@@ -1,0 +1,49 @@
+/* ================================
+   HistoryTalk Design Tokens
+   Dark – Cinematic – Premium
+================================ */
+
+:root {
+  /* ---------- Backgrounds ---------- */
+  --bg-main: #0e1a2b;        /* Nền chính (deep navy) */
+  --bg-deep: #070d18;        /* Nền sâu hơn (cinematic sections) */
+  --bg-surface: #1a2436;     /* Card / panel */
+  --bg-elevated: #24314a;    /* Modal / hover surface */
+
+  /* ---------- Text ---------- */
+  --text-primary: #e7ddc8;   /* Text chính (warm parchment) */
+  --text-secondary: #9a948c; /* Text phụ */
+  --text-muted: #6f7c84;     /* Placeholder / hint */
+  --text-inverse: #0e1a2b;   /* Text trên nền sáng (hiếm dùng) */
+
+  /* ---------- Brand / Accent ---------- */
+  --accent-gold: #c9a24d;    /* Lịch sử – di sản – premium */
+  --accent-gold-soft: #e2c77a;
+
+  --accent-blue: #8fb3c8;    /* Tri thức – AI – khám phá */
+  --accent-teal: #2f6f73;    /* Công nghệ – tương tác */
+
+  /* ---------- Emotional / Historical ---------- */
+  --accent-earth: #3b2a1f;   /* Đất – cổ đại – chiến trường */
+  --accent-bronze: #c46a2f;  /* Kim loại – cổ vật */
+  --accent-blood: #5a2323;   /* Chiến tranh – xung đột */
+  --accent-danger: #b8322a;  /* Cảnh báo / nguy hiểm */
+
+  /* ---------- Borders & Lines ---------- */
+  --border-default: rgba(231, 221, 200, 0.12);
+  --border-strong: rgba(231, 221, 200, 0.24);
+
+  /* ---------- Shadows ---------- */
+  --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.6);
+
+  /* ---------- Radius ---------- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+/* Optional: dark theme alias (nếu dùng next-themes) */
+.dark {
+  color-scheme: dark;
+}

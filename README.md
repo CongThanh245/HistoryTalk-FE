@@ -40,6 +40,119 @@ npm run lint
 
 ---
 
+## 📁 Cấu trúc thư mục chi tiết
+
+```
+core-app-fe/
+├── public/                          # 📦 Tài nguyên tĩnh (hình ảnh, icon, favicon)
+├── src/
+│   ├── app/                        # 🏠 Next.js App Router (routes & pages)
+│   │   ├── globals.css
+│   │   ├── layout.tsx              # Root layout
+│   │   ├── page.tsx                # Home page
+│   │   ├── (admin)/
+│   │   │   └── layout.tsx          # Admin section layout
+│   │   ├── (app)/
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   ├── (auth)/
+│   │   │   └── layout.tsx          # Auth routes (login, register, etc.)
+│   │   └── (marketing)/
+│   │       ├── layout.tsx
+│   │       └── page.tsx
+│   │
+│   ├── components/                 # 🧩 React components
+│   │   ├── animation/              # Animation components
+│   │   ├── commons/                # Shared UI components
+│   │   │   ├── confirm-dialog.tsx
+│   │   │   ├── empty-state.tsx
+│   │   │   ├── error-state.tsx
+│   │   │   └── loading-state.tsx
+│   │   ├── context/                # React Context providers
+│   │   │   ├── auth-context.tsx
+│   │   │   ├── query-client-provider.tsx
+│   │   │   └── theme-provider.tsx
+│   │   ├── layouts/                # Layout components
+│   │   │   └── sidebar/
+│   │   │       └── sidebar.tsx
+│   │   ├── screens/                # Page-level screen components
+│   │   │   ├── admin/
+│   │   │   ├── app/
+│   │   │   └── marketing/
+│   │   └── ui/                     # ⭐ UI primitives (reusable components)
+│   │       ├── alert-dialog.tsx
+│   │       ├── button.tsx
+│   │       ├── card.tsx
+│   │       ├── dialog.tsx
+│   │       ├── input.tsx
+│   │       ├── pagination.tsx
+│   │       ├── table.tsx
+│   │       └── ... (more UI components)
+│   │
+│   ├── configs/                    # ⚙️ Configuration files
+│   │   ├── axios.client.ts         # Axios client config
+│   │   ├── axios.server.ts         # Axios server config
+│   │   └── route.config.ts
+│   │
+│   ├── constants/                  # 📋 Hằng số & giá trị cố định
+│   │   ├── index.ts
+│   │   ├── permissions.ts
+│   │   ├── roles.ts
+│   │   └── theme.ts
+│   │
+│   ├── features/                   # 🎯 Feature modules (domain-specific logic)
+│   │   └── auth/
+│   │       └── api.ts
+│   │
+│   ├── lib/                        # 📚 Utilities & helpers
+│   │   ├── get-query-client.ts
+│   │   ├── hooks/                  # Custom React hooks
+│   │   │   ├── use-mobile.ts
+│   │   │   ├── use-navigation.ts
+│   │   │   └── use-url-sync.ts
+│   │   ├── react-query/            # React Query configuration
+│   │   │   ├── query-client.ts
+│   │   │   └── query-keys.ts
+│   │   └── utils/                  # Helper utilities
+│   │       ├── cn.ts              # Class name merger
+│   │       ├── date.ts
+│   │       ├── format.ts
+│   │       └── helpers.ts
+│   │
+│   ├── middlewares/                # 🚦 Custom middlewares
+│   │   └── auth.middleware.ts
+│   │
+│   ├── routers/                    # 🗺️ Router & navigation helpers
+│   │   ├── helper.ts
+│   │   ├── index.ts
+│   │   ├── navigation.ts
+│   │   └── sidebar.ts
+│   │
+│   ├── services/                   # 🔌 API service layer
+│   │   ├── character.service.ts
+│   │   ├── chat.service.ts
+│   │   ├── quiz.service.ts
+│   │   └── scenario.service.ts
+│   │
+│   ├── shared/                     # 🔄 Shared values & types
+│   │   └── query-key.ts
+│   │
+│   ├── store/                      # 📦 State management (Zustand, Redux, etc.)
+│   │
+│   └── styles/                     # 🎨 Global styles
+│       └── theme.css
+│
+├── components.json                 # shadcn/ui config
+├── eslint.config.mjs              # ESLint configuration
+├── next.config.ts                 # Next.js configuration
+├── package.json                   # Dependencies & scripts
+├── postcss.config.mjs             # PostCSS configuration
+├── tsconfig.json                  # TypeScript configuration
+└── README.md                      # This file
+```
+
+---
+
 ## 📁 Cấu trúc chính (tóm tắt)
 
 Root:
@@ -49,23 +162,28 @@ Root:
 src/
 - `app/` ✅ (Next.js App Router)
   - Dùng cấu trúc route của Next.js (mỗi thư mục route có `page.tsx`, `layout.tsx` nếu cần)
-  - Thư mục `(auth)`, `(private)`, `(public)`, `(status)` chứa các route/khung phân quyền
-- `components/` 🔧
+  - Thư mục `(auth)`, `(app)`, `(admin)`, `(marketing)` chứa các route/khung phân quyền
+- `components/` 🧩 
+  - `ui/` — **UI primitives** (Button, Input, Card, Table, v.v.) dùng khắp app
   - `layouts/` — layout chung (ví dụ: `sidebar/`) 
-  - `ui/` — các **UI primitives** (Button, Input, Card, Table, v.v.) dùng khắp app
-- `configs/` 🔧
+  - `context/` — React Context providers (auth, theme, query client)
+  - `commons/` — shared components (confirm-dialog, empty-state, error-state, loading-state)
+  - `screens/` — page-level screen components (organized by route)
+  - `animation/` — animation components
+- `configs/` ⚙️
   - `axios.client.ts`, `axios.server.ts` — cấu hình axios cho client/server
-- `constants/` — các hằng số (theme, roles, permissions…)
-- `features/` — nơi đặt các feature module (domain-specific logic)
-- `lib/` 🧠
-  - `hooks/` — custom React hooks (vd. `use-navigation.ts`)
+- `constants/` 📋 — các hằng số (theme, roles, permissions…)
+- `features/` 🎯 — feature modules (domain-specific logic)
+- `lib/` 📚
+  - `hooks/` — custom React hooks (`use-navigation`, `use-mobile`, `use-url-sync`, etc.)
   - `react-query/` — `query-client.ts`, `query-keys.ts` để cấu hình caching/queries
-  - `utils.ts` — helper chung
-- `middlewares/` — middleware tuỳ chỉnh nếu có
-- `routers/` — helper cho navigation/sidebars
-- `services/` — gọi API (vd. `authApi.ts`)
-- `shared/` — các giá trị chia sẻ (vd. `query-key.ts`)
-- `types/` — định nghĩa TypeScript types/interfaces
+  - `utils/` — helper chung (date, format, cn, helpers)
+- `middlewares/` 🚦 — middleware tuỳ chỉnh
+- `routers/` 🗺️ — helper cho navigation/sidebars
+- `services/` 🔌 — API service layer (character, chat, quiz, scenario services)
+- `shared/` 🔄 — giá trị chia sẻ (vd. `query-key.ts`)
+- `store/` 📦 — state management (Zustand, Redux, etc.)
+- `styles/` 🎨 — global styles (theme.css, etc.)
 
 ---
 
