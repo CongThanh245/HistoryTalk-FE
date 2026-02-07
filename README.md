@@ -56,60 +56,44 @@ core-app-fe/
 └── src/
   ├── app/                        # 🏠 Next.js App Router (routes & pages)
   │   ├── layout.tsx
-  │   ├── page.tsx
-  │   ├── (admin)/
-  │   │   ├── layout.tsx
-  │   │   └── dashboard/
-  │   ├── (auth)/
-  │   │   └── layout.tsx
-  │   ├── (marketing)/
-  │   │   ├── layout.tsx
-  │   │   └── page.tsx
-  │   └── app/                     # route group `/app`
-  │       ├── layout.tsx
-  │       └── page.tsx
-  │
-  ├── components/                 # 🧩 React components
-  │   ├── animation/
-  │   ├── commons/
-  │   │   ├── confirm-dialog.tsx
-  │   │   ├── empty-state.tsx
-  │   │   ├── error-state.tsx
-  │   │   └── loading-state.tsx
-  │   ├── context/
-  │   │   ├── auth-context.tsx
-  │   │   ├── query-client-provider.tsx
-  │   │   └── theme-provider.tsx
-  │   ├── layouts/
-  │   │   └── sidebar/
-  │   │       └── sidebar.tsx
-  │   ├── marketing/
-  │   │   └── MarketingNavbar.tsx
-  │   ├── screens/
-  │   │   ├── admin/
-  │   │   ├── app/
-  │   │   └── marketing/
-  │   │       ├── about.tsx
-  │   │       ├── features.tsx
-  │   │       ├── hero.tsx
-  │   │       ├── how-it-works.tsx
-  │   │       └── pricing.tsx
-  │   └── ui/                     # ⭐ UI primitives (reusable components)
-  │       ├── alert.tsx
-  │       ├── button.tsx
-  │       ├── card.tsx
-  │       ├── input.tsx
-  │       ├── pagination.tsx
-  │       ├── select.tsx
-  │       ├── table.tsx
-  │       ├── textarea.tsx
-  │       └── ...
-  │
-  ├── configs/                    # ⚙️ Configuration files
-  │   ├── axios.client.ts
-  │   ├── axios.server.ts
-  │   └── route.config.ts
-  │
+    │   ├── favicon.ico
+    │   ├── (admin)/
+    │   │   ├── layout.tsx
+    │   │   └── dashboard/
+    │   ├── (auth)/
+    │   │   └── layout.tsx
+    │   ├── (app)/
+    │   │   ├── layout.tsx
+    │   │   └── page.tsx
+    │   └── (marketing)/
+    │       ├── layout.tsx
+    │       ├── page.tsx
+    │       ├── about/
+    │       │   └── page.tsx
+    │       ├── features/
+    │       │   └── page.tsx
+    │       └── pricing/
+    │           └── page.tsx
+    │
+    ├── components/                 # 🧩 React components
+    │   ├── animation/
+    │   ├── commons/
+    │   │   ├── confirm-dialog.tsx
+    │   │   ├── empty-state.tsx
+    │   │   ├── error-state.tsx
+    │   │   └── loading-state.tsx
+    │   ├── context/
+    │   │   ├── auth-context.tsx
+    │   │   ├── query-client-provider.tsx
+    │   │   └── theme-provider.tsx
+    │   ├── layouts/
+    │   │   └── sidebar/
+    │   │       └── sidebar.tsx
+    │   ├── marketing/
+    │   │   ├── container.tsx
+    │   │   ├── navbar.tsx
+    │   │   ├── section-heading.tsx
+    │   │   └── section/
   ├── constants/
   │   ├── index.ts
   │   ├── permissions.ts
