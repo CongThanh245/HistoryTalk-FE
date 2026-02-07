@@ -44,111 +44,120 @@ npm run lint
 
 ```
 core-app-fe/
+├── components.json
+├── eslint.config.mjs
+├── next-env.d.ts
+├── next.config.ts
+├── package.json
+├── postcss.config.mjs
+├── README.md
+├── tsconfig.json
 ├── public/                          # 📦 Tài nguyên tĩnh (hình ảnh, icon, favicon)
-├── src/
-│   ├── app/                        # 🏠 Next.js App Router (routes & pages)
-│   │   ├── globals.css
-│   │   ├── layout.tsx              # Root layout
-│   │   ├── page.tsx                # Home page
-│   │   ├── (admin)/
-│   │   │   └── layout.tsx          # Admin section layout
-│   │   ├── (app)/
-│   │   │   ├── layout.tsx
-│   │   │   └── page.tsx
-│   │   ├── (auth)/
-│   │   │   └── layout.tsx          # Auth routes (login, register, etc.)
-│   │   └── (marketing)/
-│   │       ├── layout.tsx
-│   │       └── page.tsx
-│   │
-│   ├── components/                 # 🧩 React components
-│   │   ├── animation/              # Animation components
-│   │   ├── commons/                # Shared UI components
-│   │   │   ├── confirm-dialog.tsx
-│   │   │   ├── empty-state.tsx
-│   │   │   ├── error-state.tsx
-│   │   │   └── loading-state.tsx
-│   │   ├── context/                # React Context providers
-│   │   │   ├── auth-context.tsx
-│   │   │   ├── query-client-provider.tsx
-│   │   │   └── theme-provider.tsx
-│   │   ├── layouts/                # Layout components
-│   │   │   └── sidebar/
-│   │   │       └── sidebar.tsx
-│   │   ├── screens/                # Page-level screen components
-│   │   │   ├── admin/
-│   │   │   ├── app/
-│   │   │   └── marketing/
-│   │   └── ui/                     # ⭐ UI primitives (reusable components)
-│   │       ├── alert-dialog.tsx
-│   │       ├── button.tsx
-│   │       ├── card.tsx
-│   │       ├── dialog.tsx
-│   │       ├── input.tsx
-│   │       ├── pagination.tsx
-│   │       ├── table.tsx
-│   │       └── ... (more UI components)
-│   │
-│   ├── configs/                    # ⚙️ Configuration files
-│   │   ├── axios.client.ts         # Axios client config
-│   │   ├── axios.server.ts         # Axios server config
-│   │   └── route.config.ts
-│   │
-│   ├── constants/                  # 📋 Hằng số & giá trị cố định
-│   │   ├── index.ts
-│   │   ├── permissions.ts
-│   │   ├── roles.ts
-│   │   └── theme.ts
-│   │
-│   ├── features/                   # 🎯 Feature modules (domain-specific logic)
-│   │   └── auth/
-│   │       └── api.ts
-│   │
-│   ├── lib/                        # 📚 Utilities & helpers
-│   │   ├── get-query-client.ts
-│   │   ├── hooks/                  # Custom React hooks
-│   │   │   ├── use-mobile.ts
-│   │   │   ├── use-navigation.ts
-│   │   │   └── use-url-sync.ts
-│   │   ├── react-query/            # React Query configuration
-│   │   │   ├── query-client.ts
-│   │   │   └── query-keys.ts
-│   │   └── utils/                  # Helper utilities
-│   │       ├── cn.ts              # Class name merger
-│   │       ├── date.ts
-│   │       ├── format.ts
-│   │       └── helpers.ts
-│   │
-│   ├── middlewares/                # 🚦 Custom middlewares
-│   │   └── auth.middleware.ts
-│   │
-│   ├── routers/                    # 🗺️ Router & navigation helpers
-│   │   ├── helper.ts
-│   │   ├── index.ts
-│   │   ├── navigation.ts
-│   │   └── sidebar.ts
-│   │
-│   ├── services/                   # 🔌 API service layer
-│   │   ├── character.service.ts
-│   │   ├── chat.service.ts
-│   │   ├── quiz.service.ts
-│   │   └── scenario.service.ts
-│   │
-│   ├── shared/                     # 🔄 Shared values & types
-│   │   └── query-key.ts
-│   │
-│   ├── store/                      # 📦 State management (Zustand, Redux, etc.)
-│   │
-│   └── styles/                     # 🎨 Global styles
-│       └── theme.css
-│
-├── components.json                 # shadcn/ui config
-├── eslint.config.mjs              # ESLint configuration
-├── next.config.ts                 # Next.js configuration
-├── package.json                   # Dependencies & scripts
-├── postcss.config.mjs             # PostCSS configuration
-├── tsconfig.json                  # TypeScript configuration
-└── README.md                      # This file
+└── src/
+  ├── app/                        # 🏠 Next.js App Router (routes & pages)
+  │   ├── layout.tsx
+  │   ├── page.tsx
+  │   ├── (admin)/
+  │   │   ├── layout.tsx
+  │   │   └── dashboard/
+  │   ├── (auth)/
+  │   │   └── layout.tsx
+  │   ├── (marketing)/
+  │   │   ├── layout.tsx
+  │   │   └── page.tsx
+  │   └── app/                     # route group `/app`
+  │       ├── layout.tsx
+  │       └── page.tsx
+  │
+  ├── components/                 # 🧩 React components
+  │   ├── animation/
+  │   ├── commons/
+  │   │   ├── confirm-dialog.tsx
+  │   │   ├── empty-state.tsx
+  │   │   ├── error-state.tsx
+  │   │   └── loading-state.tsx
+  │   ├── context/
+  │   │   ├── auth-context.tsx
+  │   │   ├── query-client-provider.tsx
+  │   │   └── theme-provider.tsx
+  │   ├── layouts/
+  │   │   └── sidebar/
+  │   │       └── sidebar.tsx
+  │   ├── marketing/
+  │   │   └── MarketingNavbar.tsx
+  │   ├── screens/
+  │   │   ├── admin/
+  │   │   ├── app/
+  │   │   └── marketing/
+  │   │       ├── about.tsx
+  │   │       ├── features.tsx
+  │   │       ├── hero.tsx
+  │   │       ├── how-it-works.tsx
+  │   │       └── pricing.tsx
+  │   └── ui/                     # ⭐ UI primitives (reusable components)
+  │       ├── alert.tsx
+  │       ├── button.tsx
+  │       ├── card.tsx
+  │       ├── input.tsx
+  │       ├── pagination.tsx
+  │       ├── select.tsx
+  │       ├── table.tsx
+  │       ├── textarea.tsx
+  │       └── ...
+  │
+  ├── configs/                    # ⚙️ Configuration files
+  │   ├── axios.client.ts
+  │   ├── axios.server.ts
+  │   └── route.config.ts
+  │
+  ├── constants/
+  │   ├── index.ts
+  │   ├── permissions.ts
+  │   ├── roles.ts
+  │   └── theme.ts
+  │
+  ├── features/
+  │   └── auth/
+  │       └── api.ts
+  │
+  ├── lib/
+  │   ├── get-query-client.ts
+  │   ├── hooks/
+  │   │   ├── use-mobile.ts
+  │   │   ├── use-navigation.ts
+  │   │   └── use-url-sync.ts
+  │   ├── react-query/
+  │   │   ├── query-client.ts
+  │   │   └── query-keys.ts
+  │   └── utils/
+  │       ├── cn.ts
+  │       ├── date.ts
+  │       ├── format.ts
+  │       └── helpers.ts
+  │
+  ├── middlewares/
+  │   └── auth.middleware.ts
+  │
+  ├── routers/
+  │   ├── helper.ts
+  │   ├── index.ts
+  │   ├── navigation.ts
+  │   └── sidebar.ts
+  │
+  ├── services/
+  │   ├── character.service.ts
+  │   ├── chat.service.ts
+  │   ├── quiz.service.ts
+  │   └── scenario.service.ts
+  │
+  ├── shared/
+  │   └── query-key.ts
+  │
+  ├── store/
+  └── styles/
+    ├── globals.css
+    └── theme.css
+
 ```
 
 ---
