@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Container } from "../container";
+import { MagneticButton } from "@/components/commons/MagneticButton";
 
 export function ClosingSection() {
   return (
@@ -35,22 +36,13 @@ export function ClosingSection() {
           </div>
 
           {/* CTA */}
-          <div className="pt-8">
-            <Link
-              href="/app"
-              className="
-                inline-block
-                px-10 py-5 text-xl font-bold
-                bg-[var(--accent-gold)] text-[var(--text-inverse)]
-                rounded-[var(--radius-md)]
-                hover:bg-[var(--accent-gold-soft)]
-                transition-colors duration-300
-                shadow-[var(--shadow-strong)]
-              "
-            >
-              Bắt đầu hành trình với HistoryTalk
-            </Link>
-          </div>
+          <MagneticButton
+            href="/app"
+            size="xl"
+            className="shadow-[var(--shadow-strong)]"
+          >
+            Bắt đầu hành trình với HistoryTalk
+          </MagneticButton>
 
           {/* Secondary text */}
           <div className="pt-8">

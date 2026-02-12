@@ -139,12 +139,6 @@ export function Carousel3DVertical() {
           </Link>
         ))}
       </div>
-
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center w-full">
-        <p className="text-xs text-[var(--text-muted)] font-medium tracking-widest uppercase opacity-50">
-          Click vào thẻ để bắt đầu hành trình
-        </p>
-      </div>
     </div>
   );
 }
