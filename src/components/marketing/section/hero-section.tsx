@@ -6,6 +6,8 @@ import { Container } from "../container";
 import { Carousel3DVertical } from "./vertical-carousel";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import TypingText from "@/components/commons/TypingText";
+import MaskedText from "@/components/commons/MaskedText";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -17,36 +19,56 @@ export function HeroSection() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // --- 1. ENTRANCE: Chỉ áp dụng cho Text bên trái ---
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      // --- 1. ENTRANCE: Animation typing nhanh cho tiêu đề ---
+      const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
 
+      // Animation typing cho "History Talk"
       tl.fromTo(
-        ".reveal-text",
-        { yPercent: 100, opacity: 0 },
+        ".typing-title .char",
+        { 
+          opacity: 0,
+          x: -20,
+        },
         {
-          yPercent: 0,
           opacity: 1,
-          duration: 1.2,
-          stagger: 0.1,
+          x: 0,
+          duration: 0.05,
+          stagger: 0.03, // Mỗi chữ xuất hiện cách nhau 0.03s
         }
-      ).fromTo(
+      )
+      // Animation typing cho "Khi lịch sử trở nên sống động"
+      .fromTo(
+        ".typing-subtitle .char",
+        { 
+          opacity: 0,
+          x: -20,
+        },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.04,
+          stagger: 0.025, // Typing nhanh hơn một chút
+        },
+        "-=0.3" // Bắt đầu trước khi dòng đầu kết thúc
+      )
+      // Animation cho phần nội dung còn lại (giữ nguyên)
+      .fromTo(
         subContentRef.current,
         { y: 30, opacity: 0 },
         { y: 0, opacity: 1, duration: 1 },
-        "-=0.8"
+        "-=0.5"
       );
 
       // --- 2. SCROLL: Cả 2 bên cùng biến mất dần khi cuộn ---
-      // Ta gộp cả contentWrapper (trái) và carousel (phải) vào đây
       gsap.to([contentWrapperRef.current, carouselRef.current], {
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top top",      // Bắt đầu mờ khi section chạm đỉnh
-          end: "bottom 20%",     // Biến mất hoàn toàn khi cuộn được 80% section
-          scrub: true,           // Mờ theo tốc độ ngón tay cuộn
+          start: "top top",
+          end: "bottom 20%",
+          scrub: true,
         },
         opacity: 0,
-        y: -100,                 // Cùng bay lên trên
+        y: -100,
         ease: "none",
       });
     }, sectionRef);
@@ -54,14 +76,7 @@ export function HeroSection() {
     return () => ctx.revert();
   }, []);
 
-  const MaskedText = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
-    <div className={`overflow-hidden ${className}`}>
-      <div className="reveal-text inline-block w-full">
-        {children}
-      </div>
-    </div>
-  );
-
+  
   return (
     <section
       ref={sectionRef}
@@ -76,15 +91,16 @@ export function HeroSection() {
       <Container>
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           
-          {/* ===== LEFT SIDE: Text Content (Animation kiểu Arclin) ===== */}
+          {/* ===== LEFT SIDE: Text Content ===== */}
           <div ref={contentWrapperRef} className="space-y-8 z-10 will-change-transform">
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.15] text-[var(--text-primary)]">
-              <MaskedText>History Talk</MaskedText>
-              <MaskedText className="mt-2">
-                <span className="block text-[var(--accent-gold)] text-2xl">
-                  Khi lịch sử trở nên sống động
-                </span>
-              </MaskedText>
+              {/* Typing animation cho tiêu đề chính */}
+              <TypingText text="HISTORY TALK" className="typing-title" />
+              
+              {/* Typing animation cho phụ đề */}
+              <span className="block text-[var(--accent-gold)] text-2xl mt-2">
+                <TypingText text="Khi lịch sử trở nên sống động" className="typing-subtitle" />
+              </span>
             </h1>
 
             <div ref={subContentRef} className="space-y-8 opacity-0">
@@ -110,17 +126,17 @@ export function HeroSection() {
                   href="/app"
                   className="group relative px-8 py-4 text-base font-semibold bg-white/[0.03] backdrop-blur-md text-white border border-white/10 inline-flex items-center gap-2 overflow-visible transition-all duration-300 hover:bg-white/[0.08] hover:border-white/20"
                 >
-                  <span className="absolute top-0 left-0 h-[1.5px] w-full bg-accent-gold transition-transform duration-700 ease-out scale-x-0 origin-left group-hover:scale-x-[1.15] -translate-x-[7.5%]"></span>
-                  <span className="absolute bottom-0 left-0 h-[1.5px] w-full bg-accent-gold transition-transform duration-700 ease-out scale-x-0 origin-right group-hover:scale-x-[1.15] translate-x-[7.5%]"></span>
-                  <span className="absolute left-0 top-0 w-[1.5px] h-full bg-accent-gold transition-transform duration-700 ease-out scale-y-0 origin-bottom group-hover:scale-y-[1.3] translate-y-[15%]"></span>
-                  <span className="absolute right-0 top-0 w-[1.5px] h-full bg-accent-gold transition-transform duration-700 ease-out scale-y-0 origin-top group-hover:scale-y-[1.3] -translate-y-[15%]"></span>
+                  <span className="absolute top-0 left-0 h-[1.5px] w-full bg-[var(--accent-gold)] transition-transform duration-700 ease-out scale-x-0 origin-left group-hover:scale-x-[1.15] -translate-x-[7.5%]"></span>
+                  <span className="absolute bottom-0 left-0 h-[1.5px] w-full bg-[var(--accent-gold)] transition-transform duration-700 ease-out scale-x-0 origin-right group-hover:scale-x-[1.15] translate-x-[7.5%]"></span>
+                  <span className="absolute left-0 top-0 w-[1.5px] h-full bg-[var(--accent-gold)] transition-transform duration-700 ease-out scale-y-0 origin-bottom group-hover:scale-y-[1.3] translate-y-[15%]"></span>
+                  <span className="absolute right-0 top-0 w-[1.5px] h-full bg-[var(--accent-gold)] transition-transform duration-700 ease-out scale-y-0 origin-top group-hover:scale-y-[1.3] -translate-y-[15%]"></span>
                   <span className="relative z-20 tracking-wider">TRẢI NGHIỆM NGAY</span>
                 </Link>
               </div>
             </div>
           </div>
 
-          {/* ===== RIGHT SIDE: Carousel (Hiện ngay lập tức, mờ đi khi cuộn) ===== */}
+          {/* ===== RIGHT SIDE: Carousel ===== */}
           <div ref={carouselRef} className="relative w-full flex justify-center items-center will-change-transform">
             <div className="absolute inset-0 bg-[var(--accent-gold)] opacity-10 blur-[80px] rounded-full scale-75" />
             <div className="w-full max-w-[500px] lg:max-w-none">
