@@ -16,7 +16,7 @@ export function MarketingNavbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-[var(--bg-main)]/85 backdrop-blur-xl border-b border-[var(--border-default)] shadow-[var(--shadow-soft)]">
+    <nav className="sticky top-0 z-50 w-full bg-[var(--bg-main)]/50 backdrop-blur-xl border-b border-[var(--border-default)] shadow-[var(--shadow-soft)]">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4 gap-8">
         {/* Logo / Brand */}
         <Link
