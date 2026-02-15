@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import Link from 'next/link';
@@ -27,8 +27,11 @@ const figures: HistoricalFigure[] = [
 export function Carousel3DVertical() {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLAnchorElement | null)[]>([]);
-  
   const rotationProxy = useRef({ rotation: 0 });
+  const radiusProxy = useRef({ value: 250 }); // Sử dụng ref để lưu radius động
+  const animationRef = useRef<gsap.core.Tween | null>(null);
+  
+  const [isHovered, setIsHovered] = useState(false);
 
   const radius = 250; 
   const cardCount = figures.length;
@@ -40,12 +43,13 @@ export function Carousel3DVertical() {
 
     const updateCards = () => {
       const currentRotation = rotationProxy.current.rotation;
+      const currentRadius = radiusProxy.current.value; // Dùng radius động từ ref
 
       cards.forEach((card, index) => {
         const angle = currentRotation + index * angleIncrement;
-        const x = Math.sin(angle) * radius;
-        const z = Math.cos(angle) * radius;
-        const normalizedZ = (z + radius) / (radius * 2);
+        const x = Math.sin(angle) * currentRadius;
+        const z = Math.cos(angle) * currentRadius;
+        const normalizedZ = (z + currentRadius) / (currentRadius * 2);
         
         const scale = 0.6 + normalizedZ * 0.4;
         const opacity = 0.3 + normalizedZ * 0.7;
@@ -63,12 +67,32 @@ export function Carousel3DVertical() {
       });
     };
 
-    updateCards();
+    // Set initial position ngay lập tức để tránh flash
+    cards.forEach((card, index) => {
+      const angle = index * angleIncrement;
+      const x = Math.sin(angle) * radius;
+      const z = Math.cos(angle) * radius;
+      const normalizedZ = (z + radius) / (radius * 2);
+      
+      const scale = 0.6 + normalizedZ * 0.4;
+      const opacity = 0.3 + normalizedZ * 0.7;
+      const blur = (1 - normalizedZ) * 4;
+      const zIndex = Math.round(normalizedZ * 100);
 
-    // Animation xoay liên tục không nghỉ
-    const animation = gsap.to(rotationProxy.current, {
+      gsap.set(card, {
+        x: x,
+        z: z,
+        scale: scale,
+        opacity: opacity,
+        filter: `blur(${blur}px)`,
+        zIndex: zIndex,
+      });
+    });
+
+    // Tạo animation chính một lần duy nhất
+    animationRef.current = gsap.to(rotationProxy.current, {
       rotation: Math.PI * 2,
-      duration: 30, // Tăng nhẹ thời gian để xoay mượt mà hơn
+      duration: 30, // Tốc độ mặc định
       ease: 'none',
       repeat: -1,
       onUpdate: updateCards,
@@ -78,21 +102,41 @@ export function Carousel3DVertical() {
     });
 
     return () => {
-      animation.kill();
+      if (animationRef.current) {
+        animationRef.current.kill();
+      }
     };
   }, [cardCount, radius, angleIncrement]);
+
+  // Thay đổi tốc độ animation và radius khi hover
+  useGSAP(() => {
+    // Animate radius - GSAP sẽ tự động update radiusProxy và trigger updateCards
+    gsap.to(radiusProxy.current, {
+      value: isHovered ? radius * 0.7 : radius, // Thu nhỏ 30% khi hover
+      duration: 0.5,
+      ease: 'power2.out',
+    });
+
+    // Đợi một chút để đảm bảo animationRef đã được khởi tạo
+    if (animationRef.current) {
+      // Set timeScale trực tiếp thay vì animate
+      animationRef.current.timeScale(isHovered ? 2 : 1);
+    }
+  }, [isHovered, radius]);
 
   return (
     <div
       ref={containerRef}
       className="relative w-full h-[650px] flex items-center justify-center"
       style={{ perspective: '1200px' }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative w-full h-full" style={{ transformStyle: 'preserve-3d' }}>
         {figures.map((figure, index) => (
           <Link
             key={figure.id}
-            href="/app/latest" // Chuyển hướng cố định về app
+            href="/app/latest"
             ref={(el) => {
               cardsRef.current[index] = el;
             }}
@@ -101,6 +145,8 @@ export function Carousel3DVertical() {
               transformStyle: 'preserve-3d',
               width: '280px',
               height: '400px',
+              // Set visibility hidden ban đầu để tránh flash, GSAP sẽ set opacity
+              visibility: 'visible',
             }}
           >
             <div className="w-full h-full bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-[var(--radius-lg)] overflow-hidden shadow-[var(--shadow-strong)] transition-all duration-300 group-hover:border-[var(--accent-gold)] group-hover:shadow-[0_10px_40px_rgba(201,162,77,0.2)]">
