@@ -30,7 +30,7 @@ const NAV_LINKS = [
 
 export function Footer() {
   return (
-    <footer className="bg-[var(--bg-deep)] border-t border-[var(--border-default)]">
+    <footer className="bg-[var(--bg-main)] border-t border-[var(--border-default)]">
       <Container>
         {/* Main grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-12 py-16">
