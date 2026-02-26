@@ -1,90 +1,73 @@
+"use client";
+
+import { useRef } from "react";
 import { Container } from "../container";
 import { SectionHeading } from "../section-heading";
+import { useRevealAnimation } from "@/lib/hooks/use-reveal-animation";
+
+const solutions = [
+  {
+    title: "Từ người đọc thành người đối thoại",
+    description:
+      "Thay vì chỉ đọc về các sự kiện, bạn có thể bước vào một cuộc trò chuyện với những người đã sống trong thời kỳ đó.",
+  },
+  {
+    title: "Từ sự kiện thành con người",
+    description:
+      "Lịch sử không chỉ là những gì đã xảy ra, mà là những con người đã tạo nên nó. Hiểu họ giúp bạn hiểu câu chuyện phía sau.",
+  },
+  {
+    title: "Từ ghi nhớ thành thấu hiểu",
+    description:
+      "Khi nhìn lịch sử từ góc nhìn của nhân vật, các sự kiện trở nên dễ hiểu và có ý nghĩa hơn.",
+  },
+];
 
 export function SolutionSection() {
-  const solutions = [
-    {
-      old: "Đọc về nhân vật lịch sử",
-      new: "Trò chuyện với họ",
-    },
-    {
-      old: "Ghi nhớ kết quả",
-      new: "Khám phá động lực",
-    },
-    {
-      old: "Một câu chuyện chính thống",
-      new: "Nhiều góc nhìn",
-    },
-  ];
+  const sectionRef = useRef<HTMLElement>(null);
+  useRevealAnimation(sectionRef);
 
   return (
-    <section className="py-20 md:py-32 bg-[var(--bg-main)] relative">
+    <section
+      ref={sectionRef}
+      className="py-24 md:py-32 bg-[var(--bg-main)] border-t border-[var(--border-default)]"
+    >
       <Container>
-        <SectionHeading
-          title="Biến lịch sử thành cuộc trò chuyện"
-          subtitle="HistoryTalk chuyển đổi lịch sử từ nội dung tĩnh thành đối thoại sống động."
-        />
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          {/* LEFT */}
+          <div>
+            <div data-reveal="fast">
+              <SectionHeading
+                title="Bước vào góc nhìn của người làm nên lịch sử"
+                subtitle="History Talk biến lịch sử từ những dòng chữ tĩnh thành cuộc trò chuyện với các nhân vật đã tạo nên quá khứ."
+              />
+            </div>
 
-        <div className="max-w-4xl mx-auto space-y-12">
-          {/* Transformation grid */}
-          <div className="space-y-6">
-            {solutions.map((item, index) => (
-              <div
-                key={index}
-                className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-[var(--radius-lg)] p-6 md:p-8 hover:border-[var(--accent-gold)]/30 transition-all duration-300"
-              >
-                <div className="grid md:grid-cols-2 gap-6 items-center">
-                  {/* Old way */}
-                  <div className="space-y-2">
-                    <p className="text-sm text-[var(--text-muted)] uppercase tracking-wider">
-                      Thay vì
-                    </p>
-                    <p className="text-lg text-[var(--text-secondary)] line-through">
-                      {item.old}
-                    </p>
-                  </div>
-
-                  {/* Arrow */}
-                  <div className="hidden md:flex justify-center">
-                    <svg 
-                      width="40" 
-                      height="40" 
-                      viewBox="0 0 24 24" 
-                      fill="none"
-                      className="text-[var(--accent-gold)]"
-                    >
-                      <path 
-                        d="M5 12h14m0 0l-7-7m7 7l-7 7" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-
-                  {/* New way */}
-                  <div className="space-y-2">
-                    <p className="text-sm text-[var(--accent-gold)] uppercase tracking-wider font-medium">
-                      Bạn sẽ
-                    </p>
-                    <p className="text-lg md:text-xl text-[var(--text-primary)] font-medium">
-                      {item.new}
-                    </p>
-                  </div>
+            <div className="space-y-8 mt-10">
+              {solutions.map((item, index) => (
+                <div
+                  key={index}
+                  data-reveal="block"
+                  className="border-l-2 border-[var(--accent-gold)] pl-6"
+                >
+                  <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-[var(--text-secondary)] leading-relaxed">
+                    {item.description}
+                  </p>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          {/* Key message */}
-          <div className="bg-[var(--bg-surface)] border border-[var(--accent-gold)]/20 rounded-[var(--radius-lg)] p-8 md:p-12 text-center">
-            <p className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] mb-4">
-              Bạn không còn ở ngoài lịch sử.
-            </p>
-            <p className="text-2xl md:text-3xl font-bold text-[var(--accent-gold)]">
-              Bạn đang ở trong cuộc trò chuyện.
-            </p>
+          {/* RIGHT */}
+          <div data-reveal="block" className="relative">
+            <div className="w-full h-[420px] rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] flex items-center justify-center">
+              <span className="text-[var(--text-muted)]">
+                Ảnh minh họa app sẽ đặt ở đây
+              </span>
+            </div>
           </div>
         </div>
       </Container>

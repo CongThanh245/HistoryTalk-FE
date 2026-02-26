@@ -12,9 +12,9 @@ export default function MarketingPage() {
       <HeroSection />
       <ProblemSection />
       <SolutionSection />
-      <HowItWorksSection />
+      {/* <HowItWorksSection /> */}
       <FeaturesSection />
-      <ImpactSection />
+      {/* <ImpactSection /> */}
       <ClosingSection />
     </div>
   );

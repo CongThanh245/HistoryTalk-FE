@@ -1,68 +1,150 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import { Container } from "../container";
-import { SectionHeading } from "../section-heading";
+
+const problems = [
+  {
+    id: 1,
+    tag: "VẤN ĐỀ 01",
+    title: "ÁP LỰC THI CỬ VÀ HỆ QUẢ CỦA LỐI HỌC VẸT",
+    body: "Thay vì khơi gợi sự thấu hiểu về dòng chảy thời đại, giáo dục lịch sử hiện nay thường bị đóng khung trong việc ghi nhớ máy móc các cột mốc để đối phó với những kỳ thi căng thẳng.",
+    rotate: "-2.5deg",
+  },
+  {
+    id: 2,
+    tag: "VẤN ĐỀ 02",
+    title: "SỰ THIẾU HỤT CÁC NỀN TẢNG TỰ HỌC TƯƠNG TÁC VÀ CHUẨN XÁC",
+    body: "Trong khi các công cụ học tập chính thống còn hạn chế, các phương tiện giải trí như TikTok, điện ảnh và trò chơi điện tử đang trở thành những nguồn kênh chính, trực tiếp nhào nặn nên thế giới quan lịch sử của giới trẻ nhưng lại thiếu đi sự kiểm chứng.",
+    rotate: "1.5deg",
+  },
+  {
+    id: 3,
+    tag: "VẤN ĐỀ 03",
+    title: "SỰ ĐỨT GÃY CẢM XÚC VỚI PHƯƠNG PHÁP GIÁO DỤC TRUYỀN THỐNG",
+    body: "Lối trình bày khô khan trong sách giáo khoa—vốn quá chú trọng vào những con số thống kê và kết quả sự kiện—đang vô tình triệt tiêu sự kết nối tâm hồn giữa người học và những giá trị nhân văn của quá khứ.",
+    rotate: "-1deg",
+  },
+];
 
 export function ProblemSection() {
-  const problems = [
-    "Nhân vật lịch sử cảm thấy xa vời và không thực",
-    "Sự kiện mất đi ý nghĩa cảm xúc",
-    "Học tập trở thành ghi nhớ thay vì hiểu biết",
-    "Lịch sử trở thành thứ để vượt qua kỳ thi, không phải để suy ngẫm",
-  ];
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const didInit = useRef(false);
+
+  useEffect(() => {
+    let ctx: { revert: () => void } | null = null;
+
+    const init = async () => {
+      const { gsap } = await import("gsap");
+      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+      gsap.registerPlugin(ScrollTrigger);
+
+      if (didInit.current) return;
+      didInit.current = true;
+
+      ctx = gsap.context(() => {
+        cardsRef.current.forEach((card, i) => {
+          if (!card) return;
+          gsap.set(card, { x: "120%", opacity: 0, rotate: problems[i].rotate });
+        });
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "+=300%",
+            pin: true,
+            scrub: 1.2,
+            anticipatePin: 1,
+            pinSpacing: true,
+          },
+        });
+
+        cardsRef.current.forEach((card, i) => {
+          if (!card) return;
+          tl.to(
+            card,
+            {
+              x: 0,
+              opacity: 1,
+              rotate: problems[i].rotate,
+              duration: 1,
+              ease: "power3.out",
+            },
+            i === 0 ? 0 : ">-0.2",
+          );
+        });
+      }, sectionRef);
+    };
+
+    init();
+    return () => {
+      ctx?.revert();
+    };
+  }, []);
 
   return (
-    <section className="py-20 md:py-32 bg-[var(--bg-deep)] relative">
-      {/* Decorative line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-[var(--border-default)]" />
+    <section
+      ref={sectionRef}
+      className="relative flex items-center h-svh min-h-[600px] overflow-hidden bg-[var(--bg-deep)]"
+    >
+      {/* Subtle top border */}
+      <div className="absolute top-0 inset-x-0 h-px bg-[var(--border-default)]" />
 
-      <Container>
-        <SectionHeading
-          title="Tại sao lịch sử cảm thấy xa vời ngày nay"
-          subtitle="Trên toàn thế giới, lịch sử thường được dạy như dòng thời gian, ngày tháng và kết quả."
-        />
+      <div className="relative z-10 w-full py-16">
+        <Container>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-center">
+            {/* LEFT: Heading */}
+            <div>
+              {/* Gold rule */}
+              <div className="w-[3px] h-12 mb-5 rounded-full bg-gradient-to-b from-[var(--accent-gold)] to-transparent" />
 
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Main problem statement */}
-          <div className="text-center space-y-4 mb-12">
-            <p className="text-lg md:text-xl text-[var(--text-secondary)] leading-relaxed">
-              Học sinh được yêu cầu nhớ <span className="text-[var(--text-primary)] font-medium">điều gì đã xảy ra</span> —
-            </p>
-            <p className="text-lg md:text-xl text-[var(--text-secondary)] leading-relaxed">
-              nhưng hiếm khi được mời để hiểu <span className="text-[var(--accent-gold)] font-medium">tại sao nó xảy ra</span>.
-            </p>
-          </div>
+              <h2 className="text-[clamp(2.5rem,6vw,6rem)] leading-[0.88] tracking-wide font-bold uppercase text-[var(--text-primary)] mb-4">
+                Vấn đề
+                <br />
+                học <span className="text-[var(--accent-gold)]">lịch sử</span>
+                <br />
+                ngày nay
+              </h2>
 
-          {/* As a result section */}
-          <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-[var(--radius-lg)] p-8 md:p-12">
-            <p className="text-xl font-semibold text-[var(--accent-gold)] mb-6">
-              Kết quả là:
-            </p>
-            
-            <div className="space-y-4">
-              {problems.map((problem, index) => (
-                <div key={index} className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--accent-gold)]/20 flex items-center justify-center mt-1">
-                    <div className="w-2 h-2 rounded-full bg-[var(--accent-gold)]" />
+              <p className="text-sm lg:text-base text-[var(--text-secondary)] max-w-[340px] leading-relaxed">
+                Ba rào cản lớn đang ngăn cách thế hệ trẻ khỏi việc thực sự hiểu
+                và cảm nhận chiều sâu của lịch sử dân tộc.
+              </p>
+            </div>
+
+            {/* RIGHT: Cards */}
+            <div className="overflow-hidden px-4 -mx-4">
+              <div className="flex flex-col gap-[14px]">
+                {problems.map((problem, i) => (
+                  <div
+                    key={problem.id}
+                    ref={(el) => {
+                      cardsRef.current[i] = el;
+                    }}
+                    className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-[var(--shadow-strong)] px-6 py-5 transition-colors duration-200 hover:bg-[var(--bg-elevated)] hover:border-[var(--border-strong)] will-change-transform"
+                  >
+                    <span className="block text-[0.62rem] font-semibold tracking-[0.18em] uppercase text-[var(--accent-gold)] opacity-80 mb-2">
+                      {problem.tag}
+                    </span>
+                    <h3 className="text-[0.95rem] lg:text-[1.05rem] font-bold uppercase tracking-wide text-[var(--text-primary)] mb-2.5 leading-snug">
+                      {problem.title}
+                    </h3>
+                    <div className="w-7 h-[1.5px] bg-[var(--accent-gold)] opacity-30 mb-2.5" />
+                    <p className="text-[0.82rem] lg:text-[0.88rem] leading-relaxed text-[var(--text-secondary)]">
+                      {problem.body}
+                    </p>
                   </div>
-                  <p className="text-lg text-[var(--text-secondary)] leading-relaxed">
-                    {problem}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
+        </Container>
+      </div>
 
-          {/* Closing statement */}
-          <div className="text-center pt-8">
-            <p className="text-xl md:text-2xl text-[var(--text-primary)] font-medium italic">
-              Lịch sử trở thành điều gì đó để vượt qua kỳ thi,<br />
-              không phải điều gì đó để suy ngẫm.
-            </p>
-          </div>
-        </div>
-      </Container>
-
-      {/* Decorative line */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-[var(--border-default)]" />
+      {/* Subtle bottom border */}
+      <div className="absolute bottom-0 inset-x-0 h-px bg-[var(--border-default)]" />
     </section>
   );
 }
