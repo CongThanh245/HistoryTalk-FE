@@ -36,8 +36,8 @@ export function ClosingSection() {
             {/* Cột trái */}
             <div className="flex items-center">
               <h2 className="text-4xl lg:text-6xl font-bold text-[var(--text-primary)]">
-                Lịch sử không <br /> chỉ là{" "}
-                <span className="text-[var(--accent-gold)]">quá khứ.</span>
+                LỊCH SỬ KHÔNG <br /> CHỈ LÀ{" "}
+                <span className="text-[var(--accent-gold)]">QUÁ KHỨ.</span>
               </h2>
             </div>
 

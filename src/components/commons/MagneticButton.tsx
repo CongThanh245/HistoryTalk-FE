@@ -6,12 +6,12 @@ import Link from "next/link";
 import { useMagneticEffect } from "@/lib/hooks/use-magnetic";
 import { useSlideOverlay } from "@/lib/hooks/use-overlay-slide";
 
-
 interface MagneticButtonProps {
   href: string;
   children: ReactNode;
   className?: string;
   size?: "sm" | "md" | "lg" | "xl";
+  magnetic?: boolean;
   magneticStrength?: number;
   animationDuration?: number;
 }
@@ -28,12 +28,12 @@ export function MagneticButton({
   children,
   className = "",
   size = "md",
+  magnetic = true,
   magneticStrength = 0.12,
   animationDuration = 0.8,
 }: MagneticButtonProps) {
-  // Hiệu ứng nam châm
-  const magnetic = useMagneticEffect<HTMLButtonElement>({
-    strength: magneticStrength,
+  const magneticEffect = useMagneticEffect<HTMLButtonElement>({
+    strength: magnetic ? magneticStrength : 0, // ← strength = 0 khi tắt
     duration: 0.4,
   });
 
@@ -48,17 +48,17 @@ export function MagneticButton({
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    magnetic.handleMouseMove(e);
+    if (magnetic) magneticEffect.handleMouseMove(e);
   };
 
   const handleMouseLeave = () => {
-    magnetic.handleMouseLeave();
+    if (magnetic) magneticEffect.handleMouseLeave();
     overlay.handleMouseLeave();
   };
 
   return (
     <Button
-      ref={magnetic.ref}
+      ref={magneticEffect.ref}
       asChild
       variant="magnetic"
       className={`
@@ -88,7 +88,10 @@ export function MagneticButton({
 
         <span
           ref={overlay.textRef}
-          className="relative z-10 tracking-wide text-[var(--accent-gold)]"
+          className="relative z-10 tracking-wide"
+          style={{
+            color: "var(--accent-gold)",
+          }}
         >
           {children}
         </span>
