@@ -64,9 +64,11 @@ export function SolutionSection() {
           {/* RIGHT */}
           <div data-reveal="block" className="relative">
             <div className="w-full h-[420px] rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] flex items-center justify-center">
-              <span className="text-[var(--text-muted)]">
-                Ảnh minh họa app sẽ đặt ở đây
-              </span>
+              <img
+                src="/history-talk-ui.jpg"
+                alt="History Talk UI"
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>

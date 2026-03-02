@@ -10,52 +10,53 @@ export function ClosingSection() {
   useRevealAnimation(sectionRef);
 
   return (
-    <section
-      ref={sectionRef}
-      className="py-16 md:py-24 bg-[var(--bg-deep)] border-t border-[var(--border-default)]"
-    >
+    <section ref={sectionRef} className="py-20 bg-[var(--bg-deep)]">
       <Container>
-        <div className="relative rounded-2xl overflow-hidden border border-[var(--border-default)] bg-[var(--bg-surface)]">
-          {/* Glows */}
-          <div className="absolute -top-32 -left-32 w-80 h-80 bg-[var(--accent-gold)] opacity-10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-[var(--accent-teal)] opacity-10 rounded-full blur-3xl pointer-events-none" />
+        {/* Thẻ cha dùng flex justify-center để làm mốc căn giữa cho ảnh */}
+        <div className="relative overflow-hidden rounded-[2.5rem] border border-[var(--border-default)] bg-[var(--bg-surface)] h-[550px] lg:h-[600px] flex justify-center">
+          {/* LỚP 1: ẢNH ĐIỆN THOẠI (Căn giữa theo Card cha) */}
+          <div className="absolute inset-0 flex justify-center items-end pointer-events-none z-10">
+            <img
+              src="/phone_mock.png"
+              alt="Preview"
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: "50%",
+                transform: "translateX(-50%) translateY(12%)",
+                width: "370px",
+                zIndex: 10,
+                pointerEvents: "none",
+              }}
+            />
+          </div>
 
-          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-0 items-stretch">
-            {/* LEFT */}
-            <div className="px-10 py-14 md:px-16 md:py-20 flex flex-col justify-center">
-              <h2
-                data-reveal="fast"
-                className="text-4xl md:text-5xl lg:text-6xl font-bold uppercase tracking-wide text-[var(--text-primary)] leading-[0.9] mb-6"
-              >
-                Lịch sử không chỉ là{" "}
+          {/* LỚP 2: NỘI DUNG CHỮ (Dùng Grid để chia 2 bên) */}
+          <div className="relative z-20 w-full h-full grid grid-cols-1 lg:grid-cols-3 px-10 lg:px-16">
+            {/* Cột trái */}
+            <div className="flex items-center">
+              <h2 className="text-4xl lg:text-6xl font-bold text-[var(--text-primary)]">
+                Lịch sử không <br /> chỉ là{" "}
                 <span className="text-[var(--accent-gold)]">quá khứ.</span>
               </h2>
-
-              <p
-                data-reveal="block"
-                className="text-base md:text-lg text-[var(--text-secondary)] leading-relaxed max-w-sm mb-10"
-              >
-                Bước vào cuộc trò chuyện với những người đã tạo nên lịch sử. Đặt câu hỏi, khám phá sự thật, và hiểu về nhân loại theo cách chưa từng có.
-              </p>
-
-              <div data-reveal="block" className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <MagneticButton href="/app" size="xl" className="shadow-[var(--shadow-strong)]">
-                  Bắt đầu miễn phí
-                </MagneticButton>
-              </div>
             </div>
 
-            {/* RIGHT: Phone mockup */}
-            <div
-              data-reveal="block"
-              className="relative flex items-end justify-center border-t border-[var(--border-default)] lg:border-t-0 overflow-hidden min-h-[280px] lg:min-h-0"
-            >
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-[var(--accent-gold)] opacity-5 rounded-full blur-3xl pointer-events-none" />
-              <img
-                src="https://placehold.co/340x520/1a2436/c9a24d?text=Phone+Mockup"
-                alt="HistoryTalk app preview"
-                className="relative z-10 h-[300px] lg:h-[400px] w-auto object-contain drop-shadow-2xl"
-              />
+            {/* Cột giữa rỗng: Tạo khoảng không cho điện thoại ở lớp dưới hiện lên */}
+            <div className="hidden lg:block"></div>
+
+            {/* Cột phải */}
+            <div className="flex flex-col justify-center items-start lg:items-end gap-6 text-left lg:text-right">
+              <p className="text-base lg:text-lg text-[var(--text-secondary)] max-w-[280px]">
+                Bước vào cuộc trò chuyện với những người đã tạo nên lịch sử. Đặt
+                câu hỏi, khám phá sự thật, và hiểu về lịch sử theo góc nhìn của nhân vật.{" "}
+              </p>
+              <MagneticButton
+                href="/app"
+                size="lg"
+                className="!rounded-full px-10 py-5"
+              >
+                Bắt đầu ngay
+              </MagneticButton>
             </div>
           </div>
         </div>

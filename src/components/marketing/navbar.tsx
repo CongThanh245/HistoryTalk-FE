@@ -79,7 +79,7 @@ export function MarketingNavbar() {
               Đăng nhập
             </Link>
             <MagneticButton className="rounded-full" href="/app">
-              <span className="text-xs px-2">TRẢI NGHIỆM</span>
+              <span className="text-xs px-2">KHÁM PHÁ NGAY</span>
             </MagneticButton>
           </div>
 
