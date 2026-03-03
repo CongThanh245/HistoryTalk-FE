@@ -147,8 +147,8 @@ export function MarketingNavbar() {
 
                 {/* KHÁM PHÁ NGAY — bỏ border */}
                 <div className="cta-wrapper">
-                  <MagneticButton href="/app" className="!border-0">
-                    <span className="text-xs px-2">KHÁM PHÁ NGAY</span>
+                  <MagneticButton href="/app" className="!border-0" magnetic={false}>
+                    Khám phá ngay
                   </MagneticButton>
                 </div>
               </div>
