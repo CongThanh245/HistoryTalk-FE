@@ -1,150 +1,64 @@
-// 'use client';
+"use client";
 
-// import { cn } from '@/lib/utils/cn';
-// import { usePathname } from 'next/navigation';
-// import Link from 'next/link';
-// import { ChevronDown } from 'lucide-react';
-// import { useState } from 'react';
-// import { useAuth } from '@/lib/hooks/use-auth';
-// import { useNavigation } from '@/lib/hooks/use-navigation';
-// import { Badge } from '@/components/ui/badge';
-// import type { NavItem } from '@/routes/navigation';
+import { useState, useEffect, useRef } from "react";
+import { cn } from "@/lib/utils/cn";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import SidebarHeader from "./sidebar-header";
+import SidebarNav from "./sidebar-nav";
+import SidebarFooter from "./sidebar-footer";
 
-// export function Sidebar() {
-//   const pathname = usePathname();
-//   const { user } = useAuth();
-//   const navigation = useNavigation();
+export default function Sidebar() {
+  const [isPinned, setIsPinned] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isExpanded = isPinned || isHovered;
 
-//   if (!user) return null;
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ht-sidebar-pinned");
+      if (saved !== null) setIsPinned(JSON.parse(saved));
+    } catch {}
+  }, []);
 
-//   return (
-//     <aside className="w-64 border-r bg-background h-screen sticky top-0 flex flex-col">
-//       {/* Logo */}
-//       <div className="h-16 border-b flex items-center px-6">
-//         <Link href="/" className="flex items-center gap-2">
-//           <div className="h-8 w-8 rounded-lg bg-primary" />
-//           <span className="font-bold text-lg">Core App</span>
-//         </Link>
-//       </div>
+  const togglePin = () => {
+    const next = !isPinned;
+    setIsPinned(next);
+    try { localStorage.setItem("ht-sidebar-pinned", JSON.stringify(next)); } catch {}
+  };
 
-//       {/* Navigation */}
-//       <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-//         {navigation.map((section) => (
-//           <NavSection key={section.id} section={section} />
-//         ))}
-//       </nav>
+  const handleMouseEnter = () => {
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    setIsHovered(true);
+  };
 
-//       {/* User Info */}
-//       <div className="border-t p-4">
-//         <div className="flex items-center gap-3">
-//           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-//             <span className="text-sm font-semibold">
-//               {user.name
-//                 ?.split(' ')
-//                 .map((n) => n[0])
-//                 .join('')
-//                 .toUpperCase()}
-//             </span>
-//           </div>
-//           <div className="flex-1 min-w-0">
-//             <p className="text-sm font-medium truncate">{user.name}</p>
-//             <p className="text-xs text-muted-foreground capitalize">
-//               {user.role}
-//             </p>
-//           </div>
-//         </div>
-//       </div>
-//     </aside>
-//   );
-// }
+  const handleMouseLeave = () => {
+    hoverTimeout.current = setTimeout(() => setIsHovered(false), 120);
+  };
 
-// function NavSection({ section }: { section: any }) {
-//   // Don't show empty sections
-//   if (!section.items || section.items.length === 0) {
-//     return null;
-//   }
-
-//   return (
-//     <div>
-//       <h3 className="mb-2 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-//         {section.title}
-//       </h3>
-//       <div className="space-y-1">
-//         {section.items.map((item: NavItem) => (
-//           <NavItemComponent key={item.id} item={item} />
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-
-// function NavItemComponent({ item, depth = 0 }: { item: NavItem; depth?: number }) {
-//   const pathname = usePathname();
-//   const [isOpen, setIsOpen] = useState(false);
-
-//   const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-//   const hasChildren = item.children && item.children.length > 0;
-
-//   const Icon = item.icon;
-
-//   const handleClick = (e: React.MouseEvent) => {
-//     if (hasChildren) {
-//       e.preventDefault();
-//       setIsOpen(!isOpen);
-//     }
-//   };
-
-//   return (
-//     <div>
-//       <Link
-//         href={item.href}
-//         onClick={handleClick}
-//         className={cn(
-//           'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-//           'hover:bg-accent hover:text-accent-foreground',
-//           isActive && 'bg-primary text-primary-foreground hover:bg-primary/90',
-//           depth > 0 && 'ml-4'
-//         )}
-//       >
-//         <Icon className={cn('h-4 w-4', depth > 0 && 'h-3 w-3')} />
-//         <span className="flex-1">{item.label}</span>
-        
-//         {item.badge && (
-//           <Badge variant="secondary" className="h-5 px-1.5">
-//             {item.badge}
-//           </Badge>
-//         )}
-
-//         {hasChildren && (
-//           <ChevronDown
-//             className={cn(
-//               'h-4 w-4 transition-transform',
-//               isOpen && 'rotate-180'
-//             )}
-//           />
-//         )}
-//       </Link>
-
-//       {hasChildren && isOpen && (
-//         <div className="mt-1 space-y-1">
-//           {item.children!.map((child) => (
-//             <NavItemComponent
-//               key={child.id}
-//               item={child}
-//               depth={depth + 1}
-//             />
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-import React from 'react'
-
-function Sidebar() {
   return (
-    <div>Sidebar</div>
-  )
-}
+    <TooltipProvider delayDuration={0}>
+      <aside
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className={cn(
+          "relative h-screen flex flex-col transition-all duration-250 ease-in-out select-none shrink-0 border-r z-40",
+          isExpanded ? "w-[220px]" : "w-[68px]"
+        )}
+        style={{ background: "var(--bg-deep)", borderColor: "var(--border-default)" }}
+      >
+        {/* Grain texture */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.025] z-0"
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }}
+        />
+        {/* Gold edge line */}
+        {/* <div aria-hidden className="pointer-events-none absolute right-0 top-10 bottom-10 w-px z-10 opacity-20"
+          style={{ background: "linear-gradient(180deg, transparent 0%, var(--accent-gold) 30%, var(--accent-gold) 70%, transparent 100%)" }}
+        /> */}
 
-export default Sidebar;
+        <SidebarHeader isExpanded={isExpanded} />
+        <SidebarNav isExpanded={isExpanded} />
+        <SidebarFooter isExpanded={isExpanded} isPinned={isPinned} onTogglePin={togglePin} />
+      </aside>
+    </TooltipProvider>
+  );
+}

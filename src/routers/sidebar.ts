@@ -1,37 +1,37 @@
 import {
-  LayoutDashboard,
-  Users,
-  Package,
-  ShoppingCart,
-  BarChart3,
-  FileText,
-  Settings,
-  FolderTree,
-  Star,
-  Shield,
-  Flag,
-  Server,
-  Key,
-  FileSearch,
-  Store,
-  PackageSearch,
-  TrendingUp,
-} from 'lucide-react';
-import { Role } from '@/constants/roles';
-import { ROUTES } from './index';
+  Home, Landmark, Users, MessageSquare,
+  ClipboardList, Library, Bookmark, TrendingUp, User,
+} from "lucide-react";
 
-export interface NavItem {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
+export interface SidebarMenuItem {
+  icon: React.ElementType;
   label: string;
-  roles: Role[];
-  badge?: string | number; // Optional badge (e.g., count)
-  permission?: string; // Optional permission check
-  children?: NavItem[]; // Submenu
+  href: string;
 }
 
-export interface NavSection {
+export interface SidebarSection {
   title: string;
-  items: NavItem[];
-  roles: Role[]; // Section chỉ hiện với roles này
+  items: SidebarMenuItem[];
 }
+
+export const SIDEBAR_SECTIONS: SidebarSection[] = [
+  {
+    title: "Main",
+    items: [
+      { icon: Home,          label: "Trang chủ",       href: "/home" },
+      { icon: Landmark,      label: "Sự kiện lịch sử", href: "/events" },
+      { icon: Users,         label: "Nhân vật",        href: "/characters" },
+      { icon: MessageSquare, label: "Chat",            href: "/chat" },
+      { icon: ClipboardList, label: "Trắc nghiệm",     href: "/quiz" },
+      { icon: Library,       label: "Library",         href: "/library" },
+      { icon: Bookmark,      label: "Đã lưu",          href: "/saved" },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      { icon: TrendingUp, label: "Tiến độ", href: "/progress" },
+      { icon: User,       label: "Hồ sơ",   href: "/profile" },
+    ],
+  },
+];
