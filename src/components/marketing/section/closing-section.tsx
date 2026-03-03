@@ -51,7 +51,7 @@ export function ClosingSection() {
                 câu hỏi, khám phá sự thật, và hiểu về lịch sử theo góc nhìn của nhân vật.{" "}
               </p>
               <MagneticButton
-                href="/app"
+                href="/home"
                 size="lg"
                 className="!rounded-full px-10 py-5"
               >

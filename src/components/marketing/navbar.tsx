@@ -147,7 +147,7 @@ export function MarketingNavbar() {
 
                 {/* KHÁM PHÁ NGAY — bỏ border */}
                 <div className="cta-wrapper">
-                  <MagneticButton href="/app" className="!border-0" magnetic={false}>
+                  <MagneticButton href="/home" className="!border-0" magnetic={false}>
                     Khám phá ngay
                   </MagneticButton>
                 </div>
@@ -231,7 +231,7 @@ export function MarketingNavbar() {
 
               <div className="pt-3">
                 <Link
-                  href="/app"
+                  href="/home"
                   onClick={() => setIsOpen(false)}
                   className="
                     flex items-center justify-center w-full py-3.5 rounded-xl

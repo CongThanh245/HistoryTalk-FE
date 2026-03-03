@@ -136,7 +136,7 @@ export function Carousel3DVertical() {
         {figures.map((figure, index) => (
           <Link
             key={figure.id}
-            href="/app/latest"
+            href="/home"
             ref={(el) => {
               cardsRef.current[index] = el;
             }}

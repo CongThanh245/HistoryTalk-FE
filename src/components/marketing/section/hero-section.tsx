@@ -107,7 +107,7 @@ export function HeroSection() {
 
               <div className="pt-2 lg:pt-4">
                 <Link
-                  href="/app"
+                  href="/home"
                   className={cn(
                     "group relative",
                     "w-full lg:w-auto",
