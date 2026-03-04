@@ -65,7 +65,7 @@ export function SolutionSection() {
           <div data-reveal="block" className="relative">
             <div className="w-full h-[420px] rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] flex items-center justify-center">
               <img
-                src="/history-talk-ui.jpg"
+                src="/history-talk-ui.png"
                 alt="History Talk UI"
                 className="w-full h-full object-cover"
               />

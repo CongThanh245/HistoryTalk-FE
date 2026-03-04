@@ -1,9 +1,17 @@
-import React from 'react'
-
-function layout() {
-  return (
-    <div>layout</div>
-  )
+// app/(auth)/layout.tsx
+export default function AuthLayoutWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <>{children}</>;
 }
 
-export default layout
+// Hoặc nếu muốn giữ wrapper:
+// export default function AuthLayoutWrapper({
+//   children,
+// }: {
+//   children: React.ReactNode;
+// }) {
+//   return <div className="min-h-screen">{children}</div>;
+// }
