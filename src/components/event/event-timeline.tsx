@@ -12,7 +12,7 @@ import { TimelineCard, TimelineCardSkeleton } from "./timeline-card";
 // TODO: xoá import mock khi có API
 import { MOCK_EVENTS, MOCK_PAGE_LIMIT } from "./event.mock";
 import { eventQueryKeys } from "@/shared/query-key";
-import { EraFilter } from "./era-filter";
+import { EraFilter } from "../commons/era-filter";
 import { CustomPagination } from "../commons/pagination";
 
 const PAGE_LIMIT = MOCK_PAGE_LIMIT;

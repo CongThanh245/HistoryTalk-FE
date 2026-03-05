@@ -12,7 +12,7 @@ import { SuggestedQuiz } from "@/components/home/suggested-quiz";
 
 export default function HomePage() {
   return (
-    <div className="container mx-auto px-6 py-8 max-w-7xl">
+    <div className="px-6 py-8 ">
       <div className="container space-y-10 pb-10">
         <GreetingSection />
         <FeatureCards />

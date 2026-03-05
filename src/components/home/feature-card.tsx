@@ -10,7 +10,7 @@ import {
 const FEATURE_CARDS = [
   { icon: Landmark,      title: "Sự kiện lịch sử", desc: "Khám phá các mốc lịch sử qua dòng thời gian tương tác.", href: "/events",     accent: "var(--accent-gold)",      glow: "rgba(201,162,77,0.12)"  },
   { icon: Users,         title: "Nhân vật",         desc: "Tìm hiểu cuộc đời những nhân vật làm thay đổi lịch sử.", href: "/characters", accent: "var(--accent-bronze)",    glow: "rgba(196,106,47,0.12)"  },
-  { icon: MessageSquare, title: "Chat với lịch sử", desc: "Trò chuyện với AI đóng vai nhân vật lịch sử.",           href: "/chat",       accent: "var(--accent-blue)",      glow: "rgba(143,179,200,0.12)" },
+  { icon: MessageSquare, title: "Chat với lịch sử", desc: "Trò chuyện với AI đóng vai nhân vật lịch sử.",           href: "/chat-history",       accent: "var(--accent-blue)",      glow: "rgba(143,179,200,0.12)" },
   { icon: ClipboardList, title: "Trắc nghiệm",      desc: "Kiểm tra kiến thức với hàng nghìn câu hỏi theo chủ đề.", href: "/quiz",       accent: "var(--burning-flame)",   glow: "rgba(255,177,98,0.12)"  },
   { icon: Library,       title: "Thư viện",         desc: "Kho tàng tư liệu và hình ảnh lịch sử được kiểm duyệt.", href: "/library",    accent: "var(--accent-teal)",      glow: "rgba(47,111,115,0.15)"  },
   { icon: Bookmark,      title: "Đã lưu",           desc: "Truy cập nhanh các nội dung bạn đã đánh dấu.",           href: "/saved",      accent: "var(--accent-gold-soft)", glow: "rgba(226,199,122,0.10)" },

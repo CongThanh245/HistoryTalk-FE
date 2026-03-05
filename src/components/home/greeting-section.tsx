@@ -13,13 +13,14 @@ export function GreetingSection({ userName = "Nguyen Thanh" }: GreetingSectionPr
       <p className="text-sm" style={{ color: "var(--content-subtle)" }}>
         Chào mừng trở lại 👋
       </p>
-      <h1 className="text-3xl font-bold" style={{ color: "var(--content-heading)" }}>
+      <h1 className="text-3xl font-bold" style={{ color: "var(--text-inverse)" }}>
         Xin chào,{" "}
         <span
           style={{
             background: "linear-gradient(90deg, var(--gold-on-light) 0%, var(--accent-bronze) 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            color: "var(--gold-on-light)",
           }}
         >
           {userName}

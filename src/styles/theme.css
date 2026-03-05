@@ -40,7 +40,7 @@
     0.18
   ); /* Nền item active sidebar */
   --accent-gold-glow: rgba(201, 162, 77, 0.3); /* Box-shadow glow */
-
+  --gold-on-light: #a07828; /* ← thêm dòng này */
   --accent-blue: #8fb3c8; /* Tri thức – AI – khám phá */
   --accent-teal: #2f6f73; /* Công nghệ – tương tác */
 
@@ -59,8 +59,8 @@
   --oatmeal: #c9c1b1; /* Border header / text phụ trên nền sáng */
   --burning-flame: #ffb162; /* Streak counter / badge nổi bật */
   --truffle: #a35139; /* Active gradient end / tone đất trầm */
-  --blue-fantastic: #2C3B4D   ; /* Surface trung tính (gần bg-elevated) */
-  --abyssal-blue: #1B2632; /* Text đậm trên nền sáng / nền tối trung */
+  --blue-fantastic: #2c3b4d; /* Surface trung tính (gần bg-elevated) */
+  --abyssal-blue: #1b2632; /* Text đậm trên nền sáng / nền tối trung */
 
   /* ─────────────────────────────
      Header (nền sáng – như ảnh)

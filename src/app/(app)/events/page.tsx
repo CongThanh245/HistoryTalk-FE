@@ -3,7 +3,7 @@ import { Landmark } from "lucide-react";
 
 export default function EventsPage() {
   return (
-    <div className="container mx-auto px-6 py-8 max-w-7xl">
+    <div className="px-6 py-8 ">
       <div className=" space-y-8 pb-16">
         <div className="flex items-center gap-3">
           <div
