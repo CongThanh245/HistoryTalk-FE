@@ -1,3 +1,5 @@
+import type { GetEventsParams } from "@/services/event.service";
+
 export const QUERY_KEY = {
   Auth: {
     Login: "login",
@@ -23,4 +25,17 @@ export const QUERY_KEY = {
 export const homeQueryKeys = {
   recentQuiz: ["home", "recent-quiz"] as const,
   suggestedQuiz: ["home", "suggested-quiz"] as const,
+};
+
+// Thêm vào src/lib/react-query/query-keys.ts
+//
+// events:  ["events"],
+// event:   (id: string) => ["events", id],
+
+
+// Thêm vào src/lib/react-query/query-keys.ts
+export const eventQueryKeys = {
+  all: ["events"] as const,
+  list: (params?: GetEventsParams) => ["events", "list", params ?? {}] as const,
+  detail: (id: string) => ["events", "detail", id] as const,
 };
