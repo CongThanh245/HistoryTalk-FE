@@ -3,25 +3,22 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { X, Play, SkipForward, MessageSquare, Clock, MapPin } from "lucide-react";
+import { X, Play, SkipForward, Clock, MapPin } from "lucide-react";
 import type { HistoricalEvent, EventCategory } from "@/services/event.service";
+import {
+  CharacterCarouselCard,
+  CharacterCompactCard,
+  type Character,
+} from "@/components/commons/character-card";
 
-// ── Types ─────────────────────────────────────────────────
-
-export interface RelatedCharacter {
-  id: string;
-  name: string;
-  role: string;       // vd: "Chỉ huy quân đội"
-  avatarUrl?: string; // TODO: ảnh thật từ API
-  side?: string;      // vd: "Đại Việt" | "Quân Nguyên"
-}
-
+// ── Mock ──────────────────────────────────────────────────
 // TODO: fetch từ API /events/:id/characters
-const MOCK_CHARACTERS: Record<string, RelatedCharacter[]> = {
+
+const MOCK_CHARACTERS: Record<string, Character[]> = {
   default: [
-    { id: "ngo-quyen",     name: "Ngô Quyền",      role: "Chỉ huy quân Đại Việt", side: "Đại Việt"   },
-    { id: "liu-hongcao",   name: "Lưu Hoằng Tháo", role: "Thống soái quân Nam Hán", side: "Nam Hán"  },
-    { id: "duong-dinh-nghe", name: "Dương Đình Nghệ", role: "Tiên liệt Đại Việt",  side: "Đại Việt" },
+    { id: "ngo-quyen",        name: "Ngô Quyền",        title: "Danh tướng Đại Việt",  role: "Chỉ huy quân Đại Việt",     era: "899–944", side: "Đại Việt" },
+    { id: "liu-hongcao",      name: "Lưu Hoằng Tháo",   title: "Thống soái Nam Hán",   role: "Tổng chỉ huy quân Nam Hán", era: "?–938",   side: "Nam Hán"  },
+    { id: "duong-dinh-nghe",  name: "Dương Đình Nghệ",  title: "Tiên liệt Đại Việt",   role: "Thủ lĩnh tiền nhiệm",       era: "?–937",   side: "Đại Việt" },
   ],
 };
 
@@ -36,199 +33,105 @@ const CATEGORY_COLOR: Record<EventCategory, string> = {
 
 // ── Fake Video Player ─────────────────────────────────────
 
-const FAKE_DURATION = 8; // giây — fake video
+const FAKE_DURATION = 8;
 
-interface VideoPlayerProps {
-  event: HistoricalEvent;
-  onFinish: () => void;
-}
+function FakeVideoPlayer({ event, onFinish }: { event: HistoricalEvent; onFinish: () => void }) {
+  const [playing, setPlaying]   = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [elapsed, setElapsed]   = useState(0);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-function FakeVideoPlayer({ event, onFinish }: VideoPlayerProps) {
-  const [playing, setPlaying]     = useState(false);
-  const [progress, setProgress]   = useState(0);  // 0-100
-  const [elapsed, setElapsed]     = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const startPlay = () => {
+  const start = () => {
     setPlaying(true);
-    intervalRef.current = setInterval(() => {
-      setElapsed((prev) => {
-        const next = prev + 0.1;
-        setProgress((next / FAKE_DURATION) * 100);
-        if (next >= FAKE_DURATION) {
-          clearInterval(intervalRef.current!);
-          setPlaying(false);
-          onFinish();
-        }
-        return next;
+    timer.current = setInterval(() => {
+      setElapsed((p) => {
+        const n = p + 0.1;
+        setProgress((n / FAKE_DURATION) * 100);
+        if (n >= FAKE_DURATION) { clearInterval(timer.current!); setPlaying(false); onFinish(); }
+        return n;
       });
     }, 100);
   };
 
-  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
+  const skip = () => { if (timer.current) clearInterval(timer.current); onFinish(); };
+  useEffect(() => () => { if (timer.current) clearInterval(timer.current); }, []);
 
-  const formatTime = (s: number) => `${Math.floor(s)}:${String(Math.floor((s % 1) * 10)).padStart(2, "0")}`;
+  const fmt = (s: number) => `${Math.floor(s)}:${String(Math.floor((s % 1) * 10)).padStart(2, "0")}`;
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-black rounded-l-2xl overflow-hidden">
-
-      {/* "Video" frame — ảnh + overlay giả lập video */}
+    <div className="relative w-full h-full flex flex-col bg-black overflow-hidden">
       <div className="relative flex-1 overflow-hidden">
-        <Image
-          src="/war.jpg"
-          alt={event.title}
-          fill
-          className={`object-cover transition-all duration-700 ${playing ? "scale-105" : "scale-100"}`}
-          sizes="60vw"
-        />
-
-        {/* Dark cinematic overlay */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 60%, rgba(0,0,0,0.7) 100%)" }} />
-
-        {/* Grain texture */}
-        <div
-          aria-hidden
-          className="absolute inset-0 opacity-[0.06] mix-blend-overlay pointer-events-none"
+        <Image src="/war.jpg" alt={event.title} fill className={`object-cover transition-transform duration-700 ${playing ? "scale-105" : "scale-100"}`} sizes="60vw" priority />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.75) 100%)" }} />
+        <div aria-hidden className="absolute inset-0 opacity-[0.05] mix-blend-overlay pointer-events-none"
           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }}
         />
-
-        {/* Scan lines giả lập màn hình cũ */}
         {playing && (
-          <div
-            className="absolute inset-0 pointer-events-none opacity-10"
-            style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.3) 2px, rgba(0,0,0,0.3) 4px)" }}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.07]"
+            style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.4) 2px,rgba(0,0,0,0.4) 4px)" }}
           />
         )}
+        <div className="absolute top-0 left-0 right-0 h-8 bg-black" />
+        <div className="absolute bottom-12 left-0 right-0 h-8 bg-black" />
 
-        {/* Play button khi chưa play */}
         {!playing && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-            <button
-              onClick={startPlay}
-              className="w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 cursor-pointer"
-              style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)", border: "2px solid rgba(255,255,255,0.3)" }}
-            >
-              <Play className="w-7 h-7 text-white ml-1" fill="white" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
+            <button onClick={start} className="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 cursor-pointer"
+              style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "2px solid rgba(255,255,255,0.25)" }}>
+              <Play className="w-8 h-8 text-white ml-1.5" fill="white" />
             </button>
-            <p className="text-white text-sm font-medium opacity-80">Xem video giới thiệu</p>
+            <p className="text-white/70 text-sm font-medium tracking-wide">Xem video giới thiệu</p>
           </div>
         )}
 
-        {/* Skip button khi đang play */}
         {playing && (
-          <button
-            onClick={() => { clearInterval(intervalRef.current!); onFinish(); }}
-            className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-all duration-150 hover:bg-white/20"
-            style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", color: "rgba(255,255,255,0.85)", border: "1px solid rgba(255,255,255,0.15)" }}
-          >
-            <SkipForward className="w-3.5 h-3.5" />
-            Bỏ qua
+          <button onClick={skip} className="absolute top-10 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:bg-white/20 transition-all"
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", color: "rgba(255,255,255,0.85)", border: "1px solid rgba(255,255,255,0.15)" }}>
+            <SkipForward className="w-3.5 h-3.5" /> Bỏ qua
           </button>
         )}
 
-        {/* Title overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <p className="text-white text-xs font-semibold opacity-60 uppercase tracking-widest mb-1">Video giới thiệu</p>
-          <p className="text-white text-base font-bold leading-snug drop-shadow-lg">{event.title}</p>
+        <div className="absolute bottom-8 left-0 right-0 px-6">
+          <p className="text-white/50 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Video giới thiệu</p>
+          <p className="text-white text-xl font-bold leading-snug drop-shadow-lg">{event.title}</p>
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="px-4 py-3 flex items-center gap-3" style={{ background: "#0a0a0a" }}>
-        <span className="text-xs tabular-nums" style={{ color: "rgba(255,255,255,0.4)" }}>
-          {formatTime(elapsed)}
-        </span>
-        <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.12)" }}>
-          <div
-            className="h-full rounded-full transition-all duration-100"
-            style={{
-              width: `${progress}%`,
-              background: "linear-gradient(90deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-            }}
-          />
+      <div className="px-5 py-3 flex items-center gap-3" style={{ background: "#080808" }}>
+        <span className="text-[11px] tabular-nums" style={{ color: "rgba(255,255,255,0.35)" }}>{fmt(elapsed)}</span>
+        <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+          <div className="h-full rounded-full transition-all duration-100"
+            style={{ width: `${progress}%`, background: "linear-gradient(90deg, var(--accent-gold) 0%, var(--truffle) 100%)" }} />
         </div>
-        <span className="text-xs tabular-nums" style={{ color: "rgba(255,255,255,0.4)" }}>
-          {formatTime(FAKE_DURATION)}
-        </span>
+        <span className="text-[11px] tabular-nums" style={{ color: "rgba(255,255,255,0.35)" }}>{fmt(FAKE_DURATION)}</span>
       </div>
     </div>
   );
 }
 
-// ── Character Card ────────────────────────────────────────
+// ── Characters Reveal — card dọc giống carousel ───────────
 
-function CharacterCard({ char, onSelect }: { char: RelatedCharacter; onSelect: (id: string) => void }) {
-  return (
-    <button
-      onClick={() => onSelect(char.id)}
-      className="group flex items-center gap-3 w-full rounded-xl p-3 border text-left transition-all duration-150 cursor-pointer hover:-translate-y-0.5"
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
-    >
-      {/* Avatar */}
-      <div
-        className="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative"
-        style={{ background: "var(--card-light-border)" }}
-      >
-        {/* TODO: thay bằng char.avatarUrl khi có API */}
-        <div
-          className="w-full h-full flex items-center justify-center text-lg font-bold"
-          style={{
-            background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-            color: "var(--bg-deep)",
-          }}
-        >
-          {char.name.charAt(0)}
-        </div>
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate" style={{ color: "var(--content-heading)" }}>
-          {char.name}
-        </p>
-        <p className="text-[11px] truncate" style={{ color: "var(--content-muted)" }}>
-          {char.role}
-        </p>
-        {char.side && (
-          <span
-            className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full mt-0.5"
-            style={{ background: "rgba(201,162,77,0.10)", color: "var(--accent-gold)" }}
-          >
-            {char.side}
-          </span>
-        )}
-      </div>
-
-      {/* Chat icon */}
-      <MessageSquare
-        className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{ color: "var(--accent-gold)" }}
-      />
-    </button>
-  );
-}
-
-// ── Characters panel (xuất hiện sau video) ────────────────
-
-function CharactersReveal({ event, characters, onSelectChar }: {
+function CharactersReveal({ event, characters, onSelect }: {
   event: HistoricalEvent;
-  characters: RelatedCharacter[];
-  onSelectChar: (id: string) => void;
+  characters: Character[];
+  onSelect: (id: string) => void;
 }) {
   return (
-    <div className="relative w-full h-full flex flex-col rounded-l-2xl overflow-hidden">
-      {/* Thumbnail mờ làm nền */}
+    <div className="relative w-full h-full flex flex-col overflow-hidden bg-black">
+      {/* Background mờ */}
       <div className="absolute inset-0">
-        <Image src="/war.jpg" alt="" fill className="object-cover opacity-20" sizes="60vw" />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, var(--bg-deep) 0%, var(--abyssal-blue) 100%)" }} />
+        <Image src="/war.jpg" alt="" fill className="object-cover opacity-10" sizes="60vw" />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(7,13,24,0.97) 0%, rgba(27,38,50,0.95) 100%)" }} />
       </div>
 
-      <div className="relative z-10 flex flex-col h-full p-6 gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--accent-gold-soft)", opacity: 0.7 }}>
+      {/* Letterbox */}
+      <div className="absolute top-0 left-0 right-0 h-8 bg-black z-10" />
+      <div className="absolute bottom-0 left-0 right-0 h-8 bg-black z-10" />
+
+      <div className="relative z-10 flex flex-col h-full px-6 pt-12 pb-10 gap-4">
+        {/* Header */}
+        <div className="shrink-0">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5" style={{ color: "var(--accent-gold)", opacity: 0.7 }}>
             Nhân vật trong sự kiện
           </p>
           <h3 className="text-lg font-bold leading-snug" style={{ color: "var(--text-primary)" }}>
@@ -236,16 +139,36 @@ function CharactersReveal({ event, characters, onSelectChar }: {
           </h3>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center gap-3">
-          {characters.map((char) => (
-            <CharacterCard key={char.id} char={char} onSelect={onSelectChar} />
+        {/* Cards dọc — dùng CharacterCarouselCard thu nhỏ */}
+        <div className="flex-1 flex flex-row gap-4 items-center justify-center min-h-0">
+          {characters.map((char, i) => (
+            <div
+              key={char.id}
+              className="h-full max-h-[340px] flex-1"
+              style={{
+                animation: `fadeSlideUp 0.4s ease ${i * 100}ms both`,
+              }}
+            >
+              <CharacterCarouselCard
+                character={char}
+                priority={i === 0}
+                onClick={onSelect}
+              />
+            </div>
           ))}
         </div>
 
-        <p className="text-center text-[11px]" style={{ color: "var(--text-on-dark-muted)" }}>
+        <p className="shrink-0 text-center text-[11px]" style={{ color: "var(--text-on-dark-muted)" }}>
           Chọn nhân vật để bắt đầu trò chuyện
         </p>
       </div>
+
+      <style>{`
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -261,145 +184,99 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   const router = useRouter();
   const [videoFinished, setVideoFinished] = useState(false);
 
-  // Reset state khi mở event mới
-  useEffect(() => {
-    setVideoFinished(false);
-  }, [event?.id]);
+  useEffect(() => { setVideoFinished(false); }, [event?.id]);
 
   if (!event) return null;
 
   const color = CATEGORY_COLOR[event.category];
   const yearLabel = event.yearLabel ?? `${Math.abs(event.year)} ${event.year < 0 ? "TCN" : "SCN"}`;
-
-  // TODO: fetch characters theo event.id từ API
   const characters = MOCK_CHARACTERS[event.id] ?? MOCK_CHARACTERS.default;
 
   const handleSelectChar = (charId: string) => {
-    // TODO: navigate sang /chat/[charId]
     router.push(`/chat/${charId}`);
   };
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-md"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md" onClick={onClose} />
 
-      {/* Modal */}
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-6"
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 z-50 flex overflow-hidden">
         <div
-          className="relative flex w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl"
-          style={{
-            height: "min(600px, 90vh)",
-            boxShadow: "0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)",
-          }}
-          onClick={(e) => e.stopPropagation()}
+          className="relative flex w-full h-full"
+          style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.06)" }}
         >
-          {/* Close button */}
+          {/* Close */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-150 cursor-pointer"
-            style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)" }}
+            className="absolute top-10 right-[41%] z-30 w-9 h-9 flex items-center justify-center rounded-full transition-all duration-150 cursor-pointer hover:bg-white/10"
+            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", color: "rgba(255,255,255,0.75)", border: "1px solid rgba(255,255,255,0.12)" }}
           >
             <X className="w-4 h-4" />
           </button>
 
-          {/* ── Left 60% — Video / Characters ── */}
-          <div className="w-[60%] shrink-0">
-            {videoFinished ? (
-              <CharactersReveal
-                event={event}
-                characters={characters}
-                onSelectChar={handleSelectChar}
-              />
-            ) : (
-              <FakeVideoPlayer event={event} onFinish={() => setVideoFinished(true)} />
-            )}
+          {/* ── Left 60% ── */}
+          <div className="w-[60%] shrink-0 h-full">
+            {videoFinished
+              ? <CharactersReveal event={event} characters={characters} onSelect={handleSelectChar} />
+              : <FakeVideoPlayer event={event} onFinish={() => setVideoFinished(true)} />
+            }
           </div>
 
-          {/* ── Right 40% — Event info ── */}
+          {/* ── Right 40% ── */}
           <div
-            className="flex-1 flex flex-col overflow-hidden"
+            className="flex-1 flex flex-col h-full overflow-hidden"
             style={{ background: "var(--palladian)", borderLeft: "1px solid var(--card-light-border)" }}
           >
-            {/* Header */}
-            <div className="p-5 border-b" style={{ borderColor: "var(--card-light-border)" }}>
-              <div className="flex items-center gap-2 mb-2.5">
-                <span
-                  className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: `${color}18`, color }}
-                >
+            <div className="h-1 w-full shrink-0" style={{ background: `linear-gradient(90deg, ${color}, transparent)` }} />
+
+            <div className="px-8 py-6 border-b shrink-0" style={{ borderColor: "var(--card-light-border)" }}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${color}18`, color }}>
                   {yearLabel}
                 </span>
               </div>
-              <h2 className="text-base font-bold leading-snug mb-1" style={{ color: "var(--content-heading)" }}>
+              <h2 className="text-2xl font-bold leading-snug" style={{ color: "var(--content-heading)" }}>
                 {event.title}
               </h2>
             </div>
 
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
-              {/* Meta */}
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 shrink-0" style={{ color }} />
-                  <span className="text-xs" style={{ color: "var(--content-text)" }}>{yearLabel}</span>
+            <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 shrink-0" style={{ color }} />
+                  <span className="text-sm" style={{ color: "var(--content-text)" }}>{yearLabel}</span>
                 </div>
                 {event.location && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--content-subtle)" }} />
-                    <span className="text-xs" style={{ color: "var(--content-text)" }}>{event.location}</span>
+                  <div className="flex items-center gap-2.5">
+                    <MapPin className="w-4 h-4 shrink-0" style={{ color: "var(--content-subtle)" }} />
+                    <span className="text-sm" style={{ color: "var(--content-text)" }}>{event.location}</span>
                   </div>
                 )}
               </div>
 
               <div style={{ height: 1, background: "var(--card-light-border)" }} />
 
-              {/* Summary */}
               <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--content-subtle)" }}>
+                <h4 className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--content-subtle)" }}>
                   Bối cảnh lịch sử
                 </h4>
-                <p className="text-xs leading-relaxed" style={{ color: "var(--content-text)" }}>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--content-text)" }}>
                   {event.summary}
                 </p>
               </div>
 
-              {/* Characters list nhỏ (luôn hiện ở bên phải) */}
+              <div style={{ height: 1, background: "var(--card-light-border)" }} />
+
               <div>
-                <h4 className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--content-subtle)" }}>
+                <h4 className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--content-subtle)" }}>
                   Nhân vật liên quan
                 </h4>
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {characters.map((char) => (
-                    <button
-                      key={char.id}
-                      onClick={() => handleSelectChar(char.id)}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border text-left transition-all duration-150 cursor-pointer hover:border-[var(--accent-gold)] group"
-                      style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
-                    >
-                      <div
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
-                        style={{ background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)", color: "var(--bg-deep)" }}
-                      >
-                        {char.name.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold truncate" style={{ color: "var(--content-heading)" }}>{char.name}</p>
-                        <p className="text-[10px] truncate" style={{ color: "var(--content-muted)" }}>{char.role}</p>
-                      </div>
-                      <MessageSquare className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" style={{ color: "var(--accent-gold)" }} />
-                    </button>
+                    <CharacterCompactCard key={char.id} character={char} onClick={handleSelectChar} />
                   ))}
                 </div>
               </div>
-
-              {/* TODO: thêm field khi có API */}
             </div>
           </div>
         </div>
