@@ -1,7 +1,16 @@
-import { Scroll } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
+"use client";
 
-export default function SidebarHeader({ isExpanded }: { isExpanded: boolean }) {
+import { Scroll, Pin, PinOff } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+interface SidebarHeaderProps {
+  isExpanded: boolean;
+  isPinned: boolean;
+  onTogglePin: () => void;
+}
+
+export default function SidebarHeader({ isExpanded, isPinned, onTogglePin }: SidebarHeaderProps) {
   return (
     <div
       className={cn(
@@ -10,6 +19,7 @@ export default function SidebarHeader({ isExpanded }: { isExpanded: boolean }) {
       )}
       style={{ borderColor: "var(--border-default)" }}
     >
+      {/* Logo icon */}
       <div
         className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
         style={{
@@ -19,9 +29,11 @@ export default function SidebarHeader({ isExpanded }: { isExpanded: boolean }) {
       >
         <Scroll className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
       </div>
+
+      {/* Brand name */}
       {isExpanded && (
         <span
-          className="text-[15px] font-bold tracking-wide truncate"
+          className="flex-1 text-[15px] font-bold tracking-wide truncate"
           style={{
             background: "linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-gold-soft) 100%)",
             WebkitBackgroundClip: "text",
@@ -31,6 +43,36 @@ export default function SidebarHeader({ isExpanded }: { isExpanded: boolean }) {
         >
           HistoryTalk
         </span>
+      )}
+
+      {/* Pin button — chỉ hiện khi expanded */}
+      {isExpanded && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onTogglePin}
+              aria-label={isPinned ? "Bỏ ghim sidebar" : "Ghim sidebar"}
+              className="w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 cursor-pointer shrink-0"
+              style={{
+                color: isPinned ? "var(--sidebar-pin-active)" : "var(--sidebar-pin-inactive)",
+                background: isPinned ? "var(--accent-gold-active-bg)" : "transparent",
+              }}
+            >
+              {isPinned ? <Pin className="w-3.5 h-3.5" /> : <PinOff className="w-3.5 h-3.5" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent
+            side="bottom"
+            style={{
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border-default)",
+              color: "var(--text-primary)",
+              fontSize: 12,
+            }}
+          >
+            {isPinned ? "Bỏ ghim sidebar" : "Ghim sidebar"}
+          </TooltipContent>
+        </Tooltip>
       )}
     </div>
   );
