@@ -44,7 +44,7 @@ export default function Sidebar() {
           "relative h-screen flex flex-col transition-all duration-250 ease-in-out select-none shrink-0 border-r z-40",
           isExpanded ? "w-[220px]" : "w-[68px]"
         )}
-        style={{ background: "var(--bg-deep)", borderColor: "var(--border-default)" }}
+        style={{ background: "var(--abyssal-blue)", borderColor: "var(--border-default)" }}
       >
         {/* Grain texture */}
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.025] z-0"

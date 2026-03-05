@@ -28,6 +28,8 @@ function NavItem({
       className={cn(
         "relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 outline-none",
         isExpanded ? "px-3 py-2" : "w-10 h-10 justify-center mx-auto",
+        !isActive &&
+          "hover:bg-[var(--sidebar-hover-bg,rgba(255,255,255,0.05))] hover:text-[var(--sidebar-active-text)]",
       )}
       style={
         isActive
@@ -68,7 +70,7 @@ function NavItem({
         }}
       />
       {isExpanded && (
-        <span className="truncate leading-none whitespace-nowrap">
+        <span className="truncate leading-normal whitespace-nowrap">
           {item.label}
         </span>
       )}

@@ -21,7 +21,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
       { icon: Home,          label: "Trang chủ",       href: "/home" },
       { icon: Landmark,      label: "Sự kiện lịch sử", href: "/events" },
       { icon: Users,         label: "Nhân vật",        href: "/characters" },
-      { icon: MessageSquare, label: "Chat",            href: "/chat" },
+      { icon: MessageSquare, label: "Lịch sử chat",            href: "/chat" },
       { icon: ClipboardList, label: "Trắc nghiệm",     href: "/quiz" },
       { icon: Library,       label: "Library",         href: "/library" },
       { icon: Bookmark,      label: "Đã lưu",          href: "/saved" },
