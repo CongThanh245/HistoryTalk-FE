@@ -1,6 +1,14 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"; // Đảm bảo bạn đã cài shadcn pagination
 
 interface PaginationProps {
   page: number;
@@ -8,10 +16,14 @@ interface PaginationProps {
   onChange: (page: number) => void;
 }
 
-export function Pagination({ page, totalPages, onChange }: PaginationProps) {
+export function CustomPagination({
+  page,
+  totalPages,
+  onChange,
+}: PaginationProps) {
   if (totalPages <= 1) return null;
 
-  // Tính dải trang hiển thị — luôn hiện tối đa 5 nút
+  // Giữ nguyên logic tính toán dải trang của bạn
   const getPages = () => {
     const pages: (number | "...")[] = [];
     if (totalPages <= 5) {
@@ -19,7 +31,11 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
     }
     pages.push(1);
     if (page > 3) pages.push("...");
-    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
+    for (
+      let i = Math.max(2, page - 1);
+      i <= Math.min(totalPages - 1, page + 1);
+      i++
+    ) {
       pages.push(i);
     }
     if (page < totalPages - 2) pages.push("...");
@@ -27,73 +43,84 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
     return pages;
   };
 
-  const btnBase =
-    "w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer";
+  // Style chung cho các nút (giống btnBase cũ của bạn)
+  const commonStyles = {
+    background: "var(--card-light-bg)",
+    border: "1px solid var(--card-light-border)",
+    color: "var(--content-text)",
+  };
+
+  // Style riêng cho nút đang active
+  const activeStyles = {
+    background:
+      "var(--burning-flame)", 
+    color: "var(--bg-deep)",
+    boxShadow: "0 2px 8px var(--accent-gold-glow)",
+    border: "none",
+  };
 
   return (
-    <div className="flex items-center justify-center gap-1.5 pt-4">
-      {/* Prev */}
-      <button
-        onClick={() => onChange(page - 1)}
-        disabled={page === 1}
-        className={`${btnBase} disabled:opacity-30 disabled:cursor-not-allowed`}
-        style={{
-          background: "var(--card-light-bg)",
-          border: "1px solid var(--card-light-border)",
-          color: "var(--content-text)",
-        }}
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </button>
+    <Pagination className="pt-4">
+      <PaginationContent className="gap-1.5">
+        {/* Nút Quay lại */}
+        <PaginationItem>
+          <PaginationPrevious
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              if (page > 1) onChange(page - 1);
+            }}
+            aria-disabled={page === 1}
+            className={`w-auto h-8 p-0 justify-center transition-all hover:opacity-80 ${
+              page === 1 ? "opacity-30 cursor-not-allowed" : "cursor-pointer"
+            }`}
+            style={commonStyles}
+          />
+        </PaginationItem>
 
-      {/* Pages */}
-      {getPages().map((p, i) =>
-        p === "..." ? (
-          <span
-            key={`dots-${i}`}
-            className="w-8 h-8 flex items-center justify-center text-sm"
-            style={{ color: "var(--content-muted)" }}
-          >
-            …
-          </span>
-        ) : (
-          <button
-            key={p}
-            onClick={() => onChange(p as number)}
-            className={btnBase}
-            style={
-              page === p
-                ? {
-                    background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-                    color: "var(--bg-deep)",
-                    boxShadow: "0 2px 8px var(--accent-gold-glow)",
-                    border: "none",
-                  }
-                : {
-                    background: "var(--card-light-bg)",
-                    border: "1px solid var(--card-light-border)",
-                    color: "var(--content-text)",
-                  }
-            }
-          >
-            {p}
-          </button>
-        )
-      )}
+        {/* Danh sách các số trang */}
+        {getPages().map((p, i) => (
+          <PaginationItem key={i}>
+            {p === "..." ? (
+              <PaginationEllipsis
+                className="w-8 h-8"
+                style={{ color: "var(--content-muted)" }}
+              />
+            ) : (
+              <PaginationLink
+                href="#"
+                isActive={page === p}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onChange(p as number);
+                }}
+                className="w-8 h-8 p-0 flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer"
+                style={page === p ? activeStyles : commonStyles}
+              >
+                {p}
+              </PaginationLink>
+            )}
+          </PaginationItem>
+        ))}
 
-      {/* Next */}
-      <button
-        onClick={() => onChange(page + 1)}
-        disabled={page === totalPages}
-        className={`${btnBase} disabled:opacity-30 disabled:cursor-not-allowed`}
-        style={{
-          background: "var(--card-light-bg)",
-          border: "1px solid var(--card-light-border)",
-          color: "var(--content-text)",
-        }}
-      >
-        <ChevronRight className="w-4 h-4" />
-      </button>
-    </div>
+        {/* Nút Tiếp theo */}
+        <PaginationItem>
+          <PaginationNext
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              if (page < totalPages) onChange(page + 1);
+            }}
+            aria-disabled={page === totalPages}
+            className={`w-auto h-8 p-0 justify-center transition-all hover:opacity-80 ${
+              page === totalPages
+                ? "opacity-30 cursor-not-allowed"
+                : "cursor-pointer"
+            }`}
+            style={commonStyles}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
   );
 }

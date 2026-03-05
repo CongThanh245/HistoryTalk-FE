@@ -11,12 +11,11 @@ function layout({ children }: { children: React.ReactNode }) {
         <div className="flex-1 flex flex-col min-w-0">
           <Header />
           <main
-            className="flex-1 overflow-y-auto"
+            className="flex-1 overflow-hidden"
             style={{ background: "var(--bg-content)" }}
           >
-            <div className="container mx-auto px-6 py-8 max-w-7xl">
-              {children}
-            </div>
+            {/* Xoá div container này */}
+            {children}
           </main>
         </div>
       </div>

@@ -13,7 +13,7 @@ import { TimelineCard, TimelineCardSkeleton } from "./timeline-card";
 import { MOCK_EVENTS, MOCK_PAGE_LIMIT } from "./event.mock";
 import { eventQueryKeys } from "@/shared/query-key";
 import { EraFilter } from "./era-filter";
-import { Pagination } from "../commons/pagination";
+import { CustomPagination } from "../commons/pagination";
 
 const PAGE_LIMIT = MOCK_PAGE_LIMIT;
 
@@ -127,7 +127,7 @@ export function EventTimeline({
       </div>
 
       {/* Pagination */}
-      <Pagination page={page} totalPages={totalPages} onChange={onPageChange} />
+      <CustomPagination page={page} totalPages={totalPages} onChange={onPageChange} />
     </div>
   );
 }
