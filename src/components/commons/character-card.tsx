@@ -268,7 +268,7 @@ interface CompactCardProps {
 
 export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
   if (!character) return null;
-  const avatarSrc = character.avatarUrl ?? character.imageUrl ?? null;
+  const avatarSrc = character.avatarUrl ?? character.imageUrl ?? "/ngo-quyen.jpg";
 
   return (
     <button
