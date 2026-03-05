@@ -100,7 +100,8 @@ function NavItem({
 
 export default function SidebarNav({ isExpanded }: { isExpanded: boolean }) {
   return (
-    <nav className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden py-4 space-y-4">
+    <nav className="relative z-10 flex-1 overflow-hidden py-4 space-y-4">
+      {" "}
       {SIDEBAR_SECTIONS.map((section) => (
         <div key={section.title} className={cn(isExpanded ? "px-3" : "px-2")}>
           {isExpanded ? (

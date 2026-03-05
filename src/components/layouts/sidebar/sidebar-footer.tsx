@@ -1,12 +1,7 @@
 "use client";
 
-import { Sparkles, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface SidebarFooterProps {
   isExpanded: boolean;
@@ -18,96 +13,65 @@ export default function SidebarFooter({ isExpanded }: SidebarFooterProps) {
       className="relative z-10 shrink-0 px-2 py-3 border-t"
       style={{ borderColor: "var(--border-default)" }}
     >
-      {isExpanded ? (
-        /* Expanded — full card */
+      <div
+        className="rounded-xl overflow-hidden relative cursor-pointer group transition-all duration-250"
+        style={{
+          height: 72, // ← cố định, không bao giờ thay đổi
+          background: "linear-gradient(135deg, rgba(201,162,77,0.10) 0%, rgba(163,81,57,0.08) 100%)",
+          border: "1px solid rgba(201,162,77,0.22)",
+        }}
+      >
+        {/* Hover glow */}
         <div
-          className="rounded-xl p-3 flex flex-col gap-2 overflow-hidden relative cursor-pointer group transition-all duration-200"
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
           style={{
-            background:
-              "linear-gradient(135deg, rgba(201,162,77,0.12) 0%, rgba(163,81,57,0.10) 100%)",
-            border: "1px solid rgba(201,162,77,0.25)",
+            background: "linear-gradient(135deg, rgba(201,162,77,0.16) 0%, rgba(163,81,57,0.12) 100%)",
           }}
-        >
-          {/* Glow bg */}
-          <div
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(201,162,77,0.18) 0%, rgba(163,81,57,0.15) 100%)",
-            }}
-          />
+        />
 
-          <div className="relative flex items-center gap-2">
-            <div
-              className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-              style={{
-                background:
-                  "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-              }}
-            >
-              <Zap
-                className="w-3.5 h-3.5"
-                style={{ color: "var(--bg-deep)" }}
-              />
-            </div>
-            <span
-              className="text-xs font-semibold"
-              style={{ color: "var(--accent-gold-soft)" }}
-            >
-              Nâng cấp Pro
-            </span>
+        {/* Inner layout — căn giữa theo chiều dọc */}
+        <div className="relative z-10 h-full flex items-center px-2.5 gap-2.5">
+
+          {/* Icon — luôn cố định */}
+          <div
+            className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
+            style={{
+              background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+              boxShadow: "0 2px 8px var(--accent-gold-glow)",
+            }}
+          >
+            <Zap className="w-3.5 h-3.5" style={{ color: "var(--bg-deep)" }} />
           </div>
 
-          <p
-            className="relative text-[11px] leading-relaxed"
-            style={{ color: "var(--text-on-dark-muted)" }}
+          {/* Text + button — chỉ fade theo chiều ngang */}
+          <div
+            className={cn(
+              "flex flex-col gap-1.5 overflow-hidden transition-all duration-250",
+              isExpanded ? "opacity-100 w-full" : "opacity-0 w-0 pointer-events-none"
+            )}
           >
-            Mở khóa toàn bộ nhân vật, chat không giới hạn và nhiều hơn nữa.
-          </p>
-
-          <button
-            className="relative w-full py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 cursor-pointer"
-            style={{
-              background:
-                "linear-gradient(90deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-              color: "var(--bg-deep)",
-              boxShadow: "0 2px 10px var(--accent-gold-glow)",
-            }}
-          >
-            Upgrade to Pro ✦
-          </button>
-        </div>
-      ) : (
-        /* Collapsed — chỉ hiện icon */
-        <Tooltip>
-          <TooltipTrigger asChild>
+            <div>
+              <p className="text-xs font-semibold whitespace-nowrap" style={{ color: "var(--accent-gold-soft)" }}>
+                Nâng cấp Pro
+              </p>
+              <p className="text-[11px] whitespace-nowrap" style={{ color: "var(--text-on-dark-muted)" }}>
+                Mở khóa toàn bộ tính năng.
+              </p>
+            </div>
             <button
-              className={cn(
-                "w-10 h-10 mx-auto flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer",
-              )}
+              className="w-full py-1 rounded-lg text-[11px] font-semibold cursor-pointer whitespace-nowrap transition-all duration-150"
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(201,162,77,0.15) 0%, rgba(163,81,57,0.12) 100%)",
-                border: "1px solid rgba(201,162,77,0.25)",
-                color: "var(--accent-gold)",
+                background: "linear-gradient(90deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+                color: "var(--bg-deep)",
+                boxShadow: "0 2px 8px var(--accent-gold-glow)",
               }}
             >
-              <Sparkles className="w-4 h-4" />
+              Upgrade to Pro ✦
             </button>
-          </TooltipTrigger>
-          <TooltipContent
-            side="right"
-            style={{
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border-default)",
-              color: "var(--text-primary)",
-              fontSize: 12,
-            }}
-          >
-            Nâng cấp Pro
-          </TooltipContent>
-        </Tooltip>
-      )}
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
