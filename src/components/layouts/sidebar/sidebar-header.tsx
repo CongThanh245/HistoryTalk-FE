@@ -1,6 +1,7 @@
 "use client";
 
 import { Scroll, Pin, PinOff } from "lucide-react";
+import Link from "next/link"; // 1. Import Link
 import { cn } from "@/lib/utils/cn";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -19,33 +20,42 @@ export default function SidebarHeader({ isExpanded, isPinned, onTogglePin }: Sid
       )}
       style={{ borderColor: "var(--border-default)" }}
     >
-      {/* Logo icon */}
-      <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-        style={{
-          background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-          boxShadow: "var(--shadow-gold)",
-        }}
+      {/* 2. Bọc Logo và Brand name trong Link */}
+      <Link 
+        href="/" 
+        className={cn(
+          "flex items-center outline-none transition-opacity hover:opacity-80",
+          isExpanded ? "flex-1 gap-3 overflow-hidden" : ""
+        )}
       >
-        <Scroll className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
-      </div>
-
-      {/* Brand name */}
-      {isExpanded && (
-        <span
-          className="flex-1 text-[15px] font-bold tracking-wide truncate"
+        {/* Logo icon */}
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
           style={{
-            background: "linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-gold-soft) 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            fontFamily: "'Georgia', 'Times New Roman', serif",
+            background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+            boxShadow: "var(--shadow-gold)",
           }}
         >
-          HistoryTalk
-        </span>
-      )}
+          <Scroll className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
+        </div>
 
-      {/* Pin button — chỉ hiện khi expanded */}
+        {/* Brand name */}
+        {isExpanded && (
+          <span
+            className="text-[15px] font-bold tracking-wide truncate"
+            style={{
+              background: "linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-gold-soft) 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              fontFamily: "'Georgia', 'Times New Roman', serif",
+            }}
+          >
+            HistoryTalk
+          </span>
+        )}
+      </Link>
+
+      {/* Pin button — Giữ nguyên bên ngoài Link để tránh click nhầm */}
       {isExpanded && (
         <Tooltip>
           <TooltipTrigger asChild>
