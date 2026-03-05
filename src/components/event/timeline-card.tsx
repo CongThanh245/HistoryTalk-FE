@@ -33,7 +33,7 @@ export function TimelineCard({ event, index, onClick }: TimelineCardProps) {
         className="w-[calc(50%-28px)]"
         imageSrc={event.imageUrl ?? cat.image}
         imageAlt={event.title}
-        imageHeight={128}
+        imageHeight={300}
         imageSizes="(max-width: 768px) 100vw, 400px"
         badge={{ label: cat.label, color: "#fff", bg: `${cat.color}cc` }}
         accentColor={cat.color}
