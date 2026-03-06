@@ -123,7 +123,7 @@ export function TimelineStripCard({ event, direction, onOpenDetail }: StripCardP
         </span>
         <h2
           className="text-xl sm:text-2xl font-bold leading-snug mb-2"
-          style={{ color: "var(--content-heading)", fontFamily: "Georgia, serif" }}
+          style={{ color: "var(--content-heading)"}}
         >
           {event.title}
         </h2>
