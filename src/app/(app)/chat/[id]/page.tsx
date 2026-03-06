@@ -8,20 +8,23 @@
 import { ChatClient } from "@/components/chat/chat-client";
 
 interface ChatPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function ChatPage({ params }: ChatPageProps) {
+export default async function ChatPage({ params }: ChatPageProps) {
+  const { id } = await params;
+
   return (
     // h-full kế thừa từ layout — không có padding vì chat cần full height
     <div className="flex h-full w-full overflow-hidden">
-      <ChatClient initialCharacterId={params.id} />
+      <ChatClient initialCharacterId={id} />
     </div>
   );
 }
 
 // TODO: generateMetadata khi có API
 // export async function generateMetadata({ params }: ChatPageProps) {
-//   const character = await chatService.getCharacter(params.id);
+//   const { id } = await params;
+//   const character = await chatService.getCharacter(id);
 //   return { title: `Chat với ${character.name} | HistoryTalk` };
 // }
