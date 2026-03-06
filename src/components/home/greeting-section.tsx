@@ -10,9 +10,6 @@ interface GreetingSectionProps {
 export function GreetingSection({ userName = "Nguyen Thanh" }: GreetingSectionProps) {
   return (
     <div className="space-y-1 pt-2">
-      <p className="text-sm" style={{ color: "var(--content-subtle)" }}>
-        Chào mừng trở lại 👋
-      </p>
       <h1 className="text-3xl font-bold" style={{ color: "var(--text-inverse)" }}>
         Xin chào,{" "}
         <span
