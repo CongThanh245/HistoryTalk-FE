@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { MagneticButton } from "../commons/MagneticButton";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
+import Image from "next/image";
 
 export function MarketingNavbar() {
   const pathname = usePathname();
@@ -99,9 +100,14 @@ export function MarketingNavbar() {
               href="/"
               className="flex items-center gap-2 hover:opacity-85 transition-opacity"
             >
-              <span className="text-base font-bold text-[var(--accent-gold)] tracking-wide">
-                LogoHistoryTalk
-              </span>
+              <Image
+                src="/logo.svg"
+                alt="HistoryTalk Logo"
+                width={50}
+                height={80}
+                priority // thêm priority vì logo nằm trên navbar, load ngay
+                // className="h-8 w-auto"
+              />
             </Link>
 
             {/* Desktop links */}
@@ -147,7 +153,11 @@ export function MarketingNavbar() {
 
                 {/* KHÁM PHÁ NGAY — bỏ border */}
                 <div className="cta-wrapper">
-                  <MagneticButton href="/home" className="!border-0" magnetic={false}>
+                  <MagneticButton
+                    href="/home"
+                    className="!border-0"
+                    magnetic={false}
+                  >
                     Khám phá ngay
                   </MagneticButton>
                 </div>

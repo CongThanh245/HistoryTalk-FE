@@ -16,8 +16,9 @@
   /* ─────────────────────────────
       Text – Dark backgrounds
    ───────────────────────────── */
-  --text-primary: #e7ddc8; /* Warm parchment */
-  --text-secondary: #9a948c; /* Text phụ */
+  --text-primary: #ff9215; /* Warm parchment */
+  --text-secondary: #b5b183; /* Text phụ */
+  --text-tertiary: #cdd316;
   --text-muted: #6f7c84; /* Placeholder / hint */
   --text-inverse: #0e1a2b; /* Text trên nền sáng */
   --text-on-dark: rgba(255, 255, 255, 0.85); /* Chữ trắng sidebar nav */
@@ -31,7 +32,7 @@
   /* ─────────────────────────────
       Brand / Accent
    ───────────────────────────── */
-  --accent-gold: #c9a24d; /* Lịch sử – di sản – premium */
+  --accent-gold: #ff9215; /* Lịch sử – di sản – premium */
   --accent-gold-soft: #e2c77a; /* Gold nhạt hơn */
   --accent-gold-active-bg: rgba(
     201,

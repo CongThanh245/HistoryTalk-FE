@@ -60,14 +60,24 @@ export function HeroSection() {
     <section
       ref={sectionRef}
       className="relative overflow-hidden min-h-[100svh] flex flex-col lg:items-center lg:justify-center"
+      style={{ isolation: "isolate" }}
     >
-      {/* Background Decor */}
-      <div className="absolute inset-0 -z-10 opacity-10 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--accent-gold)] rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[var(--accent-blue)] rounded-full blur-3xl" />
-      </div>
+      {/* ── BACKGROUND GRADIENT LAYERS ──
+          Dùng z-0 (KHÔNG dùng -z-10) để gradient nằm trên bg của parent
+          nhưng dưới content (z-10+).
+      */}
 
-      <Container className="w-full">
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          zIndex: 0,
+          background:
+            "radial-gradient(ellipse 120% 70% at 60% 100%, #ff9215 0%, rgba(255,146,21,0.3) 50%, transparent 90%)",
+        }}
+      />
+
+      {/* Content phải có z-index > 0 để nằm trên gradient */}
+      <Container className="w-full relative">
         <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-20 lg:items-center lg:py-10">
           {/* TEXT CONTENT */}
           <div
@@ -76,7 +86,7 @@ export function HeroSection() {
           >
             <h1 className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-bold leading-[1.1] text-[var(--text-primary)]">
               <TypingText text="HISTORY TALK" className="typing-title" />
-              <span className="block text-[var(--accent-gold)] text-xl sm:text-2xl mt-2">
+              <span className="block text-[var(--text-tertiary)] text-xl sm:text-2xl mt-2">
                 <TypingText
                   text="Khi lịch sử trở nên sống động"
                   className="typing-subtitle"
@@ -122,10 +132,10 @@ export function HeroSection() {
                     "active:scale-[0.98]",
                   )}
                 >
-                  <span className="absolute top-0 left-0 h-[1.5px] w-full bg-[var(--accent-gold)] transition-transform duration-700 ease-out scale-x-0 origin-left group-hover:scale-x-[1.15] -translate-x-[7.5%]" />
-                  <span className="absolute bottom-0 left-0 h-[1.5px] w-full bg-[var(--accent-gold)] transition-transform duration-700 ease-out scale-x-0 origin-right group-hover:scale-x-[1.15] translate-x-[7.5%]" />
-                  <span className="absolute left-0 top-0 w-[1.5px] h-full bg-[var(--accent-gold)] transition-transform duration-700 ease-out scale-y-0 origin-bottom group-hover:scale-y-[1.3] translate-y-[15%]" />
-                  <span className="absolute right-0 top-0 w-[1.5px] h-full bg-[var(--accent-gold)] transition-transform duration-700 ease-out scale-y-0 origin-top group-hover:scale-y-[1.3] -translate-y-[15%]" />
+                  <span className="absolute top-0 left-0 h-[1.5px] w-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-x-0 origin-left group-hover:scale-x-[1.15] -translate-x-[7.5%]" />
+                  <span className="absolute bottom-0 left-0 h-[1.5px] w-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-x-0 origin-right group-hover:scale-x-[1.15] translate-x-[7.5%]" />
+                  <span className="absolute left-0 top-0 w-[1.5px] h-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-y-0 origin-bottom group-hover:scale-y-[1.3] translate-y-[15%]" />
+                  <span className="absolute right-0 top-0 w-[1.5px] h-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-y-0 origin-top group-hover:scale-y-[1.3] -translate-y-[15%]" />
                   <span className="relative z-20">TRẢI NGHIỆM NGAY</span>
                 </Link>
               </div>
@@ -133,17 +143,17 @@ export function HeroSection() {
           </div>
 
           {/* CAROUSEL */}
+          {/* Carousel inner glow — đặt NGOÀI div overflow-hidden */}
           <div
             ref={carouselRef}
             className={cn(
               "relative w-full will-change-transform",
               "flex justify-center items-center",
-              "h-[300px] sm:h-[380px]",
-              "lg:h-[650px]",
-              "overflow-hidden lg:overflow-visible",
+              "h-[300px] sm:h-[380px] lg:h-[650px]",
+              "lg:overflow-visible",
             )}
           >
-            <div className="absolute inset-0 bg-[var(--accent-gold)] opacity-10 blur-[80px] rounded-full scale-75 pointer-events-none" />
+
             <Carousel3DVertical />
           </div>
         </div>

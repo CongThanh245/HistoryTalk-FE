@@ -118,11 +118,11 @@ export function ProblemSection() {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-center">
               {/* LEFT: Heading */}
               <div>
-                <div className="w-[3px] h-12 mb-5 rounded-full bg-gradient-to-b from-[var(--accent-gold)] to-transparent" />
-                <h2 className="text-[clamp(2.5rem,6vw,6rem)] leading-[0.88] tracking-wide font-bold uppercase text-[var(--text-primary)] mb-4">
+                <div className="w-[3px] h-12 mb-5 rounded-full bg-gradient-to-b from-[var(--text-secondary)] to-transparent" />
+                <h2 className="text-[clamp(2.5rem,6vw,6rem)] leading-[0.88] tracking-wide font-bold uppercase text-[var(--text-secondary)] mb-4">
                   Vấn đề
                   <br />
-                  học <span className="text-[var(--accent-gold)]">lịch sử</span>
+                  học <span className="text-[var(--text-primary)]">lịch sử</span>
                   <br />
                   ngày nay
                 </h2>
