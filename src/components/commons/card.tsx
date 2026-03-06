@@ -7,27 +7,25 @@ import { cn } from "@/lib/utils/cn";
 
 interface CardBadge {
   label: string;
-  color: string;   // text color
-  bg: string;      // background
+  color: string;
+  bg: string;
 }
 
 interface CardProps {
-  // Ảnh
   imageSrc: string;
   imageAlt: string;
-  imageHeight?: number;        // default 128px
+  imageHeight?: number;
   imageSizes?: string;
-
-  // Badge nổi trên ảnh (góc phải)
   badge?: CardBadge;
-
-  // Nội dung phía dưới ảnh
   children: React.ReactNode;
-
-  // Style
   className?: string;
-  accentColor?: string;        // màu viền hover + glow
+  accentColor?: string;
   onClick?: () => void;
+  // "vertical" = ảnh trên nội dung dưới (default)
+  // "horizontal" = ảnh trái nội dung phải (dùng cho strip card)
+  layout?: "vertical" | "horizontal";
+  // Chiều rộng ảnh khi layout="horizontal", default 280px
+  imageWidth?: number;
 }
 
 // ── Card ──────────────────────────────────────────────────
@@ -42,12 +40,17 @@ export function Card({
   className,
   accentColor,
   onClick,
+  layout = "vertical",
+  imageWidth = 280,
 }: CardProps) {
+  const isHorizontal = layout === "horizontal";
+
   return (
     <div
       className={cn(
         "group relative rounded-xl border overflow-hidden transition-all duration-200 cursor-pointer",
         "hover:shadow-[0_4px_24px_rgba(0,0,0,0.10)] hover:-translate-y-0.5",
+        isHorizontal ? "flex flex-row" : "flex flex-col",
         className
       )}
       style={{
@@ -65,7 +68,14 @@ export function Card({
       )}
 
       {/* Ảnh */}
-      <div className="relative w-full overflow-hidden" style={{ height: imageHeight }}>
+      <div
+        className="relative overflow-hidden shrink-0"
+        style={
+          isHorizontal
+            ? { width: imageWidth, minHeight: imageHeight }
+            : { width: "100%", height: imageHeight }
+        }
+      >
         <Image
           src={imageSrc}
           alt={imageAlt}
@@ -74,15 +84,17 @@ export function Card({
           sizes={imageSizes}
         />
 
-        {/* Gradient overlay */}
+        {/* Gradient overlay — hướng khác nhau tuỳ layout */}
         <div
           className="absolute inset-0"
           style={{
-            background: "linear-gradient(to bottom, transparent 40%, var(--card-light-bg) 100%)",
+            background: isHorizontal
+              ? "linear-gradient(to right, transparent 60%, var(--card-light-bg) 100%)"
+              : "linear-gradient(to bottom, transparent 40%, var(--card-light-bg) 100%)",
           }}
         />
 
-        {/* Badge nổi trên ảnh */}
+        {/* Badge */}
         {badge && (
           <div className="absolute top-2.5 right-2.5 z-10">
             <span
@@ -96,19 +108,23 @@ export function Card({
       </div>
 
       {/* Content */}
-      <div className="px-4 pb-4 pt-1">
+      <div className={cn(
+        isHorizontal
+          ? "flex-1 px-6 py-5 flex flex-col justify-center"
+          : "px-4 pb-4 pt-1"
+      )}>
         {children}
       </div>
     </div>
   );
 }
 
-// ── Dark variant (dùng cho carousel — nền tối) ────────────
+// ── DarkCard ──────────────────────────────────────────────
 
 interface DarkCardProps {
   imageSrc: string;
   imageAlt: string;
-  imageHeight?: string;        // % của chiều cao card, default "65%"
+  imageHeight?: string;
   badge?: CardBadge;
   children: React.ReactNode;
   className?: string;
@@ -140,7 +156,6 @@ export function DarkCard({
       }}
       onClick={onClick}
     >
-      {/* Ảnh */}
       <div className="relative w-full overflow-hidden shrink-0" style={{ height: imageHeight, background: "var(--bg-elevated)" }}>
         <Image
           src={imageSrc}
@@ -150,11 +165,7 @@ export function DarkCard({
           sizes="400px"
           priority={priority}
         />
-
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-surface)] via-transparent to-transparent z-10" />
-
-        {/* Badge */}
         {badge && (
           <div
             className="absolute top-3 right-3 px-2 py-1 rounded-md border z-10"
@@ -166,8 +177,6 @@ export function DarkCard({
           </div>
         )}
       </div>
-
-      {/* Content */}
       <div className="p-4 flex-1 flex flex-col">
         {children}
       </div>

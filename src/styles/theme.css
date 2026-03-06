@@ -1,12 +1,12 @@
 /* ================================
-   HistoryTalk Design Tokens
-   Dark – Cinematic – Premium
-================================ */
+      HistoryTalk Design Tokens
+      Dark – Cinematic – Premium
+   ================================ */
 
 :root {
   /* ─────────────────────────────
-     Backgrounds
-  ───────────────────────────── */
+      Backgrounds
+   ───────────────────────────── */
   --bg-main: #0e1a2b; /* Nền chính (deep navy) */
   --bg-deep: #070d18; /* Nền sâu / sidebar */
   --bg-content: #16223a; /* Nền main content — sáng hơn bg-main 1 bậc */
@@ -14,8 +14,8 @@
   --bg-elevated: #24314a; /* Modal / hover surface */
 
   /* ─────────────────────────────
-     Text – Dark backgrounds
-  ───────────────────────────── */
+      Text – Dark backgrounds
+   ───────────────────────────── */
   --text-primary: #e7ddc8; /* Warm parchment */
   --text-secondary: #9a948c; /* Text phụ */
   --text-muted: #6f7c84; /* Placeholder / hint */
@@ -29,8 +29,8 @@
   ); /* Chữ trắng mờ (section label, footer) */
 
   /* ─────────────────────────────
-     Brand / Accent
-  ───────────────────────────── */
+      Brand / Accent
+   ───────────────────────────── */
   --accent-gold: #c9a24d; /* Lịch sử – di sản – premium */
   --accent-gold-soft: #e2c77a; /* Gold nhạt hơn */
   --accent-gold-active-bg: rgba(
@@ -45,16 +45,16 @@
   --accent-teal: #2f6f73; /* Công nghệ – tương tác */
 
   /* ─────────────────────────────
-     Emotional / Historical
-  ───────────────────────────── */
+      Emotional / Historical
+   ───────────────────────────── */
   --accent-earth: #3b2a1f; /* Đất – cổ đại – chiến trường */
   --accent-bronze: #c46a2f; /* Kim loại – cổ vật */
   --accent-blood: #5a2323; /* Chiến tranh – xung đột */
   --accent-danger: #b8322a; /* Cảnh báo / nguy hiểm */
 
   /* ─────────────────────────────
-     Palette từ ảnh màu
-  ───────────────────────────── */
+      Palette từ ảnh màu
+   ───────────────────────────── */
   --palladian: #eee9df; /* Nền sáng ấm / header bg */
   --oatmeal: #c9c1b1; /* Border header / text phụ trên nền sáng */
   --burning-flame: #ffb162; /* Streak counter / badge nổi bật */
@@ -63,8 +63,8 @@
   --abyssal-blue: #1b2632; /* Text đậm trên nền sáng / nền tối trung */
 
   /* ─────────────────────────────
-     Header (nền sáng – như ảnh)
-  ───────────────────────────── */
+      Header (nền sáng – như ảnh)
+   ───────────────────────────── */
   --header-bg: var(--palladian); /* #EEE9DF */
   --header-border: var(--oatmeal); /* #C9C1B1 */
   --header-text: var(--abyssal-blue); /* #1B2632 – text chính */
@@ -79,16 +79,16 @@
   --card-light-border: rgba(27, 38, 50, 0.1);
   --card-light-hover: rgba(27, 38, 50, 0.04);
   /* ─────────────────────────────
-     Streak counter
-  ───────────────────────────── */
+      Streak counter
+   ───────────────────────────── */
   --streak-bg: rgba(255, 177, 98, 0.1);
   --streak-border: rgba(255, 177, 98, 0.25);
   --streak-text: var(--burning-flame); /* #FFB162 */
   --streak-text-muted: rgba(255, 177, 98, 0.65);
 
   /* ─────────────────────────────
-     Sidebar nav text
-  ───────────────────────────── */
+      Sidebar nav text
+   ───────────────────────────── */
   --sidebar-nav-text: rgba(255, 255, 255, 0.75); /* Nav item text */
   --sidebar-nav-icon: rgba(255, 255, 255, 0.45); /* Nav icon */
   --sidebar-active-text: var(--accent-gold-soft); /* #e2c77a */
@@ -97,21 +97,21 @@
   --sidebar-pin-inactive: rgba(255, 255, 255, 0.3); /* Pin icon khi chưa ghim */
 
   /* ─────────────────────────────
-     Borders & Lines
-  ───────────────────────────── */
+      Borders & Lines
+   ───────────────────────────── */
   --border-default: rgba(231, 221, 200, 0.12);
   --border-strong: rgba(231, 221, 200, 0.24);
 
   /* ─────────────────────────────
-     Shadows
-  ───────────────────────────── */
+      Shadows
+   ───────────────────────────── */
   --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.35);
   --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.6);
   --shadow-gold: 0 0 18px rgba(201, 162, 77, 0.3);
 
   /* ─────────────────────────────
-     Radius
-  ───────────────────────────── */
+      Radius
+   ───────────────────────────── */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;

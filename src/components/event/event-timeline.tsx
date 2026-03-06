@@ -1,133 +1,240 @@
 "use client";
 
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type {
-  HistoricalEvent,
-  EventEra,
-  GetEventsParams,
-} from "@/services/event.service";
-import { ERA_CONFIG, getEraFromYear } from "@/services/event.service";
-import { TimelineCard, TimelineCardSkeleton } from "./timeline-card";
-
-// TODO: xoá import mock khi có API
-import { MOCK_EVENTS, MOCK_PAGE_LIMIT } from "./event.mock";
-import { eventQueryKeys } from "@/shared/query-key";
+import type { HistoricalEvent, EventEra, GetEventsParams } from "@/services/event.service";
+import { ERA_CONFIG } from "@/services/event.service";
 import { EraFilter } from "../commons/era-filter";
-import { CustomPagination } from "../commons/pagination";
+import { TimelineStrip, type TimelineItem } from "../commons/timeline-strip";
+import { TimelineStripCard, TimelineStripCardSkeleton } from "./timeline-card";
+import { MOCK_EVENTS } from "./event.mock";
+import { eventQueryKeys } from "@/shared/query-key";
 
-const PAGE_LIMIT = MOCK_PAGE_LIMIT;
+const ALL_LIMIT = 100;
+
+// Cooldown giữa 2 bước (ms) — đủ ngắn để lăn liên tục mượt
+// nhưng đủ dài để mỗi bước animate xong trước khi nhảy tiếp
+const STEP_COOLDOWN = 280;
 
 interface EventTimelineProps {
   era: EventEra;
-  page: number;
   onEraChange: (era: EventEra) => void;
-  onPageChange: (page: number) => void;
   onSelectEvent: (event: HistoricalEvent) => void;
 }
 
-export function EventTimeline({
-  era,
-  page,
-  onEraChange,
-  onPageChange,
-  onSelectEvent,
-}: EventTimelineProps) {
-  const params: GetEventsParams = { era, page, limit: PAGE_LIMIT };
+export function EventTimeline({ era, onEraChange, onSelectEvent }: EventTimelineProps) {
+  const [activeId,  setActiveId]  = useState<string>("");
+  const [direction, setDirection] = useState<1 | -1>(1);
+
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const activeIdRef   = useRef<string>("");
+  const eventsRef     = useRef<HistoricalEvent[]>([]);
+  const lastStepAt    = useRef<number>(0);  // timestamp bước cuối
+  const rafId         = useRef<number>(0);  // requestAnimationFrame id
+  const pendingDir    = useRef<0 | 1 | -1>(0); // hướng đang chờ xử lý
+
+  const params: GetEventsParams = { era, page: 1, limit: ALL_LIMIT };
 
   const { data, isLoading } = useQuery({
     queryKey: eventQueryKeys.list(params),
-    queryFn: async () => {
-      // TODO: thay bằng eventService.getEvents(params) khi có API
-      await new Promise((r) => setTimeout(r, 500));
-
-      // Filter mock theo era ở client
+    queryFn: async (): Promise<{ data: HistoricalEvent[]; total: number }> => {
+      await new Promise((r) => setTimeout(r, 300));
       const [from, to] = ERA_CONFIG[era].range;
-      const filtered = MOCK_EVENTS.filter(
-        (e) => e.year >= from && e.year <= to,
-      ).sort((a, b) => a.year - b.year);
-
-      const total = filtered.length;
-      const totalPages = Math.max(1, Math.ceil(total / PAGE_LIMIT));
-      const data = filtered.slice((page - 1) * PAGE_LIMIT, page * PAGE_LIMIT);
-
-      return { data, total, page, limit: PAGE_LIMIT, totalPages };
+      const filtered = MOCK_EVENTS
+        .filter((e) => e.year >= from && e.year <= to)
+        .sort((a, b) => a.year - b.year);
+      return { data: filtered, total: filtered.length };
     },
-    placeholderData: (prev) => prev, // giữ data cũ khi đổi page/filter, tránh flash
+    placeholderData: (prev) => prev,
   });
 
-  // Đếm số lượng mỗi era để hiện badge
+  const events = data?.data ?? [];
+  eventsRef.current   = events;
+
+  const resolvedActiveId = activeId && events.find((e) => e.id === activeId)
+    ? activeId
+    : events[0]?.id ?? "";
+  activeIdRef.current = resolvedActiveId;
+
+  const activeEvent = events.find((e) => e.id === resolvedActiveId) ?? null;
+  const activeIdx   = events.findIndex((e) => e.id === resolvedActiveId);
+
+  const handleSelect = useCallback((id: string) => {
+    const evs    = eventsRef.current;
+    const curIdx = evs.findIndex((e) => e.id === activeIdRef.current);
+    const newIdx = evs.findIndex((e) => e.id === id);
+    setDirection(newIdx >= curIdx ? 1 : -1);
+    setActiveId(id);
+  }, []);
+
+  // ── Wheel handler ─────────────────────────────────────────
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+
+    // Cập nhật hướng pending liên tục theo deltaY
+    pendingDir.current = e.deltaY > 0 ? 1 : -1;
+
+    // Nếu đang trong cooldown, dùng rAF để fire ngay khi cooldown xong
+    const now = Date.now();
+    const remaining = STEP_COOLDOWN - (now - lastStepAt.current);
+
+    if (remaining > 0) {
+      cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        if (Date.now() - lastStepAt.current < STEP_COOLDOWN) return;
+        fireStep();
+      });
+      return;
+    }
+
+    fireStep();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fireStep = useCallback(() => {
+    const dir  = pendingDir.current;
+    if (dir === 0) return;
+    const evs    = eventsRef.current;
+    const curIdx = evs.findIndex((ev) => ev.id === activeIdRef.current);
+    const next   = curIdx + dir;
+    if (next < 0 || next >= evs.length) return;
+    lastStepAt.current = Date.now();
+    handleSelect(evs[next].id);
+  }, [handleSelect]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+      cancelAnimationFrame(rafId.current);
+    };
+  }, [handleWheel]);
+
+  // Reset khi đổi era
+  useEffect(() => { pendingDir.current = 0; lastStepAt.current = 0; }, [era]);
+
+  // Era counts
   const eraCounts = Object.fromEntries(
-    (
-      ["all", "ancient", "medieval", "modern", "contemporary"] as EventEra[]
-    ).map((e) => {
+    (["all", "ancient", "medieval", "modern", "contemporary"] as EventEra[]).map((e) => {
       const [from, to] = ERA_CONFIG[e].range;
-      return [
-        e,
-        MOCK_EVENTS.filter((ev) => ev.year >= from && ev.year <= to).length,
-      ];
-    }),
+      return [e, MOCK_EVENTS.filter((ev) => ev.year >= from && ev.year <= to).length];
+    })
   ) as Record<EventEra, number>;
 
-  const events = data?.data ?? [];
-  const totalPages = data?.totalPages ?? 1;
-  const total = data?.total ?? 0;
+  const timelineItems: TimelineItem[] = events.map((ev) => ({
+    id:            ev.id,
+    year:          ev.year,
+    yearLabel:     ev.yearLabel ?? `${Math.abs(ev.year)} ${ev.year < 0 ? "TCN" : "SCN"}`,
+    category:      ev.category,
+    categoryColor: getCatColor(ev.category),
+  }));
 
   return (
-    <div className="space-y-6">
-      {/* Filter bar */}
+    // overflow-hidden trên wrapper để GSAP translateX không làm tràn scrollbar ngang
+    <div
+      ref={containerRef}
+      className="space-y-5 overflow-hidden"
+    >
+      {/* Era filter + count */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <EraFilter
           active={era}
-          onChange={(e) => {
-            onEraChange(e);
-            onPageChange(1);
-          }}
+          onChange={(e) => { onEraChange(e); setActiveId(""); }}
           counts={eraCounts}
         />
         {!isLoading && (
           <span className="text-xs" style={{ color: "var(--content-subtle)" }}>
-            {total} sự kiện
+            {events.length} sự kiện
           </span>
         )}
       </div>
 
-      {/* Timeline */}
-      <div className="relative">
-        {/* Đường dọc */}
+      {/* Timeline strip */}
+      {isLoading ? (
         <div
-          className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-px pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(180deg, transparent 0%, var(--card-light-border) 5%, var(--card-light-border) 95%, transparent 100%)",
-          }}
+          className="h-[72px] rounded-lg animate-pulse"
+          style={{ background: "var(--card-light-bg)", border: "1px solid var(--card-light-border)" }}
         />
-
-        <div className="relative flex flex-col gap-6 py-2">
-          {isLoading ? (
-            Array.from({ length: PAGE_LIMIT }).map((_, i) => (
-              <TimelineCardSkeleton key={i} index={i} />
-            ))
-          ) : events.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-sm" style={{ color: "var(--content-muted)" }}>
-                Không có sự kiện nào trong thời đại này.
-              </p>
-            </div>
-          ) : (
-            events.map((event, i) => (
-              <TimelineCard
-                key={event.id}
-                event={event}
-                index={i}
-                onClick={onSelectEvent}
-              />
-            ))
-          )}
+      ) : (
+        <div
+          className="rounded-xl px-2 py-1"
+          style={{
+            background: "var(--card-light-bg)",
+            border: "1px solid var(--card-light-border)",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+          }}
+        >
+          <TimelineStrip
+            items={timelineItems}
+            activeId={resolvedActiveId}
+            onSelect={handleSelect}
+          />
         </div>
-      </div>
+      )}
 
-      {/* Pagination */}
-      <CustomPagination page={page} totalPages={totalPages} onChange={onPageChange} />
+      {/* Position indicator dots */}
+      {!isLoading && events.length > 0 && (
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            {events.map((ev) => (
+              <button
+                key={ev.id}
+                onClick={() => handleSelect(ev.id)}
+                className="transition-all duration-200 rounded-full cursor-pointer"
+                style={{
+                  width: ev.id === resolvedActiveId ? 18 : 6,
+                  height: 6,
+                  background: ev.id === resolvedActiveId
+                    ? getCatColor(ev.category)
+                    : "var(--card-light-border)",
+                  border: "none",
+                  padding: 0,
+                }}
+              />
+            ))}
+          </div>
+          <span className="text-[11px]" style={{ color: "var(--content-subtle)" }}>
+            {activeIdx + 1} / {events.length}
+          </span>
+        </div>
+      )}
+
+
+      {/* Event card — bọc overflow-hidden để clip GSAP animation */}
+      <div className="overflow-hidden">
+        {isLoading ? (
+          <TimelineStripCardSkeleton />
+        ) : activeEvent ? (
+          <TimelineStripCard
+            key={resolvedActiveId}
+            event={activeEvent}
+            direction={direction}
+            onOpenDetail={onSelectEvent}
+          />
+        ) : (
+          <div className="py-16 text-center">
+            <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+              Không có sự kiện nào trong thời đại này.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
+}
+
+// ── Helpers ───────────────────────────────────────────────
+
+const CAT_COLORS: Record<string, string> = {
+  war:      "var(--accent-danger)",
+  politics: "var(--accent-gold)",
+  culture:  "var(--accent-blue)",
+  science:  "var(--accent-teal)",
+  religion: "var(--accent-bronze)",
+  other:    "var(--content-muted)",
+};
+
+function getCatColor(cat: string): string {
+  return CAT_COLORS[cat] ?? CAT_COLORS.other;
 }

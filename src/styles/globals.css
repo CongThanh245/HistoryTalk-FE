@@ -333,3 +333,93 @@
     width: calc(100vw - 2rem) !important;
   }
 }
+
+/* ─────────────────────────────────────────
+   Custom Scrollbar — HistoryTalk
+   Webkit (Chrome, Safari, Edge) + Firefox
+───────────────────────────────────────── */
+
+/* ── Webkit ── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px; /* horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    var(--accent-gold) 0%,
+    var(--truffle) 100%
+  );
+  border-radius: 999px;
+  border: 2px solid var(--bg-deep); /* tạo khoảng cách giữa thumb và track */
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    var(--accent-gold-soft) 0%,
+    var(--accent-gold) 100%
+  );
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--bg-deep);
+}
+
+/* ── Firefox ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-gold) var(--bg-deep);
+}
+
+/* ── Scrollbar mỏng hơn cho các panel nhỏ (sidebar, modal) ── */
+.thin-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.thin-scroll::-webkit-scrollbar-thumb {
+  border: 1px solid var(--bg-deep);
+}
+/* ─────────────────────────────────────────
+   Timeline Strip Card — slide animation
+   Dùng clip thay translateX để không gây scrollbar ngang
+───────────────────────────────────────── */
+
+/* Slide từ phải vào (next / scroll xuống) */
+@keyframes stripEnterRight {
+  from {
+    opacity: 0;
+    clip-path: inset(0 8% 0 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0% 0 0);
+  }
+}
+
+/* Slide từ trái vào (prev / scroll lên) */
+@keyframes stripEnterLeft {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 0 8%);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0%);
+  }
+}
+
+.strip-card-enter-right {
+  animation: stripEnterRight 0.32s cubic-bezier(0.25, 0, 0.2, 1) both;
+}
+
+.strip-card-enter-left {
+  animation: stripEnterLeft 0.32s cubic-bezier(0.25, 0, 0.2, 1) both;
+}
