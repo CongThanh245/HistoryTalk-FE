@@ -6,8 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import SidebarHeader from "./sidebar-header";
 import SidebarNav from "./sidebar-nav";
 import SidebarFooter from "./sidebar-footer";
+import { SidebarSection } from "@/routers/sidebar";
 
-export default function Sidebar() {
+export default function Sidebar({ sections }: { sections: SidebarSection[] }) {
   const [isPinned, setIsPinned] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,7 +70,7 @@ export default function Sidebar() {
           isPinned={isPinned}
           onTogglePin={togglePin}
         />
-        <SidebarNav isExpanded={isExpanded} />
+        <SidebarNav isExpanded={isExpanded} sections={sections} />
         <SidebarFooter isExpanded={isExpanded} />
       </aside>
     </TooltipProvider>

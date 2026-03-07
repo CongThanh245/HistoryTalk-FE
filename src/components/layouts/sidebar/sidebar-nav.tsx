@@ -1,3 +1,4 @@
+// sidebar-nav.tsx
 "use client";
 
 import Link from "next/link";
@@ -8,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { SIDEBAR_SECTIONS, type SidebarMenuItem } from "@/routers/sidebar";
+import { type SidebarSection, type SidebarMenuItem } from "@/routers/sidebar";
 
 function NavItem({
   item,
@@ -98,11 +99,16 @@ function NavItem({
   return linkEl;
 }
 
-export default function SidebarNav({ isExpanded }: { isExpanded: boolean }) {
+export default function SidebarNav({
+  isExpanded,
+  sections,
+}: {
+  isExpanded: boolean;
+  sections: SidebarSection[];
+}) {
   return (
     <nav className="relative z-10 flex-1 overflow-hidden py-4 space-y-4">
-      {" "}
-      {SIDEBAR_SECTIONS.map((section) => (
+      {sections.map((section) => (
         <div key={section.title} className={cn(isExpanded ? "px-3" : "px-2")}>
           {isExpanded ? (
             <p

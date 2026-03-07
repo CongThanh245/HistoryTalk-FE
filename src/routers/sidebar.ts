@@ -6,8 +6,9 @@ import {
   ClipboardList,
   Library,
   Bookmark,
-  TrendingUp,
   User,
+  Shield,
+  ScrollText,
 } from "lucide-react";
 
 export interface SidebarMenuItem {
@@ -21,17 +22,33 @@ export interface SidebarSection {
   items: SidebarMenuItem[];
 }
 
-export const SIDEBAR_SECTIONS: SidebarSection[] = [
+export const CUSTOMER_SIDEBAR: SidebarSection[] = [
   {
-    title: "Main",
+    title: "Menu",
     items: [
       { icon: Home, label: "Trang chủ", href: "/home" },
       { icon: Landmark, label: "Sự kiện lịch sử", href: "/events" },
       { icon: Users, label: "Nhân vật", href: "/characters" },
-      { icon: MessageSquare, label: "Lịch sử chat", href: "chat-history" },
+      { icon: MessageSquare, label: "Lịch sử chat", href: "/chat-history" },
       { icon: ClipboardList, label: "Trắc nghiệm", href: "/quiz" },
       { icon: Library, label: "Library", href: "/library" },
       { icon: Bookmark, label: "Đã lưu", href: "/saved" },
+    ],
+  },
+  {
+    title: "Account",
+    items: [{ icon: User, label: "Hồ sơ", href: "/profile" }],
+  },
+];
+
+export const STAFF_SIDEBAR: SidebarSection[] = [
+  {
+    title: "Staff",
+    items: [
+      { icon: Shield, label: "Tổng quan", href: "/staff" },
+      { icon: ScrollText, label: "Bối cảnh", href: "/staff/contexts" },
+      { icon: Users, label: "Nhân vật", href: "/staff/characters" },
+      { icon: ClipboardList, label: "Trắc nghiệm", href: "/staff/quizzes" },
     ],
   },
   {
