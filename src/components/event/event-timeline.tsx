@@ -6,6 +6,7 @@ import type {
   HistoricalEvent,
   EventEra,
   GetEventsParams,
+  EventEraBackend,
 } from "@/services/event.service";
 import { ERA_CONFIG } from "@/services/event.service";
 import { EraFilter } from "../commons/era-filter";
@@ -40,7 +41,11 @@ export function EventTimeline({
   const rafId = useRef<number>(0); // requestAnimationFrame id
   const pendingDir = useRef<0 | 1 | -1>(0); // hướng đang chờ xử lý
 
-  const params: GetEventsParams = { era, page: 1, size: ALL_LIMIT };
+  const params: GetEventsParams = {
+    page: 1,
+    limit: ALL_LIMIT,
+    ...(era !== "all" && { era: era.toUpperCase() as EventEraBackend }),
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.events.list(params),

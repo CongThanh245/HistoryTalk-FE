@@ -4,7 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { X, Play, SkipForward, Clock, MapPin } from "lucide-react";
-import type { HistoricalEvent, EventCategory } from "@/services/event.service";
+import type {
+  HistoricalEvent,
+  EventCategoryLower,
+} from "@/services/event.service";
 import {
   CharacterCarouselCard,
   CharacterCompactCard,
@@ -43,7 +46,7 @@ const MOCK_CHARACTERS: Record<string, Character[]> = {
   ],
 };
 
-const CATEGORY_COLOR: Record<EventCategory, string> = {
+const CATEGORY_COLOR: Record<EventCategoryLower, string> = {
   war: "var(--accent-danger)",
   politics: "var(--accent-gold)",
   culture: "var(--accent-blue)",

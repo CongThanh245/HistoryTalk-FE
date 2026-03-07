@@ -3,43 +3,59 @@ import { axiosClient } from "@/configs/axios.client";
 
 // ── Types map với backend ────────────────────────────────
 
-export type EventCategory =
+// UI dùng lowercase
+export type EventCategoryLower =
   | "war"
   | "politics"
   | "culture"
   | "science"
   | "religion"
   | "other";
+// Backend dùng uppercase
+export type EventCategory =
+  | "WAR"
+  | "POLITICS"
+  | "CULTURE"
+  | "SCIENCE"
+  | "RELIGION"
+  | "OTHER";
 
+// UI dùng lowercase + "all"
 export type EventEra =
   | "all"
   | "ancient"
   | "medieval"
   | "modern"
   | "contemporary";
+// Backend dùng uppercase, không có "all"
+export type EventEraBackend =
+  | "ANCIENT"
+  | "MEDIEVAL"
+  | "MODERN"
+  | "CONTEMPORARY";
 
 // Map với backend response
 export interface HistoricalEvent {
-  id: string; // ← contextId từ backend
+  id: string;
   year: number;
   yearLabel?: string;
-  title: string; // ← name từ backend
-  summary: string; // ← description từ backend
-  category: EventCategory;
+  title: string;
+  summary: string;
+  category: EventCategoryLower; // ← lowercase cho UI
   location?: string;
   imageUrl?: string;
-  era?: string;
+  era?: EventEraBackend;
   period?: string;
   startYear?: number;
   endYear?: number;
   beforeTCN?: boolean;
 }
-
 export interface GetEventsParams {
   search?: string;
   page?: number;
-  size?: number;
-  era?: EventEra; // thêm dòng này
+  limit?: number;
+  era?: EventEraBackend; // ANCIENT | MEDIEVAL | MODERN | CONTEMPORARY
+  category?: EventCategory; // WAR | POLITICS | CULTURE | SCIENCE | RELIGION | OTHER
 }
 
 export interface GetEventsResponse {
@@ -61,10 +77,10 @@ export function mapContext(raw: any): HistoricalEvent {
     summary: raw.description,
     year: raw.year ?? raw.startYear ?? 0,
     yearLabel: raw.yearLabel,
-    category: (raw.category?.toLowerCase() as EventCategory) ?? "other",
+    category: (raw.category?.toLowerCase() as EventCategoryLower) ?? "other", // ← EventCategoryLower
     location: raw.location,
     imageUrl: raw.imageUrl,
-    era: raw.era,
+    era: raw.era as EventEraBackend,
     period: raw.period,
     startYear: raw.startYear,
     endYear: raw.endYear,
