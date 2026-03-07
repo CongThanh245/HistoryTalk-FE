@@ -8,7 +8,8 @@ function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000,
+        staleTime: 1000 * 60 * 5, // 5 phút thay vì 60 giây
+        gcTime: 1000 * 60 * 10, // giữ cache 10 phút
       },
       dehydrate: {
         // include pending queries in dehydration

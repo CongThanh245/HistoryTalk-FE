@@ -362,11 +362,9 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                   </div>
                 )}
               </div>
-
               <div
                 style={{ height: 1, background: "var(--card-light-border)" }}
               />
-
               <div>
                 <h4
                   className="text-[11px] font-bold uppercase tracking-widest mb-3"
@@ -381,11 +379,9 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                   {event.summary}
                 </p>
               </div>
-
               <div
                 style={{ height: 1, background: "var(--card-light-border)" }}
               />
-
               <div>
                 <h4
                   className="text-[11px] font-bold uppercase tracking-widest mb-3"
@@ -394,13 +390,44 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                   Nhân vật liên quan
                 </h4>
                 <div className="space-y-2">
-                  {characters.map((char) => (
-                    <CharacterCompactCard
-                      key={char.id}
-                      character={char}
-                      onClick={handleSelectChar}
-                    />
-                  ))}
+                  {characters.length === 0 ? (
+                    // Skeleton khi đang loading
+                    <>
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border animate-pulse"
+                          style={{
+                            background: "var(--card-light-bg)",
+                            borderColor: "var(--card-light-border)",
+                          }}
+                        >
+                          <div
+                            className="w-8 h-8 rounded-lg shrink-0"
+                            style={{ background: "var(--card-light-border)" }}
+                          />
+                          <div className="flex-1 space-y-1.5">
+                            <div
+                              className="h-3 w-2/3 rounded"
+                              style={{ background: "var(--card-light-border)" }}
+                            />
+                            <div
+                              className="h-2.5 w-1/2 rounded"
+                              style={{ background: "var(--card-light-border)" }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    characters.map((char) => (
+                      <CharacterCompactCard
+                        key={char.id}
+                        character={char}
+                        onClick={handleSelectChar}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
             </div>

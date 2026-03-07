@@ -5,19 +5,22 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { HistoricalEvent, EventEra } from "@/services/event.service";
 import { EventTimeline } from "./event-timeline";
 import { EventDetailModal } from "./event-detail-drawer";
-export function EventsClient({ events }: { events: HistoricalEvent[] }) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [era, setEra] = useState<EventEra>("all");
 
-  const eventId = searchParams.get("event");
-  const selectedEvent = events.find((e) => e.id === eventId) ?? null; // bỏ MOCK_EVENT
+export function EventsClient() {
+  // ← bỏ props
+  const router = useRouter();
+  const [era, setEra] = useState<EventEra>("all");
+  const [selectedEvent, setSelectedEvent] = useState<HistoricalEvent | null>(
+    null,
+  );
 
   const handleSelectEvent = (event: HistoricalEvent) => {
+    setSelectedEvent(event);
     router.push(`?event=${event.id}`, { scroll: false });
   };
 
   const handleClose = () => {
+    setSelectedEvent(null);
     router.push("?", { scroll: false });
   };
 
