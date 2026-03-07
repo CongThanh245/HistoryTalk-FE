@@ -5,6 +5,8 @@ import {
   type CreateEventRequest,
   type UpdateEventRequest,
   GetEventsResponse,
+  EventEra,
+  EventEraBackend,
 } from "@/services/event.service";
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
@@ -82,4 +84,23 @@ export function useDeleteEvent() {
       toast.success("Xóa thành công");
     },
   });
+}
+export function useTimelineEvents(era: EventEra) {
+  const params: GetEventsParams = {
+    page: 1,
+    limit: 100,
+    ...(era !== "all" && { era: era.toUpperCase() as EventEraBackend }),
+  };
+
+  const { data, isLoading, isFetching, isPlaceholderData } = useQuery({
+    queryKey: queryKeys.events.list(params),
+    queryFn: () => eventService.getAllClient(params),
+    staleTime: 1000 * 60 * 5,
+    placeholderData: (prev) => prev,
+  });
+
+  return {
+    events: data?.content ?? [],
+    showSkeleton: isLoading || (isFetching && isPlaceholderData),
+  };
 }
