@@ -52,4 +52,17 @@ export const authApi = {
     );
     return res.data.data;
   },
+  registerStaff: async (data: {
+    userName: string;
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    roleName: "STAFF" | "ADMIN";
+  }): Promise<void> => {
+    const res = await axiosClient.post("/auth/register-staff", data);
+    if (!res.data.success) {
+      throw new Error(res.data.message ?? "Tạo tài khoản thất bại");
+    }
+  },
 };
