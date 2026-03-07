@@ -1,8 +1,7 @@
-import axios from "axios";
+import { axiosClient } from "@/configs/axios.client";
+// import { axiosServer } from "@/configs/axios.server";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-// ── Types ────────────────────────────────────────────────
+// ── Types map với backend ────────────────────────────────
 
 export type EventCategory =
   | "war"
@@ -12,67 +11,96 @@ export type EventCategory =
   | "religion"
   | "other";
 
-// Thời đại — dùng để filter UI
 export type EventEra =
-  | "all"      // Tất cả
-  | "ancient"  // Cổ đại      (trước năm 938)
-  | "medieval" // Trung đại   (938 – 1858)
-  | "modern"   // Cận đại     (1858 – 1945)
-  | "contemporary"; // Hiện đại (1945 – nay)
+  | "all"
+  | "ancient"
+  | "medieval"
+  | "modern"
+  | "contemporary";
 
+// Map với backend response
 export interface HistoricalEvent {
-  id: string;
-  year: number;        // Năm diễn ra (âm = trước CN)
-  yearLabel?: string;  // Hiển thị tuỳ chỉnh, vd: "938 SCN", "200 TCN"
-  title: string;
-  summary: string;
+  id: string; // ← contextId từ backend
+  year: number;
+  yearLabel?: string;
+  title: string; // ← name từ backend
+  summary: string; // ← description từ backend
   category: EventCategory;
   location?: string;
-  imageUrl?: string;   // TODO: ảnh thumbnail
+  imageUrl?: string;
+  era?: string;
+  period?: string;
+  startYear?: number;
+  endYear?: number;
+  beforeTCN?: boolean;
 }
 
 export interface GetEventsParams {
-  page?: number;
-  limit?: number;
-  era?: EventEra;      // TODO: backend filter theo thời đại
-  category?: EventCategory;
   search?: string;
+  page?: number;
+  size?: number;
+  era?: EventEra; // thêm dòng này
 }
 
 export interface GetEventsResponse {
-  data: HistoricalEvent[];
-  total: number;
-  page: number;
-  limit: number;
+  content: HistoricalEvent[];
+  totalElements: number;
   totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+// ── Map backend → HistoricalEvent ───────────────────────
+
+export function mapContext(raw: any): HistoricalEvent {
+  return {
+    id: raw.contextId,
+    title: raw.name,
+    summary: raw.description,
+    year: raw.year ?? raw.startYear ?? 0,
+    yearLabel: raw.yearLabel,
+    category: (raw.category?.toLowerCase() as EventCategory) ?? "other",
+    location: raw.location,
+    imageUrl: raw.imageUrl,
+    era: raw.era,
+    period: raw.period,
+    startYear: raw.startYear,
+    endYear: raw.endYear,
+    beforeTCN: raw.beforeTCN,
+  };
 }
 
 // ── Service ──────────────────────────────────────────────
 
 export const eventService = {
-  getEvents: async (params?: GetEventsParams): Promise<GetEventsResponse> => {
-    const res = await axios.get(`${API_URL}/events`, { params });
-    return res.data;
-  },
-
-  getEventById: async (id: string): Promise<HistoricalEvent> => {
-    const res = await axios.get(`${API_URL}/events/${id}`);
-    return res.data;
+  // Server-side (prefetch trong Server Component)
+  // Client-side (dùng trong hooks)
+  getAllClient: async (
+    params?: GetEventsParams,
+  ): Promise<GetEventsResponse> => {
+    const res = await axiosClient.get("/historical-contexts", { params });
+    const raw = res.data.data;
+    return { ...raw, content: raw.content.map(mapContext) };
   },
 };
 
-// ── Era helper (dùng ở client khi chưa có API filter) ────
+// ── Era helpers ──────────────────────────────────────────
 
-export const ERA_CONFIG: Record<EventEra, { label: string; range: [number, number] }> = {
-  all:           { label: "Tất cả",   range: [-Infinity, Infinity] },
-  ancient:       { label: "Cổ đại",   range: [-Infinity, 937]      },
-  medieval:      { label: "Trung đại", range: [938, 1857]           },
-  modern:        { label: "Cận đại",  range: [1858, 1944]          },
-  contemporary:  { label: "Hiện đại", range: [1945, Infinity]      },
+export const ERA_CONFIG: Record<
+  EventEra,
+  { label: string; range: [number, number] }
+> = {
+  all: { label: "Tất cả", range: [-Infinity, Infinity] },
+  ancient: { label: "Cổ đại", range: [-Infinity, 937] },
+  medieval: { label: "Trung đại", range: [938, 1857] },
+  modern: { label: "Cận đại", range: [1858, 1944] },
+  contemporary: { label: "Hiện đại", range: [1945, Infinity] },
 };
 
 export function getEraFromYear(year: number): Exclude<EventEra, "all"> {
-  if (year <= 937)  return "ancient";
+  if (year <= 937) return "ancient";
   if (year <= 1857) return "medieval";
   if (year <= 1944) return "modern";
   return "contemporary";

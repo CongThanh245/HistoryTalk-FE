@@ -2,14 +2,17 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { HistoricalEvent, EventEra, GetEventsParams } from "@/services/event.service";
+import type {
+  HistoricalEvent,
+  EventEra,
+  GetEventsParams,
+} from "@/services/event.service";
 import { ERA_CONFIG } from "@/services/event.service";
 import { EraFilter } from "../commons/era-filter";
 import { TimelineStrip, type TimelineItem } from "../commons/timeline-strip";
 import { TimelineStripCard, TimelineStripCardSkeleton } from "./timeline-card";
-import { MOCK_EVENTS } from "./event.mock";
-import { eventQueryKeys } from "@/shared/query-key";
-
+import { queryKeys } from "@/shared/query-key";
+import { eventService } from "@/services/event.service";
 const ALL_LIMIT = 100;
 
 // Cooldown giữa 2 bước (ms) — đủ ngắn để lăn liên tục mượt
@@ -22,45 +25,43 @@ interface EventTimelineProps {
   onSelectEvent: (event: HistoricalEvent) => void;
 }
 
-export function EventTimeline({ era, onEraChange, onSelectEvent }: EventTimelineProps) {
-  const [activeId,  setActiveId]  = useState<string>("");
+export function EventTimeline({
+  era,
+  onEraChange,
+  onSelectEvent,
+}: EventTimelineProps) {
+  const [activeId, setActiveId] = useState<string>("");
   const [direction, setDirection] = useState<1 | -1>(1);
 
-  const containerRef  = useRef<HTMLDivElement>(null);
-  const activeIdRef   = useRef<string>("");
-  const eventsRef     = useRef<HistoricalEvent[]>([]);
-  const lastStepAt    = useRef<number>(0);  // timestamp bước cuối
-  const rafId         = useRef<number>(0);  // requestAnimationFrame id
-  const pendingDir    = useRef<0 | 1 | -1>(0); // hướng đang chờ xử lý
+  const containerRef = useRef<HTMLDivElement>(null);
+  const activeIdRef = useRef<string>("");
+  const eventsRef = useRef<HistoricalEvent[]>([]);
+  const lastStepAt = useRef<number>(0); // timestamp bước cuối
+  const rafId = useRef<number>(0); // requestAnimationFrame id
+  const pendingDir = useRef<0 | 1 | -1>(0); // hướng đang chờ xử lý
 
-  const params: GetEventsParams = { era, page: 1, limit: ALL_LIMIT };
+  const params: GetEventsParams = { era, page: 1, size: ALL_LIMIT };
 
   const { data, isLoading } = useQuery({
-    queryKey: eventQueryKeys.list(params),
-    queryFn: async (): Promise<{ data: HistoricalEvent[]; total: number }> => {
-      await new Promise((r) => setTimeout(r, 300));
-      const [from, to] = ERA_CONFIG[era].range;
-      const filtered = MOCK_EVENTS
-        .filter((e) => e.year >= from && e.year <= to)
-        .sort((a, b) => a.year - b.year);
-      return { data: filtered, total: filtered.length };
-    },
+    queryKey: queryKeys.events.list(params),
+    queryFn: () => eventService.getAllClient(params),
     placeholderData: (prev) => prev,
   });
 
-  const events = data?.data ?? [];
-  eventsRef.current   = events;
+  const events = data?.content ?? [];
+  eventsRef.current = events;
 
-  const resolvedActiveId = activeId && events.find((e) => e.id === activeId)
-    ? activeId
-    : events[0]?.id ?? "";
+  const resolvedActiveId =
+    activeId && events.find((e) => e.id === activeId)
+      ? activeId
+      : (events[0]?.id ?? "");
   activeIdRef.current = resolvedActiveId;
 
   const activeEvent = events.find((e) => e.id === resolvedActiveId) ?? null;
-  const activeIdx   = events.findIndex((e) => e.id === resolvedActiveId);
+  const activeIdx = events.findIndex((e) => e.id === resolvedActiveId);
 
   const handleSelect = useCallback((id: string) => {
-    const evs    = eventsRef.current;
+    const evs = eventsRef.current;
     const curIdx = evs.findIndex((e) => e.id === activeIdRef.current);
     const newIdx = evs.findIndex((e) => e.id === id);
     setDirection(newIdx >= curIdx ? 1 : -1);
@@ -91,11 +92,11 @@ export function EventTimeline({ era, onEraChange, onSelectEvent }: EventTimeline
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fireStep = useCallback(() => {
-    const dir  = pendingDir.current;
+    const dir = pendingDir.current;
     if (dir === 0) return;
-    const evs    = eventsRef.current;
+    const evs = eventsRef.current;
     const curIdx = evs.findIndex((ev) => ev.id === activeIdRef.current);
-    const next   = curIdx + dir;
+    const next = curIdx + dir;
     if (next < 0 || next >= evs.length) return;
     lastStepAt.current = Date.now();
     handleSelect(evs[next].id);
@@ -112,35 +113,34 @@ export function EventTimeline({ era, onEraChange, onSelectEvent }: EventTimeline
   }, [handleWheel]);
 
   // Reset khi đổi era
-  useEffect(() => { pendingDir.current = 0; lastStepAt.current = 0; }, [era]);
+  useEffect(() => {
+    pendingDir.current = 0;
+    lastStepAt.current = 0;
+  }, [era]);
 
   // Era counts
-  const eraCounts = Object.fromEntries(
-    (["all", "ancient", "medieval", "modern", "contemporary"] as EventEra[]).map((e) => {
-      const [from, to] = ERA_CONFIG[e].range;
-      return [e, MOCK_EVENTS.filter((ev) => ev.year >= from && ev.year <= to).length];
-    })
-  ) as Record<EventEra, number>;
+  const eraCounts = undefined;
 
   const timelineItems: TimelineItem[] = events.map((ev) => ({
-    id:            ev.id,
-    year:          ev.year,
-    yearLabel:     ev.yearLabel ?? `${Math.abs(ev.year)} ${ev.year < 0 ? "TCN" : "SCN"}`,
-    category:      ev.category,
+    id: ev.id,
+    year: ev.year,
+    yearLabel:
+      ev.yearLabel ?? `${Math.abs(ev.year)} ${ev.year < 0 ? "TCN" : "SCN"}`,
+    category: ev.category,
     categoryColor: getCatColor(ev.category),
   }));
 
   return (
     // overflow-hidden trên wrapper để GSAP translateX không làm tràn scrollbar ngang
-    <div
-      ref={containerRef}
-      className="space-y-5 overflow-hidden"
-    >
+    <div ref={containerRef} className="space-y-5 overflow-hidden">
       {/* Era filter + count */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <EraFilter
           active={era}
-          onChange={(e) => { onEraChange(e); setActiveId(""); }}
+          onChange={(e) => {
+            onEraChange(e);
+            setActiveId("");
+          }}
           counts={eraCounts}
         />
         {!isLoading && (
@@ -154,7 +154,10 @@ export function EventTimeline({ era, onEraChange, onSelectEvent }: EventTimeline
       {isLoading ? (
         <div
           className="h-[72px] rounded-lg animate-pulse"
-          style={{ background: "var(--card-light-bg)", border: "1px solid var(--card-light-border)" }}
+          style={{
+            background: "var(--card-light-bg)",
+            border: "1px solid var(--card-light-border)",
+          }}
         />
       ) : (
         <div
@@ -185,21 +188,24 @@ export function EventTimeline({ era, onEraChange, onSelectEvent }: EventTimeline
                 style={{
                   width: ev.id === resolvedActiveId ? 18 : 6,
                   height: 6,
-                  background: ev.id === resolvedActiveId
-                    ? getCatColor(ev.category)
-                    : "var(--card-light-border)",
+                  background:
+                    ev.id === resolvedActiveId
+                      ? getCatColor(ev.category)
+                      : "var(--card-light-border)",
                   border: "none",
                   padding: 0,
                 }}
               />
             ))}
           </div>
-          <span className="text-[11px]" style={{ color: "var(--content-subtle)" }}>
+          <span
+            className="text-[11px]"
+            style={{ color: "var(--content-subtle)" }}
+          >
             {activeIdx + 1} / {events.length}
           </span>
         </div>
       )}
-
 
       {/* Event card — bọc overflow-hidden để clip GSAP animation */}
       <div className="overflow-hidden">
@@ -227,12 +233,12 @@ export function EventTimeline({ era, onEraChange, onSelectEvent }: EventTimeline
 // ── Helpers ───────────────────────────────────────────────
 
 const CAT_COLORS: Record<string, string> = {
-  war:      "var(--accent-danger)",
+  war: "var(--accent-danger)",
   politics: "var(--accent-gold)",
-  culture:  "var(--accent-blue)",
-  science:  "var(--accent-teal)",
+  culture: "var(--accent-blue)",
+  science: "var(--accent-teal)",
   religion: "var(--accent-bronze)",
-  other:    "var(--content-muted)",
+  other: "var(--content-muted)",
 };
 
 function getCatColor(cat: string): string {

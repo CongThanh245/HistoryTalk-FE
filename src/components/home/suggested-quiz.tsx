@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Flame, ArrowRight, Star, ChevronRight } from "lucide-react";
 import { homeService, type SuggestedQuizItem } from "@/services/home.service";
-import { homeQueryKeys } from "@/shared/query-key";
+import { queryKeys } from "@/shared/query-key";
 
 // ── Skeleton ──────────────────────────────────────────────
 function SkeletonRow() {
@@ -77,7 +77,7 @@ function SuggestedQuizRow({ item }: { item: SuggestedQuizItem }) {
 // ── Main component ────────────────────────────────────────
 export function SuggestedQuiz() {
   const { data, isLoading } = useQuery({
-    queryKey: homeQueryKeys.suggestedQuiz,
+    queryKey: queryKeys.home.suggestedQuiz,
     queryFn: homeService.getSuggestedQuiz,
   });
 

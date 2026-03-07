@@ -1,0 +1,34 @@
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  userName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface User {
+  uid: string;
+  userName: string;
+  email: string;
+  userType: "REGISTERED" | "STAFF" | "ADMIN";
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+}
+
+export interface LoginResponse {
+  user: User;
+  tokens: AuthTokens;
+}
+
+export interface RegisterResponse {
+  message: string;
+}

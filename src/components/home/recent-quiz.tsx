@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Clock, ArrowRight, Trophy } from "lucide-react";
 import { homeService, type RecentQuizItem } from "@/services/home.service";
-import { homeQueryKeys } from "@/shared/query-key";
+import { queryKeys } from "@/shared/query-key";
 
 // ── Skeleton ──────────────────────────────────────────────
 function SkeletonRow() {
@@ -73,7 +73,7 @@ function RecentQuizRow({ item }: { item: RecentQuizItem }) {
 // ── Main component ────────────────────────────────────────
 export function RecentQuiz() {
   const { data, isLoading } = useQuery({
-    queryKey: homeQueryKeys.recentQuiz,
+    queryKey: queryKeys.home.recentQuiz,
     queryFn: homeService.getRecentQuiz,
   });
 

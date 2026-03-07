@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, X, Scroll } from "lucide-react";
 import { toast } from "sonner";
+import { useLogin, useRegister } from "@/features/auth/hooks";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -17,25 +18,57 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [userName, setUserName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const isRegister = mode === "register";
 
-  async function handleSubmit(e: React.FormEvent) {
-    toast.success("Lưu thành công", { description: "Dữ liệu đã cập nhật" });
+  const login = useLogin();
+  const register = useRegister();
 
+  const loading = login.isPending || register.isPending;
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    // TODO: integrate backend
-    setTimeout(() => setLoading(false), 1200);
+
+    if (isRegister) {
+      if (password !== confirmPassword) {
+        toast.error("Mật khẩu không khớp");
+        return;
+      }
+      register.mutate(
+        { userName, email, password, confirmPassword },
+        {
+          onSuccess: () =>
+            toast.success("Đăng ký thành công", {
+              description: "Vui lòng đăng nhập",
+            }),
+          onError: (err: any) =>
+            toast.error("Đăng ký thất bại", {
+              description: err?.response?.data?.message ?? "Vui lòng thử lại",
+            }),
+        },
+      );
+    } else {
+      login.mutate(
+        { email, password },
+        {
+          onError: (err: any) =>
+            toast.error("Đăng nhập thất bại", {
+              description:
+                err?.response?.data?.message ??
+                err?.message ??
+                "Email hoặc mật khẩu không đúng",
+            }),
+        },
+      );
+    }
   }
 
   async function handleGoogleSignIn() {
-    setLoading(true);
     // TODO: integrate Google OAuth
-    setTimeout(() => setLoading(false), 1200);
   }
 
   return (
@@ -51,7 +84,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
             "linear-gradient(145deg, var(--bg-deep) 0%, var(--abyssal-blue) 50%, var(--blue-fantastic) 100%)",
         }}
       >
-        {/* Grain overlay */}
         <div
           aria-hidden
           className="absolute inset-0 opacity-[0.04] pointer-events-none"
@@ -59,8 +91,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
           }}
         />
-
-        {/* Gold radial glow */}
         <div
           aria-hidden
           className="absolute pointer-events-none"
@@ -74,8 +104,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
               "radial-gradient(circle, rgba(201,162,77,0.12) 0%, transparent 70%)",
           }}
         />
-
-        {/* Decorative scroll cards */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px]">
           {[
             {
@@ -119,7 +147,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 opacity: 0.85,
               }}
             >
-              {/* Mini card decoration */}
               <div
                 className="absolute top-4 left-4 w-6 h-1 rounded-full opacity-40"
                 style={{ background: "var(--accent-gold)" }}
@@ -131,8 +158,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
             </div>
           ))}
         </div>
-
-        {/* Text */}
         <div className="relative z-20 p-14 flex flex-col justify-between h-full">
           <div>
             <h1
@@ -165,8 +190,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
               kiểm tra kiến thức của bạn.
             </p>
           </div>
-
-          {/* Logo bottom */}
           <div className="flex items-center gap-3">
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center"
@@ -199,7 +222,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
         className="w-full lg:w-1/2 flex items-center justify-center p-8 relative overflow-y-auto"
         style={{ background: "var(--palladian)" }}
       >
-        {/* Close */}
         <button
           onClick={() => router.push("/")}
           className="absolute top-6 right-6 rounded-lg p-1.5 transition-colors cursor-pointer hover:bg-black/5"
@@ -213,7 +235,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           <div className="flex justify-center gap-8 text-base font-semibold">
             <Link
               href="/register"
-              className={`pb-2 transition-colors border-b-2 ${isRegister ? "border-b-2" : "border-b-2 border-transparent"}`}
+              className="pb-2 transition-colors border-b-2"
               style={{
                 color: isRegister
                   ? "var(--content-heading)"
@@ -225,13 +247,17 @@ export default function AuthForm({ mode }: AuthFormProps) {
             >
               Đăng ký
             </Link>
-            <Link 
+            <Link
               href="/login"
-              className={`pb-2 transition-all border-b-2 hover:brightness-95 ${
-                !isRegister
-                  ? "text-[var(--content-heading)] border-[var(--gold-on-light)]"
-                  : "text-[var(--content-muted)] border-transparent"
-              }`}
+              className="pb-2 transition-all border-b-2 hover:brightness-95"
+              style={{
+                color: !isRegister
+                  ? "var(--content-heading)"
+                  : "var(--content-muted)",
+                borderBottomColor: !isRegister
+                  ? "var(--gold-on-light)"
+                  : "transparent",
+              }}
             >
               Đăng nhập
             </Link>
@@ -243,7 +269,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="w-full h-12 flex items-center justify-center gap-3 rounded-xl border text-sm font-medium transition-all cursor-pointer hover:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full h-12 flex items-center justify-center gap-3 rounded-xl border text-sm font-medium transition-all cursor-pointer hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 background: "var(--card-light-bg)",
                 borderColor: "var(--card-light-border)",
@@ -294,21 +320,22 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Username — chỉ hiện khi register */}
               {isRegister && (
                 <div className="space-y-1.5">
                   <Label
-                    htmlFor="name"
+                    htmlFor="userName"
                     className="text-sm font-medium"
                     style={{ color: "var(--content-text)" }}
                   >
-                    Họ và tên
+                    Tên người dùng
                   </Label>
                   <Input
-                    id="name"
+                    id="userName"
                     type="text"
-                    placeholder="Nhập họ và tên của bạn"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nhập tên người dùng"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
                     className="h-11 text-sm rounded-xl focus-visible:ring-1"
                     style={{
                       background: "var(--card-light-bg)",
@@ -319,6 +346,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 </div>
               )}
 
+              {/* Email */}
               <div className="space-y-1.5">
                 <Label
                   htmlFor="email"
@@ -342,6 +370,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 />
               </div>
 
+              {/* Password */}
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center">
                   <Label
@@ -397,6 +426,53 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   </p>
                 )}
               </div>
+
+              {/* Confirm Password — chỉ hiện khi register */}
+              {isRegister && (
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="confirmPassword"
+                    className="text-sm font-medium"
+                    style={{ color: "var(--content-text)" }}
+                  >
+                    Xác nhận mật khẩu
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Nhập lại mật khẩu của bạn"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="h-11 text-sm rounded-xl pr-10 focus-visible:ring-1"
+                      style={{
+                        background: "var(--card-light-bg)",
+                        borderColor: "var(--card-light-border)",
+                        color: "var(--content-text)",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                      style={{ color: "var(--content-muted)" }}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  {confirmPassword && password !== confirmPassword && (
+                    <p className="text-xs" style={{ color: "#ef4444" }}>
+                      Mật khẩu không khớp
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Submit */}
               <Button

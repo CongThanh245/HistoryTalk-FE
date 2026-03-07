@@ -1,48 +1,36 @@
 import type { GetEventsParams } from "@/services/event.service";
 
-export const QUERY_KEY = {
-  Auth: {
-    Login: "login",
-    Register: "register",
+export const queryKeys = {
+  auth: {
+    login: ["auth", "login"] as const,
+    register: ["auth", "register"] as const,
   },
-};
-// Thêm vào src/lib/react-query/query-keys.ts
 
-// Paste 2 dòng này vào object queryKeys hiện có:
-//
-//   homeRecentQuiz:    ["home", "recent-quiz"],
-//   homeSuggestedQuiz: ["home", "suggested-quiz"],
-//
-// Ví dụ kết quả:
-//
-// export const queryKeys = {
-//   characters:        ["characters"],
-//   character:         (id: string) => ["character", id],
-//   homeRecentQuiz:    ["home", "recent-quiz"],      ← thêm
-//   homeSuggestedQuiz: ["home", "suggested-quiz"],   ← thêm
-// };
+  events: {
+    all: ["events"] as const,
+    list: (params?: GetEventsParams) =>
+      ["events", "list", params ?? {}] as const,
+    detail: (id: string) => ["events", "detail", id] as const,
+  },
 
-export const homeQueryKeys = {
-  recentQuiz: ["home", "recent-quiz"] as const,
-  suggestedQuiz: ["home", "suggested-quiz"] as const,
-};
+  characters: {
+    all: ["characters"] as const,
+    list: (params?: { search?: string; page?: number }) =>
+      ["characters", "list", params ?? {}] as const,
+    detail: (id: string) => ["characters", "detail", id] as const,
+  },
 
-// Thêm vào src/lib/react-query/query-keys.ts
-//
-// events:  ["events"],
-// event:   (id: string) => ["events", id],
+  home: {
+    recentQuiz: ["home", "recent-quiz"] as const,
+    suggestedQuiz: ["home", "suggested-quiz"] as const,
+  },
 
-// Thêm vào src/lib/react-query/query-keys.ts
-export const eventQueryKeys = {
-  all: ["events"] as const,
-  list: (params?: GetEventsParams) => ["events", "list", params ?? {}] as const,
-  detail: (id: string) => ["events", "detail", id] as const,
-};
-export const chatQueryKeys = {
-  event: (eventId: string) => ["chat", "event", eventId] as const,
-  character: (characterId: string) =>
-    ["chat", "character", characterId] as const,
-  sessions: (eventId: string, characterId: string) =>
-    ["chat", "sessions", eventId, characterId] as const,
-  messages: (sessionId: string) => ["chat", "messages", sessionId] as const,
-};
+  chat: {
+    event: (eventId: string) => ["chat", "event", eventId] as const,
+    character: (characterId: string) =>
+      ["chat", "character", characterId] as const,
+    sessions: (eventId: string, characterId: string) =>
+      ["chat", "sessions", eventId, characterId] as const,
+    messages: (sessionId: string) => ["chat", "messages", sessionId] as const,
+  },
+} as const;

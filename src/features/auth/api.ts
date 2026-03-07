@@ -1,18 +1,55 @@
-// import { axiosClient } from "@/configs/axios.client";
-// import { LoginRequest, RegisterRequest } from "./models/request";
-// import { Token } from "./models/response";
+import { axiosClient } from "@/configs/axios.client";
+import {
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+} from "./type";
 
-// export const AuthService = {
-//   login: async (req: LoginRequest): Promise<Result<Token>> => {
-//     await new Promise((resolve) => setTimeout(resolve, 1000));
-//     const response = await axiosClient.post("/auth/sign-in", req);
+export const authApi = {
+  login: async (data: LoginRequest): Promise<LoginResponse> => {
+    const res = await axiosClient.post("/auth/login", data);
 
-//     return response.data;
-//   },
+    if (!res.data.success) {
+      throw new Error(res.data.message ?? "Đăng nhập thất bại");
+    }
 
-//   register: async (req: RegisterRequest): Promise<Result<null>> => {
-//     await new Promise((resolve) => setTimeout(resolve, 1000));
-//     const response = await axiosClient.post("/auth/sign-up", req);
-//     return response.data;
-//   },
-// };
+    const raw = res.data.data;
+
+    // Map flat response → LoginResponse
+    return {
+      user: {
+        uid: raw.uid,
+        userName: raw.userName,
+        email: raw.email,
+        userType: raw.userType,
+      },
+      tokens: {
+        accessToken: raw.accessToken,
+        refreshToken: raw.refreshToken,
+        tokenType: raw.tokenType,
+        expiresIn: raw.expiresIn,
+      },
+    };
+  },
+
+  register: async (data: RegisterRequest): Promise<RegisterResponse> => {
+    const res = await axiosClient.post("/auth/register", data);
+    return res.data.data;
+  },
+
+  logout: async (): Promise<void> => {
+    await axiosClient.post("/auth/logout");
+  },
+
+  refreshToken: async (
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> => {
+    const res = await axiosClient.post(
+      "/auth/refresh-token",
+      { refreshToken },
+      { skipAuthRefresh: true } as any,
+    );
+    return res.data.data;
+  },
+};

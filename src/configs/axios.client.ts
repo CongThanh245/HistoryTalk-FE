@@ -1,121 +1,76 @@
-// // lib/axios.client.ts
-// // CHỈ DÙNG TRÊN BROWSER (Client Components, useEffect, event handlers)
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { useAuthStore } from "@/store/auth.store";
 
-// import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+const BASE_PATH = process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
 
-// const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+type RetryConfig = InternalAxiosRequestConfig & {
+  _retried?: boolean;
+  skipAuthRefresh?: boolean;
+};
 
-// type RetryConfig = InternalAxiosRequestConfig & {
-//   _retryCount?: number;
-//   skipAuthRefresh?: boolean;
-// };
+export const axiosClient = axios.create({
+  baseURL: `${BASE_URL}${BASE_PATH}`,
+  timeout: 15000,
+  headers: { "Content-Type": "application/json" },
+});
 
-// export const axiosClient = axios.create({
-//   baseURL: API_BASE_URL,
-//   timeout: 30000,
-//   headers: {
-//     "Content-Type": "application/json",
-//   },
-// });
+// Gắn token vào mỗi request
+axiosClient.interceptors.request.use(
+  (config) => {
+    const token = useAuthStore.getState().tokens?.accessToken;
 
-// let isRefreshing = false;
-// let refreshQueue: Array<{
-//   resolve: (token: string) => void;
-//   reject: (error: unknown) => void;
-// }> = [];
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
 
-// const processQueue = (error: unknown, token: string | null) => {
-//   refreshQueue.forEach(({ resolve, reject }) => {
-//     error ? reject(error) : resolve(token || "");
-//   });
-//   refreshQueue = [];
-// };
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
-// // Helper functions cho token management
-// const getAccessToken = () => localStorage.getItem("accessToken");
-// const getRefreshToken = () => localStorage.getItem("refreshToken");
-// const setTokens = (access: string, refresh: string) => {
-//   localStorage.setItem("accessToken", access);
-//   localStorage.setItem("refreshToken", refresh);
-// };
-// const clearTokens = () => {
-//   localStorage.removeItem("accessToken");
-//   localStorage.removeItem("refreshToken");
-// };
+// Xử lý 401 — refresh token hoặc redirect login
+axiosClient.interceptors.response.use(
+  (res) => res,
+  async (error: AxiosError) => {
+    const original = error.config as RetryConfig | undefined;
 
-// // Request interceptor: Gắn token vào header
-// axiosClient.interceptors.request.use((config) => {
-//   const token = getAccessToken();
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
-//   return config;
-// });
+    if (
+      !original ||
+      original.skipAuthRefresh ||
+      error.response?.status !== 401 ||
+      original._retried
+    ) {
+      return Promise.reject(error);
+    }
 
-// // Response interceptor: Xử lý refresh token
-// axiosClient.interceptors.response.use(
-//   (response) => response,
-//   async (error: AxiosError) => {
-//     const originalRequest = error.config as RetryConfig | undefined;
+    original._retried = true;
 
-//     // Không xử lý nếu:
-//     // - Không có config
-//     // - Request đánh dấu skip
-//     // - Không phải lỗi 401
-//     if (
-//       !originalRequest ||
-//       originalRequest.skipAuthRefresh ||
-//       error.response?.status !== 401
-//     ) {
-//       return Promise.reject(error);
-//     }
+    try {
+      const refreshToken = useAuthStore.getState().tokens?.refreshToken;
+      if (!refreshToken) throw new Error("No refresh token");
 
-//     // Giới hạn retry để tránh vòng lặp vô hạn
-//     originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
-//     if (originalRequest._retryCount > 3) {
-//       clearTokens();
-//       window.location.href = "/login";
-//       return Promise.reject(error);
-//     }
+      const { data } = await axiosClient.post(
+        "/auth/refresh-token",
+        { refreshToken },
+        { skipAuthRefresh: true } as any,
+      );
 
-//     // Nếu đang refresh, cho vào queue
-//     if (isRefreshing) {
-//       return new Promise((resolve, reject) => {
-//         refreshQueue.push({ resolve, reject });
-//       }).then((token) => {
-//         originalRequest.headers.Authorization = `Bearer ${token}`;
-//         return axiosClient(originalRequest);
-//       });
-//     }
+      if (!data.success) throw new Error("Refresh failed");
 
-//     // Bắt đầu refresh token
-//     isRefreshing = true;
+      useAuthStore.getState().setTokens({
+        accessToken: data.data.accessToken,
+        refreshToken: data.data.refreshToken,
+        tokenType: data.data.tokenType,
+        expiresIn: data.data.expiresIn,
+      });
 
-//     try {
-//       const refreshToken = getRefreshToken();
-//       if (!refreshToken) throw new Error("No refresh token");
-
-//       const { data } = await axiosClient.post<{
-//         accessToken: string;
-//         refreshToken: string;
-//       }>(
-//         "/auth/refresh-token",
-//         { refreshToken },
-//         { skipAuthRefresh: true } as any
-//       );
-
-//       setTokens(data.accessToken, data.refreshToken);
-//       processQueue(null, data.accessToken);
-
-//       originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
-//       return axiosClient(originalRequest);
-//     } catch (refreshError) {
-//       processQueue(refreshError, null);
-//       clearTokens();
-//       window.location.href = "/login";
-//       return Promise.reject(refreshError);
-//     } finally {
-//       isRefreshing = false;
-//     }
-//   }
-// );
+      original.headers.Authorization = `Bearer ${data.data.accessToken}`;
+      return axiosClient(original);
+    } catch {
+      useAuthStore.getState().clearAuth();
+      window.location.href = "/login";
+      return Promise.reject(error);
+    }
+  },
+);
