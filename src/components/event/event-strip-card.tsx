@@ -4,10 +4,10 @@ import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { MapPin, ChevronRight } from "lucide-react";
 import { Card } from "@/components/commons/card";
-import type { HistoricalEvent, EventCategory } from "@/services/event.service";
+import type { HistoricalEvent, EventCategoryLower } from "@/services/event.service";
 
 export const CATEGORY_CONFIG: Record<
-  EventCategory,
+  EventCategoryLower,
   { label: string; color: string; bg: string; image: string }
 > = {
   war: {
