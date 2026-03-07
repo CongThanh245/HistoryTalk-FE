@@ -1,7 +1,10 @@
 import { EventsClient } from "@/components/event/event-page";
+import { eventServerService } from "@/services/event.server.service";
 import { Landmark } from "lucide-react";
 
-export default function EventsPage() {
+export default async function EventsPage() {
+  const { content: events } = await eventServerService.getAll();
+
   return (
     <div className="px-6 py-8 ">
       <div className=" space-y-8">
@@ -36,7 +39,7 @@ export default function EventsPage() {
         </div>
 
         {/* Client boundary — chỉ phần cần state */}
-        <EventsClient />
+        <EventsClient events={events} />
       </div>
     </div>
   );

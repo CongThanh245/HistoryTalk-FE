@@ -1,7 +1,7 @@
 # Core FE — README
 
 ✅ **Mục đích:** Đây là frontend app Next.js (React) cho dự án Core.  
-Tài liệu này mô tả **cấu trúc thư mục** và **cách sử dụng từng folder** để giúp bảo trì và phát triển nhanh hơn.
+Tài liệu này mô tả **cấu trúc thư mục**, **cách sử dụng từng folder**, và **luồng implement API** để giúp bảo trì và phát triển nhanh hơn.
 
 ---
 
@@ -41,7 +41,355 @@ npm run lint
 
 ---
 
-# 📁 Cấu trúc thư mục chi tiết
+## ⚙️ Biến môi trường
+
+Tạo file `.env.local` ở root project:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+NEXT_PUBLIC_API_BASE_PATH=/Historical-tell/api/v1
+```
+
+- `NEXT_PUBLIC_API_BASE_URL` — địa chỉ backend server
+- `NEXT_PUBLIC_API_BASE_PATH` — base path của API (Spring MVC servlet path + `/api/v1`)
+
+---
+
+## 🔌 Luồng implement API — từ A đến Z
+
+> Ví dụ thực tế: implement `GET /historical-contexts` hiển thị danh sách sự kiện lịch sử.
+
+### Tổng quan luồng
+
+```
+Backend API
+  ↓
+services/          → gọi axios, trả về data đã map
+  ↓
+shared/query-key   → định nghĩa query key tập trung
+  ↓
+features/hooks     → useQuery / useMutation với React Query
+  ↓
+components/        → UI gọi hooks, render data
+```
+
+---
+
+### Bước 1 — Định nghĩa types và service (`services/`)
+
+Tạo file `services/event.service.ts`. File này chịu trách nhiệm:
+
+- Khai báo interface/type cho request và response
+- Gọi axios và map response từ backend về format UI cần dùng
+
+```typescript
+// services/event.service.ts
+import { axiosClient } from "@/configs/axios.client";
+
+// ── 1. Khai báo types khớp với backend response ──────────
+
+// Backend trả về uppercase → dùng cho params gửi lên
+export type EventCategory =
+  | "WAR"
+  | "POLITICS"
+  | "CULTURE"
+  | "SCIENCE"
+  | "RELIGION"
+  | "OTHER";
+export type EventEraBackend =
+  | "ANCIENT"
+  | "MEDIEVAL"
+  | "MODERN"
+  | "CONTEMPORARY";
+
+// UI dùng lowercase (để match với config màu sắc, label...)
+export type EventCategoryLower =
+  | "war"
+  | "politics"
+  | "culture"
+  | "science"
+  | "religion"
+  | "other";
+export type EventEra =
+  | "all"
+  | "ancient"
+  | "medieval"
+  | "modern"
+  | "contemporary";
+
+// Interface cho data UI sẽ dùng
+export interface HistoricalEvent {
+  id: string; // ← map từ contextId của backend
+  title: string; // ← map từ name của backend
+  summary: string; // ← map từ description của backend
+  year: number;
+  yearLabel?: string;
+  category: EventCategoryLower;
+  location?: string;
+  imageUrl?: string;
+  era?: EventEraBackend;
+  period?: string;
+  startYear?: number;
+  endYear?: number;
+  beforeTCN?: boolean;
+}
+
+// Interface cho query params gửi lên backend
+export interface GetEventsParams {
+  search?: string;
+  page?: number;
+  limit?: number;
+  era?: EventEraBackend; // Chỉ gửi khi không phải "all"
+  category?: EventCategory; // Chỉ gửi khi có filter
+}
+
+// Interface cho response (pagination)
+export interface GetEventsResponse {
+  content: HistoricalEvent[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+// ── 2. Map function: raw backend → UI type ───────────────
+// Đây là nơi xử lý sự khác nhau giữa field name backend và frontend
+
+export function mapContext(raw: any): HistoricalEvent {
+  return {
+    id: raw.contextId, // rename
+    title: raw.name, // rename
+    summary: raw.description, // rename
+    year: raw.year ?? raw.startYear ?? 0,
+    yearLabel: raw.yearLabel,
+    category: (raw.category?.toLowerCase() as EventCategoryLower) ?? "other", // uppercase → lowercase
+    location: raw.location,
+    imageUrl: raw.imageUrl,
+    era: raw.era as EventEraBackend,
+    period: raw.period,
+    startYear: raw.startYear,
+    endYear: raw.endYear,
+    beforeTCN: raw.beforeTCN,
+  };
+}
+
+// ── 3. Service function gọi API ──────────────────────────
+
+export const eventService = {
+  // Dùng trong Client Components (hooks)
+  getAllClient: async (
+    params?: GetEventsParams,
+  ): Promise<GetEventsResponse> => {
+    const res = await axiosClient.get("/historical-contexts", { params });
+    const raw = res.data.data; // unwrap ApiResponse wrapper { success, message, data }
+    return {
+      ...raw,
+      content: raw.content.map(mapContext), // map từng item
+    };
+  },
+};
+```
+
+> **Lưu ý quan trọng:**
+>
+> - File service **chỉ được import `axiosClient`**, không được import `axiosServer`
+> - `axiosServer` chỉ dùng trong file riêng `*.server.service.ts` để tránh lỗi `next/headers` trong Client Component
+> - Luôn unwrap `res.data.data` vì backend wrap response trong `{ success, message, data, timestamp }`
+
+---
+
+### Bước 2 — Đăng ký query key (`shared/query-key.ts`)
+
+Query key dùng để React Query cache và invalidate đúng data. Tất cả keys đặt tập trung ở một file.
+
+```typescript
+// shared/query-key.ts
+import type { GetEventsParams } from "@/services/event.service";
+
+export const queryKeys = {
+  events: {
+    all: ["events"] as const,
+    list: (params?: GetEventsParams) =>
+      ["events", "list", params ?? {}] as const,
+    detail: (id: string) => ["events", "detail", id] as const,
+  },
+  // Thêm domain mới vào đây...
+  characters: {
+    all: ["characters"] as const,
+    list: (params?: { search?: string; page?: number }) =>
+      ["characters", "list", params ?? {}] as const,
+    detail: (id: string) => ["characters", "detail", id] as const,
+  },
+} as const;
+```
+
+> **Quy tắc đặt key:** `[domain, action, params]`  
+> Ví dụ: `["events", "list", { page: 1, limit: 10 }]`
+
+---
+
+### Bước 3 — Tạo hooks (`features/`)
+
+Hooks là nơi kết hợp service + query key. Component chỉ gọi hook, không gọi service trực tiếp.
+
+```typescript
+// features/events/hooks.ts
+import { useQuery } from "@tanstack/react-query";
+import {
+  eventService,
+  type GetEventsParams,
+  type EventEraBackend,
+} from "@/services/event.service";
+import { queryKeys } from "@/shared/query-key";
+
+export function useEvents(params?: GetEventsParams) {
+  return useQuery({
+    queryKey: queryKeys.events.list(params),
+    queryFn: () => eventService.getAllClient(params),
+    placeholderData: (prev) => prev, // giữ data cũ khi đang load data mới (tránh flash)
+  });
+}
+```
+
+---
+
+### Bước 4 — Dùng trong Component
+
+```typescript
+// components/event/event-list.tsx
+"use client";
+
+import { useEvents } from "@/features/events/hooks";
+import type { EventEraBackend } from "@/services/event.service";
+
+export function EventList({ era }: { era?: EventEraBackend }) {
+  const { data, isLoading, isError } = useEvents({
+    page: 1,
+    limit: 20,
+    ...(era && { era }), // chỉ gửi era khi có giá trị
+  });
+
+  if (isLoading) return <div>Đang tải...</div>;
+  if (isError)   return <div>Có lỗi xảy ra</div>;
+
+  return (
+    <div>
+      {data?.content.map((event) => (
+        <div key={event.id}>
+          <h3>{event.title}</h3>
+          <p>{event.summary}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+### Bước 5 (tuỳ chọn) — Prefetch ở Server Component
+
+Dùng khi trang cần SEO hoặc data phải có sẵn trước khi render. Cần file `*.server.service.ts` riêng vì Server Component có thể dùng `next/headers`.
+
+```typescript
+// services/event.server.service.ts
+import { axiosServer } from "@/configs/axios.server"; // ← chỉ file này mới được dùng axiosServer
+import {
+  GetEventsParams,
+  GetEventsResponse,
+  mapContext,
+} from "./event.service";
+
+export const eventServerService = {
+  getAll: async (params?: GetEventsParams): Promise<GetEventsResponse> => {
+    const res = await axiosServer.get("/historical-contexts", { params });
+    const raw = res.data.data;
+    return { ...raw, content: raw.content.map(mapContext) };
+  },
+};
+```
+
+```typescript
+// app/(app)/events/page.tsx — Server Component
+import { eventServerService } from "@/services/event.server.service";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { getQueryClient } from "@/lib/get-query-client";
+import { queryKeys } from "@/shared/query-key";
+import { EventList } from "@/components/event/event-list";
+
+export default async function EventsPage() {
+  const queryClient = getQueryClient();
+
+  // Prefetch data trên server → client không cần load lại
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.events.list(),
+    queryFn: () => eventServerService.getAll({ page: 1, limit: 20 }),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <EventList />
+    </HydrationBoundary>
+  );
+}
+```
+
+---
+
+### Tóm tắt nhanh — Checklist implement API mới
+
+```
+☐ 1. Tạo services/[domain].service.ts
+       - Khai báo types (request params + response)
+       - Viết mapFunction nếu field name khác nhau
+       - Export service object với các function gọi axiosClient
+
+☐ 2. Thêm query key vào shared/query-key.ts
+       - Theo format [domain, action, params]
+
+☐ 3. Tạo features/[domain]/hooks.ts
+       - useQuery cho GET
+       - useMutation cho POST/PUT/DELETE
+
+☐ 4. Dùng hook trong component
+       - Không gọi service trực tiếp trong component
+
+☐ 5. (Tuỳ chọn) Tạo services/[domain].server.service.ts
+       - Nếu cần prefetch ở Server Component
+```
+
+---
+
+### Ví dụ thực tế — Params có điều kiện
+
+Khi filter có giá trị "tất cả" thì không gửi param lên backend:
+
+```typescript
+// Đúng: chỉ gửi era khi không phải "all"
+const params: GetEventsParams = {
+  page: 1,
+  limit: 100,
+  ...(era !== "all" && { era: era.toUpperCase() as EventEraBackend }),
+  ...(category && { category: category.toUpperCase() as EventCategory }),
+};
+```
+
+---
+
+### Lưu ý quan trọng về axios
+
+| File                      | Dùng ở đâu                        | Token                                     |
+| ------------------------- | --------------------------------- | ----------------------------------------- |
+| `configs/axios.client.ts` | Client Components, hooks          | Tự động gắn Bearer token từ Zustand store |
+| `configs/axios.server.ts` | Server Components, server actions | Đọc token từ cookie                       |
+
+**Không bao giờ** import `axiosServer` vào Client Component — sẽ gây lỗi `next/headers`.
+
+---
+
+## 📁 Cấu trúc thư mục chi tiết
 
 ```
 core-app-fe/
@@ -55,318 +403,106 @@ core-app-fe/
 ├── tsconfig.json
 ├── public/                          # 📦 Tài nguyên tĩnh (hình ảnh, icon, favicon)
 └── src/
-  ├── app/                        # 🏠 Next.js App Router (routes & pages)
-  │   ├── layout.tsx
-  │   ├── favicon.ico
-  │   ├── (admin)/
-  │   │   ├── layout.tsx
-  │   │   └── dashboard/
-  │   ├── (auth)/
-  │   │   └── layout.tsx
-  │   ├── (app)/
-  │   │   ├── layout.tsx
-  │   │   └── page.tsx
-  │   └── (marketing)/
-  │       ├── layout.tsx
-  │       ├── page.tsx
-  │       ├── about/
-  │       │   └── page.tsx
-  │       ├── features/
-  │       │   └── page.tsx
-  │       └── pricing/
-  │           └── page.tsx
-  │
-  ├── components/                 # 🧩 React components
-  │   ├── animation/
-  │   ├── commons/
-  │   │   ├── confirm-dialog.tsx
-  │   │   ├── empty-state.tsx
-  │   │   ├── error-state.tsx
-  │   │   └── loading-state.tsx
-  │   ├── context/
-  │   │   ├── auth-context.tsx
-  │   │   ├── query-client-provider.tsx
-  │   │   └── theme-provider.tsx
-  │   ├── layouts/
-  │   │   └── sidebar/
-  │   │       └── sidebar.tsx
-  │   ├── marketing/
-  │   │   ├── container.tsx
-  │   │   ├── navbar.tsx
-  │   │   ├── section-heading.tsx
-  │   │   └── section/
-  │
-  ├── constants/
-  │   ├── index.ts
-  │   ├── permissions.ts
-  │   ├── roles.ts
-  │   └── theme.ts
-  │
-  ├── features/
-  │   └── auth/
-  │       └── api.ts
-  │
-  ├── lib/
-  │   ├── get-query-client.ts
-  │   ├── hooks/
-  │   │   ├── use-mobile.ts
-  │   │   ├── use-navigation.ts
-  │   │   └── use-url-sync.ts
-  │   ├── react-query/
-  │   │   ├── query-client.ts
-  │   │   └── query-keys.ts
-  │   └── utils/
-  │       ├── cn.ts
-  │       ├── date.ts
-  │       ├── format.ts
-  │       └── helpers.ts
-  │
-  ├── middlewares/
-  │   └── auth.middleware.ts
-  │
-  ├── routers/
-  │   ├── helper.ts
-  │   ├── index.ts
-  │   ├── navigation.ts
-  │   └── sidebar.ts
-  │
-  ├── services/
-  │   ├── character.service.ts
-  │   ├── chat.service.ts
-  │   ├── quiz.service.ts
-  │   └── scenario.service.ts
-  │
-  ├── shared/
-  │   └── query-key.ts
-  │
-  ├── store/
-  │
-  └── styles/
-      ├── globals.css
-      └── theme.css
+    ├── app/                         # 🏠 Next.js App Router (routes & pages)
+    │   ├── layout.tsx
+    │   ├── middleware.ts             # Entry point middleware (chỉ gọi sang middlewares/)
+    │   ├── favicon.ico
+    │   ├── (admin)/
+    │   │   ├── layout.tsx
+    │   │   └── dashboard/
+    │   ├── (auth)/
+    │   │   └── layout.tsx
+    │   ├── (app)/
+    │   │   ├── layout.tsx
+    │   │   └── page.tsx
+    │   └── (marketing)/
+    │       ├── layout.tsx
+    │       └── page.tsx
+    │
+    ├── components/                  # 🧩 React components
+    │   ├── ui/                      # UI primitives (Button, Input, Card...)
+    │   ├── animation/
+    │   ├── commons/                 # Shared components dùng nhiều nơi
+    │   │   ├── confirm-dialog.tsx
+    │   │   ├── empty-state.tsx
+    │   │   ├── error-state.tsx
+    │   │   └── loading-state.tsx
+    │   ├── context/                 # React Context providers
+    │   │   ├── auth-context.tsx
+    │   │   ├── query-client-provider.tsx
+    │   │   └── theme-provider.tsx
+    │   └── layouts/
+    │       └── sidebar/
+    │
+    ├── configs/                     # ⚙️ Cấu hình axios
+    │   ├── axios.client.ts          # Dùng trong Client Components
+    │   └── axios.server.ts          # Dùng trong Server Components
+    │
+    ├── constants/                   # 📋 Hằng số
+    │   ├── index.ts
+    │   ├── permissions.ts
+    │   ├── roles.ts
+    │   └── theme.ts
+    │
+    ├── features/                    # 🎯 Domain logic (hooks React Query)
+    │   ├── auth/
+    │   │   ├── api.ts
+    │   │   ├── hooks.ts
+    │   │   └── types.ts
+    │   └── events/
+    │       └── hooks.ts
+    │
+    ├── lib/                         # 📚 Utilities & helpers
+    │   ├── get-query-client.ts
+    │   ├── hooks/
+    │   ├── react-query/
+    │   └── utils/
+    │
+    ├── middlewares/                 # 🚦 Middleware logic
+    │   └── auth.middleware.ts
+    │
+    ├── routers/                     # 🗺️ Navigation helpers
+    │   ├── sidebar.ts
+    │   └── navigation.ts
+    │
+    ├── services/                    # 🔌 API layer
+    │   ├── event.service.ts         # Client-side service
+    │   ├── event.server.service.ts  # Server-side service (có axiosServer)
+    │   ├── character.service.ts
+    │   ├── chat.service.ts
+    │   └── quiz.service.ts
+    │
+    ├── shared/                      # 🔄 Shared values
+    │   └── query-key.ts             # Tất cả React Query keys
+    │
+    ├── store/                       # 📦 State management (Zustand)
+    │   └── auth.store.ts
+    │
+    └── styles/                      # 🎨 Global styles
+        ├── globals.css
+        └── theme.css
 ```
 
 ---
 
-# 📁 Cấu trúc chính (tóm tắt)
-
-## Root
-
-- `package.json`, `next.config.ts`, `tsconfig.json`  
-  → cấu hình project, scripts, TypeScript
-
-- `public/`  
-  → tài nguyên tĩnh (images, favicon…)
-
----
-
-## src/
-
-### `app/` ✅ (Next.js App Router)
-
-- Dùng cấu trúc route của Next.js  
-- Mỗi route có thể có:
-
-```
-page.tsx
-layout.tsx
-```
-
-- Các folder:
-
-```
-(auth)
-(app)
-(admin)
-(marketing)
-```
-
-được dùng để **group routes** hoặc **tách layout theo context**.
-
----
-
-### `components/` 🧩
-
-- `ui/`  
-  UI primitives dùng khắp app (Button, Input, Card, Table…)
-
-- `layouts/`  
-  Layout chung như sidebar
-
-- `context/`  
-  React Context providers (auth, theme, query client)
-
-- `commons/`  
-  Shared components
-
-```
-confirm-dialog
-empty-state
-error-state
-loading-state
-```
-
-- `screens/`  
-  Page-level components (theo route)
-
-- `animation/`  
-  Animation components
-
----
-
-### `configs/` ⚙️
-
-Cấu hình hệ thống:
-
-```
-axios.client.ts
-axios.server.ts
-```
-
----
-
-### `constants/` 📋
-
-Các giá trị hằng:
-
-```
-roles
-permissions
-theme
-```
-
----
-
-### `features/` 🎯
-
-Logic theo **domain / module**.
-
-Ví dụ:
-
-```
-auth/
-```
-
----
-
-### `lib/` 📚
-
-Chứa utilities và core helpers.
-
-```
-hooks/
-react-query/
-utils/
-```
-
-Ví dụ:
-
-```
-use-navigation
-use-mobile
-use-url-sync
-```
-
----
-
-### `services/` 🔌
-
-API layer:
-
-```
-character.service.ts
-chat.service.ts
-quiz.service.ts
-scenario.service.ts
-```
-
----
-
-### `routers/` 🗺️
-
-Helper cho navigation:
-
-```
-sidebar
-navigation
-```
-
----
-
-### `middlewares/` 🚦
-
-Middleware logic:
-
-```
-auth.middleware.ts
-```
-
----
-
-### `shared/` 🔄
-
-Shared values.
-
-Ví dụ:
-
-```
-query-key.ts
-```
-
----
-
-### `store/` 📦
-
-State management.
-
-Có thể dùng:
-
-```
-Zustand
-Redux
-Jotai
-```
-
----
-
-### `styles/` 🎨
-
-Global styles:
-
-```
-globals.css
-theme.css
-```
-
----
-
-# ✅ Best Practices
+## ✅ Best Practices
 
 - Dùng `components/ui` cho **UI primitives**
-- Dùng `features` cho **domain logic**
-- Dùng `services` cho **API layer**
-- Dùng `react-query` cho **data fetching và caching**
-
-Biến môi trường:
-
-```
-.env.local
-```
-
-Ví dụ:
-
-```
-NEXT_PUBLIC_API_URL=
-```
+- Dùng `features/` cho **domain logic** (hooks React Query)
+- Dùng `services/` cho **API layer** (gọi axios, map data)
+- Dùng `shared/query-key.ts` cho **tất cả React Query keys**
+- Dùng `store/` cho **global state** (Zustand)
+- **Không** gọi service trực tiếp trong component — phải đi qua hook
+- **Không** import `axiosServer` vào Client Component
 
 ---
 
-# 🧩 Kịch bản phổ biến
+## 🧩 Kịch bản phổ biến
 
 ### Thêm trang mới
 
 ```
-src/app/new-page/page.tsx
+src/app/(app)/new-page/page.tsx
 ```
 
 ### Thêm UI component
@@ -375,22 +511,14 @@ src/app/new-page/page.tsx
 src/components/ui/MyComponent.tsx
 ```
 
-### Thêm API service
+### Thêm API service mới
 
 ```
-src/services/new-api.service.ts
+1. src/services/[domain].service.ts         ← types + axiosClient
+2. src/shared/query-key.ts                  ← thêm key mới
+3. src/features/[domain]/hooks.ts           ← useQuery/useMutation
+4. (tuỳ chọn) src/services/[domain].server.service.ts ← nếu cần prefetch
 ```
-
----
-
-# 📌 Mở rộng
-
-Có thể bổ sung:
-
-- README tiếng Anh
-- Coding guidelines
-- Commit message convention
-- Testing structure (Jest / Playwright)
 
 ---
 

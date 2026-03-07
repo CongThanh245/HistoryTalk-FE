@@ -41,9 +41,10 @@ export interface HistoricalEvent {
   yearLabel?: string;
   title: string;
   summary: string;
-  category: EventCategoryLower; // ← lowercase cho UI
+  category: EventCategoryLower;
   location?: string;
   imageUrl?: string;
+  videoUrl?: string; // ← thêm
   era?: EventEraBackend;
   period?: string;
   startYear?: number;
@@ -79,13 +80,23 @@ export function mapContext(raw: any): HistoricalEvent {
     yearLabel: raw.yearLabel,
     category: (raw.category?.toLowerCase() as EventCategoryLower) ?? "other", // ← EventCategoryLower
     location: raw.location,
-    imageUrl: raw.imageUrl,
+    imageUrl: isValidUrl(raw.imageUrl) ? raw.imageUrl : undefined,
+    videoUrl: isValidUrl(raw.videoUrl) ? raw.videoUrl : undefined, // ← thêm
     era: raw.era as EventEraBackend,
     period: raw.period,
     startYear: raw.startYear,
     endYear: raw.endYear,
     beforeTCN: raw.beforeTCN,
   };
+}
+function isValidUrl(url: any): boolean {
+  if (!url || typeof url !== "string") return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ── Service ──────────────────────────────────────────────
@@ -98,7 +109,17 @@ export const eventService = {
   ): Promise<GetEventsResponse> => {
     const res = await axiosClient.get("/historical-contexts", { params });
     const raw = res.data.data;
-    return { ...raw, content: raw.content.map(mapContext) };
+
+    const content = raw.content
+      .map(mapContext)
+      .sort((a: HistoricalEvent, b: HistoricalEvent) => {
+        if (a.year !== b.year) return a.year - b.year;
+        if (a.startYear !== b.startYear)
+          return (a.startYear ?? 0) - (b.startYear ?? 0);
+        return a.title.localeCompare(b.title, "vi");
+      });
+
+    return { ...raw, content };
   },
 };
 

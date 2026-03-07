@@ -11,40 +11,13 @@ import type {
 import {
   CharacterCarouselCard,
   CharacterCompactCard,
-  type Character,
 } from "@/components/commons/character-card";
+import { characterService, type Character } from "@/services/character.service";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/shared/query-key";
 
 // ── Mock ──────────────────────────────────────────────────
 // TODO: fetch từ API /events/:id/characters
-
-const MOCK_CHARACTERS: Record<string, Character[]> = {
-  default: [
-    {
-      id: "ngo-quyen",
-      name: "Ngô Quyền",
-      title: "Danh tướng Đại Việt",
-      role: "Chỉ huy quân Đại Việt",
-      era: "899–944",
-      side: "Đại Việt",
-    },
-    {
-      id: "liu-hongcao",
-      name: "Lưu Hoằng Tháo",
-      title: "Thống soái Nam Hán",
-      role: "Tổng chỉ huy quân Nam Hán",
-      era: "?–938",
-      side: "Nam Hán",
-    },
-    {
-      id: "duong-dinh-nghe",
-      name: "Dương Đình Nghệ",
-      title: "Tiên liệt Đại Việt",
-      role: "Thủ lĩnh tiền nhiệm",
-      era: "?–937",
-      side: "Đại Việt",
-    },
-  ],
-};
 
 const CATEGORY_COLOR: Record<EventCategoryLower, string> = {
   war: "var(--accent-danger)",
@@ -56,8 +29,12 @@ const CATEGORY_COLOR: Record<EventCategoryLower, string> = {
 };
 
 // ── Fake Video Player ─────────────────────────────────────
-
-const FAKE_DURATION = 8;
+// Thay thế toàn bộ FakeVideoPlayer component
+function extractYoutubeId(url?: string): string {
+  if (!url) return "RS9qAwnDa2k"; // fallback
+  const match = url.match(/(?:v=|youtu\.be\/)([^&\n?#]+)/);
+  return match?.[1] ?? "RS9qAwnDa2k";
+}
 
 function FakeVideoPlayer({
   event,
@@ -66,78 +43,49 @@ function FakeVideoPlayer({
   event: HistoricalEvent;
   onFinish: () => void;
 }) {
+  const youtubeId = extractYoutubeId(event.videoUrl);
   const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const start = () => {
     setPlaying(true);
-    timer.current = setInterval(() => {
-      setElapsed((p) => {
-        const n = p + 0.1;
-        setProgress((n / FAKE_DURATION) * 100);
-        if (n >= FAKE_DURATION) {
-          clearInterval(timer.current!);
-          setPlaying(false);
-          onFinish();
-        }
-        return n;
-      });
-    }, 100);
+    // Gửi lệnh play tới YouTube iframe
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: "command", func: "playVideo" }),
+      "*",
+    );
   };
 
   const skip = () => {
-    if (timer.current) clearInterval(timer.current);
     onFinish();
   };
-  useEffect(
-    () => () => {
-      if (timer.current) clearInterval(timer.current);
-    },
-    [],
-  );
-
-  const fmt = (s: number) =>
-    `${Math.floor(s)}:${String(Math.floor((s % 1) * 10)).padStart(2, "0")}`;
 
   return (
     <div className="relative w-full h-full flex flex-col bg-black overflow-hidden">
       <div className="relative flex-1 overflow-hidden">
-        <Image
-          src="/war.jpg"
-          alt={event.title}
-          fill
-          className={`object-cover transition-transform duration-700 ${playing ? "scale-105" : "scale-100"}`}
-          sizes="60vw"
-          priority
+        {/* YouTube iframe thay thế Image */}
+        <iframe
+          ref={iframeRef}
+          className="absolute inset-0 w-full h-full"
+          src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&autoplay=0&controls=0&modestbranding=1&rel=0`}
+          allow="autoplay; encrypted-media"
+          allowFullScreen
         />
+
+        {/* Overlay giữ nguyên */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 pointer-events-none"
           style={{
             background:
               "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.75) 100%)",
           }}
         />
-        <div
-          aria-hidden
-          className="absolute inset-0 opacity-[0.05] mix-blend-overlay pointer-events-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          }}
-        />
-        {playing && (
-          <div
-            className="absolute inset-0 pointer-events-none opacity-[0.07]"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.4) 2px,rgba(0,0,0,0.4) 4px)",
-            }}
-          />
-        )}
+
+        {/* Letterbox */}
         <div className="absolute top-0 left-0 right-0 h-8 bg-black" />
         <div className="absolute bottom-12 left-0 right-0 h-8 bg-black" />
 
+        {/* Play button — chỉ hiện khi chưa play */}
         {!playing && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
             <button
@@ -157,6 +105,7 @@ function FakeVideoPlayer({
           </div>
         )}
 
+        {/* Skip button */}
         {playing && (
           <button
             onClick={skip}
@@ -172,7 +121,7 @@ function FakeVideoPlayer({
           </button>
         )}
 
-        <div className="absolute bottom-8 left-0 right-0 px-6">
+        <div className="absolute bottom-8 left-0 right-0 px-6 pointer-events-none">
           <p className="text-white/50 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">
             Video giới thiệu
           </p>
@@ -182,36 +131,7 @@ function FakeVideoPlayer({
         </div>
       </div>
 
-      <div
-        className="px-5 py-3 flex items-center gap-3"
-        style={{ background: "#080808" }}
-      >
-        <span
-          className="text-[11px] tabular-nums"
-          style={{ color: "rgba(255,255,255,0.35)" }}
-        >
-          {fmt(elapsed)}
-        </span>
-        <div
-          className="flex-1 h-[3px] rounded-full overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.1)" }}
-        >
-          <div
-            className="h-full rounded-full transition-all duration-100"
-            style={{
-              width: `${progress}%`,
-              background:
-                "linear-gradient(90deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-            }}
-          />
-        </div>
-        <span
-          className="text-[11px] tabular-nums"
-          style={{ color: "rgba(255,255,255,0.35)" }}
-        >
-          {fmt(FAKE_DURATION)}
-        </span>
-      </div>
+      {/* Progress bar bỏ đi vì dùng YouTube player thật */}
     </div>
   );
 }
@@ -308,13 +228,19 @@ function CharactersReveal({
 // ── Main Modal ────────────────────────────────────────────
 
 interface EventDetailModalProps {
-  event: HistoricalEvent | null;
-  onClose: () => void;
+  event?: HistoricalEvent | null;
+  onClose?: () => void;
 }
 
 export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   const router = useRouter();
   const [videoFinished, setVideoFinished] = useState(false);
+
+  const { data: characters = [] } = useQuery({
+    queryKey: queryKeys.characters.byContext(event?.id ?? ""),
+    queryFn: () => characterService.getByContext(event!.id),
+    enabled: !!event?.id, // chỉ fetch khi có event
+  });
 
   useEffect(() => {
     setVideoFinished(false);
@@ -326,7 +252,6 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   const yearLabel =
     event.yearLabel ??
     `${Math.abs(event.year)} ${event.year < 0 ? "TCN" : "SCN"}`;
-  const characters = MOCK_CHARACTERS[event.id] ?? MOCK_CHARACTERS.default;
 
   const handleSelectChar = (charId: string) => {
     router.push(`/chat/${charId}`);

@@ -14,7 +14,7 @@ interface ChatClientProps {
 export function ChatClient({ initialCharacterId }: ChatClientProps) {
   const [activeCharacter, setActiveCharacter] = useState<ChatCharacter>(
     // TODO: thay bằng data từ server khi có API
-    MOCK_CHARACTERS[initialCharacterId] ?? MOCK_CHARACTERS["ngo-quyen"]
+    MOCK_CHARACTERS[initialCharacterId] ?? MOCK_CHARACTERS["ngo-quyen"],
   );
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 

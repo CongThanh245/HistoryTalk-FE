@@ -3,92 +3,75 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { EraFilter }    from "@/components/commons/era-filter";
-import { SearchInput }  from "@/components/commons/search-input";
+import { EraFilter } from "@/components/commons/era-filter";
+import { SearchInput } from "@/components/commons/search-input";
 import {
+  characterService,
   characterQueryKeys,
-  MOCK_CHARACTERS,
-  MOCK_PAGE_LIMIT,
+  type GetCharactersParams,
   type GetCharactersResponse,
 } from "@/services/character.service";
-import type { EventEra } from "@/services/event.service";
+import type { EventEra, EventEraBackend } from "@/services/event.service";
 import { ERA_CONFIG } from "@/services/event.service";
-import { CharacterPageCard, CharacterPageCardSkeleton } from "../commons/character-card";
+import {
+  CharacterPageCard,
+  CharacterPageCardSkeleton,
+} from "../commons/character-card";
 import { CustomPagination } from "../commons/pagination";
 
-// ── Mock query ────────────────────────────────────────────
-// TODO: xoá khi có API, dùng characterService.getCharacters(params)
+const PAGE_LIMIT = 8;
 
-function useMockCharacters(era: EventEra, search: string, page: number): {
-  data: GetCharactersResponse | undefined;
-  isLoading: boolean;
-} {
+// ── Era map: UI lowercase → Backend uppercase ─────────────
+
+const ERA_TO_BACKEND: Partial<Record<EventEra, EventEraBackend>> = {
+  ancient: "ANCIENT",
+  medieval: "MEDIEVAL",
+  modern: "MODERN",
+  contemporary: "CONTEMPORARY",
+};
+
+// ── Hook ──────────────────────────────────────────────────
+
+function useCharacters(era: EventEra, search: string, page: number) {
+  const params: GetCharactersParams = {
+    page,
+    limit: PAGE_LIMIT,
+    ...(era !== "all" && { era: ERA_TO_BACKEND[era] }),
+    ...(search.trim() && { search: search.trim() }),
+  };
+
   return useQuery({
-    queryKey: characterQueryKeys.list({ era, search, page }),
-    queryFn: (): GetCharactersResponse => {
-      let result = MOCK_CHARACTERS;
-
-      if (era !== "all") {
-        const [lo, hi] = ERA_CONFIG[era].range;
-        result = result.filter((c) => {
-          // dùng era field trực tiếp
-          const [cLo, cHi] = ERA_CONFIG[c.era].range;
-          return cLo >= lo && cHi <= hi;
-        });
-      }
-
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        result = result.filter(
-          (c) =>
-            c.name.toLowerCase().includes(q) ||
-            c.title.toLowerCase().includes(q) ||
-            c.description.toLowerCase().includes(q) ||
-            c.events.some((e) => e.title.toLowerCase().includes(q))
-        );
-      }
-
-      const total      = result.length;
-      const totalPages = Math.max(1, Math.ceil(total / MOCK_PAGE_LIMIT));
-      const safePage   = Math.min(page, totalPages);
-      const data       = result.slice((safePage - 1) * MOCK_PAGE_LIMIT, safePage * MOCK_PAGE_LIMIT);
-
-      return { data, total, page: safePage, totalPages };
-    },
+    queryKey: characterQueryKeys.list(params),
+    queryFn: () => characterService.getCharacters(params),
     placeholderData: (prev) => prev,
   });
-}
-
-// ── Era counts ────────────────────────────────────────────
-
-function useEraCounts() {
-  const counts: Partial<Record<EventEra, number>> = { all: MOCK_CHARACTERS.length };
-  MOCK_CHARACTERS.forEach((c) => {
-    counts[c.era] = (counts[c.era] ?? 0) + 1;
-  });
-  return counts;
 }
 
 // ── Component ─────────────────────────────────────────────
 
 export function CharactersClient() {
-  const router   = useRouter();
-  const [era,    setEra]    = useState<EventEra>("all");
+  const router = useRouter();
+  const [era, setEra] = useState<EventEra>("all");
   const [search, setSearch] = useState("");
-  const [page,   setPage]   = useState(1);
+  const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useMockCharacters(era, search, page);
-  const eraCounts           = useEraCounts();
+  const { data, isLoading, isError } = useCharacters(era, search, page);
 
-  const handleEraChange = (e: EventEra) => { setEra(e); setPage(1); };
-  const handleSearch    = (s: string)   => { setSearch(s); setPage(1); };
-  const handleClick     = (id: string)  => router.push(`/chat/${id}`);
+  const handleEraChange = (e: EventEra) => {
+    setEra(e);
+    setPage(1);
+  };
+  const handleSearch = (s: string) => {
+    setSearch(s);
+    setPage(1);
+  };
+  const handleClick = (id: string) => router.push(`/chat/${id}`);
 
   return (
     <div className="space-y-5">
       {/* Filters */}
       <div className="flex flex-col gap-3">
-        <EraFilter active={era} onChange={handleEraChange} counts={eraCounts} />
+        <EraFilter active={era} onChange={handleEraChange} />
         <SearchInput
           value={search}
           onChange={handleSearch}
@@ -104,21 +87,43 @@ export function CharactersClient() {
         </p>
       )}
 
+      {/* Error */}
+      {isError && (
+        <div className="py-10 text-center">
+          <p
+            className="text-sm font-medium"
+            style={{ color: "var(--content-heading)" }}
+          >
+            Không thể tải danh sách nhân vật
+          </p>
+          <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
+            Vui lòng thử lại sau
+          </p>
+        </div>
+      )}
+
       {/* Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {isLoading
-          ? Array.from({ length: MOCK_PAGE_LIMIT }).map((_, i) => (
+          ? Array.from({ length: PAGE_LIMIT }).map((_, i) => (
               <CharacterPageCardSkeleton key={i} />
             ))
           : data?.data.map((char) => (
-              <CharacterPageCard key={char.id} character={char} onClick={handleClick} />
+              <CharacterPageCard
+                key={char.id}
+                character={char}
+                onClick={handleClick}
+              />
             ))}
       </div>
 
       {/* Empty */}
-      {!isLoading && data?.data.length === 0 && (
+      {!isLoading && !isError && data?.data.length === 0 && (
         <div className="py-20 text-center">
-          <p className="text-sm font-medium" style={{ color: "var(--content-heading)" }}>
+          <p
+            className="text-sm font-medium"
+            style={{ color: "var(--content-heading)" }}
+          >
             Không tìm thấy nhân vật nào
           </p>
           <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
@@ -127,9 +132,13 @@ export function CharactersClient() {
         </div>
       )}
 
-      {/* Pagination — tái sử dụng từ events */}
+      {/* Pagination */}
       {data && data.totalPages > 1 && (
-        <CustomPagination page={page} totalPages={data.totalPages} onChange={setPage} />
+        <CustomPagination
+          page={page}
+          totalPages={data.totalPages}
+          onChange={setPage}
+        />
       )}
     </div>
   );
