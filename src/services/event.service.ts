@@ -51,6 +51,21 @@ export interface HistoricalEvent {
   endYear?: number;
   beforeTCN?: boolean;
 }
+export interface CreateEventRequest {
+  name: string;
+  description: string;
+  era: EventEraBackend;
+  category: EventCategory;
+  year: number;
+  startYear?: number;
+  endYear?: number;
+  beforeTCN?: boolean;
+  location?: string;
+  imageUrl?: string;
+  videoUrl?: string;
+}
+export interface UpdateEventRequest extends Partial<CreateEventRequest> {}
+
 export interface GetEventsParams {
   search?: string;
   page?: number;
@@ -120,6 +135,22 @@ export const eventService = {
       });
 
     return { ...raw, content };
+  },
+  create: async (data: CreateEventRequest): Promise<HistoricalEvent> => {
+    const res = await axiosClient.post("/historical-contexts", data);
+    return mapContext(res.data.data);
+  },
+
+  update: async (
+    id: string,
+    data: UpdateEventRequest,
+  ): Promise<HistoricalEvent> => {
+    const res = await axiosClient.put(`/historical-contexts/${id}`, data);
+    return mapContext(res.data.data);
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await axiosClient.delete(`/historical-contexts/${id}`);
   },
 };
 

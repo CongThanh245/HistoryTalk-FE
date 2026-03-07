@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { EraFilter } from "@/components/commons/era-filter";
 import { SearchInput } from "@/components/commons/search-input";
+import { useQuery } from "@tanstack/react-query";
 import {
   characterService,
-  characterQueryKeys,
   type GetCharactersParams,
-  type GetCharactersResponse,
 } from "@/services/character.service";
+import { queryKeys } from "@/shared/query-key"; // ← dùng queryKeys chung
 import type { EventEra, EventEraBackend } from "@/services/event.service";
 import { ERA_CONFIG } from "@/services/event.service";
 import {
@@ -41,8 +40,8 @@ function useCharacters(era: EventEra, search: string, page: number) {
   };
 
   return useQuery({
-    queryKey: characterQueryKeys.list(params),
-    queryFn: () => characterService.getCharacters(params),
+    queryKey: queryKeys.characters.list(params), // ← đổi
+    queryFn: () => characterService.getAll(params), // ← đổi
     placeholderData: (prev) => prev,
   });
 }
@@ -82,7 +81,7 @@ export function CharactersClient() {
       {/* Result count */}
       {!isLoading && data && (
         <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
-          {data.total} nhân vật
+          {data.totalElements} nhân vật
           {search && ` · kết quả cho "${search}"`}
         </p>
       )}
@@ -108,7 +107,7 @@ export function CharactersClient() {
           ? Array.from({ length: PAGE_LIMIT }).map((_, i) => (
               <CharacterPageCardSkeleton key={i} />
             ))
-          : data?.data.map((char) => (
+          : data?.content.map((char) => (
               <CharacterPageCard
                 key={char.id}
                 character={char}
@@ -118,7 +117,7 @@ export function CharactersClient() {
       </div>
 
       {/* Empty */}
-      {!isLoading && !isError && data?.data.length === 0 && (
+      {!isLoading && !isError && data?.content.length === 0 && (
         <div className="py-20 text-center">
           <p
             className="text-sm font-medium"

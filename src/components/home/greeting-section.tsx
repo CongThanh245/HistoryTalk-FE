@@ -1,20 +1,21 @@
 "use client";
 
-// TODO: nhận userName từ auth context sau khi có auth
-// import { useAuthContext } from "@/components/context/auth-context";
+import { useAuthStore } from "@/store/auth.store";
 
-interface GreetingSectionProps {
-  userName?: string;
-}
+export function GreetingSection() {
+  const userName = useAuthStore((s) => s.user?.userName ?? "bạn"); // ← đọc từ store
 
-export function GreetingSection({ userName = "Nguyen Thanh" }: GreetingSectionProps) {
   return (
     <div className="space-y-1 pt-2">
-      <h1 className="text-3xl font-bold" style={{ color: "var(--text-inverse)" }}>
+      <h1
+        className="text-3xl font-bold"
+        style={{ color: "var(--text-inverse)" }}
+      >
         Xin chào,{" "}
         <span
           style={{
-            background: "linear-gradient(90deg, var(--gold-on-light) 0%, var(--accent-bronze) 100%)",
+            background:
+              "linear-gradient(90deg, var(--gold-on-light) 0%, var(--accent-bronze) 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             color: "var(--gold-on-light)",

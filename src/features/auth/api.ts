@@ -16,13 +16,12 @@ export const authApi = {
 
     const raw = res.data.data;
 
-    // Map flat response → LoginResponse
     return {
       user: {
         uid: raw.uid,
         userName: raw.userName,
         email: raw.email,
-        userType: raw.userType,
+        role: raw.role, // ← đổi userType → role
       },
       tokens: {
         accessToken: raw.accessToken,
@@ -52,6 +51,7 @@ export const authApi = {
     );
     return res.data.data;
   },
+
   registerStaff: async (data: {
     userName: string;
     name: string;

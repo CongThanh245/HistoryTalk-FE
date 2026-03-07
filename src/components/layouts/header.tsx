@@ -12,9 +12,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SearchInput } from "@/components/commons/search-input"; // ← tái sử dụng
+import { SearchInput } from "@/components/commons/search-input";
+import { useLogout } from "@/features/auth/hooks";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function Header() {
+  const { mutate: logout, isPending } = useLogout();
+  const user = useAuthStore((s) => s.user); // ← đọc từ store
+
+  // Tạo initials từ userName (vd: "STAFF1" → "ST", "Nguyen Thanh" → "NT")
+  const initials = user?.userName
+    ? user.userName
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "?";
+
   return (
     <header
       className="sticky top-0 z-50 h-16 w-full border-b"
@@ -24,7 +39,6 @@ export default function Header() {
       }}
     >
       <div className="flex h-full items-center justify-between px-6 gap-4">
-        {/* Search — dùng SearchInput chung */}
         <div className="flex-1 max-w-xl">
           <SearchInput
             value=""
@@ -34,7 +48,6 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Create button */}
           <Button
             size="sm"
             className="rounded-full px-4 font-medium text-sm border-0 cursor-pointer"
@@ -49,7 +62,6 @@ export default function Header() {
             Tạo mới
           </Button>
 
-          {/* Streak */}
           <div
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border"
             style={{
@@ -75,7 +87,6 @@ export default function Header() {
             </span>
           </div>
 
-          {/* Notifications */}
           <Button
             variant="ghost"
             size="icon"
@@ -89,7 +100,6 @@ export default function Header() {
             />
           </Button>
 
-          {/* Avatar */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -100,7 +110,10 @@ export default function Header() {
                   className="h-9 w-9 border"
                   style={{ borderColor: "var(--oatmeal)" }}
                 >
-                  <AvatarImage src="/api/placeholder/36/36" alt="User" />
+                  <AvatarImage
+                    src="/api/placeholder/36/36"
+                    alt={user?.userName}
+                  />
                   <AvatarFallback
                     className="text-sm font-semibold"
                     style={{
@@ -109,7 +122,7 @@ export default function Header() {
                       color: "var(--bg-deep)",
                     }}
                   >
-                    NT
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -129,15 +142,17 @@ export default function Header() {
                   className="text-sm font-medium"
                   style={{ color: "var(--text-primary)" }}
                 >
-                  Nguyen Thanh
+                  {user?.userName ?? "—"}
                 </p>
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  nguyen@example.com
+                  {user?.email ?? "—"}
                 </p>
               </DropdownMenuLabel>
+
               <DropdownMenuSeparator
                 style={{ background: "var(--border-default)" }}
               />
+
               <DropdownMenuItem
                 className="cursor-pointer"
                 style={{ color: "var(--text-secondary)" }}
@@ -165,14 +180,18 @@ export default function Header() {
                   Pro
                 </Badge>
               </DropdownMenuItem>
+
               <DropdownMenuSeparator
                 style={{ background: "var(--border-default)" }}
               />
+
               <DropdownMenuItem
                 className="cursor-pointer"
                 style={{ color: "var(--accent-danger)" }}
+                disabled={isPending}
+                onClick={() => logout()}
               >
-                Đăng xuất
+                {isPending ? "Đang đăng xuất..." : "Đăng xuất"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

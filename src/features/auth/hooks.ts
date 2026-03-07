@@ -14,9 +14,9 @@ export function useLogin() {
       setAuth(user, tokens);
 
       document.cookie = `auth-token=${tokens.accessToken}; path=/; max-age=${tokens.expiresIn / 1000}`;
-      document.cookie = `auth-role=${user.userType}; path=/; max-age=${tokens.expiresIn / 1000}`;
+      document.cookie = `auth-role=${user.role}; path=/; max-age=${tokens.expiresIn / 1000}`; // ← userType → role
 
-      if (user.userType === "STAFF" || user.userType === "ADMIN") {
+      if (user.role === "STAFF") {
         router.push("/staff");
       } else {
         router.push("/home");
@@ -43,8 +43,12 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => authApi.logout(),
     onSettled: () => {
-      // Dù API lỗi vẫn clear local state
       clearAuth();
+
+      // Xóa cookies
+      document.cookie = "auth-token=; path=/; max-age=0";
+      document.cookie = "auth-role=; path=/; max-age=0";
+
       router.push("/login");
     },
   });

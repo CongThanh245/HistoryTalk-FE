@@ -3,14 +3,20 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ScrollText, Search, Plus, Pencil, Trash2 } from "lucide-react";
-
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
-import { includesLoose, newId, nowLabel } from "@/components/staff/staff-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -29,80 +35,112 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  useEvents,
+  useCreateEvent,
+  useUpdateEvent,
+  useDeleteEvent,
+} from "@/features/events/hooks";
+import type {
+  HistoricalEvent,
+  EventEraBackend,
+  EventCategory,
+} from "@/services/event.service";
 
-type HistoricalContextItem = {
-  id: string;
-  title: string;
-  era: string;
-  summary: string;
-  updatedAt: string;
+type DraftState = {
+  id?: string;
+  name: string;
+  description: string;
+  era: EventEraBackend | "";
+  category: EventCategory | "";
+  year: string;
+  startYear: string;
+  endYear: string;
+  beforeTCN: boolean;
+  location: string;
+  imageUrl: string;
+  videoUrl: string;
+};
+
+const EMPTY_DRAFT: DraftState = {
+  name: "",
+  description: "",
+  era: "",
+  category: "",
+  year: "",
+  startYear: "",
+  endYear: "",
+  beforeTCN: false,
+  location: "",
+  imageUrl: "",
+  videoUrl: "",
 };
 
 export default function StaffContextsPage() {
-  const [items, setItems] = React.useState<HistoricalContextItem[]>([
-    {
-      id: "ctx_ww2",
-      title: "Thế chiến II",
-      era: "1939–1945",
-      summary: "Tổng quan các mặt trận chính, bối cảnh chính trị và hệ quả toàn cầu.",
-      updatedAt: "02/03/2026",
-    },
-    {
-      id: "ctx_nguyen",
-      title: "Triều Nguyễn",
-      era: "1802–1945",
-      summary: "Giai đoạn triều đại phong kiến cuối cùng ở Việt Nam, cải cách và biến động.",
-      updatedAt: "28/02/2026",
-    },
-    {
-      id: "ctx_fr",
-      title: "Cách mạng Pháp",
-      era: "1789",
-      summary: "Phong trào lật đổ chế độ phong kiến, ảnh hưởng tư tưởng và chính trị châu Âu.",
-      updatedAt: "25/02/2026",
-    },
-  ]);
-
   const [search, setSearch] = React.useState("");
-  const [filtered, setFiltered] = React.useState(items);
-
-  React.useEffect(() => {
-    const q = search.trim();
-    if (!q) return setFiltered(items);
-    setFiltered(
-      items.filter(
-        (x) =>
-          includesLoose(x.title, q) ||
-          includesLoose(x.era, q) ||
-          includesLoose(x.summary, q)
-      )
-    );
-  }, [search, items]);
-
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [mode, setMode] = React.useState<"create" | "edit">("create");
-  const [draft, setDraft] = React.useState<{
-    id?: string;
-    title: string;
-    era: string;
-    summary: string;
-  }>({ title: "", era: "", summary: "" });
-
+  const [draft, setDraft] = React.useState<DraftState>(EMPTY_DRAFT);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] =
-    React.useState<HistoricalContextItem | null>(null);
+    React.useState<HistoricalEvent | null>(null);
 
-  const columns = React.useMemo<ColumnDef<HistoricalContextItem>[]>(() => {
-    return [
+  const { data, isLoading, isFetching } = useEvents({
+    search: search || undefined,
+    page: 1,
+    limit: 100,
+  });
+  const createEvent = useCreateEvent();
+  const updateEvent = useUpdateEvent();
+  const deleteEvent = useDeleteEvent();
+
+  const items = data?.content ?? [];
+
+  const set = (field: keyof DraftState) => (val: any) =>
+    setDraft((s) => ({ ...s, [field]: val }));
+
+  const handleSave = () => {
+    const payload = {
+      name: draft.name.trim(),
+      description: draft.description.trim(),
+      era: draft.era as EventEraBackend,
+      category: draft.category as EventCategory,
+      year: Number(draft.year) || 0,
+      startYear: draft.startYear ? Number(draft.startYear) : undefined,
+      endYear: draft.endYear ? Number(draft.endYear) : undefined,
+      beforeTCN: draft.beforeTCN,
+      location: draft.location.trim() || undefined,
+      imageUrl: draft.imageUrl.trim() || undefined,
+      videoUrl: draft.videoUrl.trim() || undefined,
+    };
+
+    if (mode === "create") {
+      createEvent.mutate(payload, { onSuccess: () => setDialogOpen(false) });
+    } else {
+      updateEvent.mutate(
+        { id: draft.id!, data: payload },
+        { onSuccess: () => setDialogOpen(false) },
+      );
+    }
+  };
+
+  const columns = React.useMemo<ColumnDef<HistoricalEvent>[]>(
+    () => [
       {
         accessorKey: "title",
         header: "Tiêu đề",
         cell: ({ row }) => (
           <div className="min-w-[260px]">
-            <p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+            <p
+              className="text-sm font-semibold"
+              style={{ color: "var(--content-heading)" }}
+            >
               {row.original.title}
             </p>
-            <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--content-muted)" }}>
+            <p
+              className="text-xs mt-0.5 line-clamp-1"
+              style={{ color: "var(--content-muted)" }}
+            >
               {row.original.summary}
             </p>
           </div>
@@ -110,19 +148,24 @@ export default function StaffContextsPage() {
       },
       {
         accessorKey: "era",
-        header: "Giai đoạn",
+        header: "Thời đại",
         cell: ({ row }) => (
-          <span className="text-xs font-medium" style={{ color: "var(--content-text)" }}>
-            {row.original.era}
+          <span
+            className="text-xs font-medium"
+            style={{ color: "var(--content-text)" }}
+          >
+            {row.original.era ?? "—"}
           </span>
         ),
       },
       {
-        accessorKey: "updatedAt",
-        header: "Cập nhật",
+        accessorKey: "year",
+        header: "Năm",
         cell: ({ row }) => (
           <span className="text-xs" style={{ color: "var(--content-muted)" }}>
-            {row.original.updatedAt}
+            {row.original.year < 0
+              ? `${Math.abs(row.original.year)} TCN`
+              : row.original.year}
           </span>
         ),
       },
@@ -132,27 +175,35 @@ export default function StaffContextsPage() {
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1">
             <Button
-              type="button"
               variant="ghost"
               size="icon-sm"
               className="rounded-full"
               onClick={() => {
+                const e = row.original;
                 setMode("edit");
                 setDraft({
-                  id: row.original.id,
-                  title: row.original.title,
-                  era: row.original.era,
-                  summary: row.original.summary,
+                  id: e.id,
+                  name: e.title,
+                  description: e.summary,
+                  era: (e.era ?? "") as EventEraBackend | "",
+                  category: (e.category.toUpperCase() ?? "") as
+                    | EventCategory
+                    | "",
+                  year: String(e.year ?? ""),
+                  startYear: String(e.startYear ?? ""),
+                  endYear: String(e.endYear ?? ""),
+                  beforeTCN: e.beforeTCN ?? false,
+                  location: e.location ?? "",
+                  imageUrl: e.imageUrl ?? "",
+                  videoUrl: e.videoUrl ?? "",
                 });
                 setDialogOpen(true);
               }}
               style={{ color: "var(--header-text-muted)" }}
-              aria-label="Sửa"
             >
               <Pencil className="h-4 w-4" />
             </Button>
             <Button
-              type="button"
               variant="ghost"
               size="icon-sm"
               className="rounded-full"
@@ -161,15 +212,17 @@ export default function StaffContextsPage() {
                 setDeleteOpen(true);
               }}
               style={{ color: "var(--accent-danger)" }}
-              aria-label="Xóa"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         ),
       },
-    ];
-  }, []);
+    ],
+    [],
+  );
+
+  const isPending = createEvent.isPending || updateEvent.isPending;
 
   return (
     <StaffShell
@@ -189,12 +242,26 @@ export default function StaffContextsPage() {
           <div className="space-y-1">
             <h2
               className="text-base font-semibold"
-              style={{ color: "var(--content-heading)", fontFamily: "'Georgia', serif" }}
+              style={{
+                color: "var(--content-heading)",
+                fontFamily: "'Georgia', serif",
+              }}
             >
               Danh sách bối cảnh
             </h2>
             <p className="text-sm" style={{ color: "var(--content-muted)" }}>
-              Search realtime + CRUD (mock) để mô phỏng workflow quản trị.
+              {isLoading ? (
+                "Đang tải..."
+              ) : (
+                <>
+                  {items.length} bản ghi
+                  {isFetching && (
+                    <span className="ml-2 text-xs opacity-50">
+                      Đang cập nhật...
+                    </span>
+                  )}
+                </>
+              )}
             </p>
           </div>
 
@@ -207,136 +274,199 @@ export default function StaffContextsPage() {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm theo tiêu đề, giai đoạn, mô tả..."
+                placeholder="Tìm theo tiêu đề..."
                 className="pl-10 h-10 rounded-xl border"
                 style={{
-                  background: "rgba(27, 38, 50, 0.05)",
+                  background: "rgba(27,38,50,0.05)",
                   borderColor: "var(--card-light-border)",
-                  color: "var(--content-text)",
                 }}
               />
             </div>
             <Button
-              type="button"
               className="h-10 rounded-xl px-4 font-semibold border-0"
               onClick={() => {
                 setMode("create");
-                setDraft({ title: "", era: "", summary: "" });
+                setDraft(EMPTY_DRAFT);
                 setDialogOpen(true);
               }}
               style={{
-                background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+                background:
+                  "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
                 color: "var(--bg-deep)",
                 boxShadow: "0 0 14px var(--accent-gold-glow)",
               }}
             >
-              <Plus className="h-4 w-4 mr-1.5" />
-              Add New
+              <Plus className="h-4 w-4 mr-1.5" /> Add New
             </Button>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <StaffDataTable
-            columns={columns}
-            data={filtered}
-            emptyMessage="Không tìm thấy bối cảnh phù hợp."
-          />
-          <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
-            Hiển thị {filtered.length} / {items.length} bản ghi
-          </p>
-        </div>
+        <StaffDataTable
+          columns={columns}
+          data={items}
+          emptyMessage="Không tìm thấy bối cảnh phù hợp."
+        />
       </section>
 
+      {/* Dialog create/edit */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[520px]" style={{ borderColor: "var(--card-light-border)" }}>
+        <DialogContent
+          className="sm:max-w-[580px] max-h-[90vh] overflow-y-auto"
+          style={{ borderColor: "var(--card-light-border)" }}
+        >
           <DialogHeader>
             <DialogTitle style={{ color: "var(--content-heading)" }}>
-              {mode === "create" ? "Add Historical Context" : "Edit Historical Context"}
+              {mode === "create"
+                ? "Add Historical Context"
+                : "Edit Historical Context"}
             </DialogTitle>
             <DialogDescription style={{ color: "var(--content-muted)" }}>
-              Thông tin dùng để hiển thị bối cảnh và làm dữ liệu cho trải nghiệm tương tác.
+              Thông tin bối cảnh lịch sử hiển thị cho người dùng.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4">
+            {/* Name */}
             <div className="grid gap-2">
-              <Label htmlFor="ctx-title">Tiêu đề</Label>
+              <Label>Tên sự kiện *</Label>
               <Input
-                id="ctx-title"
-                value={draft.title}
-                onChange={(e) => setDraft((s) => ({ ...s, title: e.target.value }))}
-                placeholder="VD: Thế chiến II"
+                value={draft.name}
+                onChange={(e) => set("name")(e.target.value)}
+                placeholder="VD: Trận Bạch Đằng"
               />
             </div>
+
+            {/* Description */}
             <div className="grid gap-2">
-              <Label htmlFor="ctx-era">Giai đoạn</Label>
-              <Input
-                id="ctx-era"
-                value={draft.era}
-                onChange={(e) => setDraft((s) => ({ ...s, era: e.target.value }))}
-                placeholder="VD: 1939–1945"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="ctx-summary">Tóm tắt</Label>
+              <Label>Mô tả *</Label>
               <Textarea
-                id="ctx-summary"
-                value={draft.summary}
-                onChange={(e) => setDraft((s) => ({ ...s, summary: e.target.value }))}
-                placeholder="Mô tả ngắn gọn, tập trung vào bối cảnh và ý nghĩa."
-                className="min-h-[110px]"
+                value={draft.description}
+                onChange={(e) => set("description")(e.target.value)}
+                placeholder="Bối cảnh lịch sử..."
+                className="min-h-[90px]"
+              />
+            </div>
+
+            {/* Era + Category */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label>Thời đại *</Label>
+                <Select value={draft.era} onValueChange={set("era")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn thời đại" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ANCIENT">Cổ đại</SelectItem>
+                    <SelectItem value="MEDIEVAL">Trung đại</SelectItem>
+                    <SelectItem value="MODERN">Cận đại</SelectItem>
+                    <SelectItem value="CONTEMPORARY">Hiện đại</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Danh mục *</Label>
+                <Select value={draft.category} onValueChange={set("category")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn danh mục" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WAR">Chiến tranh</SelectItem>
+                    <SelectItem value="POLITICS">Chính trị</SelectItem>
+                    <SelectItem value="CULTURE">Văn hoá</SelectItem>
+                    <SelectItem value="SCIENCE">Khoa học</SelectItem>
+                    <SelectItem value="RELIGION">Tôn giáo</SelectItem>
+                    <SelectItem value="OTHER">Khác</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Year + startYear + endYear */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="grid gap-2">
+                <Label>Năm *</Label>
+                <Input
+                  type="number"
+                  value={draft.year}
+                  onChange={(e) => set("year")(e.target.value)}
+                  placeholder="VD: 938"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Năm bắt đầu</Label>
+                <Input
+                  type="number"
+                  value={draft.startYear}
+                  onChange={(e) => set("startYear")(e.target.value)}
+                  placeholder="VD: 938"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Năm kết thúc</Label>
+                <Input
+                  type="number"
+                  value={draft.endYear}
+                  onChange={(e) => set("endYear")(e.target.value)}
+                  placeholder="VD: 939"
+                />
+              </div>
+            </div>
+
+            {/* beforeTCN */}
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={draft.beforeTCN}
+                onCheckedChange={set("beforeTCN")}
+              />
+              <Label>Trước Công Nguyên (TCN)</Label>
+            </div>
+
+            {/* Location */}
+            <div className="grid gap-2">
+              <Label>Địa điểm</Label>
+              <Input
+                value={draft.location}
+                onChange={(e) => set("location")(e.target.value)}
+                placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
+              />
+            </div>
+
+            {/* imageUrl + videoUrl */}
+            <div className="grid gap-2">
+              <Label>URL hình ảnh</Label>
+              <Input
+                value={draft.imageUrl}
+                onChange={(e) => set("imageUrl")(e.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>URL video (YouTube)</Label>
+              <Input
+                value={draft.videoUrl}
+                onChange={(e) => set("videoUrl")(e.target.value)}
+                placeholder="https://youtube.com/watch?v=..."
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
             <Button
-              type="button"
-              onClick={() => {
-                const title = draft.title.trim();
-                if (!title) return;
-
-                if (mode === "create") {
-                  const next: HistoricalContextItem = {
-                    id: newId(),
-                    title,
-                    era: draft.era.trim(),
-                    summary: draft.summary.trim(),
-                    updatedAt: nowLabel(),
-                  };
-                  setItems((prev) => [next, ...prev]);
-                } else {
-                  const id = draft.id;
-                  if (!id) return;
-                  setItems((prev) =>
-                    prev.map((x) =>
-                      x.id === id
-                        ? {
-                            ...x,
-                            title,
-                            era: draft.era.trim(),
-                            summary: draft.summary.trim(),
-                            updatedAt: nowLabel(),
-                          }
-                        : x
-                    )
-                  );
-                }
-
-                setDialogOpen(false);
-              }}
-              disabled={!draft.title.trim()}
+              onClick={handleSave}
+              disabled={
+                !draft.name.trim() || !draft.era || !draft.category || isPending
+              }
             >
-              Save
+              {isPending ? "Đang lưu..." : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Delete confirm */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent style={{ borderColor: "var(--card-light-border)" }}>
           <AlertDialogHeader>
@@ -344,7 +474,7 @@ export default function StaffContextsPage() {
               Xóa bối cảnh lịch sử?
             </AlertDialogTitle>
             <AlertDialogDescription style={{ color: "var(--content-muted)" }}>
-              Thao tác này sẽ xóa bản ghi khỏi danh sách mock trên frontend.
+              Thao tác này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -352,13 +482,16 @@ export default function StaffContextsPage() {
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               onClick={() => {
-                const target = deleteTarget;
-                if (!target) return;
-                setItems((prev) => prev.filter((x) => x.id !== target.id));
-                setDeleteTarget(null);
+                if (!deleteTarget) return;
+                deleteEvent.mutate(deleteTarget.id, {
+                  onSuccess: () => {
+                    setDeleteOpen(false);
+                    setDeleteTarget(null);
+                  },
+                });
               }}
             >
-              Xóa
+              {deleteEvent.isPending ? "Đang xóa..." : "Xóa"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -366,4 +499,3 @@ export default function StaffContextsPage() {
     </StaffShell>
   );
 }
-

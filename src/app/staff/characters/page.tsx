@@ -3,10 +3,9 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Users, Search, Plus, Pencil, Trash2 } from "lucide-react";
-
+import Image from "next/image";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
-import { includesLoose, newId, nowLabel } from "@/components/staff/staff-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,116 +28,160 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  useCharacters,
+  useCreateCharacter,
+  useUpdateCharacter,
+  useDeleteCharacter,
+} from "@/features/characters/hooks";
+import type { Character } from "@/services/character.service";
+import { useEvents } from "@/features/events/hooks";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-type CharacterItem = {
-  id: string;
+type DraftState = {
+  id?: string;
   name: string;
-  era: string;
-  role: string;
-  bio: string;
-  updatedAt: string;
+  title: string;
+  background: string;
+  image: string;
+  personality: string;
+  lifespan: string;
+  side: string;
+  contextId: string;
+};
+
+const EMPTY_DRAFT: DraftState = {
+  name: "",
+  title: "",
+  background: "",
+  image: "",
+  personality: "",
+  lifespan: "",
+  side: "",
+  contextId: "",
 };
 
 export default function StaffCharactersPage() {
-  const [items, setItems] = React.useState<CharacterItem[]>([
-    {
-      id: "ch_hochi",
-      name: "Hồ Chí Minh",
-      era: "1890–1969",
-      role: "Lãnh đạo",
-      bio: "Nhân vật chủ chốt của phong trào giải phóng dân tộc Việt Nam thế kỷ XX.",
-      updatedAt: "01/03/2026",
-    },
-    {
-      id: "ch_napoleon",
-      name: "Napoléon Bonaparte",
-      era: "1769–1821",
-      role: "Hoàng đế",
-      bio: "Nhà quân sự và chính trị, định hình châu Âu đầu thế kỷ XIX.",
-      updatedAt: "20/02/2026",
-    },
-    {
-      id: "ch_tranhu",
-      name: "Trần Hưng Đạo",
-      era: "1228–1300",
-      role: "Tướng lĩnh",
-      bio: "Danh tướng thời Trần, nổi bật với chiến thắng trước quân Nguyên–Mông.",
-      updatedAt: "18/02/2026",
-    },
-  ]);
-
   const [search, setSearch] = React.useState("");
-  const [filtered, setFiltered] = React.useState(items);
-
-  React.useEffect(() => {
-    const q = search.trim();
-    if (!q) return setFiltered(items);
-    setFiltered(
-      items.filter(
-        (x) =>
-          includesLoose(x.name, q) ||
-          includesLoose(x.era, q) ||
-          includesLoose(x.role, q) ||
-          includesLoose(x.bio, q)
-      )
-    );
-  }, [search, items]);
-
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [mode, setMode] = React.useState<"create" | "edit">("create");
-  const [draft, setDraft] = React.useState<{
-    id?: string;
-    name: string;
-    era: string;
-    role: string;
-    bio: string;
-  }>({ name: "", era: "", role: "", bio: "" });
-
+  const [draft, setDraft] = React.useState<DraftState>(EMPTY_DRAFT);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
-  const [deleteTarget, setDeleteTarget] = React.useState<CharacterItem | null>(
-    null
+  const [deleteTarget, setDeleteTarget] = React.useState<Character | null>(
+    null,
   );
+  const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
+    page: 1,
+    limit: 100,
+  });
 
-  const columns = React.useMemo<ColumnDef<CharacterItem>[]>(() => {
-    return [
+  const eventOptions = eventsData?.content ?? [];
+
+  const { data, isLoading, isFetching } = useCharacters({
+    page: 1,
+    limit: 100,
+  });
+  const createCharacter = useCreateCharacter();
+  const updateCharacter = useUpdateCharacter();
+  const deleteCharacter = useDeleteCharacter();
+
+  const items = React.useMemo(() => {
+    const all = data?.content ?? [];
+    const q = search.trim().toLowerCase();
+    if (!q) return all;
+    return all.filter(
+      (x) =>
+        x.name.toLowerCase().includes(q) ||
+        x.title?.toLowerCase().includes(q) ||
+        x.side?.toLowerCase().includes(q),
+    );
+  }, [data, search]);
+
+  const set = (field: keyof DraftState) => (val: string) =>
+    setDraft((s) => ({ ...s, [field]: val }));
+
+  const handleSave = () => {
+    const payload = {
+      name: draft.name.trim(),
+      title: draft.title.trim(),
+      background: draft.background.trim() || undefined,
+      image: draft.image.trim() || undefined,
+      personality: draft.personality.trim() || undefined,
+      lifespan: draft.lifespan.trim() || undefined,
+      side: draft.side.trim() || undefined,
+      contextId: draft.contextId.trim() || undefined,
+    };
+
+    if (mode === "create") {
+      createCharacter.mutate(payload, {
+        onSuccess: () => setDialogOpen(false),
+      });
+    } else {
+      updateCharacter.mutate(
+        { id: draft.id!, data: payload },
+        { onSuccess: () => setDialogOpen(false) },
+      );
+    }
+  };
+
+  const columns = React.useMemo<ColumnDef<Character>[]>(
+    () => [
       {
         accessorKey: "name",
         header: "Nhân vật",
         cell: ({ row }) => (
-          <div className="min-w-[260px]">
-            <p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
-              {row.original.name}
-            </p>
-            <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--content-muted)" }}>
-              {row.original.bio}
-            </p>
+          <div className="flex items-center gap-3 min-w-[220px]">
+            <div
+              className="w-9 h-9 rounded-lg overflow-hidden shrink-0 relative"
+              style={{ background: "var(--card-light-border)" }}
+            >
+              {row.original.imageUrl && (
+                <Image
+                  src={row.original.imageUrl}
+                  alt={row.original.name}
+                  fill
+                  className="object-cover"
+                />
+              )}
+            </div>
+            <div>
+              <p
+                className="text-sm font-semibold"
+                style={{ color: "var(--content-heading)" }}
+              >
+                {row.original.name}
+              </p>
+              <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                {row.original.title}
+              </p>
+            </div>
           </div>
         ),
       },
       {
-        accessorKey: "role",
-        header: "Vai trò",
+        accessorKey: "side",
+        header: "Phe",
         cell: ({ row }) => (
-          <span className="text-xs font-medium" style={{ color: "var(--content-text)" }}>
-            {row.original.role}
+          <span
+            className="text-xs font-medium"
+            style={{ color: "var(--content-text)" }}
+          >
+            {row.original.side ?? "—"}
           </span>
         ),
       },
       {
-        accessorKey: "era",
-        header: "Thời kỳ",
+        accessorKey: "lifespan",
+        header: "Thời gian sống",
         cell: ({ row }) => (
           <span className="text-xs" style={{ color: "var(--content-muted)" }}>
-            {row.original.era}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "updatedAt",
-        header: "Cập nhật",
-        cell: ({ row }) => (
-          <span className="text-xs" style={{ color: "var(--content-muted)" }}>
-            {row.original.updatedAt}
+            {row.original.lifespan ?? "—"}
           </span>
         ),
       },
@@ -148,28 +191,30 @@ export default function StaffCharactersPage() {
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1">
             <Button
-              type="button"
               variant="ghost"
               size="icon-sm"
               className="rounded-full"
               onClick={() => {
+                const c = row.original;
                 setMode("edit");
                 setDraft({
-                  id: row.original.id,
-                  name: row.original.name,
-                  era: row.original.era,
-                  role: row.original.role,
-                  bio: row.original.bio,
+                  id: c.id,
+                  name: c.name ?? "",
+                  title: c.title ?? "",
+                  background: c.background ?? "",
+                  image: c.imageUrl ?? "",
+                  personality: c.personality ?? "",
+                  lifespan: c.lifespan ?? "",
+                  side: c.side ?? "",
+                  contextId: c.contextId ?? "",
                 });
                 setDialogOpen(true);
               }}
               style={{ color: "var(--header-text-muted)" }}
-              aria-label="Sửa"
             >
               <Pencil className="h-4 w-4" />
             </Button>
             <Button
-              type="button"
               variant="ghost"
               size="icon-sm"
               className="rounded-full"
@@ -178,22 +223,24 @@ export default function StaffCharactersPage() {
                 setDeleteOpen(true);
               }}
               style={{ color: "var(--accent-danger)" }}
-              aria-label="Xóa"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         ),
       },
-    ];
-  }, []);
+    ],
+    [],
+  );
+
+  const isPending = createCharacter.isPending || updateCharacter.isPending;
 
   return (
     <StaffShell
-      title="Manage Character"
-      description="Quản lý hồ sơ nhân vật phục vụ chat và quiz."
+      title="Manage Characters"
+      description="Tạo, cập nhật và kiểm soát nhân vật lịch sử."
       icon={Users}
-      accent="var(--accent-bronze)"
+      accent="var(--accent-blue)"
     >
       <section
         className="rounded-2xl border p-6 space-y-5"
@@ -206,17 +253,31 @@ export default function StaffCharactersPage() {
           <div className="space-y-1">
             <h2
               className="text-base font-semibold"
-              style={{ color: "var(--content-heading)", fontFamily: "'Georgia', serif" }}
+              style={{
+                color: "var(--content-heading)",
+                fontFamily: "'Georgia', serif",
+              }}
             >
               Danh sách nhân vật
             </h2>
             <p className="text-sm" style={{ color: "var(--content-muted)" }}>
-              Search realtime + CRUD (mock) để mô phỏng workflow quản trị.
+              {isLoading ? (
+                "Đang tải..."
+              ) : (
+                <>
+                  {items.length} nhân vật
+                  {isFetching && (
+                    <span className="ml-2 text-xs opacity-50">
+                      Đang cập nhật...
+                    </span>
+                  )}
+                </>
+              )}
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
-            <div className="relative w-full sm:w-[340px]">
+            <div className="relative w-full sm:w-[300px]">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
                 style={{ color: "var(--content-subtle)" }}
@@ -224,149 +285,164 @@ export default function StaffCharactersPage() {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm theo tên, thời kỳ, vai trò..."
+                placeholder="Tìm theo tên, chức vị, phe..."
                 className="pl-10 h-10 rounded-xl border"
                 style={{
-                  background: "rgba(27, 38, 50, 0.05)",
+                  background: "rgba(27,38,50,0.05)",
                   borderColor: "var(--card-light-border)",
-                  color: "var(--content-text)",
                 }}
               />
             </div>
             <Button
-              type="button"
               className="h-10 rounded-xl px-4 font-semibold border-0"
               onClick={() => {
                 setMode("create");
-                setDraft({ name: "", era: "", role: "", bio: "" });
+                setDraft(EMPTY_DRAFT);
                 setDialogOpen(true);
               }}
               style={{
-                background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-                color: "var(--bg-deep)",
-                boxShadow: "0 0 14px var(--accent-gold-glow)",
+                background:
+                  "linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-teal) 100%)",
+                color: "#fff",
               }}
             >
-              <Plus className="h-4 w-4 mr-1.5" />
-              Add New
+              <Plus className="h-4 w-4 mr-1.5" /> Add New
             </Button>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <StaffDataTable
-            columns={columns}
-            data={filtered}
-            emptyMessage="Không tìm thấy nhân vật phù hợp."
-          />
-          <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
-            Hiển thị {filtered.length} / {items.length} bản ghi
-          </p>
-        </div>
+        <StaffDataTable
+          columns={columns}
+          data={items}
+          emptyMessage="Không tìm thấy nhân vật phù hợp."
+        />
       </section>
 
+      {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[560px]" style={{ borderColor: "var(--card-light-border)" }}>
+        <DialogContent
+          className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto"
+          style={{ borderColor: "var(--card-light-border)" }}
+        >
           <DialogHeader>
             <DialogTitle style={{ color: "var(--content-heading)" }}>
               {mode === "create" ? "Add Character" : "Edit Character"}
             </DialogTitle>
             <DialogDescription style={{ color: "var(--content-muted)" }}>
-              Cập nhật thông tin nhân vật để dùng cho chat và nội dung học tập.
+              Thông tin nhân vật lịch sử.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label>Tên nhân vật *</Label>
+                <Input
+                  value={draft.name}
+                  onChange={(e) => set("name")(e.target.value)}
+                  placeholder="VD: Ngô Quyền"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Chức vị *</Label>
+                <Input
+                  value={draft.title}
+                  onChange={(e) => set("title")(e.target.value)}
+                  placeholder="VD: Tiết độ sứ"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label>Phe / Quốc gia</Label>
+                <Input
+                  value={draft.side}
+                  onChange={(e) => set("side")(e.target.value)}
+                  placeholder="VD: Đại Việt"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Năm sống</Label>
+                <Input
+                  value={draft.lifespan}
+                  onChange={(e) => set("lifespan")(e.target.value)}
+                  placeholder="VD: 898–944"
+                />
+              </div>
+            </div>
             <div className="grid gap-2">
-              <Label htmlFor="ch-name">Tên nhân vật</Label>
+              <Label>Bối cảnh lịch sử</Label>
+              <Select
+                value={draft.contextId}
+                onValueChange={set("contextId")}
+                disabled={isLoadingEvents}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      isLoadingEvents
+                        ? "Đang tải..."
+                        : "Chọn bối cảnh liên quan"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {eventOptions.map((ev) => (
+                    <SelectItem key={ev.id} value={ev.id}>
+                      {ev.title} —{" "}
+                      {ev.year < 0 ? `${Math.abs(ev.year)} TCN` : ev.year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>URL hình ảnh</Label>
               <Input
-                id="ch-name"
-                value={draft.name}
-                onChange={(e) => setDraft((s) => ({ ...s, name: e.target.value }))}
-                placeholder="VD: Trần Hưng Đạo"
+                value={draft.image}
+                onChange={(e) => set("image")(e.target.value)}
+                placeholder="https://..."
               />
             </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="ch-era">Thời kỳ</Label>
-                <Input
-                  id="ch-era"
-                  value={draft.era}
-                  onChange={(e) => setDraft((s) => ({ ...s, era: e.target.value }))}
-                  placeholder="VD: 1228–1300"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="ch-role">Vai trò</Label>
-                <Input
-                  id="ch-role"
-                  value={draft.role}
-                  onChange={(e) => setDraft((s) => ({ ...s, role: e.target.value }))}
-                  placeholder="VD: Tướng lĩnh"
-                />
-              </div>
-            </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="ch-bio">Tiểu sử ngắn</Label>
+              <Label>Tiểu sử / Bối cảnh</Label>
               <Textarea
-                id="ch-bio"
-                value={draft.bio}
-                onChange={(e) => setDraft((s) => ({ ...s, bio: e.target.value }))}
-                placeholder="Gợi ý: 1–2 câu mô tả, nêu điểm nổi bật và đóng góp."
-                className="min-h-[110px]"
+                value={draft.background}
+                onChange={(e) => set("background")(e.target.value)}
+                placeholder="Mô tả cuộc đời, vai trò lịch sử..."
+                className="min-h-[90px]"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Tính cách</Label>
+              <Textarea
+                value={draft.personality}
+                onChange={(e) => set("personality")(e.target.value)}
+                placeholder="Đặc điểm tính cách, phong cách nói chuyện..."
+                className="min-h-[70px]"
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
             <Button
-              type="button"
-              onClick={() => {
-                const name = draft.name.trim();
-                if (!name) return;
-
-                if (mode === "create") {
-                  const next: CharacterItem = {
-                    id: newId(),
-                    name,
-                    era: draft.era.trim(),
-                    role: draft.role.trim(),
-                    bio: draft.bio.trim(),
-                    updatedAt: nowLabel(),
-                  };
-                  setItems((prev) => [next, ...prev]);
-                } else {
-                  const id = draft.id;
-                  if (!id) return;
-                  setItems((prev) =>
-                    prev.map((x) =>
-                      x.id === id
-                        ? {
-                            ...x,
-                            name,
-                            era: draft.era.trim(),
-                            role: draft.role.trim(),
-                            bio: draft.bio.trim(),
-                            updatedAt: nowLabel(),
-                          }
-                        : x
-                    )
-                  );
-                }
-
-                setDialogOpen(false);
-              }}
-              disabled={!draft.name.trim()}
+              onClick={handleSave}
+              disabled={!draft.name.trim() || !draft.title.trim() || isPending}
             >
-              Save
+              {isPending ? "Đang lưu..." : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Delete */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent style={{ borderColor: "var(--card-light-border)" }}>
           <AlertDialogHeader>
@@ -374,7 +450,7 @@ export default function StaffCharactersPage() {
               Xóa nhân vật?
             </AlertDialogTitle>
             <AlertDialogDescription style={{ color: "var(--content-muted)" }}>
-              Thao tác này sẽ xóa bản ghi khỏi danh sách mock trên frontend.
+              Thao tác này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -382,13 +458,16 @@ export default function StaffCharactersPage() {
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               onClick={() => {
-                const target = deleteTarget;
-                if (!target) return;
-                setItems((prev) => prev.filter((x) => x.id !== target.id));
-                setDeleteTarget(null);
+                if (!deleteTarget) return;
+                deleteCharacter.mutate(deleteTarget.id, {
+                  onSuccess: () => {
+                    setDeleteOpen(false);
+                    setDeleteTarget(null);
+                  },
+                });
               }}
             >
-              Xóa
+              {deleteCharacter.isPending ? "Đang xóa..." : "Xóa"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -396,4 +475,3 @@ export default function StaffCharactersPage() {
     </StaffShell>
   );
 }
-

@@ -14,7 +14,7 @@ export interface User {
   uid: string;
   userName: string;
   email: string;
-  userType: "REGISTERED" | "STAFF" | "ADMIN";
+  role: "CUSTOMER" | "STAFF"; 
 }
 
 export interface AuthTokens {

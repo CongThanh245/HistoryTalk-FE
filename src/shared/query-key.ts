@@ -11,11 +11,14 @@ export const queryKeys = {
     list: (params?: GetEventsParams) =>
       ["events", "list", params ?? {}] as const,
     detail: (id: string) => ["events", "detail", id] as const,
+    create: ["events", "create"] as const, // ← thêm
+    update: (id: string) => ["events", "update", id] as const, // ← thêm
+    delete: (id: string) => ["events", "delete", id] as const, // ← thêm
   },
 
   characters: {
     all: ["characters"] as const,
-    list: (params?: { search?: string; page?: number }) =>
+    list: (params?: { search?: string; page?: number; limit?: number }) =>
       ["characters", "list", params ?? {}] as const,
     detail: (id: string) => ["characters", "detail", id] as const,
     byContext: (

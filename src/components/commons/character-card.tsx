@@ -17,7 +17,7 @@ export interface Character {
   id: string;
   name: string;
   title: string; // vd: "Tiết độ sứ Tĩnh Hải quân"
-  era: string; // vd: "medieval" hoặc "898–944" tuỳ context
+  era?: string; // vd: "medieval" hoặc "898–944" tuỳ context
   description?: string;
   lifespan?: string; // vd: "898–944"
   role?: string; // context trong 1 sự kiện cụ thể
@@ -48,7 +48,7 @@ export function CharacterCarouselCard({
       imageAlt={character.name}
       imageHeight="65%"
       badge={{
-        label: character.era,
+        label: character.era ?? "",
         color: "var(--accent-gold)",
         bg: "transparent",
       }}
@@ -268,7 +268,8 @@ interface CompactCardProps {
 
 export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
   if (!character) return null;
-  const avatarSrc = character.avatarUrl ?? character.imageUrl ?? "/ngo-quyen.jpg";
+  const avatarSrc =
+    character.avatarUrl ?? character.imageUrl ?? "/ngo-quyen.jpg";
 
   return (
     <button
