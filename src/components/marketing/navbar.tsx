@@ -265,24 +265,30 @@ export function MarketingNavbar() {
                         {user.email ?? ""}
                       </p>
                     </DropdownMenuLabel>
-
-                    <DropdownMenuSeparator
-                      style={{ background: "var(--border-default)" }}
-                    />
-
                     <DropdownMenuItem
-                      className="cursor-pointer"
+                      className="cursor-pointer p-0" // 1. Set padding về 0 ở item cha
                       style={{ color: "var(--text-secondary)" }}
                       asChild
                     >
-                      <Link href="/home">Khám phá</Link>
+                      <Link
+                        href="/home"
+                        className="w-full h-full px-2 py-1.5 flex items-center" // 2. Thêm padding và flex vào đây
+                      >
+                        Khám phá
+                      </Link>
                     </DropdownMenuItem>
+
                     <DropdownMenuItem
-                      className="cursor-pointer"
+                      className="cursor-pointer p-0"
                       style={{ color: "var(--text-secondary)" }}
                       asChild
                     >
-                      <Link href="/profile">Hồ sơ</Link>
+                      <Link
+                        href="/profile"
+                        className="w-full h-full px-2 py-1.5 flex items-center"
+                      >
+                        Hồ sơ
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="cursor-pointer"
