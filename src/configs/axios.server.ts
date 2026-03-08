@@ -8,7 +8,7 @@ const BASE_PATH = process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
 // Instance không auth — dùng cho public data
 export const axiosServer = axios.create({
   baseURL: `${BASE_URL}${BASE_PATH}`,
-  timeout: 15000,
+  timeout: 60000,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -19,7 +19,7 @@ export async function getAuthAxios() {
 
   return axios.create({
     baseURL: BASE_URL,
-    timeout: 15000,
+    timeout: 60000,
     withCredentials: true,
     headers: {
       "Content-Type": "application/json",

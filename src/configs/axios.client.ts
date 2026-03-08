@@ -11,7 +11,7 @@ type RetryConfig = InternalAxiosRequestConfig & {
 
 export const axiosClient = axios.create({
   baseURL: `${BASE_URL}${BASE_PATH}`,
-  timeout: 15000,
+  timeout: 60000,
   headers: { "Content-Type": "application/json" },
 });
 
