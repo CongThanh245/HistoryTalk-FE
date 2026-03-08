@@ -62,14 +62,17 @@ export function HeroSection() {
       className="relative overflow-hidden min-h-[100svh] flex flex-col lg:items-center lg:justify-center"
       style={{ isolation: "isolate" }}
     >
+      {/* ── BACKGROUND GRADIENT LAYERS ──
+          Dùng z-0 (KHÔNG dùng -z-10) để gradient nằm trên bg của parent
+          nhưng dưới content (z-10+).
+      */}
+
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           zIndex: 0,
-          background: `
-            radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
-            radial-gradient(ellipse 100% 80% at 50% 120%, #2a1f0d 0%, rgba(10, 12, 16, 0) 70%)
-          `,
+          background:
+            "radial-gradient(ellipse 120% 70% at 60% 100%, #ff9215 0%, rgba(255,146,21,0.3) 50%, transparent 90%)",
         }}
       />
 
@@ -129,10 +132,10 @@ export function HeroSection() {
                     "active:scale-[0.98]",
                   )}
                 >
-                  <span className="absolute top-0 left-0 h-[1.5px] w-full bg-[var(--text-tertiary)] transition-transform duration-700 ease-out scale-x-0 origin-left group-hover:scale-x-[1.15] -translate-x-[7.5%]" />
-                  <span className="absolute bottom-0 left-0 h-[1.5px] w-full bg-[var(--text-tertiary)] transition-transform duration-700 ease-out scale-x-0 origin-right group-hover:scale-x-[1.15] translate-x-[7.5%]" />
-                  <span className="absolute left-0 top-0 w-[1.5px] h-full bg-[var(--text-tertiary)] transition-transform duration-700 ease-out scale-y-0 origin-bottom group-hover:scale-y-[1.3] translate-y-[15%]" />
-                  <span className="absolute right-0 top-0 w-[1.5px] h-full bg-[var(--text-tertiary)] transition-transform duration-700 ease-out scale-y-0 origin-top group-hover:scale-y-[1.3] -translate-y-[15%]" />
+                  <span className="absolute top-0 left-0 h-[1.5px] w-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-x-0 origin-left group-hover:scale-x-[1.15] -translate-x-[7.5%]" />
+                  <span className="absolute bottom-0 left-0 h-[1.5px] w-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-x-0 origin-right group-hover:scale-x-[1.15] translate-x-[7.5%]" />
+                  <span className="absolute left-0 top-0 w-[1.5px] h-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-y-0 origin-bottom group-hover:scale-y-[1.3] translate-y-[15%]" />
+                  <span className="absolute right-0 top-0 w-[1.5px] h-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-y-0 origin-top group-hover:scale-y-[1.3] -translate-y-[15%]" />
                   <span className="relative z-20">TRẢI NGHIỆM NGAY</span>
                 </Link>
               </div>

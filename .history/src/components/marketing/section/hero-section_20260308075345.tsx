@@ -129,10 +129,10 @@ export function HeroSection() {
                     "active:scale-[0.98]",
                   )}
                 >
-                  <span className="absolute top-0 left-0 h-[1.5px] w-full bg-[var(--text-tertiary)] transition-transform duration-700 ease-out scale-x-0 origin-left group-hover:scale-x-[1.15] -translate-x-[7.5%]" />
-                  <span className="absolute bottom-0 left-0 h-[1.5px] w-full bg-[var(--text-tertiary)] transition-transform duration-700 ease-out scale-x-0 origin-right group-hover:scale-x-[1.15] translate-x-[7.5%]" />
-                  <span className="absolute left-0 top-0 w-[1.5px] h-full bg-[var(--text-tertiary)] transition-transform duration-700 ease-out scale-y-0 origin-bottom group-hover:scale-y-[1.3] translate-y-[15%]" />
-                  <span className="absolute right-0 top-0 w-[1.5px] h-full bg-[var(--text-tertiary)] transition-transform duration-700 ease-out scale-y-0 origin-top group-hover:scale-y-[1.3] -translate-y-[15%]" />
+                  <span className="absolute top-0 left-0 h-[1.5px] w-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-x-0 origin-left group-hover:scale-x-[1.15] -translate-x-[7.5%]" />
+                  <span className="absolute bottom-0 left-0 h-[1.5px] w-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-x-0 origin-right group-hover:scale-x-[1.15] translate-x-[7.5%]" />
+                  <span className="absolute left-0 top-0 w-[1.5px] h-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-y-0 origin-bottom group-hover:scale-y-[1.3] translate-y-[15%]" />
+                  <span className="absolute right-0 top-0 w-[1.5px] h-full bg-[var(--text-tertiary--text-tertiaryVấn)] transition-transform duration-700 ease-out scale-y-0 origin-top group-hover:scale-y-[1.3] -translate-y-[15%]" />
                   <span className="relative z-20">TRẢI NGHIỆM NGAY</span>
                 </Link>
               </div>

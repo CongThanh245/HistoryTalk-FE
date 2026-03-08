@@ -95,19 +95,21 @@ export function MarketingNavbar() {
         >
           {/* ── Top bar ── */}
           <div className="flex items-center px-4 py-3 md:px-6 md:py-2">
-           <Link
-            href="/"
-            className="flex items-center gap-2 hover:opacity-85 transition-opacity"
-          >
-            <Image
-              src="https://p1.hiclipart.com/preview/198/296/36/tv-channel-icons-history-black-black-history-logo-png-clipart.jpg"
-              alt="HistoryTalk Logo"
-              width={50}
-              height={50}
-              priority
-              className="object-contain invert" // Thêm invert nếu nền trang web của bạn màu tối
-            />
-          </Link>
+            {/* Logo */}
+            <Link
+  href="/"
+  className="flex items-center gap-2 hover:opacity-85 transition-opacity"
+>
+  <Image
+    // Link trực tiếp từ CDN để đảm bảo hiển thị tốt nhất
+    src="https://th.bing.com/th/id/R.9fc4419653ffaa1368a705b8bb95f750?rik=DhMhrtxTpi2ahw&pid=ImgRaw&r=0"
+    alt="HistoryTalk Logo"
+    width={50} // Bạn có thể tăng lên 60 nếu muốn logo to hơn chút
+    height={50} // Chỉnh lại height cho vuông (vì logo này tỉ lệ 1:1)
+    priority 
+    className="object-contain" // Giúp ảnh không bị méo
+  />
+</Link>
 
             {/* Desktop links */}
             <div className="hidden md:flex items-center gap-6 ml-8">

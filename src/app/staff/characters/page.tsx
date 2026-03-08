@@ -443,19 +443,22 @@ export default function StaffCharactersPage() {
 
       {/* Delete */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent style={{ borderColor: "var(--card-light-border)" }}>
+        <AlertDialogContent style={{ backgroundColor: "#1a1f2e", borderColor: "rgba(255,255,255,0.1)" }}>
           <AlertDialogHeader>
-            <AlertDialogTitle style={{ color: "var(--content-heading)" }}>
+            <AlertDialogTitle style={{ color: "#FFFFFF" }}> {/* Màu trắng cho tiêu đề */}
               Xóa nhân vật?
             </AlertDialogTitle>
-            <AlertDialogDescription style={{ color: "var(--content-muted)" }}>
+            <AlertDialogDescription style={{ color: "#9ca3af" }}> {/* Màu xám nhạt cho mô tả */}
               Thao tác này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogCancel style={{ color: "#fbbf24", backgroundColor: "transparent", border: "1px solid #374151" }}>
+              Hủy
+            </AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
+              style={{ backgroundColor: "#ef4444" }} // Màu đỏ đậm chất "Xóa"
               onClick={() => {
                 if (!deleteTarget) return;
                 deleteCharacter.mutate(deleteTarget.id, {
