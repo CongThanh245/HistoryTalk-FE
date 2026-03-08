@@ -46,7 +46,7 @@ export function ChatClient({ initialCharacterId }: ChatClientProps) {
 
   const createSession = useCreateSession();
 
-  // Init session: dùng session đầu tiên nếu có, không thì tạo mới
+  // Init session: dùng session gần nhất nếu có, không thì tạo mới
   useEffect(() => {
     if (!contextId || !characterId) return;
     if (!isSessionsSuccess) return;
@@ -57,8 +57,12 @@ export function ChatClient({ initialCharacterId }: ChatClientProps) {
 
     if (sessions && sessions.length > 0) {
       setActiveSessionId(sessions[0].id); // ← dùng session gần nhất
+    } else {
+      // Chưa có session nào → tạo mới luôn
+      createSession.mutateAsync({ contextId, characterId }).then((session) => {
+        setActiveSessionId(session.id);
+      });
     }
-    // ← không tạo session mới nữa
   }, [contextId, characterId, isSessionsSuccess, sessions]);
   // Reset khi đổi nhân vật
   const handleSelectCharacter = useCallback((char: ChatCharacter) => {

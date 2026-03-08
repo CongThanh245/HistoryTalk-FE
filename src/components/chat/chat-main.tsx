@@ -9,7 +9,11 @@ import type {
 } from "@/services/chat.service";
 import { MessageBubble, TypingIndicator } from "./chat-message-bubble";
 import { ChatInput } from "./chat-input";
-import { useChatMessages, useCreateSession, useSendMessage } from "@/features/chat/hooks";
+import {
+  useChatMessages,
+  useCreateSession,
+  useSendMessage,
+} from "@/features/chat/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
 
@@ -34,7 +38,7 @@ export function ChatMain({
 
   const { data, isLoading } = useChatMessages(sessionId);
   const sendMessage = useSendMessage();
- const createSession = useCreateSession();
+  const createSession = useCreateSession();
   const serverMessages = data?.messages ?? [];
   const messages = [...serverMessages, ...optimisticMessages];
   const sessionIdRef = useRef(sessionId);
@@ -157,8 +161,15 @@ export function ChatMain({
           </div>
         ) : !sessionId ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 py-20">
+            <div
+              className="w-5 h-5 rounded-full border-2 animate-spin"
+              style={{
+                borderColor: "var(--accent-gold)",
+                borderTopColor: "transparent",
+              }}
+            />
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              Chọn cuộc trò chuyện hoặc tạo mới để bắt đầu
+              Đang khởi tạo cuộc trò chuyện...
             </p>
           </div>
         ) : (
