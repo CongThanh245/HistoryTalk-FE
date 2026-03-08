@@ -63,15 +63,15 @@ export function HeroSection() {
       style={{ isolation: "isolate" }}
     >
       <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          zIndex: 0,
-          background: `
-            radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
-            radial-gradient(ellipse 100% 80% at 50% 120%, #2a1f0d 0%, rgba(10, 12, 16, 0) 70%)
-          `,
-        }}
-      />
+  className="absolute inset-0 pointer-events-none"
+  style={{
+    zIndex: 0,
+    background: `
+      radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse 100% 80% at 50% 120%, #2a1f0d 0%, rgba(10, 12, 16, 0) 70%)
+    `,
+  }}
+/>
 
       {/* Content phải có z-index > 0 để nằm trên gradient */}
       <Container className="w-full relative">

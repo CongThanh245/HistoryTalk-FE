@@ -95,19 +95,20 @@ export function MarketingNavbar() {
         >
           {/* ── Top bar ── */}
           <div className="flex items-center px-4 py-3 md:px-6 md:py-2">
-           <Link
-            href="/"
-            className="flex items-center gap-2 hover:opacity-85 transition-opacity"
-          >
-            <Image
-              src="https://p1.hiclipart.com/preview/198/296/36/tv-channel-icons-history-black-black-history-logo-png-clipart.jpg"
-              alt="HistoryTalk Logo"
-              width={50}
-              height={50}
-              priority
-              className="object-contain invert" // Thêm invert nếu nền trang web của bạn màu tối
-            />
-          </Link>
+            {/* Logo */}
+            <Link
+              href="/"
+              className="flex items-center gap-2 hover:opacity-85 transition-opacity"
+            >
+              <Image
+                src="https://www.bing.com/images/search?view=detailV2&ccid=n8RBllP%2F&id=7F683D800F1924E09BEC879A2DA653DCAE21130E&thid=OIP.n8RBllP_qhNopwW4u5X3UAHaHa&mediaurl=https%3A%2F%2Fp1.hiclipart.com%2Fpreview%2F198%2F296%2F36%2Ftv-channel-icons-history-black-black-history-logo-png-clipart.jpg&cdnurl=https%3A%2F%2Fth.bing.com%2Fth%2Fid%2FR.9fc4419653ffaa1368a705b8bb95f750%3Frik%3DDhMhrtxTpi2ahw%26pid%3DImgRaw%26r%3D0&exph=500&expw=500&q=logo+free+history+transparent&FORM=IRPRST&ck=1D0166E6F6C6F119387A774D47A09343&selectedIndex=0&itb=0&cw=1250&ch=572&ajaxhist=0&ajaxserp=0"
+                alt="HistoryTalk Logo"
+                width={50}
+                height={80}
+                priority // thêm priority vì logo nằm trên navbar, load ngay
+                // className="h-8 w-auto"
+              />
+            </Link>
 
             {/* Desktop links */}
             <div className="hidden md:flex items-center gap-6 ml-8">

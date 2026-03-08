@@ -96,18 +96,18 @@ export function MarketingNavbar() {
           {/* ── Top bar ── */}
           <div className="flex items-center px-4 py-3 md:px-6 md:py-2">
            <Link
-            href="/"
-            className="flex items-center gap-2 hover:opacity-85 transition-opacity"
-          >
-            <Image
-              src="https://p1.hiclipart.com/preview/198/296/36/tv-channel-icons-history-black-black-history-logo-png-clipart.jpg"
-              alt="HistoryTalk Logo"
-              width={50}
-              height={50}
-              priority
-              className="object-contain invert" // Thêm invert nếu nền trang web của bạn màu tối
-            />
-          </Link>
+  href="/"
+  className="flex items-center gap-2 hover:opacity-85 transition-opacity"
+>
+  <Image
+    src="https://p1.hiclipart.com/preview/198/296/36/tv-channel-icons-history-black-black-history-logo-png-clipart.jpg"
+    alt="HistoryTalk Logo"
+    width={50}
+    height={50}
+    priority
+    className="object-contain invert" // Thêm invert nếu nền trang web của bạn màu tối
+  />
+</Link>
 
             {/* Desktop links */}
             <div className="hidden md:flex items-center gap-6 ml-8">
