@@ -41,7 +41,7 @@ export function SessionCard({ session, onClick, showEvent = false }: SessionCard
         style={{ borderColor: "var(--card-light-border)" }}
       >
         <Image
-          src={session.characterImageUrl}
+          src={session.characterImage}
           alt={session.characterName}
           fill
           className="object-cover object-top"
@@ -60,7 +60,7 @@ export function SessionCard({ session, onClick, showEvent = false }: SessionCard
             </p>
             {showEvent && (
               <p className="text-[10px] font-medium mt-0.5" style={{ color: "var(--gold-on-light)" }}>
-                {session.eventTitle} · {session.eventYear}
+                {session.contextName} 
               </p>
             )}
           </div>

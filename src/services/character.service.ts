@@ -73,9 +73,22 @@ export const characterService = {
   },
 
   getByContext: async (contextId: string): Promise<Character[]> => {
-    const res = await axiosClient.get("/characters", { params: { contextId } });
-    const raw = res.data.data;
-    return (raw.content ?? raw).map(mapCharacter);
+    const res = await axiosClient.get(`/characters/context/${contextId}`);
+    return res.data.data.map(
+      (raw: any): Character => ({
+        id: raw.characterId,
+        name: raw.name,
+        title: raw.title,
+        background: raw.background,
+        description: raw.background,
+        imageUrl: raw.image,
+        personality: raw.personality,
+        lifespan: raw.lifespan,
+        side: raw.side,
+        era: raw.era,
+        contextId: raw.context?.contextId,
+      }),
+    );
   },
 
   create: async (data: CreateCharacterRequest): Promise<Character> => {

@@ -7,9 +7,14 @@ interface ChatInputProps {
   onSend: (content: string) => void;
   isLoading: boolean;
   characterName: string;
+  disabled?: boolean;
 }
 
-export function ChatInput({ onSend, isLoading, characterName }: ChatInputProps) {
+export function ChatInput({
+  onSend,
+  isLoading,
+  characterName,
+}: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -43,11 +48,17 @@ export function ChatInput({ onSend, isLoading, characterName }: ChatInputProps) 
   return (
     <div
       className="px-4 py-3 border-t shrink-0"
-      style={{ borderColor: "var(--border-default)", background: "var(--bg-main)" }}
+      style={{
+        borderColor: "var(--border-default)",
+        background: "var(--bg-main)",
+      }}
     >
       <div
         className="flex items-end gap-2 rounded-xl border px-3 py-2 transition-all duration-150 focus-within:border-[var(--accent-gold)]"
-        style={{ background: "var(--bg-elevated)", borderColor: "var(--border-default)" }}
+        style={{
+          background: "var(--bg-elevated)",
+          borderColor: "var(--border-default)",
+        }}
       >
         <textarea
           ref={textareaRef}
@@ -68,13 +79,21 @@ export function ChatInput({ onSend, isLoading, characterName }: ChatInputProps) 
           disabled={!value.trim() || isLoading}
           className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{
-            background: value.trim() && !isLoading
-              ? "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)"
-              : "var(--bg-elevated)",
-            color: value.trim() && !isLoading ? "var(--bg-deep)" : "var(--text-secondary)",
+            background:
+              value.trim() && !isLoading
+                ? "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)"
+                : "var(--bg-elevated)",
+            color:
+              value.trim() && !isLoading
+                ? "var(--bg-deep)"
+                : "var(--text-secondary)",
           }}
         >
-          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          {isLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Send className="w-4 h-4" />
+          )}
         </button>
       </div>
     </div>

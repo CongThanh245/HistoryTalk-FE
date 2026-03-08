@@ -1,26 +1,14 @@
-import axios from "axios";
+import { axiosClient } from "@/configs/axios.client";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-// ── Types ─────────────────────────────────────────────────
-
-export interface ChatCharacter {
-  id: string;
-  name: string;
-  title: string;
-  description: string;
-  imageUrl: string;       // vd: /ngo-quyen.jpg
-  era: string;
-  side?: string;
-}
+// ── Types theo API response ───────────────────────────────
 
 export interface ChatSession {
   id: string;
   characterId: string;
-  eventId: string;
-  title: string;          // tên cuộc trò chuyện (tự generate hoặc user đặt)
+  contextId: string; // ← đổi từ eventId
+  title: string;
   lastMessage: string;
-  lastMessageAt: string;  // ISO date
+  lastMessageAt: string;
   messageCount: number;
 }
 
@@ -32,63 +20,102 @@ export interface ChatMessage {
   createdAt: string;
 }
 
-export interface ChatEvent {
-  id: string;
-  title: string;          // vd: "Trận Bạch Đằng 938"
-  year: number;
-  characters: ChatCharacter[];
-}
-
-export interface SendMessagePayload {
-  sessionId: string;
-  characterId: string;
-  eventId: string;
-  content: string;
-}
-
 export interface SendMessageResponse {
   userMessage: ChatMessage;
   assistantMessage: ChatMessage;
+  suggestedQuestions: string[];
 }
 
+export interface GetMessagesResponse {
+  messages: ChatMessage[];
+  suggestedQuestions: string[];
+}
+
+// History types
+export interface ChatHistorySession {
+  id: string;
+  characterId: string;
+  characterName: string;
+  characterTitle: string;
+  characterImage: string; // ← đổi từ characterImageUrl
+  contextId: string;
+  contextName: string; // ← đổi từ eventTitle/eventId
+  sessionTitle: string;
+  lastMessage: string;
+  lastMessageAt: string;
+  messageCount: number;
+}
+
+export interface ChatHistoryGroup {
+  contextId: string;
+  contextName: string; // ← đổi từ eventTitle
+  sessions: ChatHistorySession[];
+}
+export interface ChatCharacter {
+  id: string;
+  name: string;
+  title: string;
+  description?: string;
+  imageUrl: string;
+  side?: string;
+  contextId?: string; // character thuộc context nào
+}
 // ── Service ──────────────────────────────────────────────
 
 export const chatService = {
-  // Lấy thông tin sự kiện + nhân vật theo eventId
-  getEvent: async (eventId: string): Promise<ChatEvent> => {
-    const res = await axios.get(`${API_URL}/events/${eventId}`);
-    return res.data;
-  },
-
-  // Lấy thông tin nhân vật
-  getCharacter: async (characterId: string): Promise<ChatCharacter> => {
-    const res = await axios.get(`${API_URL}/characters/${characterId}`);
-    return res.data;
-  },
-
-  // Lấy danh sách session của user theo eventId + characterId
-  getSessions: async (eventId: string, characterId: string): Promise<ChatSession[]> => {
-    const res = await axios.get(`${API_URL}/chat/sessions`, {
-      params: { eventId, characterId },
+  getSessions: async (
+    contextId: string,
+    characterId: string,
+  ): Promise<ChatSession[]> => {
+    const res = await axiosClient.get("/chat/sessions", {
+      params: { contextId, characterId },
     });
-    return res.data;
+    return res.data.data;
   },
 
-  // Lấy messages của 1 session
-  getMessages: async (sessionId: string): Promise<ChatMessage[]> => {
-    const res = await axios.get(`${API_URL}/chat/sessions/${sessionId}/messages`);
-    return res.data;
+  createSession: async (
+    contextId: string,
+    characterId: string,
+  ): Promise<ChatSession> => {
+    const res = await axiosClient.post("/chat/sessions", {
+      contextId,
+      characterId,
+    });
+    return res.data.data;
   },
 
-  // Tạo session mới
-  createSession: async (eventId: string, characterId: string): Promise<ChatSession> => {
-    const res = await axios.post(`${API_URL}/chat/sessions`, { eventId, characterId });
-    return res.data;
+  getMessages: async (sessionId: string): Promise<GetMessagesResponse> => {
+    const res = await axiosClient.get(`/chat/sessions/${sessionId}/messages`);
+    return res.data.data;
   },
 
-  // Gửi tin nhắn
-  sendMessage: async (payload: SendMessagePayload): Promise<SendMessageResponse> => {
-    const res = await axios.post(`${API_URL}/chat/messages`, payload);
-    return res.data;
+  sendMessage: async (
+    sessionId: string,
+    content: string,
+  ): Promise<SendMessageResponse> => {
+    const res = await axiosClient.post("/chat/message", { sessionId, content });
+    return res.data.data;
+  },
+
+  getHistory: async (): Promise<ChatHistoryGroup[]> => {
+    const res = await axiosClient.get("/chat/history");
+    return res.data.data;
+  },
+
+  deleteSession: async (sessionId: string): Promise<void> => {
+    await axiosClient.delete(`/chat/sessions/${sessionId}`);
+  },
+  getCharacter: async (characterId: string): Promise<ChatCharacter> => {
+    const res = await axiosClient.get(`/characters/${characterId}`);
+    const raw = res.data.data;
+    return {
+      id: raw.characterId,
+      name: raw.name,
+      title: raw.title,
+      description: raw.background,
+      imageUrl: raw.image,
+      side: raw.side,
+      contextId: raw.context?.contextId, // ← nằm trong nested object
+    };
   },
 };
