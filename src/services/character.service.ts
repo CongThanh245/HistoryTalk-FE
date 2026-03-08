@@ -1,4 +1,5 @@
 import { axiosClient } from "@/configs/axios.client";
+import { ERA_CONFIG } from "./event.service";
 
 export interface Character {
   id: string;
@@ -59,7 +60,7 @@ function mapCharacter(raw: any): Character {
     lifespan: raw.lifespan,
     side: raw.side,
     contextId: raw.contextId,
-    era: raw.era,
+    era: mapEraLabel(raw.era),
   };
 }
 
@@ -108,3 +109,11 @@ export const characterService = {
     await axiosClient.delete(`/characters/${id}`);
   },
 };
+
+export function mapEraLabel(backendEra?: string): string {
+  if (!backendEra) return "";
+  const key = backendEra.toLowerCase();
+  return (
+    (ERA_CONFIG as Record<string, { label: string }>)[key]?.label ?? backendEra
+  );
+}
