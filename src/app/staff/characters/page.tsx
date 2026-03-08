@@ -324,7 +324,7 @@ export default function StaffCharactersPage() {
           style={{ borderColor: "var(--card-light-border)" }}
         >
           <DialogHeader>
-            <DialogTitle style={{ color: "var(--content-heading)" }}>
+            <DialogTitle style={{ color: "white" }}>
               {mode === "create" ? "Add Character" : "Edit Character"}
             </DialogTitle>
             <DialogDescription style={{ color: "var(--content-muted)" }}>
