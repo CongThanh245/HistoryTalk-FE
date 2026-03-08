@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Shield, ScrollText, Users, ClipboardList, ChevronRight } from "lucide-react";
+import {
+  Shield,
+  ScrollText,
+  Users,
+  ClipboardList,
+  ChevronRight,
+} from "lucide-react";
 
 import { StaffShell } from "@/components/staff/staff-shell";
 
@@ -43,7 +49,9 @@ export default function StaffPage() {
       <section>
         <h2
           className="text-base font-semibold mb-4"
-          style={{ color: "var(--content-heading)", fontFamily: "'Georgia', serif" }}
+          style={{
+            color: "var(--content-heading)",
+          }}
         >
           Các module quản trị
         </h2>
@@ -74,7 +82,10 @@ export default function StaffPage() {
 
                 <div
                   className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
-                  style={{ background: card.glow, border: `1px solid ${card.accent}30` }}
+                  style={{
+                    background: card.glow,
+                    border: `1px solid ${card.accent}30`,
+                  }}
                 >
                   <Icon className="w-5 h-5" style={{ color: card.accent }} />
                 </div>
@@ -84,18 +95,23 @@ export default function StaffPage() {
                     className="text-sm font-semibold mb-1"
                     style={{
                       color: "var(--content-heading)",
-                      fontFamily: "'Georgia', serif",
                     }}
                   >
                     {card.title}
                   </h3>
-                  <p className="text-xs leading-relaxed" style={{ color: "var(--content-muted)" }}>
+                  <p
+                    className="text-xs leading-relaxed"
+                    style={{ color: "var(--content-muted)" }}
+                  >
                     {card.desc}
                   </p>
                 </div>
 
                 <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                  <ChevronRight className="w-4 h-4" style={{ color: card.accent }} />
+                  <ChevronRight
+                    className="w-4 h-4"
+                    style={{ color: card.accent }}
+                  />
                 </div>
               </Link>
             );
@@ -105,4 +121,3 @@ export default function StaffPage() {
     </StaffShell>
   );
 }
-

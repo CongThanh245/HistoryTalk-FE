@@ -255,7 +255,6 @@ export default function StaffCharactersPage() {
               className="text-base font-semibold"
               style={{
                 color: "var(--content-heading)",
-                fontFamily: "'Georgia', serif",
               }}
             >
               Danh sách nhân vật

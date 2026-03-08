@@ -244,7 +244,6 @@ export default function StaffContextsPage() {
               className="text-base font-semibold"
               style={{
                 color: "var(--content-heading)",
-                fontFamily: "'Georgia', serif",
               }}
             >
               Danh sách bối cảnh

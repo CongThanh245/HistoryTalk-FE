@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "../styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProviders from "@/components/context/query-client-provider";
+import localFont from "next/font/local";
+const titleFont = localFont({
+  src: "../styles/fonts/Helvep-6.ttf",
+  variable: "--font-title",
+});
 
+const bodyFont = localFont({
+  src: "../styles/fonts/Helvep-6.ttf",
+  variable: "--font-title",
+});
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -27,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${titleFont.variable} ${bodyFont.variable} antialiased`}
       >
         {" "}
         <ReactQueryProviders>{children}</ReactQueryProviders>
