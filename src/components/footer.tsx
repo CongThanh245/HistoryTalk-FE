@@ -1,29 +1,27 @@
 import Link from "next/link";
 import { Container } from "./marketing/container";
 
-
 const NAV_LINKS = [
   {
-    heading: "Sản phẩm",
+    heading: "Khám phá",
     links: [
-      { label: "Trò chuyện lịch sử", href: "/features" },
-      { label: "Quiz ôn tập", href: "/features#quiz" },
-      { label: "Bảng giá", href: "/pricing" },
+      { label: "Sự kiện lịch sử", href: "/events" },
+      { label: "Nhân vật lịch sử", href: "/characters" },
+      { label: "Lịch sử trò chuyện", href: "/chat-history" },
     ],
   },
   {
-    heading: "Công ty",
+    heading: "Ứng dụng",
     links: [
-      { label: "Về chúng tôi", href: "/about" },
-      { label: "Blog", href: "/blog" },
-      { label: "Liên hệ", href: "/contact" },
+      { label: "Trò chuyện AI", href: "/characters" },
+      { label: "Thử thách Quiz", href: "/quiz" },
     ],
   },
   {
-    heading: "Pháp lý",
+    heading: "Tài khoản",
     links: [
-      { label: "Điều khoản sử dụng", href: "/terms" },
-      { label: "Chính sách bảo mật", href: "/privacy" },
+      { label: "Trang cá nhân", href: "/profile" },
+      { label: "Cài đặt", href: "/settings" },
     ],
   },
 ];
@@ -34,18 +32,21 @@ export function Footer() {
       <Container>
         {/* Main grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-12 py-16">
-
           {/* LEFT: Brand + contact */}
           <div className="max-w-xs">
             {/* Logo */}
-            <Link href="/" className="inline-flex items-center gap-2 mb-6 group">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 mb-6 group"
+            >
               <span className="text-xl font-bold tracking-wide text-[var(--text-primary)] group-hover:text-[var(--accent-gold)] transition-colors duration-200">
                 History<span className="text-[var(--accent-gold)]">Talk</span>
               </span>
             </Link>
 
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-8">
-              Nơi bạn không chỉ đọc lịch sử — mà trò chuyện với những người đã tạo nên nó.
+              Nơi bạn không chỉ đọc lịch sử — mà trò chuyện với những người đã
+              tạo nên nó.
             </p>
 
             {/* Contact */}
@@ -84,7 +85,6 @@ export function Footer() {
               </div>
             ))}
           </div>
-
         </div>
 
         {/* Bottom bar */}
