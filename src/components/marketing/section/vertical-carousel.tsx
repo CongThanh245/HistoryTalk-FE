@@ -8,43 +8,7 @@ import {
   CharacterCarouselCard,
   type Character,
 } from "@/components/commons/character-card";
-
-// TODO: fetch từ API /characters
-const FIGURES: Character[] = [
-  {
-    id: "napoleon",
-    name: "Napoleon Bonaparte",
-    title: "Hoàng đế Pháp",
-    era: "1769-1821",
-  },
-  {
-    id: "cleopatra",
-    name: "Cleopatra VII",
-    title: "Nữ hoàng Ai Cập",
-    era: "69-30 BC",
-  },
-  {
-    id: "davinci",
-    name: "Leonardo da Vinci",
-    title: "Nghệ sĩ & Nhà phát minh",
-    era: "1452-1519",
-  },
-  { id: "joan", name: "Joan of Arc", title: "Anh hùng Pháp", era: "1412-1431" },
-  {
-    id: "einstein",
-    name: "Albert Einstein",
-    title: "Nhà Vật lý",
-    era: "1879-1955",
-  },
-  { id: "curie", name: "Marie Curie", title: "Nhà Khoa học", era: "1867-1934" },
-  {
-    id: "shakespeare",
-    name: "William Shakespeare",
-    title: "Nhà văn",
-    era: "1564-1616",
-  },
-  { id: "confucius", name: "Khổng Tử", title: "Triết gia", era: "551-479 BC" },
-];
+import { useCharacters } from "@/features/characters/hooks";
 
 const RADIUS = 250;
 
@@ -57,12 +21,15 @@ export function Carousel3DVertical() {
   const animationRef = useRef<gsap.core.Tween | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
+  const { data, isLoading } = useCharacters({ page: 1, limit: 6 });
+  const FIGURES: Character[] = data?.content ?? [];
+
   const cardCount = FIGURES.length;
-  const angleIncrement = (Math.PI * 2) / cardCount;
+  const angleIncrement = cardCount > 0 ? (Math.PI * 2) / cardCount : 0;
 
   useGSAP(() => {
     const cards = cardsRef.current.filter(Boolean) as HTMLDivElement[];
-    if (cards.length === 0) return;
+    if (cards.length === 0 || cardCount === 0) return;
 
     const updateCards = () => {
       const rot = rotationProxy.current.rotation;
@@ -84,7 +51,6 @@ export function Carousel3DVertical() {
       });
     };
 
-    // Initial position
     updateCards();
 
     animationRef.current = gsap.to(rotationProxy.current, {
@@ -115,9 +81,16 @@ export function Carousel3DVertical() {
   }, [isHovered]);
 
   const handleSelect = (id: string) => {
-    // TODO: navigate sang /chat/[id]
     router.push(`/chat/${id}`);
   };
+
+  if (isLoading) {
+    return (
+      <div className="relative w-full h-[650px] flex items-center justify-center">
+        <div className="text-white/50 animate-pulse">Đang tải nhân vật...</div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -155,7 +128,6 @@ export function Carousel3DVertical() {
               height: "400px",
             }}
           >
-            {/* Dùng CharacterCarouselCard — component dùng chung */}
             <CharacterCarouselCard
               character={figure}
               priority={index < 3}

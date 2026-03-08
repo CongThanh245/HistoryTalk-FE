@@ -41,10 +41,12 @@ import {
   useUpdateEvent,
   useDeleteEvent,
 } from "@/features/events/hooks";
-import type {
-  HistoricalEvent,
-  EventEraBackend,
-  EventCategory,
+import {
+  type HistoricalEvent,
+  type EventEraBackend,
+  type EventCategory,
+  ERA_CONFIG,
+  EventEra,
 } from "@/services/event.service";
 
 type DraftState = {
@@ -149,14 +151,20 @@ export default function StaffContextsPage() {
       {
         accessorKey: "era",
         header: "Thời đại",
-        cell: ({ row }) => (
-          <span
-            className="text-xs font-medium"
-            style={{ color: "var(--content-text)" }}
-          >
-            {row.original.era ?? "—"}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const eraRaw = row.original.era;
+          const era = eraRaw?.toLowerCase() as EventEra | undefined;
+          const label =
+            era && era in ERA_CONFIG ? ERA_CONFIG[era]?.label : undefined;
+          return (
+            <span
+              className="text-xs font-medium"
+              style={{ color: "var(--content-text)" }}
+            >
+              {label ?? "—"}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "year",
