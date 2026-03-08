@@ -9,7 +9,7 @@ import type {
 } from "@/services/chat.service";
 import { MessageBubble, TypingIndicator } from "./chat-message-bubble";
 import { ChatInput } from "./chat-input";
-import { useChatMessages, useSendMessage } from "@/features/chat/hooks";
+import { useChatMessages, useCreateSession, useSendMessage } from "@/features/chat/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
 
@@ -17,9 +17,15 @@ interface ChatMainProps {
   character: ChatCharacter;
   sessionId: string | null;
   contextId: string;
+  onSessionCreated: (sessionId: string) => void; // ← thêm callback khi tạo session mới
 }
 
-export function ChatMain({ character, sessionId, contextId }: ChatMainProps) {
+export function ChatMain({
+  character,
+  sessionId,
+  contextId,
+  onSessionCreated,
+}: ChatMainProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>(
     [],
@@ -28,7 +34,7 @@ export function ChatMain({ character, sessionId, contextId }: ChatMainProps) {
 
   const { data, isLoading } = useChatMessages(sessionId);
   const sendMessage = useSendMessage();
-
+ const createSession = useCreateSession();
   const serverMessages = data?.messages ?? [];
   const messages = [...serverMessages, ...optimisticMessages];
   const sessionIdRef = useRef(sessionId);
@@ -54,11 +60,25 @@ export function ChatMain({ character, sessionId, contextId }: ChatMainProps) {
   const qc = useQueryClient();
 
   const handleSend = async (content: string) => {
-    if (!sessionId) return; // session đã được tạo sẵn
+    let currentSessionId = sessionId;
+
+    // Auto-create nếu chưa có session
+    if (!currentSessionId) {
+      try {
+        const newSession = await createSession.mutateAsync({
+          contextId,
+          characterId: character.id,
+        });
+        currentSessionId = newSession.id;
+        onSessionCreated?.(currentSessionId);
+      } catch {
+        return;
+      }
+    }
 
     const tempUserMsg: ChatMessage = {
       id: `temp-${Date.now()}`,
-      sessionId,
+      sessionId: currentSessionId,
       role: "USER",
       content,
       createdAt: new Date().toISOString(),
@@ -66,13 +86,13 @@ export function ChatMain({ character, sessionId, contextId }: ChatMainProps) {
     setOptimisticMessages((prev) => [...prev, tempUserMsg]);
 
     sendMessage.mutate(
-      { sessionId, content },
+      { sessionId: currentSessionId, content },
       {
         onSuccess: (res) => {
           setOptimisticMessages([]);
           setSuggestedQuestions(res.suggestedQuestions);
           qc.setQueryData(
-            queryKeys.chat.messages(sessionId),
+            queryKeys.chat.messages(currentSessionId!),
             (old: GetMessagesResponse | undefined) => ({
               messages: [
                 ...(old?.messages ?? []),
@@ -91,7 +111,6 @@ export function ChatMain({ character, sessionId, contextId }: ChatMainProps) {
       },
     );
   };
-
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
       {/* Header */}
@@ -177,7 +196,7 @@ export function ChatMain({ character, sessionId, contextId }: ChatMainProps) {
       <ChatInput
         onSend={handleSend}
         isLoading={sendMessage.isPending}
-        disabled={!sessionId}
+        disabled={!sessionId && sendMessage.isPending} // disable input khi đang tạo session mới
         characterName={character.name}
       />
     </div>
