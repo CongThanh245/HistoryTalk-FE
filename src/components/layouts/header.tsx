@@ -48,7 +48,7 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
+          {/* <Button
             size="sm"
             className="rounded-full px-4 font-medium text-sm border-0 cursor-pointer"
             style={{
@@ -60,7 +60,7 @@ export default function Header() {
           >
             <Plus className="h-4 w-4 mr-1.5" />
             Tạo mới
-          </Button>
+          </Button> */}
 
           <div
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border"

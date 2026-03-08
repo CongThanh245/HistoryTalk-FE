@@ -315,7 +315,7 @@ export default function StaffContextsPage() {
           style={{ borderColor: "var(--card-light-border)" }}
         >
           <DialogHeader>
-            <DialogTitle style={{ color: "var(--content-heading)" }}>
+            <DialogTitle style={{ color: "white" }}>
               {mode === "create"
                 ? "Add Historical Context"
                 : "Edit Historical Context"}
@@ -470,10 +470,10 @@ export default function StaffContextsPage() {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent style={{ borderColor: "var(--card-light-border)" }}>
           <AlertDialogHeader>
-            <AlertDialogTitle style={{ color: "var(--content-heading)" }}>
+            <AlertDialogTitle style={{ color: "white" }}>
               Xóa bối cảnh lịch sử?
             </AlertDialogTitle>
-            <AlertDialogDescription style={{ color: "var(--content-muted)" }}>
+            <AlertDialogDescription style={{ color: "lightgray" }}>
               Thao tác này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
