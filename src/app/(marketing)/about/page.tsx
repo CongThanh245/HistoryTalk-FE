@@ -1,9 +1,10 @@
-import React from 'react'
+import ComingSoonPage from "@/components/commons/comming-soon";
+import React from "react";
 
-function About() {
+export default function AboutPage() {
   return (
-    <div>About</div>
-  )
+    <div>
+      <ComingSoonPage></ComingSoonPage>
+    </div>
+  );
 }
-
-export default About

@@ -1,9 +1,10 @@
-import React from 'react'
+import ComingSoonPage from "@/components/commons/comming-soon";
+import React from "react";
 
-function Price() {
+export default function PricePage() {
   return (
-    <div>Price</div>
-  )
+    <div>
+      <ComingSoonPage></ComingSoonPage>
+    </div>
+  );
 }
-
-export default Price

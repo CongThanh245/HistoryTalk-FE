@@ -1,7 +1,7 @@
 import ComingSoonPage from "@/components/commons/comming-soon";
 import React from "react";
 
-export default function FeaturePage() {
+export default function LibraryPage() {
   return (
     <div>
       <ComingSoonPage></ComingSoonPage>
