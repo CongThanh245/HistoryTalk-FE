@@ -3,12 +3,19 @@ import { chatService } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
 
-export function useChatSessions(contextId: string, characterId: string) {
+export function useChatSessions(
+  contextId: string,
+  characterId: string,
+  ready = true,
+) {
   return useQuery({
     queryKey: queryKeys.chat.sessions(contextId, characterId),
     queryFn: () => chatService.getSessions(contextId, characterId),
-    enabled: !!contextId && !!characterId,
-    staleTime: 1000 * 60,
+    enabled: !!contextId && !!characterId && ready,
+    staleTime: Infinity, // ← không bao giờ stale khi đang chat
+    refetchOnWindowFocus: false, // ← không refetch khi focus tab
+    refetchOnMount: false, // ← không refetch khi component re-mount
+    refetchOnReconnect: false, // ← không refetch khi reconnect
   });
 }
 
@@ -17,10 +24,12 @@ export function useChatMessages(sessionId: string | null) {
     queryKey: queryKeys.chat.messages(sessionId ?? ""),
     queryFn: () => chatService.getMessages(sessionId!),
     enabled: !!sessionId,
-    staleTime: 0, // messages luôn fresh
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 }
-
 export function useCreateSession() {
   const qc = useQueryClient();
   return useMutation({

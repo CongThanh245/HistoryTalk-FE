@@ -15,7 +15,7 @@ export interface ChatSession {
 export interface ChatMessage {
   id: string;
   sessionId: string;
-  role: "user" | "assistant";
+  role: "USER" | "ASSISTANT";
   content: string;
   createdAt: string;
 }
@@ -69,6 +69,7 @@ export const chatService = {
   ): Promise<ChatSession[]> => {
     const res = await axiosClient.get("/chat/sessions", {
       params: { contextId, characterId },
+      timeout: 60000, // ← tăng lên 60s
     });
     return res.data.data;
   },
@@ -77,10 +78,16 @@ export const chatService = {
     contextId: string,
     characterId: string,
   ): Promise<ChatSession> => {
-    const res = await axiosClient.post("/chat/sessions", {
-      contextId,
-      characterId,
-    });
+    const res = await axiosClient.post(
+      "/chat/sessions",
+      {
+        contextId,
+        characterId,
+      },
+      {
+        timeout: 60000,
+      },
+    );
     return res.data.data;
   },
 
@@ -93,7 +100,16 @@ export const chatService = {
     sessionId: string,
     content: string,
   ): Promise<SendMessageResponse> => {
-    const res = await axiosClient.post("/chat/message", { sessionId, content });
+    const res = await axiosClient.post(
+      "/chat/messages",
+      {
+        sessionId,
+        content,
+      },
+      {
+        timeout: 60000,
+      },
+    );
     return res.data.data;
   },
 

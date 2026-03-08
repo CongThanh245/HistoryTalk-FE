@@ -2,10 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Scroll } from "lucide-react";
-import type { ChatCharacter, ChatMessage } from "@/services/chat.service";
+import type {
+  ChatCharacter,
+  ChatMessage,
+  GetMessagesResponse,
+} from "@/services/chat.service";
 import { MessageBubble, TypingIndicator } from "./chat-message-bubble";
 import { ChatInput } from "./chat-input";
 import { useChatMessages, useSendMessage } from "@/features/chat/hooks";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/shared/query-key";
 
 interface ChatMainProps {
   character: ChatCharacter;
@@ -25,7 +31,11 @@ export function ChatMain({ character, sessionId, contextId }: ChatMainProps) {
 
   const serverMessages = data?.messages ?? [];
   const messages = [...serverMessages, ...optimisticMessages];
-
+  const sessionIdRef = useRef(sessionId);
+  useEffect(() => {
+    console.log("sessionId changed during send:", sessionId);
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
   // Reset optimistic khi sessionId đổi
   useEffect(() => {
     setOptimisticMessages([]);
@@ -41,33 +51,39 @@ export function ChatMain({ character, sessionId, contextId }: ChatMainProps) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sendMessage.isPending]);
+  const qc = useQueryClient();
 
   const handleSend = async (content: string) => {
-    if (!sessionId) return;
+    if (!sessionId) return; // session đã được tạo sẵn
 
-    // Optimistic update
     const tempUserMsg: ChatMessage = {
       id: `temp-${Date.now()}`,
       sessionId,
-      role: "user",
+      role: "USER",
       content,
       createdAt: new Date().toISOString(),
     };
     setOptimisticMessages((prev) => [...prev, tempUserMsg]);
-    setSuggestedQuestions([]);
 
     sendMessage.mutate(
       { sessionId, content },
       {
         onSuccess: (res) => {
-          // Xóa optimistic, thêm real messages
           setOptimisticMessages([]);
           setSuggestedQuestions(res.suggestedQuestions);
-          // React Query sẽ tự refetch messages qua invalidate nếu cần
-          // Hoặc update cache trực tiếp
+          qc.setQueryData(
+            queryKeys.chat.messages(sessionId),
+            (old: GetMessagesResponse | undefined) => ({
+              messages: [
+                ...(old?.messages ?? []),
+                res.userMessage,
+                res.assistantMessage,
+              ],
+              suggestedQuestions: res.suggestedQuestions,
+            }),
+          );
         },
         onError: () => {
-          // Rollback optimistic
           setOptimisticMessages((prev) =>
             prev.filter((m) => m.id !== tempUserMsg.id),
           );

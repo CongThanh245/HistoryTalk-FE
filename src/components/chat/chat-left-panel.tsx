@@ -16,18 +16,23 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 import { useChatSessions, useCreateSession } from "@/features/chat/hooks";
+import { ChatSession } from "@/services/chat.service";
 
 interface ChatLeftPanelProps {
   characterId: string;
   contextId: string; // ← thêm
   activeSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
+  sessions: ChatSession[]; // ← thêm
+  isLoadingSessions: boolean; // ← thêm
   onNewSession: (sessionId: string) => void; // ← trả về sessionId mới
 }
 
 export function ChatLeftPanel({
   characterId,
   contextId,
+  sessions,
+  isLoadingSessions,
   activeSessionId,
   onSelectSession,
   onNewSession,
@@ -35,10 +40,6 @@ export function ChatLeftPanel({
   const [isOpen, setIsOpen] = useState(false);
   const [showHint, setShowHint] = useState(false);
 
-  const { data: sessions = [], isLoading } = useChatSessions(
-    contextId,
-    characterId,
-  );
   const createSession = useCreateSession();
 
   useEffect(() => {
@@ -195,7 +196,7 @@ export function ChatLeftPanel({
                 </button>
               </div>
 
-              {isLoading ? (
+              {isLoadingSessions ? (
                 <div className="space-y-2">
                   {[1, 2, 3].map((i) => (
                     <div

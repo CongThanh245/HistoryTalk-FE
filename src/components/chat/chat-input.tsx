@@ -14,13 +14,14 @@ export function ChatInput({
   onSend,
   isLoading,
   characterName,
+  disabled,
 }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = () => {
     const trimmed = value.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || isLoading || disabled) return;
     onSend(trimmed);
     setValue("");
     if (textareaRef.current) {
@@ -62,10 +63,15 @@ export function ChatInput({
       >
         <textarea
           ref={textareaRef}
+          disabled={disabled || isLoading} 
           value={value}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder={`Hỏi ${characterName}...`}
+          placeholder={
+            disabled
+              ? "Tạo cuộc trò chuyện mới để bắt đầu..."
+              : `Hỏi ${characterName}...`
+          }
           rows={1}
           className="flex-1 resize-none bg-transparent text-sm outline-none leading-relaxed py-1"
           style={{

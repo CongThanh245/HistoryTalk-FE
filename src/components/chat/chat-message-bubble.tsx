@@ -9,7 +9,7 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ message, character }: MessageBubbleProps) {
-  const isUser = message.role === "user";
+  const isUser = message.role === "USER";
 
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
