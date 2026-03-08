@@ -10,9 +10,14 @@ import type {
 interface EventGroupProps {
   group: ChatHistoryGroup;
   onSelectSession: (session: ChatHistoryItem) => void;
+  onDeleteSession?: (sessionId: string) => void;
 }
 
-export function EventGroup({ group, onSelectSession }: EventGroupProps) {
+export function EventGroup({
+  group,
+  onSelectSession,
+  onDeleteSession,
+}: EventGroupProps) {
   return (
     <div className="space-y-3">
       {/* Group header */}
@@ -58,6 +63,7 @@ export function EventGroup({ group, onSelectSession }: EventGroupProps) {
             key={session.id}
             session={session}
             onClick={onSelectSession}
+            onDelete={onDeleteSession}
           />
         ))}
       </div>

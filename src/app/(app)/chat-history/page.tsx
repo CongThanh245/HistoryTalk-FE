@@ -63,7 +63,14 @@ export default function ChatHistoryPage() {
   // TODO: useQuery + chatHistoryService.getHistory() khi có API
   const { data: allGroups = [], isLoading } = useChatHistory();
   const deleteSession = useDeleteSession();
-
+  const handleDeleteSession = (sessionId: string) => {
+    deleteSession.mutate(sessionId, {
+      onSuccess: () => {
+        // invalidate để refetch history
+        // useDeleteSession đã tự invalidate trong hooks.ts
+      },
+    });
+  };
   // Tính counts cho EraFilter badge
   const eraCounts = (() => {
     const counts: Partial<Record<EventEra, number>> = {};
@@ -195,6 +202,7 @@ export default function ChatHistoryPage() {
                 key={group.contextId}
                 group={group}
                 onSelectSession={handleSelectSession}
+                onDeleteSession={handleDeleteSession} 
               />
             ))}
           </div>
