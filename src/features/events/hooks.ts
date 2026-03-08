@@ -15,10 +15,6 @@ export function useEvents(params?: GetEventsParams) {
   return useQuery({
     queryKey: queryKeys.events.list(params),
     queryFn: () => {
-      console.log(
-        "🔥 useEvents fetching with key:",
-        queryKeys.events.list(params),
-      );
       return eventService.getAllClient(params);
     },
     staleTime: 1000 * 60 * 5,

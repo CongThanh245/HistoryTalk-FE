@@ -14,13 +14,6 @@ export function authMiddleware(request: NextRequest) {
 
   const isPublic = PUBLIC_ROUTES.some((r) => pathname.startsWith(r));
   const isStaffRoute = STAFF_ROUTES.some((r) => pathname.startsWith(r));
-  console.log("Auth Middleware:", { pathname, token, role });
-  console.log(
-    "isPublic:",
-    isPublic ? "Yes" : "No",
-    "isStaffRoute:",
-    isStaffRoute ? "Yes" : "No",
-  );
   if (!token && !isPublic) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
