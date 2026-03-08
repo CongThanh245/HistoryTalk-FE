@@ -56,20 +56,20 @@ export function ProblemSection() {
             // Trigger là wrapper div (cao 400vh), KHÔNG phải section
             trigger: wrapperRef.current,
             start: "top top",
-            end: () => wrapperRef.current!.offsetHeight,
+            end: () => wrapperRef.current!?.offsetHeight,
             scrub: 1.2,
             once: true,
             // Không dùng pin/pinSpacing → không có spacer bug
             onLeave: () => {
               if (!wrapperRef.current) return;
 
-              const oldHeight = wrapperRef.current.offsetHeight;
+              const oldHeight = wrapperRef.current?.offsetHeight;
               const scrollY = window.scrollY;
 
               requestAnimationFrame(() => {
                 wrapperRef.current!.style.height = "100vh";
 
-                const newHeight = wrapperRef.current!.offsetHeight;
+                const newHeight = wrapperRef.current!?.offsetHeight;
                 const diff = oldHeight - newHeight;
 
                 ScrollTrigger.refresh();

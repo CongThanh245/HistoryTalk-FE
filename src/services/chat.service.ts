@@ -69,7 +69,7 @@ export const chatService = {
   ): Promise<ChatSession[]> => {
     const res = await axiosClient.get("/chat/sessions", {
       params: { contextId, characterId },
-      timeout: 60000, // ← tăng lên 60s
+      timeout: 90000, 
     });
     return res.data.data;
   },
@@ -85,7 +85,7 @@ export const chatService = {
         characterId,
       },
       {
-        timeout: 60000,
+        timeout: 90000,
       },
     );
     return res.data.data;
@@ -107,7 +107,7 @@ export const chatService = {
         content,
       },
       {
-        timeout: 60000,
+        timeout: 90000,
       },
     );
     return res.data.data;
