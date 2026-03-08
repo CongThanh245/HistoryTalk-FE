@@ -131,22 +131,31 @@ export default function StaffContextsPage() {
       {
         accessorKey: "title",
         header: "Tiêu đề",
-        cell: ({ row }) => (
-          <div className="min-w-[260px]">
-            <p
-              className="text-sm font-semibold"
-              style={{ color: "var(--content-heading)" }}
-            >
-              {row.original.title}
-            </p>
-            <p
-              className="text-xs mt-0.5 line-clamp-1"
-              style={{ color: "var(--content-muted)" }}
-            >
-              {row.original.summary}
-            </p>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const summary = row.original.summary || "";
+          // Giới hạn 100 ký tự ở tầng dữ liệu
+          const truncatedSummary =
+            summary.length > 100 ? summary.slice(0, 100) + "..." : summary;
+
+          return (
+            <div className="min-w-[260px]">
+              <p
+                className="text-sm font-semibold"
+                style={{ color: "var(--content-heading)" }}
+              >
+                {row.original.title}
+              </p>
+              <p
+                /* QUAN TRỌNG: Thêm 'overflow-hidden' và 'text-ellipsis' */
+                className="text-xs mt-0.5 line-clamp-1 truncate max-w-[400px] block"
+                style={{ color: "var(--content-muted)" }}
+                title={summary}
+              >
+                {truncatedSummary}
+              </p>
+            </div>
+          );
+        },
       },
       {
         accessorKey: "era",

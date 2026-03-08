@@ -20,8 +20,12 @@ export function StaffShell({
   const a = accent ?? "var(--accent-gold)";
 
   return (
-    <div className="space-y-10 pb-10">
-      <div className="space-y-1 pt-2">
+    // THÊM: px-6 (cho mobile) và lg:px-10 (cho màn hình lớn)
+    // để tạo khoảng cách với sidebar và mép phải.
+    <div className="space-y-10 pb-10 px-6 lg:px-10 max-w-[1600px]">
+      <div className="space-y-1 pt-6">
+        {" "}
+        {/* Tăng pt-2 lên pt-6 cho thoáng phía trên */}
         <p className="text-sm" style={{ color: "var(--content-subtle)" }}>
           Staff dashboard
         </p>
@@ -52,8 +56,8 @@ export function StaffShell({
         </div>
       </div>
 
-      {children}
+      {/* Phần children bây giờ sẽ tự động thụt vào theo padding của cha */}
+      <div className="w-full">{children}</div>
     </div>
   );
 }
-

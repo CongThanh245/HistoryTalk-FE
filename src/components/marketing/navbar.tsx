@@ -280,8 +280,9 @@ export function MarketingNavbar() {
                     <DropdownMenuItem
                       className="cursor-pointer"
                       style={{ color: "var(--text-secondary)" }}
+                      asChild
                     >
-                      Hồ sơ
+                      <Link href="/profile">Hồ sơ</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="cursor-pointer"
