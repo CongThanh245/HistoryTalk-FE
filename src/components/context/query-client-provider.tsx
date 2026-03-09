@@ -3,7 +3,6 @@
 
 import { getQueryClient } from "@/lib/get-query-client";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
 import type * as React from "react";
 
 export default function ReactQueryProviders({
@@ -11,7 +10,9 @@ export default function ReactQueryProviders({
 }: {
   children: React.ReactNode;
 }) {
-  const [queryClient] = useState(() => getQueryClient());
+  // Không dùng useState — getQueryClient() tự xử lý singleton trên browser
+  // và tạo mới mỗi request trên server
+  const queryClient = getQueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

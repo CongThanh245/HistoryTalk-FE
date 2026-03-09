@@ -94,6 +94,7 @@ export function useTimelineEvents(era: EventEra) {
     staleTime: 1000 * 60 * 5,
     placeholderData: (prev) => prev,
   });
+  console.log({ isLoading, isFetching });
 
   return {
     events: data?.content ?? [],
