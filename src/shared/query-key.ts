@@ -1,5 +1,5 @@
 import type { GetEventsParams } from "@/services/event.service";
-import { GetQuizSetsParams } from "@/services/scenario.service";
+import { GetQuizSetsParams } from "@/services/quiz.service";
 
 export const queryKeys = {
   auth: {
