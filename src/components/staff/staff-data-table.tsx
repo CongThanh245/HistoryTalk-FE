@@ -9,7 +9,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown } from "@phosphor-icons/react";
+import { ArrowUpDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
@@ -74,7 +74,7 @@ export function StaffDataTable<TData>({
                           header.column.columnDef.header,
                           header.getContext()
                         )}
-                        <ArrowUpDown className="h-3.5 w-3.5 opacity-70" />
+                        <ArrowUpDownIcon className="h-3.5 w-3.5 opacity-70" />
                       </Button>
                     ) : (
                       <span
