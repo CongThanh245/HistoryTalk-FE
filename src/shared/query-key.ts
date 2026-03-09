@@ -1,4 +1,5 @@
 import type { GetEventsParams } from "@/services/event.service";
+import { GetLandmarksParams } from "@/services/landmark.service";
 import { GetQuizSetsParams } from "@/services/quiz.service";
 
 export const queryKeys = {
@@ -51,5 +52,13 @@ export const queryKeys = {
       ["quizzes", "list", params ?? {}] as const,
     detail: (id: string) => ["quizzes", "detail", id] as const,
     myResults: ["quizzes", "results", "me"] as const,
+  },
+  landmarks: {
+    all: ["landmarks"] as const,
+    list: (params?: GetLandmarksParams) =>
+      ["landmarks", "list", params ?? {}] as const,
+    detail: (id: string) => ["landmarks", "detail", id] as const,
+    events: (contextIds: string[]) =>
+      ["landmarks", "events", contextIds] as const,
   },
 } as const;

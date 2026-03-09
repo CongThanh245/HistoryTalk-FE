@@ -8,6 +8,7 @@ import {
   UserIcon,
   ShieldIcon,
   ScrollIcon,
+  MapTrifoldIcon,
 } from "@phosphor-icons/react";
 
 export interface SidebarMenuItem {
@@ -30,6 +31,7 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
       { icon: UserIcon, label: "Nhân vật", href: "/characters" },
       { icon: ChatTextIcon, label: "Lịch sử chat", href: "/chat-history" },
       { icon: ClipboardTextIcon, label: "Trắc nghiệm", href: "/quiz" },
+      { icon: MapTrifoldIcon, label: "Bản đồ lịch sử", href: "/map" }, // ← thêm
       { icon: BooksIcon, label: "Library", href: "/library" },
       { icon: BookmarkIcon, label: "Đã lưu", href: "/saved" },
     ],
