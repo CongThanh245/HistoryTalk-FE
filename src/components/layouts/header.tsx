@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Flame, Bell } from "lucide-react";
+import { Plus, Flame, Bell } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import {
 import { SearchInput } from "@/components/commons/search-input";
 import { useLogout } from "@/features/auth/hooks";
 import { useAuthStore } from "@/store/auth.store";
+import { GreetingSection } from "../home/greeting-section";
 
 export default function Header() {
   const { mutate: logout, isPending } = useLogout();
@@ -62,30 +63,7 @@ export default function Header() {
             Tạo mới
           </Button> */}
 
-          <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border"
-            style={{
-              background: "var(--streak-bg)",
-              borderColor: "var(--streak-border)",
-            }}
-          >
-            <Flame
-              className="h-4 w-4"
-              style={{ color: "var(--streak-text)" }}
-            />
-            <span
-              className="text-sm font-bold"
-              style={{ color: "var(--streak-text)" }}
-            >
-              3
-            </span>
-            <span
-              className="text-xs hidden sm:inline"
-              style={{ color: "var(--streak-text-muted)" }}
-            >
-              ngày
-            </span>
-          </div>
+          <GreetingSection />
 
           <Button
             variant="ghost"

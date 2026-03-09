@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 import {
-  Shield,
-  ScrollText,
-  Users,
-  ClipboardList,
-  ChevronRight,
-} from "lucide-react";
+  ShieldIcon,
+  ScrollIcon,
+  UsersIcon,
+  ClipboardTextIcon,
+  CaretRightIcon,
+} from "@phosphor-icons/react";
 
 import { StaffShell } from "@/components/staff/staff-shell";
 
 const MODULES = [
   {
-    icon: ScrollText,
+    icon: ScrollIcon,
     title: "Manage Historical Context",
     desc: "Tạo/cập nhật bối cảnh lịch sử để dùng cho sự kiện và cuộc trò chuyện.",
     href: "/staff/contexts",
@@ -21,7 +21,7 @@ const MODULES = [
     glow: "rgba(201,162,77,0.12)",
   },
   {
-    icon: Users,
+    icon: UsersIcon,
     title: "Manage Character",
     desc: "Quản lý nhân vật: tiểu sử, vai trò, thời kỳ để dùng cho chat/quiz.",
     href: "/staff/characters",
@@ -29,7 +29,7 @@ const MODULES = [
     glow: "rgba(196,106,47,0.12)",
   },
   {
-    icon: ClipboardList,
+    icon: ClipboardTextIcon,
     title: "Manage Quizzes",
     desc: "Quản lý quiz theo chủ đề, độ khó và số câu hỏi.",
     href: "/staff/quizzes",
@@ -43,7 +43,7 @@ export default function StaffPage() {
     <StaffShell
       title="Staff Management"
       description="Màn hình dành cho role Staff. Chọn module ở sidebar để thao tác nhanh."
-      icon={Shield}
+      icon={ShieldIcon}
       accent="var(--accent-gold)"
     >
       <section>
@@ -108,7 +108,7 @@ export default function StaffPage() {
                 </div>
 
                 <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                  <ChevronRight
+                  <CaretRightIcon
                     className="w-4 h-4"
                     style={{ color: card.accent }}
                   />

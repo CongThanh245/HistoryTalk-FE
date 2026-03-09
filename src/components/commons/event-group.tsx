@@ -1,6 +1,6 @@
 "use client";
 
-import { Sword } from "lucide-react";
+import { SwordIcon } from "@phosphor-icons/react";
 import { SessionCard } from "@/components/commons/session-card";
 import type {
   ChatHistoryGroup,
@@ -30,7 +30,7 @@ export function EventGroup({
             border: "1px solid rgba(201,162,77,0.2)",
           }}
         >
-          <Sword
+          <SwordIcon
             className="w-3.5 h-3.5"
             style={{ color: "var(--gold-on-light)" }}
           />

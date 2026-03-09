@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, X, Scroll } from "lucide-react";
+import { EyeIcon, EyeClosedIcon, XIcon, ScrollIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useLogin, useRegister } from "@/features/auth/hooks";
 
@@ -199,7 +199,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 boxShadow: "var(--shadow-gold)",
               }}
             >
-              <Scroll className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
+              <ScrollIcon className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
             </div>
             <span
               className="text-xl font-bold"
@@ -227,7 +227,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           className="absolute top-6 right-6 rounded-lg p-1.5 transition-colors cursor-pointer hover:bg-black/5"
           style={{ color: "var(--content-muted)" }}
         >
-          <X className="w-5 h-5" />
+          <XIcon className="w-5 h-5" />
         </button>
 
         <div className="w-full max-w-md space-y-7">
@@ -411,9 +411,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     style={{ color: "var(--content-muted)" }}
                   >
                     {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
+                      <EyeClosedIcon className="w-4 h-4" />
                     ) : (
-                      <Eye className="w-4 h-4" />
+                      <EyeIcon className="w-4 h-4" />
                     )}
                   </button>
                 </div>
@@ -460,9 +460,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
                       style={{ color: "var(--content-muted)" }}
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className="w-4 h-4" />
+                        <EyeClosedIcon className="w-4 h-4" />
                       ) : (
-                        <Eye className="w-4 h-4" />
+                        <EyeIcon className="w-4 h-4" />
                       )}
                     </button>
                   </div>

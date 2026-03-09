@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Scroll } from "lucide-react";
+import { ScrollIcon } from "@phosphor-icons/react";
 import type {
   ChatCharacter,
   ChatMessage,
@@ -174,7 +174,7 @@ export function ChatMain({
               "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
           }}
         >
-          <Scroll className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
+          <ScrollIcon className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
         </div>
         <div>
           <h2

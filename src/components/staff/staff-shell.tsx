@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Shield } from "lucide-react";
+import { ShieldIcon } from "@phosphor-icons/react";
 
 export function StaffShell({
   title,
@@ -16,7 +16,7 @@ export function StaffShell({
   accent?: string;
   children: React.ReactNode;
 }) {
-  const Icon = icon ?? Shield;
+  const Icon = icon ?? ShieldIcon;
   const a = accent ?? "var(--accent-gold)";
 
   return (

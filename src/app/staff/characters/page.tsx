@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Users, Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { UsersIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
@@ -212,7 +212,7 @@ export default function StaffCharactersPage() {
               }}
               style={{ color: "var(--header-text-muted)" }}
             >
-              <Pencil className="h-4 w-4" />
+              <PencilIcon className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
@@ -224,7 +224,7 @@ export default function StaffCharactersPage() {
               }}
               style={{ color: "var(--accent-danger)" }}
             >
-              <Trash2 className="h-4 w-4" />
+              <TrashIcon className="h-4 w-4" />
             </Button>
           </div>
         ),
@@ -239,7 +239,7 @@ export default function StaffCharactersPage() {
     <StaffShell
       title="Manage Characters"
       description="Tạo, cập nhật và kiểm soát nhân vật lịch sử."
-      icon={Users}
+      icon={UsersIcon}
       accent="var(--accent-blue)"
     >
       <section
@@ -277,7 +277,7 @@ export default function StaffCharactersPage() {
 
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
             <div className="relative w-full sm:w-[300px]">
-              <Search
+              <MagnifyingGlassIcon
                 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
                 style={{ color: "var(--content-subtle)" }}
               />
@@ -305,7 +305,7 @@ export default function StaffCharactersPage() {
                 color: "#fff",
               }}
             >
-              <Plus className="h-4 w-4 mr-1.5" /> Add New
+              <PlusIcon className="h-4 w-4 mr-1.5" /> Add New
             </Button>
           </div>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Scroll, Pin, PinOff } from "lucide-react";
+import { ScrollIcon, PushPinIcon, PushPinSlashIcon } from "@phosphor-icons/react";
 import Link from "next/link"; // 1. Import Link
 import { cn } from "@/lib/utils/cn";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -36,7 +36,7 @@ export default function SidebarHeader({ isExpanded, isPinned, onTogglePin }: Sid
             boxShadow: "var(--shadow-gold)",
           }}
         >
-          <Scroll className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
+          <ScrollIcon className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
         </div>
 
         {/* Brand name */}
@@ -55,7 +55,7 @@ export default function SidebarHeader({ isExpanded, isPinned, onTogglePin }: Sid
         )}
       </Link>
 
-      {/* Pin button — Giữ nguyên bên ngoài Link để tránh click nhầm */}
+      {/* PushPinIcon button — Giữ nguyên bên ngoài Link để tránh click nhầm */}
       {isExpanded && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -68,7 +68,7 @@ export default function SidebarHeader({ isExpanded, isPinned, onTogglePin }: Sid
                 background: isPinned ? "var(--accent-gold-active-bg)" : "transparent",
               }}
             >
-              {isPinned ? <Pin className="w-3.5 h-3.5" /> : <PinOff className="w-3.5 h-3.5" />}
+              {isPinned ? <PushPinIcon className="w-3.5 h-3.5" /> : <PushPinSlashIcon className="w-3.5 h-3.5" />}
             </button>
           </TooltipTrigger>
           <TooltipContent

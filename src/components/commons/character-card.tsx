@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { MessageSquare, Swords } from "lucide-react";
+import { ChatTextIcon, SwordIcon } from "@phosphor-icons/react";
 import { DarkCard } from "@/components/commons/card";
 
 // ── Type dùng chung cho TẤT CẢ nơi dùng Character ────────
@@ -209,7 +209,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
               </p>
               {character.events.slice(0, 2).map((ev) => (
                 <div key={ev.id} className="flex items-center gap-1.5">
-                  <Swords
+                  <SwordIcon
                     className="w-3 h-3 shrink-0"
                     style={{ color: "var(--content-subtle)" }}
                   />
@@ -249,7 +249,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
             color: "var(--gold-on-light)",
           }}
         >
-          <MessageSquare className="w-3.5 h-3.5" />
+          <ChatTextIcon className="w-3.5 h-3.5" />
           Trò chuyện ngay
         </div>
       </div>
@@ -314,7 +314,7 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
         </p>
       </div>
 
-      <MessageSquare
+      <ChatTextIcon
         className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all shrink-0"
         style={{ color: "var(--accent-gold)" }}
       />

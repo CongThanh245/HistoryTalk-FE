@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
-import { MapPin, ChevronRight } from "lucide-react";
+import { MapPinIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { Card } from "@/components/commons/card";
 import type { HistoricalEvent, EventCategoryLower } from "@/services/event.service";
 
@@ -118,7 +118,7 @@ export function EventStripCard({
         <div className="flex items-center justify-between mt-auto">
           {event.location ? (
             <div className="flex items-center gap-1">
-              <MapPin
+              <MapPinIcon
                 className="w-3 h-3 shrink-0"
                 style={{ color: "var(--content-subtle)" }}
               />
@@ -136,7 +136,7 @@ export function EventStripCard({
             className="flex items-center gap-1 text-[11px] font-medium opacity-0 group-hover:opacity-100 transition-opacity"
             style={{ color: cat.color }}
           >
-            Xem chi tiết <ChevronRight className="w-3 h-3" />
+            Xem chi tiết <CaretRightIcon className="w-3 h-3" />
           </div>
         </div>
       </Card>

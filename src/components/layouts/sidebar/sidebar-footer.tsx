@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap } from "lucide-react";
+import { LightningIcon  } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils/cn";
 
 interface SidebarFooterProps {
@@ -40,7 +40,7 @@ export default function SidebarFooter({ isExpanded }: SidebarFooterProps) {
               boxShadow: "0 2px 8px var(--accent-gold-glow)",
             }}
           >
-            <Zap className="w-3.5 h-3.5" style={{ color: "var(--bg-deep)" }} />
+            <LightningIcon  className="w-3.5 h-3.5" style={{ color: "var(--bg-deep)" }} />
           </div>
 
           {/* Text + button — chỉ fade theo chiều ngang */}

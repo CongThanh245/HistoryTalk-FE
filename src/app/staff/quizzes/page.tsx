@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ClipboardList, Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { ClipboardTextIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon } from "@phosphor-icons/react";
 
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
@@ -176,7 +176,7 @@ export default function StaffQuizzesPage() {
               style={{ color: "var(--header-text-muted)" }}
               aria-label="Sửa"
             >
-              <Pencil className="h-4 w-4" />
+              <PencilIcon className="h-4 w-4" />
             </Button>
             <Button
               type="button"
@@ -190,7 +190,7 @@ export default function StaffQuizzesPage() {
               style={{ color: "var(--accent-danger)" }}
               aria-label="Xóa"
             >
-              <Trash2 className="h-4 w-4" />
+              <TrashIcon className="h-4 w-4" />
             </Button>
           </div>
         ),
@@ -202,7 +202,7 @@ export default function StaffQuizzesPage() {
     <StaffShell
       title="Manage Quizzes"
       description="Quản lý quiz theo chủ đề và độ khó."
-      icon={ClipboardList}
+      icon={ClipboardTextIcon}
       accent="var(--burning-flame)"
     >
       <section
@@ -227,7 +227,7 @@ export default function StaffQuizzesPage() {
 
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
             <div className="relative w-full sm:w-[340px]">
-              <Search
+              <MagnifyingGlassIcon
                 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
                 style={{ color: "var(--content-subtle)" }}
               />
@@ -257,7 +257,7 @@ export default function StaffQuizzesPage() {
                 boxShadow: "0 0 14px var(--accent-gold-glow)",
               }}
             >
-              <Plus className="h-4 w-4 mr-1.5" />
+              <PlusIcon className="h-4 w-4 mr-1.5" />
               Add New
             </Button>
           </div>

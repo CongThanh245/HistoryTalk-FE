@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Clock, ArrowRight, Trophy } from "lucide-react";
+import { TimerIcon, ArrowRight, Trophy } from "@phosphor-icons/react";
 import { homeService, type RecentQuizItem } from "@/services/home.service";
 import { queryKeys } from "@/shared/query-key";
 
@@ -81,7 +81,7 @@ export function RecentQuiz() {
     <section>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4" style={{ color: "var(--gold-on-light)" }} />
+          <TimerIcon className="w-4 h-4" style={{ color: "var(--gold-on-light)" }} />
           <h2 className="text-base font-semibold" style={{ color: "var(--content-heading)" }}>
             Lần thi gần đây
           </h2>

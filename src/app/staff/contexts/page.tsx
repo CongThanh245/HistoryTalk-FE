@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ScrollText, Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon  , TrashIcon } from "@phosphor-icons/react";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
@@ -218,7 +218,7 @@ export default function StaffContextsPage() {
               }}
               style={{ color: "var(--header-text-muted)" }}
             >
-              <Pencil className="h-4 w-4" />
+              <PencilIcon  className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
@@ -230,7 +230,7 @@ export default function StaffContextsPage() {
               }}
               style={{ color: "var(--accent-danger)" }}
             >
-              <Trash2 className="h-4 w-4" />
+              <TrashIcon className="h-4 w-4" />
             </Button>
           </div>
         ),
@@ -245,7 +245,7 @@ export default function StaffContextsPage() {
     <StaffShell
       title="Manage Historical Context"
       description="Tạo, cập nhật và kiểm soát bối cảnh lịch sử."
-      icon={ScrollText}
+      icon={ScrollIcon}
       accent="var(--accent-gold)"
     >
       <section
@@ -283,7 +283,7 @@ export default function StaffContextsPage() {
 
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
             <div className="relative w-full sm:w-[340px]">
-              <Search
+              <MagnifyingGlassIcon
                 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
                 style={{ color: "var(--content-subtle)" }}
               />
@@ -312,7 +312,7 @@ export default function StaffContextsPage() {
                 boxShadow: "0 0 14px var(--accent-gold-glow)",
               }}
             >
-              <Plus className="h-4 w-4 mr-1.5" /> Add New
+              <PlusIcon className="h-4 w-4 mr-1.5" /> Add New
             </Button>
           </div>
         </div>

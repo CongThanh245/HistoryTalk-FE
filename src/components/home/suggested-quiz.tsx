@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Flame, ArrowRight, Star, ChevronRight } from "lucide-react";
+import { Flame, ArrowRight, Star, CaretRightIcon } from "@phosphor-icons/react";
 import { homeService, type SuggestedQuizItem } from "@/services/home.service";
 import { queryKeys } from "@/shared/query-key";
 
@@ -65,7 +65,7 @@ function SuggestedQuizRow({ item }: { item: SuggestedQuizItem }) {
         >
           {item.tag}
         </span>
-        <ChevronRight
+        <CaretRightIcon
           className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity"
           style={{ color: "var(--gold-on-light)" }}
         />

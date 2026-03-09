@@ -1,66 +1,266 @@
-export interface QuizQuestion {
+// ── Game 1: Guess the Character ──────────────────────────────
+
+export interface CharacterQuestion {
   id: number;
-  question: string;
-  options: string[];
+  hints: string[];
   answer: string;
-  explanation?: string;
+  options: string[];
+  explanation: string;
 }
 
-export const quiz: QuizQuestion[] = [
+export const characterQuestions: CharacterQuestion[] = [
   {
     id: 1,
-    question: "Ai đánh bại quân Nam Hán trên sông Bạch Đằng năm 938?",
-    options: ["Ngô Quyền", "Trần Hưng Đạo", "Quang Trung", "Lý Thường Kiệt"],
+    hints: ["Đánh bại quân Nam Hán", "Trận sông Bạch Đằng", "Năm 938"],
     answer: "Ngô Quyền",
-    explanation: "Ngô Quyền dùng kế cọc nhọn dưới sông Bạch Đằng, đánh tan quân Nam Hán, mở ra kỷ nguyên độc lập.",
+    options: ["Ngô Quyền", "Trần Hưng Đạo", "Lý Thường Kiệt", "Quang Trung"],
+    explanation:
+      "Ngô Quyền dùng cọc nhọn cắm dưới sông Bạch Đằng, đánh tan quân Nam Hán năm 938.",
   },
   {
     id: 2,
-    question: "Trận Điện Biên Phủ kéo dài bao nhiêu ngày?",
-    options: ["42 ngày", "56 ngày", "70 ngày", "30 ngày"],
-    answer: "56 ngày",
-    explanation: "Chiến dịch Điện Biên Phủ diễn ra từ 13/3 đến 7/5/1954, tổng cộng 56 ngày đêm.",
+    hints: [
+      "Ba lần đánh bại Nguyên Mông",
+      "Soạn 'Hịch tướng sĩ'",
+      "Được phong Hưng Đạo Vương",
+    ],
+    answer: "Trần Hưng Đạo",
+    options: ["Trần Hưng Đạo", "Trần Thái Tông", "Lê Lợi", "Ngô Quyền"],
+    explanation:
+      "Trần Hưng Đạo là Quốc công Tiết chế, tổng chỉ huy 3 cuộc kháng chiến chống Nguyên Mông (1258–1288).",
   },
   {
     id: 3,
-    question: "Trần Hưng Đạo đánh bại quân Nguyên Mông bao nhiêu lần?",
-    options: ["1 lần", "2 lần", "3 lần", "4 lần"],
-    answer: "3 lần",
-    explanation: "Quân Nguyên Mông xâm lược Đại Việt 3 lần (1258, 1285, 1288) và đều bị đánh bại.",
+    hints: [
+      "Hành quân thần tốc từ Phú Xuân",
+      "Mùng 5 Tết Kỷ Dậu 1789",
+      "Đại phá 29 vạn quân Thanh",
+    ],
+    answer: "Quang Trung",
+    options: ["Quang Trung", "Gia Long", "Lê Lợi", "Đinh Bộ Lĩnh"],
+    explanation:
+      "Vua Quang Trung (Nguyễn Huệ) đại phá quân Thanh ngay đêm mùng 5 Tết 1789.",
   },
   {
     id: 4,
-    question: "Vua Quang Trung đại phá quân Thanh vào dịp nào?",
-    options: ["Rằm tháng Giêng", "Mùng 5 Tết Kỷ Dậu", "Mùng 1 Tết", "Ngày giỗ tổ"],
-    answer: "Mùng 5 Tết Kỷ Dậu",
-    explanation: "Năm 1789, Quang Trung hành quân thần tốc và đại thắng quân Thanh đúng mùng 5 Tết Kỷ Dậu.",
+    hints: [
+      "Chủ động đánh sang đất Tống",
+      "Bài thơ 'Nam quốc sơn hà'",
+      "Đánh tan quân Tống tại sông Như Nguyệt",
+    ],
+    answer: "Lý Thường Kiệt",
+    options: ["Lý Thường Kiệt", "Lý Công Uẩn", "Trần Quốc Tuấn", "Ngô Quyền"],
+    explanation:
+      "Lý Thường Kiệt (1019–1105) — tướng tài nhà Lý, tác giả bài thơ tuyên ngôn độc lập đầu tiên.",
   },
   {
     id: 5,
-    question: "Hai Bà Trưng phất cờ khởi nghĩa vào năm nào?",
-    options: ["40 SCN", "938", "1075", "248"],
-    answer: "40 SCN",
-    explanation: "Năm 40 SCN, Trưng Trắc và Trưng Nhị khởi nghĩa chống lại ách đô hộ của nhà Đông Hán.",
+    hints: [
+      "Khởi nghĩa Lam Sơn",
+      "10 năm kháng chiến chống Minh",
+      "Lập ra nhà Hậu Lê",
+    ],
+    answer: "Lê Lợi",
+    options: ["Lê Lợi", "Lê Lai", "Nguyễn Trãi", "Lê Hoàn"],
+    explanation:
+      "Lê Lợi (1385–1433) lãnh đạo khởi nghĩa Lam Sơn, đánh đuổi quân Minh, lên ngôi năm 1428.",
+  },
+];
+
+// ── Game 2: Guess the Event ───────────────────────────────────
+
+export interface EventQuestion {
+  id: number;
+  year: string;
+  clues: string[];
+  answer: string;
+  options: string[];
+  explanation: string;
+}
+
+export const eventQuestions: EventQuestion[] = [
+  {
+    id: 1,
+    year: "1954",
+    clues: [
+      "56 ngày đêm",
+      "Tướng De Castries đầu hàng",
+      "Chấm dứt thực dân Pháp",
+    ],
+    answer: "Trận Điện Biên Phủ",
+    options: [
+      "Trận Điện Biên Phủ",
+      "Trận Bạch Đằng",
+      "Khởi nghĩa Lam Sơn",
+      "Trận Đông Khê",
+    ],
+    explanation:
+      "Chiến thắng Điện Biên Phủ 7/5/1954 buộc Pháp ký Hiệp định Genève.",
   },
   {
-    id: 6,
-    question: "Lý Thường Kiệt chủ động đánh sang đất nước nào?",
-    options: ["Chiêm Thành", "Chân Lạp", "Nhà Tống", "Nhà Đường"],
-    answer: "Nhà Tống",
-    explanation: "Năm 1075, Lý Thường Kiệt tiên phát chế nhân, đánh vào đất Tống trước khi họ kịp chuẩn bị xâm lược.",
+    id: 2,
+    year: "938",
+    clues: [
+      "Cọc gỗ bịt sắt dưới lòng sông",
+      "Thủy chiến",
+      "Quân Nam Hán đại bại",
+    ],
+    answer: "Trận Bạch Đằng",
+    options: [
+      "Trận Bạch Đằng",
+      "Trận Chi Lăng",
+      "Trận Tốt Động",
+      "Trận Rạch Gầm",
+    ],
+    explanation: "Trận Bạch Đằng 938 — Ngô Quyền mở ra kỷ nguyên độc lập.",
   },
   {
-    id: 7,
-    question: "Hội nghị Diên Hồng diễn ra vào thời nhà nào?",
-    options: ["Nhà Lý", "Nhà Trần", "Nhà Lê", "Nhà Nguyễn"],
-    answer: "Nhà Trần",
-    explanation: "Hội nghị Diên Hồng năm 1284 là sáng kiến của nhà Trần, hỏi ý kiến bô lão về việc đối phó quân Nguyên.",
+    id: 3,
+    year: "1789",
+    clues: ["Tết Kỷ Dậu", "Gò Đống Đa", "29 vạn quân Thanh"],
+    answer: "Đại phá quân Thanh",
+    options: [
+      "Đại phá quân Thanh",
+      "Trận Bạch Đằng 1288",
+      "Khởi nghĩa Lam Sơn",
+      "Trận Điện Biên Phủ",
+    ],
+    explanation:
+      "Mùng 5 Tết 1789, Quang Trung đại phá quân Thanh, tiến vào Thăng Long.",
   },
   {
-    id: 8,
-    question: "Chiến dịch Hồ Chí Minh kết thúc vào ngày nào?",
-    options: ["30/4/1975", "2/9/1945", "7/5/1954", "21/7/1954"],
-    answer: "30/4/1975",
-    explanation: "30/4/1975 là ngày giải phóng miền Nam, thống nhất đất nước sau hơn 20 năm chia cắt.",
+    id: 4,
+    year: "1975",
+    clues: ["30 tháng 4", "Dinh Độc Lập", "Thống nhất đất nước"],
+    answer: "Chiến dịch Hồ Chí Minh",
+    options: [
+      "Chiến dịch Hồ Chí Minh",
+      "Chiến dịch Điện Biên Phủ",
+      "Tổng tiến công Mậu Thân",
+      "Chiến dịch Huế–Đà Nẵng",
+    ],
+    explanation:
+      "30/4/1975, xe tăng tiến vào Dinh Độc Lập — thống nhất Nam Bắc sau 21 năm.",
   },
+  {
+    id: 5,
+    year: "1288",
+    clues: [
+      "Lần thứ ba quân Nguyên xâm lược",
+      "Cọc sông Bạch Đằng lần hai",
+      "Ô Mã Nhi bị bắt sống",
+    ],
+    answer: "Trận Bạch Đằng 1288",
+    options: [
+      "Trận Bạch Đằng 1288",
+      "Trận Chương Dương",
+      "Trận Vân Đồn",
+      "Trận Tây Kết",
+    ],
+    explanation:
+      "Năm 1288, Trần Hưng Đạo dùng lại kế cọc sông Bạch Đằng, đánh tan quân Nguyên lần thứ ba.",
+  },
+];
+
+// ── Game 3: Timeline Puzzle ───────────────────────────────────
+
+export interface TimelineItem {
+  id: string;
+  label: string;
+  year: number;
+  yearDisplay: string;
+  description: string;
+}
+
+export const timelineSets: TimelineItem[][] = [
+  [
+    {
+      id: "a1",
+      label: "Hai Bà Trưng khởi nghĩa",
+      year: 40,
+      yearDisplay: "40",
+      description: "Chống ách đô hộ Đông Hán",
+    },
+    {
+      id: "a2",
+      label: "Trận Bạch Đằng",
+      year: 938,
+      yearDisplay: "938",
+      description: "Ngô Quyền đánh tan quân Nam Hán",
+    },
+    {
+      id: "a3",
+      label: "Hội nghị Diên Hồng",
+      year: 1284,
+      yearDisplay: "1284",
+      description: "Nhà Trần hỏi ý dân trước giặc Nguyên",
+    },
+    {
+      id: "a4",
+      label: "Khởi nghĩa Lam Sơn",
+      year: 1418,
+      yearDisplay: "1418",
+      description: "Lê Lợi dựng cờ khởi nghĩa",
+    },
+  ],
+  [
+    {
+      id: "b1",
+      label: "Lý Công Uẩn dời đô",
+      year: 1010,
+      yearDisplay: "1010",
+      description: "Dời đô từ Hoa Lư ra Thăng Long",
+    },
+    {
+      id: "b2",
+      label: "Trận Như Nguyệt",
+      year: 1077,
+      yearDisplay: "1077",
+      description: "Lý Thường Kiệt chặn quân Tống",
+    },
+    {
+      id: "b3",
+      label: "Đại phá quân Thanh",
+      year: 1789,
+      yearDisplay: "1789",
+      description: "Quang Trung đại thắng mùng 5 Tết",
+    },
+    {
+      id: "b4",
+      label: "Điện Biên Phủ",
+      year: 1954,
+      yearDisplay: "1954",
+      description: "Đại thắng 56 ngày đêm",
+    },
+  ],
+  [
+    {
+      id: "c1",
+      label: "Nhà Đinh thống nhất",
+      year: 968,
+      yearDisplay: "968",
+      description: "Đinh Bộ Lĩnh dẹp loạn 12 sứ quân",
+    },
+    {
+      id: "c2",
+      label: "Trận Bạch Đằng 1288",
+      year: 1288,
+      yearDisplay: "1288",
+      description: "Trần Hưng Đạo phá quân Nguyên lần 3",
+    },
+    {
+      id: "c3",
+      label: "Bình Ngô đại cáo",
+      year: 1428,
+      yearDisplay: "1428",
+      description: "Nguyễn Trãi viết tuyên ngôn độc lập",
+    },
+    {
+      id: "c4",
+      label: "Giải phóng miền Nam",
+      year: 1975,
+      yearDisplay: "1975",
+      description: "Thống nhất đất nước 30/4/1975",
+    },
+  ],
 ];

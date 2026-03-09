@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { History, CalendarDays } from "lucide-react";
+import { VisorIcon, CalendarIcon } from "@phosphor-icons/react";
 
 // ── Tái sử dụng components đã có ─────────────────────────
 import { EraFilter } from "@/components/commons/era-filter"; // ← từ trang events
@@ -31,7 +31,7 @@ function EmptyState({ hasFilter }: { hasFilter: boolean }) {
           border: "1px solid rgba(201,162,77,0.15)",
         }}
       >
-        <History
+        <VisorIcon
           className="w-7 h-7"
           style={{ color: "var(--gold-on-light)", opacity: 0.5 }}
         />
@@ -131,19 +131,6 @@ export default function ChatHistoryPage() {
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(201,162,77,0.15) 0%, rgba(163,81,57,0.10) 100%)",
-                border: "1px solid rgba(201,162,77,0.25)",
-              }}
-            >
-              <History
-                className="w-5 h-5"
-                style={{ color: "var(--gold-on-light)" }}
-              />
-            </div>
             <div>
               <h1
                 className="text-2xl font-bold"
@@ -168,7 +155,7 @@ export default function ChatHistoryPage() {
               color: "var(--gold-on-light)",
             }}
           >
-            <CalendarDays className="w-3.5 h-3.5" />
+            <CalendarIcon className="w-3.5 h-3.5" />
             {totalSessions} cuộc trò chuyện
           </div>
         </div>

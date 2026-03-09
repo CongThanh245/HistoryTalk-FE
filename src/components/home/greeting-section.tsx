@@ -3,12 +3,12 @@
 import { useAuthStore } from "@/store/auth.store";
 
 export function GreetingSection() {
-  const userName = useAuthStore((s) => s.user?.userName ?? "bạn"); // ← đọc từ store
+  const userName = useAuthStore((s) => s.user?.userName ?? "bạn");
 
   return (
-    <div className="space-y-1 pt-2">
+    <div className="flex flex-col items-end justify-center leading-tight mr-2">
       <h1
-        className="text-3xl font-bold"
+        className="text-sm font-semibold" // Giảm từ 3xl xuống sm/base
         style={{ color: "var(--text-inverse)" }}
       >
         Xin chào,{" "}
@@ -23,10 +23,13 @@ export function GreetingSection() {
         >
           {userName}
         </span>
-        !
       </h1>
-      <p className="text-sm" style={{ color: "var(--content-muted)" }}>
-        Hôm nay bạn muốn khám phá trang sử nào?
+      {/* Dòng này có thể ẩn đi trên mobile hoặc thu nhỏ tối đa */}
+      <p
+        className="text-[10px] opacity-80"
+        style={{ color: "var(--content-muted)" }}
+      >
+        Lịch sử hôm nay có gì?
       </p>
     </div>
   );

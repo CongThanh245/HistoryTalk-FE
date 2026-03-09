@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { ChatMessage, ChatCharacter } from "@/services/chat.service";
-import { Volume2, VolumeX } from "lucide-react";
+import { SpeakerHighIcon, SpeakerXIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 
 interface MessageBubbleProps {
@@ -106,7 +106,7 @@ export function MessageBubble({
             }}
             className="absolute bottom-1 right-1 opacity-60 hover:opacity-100 transition"
           >
-            {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            {isSpeaking ? <SpeakerXIcon size={16} /> : <SpeakerHighIcon size={16} />}
           </button>
         </div>
         <span

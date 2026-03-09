@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { MessageSquare, Clock, ChevronRight, Trash2 } from "lucide-react";
+import { ChatTextIcon, TimerIcon , CaretRightIcon, TrashIcon } from "@phosphor-icons/react";
 import type { ChatHistoryItem } from "@/services/chat-history.service";
 import {
   AlertDialog,
@@ -65,7 +65,7 @@ export function SessionCard({
               className="absolute top-3 right-3 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50"
               style={{ color: "var(--content-subtle)" }}
             >
-              <Trash2 className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
+              <TrashIcon className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
             </button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -132,7 +132,7 @@ export function SessionCard({
             )}
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <Clock
+            <TimerIcon
               className="w-3 h-3"
               style={{ color: "var(--content-subtle)" }}
             />
@@ -156,7 +156,7 @@ export function SessionCard({
         {/* Footer */}
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-1.5">
-            <MessageSquare
+            <ChatTextIcon
               className="w-3 h-3"
               style={{ color: "var(--content-subtle)" }}
             />
@@ -182,7 +182,7 @@ export function SessionCard({
             className="flex items-center gap-1 text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity"
             style={{ color: "var(--gold-on-light)" }}
           >
-            Xem lại <ChevronRight className="w-3.5 h-3.5" />
+            Xem lại <CaretRightIcon className="w-3.5 h-3.5" />
           </div>
         </div>
       </div>

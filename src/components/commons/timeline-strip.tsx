@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useCallback } from "react";
 import { gsap } from "gsap";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 
 export interface TimelineItem {
   id: string;
@@ -77,7 +77,7 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
         className={btnBase}
         style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
       >
-        <ChevronLeft className="w-3.5 h-3.5" />
+        <CaretLeftIcon className="w-3.5 h-3.5" />
       </button>
 
       {/* Track outer — clipping container */}
@@ -156,7 +156,7 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
         className={btnBase}
         style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
       >
-        <ChevronRight className="w-3.5 h-3.5" />
+        <CaretRightIcon className="w-3.5 h-3.5" />
       </button>
     </div>
   );

@@ -1,25 +1,25 @@
 import {
-  LayoutDashboard,
-  Users,
-  Package,
-  ShoppingCart,
-  BarChart3,
-  FileText,
-  Settings,
-  FolderTree,
-  Star,
-  Shield,
-  Flag,
-  Server,
-  Key,
-  FileSearch,
-  Store,
-  PackageSearch,
-  TrendingUp,
-  Home,
-  Bell,
-  Heart,
-} from 'lucide-react';
+  SquaresFourIcon,
+  UserIcon,
+  PackageIcon,
+  ShoppingCartIcon,
+  ChartBarIcon,
+  FileTextIcon,
+  GearIcon,
+  TreeStructureIcon,
+  StarIcon,
+  ShieldIcon,
+  FlagIcon,
+  DatabaseIcon,
+  KeyIcon,
+  FileMagnifyingGlassIcon,
+  StorefrontIcon,
+  MagnifyingGlassIcon,
+  TrendUpIcon,
+  HouseIcon,
+  BellIcon,
+  HeartIcon,
+} from '@phosphor-icons/react';
 import { Role } from '@/constants/roles';
 import { ROUTES } from './index';
 
@@ -48,19 +48,19 @@ export interface NavSection {
  * Roles được define trong allowedRoles array
  */
 
-// ===== Common Navigation (All Users) =====
+// ===== Common Navigation (All UserIcon) =====
 export const commonNavItems: NavItem[] = [
   {
     id: 'profile',
     href: ROUTES.PROFILE,
-    icon: Users,
+    icon: UserIcon,
     label: 'Tài khoản',
     allowedRoles: [Role.ADMIN, Role.MODERATOR, Role.SELLER, Role.CUSTOMER],
   },
   {
     id: 'notifications',
     href: ROUTES.NOTIFICATIONS,
-    icon: Bell,
+    icon: BellIcon,
     label: 'Thông báo',
     allowedRoles: [Role.ADMIN, Role.MODERATOR, Role.SELLER, Role.CUSTOMER],
     badge: 5,
@@ -68,7 +68,7 @@ export const commonNavItems: NavItem[] = [
   {
     id: 'settings',
     href: ROUTES.SETTINGS,
-    icon: Settings,
+    icon: GearIcon,
     label: 'Cài đặt',
     allowedRoles: [Role.ADMIN, Role.MODERATOR, Role.SELLER, Role.CUSTOMER],
   },
@@ -79,28 +79,28 @@ export const customerNavItems: NavItem[] = [
   {
     id: 'home',
     href: ROUTES.HOME,
-    icon: Home,
+    icon: HouseIcon,
     label: 'Trang chủ',
     allowedRoles: [Role.CUSTOMER],
   },
   {
     id: 'products',
     href: ROUTES.PRODUCTS,
-    icon: Package,
+    icon: PackageIcon,
     label: 'Sản phẩm',
     allowedRoles: [Role.CUSTOMER],
   },
   {
     id: 'orders',
     href: ROUTES.ORDERS,
-    icon: ShoppingCart,
+    icon: ShoppingCartIcon,
     label: 'Đơn hàng của tôi',
     allowedRoles: [Role.CUSTOMER],
   },
   {
     id: 'wishlist',
     href: ROUTES.WISHLIST,
-    icon: Heart,
+    icon: HeartIcon,
     label: 'Yêu thích',
     allowedRoles: [Role.CUSTOMER],
   },
@@ -117,7 +117,7 @@ export const mainNavSections: NavSection[] = [
       {
         id: 'dashboard',
         href: ROUTES.DASHBOARD,
-        icon: LayoutDashboard,
+        icon: SquaresFourIcon,
         label: 'Dashboard',
         description: 'Tổng quan hệ thống',
         allowedRoles: [Role.ADMIN, Role.MODERATOR, Role.SELLER],
@@ -125,7 +125,7 @@ export const mainNavSections: NavSection[] = [
       {
         id: 'analytics',
         href: ROUTES.ANALYTICS,
-        icon: BarChart3,
+        icon: ChartBarIcon,
         label: 'Phân tích',
         description: 'Thống kê và báo cáo',
         allowedRoles: [Role.ADMIN, Role.SELLER], // Seller chỉ thấy data của mình
@@ -133,7 +133,7 @@ export const mainNavSections: NavSection[] = [
       {
         id: 'reports',
         href: ROUTES.REPORTS,
-        icon: FileText,
+        icon: FileTextIcon,
         label: 'Báo cáo',
         allowedRoles: [Role.ADMIN],
       },
@@ -149,7 +149,7 @@ export const mainNavSections: NavSection[] = [
       {
         id: 'users',
         href: ROUTES.USERS,
-        icon: Users,
+        icon: UserIcon,
         label: 'Người dùng',
         description: 'Quản lý người dùng',
         allowedRoles: [Role.ADMIN, Role.MODERATOR],
@@ -158,7 +158,7 @@ export const mainNavSections: NavSection[] = [
       {
         id: 'products',
         href: ROUTES.PRODUCTS_MANAGE,
-        icon: Package,
+        icon: PackageIcon,
         label: 'Sản phẩm',
         description: 'Quản lý sản phẩm',
         allowedRoles: [Role.ADMIN, Role.MODERATOR, Role.SELLER],
@@ -167,21 +167,21 @@ export const mainNavSections: NavSection[] = [
           {
             id: 'products-list',
             href: ROUTES.PRODUCTS_MANAGE,
-            icon: Package,
+            icon: PackageIcon,
             label: 'Danh sách',
             allowedRoles: [Role.ADMIN, Role.MODERATOR, Role.SELLER],
           },
           {
             id: 'products-create',
             href: ROUTES.PRODUCT_CREATE,
-            icon: Package,
+            icon: PackageIcon,
             label: 'Thêm mới',
             allowedRoles: [Role.ADMIN, Role.SELLER],
           },
           {
             id: 'categories',
             href: ROUTES.CATEGORIES,
-            icon: FolderTree,
+            icon: TreeStructureIcon,
             label: 'Danh mục',
             allowedRoles: [Role.ADMIN],
           },
@@ -190,7 +190,7 @@ export const mainNavSections: NavSection[] = [
       {
         id: 'orders',
         href: ROUTES.ORDERS_MANAGE,
-        icon: ShoppingCart,
+        icon: ShoppingCartIcon,
         label: 'Đơn hàng',
         description: 'Quản lý đơn hàng',
         allowedRoles: [Role.ADMIN, Role.MODERATOR, Role.SELLER],
@@ -200,7 +200,7 @@ export const mainNavSections: NavSection[] = [
       {
         id: 'inventory',
         href: ROUTES.INVENTORY,
-        icon: PackageSearch,
+        icon: MagnifyingGlassIcon,
         label: 'Kho hàng',
         description: 'Quản lý tồn kho',
         allowedRoles: [Role.ADMIN, Role.SELLER],
@@ -208,7 +208,7 @@ export const mainNavSections: NavSection[] = [
       {
         id: 'reviews',
         href: ROUTES.REVIEWS,
-        icon: Star,
+        icon: StarIcon,
         label: 'Đánh giá',
         allowedRoles: [Role.ADMIN, Role.MODERATOR, Role.SELLER],
       },
@@ -224,21 +224,21 @@ export const mainNavSections: NavSection[] = [
       {
         id: 'my-store-overview',
         href: ROUTES.MY_STORE,
-        icon: Store,
+        icon: StorefrontIcon,
         label: 'Tổng quan cửa hàng',
         allowedRoles: [Role.SELLER],
       },
       {
         id: 'my-products',
         href: ROUTES.MY_PRODUCTS,
-        icon: Package,
+        icon: PackageIcon,
         label: 'Sản phẩm của tôi',
         allowedRoles: [Role.SELLER],
       },
       {
         id: 'my-orders',
         href: ROUTES.MY_ORDERS,
-        icon: ShoppingCart,
+        icon: ShoppingCartIcon,
         label: 'Đơn hàng của tôi',
         allowedRoles: [Role.SELLER],
         badge: 8,
@@ -255,14 +255,14 @@ export const mainNavSections: NavSection[] = [
       {
         id: 'content-moderation',
         href: ROUTES.CONTENT_MODERATION,
-        icon: Shield,
+        icon: ShieldIcon,
         label: 'Kiểm duyệt nội dung',
         allowedRoles: [Role.MODERATOR, Role.ADMIN],
       },
       {
         id: 'user-reports',
         href: ROUTES.USER_REPORTS,
-        icon: Flag,
+        icon: FlagIcon,
         label: 'Báo cáo vi phạm',
         allowedRoles: [Role.MODERATOR, Role.ADMIN],
         badge: 5,
@@ -279,21 +279,21 @@ export const mainNavSections: NavSection[] = [
       {
         id: 'system-config',
         href: ROUTES.SYSTEM,
-        icon: Server,
+        icon: DatabaseIcon,
         label: 'Cấu hình',
         allowedRoles: [Role.ADMIN],
       },
       {
         id: 'roles-permissions',
         href: ROUTES.ROLES_PERMISSIONS,
-        icon: Key,
+        icon: KeyIcon,
         label: 'Phân quyền',
         allowedRoles: [Role.ADMIN],
       },
       {
         id: 'system-logs',
         href: ROUTES.LOGS,
-        icon: FileSearch,
+        icon: FileMagnifyingGlassIcon,
         label: 'Nhật ký',
         allowedRoles: [Role.ADMIN],
       },

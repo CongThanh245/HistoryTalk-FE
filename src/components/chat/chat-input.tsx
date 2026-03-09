@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { PaperPlaneTiltIcon, SpinnerIcon } from "@phosphor-icons/react";
 
 interface ChatInputProps {
   onSend: (content: string) => void;
@@ -96,9 +96,9 @@ export function ChatInput({
           }}
         >
           {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <SpinnerIcon className="w-4 h-4 animate-spin" />
           ) : (
-            <Send className="w-4 h-4" />
+            <PaperPlaneTiltIcon className="w-4 h-4" />
           )}
         </button>
       </div>

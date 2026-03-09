@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { MessageSquare } from "lucide-react";
+import { ChatTextIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import type { ChatCharacter } from "@/services/chat.service";
 import { characterService } from "@/services/character.service";
@@ -171,7 +171,7 @@ export function ChatRightPanel({
                     </span>
                   )}
                 </div>
-                <MessageSquare
+                <ChatTextIcon
                   className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                   style={{ color: "var(--accent-gold)" }}
                 />

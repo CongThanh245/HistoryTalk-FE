@@ -2,7 +2,7 @@
 
 // /**
 //  * HistoryTalk – useToast + Toaster
-//  * Base: @radix-ui/react-toast  |  Icons: lucide-react
+//  * Base: @radix-ui/react-toast  |  Icons: @phosphor-icons/react
 //  * Singleton listener pattern — no Redux, no Context, no localStorage
 //  *
 //  * Mount <Toaster /> once in src/app/layout.tsx
@@ -19,8 +19,8 @@
 //   AlertCircle,
 //   AlertTriangle,
 //   Info,
-//   X,
-// } from "lucide-react";
+//   XIcon,
+// } from "@phosphor-icons/react";
 
 // // ─────────────────────────────────────────────
 // // Types
@@ -309,7 +309,7 @@
 //         ].join(" ")}
 //         aria-label="Đóng thông báo"
 //       >
-//         <X size={14} />
+//         <XIcon size={14} />
 //       </ToastPrimitives.Close>
 
 //       {/* Progress bar */}

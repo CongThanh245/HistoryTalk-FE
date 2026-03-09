@@ -1,77 +1,143 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import {
-  Landmark, Users, MessageSquare, ClipboardList,
-  Library, Bookmark, ChevronRight, LucideIcon,
-} from "lucide-react";
+  BankIcon, UserIcon, ChatTextIcon, ClipboardTextIcon,
+  BookmarkIcon, CaretLeftIcon, CaretRightIcon,
+} from "@phosphor-icons/react";
 
-// Static — không cần API
-const FEATURE_CARDS = [
-  { icon: Landmark,      title: "Sự kiện lịch sử", desc: "Khám phá các mốc lịch sử qua dòng thời gian tương tác.", href: "/events",     accent: "var(--accent-gold)",      glow: "rgba(201,162,77,0.12)"  },
-  { icon: Users,         title: "Nhân vật",         desc: "Tìm hiểu cuộc đời những nhân vật làm thay đổi lịch sử.", href: "/characters", accent: "var(--accent-bronze)",    glow: "rgba(196,106,47,0.12)"  },
-  { icon: MessageSquare, title: "Chat với lịch sử", desc: "Trò chuyện với AI đóng vai nhân vật lịch sử.",           href: "/chat-history",       accent: "var(--accent-blue)",      glow: "rgba(143,179,200,0.12)" },
-  { icon: ClipboardList, title: "Trắc nghiệm",      desc: "Kiểm tra kiến thức với hàng nghìn câu hỏi theo chủ đề.", href: "/quiz",       accent: "var(--burning-flame)",   glow: "rgba(255,177,98,0.12)"  },
-  { icon: Library,       title: "Thư viện",         desc: "Kho tàng tư liệu và hình ảnh lịch sử được kiểm duyệt.", href: "/library",    accent: "var(--accent-teal)",      glow: "rgba(47,111,115,0.15)"  },
-  { icon: Bookmark,      title: "Đã lưu",           desc: "Truy cập nhanh các nội dung bạn đã đánh dấu.",           href: "/saved",      accent: "var(--accent-gold-soft)", glow: "rgba(226,199,122,0.10)" },
+const ALL_CARDS = [
+  { icon: BankIcon,          title: "Sự kiện lịch sử", desc: "Dòng thời gian tương tác",          href: "/events",       accentHex: "#c9a24d", glow: "rgba(201,162,77,0.1)"  },
+  { icon: UserIcon,          title: "Nhân vật",         desc: "Những người làm thay đổi lịch sử",  href: "/characters",   accentHex: "#c46a2f", glow: "rgba(196,106,47,0.1)"  },
+  { icon: ChatTextIcon,      title: "Chat với lịch sử", desc: "AI đóng vai nhân vật lịch sử",      href: "/chat-history", accentHex: "#8fb3c8", glow: "rgba(143,179,200,0.1)" },
+  { icon: ClipboardTextIcon, title: "Trắc nghiệm",      desc: "Hàng nghìn câu hỏi theo chủ đề",    href: "/quiz",         accentHex: "#e8924a", glow: "rgba(255,177,98,0.1)"  },
+  { icon: BankIcon,          title: "Thư viện",         desc: "Tư liệu & hình ảnh lịch sử",        href: "/library",      accentHex: "#2f8a8e", glow: "rgba(47,111,115,0.1)"  },
+  { icon: BookmarkIcon,      title: "Đã lưu",           desc: "Nội dung bạn đã đánh dấu",          href: "/saved",        accentHex: "#b89a3a", glow: "rgba(226,199,122,0.1)" },
 ];
 
-interface FeatureCardItem {
-  icon: LucideIcon;
-  title: string;
-  desc: string;
-  href: string;
-  accent: string;
-  glow: string;
-}
-
-function FeatureCard({ icon: Icon, title, desc, href, accent, glow }: FeatureCardItem) {
-  return (
-    <Link
-      href={href}
-      className="group relative flex flex-col gap-3 rounded-xl p-5 border transition-all duration-200 overflow-hidden"
-      style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
-    >
-      <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-        style={{ background: `radial-gradient(ellipse at top left, ${glow} 0%, transparent 65%)` }}
-      />
-      <div
-        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-        style={{ boxShadow: `inset 0 0 0 1px ${accent}40` }}
-      />
-      <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
-        style={{ background: glow, border: `1px solid ${accent}30` }}
-      >
-        <Icon className="w-5 h-5" style={{ color: accent }} />
-      </div>
-      <div className="relative z-10 flex-1">
-        <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--content-heading)" }}>
-          {title}
-        </h3>
-        <p className="text-xs leading-relaxed" style={{ color: "var(--content-muted)" }}>
-          {desc}
-        </p>
-      </div>
-      <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-200">
-        <ChevronRight className="w-4 h-4" style={{ color: accent }} />
-      </div>
-    </Link>
-  );
-}
+// Show 4 cards per page in a 2×2 grid
+const PAGE_SIZE = 6;
 
 export function FeatureCards() {
+  const [page, setPage] = useState(0);
+  const totalPages = Math.ceil(ALL_CARDS.length / PAGE_SIZE);
+  const visible = ALL_CARDS.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+
   return (
-    <section>
-      <h2 className="text-base font-semibold mb-4" style={{ color: "var(--content-heading)" }}>
-        Khám phá
-      </h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {FEATURE_CARDS.map((card) => (
-          <FeatureCard key={card.href} {...card} />
+    <div style={{
+      background: "var(--card-light-bg)",
+      border: "1px solid var(--card-light-border)",
+      borderRadius: 14,
+      overflow: "hidden",
+      boxShadow: "0 1px 6px rgba(27,38,50,0.06)",
+      display: "flex", flexDirection: "column",
+    }}>
+      {/* Header */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "11px 11px",
+      }}>
+
+
+        {/* Pagination arrows */}
+        {totalPages > 1 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              style={{
+                width: 24, height: 24, borderRadius: 6, border: "1px solid var(--card-light-border)",
+                background: page === 0 ? "transparent" : "var(--card-light-bg)",
+                color: page === 0 ? "var(--content-subtle)" : "#7a5a1e",
+                cursor: page === 0 ? "default" : "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.15s",
+              }}
+            >
+              <CaretLeftIcon size={11} weight="bold" />
+            </button>
+            <span style={{ fontSize: 10, color: "var(--content-muted)", fontWeight: 600 }}>
+              {page + 1}/{totalPages}
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page === totalPages - 1}
+              style={{
+                width: 24, height: 24, borderRadius: 6, border: "1px solid var(--card-light-border)",
+                background: page === totalPages - 1 ? "transparent" : "var(--card-light-bg)",
+                color: page === totalPages - 1 ? "var(--content-subtle)" : "#7a5a1e",
+                cursor: page === totalPages - 1 ? "default" : "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.15s",
+              }}
+            >
+              <CaretRightIcon size={11} weight="bold" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 2×2 grid */}
+      <div style={{ padding: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 15 }}>
+        {visible.map(card => (
+          <Link
+            key={card.href}
+            href={card.href}
+            className="group"
+            style={{ textDecoration: "none" }}
+          >
+            <div
+              style={{
+                display: "flex", flexDirection: "column", gap: 10,
+                padding: "12px 12px", borderRadius: 10,
+                border: "1px solid var(--card-light-border)",
+                background: "var(--card-light-bg)",
+                transition: "all 0.15s", cursor: "pointer",
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = card.glow;
+                el.style.borderColor = `${card.accentHex}40`;
+                el.style.transform = "translateY(-1px)";
+                el.style.boxShadow = `0 4px 16px ${card.accentHex}14`;
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = "var(--card-light-bg)";
+                el.style.borderColor = "var(--card-light-border)";
+                el.style.transform = "translateY(0)";
+                el.style.boxShadow = "none";
+              }}
+            >
+              {/* Icon */}
+              <div style={{
+                width: 32, height: 32, borderRadius: 8,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: card.glow, border: `1px solid ${card.accentHex}28`,
+              }}>
+                <card.icon size={16} style={{ color: card.accentHex }} />
+              </div>
+
+              {/* Text */}
+              <div>
+                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "var(--content-heading)", lineHeight: 1.3 }}>
+                  {card.title}
+                </p>
+                <p style={{ margin: "3px 0 0", fontSize: 14, color: "var(--content-muted)", lineHeight: 1.4 }}>
+                  {card.desc}
+                </p>
+              </div>
+
+              {/* Arrow on hover */}
+              <div style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, fontWeight: 600, color: card.accentHex, opacity: 0 }}
+                className="group-hover:opacity-100" >
+                Mở <CaretRightIcon size={10} weight="bold" />
+              </div>
+            </div>
+          </Link>
         ))}
       </div>
-    </section>
+    </div>
   );
 }

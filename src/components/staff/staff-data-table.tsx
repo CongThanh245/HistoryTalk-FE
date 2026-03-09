@@ -9,7 +9,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { X, Play, SkipForward, Clock, MapPin } from "lucide-react";
+import { XIcon, PlayIcon, SkipForwardIcon, TimerIcon, MapPinIcon } from "@phosphor-icons/react";
 import type {
   HistoricalEvent,
   EventCategoryLower,
@@ -85,7 +85,7 @@ function FakeVideoPlayer({
         <div className="absolute top-0 left-0 right-0 h-8 bg-black" />
         <div className="absolute bottom-12 left-0 right-0 h-8 bg-black" />
 
-        {/* Play button — chỉ hiện khi chưa play */}
+        {/* PlayIcon button — chỉ hiện khi chưa play */}
         {!playing && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
             <button
@@ -97,7 +97,7 @@ function FakeVideoPlayer({
                 border: "2px solid rgba(255,255,255,0.25)",
               }}
             >
-              <Play className="w-8 h-8 text-white ml-1.5" fill="white" />
+              <PlayIcon className="w-8 h-8 text-white ml-1.5" fill="white" />
             </button>
             <p className="text-white/70 text-sm font-medium tracking-wide">
               Xem video giới thiệu
@@ -117,7 +117,7 @@ function FakeVideoPlayer({
               border: "1px solid rgba(255,255,255,0.15)",
             }}
           >
-            <SkipForward className="w-3.5 h-3.5" /> Bỏ qua
+            <SkipForwardIcon className="w-3.5 h-3.5" /> Bỏ qua
           </button>
         )}
 
@@ -279,7 +279,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
               boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
             }}
           >
-            <X
+            <XIcon
               className="w-5 h-5 transition-colors"
               style={{ color: "var(--text-primary)" }}
             />
@@ -339,7 +339,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
             <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
               <div className="flex flex-col gap-2.5">
                 <div className="flex items-center gap-2.5">
-                  <Clock className="w-4 h-4 shrink-0" style={{ color }} />
+                  <TimerIcon className="w-4 h-4 shrink-0" style={{ color }} />
                   <span
                     className="text-sm"
                     style={{ color: "var(--content-text)" }}
@@ -349,7 +349,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                 </div>
                 {event.location && (
                   <div className="flex items-center gap-2.5">
-                    <MapPin
+                    <MapPinIcon
                       className="w-4 h-4 shrink-0"
                       style={{ color: "var(--content-subtle)" }}
                     />

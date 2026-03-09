@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  MessageSquare,
-  Clock,
-  History,
-} from "lucide-react";
+  CaretLeftIcon,
+  CaretRightIcon,
+  PlusIcon,
+  ChatTextIcon,
+  TimerIcon,
+  ClockCounterClockwiseIcon,
+} from "@phosphor-icons/react";
 import {
   Tooltip,
   TooltipContent,
@@ -106,9 +106,9 @@ export function ChatLeftPanel({
               }}
             >
               {isOpen ? (
-                <ChevronLeft className="w-3 h-3" />
+                <CaretLeftIcon className="w-3 h-3" />
               ) : (
-                <ChevronRight className="w-3 h-3" />
+                <CaretRightIcon className="w-3 h-3" />
               )}
             </button>
           </TooltipTrigger>
@@ -134,7 +134,7 @@ export function ChatLeftPanel({
                 borderBottom: "1px solid var(--border-default)",
               }}
             />
-            <History
+            <ClockCounterClockwiseIcon
               className="w-3.5 h-3.5 shrink-0"
               style={{ color: "var(--accent-gold)" }}
             />
@@ -191,7 +191,7 @@ export function ChatLeftPanel({
                   className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md cursor-pointer transition-colors hover:bg-white/5"
                   style={{ color: "var(--accent-gold)" }}
                 >
-                  <Plus className="w-3 h-3" />
+                  <PlusIcon className="w-3 h-3" />
                   {createSession.isPending ? "..." : "Mới"}
                 </button>
               </div>
@@ -231,7 +231,7 @@ export function ChatLeftPanel({
                     }}
                   >
                     <div className="flex items-start gap-2">
-                      <MessageSquare
+                      <ChatTextIcon
                         className="w-3.5 h-3.5 mt-0.5 shrink-0"
                         style={{
                           color:
@@ -259,7 +259,7 @@ export function ChatLeftPanel({
                           {session.lastMessage}
                         </p>
                         <div className="flex items-center gap-1 mt-1">
-                          <Clock
+                          <TimerIcon
                             className="w-2.5 h-2.5"
                             style={{ color: "var(--text-secondary)" }}
                           />
@@ -293,7 +293,7 @@ export function ChatLeftPanel({
                   color: "var(--accent-gold-soft)",
                 }}
               >
-                <Plus className="w-3.5 h-3.5" />
+                <PlusIcon className="w-3.5 h-3.5" />
                 {createSession.isPending
                   ? "Đang tạo..."
                   : "Cuộc trò chuyện mới"}
