@@ -39,4 +39,8 @@ export const queryKeys = {
     character: (characterId: string) =>
       ["chat", "character", characterId] as const,
   },
+  chatHistory: {
+    all: ["chatHistory"] as const,
+    list: () => ["chatHistory", "list"] as const,
+  },
 } as const;

@@ -408,7 +408,7 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
               color: "var(--gold-on-light)",
             }}
           >
-            Gợi ý — Đây là ai?
+            Đây là ai?
           </p>
         </div>
 
@@ -1034,26 +1034,8 @@ export function HistoryMiniGame() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            marginBottom: 12,
           }}
         >
-          {/* Title */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <TrophyIcon
-              size={16}
-              weight="fill"
-              style={{ color: "var(--accent-gold)" }}
-            />
-            <span
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: "var(--content-heading)",
-              }}
-            >
-              Game zui zẻ
-            </span>
-          </div>
 
           {/* Score badge */}
           {score.total > 0 && (
@@ -1111,22 +1093,7 @@ export function HistoryMiniGame() {
       {/* ── Game area ── */}
       <div ref={contentRef} style={{ padding: "16px 18px 18px", flex: 1 }}>
         {/* Active mode label */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: activeTab.accent,
-            marginBottom: 12,
-          }}
-        >
-          <activeTab.Icon size={13} weight="fill" />
-          {activeTab.label}
-        </div>
+  
 
         {mode === "character" && (
           <GameGuessCharacter key="char" onScore={handleScore} />
