@@ -1,10 +1,9 @@
-import ComingSoonPage from "@/components/commons/comming-soon";
+// app/(app)/trac-nghiem/page.tsx
+// Server Component entry point
+
+import { QuizPageClient } from "@/components/quiz/quiz-page";
 import React from "react";
 
 export default function QuizPage() {
-  return (
-    <div>
-      <ComingSoonPage></ComingSoonPage>
-    </div>
-  );
+  return <QuizPageClient />;
 }

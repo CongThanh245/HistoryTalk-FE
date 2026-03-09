@@ -1,4 +1,5 @@
 import type { GetEventsParams } from "@/services/event.service";
+import { GetQuizSetsParams } from "@/services/scenario.service";
 
 export const queryKeys = {
   auth: {
@@ -42,5 +43,13 @@ export const queryKeys = {
   chatHistory: {
     all: ["chatHistory"] as const,
     list: () => ["chatHistory", "list"] as const,
+  },
+
+  quizzes: {
+    all: ["quizzes"] as const,
+    list: (params?: GetQuizSetsParams) =>
+      ["quizzes", "list", params ?? {}] as const,
+    detail: (id: string) => ["quizzes", "detail", id] as const,
+    myResults: ["quizzes", "results", "me"] as const,
   },
 } as const;
