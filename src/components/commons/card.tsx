@@ -74,7 +74,7 @@ export function Card({
         }
       >
         <Image
-          src={imageSrc}
+          src={imageSrc || "/card.jpg"}
           alt={imageAlt}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"

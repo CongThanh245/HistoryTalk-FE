@@ -2,17 +2,27 @@
 
 import Image from "next/image";
 import type { ChatMessage, ChatCharacter } from "@/services/chat.service";
+import { Volume2, VolumeX } from "lucide-react";
+import { useState } from "react";
 
 interface MessageBubbleProps {
   message: ChatMessage;
   character: ChatCharacter;
+  speak?: (text: string) => void;
 }
 
-export function MessageBubble({ message, character }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  character,
+  speak,
+}: MessageBubbleProps) {
   const isUser = message.role === "USER";
-
   const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    new Date(iso).toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   if (isUser) {
     return (
@@ -21,14 +31,18 @@ export function MessageBubble({ message, character }: MessageBubbleProps) {
           <div
             className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed"
             style={{
-              background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+              background:
+                "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
               color: "var(--bg-deep)",
               boxShadow: "0 2px 12px var(--accent-gold-glow)",
             }}
           >
             {message.content}
           </div>
-          <span className="text-[10px]" style={{ color: "var(--text-secondary)" }}>
+          <span
+            className="text-[10px]"
+            style={{ color: "var(--text-secondary)" }}
+          >
             {formatTime(message.createdAt)}
           </span>
         </div>
@@ -36,7 +50,11 @@ export function MessageBubble({ message, character }: MessageBubbleProps) {
         {/* User avatar */}
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-auto"
-          style={{ background: "var(--bg-elevated)", color: "var(--text-primary)", border: "1px solid var(--border-default)" }}
+          style={{
+            background: "var(--bg-elevated)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border-default)",
+          }}
         >
           T
         </div>
@@ -47,16 +65,27 @@ export function MessageBubble({ message, character }: MessageBubbleProps) {
   return (
     <div className="flex gap-2.5 px-4">
       {/* Character avatar */}
-      <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 mt-auto border" style={{ borderColor: "var(--border-default)" }}>
-        <Image src={character.imageUrl} alt={character.name} fill className="object-cover" />
+      <div
+        className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 mt-auto border"
+        style={{ borderColor: "var(--border-default)" }}
+      >
+        <Image
+          src={character.imageUrl}
+          alt={character.name}
+          fill
+          className="object-cover"
+        />
       </div>
 
       <div className="max-w-[65%] flex flex-col gap-1">
-        <span className="text-[10px] font-semibold px-1" style={{ color: "var(--accent-gold-soft)" }}>
+        <span
+          className="text-[10px] font-semibold px-1"
+          style={{ color: "var(--accent-gold-soft)" }}
+        >
           {character.name}
         </span>
         <div
-          className="px-4 py-2.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed"
+          className="relative px-4 py-2.5 pr-8 rounded-2xl rounded-tl-sm text-sm leading-relaxed"
           style={{
             background: "var(--bg-elevated)",
             color: "var(--text-primary)",
@@ -64,8 +93,26 @@ export function MessageBubble({ message, character }: MessageBubbleProps) {
           }}
         >
           {message.content}
+
+          <button
+            onClick={() => {
+              if (isSpeaking) {
+                speechSynthesis.cancel();
+                setIsSpeaking(false);
+              } else {
+                speak?.(message.content);
+                setIsSpeaking(true);
+              }
+            }}
+            className="absolute bottom-1 right-1 opacity-60 hover:opacity-100 transition"
+          >
+            {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
+          </button>
         </div>
-        <span className="text-[10px] px-1" style={{ color: "var(--text-secondary)" }}>
+        <span
+          className="text-[10px] px-1"
+          style={{ color: "var(--text-secondary)" }}
+        >
           {formatTime(message.createdAt)}
         </span>
       </div>
@@ -78,16 +125,30 @@ export function MessageBubble({ message, character }: MessageBubbleProps) {
 export function TypingIndicator({ character }: { character: ChatCharacter }) {
   return (
     <div className="flex gap-2.5 px-4">
-      <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border" style={{ borderColor: "var(--border-default)" }}>
-        <Image src={character.imageUrl} alt={character.name} fill className="object-cover" />
+      <div
+        className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border"
+        style={{ borderColor: "var(--border-default)" }}
+      >
+        <Image
+          src={character.imageUrl}
+          alt={character.name}
+          fill
+          className="object-cover"
+        />
       </div>
       <div className="flex flex-col gap-1">
-        <span className="text-[10px] font-semibold px-1" style={{ color: "var(--accent-gold-soft)" }}>
+        <span
+          className="text-[10px] font-semibold px-1"
+          style={{ color: "var(--accent-gold-soft)" }}
+        >
           {character.name}
         </span>
         <div
           className="px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1"
-          style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-default)" }}
+          style={{
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border-default)",
+          }}
         >
           {[0, 1, 2].map((i) => (
             <div

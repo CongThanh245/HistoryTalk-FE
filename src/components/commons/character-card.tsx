@@ -44,7 +44,7 @@ export function CharacterCarouselCard({
 }: CarouselCardProps) {
   return (
     <DarkCard
-      imageSrc={character.imageUrl ?? "/card.jpg"}
+      imageSrc={character.imageUrl || "/card.jpg"}
       imageAlt={character.name}
       imageHeight="65%"
       badge={{
@@ -126,7 +126,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       {/* Ảnh */}
       <div className="relative w-full h-48 overflow-hidden">
         <Image
-          src={character.imageUrl ?? "/card.jpg"}
+          src={character.imageUrl || "/card.jpg"}
           alt={character.name}
           fill
           className="object-cover object-top transition-transform duration-500 group-hover:scale-105"

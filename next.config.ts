@@ -6,8 +6,8 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "**",
+        pathname: "/**",
       },
-      // thêm các domain khác nếu cần sau
     ],
   },
   reactCompiler: true,

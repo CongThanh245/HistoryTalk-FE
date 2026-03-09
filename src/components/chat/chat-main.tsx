@@ -39,6 +39,43 @@ export function ChatMain({
   const { data, isLoading } = useChatMessages(sessionId);
   const sendMessage = useSendMessage();
   const createSession = useCreateSession();
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    const loadVoices = () => {
+      const v = speechSynthesis.getVoices();
+      setVoices(v);
+    };
+
+    loadVoices();
+
+    speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
+  const speak = (text: string) => {
+    // nếu đang đọc thì dừng
+    if (speechSynthesis.speaking) {
+      speechSynthesis.cancel();
+      return;
+    }
+
+    const voices = speechSynthesis.getVoices();
+
+    const vietnameseVoice = voices.find((v) => v.name.includes("Vietnamese"));
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    if (vietnameseVoice) {
+      utterance.voice = vietnameseVoice;
+    }
+
+    utterance.lang = "vi-VN";
+
+    speechSynthesis.speak(utterance);
+  };
   const serverMessages = data?.messages ?? [];
   const messages = [...serverMessages, ...optimisticMessages];
   const sessionIdRef = useRef(sessionId);
@@ -95,6 +132,11 @@ export function ChatMain({
         onSuccess: (res) => {
           setOptimisticMessages([]);
           setSuggestedQuestions(res.suggestedQuestions);
+
+          // 🔊 đọc message của nhân vật
+          if (res.assistantMessage?.content) {
+            speak(res.assistantMessage.content);
+          }
           qc.setQueryData(
             queryKeys.chat.messages(currentSessionId!),
             (old: GetMessagesResponse | undefined) => ({
@@ -175,7 +217,12 @@ export function ChatMain({
         ) : (
           <>
             {messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} character={character} />
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                character={character}
+                speak={speak}
+              />
             ))}
             {sendMessage.isPending && <TypingIndicator character={character} />}
           </>
