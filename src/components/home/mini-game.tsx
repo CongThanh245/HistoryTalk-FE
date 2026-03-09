@@ -543,7 +543,7 @@ function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
         ref={yearRef}
         style={{
           background:
-            "linear-gradient(135deg, var(--accent-earth), rgba(59,42,31,0.6))",
+            "var(--accent-earth)",
           border: "1px solid rgba(196,106,47,0.3)",
           borderRadius: 14,
           padding: "18px 16px",

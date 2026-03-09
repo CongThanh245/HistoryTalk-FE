@@ -31,7 +31,7 @@ export default function HomePage() {
               className="text-sm font-bold uppercase"
               style={{ color: "var(--content-heading)", letterSpacing: "0.1em" }}
             >
-              Khám phá & Luyện tập
+              Chào mừng bạn đến với HistoryTalk - Hãy bắt đầu trò chuyện với nhân vật mà bạn thích
             </h2>
             <div className="flex-1 h-px" style={{ background: "var(--card-light-border)" }} />
           </div>
