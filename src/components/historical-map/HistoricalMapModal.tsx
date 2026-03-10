@@ -102,7 +102,7 @@ export function HistoricalMapModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col"
+      className="flex flex-col h-full"
       style={{ background: "var(--bg-content)" }}
     >
       {/* Top bar */}

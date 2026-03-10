@@ -25,58 +25,60 @@ export function LeafletMap({
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!containerRef.current) return;
-    if ((containerRef.current as any)._leaflet_id) return; // ← guard
+    if (mapRef.current) return;
 
-    if (mapRef.current) return; // already initialized
+    // Delay nhỏ để đảm bảo container đã mount xong
+    const timer = setTimeout(() => {
+      if (!containerRef.current) return;
+      if ((containerRef.current as any)._leaflet_id) return; // ← guard chính
 
-    // Dynamically import Leaflet to avoid SSR issues
-    import("leaflet").then((L) => {
-      // Fix default icon path issue with Next.js
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl:
-          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        shadowUrl:
-          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      import("leaflet").then((L) => {
+        if (!containerRef.current) return;
+        if ((containerRef.current as any)._leaflet_id) return; // ← check lại trong async
+
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl:
+            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+          iconUrl:
+            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+          shadowUrl:
+            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        });
+
+        const map = L.map(containerRef.current!, {
+          center: [16.5, 107.5],
+          zoom: 6,
+          zoomControl: true,
+          attributionControl: false,
+        });
+
+        L.tileLayer(
+          "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+          { subdomains: "abcd", maxZoom: 19 },
+        ).addTo(map);
+
+        const vietnamBounds = L.latLngBounds(
+          L.latLng(8.4, 102.0),
+          L.latLng(23.5, 110.0),
+        );
+        map.setMaxBounds(vietnamBounds.pad(0.5));
+        map.setMinZoom(5);
+
+        mapRef.current = map;
+
+        landmarks.forEach((landmark) => {
+          addMarker(L, map, landmark, false, onSelectLandmark, markersRef);
+        });
       });
-
-      const map = L.map(containerRef.current!, {
-        center: [16.5, 107.5], // Center of Vietnam
-        zoom: 6,
-        zoomControl: true,
-        attributionControl: false,
-      });
-
-      // CartoDB Positron — tile sáng, tối giản, đẹp
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-        {
-          subdomains: "abcd",
-          maxZoom: 19,
-        },
-      ).addTo(map);
-
-      // Giới hạn bounding box của Việt Nam
-      const vietnamBounds = L.latLngBounds(
-        L.latLng(8.4, 102.0),
-        L.latLng(23.5, 110.0),
-      );
-      map.setMaxBounds(vietnamBounds.pad(0.5));
-      map.setMinZoom(5);
-
-      mapRef.current = map;
-
-      // Add markers
-      landmarks.forEach((landmark) => {
-        addMarker(L, map, landmark, false, onSelectLandmark, markersRef);
-      });
-    });
+    }, 0);
 
     return () => {
+      clearTimeout(timer);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
+        markersRef.current = {};
       }
     };
   }, []); // eslint-disable-line

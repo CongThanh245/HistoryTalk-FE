@@ -14,7 +14,8 @@ export interface User {
   uid: string;
   userName: string;
   email: string;
-  role: "CUSTOMER" | "STAFF"; 
+  role: "CUSTOMER" | "STAFF";
+  avatarUrl?: string;
 }
 
 export interface AuthTokens {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Flame, Bell } from "@phosphor-icons/react";
+import { Bell, SignIn } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -16,12 +16,13 @@ import { SearchInput } from "@/components/commons/search-input";
 import { useLogout } from "@/features/auth/hooks";
 import { useAuthStore } from "@/store/auth.store";
 import { GreetingSection } from "../home/greeting-section";
+import Link from "next/link"; // Giả sử bạn dùng Next.js Link
+import { MagneticButton } from "../commons/MagneticButton";
 
 export default function Header() {
   const { mutate: logout, isPending } = useLogout();
-  const user = useAuthStore((s) => s.user); // ← đọc từ store
+  const user = useAuthStore((s) => s.user);
 
-  // Tạo initials từ userName (vd: "STAFF1" → "ST", "Nguyen Thanh" → "NT")
   const initials = user?.userName
     ? user.userName
         .split(" ")
@@ -49,130 +50,118 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* <Button
-            size="sm"
-            className="rounded-full px-4 font-medium text-sm border-0 cursor-pointer"
-            style={{
-              background:
-                "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-              color: "var(--bg-deep)",
-              boxShadow: "0 0 14px var(--accent-gold-glow)",
-            }}
-          >
-            <Plus className="h-4 w-4 mr-1.5" />
-            Tạo mới
-          </Button> */}
+          {user ? (
+            /* --- TRẠNG THÁI ĐÃ ĐĂNG NHẬP --- */
+            <>
+              <GreetingSection />
 
-          <GreetingSection />
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative rounded-full h-9 w-9 cursor-pointer"
-            style={{ color: "var(--header-text-muted)" }}
-          >
-            <Bell className="h-[18px] w-[18px]" />
-            <span
-              className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full ring-2 ring-[--header-bg]"
-              style={{ background: "var(--accent-danger)" }}
-            />
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-9 w-9 rounded-full p-0 cursor-pointer"
+                size="icon"
+                className="relative rounded-full h-9 w-9 cursor-pointer"
+                style={{ color: "var(--header-text-muted)" }}
               >
-                <Avatar
-                  className="h-9 w-9 border"
-                  style={{ borderColor: "var(--oatmeal)" }}
-                >
-                  <AvatarImage
-                    src="/api/placeholder/36/36"
-                    alt={user?.userName}
-                  />
-                  <AvatarFallback
-                    className="text-sm font-semibold"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-                      color: "var(--bg-deep)",
-                    }}
-                  >
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
+                <Bell className="h-[18px] w-[18px]" />
+                <span
+                  className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full ring-2 ring-[--header-bg]"
+                  style={{ background: "var(--accent-danger)" }}
+                />
               </Button>
-            </DropdownMenuTrigger>
 
-            <DropdownMenuContent
-              align="end"
-              className="w-56 border"
-              style={{
-                background: "var(--bg-elevated)",
-                borderColor: "var(--border-default)",
-                color: "var(--text-primary)",
-              }}
-            >
-              <DropdownMenuLabel>
-                <p
-                  className="text-sm font-medium"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  {user?.userName ?? "—"}
-                </p>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {user?.email ?? "—"}
-                </p>
-              </DropdownMenuLabel>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative h-9 w-9 rounded-full p-0 cursor-pointer"
+                  >
+                    <Avatar
+                      className="h-9 w-9 border"
+                      style={{ borderColor: "var(--oatmeal)" }}
+                    >
+                      <AvatarImage
+                        src={user?.avatarUrl ?? "/api/placeholder/36/36"}
+                        alt={user?.userName}
+                      />
+                      <AvatarFallback
+                        className="text-sm font-semibold"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+                          color: "var(--bg-deep)",
+                        }}
+                      >
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
 
-              <DropdownMenuSeparator
-                style={{ background: "var(--border-default)" }}
-              />
-
-              <DropdownMenuItem
-                className="cursor-pointer"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Hồ sơ
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Cài đặt
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer justify-between"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Nâng cấp Premium
-                <Badge
-                  className="text-[10px] px-1.5 py-0 border-0"
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 border"
                   style={{
-                    background: "var(--accent-gold-active-bg)",
-                    color: "var(--accent-gold)",
+                    background: "var(--bg-elevated)",
+                    borderColor: "var(--border-default)",
+                    color: "var(--text-primary)",
                   }}
                 >
-                  Pro
-                </Badge>
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator
-                style={{ background: "var(--border-default)" }}
-              />
-
-              <DropdownMenuItem
-                className="cursor-pointer"
-                style={{ color: "var(--accent-danger)" }}
-                disabled={isPending}
-                onClick={() => logout()}
-              >
-                {isPending ? "Đang đăng xuất..." : "Đăng xuất"}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <DropdownMenuLabel>
+                    <p className="text-sm font-medium">
+                      {user?.userName ?? "—"}
+                    </p>
+                    <p
+                      className="text-xs"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      {user?.email ?? "—"}
+                    </p>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator
+                    style={{ background: "var(--border-default)" }}
+                  />
+                  <DropdownMenuItem className="cursor-pointer">
+                    Hồ sơ
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    Cài đặt
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer justify-between">
+                    Nâng cấp Premium
+                    <Badge
+                      className="text-[10px] px-1.5 py-0 border-0"
+                      style={{
+                        background: "var(--accent-gold-active-bg)",
+                        color: "var(--accent-gold)",
+                      }}
+                    >
+                      Pro
+                    </Badge>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator
+                    style={{ background: "var(--border-default)" }}
+                  />
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    style={{ color: "var(--accent-danger)" }}
+                    disabled={isPending}
+                    onClick={() => logout()}
+                  >
+                    {isPending ? "Đang đăng xuất..." : "Đăng xuất"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            /* --- TRẠNG THÁI CHƯA ĐĂNG NHẬP --- */
+            <MagneticButton
+              href="/login"
+              variant="header-style"
+              rounded="full"
+              size="sm"
+            >
+              Đăng nhập
+            </MagneticButton>
+          )}
         </div>
       </div>
     </header>

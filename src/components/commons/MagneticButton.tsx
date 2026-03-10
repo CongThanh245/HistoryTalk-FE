@@ -14,6 +14,8 @@ interface MagneticButtonProps {
   magnetic?: boolean;
   magneticStrength?: number;
   animationDuration?: number;
+  variant?: "gold-outline" | "header-style";
+  rounded?: "none" | "full";
 }
 
 const sizeClasses = {
@@ -31,7 +33,24 @@ export function MagneticButton({
   magnetic = true,
   magneticStrength = 0.12,
   animationDuration = 0.8,
+  variant = "gold-outline",
+  rounded = "none",
 }: MagneticButtonProps) {
+  const variantStyles = {
+    "gold-outline": {
+      border: "border-2 border-[var(--accent-gold)]",
+      text: "text-[var(--accent-gold)]",
+      overlay: "bg-[var(--accent-gold)]",
+    },
+    "header-style": {
+      border:
+        "border border-[var(--header-border)] hover:border-[var(--accent-gold)]",
+      text: "text-[var(--text-primary)]",
+      overlay:
+        "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+    },
+  };
+  const currentStyle = variantStyles[variant];
   const magneticEffect = useMagneticEffect<HTMLButtonElement>({
     strength: magnetic ? magneticStrength : 0, // ← strength = 0 khi tắt
     duration: 0.4,
@@ -62,13 +81,9 @@ export function MagneticButton({
       asChild
       variant="magnetic"
       className={`
-        relative overflow-hidden
-        bg-transparent
-        border-2 border-[var(--accent-gold)]
-        text-[var(--accent-gold)]
-        font-medium
-        rounded-none
-        cursor-pointer
+        relative overflow-hidden bg-transparent font-medium cursor-pointer
+        ${currentStyle.border}
+        ${rounded === "full" ? "rounded-full" : "rounded-none"}
         ${sizeClasses[size]}
         ${className}
       `}
@@ -79,8 +94,9 @@ export function MagneticButton({
       <Link href={href}>
         <span
           ref={overlay.overlayRef}
-          className="absolute inset-0 pointer-events-none bg-[var(--accent-gold)]"
+          className="absolute inset-0 pointer-events-none"
           style={{
+            background: currentStyle.overlay, // Sử dụng màu từ variant
             transform: "scaleX(0)",
             transformOrigin: "left",
           }}
@@ -90,7 +106,8 @@ export function MagneticButton({
           ref={overlay.textRef}
           className="relative z-10 tracking-wide"
           style={{
-            color: "var(--accent-gold)",
+            color:
+              variant === "gold-outline" ? "var(--accent-gold)" : "inherit",
           }}
         >
           {children}
