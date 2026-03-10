@@ -155,7 +155,7 @@ export default function Header() {
             /* --- TRẠNG THÁI CHƯA ĐĂNG NHẬP --- */
             <MagneticButton
               href="/login"
-              variant="header-style"
+              variant="header"
               rounded="full"
               size="sm"
             >

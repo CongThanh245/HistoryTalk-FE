@@ -14,7 +14,8 @@ interface MagneticButtonProps {
   magnetic?: boolean;
   magneticStrength?: number;
   animationDuration?: number;
-  variant?: "gold-outline" | "header-style";
+  // Thêm 2 props mới để tùy biến mà không làm hỏng cái cũ
+  variant?: "default" | "header";
   rounded?: "none" | "full";
 }
 
@@ -33,35 +34,18 @@ export function MagneticButton({
   magnetic = true,
   magneticStrength = 0.12,
   animationDuration = 0.8,
-  variant = "gold-outline",
-  rounded = "none",
+  variant = "default", // Mặc định là kiểu cũ (viền vàng, vuông)
+  rounded = "none", // Mặc định là vuông
 }: MagneticButtonProps) {
-  const variantStyles = {
-    "gold-outline": {
-      border: "border-2 border-[var(--accent-gold)]",
-      text: "text-[var(--accent-gold)]",
-      overlay: "bg-[var(--accent-gold)]",
-    },
-    "header-style": {
-      border:
-        "border border-[var(--header-border)] hover:border-[var(--accent-gold)]",
-      text: "text-[var(--text-primary)]",
-      overlay:
-        "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-    },
-  };
-  const currentStyle = variantStyles[variant];
   const magneticEffect = useMagneticEffect<HTMLButtonElement>({
-    strength: magnetic ? magneticStrength : 0, // ← strength = 0 khi tắt
+    strength: magnetic ? magneticStrength : 0,
     duration: 0.4,
   });
 
-  // Hiệu ứng overlay gạt
   const overlay = useSlideOverlay({
     duration: animationDuration,
   });
 
-  // Gộp handlers
   const handleMouseEnter = () => {
     overlay.handleMouseEnter();
   };
@@ -75,14 +59,25 @@ export function MagneticButton({
     overlay.handleMouseLeave();
   };
 
+  // Logic định nghĩa style cho Header
+  const isHeader = variant === "header";
+
   return (
     <Button
       ref={magneticEffect.ref}
       asChild
       variant="magnetic"
       className={`
-        relative overflow-hidden bg-transparent font-medium cursor-pointer
-        ${currentStyle.border}
+        relative overflow-hidden
+        bg-transparent
+        font-medium
+        cursor-pointer
+        transition-all duration-300
+        ${
+          isHeader
+            ? "border border-[var(--header-border)] text-[var(--text-primary)]"
+            : "border-2 border-[var(--accent-gold)] text-[var(--accent-gold)]"
+        }
         ${rounded === "full" ? "rounded-full" : "rounded-none"}
         ${sizeClasses[size]}
         ${className}
@@ -92,22 +87,26 @@ export function MagneticButton({
       onMouseLeave={handleMouseLeave}
     >
       <Link href={href}>
+        {/* Lớp Overlay gạt - Giữ nguyên class bg-[var(--accent-gold)] cho bản cũ */}
         <span
           ref={overlay.overlayRef}
-          className="absolute inset-0 pointer-events-none"
+          className={`absolute inset-0 pointer-events-none ${
+            isHeader
+              ? "bg-gradient-to-r from-[var(--accent-gold)] to-[var(--truffle)]"
+              : "bg-[var(--accent-gold)]"
+          }`}
           style={{
-            background: currentStyle.overlay, // Sử dụng màu từ variant
             transform: "scaleX(0)",
             transformOrigin: "left",
           }}
         />
 
+        {/* Text */}
         <span
           ref={overlay.textRef}
           className="relative z-10 tracking-wide"
           style={{
-            color:
-              variant === "gold-outline" ? "var(--accent-gold)" : "inherit",
+            color: isHeader ? "inherit" : "var(--accent-gold)",
           }}
         >
           {children}
