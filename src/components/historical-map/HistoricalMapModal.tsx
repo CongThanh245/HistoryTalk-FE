@@ -96,7 +96,7 @@ export function HistoricalMapModal({
     setSelectedContextId(null);
   }, []);
 
-  if (!isOpen) return null;
+  // if (!isOpen) return null;
 
   const panelOpen = !!selectedLandmark;
 

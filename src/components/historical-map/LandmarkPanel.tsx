@@ -4,10 +4,12 @@
 // Panel bên phải: hiện thông tin landmark + danh sách sự kiện
 
 import React from "react";
-import { X, MapPin, Calendar, ChevronRight, Users } from "lucide-react";
+import { X, MapPin, Calendar, ChevronRight, Users, DoorOpen } from "lucide-react";
 import type { Landmark } from "@/services/landmark.service";
 import { LANDMARK_TYPE_CONFIG, ERA_CONFIG_MAP } from "./landmark-config";
 import { useLandmarkEvents } from "@/features/landmark/hooks";
+import { useRouter } from "next/navigation";
+import { MOCK_ROOMS } from "@/services/room.service";
 
 interface LandmarkPanelProps {
   landmark: Landmark;
@@ -27,7 +29,9 @@ export function LandmarkPanel({
   );
   const typeConfig = LANDMARK_TYPE_CONFIG[landmark.type];
   const eraConfig = ERA_CONFIG_MAP[landmark.era as keyof typeof ERA_CONFIG_MAP];
-
+  // 2. Trong component, thêm:
+  const router = useRouter();
+  const room = MOCK_ROOMS.find((r) => r.landmarkId === landmark.landmarkId);
   return (
     <div
       className="flex flex-col h-full"
@@ -103,6 +107,21 @@ export function LandmarkPanel({
           >
             {landmark.description}
           </p>
+          {room && (
+            <button
+              onClick={() => router.push(`/map/room/${room.roomId}`)}
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+                color: "white",
+                boxShadow: "0 4px 14px rgba(201,162,77,0.35)",
+              }}
+            >
+              <DoorOpen size={16} />
+              Bước vào không gian lịch sử
+            </button>
+          )}
         </div>
       </div>
 
