@@ -11,7 +11,11 @@ import {
   TimelineItem,
   timelineSets,
 } from "@/store/quiz";
-import { QuestionIcon } from "@phosphor-icons/react";
+import {
+  HandTapIcon,
+  LightbulbIcon,
+  QuestionIcon,
+} from "@phosphor-icons/react";
 
 // ─────────────────────────────────────────
 // Helpers
@@ -451,7 +455,7 @@ function FactCardModal({ onClose }: { onClose: () => void }) {
                   fontSize: 30,
                 }}
               >
-                📜
+                <LightbulbIcon />
               </div>
               <p
                 style={{
@@ -469,7 +473,7 @@ function FactCardModal({ onClose }: { onClose: () => void }) {
 
             {/* Hint */}
             <div
-              style={{ position: "relative", zIndex: 1, textAlign: "center" }}
+              style={{ position: "relative", zIndex: 1, textAlign: "center", justifyItems: "center" }}
             >
               <p
                 style={{
@@ -481,21 +485,7 @@ function FactCardModal({ onClose }: { onClose: () => void }) {
               >
                 Chạm để khám phá
               </p>
-              <svg
-                width="14"
-                height="22"
-                viewBox="0 0 16 24"
-                fill="none"
-                style={{ animation: "bh2 1.6s ease-in-out infinite" }}
-              >
-                <path
-                  d="M8 0 L8 16 M2 10 L8 16 L14 10"
-                  stroke="rgba(201,162,77,0.5)"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <HandTapIcon></HandTapIcon>
             </div>
             <style>{`@keyframes bh2{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(5px);opacity:1}}`}</style>
           </div>
@@ -547,34 +537,9 @@ function FactCardModal({ onClose }: { onClose: () => void }) {
                     color: "rgba(138,74,26,0.7)",
                   }}
                 >
-                  Năm {fact.year}
+                  Sự kiện xảy ra năm {fact.year}
                 </p>
               )}
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 4,
-                  marginTop: 8,
-                }}
-              >
-                {fact.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    style={{
-                      fontSize: 9,
-                      padding: "2px 7px",
-                      borderRadius: 20,
-                      background: "rgba(201,162,77,0.1)",
-                      border: "1px solid rgba(201,162,77,0.2)",
-                      color: "#7a5a1e",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
             </div>
 
             {/* Body */}
@@ -696,7 +661,9 @@ function FactTriggerButton({ onClick }: { onClick: () => void }) {
           "0 8px 28px rgba(0,0,0,0.38), 0 0 0 1px rgba(201,162,77,0.07), inset 0 1px 0 rgba(201,162,77,0.14)";
       }}
     >
-      <span style={{ fontSize: 20, lineHeight: 1 }}><QuestionIcon></QuestionIcon></span>
+      <span style={{ fontSize: 20, lineHeight: 1 }}>
+        <QuestionIcon></QuestionIcon>
+      </span>
       <div
         style={{
           display: "flex",
@@ -713,17 +680,17 @@ function FactTriggerButton({ onClick }: { onClick: () => void }) {
             letterSpacing: "0.04em",
           }}
         >
-          Bạn có biết?
+          +1 Kiến thức về lịch sử
         </span>
         <span
           style={{
             fontSize: 9,
-            opacity: 0.48,
+            opacity: 0.8,
             fontWeight: 400,
             letterSpacing: "0.06em",
           }}
         >
-          Sự thật lịch sử chiến tranh
+          Mỗi ngày biết thêm 1 sự thật về lịch sử chiến tranh
         </span>
       </div>
     </button>
