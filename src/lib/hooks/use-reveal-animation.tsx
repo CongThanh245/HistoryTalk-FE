@@ -11,7 +11,7 @@ import { useEffect } from "react";
  * data-reveal="fast"   → same but quicker, for headings
  */
 export function useRevealAnimation(
-  ref: React.RefObject<HTMLElement | HTMLDivElement | null>
+  ref: React.RefObject<HTMLElement | HTMLDivElement | null>,
 ) {
   useEffect(() => {
     let ctx: { revert: () => void } | null = null;
@@ -20,16 +20,22 @@ export function useRevealAnimation(
       const { gsap } = await import("gsap");
       const { ScrollTrigger } = await import("gsap/ScrollTrigger");
       gsap.registerPlugin(ScrollTrigger);
-
       if (!ref.current) return;
 
+      // ✅ Pre-hide elements TRƯỚC khi ScrollTrigger init
+      // Tránh flash visible → invisible → animate
+      const fastEls = ref.current.querySelectorAll("[data-reveal='fast']");
+      const blockEls = ref.current.querySelectorAll("[data-reveal='block']");
+
+      if (fastEls.length) gsap.set(fastEls, { y: 40, opacity: 0 });
+      if (blockEls.length) gsap.set(blockEls, { y: 28, opacity: 0 });
+
       ctx = gsap.context(() => {
-        // Headings: fast slide up
-        const fastEls = ref.current!.querySelectorAll("[data-reveal='fast']");
         if (fastEls.length) {
-          gsap.from(fastEls, {
-            y: 40,
-            opacity: 0,
+          gsap.to(fastEls, {
+            // ✅ dùng gsap.to thay vì gsap.from
+            y: 0,
+            opacity: 1,
             duration: 0.55,
             ease: "power3.out",
             stagger: 0.08,
@@ -41,12 +47,11 @@ export function useRevealAnimation(
           });
         }
 
-        // Blocks: slightly slower, more stagger
-        const blockEls = ref.current!.querySelectorAll("[data-reveal='block']");
         if (blockEls.length) {
-          gsap.from(blockEls, {
-            y: 28,
-            opacity: 0,
+          gsap.to(blockEls, {
+            // ✅ dùng gsap.to thay vì gsap.from
+            y: 0,
+            opacity: 1,
             duration: 0.65,
             ease: "power3.out",
             stagger: 0.12,
@@ -61,6 +66,8 @@ export function useRevealAnimation(
     };
 
     init();
-    return () => { ctx?.revert(); };
+    return () => {
+      ctx?.revert();
+    };
   }, []);
 }

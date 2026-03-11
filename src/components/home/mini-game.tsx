@@ -2,20 +2,6 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
-  SwordIcon,
-  CalendarDotsIcon,
-  SortAscendingIcon,
-  TrophyIcon,
-  ArrowCounterClockwiseIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  EyeIcon,
-  LightbulbIcon,
-  DotsSixVerticalIcon,
-  MagnifyingGlassIcon,
-  CheckFatIcon,
-} from "@phosphor-icons/react";
-import {
   CharacterQuestion,
   characterQuestions,
   EventQuestion,
@@ -23,6 +9,7 @@ import {
   TimelineItem,
   timelineSets,
 } from "@/store/quiz";
+
 // ─────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────
@@ -44,8 +31,19 @@ function getRandom<T>(arr: T[], exclude?: T): T {
   return item;
 }
 
+type GameMode = "character" | "event" | "timeline";
+
+function randomMode(exclude?: GameMode): GameMode {
+  const modes: GameMode[] = ["character", "event", "timeline"];
+  let m: GameMode;
+  do {
+    m = modes[Math.floor(Math.random() * modes.length)];
+  } while (modes.length > 1 && m === exclude);
+  return m;
+}
+
 // ─────────────────────────────────────────
-// Result Banner
+// Result Banner — text only, no icon clutter
 // ─────────────────────────────────────────
 
 function ResultBanner({
@@ -58,44 +56,18 @@ function ResultBanner({
   onNext: () => void;
 }) {
   const [showExp, setShowExp] = useState(false);
-  const bannerRef = useRef<HTMLDivElement>(null);
-  const gsapRef = useRef<any>(null);
-
-  useEffect(() => {
-    import("gsap").then((mod) => {
-      gsapRef.current = mod.gsap ?? mod.default;
-      if (bannerRef.current)
-        gsapRef.current.from(bannerRef.current, {
-          y: 8,
-          opacity: 0,
-          duration: 0.3,
-          ease: "power3.out",
-        });
-    });
-  }, []);
 
   return (
-    <div
-      ref={bannerRef}
-      style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}
-    >
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
       {/* Status */}
       <div
         style={{
           borderRadius: 10,
           padding: "10px 14px",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          background: correct ? "rgba(16,40,24,0.1)" : "rgba(90,35,35,0.1)",
-          border: `1px solid ${correct ? "rgba(74,178,98,0.45)" : "rgba(184,50,42,0.45)"}`,
+          background: correct ? "rgba(16,40,24,0.08)" : "rgba(90,35,35,0.08)",
+          border: `1px solid ${correct ? "rgba(74,178,98,0.4)" : "rgba(184,50,42,0.4)"}`,
         }}
       >
-        {correct ? (
-          <CheckCircleIcon size={16} weight="fill" color="#3a9e57" />
-        ) : (
-          <XCircleIcon size={16} weight="fill" color="#c94040" />
-        )}
         <p
           style={{
             margin: 0,
@@ -108,52 +80,34 @@ function ResultBanner({
         </p>
       </div>
 
-      {/* Explanation toggle */}
+      {/* Explanation */}
       {!showExp ? (
         <button
           onClick={() => setShowExp(true)}
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: 600,
-            color: "#4a3a1a",
-            background: "#fdf6e8",
-            border: "1px solid #d4a84b",
+            color: "#7a5a1e",
+            background: "rgba(201,162,77,0.07)",
+            border: "1px solid rgba(201,162,77,0.2)",
             borderRadius: 8,
             cursor: "pointer",
             padding: "7px 12px",
+            textAlign: "left",
           }}
         >
-          <EyeIcon size={14} weight="bold" />
-          Xem giải thích
+          Xem giải thích →
         </button>
       ) : (
         <div
           style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 8,
-            background: "#fdf6e8",
-            border: "1px solid #c9a24d",
+            background: "rgba(201,162,77,0.05)",
+            border: "1px solid rgba(201,162,77,0.18)",
             borderRadius: 8,
             padding: "10px 13px",
           }}
         >
-          <LightbulbIcon
-            size={14}
-            weight="fill"
-            style={{ color: "#c46a2f", marginTop: 2, flexShrink: 0 }}
-          />
-          <p
-            style={{
-              margin: 0,
-              fontSize: 12.5,
-              lineHeight: 1.7,
-              color: "#2d3d4f",
-            }}
-          >
+          <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.7, color: "#2d3d4f" }}>
             {explanation}
           </p>
         </div>
@@ -163,10 +117,6 @@ function ResultBanner({
       <button
         onClick={onNext}
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 6,
           fontSize: 13,
           fontWeight: 700,
           cursor: "pointer",
@@ -175,16 +125,9 @@ function ResultBanner({
           background: "#e8d5a8",
           border: "1px solid #b8922a",
           color: "#5c3d0e",
-          transition: "all 0.15s",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "#dcc88e";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "#e8d5a8";
+          width: "100%",
         }}
       >
-        <ArrowCounterClockwiseIcon size={13} weight="bold" />
         Câu tiếp theo
       </button>
     </div>
@@ -192,7 +135,7 @@ function ResultBanner({
 }
 
 // ─────────────────────────────────────────
-// Option Button — shared
+// Option Button — clean, no icon badges
 // ─────────────────────────────────────────
 
 function OptionBtn({
@@ -202,7 +145,6 @@ function OptionBtn({
   isAnswer,
   isSelected,
   onClick,
-  accentColor,
 }: {
   label: string;
   index: number;
@@ -210,122 +152,74 @@ function OptionBtn({
   isAnswer: boolean;
   isSelected: boolean;
   onClick: () => void;
-  accentColor: string;
 }) {
-  const gsapRef = useRef<any>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
+  const letters = ["A", "B", "C", "D"];
 
-  useEffect(() => {
-    import("gsap").then((mod) => {
-      gsapRef.current = mod.gsap ?? mod.default;
-    });
-  }, []);
-
-  let bg = "var(--card-light-hover, rgba(27,38,50,0.03))";
+  let bg = "transparent";
   let border = "var(--card-light-border)";
   let color = "var(--content-text)";
+  let letterColor = "var(--content-muted)";
 
   if (answered) {
     if (isAnswer) {
-      bg = "rgba(16,40,24,0.09)";
+      bg = "rgba(16,40,24,0.08)";
       border = "rgba(74,178,98,0.45)";
       color = "#2d6b3e";
+      letterColor = "#3a9e57";
     } else if (isSelected) {
-      bg = "rgba(90,35,35,0.09)";
+      bg = "rgba(90,35,35,0.08)";
       border = "rgba(184,50,42,0.45)";
-      color = "#b8322a";
+      color = "#9b2222";
+      letterColor = "#c94040";
     } else {
       color = "var(--content-muted)";
     }
   }
 
-  const letters = ["A", "B", "C", "D"];
-
   return (
     <button
-      ref={btnRef}
       onClick={onClick}
       style={{
         background: bg,
         border: `1px solid ${border}`,
         color,
         borderRadius: 9,
-        padding: "9px 13px",
+        padding: "9px 12px",
         fontSize: 13,
-        fontWeight: 500,
         cursor: answered ? "default" : "pointer",
         textAlign: "left",
-        transition: "all 0.15s",
         display: "flex",
         alignItems: "center",
         gap: 10,
         width: "100%",
+        transition: "background 0.12s, border-color 0.12s",
       }}
       onMouseEnter={(e) => {
-        if (!answered) {
-          e.currentTarget.style.background = `${accentColor}12`;
-          e.currentTarget.style.borderColor = `${accentColor}35`;
-          if (gsapRef.current && btnRef.current)
-            gsapRef.current.to(btnRef.current, { x: 3, duration: 0.15 });
-        }
+        if (!answered)
+          e.currentTarget.style.background = "rgba(201,162,77,0.06)";
       }}
       onMouseLeave={(e) => {
-        if (!answered) {
-          e.currentTarget.style.background = bg;
-          e.currentTarget.style.borderColor = border;
-          if (gsapRef.current && btnRef.current)
-            gsapRef.current.to(btnRef.current, { x: 0, duration: 0.15 });
-        }
+        if (!answered) e.currentTarget.style.background = bg;
       }}
     >
-      {/* Letter badge */}
       <span
         style={{
           fontSize: 10,
           fontWeight: 800,
-          minWidth: 18,
-          height: 18,
+          minWidth: 20,
+          height: 20,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           borderRadius: 4,
           flexShrink: 0,
-          background:
-            answered && isAnswer
-              ? "rgba(74,178,98,0.15)"
-              : answered && isSelected
-                ? "rgba(184,50,42,0.15)"
-                : `${accentColor}15`,
-          color:
-            answered && isAnswer
-              ? "#5dcc78"
-              : answered && isSelected
-                ? "#f07070"
-                : accentColor,
+          background: "rgba(201,162,77,0.1)",
+          color: letterColor,
         }}
       >
         {letters[index]}
       </span>
-
-      <span style={{ flex: 1 }}>{label}</span>
-
-      {/* State icon */}
-      {answered && isAnswer && (
-        <CheckCircleIcon
-          size={14}
-          weight="fill"
-          color="#5dcc78"
-          style={{ flexShrink: 0 }}
-        />
-      )}
-      {answered && isSelected && !isAnswer && (
-        <XCircleIcon
-          size={14}
-          weight="fill"
-          color="#f07070"
-          style={{ flexShrink: 0 }}
-        />
-      )}
+      <span style={{ flex: 1, fontWeight: 500 }}>{label}</span>
     </button>
   );
 }
@@ -338,34 +232,12 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
   const [q, setQ] = useState<CharacterQuestion>(characterQuestions[0]);
   const [hintsRevealed, setHintsRevealed] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
-  const hintRef = useRef<HTMLUListElement>(null);
-  const gsapRef = useRef<any>(null);
 
   useEffect(() => {
     setQ(getRandom(characterQuestions));
-    import("gsap").then((mod) => {
-      gsapRef.current = mod.gsap ?? mod.default;
-    });
   }, []);
 
   const answered = selected !== null;
-  const isCorrect = selected === q.answer;
-
-  const revealHint = () => {
-    if (hintsRevealed >= q.hints.length) return;
-    setHintsRevealed((n) => n + 1);
-    if (gsapRef.current && hintRef.current) {
-      const items = hintRef.current.querySelectorAll("li");
-      const last = items[items.length - 1];
-      if (last)
-        gsapRef.current.from(last, {
-          x: -8,
-          opacity: 0,
-          duration: 0.25,
-          ease: "power3.out",
-        });
-    }
-  };
 
   const next = () => {
     setQ(getRandom(characterQuestions, q));
@@ -378,59 +250,36 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
       {/* Hint card */}
       <div
         style={{
-          background:
-            "linear-gradient(135deg, rgba(27,38,50,0.05), rgba(201,162,77,0.04))",
-          border: "1px solid rgba(201,162,77,0.18)",
+          background: "rgba(201,162,77,0.04)",
+          border: "1px solid rgba(201,162,77,0.15)",
           borderRadius: 12,
           padding: "14px 16px",
         }}
       >
-        <div
+        <p
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginBottom: 10,
+            margin: "0 0 10px",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "var(--gold-on-light, #a07828)",
           }}
         >
-          <MagnifyingGlassIcon
-            size={13}
-            weight="bold"
-            style={{ color: "var(--gold-on-light)" }}
-          />
-          <p
-            style={{
-              margin: 0,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "var(--gold-on-light)",
-            }}
-          >
-            Đây là ai?
-          </p>
-        </div>
+          Đây là ai?
+        </p>
 
         <ul
-          ref={hintRef}
           style={{
             margin: 0,
-            padding: "0 0 0 18px",
+            padding: "0 0 0 16px",
             display: "flex",
             flexDirection: "column",
             gap: 6,
           }}
         >
           {q.hints.slice(0, hintsRevealed).map((h, i) => (
-            <li
-              key={i}
-              style={{
-                fontSize: 13.5,
-                color: "var(--content-text)",
-                lineHeight: 1.5,
-              }}
-            >
+            <li key={i} style={{ fontSize: 13.5, color: "var(--content-text)", lineHeight: 1.5 }}>
               {h}
             </li>
           ))}
@@ -438,15 +287,12 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
 
         {!answered && hintsRevealed < q.hints.length && (
           <button
-            onClick={revealHint}
+            onClick={() => setHintsRevealed((n) => n + 1)}
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
               marginTop: 10,
               fontSize: 11,
               fontWeight: 600,
-              color: "var(--gold-on-light)",
+              color: "var(--gold-on-light, #a07828)",
               background: "rgba(201,162,77,0.1)",
               border: "1px solid rgba(201,162,77,0.22)",
               borderRadius: 6,
@@ -454,8 +300,7 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
               cursor: "pointer",
             }}
           >
-            <LightbulbIcon size={11} weight="fill" />
-            Gợi ý thêm ({q.hints.length - hintsRevealed} còn lại)
+            + Gợi ý thêm ({q.hints.length - hintsRevealed} còn lại)
           </button>
         )}
       </div>
@@ -476,17 +321,12 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
                 onScore(opt === q.answer);
               }
             }}
-            accentColor="#a07828"
           />
         ))}
       </div>
 
       {answered && (
-        <ResultBanner
-          correct={isCorrect}
-          explanation={q.explanation}
-          onNext={next}
-        />
+        <ResultBanner correct={selected === q.answer} explanation={q.explanation} onNext={next} />
       )}
     </div>
   );
@@ -499,102 +339,57 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
 function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
   const [q, setQ] = useState<EventQuestion>(eventQuestions[0]);
   const [selected, setSelected] = useState<string | null>(null);
-  const yearRef = useRef<HTMLDivElement>(null);
-  const gsapRef = useRef<any>(null);
 
   useEffect(() => {
     setQ(getRandom(eventQuestions));
-    import("gsap").then((mod) => {
-      gsapRef.current = mod.gsap ?? mod.default;
-    });
   }, []);
 
   const answered = selected !== null;
-  const isCorrect = selected === q.answer;
 
   const next = () => {
-    const g = gsapRef.current;
-    if (g && yearRef.current) {
-      g.to(yearRef.current, {
-        scale: 0.92,
-        opacity: 0,
-        duration: 0.18,
-        ease: "power2.in",
-        onComplete: () => {
-          setQ(getRandom(eventQuestions, q));
-          setSelected(null);
-          g.fromTo(
-            yearRef.current,
-            { scale: 1.06, opacity: 0 },
-            { scale: 1, opacity: 1, duration: 0.28, ease: "back.out(1.5)" },
-          );
-        },
-      });
-    } else {
-      setQ(getRandom(eventQuestions, q));
-      setSelected(null);
-    }
+    setQ(getRandom(eventQuestions, q));
+    setSelected(null);
   };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
       {/* Year showcase */}
       <div
-        ref={yearRef}
         style={{
-          background:
-            "var(--accent-earth)",
-          border: "1px solid rgba(196,106,47,0.3)",
+          background: "var(--accent-earth, rgba(196,106,47,0.06))",
+          border: "1px solid rgba(196,106,47,0.2)",
           borderRadius: 14,
           padding: "18px 16px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 8,
+          textAlign: "center",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <CalendarDotsIcon
-            size={13}
-            weight="fill"
-            style={{ color: "var(--accent-bronze)" }}
-          />
-          <p
-            style={{
-              margin: 0,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              color: "var(--accent-bronze)",
-            }}
-          >
-            Năm xảy ra sự kiện
-          </p>
-        </div>
+        <p
+          style={{
+            margin: "0 0 4px",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            color: "var(--accent-bronze, #c46a2f)",
+          }}
+        >
+          Năm xảy ra sự kiện
+        </p>
 
         <p
           style={{
-            margin: 0,
+            margin: "0 0 12px",
             fontSize: 52,
             fontWeight: 900,
             lineHeight: 1,
             letterSpacing: "-2px",
-            color: "var(--burning-flame)",
-            textShadow: "0 0 30px rgba(255,177,98,0.4)",
+            color: "var(--burning-flame, #e08040)",
           }}
         >
           {q.year}
         </p>
 
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 6,
-            justifyContent: "center",
-          }}
-        >
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
           {q.clues.map((c, i) => (
             <span
               key={i}
@@ -602,9 +397,9 @@ function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
                 fontSize: 11,
                 padding: "3px 10px",
                 borderRadius: 20,
-                background: "rgba(255,177,98,0.12)",
-                border: "1px solid rgba(255,177,98,0.2)",
-                color: "var(--burning-flame)",
+                background: "rgba(196,106,47,0.08)",
+                border: "1px solid rgba(196,106,47,0.18)",
+                color: "var(--burning-flame, #c46a2f)",
               }}
             >
               {c}
@@ -629,17 +424,12 @@ function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
                 onScore(opt === q.answer);
               }
             }}
-            accentColor="#c46a2f"
           />
         ))}
       </div>
 
       {answered && (
-        <ResultBanner
-          correct={isCorrect}
-          explanation={q.explanation}
-          onNext={next}
-        />
+        <ResultBanner correct={selected === q.answer} explanation={q.explanation} onNext={next} />
       )}
     </div>
   );
@@ -651,7 +441,7 @@ function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
 
 function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
   const [setIdx, setSetIdx] = useState(0);
-  const [items, setItems] = useState<TimelineItem[]>(timelineSets[0]);
+  const [items, setItems] = useState<TimelineItem[]>(() => shuffle(timelineSets[0]));
   const [submitted, setSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [dragging, setDragging] = useState<number | null>(null);
@@ -659,28 +449,9 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
 
   const dragItemRef = useRef<number | null>(null);
   const dragOverRef = useRef<number | null>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-  const gsapRef = useRef<any>(null);
 
-  useEffect(() => {
-    setItems(shuffle(timelineSets[0]));
-    import("gsap").then((mod) => {
-      gsapRef.current = mod.gsap ?? mod.default;
-    });
-  }, []);
+  const correctOrder = [...timelineSets[setIdx]].sort((a, b) => a.year - b.year);
 
-  const correctOrder = [...timelineSets[setIdx]].sort(
-    (a, b) => a.year - b.year,
-  );
-
-  const handleDragStart = (i: number) => {
-    dragItemRef.current = i;
-    setDragging(i);
-  };
-  const handleDragEnter = (i: number) => {
-    dragOverRef.current = i;
-    setDragOverIdx(i);
-  };
   const handleDrop = () => {
     if (dragItemRef.current === null || dragOverRef.current === null) return;
     const copy = [...items];
@@ -698,16 +469,6 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
     setIsCorrect(ok);
     setSubmitted(true);
     onScore(ok);
-    if (gsapRef.current && listRef.current) {
-      const cards = listRef.current.querySelectorAll("[data-item]");
-      gsapRef.current.from(cards, {
-        scale: 0.97,
-        opacity: 0.5,
-        duration: 0.3,
-        stagger: 0.06,
-        ease: "power3.out",
-      });
-    }
   };
 
   const next = () => {
@@ -721,35 +482,13 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {/* Instruction */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 7,
-          background: "rgba(201,162,77,0.05)",
-          border: "1px solid rgba(201,162,77,0.15)",
-          borderRadius: 9,
-          padding: "9px 13px",
-        }}
-      >
-        <SortAscendingIcon
-          size={14}
-          weight="bold"
-          style={{ color: "var(--gold-on-light)", flexShrink: 0 }}
-        />
-        <p style={{ margin: 0, fontSize: 12, color: "var(--content-muted)" }}>
-          Kéo thả sắp xếp{" "}
-          <strong style={{ color: "var(--content-text)" }}>
-            từ sớm đến muộn nhất
-          </strong>
-        </p>
-      </div>
+      <p style={{ margin: 0, fontSize: 12, color: "var(--content-muted)" }}>
+        Kéo thả sắp xếp{" "}
+        <strong style={{ color: "var(--content-text)" }}>từ sớm đến muộn nhất</strong>
+      </p>
 
       {/* Draggable list */}
-      <div
-        ref={listRef}
-        style={{ display: "flex", flexDirection: "column", gap: 6 }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {items.map((item, i) => {
           const correctPos = correctOrder.findIndex((c) => c.id === item.id);
           const placedOk = submitted && correctPos === i;
@@ -760,28 +499,33 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
           return (
             <div
               key={item.id}
-              data-item
               draggable={!submitted}
-              onDragStart={() => handleDragStart(i)}
-              onDragEnter={() => handleDragEnter(i)}
+              onDragStart={() => {
+                dragItemRef.current = i;
+                setDragging(i);
+              }}
+              onDragEnter={() => {
+                dragOverRef.current = i;
+                setDragOverIdx(i);
+              }}
               onDragEnd={handleDrop}
               onDragOver={(e) => e.preventDefault()}
               style={{
                 background: placedOk
-                  ? "rgba(16,40,24,0.09)"
+                  ? "rgba(16,40,24,0.08)"
                   : placedWrong
-                    ? "rgba(90,35,35,0.09)"
-                    : isDragTarget
-                      ? "rgba(201,162,77,0.08)"
-                      : "var(--card-light-bg)",
+                  ? "rgba(90,35,35,0.08)"
+                  : isDragTarget
+                  ? "rgba(201,162,77,0.07)"
+                  : "var(--card-light-bg)",
                 border: `1px solid ${
                   placedOk
                     ? "rgba(74,178,98,0.45)"
                     : placedWrong
-                      ? "rgba(184,50,42,0.45)"
-                      : isDragTarget
-                        ? "rgba(201,162,77,0.4)"
-                        : "var(--card-light-border)"
+                    ? "rgba(184,50,42,0.45)"
+                    : isDragTarget
+                    ? "rgba(201,162,77,0.4)"
+                    : "var(--card-light-border)"
                 }`,
                 borderRadius: 10,
                 padding: "10px 13px",
@@ -789,56 +533,31 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
-                transition: "all 0.15s",
-                opacity: isDraggingThis ? 0.4 : 1,
-                boxShadow: isDragTarget
-                  ? "0 4px 16px rgba(201,162,77,0.12)"
-                  : "none",
+                transition: "all 0.12s",
+                opacity: isDraggingThis ? 0.35 : 1,
                 userSelect: "none",
               }}
             >
-              {/* Drag handle or result icon */}
-              {!submitted ? (
-                <DotsSixVerticalIcon
-                  size={14}
-                  weight="bold"
-                  style={{ color: "var(--content-subtle)", flexShrink: 0 }}
-                />
-              ) : placedOk ? (
-                <CheckCircleIcon
-                  size={15}
-                  weight="fill"
-                  color="#5dcc78"
-                  style={{ flexShrink: 0 }}
-                />
-              ) : (
-                <XCircleIcon
-                  size={15}
-                  weight="fill"
-                  color="#f07070"
-                  style={{ flexShrink: 0 }}
-                />
-              )}
+              {/* Handle / result dot */}
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  flexShrink: 0,
+                  background: submitted
+                    ? placedOk
+                      ? "#5dcc78"
+                      : "#f07070"
+                    : "rgba(201,162,77,0.4)",
+                }}
+              />
 
               <div style={{ flex: 1 }}>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "var(--content-text)",
-                  }}
-                >
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--content-text)" }}>
                   {item.label}
                 </p>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 11,
-                    color: "var(--content-muted)",
-                    marginTop: 2,
-                  }}
-                >
+                <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--content-muted)" }}>
                   {item.description}
                 </p>
               </div>
@@ -850,10 +569,8 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
                     fontSize: 11,
                     fontWeight: 800,
                     color: placedOk ? "#1f5c34" : "#9b2222",
-                    background: placedOk
-                      ? "rgba(74,178,98,0.15)"
-                      : "rgba(184,50,42,0.15)",
-                    border: `1px solid ${placedOk ? "rgba(74,178,98,0.4)" : "rgba(184,50,42,0.4)"}`,
+                    background: placedOk ? "rgba(74,178,98,0.12)" : "rgba(184,50,42,0.12)",
+                    border: `1px solid ${placedOk ? "rgba(74,178,98,0.3)" : "rgba(184,50,42,0.3)"}`,
                     borderRadius: 5,
                     padding: "1px 7px",
                   }}
@@ -874,7 +591,7 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
                   justifyContent: "center",
                   borderRadius: 5,
                   background: "rgba(201,162,77,0.1)",
-                  color: "var(--gold-on-light)",
+                  color: "var(--gold-on-light, #a07828)",
                   flexShrink: 0,
                 }}
               >
@@ -889,10 +606,6 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
         <button
           onClick={handleSubmit}
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
             fontSize: 13,
             fontWeight: 700,
             cursor: "pointer",
@@ -901,16 +614,9 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
             background: "#e8d5a8",
             border: "1px solid #b8922a",
             color: "#5c3d0e",
-            transition: "all 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#dcc88e";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#e8d5a8";
+            width: "100%",
           }}
         >
-          <CheckFatIcon size={14} weight="bold" />
           Kiểm tra thứ tự
         </button>
       ) : (
@@ -929,50 +635,27 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
 }
 
 // ─────────────────────────────────────────
-// Main Widget
+// Game mode label — minimal, no icon
 // ─────────────────────────────────────────
 
-type GameMode = "character" | "event" | "timeline";
+const MODE_LABELS: Record<GameMode, string> = {
+  character: "Đoán nhân vật",
+  event: "Đoán sự kiện",
+  timeline: "Sắp xếp dòng thời gian",
+};
 
-const TABS: {
-  id: GameMode;
-  label: string;
-  Icon: React.ElementType;
-  accent: string;
-}[] = [
-  {
-    id: "character",
-    label: "Đoán nhân vật",
-    Icon: SwordIcon,
-    accent: "#a07828",
-  },
-  {
-    id: "event",
-    label: "Đoán sự kiện",
-    Icon: CalendarDotsIcon,
-    accent: "#c46a2f",
-  },
-  {
-    id: "timeline",
-    label: "Sắp xếp TL",
-    Icon: SortAscendingIcon,
-    accent: "#2f6f73",
-  },
-];
+// ─────────────────────────────────────────
+// Main Widget — no tabs, random game
+// ─────────────────────────────────────────
 
 export function HistoryMiniGame() {
-  const [mode, setMode] = useState<GameMode>("character");
+  const [mode, setMode] = useState<GameMode>("character"); // stable SSR default
   const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [key, setKey] = useState(0);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const gsapRef = useRef<any>(null);
-
+  // Randomize only on client after hydration
   useEffect(() => {
-    import("gsap").then((mod) => {
-      gsapRef.current = mod.gsap ?? mod.default;
-      // No entrance animation — load only for tab transitions
-    });
+    setMode(randomMode());
   }, []);
 
   const handleScore = useCallback((correct: boolean) => {
@@ -982,124 +665,87 @@ export function HistoryMiniGame() {
     }));
   }, []);
 
-  const handleTabChange = (id: GameMode) => {
-    if (id === mode) return;
-    const g = gsapRef.current;
-    if (g && contentRef.current) {
-      g.to(contentRef.current, {
-        y: -6,
-        opacity: 0,
-        duration: 0.15,
-        ease: "power2.in",
-        onComplete: () => {
-          setMode(id);
-          g.fromTo(
-            contentRef.current,
-            { y: 8, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.25, ease: "power3.out" },
-          );
-        },
-      });
-    } else {
-      setMode(id);
-    }
+  const handleSwitchGame = () => {
+    const next = randomMode(mode);
+    setMode(next);
+    setKey((k) => k + 1);
   };
-
-  const activeTab = TABS.find((t) => t.id === mode)!;
 
   return (
     <div
-      ref={containerRef}
       style={{
         background: "var(--card-light-bg)",
         border: "1px solid var(--card-light-border)",
-        borderRadius: "var(--radius-lg)",
+        borderRadius: 14,
         overflow: "hidden",
         boxShadow: "0 2px 12px rgba(27,38,50,0.07)",
-        display: "flex",
-        flexDirection: "column",
       }}
     >
-      {/* ── Header ── */}
+      {/* Header — chỉ text, không icon */}
       <div
         style={{
-          padding: "14px 18px 0",
+          padding: "14px 18px 12px",
           borderBottom: "1px solid var(--card-light-border)",
-          background:
-            "linear-gradient(to right, rgba(201,162,77,0.04), transparent)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-
-          {/* Score badge */}
+        <div>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 13,
+              fontWeight: 700,
+              color: "var(--content-heading)",
+            }}
+          >
+            {MODE_LABELS[mode]}
+          </p>
           {score.total > 0 && (
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 5,
-                fontSize: 11,
-                fontWeight: 800,
-                padding: "3px 10px",
-                borderRadius: 20,
-                background: "var(--streak-bg)",
-                border: "1px solid var(--streak-border)",
-                color: "var(--streak-text)",
-              }}
-            >
-              <TrophyIcon size={11} weight="fill" />
-              {score.correct}/{score.total} đúng
-            </span>
+            <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--content-muted)" }}>
+              {score.correct}/{score.total} câu đúng
+            </p>
           )}
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: "flex" }}>
-          {TABS.map(({ id, label, Icon, accent }) => (
-            <button
-              key={id}
-              onClick={() => handleTabChange(id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "8px 12px",
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-                background: "transparent",
-                border: "none",
-                borderBottom:
-                  mode === id ? `2px solid ${accent}` : "2px solid transparent",
-                color: mode === id ? accent : "var(--content-muted)",
-                marginBottom: -1,
-                transition: "all 0.15s",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <Icon size={13} weight={mode === id ? "fill" : "regular"} />
-              {label}
-            </button>
-          ))}
-        </div>
+        <button
+          onClick={handleSwitchGame}
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            cursor: "pointer",
+            padding: "5px 11px",
+            borderRadius: 7,
+            background: "transparent",
+            border: "1px solid var(--card-light-border)",
+            color: "var(--content-muted)",
+            transition: "all 0.12s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "rgba(201,162,77,0.4)";
+            e.currentTarget.style.color = "var(--gold-on-light, #a07828)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "var(--card-light-border)";
+            e.currentTarget.style.color = "var(--content-muted)";
+          }}
+        >
+          Game khác
+        </button>
       </div>
 
-      {/* ── Game area ── */}
-      <div ref={contentRef} style={{ padding: "16px 18px 18px", flex: 1 }}>
-        {/* Active mode label */}
-  
-
+      {/* Game area */}
+      <div style={{ padding: "16px 18px 18px" }}>
         {mode === "character" && (
-          <GameGuessCharacter key="char" onScore={handleScore} />
+          <GameGuessCharacter key={`char-${key}`} onScore={handleScore} />
         )}
-        {mode === "event" && <GameGuessEvent key="evt" onScore={handleScore} />}
-        {mode === "timeline" && <GameTimeline key="tl" onScore={handleScore} />}
+        {mode === "event" && (
+          <GameGuessEvent key={`evt-${key}`} onScore={handleScore} />
+        )}
+        {mode === "timeline" && (
+          <GameTimeline key={`tl-${key}`} onScore={handleScore} />
+        )}
       </div>
     </div>
   );
