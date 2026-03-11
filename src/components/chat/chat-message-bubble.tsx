@@ -32,7 +32,7 @@ export function MessageBubble({
             className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed"
             style={{
               background:
-                "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+                "var(--accent-gold)",
               color: "var(--bg-deep)",
               boxShadow: "0 2px 12px var(--accent-gold-glow)",
             }}
@@ -106,7 +106,11 @@ export function MessageBubble({
             }}
             className="absolute bottom-1 right-1 opacity-60 hover:opacity-100 transition"
           >
-            {isSpeaking ? <SpeakerXIcon size={16} /> : <SpeakerHighIcon size={16} />}
+            {isSpeaking ? (
+              <SpeakerHighIcon size={16} />
+            ) : (
+              <SpeakerXIcon size={16} />
+            )}
           </button>
         </div>
         <span

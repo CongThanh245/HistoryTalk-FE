@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ScrollIcon } from "@phosphor-icons/react";
+import { PhoneIcon, ScrollIcon } from "@phosphor-icons/react"; // ← thêm PhoneIcon
 import type {
   ChatCharacter,
   ChatMessage,
@@ -16,12 +16,13 @@ import {
 } from "@/features/chat/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
+import { VoiceChatModal } from "./VoiceChatModal"; // ← thêm import
 
 interface ChatMainProps {
   character: ChatCharacter;
   sessionId: string | null;
   contextId: string;
-  onSessionCreated: (sessionId: string) => void; // ← thêm callback khi tạo session mới
+  onSessionCreated: (sessionId: string) => void;
 }
 
 export function ChatMain({
@@ -35,6 +36,7 @@ export function ChatMain({
     [],
   );
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [isVoiceOpen, setIsVoiceOpen] = useState(false); // ← thêm state
 
   const { data, isLoading } = useChatMessages(sessionId);
   const sendMessage = useSendMessage();
@@ -46,44 +48,34 @@ export function ChatMain({
       const v = speechSynthesis.getVoices();
       setVoices(v);
     };
-
     loadVoices();
-
     speechSynthesis.onvoiceschanged = loadVoices;
-
     return () => {
       speechSynthesis.onvoiceschanged = null;
     };
   }, []);
+
   const speak = (text: string) => {
-    // nếu đang đọc thì dừng
     if (speechSynthesis.speaking) {
       speechSynthesis.cancel();
       return;
     }
-
     const voices = speechSynthesis.getVoices();
-
     const vietnameseVoice = voices.find((v) => v.name.includes("Vietnamese"));
-
     const utterance = new SpeechSynthesisUtterance(text);
-
-    if (vietnameseVoice) {
-      utterance.voice = vietnameseVoice;
-    }
-
+    if (vietnameseVoice) utterance.voice = vietnameseVoice;
     utterance.lang = "vi-VN";
-
     speechSynthesis.speak(utterance);
   };
+
   const serverMessages = data?.messages ?? [];
   const messages = [...serverMessages, ...optimisticMessages];
   const sessionIdRef = useRef(sessionId);
+
   useEffect(() => {
-    console.log("sessionId changed during send:", sessionId);
     sessionIdRef.current = sessionId;
   }, [sessionId]);
-  // Reset optimistic khi sessionId đổi
+
   useEffect(() => {
     setOptimisticMessages([]);
     setSuggestedQuestions(data?.suggestedQuestions ?? []);
@@ -98,12 +90,12 @@ export function ChatMain({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sendMessage.isPending]);
+
   const qc = useQueryClient();
 
   const handleSend = async (content: string) => {
     let currentSessionId = sessionId;
 
-    // Auto-create nếu chưa có session
     if (!currentSessionId) {
       try {
         const newSession = await createSession.mutateAsync({
@@ -132,8 +124,6 @@ export function ChatMain({
         onSuccess: (res) => {
           setOptimisticMessages([]);
           setSuggestedQuestions(res.suggestedQuestions);
-
-          // 🔊 đọc message của nhân vật
           if (res.assistantMessage?.content) {
             speak(res.assistantMessage.content);
           }
@@ -157,6 +147,7 @@ export function ChatMain({
       },
     );
   };
+
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
       {/* Header */}
@@ -176,7 +167,9 @@ export function ChatMain({
         >
           <ScrollIcon className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
         </div>
-        <div>
+
+        {/* Character info */}
+        <div className="flex-1">
           <h2
             className="text-sm font-bold"
             style={{ color: "var(--text-primary)" }}
@@ -187,6 +180,26 @@ export function ChatMain({
             {character.title}
           </p>
         </div>
+
+        {/* ── Nút Voice Call ── */}
+        <button
+          onClick={() => setIsVoiceOpen(true)}
+          disabled={!sessionId}
+          title={
+            sessionId ? `Gọi thoại với ${character.name}` : "Đang khởi tạo..."
+          }
+          className="w-8 h-8 flex items-center justify-center rounded-full transition-all
+                     hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{
+            background: "rgba(201,168,76,0.12)",
+            border: "1px solid rgba(201,168,76,0.3)",
+          }}
+        >
+          <PhoneIcon
+            className="w-4 h-4"
+            style={{ color: "var(--accent-gold)" }}
+          />
+        </button>
       </div>
 
       {/* Messages */}
@@ -228,7 +241,6 @@ export function ChatMain({
           </>
         )}
 
-        {/* Suggested questions */}
         {suggestedQuestions.length > 0 && !sendMessage.isPending && (
           <div className="px-4 flex flex-wrap gap-2">
             {suggestedQuestions.map((q, i) => (
@@ -254,9 +266,19 @@ export function ChatMain({
       <ChatInput
         onSend={handleSend}
         isLoading={sendMessage.isPending}
-        disabled={!sessionId && sendMessage.isPending} // disable input khi đang tạo session mới
+        disabled={!sessionId && sendMessage.isPending}
         characterName={character.name}
       />
+
+      {/* ── Voice Chat Modal ── */}
+      {isVoiceOpen && sessionId && (
+        <VoiceChatModal
+          character={character}
+          sessionId={sessionId}
+          contextId={contextId}
+          onClose={() => setIsVoiceOpen(false)}
+        />
+      )}
     </div>
   );
 }
