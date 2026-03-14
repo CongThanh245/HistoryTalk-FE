@@ -1,7 +1,7 @@
 "use client";
 
-import { ScrollIcon, PushPinIcon, PushPinSlashIcon } from "@phosphor-icons/react";
-import Link from "next/link"; // 1. Import Link
+import { ScrollIcon, PushPinIcon, PushPinSlashIcon, XIcon } from "@phosphor-icons/react";
+import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -9,23 +9,33 @@ interface SidebarHeaderProps {
   isExpanded: boolean;
   isPinned: boolean;
   onTogglePin: () => void;
+  /** Called when the mobile × button is pressed */
+  onClose?: () => void;
+  /** True when rendered inside the mobile drawer */
+  isMobileDrawer?: boolean;
 }
 
-export default function SidebarHeader({ isExpanded, isPinned, onTogglePin }: SidebarHeaderProps) {
+export default function SidebarHeader({
+  isExpanded,
+  isPinned,
+  onTogglePin,
+  onClose,
+  isMobileDrawer = false,
+}: SidebarHeaderProps) {
   return (
     <div
       className={cn(
         "relative z-10 h-16 flex items-center shrink-0 border-b overflow-hidden",
-        isExpanded ? "px-4 gap-3" : "justify-center"
+        isExpanded ? "px-4 gap-3" : "justify-center",
       )}
       style={{ borderColor: "var(--border-default)" }}
     >
-      {/* 2. Bọc Logo và Brand name trong Link */}
-      <Link 
-        href="/" 
+      {/* Logo + Brand name */}
+      <Link
+        href="/"
         className={cn(
           "flex items-center outline-none transition-opacity hover:opacity-80",
-          isExpanded ? "flex-1 gap-3 overflow-hidden" : ""
+          isExpanded ? "flex-1 gap-3 overflow-hidden" : "",
         )}
       >
         {/* Logo icon */}
@@ -55,8 +65,20 @@ export default function SidebarHeader({ isExpanded, isPinned, onTogglePin }: Sid
         )}
       </Link>
 
-      {/* PushPinIcon button — Giữ nguyên bên ngoài Link để tránh click nhầm */}
-      {isExpanded && (
+      {/* Mobile: × close button */}
+      {isMobileDrawer && onClose && (
+        <button
+          onClick={onClose}
+          aria-label="Đóng menu"
+          className="w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 cursor-pointer shrink-0"
+          style={{ color: "var(--sidebar-pin-inactive)" }}
+        >
+          <XIcon className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* Desktop: PushPin button — only when expanded and not in mobile drawer */}
+      {isExpanded && !isMobileDrawer && (
         <Tooltip>
           <TooltipTrigger asChild>
             <button

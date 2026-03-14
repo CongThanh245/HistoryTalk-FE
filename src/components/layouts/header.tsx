@@ -16,12 +16,14 @@ import { SearchInput } from "@/components/commons/search-input";
 import { useLogout } from "@/features/auth/hooks";
 import { useAuthStore } from "@/store/auth.store";
 import { GreetingSection } from "../home/greeting-section";
-import Link from "next/link"; // Giả sử bạn dùng Next.js Link
+import Link from "next/link";
 import { MagneticButton } from "../commons/MagneticButton";
+import { useSidebar } from "./sidebar/sidebar-context";
 
 export default function Header() {
   const { mutate: logout, isPending } = useLogout();
   const user = useAuthStore((s) => s.user);
+  const { toggleMobileSidebar } = useSidebar();
 
   const initials = user?.userName
     ? user.userName
@@ -40,8 +42,25 @@ export default function Header() {
         borderColor: "var(--header-border)",
       }}
     >
-      <div className="flex h-full items-center justify-between px-6 gap-4">
-        <div className="flex-1 max-w-xl">
+      <div className="flex h-full items-center justify-between px-4 md:px-6 gap-4">
+        {/* Mobile hamburger — opens sidebar drawer */}
+        <button
+          onClick={toggleMobileSidebar}
+          aria-label="Open menu"
+          className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg border transition-colors shrink-0"
+          style={{
+            color: "var(--header-text-muted)",
+            borderColor: "var(--header-border)",
+            background: "transparent",
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor">
+            <path d="M2 4.5h14M2 9h14M2 13.5h14" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+
+        {/* Search — hidden on mobile, visible on md+ */}
+        <div className="hidden md:flex flex-1 max-w-md">
           <SearchInput
             value=""
             onChange={() => {}}
@@ -49,7 +68,10 @@ export default function Header() {
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Spacer on mobile so auth section pushes right */}
+        <div className="flex-1 md:hidden" />
+
+        <div className="flex items-center gap-2 shrink-0">
           {user ? (
             /* --- TRẠNG THÁI ĐÃ ĐĂNG NHẬP --- */
             <>

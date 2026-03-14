@@ -6,7 +6,7 @@ export function GreetingSection() {
   const userName = useAuthStore((s) => s.user?.userName ?? "bạn");
 
   return (
-    <div className="flex flex-col items-end justify-center leading-tight mr-2">
+    <div className="hidden md:flex flex-col items-end justify-center leading-tight mr-2">
       <h1
         className="text-sm font-semibold" // Giảm từ 3xl xuống sm/base
         style={{ color: "var(--text-inverse)" }}

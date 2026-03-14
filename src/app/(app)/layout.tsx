@@ -1,25 +1,28 @@
 import Header from "@/components/layouts/header";
-import Sidebar from "@/components/layouts/sidebar";
 import ReactQueryProviders from "@/components/context/query-client-provider";
 import React from "react";
 import CustomerSidebar from "@/components/layouts/sidebar/customer-sidebar";
+import { SidebarProvider } from "@/components/layouts/sidebar/sidebar-context";
 
 function layout({ children }: { children: React.ReactNode }) {
   return (
     <ReactQueryProviders>
-      <div className="flex h-screen bg-gray-50/50">
-        <CustomerSidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          <Header />
-          <main
-            className="flex-1 overflow-y-auto"
-            style={{ background: "var(--bg-content)" }}
-          >
-            {/* Xoá div container này */}
-            {children}
-          </main>
+      <SidebarProvider>
+        {/* On mobile: sidebar is a fixed overlay, main takes full width.   */}
+        {/* On md+:    sidebar sits in the flex row beside the main content. */}
+        <div className="flex h-[100dvh] bg-gray-50/50">
+          <CustomerSidebar />
+          <div className="flex-1 flex flex-col min-w-0">
+            <Header />
+            <main
+              className="flex-1 overflow-y-auto"
+              style={{ background: "var(--bg-content)" }}
+            >
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
+      </SidebarProvider>
     </ReactQueryProviders>
   );
 }

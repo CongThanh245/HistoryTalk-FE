@@ -417,3 +417,211 @@ Tất cả lỗi đều trả về cùng shape:
 - Upload ảnh nhân vật/sự kiện: endpoint riêng hay dùng S3 presigned URL?
 - Rate limiting cho `POST /chat/messages` — giới hạn bao nhiêu request/phút?
 - AI model nào dùng cho chat? Context window tối đa bao nhiêu messages?
+
+
+----
+
+# HistoryTalk — Quiz API Specification
+
+> **Base path:** `/Historical-tell/api/v1`  
+> **Response wrapper:** `{ success, message, data, timestamp }`  
+> **Auth:** Bearer token — `Authorization: Bearer <token>`
+
+---
+
+## 1. `GET /quizzes`
+
+Lấy danh sách bộ câu hỏi.
+
+**Query params:**
+
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `search` | string | No | Tìm theo tên |
+| `page` | number | No | Default 0 |
+| `limit` | number | No | Default 10 |
+| `era` | enum | No | `ANCIENT` \| `MEDIEVAL` \| `MODERN` \| `CONTEMPORARY` |
+| `difficulty` | enum | No | `EASY` \| `MEDIUM` \| `HARD` |
+
+**Response:**
+```json
+{
+  "content": [
+    {
+      "quizId": "string",
+      "title": "string",
+      "description": "string",
+      "era": "MEDIEVAL",
+      "difficulty": "MEDIUM",
+      "totalQuestions": 15,
+      "durationSeconds": 600,
+      "playCount": 1284,
+      "rating": 4.7,
+      "tags": ["string"],
+      "createdAt": "2024-01-15"
+    }
+  ],
+  "totalElements": 100,
+  "totalPages": 10,
+  "currentPage": 0,
+  "pageSize": 10,
+  "hasNext": true,
+  "hasPrevious": false
+}
+```
+
+---
+
+## 2. `GET /quizzes/:quizId`
+
+Lấy chi tiết 1 bộ câu hỏi.
+
+**Response:** Single object như item trong danh sách trên.
+
+---
+
+## 3. `GET /quizzes/:quizId/questions`
+
+Lấy danh sách câu hỏi của bộ quiz.
+
+> ⚠️ Chỉ trả về sau khi user đã `POST /quizzes/:quizId/start` và có `sessionId` hợp lệ — hoặc nếu không cần bảo mật thì trả thẳng cũng được, frontend sẽ xử lý.
+
+**Response:**
+```json
+[
+  {
+    "questionId": "string",
+    "content": "string",
+    "options": ["string", "string", "string", "string"],
+    "correctAnswer": 0,
+    "explanation": "string (optional)"
+  }
+]
+```
+
+> `correctAnswer` là index 0–3 tương ứng với mảng `options`.
+
+---
+
+## 4. `POST /quizzes/:quizId/start`
+
+Bắt đầu phiên làm bài, tạo session.
+
+**Request body:** Không cần.
+
+**Response:**
+```json
+{
+  "sessionId": "string",
+  "quizId": "string",
+  "questions": [
+    {
+      "questionId": "string",
+      "content": "string",
+      "options": ["string", "string", "string", "string"],
+      "correctAnswer": 0,
+      "explanation": "string (optional)"
+    }
+  ],
+  "durationSeconds": 600,
+  "startedAt": "2024-03-20T10:00:00Z"
+}
+```
+
+> Nếu trả `questions` luôn trong response này thì không cần endpoint `GET /quizzes/:id/questions` riêng nữa — tùy backend quyết định.
+
+---
+
+## 5. `POST /quizzes/submit`
+
+Nộp bài.
+
+**Request body:**
+```json
+{
+  "sessionId": "string",
+  "answers": [
+    { "questionId": "string", "selectedAnswer": 0 }
+  ],
+  "durationSeconds": 480
+}
+```
+
+> `selectedAnswer` là index 0–3, khớp với `options[]` của câu hỏi.
+
+**Response:**
+```json
+{
+  "resultId": "string",
+  "score": 12,
+  "totalQuestions": 15,
+  "correctAnswers": [0, 1, 3],
+  "wrongAnswers": [2, 4],
+  "durationSeconds": 480,
+  "completedAt": "2024-03-20T10:08:00Z"
+}
+```
+
+> `correctAnswers` và `wrongAnswers` là mảng **index** của câu trong danh sách questions (0-indexed), dùng để frontend highlight câu đúng/sai trong trang kết quả.
+
+---
+
+## 6. `GET /quizzes/results/me`
+
+Lịch sử làm bài của user hiện tại.
+
+**Response:**
+```json
+[
+  {
+    "resultId": "string",
+    "quizId": "string",
+    "quizTitle": "string",
+    "score": 12,
+    "totalQuestions": 15,
+    "durationSeconds": 480,
+    "completedAt": "2024-03-20T10:08:00Z",
+    "difficulty": "MEDIUM"
+  }
+]
+```
+
+---
+
+## 7. `POST /quizzes` — Staff/Admin
+
+Tạo bộ câu hỏi mới.
+
+**Request body:**
+```json
+{
+  "title": "string",
+  "description": "string",
+  "era": "MEDIEVAL",
+  "difficulty": "MEDIUM",
+  "durationSeconds": 600,
+  "tags": ["string"],
+  "questions": [
+    {
+      "content": "string",
+      "options": ["string", "string", "string", "string"],
+      "correctAnswer": 0,
+      "explanation": "string (optional)"
+    }
+  ]
+}
+```
+
+---
+
+## Tóm tắt
+
+| Endpoint | Method | Mô tả | Priority |
+|---|---|---|---|
+| `/quizzes` | GET | Danh sách quiz | 🔴 High |
+| `/quizzes/:id` | GET | Chi tiết quiz | 🔴 High |
+| `/quizzes/:id/start` | POST | Bắt đầu làm bài | 🔴 High |
+| `/quizzes/submit` | POST | Nộp bài | 🔴 High |
+| `/quizzes/:id/questions` | GET | Câu hỏi (nếu tách riêng) | 🟡 Medium |
+| `/quizzes/results/me` | GET | Lịch sử làm bài | 🟡 Medium |
+| `/quizzes` | POST | Tạo quiz (staff) | 🟢 Low |

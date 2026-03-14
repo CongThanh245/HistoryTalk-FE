@@ -219,7 +219,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
       {/* ── Right — Form ── */}
       <div
-        className="w-full lg:w-1/2 flex items-center justify-center p-8 relative overflow-y-auto"
+        className="w-full lg:w-1/2 flex items-center justify-center p-5 sm:p-8 relative overflow-y-auto"
         style={{ background: "var(--palladian)" }}
       >
         <button

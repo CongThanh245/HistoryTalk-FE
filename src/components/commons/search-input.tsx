@@ -11,7 +11,7 @@ interface SearchInputProps {
 export function SearchInput({ value, onChange, placeholder = "Tìm kiếm..." }: SearchInputProps) {
   return (
     <div
-      className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all duration-150 focus-within:border-[rgba(201,162,77,0.4)]"
+      className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all duration-150 focus-within:border-[rgba(201,162,77,0.4)]"
       style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
     >
       <MagnifyingGlassIcon className="w-4 h-4 shrink-0" style={{ color: "var(--content-subtle)" }} />
