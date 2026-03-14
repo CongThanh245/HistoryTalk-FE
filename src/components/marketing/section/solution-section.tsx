@@ -33,7 +33,7 @@ export function SolutionSection() {
       className="py-24 md:py-32 bg-[var(--bg-main)] border-t border-[var(--border-default)]"
     >
       <Container>
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           {/* LEFT */}
           <div>
             <div data-reveal="fast">
@@ -63,7 +63,7 @@ export function SolutionSection() {
 
           {/* RIGHT */}
           <div data-reveal="block" className="relative">
-            <div className="w-full h-[420px] rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] flex items-center justify-center">
+            <div className="w-full h-[260px] sm:h-[340px] lg:h-[420px] rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] flex items-center justify-center">
               <img
                 src="/history-talk-ui.png"
                 alt="History Talk UI"

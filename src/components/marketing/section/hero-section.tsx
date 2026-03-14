@@ -79,7 +79,7 @@ export function HeroSection() {
           {/* TEXT CONTENT */}
           <div
             ref={contentWrapperRef}
-            className="z-10 will-change-transform pt-24 pb-6 lg:pt-0 lg:pb-0 space-y-5 lg:space-y-8"
+            className="z-10 will-change-transform pt-28 pb-6 lg:pt-0 lg:pb-0 space-y-5 lg:space-y-8"
           >
             <h1 className="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-bold leading-[1.1] text-[var(--text-primary)]">
               <TypingText text="HISTORY TALK" className="typing-title" />

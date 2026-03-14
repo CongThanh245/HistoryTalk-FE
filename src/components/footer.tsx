@@ -31,7 +31,7 @@ export function Footer() {
     <footer className="bg-[var(--bg-main)] border-t border-[var(--border-default)]">
       <Container>
         {/* Main grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-12 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 sm:gap-12 py-10 sm:py-16">
           {/* LEFT: Brand + contact */}
           <div className="max-w-xs">
             {/* Logo */}

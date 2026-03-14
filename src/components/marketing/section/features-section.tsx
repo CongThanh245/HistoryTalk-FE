@@ -42,7 +42,7 @@ function FeatureBlock({ label, title, features, reverse, bg }: {
   useRevealAnimation(blockRef);
 
   return (
-    <div ref={blockRef} className={`py-20 lg:py-28 border-t border-[var(--border-default)] ${bg}`}>
+    <div ref={blockRef} className={`py-14 sm:py-20 lg:py-28 border-t border-[var(--border-default)] ${bg}`}>
       <Container>
         <div className="mb-10 lg:mb-14">
           <span data-reveal="block" className="inline-block text-[0.65rem] font-semibold tracking-[0.2em] uppercase text-[var(--accent-gold)] opacity-80 mb-3">

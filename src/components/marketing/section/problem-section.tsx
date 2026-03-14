@@ -80,11 +80,11 @@ export function ProblemSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative flex items-center h-svh min-h-[600px] overflow-hidden bg-[var(--bg-deep)]"
+      className="relative flex items-start md:items-center h-auto md:h-svh min-h-[600px] overflow-hidden bg-[var(--bg-deep)]"
     >
       <div className="absolute top-0 inset-x-0 h-px bg-[var(--border-default)]" />
 
-      <div className="relative z-10 w-full py-16">
+      <div className="relative z-10 w-full py-16 md:py-0">
         <Container>
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 lg:gap-16 items-center">
             <div>

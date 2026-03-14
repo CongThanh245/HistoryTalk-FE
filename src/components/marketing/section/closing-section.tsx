@@ -13,9 +13,9 @@ export function ClosingSection() {
     <section ref={sectionRef} className="py-20 bg-[var(--bg-deep)]">
       <Container>
         {/* Thẻ cha dùng flex justify-center để làm mốc căn giữa cho ảnh */}
-        <div className="relative overflow-hidden rounded-[2.5rem] border border-[var(--border-default)] bg-[var(--bg-surface)] h-[550px] lg:h-[600px] flex justify-center">
+        <div className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-[var(--border-default)] bg-[var(--bg-surface)] h-auto min-h-[380px] sm:min-h-[520px] lg:h-[600px] flex justify-center">
           {/* LỚP 1: ẢNH ĐIỆN THOẠI (Căn giữa theo Card cha) */}
-          <div className="absolute inset-0 flex justify-center items-end pointer-events-none z-10">
+          <div className="hidden sm:flex absolute inset-0 justify-center items-end pointer-events-none z-10">
             <img
               src="/phone_mock.png"
               alt="Preview"
@@ -24,7 +24,7 @@ export function ClosingSection() {
                 bottom: 0,
                 left: "50%",
                 transform: "translateX(-50%) translateY(12%)",
-                width: "370px",
+                width: "clamp(200px, 50vw, 370px)",
                 zIndex: 10,
                 pointerEvents: "none",
               }}
@@ -32,10 +32,10 @@ export function ClosingSection() {
           </div>
 
           {/* LỚP 2: NỘI DUNG CHỮ (Dùng Grid để chia 2 bên) */}
-          <div className="relative z-20 w-full h-full grid grid-cols-1 lg:grid-cols-3 px-10 lg:px-16">
+          <div className="relative z-20 w-full h-full grid grid-cols-1 lg:grid-cols-3 px-6 sm:px-10 lg:px-16 py-10 sm:py-14 lg:py-0">
             {/* Cột trái */}
             <div className="flex items-center">
-              <h2 className="text-4xl lg:text-6xl font-bold text-[var(--text-primary)]">
+              <h2 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-[var(--text-primary)]">
                 LỊCH SỬ KHÔNG <br /> CHỈ LÀ{" "}
                 <span className="text-[var(--accent-gold)]">QUÁ KHỨ.</span>
               </h2>

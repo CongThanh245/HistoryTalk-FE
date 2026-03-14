@@ -219,6 +219,83 @@ export const MOCK_QUIZ_SETS: QuizSet[] = [
     createdAt: "2024-02-20",
   },
 ];
+export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
+  "quiz-001": [
+    {
+      questionId: "q001-1",
+      content:
+        "Triều đại nào mở đầu thời kỳ phong kiến độc lập của Việt Nam sau 1000 năm Bắc thuộc?",
+      options: ["Triều Ngô", "Triều Đinh", "Triều Lý", "Triều Trần"],
+      correctAnswer: 0,
+      explanation:
+        "Ngô Quyền sau chiến thắng Bạch Đằng năm 938 đã lập ra triều Ngô, chấm dứt 1000 năm đô hộ phương Bắc.",
+    },
+    {
+      questionId: "q001-2",
+      content: "Lý Công Uẩn dời đô về Thăng Long vào năm nào?",
+      options: ["938", "968", "1009", "1010"],
+      correctAnswer: 3,
+      explanation:
+        "Năm 1010, Lý Thái Tổ ban Chiếu dời đô từ Hoa Lư về Đại La (đổi tên thành Thăng Long).",
+    },
+    {
+      questionId: "q001-3",
+      content:
+        "Triều đại nào tồn tại lâu nhất trong lịch sử phong kiến Việt Nam?",
+      options: ["Triều Lý", "Triều Trần", "Triều Lê", "Triều Nguyễn"],
+      correctAnswer: 2,
+      explanation:
+        "Triều Lê (Lê sơ + Lê trung hưng) tồn tại từ 1428 đến 1789, hơn 360 năm.",
+    },
+    {
+      questionId: "q001-4",
+      content: "Nhà Trần đã bao nhiêu lần đánh bại quân Mông–Nguyên?",
+      options: ["1 lần", "2 lần", "3 lần", "4 lần"],
+      correctAnswer: 2,
+      explanation:
+        "Nhà Trần ba lần thắng quân Mông–Nguyên: 1258, 1285 và 1288.",
+    },
+    {
+      questionId: "q001-5",
+      content: "Ai tương truyền là tác giả bài thơ 'Nam quốc sơn hà'?",
+      options: ["Lý Thái Tổ", "Lý Thái Tông", "Lý Thường Kiệt", "Lý Nhân Tông"],
+      correctAnswer: 2,
+      explanation:
+        "Lý Thường Kiệt tương truyền đã đọc bài thơ này năm 1077 tại phòng tuyến sông Như Nguyệt.",
+    },
+  ],
+  "quiz-003": [
+    {
+      questionId: "q003-1",
+      content: "Cuộc khởi nghĩa Hai Bà Trưng nổ ra vào năm nào?",
+      options: ["39 TCN", "40 SCN", "43 SCN", "111 TCN"],
+      correctAnswer: 1,
+      explanation:
+        "Năm 40 SCN, Trưng Trắc và Trưng Nhị khởi nghĩa chống nhà Đông Hán.",
+    },
+    {
+      questionId: "q003-2",
+      content: "1000 năm Bắc thuộc kết thúc với chiến thắng nào?",
+      options: [
+        "Khởi nghĩa Hai Bà Trưng",
+        "Trận Bạch Đằng 938",
+        "Khởi nghĩa Lý Bí",
+        "Trận Chi Lăng",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "Chiến thắng Bạch Đằng năm 938 của Ngô Quyền chấm dứt hơn 1000 năm Bắc thuộc.",
+    },
+    {
+      questionId: "q003-3",
+      content: "Bà Triệu khởi nghĩa chống lại triều đại nào?",
+      options: ["Nhà Hán", "Nhà Đường", "Nhà Ngô (Đông Ngô)", "Nhà Tần"],
+      correctAnswer: 2,
+      explanation:
+        "Năm 248, Bà Triệu khởi nghĩa chống Đông Ngô — một trong các nước thời Tam Quốc.",
+    },
+  ],
+};
 
 export const MOCK_RECENT_RESULTS: QuizResult[] = [
   {
@@ -273,7 +350,12 @@ export const quizService = {
       hasPrevious: false,
     };
   },
-
+  getQuestions: async (quizId: string): Promise<QuizQuestion[]> => {
+    // TODO: const res = await axiosClient.get(`/quizzes/${quizId}/questions`);
+    // return res.data.data;
+    await new Promise((r) => setTimeout(r, 400));
+    return MOCK_QUESTIONS[quizId] ?? MOCK_QUESTIONS["quiz-001"];
+  },
   // GET /quizzes/:id
   getById: async (quizId: string): Promise<QuizSet> => {
     // TODO: const res = await axiosClient.get(`/quizzes/${quizId}`);
