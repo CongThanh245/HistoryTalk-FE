@@ -8,13 +8,14 @@ import React, { useState, useMemo } from "react";
 import {
   useQuizSets,
   useMyQuizResults,
-  useStartQuiz,
+  // useStartQuiz,
 } from "@/features/quiz/hooks";
 import type { QuizEra, QuizDifficulty } from "@/services/quiz.service";
 import { QuizStatsBar } from "./quiz-stats-bar";
 import { QuizFilterBar } from "./quiz-filterbar";
 import { QuizGrid } from "./quiz-grid";
 import { QuizRecentResults } from "./quiz-recent-result";
+import { useRouter } from "next/navigation";
 
 export function QuizPageClient() {
   const [search, setSearch] = useState("");
@@ -26,7 +27,7 @@ export function QuizPageClient() {
   // Fetch data
   const { data: quizData, isLoading: quizLoading } = useQuizSets();
   const { data: results = [], isLoading: resultsLoading } = useMyQuizResults();
-  const startQuizMutation = useStartQuiz();
+  // const startQuizMutation = useStartQuiz();
 
   // Filter locally (thay bằng server-side filter khi API sẵn sàng)
   const filteredQuizzes = useMemo(() => {
@@ -53,12 +54,10 @@ export function QuizPageClient() {
     );
     return Math.round(total / results.length);
   }, [results]);
+  const router = useRouter(); // ← thêm dòng này
 
   const handleStartQuiz = async (quizId: string) => {
-    // TODO: navigate to quiz session page
-    // const session = await startQuizMutation.mutateAsync(quizId);
-    // router.push(`/quiz/${quizId}/session/${session.sessionId}`);
-    alert(`Bắt đầu quiz: ${quizId}`);
+    router.push(`/quiz/${quizId}`);
   };
 
   return (
