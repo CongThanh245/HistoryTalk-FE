@@ -4,7 +4,7 @@
 "use client";
 
 import React from "react";
-import type { QuizSet } from "@/services/quiz.service";
+import type { QuizSet, QuizSetV2 } from "@/services/quiz.service";
 import { QuizCard } from "./quiz-card";
 
 function QuizCardSkeleton() {
@@ -18,16 +18,25 @@ function QuizCardSkeleton() {
     >
       <div className="h-36" style={{ background: "var(--bg-surface)" }} />
       <div className="p-4 space-y-2">
-        <div className="h-4 rounded" style={{ background: "var(--bg-surface)", width: "80%" }} />
-        <div className="h-3 rounded" style={{ background: "var(--bg-surface)", width: "60%" }} />
-        <div className="h-3 rounded" style={{ background: "var(--bg-surface)", width: "40%" }} />
+        <div
+          className="h-4 rounded"
+          style={{ background: "var(--bg-surface)", width: "80%" }}
+        />
+        <div
+          className="h-3 rounded"
+          style={{ background: "var(--bg-surface)", width: "60%" }}
+        />
+        <div
+          className="h-3 rounded"
+          style={{ background: "var(--bg-surface)", width: "40%" }}
+        />
       </div>
     </div>
   );
 }
 
 interface QuizGridProps {
-  quizzes: QuizSet[];
+  quizzes: QuizSetV2[]; // ← đổi QuizSet → QuizSetV2
   isLoading: boolean;
   onStart: (quizId: string) => void;
 }
