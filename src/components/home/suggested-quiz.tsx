@@ -54,7 +54,7 @@ function SuggestedQuizRow({ item }: { item: SuggestedQuizItem }) {
             {item.title}
           </p>
           <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-            {item.questions} câu · {item.difficulty}
+            {item.questions} câu
           </p>
         </div>
       </div>
