@@ -419,93 +419,128 @@ Tất cả lỗi đều trả về cùng shape:
 - AI model nào dùng cho chat? Context window tối đa bao nhiêu messages?
 
 
-----
+----# HistoryTalk — Quiz API Specification
 
-# HistoryTalk — Quiz API Specification
-
+> **Version:** 2.0  
 > **Base path:** `/Historical-tell/api/v1`  
 > **Response wrapper:** `{ success, message, data, timestamp }`  
-> **Auth:** Bearer token — `Authorization: Bearer <token>`
+> **Auth:** Bearer token — `Authorization: Bearer <token>`  
+> **Roles:** `CUSTOMER` | `STAFF` | `ADMIN`
 
 ---
 
-## 1. `GET /quizzes`
+## Data Model
+
+```typescript
+QuizSet {
+  quizId:          string
+  title:           string
+  description:     string
+  grade:           10 | 11 | 12          // Lớp học
+  chapterNumber:   number                // Số bài
+  chapterTitle:    string                // Tên chủ đề ngắn
+  era:             "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY" | "ALL"
+  difficulty:      "EASY" | "MEDIUM" | "HARD"
+  totalQuestions:  number                // tính tự động từ questions
+  durationSeconds: number                // thời gian gợi ý
+  playCount:       number                // tính tự động
+  rating:          number                // tính tự động từ reviews
+  tags:            string[]
+  createdAt:       ISO datetime
+  createdBy:       string (staffId)
+}
+
+QuizQuestion {
+  questionId:    string
+  quizId:        string
+  orderIndex:    number                  // thứ tự câu hỏi
+  content:       string
+  options:       string[]                // đúng 4 phần tử
+  correctAnswer: number                  // index 0-3
+  explanation:   string (optional)
+}
+
+QuizSession {
+  sessionId:   string
+  quizId:      string
+  userId:      string
+  startedAt:   ISO datetime
+  expiresAt:   ISO datetime
+  submitted:   boolean
+}
+
+QuizResult {
+  resultId:        string
+  quizId:          string
+  quizTitle:       string
+  userId:          string
+  score:           number
+  totalQuestions:  number
+  durationSeconds: number
+  completedAt:     ISO datetime
+  difficulty:      "EASY" | "MEDIUM" | "HARD"
+}
+```
+
+---
+
+## CUSTOMER Endpoints
+
+### `GET /quizzes`
 
 Lấy danh sách bộ câu hỏi.
 
 **Query params:**
 
-| Param | Type | Required | Description |
-|---|---|---|---|
-| `search` | string | No | Tìm theo tên |
-| `page` | number | No | Default 0 |
-| `limit` | number | No | Default 10 |
-| `era` | enum | No | `ANCIENT` \| `MEDIEVAL` \| `MODERN` \| `CONTEMPORARY` |
-| `difficulty` | enum | No | `EASY` \| `MEDIUM` \| `HARD` |
+| Param | Type | Description |
+|---|---|---|
+| `search` | string | Tìm theo title, chapterTitle |
+| `page` | number | Default 0 |
+| `limit` | number | Default 20 |
+| `grade` | number | `10` \| `11` \| `12` |
+| `era` | enum | `ANCIENT` \| `MEDIEVAL` \| `MODERN` \| `CONTEMPORARY` |
 
 **Response:**
 ```json
 {
   "content": [
     {
-      "quizId": "string",
-      "title": "string",
+      "quizId": "ls12-b1",
+      "title": "Lịch sử 12 — Bài 1: Liên Hợp Quốc",
       "description": "string",
-      "era": "MEDIEVAL",
+      "grade": 12,
+      "chapterNumber": 1,
+      "chapterTitle": "Liên Hợp Quốc",
+      "era": "CONTEMPORARY",
       "difficulty": "MEDIUM",
-      "totalQuestions": 15,
-      "durationSeconds": 600,
-      "playCount": 1284,
-      "rating": 4.7,
-      "tags": ["string"],
-      "createdAt": "2024-01-15"
+      "totalQuestions": 10,
+      "durationSeconds": 900,
+      "playCount": 3241,
+      "rating": 4.8,
+      "tags": ["liên hợp quốc"],
+      "createdAt": "2024-01-10"
     }
   ],
-  "totalElements": 100,
-  "totalPages": 10,
+  "totalElements": 15,
+  "totalPages": 1,
   "currentPage": 0,
-  "pageSize": 10,
-  "hasNext": true,
+  "pageSize": 20,
+  "hasNext": false,
   "hasPrevious": false
 }
 ```
 
 ---
 
-## 2. `GET /quizzes/:quizId`
+### `GET /quizzes/:quizId`
 
-Lấy chi tiết 1 bộ câu hỏi.
-
-**Response:** Single object như item trong danh sách trên.
+Chi tiết 1 bộ câu hỏi. Response là single object như trên.
 
 ---
 
-## 3. `GET /quizzes/:quizId/questions`
+### `POST /quizzes/:quizId/start`
 
-Lấy danh sách câu hỏi của bộ quiz.
-
-> ⚠️ Chỉ trả về sau khi user đã `POST /quizzes/:quizId/start` và có `sessionId` hợp lệ — hoặc nếu không cần bảo mật thì trả thẳng cũng được, frontend sẽ xử lý.
-
-**Response:**
-```json
-[
-  {
-    "questionId": "string",
-    "content": "string",
-    "options": ["string", "string", "string", "string"],
-    "correctAnswer": 0,
-    "explanation": "string (optional)"
-  }
-]
-```
-
-> `correctAnswer` là index 0–3 tương ứng với mảng `options`.
-
----
-
-## 4. `POST /quizzes/:quizId/start`
-
-Bắt đầu phiên làm bài, tạo session.
+Bắt đầu phiên làm bài.
 
 **Request body:** Không cần.
 
@@ -517,22 +552,24 @@ Bắt đầu phiên làm bài, tạo session.
   "questions": [
     {
       "questionId": "string",
+      "orderIndex": 1,
       "content": "string",
-      "options": ["string", "string", "string", "string"],
+      "options": ["A", "B", "C", "D"],
       "correctAnswer": 0,
       "explanation": "string (optional)"
     }
   ],
-  "durationSeconds": 600,
-  "startedAt": "2024-03-20T10:00:00Z"
+  "durationSeconds": 900,
+  "startedAt": "2024-03-20T10:00:00Z",
+  "expiresAt": "2024-03-20T10:15:00Z"
 }
 ```
 
-> Nếu trả `questions` luôn trong response này thì không cần endpoint `GET /quizzes/:id/questions` riêng nữa — tùy backend quyết định.
+> `correctAnswer` trả về luôn trong response này vì frontend cần để hiện đúng/sai ngay sau khi chọn.
 
 ---
 
-## 5. `POST /quizzes/submit`
+### `POST /quizzes/submit`
 
 Nộp bài.
 
@@ -547,26 +584,24 @@ Nộp bài.
 }
 ```
 
-> `selectedAnswer` là index 0–3, khớp với `options[]` của câu hỏi.
-
 **Response:**
 ```json
 {
   "resultId": "string",
-  "score": 12,
-  "totalQuestions": 15,
-  "correctAnswers": [0, 1, 3],
-  "wrongAnswers": [2, 4],
+  "score": 8,
+  "totalQuestions": 10,
+  "correctAnswers": [0, 1, 2, 3, 5, 6, 7, 9],
+  "wrongAnswers": [4, 8],
   "durationSeconds": 480,
   "completedAt": "2024-03-20T10:08:00Z"
 }
 ```
 
-> `correctAnswers` và `wrongAnswers` là mảng **index** của câu trong danh sách questions (0-indexed), dùng để frontend highlight câu đúng/sai trong trang kết quả.
+> `correctAnswers` / `wrongAnswers` là mảng **index** (0-based) của câu trong danh sách questions.
 
 ---
 
-## 6. `GET /quizzes/results/me`
+### `GET /quizzes/results/me`
 
 Lịch sử làm bài của user hiện tại.
 
@@ -577,8 +612,10 @@ Lịch sử làm bài của user hiện tại.
     "resultId": "string",
     "quizId": "string",
     "quizTitle": "string",
-    "score": 12,
-    "totalQuestions": 15,
+    "grade": 12,
+    "chapterTitle": "Liên Hợp Quốc",
+    "score": 8,
+    "totalQuestions": 10,
     "durationSeconds": 480,
     "completedAt": "2024-03-20T10:08:00Z",
     "difficulty": "MEDIUM"
@@ -588,23 +625,106 @@ Lịch sử làm bài của user hiện tại.
 
 ---
 
-## 7. `POST /quizzes` — Staff/Admin
+## STAFF / ADMIN Endpoints
+
+> Tất cả endpoint dưới đây yêu cầu role `STAFF` hoặc `ADMIN`.  
+> Backend nên kiểm tra role từ JWT token.
+
+---
+
+### `GET /staff/quizzes`
+
+Danh sách tất cả quiz kèm thống kê — dùng cho trang quản lý của staff.
+
+**Query params:**
+
+| Param | Type | Description |
+|---|---|---|
+| `search` | string | Tìm theo title |
+| `page` | number | Default 0 |
+| `limit` | number | Default 20 |
+| `grade` | number | `10` \| `11` \| `12` |
+| `difficulty` | enum | `EASY` \| `MEDIUM` \| `HARD` |
+
+**Response item** (thêm các field quản lý so với GET /quizzes):
+```json
+{
+  "quizId": "string",
+  "title": "string",
+  "grade": 12,
+  "chapterNumber": 1,
+  "chapterTitle": "string",
+  "difficulty": "MEDIUM",
+  "totalQuestions": 10,
+  "durationSeconds": 900,
+  "playCount": 3241,
+  "rating": 4.8,
+  "createdAt": "2024-01-10",
+  "createdBy": "staffId",
+  "updatedAt": "2024-02-01",
+  "updatedBy": "staffId"
+}
+```
+
+---
+
+### `GET /staff/quizzes/:quizId`
+
+Chi tiết quiz kèm toàn bộ câu hỏi — dùng để edit.
+
+**Response:**
+```json
+{
+  "quizId": "string",
+  "title": "string",
+  "description": "string",
+  "grade": 12,
+  "chapterNumber": 1,
+  "chapterTitle": "string",
+  "era": "CONTEMPORARY",
+  "difficulty": "MEDIUM",
+  "durationSeconds": 900,
+  "tags": ["string"],
+  "questions": [
+    {
+      "questionId": "string",
+      "orderIndex": 1,
+      "content": "string",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": 0,
+      "explanation": "string"
+    }
+  ],
+  "createdAt": "string",
+  "createdBy": "string",
+  "updatedAt": "string",
+  "updatedBy": "string"
+}
+```
+
+---
+
+### `POST /staff/quizzes`
 
 Tạo bộ câu hỏi mới.
 
 **Request body:**
 ```json
 {
-  "title": "string",
-  "description": "string",
-  "era": "MEDIEVAL",
+  "title": "string (required)",
+  "description": "string (required)",
+  "grade": 12,
+  "chapterNumber": 1,
+  "chapterTitle": "string (required)",
+  "era": "CONTEMPORARY",
   "difficulty": "MEDIUM",
-  "durationSeconds": 600,
+  "durationSeconds": 900,
   "tags": ["string"],
   "questions": [
     {
-      "content": "string",
-      "options": ["string", "string", "string", "string"],
+      "orderIndex": 1,
+      "content": "string (required)",
+      "options": ["A", "B", "C", "D"],
       "correctAnswer": 0,
       "explanation": "string (optional)"
     }
@@ -612,16 +732,117 @@ Tạo bộ câu hỏi mới.
 }
 ```
 
+**Response:** QuizSet object đã tạo kèm `quizId` được generate.
+
+---
+
+### `PUT /staff/quizzes/:quizId`
+
+Cập nhật thông tin quiz (không bao gồm câu hỏi).
+
+**Request body:** Partial của POST body, không có `questions`.
+
+```json
+{
+  "title": "string (optional)",
+  "description": "string (optional)",
+  "grade": 12,
+  "chapterNumber": 1,
+  "chapterTitle": "string (optional)",
+  "era": "CONTEMPORARY",
+  "difficulty": "MEDIUM",
+  "durationSeconds": 900,
+  "tags": ["string"]
+}
+```
+
+---
+
+### `DELETE /staff/quizzes/:quizId`
+
+Xóa bộ câu hỏi. Nên soft delete (thêm field `deletedAt`).
+
+---
+
+### `POST /staff/quizzes/:quizId/questions`
+
+Thêm câu hỏi mới vào quiz đã có.
+
+**Request body:**
+```json
+{
+  "orderIndex": 11,
+  "content": "string",
+  "options": ["A", "B", "C", "D"],
+  "correctAnswer": 0,
+  "explanation": "string (optional)"
+}
+```
+
+**Response:** QuizQuestion object đã tạo.
+
+---
+
+### `PUT /staff/quizzes/:quizId/questions/:questionId`
+
+Sửa 1 câu hỏi.
+
+**Request body:** Partial của POST body trên.
+
+---
+
+### `DELETE /staff/quizzes/:quizId/questions/:questionId`
+
+Xóa 1 câu hỏi khỏi quiz.
+
+---
+
+### `PUT /staff/quizzes/:quizId/questions/reorder`
+
+Sắp xếp lại thứ tự câu hỏi.
+
+**Request body:**
+```json
+{
+  "order": ["questionId-1", "questionId-3", "questionId-2"]
+}
+```
+
 ---
 
 ## Tóm tắt
 
-| Endpoint | Method | Mô tả | Priority |
-|---|---|---|---|
-| `/quizzes` | GET | Danh sách quiz | 🔴 High |
-| `/quizzes/:id` | GET | Chi tiết quiz | 🔴 High |
-| `/quizzes/:id/start` | POST | Bắt đầu làm bài | 🔴 High |
-| `/quizzes/submit` | POST | Nộp bài | 🔴 High |
-| `/quizzes/:id/questions` | GET | Câu hỏi (nếu tách riêng) | 🟡 Medium |
-| `/quizzes/results/me` | GET | Lịch sử làm bài | 🟡 Medium |
-| `/quizzes` | POST | Tạo quiz (staff) | 🟢 Low |
+| Endpoint | Method | Role | Mô tả | Priority |
+|---|---|---|---|---|
+| `/quizzes` | GET | All | Danh sách quiz | 🔴 High |
+| `/quizzes/:id` | GET | All | Chi tiết quiz | 🔴 High |
+| `/quizzes/:id/start` | POST | Customer | Bắt đầu làm bài | 🔴 High |
+| `/quizzes/submit` | POST | Customer | Nộp bài | 🔴 High |
+| `/quizzes/results/me` | GET | Customer | Lịch sử làm bài | 🟡 Medium |
+| `/staff/quizzes` | GET | Staff/Admin | Danh sách quản lý | 🟡 Medium |
+| `/staff/quizzes/:id` | GET | Staff/Admin | Chi tiết + questions | 🟡 Medium |
+| `/staff/quizzes` | POST | Staff/Admin | Tạo quiz mới | 🟡 Medium |
+| `/staff/quizzes/:id` | PUT | Staff/Admin | Sửa thông tin quiz | 🟡 Medium |
+| `/staff/quizzes/:id` | DELETE | Staff/Admin | Xóa quiz | 🟢 Low |
+| `/staff/quizzes/:id/questions` | POST | Staff/Admin | Thêm câu hỏi | 🟡 Medium |
+| `/staff/quizzes/:id/questions/:qId` | PUT | Staff/Admin | Sửa câu hỏi | 🟡 Medium |
+| `/staff/quizzes/:id/questions/:qId` | DELETE | Staff/Admin | Xóa câu hỏi | 🟢 Low |
+| `/staff/quizzes/:id/questions/reorder` | PUT | Staff/Admin | Sắp xếp câu hỏi | 🟢 Low |
+
+---
+
+## Notes cho Backend
+
+1. **`grade` field** — thêm vào bảng `Quiz`, kiểu `INTEGER`, giá trị `10`, `11`, `12`.
+
+2. **`chapterNumber` + `chapterTitle`** — thêm vào bảng `Quiz`, dùng để group và hiển thị trên UI.
+
+3. **`correctAnswer` trong start response** — frontend cần field này ngay khi làm bài để hiện đúng/sai sau mỗi câu. Không cần ẩn vì đây là app học tập, không phải thi cử nghiêm túc.
+
+4. **Soft delete** — thêm `deletedAt: datetime (nullable)` vào bảng `Quiz` và `QuizQuestion`. Filter `WHERE deletedAt IS NULL` trong tất cả GET queries.
+
+5. **`playCount`** — tự động tăng 1 mỗi khi `POST /quizzes/:id/start` được gọi thành công.
+
+6. **`totalQuestions`** — tính tự động từ `COUNT(questions)`, không cần lưu riêng hoặc có thể cache.
+
+7. **Role check** — staff endpoint nên check `role IN ('STAFF', 'ADMIN')` từ JWT, trả về `403 Forbidden` nếu không đủ quyền.
