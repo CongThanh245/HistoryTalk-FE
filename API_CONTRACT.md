@@ -440,7 +440,6 @@ QuizSet {
   chapterNumber:   number                // Số bài
   chapterTitle:    string                // Tên chủ đề ngắn
   era:             "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY" | "ALL"
-  difficulty:      "EASY" | "MEDIUM" | "HARD"
   totalQuestions:  number                // tính tự động từ questions
   durationSeconds: number                // thời gian gợi ý
   playCount:       number                // tính tự động
@@ -478,7 +477,6 @@ QuizResult {
   totalQuestions:  number
   durationSeconds: number
   completedAt:     ISO datetime
-  difficulty:      "EASY" | "MEDIUM" | "HARD"
 }
 ```
 
@@ -512,7 +510,6 @@ Lấy danh sách bộ câu hỏi.
       "chapterNumber": 1,
       "chapterTitle": "Liên Hợp Quốc",
       "era": "CONTEMPORARY",
-      "difficulty": "MEDIUM",
       "totalQuestions": 10,
       "durationSeconds": 900,
       "playCount": 3241,
@@ -617,8 +614,7 @@ Lịch sử làm bài của user hiện tại.
     "score": 8,
     "totalQuestions": 10,
     "durationSeconds": 480,
-    "completedAt": "2024-03-20T10:08:00Z",
-    "difficulty": "MEDIUM"
+    "completedAt": "2024-03-20T10:08:00Z"
   }
 ]
 ```
@@ -644,7 +640,6 @@ Danh sách tất cả quiz kèm thống kê — dùng cho trang quản lý của
 | `page` | number | Default 0 |
 | `limit` | number | Default 20 |
 | `grade` | number | `10` \| `11` \| `12` |
-| `difficulty` | enum | `EASY` \| `MEDIUM` \| `HARD` |
 
 **Response item** (thêm các field quản lý so với GET /quizzes):
 ```json
@@ -654,7 +649,6 @@ Danh sách tất cả quiz kèm thống kê — dùng cho trang quản lý của
   "grade": 12,
   "chapterNumber": 1,
   "chapterTitle": "string",
-  "difficulty": "MEDIUM",
   "totalQuestions": 10,
   "durationSeconds": 900,
   "playCount": 3241,
@@ -682,7 +676,6 @@ Chi tiết quiz kèm toàn bộ câu hỏi — dùng để edit.
   "chapterNumber": 1,
   "chapterTitle": "string",
   "era": "CONTEMPORARY",
-  "difficulty": "MEDIUM",
   "durationSeconds": 900,
   "tags": ["string"],
   "questions": [
@@ -717,7 +710,6 @@ Tạo bộ câu hỏi mới.
   "chapterNumber": 1,
   "chapterTitle": "string (required)",
   "era": "CONTEMPORARY",
-  "difficulty": "MEDIUM",
   "durationSeconds": 900,
   "tags": ["string"],
   "questions": [
@@ -750,7 +742,6 @@ Cập nhật thông tin quiz (không bao gồm câu hỏi).
   "chapterNumber": 1,
   "chapterTitle": "string (optional)",
   "era": "CONTEMPORARY",
-  "difficulty": "MEDIUM",
   "durationSeconds": 900,
   "tags": ["string"]
 }

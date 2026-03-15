@@ -12,7 +12,7 @@ import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { StaffSearchBar } from "@/components/staff/staff-search-bar";
 import { StaffConfirmDialog } from "@/components/staff/staff-confirm-dialog";
-import { DifficultyBadge, EraBadge, GradeBadge, ERA_OPTIONS, type DifficultyKey, type EraKey } from "@/components/staff/staff-badge";
+import { EraBadge, GradeBadge, ERA_OPTIONS, type EraKey } from "@/components/staff/staff-badge";
 import { QuizQuestionEditor, type QuizQuestion } from "@/components/staff/quiz-question-editor";
 import { includesLoose, newId, nowLabel } from "@/components/staff/staff-utils";
 
@@ -28,7 +28,7 @@ interface QuizSet {
   quizId: string; title: string; description: string;
   /** null = not tied to a specific school grade (extra-curricular) */
   grade: 10 | 11 | 12 | null; chapterNumber: number; chapterTitle: string;
-  era: EraKey; difficulty: DifficultyKey; durationSeconds: number;
+  era: EraKey; durationSeconds: number;
   tags: string[]; playCount: number; rating: number;
   createdAt: string; updatedAt: string; createdBy: string;
   questions: QuizQuestion[];
@@ -41,7 +41,7 @@ const SEED: QuizSet[] = [
     quizId: "ls12-b1", title: "Lịch sử 12 — Bài 1: Liên Hợp Quốc",
     description: "Kiểm tra kiến thức về sự thành lập và vai trò của Liên Hợp Quốc sau Chiến tranh thế giới thứ II.",
     grade: 12, chapterNumber: 1, chapterTitle: "Liên Hợp Quốc",
-    era: "CONTEMPORARY", difficulty: "EASY", durationSeconds: 900,
+    era: "CONTEMPORARY", durationSeconds: 900,
     playCount: 3241, rating: 4.8, createdAt: "10/01/2024", updatedAt: "15/02/2024", createdBy: "staff_01",
     tags: ["liên hợp quốc", "lớp 12", "hiện đại"],
     questions: [
@@ -54,7 +54,7 @@ const SEED: QuizSet[] = [
     quizId: "ls11-b3", title: "Lịch sử 11 — Bài 3: Chiến tranh thế giới thứ nhất",
     description: "Nguyên nhân, diễn biến và hậu quả của Chiến tranh thế giới thứ nhất (1914–1918).",
     grade: 11, chapterNumber: 3, chapterTitle: "Chiến tranh thế giới thứ nhất",
-    era: "MODERN", difficulty: "MEDIUM", durationSeconds: 1200,
+    era: "MODERN", durationSeconds: 1200,
     playCount: 2105, rating: 4.5, createdAt: "20/02/2024", updatedAt: "28/02/2024", createdBy: "staff_02",
     tags: ["ww1", "chiến tranh", "lớp 11", "cận đại"],
     questions: [
@@ -68,7 +68,7 @@ const SEED: QuizSet[] = [
     quizId: "ls10-b5", title: "Lịch sử 10 — Bài 5: Các quốc gia phong kiến Đông Nam Á",
     description: "Sự hình thành và phát triển của các vương quốc phong kiến khu vực Đông Nam Á từ thế kỷ X–XV.",
     grade: 10, chapterNumber: 5, chapterTitle: "Các quốc gia phong kiến Đông Nam Á",
-    era: "MEDIEVAL", difficulty: "HARD", durationSeconds: 1500,
+    era: "MEDIEVAL", durationSeconds: 1500,
     playCount: 987, rating: 4.2, createdAt: "05/03/2024", updatedAt: "10/03/2024", createdBy: "staff_01",
     tags: ["đông nam á", "phong kiến", "lớp 10", "trung đại"],
     questions: [
@@ -83,7 +83,7 @@ const SEED: QuizSet[] = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const emptyDraft = () => ({ title: "", description: "", grade: null as 10|11|12|null, chapterNumber: 1, chapterTitle: "", era: "CONTEMPORARY" as EraKey, difficulty: "MEDIUM" as DifficultyKey, durationSeconds: 900, tags: [] as string[], questions: [] as QuizQuestion[] });
+const emptyDraft = () => ({ title: "", description: "", grade: null as 10|11|12|null, chapterNumber: 1, chapterTitle: "", era: "CONTEMPORARY" as EraKey, durationSeconds: 900, tags: [] as string[], questions: [] as QuizQuestion[] });
 type DraftState = ReturnType<typeof emptyDraft> & { quizId?: string };
 
 const fmtDuration = (s: number) => { const m = Math.floor(s / 60); return m > 0 ? `${m} phút` : `${s}s`; };
@@ -98,7 +98,6 @@ export default function StaffQuizzesPage() {
   const [items, setItems] = React.useState<QuizSet[]>(SEED);
   const [search, setSearch] = React.useState("");
   const [filterGrade, setFilterGrade] = React.useState<""|"10"|"11"|"12">("");
-  const [filterDiff, setFilterDiff] = React.useState<""|DifficultyKey>("");
   const [view, setView] = React.useState<"list"|"editor">("list");
   const [editorMode, setEditorMode] = React.useState<"create"|"edit">("create");
   const [draft, setDraft] = React.useState<DraftState>(emptyDraft());
@@ -110,9 +109,8 @@ export default function StaffQuizzesPage() {
     let list = items;
     if (search.trim()) { const q = search.trim(); list = list.filter((x) => includesLoose(x.title, q) || includesLoose(x.chapterTitle, q) || x.tags.some((t) => includesLoose(t, q))); }
     if (filterGrade) list = list.filter((x) => String(x.grade) === filterGrade);
-    if (filterDiff) list = list.filter((x) => x.difficulty === filterDiff);
     return list;
-  }, [items, search, filterGrade, filterDiff]);
+  }, [items, search, filterGrade]);
 
   const openCreate = () => { setDraft(emptyDraft()); setTagInput(""); setEditorMode("create"); setView("editor"); };
   const openEdit = (q: QuizSet) => { setDraft({ ...q }); setTagInput(""); setEditorMode("edit"); setView("editor"); };
@@ -121,11 +119,11 @@ export default function StaffQuizzesPage() {
     const title = draft.title.trim(); const chapterTitle = draft.chapterTitle.trim();
     if (!title || !chapterTitle) return;
     if (editorMode === "create") {
-      const next: QuizSet = { quizId: newId(), title, description: draft.description.trim(), grade: draft.grade, chapterNumber: draft.chapterNumber, chapterTitle, era: draft.era, difficulty: draft.difficulty, durationSeconds: draft.durationSeconds, tags: draft.tags, questions: draft.questions, playCount: 0, rating: 0, createdAt: nowLabel(), updatedAt: nowLabel(), createdBy: "staff_me" };
+      const next: QuizSet = { quizId: newId(), title, description: draft.description.trim(), grade: draft.grade, chapterNumber: draft.chapterNumber, chapterTitle, era: draft.era, durationSeconds: draft.durationSeconds, tags: draft.tags, questions: draft.questions, playCount: 0, rating: 0, createdAt: nowLabel(), updatedAt: nowLabel(), createdBy: "staff_me" };
       setItems((p) => [next, ...p]);
       toast.success(`Đã tạo quiz "${title}" với ${draft.questions.length} câu hỏi.`);
     } else {
-      setItems((p) => p.map((x) => x.quizId === draft.quizId ? { ...x, title, description: draft.description.trim(), grade: draft.grade, chapterNumber: draft.chapterNumber, chapterTitle, era: draft.era, difficulty: draft.difficulty, durationSeconds: draft.durationSeconds, tags: draft.tags, questions: draft.questions, updatedAt: nowLabel() } : x));
+      setItems((p) => p.map((x) => x.quizId === draft.quizId ? { ...x, title, description: draft.description.trim(), grade: draft.grade, chapterNumber: draft.chapterNumber, chapterTitle, era: draft.era, durationSeconds: draft.durationSeconds, tags: draft.tags, questions: draft.questions, updatedAt: nowLabel() } : x));
       toast.success(`Đã cập nhật quiz "${title}".`);
     }
     setView("list");
@@ -144,7 +142,7 @@ export default function StaffQuizzesPage() {
   // Table columns
   const columns = React.useMemo<ColumnDef<QuizSet>[]>(() => [
     { accessorKey: "title", header: "Bài quiz", cell: ({ row: r }) => <div className="min-w-[240px]"><p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>{r.original.title}</p><p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>Bài {r.original.chapterNumber}: {r.original.chapterTitle}</p></div> },
-    { id: "meta", header: "Phân loại", cell: ({ row: r }) => <div className="flex items-center gap-1.5 flex-wrap">{r.original.grade && <GradeBadge value={r.original.grade} />}<EraBadge value={r.original.era} /><DifficultyBadge value={r.original.difficulty} /></div> },
+    { id: "meta", header: "Phân loại", cell: ({ row: r }) => <div className="flex items-center gap-1.5 flex-wrap">{r.original.grade && <GradeBadge value={r.original.grade} />}<EraBadge value={r.original.era} /></div> },
     { id: "stats", header: "Thống kê", cell: ({ row: r }) => <div><p className="text-xs" style={{ color: "var(--content-text)" }}>{r.original.questions.length} câu · {fmtDuration(r.original.durationSeconds)}</p><p className="text-xs" style={{ color: "var(--content-muted)" }}>{r.original.playCount.toLocaleString()} lượt chơi</p></div> },
     { accessorKey: "updatedAt", header: "Cập nhật", cell: ({ row: r }) => <span className="text-xs" style={{ color: "var(--content-muted)" }}>{r.original.updatedAt}</span> },
     { id: "actions", header: "Thao tác", cell: ({ row: r }) => <div className="flex items-center justify-end gap-1"><Button type="button" variant="ghost" size="icon-sm" className="rounded-full" onClick={() => openEdit(r.original)} style={{ color: "var(--header-text-muted)" }}><PencilIcon className="h-4 w-4" /></Button><Button type="button" variant="ghost" size="icon-sm" className="rounded-full" onClick={() => setDeleteTarget(r.original)} style={{ color: "var(--accent-danger)" }}><TrashIcon className="h-4 w-4" /></Button></div> },
@@ -158,14 +156,6 @@ export default function StaffQuizzesPage() {
           className="px-3 h-8 rounded-lg text-xs font-semibold border transition-all"
           style={filterGrade === g ? { background: "var(--accent-gold-active-bg)", borderColor: "var(--accent-gold)", color: "var(--content-heading)" } : { background: "transparent", borderColor: "var(--card-light-border)", color: "var(--content-muted)" }}>
           {g ? `Lớp ${g}` : "Tất cả"}
-        </button>
-      ))}
-      <div className="w-px h-5" style={{ background: "var(--card-light-border)" }} />
-      {([["", "Độ khó"], ["EASY", "Dễ"], ["MEDIUM", "TB"], ["HARD", "Khó"]] as const).map(([v, lbl]) => (
-        <button key={v || "all-d"} type="button" onClick={() => setFilterDiff(v as "" | DifficultyKey)}
-          className="px-3 h-8 rounded-lg text-xs font-semibold border transition-all"
-          style={filterDiff === v ? { background: "var(--accent-gold-active-bg)", borderColor: "var(--accent-gold)", color: "var(--content-heading)" } : { background: "transparent", borderColor: "var(--card-light-border)", color: "var(--content-muted)" }}>
-          {lbl}
         </button>
       ))}
     </div>
@@ -218,17 +208,6 @@ export default function StaffQuizzesPage() {
               </Select>
             </Field>
 
-            <Field label="Độ khó">
-              <div className="flex gap-2">
-                {([["EASY", "Dễ"], ["MEDIUM", "Trung bình"], ["HARD", "Khó"]] as const).map(([d, l]) => (
-                  <button key={d} type="button" onClick={() => setDraft((s) => ({ ...s, difficulty: d }))}
-                    className="flex-1 h-9 rounded-lg border text-xs font-semibold transition-all"
-                    style={draft.difficulty === d ? { background: "var(--accent-gold-active-bg)", borderColor: "var(--accent-gold)", color: "var(--content-heading)" } : { background: "transparent", borderColor: "var(--card-light-border)", color: "var(--content-muted)" }}>
-                    {l}
-                  </button>
-                ))}
-              </div>
-            </Field>
 
             <Field label={`Thời gian gợi ý (giây) — ${fmtDuration(draft.durationSeconds)}`}>
               <Input type="number" min={60} step={60} value={draft.durationSeconds} onChange={(e) => setDraft((s) => ({ ...s, durationSeconds: Number(e.target.value) || 600 }))} className="h-9" />

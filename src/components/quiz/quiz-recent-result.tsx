@@ -5,11 +5,6 @@ import React from "react";
 import { Trophy, Clock, Calendar } from "lucide-react";
 import type { QuizResult } from "@/services/quiz.service";
 
-const DIFFICULTY_LABELS: Record<string, string> = {
-  easy: "Dễ",
-  medium: "Trung bình",
-  hard: "Khó",
-};
 
 interface QuizRecentResultsProps {
   results: QuizResult[];
@@ -86,7 +81,7 @@ export function QuizRecentResults({ results, isLoading }: QuizRecentResultsProps
                     <Clock size={11} />
                     {formatDuration(r.durationSeconds)}
                   </span>
-                  <span>{DIFFICULTY_LABELS[r.difficulty]}</span>
+
                 </div>
               </div>
               <ScoreBadge score={r.score} total={r.totalQuestions} />

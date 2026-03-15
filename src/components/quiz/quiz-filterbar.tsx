@@ -1,11 +1,11 @@
 // components/quiz/QuizFilterBar.tsx
-// Bộ lọc era + difficulty + search
+// Bộ lọc era + search
 
 "use client";
 
 import React from "react";
 import { Search } from "lucide-react";
-import type { QuizEra, QuizDifficulty } from "@/services/quiz.service";
+import type { QuizEra } from "@/services/quiz.service";
 
 const ERA_FILTERS: { label: string; value: QuizEra }[] = [
   { label: "Tất cả", value: "ALL" },
@@ -15,20 +15,11 @@ const ERA_FILTERS: { label: string; value: QuizEra }[] = [
   { label: "Hiện đại", value: "CONTEMPORARY" },
 ];
 
-const DIFFICULTY_FILTERS: { label: string; value: QuizDifficulty | "ALL" }[] = [
-  { label: "Tất cả", value: "ALL" },
-  { label: "Dễ", value: "EASY" },
-  { label: "Trung bình", value: "MEDIUM" },
-  { label: "Khó", value: "HARD" },
-];
-
 interface QuizFilterBarProps {
   search: string;
   onSearchChange: (v: string) => void;
   selectedEra: QuizEra;
   onEraChange: (v: QuizEra) => void;
-  selectedDifficulty: QuizDifficulty | "ALL";
-  onDifficultyChange: (v: QuizDifficulty | "ALL") => void;
 }
 
 export function QuizFilterBar({
@@ -36,8 +27,6 @@ export function QuizFilterBar({
   onSearchChange,
   selectedEra,
   onEraChange,
-  selectedDifficulty,
-  onDifficultyChange,
 }: QuizFilterBarProps) {
   return (
     <div className="flex flex-col gap-3 mb-6">
@@ -77,36 +66,6 @@ export function QuizFilterBar({
                 : {
                     background: "var(--card-light-bg)",
                     color: "var(--content-text)",
-                    border: "1px solid var(--border-default)",
-                  }
-            }
-          >
-            {f.label}
-          </button>
-        ))}
-
-        {/* Divider */}
-        <div
-          className="w-px mx-1 self-stretch"
-          style={{ background: "var(--border-default)" }}
-        />
-
-        {/* Difficulty filter */}
-        {DIFFICULTY_FILTERS.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => onDifficultyChange(f.value)}
-            className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
-            style={
-              selectedDifficulty === f.value
-                ? {
-                    background: "var(--abyssal-blue)",
-                    color: "var(--accent-gold-soft)",
-                    border: "1px solid var(--accent-gold-soft)",
-                  }
-                : {
-                    background: "var(--card-light-bg)",
-                    color: "var(--content-muted)",
                     border: "1px solid var(--border-default)",
                   }
             }

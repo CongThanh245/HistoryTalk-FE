@@ -2,8 +2,7 @@ import { axiosClient } from "@/configs/axios.client";
 
 // ── Types ──────────────────────────────────────────────────
 
-export type QuizDifficulty = "EASY" | "MEDIUM" | "HARD";
-export type QuizDifficultyLower = "easy" | "medium" | "hard";
+
 export type QuizEra =
   | "ALL"
   | "ANCIENT"
@@ -25,7 +24,6 @@ export interface QuizSet {
   description: string;
   thumbnailUrl?: string;
   era: QuizEra;
-  difficulty: QuizDifficultyLower;
   totalQuestions: number;
   durationSeconds: number;
   playCount: number;
@@ -54,7 +52,6 @@ export interface QuizResult {
   totalQuestions: number;
   durationSeconds: number;
   completedAt: string;
-  difficulty: QuizDifficultyLower;
 }
 
 export interface GetQuizSetsParams {
@@ -62,7 +59,6 @@ export interface GetQuizSetsParams {
   page?: number;
   limit?: number;
   era?: QuizEra;
-  difficulty?: QuizDifficulty;
 }
 
 export interface GetQuizSetsResponse {
@@ -108,8 +104,6 @@ export function mapQuizSet(raw: any): QuizSetV2 {
     description: raw.description,
     thumbnailUrl: raw.thumbnailUrl,
     era: raw.era as QuizEra,
-    difficulty:
-      (raw.difficulty?.toLowerCase() as QuizDifficultyLower) ?? "easy",
     totalQuestions: raw.totalQuestions ?? 0,
     durationSeconds: raw.durationSeconds ?? 300,
     playCount: raw.playCount ?? 0,
@@ -131,8 +125,6 @@ export function mapQuizResult(raw: any): QuizResult {
     totalQuestions: raw.totalQuestions,
     durationSeconds: raw.durationSeconds,
     completedAt: raw.completedAt,
-    difficulty:
-      (raw.difficulty?.toLowerCase() as QuizDifficultyLower) ?? "easy",
   };
 }
 
@@ -149,7 +141,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 1,
     chapterTitle: "Liên Hợp Quốc",
     era: "CONTEMPORARY",
-    difficulty: "medium",
+
     totalQuestions: 10,
     durationSeconds: 900,
     playCount: 3241,
@@ -166,7 +158,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 2,
     chapterTitle: "Trật tự thế giới hai cực",
     era: "CONTEMPORARY",
-    difficulty: "medium",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 2187,
@@ -183,7 +175,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 3,
     chapterTitle: "Các nước Đông Bắc Á",
     era: "CONTEMPORARY",
-    difficulty: "medium",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1842,
@@ -199,7 +191,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 4,
     chapterTitle: "Các nước Đông Nam Á & ASEAN",
     era: "CONTEMPORARY",
-    difficulty: "medium",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 2563,
@@ -215,7 +207,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 5,
     chapterTitle: "Châu Phi & Mĩ La-tinh",
     era: "CONTEMPORARY",
-    difficulty: "medium",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1203,
@@ -234,7 +226,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 1,
     chapterTitle: "Nhật Bản cuối XIX — đầu XX",
     era: "MODERN",
-    difficulty: "medium",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1876,
@@ -251,7 +243,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 2,
     chapterTitle: "Ấn Độ thời thuộc địa",
     era: "MODERN",
-    difficulty: "medium",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1234,
@@ -268,7 +260,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 3,
     chapterTitle: "Trung Quốc cuối XIX — đầu XX",
     era: "MODERN",
-    difficulty: "medium",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1654,
@@ -285,7 +277,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 4,
     chapterTitle: "Chiến tranh thế giới I (1914–1918)",
     era: "MODERN",
-    difficulty: "hard",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 2890,
@@ -302,7 +294,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 5,
     chapterTitle: "Cách mạng tháng Mười Nga 1917",
     era: "MODERN",
-    difficulty: "medium",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 2103,
@@ -320,7 +312,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 1,
     chapterTitle: "Xã hội nguyên thủy",
     era: "ANCIENT",
-    difficulty: "easy",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 3102,
@@ -336,7 +328,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 2,
     chapterTitle: "Xã hội cổ đại",
     era: "ANCIENT",
-    difficulty: "easy",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 2456,
@@ -352,7 +344,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 3,
     chapterTitle: "Trung Quốc thời phong kiến",
     era: "MEDIEVAL",
-    difficulty: "medium",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1789,
@@ -369,7 +361,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 4,
     chapterTitle: "Ấn Độ & ĐNA phong kiến",
     era: "MEDIEVAL",
-    difficulty: "medium",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1342,
@@ -386,7 +378,7 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 5,
     chapterTitle: "Tây Âu thời phong kiến",
     era: "MEDIEVAL",
-    difficulty: "medium",
+
     totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1567,
@@ -549,7 +541,7 @@ export const MOCK_RECENT_RESULTS: QuizResult[] = [
     totalQuestions: 10,
     durationSeconds: 480,
     completedAt: "2024-03-20T10:30:00",
-    difficulty: "medium",
+
   },
   {
     resultId: "res-002",
@@ -559,7 +551,7 @@ export const MOCK_RECENT_RESULTS: QuizResult[] = [
     totalQuestions: 20,
     durationSeconds: 620,
     completedAt: "2024-03-19T14:15:00",
-    difficulty: "hard",
+
   },
   {
     resultId: "res-003",
@@ -569,7 +561,7 @@ export const MOCK_RECENT_RESULTS: QuizResult[] = [
     totalQuestions: 20,
     durationSeconds: 540,
     completedAt: "2024-03-18T09:00:00",
-    difficulty: "easy",
+
   },
 ];
 

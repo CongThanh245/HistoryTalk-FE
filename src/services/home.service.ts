@@ -12,7 +12,6 @@ export interface RecentQuizItem {
 export interface SuggestedQuizItem {
   title: string;
   questions: number;
-  difficulty: string;
   tag: string;
 }
 
