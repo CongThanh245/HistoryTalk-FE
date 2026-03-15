@@ -14,10 +14,9 @@ export type QuizEra =
 export interface QuizQuestion {
   questionId: string;
   content: string;
-  options: string[]; // A, B, C, D
-  correctAnswer: number; // index 0-3
+  options: string[];
+  correctAnswer: number;
   explanation?: string;
-  imageUrl?: string;
 }
 
 export interface QuizSet {
@@ -34,6 +33,18 @@ export interface QuizSet {
   tags?: string[];
   createdAt: string;
 }
+
+// ── QuizSetV2 — thêm grade cho chương trình học ────────────
+
+export type QuizGrade = 10 | 11 | 12;
+
+export interface QuizSetV2 extends QuizSet {
+  grade: QuizGrade;
+  chapterNumber: number;
+  chapterTitle: string;
+}
+
+// ── Các types khác ─────────────────────────────────────────
 
 export interface QuizResult {
   resultId: string;
@@ -55,7 +66,7 @@ export interface GetQuizSetsParams {
 }
 
 export interface GetQuizSetsResponse {
-  content: QuizSet[];
+  content: QuizSetV2[];
   totalElements: number;
   totalPages: number;
   currentPage: number;
@@ -90,7 +101,7 @@ export interface SubmitQuizResponse {
 
 // ── Map functions ──────────────────────────────────────────
 
-export function mapQuizSet(raw: any): QuizSet {
+export function mapQuizSet(raw: any): QuizSetV2 {
   return {
     quizId: raw.quizId,
     title: raw.title,
@@ -105,6 +116,9 @@ export function mapQuizSet(raw: any): QuizSet {
     rating: raw.rating ?? 0,
     tags: raw.tags ?? [],
     createdAt: raw.createdAt,
+    grade: raw.grade ?? 12,
+    chapterNumber: raw.chapterNumber ?? 1,
+    chapterTitle: raw.chapterTitle ?? raw.title,
   };
 }
 
@@ -124,175 +138,404 @@ export function mapQuizResult(raw: any): QuizResult {
 
 // ── Mock Data ──────────────────────────────────────────────
 
-export const MOCK_QUIZ_SETS: QuizSet[] = [
+export const MOCK_QUIZ_SETS: QuizSetV2[] = [
+  // ── Lịch sử 12 ──────────────────────────────────────────
   {
-    quizId: "quiz-001",
-    title: "Các triều đại phong kiến Việt Nam",
+    quizId: "ls12-b1",
+    title: "Lịch sử 12 — Bài 1: Liên Hợp Quốc",
     description:
-      "Kiểm tra kiến thức về các triều đại từ thời Ngô đến thời Nguyễn",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=400",
-    era: "MEDIEVAL",
+      "Quá trình thành lập, mục tiêu và nguyên tắc hoạt động của Liên Hợp Quốc",
+    grade: 12,
+    chapterNumber: 1,
+    chapterTitle: "Liên Hợp Quốc",
+    era: "CONTEMPORARY",
     difficulty: "medium",
-    totalQuestions: 15,
-    durationSeconds: 600,
-    playCount: 1284,
-    rating: 4.7,
-    tags: ["triều đại", "phong kiến"],
+    totalQuestions: 10,
+    durationSeconds: 900,
+    playCount: 3241,
+    rating: 4.8,
+    tags: ["liên hợp quốc", "chiến tranh lạnh"],
+    createdAt: "2024-01-10",
+  },
+  {
+    quizId: "ls12-b2",
+    title: "Lịch sử 12 — Bài 2: Trật tự thế giới hai cực",
+    description:
+      "Sự hình thành trật tự thế giới hai cực Ianta và chiến tranh lạnh",
+    grade: 12,
+    chapterNumber: 2,
+    chapterTitle: "Trật tự thế giới hai cực",
+    era: "CONTEMPORARY",
+    difficulty: "medium",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 2187,
+    rating: 4.6,
+    tags: ["chiến tranh lạnh", "hai cực"],
+    createdAt: "2024-01-12",
+  },
+  {
+    quizId: "ls12-b3",
+    title: "Lịch sử 12 — Bài 3: Các nước Đông Bắc Á",
+    description:
+      "Tình hình các nước Đông Bắc Á sau chiến tranh thế giới thứ hai",
+    grade: 12,
+    chapterNumber: 3,
+    chapterTitle: "Các nước Đông Bắc Á",
+    era: "CONTEMPORARY",
+    difficulty: "medium",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 1842,
+    rating: 4.5,
+    tags: ["đông bắc á", "trung quốc", "nhật bản"],
     createdAt: "2024-01-15",
   },
   {
-    quizId: "quiz-002",
-    title: "Chiến tranh chống Pháp",
+    quizId: "ls12-b4",
+    title: "Lịch sử 12 — Bài 4: Các nước Đông Nam Á",
+    description: "Phong trào giải phóng dân tộc và sự ra đời của ASEAN",
+    grade: 12,
+    chapterNumber: 4,
+    chapterTitle: "Các nước Đông Nam Á & ASEAN",
+    era: "CONTEMPORARY",
+    difficulty: "medium",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 2563,
+    rating: 4.7,
+    tags: ["asean", "đông nam á"],
+    createdAt: "2024-01-18",
+  },
+  {
+    quizId: "ls12-b5",
+    title: "Lịch sử 12 — Bài 5: Các nước châu Phi & Mĩ La-tinh",
+    description: "Phong trào giải phóng dân tộc ở châu Phi và cách mạng Cuba",
+    grade: 12,
+    chapterNumber: 5,
+    chapterTitle: "Châu Phi & Mĩ La-tinh",
+    era: "CONTEMPORARY",
+    difficulty: "medium",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 1203,
+    rating: 4.4,
+    tags: ["châu phi", "cuba", "mĩ la-tinh"],
+    createdAt: "2024-01-20",
+  },
+
+  // ── Lịch sử 11 ──────────────────────────────────────────
+  {
+    quizId: "ls11-b1",
+    title: "Lịch sử 11 — Bài 1: Nhật Bản",
     description:
-      "Những sự kiện quan trọng trong cuộc kháng chiến chống thực dân Pháp",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1569974507005-6dc61f97fb5c?w=400",
+      "Nhật Bản từ cuối thế kỷ XIX đến đầu thế kỷ XX — Minh Trị Duy Tân",
+    grade: 11,
+    chapterNumber: 1,
+    chapterTitle: "Nhật Bản cuối XIX — đầu XX",
+    era: "MODERN",
+    difficulty: "medium",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 1876,
+    rating: 4.6,
+    tags: ["nhật bản", "minh trị"],
+    createdAt: "2024-02-01",
+  },
+  {
+    quizId: "ls11-b2",
+    title: "Lịch sử 11 — Bài 2: Ấn Độ",
+    description:
+      "Phong trào giải phóng dân tộc ở Ấn Độ dưới thời thuộc địa Anh",
+    grade: 11,
+    chapterNumber: 2,
+    chapterTitle: "Ấn Độ thời thuộc địa",
+    era: "MODERN",
+    difficulty: "medium",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 1234,
+    rating: 4.3,
+    tags: ["ấn độ", "giải phóng dân tộc"],
+    createdAt: "2024-02-05",
+  },
+  {
+    quizId: "ls11-b3",
+    title: "Lịch sử 11 — Bài 3: Trung Quốc",
+    description:
+      "Trung Quốc cuối thế kỷ XIX — phong trào Ngũ Tứ và cách mạng Tân Hợi",
+    grade: 11,
+    chapterNumber: 3,
+    chapterTitle: "Trung Quốc cuối XIX — đầu XX",
+    era: "MODERN",
+    difficulty: "medium",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 1654,
+    rating: 4.5,
+    tags: ["trung quốc", "tân hợi"],
+    createdAt: "2024-02-08",
+  },
+  {
+    quizId: "ls11-b4",
+    title: "Lịch sử 11 — Bài 4: Chiến tranh thế giới thứ nhất",
+    description:
+      "Nguyên nhân, diễn biến và hậu quả của chiến tranh thế giới lần thứ nhất",
+    grade: 11,
+    chapterNumber: 4,
+    chapterTitle: "Chiến tranh thế giới I (1914–1918)",
     era: "MODERN",
     difficulty: "hard",
     totalQuestions: 20,
     durationSeconds: 900,
-    playCount: 892,
-    rating: 4.5,
-    tags: ["kháng chiến", "Pháp"],
+    playCount: 2890,
+    rating: 4.9,
+    tags: ["thế chiến 1", "1914"],
     createdAt: "2024-02-10",
   },
   {
-    quizId: "quiz-003",
-    title: "Thời kỳ Bắc thuộc",
-    description: "1000 năm Bắc thuộc và các cuộc khởi nghĩa tiêu biểu",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400",
+    quizId: "ls11-b5",
+    title: "Lịch sử 11 — Bài 5: Cách mạng tháng Mười Nga",
+    description:
+      "Cuộc cách mạng Bolshevik năm 1917 và sự ra đời của Nhà nước Xô Viết",
+    grade: 11,
+    chapterNumber: 5,
+    chapterTitle: "Cách mạng tháng Mười Nga 1917",
+    era: "MODERN",
+    difficulty: "medium",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 2103,
+    rating: 4.7,
+    tags: ["cách mạng nga", "liên xô"],
+    createdAt: "2024-02-12",
+  },
+
+  // ── Lịch sử 10 ──────────────────────────────────────────
+  {
+    quizId: "ls10-b1",
+    title: "Lịch sử 10 — Bài 1: Xã hội nguyên thủy",
+    description: "Nguồn gốc loài người và sự hình thành xã hội nguyên thủy",
+    grade: 10,
+    chapterNumber: 1,
+    chapterTitle: "Xã hội nguyên thủy",
     era: "ANCIENT",
     difficulty: "easy",
-    totalQuestions: 10,
-    durationSeconds: 400,
-    playCount: 2341,
-    rating: 4.8,
-    tags: ["Bắc thuộc", "khởi nghĩa"],
-    createdAt: "2024-01-05",
-  },
-  {
-    quizId: "quiz-004",
-    title: "Nhân vật lịch sử nổi bật",
-    description:
-      "Những anh hùng dân tộc đã làm nên lịch sử Việt Nam qua các thời kỳ",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400",
-    era: "ALL",
-    difficulty: "medium",
-    totalQuestions: 25,
-    durationSeconds: 1200,
-    playCount: 3105,
-    rating: 4.9,
-    tags: ["nhân vật", "anh hùng"],
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 3102,
+    rating: 4.5,
+    tags: ["nguyên thủy", "loài người"],
     createdAt: "2024-03-01",
   },
   {
-    quizId: "quiz-005",
-    title: "Văn hóa và phong tục",
-    description: "Phong tục, tập quán và văn hóa dân gian người Việt",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1555400082-595b6e60ce6b?w=400",
-    era: "CONTEMPORARY",
+    quizId: "ls10-b2",
+    title: "Lịch sử 10 — Bài 2: Xã hội cổ đại",
+    description: "Các nền văn minh cổ đại phương Đông và phương Tây",
+    grade: 10,
+    chapterNumber: 2,
+    chapterTitle: "Xã hội cổ đại",
+    era: "ANCIENT",
     difficulty: "easy",
-    totalQuestions: 12,
-    durationSeconds: 480,
-    playCount: 567,
-    rating: 4.3,
-    tags: ["văn hóa", "phong tục"],
-    createdAt: "2024-03-15",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 2456,
+    rating: 4.6,
+    tags: ["cổ đại", "văn minh"],
+    createdAt: "2024-03-05",
   },
   {
-    quizId: "quiz-006",
-    title: "Chiến thắng Điện Biên Phủ",
-    description: "Chi tiết về chiến dịch Điện Biên Phủ lịch sử năm 1954",
-    thumbnailUrl:
-      "https://images.unsplash.com/photo-1569974507005-6dc61f97fb5c?w=400",
-    era: "MODERN",
-    difficulty: "hard",
-    totalQuestions: 18,
-    durationSeconds: 720,
-    playCount: 1456,
-    rating: 4.6,
-    tags: ["Điện Biên Phủ", "1954"],
-    createdAt: "2024-02-20",
+    quizId: "ls10-b3",
+    title: "Lịch sử 10 — Bài 3: Trung Quốc phong kiến",
+    description: "Các triều đại phong kiến Trung Quốc và ảnh hưởng đến khu vực",
+    grade: 10,
+    chapterNumber: 3,
+    chapterTitle: "Trung Quốc thời phong kiến",
+    era: "MEDIEVAL",
+    difficulty: "medium",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 1789,
+    rating: 4.4,
+    tags: ["trung quốc", "phong kiến"],
+    createdAt: "2024-03-08",
+  },
+  {
+    quizId: "ls10-b4",
+    title: "Lịch sử 10 — Bài 4: Ấn Độ & Đông Nam Á phong kiến",
+    description:
+      "Các vương quốc phong kiến Ấn Độ và Đông Nam Á thời cổ trung đại",
+    grade: 10,
+    chapterNumber: 4,
+    chapterTitle: "Ấn Độ & ĐNA phong kiến",
+    era: "MEDIEVAL",
+    difficulty: "medium",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 1342,
+    rating: 4.3,
+    tags: ["ấn độ", "đông nam á"],
+    createdAt: "2024-03-10",
+  },
+  {
+    quizId: "ls10-b5",
+    title: "Lịch sử 10 — Bài 5: Tây Âu thời phong kiến",
+    description:
+      "Chế độ phong kiến Tây Âu, thành thị trung đại và văn hóa Phục Hưng",
+    grade: 10,
+    chapterNumber: 5,
+    chapterTitle: "Tây Âu thời phong kiến",
+    era: "MEDIEVAL",
+    difficulty: "medium",
+    totalQuestions: 20,
+    durationSeconds: 900,
+    playCount: 1567,
+    rating: 4.5,
+    tags: ["tây âu", "phong kiến"],
+    createdAt: "2024-03-12",
   },
 ];
+
 export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
-  "quiz-001": [
+  "ls12-b1": [
     {
-      questionId: "q001-1",
-      content:
-        "Triều đại nào mở đầu thời kỳ phong kiến độc lập của Việt Nam sau 1000 năm Bắc thuộc?",
-      options: ["Triều Ngô", "Triều Đinh", "Triều Lý", "Triều Trần"],
+      questionId: "ls12b1-q1",
+      content: "Tổ chức quốc tế được xem như tiền thân của Liên hợp quốc là",
+      options: [
+        "Hội Quốc liên",
+        "Khối Hiệp ước",
+        "Khối Đồng minh",
+        "Liên minh châu Âu",
+      ],
       correctAnswer: 0,
       explanation:
-        "Ngô Quyền sau chiến thắng Bạch Đằng năm 938 đã lập ra triều Ngô, chấm dứt 1000 năm đô hộ phương Bắc.",
+        "Hội Quốc liên (League of Nations) thành lập năm 1920 sau Chiến tranh thế giới I được coi là tiền thân của Liên hợp quốc.",
     },
     {
-      questionId: "q001-2",
-      content: "Lý Công Uẩn dời đô về Thăng Long vào năm nào?",
-      options: ["938", "968", "1009", "1010"],
-      correctAnswer: 3,
-      explanation:
-        "Năm 1010, Lý Thái Tổ ban Chiếu dời đô từ Hoa Lư về Đại La (đổi tên thành Thăng Long).",
-    },
-    {
-      questionId: "q001-3",
+      questionId: "ls12b1-q2",
       content:
-        "Triều đại nào tồn tại lâu nhất trong lịch sử phong kiến Việt Nam?",
-      options: ["Triều Lý", "Triều Trần", "Triều Lê", "Triều Nguyễn"],
-      correctAnswer: 2,
-      explanation:
-        "Triều Lê (Lê sơ + Lê trung hưng) tồn tại từ 1428 đến 1789, hơn 360 năm.",
-    },
-    {
-      questionId: "q001-4",
-      content: "Nhà Trần đã bao nhiêu lần đánh bại quân Mông–Nguyên?",
-      options: ["1 lần", "2 lần", "3 lần", "4 lần"],
-      correctAnswer: 2,
-      explanation:
-        "Nhà Trần ba lần thắng quân Mông–Nguyên: 1258, 1285 và 1288.",
-    },
-    {
-      questionId: "q001-5",
-      content: "Ai tương truyền là tác giả bài thơ 'Nam quốc sơn hà'?",
-      options: ["Lý Thái Tổ", "Lý Thái Tông", "Lý Thường Kiệt", "Lý Nhân Tông"],
-      correctAnswer: 2,
-      explanation:
-        "Lý Thường Kiệt tương truyền đã đọc bài thơ này năm 1077 tại phòng tuyến sông Như Nguyệt.",
-    },
-  ],
-  "quiz-003": [
-    {
-      questionId: "q003-1",
-      content: "Cuộc khởi nghĩa Hai Bà Trưng nổ ra vào năm nào?",
-      options: ["39 TCN", "40 SCN", "43 SCN", "111 TCN"],
-      correctAnswer: 1,
-      explanation:
-        "Năm 40 SCN, Trưng Trắc và Trưng Nhị khởi nghĩa chống nhà Đông Hán.",
-    },
-    {
-      questionId: "q003-2",
-      content: "1000 năm Bắc thuộc kết thúc với chiến thắng nào?",
+        "Quá trình hình thành Liên hợp quốc gắn liền với vai trò quan trọng của các quốc gia nào?",
       options: [
-        "Khởi nghĩa Hai Bà Trưng",
-        "Trận Bạch Đằng 938",
-        "Khởi nghĩa Lý Bí",
-        "Trận Chi Lăng",
+        "Liên Xô, Mỹ, Anh",
+        "Mỹ, Anh, Pháp",
+        "Liên Xô, Trung Quốc, Đức",
+        "Liên Xô, Mỹ, Đức",
+      ],
+      correctAnswer: 0,
+      explanation:
+        "Ba cường quốc Liên Xô, Mỹ, Anh đóng vai trò chủ chốt qua các hội nghị Têhêran, Ianta và Xan Phranxixcô.",
+    },
+    {
+      questionId: "ls12b1-q3",
+      content:
+        "Tại Hội nghị I-an-ta (2-1945), quyết định quan trọng nào liên quan đến Liên hợp quốc?",
+      options: [
+        "Duy trì và mở rộng Hội Quốc liên",
+        "Thành lập tổ chức Liên hợp quốc",
+        "Thành lập tổ chức Hội Quốc liên",
+        "Thành lập Ban Thư kí Liên hợp quốc",
       ],
       correctAnswer: 1,
       explanation:
-        "Chiến thắng Bạch Đằng năm 938 của Ngô Quyền chấm dứt hơn 1000 năm Bắc thuộc.",
+        "Hội nghị Ianta (2/1945) quyết định thành lập Liên hợp quốc để duy trì hòa bình và an ninh thế giới.",
     },
     {
-      questionId: "q003-3",
-      content: "Bà Triệu khởi nghĩa chống lại triều đại nào?",
-      options: ["Nhà Hán", "Nhà Đường", "Nhà Ngô (Đông Ngô)", "Nhà Tần"],
+      questionId: "ls12b1-q4",
+      content:
+        "Từ cuối tháng 4 đến cuối tháng 6-1945, 50 nước họp tại Xan Phran-xi-xcô thông qua nội dung nào?",
+      options: [
+        "Xét xử tội phạm chiến tranh",
+        "Hiến chương Liên hợp quốc",
+        "Tiêu diệt phát xít Nhật",
+        "Kết thúc chiến tranh Triều Tiên",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "Hội nghị Xan Phranxixcô (4-6/1945) với 50 quốc gia đã thông qua bản Hiến chương Liên hợp quốc.",
+    },
+    {
+      questionId: "ls12b1-q5",
+      content:
+        "Ngày 24-10-1945, sau khi Quốc hội các nước thành viên phê chuẩn, bản Hiến chương Liên hợp quốc",
+      options: [
+        "Chính thức được công bố",
+        "Được bổ sung, hoàn chỉnh",
+        "Chính thức có hiệu lực",
+        "Được chính thức thông qua",
+      ],
       correctAnswer: 2,
       explanation:
-        "Năm 248, Bà Triệu khởi nghĩa chống Đông Ngô — một trong các nước thời Tam Quốc.",
+        "Ngày 24/10/1945 là ngày Hiến chương LHQ chính thức có hiệu lực, được gọi là Ngày Liên hợp quốc.",
+    },
+    {
+      questionId: "ls12b1-q6",
+      content:
+        "Ngày 1/1/1942, tại Oa-sinh-tơn, đại diện của 26 nước ký văn kiện nào?",
+      options: [
+        "Hiệp ước Maxtrich",
+        "Tuyên bố Liên hợp quốc",
+        "Hiệp định Muynich",
+        "Hiệp ước Rôma",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "Ngày 1/1/1942, đại diện 26 quốc gia ký 'Tuyên bố Liên hợp quốc' tại Washington.",
+    },
+    {
+      questionId: "ls12b1-q7",
+      content:
+        "Tại Hội nghị Tê-hê-ran, nguyên thủ 3 nước Liên Xô, Mĩ, Anh khẳng định điều gì?",
+      options: [
+        "Nguyên tắc phân chia nước Đức",
+        "Thành lập quân đội giữ gìn hòa bình",
+        "Nhanh chóng đánh bại phát xít Đức",
+        "Quyết tâm thành lập Liên hợp quốc",
+      ],
+      correctAnswer: 3,
+      explanation:
+        "Tại Hội nghị Têhêran (11-12/1943), ba cường quốc khẳng định quyết tâm thành lập tổ chức quốc tế mới.",
+    },
+    {
+      questionId: "ls12b1-q8",
+      content:
+        "Tổ chức Liên hợp quốc được thành lập trong bối cảnh nhân dân thế giới ý thức sâu sắc về hậu quả tàn khốc của",
+      options: [
+        "Chiến tranh lạnh",
+        "Chiến tranh thế giới",
+        "Phân hóa giàu nghèo",
+        "Khủng hoảng kinh tế",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "LHQ ra đời khi nhân loại vừa trải qua hai cuộc chiến tranh thế giới với hàng chục triệu người thiệt mạng.",
+    },
+    {
+      questionId: "ls12b1-q9",
+      content:
+        "Tổ chức Liên hợp quốc được thành lập năm 1945 nhằm đáp ứng nhu cầu nào của nhân loại?",
+      options: [
+        "Chống biến đổi khí hậu toàn cầu",
+        "Bảo vệ hòa bình, an ninh toàn thế giới",
+        "Nâng cao đời sống tinh thần con người",
+        "Thúc đẩy khoa học công nghệ phát triển",
+      ],
+      correctAnswer: 1,
+      explanation:
+        "Mục tiêu hàng đầu của LHQ là duy trì hòa bình và an ninh quốc tế, ngăn ngừa chiến tranh.",
+    },
+    {
+      questionId: "ls12b1-q10",
+      content:
+        "Yêu cầu bức thiết nào được đặt ra cho các nước Đồng minh khi chiến tranh thế giới thứ hai bước vào giai đoạn cuối?",
+      options: [
+        "Đẩy mạnh xu thế toàn cầu hóa kinh tế",
+        "Thành lập Hội Quốc liên để ngăn chặn chiến tranh",
+        "Tiêu diệt chủ nghĩa phát xít và tổ chức lại thế giới",
+        "Thủ tiêu chế độ phân biệt chủng tộc",
+      ],
+      correctAnswer: 2,
+      explanation:
+        "Giai đoạn cuối Thế chiến II: tiêu diệt chủ nghĩa phát xít và xây dựng trật tự thế giới mới.",
     },
   ],
 };
@@ -300,33 +543,33 @@ export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
 export const MOCK_RECENT_RESULTS: QuizResult[] = [
   {
     resultId: "res-001",
-    quizId: "quiz-001",
-    quizTitle: "Các triều đại phong kiến Việt Nam",
-    score: 12,
-    totalQuestions: 15,
+    quizId: "ls12-b1",
+    quizTitle: "Liên Hợp Quốc",
+    score: 8,
+    totalQuestions: 10,
     durationSeconds: 480,
     completedAt: "2024-03-20T10:30:00",
     difficulty: "medium",
   },
   {
     resultId: "res-002",
-    quizId: "quiz-003",
-    quizTitle: "Thời kỳ Bắc thuộc",
-    score: 9,
-    totalQuestions: 10,
-    durationSeconds: 320,
+    quizId: "ls11-b4",
+    quizTitle: "Chiến tranh thế giới I (1914–1918)",
+    score: 15,
+    totalQuestions: 20,
+    durationSeconds: 620,
     completedAt: "2024-03-19T14:15:00",
-    difficulty: "easy",
+    difficulty: "hard",
   },
   {
     resultId: "res-003",
-    quizId: "quiz-004",
-    quizTitle: "Nhân vật lịch sử nổi bật",
+    quizId: "ls10-b1",
+    quizTitle: "Xã hội nguyên thủy",
     score: 18,
-    totalQuestions: 25,
-    durationSeconds: 950,
+    totalQuestions: 20,
+    durationSeconds: 540,
     completedAt: "2024-03-18T09:00:00",
-    difficulty: "medium",
+    difficulty: "easy",
   },
 ];
 
@@ -335,8 +578,7 @@ export const MOCK_RECENT_RESULTS: QuizResult[] = [
 export const quizService = {
   // GET /quizzes
   getAll: async (params?: GetQuizSetsParams): Promise<GetQuizSetsResponse> => {
-    // TODO: uncomment when API ready
-    // const res = await axiosClient.get("/quizzes", { params });
+    // TODO: const res = await axiosClient.get("/quizzes", { params });
     // const raw = res.data.data;
     // return { ...raw, content: raw.content.map(mapQuizSet) };
     await new Promise((r) => setTimeout(r, 400));
@@ -345,23 +587,26 @@ export const quizService = {
       totalElements: MOCK_QUIZ_SETS.length,
       totalPages: 1,
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 20,
       hasNext: false,
       hasPrevious: false,
     };
   },
-  getQuestions: async (quizId: string): Promise<QuizQuestion[]> => {
-    // TODO: const res = await axiosClient.get(`/quizzes/${quizId}/questions`);
-    // return res.data.data;
-    await new Promise((r) => setTimeout(r, 400));
-    return MOCK_QUESTIONS[quizId] ?? MOCK_QUESTIONS["quiz-001"];
-  },
+
   // GET /quizzes/:id
-  getById: async (quizId: string): Promise<QuizSet> => {
+  getById: async (quizId: string): Promise<QuizSetV2> => {
     // TODO: const res = await axiosClient.get(`/quizzes/${quizId}`);
     // return mapQuizSet(res.data.data);
     await new Promise((r) => setTimeout(r, 300));
     return MOCK_QUIZ_SETS.find((q) => q.quizId === quizId) ?? MOCK_QUIZ_SETS[0];
+  },
+
+  // GET /quizzes/:id/questions
+  getQuestions: async (quizId: string): Promise<QuizQuestion[]> => {
+    // TODO: const res = await axiosClient.get(`/quizzes/${quizId}/questions`);
+    // return res.data.data;
+    await new Promise((r) => setTimeout(r, 400));
+    return MOCK_QUESTIONS[quizId] ?? MOCK_QUESTIONS["ls12-b1"] ?? [];
   },
 
   // POST /quizzes/:id/start
@@ -373,7 +618,7 @@ export const quizService = {
       sessionId: `session-${Date.now()}`,
       quizId,
       questions: [],
-      durationSeconds: 600,
+      durationSeconds: 900,
       startedAt: new Date().toISOString(),
     };
   },
@@ -387,8 +632,8 @@ export const quizService = {
     await new Promise((r) => setTimeout(r, 500));
     return {
       resultId: `res-${Date.now()}`,
-      score: 14,
-      totalQuestions: 15,
+      score: 0,
+      totalQuestions: 0,
       correctAnswers: [],
       wrongAnswers: [],
       durationSeconds: payload.durationSeconds,

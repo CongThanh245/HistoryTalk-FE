@@ -1,16 +1,17 @@
 "use client";
 
-// components/quiz/QuizProgressBar.tsx
-// Sticky progress bar hiển thị số câu đã trả lời + thời gian còn lại
+// components/quiz/QuizProgressBar.tsx — v2
+// Timer là optional — chỉ hiện đếm giờ khi useTimer = true
 
 import React, { useEffect, useState } from "react";
-import { Clock, ChevronLeft } from "lucide-react";
+import { Clock, ChevronLeft, TimerOff } from "lucide-react";
 
 interface QuizProgressBarProps {
   quizTitle: string;
   totalQuestions: number;
   answeredCount: number;
-  durationSeconds: number; // tổng thời gian
+  durationSeconds: number;
+  useTimer: boolean; // ← optional timer
   onTimeUp: () => void;
   onBack: () => void;
 }
@@ -20,24 +21,35 @@ export function QuizProgressBar({
   totalQuestions,
   answeredCount,
   durationSeconds,
+  useTimer,
   onTimeUp,
   onBack,
 }: QuizProgressBarProps) {
   const [secondsLeft, setSecondsLeft] = useState(durationSeconds);
+  const [elapsed, setElapsed] = useState(0); // khi không dùng timer, đếm elapsed
 
   useEffect(() => {
-    if (secondsLeft <= 0) {
-      onTimeUp();
-      return;
+    if (useTimer) {
+      if (secondsLeft <= 0) {
+        onTimeUp();
+        return;
+      }
+      const t = setInterval(() => setSecondsLeft((s) => s - 1), 1000);
+      return () => clearInterval(t);
+    } else {
+      const t = setInterval(() => setElapsed((s) => s + 1), 1000);
+      return () => clearInterval(t);
     }
-    const timer = setInterval(() => setSecondsLeft((s) => s - 1), 1000);
-    return () => clearInterval(timer);
-  }, [secondsLeft]); // eslint-disable-line
+  }, [secondsLeft, useTimer]); // eslint-disable-line
 
   const pct = Math.round((answeredCount / totalQuestions) * 100);
-  const minutes = Math.floor(secondsLeft / 60);
-  const seconds = secondsLeft % 60;
-  const isUrgent = secondsLeft < 60;
+  const isUrgent = useTimer && secondsLeft < 60;
+
+  function formatTime(s: number) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  }
 
   return (
     <div
@@ -49,9 +61,10 @@ export function QuizProgressBar({
       }}
     >
       <div className="flex items-center gap-3 px-4 h-14">
+        {/* Back — với padding trái vì có sidebar toggle button */}
         <button
           onClick={onBack}
-          className="p-1.5 rounded-lg transition-colors hover:bg-black/5 flex-shrink-0"
+          className="p-1.5 rounded-lg transition-colors hover:bg-black/5 ml-8"
           style={{ color: "var(--content-muted)" }}
         >
           <ChevronLeft size={18} />
@@ -69,26 +82,40 @@ export function QuizProgressBar({
           </p>
         </div>
 
-        {/* Timer */}
-        <div
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold flex-shrink-0 transition-colors"
-          style={
-            isUrgent
-              ? {
-                  background: "rgba(239,68,68,0.1)",
-                  color: "#ef4444",
-                  border: "1px solid rgba(239,68,68,0.2)",
-                }
-              : {
-                  background: "var(--card-light-bg)",
-                  color: "var(--content-heading)",
-                  border: "1px solid var(--card-light-border)",
-                }
-          }
-        >
-          <Clock size={13} className={isUrgent ? "animate-pulse" : ""} />
-          {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
-        </div>
+        {/* Timer / Elapsed */}
+        {useTimer ? (
+          <div
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold flex-shrink-0"
+            style={
+              isUrgent
+                ? {
+                    background: "rgba(239,68,68,0.1)",
+                    color: "#ef4444",
+                    border: "1px solid rgba(239,68,68,0.2)",
+                  }
+                : {
+                    background: "var(--card-light-bg)",
+                    color: "var(--content-heading)",
+                    border: "1px solid var(--card-light-border)",
+                  }
+            }
+          >
+            <Clock size={13} className={isUrgent ? "animate-pulse" : ""} />
+            {formatTime(secondsLeft)}
+          </div>
+        ) : (
+          <div
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs flex-shrink-0"
+            style={{
+              background: "var(--card-light-bg)",
+              color: "var(--content-muted)",
+              border: "1px solid var(--card-light-border)",
+            }}
+          >
+            <TimerOff size={12} />
+            {formatTime(elapsed)}
+          </div>
+        )}
       </div>
 
       {/* Progress bar */}

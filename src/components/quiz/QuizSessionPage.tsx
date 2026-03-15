@@ -1,7 +1,7 @@
 "use client";
 
-// components/quiz/QuizSessionPage.tsx
-// Trang làm bài — hiện tất cả câu, scroll xuống, click → reveal đúng/sai + explanation
+// components/quiz/QuizSessionPage.tsx — v2
+// Thêm prop useTimer
 
 import React, { useState, useCallback, useRef } from "react";
 import { CheckCircle2, Send } from "lucide-react";
@@ -14,7 +14,8 @@ interface QuizSessionPageProps {
   questions: QuizQuestion[];
   onSubmit: (answers: Record<string, number>, durationSeconds: number) => void;
   onBack: () => void;
-  startTime: number; // Date.now() khi bắt đầu
+  startTime: number;
+  useTimer: boolean; // ← thêm prop này
 }
 
 export function QuizSessionPage({
@@ -23,6 +24,7 @@ export function QuizSessionPage({
   onSubmit,
   onBack,
   startTime,
+  useTimer,
 }: QuizSessionPageProps) {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -33,12 +35,10 @@ export function QuizSessionPage({
   const handleAnswer = useCallback(
     (questionId: string, answerIndex: number) => {
       setAnswers((prev) => {
-        // Đã trả lời rồi thì không cho đổi
         if (prev[questionId] !== undefined) return prev;
-
         const next = { ...prev, [questionId]: answerIndex };
 
-        // Auto-scroll đến câu tiếp theo sau 600ms
+        // Auto-scroll câu tiếp theo
         const currentIdx = questions.findIndex(
           (q) => q.questionId === questionId,
         );
@@ -51,7 +51,6 @@ export function QuizSessionPage({
             });
           }, 600);
         }
-
         return next;
       });
     },
@@ -72,17 +71,16 @@ export function QuizSessionPage({
       className="flex flex-col h-full"
       style={{ background: "var(--bg-content)" }}
     >
-      {/* Sticky progress bar + timer */}
       <QuizProgressBar
         quizTitle={quiz.title}
         totalQuestions={questions.length}
         answeredCount={answeredCount}
         durationSeconds={quiz.durationSeconds}
+        useTimer={useTimer}
         onTimeUp={handleTimeUp}
         onBack={onBack}
       />
 
-      {/* Scrollable questions list */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
           {questions.map((q, idx) => (
@@ -101,18 +99,14 @@ export function QuizSessionPage({
             </div>
           ))}
 
-          {/* Submit section */}
+          {/* Submit */}
           <div
             className="rounded-2xl p-5 text-center"
             style={{
               background: allAnswered
                 ? "rgba(16,185,129,0.06)"
                 : "var(--card-light-bg)",
-              border: `1.5px solid ${
-                allAnswered
-                  ? "rgba(16,185,129,0.25)"
-                  : "var(--card-light-border)"
-              }`,
+              border: `1.5px solid ${allAnswered ? "rgba(16,185,129,0.25)" : "var(--card-light-border)"}`,
             }}
           >
             {allAnswered ? (

@@ -1,51 +1,66 @@
-// components/quiz/QuizPageClient.tsx
-// Client component tổng hợp toàn bộ trang Quiz
-
 "use client";
 
-import React, { useState, useMemo } from "react";
-
+// components/quiz/QuizPageClient.tsx — v2
+// Bỏ filter difficulty, thêm filter theo lớp, card mới
 import {
-  useQuizSets,
-  useMyQuizResults,
-  // useStartQuiz,
-} from "@/features/quiz/hooks";
-import type { QuizEra, QuizDifficulty } from "@/services/quiz.service";
-import { QuizStatsBar } from "./quiz-stats-bar";
-import { QuizFilterBar } from "./quiz-filterbar";
-import { QuizGrid } from "./quiz-grid";
-import { QuizRecentResults } from "./quiz-recent-result";
+  MOCK_QUIZ_SETS,
+  type QuizSetV2,
+  type QuizGrade,
+} from "@/services/quiz.service";
+import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useMyQuizResults } from "@/features/quiz/hooks";
+
+import { QuizStatsBar } from "./quiz-stats-bar";
+import { QuizRecentResults } from "./quiz-recent-result";
+
+import { Search, BookOpen } from "lucide-react";
+import { QuizCard } from "./quiz-card";
+
+type GradeFilter = "ALL" | QuizGrade;
+
+const GRADE_FILTERS: { label: string; value: GradeFilter }[] = [
+  { label: "Tất cả", value: "ALL" },
+  { label: "Lịch sử 12", value: 12 },
+  { label: "Lịch sử 11", value: 11 },
+  { label: "Lịch sử 10", value: 10 },
+];
+
+const GRADE_COLORS: Record<number, string> = {
+  10: "#3b82f6",
+  11: "#8b5cf6",
+  12: "#f97316",
+};
 
 export function QuizPageClient() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
-  const [selectedEra, setSelectedEra] = useState<QuizEra>("ALL");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<
-    QuizDifficulty | "ALL"
-  >("ALL");
+  const [selectedGrade, setSelectedGrade] = useState<GradeFilter>("ALL");
 
-  // Fetch data
-  const { data: quizData, isLoading: quizLoading } = useQuizSets();
   const { data: results = [], isLoading: resultsLoading } = useMyQuizResults();
-  // const startQuizMutation = useStartQuiz();
 
-  // Filter locally (thay bằng server-side filter khi API sẵn sàng)
   const filteredQuizzes = useMemo(() => {
-    const all = quizData?.content ?? [];
-    return all.filter((q) => {
+    return MOCK_QUIZ_SETS.filter((q) => {
       const matchSearch =
         !search ||
         q.title.toLowerCase().includes(search.toLowerCase()) ||
-        q.description.toLowerCase().includes(search.toLowerCase());
-      const matchEra = selectedEra === "ALL" || q.era === selectedEra;
-      const matchDifficulty =
-        selectedDifficulty === "ALL" ||
-        q.difficulty === selectedDifficulty.toLowerCase();
-      return matchSearch && matchEra && matchDifficulty;
+        q.chapterTitle.toLowerCase().includes(search.toLowerCase());
+      const matchGrade = selectedGrade === "ALL" || q.grade === selectedGrade;
+      return matchSearch && matchGrade;
     });
-  }, [quizData, search, selectedEra, selectedDifficulty]);
+  }, [search, selectedGrade]);
 
-  // Stats
+  // Group theo lớp khi filter "Tất cả"
+  const groupedByGrade = useMemo(() => {
+    if (selectedGrade !== "ALL") return null;
+    const groups: Record<number, QuizSetV2[]> = {};
+    filteredQuizzes.forEach((q) => {
+      if (!groups[q.grade]) groups[q.grade] = [];
+      groups[q.grade].push(q);
+    });
+    return groups;
+  }, [filteredQuizzes, selectedGrade]);
+
   const avgScore = useMemo(() => {
     if (!results.length) return 0;
     const total = results.reduce(
@@ -54,9 +69,8 @@ export function QuizPageClient() {
     );
     return Math.round(total / results.length);
   }, [results]);
-  const router = useRouter(); // ← thêm dòng này
 
-  const handleStartQuiz = async (quizId: string) => {
+  const handleStartQuiz = (quizId: string) => {
     router.push(`/quiz/${quizId}`);
   };
 
@@ -74,48 +88,133 @@ export function QuizPageClient() {
           Trắc nghiệm lịch sử
         </h1>
         <p className="text-sm" style={{ color: "var(--content-muted)" }}>
-          Kiểm tra và nâng cao kiến thức lịch sử Việt Nam qua các bộ câu hỏi
+          Ôn tập theo từng bài — Lịch sử 10, 11, 12
         </p>
       </div>
 
       {/* Stats */}
       <QuizStatsBar
-        totalQuizzes={quizData?.totalElements ?? 0}
+        totalQuizzes={MOCK_QUIZ_SETS.length}
         completedCount={results.length}
         averageScore={avgScore}
         streakDays={7}
       />
 
-      {/* Main grid layout */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left: quiz list */}
         <div className="flex-1 min-w-0">
-          <QuizFilterBar
-            search={search}
-            onSearchChange={setSearch}
-            selectedEra={selectedEra}
-            onEraChange={setSelectedEra}
-            selectedDifficulty={selectedDifficulty}
-            onDifficultyChange={setSelectedDifficulty}
-          />
+          {/* Search + grade filter */}
+          <div className="flex flex-col gap-3 mb-5">
+            <div
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl"
+              style={{
+                background: "var(--card-light-bg)",
+                border: "1px solid var(--card-light-border)",
+              }}
+            >
+              <Search size={15} style={{ color: "var(--content-muted)" }} />
+              <input
+                type="text"
+                placeholder="Tìm kiếm bài học..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1 bg-transparent text-sm outline-none"
+                style={{ color: "var(--content-heading)" }}
+              />
+            </div>
 
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm" style={{ color: "var(--content-muted)" }}>
-              {quizLoading
-                ? "Đang tải..."
-                : `${filteredQuizzes.length} bộ câu hỏi`}
-            </p>
+            <div className="flex gap-2">
+              {GRADE_FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => setSelectedGrade(f.value)}
+                  className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
+                  style={
+                    selectedGrade === f.value
+                      ? {
+                          background:
+                            f.value === "ALL"
+                              ? "var(--abyssal-blue)"
+                              : GRADE_COLORS[f.value as number],
+                          color: "white",
+                        }
+                      : {
+                          background: "var(--card-light-bg)",
+                          color: "var(--content-muted)",
+                          border: "1px solid var(--card-light-border)",
+                        }
+                  }
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <QuizGrid
-            quizzes={filteredQuizzes}
-            isLoading={quizLoading}
-            onStart={handleStartQuiz}
-          />
+          {/* Count */}
+          <p className="text-sm mb-4" style={{ color: "var(--content-muted)" }}>
+            {filteredQuizzes.length} đề thi
+          </p>
+
+          {/* Quiz grid — grouped or flat */}
+          {groupedByGrade ? (
+            <div className="space-y-8">
+              {([12, 11, 10] as QuizGrade[]).map((grade) => {
+                const items = groupedByGrade[grade];
+                if (!items?.length) return null;
+                return (
+                  <div key={grade}>
+                    {/* Section header */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div
+                        className="w-1 h-6 rounded-full"
+                        style={{ background: GRADE_COLORS[grade] }}
+                      />
+                      <h2
+                        className="text-base font-bold"
+                        style={{ color: "var(--content-heading)" }}
+                      >
+                        Lịch sử {grade}
+                      </h2>
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full font-medium"
+                        style={{
+                          background: `${GRADE_COLORS[grade]}15`,
+                          color: GRADE_COLORS[grade],
+                        }}
+                      >
+                        {items.length} bài
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {items.map((quiz) => (
+                        <QuizCard
+                          key={quiz.quizId}
+                          quiz={quiz}
+                          onStart={handleStartQuiz}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {filteredQuizzes.map((quiz) => (
+                <QuizCard
+                  key={quiz.quizId}
+                  quiz={quiz}
+                  onStart={handleStartQuiz}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Right: recent results sidebar */}
-        <div className="w-full lg:w-80 flex-shrink-0">
+        {/* Right: recent results */}
+        <div className="w-full lg:w-72 flex-shrink-0">
           <QuizRecentResults results={results} isLoading={resultsLoading} />
         </div>
       </div>
