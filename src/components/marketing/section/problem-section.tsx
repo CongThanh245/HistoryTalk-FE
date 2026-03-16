@@ -65,7 +65,7 @@ export function ProblemSection() {
 
         ScrollTrigger.create({
           trigger: sectionRef.current,
-          start: "top 80%",
+          start: "50% 80%",
           once: true,
           onEnter: () => tl.play(),
         });
