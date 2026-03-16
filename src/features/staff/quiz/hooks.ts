@@ -5,6 +5,8 @@ import {
   type GetStaffQuizzesParams,
   type CreateQuizPayload,
   type CreateQuestionPayload,
+  type UpdateQuizPayload,
+  type UpdateQuestionPayload,
 } from "@/services/staff.quiz.service";
 
 // GET /staff/quizzes — danh sách quiz của staff
@@ -12,7 +14,16 @@ export function useStaffQuizzes(params?: GetStaffQuizzesParams) {
   return useQuery({
     queryKey: queryKeys.staffQuizzes.list(params),
     queryFn: () => staffQuizService.getAll(params),
-    placeholderData: (prev) => prev, // giữ data cũ khi filter đang load
+    placeholderData: (prev) => prev,
+  });
+}
+
+// GET /staff/quizzes/{quizId} — chi tiết quiz
+export function useStaffQuizDetail(quizId: string) {
+  return useQuery({
+    queryKey: queryKeys.staffQuizzes.detail(quizId),
+    queryFn: () => staffQuizService.getById(quizId),
+    enabled: !!quizId,
   });
 }
 
@@ -22,20 +33,81 @@ export function useCreateStaffQuiz() {
   return useMutation({
     mutationFn: (payload: CreateQuizPayload) => staffQuizService.create(payload),
     onSuccess: () => {
-      // Invalidate danh sách sau khi tạo thành công
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
     },
   });
 }
 
-// POST /staff/quizzes/{quizId}/questions — thêm câu hỏi vào quiz
+// PUT /staff/quizzes/{quizId} — cập nhật thông tin quiz
+export function useUpdateStaffQuiz() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ quizId, payload }: { quizId: string; payload: UpdateQuizPayload }) =>
+      staffQuizService.updateQuiz(quizId, payload),
+    onSuccess: (updated) => {
+      // Cập nhật detail cache luôn, rồi invalidate list
+      queryClient.setQueryData(
+        queryKeys.staffQuizzes.detail(updated.quizId),
+        updated,
+      );
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+    },
+  });
+}
+
+// POST /staff/quizzes/{quizId}/questions — thêm câu hỏi
 export function useAddQuizQuestion(quizId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateQuestionPayload) =>
       staffQuizService.addQuestion(quizId, payload),
     onSuccess: () => {
-      // Invalidate detail + list để refresh số câu hỏi
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.detail(quizId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+    },
+  });
+}
+
+// PUT /staff/quizzes/{quizId}/questions/{questionId} — sửa câu hỏi
+export function useUpdateQuizQuestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      quizId,
+      questionId,
+      payload,
+    }: {
+      quizId: string;
+      questionId: string;
+      payload: UpdateQuestionPayload;
+    }) => staffQuizService.updateQuestion(quizId, questionId, payload),
+    onSuccess: (_result, { quizId }) => {
+      // API chỉ trả string, invalidate detail để refetch câu hỏi mới nhất
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.detail(quizId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+    },
+  });
+}
+
+// DELETE /staff/quizzes/{quizId} — xóa bộ quiz
+export function useDeleteStaffQuiz() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (quizId: string) => staffQuizService.deleteQuiz(quizId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+    },
+  });
+}
+
+// DELETE /staff/quizzes/{quizId}/questions/{questionId} — xóa câu hỏi
+export function useDeleteQuizQuestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ quizId, questionId }: { quizId: string; questionId: string }) =>
+      staffQuizService.deleteQuestion(quizId, questionId),
+    onSuccess: (_result, { quizId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.detail(quizId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
     },
   });

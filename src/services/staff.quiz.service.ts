@@ -80,6 +80,27 @@ export interface CreateQuizPayload {
   questions: CreateQuestionPayload[];
 }
 
+// Partial update — tất cả field đều optional
+export interface UpdateQuizPayload {
+  title?: string;
+  description?: string;
+  contextId?: string;
+  grade?: number;
+  chapterNumber?: number;
+  chapterTitle?: string;
+  era?: StaffQuizEra;
+  durationSeconds?: number;
+}
+
+export interface UpdateQuestionPayload {
+  content?: string;
+  options?: string[];
+  correctAnswer?: number;
+  orderIndex?: number;
+  explanation?: string;
+}
+
+
 // ── Map functions ──────────────────────────────────────────
 
 export function mapStaffQuestion(raw: any): StaffQuizQuestion {
@@ -146,4 +167,47 @@ export const staffQuizService = {
     );
     return mapStaffQuestion(res.data.data);
   },
+
+  // GET /staff/quizzes/{quizId} — chi tiết quiz kèm toàn bộ câu hỏi
+  getById: async (quizId: string): Promise<StaffQuizSet> => {
+    const res = await axiosClient.get(`/staff/quizzes/${quizId}`);
+    return mapStaffQuizSet(res.data.data);
+  },
+
+  // PUT /staff/quizzes/{quizId} — cập nhật thông tin quiz
+  updateQuiz: async (
+    quizId: string,
+    payload: UpdateQuizPayload,
+  ): Promise<StaffQuizSet> => {
+    const res = await axiosClient.put(`/staff/quizzes/${quizId}`, payload);
+    return mapStaffQuizSet(res.data.data);
+  },
+
+  // PUT /staff/quizzes/{quizId}/questions/{questionId} — sửa câu hỏi
+  updateQuestion: async (
+    quizId: string,
+    questionId: string,
+    payload: UpdateQuestionPayload,
+  ): Promise<void> => {
+    await axiosClient.put(
+      `/staff/quizzes/${quizId}/questions/${questionId}`,
+      payload,
+    );
+  },
+
+  // DELETE /staff/quizzes/{quizId} — xóa bộ quiz
+  deleteQuiz: async (quizId: string): Promise<void> => {
+    await axiosClient.delete(`/staff/quizzes/${quizId}`);
+  },
+
+  // DELETE /staff/quizzes/{quizId}/questions/{questionId} — xóa câu hỏi
+  deleteQuestion: async (
+    quizId: string,
+    questionId: string,
+  ): Promise<void> => {
+    await axiosClient.delete(
+      `/staff/quizzes/${quizId}/questions/${questionId}`,
+    );
+  },
 };
+

@@ -23,7 +23,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-import { useStaffQuizzes, useCreateStaffQuiz } from "@/features/staff/quiz/hooks";
+import { useStaffQuizzes, useCreateStaffQuiz, useUpdateStaffQuiz, useDeleteStaffQuiz } from "@/features/staff/quiz/hooks";
 import { useEvents } from "@/features/events/hooks";
 import type { StaffQuizSet, StaffQuizEra } from "@/services/staff.quiz.service";
 
@@ -77,27 +77,29 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export default function StaffQuizzesPage() {
   // ── Filter state ──────────────────────────────────────────
-  const [search, setSearch]     = React.useState("");
+  const [search, setSearch] = React.useState("");
   const [filterGrade, setFilterGrade] = React.useState<"" | "10" | "11" | "12">("");
-  const [page]                  = React.useState(0);
+  const [page] = React.useState(0);
 
   // ── View / editor state ───────────────────────────────────
-  const [view, setView]         = React.useState<"list" | "editor">("list");
+  const [view, setView] = React.useState<"list" | "editor">("list");
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
-  const [draft, setDraft]       = React.useState<QuizDraft>(emptyDraft());
+  const [draft, setDraft] = React.useState<QuizDraft>(emptyDraft());
   const [deleteTarget, setDeleteTarget] = React.useState<StaffQuizSet | null>(null);
   const [contextSearch, setContextSearch] = React.useState("");
 
   // ── API hooks ─────────────────────────────────────────────
   const params = React.useMemo(() => ({
-    ...(search.trim()  && { search: search.trim() }),
-    ...(filterGrade    && { grade: Number(filterGrade) }),
+    ...(search.trim() && { search: search.trim() }),
+    ...(filterGrade && { grade: Number(filterGrade) }),
     page,
     size: 20,
   }), [search, filterGrade, page]);
 
   const { data, isLoading, isError } = useStaffQuizzes(params);
   const createQuiz = useCreateStaffQuiz();
+  const updateQuiz = useUpdateStaffQuiz();
+  const deleteQuiz = useDeleteStaffQuiz();
   // Load toàn bộ contexts để chọn trong dropdown (chỉ cần khi mở editor)
   const { data: contextsData } = useEvents({ page: 1, limit: 200 });
 
@@ -141,7 +143,7 @@ export default function StaffQuizzesPage() {
   };
 
   const handleSave = () => {
-    const title        = draft.title.trim();
+    const title = draft.title.trim();
     const chapterTitle = draft.chapterTitle.trim();
     if (!title || !chapterTitle) return;
 
@@ -175,19 +177,47 @@ export default function StaffQuizzesPage() {
         },
       );
     } else {
-      // Edit — hiện tại API chưa có PUT /staff/quizzes/:id nên thông báo thành công UI-only
-      // TODO: Thêm mutation updateQuiz khi backend cung cấp endpoint
-      toast.success(`Đã cập nhật quiz "${title}".`);
-      setView("list");
+      // Edit — gọi PUT /staff/quizzes/{quizId}
+      if (!draft.quizId) return;
+      updateQuiz.mutate(
+        {
+          quizId: draft.quizId,
+          payload: {
+            title,
+            description: draft.description.trim(),
+            contextId: draft.contextId,
+            grade: draft.grade ?? 0,
+            chapterNumber: draft.chapterNumber,
+            chapterTitle,
+            era: draft.era,
+            durationSeconds: draft.durationSeconds,
+          },
+        },
+        {
+          onSuccess: () => {
+            toast.success(`Đã cập nhật quiz "${title}".`);
+            setView("list");
+          },
+          onError: () => {
+            toast.error("Ấp nhật quiz thất bại. Vui lòng thử lại.");
+          },
+        },
+      );
     }
   };
 
-  // ── Delete — TODO: thêm DELETE mutation khi BE có endpoint ────
+  // DELETE /staff/quizzes/{quizId}
   const handleDelete = () => {
     if (!deleteTarget) return;
-    // TODO: gọi deleteQuiz.mutate(deleteTarget.quizId)
-    toast.success(`Đã xóa quiz "${deleteTarget.title}".`);
-    setDeleteTarget(null);
+    deleteQuiz.mutate(deleteTarget.quizId, {
+      onSuccess: () => {
+        toast.success(`Đã xóa quiz "${deleteTarget.title}".`);
+        setDeleteTarget(null);
+      },
+      onError: () => {
+        toast.error("Xóa quiz thất bại. Vui lòng thử lại.");
+      },
+    });
   };
 
   // ── Columns ───────────────────────────────────────────────
@@ -234,11 +264,7 @@ export default function StaffQuizzesPage() {
       accessorKey: "updatedDate",
       header: "Cập nhật",
       cell: ({ row: r }) => (
-        <span className="text-xs" style={{ color: "var(--content-muted)" }}>
-          {r.original.updatedDate
-            ? new Date(r.original.updatedDate).toLocaleDateString("vi-VN")
-            : "—"}
-        </span>
+        r.original.updatedDate ? <FormattedDate date={r.original.updatedDate} /> : "—"
       ),
     },
     {
@@ -287,7 +313,10 @@ export default function StaffQuizzesPage() {
 
   // ═══ EDITOR VIEW ══════════════════════════════════════════════════════════
   if (view === "editor") {
-    const canSave = !!(draft.title.trim() && draft.chapterTitle.trim()) && !createQuiz.isPending;
+    const canSave =
+      !!(draft.title.trim() && draft.chapterTitle.trim()) &&
+      !createQuiz.isPending &&
+      !updateQuiz.isPending;
     return (
       <StaffShell
         title={editorMode === "create" ? "Tạo Quiz mới" : "Chỉnh sửa Quiz"}
@@ -338,10 +367,10 @@ export default function StaffQuizzesPage() {
                 const q = contextSearch.trim().toLowerCase();
                 const filtered = q
                   ? allContexts.filter(
-                      (c) =>
-                        c.title.toLowerCase().includes(q) ||
-                        c.id.toLowerCase().includes(q),
-                    )
+                    (c) =>
+                      c.title.toLowerCase().includes(q) ||
+                      c.id.toLowerCase().includes(q),
+                  )
                   : allContexts;
                 const selected = allContexts.find((c) => c.id === draft.contextId);
                 return (
@@ -482,7 +511,7 @@ export default function StaffQuizzesPage() {
                 onClick={handleSave}
                 style={{ background: "linear-gradient(135deg, var(--burning-flame) 0%, var(--accent-gold) 100%)", color: "#fff" }}
               >
-                {createQuiz.isPending
+                {createQuiz.isPending || updateQuiz.isPending
                   ? "Đang lưu..."
                   : editorMode === "create" ? "Tạo Quiz" : "Lưu thay đổi"}
               </Button>
@@ -523,9 +552,9 @@ export default function StaffQuizzesPage() {
   }
 
   // ═══ LIST VIEW ═══════════════════════════════════════════════════════════
-  const totalItems   = data?.totalElements ?? 0;
-  const totalPlays   = items.reduce((a, x) => a + x.playCount, 0);
-  const totalQues    = items.reduce((a, x) => a + x.questions.length, 0);
+  const totalItems = data?.totalElements ?? 0;
+  const totalPlays = items.reduce((a, x) => a + x.playCount, 0);
+  const totalQues = items.reduce((a, x) => a + x.questions.length, 0);
 
   return (
     <StaffShell
@@ -541,9 +570,9 @@ export default function StaffQuizzesPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {([
-            { label: "Tổng bộ quiz",   value: totalItems,                        icon: ClipboardTextIcon, color: "var(--burning-flame)" },
-            { label: "Tổng câu hỏi",  value: totalQues,                          icon: ClipboardTextIcon, color: "var(--accent-teal)"  },
-            { label: "Tổng lượt chơi", value: totalPlays.toLocaleString(),        icon: GameControllerIcon, color: "var(--accent-blue)"  },
+            { label: "Tổng bộ quiz", value: totalItems, icon: ClipboardTextIcon, color: "var(--burning-flame)" },
+            { label: "Tổng câu hỏi", value: totalQues, icon: ClipboardTextIcon, color: "var(--accent-teal)" },
+            { label: "Tổng lượt chơi", value: totalPlays.toLocaleString(), icon: GameControllerIcon, color: "var(--accent-blue)" },
           ] as const).map((s) => {
             const Icon = s.icon;
             return (
@@ -606,5 +635,22 @@ export default function StaffQuizzesPage() {
         onConfirm={handleDelete}
       />
     </StaffShell>
+  );
+}
+
+
+function FormattedDate({ date }: { date: string }) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return <span className="text-xs">—</span>;
+
+  return (
+    <span className="text-xs" style={{ color: "var(--content-muted)" }}>
+      {new Date(date).toLocaleDateString("vi-VN")}
+    </span>
   );
 }
