@@ -1,7 +1,7 @@
 "use client";
 
 // components/quiz/QuizResultPage.tsx
-// Trang kết quả sau khi nộp bài
+// Dùng submitResult từ API thay vì tính local
 
 import React from "react";
 import { useRouter } from "next/navigation";
@@ -12,18 +12,11 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  Target,
   TrendingUp,
 } from "lucide-react";
-import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
+import type { QuizSetV2, QuizQuestion } from "@/services/quiz.service";
 
-interface QuizResultPageProps {
-  quiz: QuizSet;
-  questions: QuizQuestion[];
-  answers: Record<string, number>; // questionId → selectedIndex
-  durationSeconds: number;
-  onRetry: () => void;
-}
+const OPTION_LABELS = ["A", "B", "C", "D"];
 
 function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -31,34 +24,61 @@ function formatDuration(seconds: number) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-const OPTION_LABELS = ["A", "B", "C", "D"];
+interface SubmitResult {
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  correctAnswers: number[]; // index của câu đúng
+  wrongAnswers: number[]; // index của câu sai
+}
+
+interface QuizResultPageProps {
+  quiz: QuizSetV2;
+  questions: QuizQuestion[];
+  answers: Record<string, number>; // questionId → selectedIndex
+  durationSeconds: number;
+  submitResult: SubmitResult | null;
+  onRetry: () => void;
+}
 
 export function QuizResultPage({
   quiz,
   questions,
   answers,
   durationSeconds,
+  submitResult,
   onRetry,
 }: QuizResultPageProps) {
   const router = useRouter();
 
-  const correctCount = questions.filter(
-    (q) => answers[q.questionId] === q.correctAnswer,
-  ).length;
-  const totalCount = questions.length;
-  const score = Math.round((correctCount / totalCount) * 100);
-  const wrongCount = totalCount - correctCount;
-  const unanswered = totalCount - Object.keys(answers).length;
+  // Dùng data từ API nếu có, fallback tính local
+  const score =
+    submitResult?.score ??
+    Object.keys(answers).filter((qId) => {
+      const q = questions.find((q) => q.questionId === qId);
+      return q && answers[qId] === q.correctAnswer;
+    }).length;
 
-  // Score tier
+  const totalQuestions = submitResult?.totalQuestions ?? questions.length;
+  const percentage =
+    submitResult?.percentage ?? Math.round((score / totalQuestions) * 100);
+
   const tier =
-    score >= 90
+    percentage >= 90
       ? { label: "Xuất sắc", color: "#f59e0b", emoji: "🏆" }
-      : score >= 70
+      : percentage >= 70
         ? { label: "Khá giỏi", color: "#10b981", emoji: "🌟" }
-        : score >= 50
+        : percentage >= 50
           ? { label: "Trung bình", color: "#3b82f6", emoji: "📚" }
           : { label: "Cần cố gắng hơn", color: "#ef4444", emoji: "💪" };
+
+  // Xác định câu đúng/sai từ submitResult (API) hoặc tính local
+  function isCorrect(q: QuizQuestion, idx: number): boolean {
+    if (submitResult) {
+      return submitResult.correctAnswers.includes(idx);
+    }
+    return answers[q.questionId] === q.correctAnswer;
+  }
 
   return (
     <div className="min-h-full" style={{ background: "var(--bg-content)" }}>
@@ -70,25 +90,21 @@ export function QuizResultPage({
             "linear-gradient(135deg, var(--abyssal-blue) 0%, #2c3b4d 100%)",
         }}
       >
-        {/* Background decoration */}
         <div
           className="absolute inset-0 opacity-10"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 20% 50%, rgba(201,162,77,0.5) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.3) 0%, transparent 40%)",
+              "radial-gradient(circle at 20% 50%, rgba(201,162,77,0.5) 0%, transparent 50%)",
           }}
         />
-
         <div className="relative z-10">
           <div className="text-5xl mb-3">{tier.emoji}</div>
           <p
             className="text-sm font-medium mb-2"
             style={{ color: "rgba(255,255,255,0.6)" }}
           >
-            {quiz.title}
+            {quiz.chapterTitle}
           </p>
-
-          {/* Big score */}
           <div className="mb-2">
             <span
               className="text-7xl font-black"
@@ -97,7 +113,7 @@ export function QuizResultPage({
                 textShadow: `0 0 40px ${tier.color}60`,
               }}
             >
-              {score}
+              {percentage}
             </span>
             <span
               className="text-3xl font-bold"
@@ -106,7 +122,6 @@ export function QuizResultPage({
               %
             </span>
           </div>
-
           <div
             className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold"
             style={{
@@ -119,18 +134,17 @@ export function QuizResultPage({
             {tier.label}
           </div>
 
-          {/* Quick stats */}
           <div className="flex justify-center gap-6 mt-6">
             {[
               {
                 label: "Đúng",
-                value: correctCount,
+                value: score,
                 color: "#10b981",
                 icon: <CheckCircle2 size={14} />,
               },
               {
                 label: "Sai",
-                value: wrongCount,
+                value: totalQuestions - score,
                 color: "#ef4444",
                 icon: <XCircle size={14} />,
               },
@@ -158,52 +172,7 @@ export function QuizResultPage({
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-2xl mx-auto px-5 py-6 space-y-5">
-        {/* Performance bar */}
-        <div
-          className="p-4 rounded-2xl"
-          style={{
-            background: "var(--card-light-bg)",
-            border: "1px solid var(--card-light-border)",
-          }}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Target size={15} style={{ color: "var(--accent-gold)" }} />
-              <span
-                className="text-sm font-semibold"
-                style={{ color: "var(--content-heading)" }}
-              >
-                Kết quả tổng quan
-              </span>
-            </div>
-            <span className="text-sm font-bold" style={{ color: tier.color }}>
-              {correctCount}/{totalCount}
-            </span>
-          </div>
-          <div
-            className="h-3 rounded-full overflow-hidden"
-            style={{ background: "var(--bg-surface)" }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-1000"
-              style={{
-                width: `${score}%`,
-                background: `linear-gradient(90deg, ${tier.color}, ${tier.color}cc)`,
-              }}
-            />
-          </div>
-          {unanswered > 0 && (
-            <p
-              className="text-xs mt-2"
-              style={{ color: "var(--content-muted)" }}
-            >
-              ⚠️ {unanswered} câu chưa được trả lời
-            </p>
-          )}
-        </div>
-
         {/* Review answers */}
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -219,8 +188,7 @@ export function QuizResultPage({
           <div className="space-y-3">
             {questions.map((q, idx) => {
               const selected = answers[q.questionId];
-              const correct = q.correctAnswer;
-              const isRight = selected === correct;
+              const correct = isCorrect(q, idx);
               const notAnswered = selected === undefined;
 
               return (
@@ -229,7 +197,7 @@ export function QuizResultPage({
                   className="p-4 rounded-xl"
                   style={{
                     background: "var(--card-light-bg)",
-                    border: `1.5px solid ${notAnswered ? "var(--card-light-border)" : isRight ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.2)"}`,
+                    border: `1.5px solid ${notAnswered ? "var(--card-light-border)" : correct ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.2)"}`,
                   }}
                 >
                   <div className="flex items-start gap-3 mb-3">
@@ -241,7 +209,7 @@ export function QuizResultPage({
                               background: "var(--bg-surface)",
                               color: "var(--content-muted)",
                             }
-                          : isRight
+                          : correct
                             ? {
                                 background: "rgba(16,185,129,0.15)",
                                 color: "#10b981",
@@ -260,19 +228,20 @@ export function QuizResultPage({
                     >
                       {q.content}
                     </p>
-                    {notAnswered ? null : isRight ? (
-                      <CheckCircle2
-                        size={15}
-                        color="#10b981"
-                        className="flex-shrink-0 mt-0.5"
-                      />
-                    ) : (
-                      <XCircle
-                        size={15}
-                        color="#ef4444"
-                        className="flex-shrink-0 mt-0.5"
-                      />
-                    )}
+                    {!notAnswered &&
+                      (correct ? (
+                        <CheckCircle2
+                          size={15}
+                          color="#10b981"
+                          className="flex-shrink-0 mt-0.5"
+                        />
+                      ) : (
+                        <XCircle
+                          size={15}
+                          color="#ef4444"
+                          className="flex-shrink-0 mt-0.5"
+                        />
+                      ))}
                   </div>
 
                   <div className="grid grid-cols-2 gap-1.5 mb-2">
@@ -282,32 +251,33 @@ export function QuizResultPage({
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs"
                         style={{
                           background:
-                            i === correct
+                            i === q.correctAnswer
                               ? "rgba(16,185,129,0.1)"
-                              : i === selected && !isRight
+                              : i === selected && !correct
                                 ? "rgba(239,68,68,0.08)"
                                 : "transparent",
                           color:
-                            i === correct
+                            i === q.correctAnswer
                               ? "#065f46"
-                              : i === selected && !isRight
+                              : i === selected && !correct
                                 ? "#7f1d1d"
                                 : "var(--content-muted)",
                           fontWeight:
-                            i === correct || i === selected ? 600 : 400,
+                            i === q.correctAnswer || i === selected ? 600 : 400,
                         }}
                       >
                         <span
                           className="w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold"
                           style={{
                             background:
-                              i === correct
+                              i === q.correctAnswer
                                 ? "#10b981"
-                                : i === selected && !isRight
+                                : i === selected && !correct
                                   ? "#ef4444"
                                   : "var(--bg-surface)",
                             color:
-                              i === correct || (i === selected && !isRight)
+                              i === q.correctAnswer ||
+                              (i === selected && !correct)
                                 ? "white"
                                 : "var(--content-muted)",
                           }}

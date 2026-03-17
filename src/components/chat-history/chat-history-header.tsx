@@ -1,9 +1,6 @@
-// components/chat-history/chat-history-header.tsx
-// ✅ Không cần "use client" — pure UI, nhận props tĩnh
 
 import { CalendarIcon } from "@phosphor-icons/react/dist/ssr";
-// ⚠️ Import từ /dist/ssr để dùng trong Server Component
-// Nếu Phosphor chưa support SSR, wrap trong một client wrapper nhỏ
+
 
 interface ChatHistoryHeaderProps {
   totalSessions: number;

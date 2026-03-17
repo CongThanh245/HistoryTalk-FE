@@ -8,7 +8,6 @@ import { Search, BookOpen } from "lucide-react";
 import { QuizSetV2 } from "@/services/quiz.service";
 import { QuizCard } from "./quiz-card";
 
-
 type GradeFilter = "ALL" | 10 | 11 | 12;
 
 interface QuizSidebarProps {
@@ -29,13 +28,14 @@ export function QuizSidebar({
     const matchSearch =
       !search ||
       q.title.toLowerCase().includes(search.toLowerCase()) ||
-      q.chapterTitle.toLowerCase().includes(search.toLowerCase());
+      q.chapterTitle?.toLowerCase().includes(search.toLowerCase());
     const matchGrade = gradeFilter === "ALL" || q.grade === gradeFilter;
     return matchSearch && matchGrade;
   });
 
   // Group by grade
   const grouped = filtered.reduce<Record<number, QuizSetV2[]>>((acc, q) => {
+    if (!q.grade) return acc; // ← skip
     if (!acc[q.grade]) acc[q.grade] = [];
     acc[q.grade].push(q);
     return acc;

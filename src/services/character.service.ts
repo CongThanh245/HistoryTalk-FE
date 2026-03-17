@@ -60,6 +60,7 @@ function mapCharacter(raw: any): Character {
     lifespan: raw.lifespan,
     side: raw.side,
     contextId: raw.contextId,
+    role: raw.role,
     era: mapEraLabel(raw.era),
   };
 }
@@ -75,21 +76,16 @@ export const characterService = {
 
   getByContext: async (contextId: string): Promise<Character[]> => {
     const res = await axiosClient.get(`/characters/context/${contextId}`);
-    return res.data.data.map(
-      (raw: any): Character => ({
-        id: raw.characterId,
-        name: raw.name,
-        title: raw.title,
-        background: raw.background,
-        description: raw.background,
-        imageUrl: raw.image,
-        personality: raw.personality,
-        lifespan: raw.lifespan,
-        side: raw.side,
-        era: raw.era,
-        contextId: raw.context?.contextId,
-      }),
-    );
+    return res.data.data.map((raw: any): Character => {
+      // Normalize raw để mapCharacter có thể xử lý đúng
+      const normalized = {
+        ...raw,
+        characterId: raw.characterId ?? raw.id,
+        image: raw.image ?? raw.imageUrl,
+        contextId: raw.context?.contextId ?? raw.contextId,
+      };
+      return mapCharacter(normalized);
+    });
   },
 
   create: async (data: CreateCharacterRequest): Promise<Character> => {

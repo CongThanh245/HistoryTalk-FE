@@ -159,15 +159,25 @@ export function ChatMain({
         }}
       >
         <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
           style={{
-            background:
-              "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+            background: "var(--bg-elevated)", // Có thể giữ hoặc bỏ gradient cũ
           }}
         >
-          <ScrollIcon className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
+          {character.imageUrl ? (
+            <img
+              src={character.imageUrl}
+              alt={character.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            /* Fallback nếu không có ảnh thì hiện lại Icon hoặc tên viết tắt */
+            <ScrollIcon
+              className="w-4 h-4"
+              style={{ color: "var(--bg-deep)" }}
+            />
+          )}
         </div>
-
         {/* Character info */}
         <div className="flex-1">
           <h2

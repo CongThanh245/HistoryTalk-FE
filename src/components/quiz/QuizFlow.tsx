@@ -1,21 +1,24 @@
 "use client";
 
-// components/quiz/QuizFlow.tsx — v2
-// Thêm: sidebar trái danh sách quiz, timer optional
-
+// components/quiz/QuizFlow.tsx
+// Dùng API thật: POST /quizzes/:id/start để lấy questions
+import {
+  type QuizSetV2,
+  type QuizQuestion,
+  type SubmitQuizPayload,
+} from "@/services/quiz.service";
 import React, { useState, useCallback } from "react";
 import { Loader2, PanelLeftOpen, PanelLeftClose } from "lucide-react";
+import {
+  useQuizSets,
+  useStartQuiz,
+  useSubmitQuiz,
+} from "@/features/quiz/hooks";
 
 import { QuizDetailPage } from "./QuizDetailPage";
 import { QuizSessionPage } from "./QuizSessionPage";
 import { QuizResultPage } from "./QuizResultPage";
 import { QuizSidebar } from "./QuizSidebar";
-import type { QuizSet, QuizQuestion, QuizSetV2 } from "@/services/quiz.service";
-import {
-  MOCK_QUIZ_SETS,
-  MOCK_QUESTIONS,
-  quizService,
-} from "@/services/quiz.service";
 
 type QuizPhase = "detail" | "session" | "result";
 
@@ -24,67 +27,103 @@ interface QuizFlowProps {
 }
 
 export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
+  const { data: quizData } = useQuizSets();
+  const allQuizzes = quizData?.content ?? [];
+
   const [currentQuiz, setCurrentQuiz] = useState<QuizSetV2>(initialQuiz);
   const [phase, setPhase] = useState<QuizPhase>("detail");
+  const [sessionId, setSessionId] = useState<string>("");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [startTime, setStartTime] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [useTimer, setUseTimer] = useState(false); // timer optional
+  const [useTimer, setUseTimer] = useState(false);
+
+  // Submission result state — lưu lại để hiện ở ResultPage
+  const [submitResult, setSubmitResult] = useState<{
+    score: number;
+    totalQuestions: number;
+    percentage: number;
+    correctAnswers: number[];
+    wrongAnswers: number[];
+  } | null>(null);
+
+  const startQuizMutation = useStartQuiz();
+  const submitQuizMutation = useSubmitQuiz();
 
   const handleStart = useCallback(
     async (withTimer: boolean) => {
-      setIsLoadingQuestions(true);
       setUseTimer(withTimer);
       try {
-        // TODO: const session = await quizService.startQuiz(currentQuiz.quizId);
-        await new Promise((r) => setTimeout(r, 400));
-        const qs =
-          MOCK_QUESTIONS[currentQuiz.quizId] ?? MOCK_QUESTIONS["ls12-b1"];
-
-        setQuestions(qs);
+        // POST /quizzes/:id/start → nhận sessionId + questions
+        const session = await startQuizMutation.mutateAsync(currentQuiz.quizId);
+        setSessionId(session.sessionId);
+        setQuestions(session.questions);
         setStartTime(Date.now());
         setPhase("session");
-      } finally {
-        setIsLoadingQuestions(false);
+      } catch (err) {
+        console.error("Không thể bắt đầu quiz:", err);
       }
     },
-    [currentQuiz.quizId],
+    [currentQuiz.quizId, startQuizMutation],
   );
 
   const handleSubmit = useCallback(
-    (finalAnswers: Record<string, number>, duration: number) => {
+    async (finalAnswers: Record<string, number>, duration: number) => {
       setAnswers(finalAnswers);
       setElapsedSeconds(duration);
+
+      try {
+        // POST /quizzes/submit
+        const payload: SubmitQuizPayload = {
+          sessionId,
+          answers: Object.entries(finalAnswers).map(
+            ([questionId, selectedAnswer]) => ({
+              questionId,
+              selectedAnswer,
+            }),
+          ),
+          durationSeconds: duration,
+        };
+        const result = await submitQuizMutation.mutateAsync(payload);
+        setSubmitResult(result);
+      } catch (err) {
+        console.error("Lỗi nộp bài:", err);
+        // Vẫn chuyển sang result page dù có lỗi
+      }
       setPhase("result");
     },
-    [],
+    [sessionId, submitQuizMutation],
   );
 
   const handleRetry = useCallback(() => {
     setAnswers({});
     setElapsedSeconds(0);
     setQuestions([]);
+    setSessionId("");
+    setSubmitResult(null);
     setPhase("detail");
   }, []);
 
-  // Switch sang quiz khác từ sidebar
+  // Switch sang quiz khác từ sidebar — reset toàn bộ state
   const handleSwitchQuiz = useCallback(
     (quizId: string) => {
-      const next = MOCK_QUIZ_SETS.find((q) => q.quizId === quizId);
-      if (!next || next.quizId === currentQuiz.quizId) return;
-      // Reset state
+      if (quizId === currentQuiz.quizId) return;
+      const next = allQuizzes.find((q) => q.quizId === quizId);
+      if (!next) return;
       setCurrentQuiz(next);
       setPhase("detail");
       setAnswers({});
       setQuestions([]);
+      setSessionId("");
+      setSubmitResult(null);
       setElapsedSeconds(0);
     },
     [currentQuiz.quizId],
   );
 
+  const isLoading = startQuizMutation.isPending;
   const sidebarWidth = 260;
 
   return (
@@ -99,7 +138,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
       >
         <div style={{ width: `${sidebarWidth}px`, height: "100%" }}>
           <QuizSidebar
-            quizzes={MOCK_QUIZ_SETS}
+            quizzes={allQuizzes}
             activeQuizId={currentQuiz.quizId}
             onSelectQuiz={handleSwitchQuiz}
           />
@@ -126,11 +165,10 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
           )}
         </button>
 
-        {/* Phase content */}
         <div className="flex-1 overflow-y-auto">
-          {isLoadingQuestions ? (
+          {isLoading ? (
             <div
-              className="flex-1 flex flex-col items-center justify-center gap-3 h-full"
+              className="flex flex-col items-center justify-center gap-3 h-full"
               style={{ background: "var(--bg-content)" }}
             >
               <Loader2
@@ -143,13 +181,10 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
               </p>
             </div>
           ) : phase === "detail" ? (
-            <QuizDetailPage
-              quiz={currentQuiz as QuizSet}
-              onStart={handleStart}
-            />
+            <QuizDetailPage quiz={currentQuiz} onStart={handleStart} />
           ) : phase === "session" ? (
             <QuizSessionPage
-              quiz={currentQuiz as QuizSet}
+              quiz={currentQuiz}
               questions={questions}
               onSubmit={handleSubmit}
               onBack={handleRetry}
@@ -158,10 +193,11 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
             />
           ) : (
             <QuizResultPage
-              quiz={currentQuiz as QuizSet}
+              quiz={currentQuiz}
               questions={questions}
               answers={answers}
               durationSeconds={elapsedSeconds}
+              submitResult={submitResult}
               onRetry={handleRetry}
             />
           )}

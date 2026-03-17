@@ -1,12 +1,13 @@
 "use client";
-
-// components/quiz/QuizPageClient.tsx — v2
-// Bỏ filter difficulty, thêm filter theo lớp, card mới
 import {
-  MOCK_QUIZ_SETS,
   type QuizSetV2,
   type QuizGrade,
+  type QuizResult,
 } from "@/services/quiz.service";
+// components/quiz/QuizPageClient.tsx — v2
+// Bỏ filter difficulty, thêm filter theo lớp, card mới
+import { useQuizSets } from "@/features/quiz/hooks";
+
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMyQuizResults } from "@/features/quiz/hooks";
@@ -36,31 +37,37 @@ export function QuizPageClient() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [selectedGrade, setSelectedGrade] = useState<GradeFilter>("ALL");
+  const { data: quizData, isLoading: quizLoading } = useQuizSets();
+  const allQuizzes = quizData?.content ?? [];
 
-  const { data: results = [], isLoading: resultsLoading } = useMyQuizResults();
-
+  const { data: resultsData, isLoading: resultsLoading } = useMyQuizResults();
+  const results: QuizResult[] = resultsData?.content ?? [];
   const filteredQuizzes = useMemo(() => {
-    return MOCK_QUIZ_SETS.filter((q) => {
+    return allQuizzes.filter((q) => {
       const matchSearch =
         !search ||
         q.title.toLowerCase().includes(search.toLowerCase()) ||
-        q.chapterTitle.toLowerCase().includes(search.toLowerCase());
+        q.chapterTitle?.toLowerCase().includes(search.toLowerCase());
       const matchGrade = selectedGrade === "ALL" || q.grade === selectedGrade;
       return matchSearch && matchGrade;
     });
-  }, [search, selectedGrade]);
+  }, [allQuizzes, search, selectedGrade]); // ← thêm allQuizzes vào đây
 
   // Group theo lớp khi filter "Tất cả"
   const groupedByGrade = useMemo(() => {
     if (selectedGrade !== "ALL") return null;
     const groups: Record<number, QuizSetV2[]> = {};
     filteredQuizzes.forEach((q) => {
+      if (!q.grade) return; // ← skip quiz không có grade
       if (!groups[q.grade]) groups[q.grade] = [];
       groups[q.grade].push(q);
     });
     return groups;
-  }, [filteredQuizzes, selectedGrade]);
-
+  }, [filteredQuizzes]);
+  console.log("quizData", quizData);
+  console.log("allQuizzes", allQuizzes);
+  console.log("filteredQuizzes", filteredQuizzes);
+  console.log("groupedByGrade", groupedByGrade);
   const avgScore = useMemo(() => {
     if (!results.length) return 0;
     const total = results.reduce(
@@ -94,7 +101,7 @@ export function QuizPageClient() {
 
       {/* Stats */}
       <QuizStatsBar
-        totalQuizzes={MOCK_QUIZ_SETS.length}
+        totalQuizzes={quizData?.totalElements ?? 0}
         completedCount={results.length}
         averageScore={avgScore}
         streakDays={7}
@@ -157,7 +164,7 @@ export function QuizPageClient() {
           </p>
 
           {/* Quiz grid — grouped or flat */}
-          {groupedByGrade ? (
+          {groupedByGrade && Object.keys(groupedByGrade).length > 0 ? (
             <div className="space-y-8">
               {([12, 11, 10] as QuizGrade[]).map((grade) => {
                 const items = groupedByGrade[grade];

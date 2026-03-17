@@ -104,15 +104,15 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
               <p className="text-xs" style={{ color: "var(--content-muted)" }}>
                 Số câu hỏi
               </p>
-              <p
-                className="text-sm font-bold"
-                style={{ color: "var(--content-heading)" }}
-              >
-                {quiz.totalQuestions} câu
-              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div
+            className="flex items-center gap-2.5 p-4 rounded-2xl"
+            style={{
+              background: "var(--card-light-bg)",
+              border: "1px solid var(--card-light-border)",
+            }}
+          >
             <div
               className="p-2 rounded-xl"
               style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}

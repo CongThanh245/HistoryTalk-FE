@@ -4,6 +4,7 @@ import Image from "next/image";
 import type { ChatMessage, ChatCharacter } from "@/services/chat.service";
 import { SpeakerHighIcon, SpeakerXIcon } from "@phosphor-icons/react";
 import { useState } from "react";
+import { useAuthStore } from "@/store/auth.store";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -23,6 +24,7 @@ export function MessageBubble({
       minute: "2-digit",
     });
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const userName = useAuthStore((s) => s.user?.userName ?? "bạn");
 
   if (isUser) {
     return (
@@ -31,8 +33,7 @@ export function MessageBubble({
           <div
             className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed"
             style={{
-              background:
-                "var(--accent-gold)",
+              background: "var(--accent-gold)",
               color: "var(--bg-deep)",
               boxShadow: "0 2px 12px var(--accent-gold-glow)",
             }}
@@ -56,7 +57,7 @@ export function MessageBubble({
             border: "1px solid var(--border-default)",
           }}
         >
-          T
+          {userName}
         </div>
       </div>
     );

@@ -1,10 +1,10 @@
 "use client";
 
 // components/quiz/QuizCard.tsx — v2
-// Card đơn giản: title + grade badge + số câu + nút làm bài
+// Card đơn giản: title + grade badge + nút làm bài
 
 import React from "react";
-import { BookOpen, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { QuizSetV2 } from "@/services/quiz.service";
 
 const GRADE_CONFIG = {
@@ -28,18 +28,26 @@ const GRADE_CONFIG = {
   },
 };
 
+const FALLBACK_GRADE = {
+  label: "Tổng hợp",
+  color: "#a07828",
+  bg: "rgba(160,120,40,0.08)",
+  border: "rgba(160,120,40,0.2)",
+};
+
 interface QuizCardProps {
   quiz: QuizSetV2;
-  isActive?: boolean; // đang làm bài này
+  isActive?: boolean;
   onStart: (quizId: string) => void;
-  compact?: boolean; // mode nhỏ cho sidebar
+  compact?: boolean;
 }
 
 export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
-  const grade = GRADE_CONFIG[quiz.grade];
+  const gradeConfig = quiz.grade
+    ? (GRADE_CONFIG[quiz.grade] ?? FALLBACK_GRADE)
+    : FALLBACK_GRADE;
 
   if (compact) {
-    // ── Compact mode cho sidebar ────────────────────────
     return (
       <button
         onClick={() => onStart(quiz.quizId)}
@@ -57,11 +65,10 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
         }
       >
         <div className="flex items-start gap-2.5">
-          {/* Grade dot */}
           <div
-            className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5"
+            className="w-2 h-2 rounded-full shrink-0 mt-1.5"
             style={{
-              background: isActive ? "var(--accent-gold)" : grade.color,
+              background: isActive ? "var(--accent-gold)" : gradeConfig.color,
             }}
           />
           <div className="flex-1 min-w-0">
@@ -73,32 +80,23 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
                   : "var(--content-heading)",
               }}
             >
-              {quiz.chapterTitle}
+              {quiz.chapterTitle ?? quiz.title}
             </p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span
-                className="text-xs"
-                style={{
-                  color: isActive ? "var(--accent-gold)" : grade.color,
-                  opacity: 0.8,
-                }}
-              >
-                {grade.label}
-              </span>
-              <span
-                className="text-xs"
-                style={{ color: "var(--content-subtle)" }}
-              >
-                · {quiz.totalQuestions} câu
-              </span>
-            </div>
+            <span
+              className="text-xs mt-0.5 block"
+              style={{
+                color: isActive ? "var(--accent-gold)" : gradeConfig.color,
+                opacity: 0.8,
+              }}
+            >
+              {gradeConfig.label}
+            </span>
           </div>
         </div>
       </button>
     );
   }
 
-  // ── Full card mode cho danh sách ────────────────────────
   return (
     <div
       className="group rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
@@ -111,24 +109,17 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
       }}
     >
       <div className="p-4">
-        {/* Top: grade badge */}
+        {/* Grade badge */}
         <div className="flex items-center justify-between mb-2.5">
           <span
             className="text-xs font-semibold px-2.5 py-1 rounded-full"
             style={{
-              background: grade.bg,
-              color: grade.color,
-              border: `1px solid ${grade.border}`,
+              background: gradeConfig.bg,
+              color: gradeConfig.color,
+              border: `1px solid ${gradeConfig.border}`,
             }}
           >
-            {grade.label}
-          </span>
-          <span
-            className="flex items-center gap-1 text-xs"
-            style={{ color: "var(--content-muted)" }}
-          >
-            <BookOpen size={11} />
-            {quiz.totalQuestions} câu
+            {gradeConfig.label}
           </span>
         </div>
 
@@ -137,7 +128,7 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
           className="text-sm font-semibold leading-snug mb-3 line-clamp-2 group-hover:text-[var(--accent-gold)] transition-colors"
           style={{ color: "var(--content-heading)" }}
         >
-          {quiz.chapterTitle}
+          {quiz.chapterTitle ?? quiz.title}
         </h3>
 
         {/* Subject line */}

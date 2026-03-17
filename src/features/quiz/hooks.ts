@@ -1,9 +1,17 @@
+"use client";
+
+// features/quiz/hooks.ts
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
+import {
+  quizService,
+  type GetQuizSetsParams,
+  type GetQuizResultsParams,
+  type SubmitQuizPayload,
+} from "@/services/quiz.service";
 import { queryKeys } from "@/shared/query-key";
-import { GetQuizSetsParams, quizService, SubmitQuizPayload } from "@/services/quiz.service";
 
-// GET /quizzes — danh sách bộ câu hỏi
+// GET /quizzes
 export function useQuizSets(params?: GetQuizSetsParams) {
   return useQuery({
     queryKey: queryKeys.quizzes.list(params),
@@ -13,19 +21,19 @@ export function useQuizSets(params?: GetQuizSetsParams) {
 }
 
 // GET /quizzes/:id
-export function useQuizDetail(quizId: string) {
+export function useQuizDetail(quizId: string | null) {
   return useQuery({
-    queryKey: queryKeys.quizzes.detail(quizId),
-    queryFn: () => quizService.getById(quizId),
+    queryKey: queryKeys.quizzes.detail(quizId ?? ""),
+    queryFn: () => quizService.getById(quizId!),
     enabled: !!quizId,
   });
 }
 
 // GET /quizzes/results/me
-export function useMyQuizResults() {
+export function useMyQuizResults(params?: GetQuizResultsParams) {
   return useQuery({
     queryKey: queryKeys.quizzes.myResults,
-    queryFn: () => quizService.getMyResults(),
+    queryFn: () => quizService.getMyResults(params),
   });
 }
 
@@ -42,7 +50,6 @@ export function useSubmitQuiz() {
   return useMutation({
     mutationFn: (payload: SubmitQuizPayload) => quizService.submitQuiz(payload),
     onSuccess: () => {
-      // invalidate kết quả sau khi nộp bài
       queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.myResults });
     },
   });

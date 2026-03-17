@@ -2,7 +2,6 @@ import { axiosClient } from "@/configs/axios.client";
 
 // ── Types ──────────────────────────────────────────────────
 
-
 export type QuizEra =
   | "ALL"
   | "ANCIENT"
@@ -10,39 +9,43 @@ export type QuizEra =
   | "MODERN"
   | "CONTEMPORARY";
 
+export type QuizGrade = 10 | 11 | 12;
+
+// ── QuizQuestion ───────────────────────────────────────────
+
 export interface QuizQuestion {
   questionId: string;
   content: string;
   options: string[];
   correctAnswer: number;
+  orderIndex: number; // ← có từ backend
   explanation?: string;
 }
+
+// ── QuizSet ────────────────────────────────────────────────
+// Field đã xóa: thumbnailUrl, tags, createdAt, totalQuestions, difficulty
+// Field thêm mới: contextTitle
 
 export interface QuizSet {
   quizId: string;
   title: string;
   description: string;
-  thumbnailUrl?: string;
   era: QuizEra;
-  totalQuestions: number;
   durationSeconds: number;
   playCount: number;
   rating: number;
-  tags?: string[];
-  createdAt: string;
+  contextTitle?: string;
 }
-
-// ── QuizSetV2 — thêm grade cho chương trình học ────────────
-
-export type QuizGrade = 10 | 11 | 12;
 
 export interface QuizSetV2 extends QuizSet {
-  grade: QuizGrade;
-  chapterNumber: number;
-  chapterTitle: string;
+  grade?: QuizGrade;
+  chapterNumber?: number;
+  chapterTitle?: string;
 }
 
-// ── Các types khác ─────────────────────────────────────────
+// ── QuizResult ─────────────────────────────────────────────
+// Field đã xóa: difficulty
+// Field thêm mới: percentage
 
 export interface QuizResult {
   resultId: string;
@@ -50,15 +53,17 @@ export interface QuizResult {
   quizTitle: string;
   score: number;
   totalQuestions: number;
+  percentage: number;
   durationSeconds: number;
   completedAt: string;
 }
 
+// ── Params & Responses ─────────────────────────────────────
+
 export interface GetQuizSetsParams {
   search?: string;
-  page?: number;
-  limit?: number;
-  era?: QuizEra;
+  // Lưu ý: backend hiện chỉ hỗ trợ search
+  // grade, era → filter local phía frontend
 }
 
 export interface GetQuizSetsResponse {
@@ -71,12 +76,28 @@ export interface GetQuizSetsResponse {
   hasPrevious: boolean;
 }
 
+export interface GetQuizResultsParams {
+  page?: number; // default 0
+  size?: number; // default 10
+}
+
+export interface GetQuizResultsResponse {
+  content: QuizResult[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
 export interface StartQuizResponse {
   sessionId: string;
   quizId: string;
-  questions: QuizQuestion[];
+  title: string;
   durationSeconds: number;
-  startedAt: string;
+  questions: QuizQuestion[];
+  // Field đã xóa: startedAt, expiresAt (không có từ backend)
 }
 
 export interface SubmitQuizPayload {
@@ -89,30 +110,29 @@ export interface SubmitQuizResponse {
   resultId: string;
   score: number;
   totalQuestions: number;
+  percentage: number;
   correctAnswers: number[];
   wrongAnswers: number[];
-  durationSeconds: number;
-  completedAt: string;
+  // Field đã xóa: durationSeconds, completedAt (không có từ backend)
 }
 
 // ── Map functions ──────────────────────────────────────────
 
 export function mapQuizSet(raw: any): QuizSetV2 {
+  const grade = Number(raw.grade);
+
   return {
     quizId: raw.quizId,
     title: raw.title,
     description: raw.description,
-    thumbnailUrl: raw.thumbnailUrl,
-    era: raw.era as QuizEra,
-    totalQuestions: raw.totalQuestions ?? 0,
-    durationSeconds: raw.durationSeconds ?? 300,
+    era: (raw.era as QuizEra) ?? "ALL",
+    durationSeconds: raw.durationSeconds ?? 900,
     playCount: raw.playCount ?? 0,
     rating: raw.rating ?? 0,
-    tags: raw.tags ?? [],
-    createdAt: raw.createdAt,
-    grade: raw.grade ?? 12,
-    chapterNumber: raw.chapterNumber ?? 1,
-    chapterTitle: raw.chapterTitle ?? raw.title,
+    contextTitle: raw.contextTitle,
+    grade: [10, 11, 12].includes(grade) ? (grade as QuizGrade) : undefined,
+    chapterNumber: raw.chapterNumber ?? undefined,
+    chapterTitle: raw.chapterTitle ?? undefined,
   };
 }
 
@@ -123,15 +143,26 @@ export function mapQuizResult(raw: any): QuizResult {
     quizTitle: raw.quizTitle,
     score: raw.score,
     totalQuestions: raw.totalQuestions,
+    percentage: raw.percentage ?? 0,
     durationSeconds: raw.durationSeconds,
     completedAt: raw.completedAt,
+  };
+}
+
+export function mapQuizQuestion(raw: any): QuizQuestion {
+  return {
+    questionId: raw.questionId,
+    content: raw.content,
+    options: raw.options ?? [],
+    correctAnswer: raw.correctAnswer,
+    orderIndex: raw.orderIndex ?? 0,
+    explanation: raw.explanation,
   };
 }
 
 // ── Mock Data ──────────────────────────────────────────────
 
 export const MOCK_QUIZ_SETS: QuizSetV2[] = [
-  // ── Lịch sử 12 ──────────────────────────────────────────
   {
     quizId: "ls12-b1",
     title: "Lịch sử 12 — Bài 1: Liên Hợp Quốc",
@@ -141,13 +172,10 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 1,
     chapterTitle: "Liên Hợp Quốc",
     era: "CONTEMPORARY",
-
-    totalQuestions: 10,
     durationSeconds: 900,
     playCount: 3241,
     rating: 4.8,
-    tags: ["liên hợp quốc", "chiến tranh lạnh"],
-    createdAt: "2024-01-10",
+    contextTitle: "Thế giới sau Chiến tranh thế giới II",
   },
   {
     quizId: "ls12-b2",
@@ -158,13 +186,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 2,
     chapterTitle: "Trật tự thế giới hai cực",
     era: "CONTEMPORARY",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 2187,
     rating: 4.6,
-    tags: ["chiến tranh lạnh", "hai cực"],
-    createdAt: "2024-01-12",
   },
   {
     quizId: "ls12-b3",
@@ -175,13 +199,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 3,
     chapterTitle: "Các nước Đông Bắc Á",
     era: "CONTEMPORARY",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1842,
     rating: 4.5,
-    tags: ["đông bắc á", "trung quốc", "nhật bản"],
-    createdAt: "2024-01-15",
   },
   {
     quizId: "ls12-b4",
@@ -191,13 +211,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 4,
     chapterTitle: "Các nước Đông Nam Á & ASEAN",
     era: "CONTEMPORARY",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 2563,
     rating: 4.7,
-    tags: ["asean", "đông nam á"],
-    createdAt: "2024-01-18",
   },
   {
     quizId: "ls12-b5",
@@ -207,16 +223,10 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 5,
     chapterTitle: "Châu Phi & Mĩ La-tinh",
     era: "CONTEMPORARY",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1203,
     rating: 4.4,
-    tags: ["châu phi", "cuba", "mĩ la-tinh"],
-    createdAt: "2024-01-20",
   },
-
-  // ── Lịch sử 11 ──────────────────────────────────────────
   {
     quizId: "ls11-b1",
     title: "Lịch sử 11 — Bài 1: Nhật Bản",
@@ -226,13 +236,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 1,
     chapterTitle: "Nhật Bản cuối XIX — đầu XX",
     era: "MODERN",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1876,
     rating: 4.6,
-    tags: ["nhật bản", "minh trị"],
-    createdAt: "2024-02-01",
   },
   {
     quizId: "ls11-b2",
@@ -243,13 +249,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 2,
     chapterTitle: "Ấn Độ thời thuộc địa",
     era: "MODERN",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1234,
     rating: 4.3,
-    tags: ["ấn độ", "giải phóng dân tộc"],
-    createdAt: "2024-02-05",
   },
   {
     quizId: "ls11-b3",
@@ -260,13 +262,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 3,
     chapterTitle: "Trung Quốc cuối XIX — đầu XX",
     era: "MODERN",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1654,
     rating: 4.5,
-    tags: ["trung quốc", "tân hợi"],
-    createdAt: "2024-02-08",
   },
   {
     quizId: "ls11-b4",
@@ -277,13 +275,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 4,
     chapterTitle: "Chiến tranh thế giới I (1914–1918)",
     era: "MODERN",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 2890,
     rating: 4.9,
-    tags: ["thế chiến 1", "1914"],
-    createdAt: "2024-02-10",
   },
   {
     quizId: "ls11-b5",
@@ -294,16 +288,10 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 5,
     chapterTitle: "Cách mạng tháng Mười Nga 1917",
     era: "MODERN",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 2103,
     rating: 4.7,
-    tags: ["cách mạng nga", "liên xô"],
-    createdAt: "2024-02-12",
   },
-
-  // ── Lịch sử 10 ──────────────────────────────────────────
   {
     quizId: "ls10-b1",
     title: "Lịch sử 10 — Bài 1: Xã hội nguyên thủy",
@@ -312,13 +300,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 1,
     chapterTitle: "Xã hội nguyên thủy",
     era: "ANCIENT",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 3102,
     rating: 4.5,
-    tags: ["nguyên thủy", "loài người"],
-    createdAt: "2024-03-01",
   },
   {
     quizId: "ls10-b2",
@@ -328,13 +312,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 2,
     chapterTitle: "Xã hội cổ đại",
     era: "ANCIENT",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 2456,
     rating: 4.6,
-    tags: ["cổ đại", "văn minh"],
-    createdAt: "2024-03-05",
   },
   {
     quizId: "ls10-b3",
@@ -344,13 +324,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 3,
     chapterTitle: "Trung Quốc thời phong kiến",
     era: "MEDIEVAL",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1789,
     rating: 4.4,
-    tags: ["trung quốc", "phong kiến"],
-    createdAt: "2024-03-08",
   },
   {
     quizId: "ls10-b4",
@@ -361,13 +337,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 4,
     chapterTitle: "Ấn Độ & ĐNA phong kiến",
     era: "MEDIEVAL",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1342,
     rating: 4.3,
-    tags: ["ấn độ", "đông nam á"],
-    createdAt: "2024-03-10",
   },
   {
     quizId: "ls10-b5",
@@ -378,13 +350,9 @@ export const MOCK_QUIZ_SETS: QuizSetV2[] = [
     chapterNumber: 5,
     chapterTitle: "Tây Âu thời phong kiến",
     era: "MEDIEVAL",
-
-    totalQuestions: 20,
     durationSeconds: 900,
     playCount: 1567,
     rating: 4.5,
-    tags: ["tây âu", "phong kiến"],
-    createdAt: "2024-03-12",
   },
 ];
 
@@ -392,6 +360,7 @@ export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
   "ls12-b1": [
     {
       questionId: "ls12b1-q1",
+      orderIndex: 0,
       content: "Tổ chức quốc tế được xem như tiền thân của Liên hợp quốc là",
       options: [
         "Hội Quốc liên",
@@ -405,6 +374,7 @@ export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
     },
     {
       questionId: "ls12b1-q2",
+      orderIndex: 1,
       content:
         "Quá trình hình thành Liên hợp quốc gắn liền với vai trò quan trọng của các quốc gia nào?",
       options: [
@@ -419,6 +389,7 @@ export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
     },
     {
       questionId: "ls12b1-q3",
+      orderIndex: 2,
       content:
         "Tại Hội nghị I-an-ta (2-1945), quyết định quan trọng nào liên quan đến Liên hợp quốc?",
       options: [
@@ -433,6 +404,7 @@ export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
     },
     {
       questionId: "ls12b1-q4",
+      orderIndex: 3,
       content:
         "Từ cuối tháng 4 đến cuối tháng 6-1945, 50 nước họp tại Xan Phran-xi-xcô thông qua nội dung nào?",
       options: [
@@ -447,6 +419,7 @@ export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
     },
     {
       questionId: "ls12b1-q5",
+      orderIndex: 4,
       content:
         "Ngày 24-10-1945, sau khi Quốc hội các nước thành viên phê chuẩn, bản Hiến chương Liên hợp quốc",
       options: [
@@ -461,6 +434,7 @@ export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
     },
     {
       questionId: "ls12b1-q6",
+      orderIndex: 5,
       content:
         "Ngày 1/1/1942, tại Oa-sinh-tơn, đại diện của 26 nước ký văn kiện nào?",
       options: [
@@ -475,6 +449,7 @@ export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
     },
     {
       questionId: "ls12b1-q7",
+      orderIndex: 6,
       content:
         "Tại Hội nghị Tê-hê-ran, nguyên thủ 3 nước Liên Xô, Mĩ, Anh khẳng định điều gì?",
       options: [
@@ -489,6 +464,7 @@ export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
     },
     {
       questionId: "ls12b1-q8",
+      orderIndex: 7,
       content:
         "Tổ chức Liên hợp quốc được thành lập trong bối cảnh nhân dân thế giới ý thức sâu sắc về hậu quả tàn khốc của",
       options: [
@@ -503,6 +479,7 @@ export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
     },
     {
       questionId: "ls12b1-q9",
+      orderIndex: 8,
       content:
         "Tổ chức Liên hợp quốc được thành lập năm 1945 nhằm đáp ứng nhu cầu nào của nhân loại?",
       options: [
@@ -517,6 +494,7 @@ export const MOCK_QUESTIONS: Record<string, QuizQuestion[]> = {
     },
     {
       questionId: "ls12b1-q10",
+      orderIndex: 9,
       content:
         "Yêu cầu bức thiết nào được đặt ra cho các nước Đồng minh khi chiến tranh thế giới thứ hai bước vào giai đoạn cuối?",
       options: [
@@ -539,9 +517,9 @@ export const MOCK_RECENT_RESULTS: QuizResult[] = [
     quizTitle: "Liên Hợp Quốc",
     score: 8,
     totalQuestions: 10,
+    percentage: 80,
     durationSeconds: 480,
     completedAt: "2024-03-20T10:30:00",
-
   },
   {
     resultId: "res-002",
@@ -549,9 +527,9 @@ export const MOCK_RECENT_RESULTS: QuizResult[] = [
     quizTitle: "Chiến tranh thế giới I (1914–1918)",
     score: 15,
     totalQuestions: 20,
+    percentage: 75,
     durationSeconds: 620,
     completedAt: "2024-03-19T14:15:00",
-
   },
   {
     resultId: "res-003",
@@ -559,59 +537,55 @@ export const MOCK_RECENT_RESULTS: QuizResult[] = [
     quizTitle: "Xã hội nguyên thủy",
     score: 18,
     totalQuestions: 20,
+    percentage: 90,
     durationSeconds: 540,
     completedAt: "2024-03-18T09:00:00",
-
   },
 ];
 
 // ── Service ────────────────────────────────────────────────
 
 export const quizService = {
-  // GET /quizzes
+  // GET /quizzes?search=...
+  // Lưu ý: backend trả về array trực tiếp (không pagination)
+  // → frontend tự wrap vào GetQuizSetsResponse
   getAll: async (params?: GetQuizSetsParams): Promise<GetQuizSetsResponse> => {
-    // TODO: const res = await axiosClient.get("/quizzes", { params });
-    // const raw = res.data.data;
-    // return { ...raw, content: raw.content.map(mapQuizSet) };
-    await new Promise((r) => setTimeout(r, 400));
+    const res = await axiosClient.get("/quizzes", {
+      params: { search: params?.search },
+    });
+    const raw: any[] = res.data.data;
+    const content = raw.map(mapQuizSet);
     return {
-      content: MOCK_QUIZ_SETS,
-      totalElements: MOCK_QUIZ_SETS.length,
+      content,
+      totalElements: content.length,
       totalPages: 1,
-      currentPage: 1,
-      pageSize: 20,
+      currentPage: 0,
+      pageSize: content.length,
       hasNext: false,
       hasPrevious: false,
     };
   },
 
-  // GET /quizzes/:id
+  // GET /quizzes/:quizId
   getById: async (quizId: string): Promise<QuizSetV2> => {
-    // TODO: const res = await axiosClient.get(`/quizzes/${quizId}`);
-    // return mapQuizSet(res.data.data);
-    await new Promise((r) => setTimeout(r, 300));
-    return MOCK_QUIZ_SETS.find((q) => q.quizId === quizId) ?? MOCK_QUIZ_SETS[0];
+    const res = await axiosClient.get(`/quizzes/${quizId}`);
+    return mapQuizSet(res.data.data);
   },
 
-  // GET /quizzes/:id/questions
-  getQuestions: async (quizId: string): Promise<QuizQuestion[]> => {
-    // TODO: const res = await axiosClient.get(`/quizzes/${quizId}/questions`);
-    // return res.data.data;
-    await new Promise((r) => setTimeout(r, 400));
-    return MOCK_QUESTIONS[quizId] ?? MOCK_QUESTIONS["ls12-b1"] ?? [];
-  },
-
-  // POST /quizzes/:id/start
+  // POST /quizzes/:quizId/start
   startQuiz: async (quizId: string): Promise<StartQuizResponse> => {
-    // TODO: const res = await axiosClient.post(`/quizzes/${quizId}/start`);
-    // return res.data.data;
-    await new Promise((r) => setTimeout(r, 300));
+    const res = await axiosClient.post(`/quizzes/${quizId}/start`);
+    const raw = res.data.data;
     return {
-      sessionId: `session-${Date.now()}`,
-      quizId,
-      questions: [],
-      durationSeconds: 900,
-      startedAt: new Date().toISOString(),
+      sessionId: raw.sessionId,
+      quizId: raw.quizId,
+      title: raw.title,
+      durationSeconds: raw.durationSeconds,
+      questions: (raw.questions ?? [])
+        .map(mapQuizQuestion)
+        .sort(
+          (a: QuizQuestion, b: QuizQuestion) => a.orderIndex - b.orderIndex,
+        ),
     };
   },
 
@@ -619,25 +593,29 @@ export const quizService = {
   submitQuiz: async (
     payload: SubmitQuizPayload,
   ): Promise<SubmitQuizResponse> => {
-    // TODO: const res = await axiosClient.post("/quizzes/submit", payload);
-    // return res.data.data;
-    await new Promise((r) => setTimeout(r, 500));
+    const res = await axiosClient.post("/quizzes/submit", payload);
+    const raw = res.data.data;
     return {
-      resultId: `res-${Date.now()}`,
-      score: 0,
-      totalQuestions: 0,
-      correctAnswers: [],
-      wrongAnswers: [],
-      durationSeconds: payload.durationSeconds,
-      completedAt: new Date().toISOString(),
+      resultId: raw.resultId,
+      score: raw.score,
+      totalQuestions: raw.totalQuestions,
+      percentage: raw.percentage,
+      correctAnswers: raw.correctAnswers ?? [],
+      wrongAnswers: raw.wrongAnswers ?? [],
     };
   },
 
-  // GET /quizzes/results/me
-  getMyResults: async (): Promise<QuizResult[]> => {
-    // TODO: const res = await axiosClient.get("/quizzes/results/me");
-    // return res.data.data.map(mapQuizResult);
-    await new Promise((r) => setTimeout(r, 300));
-    return MOCK_RECENT_RESULTS;
+  // GET /quizzes/results/me?page=0&size=10
+  getMyResults: async (
+    params?: GetQuizResultsParams,
+  ): Promise<GetQuizResultsResponse> => {
+    const res = await axiosClient.get("/quizzes/results/me", {
+      params: { page: params?.page ?? 0, size: params?.size ?? 10 },
+    });
+    const raw = res.data.data;
+    return {
+      ...raw,
+      content: raw.content.map(mapQuizResult),
+    };
   },
 };
