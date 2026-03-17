@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 const FULL_TEXT =
   "Chào mừng bạn đến với HistoryTalk - Hãy bắt đầu trò chuyện với nhân vật mà bạn thích";
+const HIGHLIGHT_TEXT = "HistoryTalk";
 
 export function WelcomeHeading() {
   const textRef = useRef<HTMLSpanElement>(null);
@@ -15,17 +16,14 @@ export function WelcomeHeading() {
 
     import("gsap").then((m) => {
       const gsap = m.gsap ?? m.default;
-
       const el = textRef.current;
       const cursor = cursorRef.current;
       if (!el || !cursor) return;
 
-      // Array.from splits by Unicode code points — handles Vietnamese diacritics correctly
-      // FULL_TEXT.split("") would split combining characters into separate glyphs → double rendering
       const chars = Array.from(FULL_TEXT);
       let i = 0;
 
-      el.textContent = "";
+      el.innerHTML = "";
 
       // Cursor blink
       cursorTween = gsap.to(cursor, {
@@ -36,12 +34,21 @@ export function WelcomeHeading() {
         yoyo: true,
       });
 
-      // Rebuild the full string up to index i each tick
-      // This ensures combining diacritics stay attached to their base character
       timer = setInterval(() => {
         if (i < chars.length) {
           i++;
-          el.textContent = chars.slice(0, i).join("");
+          const currentString = chars.slice(0, i).join("");
+
+          // Kiểm tra và highlight từ khóa
+          if (currentString.includes(HIGHLIGHT_TEXT)) {
+            // Chia chuỗi thành 2 phần: trước và sau highlight
+            const parts = currentString.split(HIGHLIGHT_TEXT);
+            el.innerHTML = `
+              ${parts[0]}<span style="color: var(--accent-gold, #c9a24d)">${HIGHLIGHT_TEXT}</span>${parts[1]}
+            `;
+          } else {
+            el.textContent = currentString;
+          }
         } else {
           clearInterval(timer);
           setTimeout(() => {
@@ -55,7 +62,7 @@ export function WelcomeHeading() {
             });
           }, 1200);
         }
-      }, 42);
+      }, 30);
     });
 
     return () => {

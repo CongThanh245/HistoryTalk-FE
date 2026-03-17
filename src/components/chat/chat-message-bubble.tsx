@@ -18,56 +18,60 @@ export function MessageBubble({
   speak,
 }: MessageBubbleProps) {
   const isUser = message.role === "USER";
-  const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const userName = useAuthStore((s) => s.user?.userName ?? "bạn");
+  const userName = useAuthStore((s) => s.user?.userName ?? "Bạn");
+
+  // Logic lấy chữ cái đầu
+  const userInitial = userName.trim().charAt(0).toUpperCase();
 
   if (isUser) {
     return (
-      <div className="flex justify-end gap-2.5 px-4">
-        <div className="max-w-[65%] flex flex-col items-end gap-1">
+      <div className="flex justify-end gap-3 px-4 mb-4">
+        <div className="max-w-[70%] flex flex-col items-end gap-1.5">
           <div
-            className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed"
+            className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-lg"
             style={{
-              background: "var(--accent-gold)",
-              color: "var(--bg-deep)",
-              boxShadow: "0 2px 12px var(--accent-gold-glow)",
+              // Phối màu Gradient Bronze -> Truffle (Cổ điển & Sang trọng)
+              background: "var(--accent-bronze)",
+              color: "white",
             }}
           >
             {message.content}
           </div>
           <span
-            className="text-[10px]"
-            style={{ color: "var(--text-secondary)" }}
+            className="text-[10px] opacity-60"
+            style={{ color: "var(--text-primary)" }}
           >
-            {formatTime(message.createdAt)}
+            {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })}
           </span>
         </div>
 
-        {/* User avatar */}
+        {/* User Avatar - Chữ cái đầu với Glow nhẹ */}
         <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-auto"
+          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-auto border"
           style={{
             background: "var(--bg-elevated)",
-            color: "var(--text-primary)",
-            border: "1px solid var(--border-default)",
+            color: "var(--accent-gold-soft)",
+            borderColor: "var(--accent-gold-glow)",
+            boxShadow: "var(--shadow-gold)",
           }}
         >
-          {userName.charAt(0).toUpperCase()}        </div>
+          {userInitial}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex gap-2.5 px-4">
-      {/* Character avatar */}
+    <div className="flex gap-3 px-4 mb-4">
+      {/* Character Avatar */}
       <div
-        className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 mt-auto border"
-        style={{ borderColor: "var(--border-default)" }}
+        className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 mt-auto border-2"
+        style={{ borderColor: "var(--accent-gold-soft)" }}
       >
         <Image
           src={character.imageUrl}
@@ -77,19 +81,19 @@ export function MessageBubble({
         />
       </div>
 
-      <div className="max-w-[65%] flex flex-col gap-1">
+      <div className="max-w-[75%] flex flex-col gap-1.5">
         <span
-          className="text-[10px] font-semibold px-1"
-          style={{ color: "var(--accent-gold-soft)" }}
+          className="text-[11px] font-bold px-1 tracking-wide"
+          style={{ color: "--accent-gold" }}
         >
-          {character.name}
+          {character.name.toUpperCase()}
         </span>
         <div
-          className="relative px-4 py-2.5 pr-8 rounded-2xl rounded-tl-sm text-sm leading-relaxed"
+          className="relative px-4 py-3 pr-9 rounded-2xl rounded-tl-sm text-sm leading-relaxed border"
           style={{
-            background: "var(--bg-elevated)",
-            color: "var(--text-primary)",
-            border: "1px solid var(--border-default)",
+            background: "var(--bg-surface)",
+            color: "var(--text-on-dark)",
+            borderColor: "var(--border-strong)",
           }}
         >
           {message.content}
@@ -104,20 +108,27 @@ export function MessageBubble({
                 setIsSpeaking(true);
               }
             }}
-            className="absolute bottom-1 right-1 opacity-60 hover:opacity-100 transition"
+            className="absolute bottom-2 right-2 transition-all duration-200 hover:scale-110"
+            style={{
+              color: isSpeaking ? "var(--accent-gold)" : "var(--text-muted)",
+            }}
           >
             {isSpeaking ? (
-              <SpeakerHighIcon size={16} />
+              <SpeakerHighIcon size={18} weight="fill" />
             ) : (
-              <SpeakerXIcon size={16} />
+              <SpeakerXIcon size={18} />
             )}
           </button>
         </div>
         <span
-          className="text-[10px] px-1"
-          style={{ color: "var(--text-secondary)" }}
+          className="text-[10px] px-1 opacity-60"
+          style={{ color: "var(--text-primary)" }}
         >
-          {formatTime(message.createdAt)}
+          {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })}
         </span>
       </div>
     </div>
