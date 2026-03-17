@@ -57,8 +57,7 @@ export function MessageBubble({
             border: "1px solid var(--border-default)",
           }}
         >
-          {userName}
-        </div>
+          {userName.charAt(0).toUpperCase()}        </div>
       </div>
     );
   }
