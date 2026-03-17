@@ -1,0 +1,227 @@
+[
+  {
+    "id": "bach-dang",
+    "keyword": "Bạch Đằng",
+    "aliases": ["sông Bạch Đằng", "cửa sông Bạch Đằng", "trận Bạch Đằng"],
+    "type": "location",
+    "shortDesc": "Con sông gắn với 3 trận thủy chiến lịch sử của dân tộc Việt.",
+    "description": "Sông Bạch Đằng chứng kiến ba đại thắng vang dội: Ngô Quyền đánh tan quân Nam Hán năm 938, Lê Hoàn phá Tống năm 981, và Trần Hưng Đạo tiêu diệt quân Nguyên Mông năm 1288 bằng kế cắm cọc gỗ thiết mộc lan.",
+    "imageUrl": null
+  },
+  {
+    "id": "ngo-quyen",
+    "keyword": "Ngô Quyền",
+    "aliases": ["Tiết độ sứ Ngô Quyền"],
+    "type": "person",
+    "shortDesc": "Người kết thúc 1.000 năm Bắc thuộc, lập nền độc lập cho Việt Nam.",
+    "description": "Ngô Quyền (898–944) — vị tướng kiệt xuất người Ái Châu. Năm 938, ông dùng kế cắm cọc nhọn trên sông Bạch Đằng đánh tan đạo quân thủy của Nam Hán do Lưu Hoằng Tháo chỉ huy, chấm dứt 1.000 năm Bắc thuộc và mở ra kỷ nguyên độc lập tự chủ.",
+    "imageUrl": null
+  },
+  {
+    "id": "tran-hung-dao",
+    "keyword": "Trần Hưng Đạo",
+    "aliases": ["Hưng Đạo Vương", "Đại Vương Trần Quốc Tuấn"],
+    "type": "person",
+    "shortDesc": "Danh tướng nhà Trần, ba lần đánh bại đế quốc Nguyên Mông.",
+    "description": "Trần Quốc Tuấn (1228–1300), quốc công tiết chế của nhà Trần, là thiên tài quân sự lỗi lạc. Ông chỉ huy quân dân Đại Việt đánh bại quân Nguyên Mông ba lần (1258, 1285, 1288). Tác giả của 'Hịch tướng sĩ' và 'Binh thư yếu lược'.",
+    "imageUrl": null
+  },
+  {
+    "id": "le-loi",
+    "keyword": "Lê Lợi",
+    "aliases": ["Bình Định Vương", "vua Lê Thái Tổ"],
+    "type": "person",
+    "shortDesc": "Người lãnh đạo khởi nghĩa Lam Sơn, sáng lập nhà Hậu Lê.",
+    "description": "Lê Lợi (1385–1433) — người hào trưởng đất Lam Sơn (Thanh Hoá). Năm 1418, ông dựng cờ khởi nghĩa chống quân Minh. Sau 10 năm kháng chiến gian khổ, năm 1428 ông đuổi quân Minh ra khỏi bờ cõi, lên ngôi hoàng đế, lập ra nhà Hậu Lê, đặt quốc hiệu là Đại Việt.",
+    "imageUrl": null
+  },
+  {
+    "id": "nguyen-trai",
+    "keyword": "Nguyễn Trãi",
+    "aliases": ["Ức Trai"],
+    "type": "person",
+    "shortDesc": "Nhà thơ, nhà chính trị lỗi lạc, tác giả Bình Ngô Đại Cáo.",
+    "description": "Nguyễn Trãi (1380–1442) — nhà tư tưởng, nhà thơ và chiến lược gia kiệt xuất. Ông là quân sư của Lê Lợi, tác giả của 'Bình Ngô Đại Cáo' — bản tuyên ngôn độc lập của Việt Nam. Ông cũng là tác giả của 'Quốc âm thi tập', di sản thơ Nôm đầu tiên của Việt Nam.",
+    "imageUrl": null
+  },
+  {
+    "id": "hai-ba-trung",
+    "keyword": "Hai Bà Trưng",
+    "aliases": ["Trưng Trắc", "Trưng Nhị", "bà Trưng"],
+    "type": "person",
+    "shortDesc": "Hai nữ anh hùng lãnh đạo cuộc khởi nghĩa đầu tiên của người Việt chống Hán.",
+    "description": "Trưng Trắc và Trưng Nhị là hai chị em quê đất Mê Linh. Năm 40 SCN, họ dấy binh khởi nghĩa chống lại sự đô hộ tàn bạo của nhà Đông Hán, thu phục được hơn 65 thành trì, được suy tôn là vua (Trưng Vương). Đây là cuộc khởi nghĩa thắng lợi đầu tiên trong lịch sử Việt Nam.",
+    "imageUrl": null
+  },
+  {
+    "id": "quang-trung",
+    "keyword": "Quang Trung",
+    "aliases": ["Nguyễn Huệ", "vua Quang Trung", "Bắc Bình Vương"],
+    "type": "person",
+    "shortDesc": "Vị hoàng đế tài ba của nhà Tây Sơn, đánh tan 29 vạn quân Thanh.",
+    "description": "Nguyễn Huệ (1753–1792) — hoàng đế Quang Trung, thiên tài quân sự bậc nhất lịch sử Việt Nam. Năm 1789, ông chỉ huy cuộc hành quân thần tốc, đánh tan 29 vạn quân Mãn Thanh trong vòng 5 ngày Tết Kỷ Dậu. Ông cũng là người đề cao chữ Nôm và cải cách nhiều mặt đất nước.",
+    "imageUrl": null
+  },
+  {
+    "id": "dong-da",
+    "keyword": "Đống Đa",
+    "aliases": ["trận Đống Đa", "gò Đống Đa"],
+    "type": "event",
+    "shortDesc": "Trận đại thắng quân Thanh mùa xuân Kỷ Dậu 1789 của vua Quang Trung.",
+    "description": "Trận Đống Đa (tháng 1/1789) là chiến thắng lừng lẫy của quân Tây Sơn dưới sự chỉ huy của Nguyễn Huệ. Chỉ trong 5 ngày đêm, từ mùng 3 đến mùng 7 Tết Kỷ Dậu, quân ta đại phá 29 vạn quân Thanh, giết chết tướng Sầm Nghi Đống ngay tại Đống Đa (Hà Nội).",
+    "imageUrl": null
+  },
+  {
+    "id": "lam-son",
+    "keyword": "Lam Sơn",
+    "aliases": ["căn cứ Lam Sơn", "khởi nghĩa Lam Sơn"],
+    "type": "location",
+    "shortDesc": "Địa danh tại Thanh Hoá, nơi Lê Lợi dựng cờ khởi nghĩa chống quân Minh.",
+    "description": "Lam Sơn là vùng đất thuộc huyện Thọ Xuân, Thanh Hoá ngày nay. Năm 1418, Lê Lợi chọn nơi đây làm căn cứ địa khởi nghĩa, xưng là Bình Định Vương, bắt đầu cuộc kháng chiến 10 năm trường kỳ (1418-1428) chống lại sự chiếm đóng của nhà Minh.",
+    "imageUrl": null
+  },
+  {
+    "id": "nha-ly",
+    "keyword": "nhà Lý",
+    "aliases": ["triều Lý", "Lý triều"],
+    "type": "event",
+    "shortDesc": "Triều đại phong kiến tự chủ đầu tiên vững mạnh của Việt Nam (1009–1225).",
+    "description": "Nhà Lý (1009-1225) do Lý Công Uẩn sáng lập, là triều đại đánh dấu bước phát triển rực rỡ của nhà nước Đại Việt. Nhà Lý dời đô từ Hoa Lư về Thăng Long (1010), xây dựng Văn Miếu (1070), đánh bại quân Tống (1075-1077) và phát triển nền văn hoá dân tộc.",
+    "imageUrl": null
+  },
+  {
+    "id": "nha-tran",
+    "keyword": "nhà Trần",
+    "aliases": ["triều Trần", "Trần triều"],
+    "type": "event",
+    "shortDesc": "Triều đại ba lần đánh bại đế quốc Nguyên Mông hùng mạnh nhất thế giới.",
+    "description": "Nhà Trần (1225-1400) nắm quyền sau khi Trần Cảnh được nhường ngôi. Triều đại này nổi bật với ba lần kháng chiến chống Nguyên Mông thắng lợi (1258, 1285, 1288) dưới sự lãnh đạo của Trần Hưng Đạo. Đây cũng là thời kỳ phát triển văn học chữ Nôm và thơ văn yêu nước.",
+    "imageUrl": null
+  },
+  {
+    "id": "co-loa",
+    "keyword": "Cổ Loa",
+    "aliases": ["thành Cổ Loa", "thành ốc"],
+    "type": "location",
+    "shortDesc": "Kinh đô đầu tiên của nhà nước Âu Lạc, nơi An Dương Vương đóng đô.",
+    "description": "Cổ Loa (nay thuộc Đông Anh, Hà Nội) là kinh đô của nước Âu Lạc thế kỷ 3 TCN, do An Dương Vương Thục Phán xây dựng. Thành có hình xoắn ốc với ba vòng lũy đất bao quanh, được xem là tòa thành cổ nhất Đông Nam Á còn lại dấu tích.",
+    "imageUrl": null
+  },
+  {
+    "id": "thang-long",
+    "keyword": "Thăng Long",
+    "aliases": ["kinh thành Thăng Long", "đất Thăng Long", "Hà Nội"],
+    "type": "location",
+    "shortDesc": "Kinh đô ngàn năm của Đại Việt, nay là Hà Nội.",
+    "description": "Thăng Long được Lý Công Uẩn xây dựng làm kinh đô năm 1010, thay thế Hoa Lư (Ninh Bình). Tên 'Thăng Long' có nghĩa là 'Rồng bay lên'. Đây là trung tâm chính trị, văn hoá, kinh tế của Đại Việt qua nhiều triều đại Lý, Trần, Lê, Nguyễn.",
+    "imageUrl": null
+  },
+  {
+    "id": "an-duong-vuong",
+    "keyword": "An Dương Vương",
+    "aliases": ["Thục Phán"],
+    "type": "person",
+    "shortDesc": "Vua nước Âu Lạc, người xây thành Cổ Loa và sở hữu nỏ thần Kim Quy.",
+    "description": "An Dương Vương (Thục Phán) là vua nước Âu Lạc (257 TCN–179 TCN). Ông thống nhất hai bộ tộc Âu Việt và Lạc Việt, xây thành Cổ Loa hình xoắn ốc và được thần Kim Quy ban cho nỏ thần. Tuy nhiên, do con rể Trọng Thuỷ phản bội, ông để mất nước vào tay Triệu Đà.",
+    "imageUrl": null
+  },
+  {
+    "id": "trieu-da",
+    "keyword": "Triệu Đà",
+    "aliases": ["Nam Việt Vũ Đế"],
+    "type": "person",
+    "shortDesc": "Tướng Tần chinh phục Âu Lạc, lập nên nước Nam Việt.",
+    "description": "Triệu Đà (240–137 TCN) vốn là tướng nhà Tần, sau chiếm cứ Quảng Đông, lập nước Nam Việt. Khoảng năm 179 TCN, ông dùng kế 'mỹ nhân kế' thông qua cuộc hôn nhân của con trai Trọng Thuỷ với Mỵ Châu để đánh bại An Dương Vương, chiếm Âu Lạc, mở đầu thời kỳ Bắc thuộc.",
+    "imageUrl": null
+  },
+  {
+    "id": "ngo-quyen-coc",
+    "keyword": "cọc gỗ",
+    "aliases": ["cọc nhọn", "cọc Bạch Đằng", "bãi cọc"],
+    "type": "event",
+    "shortDesc": "Kế sách thiên tài của Ngô Quyền: cắm cọc gỗ đầu nhọn bịt sắt dưới lòng sông.",
+    "description": "Kế cọc gỗ là chiến thuật quân sự của Ngô Quyền tại trận Bạch Đằng năm 938. Ông cho đóng hàng ngàn cọc gỗ đầu nhọn bịt sắt xuống lòng sông, ngụy trang kín đáo. Khi thủy triều lên, quân Nam Hán tiến vào, thủy triều rút nhanh, thuyền địch mắc cọc và bị quân ta tiêu diệt.",
+    "imageUrl": null
+  },
+  {
+    "id": "dinh-bo-linh",
+    "keyword": "Đinh Bộ Lĩnh",
+    "aliases": ["vua Đinh", "Đinh Tiên Hoàng", "trẻ chăn trâu"],
+    "type": "person",
+    "shortDesc": "Người dẹp loạn 12 sứ quân, thống nhất đất nước, lập nhà Đinh.",
+    "description": "Đinh Bộ Lĩnh (924–979) — xuất thân nghèo khó, từng là trẻ chăn trâu. Ông dẹp loạn 12 sứ quân (944-968), thống nhất đất nước, lên ngôi hoàng đế năm 968, đặt tên nước là Đại Cồ Việt, đóng đô tại Hoa Lư (Ninh Bình). Đây là nhà nước phong kiến trung ương tập quyền đầu tiên của Việt Nam.",
+    "imageUrl": null
+  },
+  {
+    "id": "hoa-lu",
+    "keyword": "Hoa Lư",
+    "aliases": ["kinh đô Hoa Lư", "cố đô Hoa Lư"],
+    "type": "location",
+    "shortDesc": "Kinh đô đầu tiên của nước Đại Cồ Việt, nay là Ninh Bình.",
+    "description": "Hoa Lư (nay thuộc Ninh Bình) là kinh đô của Đại Cồ Việt và Đại Việt qua các triều Đinh, Tiền Lê, và đầu triều Lý. Được xây dựng trong vùng núi đá hiểm trở, Hoa Lư đóng vai trò chiến lược phòng thủ. Năm 1010, vua Lý Công Uẩn dời đô ra Thăng Long.",
+    "imageUrl": null
+  },
+  {
+    "id": "le-hoan",
+    "keyword": "Lê Hoàn",
+    "aliases": ["Lê Đại Hành", "vua Lê Đại Hành"],
+    "type": "person",
+    "shortDesc": "Vị vua sáng lập nhà Tiền Lê, đánh bại quân Tống năm 981.",
+    "description": "Lê Hoàn (941–1005) — người Ái Châu (Thanh Hoá), vốn là tướng của Đinh Bộ Lĩnh. Sau khi Đinh Tiên Hoàng bị ám sát, ông lên làm vua. Năm 981, ông chỉ huy quân dân đánh tan quân Tống xâm lược trên sông Bạch Đằng và Chi Lăng. Ông cũng phát triển nông nghiệp và thương mại đất nước.",
+    "imageUrl": null
+  },
+  {
+    "id": "tay-son",
+    "keyword": "Tây Sơn",
+    "aliases": ["nhà Tây Sơn", "phong trào Tây Sơn"],
+    "type": "event",
+    "shortDesc": "Phong trào nông dân khởi nghĩa lớn nhất thế kỷ 18, thống nhất đất nước.",
+    "description": "Phong trào Tây Sơn (1771-1802) do ba anh em Nguyễn Nhạc, Nguyễn Huệ, Nguyễn Lữ lãnh đạo. Xuất phát từ vùng đất Tây Sơn (Bình Định), phong trào nhanh chóng lật đổ chúa Nguyễn ở miền Nam (1777), chúa Trịnh ở miền Bắc (1786), thống nhất đất nước, và đánh bại quân Thanh (1789).",
+    "imageUrl": null
+  },
+  {
+    "id": "nguyen-hue",
+    "keyword": "Nguyễn Huệ",
+    "aliases": ["vua Quang Trung", "Bắc Bình Vương Nguyễn Huệ"],
+    "type": "person",
+    "shortDesc": "Thiên tài quân sự, anh hùng dân tộc, người đánh tan 29 vạn quân Thanh.",
+    "description": "Nguyễn Huệ (1753–1792) là người anh hùng kiệt xuất của dân tộc. Ông chỉ huy nhiều trận đánh thần tốc, nổi bật là đại thắng quân Thanh mùa xuân 1789. Lên ngôi hoàng đế lấy hiệu là Quang Trung, ông tiến hành nhiều cải cách tiến bộ: dùng chữ Nôm, phát triển giáo dục, thương mại.",
+    "imageUrl": null
+  },
+  {
+    "id": "my-chau",
+    "keyword": "Mỵ Châu",
+    "aliases": ["công chúa Mỵ Châu"],
+    "type": "person",
+    "shortDesc": "Con gái An Dương Vương, nhân vật bi kịch trong truyền thuyết nỏ thần.",
+    "description": "Mỵ Châu là con gái vua An Dương Vương, lấy Trọng Thuỷ — con trai kẻ thù Triệu Đà. Vì tin tưởng chồng, nàng để lộ bí mật nỏ thần, dẫn đến cảnh nước mất nhà tan. Truyền thuyết kể rằng khi chết, máu nàng chảy xuống biển, trai ăn vào tạo ngọc trai — hình ảnh biểu tượng cho tình yêu bi kịch và bài học về sự cảnh giác.",
+    "imageUrl": null
+  },
+  {
+    "id": "van-mieu",
+    "keyword": "Văn Miếu",
+    "aliases": ["Văn Miếu Quốc Tử Giám", "Quốc Tử Giám"],
+    "type": "location",
+    "shortDesc": "Trường đại học đầu tiên của Việt Nam, xây dựng năm 1070 thời Lý.",
+    "description": "Văn Miếu - Quốc Tử Giám được vua Lý Thánh Tông xây năm 1070 để thờ Khổng Tử và các bậc hiền triết. Năm 1076, Quốc Tử Giám được lập ra như trường đại học đầu tiên của Việt Nam. Nơi đây lưu giữ 82 tấm bia đá khắc tên 1.307 tiến sĩ qua các kỳ thi từ 1442 đến 1779.",
+    "imageUrl": null
+  },
+  {
+    "id": "ly-thuong-kiet",
+    "keyword": "Lý Thường Kiệt",
+    "aliases": ["tướng Lý Thường Kiệt"],
+    "type": "person",
+    "shortDesc": "Danh tướng nhà Lý, chủ trương đánh vào đất Tống, tác giả bài thơ thần.",
+    "description": "Lý Thường Kiệt (1019–1105) là danh tướng nhà Lý nổi tiếng với chiến lược 'tiên phát chế nhân'. Năm 1075, ông chủ động đưa quân sang đánh phá căn cứ của nhà Tống ở Quảng Đông, Quảng Tây để phá vỡ âm mưu xâm lược. Năm 1077, ông đánh bại quân Tống tại sông Như Nguyệt và được cho là tác giả bài thơ 'Nam quốc sơn hà'.",
+    "imageUrl": null
+  },
+  {
+    "id": "chi-lang",
+    "keyword": "Chi Lăng",
+    "aliases": ["ải Chi Lăng", "đèo Chi Lăng"],
+    "type": "location",
+    "shortDesc": "Vị trí chiến lược tại Lạng Sơn, nơi xảy ra nhiều trận đánh lịch sử.",
+    "description": "Ải Chi Lăng thuộc tỉnh Lạng Sơn, là yết hầu trên con đường thiết yếu từ Trung Quốc vào Việt Nam. Nơi đây gắn với nhiều chiến thắng lịch sử, đặc biệt là trận nghĩa quân Lam Sơn đánh tan 10 vạn viện binh nhà Minh năm 1427 do Liễu Thăng chỉ huy, giết chết chủ tướng ngay tại trận.",
+    "imageUrl": null
+  }
+]

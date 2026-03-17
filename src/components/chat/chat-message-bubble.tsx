@@ -5,17 +5,21 @@ import type { ChatMessage, ChatCharacter } from "@/services/chat.service";
 import { SpeakerHighIcon, SpeakerXIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
+import { HighlightedText } from "./HighlightedText";
+import type { KeywordData } from "@/data/keywords";
 
 interface MessageBubbleProps {
   message: ChatMessage;
   character: ChatCharacter;
   speak?: (text: string) => void;
+  onKeywordSelect?: (kw: KeywordData) => void;
 }
 
 export function MessageBubble({
   message,
   character,
   speak,
+  onKeywordSelect,
 }: MessageBubbleProps) {
   const isUser = message.role === "USER";
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -96,7 +100,14 @@ export function MessageBubble({
             borderColor: "var(--border-strong)",
           }}
         >
-          {message.content}
+          {onKeywordSelect ? (
+            <HighlightedText
+              text={message.content}
+              onKeywordSelect={onKeywordSelect}
+            />
+          ) : (
+            message.content
+          )}
 
           <button
             onClick={() => {

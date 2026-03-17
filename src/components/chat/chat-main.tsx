@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PhoneIcon, ScrollIcon } from "@phosphor-icons/react"; // ← thêm PhoneIcon
 import type {
   ChatCharacter,
@@ -16,7 +16,9 @@ import {
 } from "@/features/chat/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
-import { VoiceChatModal } from "./VoiceChatModal"; // ← thêm import
+import { VoiceChatModal } from "./VoiceChatModal";
+import { KeywordDetailPanel } from "./KeywordDetailPanel";
+import type { KeywordData } from "@/data/keywords";
 
 interface ChatMainProps {
   character: ChatCharacter;
@@ -36,7 +38,15 @@ export function ChatMain({
     [],
   );
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
-  const [isVoiceOpen, setIsVoiceOpen] = useState(false); // ← thêm state
+  const [isVoiceOpen, setIsVoiceOpen] = useState(false);
+  const [selectedKeyword, setSelectedKeyword] = useState<KeywordData | null>(null);
+
+  const handleKeywordSelect = useCallback((kw: KeywordData) => {
+    setSelectedKeyword(kw);
+  }, []);
+  const handleKeywordClose = useCallback(() => {
+    setSelectedKeyword(null);
+  }, []);
 
   const { data, isLoading } = useChatMessages(sessionId);
   const sendMessage = useSendMessage();
@@ -149,7 +159,7 @@ export function ChatMain({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+    <div className="relative flex-1 flex flex-col min-w-0 h-full overflow-hidden">
       {/* Header */}
       <div
         className="px-6 py-4 border-b flex items-center gap-3 shrink-0"
@@ -245,6 +255,9 @@ export function ChatMain({
                 message={msg}
                 character={character}
                 speak={speak}
+                onKeywordSelect={
+                  msg.role === "ASSISTANT" ? handleKeywordSelect : undefined
+                }
               />
             ))}
             {sendMessage.isPending && <TypingIndicator character={character} />}
@@ -289,6 +302,12 @@ export function ChatMain({
           onClose={() => setIsVoiceOpen(false)}
         />
       )}
+
+      {/* ── Historical Keyword Panel ── */}
+      <KeywordDetailPanel
+        keyword={selectedKeyword}
+        onClose={handleKeywordClose}
+      />
     </div>
   );
 }
