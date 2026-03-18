@@ -95,10 +95,10 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col"
         style={{ borderColor: "var(--card-light-border)" }}>
         <DialogHeader>
-          <DialogTitle style={{ color: "var(--content-heading)" }}>
-            📋 Dán văn bản — Bulk import câu hỏi
+          <DialogTitle style={{ color: "var(--text-on-dark)" }}>
+             Dán văn bản — Bulk import câu hỏi
           </DialogTitle>
-          <DialogDescription style={{ color: "var(--content-muted)" }}>
+          <DialogDescription style={{ color: "var(--content-text)" }}>
             Paste nhiều câu hỏi cùng lúc theo format dưới đây. Phân cách câu hỏi bằng{" "}
             <code className="px-1 py-0.5 rounded text-xs" style={{ background: "rgba(255,255,255,0.08)" }}>---</code>{" "}
             hoặc dòng trống.
@@ -110,10 +110,10 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
           style={{ borderColor: "var(--card-light-border)" }}>
           <summary className="px-3 py-2 cursor-pointer font-semibold select-none"
             style={{ color: "var(--content-subtle)", background: "rgba(27,38,50,0.06)" }}>
-            📖 Xem format mẫu
+             Xem format mẫu
           </summary>
           <pre className="px-3 py-3 overflow-x-auto leading-relaxed"
-            style={{ color: "var(--content-muted)", background: "rgba(27,38,50,0.03)", fontFamily: "monospace" }}>
+            style={{ color: "var(--content-subtle)", background: "rgba(27,38,50,0.03)", fontFamily: "monospace" }}>
             {`Nội dung câu hỏi?\nA. Đáp án A\nB. Đáp án B\nC. Đáp án C\nD. Đáp án D\n*B          ← đáp án đúng (A/B/C/D)\n// Giải thích (tuỳ chọn)\n\n---\n\nCâu hỏi tiếp theo?\n...`}
           </pre>
         </details>
@@ -135,7 +135,7 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
             onChange={(e) => { setText(e.target.value); setError(null); setPreviewCount(null); }}
             placeholder={"Dán câu hỏi vào đây...\n\nVí dụ:\nLinh Hợp Quốc thành lập năm nào?\nA. 1944\nB. 1945\nC. 1946\nD. 1947\n*B"}
             className="min-h-[260px] font-mono text-xs resize-y"
-            style={{ color: "var(--content-text)" }}
+            style={{ color: "var(--text-on-dark)" }}
           />
         </div>
 
