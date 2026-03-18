@@ -65,12 +65,12 @@ export function QuizResultPage({
 
   const tier =
     percentage >= 90
-      ? { label: "Xuất sắc", color: "#f59e0b", emoji: "🏆" }
+      ? { label: "Xuất sắc", color: "#f59e0b" }
       : percentage >= 70
-        ? { label: "Khá giỏi", color: "#10b981", emoji: "🌟" }
+        ? { label: "Khá giỏi", color: "#10b981" }
         : percentage >= 50
-          ? { label: "Trung bình", color: "#3b82f6", emoji: "📚" }
-          : { label: "Cần cố gắng hơn", color: "#ef4444", emoji: "💪" };
+          ? { label: "Trung bình", color: "#3b82f6"}
+          : { label: "Cần cố gắng hơn", color: "#ef4444"};
 
   // Xác định câu đúng/sai từ submitResult (API) hoặc tính local
   function isCorrect(q: QuizQuestion, idx: number): boolean {
@@ -98,7 +98,6 @@ export function QuizResultPage({
           }}
         />
         <div className="relative z-10">
-          <div className="text-5xl mb-3">{tier.emoji}</div>
           <p
             className="text-sm font-medium mb-2"
             style={{ color: "rgba(255,255,255,0.6)" }}

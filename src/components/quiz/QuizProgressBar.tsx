@@ -89,15 +89,15 @@ export function QuizProgressBar({
             style={
               isUrgent
                 ? {
-                    background: "rgba(239,68,68,0.1)",
-                    color: "#ef4444",
-                    border: "1px solid rgba(239,68,68,0.2)",
-                  }
+                  background: "rgba(239,68,68,0.1)",
+                  color: "#ef4444",
+                  border: "1px solid rgba(239,68,68,0.2)",
+                }
                 : {
-                    background: "var(--card-light-bg)",
-                    color: "var(--content-heading)",
-                    border: "1px solid var(--card-light-border)",
-                  }
+                  background: "var(--card-light-bg)",
+                  color: "var(--content-heading)",
+                  border: "1px solid var(--card-light-border)",
+                }
             }
           >
             <Clock size={13} className={isUrgent ? "animate-pulse" : ""} />
