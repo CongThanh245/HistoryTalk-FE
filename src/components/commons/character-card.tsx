@@ -124,7 +124,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       />
 
       {/* Ảnh */}
-      <div className="relative w-full h-48 overflow-hidden">
+      <div className="relative w-full h-85 overflow-hidden">
         <Image
           src={character.imageUrl || "/card.jpg"}
           alt={character.name}

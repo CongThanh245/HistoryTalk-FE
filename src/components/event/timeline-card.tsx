@@ -170,8 +170,8 @@ export function TimelineStripCard({
       <Card
         imageSrc={event.imageUrl ?? cat.image}
         imageAlt={event.title}
-        imageHeight={260}
-        imageWidth={320}
+        imageHeight={300}
+        imageWidth={500}
         imageSizes="(max-width: 768px) 100vw, 900px"
         badge={{ label: cat.label, color: "#fff", bg: `${cat.color}cc` }}
         accentColor={cat.color}

@@ -137,7 +137,7 @@ export function QuizQuestionCard({
                   : hasAnswered && optIndex === selectedAnswer
                     ? { background: "#ef4444", color: "white" }
                     : {
-                        background: "var(--bg-surface)",
+                        background: "var(--card-light-bg)",
                         color: "var(--content-muted)",
                       }
               }

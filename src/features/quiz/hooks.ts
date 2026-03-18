@@ -34,6 +34,7 @@ export function useMyQuizResults(params?: GetQuizResultsParams) {
   return useQuery({
     queryKey: queryKeys.quizzes.myResults,
     queryFn: () => quizService.getMyResults(params),
+        staleTime: 0, 
   });
 }
 

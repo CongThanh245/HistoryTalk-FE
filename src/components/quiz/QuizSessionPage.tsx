@@ -1,7 +1,6 @@
 "use client";
 
-// components/quiz/QuizSessionPage.tsx — v2
-// Thêm prop useTimer
+// components/quiz/QuizSessionPage.tsx — v3
 
 import React, { useState, useCallback, useRef } from "react";
 import { CheckCircle2, Send } from "lucide-react";
@@ -14,8 +13,10 @@ interface QuizSessionPageProps {
   questions: QuizQuestion[];
   onSubmit: (answers: Record<string, number>, durationSeconds: number) => void;
   onBack: () => void;
+  onGoHome: () => void; // ← mới
+  onRetry: () => void; // ← mới
   startTime: number;
-  useTimer: boolean; // ← thêm prop này
+  useTimer: boolean;
 }
 
 export function QuizSessionPage({
@@ -23,14 +24,18 @@ export function QuizSessionPage({
   questions,
   onSubmit,
   onBack,
+  onGoHome,
+  onRetry,
   startTime,
   useTimer,
 }: QuizSessionPageProps) {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const answeredCount = Object.keys(answers).length;
   const allAnswered = answeredCount === questions.length;
+  const questionIds = questions.map((q) => q.questionId);
 
   const handleAnswer = useCallback(
     (questionId: string, answerIndex: number) => {
@@ -57,6 +62,19 @@ export function QuizSessionPage({
     [questions],
   );
 
+  // ← Scroll đến câu theo index từ dropdown panel
+  const scrollToQuestion = useCallback(
+    (index: number) => {
+      const qId = questions[index]?.questionId;
+      if (!qId) return;
+      questionRefs.current[qId]?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    },
+    [questions],
+  );
+
   const handleSubmit = () => {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
     onSubmit(answers, elapsed);
@@ -75,13 +93,18 @@ export function QuizSessionPage({
         quizTitle={quiz.title}
         totalQuestions={questions.length}
         answeredCount={answeredCount}
+        answers={answers}
+        questionIds={questionIds}
         durationSeconds={quiz.durationSeconds}
         useTimer={useTimer}
         onTimeUp={handleTimeUp}
         onBack={onBack}
+        onGoHome={onGoHome}
+        onRetry={onRetry}
+        scrollToQuestion={scrollToQuestion}
       />
 
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
           {questions.map((q, idx) => (
             <div

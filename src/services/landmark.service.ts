@@ -72,7 +72,7 @@ export const MOCK_LANDMARKS: Landmark[] = [
     contextIds: ["ctx-bach-dang-938", "ctx-bach-dang-1288"],
     characterIds: ["char-ngo-quyen", "char-tran-hung-dao"],
     imageUrl:
-      "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=600",
+      "https://redsvn.net/wp-content/uploads/2020/02/Tran-bach-Dang-01.jpg",
   },
   {
     landmarkId: "lm-002",
@@ -87,7 +87,7 @@ export const MOCK_LANDMARKS: Landmark[] = [
     contextIds: ["ctx-au-lac", "ctx-an-duong-vuong"],
     characterIds: ["char-an-duong-vuong", "char-my-chau"],
     imageUrl:
-      "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=600",
+      "https://statics.vinpearl.com/Den-co-loa-1_1679652153.jpg",
   },
   {
     landmarkId: "lm-003",
@@ -102,7 +102,7 @@ export const MOCK_LANDMARKS: Landmark[] = [
     contextIds: ["ctx-dien-bien-phu-1954"],
     characterIds: ["char-vo-nguyen-giap"],
     imageUrl:
-      "https://images.unsplash.com/photo-1569974507005-6dc61f97fb5c?w=600",
+      "https://cloudcdnvod.tek4tv.vn/MAM/attach/upload/21042024003110/96d363d2-f11e-4656-be8b-c0d11d80d0f7-404.webp",
   },
   {
     landmarkId: "lm-004",
@@ -117,7 +117,7 @@ export const MOCK_LANDMARKS: Landmark[] = [
     contextIds: ["ctx-thang-long", "ctx-ly-thai-to"],
     characterIds: ["char-ly-thai-to", "char-tran-hung-dao"],
     imageUrl:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600",
+      "https://statics.vinpearl.com/dien-kinh-thien-1_1678893283.jpg",
   },
   {
     landmarkId: "lm-005",
@@ -131,7 +131,7 @@ export const MOCK_LANDMARKS: Landmark[] = [
     province: "Thanh Hóa",
     contextIds: ["ctx-lam-son", "ctx-le-loi"],
     characterIds: ["char-le-loi", "char-nguyen-trai"],
-    imageUrl: "https://images.unsplash.com/photo-1555400082-595b6e60ce6b?w=600",
+    imageUrl: "https://namevgo.wordpress.com/wp-content/uploads/2019/12/khoi-nghia-lam-son.jpg",
   },
 ];
 

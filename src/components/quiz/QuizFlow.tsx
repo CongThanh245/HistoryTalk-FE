@@ -14,11 +14,13 @@ import {
   useStartQuiz,
   useSubmitQuiz,
 } from "@/features/quiz/hooks";
-
+import { queryKeys } from "@/shared/query-key";
 import { QuizDetailPage } from "./QuizDetailPage";
 import { QuizSessionPage } from "./QuizSessionPage";
 import { QuizResultPage } from "./QuizResultPage";
 import { QuizSidebar } from "./QuizSidebar";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation"; // thêm nếu chưa có
 
 type QuizPhase = "detail" | "session" | "result";
 
@@ -51,7 +53,10 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
 
   const startQuizMutation = useStartQuiz();
   const submitQuizMutation = useSubmitQuiz();
-
+  const router = useRouter();
+  const handleGoHome = useCallback(() => {
+    router.push("/quiz");
+  }, [router]);
   const handleStart = useCallback(
     async (withTimer: boolean) => {
       setUseTimer(withTimer);
@@ -68,6 +73,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
     },
     [currentQuiz.quizId, startQuizMutation],
   );
+  const queryClient = useQueryClient();
 
   const handleSubmit = useCallback(
     async (finalAnswers: Record<string, number>, duration: number) => {
@@ -75,7 +81,6 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
       setElapsedSeconds(duration);
 
       try {
-        // POST /quizzes/submit
         const payload: SubmitQuizPayload = {
           sessionId,
           answers: Object.entries(finalAnswers).map(
@@ -88,13 +93,17 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
         };
         const result = await submitQuizMutation.mutateAsync(payload);
         setSubmitResult(result);
+
+        // ← Thêm dòng này sau khi submit thành công
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.quizzes.myResults,
+        });
       } catch (err) {
         console.error("Lỗi nộp bài:", err);
-        // Vẫn chuyển sang result page dù có lỗi
       }
       setPhase("result");
     },
-    [sessionId, submitQuizMutation],
+    [sessionId, submitQuizMutation, queryClient], // ← thêm queryClient vào deps
   );
 
   const handleRetry = useCallback(() => {
@@ -188,6 +197,8 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
               questions={questions}
               onSubmit={handleSubmit}
               onBack={handleRetry}
+              onGoHome={handleGoHome} // ← thêm
+              onRetry={handleRetry} // ← thêm
               startTime={startTime}
               useTimer={useTimer}
             />

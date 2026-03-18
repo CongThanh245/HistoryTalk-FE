@@ -35,14 +35,19 @@ export function QuizSidebar({
 
   // Group by grade
   const grouped = filtered.reduce<Record<number, QuizSetV2[]>>((acc, q) => {
-    if (!q.grade) return acc; // ← skip
-    if (!acc[q.grade]) acc[q.grade] = [];
-    acc[q.grade].push(q);
+    const key = q.grade || 0;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(q);
     return acc;
   }, {});
 
   const grades = [12, 11, 10] as const;
-  const gradeColors = { 10: "#3b82f6", 11: "#8b5cf6", 12: "#f97316" };
+  const gradeColors: Record<number, string> = {
+    0: "#6b7280",
+    10: "#3b82f6",
+    11: "#8b5cf6",
+    12: "#f97316",
+  };
 
   return (
     <div
@@ -84,14 +89,14 @@ export function QuizSidebar({
             border: "1px solid var(--card-light-border)",
           }}
         >
-          <Search size={13} style={{ color: "var(--content-muted)" }} />
+          <Search size={13} style={{ color: "var(--text-on-dark)" }} />
           <input
             type="text"
             placeholder="Tìm đề..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent text-xs outline-none"
-            style={{ color: "var(--content-heading)" }}
+            style={{ color: "var(--text-on-dark)" }}
           />
         </div>
 
@@ -148,7 +153,7 @@ export function QuizSidebar({
           </div>
         ) : (
           // Grouped by grade
-          grades.map((grade) => {
+          [0, ...grades].map((grade) => {
             const items = grouped[grade];
             if (!items?.length) return null;
             return (
@@ -162,7 +167,7 @@ export function QuizSidebar({
                     className="text-xs font-bold"
                     style={{ color: gradeColors[grade] }}
                   >
-                    Lịch sử {grade}
+                    {grade === 0 ? "Tổng hợp" : `Lịch sử ${grade}`}
                   </span>
                   <span
                     className="text-xs"
