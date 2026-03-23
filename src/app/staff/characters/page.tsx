@@ -301,7 +301,7 @@ export default function StaffCharactersPage() {
               }}
               style={{
                 background:
-                  "linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-teal) 100%)",
+                  "var(--accent-blue)",
                 color: "#fff",
               }}
             >
@@ -321,10 +321,10 @@ export default function StaffCharactersPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent
           className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto"
-          style={{ borderColor: "var(--card-light-border)" }}
+          style={{ background: "var(--bg-content)", borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
         >
           <DialogHeader>
-            <DialogTitle style={{ color: "white" }}>
+            <DialogTitle style={{ color: "var(--content-heading)" }}>
               {mode === "create" ? "Add Character" : "Edit Character"}
             </DialogTitle>
             <DialogDescription style={{ color: "var(--content-muted)" }}>
@@ -428,7 +428,7 @@ export default function StaffCharactersPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
             <Button
@@ -443,17 +443,17 @@ export default function StaffCharactersPage() {
 
       {/* Delete */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent style={{ backgroundColor: "#1a1f2e", borderColor: "rgba(255,255,255,0.1)" }}>
+        <AlertDialogContent style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
           <AlertDialogHeader>
-            <AlertDialogTitle style={{ color: "#FFFFFF" }}> {/* Màu trắng cho tiêu đề */}
+            <AlertDialogTitle style={{ color: "var(--content-heading)" }}>
               Xóa nhân vật?
             </AlertDialogTitle>
-            <AlertDialogDescription style={{ color: "#9ca3af" }}> {/* Màu xám nhạt cho mô tả */}
+            <AlertDialogDescription style={{ color: "var(--content-muted)" }}>
               Thao tác này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel style={{ color: "#fbbf24", backgroundColor: "transparent", border: "1px solid #374151" }}>
+            <AlertDialogCancel className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]">
               Hủy
             </AlertDialogCancel>
             <AlertDialogAction

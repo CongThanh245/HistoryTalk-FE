@@ -328,11 +328,11 @@ export default function StaffContextsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent
           className="w-[95vw] sm:max-w-none max-w-none p-0 overflow-hidden"
-          style={{ borderColor: "var(--card-light-border)" }}
+          style={{ background: "var(--bg-content)", borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
         >
           {/* Header */}
           <div className="px-8 pt-7 pb-5 border-b" style={{ borderColor: "var(--card-light-border)" }}>
-            <DialogTitle style={{ color: "white", fontSize: 18 }}>
+            <DialogTitle style={{ color: "var(--content-heading)", fontSize: 18 }}>
               {mode === "create" ? "Add Historical Context" : "Edit Historical Context"}
             </DialogTitle>
             <DialogDescription style={{ color: "var(--content-muted)", marginTop: 4 }}>
@@ -345,7 +345,7 @@ export default function StaffContextsPage() {
 
             {/* ── Left column: content fields ── */}
             <div className="px-8 py-6 space-y-5">
-              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-subtle)" }}>
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
                 Nội dung
               </p>
 
@@ -383,7 +383,7 @@ export default function StaffContextsPage() {
 
             {/* ── Right column: meta fields ── */}
             <div className="px-8 py-6 space-y-5 border-t lg:border-t-0 lg:border-l" style={{ borderColor: "var(--card-light-border)" }}>
-              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-subtle)" }}>
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
                 Phân loại & Thời gian
               </p>
 
@@ -463,7 +463,7 @@ export default function StaffContextsPage() {
 
               {/* Media URLs */}
               <div className="space-y-3 pt-1">
-                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-subtle)" }}>
+                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
                   Media
                 </p>
                 <div className="grid gap-2">
@@ -488,7 +488,7 @@ export default function StaffContextsPage() {
 
           {/* Footer */}
           <div className="px-8 py-4 border-t flex justify-end gap-2" style={{ borderColor: "var(--card-light-border)" }}>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
             <Button
@@ -503,17 +503,17 @@ export default function StaffContextsPage() {
 
       {/* Delete confirm */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent style={{ borderColor: "var(--card-light-border)" }}>
+        <AlertDialogContent style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
           <AlertDialogHeader>
-            <AlertDialogTitle style={{ color: "white" }}>
+            <AlertDialogTitle style={{ color: "var(--content-heading)" }}>
               Xóa bối cảnh lịch sử?
             </AlertDialogTitle>
-            <AlertDialogDescription style={{ color: "lightgray" }}>
+            <AlertDialogDescription style={{ color: "var(--content-muted)" }}>
               Thao tác này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogCancel className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]">Hủy</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               onClick={() => {
