@@ -307,7 +307,7 @@ export default function StaffContextsPage() {
               }}
               style={{
                 background:
-                  "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+                  "var(--accent-gold)",
                 color: "var(--bg-deep)",
                 boxShadow: "0 0 14px var(--accent-gold-glow)",
               }}

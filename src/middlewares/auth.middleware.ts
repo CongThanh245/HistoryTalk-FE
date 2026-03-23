@@ -39,8 +39,8 @@ export function authMiddleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // STAFF/ADMIN cố vào trang customer → redirect về /staff
-  if (token && isStaffRole(role) && isCustomerRoute) {
+  // Thắt chặt: STAFF/ADMIN chỉ được ở trong /staff, nếu đi lạc ra ngoài -> redirect về /staff
+  if (token && isStaffRole(role) && !isStaffRoute) {
     return NextResponse.redirect(new URL("/staff", request.url));
   }
 
