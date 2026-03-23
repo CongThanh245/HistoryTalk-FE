@@ -20,8 +20,12 @@ function NavItem({
 }) {
   const pathname = usePathname();
   const Icon = item.icon;
-  const isActive =
-    item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+  const isActive = item.exact
+    ? pathname === item.href
+    : item.href === "/"
+    ? pathname === "/"
+    : pathname.startsWith(item.href);
+
 
   const linkEl = (
     <Link

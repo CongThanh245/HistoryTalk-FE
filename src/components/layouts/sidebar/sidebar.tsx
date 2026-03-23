@@ -9,7 +9,7 @@ import SidebarFooter from "./sidebar-footer";
 import { SidebarSection } from "@/routers/sidebar";
 import { useSidebar } from "./sidebar-context";
 
-export default function Sidebar({ sections }: { sections: SidebarSection[] }) {
+export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }: { sections: SidebarSection[]; showUpgrade?: boolean; logoHref?: string }) {
   const [isPinned, setIsPinned] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -77,9 +77,10 @@ export default function Sidebar({ sections }: { sections: SidebarSection[] }) {
         onTogglePin={togglePin}
         onClose={closeMobileSidebar}
         isMobileDrawer={isMobileOpen}
+        logoHref={logoHref}
       />
       <SidebarNav isExpanded={isExpanded} sections={sections} />
-      <SidebarFooter isExpanded={isExpanded} />
+      <SidebarFooter isExpanded={isExpanded} showUpgrade={showUpgrade} />
     </aside>
   );
 

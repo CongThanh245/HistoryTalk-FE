@@ -5,9 +5,12 @@ import { cn } from "@/lib/utils/cn";
 
 interface SidebarFooterProps {
   isExpanded: boolean;
+  showUpgrade?: boolean;
 }
 
-export default function SidebarFooter({ isExpanded }: SidebarFooterProps) {
+export default function SidebarFooter({ isExpanded, showUpgrade = true }: SidebarFooterProps) {
+  if (!showUpgrade) return null;
+
   return (
     <div
       className="relative z-10 shrink-0 px-2 py-3 border-t"

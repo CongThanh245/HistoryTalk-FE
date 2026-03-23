@@ -13,6 +13,8 @@ interface SidebarHeaderProps {
   onClose?: () => void;
   /** True when rendered inside the mobile drawer */
   isMobileDrawer?: boolean;
+  /** URL khi click vào logo, mặc định "/" */
+  logoHref?: string;
 }
 
 export default function SidebarHeader({
@@ -21,6 +23,7 @@ export default function SidebarHeader({
   onTogglePin,
   onClose,
   isMobileDrawer = false,
+  logoHref = "/",
 }: SidebarHeaderProps) {
   return (
     <div
@@ -32,7 +35,7 @@ export default function SidebarHeader({
     >
       {/* Logo + Brand name */}
       <Link
-        href="/"
+        href={logoHref}
         className={cn(
           "flex items-center outline-none transition-opacity hover:opacity-80",
           isExpanded ? "flex-1 gap-3 overflow-hidden" : "",

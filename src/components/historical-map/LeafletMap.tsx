@@ -54,13 +54,16 @@ export function LeafletMap({
         });
 
         L.tileLayer(
-          "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-          { subdomains: "abcd", maxZoom: 19 },
+          "https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}",
+          {
+            attribution: "&copy; Google Maps",
+            maxZoom: 20,
+          },
         ).addTo(map);
 
         const vietnamBounds = L.latLngBounds(
-          L.latLng(8.4, 102.0),
-          L.latLng(23.5, 110.0),
+          L.latLng(6.0, 102.0),
+          L.latLng(30, 115.0),
         );
         map.setMaxBounds(vietnamBounds.pad(0.5));
         map.setMinZoom(5);

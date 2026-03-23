@@ -26,9 +26,6 @@ export function StaffShell({
       <div className="space-y-1 pt-6">
         {" "}
         {/* Tăng pt-2 lên pt-6 cho thoáng phía trên */}
-        <p className="text-sm" style={{ color: "var(--content-subtle)" }}>
-          Staff dashboard
-        </p>
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center border"

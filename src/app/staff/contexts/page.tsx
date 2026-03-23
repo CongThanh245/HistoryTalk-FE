@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon  , TrashIcon } from "@phosphor-icons/react";
+import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon } from "@phosphor-icons/react";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
@@ -218,7 +218,7 @@ export default function StaffContextsPage() {
               }}
               style={{ color: "var(--header-text-muted)" }}
             >
-              <PencilIcon  className="h-4 w-4" />
+              <PencilIcon className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
@@ -324,161 +324,180 @@ export default function StaffContextsPage() {
         />
       </section>
 
-      {/* Dialog create/edit */}
+      {/* Dialog create/edit — wide 2-column layout */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent
-          className="sm:max-w-[580px] max-h-[90vh] overflow-y-auto"
+          className="w-[95vw] sm:max-w-none max-w-none p-0 overflow-hidden"
           style={{ borderColor: "var(--card-light-border)" }}
         >
-          <DialogHeader>
-            <DialogTitle style={{ color: "white" }}>
-              {mode === "create"
-                ? "Add Historical Context"
-                : "Edit Historical Context"}
+          {/* Header */}
+          <div className="px-8 pt-7 pb-5 border-b" style={{ borderColor: "var(--card-light-border)" }}>
+            <DialogTitle style={{ color: "white", fontSize: 18 }}>
+              {mode === "create" ? "Add Historical Context" : "Edit Historical Context"}
             </DialogTitle>
-            <DialogDescription style={{ color: "var(--content-muted)" }}>
+            <DialogDescription style={{ color: "var(--content-muted)", marginTop: 4 }}>
               Thông tin bối cảnh lịch sử hiển thị cho người dùng.
             </DialogDescription>
-          </DialogHeader>
+          </div>
 
-          <div className="grid gap-4">
-            {/* Name */}
-            <div className="grid gap-2">
-              <Label>Tên sự kiện *</Label>
-              <Input
-                value={draft.name}
-                onChange={(e) => set("name")(e.target.value)}
-                placeholder="VD: Trận Bạch Đằng"
-              />
-            </div>
+          {/* Two-column body */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 overflow-y-auto max-h-[calc(100vh-140px)]">
 
-            {/* Description */}
-            <div className="grid gap-2">
-              <Label>Mô tả *</Label>
-              <Textarea
-                value={draft.description}
-                onChange={(e) => set("description")(e.target.value)}
-                placeholder="Bối cảnh lịch sử..."
-                className="min-h-[90px]"
-              />
-            </div>
+            {/* ── Left column: content fields ── */}
+            <div className="px-8 py-6 space-y-5">
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-subtle)" }}>
+                Nội dung
+              </p>
 
-            {/* Era + Category */}
-            <div className="grid grid-cols-2 gap-3">
+              {/* Name */}
               <div className="grid gap-2">
-                <Label>Thời đại *</Label>
-                <Select value={draft.era} onValueChange={set("era")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn thời đại" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ANCIENT">Cổ đại</SelectItem>
-                    <SelectItem value="MEDIEVAL">Trung đại</SelectItem>
-                    <SelectItem value="MODERN">Cận đại</SelectItem>
-                    <SelectItem value="CONTEMPORARY">Hiện đại</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label>Danh mục *</Label>
-                <Select value={draft.category} onValueChange={set("category")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn danh mục" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="WAR">Chiến tranh</SelectItem>
-                    <SelectItem value="POLITICS">Chính trị</SelectItem>
-                    <SelectItem value="CULTURE">Văn hoá</SelectItem>
-                    <SelectItem value="SCIENCE">Khoa học</SelectItem>
-                    <SelectItem value="RELIGION">Tôn giáo</SelectItem>
-                    <SelectItem value="OTHER">Khác</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Year + startYear + endYear */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="grid gap-2">
-                <Label>Năm *</Label>
+                <Label>Tên sự kiện *</Label>
                 <Input
-                  type="number"
-                  value={draft.year}
-                  onChange={(e) => set("year")(e.target.value)}
-                  placeholder="VD: 938"
+                  value={draft.name}
+                  onChange={(e) => set("name")(e.target.value)}
+                  placeholder="VD: Trận Bạch Đằng"
                 />
               </div>
+
+              {/* Description */}
               <div className="grid gap-2">
-                <Label>Năm bắt đầu</Label>
-                <Input
-                  type="number"
-                  value={draft.startYear}
-                  onChange={(e) => set("startYear")(e.target.value)}
-                  placeholder="VD: 938"
+                <Label>Mô tả *</Label>
+                <Textarea
+                  value={draft.description}
+                  onChange={(e) => set("description")(e.target.value)}
+                  placeholder="Bối cảnh lịch sử..."
+                  className="min-h-[140px] resize-none"
                 />
               </div>
+
+              {/* Location */}
               <div className="grid gap-2">
-                <Label>Năm kết thúc</Label>
+                <Label>Địa điểm</Label>
                 <Input
-                  type="number"
-                  value={draft.endYear}
-                  onChange={(e) => set("endYear")(e.target.value)}
-                  placeholder="VD: 939"
+                  value={draft.location}
+                  onChange={(e) => set("location")(e.target.value)}
+                  placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
                 />
               </div>
             </div>
 
-            {/* beforeTCN */}
-            <div className="flex items-center gap-3">
-              <Switch
-                checked={draft.beforeTCN}
-                onCheckedChange={set("beforeTCN")}
-              />
-              <Label>Trước Công Nguyên (TCN)</Label>
-            </div>
+            {/* ── Right column: meta fields ── */}
+            <div className="px-8 py-6 space-y-5 border-t lg:border-t-0 lg:border-l" style={{ borderColor: "var(--card-light-border)" }}>
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-subtle)" }}>
+                Phân loại & Thời gian
+              </p>
 
-            {/* Location */}
-            <div className="grid gap-2">
-              <Label>Địa điểm</Label>
-              <Input
-                value={draft.location}
-                onChange={(e) => set("location")(e.target.value)}
-                placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
-              />
-            </div>
+              {/* Era + Category */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-2">
+                  <Label>Thời đại *</Label>
+                  <Select value={draft.era} onValueChange={set("era")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn thời đại" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ANCIENT">Cổ đại</SelectItem>
+                      <SelectItem value="MEDIEVAL">Trung đại</SelectItem>
+                      <SelectItem value="MODERN">Cận đại</SelectItem>
+                      <SelectItem value="CONTEMPORARY">Hiện đại</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Danh mục *</Label>
+                  <Select value={draft.category} onValueChange={set("category")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn danh mục" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="WAR">Chiến tranh</SelectItem>
+                      <SelectItem value="POLITICS">Chính trị</SelectItem>
+                      <SelectItem value="CULTURE">Văn hoá</SelectItem>
+                      <SelectItem value="SCIENCE">Khoa học</SelectItem>
+                      <SelectItem value="RELIGION">Tôn giáo</SelectItem>
+                      <SelectItem value="OTHER">Khác</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-            {/* imageUrl + videoUrl */}
-            <div className="grid gap-2">
-              <Label>URL hình ảnh</Label>
-              <Input
-                value={draft.imageUrl}
-                onChange={(e) => set("imageUrl")(e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>URL video (YouTube)</Label>
-              <Input
-                value={draft.videoUrl}
-                onChange={(e) => set("videoUrl")(e.target.value)}
-                placeholder="https://youtube.com/watch?v=..."
-              />
+              {/* Year + startYear + endYear */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="grid gap-2">
+                  <Label>Năm *</Label>
+                  <Input
+                    type="number"
+                    value={draft.year}
+                    onChange={(e) => set("year")(e.target.value)}
+                    placeholder="938"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Năm bắt đầu</Label>
+                  <Input
+                    type="number"
+                    value={draft.startYear}
+                    onChange={(e) => set("startYear")(e.target.value)}
+                    placeholder="938"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Năm kết thúc</Label>
+                  <Input
+                    type="number"
+                    value={draft.endYear}
+                    onChange={(e) => set("endYear")(e.target.value)}
+                    placeholder="939"
+                  />
+                </div>
+              </div>
+
+              {/* beforeTCN */}
+              <div className="flex items-center gap-3 py-1">
+                <Switch
+                  checked={draft.beforeTCN}
+                  onCheckedChange={set("beforeTCN")}
+                />
+                <Label>Trước Công Nguyên (TCN)</Label>
+              </div>
+
+              {/* Media URLs */}
+              <div className="space-y-3 pt-1">
+                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-subtle)" }}>
+                  Media
+                </p>
+                <div className="grid gap-2">
+                  <Label>URL hình ảnh</Label>
+                  <Input
+                    value={draft.imageUrl}
+                    onChange={(e) => set("imageUrl")(e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>URL video (YouTube)</Label>
+                  <Input
+                    value={draft.videoUrl}
+                    onChange={(e) => set("videoUrl")(e.target.value)}
+                    placeholder="https://youtube.com/watch?v=..."
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <DialogFooter>
+          {/* Footer */}
+          <div className="px-8 py-4 border-t flex justify-end gap-2" style={{ borderColor: "var(--card-light-border)" }}>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
             <Button
               onClick={handleSave}
-              disabled={
-                !draft.name.trim() || !draft.era || !draft.category || isPending
-              }
+              disabled={!draft.name.trim() || !draft.era || !draft.category || isPending}
             >
               {isPending ? "Đang lưu..." : "Save"}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -16,7 +16,7 @@ export function useLogin() {
       document.cookie = `auth-token=${tokens.accessToken}; path=/; max-age=${tokens.expiresIn / 1000}`;
       document.cookie = `auth-role=${user.role}; path=/; max-age=${tokens.expiresIn / 1000}`; // ← userType → role
 
-      if (user.role === "STAFF") {
+      if (user.role === "STAFF" || user.role === "ADMIN") {
         router.push("/staff");
       } else {
         router.push("/home");
