@@ -12,10 +12,10 @@ export function useChatSessions(
     queryKey: queryKeys.chat.sessions(contextId, characterId),
     queryFn: () => chatService.getSessions(contextId, characterId),
     enabled: !!contextId && !!characterId && ready,
-    staleTime: Infinity, // ← không bao giờ stale khi đang chat
+    staleTime: 0, // ← luôn fetch lại khi mount để lấy sessions mới nhất
     refetchOnWindowFocus: false, // ← không refetch khi focus tab
-    refetchOnMount: false, // ← không refetch khi component re-mount
-    refetchOnReconnect: false, // ← không refetch khi reconnect
+    refetchOnMount: true, // ← fetch khi mount để tránh dùng cache cũ
+    refetchOnReconnect: false,
   });
 }
 

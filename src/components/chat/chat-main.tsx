@@ -289,7 +289,7 @@ export function ChatMain({
       <ChatInput
         onSend={handleSend}
         isLoading={sendMessage.isPending}
-        disabled={!sessionId && sendMessage.isPending}
+        disabled={sendMessage.isPending}
         characterName={character.name}
       />
 

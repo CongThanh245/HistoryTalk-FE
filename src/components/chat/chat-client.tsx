@@ -40,25 +40,26 @@ export function ChatClient({ initialCharacterId }: ChatClientProps) {
     !!activeCharacter, // ← thêm param enabled
   );
 
-  useEffect(() => {
-    console.log("contextId/characterId changed:", contextId, characterId);
-  }, [contextId, characterId]);
-
   const createSession = useCreateSession();
+
+  // Reset ref khi character thay đổi (bao gồm lần mount đầu tiên)
+  useEffect(() => {
+    sessionInitialized.current = false;
+  }, [characterId]);
 
   // Init session: dùng session gần nhất nếu có, không thì tạo mới
   useEffect(() => {
     if (!contextId || !characterId) return;
-    if (!isSessionsSuccess) return;
-    if (sessionInitialized.current) return;
-    if (activeSessionId) return;
+    if (!isSessionsSuccess) return; // chờ fetch xong
+    if (sessionInitialized.current) return; // đã init rồi
+    if (activeSessionId) return; // đã có session rồi
 
     sessionInitialized.current = true;
 
     if (sessions && sessions.length > 0) {
-      setActiveSessionId(sessions[0].id); // ← dùng session gần nhất
+      setActiveSessionId(sessions[0].id); // dùng session gần nhất
     } else {
-      // Chưa có session nào → tạo mới luôn
+      // Chưa có session nào → tạo mới
       createSession.mutateAsync({ contextId, characterId }).then((session) => {
         setActiveSessionId(session.id);
       });

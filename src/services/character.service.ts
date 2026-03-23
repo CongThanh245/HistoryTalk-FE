@@ -15,6 +15,7 @@ export interface Character {
   era?: string;
   role?: string;
   avatarUrl?: string;
+  isDraft?: boolean;
   events?: { id: string; title: string; year: number }[];
 }
 
@@ -43,6 +44,7 @@ export interface CreateCharacterRequest {
   lifespan?: string;
   side?: string;
   contextId?: string;
+  isDraft?: boolean;
 }
 
 export interface UpdateCharacterRequest extends Partial<CreateCharacterRequest> {}
@@ -59,9 +61,10 @@ function mapCharacter(raw: any): Character {
     personality: raw.personality,
     lifespan: raw.lifespan,
     side: raw.side,
-    contextId: raw.contextId,
+    contextId: raw.contextId ?? raw.context?.contextId,
     role: raw.role,
     era: mapEraLabel(raw.era),
+    isDraft: raw.isDraft ?? false,
   };
 }
 
