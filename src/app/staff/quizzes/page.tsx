@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { StaffSearchBar } from "@/components/staff/staff-search-bar";
-import { StaffConfirmDialog } from "@/components/staff/staff-confirm-dialog";
+import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { EraBadge, GradeBadge, ERA_OPTIONS, type EraKey } from "@/components/staff/staff-badge";
 import { QuizQuestionEditor, type QuizQuestion } from "@/components/staff/quiz-question-editor";
 
@@ -767,33 +767,35 @@ export default function StaffQuizzesPage() {
         </div>
       </section>
 
-      <StaffConfirmDialog
+      <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(o) => !o && setDeleteTarget(null)}
-        title={`Chuyển vào thùng rác?`}
+        title="Chuyển vào thùng rác?"
         description={`Quiz "${deleteTarget?.title}" sẽ được chuyển vào thùng rác. Bạn có thể khôi phục sau.`}
         isPending={softDeleteQuiz.isPending}
         confirmLabel="Chuyển vào thùng rác"
+        variant="danger"
         onConfirm={handleSoftDelete}
       />
 
-      <StaffConfirmDialog
+      <ConfirmDialog
         open={!!restoreTarget}
         onOpenChange={(o) => !o && setRestoreTarget(null)}
-        title={`Khôi phục quiz?`}
+        title="Khôi phục quiz?"
         description={`Khôi phục quiz "${restoreTarget?.title}" về danh sách hoạt động.`}
         isPending={restoreQuiz.isPending}
         confirmLabel="Khôi phục"
         onConfirm={handleRestore}
       />
 
-      <StaffConfirmDialog
+      <ConfirmDialog
         open={!!permanentDeleteTarget}
         onOpenChange={(o) => !o && setPermanentDeleteTarget(null)}
-        title={`Xóa vĩnh viễn?`}
+        title="Xóa vĩnh viễn?"
         description={`Hành động này không thể hoàn tác. Quiz "${permanentDeleteTarget?.title}" sẽ bị xóa hoàn toàn.`}
         isPending={permanentDeleteQuiz.isPending}
         confirmLabel="Xóa vĩnh viễn"
+        variant="danger"
         onConfirm={handlePermanentDelete}
       />
     </StaffShell>

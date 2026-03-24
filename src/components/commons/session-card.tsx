@@ -4,17 +4,8 @@ import Image from "next/image";
 import { ChatTextIcon, TimerIcon , CaretRightIcon, TrashIcon } from "@phosphor-icons/react";
 import type { ChatHistoryItem } from "@/services/chat-history.service";
 import { isValidUrl } from "@/lib/utils/url";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/commons/confirm-dialog";
+import * as React from "react";
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -44,6 +35,8 @@ export function SessionCard({
   onDelete,
   showEvent = false,
 }: SessionCardProps) {
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
+
   return (
     <div
       onClick={() => onClick(session)}
@@ -59,40 +52,31 @@ export function SessionCard({
         style={{ boxShadow: "inset 0 0 0 1px rgba(201,162,77,0.3)" }}
       />
       {onDelete && (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button
-              onClick={(e) => e.stopPropagation()}
-              className="absolute top-3 right-3 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50"
-              style={{ color: "var(--content-subtle)" }}
-            >
-              <TrashIcon className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Xóa cuộc trò chuyện?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Cuộc trò chuyện "{session.sessionTitle || "này"}" sẽ bị xóa vĩnh
-                viễn và không thể khôi phục.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
-                Hủy
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(session.id);
-                }}
-                className="bg-red-500 hover:bg-red-600"
-              >
-                Xóa
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteOpen(true);
+            }}
+            className="absolute top-3 right-3 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50"
+            style={{ color: "var(--content-subtle)" }}
+          >
+            <TrashIcon className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
+          </button>
+
+          <ConfirmDialog
+            open={deleteOpen}
+            onOpenChange={setDeleteOpen}
+            title="Xóa cuộc trò chuyện?"
+            description={`Cuộc trò chuyện "${session.sessionTitle || "này"}" sẽ bị xóa vĩnh viễn và không thể khôi phục.`}
+            confirmLabel="Xóa"
+            variant="danger"
+            onConfirm={() => {
+              onDelete(session.id);
+              setDeleteOpen(false);
+            }}
+          />
+        </>
       )}
       {/* Avatar */}
       <div

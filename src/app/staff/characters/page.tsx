@@ -9,16 +9,7 @@ import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import {
   useCharacters,
   useCreateCharacter,
@@ -366,71 +357,44 @@ export default function StaffCharactersPage() {
       </section>
 
       {/* Delete confirm */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
-          <AlertDialogHeader>
-            <AlertDialogTitle style={{ color: "var(--content-heading)" }}>
-              Chuyển vào thùng rác?
-            </AlertDialogTitle>
-            <AlertDialogDescription style={{ color: "var(--content-muted)" }}>
-              Nhân vật sẽ được chuyển vào thùng rác. Bạn có thể xem lại trong mục Thùng rác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]">
-              Hủy
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
-              style={{ backgroundColor: "#ef4444" }}
-              onClick={() => {
-                if (!deleteTarget) return;
-                deleteCharacter.mutate(deleteTarget.id, {
-                  onSuccess: () => {
-                    setDeleteOpen(false);
-                    setDeleteTarget(null);
-                  },
-                });
-              }}
-            >
-              {deleteCharacter.isPending ? "Đang xóa..." : "Chuyển vào thùng rác"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Chuyển vào thùng rác?"
+        description="Nhân vật sẽ được chuyển vào thùng rác. Bạn có thể xem lại trong mục Thùng rác."
+        confirmLabel={deleteCharacter.isPending ? "Đang xóa..." : "Chuyển vào thùng rác"}
+        variant="danger"
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          deleteCharacter.mutate(deleteTarget.id, {
+            onSuccess: () => {
+              setDeleteOpen(false);
+              setDeleteTarget(null);
+            },
+          });
+        }}
+        isPending={deleteCharacter.isPending}
+      />
+
       {/* Permanent Delete confirm */}
-      <AlertDialog open={permanentDeleteOpen} onOpenChange={setPermanentDeleteOpen}>
-        <AlertDialogContent style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
-          <AlertDialogHeader>
-            <AlertDialogTitle style={{ color: "var(--content-heading)" }}>
-              Xóa vĩnh viễn nhân vật?
-            </AlertDialogTitle>
-            <AlertDialogDescription style={{ color: "var(--accent-danger)", fontWeight: 500 }}>
-              Hành động này không thể hoàn tác. Nhân vật sẽ bị xóa hoàn toàn khỏi hệ thống.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]">
-              Hủy
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
-              style={{ backgroundColor: "#ef4444" }}
-              onClick={() => {
-                if (!permanentDeleteTarget) return;
-                permanentDeleteCharacter.mutate(permanentDeleteTarget.id, {
-                  onSuccess: () => {
-                    setPermanentDeleteOpen(false);
-                    setPermanentDeleteTarget(null);
-                  },
-                });
-              }}
-            >
-              {permanentDeleteCharacter.isPending ? "Đang xóa..." : "Xóa vĩnh viễn"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={permanentDeleteOpen}
+        onOpenChange={setPermanentDeleteOpen}
+        title="Xóa vĩnh viễn nhân vật?"
+        description="Hành động này không thể hoàn tác. Nhân vật sẽ bị xóa hoàn toàn khỏi hệ thống."
+        confirmLabel={permanentDeleteCharacter.isPending ? "Đang xóa..." : "Xóa vĩnh viễn"}
+        variant="danger"
+        onConfirm={() => {
+          if (!permanentDeleteTarget) return;
+          permanentDeleteCharacter.mutate(permanentDeleteTarget.id, {
+            onSuccess: () => {
+              setPermanentDeleteOpen(false);
+              setPermanentDeleteTarget(null);
+            },
+          });
+        }}
+        isPending={permanentDeleteCharacter.isPending}
+      />
     </StaffShell>
   );
 }

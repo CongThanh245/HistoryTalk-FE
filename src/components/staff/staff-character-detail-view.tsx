@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { ChatMain } from "@/components/chat/chat-main";
 import { useChatSessions, useCreateSession } from "@/features/chat/hooks";
 import type { ChatCharacter } from "@/services/chat.service";
@@ -96,6 +97,14 @@ export function StaffCharacterDetailView({
   /* ── State ── */
   const [draft, setDraft] = React.useState<CharacterDraft>(initialDraft || EMPTY_CHARACTER_DRAFT);
   const [isEditing, setIsEditing] = React.useState(mode === "create");
+  const [publishDialogOpen, setPublishDialogOpen] = React.useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
+
+  /* Detect if form is dirty */
+  const isDirty = React.useMemo(() => {
+    if (!initialDraft) return draft.name !== "" || draft.title !== "";
+    return JSON.stringify(draft) !== JSON.stringify(initialDraft);
+  }, [draft, initialDraft]);
 
   /* helper to set a single field */
   const set =
@@ -131,6 +140,17 @@ export function StaffCharacterDetailView({
     setSelectedContextId(initialContextId ?? "");
     setMappedContextId(initialContextId ?? "");
   }, [initialContextId]);
+
+  React.useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty && isEditing) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty, isEditing]);
 
   // Auto-exit editing mode after save completes successfully
   const prevPendingRef = React.useRef(false);
@@ -269,6 +289,22 @@ export function StaffCharacterDetailView({
         </div>
       </div>
 
+      {/* Unsaved Changes confirm */}
+      <ConfirmDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        title="Hủy bỏ thay đổi?"
+        description="Bạn có một số thay đổi chưa được lưu. Nếu hủy bỏ, các thay đổi này sẽ bị mất. Bạn có chắc chắn muốn tiếp tục không?"
+        confirmLabel="Hủy và xóa thay đổi"
+        cancelLabel="Tiếp tục chỉnh sửa"
+        variant="danger"
+        onConfirm={() => {
+          if (initialDraft) setDraft(initialDraft);
+          setIsEditing(false);
+          setCancelDialogOpen(false);
+        }}
+      />
+
       {/* ═══════ Body — two columns ═══════ */}
       <div className="flex-1 flex min-h-0">
         {/* ── Left Panel: Form ── */}
@@ -381,8 +417,14 @@ export function StaffCharacterDetailView({
               <Checkbox
                 checked={draft.isDraft}
                 onCheckedChange={(val) => {
-                  if (!val && !mappedContextId) return;
-                  set("isDraft")(!!val);
+                  if (!val) {
+                    // Cố gắng bỏ tick (sang trạng thái Published)
+                    if (!mappedContextId) return; // Vẫn giữ rule cũ: cần context mới được publish
+                    setPublishDialogOpen(true);
+                  } else {
+                    // Tick vào (sang trạng thái Draft)
+                    set("isDraft")(true);
+                  }
                 }}
                 disabled={!isEditing || (!draft.isDraft && !mappedContextId)}
                 id="isDraft"
@@ -399,13 +441,31 @@ export function StaffCharacterDetailView({
               </div>
             </div>
 
+            <ConfirmDialog
+              open={publishDialogOpen}
+              onOpenChange={setPublishDialogOpen}
+              title="Xác nhận xuất bản nhân vật?"
+              description='Khi bỏ chọn "Bản nháp", nhân vật này sẽ được hiển thị công khai cho người dùng. Bạn có chắc chắn muốn thực hiện không?'
+              confirmLabel="Đồng ý, xuất bản"
+              onConfirm={() => {
+                set("isDraft")(false);
+                setPublishDialogOpen(false);
+              }}
+            />
+
             {isEditing && (
               <div className="flex gap-2 pt-2">
                 {isCreated && (
                   <Button
                     variant="outline"
                     className="flex-1 bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]"
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => {
+                      if (isDirty) {
+                        setCancelDialogOpen(true);
+                      } else {
+                        setIsEditing(false);
+                      }
+                    }}
                   >
                     Hủy chỉnh sửa
                   </Button>
