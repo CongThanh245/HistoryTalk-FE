@@ -30,7 +30,7 @@ const CATEGORY_COLOR: Record<EventCategoryLower, string> = {
 
 // ── Fake Video Player ─────────────────────────────────────
 // Thay thế toàn bộ FakeVideoPlayer component
-function extractYoutubeId(url?: string): string {
+function extractYoutubeId(url?: string | null): string {
   if (!url) return "RS9qAwnDa2k"; // fallback
   const match = url.match(/(?:v=|youtu\.be\/)([^&\n?#]+)/);
   return match?.[1] ?? "RS9qAwnDa2k";
