@@ -210,7 +210,7 @@ export function StaffCharacterDetailView({
   }, [mappedContextId, eventOptions]);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-[var(--bg-content)]">
+    <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-content)]">
       {/* ═══════ Header ═══════ */}
       <div
         className="flex items-center justify-between px-6 py-4 border-b shrink-0"
@@ -290,6 +290,7 @@ export function StaffCharacterDetailView({
                   placeholder="VD: Ngô Quyền"
                   disabled={!isEditing}
                   className="bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10"
+                  style={{ color: "var(--content-heading)" }}
                 />
               </div>
               <div className="grid gap-1.5">
@@ -300,6 +301,7 @@ export function StaffCharacterDetailView({
                   placeholder="VD: Tiết độ sứ"
                   disabled={!isEditing}
                   className="bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10"
+                  style={{ color: "var(--content-heading)" }}
                 />
               </div>
             </div>
@@ -313,6 +315,7 @@ export function StaffCharacterDetailView({
                   placeholder="VD: Đại Việt"
                   disabled={!isEditing}
                   className="bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10"
+                  style={{ color: "var(--content-heading)" }}
                 />
               </div>
               <div className="grid gap-1.5">
@@ -323,6 +326,7 @@ export function StaffCharacterDetailView({
                   placeholder="VD: 898–944"
                   disabled={!isEditing}
                   className="bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10"
+                  style={{ color: "var(--content-heading)" }}
                 />
               </div>
             </div>
@@ -335,6 +339,7 @@ export function StaffCharacterDetailView({
                 placeholder="https://..."
                 disabled={!isEditing}
                 className="bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10"
+                style={{ color: "var(--content-heading)" }}
               />
             </div>
 
@@ -345,6 +350,7 @@ export function StaffCharacterDetailView({
                 onChange={(e) => set("background")(e.target.value)}
                 placeholder="Mô tả cuộc đời, vai trò lịch sử..."
                 className="min-h-[120px] resize-none bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all"
+                style={{ color: "var(--content-heading)" }}
                 disabled={!isEditing}
               />
             </div>
@@ -356,6 +362,7 @@ export function StaffCharacterDetailView({
                 onChange={(e) => set("personality")(e.target.value)}
                 placeholder="Đặc điểm tính cách, phong cách nói chuyện..."
                 className="min-h-[90px] resize-none bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all"
+                style={{ color: "var(--content-heading)" }}
                 disabled={!isEditing}
               />
             </div>
