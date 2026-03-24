@@ -23,9 +23,17 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-import { useStaffQuizzes, useCreateStaffQuiz, useUpdateStaffQuiz, useDeleteStaffQuiz } from "@/features/staff/quiz/hooks";
+import {
+  useStaffQuizzes,
+  useCreateStaffQuiz,
+  useUpdateStaffQuiz,
+  useSoftDeleteStaffQuiz,
+  useRestoreStaffQuiz,
+  usePermanentDeleteStaffQuiz,
+} from "@/features/staff/quiz/hooks";
 import { useEvents } from "@/features/events/hooks";
 import type { StaffQuizSet, StaffQuizEra } from "@/services/staff.quiz.service";
+import { ArrowCounterClockwiseIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,6 +94,9 @@ export default function StaffQuizzesPage() {
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
   const [draft, setDraft] = React.useState<QuizDraft>(emptyDraft());
   const [deleteTarget, setDeleteTarget] = React.useState<StaffQuizSet | null>(null);
+  const [showTrash, setShowTrash] = React.useState(false);
+  const [restoreTarget, setRestoreTarget] = React.useState<StaffQuizSet | null>(null);
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<StaffQuizSet | null>(null);
   const [contextSearch, setContextSearch] = React.useState("");
 
   // ── API hooks ─────────────────────────────────────────────
@@ -99,11 +110,16 @@ export default function StaffQuizzesPage() {
   const { data, isLoading, isError } = useStaffQuizzes(params);
   const createQuiz = useCreateStaffQuiz();
   const updateQuiz = useUpdateStaffQuiz();
-  const deleteQuiz = useDeleteStaffQuiz();
+  const softDeleteQuiz = useSoftDeleteStaffQuiz();
+  const restoreQuiz = useRestoreStaffQuiz();
+  const permanentDeleteQuiz = usePermanentDeleteStaffQuiz();
   // Load toàn bộ contexts để chọn trong dropdown (chỉ cần khi mở editor)
   const { data: contextsData } = useEvents({ page: 1, limit: 200 });
 
-  const items = data?.content ?? [];
+  const allItems = data?.content ?? [];
+  const activeItems = allItems.filter((q) => !q.deletedAt);
+  const trashedItems = allItems.filter((q) => !!q.deletedAt);
+  const items = showTrash ? trashedItems : activeItems;
 
   // ── Handlers ──────────────────────────────────────────────
   const openCreate = () => {
@@ -206,16 +222,44 @@ export default function StaffQuizzesPage() {
     }
   };
 
-  // DELETE /staff/quizzes/{quizId}
-  const handleDelete = () => {
+  // PATCH /staff/quizzes/{quizId}/soft-delete
+  const handleSoftDelete = () => {
     if (!deleteTarget) return;
-    deleteQuiz.mutate(deleteTarget.quizId, {
+    softDeleteQuiz.mutate(deleteTarget.quizId, {
       onSuccess: () => {
-        toast.success(`Đã xóa quiz "${deleteTarget.title}".`);
+        toast.success(`Đã chuyển quiz "${deleteTarget.title}" vào thùng rác.`);
         setDeleteTarget(null);
       },
       onError: () => {
         toast.error("Xóa quiz thất bại. Vui lòng thử lại.");
+      },
+    });
+  };
+
+  // PATCH /staff/quizzes/{quizId}/restore
+  const handleRestore = () => {
+    if (!restoreTarget) return;
+    restoreQuiz.mutate(restoreTarget.quizId, {
+      onSuccess: () => {
+        toast.success(`Đã khôi phục quiz "${restoreTarget.title}".`);
+        setRestoreTarget(null);
+      },
+      onError: () => {
+        toast.error("Khôi phục quiz thất bại.");
+      },
+    });
+  };
+
+  // DELETE /staff/quizzes/{quizId}
+  const handlePermanentDelete = () => {
+    if (!permanentDeleteTarget) return;
+    permanentDeleteQuiz.mutate(permanentDeleteTarget.quizId, {
+      onSuccess: () => {
+        toast.success(`Đã xóa vĩnh viễn quiz "${permanentDeleteTarget.title}".`);
+        setPermanentDeleteTarget(null);
+      },
+      onError: () => {
+        toast.error("Xóa vĩnh viễn thất bại.");
       },
     });
   };
@@ -267,6 +311,59 @@ export default function StaffQuizzesPage() {
         r.original.updatedDate ? <FormattedDate date={r.original.updatedDate} /> : "—"
       ),
     },
+      {
+        id: "actions",
+        header: () => <div className="text-right pr-4">Thao tác</div>,
+        cell: ({ row: r }) => (
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              type="button" variant="ghost" size="icon-sm" className="rounded-full"
+              onClick={() => openEdit(r.original)}
+              style={{ color: "var(--header-text-muted)" }}
+            >
+              <PencilIcon className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button" variant="ghost" size="icon-sm" className="rounded-full"
+              onClick={() => setDeleteTarget(r.original)}
+              style={{ color: "var(--accent-danger)" }}
+            >
+              <TrashIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const trashColumns = React.useMemo<ColumnDef<StaffQuizSet>[]>(() => [
+    {
+      accessorKey: "title",
+      header: "Bài quiz",
+      cell: ({ row: r }) => (
+        <div className="min-w-[240px] opacity-60">
+          <p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+            {r.original.title}
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+            Bài {r.original.chapterNumber}: {r.original.chapterTitle}
+          </p>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "deletedAt",
+      header: "Đã xóa lúc",
+      cell: ({ row: r }) => {
+        const date = r.original.deletedAt ? new Date(r.original.deletedAt) : null;
+        return (
+          <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
+            {date && !isNaN(date.getTime()) ? date.toLocaleString("vi-VN") : "—"}
+          </span>
+        );
+      },
+    },
     {
       id: "actions",
       header: () => <div className="text-right pr-4">Thao tác</div>,
@@ -274,14 +371,16 @@ export default function StaffQuizzesPage() {
         <div className="flex items-center justify-end gap-1">
           <Button
             type="button" variant="ghost" size="icon-sm" className="rounded-full"
-            onClick={() => openEdit(r.original)}
-            style={{ color: "var(--header-text-muted)" }}
+            title="Khôi phục"
+            onClick={() => setRestoreTarget(r.original)}
+            style={{ color: "var(--accent-teal)" }}
           >
-            <PencilIcon className="h-4 w-4" />
+            <ArrowCounterClockwiseIcon className="h-4 w-4" />
           </Button>
           <Button
             type="button" variant="ghost" size="icon-sm" className="rounded-full"
-            onClick={() => setDeleteTarget(r.original)}
+            title="Xóa vĩnh viễn"
+            onClick={() => setPermanentDeleteTarget(r.original)}
             style={{ color: "var(--accent-danger)" }}
           >
             <TrashIcon className="h-4 w-4" />
@@ -594,16 +693,56 @@ export default function StaffQuizzesPage() {
           })}
         </div>
 
-        <StaffSearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Tìm theo tiêu đề, chủ đề..."
-          actionLabel="Tạo Quiz"
-          actionGradient="linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)"
-          actionColor="#fff"
-          onAction={openCreate}
-          filters={filterChips}
-        />
+        <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between px-1">
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-semibold" style={{ color: "var(--content-heading)" }}>
+              {showTrash ? "Thùng rác Quiz" : "Danh sách Quiz"}
+            </h2>
+            <div className="h-4 w-px bg-gray-200" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 rounded-lg px-2 text-xs font-semibold gap-1.5"
+              onClick={() => setShowTrash(!showTrash)}
+              style={{
+                color: showTrash ? "var(--accent-blue)" : "var(--content-muted)",
+                background: showTrash ? "rgba(59,130,246,0.08)" : "transparent",
+              }}
+            >
+              {showTrash ? (
+                <><ArrowLeftIcon className="h-3.5 w-3.5" /> Quay lại</>
+              ) : (
+                <><TrashIcon className="h-3.5 w-3.5" /> Thùng rác {trashedItems.length > 0 && `(${trashedItems.length})`}</>
+              )}
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="relative w-full sm:w-[280px]">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-40" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm bộ quiz..."
+                className="pl-9 h-9 rounded-xl border-0 bg-black/[0.03] placeholder:text-[11px]"
+              />
+            </div>
+            {!showTrash && (
+              <Button
+                size="sm"
+                className="h-9 rounded-xl px-4 font-semibold gap-1.5 shadow-sm shadow-blue-500/20"
+                onClick={openCreate}
+                style={{ background: "var(--accent-blue)", color: "#fff" }}
+              >
+                <PlusIcon className="h-4 w-4" /> Tạo Quiz
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="pb-2">
+          {filterChips}
+        </div>
 
         <div className="space-y-2">
           {isError && (
@@ -617,9 +756,9 @@ export default function StaffQuizzesPage() {
             </p>
           ) : (
             <StaffDataTable
-              columns={columns}
+              columns={showTrash ? trashColumns : columns}
               data={items}
-              emptyMessage="Không tìm thấy quiz phù hợp."
+              emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy quiz phù hợp."}
             />
           )}
           <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
@@ -631,9 +770,31 @@ export default function StaffQuizzesPage() {
       <StaffConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(o) => !o && setDeleteTarget(null)}
-        title={`Xóa quiz "${deleteTarget?.title}"?`}
-        description="Bộ câu hỏi và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn."
-        onConfirm={handleDelete}
+        title={`Chuyển vào thùng rác?`}
+        description={`Quiz "${deleteTarget?.title}" sẽ được chuyển vào thùng rác. Bạn có thể khôi phục sau.`}
+        isPending={softDeleteQuiz.isPending}
+        confirmLabel="Chuyển vào thùng rác"
+        onConfirm={handleSoftDelete}
+      />
+
+      <StaffConfirmDialog
+        open={!!restoreTarget}
+        onOpenChange={(o) => !o && setRestoreTarget(null)}
+        title={`Khôi phục quiz?`}
+        description={`Khôi phục quiz "${restoreTarget?.title}" về danh sách hoạt động.`}
+        isPending={restoreQuiz.isPending}
+        confirmLabel="Khôi phục"
+        onConfirm={handleRestore}
+      />
+
+      <StaffConfirmDialog
+        open={!!permanentDeleteTarget}
+        onOpenChange={(o) => !o && setPermanentDeleteTarget(null)}
+        title={`Xóa vĩnh viễn?`}
+        description={`Hành động này không thể hoàn tác. Quiz "${permanentDeleteTarget?.title}" sẽ bị xóa hoàn toàn.`}
+        isPending={permanentDeleteQuiz.isPending}
+        confirmLabel="Xóa vĩnh viễn"
+        onConfirm={handlePermanentDelete}
       />
     </StaffShell>
   );

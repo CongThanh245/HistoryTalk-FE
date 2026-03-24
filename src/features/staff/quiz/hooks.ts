@@ -89,11 +89,33 @@ export function useUpdateQuizQuestion() {
   });
 }
 
-// DELETE /staff/quizzes/{quizId} — xóa bộ quiz
-export function useDeleteStaffQuiz() {
+// PATCH /staff/quizzes/{quizId}/soft-delete — xóa tạm thời
+export function useSoftDeleteStaffQuiz() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (quizId: string) => staffQuizService.deleteQuiz(quizId),
+    mutationFn: (quizId: string) => staffQuizService.softDelete(quizId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+    },
+  });
+}
+
+// DELETE /staff/quizzes/{quizId} — xóa vĩnh viễn
+export function usePermanentDeleteStaffQuiz() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (quizId: string) => staffQuizService.permanentDelete(quizId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+    },
+  });
+}
+
+// PATCH /staff/quizzes/{quizId}/restore — khôi phục
+export function useRestoreStaffQuiz() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (quizId: string) => staffQuizService.restore(quizId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
     },

@@ -45,6 +45,7 @@ export interface StaffQuizSet {
   createdBy: string;
   createdDate: string;
   updatedDate: string;
+  deletedAt?: string | null;
   questions: StaffQuizQuestion[];
 }
 
@@ -131,6 +132,7 @@ export function mapStaffQuizSet(raw: any): StaffQuizSet {
     createdBy: raw.createdBy ?? "",
     createdDate: raw.createdDate ?? "",
     updatedDate: raw.updatedDate ?? "",
+    deletedAt: raw.deletedAt ?? null,
     questions: (raw.questions ?? []).map(mapStaffQuestion),
   };
 }
@@ -195,9 +197,19 @@ export const staffQuizService = {
     );
   },
 
-  // DELETE /staff/quizzes/{quizId} — xóa bộ quiz
-  deleteQuiz: async (quizId: string): Promise<void> => {
+  // DELETE /staff/quizzes/{quizId} — xóa bộ quiz (permanent)
+  permanentDelete: async (quizId: string): Promise<void> => {
     await axiosClient.delete(`/staff/quizzes/${quizId}`);
+  },
+
+  // PATCH /staff/quizzes/{quizId}/soft-delete — xóa tạm thời
+  softDelete: async (quizId: string): Promise<void> => {
+    await axiosClient.patch(`/staff/quizzes/${quizId}/soft-delete`);
+  },
+
+  // PATCH /staff/quizzes/{quizId}/restore — khôi phục
+  restore: async (quizId: string): Promise<void> => {
+    await axiosClient.patch(`/staff/quizzes/${quizId}/restore`);
   },
 
   // DELETE /staff/quizzes/{quizId}/questions/{questionId} — xóa câu hỏi
