@@ -77,3 +77,16 @@ export function useDeleteCharacter() {
     },
   });
 }
+export function usePermanentDeleteCharacter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => characterService.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.characters.all });
+      toast.success("Đã xóa vĩnh viễn nhân vật");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Xóa vĩnh viễn thất bại");
+    },
+  });
+}

@@ -92,3 +92,17 @@ export function useTimelineEvents(era: EventEra) {
     showSkeleton: isLoading || (isFetching && isPlaceholderData),
   };
 }
+
+export function usePermanentDeleteEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => eventService.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.events.all });
+      toast.success("Đã xóa vĩnh viễn bối cảnh");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Xóa vĩnh viễn thất bại");
+    },
+  });
+}

@@ -78,7 +78,7 @@ export function MessageBubble({
         style={{ borderColor: "var(--accent-gold-soft)" }}
       >
         <Image
-          src={character.imageUrl}
+          src={character.imageUrl || "/ngo-quyen.jpg"}
           alt={character.name}
           fill
           className="object-cover"
@@ -156,7 +156,7 @@ export function TypingIndicator({ character }: { character: ChatCharacter }) {
         style={{ borderColor: "var(--border-default)" }}
       >
         <Image
-          src={character.imageUrl}
+          src={character.imageUrl || "/ngo-quyen.jpg"}
           alt={character.name}
           fill
           className="object-cover"

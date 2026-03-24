@@ -22,8 +22,8 @@ export interface Character {
   lifespan?: string; // vd: "898–944"
   role?: string; // context trong 1 sự kiện cụ thể
   side?: string; // vd: "Đại Việt"
-  avatarUrl?: string;
-  imageUrl?: string;
+  avatarUrl?: string | null;
+  imageUrl?: string | null;
   events?: CharacterEvent[];
 }
 

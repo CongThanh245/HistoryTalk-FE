@@ -23,6 +23,7 @@ import {
   useCreateCharacter,
   useUpdateCharacter,
   useDeleteCharacter,
+  usePermanentDeleteCharacter,
 } from "@/features/characters/hooks";
 import type { Character } from "@/services/character.service";
 import { useEvents } from "@/features/events/hooks";
@@ -41,6 +42,8 @@ export default function StaffCharactersPage() {
   const [deleteTarget, setDeleteTarget] = React.useState<Character | null>(null);
   const [createdCharacterId, setCreatedCharacterId] = React.useState<string | null>(null);
   const [showTrash, setShowTrash] = React.useState(false);
+  const [permanentDeleteOpen, setPermanentDeleteOpen] = React.useState(false);
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<Character | null>(null);
 
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
     page: 1,
@@ -55,6 +58,7 @@ export default function StaffCharactersPage() {
   const createCharacter = useCreateCharacter();
   const updateCharacter = useUpdateCharacter();
   const deleteCharacter = useDeleteCharacter();
+  const permanentDeleteCharacter = usePermanentDeleteCharacter();
 
   const allItems = data?.content ?? [];
   const activeItems = allItems.filter((c) => !c.deletedAt);
@@ -307,13 +311,15 @@ export default function StaffCharactersPage() {
       {
         accessorKey: "deletedAt",
         header: "Đã xóa lúc",
-        cell: ({ row }) => (
-          <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
-            {row.original.deletedAt
-              ? new Date(row.original.deletedAt).toLocaleString("vi-VN")
-              : "—"}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const date = row.original.deletedAt ? new Date(row.original.deletedAt) : null;
+          const isValidDate = date && !isNaN(date.getTime());
+          return (
+            <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
+              {isValidDate ? date.toLocaleString("vi-VN") : "—"}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "side",
@@ -325,6 +331,27 @@ export default function StaffCharactersPage() {
           >
             {row.original.side ?? "—"}
           </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Thao tác",
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full"
+              title="Xóa vĩnh viễn"
+              onClick={() => {
+                setPermanentDeleteTarget(row.original);
+                setPermanentDeleteOpen(true);
+              }}
+              style={{ color: "var(--accent-danger)" }}
+            >
+              <TrashIcon className="h-4 w-4" />
+            </Button>
+          </div>
         ),
       },
     ],
@@ -474,6 +501,39 @@ export default function StaffCharactersPage() {
               }}
             >
               {deleteCharacter.isPending ? "Đang xóa..." : "Chuyển vào thùng rác"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Permanent Delete confirm */}
+      <AlertDialog open={permanentDeleteOpen} onOpenChange={setPermanentDeleteOpen}>
+        <AlertDialogContent style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle style={{ color: "var(--content-heading)" }}>
+              Xóa vĩnh viễn nhân vật?
+            </AlertDialogTitle>
+            <AlertDialogDescription style={{ color: "var(--accent-danger)", fontWeight: 500 }}>
+              Hành động này không thể hoàn tác. Nhân vật sẽ bị xóa hoàn toàn khỏi hệ thống.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]">
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              style={{ backgroundColor: "#ef4444" }}
+              onClick={() => {
+                if (!permanentDeleteTarget) return;
+                permanentDeleteCharacter.mutate(permanentDeleteTarget.id, {
+                  onSuccess: () => {
+                    setPermanentDeleteOpen(false);
+                    setPermanentDeleteTarget(null);
+                  },
+                });
+              }}
+            >
+              {permanentDeleteCharacter.isPending ? "Đang xóa..." : "Xóa vĩnh viễn"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

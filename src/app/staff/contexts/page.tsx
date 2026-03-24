@@ -40,6 +40,7 @@ import {
   useCreateEvent,
   useUpdateEvent,
   useDeleteEvent,
+  usePermanentDeleteEvent,
 } from "@/features/events/hooks";
 import {
   type HistoricalEvent,
@@ -87,6 +88,9 @@ export default function StaffContextsPage() {
   const [deleteTarget, setDeleteTarget] =
     React.useState<HistoricalEvent | null>(null);
   const [showTrash, setShowTrash] = React.useState(false);
+  const [permanentDeleteOpen, setPermanentDeleteOpen] = React.useState(false);
+  const [permanentDeleteTarget, setPermanentDeleteTarget] =
+    React.useState<HistoricalEvent | null>(null);
 
   const { data, isLoading, isFetching } = useEvents({
     search: search || undefined,
@@ -96,6 +100,7 @@ export default function StaffContextsPage() {
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
   const deleteEvent = useDeleteEvent();
+  const permanentDeleteEvent = usePermanentDeleteEvent();
 
   const items = data?.content ?? [];
 
@@ -270,16 +275,18 @@ export default function StaffContextsPage() {
           </div>
         ),
       },
-      {
+       {
         accessorKey: "deletedAt",
         header: "Đã xóa lúc",
-        cell: ({ row }) => (
-          <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
-            {row.original.deletedAt
-              ? new Date(row.original.deletedAt).toLocaleString("vi-VN")
-              : "—"}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const date = row.original.deletedAt ? new Date(row.original.deletedAt) : null;
+          const isValidDate = date && !isNaN(date.getTime());
+          return (
+            <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
+              {isValidDate ? date.toLocaleString("vi-VN") : "—"}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "era",
@@ -294,6 +301,27 @@ export default function StaffContextsPage() {
             </span>
           );
         },
+      },
+      {
+        id: "actions",
+        header: "Thao tác",
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full"
+              title="Xóa vĩnh viễn"
+              onClick={() => {
+                setPermanentDeleteTarget(row.original);
+                setPermanentDeleteOpen(true);
+              }}
+              style={{ color: "var(--accent-danger)" }}
+            >
+              <TrashIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
       },
     ],
     [],
@@ -604,6 +632,39 @@ export default function StaffContextsPage() {
               }}
             >
               {deleteEvent.isPending ? "Đang xóa..." : "Chuyển vào thùng rác"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Permanent Delete confirm */}
+      <AlertDialog open={permanentDeleteOpen} onOpenChange={setPermanentDeleteOpen}>
+        <AlertDialogContent style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle style={{ color: "var(--content-heading)" }}>
+              Xóa vĩnh viễn bối cảnh?
+            </AlertDialogTitle>
+            <AlertDialogDescription style={{ color: "var(--accent-danger)", fontWeight: 500 }}>
+              Hành động này không thể hoàn tác. Bối cảnh sẽ bị xóa hoàn toàn khỏi hệ thống.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]">
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              style={{ backgroundColor: "#ef4444" }}
+              onClick={() => {
+                if (!permanentDeleteTarget) return;
+                permanentDeleteEvent.mutate(permanentDeleteTarget.id, {
+                  onSuccess: () => {
+                    setPermanentDeleteOpen(false);
+                    setPermanentDeleteTarget(null);
+                  },
+                });
+              }}
+            >
+              {permanentDeleteEvent.isPending ? "Đang xóa..." : "Xóa vĩnh viễn"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -171,7 +171,7 @@ export function DarkCard({
         style={{ height: imageHeight, background: "var(--bg-elevated)" }}
       >
         <Image
-          src={imageSrc}
+          src={imageSrc || "/card.jpg"}
           alt={imageAlt}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-105"

@@ -7,14 +7,14 @@ export interface Character {
   title: string;
   background?: string;
   description?: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   personality?: string;
   lifespan?: string;
   side?: string;
   contextId?: string;
   era?: string;
   role?: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
   isDraft?: boolean;
   deletedAt?: string | null;
   events?: { id: string; title: string; year: number }[];
@@ -40,7 +40,7 @@ export interface CreateCharacterRequest {
   name: string;
   title: string;
   background?: string;
-  image?: string;
+  image?: string | null;
   personality?: string;
   lifespan?: string;
   side?: string;
@@ -51,14 +51,15 @@ export interface CreateCharacterRequest {
 export interface UpdateCharacterRequest extends Partial<CreateCharacterRequest> {}
 
 function mapCharacter(raw: any): Character {
+  const imageUrl = raw.image || raw.imageUrl || null;
   return {
     id: raw.characterId ?? raw.id,
     name: raw.name,
     title: raw.title,
     background: raw.background,
     description: raw.background, // map background → description cho UI
-    imageUrl: raw.image ?? raw.imageUrl,
-    avatarUrl: raw.image ?? raw.imageUrl,
+    imageUrl,
+    avatarUrl: imageUrl,
     personality: raw.personality,
     lifespan: raw.lifespan,
     side: raw.side,

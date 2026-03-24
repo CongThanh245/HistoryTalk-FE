@@ -43,8 +43,8 @@ export interface HistoricalEvent {
   summary: string;
   category: EventCategoryLower;
   location?: string;
-  imageUrl?: string;
-  videoUrl?: string;
+  imageUrl?: string | null;
+  videoUrl?: string | null;
   era?: EventEraBackend;
   period?: string;
   startYear?: number;
@@ -62,8 +62,8 @@ export interface CreateEventRequest {
   endYear?: number;
   beforeTCN?: boolean;
   location?: string;
-  imageUrl?: string;
-  videoUrl?: string;
+  imageUrl?: string | null;
+  videoUrl?: string | null;
 }
 export interface UpdateEventRequest extends Partial<CreateEventRequest> {}
 
@@ -96,8 +96,8 @@ export function mapContext(raw: any): HistoricalEvent {
     yearLabel: raw.yearLabel,
     category: (raw.category?.toLowerCase() as EventCategoryLower) ?? "other",
     location: raw.location,
-    imageUrl: isValidUrl(raw.imageUrl) ? raw.imageUrl : undefined,
-    videoUrl: isValidUrl(raw.videoUrl) ? raw.videoUrl : undefined,
+    imageUrl: isValidUrl(raw.imageUrl) ? raw.imageUrl : null,
+    videoUrl: isValidUrl(raw.videoUrl) ? raw.videoUrl : null,
     era: raw.era as EventEraBackend,
     period: raw.period,
     startYear: raw.startYear,
