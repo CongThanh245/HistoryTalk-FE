@@ -33,8 +33,8 @@ const MODULES = [
     title: "Manage Quizzes",
     desc: "Quản lý quiz theo chủ đề, độ khó và số câu hỏi.",
     href: "/staff/quizzes",
-    accent: "var(--burning-flame)",
-    glow: "rgba(255,177,98,0.12)",
+    accent: "var(--accent-blue)",
+    glow: "rgba(143,179,200,0.12)",
   },
 ] as const;
 

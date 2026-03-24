@@ -197,7 +197,7 @@ export default function StaffCharactersPage() {
       },
       {
         id: "actions",
-        header: "Thao tác",
+        header: () => <div className="text-right pr-4">Thao tác</div>,
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1">
             {/* Chat test button */}
@@ -336,7 +336,7 @@ export default function StaffCharactersPage() {
       },
       {
         id: "actions",
-        header: "Thao tác",
+        header: () => <div className="text-right pr-4">Thao tác</div>,
         cell: ({ row }) => (
           <div className="flex items-center justify-end">
             <Button

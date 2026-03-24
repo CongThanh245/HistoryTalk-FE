@@ -269,7 +269,7 @@ export default function StaffQuizzesPage() {
     },
     {
       id: "actions",
-      header: "Thao tác",
+      header: () => <div className="text-right pr-4">Thao tác</div>,
       cell: ({ row: r }) => (
         <div className="flex items-center justify-end gap-1">
           <Button
@@ -322,7 +322,7 @@ export default function StaffQuizzesPage() {
         title={editorMode === "create" ? "Tạo Quiz mới" : "Chỉnh sửa Quiz"}
         description={editorMode === "create" ? "Điền metadata và thêm câu hỏi." : `Đang chỉnh sửa: ${draft.title}`}
         icon={ClipboardTextIcon}
-        accent="var(--burning-flame)"
+        accent="var(--accent-blue)"
       >
         <button
           type="button"
@@ -509,13 +509,14 @@ export default function StaffQuizzesPage() {
                 className="flex-1 font-semibold border-0"
                 disabled={!canSave}
                 onClick={handleSave}
-                style={{ background: "linear-gradient(135deg, var(--burning-flame) 0%, var(--accent-gold) 100%)", color: "#fff" }}
+                style={{ background: "#3b82f6", color: "#fff" }}
               >
                 {createQuiz.isPending || updateQuiz.isPending
                   ? "Đang lưu..."
                   : editorMode === "create" ? "Tạo Quiz" : "Lưu thay đổi"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setView("list")}>
+              <Button type="button" variant="outline" onClick={() => setView("list")}
+                style={{ borderColor: "var(--card-light-border)", background: "transparent", color: "var(--content-text)" }}>
                 Hủy
               </Button>
             </div>
@@ -561,7 +562,7 @@ export default function StaffQuizzesPage() {
       title="Manage Quizzes"
       description="Quản lý bộ câu hỏi lịch sử theo lớp, bài và độ khó."
       icon={ClipboardTextIcon}
-      accent="var(--burning-flame)"
+      accent="var(--accent-blue)"
     >
       <section
         className="rounded-2xl border p-6 space-y-5"
@@ -570,7 +571,7 @@ export default function StaffQuizzesPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {([
-            { label: "Tổng bộ quiz", value: totalItems, icon: ClipboardTextIcon, color: "var(--burning-flame)" },
+            { label: "Tổng bộ quiz", value: totalItems, icon: ClipboardTextIcon, color: "var(--accent-blue)" },
             { label: "Tổng câu hỏi", value: totalQues, icon: ClipboardTextIcon, color: "var(--accent-teal)" },
             { label: "Tổng lượt chơi", value: totalPlays.toLocaleString(), icon: GameControllerIcon, color: "var(--accent-blue)" },
           ] as const).map((s) => {
@@ -598,7 +599,7 @@ export default function StaffQuizzesPage() {
           onChange={setSearch}
           placeholder="Tìm theo tiêu đề, chủ đề..."
           actionLabel="Tạo Quiz"
-          actionGradient="linear-gradient(135deg, var(--burning-flame) 0%, var(--accent-gold) 100%)"
+          actionGradient="linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)"
           actionColor="#fff"
           onAction={openCreate}
           filters={filterChips}

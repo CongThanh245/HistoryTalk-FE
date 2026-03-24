@@ -22,7 +22,10 @@ export function StaffShell({
   return (
     // THÊM: px-6 (cho mobile) và lg:px-10 (cho màn hình lớn)
     // để tạo khoảng cách với sidebar và mép phải.
-    <div className="space-y-10 pb-10 px-6 lg:px-10 max-w-[1600px]">
+    <div 
+      className="space-y-10 pb-10 px-6 lg:px-10 max-w-[1600px]"
+      style={{ color: "var(--content-text)" }}
+    >
       <div className="space-y-1 pt-6">
         {" "}
         {/* Tăng pt-2 lên pt-6 cho thoáng phía trên */}

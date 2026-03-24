@@ -92,74 +92,119 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col"
-        style={{ borderColor: "var(--card-light-border)" }}>
-        <DialogHeader>
-          <DialogTitle style={{ color: "var(--text-on-dark)" }}>
-             Dán văn bản — Bulk import câu hỏi
+      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col p-0 overflow-hidden border-none shadow-strong"
+        style={{ background: "rgba(245, 241, 234, 0.85)", backdropFilter: "blur(20px)", color: "var(--content-heading)" }}>
+        
+        <DialogHeader className="px-8 pt-8 pb-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent-blue via-accent-teal to-accent-gold opacity-60" />
+          <DialogTitle className="text-2xl font-bold tracking-tight" style={{ color: "var(--content-heading)" }}>
+            Dán văn bản — Bulk import câu hỏi
           </DialogTitle>
-          <DialogDescription style={{ color: "var(--content-text)" }}>
-            Paste nhiều câu hỏi cùng lúc theo format dưới đây. Phân cách câu hỏi bằng{" "}
-            <code className="px-1 py-0.5 rounded text-xs" style={{ background: "rgba(255,255,255,0.08)" }}>---</code>{" "}
-            hoặc dòng trống.
+          <DialogDescription className="text-sm mt-1.5 leading-relaxed" style={{ color: "var(--content-muted)" }}>
+            Paste nhiều câu hỏi cùng lúc theo định dạng chuẩn. Các câu hỏi được phân tách bằng dấu gạch ngang <code className="px-1.5 py-0.5 rounded bg-black/5 font-mono text-xs">---</code> hoặc một dòng trống.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Format reference */}
-        <details className="rounded-xl border overflow-hidden text-xs"
-          style={{ borderColor: "var(--card-light-border)" }}>
-          <summary className="px-3 py-2 cursor-pointer font-semibold select-none"
-            style={{ color: "var(--content-subtle)", background: "rgba(27,38,50,0.06)" }}>
-             Xem format mẫu
-          </summary>
-          <pre className="px-3 py-3 overflow-x-auto leading-relaxed"
-            style={{ color: "var(--content-subtle)", background: "rgba(27,38,50,0.03)", fontFamily: "monospace" }}>
-            {`Nội dung câu hỏi?\nA. Đáp án A\nB. Đáp án B\nC. Đáp án C\nD. Đáp án D\n*B          ← đáp án đúng (A/B/C/D)\n// Giải thích (tuỳ chọn)\n\n---\n\nCâu hỏi tiếp theo?\n...`}
-          </pre>
-        </details>
-
-        {/* Textarea */}
-        <div className="flex-1 grid gap-1.5 min-h-0">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-semibold" style={{ color: "var(--content-subtle)" }}>
-              Văn bản câu hỏi
-            </Label>
-            <button type="button" className="text-xs underline opacity-60 hover:opacity-100 transition-opacity"
-              style={{ color: "var(--accent-blue)" }}
-              onClick={() => { setText(FORMAT_EXAMPLE); setError(null); setPreviewCount(null); }}>
-              Dùng ví dụ mẫu
-            </button>
+        <div className="flex-1 px-8 pb-8 overflow-y-auto space-y-6 scrollbar-thin scrollbar-thumb-black/10">
+          {/* Format reference section */}
+          <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "var(--card-light-border)", background: "rgba(27,38,50,0.02)" }}>
+            <details className="group">
+              <summary className="px-5 py-3.5 cursor-pointer font-semibold select-none flex items-center justify-between hover:bg-black/5 transition-colors"
+                style={{ color: "var(--content-text)" }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent-teal" />
+                  <span>Xem định dạng mẫu & Hướng dẫn</span>
+                </div>
+                <div className="text-[10px] px-2 py-0.5 rounded-full bg-black/5 uppercase tracking-wider group-open:hidden">Xem</div>
+                <div className="text-[10px] px-2 py-0.5 rounded-full bg-black/5 uppercase tracking-wider hidden group-open:block">Đóng</div>
+              </summary>
+              <div className="px-5 pb-5 pt-1 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="space-y-2">
+                    <p className="font-bold underline decoration-accent-teal/30 underline-offset-4">Cấu trúc 1 câu hỏi:</p>
+                    <ul className="space-y-1 opacity-80 list-disc pl-4">
+                      <li>Dòng 1: Nội dung câu hỏi</li>
+                      <li>Dòng 2-5: Đáp án A, B, C, D (bắt đầu bằng A., B., C., D.)</li>
+                      <li>Dòng 6: Đáp án đúng (bắt đầu bằng *)</li>
+                      <li>Dòng 7: Giải thích (tuỳ chọn, bắt đầu bằng //)</li>
+                    </ul>
+                  </div>
+                  <pre className="p-4 rounded-xl font-mono text-[10px] leading-relaxed overflow-x-auto shadow-inner"
+                    style={{ color: "var(--content-muted)", background: "rgba(255,255,255,0.4)", border: "1px solid var(--card-light-border)" }}>
+                    {`Nội dung câu hỏi?\nA. Đáp án A\nB. Đáp án B\nC. Đáp án C\nD. Đáp án D\n*B\n// Giải thích tại đây...`}
+                  </pre>
+                </div>
+              </div>
+            </details>
           </div>
-          <Textarea
-            value={text}
-            onChange={(e) => { setText(e.target.value); setError(null); setPreviewCount(null); }}
-            placeholder={"Dán câu hỏi vào đây...\n\nVí dụ:\nLinh Hợp Quốc thành lập năm nào?\nA. 1944\nB. 1945\nC. 1946\nD. 1947\n*B"}
-            className="min-h-[260px] font-mono text-xs resize-y"
-            style={{ color: "var(--text-on-dark)" }}
-          />
+
+          {/* Textarea field */}
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--content-heading)" }}>
+                Nội dung văn bản
+                <span className="text-[10px] font-normal px-1.5 py-0.25 rounded-md bg-accent-blue/10 text-accent-blue border border-accent-blue/20">Soạn thảo</span>
+              </Label>
+              <button type="button" 
+                className="text-xs font-semibold px-2 py-1 rounded-lg hover:bg-accent-blue/10 transition-all"
+                style={{ color: "var(--accent-blue)" }}
+                onClick={() => { setText(FORMAT_EXAMPLE); setError(null); setPreviewCount(null); }}>
+                Dùng ví dụ mẫu
+              </button>
+            </div>
+            <div className="relative group">
+              <Textarea
+                value={text}
+                onChange={(e) => { setText(e.target.value); setError(null); setPreviewCount(null); }}
+                placeholder={"Dán các nội dung câu hỏi tại đây...\n\nVí dụ:\nLịch sử Việt Nam có bao nhiêu năm văn hiến?\nA. 1000\nB. 2000\nC. 3000\nD. 4000\n*D"}
+                className="min-h-[300px] font-mono text-sm resize-none rounded-2xl p-6 transition-all border-2 shadow-inner leading-relaxed"
+                style={{ 
+                  color: "var(--content-text)", 
+                  background: "rgba(255, 255, 255, 0.5)",
+                  borderColor: "var(--card-light-border)"
+                }}
+              />
+              <div className="absolute bottom-4 right-4 text-[10px] opacity-30 group-hover:opacity-60 pointer-events-none font-mono">
+                {text.length} ký tự
+              </div>
+            </div>
+          </div>
+
+          {/* Feedback Section */}
+          <div className="min-h-[40px] animate-in fade-in slide-in-from-top-2 duration-300">
+            {error && (
+              <div className="rounded-xl px-4 py-3 text-xs font-semibold flex items-center gap-2 border shadow-sm"
+                style={{ background: "rgba(184,50,42,0.08)", color: "#b8322a", borderColor: "rgba(184,50,42,0.2)" }}>
+                <div className="shrink-0 w-5 h-5 rounded-full bg-accent-danger/20 flex items-center justify-center text-accent-danger">!</div>
+                {error}
+              </div>
+            )}
+            {previewCount !== null && !error && (
+              <div className="rounded-xl px-4 py-3 text-xs font-semibold flex items-center gap-2 border shadow-sm"
+                style={{ background: "rgba(47,111,115,0.08)", color: "var(--accent-teal)", borderColor: "rgba(47,111,115,0.2)" }}>
+                <div className="shrink-0 w-5 h-5 rounded-full bg-accent-teal/20 flex items-center justify-center text-accent-teal font-bold">✓</div>
+                Xác nhận: Tìm thấy <strong>{previewCount}</strong> câu hỏi hợp lệ.
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Feedback */}
-        {error && (
-          <div className="rounded-lg px-3 py-2 text-xs font-medium"
-            style={{ background: "rgba(184,50,42,0.10)", color: "var(--accent-danger)", border: "1px solid rgba(184,50,42,0.20)" }}>
-            ⚠ {error}
-          </div>
-        )}
-        {previewCount !== null && !error && (
-          <div className="rounded-lg px-3 py-2 text-xs font-medium"
-            style={{ background: "rgba(47,111,115,0.10)", color: "var(--accent-teal)", border: "1px solid rgba(47,111,115,0.20)" }}>
-            ✓ Tìm thấy <strong>{previewCount}</strong> câu hỏi hợp lệ — nhấn "Import" để thêm vào.
-          </div>
-        )}
-
-        <DialogFooter className="gap-2">
-          <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
-          <Button type="button" variant="outline" onClick={handlePreview} disabled={!text.trim()}>
+        <DialogFooter className="px-8 py-6 bg-black/5 border-t flex flex-row items-center justify-end gap-3" style={{ borderColor: "var(--card-light-border)" }}>
+          <Button type="button" variant="ghost" onClick={onClose}
+            className="rounded-xl font-semibold px-6 hover:bg-black/5"
+            style={{ color: "var(--content-muted)" }}>Hủy</Button>
+          
+          <Button type="button" variant="outline" onClick={handlePreview} disabled={!text.trim()}
+            className="rounded-xl font-semibold px-6 border-2 transition-all hover:border-accent-blue/50"
+            style={{ borderColor: "var(--card-light-border)", background: "transparent", color: "var(--content-text)" }}>
             Kiểm tra
           </Button>
-          <Button type="button" onClick={handleImport} disabled={!text.trim()}
-            style={{ background: "linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-blue) 100%)", color: "#fff", border: "none" }}>
+
+          <Button type="button" onClick={handleImport} disabled={!text.trim() || error !== null}
+            className="rounded-xl font-bold px-8 shadow-lg hover:shadow-accent-teal/25 transition-all text-white active:scale-95 border-none"
+            style={{ 
+              background: "linear-gradient(135deg, var(--accent-teal), #3b82f6)",
+            }}>
             Import {previewCount !== null ? `(${previewCount} câu)` : ""}
           </Button>
         </DialogFooter>
@@ -184,46 +229,44 @@ function QuestionForm({ initial, orderIndex, onSave, onCancel }: QFormProps) {
   const valid = draft.content.trim() && draft.options.every((o) => o.trim());
 
   return (
-    <div className="rounded-xl border p-4 space-y-3"
-      style={{ background: "rgba(27,38,50,0.06)", borderColor: "var(--card-light-border)" }}>
+    <div className="rounded-2xl border p-6 space-y-5 shadow-sm transition-all animate-in zoom-in-95 duration-200"
+      style={{ background: "rgba(255, 255, 255, 0.4)", backdropFilter: "blur(10px)", borderColor: "var(--card-light-border)" }}>
+      
       {/* Content */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs font-semibold" style={{ color: "var(--content-subtle)" }}>
+      <div className="grid gap-2">
+        <Label className="text-xs font-bold uppercase tracking-wider px-1" style={{ color: "var(--content-subtle)" }}>
           Nội dung câu hỏi *
         </Label>
         <Textarea value={draft.content}
           onChange={(e) => setDraft((s) => ({ ...s, content: e.target.value }))}
-          placeholder="Nhập nội dung câu hỏi..." className="min-h-[72px] text-sm" />
+          placeholder="Nhập nội dung câu hỏi..." 
+          className="min-h-[100px] text-sm rounded-xl border-2 focus:ring-0 transition-all border-black/5 bg-white/50" />
       </div>
 
       {/* Options */}
-      <div className="grid gap-2">
-        <Label className="text-xs font-semibold" style={{ color: "var(--content-subtle)" }}>
-          Đáp án — click ô tròn để đánh dấu đáp án đúng ✓
+      <div className="grid gap-3">
+        <Label className="text-xs font-bold uppercase tracking-wider px-1" style={{ color: "var(--content-subtle)" }}>
+          Đáp án & Đáp án đúng ✓
         </Label>
-        <div className="grid gap-2">
+        <div className="grid gap-2.5">
           {LABELS.map((lbl, idx) => {
             const correct = draft.correctAnswer === idx;
             return (
-              <div key={lbl} className="flex items-center gap-2">
+              <div key={lbl} className="flex items-center gap-3">
                 <button type="button"
-                  onClick={() => setDraft((s) => ({ ...s, correctAnswer: idx as 0|1|2|3 }))}
-                  className="shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-150"
+                  onClick={() => setDraft((s) => ({ ...s, correctAnswer: idx as 0 | 1 | 2 | 3 }))}
+                  className="shrink-0 w-9 h-9 rounded-xl border-2 flex items-center justify-center transition-all duration-200 shadow-sm active:scale-90"
                   title="Đánh dấu đáp án đúng"
                   style={correct
-                    ? { borderColor: "var(--accent-teal)", background: "rgba(47,111,115,0.15)" }
-                    : { borderColor: "var(--card-light-border)", background: "transparent" }
+                    ? { borderColor: "var(--accent-teal)", background: "var(--accent-teal)", color: "white" }
+                    : { borderColor: "var(--card-light-border)", background: "white", color: "var(--content-muted)" }
                   }>
-                  {correct && <CheckCircleIcon className="w-4 h-4" weight="fill" style={{ color: "var(--accent-teal)" }} />}
+                  {correct ? <CheckCircleIcon className="w-5 h-5" weight="bold" /> : <span className="text-sm font-bold">{lbl}</span>}
                 </button>
-                <span className="shrink-0 w-6 h-6 rounded-md text-xs font-bold flex items-center justify-center"
-                  style={correct
-                    ? { background: "rgba(47,111,115,0.15)", color: "var(--accent-teal)" }
-                    : { background: "var(--card-light-border)", color: "var(--content-muted)" }
-                  }>{lbl}</span>
                 <Input value={draft.options[idx]} onChange={(e) => setOpt(idx, e.target.value)}
-                  placeholder={`Đáp án ${lbl}...`} className="flex-1 h-9 text-sm"
-                  style={correct ? { borderColor: "var(--accent-teal)", background: "rgba(47,111,115,0.06)" } : {}} />
+                  placeholder={`Đáp án ${lbl}...`} 
+                  className="flex-1 h-10 text-sm rounded-xl border-2 transition-all bg-white/50 border-black/5"
+                  style={correct ? { borderColor: "rgba(47,111,115,0.3)", background: "white" } : {}} />
               </div>
             );
           })}
@@ -231,21 +274,25 @@ function QuestionForm({ initial, orderIndex, onSave, onCancel }: QFormProps) {
       </div>
 
       {/* Explanation */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs font-semibold" style={{ color: "var(--content-subtle)" }}>
+      <div className="grid gap-2">
+        <Label className="text-xs font-bold uppercase tracking-wider px-1" style={{ color: "var(--content-subtle)" }}>
           Giải thích (tuỳ chọn)
         </Label>
         <Input value={draft.explanation ?? ""}
           onChange={(e) => setDraft((s) => ({ ...s, explanation: e.target.value }))}
-          placeholder="Lý do đáp án đúng..." className="h-9 text-sm" />
+          placeholder="Lý do vì sao đáp án này đúng..." 
+          className="h-10 text-sm rounded-xl border-2 border-black/5 bg-white/50" />
       </div>
 
-      <div className="flex gap-2 pt-1">
-        <Button type="button" size="sm" className="px-4"
-          disabled={!valid} onClick={() => valid && onSave({ ...draft })}>
+      <div className="flex gap-2.5 pt-2 border-t mt-4" style={{ borderColor: "var(--card-light-border)" }}>
+        <Button type="button" size="sm" className="px-6 rounded-xl font-bold shadow-md transition-all active:scale-95 border-none"
+          disabled={!valid} onClick={() => valid && onSave({ ...draft })}
+          style={{ background: "var(--accent-teal)", color: "#fff" }}>
           Lưu câu hỏi
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>Hủy</Button>
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel}
+          className="rounded-xl px-4 hover:bg-black/5"
+          style={{ color: "var(--content-muted)" }}>Hủy bỏ</Button>
       </div>
     </div>
   );
@@ -255,40 +302,43 @@ function QuestionForm({ initial, orderIndex, onSave, onCancel }: QFormProps) {
 
 function QuestionRow({ q, idx, total, onEdit, onDelete, onMove }: {
   q: QuizQuestion; idx: number; total: number;
-  onEdit: () => void; onDelete: () => void; onMove: (d: "up"|"down") => void;
+  onEdit: () => void; onDelete: () => void; onMove: (d: "up" | "down") => void;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border px-3 py-2.5 group transition-colors"
+    <div className="flex items-start gap-4 rounded-2xl border px-5 py-4 group transition-all hover:shadow-md hover:border-accent-blue/30"
       style={{ borderColor: "var(--card-light-border)", background: "var(--card-light-bg)" }}>
-      <span className="shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold mt-0.5"
-        style={{ background: "rgba(59,130,246,0.10)", color: "var(--accent-blue)" }}>
+      <div className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm"
+        style={{ background: "rgba(143,179,200,0.15)", color: "var(--accent-blue)" }}>
         {idx + 1}
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm line-clamp-2 leading-snug" style={{ color: "var(--content-text)" }}>{q.content}</p>
-        <p className="text-xs mt-1" style={{ color: "var(--content-subtle)" }}>
-          Đáp án:&nbsp;
-          <span className="font-semibold" style={{ color: "var(--accent-teal)" }}>
-            {LABELS[q.correctAnswer]}. {q.options[q.correctAnswer]}
-          </span>
-        </p>
       </div>
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-        <Button type="button" variant="ghost" size="icon-sm" className="rounded-lg h-7 w-7"
-          disabled={idx === 0} onClick={() => onMove("up")} title="Lên">
-          <ArrowUpIcon className="h-3.5 w-3.5" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold leading-relaxed" style={{ color: "var(--content-text)" }}>{q.content}</p>
+        <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
+          <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent-teal/10 text-accent-teal border border-accent-teal/10">Đúng</span>
+          <p className="text-xs truncate font-medium" style={{ color: "var(--content-muted)" }}>
+            {LABELS[q.correctAnswer]}. {q.options[q.correctAnswer]}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+        <div className="flex items-center gap-0.5 bg-black/[0.03] p-0.5 rounded-lg border border-black/5">
+          <Button type="button" variant="ghost" size="icon-sm" className="rounded-lg h-7 w-7 hover:bg-white/80"
+            disabled={idx === 0} onClick={() => onMove("up")} title="Lên">
+            <ArrowUpIcon className="h-3.5 w-3.5" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon-sm" className="rounded-lg h-7 w-7 hover:bg-white/80"
+            disabled={idx === total - 1} onClick={() => onMove("down")} title="Xuống">
+            <ArrowDownIcon className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+        <div className="w-px h-4 bg-black/10 mx-1" />
+        <Button type="button" variant="ghost" size="icon-sm" className="rounded-lg h-8 w-8 hover:bg-accent-blue/10"
+          onClick={onEdit} style={{ color: "var(--accent-blue)" }} title="Sửa">
+          <PencilIcon className="h-4 w-4" weight="bold" />
         </Button>
-        <Button type="button" variant="ghost" size="icon-sm" className="rounded-lg h-7 w-7"
-          disabled={idx === total - 1} onClick={() => onMove("down")} title="Xuống">
-          <ArrowDownIcon className="h-3.5 w-3.5" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon-sm" className="rounded-lg h-7 w-7"
-          onClick={onEdit} style={{ color: "var(--header-text-muted)" }} title="Sửa">
-          <PencilIcon className="h-3.5 w-3.5" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon-sm" className="rounded-lg h-7 w-7"
+        <Button type="button" variant="ghost" size="icon-sm" className="rounded-lg h-8 w-8 hover:bg-accent-danger/10"
           onClick={onDelete} style={{ color: "var(--accent-danger)" }} title="Xóa">
-          <TrashIcon className="h-3.5 w-3.5" />
+          <TrashIcon className="h-4 w-4" weight="bold" />
         </Button>
       </div>
     </div>
@@ -306,7 +356,7 @@ export function QuizQuestionEditor({ questions, onChange, onImportError, onImpor
   const handleSaveNew = (q: QuizQuestion) => { onChange(reindex([...questions, q])); setAddingNew(false); };
   const handleSaveEdit = (u: QuizQuestion) => { onChange(reindex(questions.map((q) => q.questionId === u.questionId ? u : q))); setEditingId(null); };
   const handleDelete = (id: string) => onChange(reindex(questions.filter((q) => q.questionId !== id)));
-  const handleMove = (id: string, dir: "up"|"down") => {
+  const handleMove = (id: string, dir: "up" | "down") => {
     const i = questions.findIndex((q) => q.questionId === id); if (i < 0) return;
     const next = [...questions]; const j = dir === "up" ? i - 1 : i + 1;
     if (j < 0 || j >= next.length) return;
@@ -341,25 +391,19 @@ export function QuizQuestionEditor({ questions, onChange, onImportError, onImpor
         <div className="flex gap-2 flex-wrap">
           {/* Paste text */}
           <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg"
-            onClick={() => setPasteOpen(true)}>
+            onClick={() => setPasteOpen(true)}
+            style={{ borderColor: "var(--card-light-border)", background: "transparent", color: "var(--content-text)" }}>
             <ClipboardTextIcon className="h-3.5 w-3.5" /> Dán văn bản
           </Button>
 
           {/* File import */}
           <input ref={fileRef} type="file" accept=".json,.csv" className="hidden" onChange={handleFile} />
           <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg"
-            onClick={() => fileRef.current?.click()}>
+            onClick={() => fileRef.current?.click()}
+            style={{ borderColor: "var(--card-light-border)", background: "transparent", color: "var(--content-text)" }}>
             <UploadSimpleIcon className="h-3.5 w-3.5" /> Import JSON/CSV
           </Button>
 
-          {/* Add single */}
-          {!addingNew && (
-            <Button type="button" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-lg border-none"
-              onClick={() => { setEditingId(null); setAddingNew(true); }}
-              style={{ background: "linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-blue) 100%)", color: "#fff" }}>
-              <PlusIcon className="h-3.5 w-3.5" /> Thêm 1 câu
-            </Button>
-          )}
         </div>
       </div>
 
@@ -369,11 +413,11 @@ export function QuizQuestionEditor({ questions, onChange, onImportError, onImpor
           <div key={q.questionId}>
             {editingId === q.questionId
               ? <QuestionForm initial={q} orderIndex={idx + 1}
-                  onSave={handleSaveEdit} onCancel={() => setEditingId(null)} />
+                onSave={handleSaveEdit} onCancel={() => setEditingId(null)} />
               : <QuestionRow q={q} idx={idx} total={questions.length}
-                  onEdit={() => { setAddingNew(false); setEditingId(q.questionId); }}
-                  onDelete={() => handleDelete(q.questionId)}
-                  onMove={(d) => handleMove(q.questionId, d)} />
+                onEdit={() => { setAddingNew(false); setEditingId(q.questionId); }}
+                onDelete={() => handleDelete(q.questionId)}
+                onMove={(d) => handleMove(q.questionId, d)} />
             }
           </div>
         ))}
@@ -387,11 +431,8 @@ export function QuizQuestionEditor({ questions, onChange, onImportError, onImpor
             <p className="text-sm" style={{ color: "var(--content-muted)" }}>Chưa có câu hỏi nào</p>
             <div className="flex gap-2 mt-1">
               <Button type="button" size="sm" variant="outline" className="rounded-lg"
-                onClick={() => setPasteOpen(true)}>
-                <ClipboardTextIcon className="h-3.5 w-3.5 mr-1" /> Dán văn bản
-              </Button>
-              <Button type="button" size="sm" variant="outline" className="rounded-lg"
-                onClick={() => setAddingNew(true)}>
+                onClick={() => setAddingNew(true)}
+                style={{ borderColor: "var(--card-light-border)", background: "transparent", color: "var(--content-text)" }}>
                 <PlusIcon className="h-3.5 w-3.5 mr-1" /> Thêm câu hỏi
               </Button>
             </div>
