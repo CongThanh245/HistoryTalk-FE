@@ -4,6 +4,8 @@ import React from "react";
 import CustomerSidebar from "@/components/layouts/sidebar/customer-sidebar";
 import { SidebarProvider } from "@/components/layouts/sidebar/sidebar-context";
 
+import Breadcrumbs from "@/components/commons/breadcrumbs";
+
 function layout({ children }: { children: React.ReactNode }) {
   return (
     <ReactQueryProviders>
@@ -14,6 +16,7 @@ function layout({ children }: { children: React.ReactNode }) {
           <CustomerSidebar />
           <div className="flex-1 flex flex-col min-w-0">
             <Header />
+            <Breadcrumbs />
             <main
               className="flex-1 overflow-y-auto"
               style={{ background: "var(--bg-content)" }}
