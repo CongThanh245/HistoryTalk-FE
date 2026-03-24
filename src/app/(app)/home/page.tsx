@@ -1,7 +1,6 @@
 import { RecentQuiz } from "@/components/home/recent-quiz";
 import { SuggestedQuiz } from "@/components/home/suggested-quiz";
 import { FeatureCards } from "@/components/home/feature-card";
-import { HomeRightPanel } from "@/components/home/home-right-panel";
 import { WelcomeHeading } from "@/components/home/welcome-heading";
 import { HistoricalContexts } from "@/components/home/historical-contexts";
 
@@ -26,19 +25,16 @@ export default function HomePage() {
           <HistoricalContexts />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-            {/* Left: Feature cards — 1 cột dọc, 3 item/trang */}
+            {/* Left: Feature cards */}
             <FeatureCards />
 
-            {/* Right: Recent quiz phía trên, mini game phía dưới */}
+            {/* Right: Recent quiz & Suggestions */}
             <div className="flex flex-col gap-5">
               <RecentQuiz />
-              <HomeRightPanel />
+              <SuggestedQuiz />
             </div>
           </div>
         </section>
-
-        {/* ── Suggested quiz ── */}
-        <SuggestedQuiz />
       </div>
     </div>
   );

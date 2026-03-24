@@ -238,7 +238,6 @@ export function FeatureCards() {
                 </p>
               </div>
 
-              {/* Arrow on hover */}
               <div
                 style={{
                   display: "flex",
@@ -247,11 +246,11 @@ export function FeatureCards() {
                   fontSize: 11,
                   fontWeight: 600,
                   color: card.accentHex,
-                  opacity: 0,
+                  opacity: 0.6,
                 }}
-                className="group-hover:opacity-100"
+                className="group-hover:opacity-100 transition-opacity mt-1"
               >
-                Mở <CaretRightIcon size={10} weight="bold" />
+                Khám phá ngay <CaretRightIcon size={10} weight="bold" />
               </div>
             </div>
           </Link>
