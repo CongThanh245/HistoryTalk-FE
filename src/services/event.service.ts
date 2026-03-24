@@ -150,6 +150,10 @@ export const eventService = {
   softDelete: async (id: string): Promise<void> => {
     await axiosClient.patch(`/historical-contexts/${id}/soft-delete`);
   },
+  getById: async (id: string): Promise<HistoricalEvent> => {
+    const res = await axiosClient.get(`/historical-contexts/${id}`);
+    return mapContext(res.data.data);
+  },
 };
 
 // ── Era helpers ──────────────────────────────────────────

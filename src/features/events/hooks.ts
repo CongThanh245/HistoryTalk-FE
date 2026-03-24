@@ -21,6 +21,13 @@ export function useEvents(params?: GetEventsParams) {
     placeholderData: (prev) => prev,
   });
 }
+export function useEventDetail(id?: string) {
+  return useQuery({
+    queryKey: queryKeys.events.detail(id || ""),
+    queryFn: () => eventService.getById(id!),
+    enabled: !!id,
+  });
+}
 export function useCreateEvent() {
   const qc = useQueryClient();
   return useMutation({

@@ -99,11 +99,22 @@ export function StaffCharacterDetailView({
   const [isEditing, setIsEditing] = React.useState(mode === "create");
   const [publishDialogOpen, setPublishDialogOpen] = React.useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
+  const [leaveDialogOpen, setLeaveDialogOpen] = React.useState(false);
 
   /* Detect if form is dirty */
   const isDirty = React.useMemo(() => {
     if (!initialDraft) return draft.name !== "" || draft.title !== "";
-    return JSON.stringify(draft) !== JSON.stringify(initialDraft);
+    
+    // Deep comparison of relevant fields
+    const keys: (keyof CharacterDraft)[] = [
+      "name", "title", "background", "image", "personality", "lifespan", "side", "isDraft"
+    ];
+    
+    return keys.some(key => {
+      const v1 = draft[key] ?? "";
+      const v2 = initialDraft[key] ?? "";
+      return v1 !== v2;
+    });
   }, [draft, initialDraft]);
 
   /* helper to set a single field */
@@ -240,7 +251,13 @@ export function StaffCharacterDetailView({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push("/staff/characters")}
+            onClick={() => {
+              if (isDirty && isEditing) {
+                setLeaveDialogOpen(true);
+              } else {
+                router.push("/staff/characters");
+              }
+            }}
             style={{ color: "var(--content-muted)" }}
           >
             <ArrowLeftIcon className="h-5 w-5" />
@@ -289,7 +306,6 @@ export function StaffCharacterDetailView({
         </div>
       </div>
 
-      {/* Unsaved Changes confirm */}
       <ConfirmDialog
         open={cancelDialogOpen}
         onOpenChange={setCancelDialogOpen}
@@ -302,6 +318,21 @@ export function StaffCharacterDetailView({
           if (initialDraft) setDraft(initialDraft);
           setIsEditing(false);
           setCancelDialogOpen(false);
+        }}
+      />
+
+      {/* Leave Page confirm */}
+      <ConfirmDialog
+        open={leaveDialogOpen}
+        onOpenChange={setLeaveDialogOpen}
+        title="Bỏ dở phiên làm việc?"
+        description="Bạn có một số thay đổi chưa được lưu và sẽ bị mất nếu bạn rời khỏi trang này. Bạn có chắc chắn muốn rời đi?"
+        confirmLabel="Rời đi"
+        cancelLabel="Ở lại"
+        variant="danger"
+        onConfirm={() => {
+          setLeaveDialogOpen(false);
+          router.push("/staff/characters");
         }}
       />
 
