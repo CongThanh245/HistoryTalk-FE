@@ -274,7 +274,7 @@ export default function StaffCharactersPage() {
 
   return (
     <StaffShell
-      title="Manage Characters"
+      title="Quản lý nhân vật"
       description="Tạo, cập nhật và kiểm soát nhân vật lịch sử."
       icon={UsersIcon}
       accent="var(--accent-blue)"

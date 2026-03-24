@@ -100,7 +100,6 @@ export function EventStripCard({
           className="text-xl sm:text-2xl font-bold leading-snug mb-2"
           style={{
             color: "var(--content-heading)",
-            fontFamily: "Georgia, serif",
           }}
         >
           {event.title}

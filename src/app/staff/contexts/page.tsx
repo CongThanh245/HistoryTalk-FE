@@ -275,7 +275,7 @@ export default function StaffContextsPage() {
           </div>
         ),
       },
-       {
+      {
         accessorKey: "deletedAt",
         header: "Đã xóa lúc",
         cell: ({ row }) => {
@@ -331,7 +331,7 @@ export default function StaffContextsPage() {
 
   return (
     <StaffShell
-      title="Manage Historical Context"
+      title="Quản lý bối cảnh lịch sử"
       description="Tạo, cập nhật và kiểm soát bối cảnh lịch sử."
       icon={ScrollIcon}
       accent="var(--accent-gold)"

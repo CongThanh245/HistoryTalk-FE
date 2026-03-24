@@ -311,29 +311,29 @@ export default function StaffQuizzesPage() {
         r.original.updatedDate ? <FormattedDate date={r.original.updatedDate} /> : "—"
       ),
     },
-      {
-        id: "actions",
-        header: () => <div className="text-right pr-4">Thao tác</div>,
-        cell: ({ row: r }) => (
-          <div className="flex items-center justify-end gap-1">
-            <Button
-              type="button" variant="ghost" size="icon-sm" className="rounded-full"
-              onClick={() => openEdit(r.original)}
-              style={{ color: "var(--header-text-muted)" }}
-            >
-              <PencilIcon className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button" variant="ghost" size="icon-sm" className="rounded-full"
-              onClick={() => setDeleteTarget(r.original)}
-              style={{ color: "var(--accent-danger)" }}
-            >
-              <TrashIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        ),
-      },
-    ],
+    {
+      id: "actions",
+      header: () => <div className="text-right pr-4">Thao tác</div>,
+      cell: ({ row: r }) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            type="button" variant="ghost" size="icon-sm" className="rounded-full"
+            onClick={() => openEdit(r.original)}
+            style={{ color: "var(--header-text-muted)" }}
+          >
+            <PencilIcon className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button" variant="ghost" size="icon-sm" className="rounded-full"
+            onClick={() => setDeleteTarget(r.original)}
+            style={{ color: "var(--accent-danger)" }}
+          >
+            <TrashIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ],
     [],
   );
 
@@ -658,7 +658,7 @@ export default function StaffQuizzesPage() {
 
   return (
     <StaffShell
-      title="Manage Quizzes"
+      title="Quản lý câu đố"
       description="Quản lý bộ câu hỏi lịch sử theo lớp, bài và độ khó."
       icon={ClipboardTextIcon}
       accent="var(--accent-blue)"

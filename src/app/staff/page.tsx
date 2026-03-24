@@ -14,7 +14,7 @@ import { StaffShell } from "@/components/staff/staff-shell";
 const MODULES = [
   {
     icon: ScrollIcon,
-    title: "Manage Historical Context",
+    title: "Quản lý bối cảnh lịch sử",
     desc: "Tạo/cập nhật bối cảnh lịch sử để dùng cho sự kiện và cuộc trò chuyện.",
     href: "/staff/contexts",
     accent: "var(--accent-gold)",
@@ -30,7 +30,7 @@ const MODULES = [
   },
   {
     icon: ClipboardTextIcon,
-    title: "Manage Quizzes",
+    title: "Quản lý câu đố",
     desc: "Quản lý quiz theo chủ đề, độ khó và số câu hỏi.",
     href: "/staff/quizzes",
     accent: "var(--accent-blue)",
@@ -41,7 +41,7 @@ const MODULES = [
 export default function StaffPage() {
   return (
     <StaffShell
-      title="Staff Management"
+      title="Quản trị"
       description="Màn hình dành cho role Staff. Chọn module ở sidebar để thao tác nhanh."
       icon={ShieldIcon}
       accent="var(--accent-gold)"
