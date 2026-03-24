@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils/cn";
+import { isValidUrl } from "@/lib/utils/url";
 
 // ── Types ─────────────────────────────────────────────────
 
@@ -74,7 +75,7 @@ export function Card({
         }
       >
         <Image
-          src={imageSrc || "/card.jpg"}
+          src={isValidUrl(imageSrc) ? imageSrc : "/card.jpg"}
           alt={imageAlt}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -171,7 +172,7 @@ export function DarkCard({
         style={{ height: imageHeight, background: "var(--bg-elevated)" }}
       >
         <Image
-          src={imageSrc || "/card.jpg"}
+          src={isValidUrl(imageSrc) ? imageSrc : "/card.jpg"}
           alt={imageAlt}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-105"

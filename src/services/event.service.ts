@@ -1,4 +1,5 @@
 import { axiosClient } from "@/configs/axios.client";
+import { isValidUrl } from "@/lib/utils/url";
 // import { axiosServer } from "@/configs/axios.server";
 
 // ── Types map với backend ────────────────────────────────
@@ -105,15 +106,6 @@ export function mapContext(raw: any): HistoricalEvent {
     beforeTCN: raw.beforeTCN,
     deletedAt: raw.deletedAt ?? null,
   };
-}
-function isValidUrl(url: any): boolean {
-  if (!url || typeof url !== "string") return false;
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 // ── Service ──────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { axiosClient } from "@/configs/axios.client";
+import { isValidUrl } from "@/lib/utils/url";
 import { ERA_CONFIG } from "./event.service";
 
 export interface Character {
@@ -58,8 +59,8 @@ function mapCharacter(raw: any): Character {
     title: raw.title,
     background: raw.background,
     description: raw.background, // map background → description cho UI
-    imageUrl,
-    avatarUrl: imageUrl,
+    imageUrl: isValidUrl(raw.image ?? raw.imageUrl) ? (raw.image ?? raw.imageUrl) : null,
+    avatarUrl: isValidUrl(raw.image ?? raw.imageUrl) ? (raw.image ?? raw.imageUrl) : null,
     personality: raw.personality,
     lifespan: raw.lifespan,
     side: raw.side,

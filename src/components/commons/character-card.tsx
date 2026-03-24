@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ChatTextIcon, SwordIcon } from "@phosphor-icons/react";
 import { DarkCard } from "@/components/commons/card";
+import { isValidUrl } from "@/lib/utils/url";
 
 // ── Type dùng chung cho TẤT CẢ nơi dùng Character ────────
 // Thay thế cả character-card.tsx lẫn character.service.ts
@@ -44,7 +45,7 @@ export function CharacterCarouselCard({
 }: CarouselCardProps) {
   return (
     <DarkCard
-      imageSrc={character.imageUrl || "/card.jpg"}
+      imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
       imageAlt={character.name}
       imageHeight="65%"
       badge={{
@@ -126,7 +127,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       {/* Ảnh */}
       <div className="relative w-full h-85 overflow-hidden">
         <Image
-          src={character.imageUrl || "/card.jpg"}
+          src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
           alt={character.name}
           fill
           className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
@@ -268,8 +269,7 @@ interface CompactCardProps {
 
 export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
   if (!character) return null;
-  const avatarSrc =
-    character.avatarUrl ?? character.imageUrl ?? "/ngo-quyen.jpg";
+  const avatarSrc = isValidUrl(character.avatarUrl) ? character.avatarUrl : (isValidUrl(character.imageUrl) ? character.imageUrl : "/ngo-quyen.jpg");
 
   return (
     <button

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { isValidUrl } from "@/lib/utils/url";
 import type { ChatMessage, ChatCharacter } from "@/services/chat.service";
 import { SpeakerHighIcon, SpeakerXIcon } from "@phosphor-icons/react";
 import { useState } from "react";
@@ -78,7 +79,7 @@ export function MessageBubble({
         style={{ borderColor: "var(--accent-gold-soft)" }}
       >
         <Image
-          src={character.imageUrl || "/ngo-quyen.jpg"}
+          src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/ngo-quyen.jpg"}
           alt={character.name}
           fill
           className="object-cover"
@@ -156,7 +157,7 @@ export function TypingIndicator({ character }: { character: ChatCharacter }) {
         style={{ borderColor: "var(--border-default)" }}
       >
         <Image
-          src={character.imageUrl || "/ngo-quyen.jpg"}
+          src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/ngo-quyen.jpg"}
           alt={character.name}
           fill
           className="object-cover"

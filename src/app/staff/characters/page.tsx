@@ -32,6 +32,7 @@ import {
   EMPTY_CHARACTER_DRAFT,
   type CharacterDraft,
 } from "@/components/staff/staff-character-modal";
+import { isValidUrl } from "@/lib/utils/url";
 
 export default function StaffCharactersPage() {
   const [search, setSearch] = React.useState("");
@@ -127,9 +128,9 @@ export default function StaffCharactersPage() {
               className="w-9 h-9 rounded-lg overflow-hidden shrink-0 relative"
               style={{ background: "var(--card-light-border)" }}
             >
-              {row.original.imageUrl && (
+              {isValidUrl(row.original.imageUrl) && (
                 <Image
-                  src={row.original.imageUrl}
+                  src={row.original.imageUrl!}
                   alt={row.original.name}
                   fill
                   className="object-cover"
@@ -285,9 +286,9 @@ export default function StaffCharactersPage() {
               className="w-9 h-9 rounded-lg overflow-hidden shrink-0 relative"
               style={{ background: "var(--card-light-border)", opacity: 0.6 }}
             >
-              {row.original.imageUrl && (
+              {isValidUrl(row.original.imageUrl) && (
                 <Image
-                  src={row.original.imageUrl}
+                  src={row.original.imageUrl!}
                   alt={row.original.name}
                   fill
                   className="object-cover grayscale"
