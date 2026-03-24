@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ChatTextIcon, TimerIcon , CaretRightIcon, TrashIcon } from "@phosphor-icons/react";
 import type { ChatHistoryItem } from "@/services/chat-history.service";
+import { isValidUrl } from "@/lib/utils/url";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -99,7 +100,7 @@ export function SessionCard({
         style={{ borderColor: "var(--card-light-border)" }}
       >
         <Image
-          src={session.characterImage}
+          src={isValidUrl(session.characterImage) ? session.characterImage! : "/card.jpg"}
           alt={session.characterName}
           fill
           className="object-cover object-top"

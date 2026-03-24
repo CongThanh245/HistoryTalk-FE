@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ChatCharacter } from "@/services/chat.service";
 import { characterService } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key";
+import { isValidUrl } from "@/lib/utils/url";
 
 interface ChatRightPanelProps {
   activeCharacter: ChatCharacter;
@@ -28,7 +29,7 @@ export function ChatRightPanel({
           name: c.name,
           title: c.title,
           description: c.background,
-          imageUrl: c.imageUrl ?? "/card.jpg",
+          imageUrl: isValidUrl(c.imageUrl) ? c.imageUrl : "/card.jpg",
           side: c.side,
           contextId: c.contextId ?? activeCharacter.contextId,
         }),
@@ -49,7 +50,7 @@ export function ChatRightPanel({
       <div className="shrink-0">
         <div className="relative w-full h-52 overflow-hidden">
           <Image
-            src={activeCharacter.imageUrl}
+            src={isValidUrl(activeCharacter.imageUrl) ? activeCharacter.imageUrl! : "/card.jpg"}
             alt={activeCharacter.name}
             fill
             className="object-cover object-top"
@@ -143,7 +144,7 @@ export function ChatRightPanel({
               >
                 <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0">
                   <Image
-                    src={char.imageUrl}
+                    src={isValidUrl(char.imageUrl) ? char.imageUrl! : "/card.jpg"}
                     alt={char.name}
                     fill
                     className="object-cover object-top"

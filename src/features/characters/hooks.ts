@@ -18,6 +18,14 @@ export function useCharacters(params?: GetCharactersParams) {
   });
 }
 
+export function useCharacter(id?: string) {
+  return useQuery({
+    queryKey: queryKeys.characters.detail(id || ""),
+    queryFn: () => characterService.getById(id!),
+    enabled: !!id,
+  });
+}
+
 export function useCreateCharacter() {
   const qc = useQueryClient();
   return useMutation({
@@ -87,6 +95,21 @@ export function usePermanentDeleteCharacter() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message ?? "Xóa vĩnh viễn thất bại");
+    },
+  });
+}
+
+export function useMapContextToCharacter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ characterId, contextId }: { characterId: string; contextId: string }) =>
+      characterService.mapContext(characterId, contextId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.characters.all });
+      toast.success("Liên kết bối cảnh thành công");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Liên kết bối cảnh thất bại");
     },
   });
 }

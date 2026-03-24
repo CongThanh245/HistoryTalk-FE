@@ -45,7 +45,6 @@ export interface CreateCharacterRequest {
   personality?: string;
   lifespan?: string;
   side?: string;
-  contextId?: string;
   isDraft?: boolean;
 }
 
@@ -112,8 +111,17 @@ export const characterService = {
     await axiosClient.delete(`/characters/${id}`);
   },
 
+  getById: async (id: string): Promise<Character> => {
+    const res = await axiosClient.get(`/characters/${id}`);
+    return mapCharacter(res.data.data);
+  },
+
   softDelete: async (id: string): Promise<void> => {
     await axiosClient.patch(`/characters/${id}/soft-delete`);
+  },
+
+  mapContext: async (characterId: string, contextId: string): Promise<void> => {
+    await axiosClient.post(`/characters/${characterId}/contexts/${contextId}`);
   },
 };
 

@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { UsersIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ChatCircleDotsIcon, ArrowCounterClockwiseIcon } from "@phosphor-icons/react";
+import { PlusIcon, PencilIcon, TrashIcon, ChatCircleDotsIcon, ArrowCounterClockwiseIcon, MagnifyingGlassIcon, UsersIcon } from "@phosphor-icons/react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
@@ -21,43 +22,25 @@ import {
 import {
   useCharacters,
   useCreateCharacter,
-  useUpdateCharacter,
   useDeleteCharacter,
   usePermanentDeleteCharacter,
 } from "@/features/characters/hooks";
 import type { Character } from "@/services/character.service";
-import { useEvents } from "@/features/events/hooks";
-import {
-  StaffCharacterModal,
-  EMPTY_CHARACTER_DRAFT,
-  type CharacterDraft,
-} from "@/components/staff/staff-character-modal";
 import { isValidUrl } from "@/lib/utils/url";
 
 export default function StaffCharactersPage() {
+  const router = useRouter();
   const [search, setSearch] = React.useState("");
-  const [modalOpen, setModalOpen] = React.useState(false);
-  const [mode, setMode] = React.useState<"create" | "edit">("create");
-  const [draft, setDraft] = React.useState<CharacterDraft>(EMPTY_CHARACTER_DRAFT);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<Character | null>(null);
-  const [createdCharacterId, setCreatedCharacterId] = React.useState<string | null>(null);
   const [showTrash, setShowTrash] = React.useState(false);
   const [permanentDeleteOpen, setPermanentDeleteOpen] = React.useState(false);
   const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<Character | null>(null);
-
-  const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
-    page: 1,
-    limit: 100,
-  });
-  const eventOptions = eventsData?.content ?? [];
 
   const { data, isLoading, isFetching } = useCharacters({
     page: 1,
     limit: 100,
   });
-  const createCharacter = useCreateCharacter();
-  const updateCharacter = useUpdateCharacter();
   const deleteCharacter = useDeleteCharacter();
   const permanentDeleteCharacter = usePermanentDeleteCharacter();
 
@@ -76,46 +59,6 @@ export default function StaffCharactersPage() {
         x.side?.toLowerCase().includes(q),
     );
   }, [filteredItems, search]);
-
-  const handleSave = () => {
-    const payload = {
-      name: draft.name.trim(),
-      title: draft.title.trim(),
-      background: draft.background.trim() || undefined,
-      image: draft.image.trim() || undefined,
-      personality: draft.personality.trim() || undefined,
-      lifespan: draft.lifespan.trim() || undefined,
-      side: draft.side.trim() || undefined,
-      contextId: draft.contextId.trim() || undefined,
-      isDraft: draft.isDraft,
-    };
-
-    if (mode === "create" && !createdCharacterId) {
-      createCharacter.mutate(payload, {
-        onSuccess: (newChar) => {
-          // Don't close modal — set created id so chat becomes available
-          setCreatedCharacterId(newChar.id);
-          setDraft((prev) => ({ ...prev, id: newChar.id }));
-        },
-      });
-    } else {
-      const id = createdCharacterId || draft.id!;
-      updateCharacter.mutate(
-        { id, data: payload },
-        {
-          onSuccess: () => {
-            // Stay in modal, just exit edit mode
-          },
-        },
-      );
-    }
-  };
-
-  const handleCloseModal = () => {
-    setModalOpen(false);
-    setCreatedCharacterId(null);
-    setDraft(EMPTY_CHARACTER_DRAFT);
-  };
 
   const columns = React.useMemo<ColumnDef<Character>[]>(
     () => [
@@ -207,24 +150,8 @@ export default function StaffCharactersPage() {
               className="rounded-full"
               title="Chat thử với nhân vật"
               onClick={() => {
-                const c = row.original;
-                setMode("edit");
-                setDraft({
-                  id: c.id,
-                  name: c.name ?? "",
-                  title: c.title ?? "",
-                  background: c.background ?? "",
-                  image: c.imageUrl ?? "",
-                  personality: c.personality ?? "",
-                  lifespan: c.lifespan ?? "",
-                  side: c.side ?? "",
-                  contextId: c.contextId ?? "",
-                  isDraft: c.isDraft ?? false,
-                });
-                setCreatedCharacterId(null);
-                setModalOpen(true);
+                router.push(`/staff/characters/${row.original.id}`);
               }}
-              disabled={!row.original.contextId}
               style={{ color: "var(--accent-blue)" }}
             >
               <ChatCircleDotsIcon className="h-4 w-4" />
@@ -235,22 +162,7 @@ export default function StaffCharactersPage() {
               size="icon-sm"
               className="rounded-full"
               onClick={() => {
-                const c = row.original;
-                setMode("edit");
-                setDraft({
-                  id: c.id,
-                  name: c.name ?? "",
-                  title: c.title ?? "",
-                  background: c.background ?? "",
-                  image: c.imageUrl ?? "",
-                  personality: c.personality ?? "",
-                  lifespan: c.lifespan ?? "",
-                  side: c.side ?? "",
-                  contextId: c.contextId ?? "",
-                  isDraft: c.isDraft ?? false,
-                });
-                setCreatedCharacterId(null);
-                setModalOpen(true);
+                router.push(`/staff/characters/${row.original.id}`);
               }}
               style={{ color: "var(--header-text-muted)" }}
             >
@@ -359,7 +271,6 @@ export default function StaffCharactersPage() {
     [],
   );
 
-  const isPending = createCharacter.isPending || updateCharacter.isPending;
 
   return (
     <StaffShell
@@ -435,12 +346,7 @@ export default function StaffCharactersPage() {
             {!showTrash && (
               <Button
                 className="h-10 rounded-xl px-4 font-semibold border-0"
-                onClick={() => {
-                  setMode("create");
-                  setDraft(EMPTY_CHARACTER_DRAFT);
-                  setCreatedCharacterId(null);
-                  setModalOpen(true);
-                }}
+                onClick={() => router.push("/staff/characters/create")}
                 style={{
                   background: "var(--accent-blue)",
                   color: "#fff",
@@ -458,20 +364,6 @@ export default function StaffCharactersPage() {
           emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy nhân vật phù hợp."}
         />
       </section>
-
-      {/* Fullscreen character modal */}
-      <StaffCharacterModal
-        open={modalOpen}
-        onClose={handleCloseModal}
-        mode={mode}
-        draft={draft}
-        setDraft={setDraft}
-        onSave={handleSave}
-        isPending={isPending}
-        eventOptions={eventOptions}
-        isLoadingEvents={isLoadingEvents}
-        createdCharacterId={createdCharacterId}
-      />
 
       {/* Delete confirm */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
