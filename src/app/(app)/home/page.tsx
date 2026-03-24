@@ -1,22 +1,9 @@
-/**
- * src/app/(app)/home/page.tsx
- * Server Component
- *
- * Layout:
- * ┌─────────────────────┬──────────────────────────────────┐
- * │  Feature Cards      │  [Fact Card] │ [Mini Game]       │
- * │  (2×2 grid + nav)   │   (đứng)     │  (random game)    │
- * └─────────────────────┴──────────────────────────────────┘
- * ┌──────────────────────────────────────────────────────────┐
- * │  Recent Quiz  │  Suggested Quiz                         │
- * └──────────────────────────────────────────────────────────┘
- */
-
 import { RecentQuiz } from "@/components/home/recent-quiz";
 import { SuggestedQuiz } from "@/components/home/suggested-quiz";
 import { FeatureCards } from "@/components/home/feature-card";
 import { HomeRightPanel } from "@/components/home/home-right-panel";
 import { WelcomeHeading } from "@/components/home/welcome-heading";
+import { HistoricalContexts } from "@/components/home/historical-contexts";
 
 export default function HomePage() {
   return (
@@ -36,20 +23,22 @@ export default function HomePage() {
             />
           </div>
 
+          <HistoricalContexts />
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-            {/* Left: Feature cards 2×2 với pagination */}
+            {/* Left: Feature cards — 1 cột dọc, 3 item/trang */}
             <FeatureCards />
 
-            {/* Right: Fact card đứng + Mini game gộp chung */}
-            <HomeRightPanel />
+            {/* Right: Recent quiz phía trên, mini game phía dưới */}
+            <div className="flex flex-col gap-5">
+              <RecentQuiz />
+              <HomeRightPanel />
+            </div>
           </div>
         </section>
 
-        {/* ── Recent + Suggested quiz ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RecentQuiz />
-          <SuggestedQuiz />
-        </div>
+        {/* ── Suggested quiz ── */}
+        <SuggestedQuiz />
       </div>
     </div>
   );
