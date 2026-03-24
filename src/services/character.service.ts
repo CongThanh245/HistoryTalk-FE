@@ -16,6 +16,7 @@ export interface Character {
   role?: string;
   avatarUrl?: string;
   isDraft?: boolean;
+  deletedAt?: string | null;
   events?: { id: string; title: string; year: number }[];
 }
 
@@ -65,6 +66,7 @@ function mapCharacter(raw: any): Character {
     role: raw.role,
     era: mapEraLabel(raw.era),
     isDraft: raw.isDraft ?? false,
+    deletedAt: raw.deletedAt ?? null,
   };
 }
 
@@ -106,6 +108,10 @@ export const characterService = {
 
   delete: async (id: string): Promise<void> => {
     await axiosClient.delete(`/characters/${id}`);
+  },
+
+  softDelete: async (id: string): Promise<void> => {
+    await axiosClient.patch(`/characters/${id}/soft-delete`);
   },
 };
 

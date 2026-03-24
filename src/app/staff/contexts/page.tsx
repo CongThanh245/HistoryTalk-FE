@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon } from "@phosphor-icons/react";
+import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ArrowCounterClockwiseIcon } from "@phosphor-icons/react";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
@@ -86,6 +86,7 @@ export default function StaffContextsPage() {
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] =
     React.useState<HistoricalEvent | null>(null);
+  const [showTrash, setShowTrash] = React.useState(false);
 
   const { data, isLoading, isFetching } = useEvents({
     search: search || undefined,
@@ -97,6 +98,11 @@ export default function StaffContextsPage() {
   const deleteEvent = useDeleteEvent();
 
   const items = data?.content ?? [];
+
+  // FE filter: active vs trashed
+  const activeItems = items.filter((e) => !e.deletedAt);
+  const trashedItems = items.filter((e) => !!e.deletedAt);
+  const displayedItems = showTrash ? trashedItems : activeItems;
 
   const set = (field: keyof DraftState) => (val: any) =>
     setDraft((s) => ({ ...s, [field]: val }));
@@ -239,6 +245,60 @@ export default function StaffContextsPage() {
     [],
   );
 
+  // Trash view columns
+  const trashColumns = React.useMemo<ColumnDef<HistoricalEvent>[]>(
+    () => [
+      {
+        accessorKey: "title",
+        header: "Tiêu đề",
+        cell: ({ row }) => (
+          <div className="min-w-[260px]">
+            <p
+              className="text-sm font-semibold"
+              style={{ color: "var(--content-heading)", opacity: 0.6 }}
+            >
+              {row.original.title}
+            </p>
+            <p
+              className="text-xs mt-0.5"
+              style={{ color: "var(--content-muted)" }}
+            >
+              {row.original.summary?.length > 80
+                ? row.original.summary.slice(0, 80) + "..."
+                : row.original.summary}
+            </p>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "deletedAt",
+        header: "Đã xóa lúc",
+        cell: ({ row }) => (
+          <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
+            {row.original.deletedAt
+              ? new Date(row.original.deletedAt).toLocaleString("vi-VN")
+              : "—"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "era",
+        header: "Thời đại",
+        cell: ({ row }) => {
+          const eraRaw = row.original.era;
+          const era = eraRaw?.toLowerCase() as EventEra | undefined;
+          const label = era && era in ERA_CONFIG ? ERA_CONFIG[era]?.label : undefined;
+          return (
+            <span className="text-xs font-medium" style={{ color: "var(--content-text)" }}>
+              {label ?? "—"}
+            </span>
+          );
+        },
+      },
+    ],
+    [],
+  );
+
   const isPending = createEvent.isPending || updateEvent.isPending;
 
   return (
@@ -263,14 +323,14 @@ export default function StaffContextsPage() {
                 color: "var(--content-heading)",
               }}
             >
-              Danh sách bối cảnh
+              {showTrash ? "Thùng rác" : "Danh sách bối cảnh"}
             </h2>
             <p className="text-sm" style={{ color: "var(--content-muted)" }}>
               {isLoading ? (
                 "Đang tải..."
               ) : (
                 <>
-                  {items.length} bản ghi
+                  {displayedItems.length} bản ghi
                   {isFetching && (
                     <span className="ml-2 text-xs opacity-50">
                       Đang cập nhật...
@@ -299,28 +359,45 @@ export default function StaffContextsPage() {
               />
             </div>
             <Button
-              className="h-10 rounded-xl px-4 font-semibold border-0"
-              onClick={() => {
-                setMode("create");
-                setDraft(EMPTY_DRAFT);
-                setDialogOpen(true);
-              }}
+              variant="outline"
+              className="h-10 rounded-xl px-4 font-semibold"
+              onClick={() => setShowTrash(!showTrash)}
               style={{
-                background:
-                  "var(--accent-gold)",
-                color: "var(--bg-deep)",
-                boxShadow: "0 0 14px var(--accent-gold-glow)",
+                borderColor: showTrash ? "var(--accent-danger)" : "var(--card-light-border)",
+                color: showTrash ? "var(--accent-danger)" : "var(--content-heading)",
+                background: showTrash ? "rgba(239,68,68,0.08)" : "transparent",
               }}
             >
-              <PlusIcon className="h-4 w-4 mr-1.5" /> Add New
+              {showTrash ? (
+                <><ArrowCounterClockwiseIcon className="h-4 w-4 mr-1.5" /> Danh sách</>
+              ) : (
+                <><TrashIcon className="h-4 w-4 mr-1.5" /> Thùng rác {trashedItems.length > 0 && `(${trashedItems.length})`}</>
+              )}
             </Button>
+            {!showTrash && (
+              <Button
+                className="h-10 rounded-xl px-4 font-semibold border-0"
+                onClick={() => {
+                  setMode("create");
+                  setDraft(EMPTY_DRAFT);
+                  setDialogOpen(true);
+                }}
+                style={{
+                  background: "var(--accent-gold)",
+                  color: "var(--bg-deep)",
+                  boxShadow: "0 0 14px var(--accent-gold-glow)",
+                }}
+              >
+                <PlusIcon className="h-4 w-4 mr-1.5" /> Add New
+              </Button>
+            )}
           </div>
         </div>
 
         <StaffDataTable
-          columns={columns}
-          data={items}
-          emptyMessage="Không tìm thấy bối cảnh phù hợp."
+          columns={showTrash ? trashColumns : columns}
+          data={displayedItems}
+          emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy bối cảnh phù hợp."}
         />
       </section>
 
@@ -506,10 +583,10 @@ export default function StaffContextsPage() {
         <AlertDialogContent style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
           <AlertDialogHeader>
             <AlertDialogTitle style={{ color: "var(--content-heading)" }}>
-              Xóa bối cảnh lịch sử?
+              Chuyển vào thùng rác?
             </AlertDialogTitle>
             <AlertDialogDescription style={{ color: "var(--content-muted)" }}>
-              Thao tác này không thể hoàn tác.
+              Bối cảnh sẽ được chuyển vào thùng rác. Bạn có thể xem lại trong mục Thùng rác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -526,7 +603,7 @@ export default function StaffContextsPage() {
                 });
               }}
             >
-              {deleteEvent.isPending ? "Đang xóa..." : "Xóa"}
+              {deleteEvent.isPending ? "Đang xóa..." : "Chuyển vào thùng rác"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

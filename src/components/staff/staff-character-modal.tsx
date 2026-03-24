@@ -125,7 +125,7 @@ export function StaffCharacterModal({
     characterId,
     isCreated && !!draft.contextId && open
   );
-  
+
   const createSession = useCreateSession();
   const sessionInitialized = React.useRef(false);
 
@@ -138,15 +138,15 @@ export function StaffCharacterModal({
     if (!isSessionsSuccess) return;
     if (sessionInitialized.current) return;
     if (sessionId) return;
-    
+
     sessionInitialized.current = true;
 
     if (sessions && sessions.length > 0) {
       setSessionId(sessions[0].id);
     } else {
-      createSession.mutateAsync({ 
-        contextId: draft.contextId, 
-        characterId 
+      createSession.mutateAsync({
+        contextId: draft.contextId,
+        characterId
       }).then((session) => {
         setSessionId(session.id);
       }).catch(console.error);
@@ -180,6 +180,7 @@ export function StaffCharacterModal({
           background: "var(--bg-content)",
           border: "1px solid var(--card-light-border)",
           boxShadow: "0 25px 60px rgba(0,0,0,0.3)",
+          color: "var(--content-heading)",
         }}
       >
         {/* ═══════ Header ═══════ */}

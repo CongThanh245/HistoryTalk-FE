@@ -44,12 +44,13 @@ export interface HistoricalEvent {
   category: EventCategoryLower;
   location?: string;
   imageUrl?: string;
-  videoUrl?: string; // ← thêm
+  videoUrl?: string;
   era?: EventEraBackend;
   period?: string;
   startYear?: number;
   endYear?: number;
   beforeTCN?: boolean;
+  deletedAt?: string | null;
 }
 export interface CreateEventRequest {
   name: string;
@@ -93,15 +94,16 @@ export function mapContext(raw: any): HistoricalEvent {
     summary: raw.description,
     year: raw.year ?? raw.startYear ?? 0,
     yearLabel: raw.yearLabel,
-    category: (raw.category?.toLowerCase() as EventCategoryLower) ?? "other", // ← EventCategoryLower
+    category: (raw.category?.toLowerCase() as EventCategoryLower) ?? "other",
     location: raw.location,
     imageUrl: isValidUrl(raw.imageUrl) ? raw.imageUrl : undefined,
-    videoUrl: isValidUrl(raw.videoUrl) ? raw.videoUrl : undefined, // ← thêm
+    videoUrl: isValidUrl(raw.videoUrl) ? raw.videoUrl : undefined,
     era: raw.era as EventEraBackend,
     period: raw.period,
     startYear: raw.startYear,
     endYear: raw.endYear,
     beforeTCN: raw.beforeTCN,
+    deletedAt: raw.deletedAt ?? null,
   };
 }
 function isValidUrl(url: any): boolean {
@@ -151,6 +153,10 @@ export const eventService = {
 
   delete: async (id: string): Promise<void> => {
     await axiosClient.delete(`/historical-contexts/${id}`);
+  },
+
+  softDelete: async (id: string): Promise<void> => {
+    await axiosClient.patch(`/historical-contexts/${id}/soft-delete`);
   },
 };
 

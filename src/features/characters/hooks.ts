@@ -67,16 +67,10 @@ export function useUpdateCharacter() {
 export function useDeleteCharacter() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => characterService.delete(id),
-    onSuccess: (_, id) => {
-      qc.setQueryData(
-        queryKeys.characters.list({ page: 1, limit: 100 }),
-        (old: GetCharactersResponse | undefined) => {
-          if (!old) return old;
-          return { ...old, content: old.content.filter((c) => c.id !== id) };
-        },
-      );
-      toast.success("Xóa thành công");
+    mutationFn: (id: string) => characterService.softDelete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.characters.all });
+      toast.success("Đã chuyển vào thùng rác");
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message ?? "Xóa thất bại");

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { UsersIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ChatCircleDotsIcon } from "@phosphor-icons/react";
+import { UsersIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ChatCircleDotsIcon, ArrowCounterClockwiseIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
@@ -40,6 +40,7 @@ export default function StaffCharactersPage() {
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<Character | null>(null);
   const [createdCharacterId, setCreatedCharacterId] = React.useState<string | null>(null);
+  const [showTrash, setShowTrash] = React.useState(false);
 
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
     page: 1,
@@ -55,17 +56,21 @@ export default function StaffCharactersPage() {
   const updateCharacter = useUpdateCharacter();
   const deleteCharacter = useDeleteCharacter();
 
+  const allItems = data?.content ?? [];
+  const activeItems = allItems.filter((c) => !c.deletedAt);
+  const trashedItems = allItems.filter((c) => !!c.deletedAt);
+  const filteredItems = showTrash ? trashedItems : activeItems;
+
   const items = React.useMemo(() => {
-    const all = data?.content ?? [];
     const q = search.trim().toLowerCase();
-    if (!q) return all;
-    return all.filter(
+    if (!q) return filteredItems;
+    return filteredItems.filter(
       (x) =>
         x.name.toLowerCase().includes(q) ||
         x.title?.toLowerCase().includes(q) ||
         x.side?.toLowerCase().includes(q),
     );
-  }, [data, search]);
+  }, [filteredItems, search]);
 
   const handleSave = () => {
     const payload = {
@@ -265,6 +270,67 @@ export default function StaffCharactersPage() {
     [],
   );
 
+  const trashColumns = React.useMemo<ColumnDef<Character>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Nhân vật",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-3 min-w-[220px]">
+            <div
+              className="w-9 h-9 rounded-lg overflow-hidden shrink-0 relative"
+              style={{ background: "var(--card-light-border)", opacity: 0.6 }}
+            >
+              {row.original.imageUrl && (
+                <Image
+                  src={row.original.imageUrl}
+                  alt={row.original.name}
+                  fill
+                  className="object-cover grayscale"
+                />
+              )}
+            </div>
+            <div>
+              <p
+                className="text-sm font-semibold"
+                style={{ color: "var(--content-heading)", opacity: 0.6 }}
+              >
+                {row.original.name}
+              </p>
+              <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                {row.original.title}
+              </p>
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "deletedAt",
+        header: "Đã xóa lúc",
+        cell: ({ row }) => (
+          <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
+            {row.original.deletedAt
+              ? new Date(row.original.deletedAt).toLocaleString("vi-VN")
+              : "—"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "side",
+        header: "Phe",
+        cell: ({ row }) => (
+          <span
+            className="text-xs font-medium"
+            style={{ color: "var(--content-text)", opacity: 0.6 }}
+          >
+            {row.original.side ?? "—"}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
+
   const isPending = createCharacter.isPending || updateCharacter.isPending;
 
   return (
@@ -287,7 +353,7 @@ export default function StaffCharactersPage() {
               className="text-base font-semibold"
               style={{ color: "var(--content-heading)" }}
             >
-              Danh sách nhân vật
+              {showTrash ? "Thùng rác nhân vật" : "Danh sách nhân vật"}
             </h2>
             <p className="text-sm" style={{ color: "var(--content-muted)" }}>
               {isLoading ? (
@@ -323,27 +389,45 @@ export default function StaffCharactersPage() {
               />
             </div>
             <Button
-              className="h-10 rounded-xl px-4 font-semibold border-0"
-              onClick={() => {
-                setMode("create");
-                setDraft(EMPTY_CHARACTER_DRAFT);
-                setCreatedCharacterId(null);
-                setModalOpen(true);
-              }}
+              variant="outline"
+              className="h-10 rounded-xl px-4 font-semibold"
+              onClick={() => setShowTrash(!showTrash)}
               style={{
-                background: "var(--accent-blue)",
-                color: "#fff",
+                borderColor: showTrash ? "var(--accent-danger)" : "var(--card-light-border)",
+                color: showTrash ? "var(--accent-danger)" : "var(--content-heading)",
+                background: showTrash ? "rgba(239,68,68,0.08)" : "transparent",
               }}
             >
-              <PlusIcon className="h-4 w-4 mr-1.5" /> Add New
+              {showTrash ? (
+                <><ArrowCounterClockwiseIcon className="h-4 w-4 mr-1.5" /> Danh sách</>
+              ) : (
+                <><TrashIcon className="h-4 w-4 mr-1.5" /> Thùng rác {trashedItems.length > 0 && `(${trashedItems.length})`}</>
+              )}
             </Button>
+            {!showTrash && (
+              <Button
+                className="h-10 rounded-xl px-4 font-semibold border-0"
+                onClick={() => {
+                  setMode("create");
+                  setDraft(EMPTY_CHARACTER_DRAFT);
+                  setCreatedCharacterId(null);
+                  setModalOpen(true);
+                }}
+                style={{
+                  background: "var(--accent-blue)",
+                  color: "#fff",
+                }}
+              >
+                <PlusIcon className="h-4 w-4 mr-1.5" /> Add New
+              </Button>
+            )}
           </div>
         </div>
 
         <StaffDataTable
-          columns={columns}
+          columns={showTrash ? trashColumns : columns}
           data={items}
-          emptyMessage="Không tìm thấy nhân vật phù hợp."
+          emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy nhân vật phù hợp."}
         />
       </section>
 
@@ -366,10 +450,10 @@ export default function StaffCharactersPage() {
         <AlertDialogContent style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
           <AlertDialogHeader>
             <AlertDialogTitle style={{ color: "var(--content-heading)" }}>
-              Xóa nhân vật?
+              Chuyển vào thùng rác?
             </AlertDialogTitle>
             <AlertDialogDescription style={{ color: "var(--content-muted)" }}>
-              Thao tác này không thể hoàn tác.
+              Nhân vật sẽ được chuyển vào thùng rác. Bạn có thể xem lại trong mục Thùng rác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -389,7 +473,7 @@ export default function StaffCharactersPage() {
                 });
               }}
             >
-              {deleteCharacter.isPending ? "Đang xóa..." : "Xóa"}
+              {deleteCharacter.isPending ? "Đang xóa..." : "Chuyển vào thùng rác"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

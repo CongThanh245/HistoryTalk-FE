@@ -65,19 +65,10 @@ export function useUpdateEvent() {
 export function useDeleteEvent() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => eventService.delete(id),
+    mutationFn: (id: string) => eventService.softDelete(id),
     onSuccess: (_, id) => {
-      qc.setQueryData(
-        queryKeys.events.list({ page: 1, limit: 100 }),
-        (old: GetEventsResponse | undefined) => {
-          if (!old) return old;
-          return {
-            ...old,
-            content: old.content.filter((e) => e.id !== id),
-          };
-        },
-      );
-      toast.success("Xóa thành công");
+      qc.invalidateQueries({ queryKey: queryKeys.events.all });
+      toast.success("Đã chuyển vào thùng rác");
     },
   });
 }
