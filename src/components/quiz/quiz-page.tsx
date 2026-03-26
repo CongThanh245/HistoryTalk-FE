@@ -83,7 +83,7 @@ export function QuizPageClient() {
 
   return (
     <div
-      className="min-h-screen px-6 py-8"
+      className="min-h-screen px-3 py-6 md:px-6 md:py-8"
       style={{ background: "var(--bg-content)" }}
     >
       {/* Header */}
@@ -130,7 +130,7 @@ export function QuizPageClient() {
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {GRADE_FILTERS.map((f) => (
                 <button
                   key={f.value}

@@ -21,6 +21,7 @@ import { QuizResultPage } from "./QuizResultPage";
 import { QuizSidebar } from "./QuizSidebar";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation"; // thêm nếu chưa có
+import { cn } from "@/lib/utils/cn";
 
 type QuizPhase = "detail" | "session" | "result";
 
@@ -141,18 +142,31 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
       style={{ background: "var(--bg-content)" }}
     >
       {/* Left Sidebar */}
-      <div
-        className="flex-shrink-0 overflow-hidden transition-all duration-300"
-        style={{ width: sidebarOpen ? `${sidebarWidth}px` : "0px" }}
-      >
-        <div style={{ width: `${sidebarWidth}px`, height: "100%" }}>
-          <QuizSidebar
-            quizzes={allQuizzes}
-            activeQuizId={currentQuiz.quizId}
-            onSelectQuiz={handleSwitchQuiz}
-          />
+      <>
+        {/* Backdrop on mobile */}
+        <div
+          className={cn(
+            "lg:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-[2px] transition-opacity duration-300",
+            sidebarOpen ? "opacity-100 visible" : "opacity-0 invisible"
+          )}
+          onClick={() => setSidebarOpen(false)}
+        />
+        <div
+          className={cn(
+            "flex-shrink-0 h-full transition-all duration-300 z-50 border-r",
+            "lg:relative absolute left-0 top-0 bottom-0 shadow-2xl lg:shadow-none bg-[var(--bg-content)] overflow-hidden",
+            sidebarOpen ? `w-[${sidebarWidth}px] translate-x-0` : "w-0 lg:w-0 -translate-x-[260px] lg:translate-x-0 border-none",
+          )}
+        >
+          <div style={{ width: `${sidebarWidth}px`, height: "100%" }}>
+            <QuizSidebar
+              quizzes={allQuizzes}
+              activeQuizId={currentQuiz.quizId}
+              onSelectQuiz={handleSwitchQuiz}
+            />
+          </div>
         </div>
-      </div>
+      </>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
