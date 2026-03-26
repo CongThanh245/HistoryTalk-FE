@@ -6,8 +6,8 @@ import { HistoricalContexts } from "@/components/home/historical-contexts";
 
 export default function HomePage() {
   return (
-    <div className="px-6 py-8">
-      <div className="container space-y-8 pb-10">
+    <div className="px-3 py-6 md:px-6 md:py-8">
+      <div className="max-w-7xl mx-auto space-y-8 pb-10">
         {/* ── Main section ── */}
         <section>
           <div className="flex items-center gap-3 mb-5">

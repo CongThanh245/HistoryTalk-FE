@@ -231,7 +231,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           <XIcon className="w-5 h-5" />
         </button>
 
-        <div className="w-full max-w-md space-y-7">
+        <div className="w-full max-w-md sm:max-w-xl lg:max-w-md space-y-7">
           {/* Tabs */}
           <div className="flex justify-center gap-8 text-base font-semibold">
             <Link

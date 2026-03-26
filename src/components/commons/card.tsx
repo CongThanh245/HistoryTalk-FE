@@ -48,7 +48,7 @@ export function Card({
       className={cn(
         "group relative rounded-xl border overflow-hidden transition-all duration-200 cursor-pointer",
         "hover:shadow-[0_4px_24px_rgba(0,0,0,0.10)] hover:-translate-y-0.5",
-        isHorizontal ? "flex flex-row" : "flex flex-col",
+        isHorizontal ? "flex flex-col md:flex-row" : "flex flex-col",
         className,
       )}
       style={{
@@ -67,30 +67,47 @@ export function Card({
 
       {/* Ảnh */}
       <div
-        className="relative overflow-hidden shrink-0"
+        className={cn(
+          "relative overflow-hidden shrink-0",
+          isHorizontal ? "w-full md:w-[var(--desktop-width)] md:h-auto" : "w-full",
+        )}
         style={
           isHorizontal
-            ? { width: imageWidth, minHeight: imageHeight }
+            ? ({
+                "--desktop-width": `${imageWidth}px`,
+                "--mobile-height": `${imageHeight}px` || "240px",
+                minHeight: imageHeight,
+              } as React.CSSProperties)
             : { width: "100%", height: imageHeight }
         }
       >
-        <Image
-          src={isValidUrl(imageSrc) ? imageSrc : "/card.jpg"}
-          alt={imageAlt}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes={imageSizes}
-        />
         <div
-          className="absolute inset-0"
-          style={{
-            background: isHorizontal
-              ? "linear-gradient(to right, transparent 60%, var(--card-light-bg) 100%)"
-              : "linear-gradient(to bottom, transparent 40%, var(--card-light-bg) 100%)",
-          }}
-        />
+          className={cn(
+            "relative w-full overflow-hidden",
+            isHorizontal
+              ? "h-[var(--mobile-height)] md:h-full"
+              : "h-full",
+          )}
+        >
+          <Image
+            src={isValidUrl(imageSrc) ? imageSrc : "/card.jpg"}
+            alt={imageAlt}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes={imageSizes}
+          />
+          <div
+            className={cn(
+              "absolute inset-0 z-10",
+              isHorizontal
+                ? "bg-gradient-to-t from-[var(--card-light-bg)] via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-[var(--card-light-bg)]"
+                : "bg-gradient-to-t from-[var(--card-light-bg)] via-transparent to-transparent",
+            )}
+          />
+        </div>
+
         {badge && (
-          <div className="absolute top-2.5 right-2.5 z-10">
+          <div className="absolute top-2.5 right-2.5 z-20">
             <span
               className="text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm"
               style={{ background: badge.bg, color: badge.color }}
@@ -105,7 +122,7 @@ export function Card({
       <div
         className={cn(
           isHorizontal
-            ? "flex-1 px-6 py-5 flex flex-col justify-center"
+            ? "flex-1 px-4 py-5 md:px-6 md:py-6 flex flex-col justify-center"
             : "px-4 pb-4 pt-1",
         )}
       >

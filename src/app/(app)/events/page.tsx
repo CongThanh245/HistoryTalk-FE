@@ -12,7 +12,7 @@ export const metadata = {
 };
 export default function EventsPage() {
   return (
-    <div className="px-6 py-8">
+    <div className="px-3 py-6 md:px-6 md:py-8">
       <div className="space-y-8">
         <div className="flex items-center gap-3">
           <div>

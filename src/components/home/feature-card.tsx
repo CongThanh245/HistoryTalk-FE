@@ -155,14 +155,7 @@ export function FeatureCards() {
       </div>
 
       {/* 2×2 grid */}
-      <div
-        style={{
-          padding: 10,
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 15,
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5">
         {visible.map((card) => (
           <Link
             key={card.href}

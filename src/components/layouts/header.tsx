@@ -42,7 +42,7 @@ export default function Header() {
         borderColor: "var(--header-border)",
       }}
     >
-      <div className="flex h-full items-center justify-between px-4 md:px-6 gap-4">
+      <div className="flex h-full items-center justify-between px-3 md:px-6 gap-4">
         {/* Mobile hamburger — opens sidebar drawer */}
         <button
           onClick={toggleMobileSidebar}
