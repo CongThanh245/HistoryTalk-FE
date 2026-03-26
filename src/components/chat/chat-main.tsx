@@ -26,10 +26,10 @@ interface ChatMainProps {
   sessionId: string | null;
   contextId: string;
   onSessionCreated: (sessionId: string) => void;
-  toggleLeftPanel: () => void;
-  toggleRightPanel: () => void;
-  isLeftOpen: boolean;
-  isRightOpen: boolean;
+  toggleLeftPanel?: () => void;
+  toggleRightPanel?: () => void;
+  isLeftOpen?: boolean;
+  isRightOpen?: boolean;
 }
 
 export function ChatMain({
@@ -39,8 +39,8 @@ export function ChatMain({
   onSessionCreated,
   toggleLeftPanel,
   toggleRightPanel,
-  isLeftOpen,
-  isRightOpen,
+  isLeftOpen = false,
+  isRightOpen = false,
 }: ChatMainProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>(
@@ -178,13 +178,15 @@ export function ChatMain({
         }}
       >
         {/* Toggle Left (Mobile) */}
-        <button
-          onClick={toggleLeftPanel}
-          className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
-          style={{ color: isLeftOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
-        >
-          <ListIcon className="w-5 h-5" />
-        </button>
+        {toggleLeftPanel && (
+          <button
+            onClick={toggleLeftPanel}
+            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
+            style={{ color: isLeftOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
+          >
+            <ListIcon className="w-5 h-5" />
+          </button>
+        )}
 
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
@@ -239,13 +241,15 @@ export function ChatMain({
         </button>
 
         {/* Toggle Right (Mobile) */}
-        <button
-          onClick={toggleRightPanel}
-          className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
-          style={{ color: isRightOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
-        >
-          <InfoIcon className="w-5 h-5" />
-        </button>
+        {toggleRightPanel && (
+          <button
+            onClick={toggleRightPanel}
+            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
+            style={{ color: isRightOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
+          >
+            <InfoIcon className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Messages */}

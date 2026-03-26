@@ -92,9 +92,16 @@ export function Footer() {
           <p className="text-xs text-[var(--text-muted)]">
             © {new Date().getFullYear()} HistoryTalk. Bảo lưu mọi quyền.
           </p>
-          <p className="text-xs text-[var(--text-muted)]">
-            Được xây dựng tại Việt Nam 🇻🇳
-          </p>
+
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-[var(--text-muted)] opacity-[0.1] select-none pointer-events-none">
+              NganNK34
+            </span>
+
+            <p className="text-xs text-[var(--text-muted)]">
+              Được xây dựng tại Việt Nam 🇻🇳
+            </p>
+          </div>
         </div>
       </Container>
     </footer>
