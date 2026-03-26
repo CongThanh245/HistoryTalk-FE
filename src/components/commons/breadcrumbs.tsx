@@ -21,7 +21,7 @@ const routeLabels: Record<string, string> = {
   profile: "Hồ sơ",
   quiz: "Trắc nghiệm",
   saved: "Đã lưu",
-  chat: "Trò chuyện",
+  chat: "Nhân vật",
   "chat-history": "Lịch sử trò chuyện",
   about: "Giới thiệu",
   features: "Tính năng",
@@ -99,14 +99,7 @@ export default function Breadcrumbs() {
 }
 
 function BreadcrumbLabel({ segment, parentSegment }: { segment: string; parentSegment?: string }) {
-  const isId = /^[0-9a-fA-F-]{24,36}$/.test(segment);
-  
-  if (!isId) {
-    const label = routeLabels[segment] || segment;
-    return <>{label.charAt(0).toUpperCase() + label.slice(1)}</>;
-  }
-
-  if (parentSegment === "characters") {
+  if (parentSegment === "characters" || parentSegment === "chat") {
     return <CharacterName id={segment} />;
   }
   if (parentSegment === "contexts") {
@@ -114,6 +107,13 @@ function BreadcrumbLabel({ segment, parentSegment }: { segment: string; parentSe
   }
   if (parentSegment === "quizzes") {
     return <QuizName id={segment} />;
+  }
+
+  const isId = /^[0-9a-fA-F-]{24,36}$/.test(segment);
+  
+  if (!isId) {
+    const label = routeLabels[segment] || segment;
+    return <>{label.charAt(0).toUpperCase() + label.slice(1)}</>;
   }
 
   return <>{segment.slice(0, 8)}...</>;
