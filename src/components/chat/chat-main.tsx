@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PhoneIcon, ScrollIcon } from "@phosphor-icons/react"; // ← thêm PhoneIcon
+import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
 import type {
   ChatCharacter,
   ChatMessage,
@@ -19,12 +19,17 @@ import { queryKeys } from "@/shared/query-key";
 import { VoiceChatModal } from "./VoiceChatModal";
 import { KeywordDetailPanel } from "./KeywordDetailPanel";
 import type { KeywordData } from "@/data/keywords";
+import { cn } from "@/lib/utils/cn";
 
 interface ChatMainProps {
   character: ChatCharacter;
   sessionId: string | null;
   contextId: string;
   onSessionCreated: (sessionId: string) => void;
+  toggleLeftPanel: () => void;
+  toggleRightPanel: () => void;
+  isLeftOpen: boolean;
+  isRightOpen: boolean;
 }
 
 export function ChatMain({
@@ -32,6 +37,10 @@ export function ChatMain({
   sessionId,
   contextId,
   onSessionCreated,
+  toggleLeftPanel,
+  toggleRightPanel,
+  isLeftOpen,
+  isRightOpen,
 }: ChatMainProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>(
@@ -162,16 +171,25 @@ export function ChatMain({
     <div className="relative flex-1 flex flex-col min-w-0 h-full overflow-hidden">
       {/* Header */}
       <div
-        className="px-6 py-4 border-b flex items-center gap-3 shrink-0"
+        className="px-4 lg:px-6 py-4 border-b flex items-center gap-3 shrink-0"
         style={{
           borderColor: "var(--border-default)",
           background: "var(--bg-main)",
         }}
       >
+        {/* Toggle Left (Mobile) */}
+        <button
+          onClick={toggleLeftPanel}
+          className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
+          style={{ color: isLeftOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
+        >
+          <ListIcon className="w-5 h-5" />
+        </button>
+
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
           style={{
-            background: "var(--bg-elevated)", // Có thể giữ hoặc bỏ gradient cũ
+            background: "var(--bg-elevated)",
           }}
         >
           {character.imageUrl ? (
@@ -181,7 +199,6 @@ export function ChatMain({
               className="w-full h-full object-cover"
             />
           ) : (
-            /* Fallback nếu không có ảnh thì hiện lại Icon hoặc tên viết tắt */
             <ScrollIcon
               className="w-4 h-4"
               style={{ color: "var(--bg-deep)" }}
@@ -219,6 +236,15 @@ export function ChatMain({
             className="w-4 h-4"
             style={{ color: "var(--accent-gold)" }}
           />
+        </button>
+
+        {/* Toggle Right (Mobile) */}
+        <button
+          onClick={toggleRightPanel}
+          className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
+          style={{ color: isRightOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
+        >
+          <InfoIcon className="w-5 h-5" />
         </button>
       </div>
 

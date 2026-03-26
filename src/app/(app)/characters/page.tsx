@@ -13,7 +13,7 @@ export const metadata = {
 export default function CharactersPage() {
   return (
     <div className="h-full overflow-y-auto">
-      <div className="px-6 py-8">
+      <div className="px-3 py-6 md:px-6 md:py-8">
         <div className="flex items-center gap-3 mb-8">
           <div>
             <h1

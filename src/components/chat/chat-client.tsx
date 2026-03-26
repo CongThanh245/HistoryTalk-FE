@@ -80,6 +80,17 @@ export function ChatClient({ initialCharacterId }: ChatClientProps) {
     // invalidate để left panel cập nhật list
   }, []);
 
+  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
+
+  // Default hide on mobile
+  useEffect(() => {
+    if (window.innerWidth < 1024) {
+      setIsLeftPanelOpen(false);
+      setIsRightPanelOpen(false);
+    }
+  }, []);
+
   if (isLoadingCharacter || !activeCharacter) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -95,7 +106,7 @@ export function ChatClient({ initialCharacterId }: ChatClientProps) {
   }
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden relative">
       <ChatLeftPanel
         characterId={characterId}
         contextId={contextId}
@@ -104,16 +115,24 @@ export function ChatClient({ initialCharacterId }: ChatClientProps) {
         activeSessionId={activeSessionId}
         onSelectSession={setActiveSessionId}
         onNewSession={handleNewSession}
+        isOpen={isLeftPanelOpen}
+        setIsOpen={setIsLeftPanelOpen}
       />
       <ChatMain
         character={activeCharacter}
         sessionId={activeSessionId}
         contextId={contextId}
-        onSessionCreated={handleSessionCreated} // ← thêm
+        onSessionCreated={handleSessionCreated}
+        toggleLeftPanel={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
+        toggleRightPanel={() => setIsRightPanelOpen(!isRightPanelOpen)}
+        isLeftOpen={isLeftPanelOpen}
+        isRightOpen={isRightPanelOpen}
       />
       <ChatRightPanel
         activeCharacter={activeCharacter}
         onSelectCharacter={handleSelectCharacter}
+        isOpen={isRightPanelOpen}
+        setIsOpen={setIsRightPanelOpen}
       />
     </div>
   );

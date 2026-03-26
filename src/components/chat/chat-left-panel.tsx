@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils/cn";
 import {
   CaretLeftIcon,
   CaretRightIcon,
@@ -20,12 +21,14 @@ import { ChatSession } from "@/services/chat.service";
 
 interface ChatLeftPanelProps {
   characterId: string;
-  contextId: string; // ← thêm
+  contextId: string;
   activeSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
-  sessions: ChatSession[]; // ← thêm
-  isLoadingSessions: boolean; // ← thêm
-  onNewSession: (sessionId: string) => void; // ← trả về sessionId mới
+  sessions: ChatSession[];
+  isLoadingSessions: boolean;
+  onNewSession: (sessionId: string) => void;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
 }
 
 export function ChatLeftPanel({
@@ -36,8 +39,9 @@ export function ChatLeftPanel({
   activeSessionId,
   onSelectSession,
   onNewSession,
+  isOpen,
+  setIsOpen,
 }: ChatLeftPanelProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [showHint, setShowHint] = useState(false);
 
   const createSession = useCreateSession();
@@ -88,16 +92,32 @@ export function ChatLeftPanel({
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div
-        className="relative flex shrink-0 h-full transition-all duration-250"
-        style={{ width: isOpen ? 260 : 28 }}
-      >
-        <Tooltip>
+      <>
+        {/* Backdrop on mobile */}
+        <div
+          className={cn(
+            "lg:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-[2px] transition-opacity duration-300",
+            isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+          )}
+          onClick={() => setIsOpen(false)}
+        />
+
+        <div
+          className={cn(
+            "shrink-0 h-full transition-all duration-300 z-50",
+            "lg:relative absolute left-0 top-0 bottom-0",
+            isOpen ? "w-[260px]" : "w-0 lg:w-[28px]",
+          )}
+        >
+          <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={isOpen ? () => setIsOpen(false) : handleOpen}
               onMouseEnter={dismissHint}
-              className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-6 h-10 flex items-center justify-center rounded-full border cursor-pointer transition-all duration-150 hover:scale-110"
+              className={cn(
+                "absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-6 h-10 flex items-center justify-center rounded-full border cursor-pointer transition-all duration-150 hover:scale-110",
+                !isOpen && "hidden lg:flex",
+              )}
               style={{
                 background: "var(--bg-elevated)",
                 borderColor: "var(--border-default)",
@@ -119,7 +139,7 @@ export function ChatLeftPanel({
 
         {!isOpen && showHint && (
           <div
-            className="absolute left-6 top-1/2 -translate-y-1/2 z-30 flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap"
+            className="hidden lg:absolute left-6 top-1/2 -translate-y-1/2 z-30 flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap"
             style={{
               background: "var(--bg-elevated)",
               border: "1px solid var(--border-default)",
@@ -156,7 +176,7 @@ export function ChatLeftPanel({
 
         {isOpen && (
           <div
-            className="w-full h-full flex flex-col border-r overflow-hidden"
+            className="w-full h-full flex flex-col border-r shadow-2xl lg:shadow-none overflow-hidden"
             style={{
               background: "var(--abyssal-blue)",
               borderColor: "var(--border-default)",
@@ -301,7 +321,8 @@ export function ChatLeftPanel({
             </div>
           </div>
         )}
-      </div>
+        </div>
+      </>
     </TooltipProvider>
   );
 }
