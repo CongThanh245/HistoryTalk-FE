@@ -51,6 +51,7 @@ export interface HistoricalEvent {
   startYear?: number;
   endYear?: number;
   beforeTCN?: boolean;
+  isDraft?: boolean;
   deletedAt?: string | null;
 }
 export interface CreateEventRequest {
@@ -65,6 +66,7 @@ export interface CreateEventRequest {
   location?: string;
   imageUrl?: string | null;
   videoUrl?: string | null;
+  isDraft?: boolean;
 }
 export interface UpdateEventRequest extends Partial<CreateEventRequest> {}
 
@@ -104,6 +106,7 @@ export function mapContext(raw: any): HistoricalEvent {
     startYear: raw.startYear,
     endYear: raw.endYear,
     beforeTCN: raw.beforeTCN,
+    isDraft: raw.isDraft ?? false,
     deletedAt: raw.deletedAt ?? null,
   };
 }

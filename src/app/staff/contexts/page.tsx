@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ArrowCounterClockwiseIcon } from "@phosphor-icons/react";
+import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon } from "@phosphor-icons/react";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -54,6 +55,7 @@ type DraftState = {
   location: string;
   imageUrl: string;
   videoUrl: string;
+  isDraft: boolean;
 };
 
 const EMPTY_DRAFT: DraftState = {
@@ -68,6 +70,7 @@ const EMPTY_DRAFT: DraftState = {
   location: "",
   imageUrl: "",
   videoUrl: "",
+  isDraft: true,
 };
 
 export default function StaffContextsPage() {
@@ -82,6 +85,7 @@ export default function StaffContextsPage() {
   const [permanentDeleteOpen, setPermanentDeleteOpen] = React.useState(false);
   const [permanentDeleteTarget, setPermanentDeleteTarget] =
     React.useState<HistoricalEvent | null>(null);
+  const [publishDialogOpen, setPublishDialogOpen] = React.useState(false);
 
   const { data, isLoading, isFetching } = useEvents({
     search: search || undefined,
@@ -116,6 +120,7 @@ export default function StaffContextsPage() {
       location: draft.location.trim() || undefined,
       imageUrl: draft.imageUrl.trim() || undefined,
       videoUrl: draft.videoUrl.trim() || undefined,
+      isDraft: draft.isDraft,
     };
 
     if (mode === "create") {
@@ -155,6 +160,26 @@ export default function StaffContextsPage() {
               >
                 {truncatedSummary}
               </p>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "isDraft",
+        header: "Trạng thái",
+        cell: ({ row }) => {
+          const isDraft = row.original.isDraft;
+          return (
+            <div
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+              style={{
+                background: isDraft ? "rgba(234,179,8,0.1)" : "rgba(34,197,94,0.1)",
+                color: isDraft ? "rgb(161,98,7)" : "rgb(22,163,74)",
+                border: `1px solid ${isDraft ? "rgba(234,179,8,0.2)" : "rgba(34,197,94,0.2)"}`,
+              }}
+            >
+              <EyeIcon className="h-3 w-3" />
+              {isDraft ? "Bản nháp" : "Đã công bố"}
             </div>
           );
         },
@@ -215,6 +240,7 @@ export default function StaffContextsPage() {
                   location: e.location ?? "",
                   imageUrl: e.imageUrl ?? "",
                   videoUrl: e.videoUrl ?? "",
+                  isDraft: e.isDraft ?? false,
                 });
                 setDialogOpen(true);
               }}
@@ -548,13 +574,41 @@ export default function StaffContextsPage() {
                 </div>
               </div>
 
-              {/* beforeTCN */}
               <div className="flex items-center gap-3 py-1">
                 <Switch
                   checked={draft.beforeTCN}
                   onCheckedChange={set("beforeTCN")}
                 />
                 <Label>Trước Công Nguyên (TCN)</Label>
+              </div>
+
+              {/* isDraft Checkbox */}
+              <div
+                className="flex items-center gap-3 py-3 px-4 rounded-xl border transition-colors"
+                style={{
+                  borderColor: "var(--card-light-border)",
+                  background: "rgba(27,38,50,0.03)",
+                }}
+              >
+                <Checkbox
+                  checked={draft.isDraft}
+                  onCheckedChange={(val) => {
+                    if (!val) {
+                      setPublishDialogOpen(true);
+                    } else {
+                      set("isDraft")(true);
+                    }
+                  }}
+                  id="isDraft"
+                />
+                <div className="flex-1">
+                  <Label htmlFor="isDraft" className="cursor-pointer text-sm font-medium">
+                    Lưu dạng bản nháp (Draft)
+                  </Label>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                    Bản nháp không hiển thị cho học sinh. Bỏ tick để xuất bản.
+                  </p>
+                </div>
               </div>
 
               {/* Media URLs */}
@@ -596,6 +650,18 @@ export default function StaffContextsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={publishDialogOpen}
+        onOpenChange={setPublishDialogOpen}
+        title="Xác nhận xuất bản bối cảnh?"
+        description='Khi bỏ chọn "Bản nháp", bối cảnh này sẽ được hiển thị công khai cho người dùng. Bạn có chắc chắn muốn thực hiện không?'
+        confirmLabel="Đồng ý, xuất bản"
+        onConfirm={() => {
+          set("isDraft")(false);
+          setPublishDialogOpen(false);
+        }}
+      />
 
       {/* Delete confirm */}
       <ConfirmDialog
