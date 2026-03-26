@@ -224,6 +224,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       >
         <button
           onClick={() => router.push("/")}
+          tabIndex={-1}
           className="absolute top-6 right-6 rounded-lg p-1.5 transition-colors cursor-pointer hover:bg-black/5"
           style={{ color: "var(--content-muted)" }}
         >
@@ -335,6 +336,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     type="text"
                     placeholder="Nhập tên người dùng"
                     value={userName}
+                    autoFocus={isRegister}
                     onChange={(e) => setUserName(e.target.value)}
                     className="h-11 text-sm rounded-xl focus-visible:ring-1"
                     style={{
@@ -360,6 +362,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   type="email"
                   placeholder="Nhập địa chỉ email của bạn"
                   value={email}
+                  autoFocus={!isRegister}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-11 text-sm rounded-xl focus-visible:ring-1"
                   style={{
@@ -383,6 +386,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   {!isRegister && (
                     <Link
                       href="/forgot-password"
+                      tabIndex={-1}
                       className="text-xs hover:underline"
                       style={{ color: "var(--content-text)" }}
                     >
@@ -406,6 +410,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   />
                   <button
                     type="button"
+                    tabIndex={-1}
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
                     style={{ color: "var(--content-muted)" }}
@@ -453,6 +458,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     />
                     <button
                       type="button"
+                      tabIndex={-1}
                       onClick={() =>
                         setShowConfirmPassword(!showConfirmPassword)
                       }
