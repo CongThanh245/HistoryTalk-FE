@@ -31,7 +31,7 @@ import { ChatMain } from "@/components/chat/chat-main";
 import { useChatSessions, useCreateSession } from "@/features/chat/hooks";
 import type { ChatCharacter } from "@/services/chat.service";
 import type { HistoricalEvent, EventEraBackend, EventCategory } from "@/services/event.service";
-import { useCreateEvent } from "@/features/events/hooks";
+import { useCreateEvent, useUpdateEvent } from "@/features/events/hooks";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -139,6 +139,14 @@ export function StaffCharacterDetailView({
     year: "",
   });
   const createEvent = useCreateEvent();
+  const updateEvent = useUpdateEvent();
+
+  const linkedContext = React.useMemo(() => {
+    if (!mappedContextId) return null;
+    return eventOptions.find((e) => e.id === mappedContextId);
+  }, [mappedContextId, eventOptions]);
+
+  const isContextDraft = linkedContext?.isDraft ?? false;
 
   // Reset state/sync when props change (especially for edit mode)
   React.useEffect(() => {
@@ -475,10 +483,17 @@ export function StaffCharacterDetailView({
             <ConfirmDialog
               open={publishDialogOpen}
               onOpenChange={setPublishDialogOpen}
-              title="Xác nhận xuất bản nhân vật?"
-              description='Khi bỏ chọn "Bản nháp", nhân vật này sẽ được hiển thị công khai cho người dùng. Bạn có chắc chắn muốn thực hiện không?'
+              title={isContextDraft ? "Xác nhận xuất bản nhân vật & bối cảnh?" : "Xác nhận xuất bản nhân vật?"}
+              description={
+                isContextDraft
+                  ? 'Nhân vật này đang liên kết với bối cảnh "' + (linkedContext?.title || "") + '" hiện đang là bản nháp. Việc xuất bản nhân vật sẽ đồng thời xuất bản bối cảnh này để người dùng có thể xem được đầy đủ thông tin. Bạn có chắc chắn muốn thực hiện không?'
+                  : 'Khi bỏ chọn "Bản nháp", nhân vật này sẽ được hiển thị công khai cho người dùng. Bạn có chắc chắn muốn thực hiện không?'
+              }
               confirmLabel="Đồng ý, xuất bản"
               onConfirm={() => {
+                if (isContextDraft && mappedContextId) {
+                  updateEvent.mutate({ id: mappedContextId, data: { isDraft: false } });
+                }
                 set("isDraft")(false);
                 setPublishDialogOpen(false);
               }}
