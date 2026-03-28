@@ -7,65 +7,9 @@ import { MagneticButton } from "../commons/MagneticButton";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
 import Image from "next/image";
 import { useAuthStore } from "@/store/auth.store";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { UserProfileDropdown } from "../layouts/user-profile-dropdown";
 import { useLogout } from "@/features/auth/hooks";
 
-// Avatar component tối giản, hòa hợp với navbar
-function NavAvatar({ userName }: { userName?: string }) {
-  const initials = userName
-    ? userName
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "?";
-
-  return (
-    <div
-      style={{
-        width: 32,
-        height: 32,
-        borderRadius: "50%",
-        background:
-          "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle, #8B7355) 100%)",
-        color: "var(--bg-deep, #0a0a0a)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 12,
-        fontWeight: 700,
-        letterSpacing: "0.05em",
-        border:
-          "1px solid color-mix(in srgb, var(--accent-gold) 40%, transparent)",
-        boxShadow:
-          "0 0 10px -2px color-mix(in srgb, var(--accent-gold) 30%, transparent)",
-        flexShrink: 0,
-        cursor: "pointer",
-        transition: "box-shadow 0.2s ease, transform 0.2s ease",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.transform = "scale(1.05)";
-        (e.currentTarget as HTMLDivElement).style.boxShadow =
-          "0 0 16px -2px color-mix(in srgb, var(--accent-gold) 50%, transparent)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.transform = "scale(1)";
-        (e.currentTarget as HTMLDivElement).style.boxShadow =
-          "0 0 10px -2px color-mix(in srgb, var(--accent-gold) 30%, transparent)";
-      }}
-    >
-      {initials}
-    </div>
-  );
-}
 
 export function MarketingNavbar() {
   const pathname = usePathname();
@@ -129,34 +73,6 @@ export function MarketingNavbar() {
         .auth-group:hover .auth-divider { background: color-mix(in srgb, var(--accent-gold) 30%, transparent); }
         .auth-group .cta-wrapper > * { border-radius: 0 9999px 9999px 0 !important; }
 
-        /* Logged-in avatar pill */
-        .avatar-pill {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 4px 12px 4px 4px;
-          border: 1px solid var(--border-default);
-          border-radius: 9999px;
-          transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-          cursor: pointer;
-          background: transparent;
-        }
-        .avatar-pill:hover {
-          border-color: color-mix(in srgb, var(--accent-gold) 40%, transparent);
-          box-shadow: 0 0 16px -4px color-mix(in srgb, var(--accent-gold) 25%, transparent);
-          background: color-mix(in srgb, var(--accent-gold) 4%, transparent);
-        }
-        .avatar-pill-name {
-          font-size: 13px;
-          font-weight: 500;
-          color: var(--text-secondary);
-          transition: color 0.2s ease;
-          max-width: 100px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        .avatar-pill:hover .avatar-pill-name { color: var(--text-primary); }
       `}</style>
 
       <div className="fixed top-0 left-0 right-0 z-50 flex justify-center p-3 md:p-4 pointer-events-none">
@@ -197,10 +113,9 @@ export function MarketingNavbar() {
                     href={link.href}
                     className={`
                       relative py-1 text-[14px] font-medium tracking-wide transition-colors group
-                      ${
-                        isActive
-                          ? "text-[var(--accent-gold)]"
-                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                      ${isActive
+                        ? "text-[var(--accent-gold)]"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                       }
                     `}
                   >
@@ -217,100 +132,7 @@ export function MarketingNavbar() {
             {/* Desktop CTA — đã đăng nhập: avatar pill, chưa: auth group */}
             <div className="hidden md:flex items-center ml-6">
               {isLoggedIn ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="avatar-pill" style={{ outline: "none" }}>
-                      <NavAvatar userName={user.userName} />
-                      <span className="avatar-pill-name">{user.userName}</span>
-                      {/* chevron nhỏ */}
-                      <svg
-                        width="10"
-                        height="10"
-                        viewBox="0 0 10 10"
-                        fill="none"
-                        style={{ color: "var(--text-muted)", flexShrink: 0 }}
-                      >
-                        <path
-                          d="M2 4l3 3 3-3"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent
-                    align="end"
-                    className="w-52 border mt-2"
-                    style={{
-                      background: "var(--bg-elevated)",
-                      borderColor: "var(--border-default)",
-                      color: "var(--text-primary)",
-                      borderRadius: "14px",
-                    }}
-                  >
-                    <DropdownMenuLabel>
-                      <p
-                        className="text-sm font-medium"
-                        style={{ color: "var(--text-primary)" }}
-                      >
-                        {user.userName}
-                      </p>
-                      <p
-                        className="text-xs mt-0.5"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        {user.email ?? ""}
-                      </p>
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem
-                      className="cursor-pointer p-0" // 1. Set padding về 0 ở item cha
-                      style={{ color: "var(--text-secondary)" }}
-                      asChild
-                    >
-                      <Link
-                        href="/home"
-                        className="w-full h-full px-2 py-1.5 flex items-center" // 2. Thêm padding và flex vào đây
-                      >
-                        Khám phá
-                      </Link>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      className="cursor-pointer p-0"
-                      style={{ color: "var(--text-secondary)" }}
-                      asChild
-                    >
-                      <Link
-                        href="/profile"
-                        className="w-full h-full px-2 py-1.5 flex items-center"
-                      >
-                        Hồ sơ
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      Cài đặt
-                    </DropdownMenuItem>
-
-                    <DropdownMenuSeparator
-                      style={{ background: "var(--border-default)" }}
-                    />
-
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      style={{ color: "var(--accent-danger)" }}
-                      disabled={isPending}
-                      onClick={() => logout()}
-                    >
-                      {isPending ? "Đang đăng xuất..." : "Đăng xuất"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <UserProfileDropdown align="end" showPremium={false} showBorder={false} />
               ) : (
                 <div className="auth-group">
                   <MagneticButton
@@ -337,66 +159,7 @@ export function MarketingNavbar() {
             {/* Mobile: Login + Hamburger */}
             <div className="flex items-center gap-2 ml-auto md:hidden">
               {isLoggedIn ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      style={{
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <NavAvatar userName={user.userName} />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="w-48 border mt-2"
-                    style={{
-                      background: "var(--bg-elevated)",
-                      borderColor: "var(--border-default)",
-                      color: "var(--text-primary)",
-                      borderRadius: "14px",
-                    }}
-                  >
-                    <DropdownMenuLabel>
-                      <p
-                        className="text-sm font-medium"
-                        style={{ color: "var(--text-primary)" }}
-                      >
-                        {user.userName}
-                      </p>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator
-                      style={{ background: "var(--border-default)" }}
-                    />
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      style={{ color: "var(--text-secondary)" }}
-                      asChild
-                    >
-                      <Link href="/home">Khám phá</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      Hồ sơ
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator
-                      style={{ background: "var(--border-default)" }}
-                    />
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      style={{ color: "var(--accent-danger)" }}
-                      disabled={isPending}
-                      onClick={() => logout()}
-                    >
-                      {isPending ? "Đang đăng xuất..." : "Đăng xuất"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <UserProfileDropdown align="end" showPremium={false} showBorder={false} />
               ) : (
                 <Link
                   href="/login"
@@ -458,10 +221,9 @@ export function MarketingNavbar() {
                       flex items-center justify-between
                       w-full px-3 py-3.5 rounded-xl text-sm font-medium
                       transition-colors active:scale-[0.98]
-                      ${
-                        isActive
-                          ? "bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]"
-                          : "text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
+                      ${isActive
+                        ? "bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]"
+                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
                       }
                     `}
                   >
