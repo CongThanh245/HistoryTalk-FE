@@ -1,7 +1,6 @@
 import { Footer } from "@/components/footer";
 import { MarketingNavbar } from "@/components/marketing/navbar";
 
-import Breadcrumbs from "@/components/commons/breadcrumbs";
 
 export default function MarketingLayout({
   children,
@@ -25,7 +24,7 @@ export default function MarketingLayout({
       <MarketingNavbar />
       
       {/* Main Content */}
-      <Breadcrumbs />
+
       <main className="w-full">
         {children}
       </main>
