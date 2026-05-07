@@ -1,8 +1,9 @@
-// app/(app)/trac-nghiem/page.tsx
-// Server Component entry point
-
 import { QuizPageClient } from "@/components/quiz/quiz-page";
 
+export const metadata = {
+  title: "Trắc nghiệm lịch sử",
+  description: "Kiểm tra kiến thức lịch sử của bạn với các bộ câu hỏi trắc nghiệm",
+};
 
 export default function QuizPage() {
   return <QuizPageClient />;

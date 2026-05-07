@@ -10,7 +10,17 @@ export const metadata = {
   title: "Sự kiện lịch sử",
   description: "Hành trình qua các mốc lịch sử quan trọng của dân tộc",
 };
-export default function EventsPage() {
+
+export const dynamic = "force-dynamic";
+export default async function EventsPage() {
+  const queryClient = getQueryClient();
+
+  const defaultParams = { page: 1, limit: 100 };
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.events.list(defaultParams),
+    queryFn: () => eventServerService.getAll(defaultParams),
+  });
+
   return (
     <div className="px-3 py-6 md:px-6 md:py-8">
       <div className="space-y-8">
@@ -30,7 +40,9 @@ export default function EventsPage() {
             </p>
           </div>
         </div>
-        <EventsClient />
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <EventsClient />
+        </HydrationBoundary>
       </div>
     </div>
   );

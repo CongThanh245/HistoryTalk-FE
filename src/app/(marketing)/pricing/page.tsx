@@ -1,10 +1,13 @@
-"use client";
-
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
 import { Check, Sparkles, Zap, Crown, Gem } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+
+export const metadata = {
+  title: "Bảng giá | HistoryTalk",
+  description:
+    "So sánh các gói HistoryTalk — Miễn phí, Plus, Pro và Ultra cho tổ chức giáo dục.",
+};
 
 /* ─── Plan Data ─── */
 interface PlanFeature {
@@ -145,7 +148,6 @@ function ctaClasses(style: Plan["ctaStyle"]) {
 
 /* ─── Page Component ─── */
 export default function PricingPage() {
-  const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
 
   return (
     <div className="w-full">
@@ -211,7 +213,6 @@ export default function PricingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-0 border border-[var(--border-default)] rounded-2xl overflow-hidden">
             {plans.map((plan, idx) => {
               const isLast = idx === plans.length - 1;
-              const isHovered = hoveredPlan === plan.id;
 
               return (
                 <div
@@ -223,10 +224,8 @@ export default function PricingPage() {
                     /* 2-col last row fix */
                     idx === 2 && "md:border-r xl:border-r",
                     idx >= 2 && "md:border-b-0",
-                    isHovered && "bg-white/[0.02]",
+                    "hover:bg-white/[0.02]",
                   )}
-                  onMouseEnter={() => setHoveredPlan(plan.id)}
-                  onMouseLeave={() => setHoveredPlan(null)}
                 >
                   {/* Popular badge */}
                   {plan.popular && (

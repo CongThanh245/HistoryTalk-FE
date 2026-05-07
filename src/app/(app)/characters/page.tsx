@@ -10,7 +10,24 @@ export const metadata = {
   title: "Nhân vật lịch sử",
   description: "Trò chuyện với những nhân vật đã làm nên lịch sử Việt Nam",
 };
-export default function CharactersPage() {
+
+export const dynamic = "force-dynamic";
+
+/**
+ * Server Component — prefetch danh sách nhân vật mặc định (page 1, limit 8)
+ * để HTML đã có data sẵn → tốt cho SEO (public catalog) và giảm LCP.
+ * React Query trên client sẽ tự pick up prefetched data, không fetch lại.
+ */
+export default async function CharactersPage() {
+  const queryClient = getQueryClient();
+
+  // Prefetch với params mặc định — khớp với CharactersClient initial state
+  const defaultParams = { page: 1, limit: 8 };
+  await queryClient.prefetchQuery({
+    queryKey: queryKeys.characters.list(defaultParams),
+    queryFn: () => characterServerService.getAll(defaultParams),
+  });
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="px-3 py-6 md:px-6 md:py-8">
@@ -30,7 +47,9 @@ export default function CharactersPage() {
             </p>
           </div>
         </div>
-        <CharactersClient />
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <CharactersClient />
+        </HydrationBoundary>
       </div>
     </div>
   );
