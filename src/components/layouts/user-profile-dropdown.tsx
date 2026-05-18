@@ -65,7 +65,7 @@ export function UserProfileDropdown({
             style={{ borderColor: "var(--header-border)" }}
           >
             <AvatarImage
-              src={user?.avatarUrl ?? "/api/placeholder/36/36"}
+              src={user?.avatarUrl ?? undefined}
               alt={user?.userName}
             />
             <AvatarFallback

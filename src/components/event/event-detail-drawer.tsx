@@ -193,7 +193,7 @@ function CharactersReveal({
           {characters.map((char, i) => (
             <div
               key={char.id}
-              className="h-full max-h-[340px] flex-1"
+              className="h-full max-h-[340px] flex-1 max-w-[240px]"
               style={{
                 animation: `fadeSlideUp 0.4s ease ${i * 100}ms both`,
               }}

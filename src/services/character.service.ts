@@ -25,6 +25,7 @@ export interface GetCharactersParams {
   search?: string;
   page?: number;
   limit?: number;
+  era?: string;
 }
 
 export interface GetCharactersResponse {
@@ -48,12 +49,12 @@ export interface CreateCharacterRequest {
   isDraft?: boolean;
 }
 
-export interface UpdateCharacterRequest extends Partial<CreateCharacterRequest> {}
+export interface UpdateCharacterRequest extends Partial<CreateCharacterRequest> { }
 
 function mapCharacter(raw: any): Character {
   const imageUrl = raw.image || raw.imageUrl || null;
   return {
-    id: raw.characterId ?? raw.id,
+    id: raw.characterId ?? raw.id ?? `char-${Math.random().toString(36).slice(2)}`,
     name: raw.name,
     title: raw.title,
     background: raw.background,

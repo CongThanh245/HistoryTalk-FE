@@ -196,7 +196,12 @@ export function DarkCard({
           sizes="400px"
           priority={priority}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-surface)] via-transparent to-transparent z-10" />
+        <div
+          className="absolute inset-0 z-10"
+          style={{
+            background: "linear-gradient(to top, var(--bg-surface) 0%, rgba(26,36,54,0) 50%)",
+          }}
+        />
         {badge && (
           <div
             className="absolute top-3 right-3 px-2 py-1 rounded-md border z-10"

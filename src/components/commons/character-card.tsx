@@ -70,7 +70,7 @@ export function CharacterCarouselCard({
       </p>
       {character.side && (
         <span
-          className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5"
+          className="inline-block w-fit text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5"
           style={{
             background: "rgba(201,162,77,0.15)",
             color: "var(--accent-gold-soft)",
@@ -111,7 +111,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
   return (
     <button
       onClick={() => onClick(character.id)}
-      className="group relative w-full text-left rounded-xl border overflow-hidden transition-all duration-200 cursor-pointer hover:-translate-y-1"
+      className="group relative w-full flex flex-col text-left rounded-xl border overflow-hidden transition-all duration-200 cursor-pointer hover:-translate-y-1"
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
@@ -125,12 +125,12 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       />
 
       {/* Ảnh */}
-      <div className="relative w-full h-85 overflow-hidden">
+      <div className="relative w-full overflow-hidden" style={{ height: "340px", background: "var(--card-light-border)" }}>
         <Image
           src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
           alt={character.name}
           fill
-          className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+          className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, 300px"
         />
         <div
