@@ -1,100 +1,242 @@
 # HistoryTalk — API Contract
 
-> **Version:** 1.0  
-> **Base URL:** `https://api.historytalk.vn/v1`  
-> **Auth:** Bearer token — header `Authorization: Bearer <token>`  
-> Tất cả endpoints (trừ `/auth/*`) đều yêu cầu auth.
+> **Version:** 2.1 — Synced with FE source code  
+> **Base URL:** `{BACKEND_BASE_URL}/api/v1`  
+> **Response Wrapper:** `{ success: boolean, message: string, data: T, timestamp: string }`  
+> **Auth:** `Authorization: Bearer <accessToken>`  
+> **Roles:** `CUSTOMER` | `STAFF` | `ADMIN`
 
 ---
 
 ## Mục lục
 
-1. [Enum Values](#1-enum-values)
-2. [Characters](#2-characters)
-3. [Events](#3-events)
-4. [Chat Sessions](#4-chat-sessions)
-5. [Chat Messages](#5-chat-messages)
+1. [Enums & Common Types](#1-enums--common-types)
+2. [Auth](#2-auth)
+3. [Characters](#3-characters)
+4. [Historical Contexts (Events)](#4-historical-contexts-events)
+5. [Chat Sessions & Messages](#5-chat-sessions--messages)
 6. [Chat History](#6-chat-history)
-7. [Error Format](#7-error-format)
-8. [Ghi chú](#8-ghi-chú)
+7. [Quiz — Customer](#7-quiz--customer)
+8. [Quiz — Staff/Admin](#8-quiz--staffadmin)
+9. [Error Format](#9-error-format)
+10. [Notes cho Backend](#10-notes-cho-backend)
 
 ---
 
-## 1. Enum Values
+## 1. Enums & Common Types
 
-### `EventEra`
+### Era (thời đại)
 
-| Value | Label | Khoảng năm |
-|---|---|---|
-| `ancient` | Cổ đại | Từ đầu → 937 |
-| `medieval` | Trung đại | 938 → 1857 |
-| `modern` | Cận đại | 1858 → 1944 |
-| `contemporary` | Hiện đại | 1945 → nay |
+| FE Value (lowercase) | Backend Value (uppercase) | Label | Khoảng năm |
+|---|---|---|---|
+| `ancient` | `ANCIENT` | Cổ đại | → 937 |
+| `medieval` | `MEDIEVAL` | Trung đại | 938 → 1857 |
+| `modern` | `MODERN` | Cận đại | 1858 → 1944 |
+| `contemporary` | `CONTEMPORARY` | Hiện đại | 1945 → nay |
 
-> `all` chỉ dùng ở FE cho filter UI, **không gửi lên API**.
+> **Backend phải dùng UPPERCASE.** FE tự convert sang lowercase cho UI.  
+> `all` chỉ dùng nội bộ FE cho filter — **không gửi lên API**.
 
-### `EventCategory`
+### EventCategory
 
-| Value | Label |
+| Backend Value | Label |
 |---|---|
-| `war` | Chiến tranh |
-| `politics` | Chính trị |
-| `culture` | Văn hoá |
-| `science` | Khoa học |
-| `religion` | Tôn giáo |
-| `other` | Khác |
+| `WAR` | Chiến tranh |
+| `POLITICS` | Chính trị |
+| `CULTURE` | Văn hoá |
+| `SCIENCE` | Khoa học |
+| `RELIGION` | Tôn giáo |
+| `OTHER` | Khác |
 
-### `MessageRole`
+> Backend nhận và trả về **UPPERCASE**. FE tự convert lowercase cho UI.
+
+### MessageRole
 
 | Value | Ý nghĩa |
 |---|---|
-| `user` | Tin nhắn của người dùng |
-| `assistant` | Tin nhắn của nhân vật AI |
+| `USER` | Tin nhắn người dùng |
+| `ASSISTANT` | Tin nhắn nhân vật AI |
 
----
-
-## 2. Characters
-
-### `GET /characters`
-
-Lấy danh sách nhân vật — dùng cho trang `/characters`.
-
-**Query params**
-
-| Param | Type | Default | Mô tả |
-|---|---|---|---|
-| `page` | `number` | `1` | Trang hiện tại (1-indexed) |
-| `limit` | `number` | `8` | Số item/trang, max `20` |
-| `era` | `EventEra` | — | Lọc theo thời đại |
-| `search` | `string` | — | Tìm theo tên, chức danh, mô tả, tên sự kiện liên quan |
-
-**Response `200`**
+### Pagination Response (dùng chung)
 
 ```json
 {
-  "data": [
-    {
-      "id": "ngo-quyen",
-      "name": "Ngô Quyền",
-      "title": "Tiết độ sứ Tĩnh Hải quân",
-      "description": "Anh hùng dân tộc, người lãnh đạo quân dân Đại Việt đánh tan quân Nam Hán...",
-      "imageUrl": "/images/characters/ngo-quyen.jpg",
-      "era": "medieval",
-      "lifespan": "898–944",
-      "side": "Đại Việt",
-      "events": [
-        {
-          "id": "bach-dang-938",
-          "title": "Trận Bạch Đằng",
-          "year": 938,
-          "era": "medieval"
-        }
-      ]
-    }
-  ],
-  "total": 24,
-  "page": 1,
-  "totalPages": 3
+  "content": [],
+  "totalElements": 0,
+  "totalPages": 0,
+  "currentPage": 0,
+  "pageSize": 0,
+  "hasNext": false,
+  "hasPrevious": false
+}
+```
+
+> `currentPage` là **0-indexed**.
+
+---
+
+## 2. Auth
+
+### `POST /auth/register`
+
+Đăng ký tài khoản mới (Customer).
+
+**Request:**
+```json
+{
+  "userName": "string",
+  "email": "string",
+  "password": "string",
+  "confirmPassword": "string"
+}
+```
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Đăng ký thành công",
+  "data": { "message": "string" },
+  "timestamp": "ISO8601"
+}
+```
+
+---
+
+### `POST /auth/login`
+
+**Request:**
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "string",
+  "data": {
+    "uid": "string",
+    "userName": "string",
+    "email": "string",
+    "role": "CUSTOMER",
+    "accessToken": "string",
+    "refreshToken": "string",
+    "tokenType": "Bearer",
+    "expiresIn": 3600
+  },
+  "timestamp": "ISO8601"
+}
+```
+
+> `role`: `CUSTOMER` | `STAFF` | `ADMIN`
+
+---
+
+### `POST /auth/logout`
+
+Yêu cầu auth. Không cần body. Response `200`.
+
+---
+
+### `POST /auth/refresh-token`
+
+**Request:**
+```json
+{ "refreshToken": "string" }
+```
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "string",
+    "refreshToken": "string"
+  }
+}
+```
+
+---
+
+### `POST /auth/register-staff`
+
+Yêu cầu role `ADMIN`.
+
+**Request:**
+```json
+{
+  "userName": "string",
+  "name": "string",
+  "email": "string",
+  "password": "string",
+  "confirmPassword": "string",
+  "roleName": "STAFF"
+}
+```
+
+> `roleName`: `STAFF` | `ADMIN`
+
+**Response `200`:** `{ "success": true, "message": "string" }`
+
+---
+
+## 3. Characters
+
+### Object `Character`
+
+```typescript
+{
+  characterId: string      // ID nhân vật (FE map sang id)
+  name: string
+  title: string            // Chức danh
+  background: string       // Tiểu sử (FE map sang description)
+  image: string | null     // URL ảnh (FE map sang imageUrl + avatarUrl)
+  personality?: string
+  lifespan?: string        // VD: "898–944"
+  side?: string            // Phe, VD: "Đại Việt"
+  era?: string             // ANCIENT | MEDIEVAL | MODERN | CONTEMPORARY
+  role?: string            // Vai trò cụ thể trong context
+  isDraft?: boolean
+  deletedAt?: string | null
+  context?: { contextId: string }   // nested object
+  events?: { id: string; title: string; year: number }[]
+}
+```
+
+> **Quan trọng:** FE dùng `raw.characterId ?? raw.id` làm id. Phải trả `characterId`.  
+> **Quan trọng:** FE dùng `raw.image ?? raw.imageUrl`. Ưu tiên trả field `image`.  
+> **Quan trọng:** `contextId` nằm trong `context.contextId` (nested).
+
+---
+
+### `GET /characters`
+
+**Query params:**
+
+| Param | Type | Mô tả |
+|---|---|---|
+| `search` | string | Tìm theo tên, chức danh |
+| `page` | number | 0-indexed |
+| `limit` | number | Số item/trang |
+| `era` | string | `ANCIENT` \| `MEDIEVAL` \| `MODERN` \| `CONTEMPORARY` |
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "content": [ { "characterId": "...", "name": "...", "title": "...", "background": "...", "image": "url", "era": "MEDIEVAL", "isDraft": false } ],
+    "totalElements": 24,
+    "totalPages": 3,
+    "currentPage": 0,
+    "pageSize": 8,
+    "hasNext": true,
+    "hasPrevious": false
+  }
 }
 ```
 
@@ -102,238 +244,388 @@ Lấy danh sách nhân vật — dùng cho trang `/characters`.
 
 ### `GET /characters/:id`
 
-Lấy chi tiết 1 nhân vật — dùng cho right panel trong trang chat.
-
-**Response `200`** — cùng shape với 1 item trong `data[]` ở trên.
-
----
-
-## 3. Events
-
-### `GET /events`
-
-Lấy danh sách sự kiện lịch sử — dùng cho trang `/events`.
-
-**Query params**
-
-| Param | Type | Default | Mô tả |
-|---|---|---|---|
-| `page` | `number` | `1` | Trang hiện tại |
-| `limit` | `number` | `6` | Số item/trang |
-| `era` | `EventEra` | — | Lọc theo thời đại |
-| `category` | `EventCategory` | — | Lọc theo loại sự kiện |
-| `search` | `string` | — | Tìm theo tên sự kiện |
-
-**Response `200`**
-
+**Response `200`:**
 ```json
 {
-  "data": [
-    {
-      "id": "bach-dang-938",
-      "year": 938,
-      "yearLabel": "938 SCN",
-      "title": "Trận Bạch Đằng",
-      "summary": "Ngô Quyền dùng kế cọc nhọn đánh tan quân Nam Hán...",
-      "category": "war",
-      "location": "Sông Bạch Đằng, Quảng Ninh",
-      "imageUrl": "/images/events/bach-dang.jpg"
-    }
-  ],
-  "total": 48,
-  "page": 1,
-  "totalPages": 8
+  "success": true,
+  "data": {
+    "characterId": "string",
+    "name": "string",
+    "title": "string",
+    "background": "string",
+    "image": "string | null",
+    "personality": "string",
+    "lifespan": "string",
+    "side": "string",
+    "era": "MEDIEVAL",
+    "role": "string",
+    "isDraft": false,
+    "deletedAt": null,
+    "context": { "contextId": "string" }
+  }
 }
 ```
 
-> `yearLabel`: backend tự format (`"938 SCN"`, `"258 TCN"`). FE dùng thẳng, không tự format lại.
-
 ---
 
-### `GET /events/:id`
+### `GET /characters/context/:contextId`
 
-Lấy chi tiết sự kiện kèm danh sách nhân vật — dùng khi mở `EventDetailModal`.
+Lấy danh sách nhân vật thuộc 1 bối cảnh lịch sử.
 
-**Response `200`**
-
+**Response `200`:**
 ```json
 {
-  "id": "bach-dang-938",
-  "year": 938,
-  "yearLabel": "938 SCN",
-  "title": "Trận Bạch Đằng",
-  "summary": "...",
-  "category": "war",
-  "location": "Sông Bạch Đằng, Quảng Ninh",
-  "imageUrl": "/images/events/bach-dang.jpg",
-  "characters": [
+  "success": true,
+  "data": [
     {
-      "id": "ngo-quyen",
-      "name": "Ngô Quyền",
-      "title": "Tiết độ sứ Tĩnh Hải quân",
-      "imageUrl": "/images/characters/ngo-quyen.jpg",
-      "era": "medieval",
-      "role": "Chỉ huy quân Đại Việt",
-      "side": "Đại Việt"
+      "characterId": "string",
+      "name": "string",
+      "title": "string",
+      "background": "string",
+      "image": "string | null",
+      "side": "string",
+      "context": { "contextId": "string" }
     }
   ]
 }
 ```
 
-> `characters[].role`: vai trò của nhân vật **trong sự kiện này** (khác với `title` là chức danh chung).
+---
+
+### `POST /characters`
+
+Yêu cầu role `STAFF` | `ADMIN`.
+
+**Request:**
+```json
+{
+  "name": "string",
+  "title": "string",
+  "background": "string",
+  "image": "string | null",
+  "personality": "string",
+  "lifespan": "string",
+  "side": "string",
+  "isDraft": false
+}
+```
+
+**Response `200`:** `{ "success": true, "data": Character }`
 
 ---
 
-## 4. Chat Sessions
+### `PUT /characters/:id`
+
+**Request:** Partial của POST body trên.
+
+**Response `200`:** `{ "success": true, "data": Character }`
+
+---
+
+### `DELETE /characters/:id`
+
+Permanent delete. Response `200`.
+
+---
+
+### `PATCH /characters/:id/soft-delete`
+
+Soft delete — set `deletedAt`. Response `200`.
+
+---
+
+### `POST /characters/:characterId/contexts/:contextId`
+
+Gắn nhân vật vào bối cảnh. Response `200`.
+
+---
+
+## 4. Historical Contexts (Events)
+
+> FE gọi resource này là "Events" nhưng endpoint là `/historical-contexts`.  
+> `contextId` ↔ `id` của event trong FE.
+
+### Object `HistoricalContext`
+
+```typescript
+{
+  contextId: string        // ID (FE map sang id)
+  name: string             // Tên sự kiện (FE map sang title)
+  description: string      // Mô tả (FE map sang summary)
+  year: number
+  yearLabel?: string       // VD: "938 SCN", "258 TCN" — backend tự format
+  startYear?: number
+  endYear?: number
+  beforeTCN?: boolean
+  category: string         // WAR | POLITICS | CULTURE | SCIENCE | RELIGION | OTHER
+  era: string              // ANCIENT | MEDIEVAL | MODERN | CONTEMPORARY
+  location?: string
+  imageUrl?: string | null
+  videoUrl?: string | null
+  period?: string
+  isDraft?: boolean
+  deletedAt?: string | null
+}
+```
+
+---
+
+### `GET /historical-contexts`
+
+**Query params:**
+
+| Param | Type | Mô tả |
+|---|---|---|
+| `search` | string | Tìm theo tên |
+| `page` | number | 0-indexed |
+| `limit` | number | Số item/trang |
+| `era` | string | `ANCIENT` \| `MEDIEVAL` \| `MODERN` \| `CONTEMPORARY` |
+| `category` | string | `WAR` \| `POLITICS` \| ... |
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "contextId": "string",
+        "name": "string",
+        "description": "string",
+        "year": 938,
+        "yearLabel": "938 SCN",
+        "category": "WAR",
+        "era": "MEDIEVAL",
+        "location": "Sông Bạch Đằng",
+        "imageUrl": "string | null",
+        "videoUrl": "string | null",
+        "isDraft": false
+      }
+    ],
+    "totalElements": 48,
+    "totalPages": 8,
+    "currentPage": 0,
+    "pageSize": 6,
+    "hasNext": true,
+    "hasPrevious": false
+  }
+}
+```
+
+---
+
+### `GET /historical-contexts/:id`
+
+**Response `200`:** `{ "success": true, "data": HistoricalContext }`
+
+---
+
+### `POST /historical-contexts`
+
+Yêu cầu role `STAFF` | `ADMIN`.
+
+**Request:**
+```json
+{
+  "name": "string",
+  "description": "string",
+  "era": "MEDIEVAL",
+  "category": "WAR",
+  "year": 938,
+  "startYear": 938,
+  "endYear": 938,
+  "beforeTCN": false,
+  "location": "string",
+  "imageUrl": "string | null",
+  "videoUrl": "string | null",
+  "isDraft": false
+}
+```
+
+**Response `200`:** `{ "success": true, "data": HistoricalContext }`
+
+---
+
+### `PUT /historical-contexts/:id`
+
+**Request:** Partial của POST body. **Response `200`:** `{ "success": true, "data": HistoricalContext }`
+
+---
+
+### `DELETE /historical-contexts/:id`
+
+Permanent delete. Response `200`.
+
+---
+
+### `PATCH /historical-contexts/:id/soft-delete`
+
+Soft delete. Response `200`.
+
+---
+
+## 5. Chat Sessions & Messages
+
+### Object `ChatSession`
+
+```typescript
+{
+  id: string
+  characterId: string
+  contextId: string      // ID của historical-context
+  title: string          // AI tự tạo sau tin đầu, để "" khi mới tạo
+  lastMessage: string
+  lastMessageAt: string  // ISO8601
+  messageCount: number
+}
+```
+
+### Object `ChatMessage`
+
+```typescript
+{
+  id: string
+  sessionId: string
+  role: "USER" | "ASSISTANT"
+  content: string
+  createdAt: string  // ISO8601
+}
+```
+
+---
 
 ### `GET /chat/sessions`
 
-Lấy danh sách sessions của user — dùng cho left panel trong trang chat.
+Lấy sessions của user theo context + character.
 
-**Query params**
+**Query params:**
 
 | Param | Type | Required | Mô tả |
 |---|---|---|---|
-| `eventId` | `string` | ✓ | ID sự kiện |
-| `characterId` | `string` | ✓ | ID nhân vật |
+| `contextId` | string | ✓ | ID bối cảnh lịch sử |
+| `characterId` | string | ✓ | ID nhân vật |
 
-**Response `200`** — mảng sessions, sort theo `lastMessageAt` desc.
-
+**Response `200`:**
 ```json
-[
-  {
-    "id": "session-abc123",
-    "characterId": "ngo-quyen",
-    "eventId": "bach-dang-938",
-    "title": "Kế sách cọc nhọn Bạch Đằng",
-    "lastMessage": "Quân Nam Hán đã mắc bẫy cọc nhọn...",
-    "lastMessageAt": "2026-05-22T14:30:00Z",
-    "messageCount": 14
-  }
-]
+{
+  "success": true,
+  "data": [
+    {
+      "id": "string",
+      "characterId": "string",
+      "contextId": "string",
+      "title": "string",
+      "lastMessage": "string",
+      "lastMessageAt": "2026-05-22T14:30:00Z",
+      "messageCount": 14
+    }
+  ]
+}
 ```
 
 ---
 
 ### `POST /chat/sessions`
 
-Tạo session mới.
+Tạo session mới. Backend tự tạo tin nhắn chào (`role: ASSISTANT`) đầu tiên.
 
-**Request body**
-
+**Request:**
 ```json
 {
-  "eventId": "bach-dang-938",
-  "characterId": "ngo-quyen"
+  "contextId": "string",
+  "characterId": "string"
 }
 ```
 
-**Response `201`** — object session vừa tạo, cùng shape với item trong `GET /chat/sessions`.
-
-> `title` lúc mới tạo để trống `""`. Backend tự update sau khi có tin nhắn đầu tiên (dùng AI summary).
-
----
-
-### `DELETE /chat/sessions/:id`
-
-Xoá session và toàn bộ messages bên trong.
-
-**Response `204`** — No Content.
-
----
-
-## 5. Chat Messages
-
-### `GET /chat/sessions/:id/messages`
-
-Lấy toàn bộ messages của 1 session — dùng khi load trang chat hoặc chọn session.
-
-**Response `200`**
-
+**Response `200`:**
 ```json
 {
-  "messages": [
-    {
-      "id": "msg-001",
-      "sessionId": "session-abc123",
-      "role": "assistant",
-      "content": "Chào ngươi! Ta là Ngô Quyền, Tiết độ sứ Tĩnh Hải quân...",
-      "createdAt": "2026-05-22T14:00:00Z"
-    },
-    {
-      "id": "msg-002",
-      "sessionId": "session-abc123",
-      "role": "user",
-      "content": "Tướng quân đã chuẩn bị trận Bạch Đằng như thế nào?",
-      "createdAt": "2026-05-22T14:01:00Z"
-    },
-    {
-      "id": "msg-003",
-      "sessionId": "session-abc123",
-      "role": "assistant",
-      "content": "Ta đã cho đóng cọc nhọn dưới lòng sông...",
-      "createdAt": "2026-05-22T14:01:05Z"
-    }
-  ],
-  "suggestedQuestions": [
-    "Tướng quân đã biết trước quân Hán sẽ đến từ hướng nào?",
-    "Cọc nhọn được làm từ vật liệu gì và đóng như thế nào?",
-    "Sau trận thắng, tướng quân có kế hoạch gì tiếp theo?"
-  ]
+  "success": true,
+  "data": {
+    "id": "string",
+    "characterId": "string",
+    "contextId": "string",
+    "title": "",
+    "lastMessage": "",
+    "lastMessageAt": "ISO8601",
+    "messageCount": 0
+  }
 }
 ```
 
-> - Messages sort theo `createdAt` asc.
-> - `suggestedQuestions` được generate dựa trên **message cuối cùng** trong session. Trả `[]` nếu session chưa có message hoặc message cuối là `role: "user"`.
-> - Tin nhắn đầu tiên (`role: "assistant"`) là lời chào — backend tự generate khi `POST /chat/sessions`.
+---
+
+### `DELETE /chat/sessions/:sessionId`
+
+Xóa session và toàn bộ messages. Response `200`.
+
+---
+
+### `GET /chat/sessions/:sessionId/messages`
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "messages": [
+      {
+        "id": "string",
+        "sessionId": "string",
+        "role": "ASSISTANT",
+        "content": "string",
+        "createdAt": "ISO8601"
+      }
+    ],
+    "suggestedQuestions": [
+      "Câu hỏi gợi ý 1",
+      "Câu hỏi gợi ý 2",
+      "Câu hỏi gợi ý 3"
+    ]
+  }
+}
+```
+
+> - Messages sort theo `createdAt` ASC.  
+> - `suggestedQuestions`: trả `[]` nếu chưa có message.
 
 ---
 
 ### `POST /chat/messages`
 
-Gửi tin nhắn của user, backend gọi AI và trả về reply ngay trong cùng response.
+Gửi tin nhắn — backend gọi AI và trả reply trong cùng response (synchronous).
 
-> **Phase 1:** Đồng bộ — FE chờ response. **Phase 2** sẽ migrate sang SSE/WebSocket khi cần.
-
-**Request body**
-
+**Request:**
 ```json
 {
-  "sessionId": "session-abc123",
-  "characterId": "ngo-quyen",
-  "eventId": "bach-dang-938",
-  "content": "Tướng quân đã chuẩn bị trận Bạch Đằng như thế nào?"
+  "sessionId": "string",
+  "content": "string"
 }
 ```
 
-**Response `200`**
-
+**Response `200`:**
 ```json
 {
-  "userMessage": {
-    "id": "msg-003",
-    "sessionId": "session-abc123",
-    "role": "user",
-    "content": "Tướng quân đã chuẩn bị trận Bạch Đằng như thế nào?",
-    "createdAt": "2026-05-22T14:01:00Z"
-  },
-  "assistantMessage": {
-    "id": "msg-004",
-    "sessionId": "session-abc123",
-    "role": "assistant",
-    "content": "Ta đã cho đóng cọc nhọn dưới lòng sông từ nhiều ngày trước...",
-    "createdAt": "2026-05-22T14:01:05Z"
-  },
-  "suggestedQuestions": [
-    "Tướng quân đã biết trước quân Hán sẽ đến từ hướng nào?",
-    "Cọc nhọn được làm từ vật liệu gì và đóng như thế nào?",
-    "Sau trận thắng, tướng quân có kế hoạch gì tiếp theo?"
-  ]
+  "success": true,
+  "data": {
+    "userMessage": {
+      "id": "string",
+      "sessionId": "string",
+      "role": "USER",
+      "content": "string",
+      "createdAt": "ISO8601"
+    },
+    "assistantMessage": {
+      "id": "string",
+      "sessionId": "string",
+      "role": "ASSISTANT",
+      "content": "string",
+      "createdAt": "ISO8601"
+    },
+    "suggestedQuestions": ["string", "string", "string"]
+  }
 }
 ```
-
-> - Backend nhận `eventId` để làm context cho AI (nhân vật biết mình đang ở sự kiện nào).
-> - `suggestedQuestions`: 3 câu gợi ý do AI generate, liên quan đến nội dung vừa trả lời.
 
 ---
 
@@ -341,189 +633,107 @@ Gửi tin nhắn của user, backend gọi AI và trả về reply ngay trong c�
 
 ### `GET /chat/history`
 
-Lấy toàn bộ lịch sử chat của user hiện tại, **đã group theo sự kiện** — dùng cho trang `/chat-history`.
+Lấy lịch sử chat của user đang auth, **đã group theo context**.
 
-**Response `200`** — mảng groups, sort theo `lastMessageAt` của session mới nhất trong group, desc.
-
-```json
-[
-  {
-    "eventId": "bach-dang-938",
-    "eventTitle": "Trận Bạch Đằng",
-    "eventYear": 938,
-    "sessions": [
-      {
-        "id": "session-abc123",
-        "characterId": "ngo-quyen",
-        "characterName": "Ngô Quyền",
-        "characterImageUrl": "/images/characters/ngo-quyen.jpg",
-        "characterTitle": "Tiết độ sứ Tĩnh Hải quân",
-        "eventId": "bach-dang-938",
-        "eventTitle": "Trận Bạch Đằng",
-        "eventYear": 938,
-        "sessionTitle": "Kế sách cọc nhọn Bạch Đằng",
-        "lastMessage": "Quân Nam Hán đã mắc bẫy cọc nhọn...",
-        "lastMessageAt": "2026-05-22T14:30:00Z",
-        "messageCount": 14
-      }
-    ]
-  }
-]
-```
-
-> FE tự filter theo era ở client-side — không cần thêm query param cho endpoint này.
-
----
-
-## 7. Error Format
-
-Tất cả lỗi đều trả về cùng shape:
-
+**Response `200`:**
 ```json
 {
-  "code": "RESOURCE_NOT_FOUND",
-  "message": "Character not found",
-  "statusCode": 404
+  "success": true,
+  "data": [
+    {
+      "contextId": "string",
+      "contextName": "string",
+      "sessions": [
+        {
+          "id": "string",
+          "characterId": "string",
+          "characterName": "string",
+          "characterTitle": "string",
+          "characterImage": "string",
+          "contextId": "string",
+          "contextName": "string",
+          "sessionTitle": "string",
+          "lastMessage": "string",
+          "lastMessageAt": "ISO8601",
+          "messageCount": 14
+        }
+      ]
+    }
+  ]
 }
 ```
 
-| Status | Code | Khi nào |
-|---|---|---|
-| `400` | `BAD_REQUEST` | Request params/body không hợp lệ |
-| `401` | `UNAUTHORIZED` | Chưa đăng nhập hoặc token hết hạn |
-| `403` | `FORBIDDEN` | Không có quyền truy cập resource |
-| `404` | `RESOURCE_NOT_FOUND` | Không tìm thấy resource |
-| `500` | `INTERNAL_ERROR` | Lỗi server |
+> - Sort groups theo `lastMessageAt` của session mới nhất, DESC.  
+> - `characterImage`: URL ảnh nhân vật (FE field name: `characterImage`, không phải `characterImageUrl`).  
+> - Group dùng `contextId` + `contextName` (không phải `eventId`/`eventTitle`).
 
 ---
 
-## 8. Ghi chú
+## 7. Quiz — Customer
 
-### Đã quyết định — backend không cần hỏi lại
-
-- **Datetime:** ISO 8601 UTC. VD: `"2026-05-22T14:30:00Z"`
-- **Phân trang:** FE gửi `page` (1-indexed) + `limit`. Backend trả `total` + `totalPages`.
-- **imageUrl:** relative path hoặc absolute đều được. FE dùng Next.js `<Image>`.
-- **`yearLabel`:** Backend tự format (`"938 SCN"`, `"258 TCN"`). FE dùng thẳng.
-- **Session title:** Backend tự generate bằng AI summary sau tin nhắn đầu. Để `""` khi mới tạo.
-- **Tin nhắn chào:** Backend tự tạo message `role: "assistant"` đầu tiên khi `POST /chat/sessions`.
-- **Chat AI phase 1:** Đồng bộ, không streaming. Phase 2 sẽ thảo luận riêng.
-- **`/chat/history`:** Chỉ trả về data của user đang auth. Sort desc theo session mới nhất.
-- **`era` trong Character:** Dùng đúng enum `ancient | medieval | modern | contemporary`.
-
-### Chưa quyết định — cần thảo luận thêm
-
-- Auth flow: JWT hay session? Token refresh như thế nào?
-- Upload ảnh nhân vật/sự kiện: endpoint riêng hay dùng S3 presigned URL?
-- Rate limiting cho `POST /chat/messages` — giới hạn bao nhiêu request/phút?
-- AI model nào dùng cho chat? Context window tối đa bao nhiêu messages?
-
-
-----# HistoryTalk — Quiz API Specification
-
-> **Version:** 2.0  
-> **Base path:** `/Historical-tell/api/v1`  
-> **Response wrapper:** `{ success, message, data, timestamp }`  
-> **Auth:** Bearer token — `Authorization: Bearer <token>`  
-> **Roles:** `CUSTOMER` | `STAFF` | `ADMIN`
-
----
-
-## Data Model
+### Object `QuizSet`
 
 ```typescript
-QuizSet {
-  quizId:          string
-  title:           string
-  description:     string
-  grade:           10 | 11 | 12          // Lớp học
-  chapterNumber:   number                // Số bài
-  chapterTitle:    string                // Tên chủ đề ngắn
-  era:             "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY" | "ALL"
-  totalQuestions:  number                // tính tự động từ questions
-  durationSeconds: number                // thời gian gợi ý
-  playCount:       number                // tính tự động
-  rating:          number                // tính tự động từ reviews
-  tags:            string[]
-  createdAt:       ISO datetime
-  createdBy:       string (staffId)
-}
-
-QuizQuestion {
-  questionId:    string
-  quizId:        string
-  orderIndex:    number                  // thứ tự câu hỏi
-  content:       string
-  options:       string[]                // đúng 4 phần tử
-  correctAnswer: number                  // index 0-3
-  explanation:   string (optional)
-}
-
-QuizSession {
-  sessionId:   string
-  quizId:      string
-  userId:      string
-  startedAt:   ISO datetime
-  expiresAt:   ISO datetime
-  submitted:   boolean
-}
-
-QuizResult {
-  resultId:        string
-  quizId:          string
-  quizTitle:       string
-  userId:          string
-  score:           number
-  totalQuestions:  number
+{
+  quizId: string
+  title: string
+  description: string
+  era: "ALL" | "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY"
   durationSeconds: number
-  completedAt:     ISO datetime
+  playCount: number
+  rating: number
+  contextTitle?: string
+  grade?: 10 | 11 | 12
+  chapterNumber?: number
+  chapterTitle?: string
+}
+```
+
+### Object `QuizQuestion`
+
+```typescript
+{
+  questionId: string
+  content: string
+  options: string[]      // 4 phần tử
+  correctAnswer: number  // index 0-3
+  orderIndex: number
+  explanation?: string
 }
 ```
 
 ---
-
-## CUSTOMER Endpoints
 
 ### `GET /quizzes`
 
-Lấy danh sách bộ câu hỏi.
+> **Lưu ý:** Backend hiện trả về **array trực tiếp** (không pagination). FE tự wrap.  
+> Nếu backend có thể trả pagination thì càng tốt.
 
 **Query params:**
 
-| Param | Type | Description |
+| Param | Type | Mô tả |
 |---|---|---|
-| `search` | string | Tìm theo title, chapterTitle |
-| `page` | number | Default 0 |
-| `limit` | number | Default 20 |
-| `grade` | number | `10` \| `11` \| `12` |
-| `era` | enum | `ANCIENT` \| `MEDIEVAL` \| `MODERN` \| `CONTEMPORARY` |
+| `search` | string | Tìm theo title |
 
-**Response:**
+**Response `200`:**
 ```json
 {
-  "content": [
+  "success": true,
+  "data": [
     {
-      "quizId": "ls12-b1",
-      "title": "Lịch sử 12 — Bài 1: Liên Hợp Quốc",
+      "quizId": "string",
+      "title": "string",
       "description": "string",
       "grade": 12,
       "chapterNumber": 1,
-      "chapterTitle": "Liên Hợp Quốc",
+      "chapterTitle": "string",
       "era": "CONTEMPORARY",
-      "totalQuestions": 10,
       "durationSeconds": 900,
       "playCount": 3241,
       "rating": 4.8,
-      "tags": ["liên hợp quốc"],
-      "createdAt": "2024-01-10"
+      "contextTitle": "string"
     }
-  ],
-  "totalElements": 15,
-  "totalPages": 1,
-  "currentPage": 0,
-  "pageSize": 20,
-  "hasNext": false,
-  "hasPrevious": false
+  ]
 }
 ```
 
@@ -531,46 +741,45 @@ Lấy danh sách bộ câu hỏi.
 
 ### `GET /quizzes/:quizId`
 
-Chi tiết 1 bộ câu hỏi. Response là single object như trên.
+**Response `200`:** `{ "success": true, "data": QuizSet }`
 
 ---
 
 ### `POST /quizzes/:quizId/start`
 
-Bắt đầu phiên làm bài.
+Bắt đầu phiên làm bài. Không cần body.
 
-**Request body:** Không cần.
-
-**Response:**
+**Response `200`:**
 ```json
 {
-  "sessionId": "string",
-  "quizId": "string",
-  "questions": [
-    {
-      "questionId": "string",
-      "orderIndex": 1,
-      "content": "string",
-      "options": ["A", "B", "C", "D"],
-      "correctAnswer": 0,
-      "explanation": "string (optional)"
-    }
-  ],
-  "durationSeconds": 900,
-  "startedAt": "2024-03-20T10:00:00Z",
-  "expiresAt": "2024-03-20T10:15:00Z"
+  "success": true,
+  "data": {
+    "sessionId": "string",
+    "quizId": "string",
+    "title": "string",
+    "durationSeconds": 900,
+    "questions": [
+      {
+        "questionId": "string",
+        "content": "string",
+        "options": ["A", "B", "C", "D"],
+        "correctAnswer": 0,
+        "orderIndex": 0,
+        "explanation": "string"
+      }
+    ]
+  }
 }
 ```
 
-> `correctAnswer` trả về luôn trong response này vì frontend cần để hiện đúng/sai ngay sau khi chọn.
+> `correctAnswer` trả về ngay vì đây là app học tập (hiện đúng/sai sau mỗi câu).  
+> FE sort questions theo `orderIndex` ASC.
 
 ---
 
 ### `POST /quizzes/submit`
 
-Nộp bài.
-
-**Request body:**
+**Request:**
 ```json
 {
   "sessionId": "string",
@@ -581,82 +790,118 @@ Nộp bài.
 }
 ```
 
-**Response:**
+**Response `200`:**
 ```json
 {
-  "resultId": "string",
-  "score": 8,
-  "totalQuestions": 10,
-  "correctAnswers": [0, 1, 2, 3, 5, 6, 7, 9],
-  "wrongAnswers": [4, 8],
-  "durationSeconds": 480,
-  "completedAt": "2024-03-20T10:08:00Z"
+  "success": true,
+  "data": {
+    "resultId": "string",
+    "score": 8,
+    "totalQuestions": 10,
+    "percentage": 80,
+    "correctAnswers": [0, 1, 2],
+    "wrongAnswers": [3, 4]
+  }
 }
 ```
 
-> `correctAnswers` / `wrongAnswers` là mảng **index** (0-based) của câu trong danh sách questions.
+> `correctAnswers` / `wrongAnswers`: mảng **index** (0-based) trong danh sách questions.
 
 ---
 
 ### `GET /quizzes/results/me`
 
-Lịch sử làm bài của user hiện tại.
+**Query params:**
 
-**Response:**
+| Param | Type | Default |
+|---|---|---|
+| `page` | number | 0 |
+| `size` | number | 10 |
+
+**Response `200`:**
 ```json
-[
-  {
-    "resultId": "string",
-    "quizId": "string",
-    "quizTitle": "string",
-    "grade": 12,
-    "chapterTitle": "Liên Hợp Quốc",
-    "score": 8,
-    "totalQuestions": 10,
-    "durationSeconds": 480,
-    "completedAt": "2024-03-20T10:08:00Z"
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "resultId": "string",
+        "quizId": "string",
+        "quizTitle": "string",
+        "score": 8,
+        "totalQuestions": 10,
+        "percentage": 80,
+        "durationSeconds": 480,
+        "completedAt": "ISO8601"
+      }
+    ],
+    "totalElements": 20,
+    "totalPages": 2,
+    "currentPage": 0,
+    "pageSize": 10,
+    "hasNext": true,
+    "hasPrevious": false
   }
-]
+}
 ```
 
 ---
 
-## STAFF / ADMIN Endpoints
+## 8. Quiz — Staff/Admin
 
-> Tất cả endpoint dưới đây yêu cầu role `STAFF` hoặc `ADMIN`.  
-> Backend nên kiểm tra role từ JWT token.
+> Tất cả endpoint dưới yêu cầu role `STAFF` hoặc `ADMIN`.
+
+### Object `StaffQuizSet`
+
+```typescript
+{
+  quizId: string
+  title: string
+  description: string
+  grade: number            // 10 | 11 | 12
+  chapterNumber: number
+  chapterTitle: string
+  era: "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY"
+  durationSeconds: number
+  playCount: number
+  rating: number
+  contextId: string
+  contextTitle: string
+  createdBy: string
+  createdDate: string      // ISO8601
+  updatedDate: string      // ISO8601
+  deletedAt: string | null
+  questions: QuizQuestion[]
+}
+```
 
 ---
 
 ### `GET /staff/quizzes`
 
-Danh sách tất cả quiz kèm thống kê — dùng cho trang quản lý của staff.
-
 **Query params:**
 
-| Param | Type | Description |
+| Param | Type | Mô tả |
 |---|---|---|
 | `search` | string | Tìm theo title |
-| `page` | number | Default 0 |
-| `limit` | number | Default 20 |
-| `grade` | number | `10` \| `11` \| `12` |
+| `grade` | number | 10 \| 11 \| 12 |
+| `era` | string | Era enum |
+| `page` | number | 0-indexed |
+| `size` | number | Số item/trang |
 
-**Response item** (thêm các field quản lý so với GET /quizzes):
+**Response `200`:**
 ```json
 {
-  "quizId": "string",
-  "title": "string",
-  "grade": 12,
-  "chapterNumber": 1,
-  "chapterTitle": "string",
-  "totalQuestions": 10,
-  "durationSeconds": 900,
-  "playCount": 3241,
-  "rating": 4.8,
-  "createdAt": "2024-01-10",
-  "createdBy": "staffId",
-  "updatedAt": "2024-02-01",
-  "updatedBy": "staffId"
+  "success": true,
+  "data": {
+    "content": [ "StaffQuizSet..." ],
+    "totalElements": 0,
+    "totalPages": 0,
+    "currentPage": 0,
+    "pageSize": 0,
+    "hasNext": false,
+    "hasPrevious": false
+  }
 }
 ```
 
@@ -664,176 +909,172 @@ Danh sách tất cả quiz kèm thống kê — dùng cho trang quản lý của
 
 ### `GET /staff/quizzes/:quizId`
 
-Chi tiết quiz kèm toàn bộ câu hỏi — dùng để edit.
+Chi tiết quiz kèm toàn bộ câu hỏi.
 
-**Response:**
-```json
-{
-  "quizId": "string",
-  "title": "string",
-  "description": "string",
-  "grade": 12,
-  "chapterNumber": 1,
-  "chapterTitle": "string",
-  "era": "CONTEMPORARY",
-  "durationSeconds": 900,
-  "tags": ["string"],
-  "questions": [
-    {
-      "questionId": "string",
-      "orderIndex": 1,
-      "content": "string",
-      "options": ["A", "B", "C", "D"],
-      "correctAnswer": 0,
-      "explanation": "string"
-    }
-  ],
-  "createdAt": "string",
-  "createdBy": "string",
-  "updatedAt": "string",
-  "updatedBy": "string"
-}
-```
+**Response `200`:** `{ "success": true, "data": StaffQuizSet }`
 
 ---
 
 ### `POST /staff/quizzes`
 
-Tạo bộ câu hỏi mới.
-
-**Request body:**
+**Request:**
 ```json
 {
-  "title": "string (required)",
-  "description": "string (required)",
+  "title": "string",
+  "description": "string",
+  "contextId": "string",
   "grade": 12,
   "chapterNumber": 1,
-  "chapterTitle": "string (required)",
+  "chapterTitle": "string",
   "era": "CONTEMPORARY",
   "durationSeconds": 900,
-  "tags": ["string"],
   "questions": [
     {
-      "orderIndex": 1,
-      "content": "string (required)",
+      "content": "string",
       "options": ["A", "B", "C", "D"],
       "correctAnswer": 0,
-      "explanation": "string (optional)"
+      "orderIndex": 0,
+      "explanation": "string"
     }
   ]
 }
 ```
 
-**Response:** QuizSet object đã tạo kèm `quizId` được generate.
+**Response `200`:** `{ "success": true, "data": StaffQuizSet }`
 
 ---
 
 ### `PUT /staff/quizzes/:quizId`
 
-Cập nhật thông tin quiz (không bao gồm câu hỏi).
+Cập nhật metadata (không bao gồm questions).
 
-**Request body:** Partial của POST body, không có `questions`.
-
+**Request:** Partial — tất cả field đều optional:
 ```json
 {
-  "title": "string (optional)",
-  "description": "string (optional)",
+  "title": "string",
+  "description": "string",
+  "contextId": "string",
   "grade": 12,
   "chapterNumber": 1,
-  "chapterTitle": "string (optional)",
+  "chapterTitle": "string",
   "era": "CONTEMPORARY",
-  "durationSeconds": 900,
-  "tags": ["string"]
+  "durationSeconds": 900
 }
 ```
+
+**Response `200`:** `{ "success": true, "data": StaffQuizSet }`
 
 ---
 
 ### `DELETE /staff/quizzes/:quizId`
 
-Xóa bộ câu hỏi. Nên soft delete (thêm field `deletedAt`).
+Permanent delete. Response `200`.
+
+---
+
+### `PATCH /staff/quizzes/:quizId/soft-delete`
+
+Soft delete — set `deletedAt`. Response `200`.
+
+---
+
+### `PATCH /staff/quizzes/:quizId/restore`
+
+Khôi phục quiz đã soft-delete. Response `200`.
 
 ---
 
 ### `POST /staff/quizzes/:quizId/questions`
 
-Thêm câu hỏi mới vào quiz đã có.
+Thêm câu hỏi vào quiz.
 
-**Request body:**
+**Request:**
 ```json
 {
-  "orderIndex": 11,
   "content": "string",
   "options": ["A", "B", "C", "D"],
   "correctAnswer": 0,
-  "explanation": "string (optional)"
+  "orderIndex": 0,
+  "explanation": "string"
 }
 ```
 
-**Response:** QuizQuestion object đã tạo.
+**Response `200`:** `{ "success": true, "data": QuizQuestion }`
 
 ---
 
 ### `PUT /staff/quizzes/:quizId/questions/:questionId`
 
-Sửa 1 câu hỏi.
+Sửa câu hỏi. **Request:** Partial của POST body — tất cả optional.
 
-**Request body:** Partial của POST body trên.
+**Response `200`:** `{ "success": true }`
 
 ---
 
 ### `DELETE /staff/quizzes/:quizId/questions/:questionId`
 
-Xóa 1 câu hỏi khỏi quiz.
+Xóa câu hỏi. Response `200`.
 
 ---
 
-### `PUT /staff/quizzes/:quizId/questions/reorder`
+## 9. Error Format
 
-Sắp xếp lại thứ tự câu hỏi.
-
-**Request body:**
 ```json
 {
-  "order": ["questionId-1", "questionId-3", "questionId-2"]
+  "success": false,
+  "message": "Character not found",
+  "data": null,
+  "timestamp": "ISO8601"
 }
 ```
 
----
-
-## Tóm tắt
-
-| Endpoint | Method | Role | Mô tả | Priority |
-|---|---|---|---|---|
-| `/quizzes` | GET | All | Danh sách quiz | 🔴 High |
-| `/quizzes/:id` | GET | All | Chi tiết quiz | 🔴 High |
-| `/quizzes/:id/start` | POST | Customer | Bắt đầu làm bài | 🔴 High |
-| `/quizzes/submit` | POST | Customer | Nộp bài | 🔴 High |
-| `/quizzes/results/me` | GET | Customer | Lịch sử làm bài | 🟡 Medium |
-| `/staff/quizzes` | GET | Staff/Admin | Danh sách quản lý | 🟡 Medium |
-| `/staff/quizzes/:id` | GET | Staff/Admin | Chi tiết + questions | 🟡 Medium |
-| `/staff/quizzes` | POST | Staff/Admin | Tạo quiz mới | 🟡 Medium |
-| `/staff/quizzes/:id` | PUT | Staff/Admin | Sửa thông tin quiz | 🟡 Medium |
-| `/staff/quizzes/:id` | DELETE | Staff/Admin | Xóa quiz | 🟢 Low |
-| `/staff/quizzes/:id/questions` | POST | Staff/Admin | Thêm câu hỏi | 🟡 Medium |
-| `/staff/quizzes/:id/questions/:qId` | PUT | Staff/Admin | Sửa câu hỏi | 🟡 Medium |
-| `/staff/quizzes/:id/questions/:qId` | DELETE | Staff/Admin | Xóa câu hỏi | 🟢 Low |
-| `/staff/quizzes/:id/questions/reorder` | PUT | Staff/Admin | Sắp xếp câu hỏi | 🟢 Low |
+| HTTP Status | Khi nào |
+|---|---|
+| `400` | Request params/body không hợp lệ |
+| `401` | Chưa auth hoặc token hết hạn |
+| `403` | Không đủ role/quyền |
+| `404` | Không tìm thấy resource |
+| `500` | Lỗi server |
 
 ---
 
-## Notes cho Backend
+## 10. Notes cho Backend
 
-1. **`grade` field** — thêm vào bảng `Quiz`, kiểu `INTEGER`, giá trị `10`, `11`, `12`.
+### ⚠️ Critical — phải đúng để FE không lỗi
 
-2. **`chapterNumber` + `chapterTitle`** — thêm vào bảng `Quiz`, dùng để group và hiển thị trên UI.
+1. **Response wrapper bắt buộc:** Mọi response phải có shape `{ success, message, data, timestamp }`. FE đọc `res.data.success` và `res.data.data`.
 
-3. **`correctAnswer` trong start response** — frontend cần field này ngay khi làm bài để hiện đúng/sai sau mỗi câu. Không cần ẩn vì đây là app học tập, không phải thi cử nghiêm túc.
+2. **Character ID field:** Phải trả `characterId` (không phải `id`). FE dùng `raw.characterId ?? raw.id`.
 
-4. **Soft delete** — thêm `deletedAt: datetime (nullable)` vào bảng `Quiz` và `QuizQuestion`. Filter `WHERE deletedAt IS NULL` trong tất cả GET queries.
+3. **Character image field:** Phải trả `image` (không phải `imageUrl`). FE dùng `raw.image ?? raw.imageUrl`.
 
-5. **`playCount`** — tự động tăng 1 mỗi khi `POST /quizzes/:id/start` được gọi thành công.
+4. **Character contextId:** Phải nằm trong `context.contextId` (nested object), không phải flat `contextId`.
 
-6. **`totalQuestions`** — tính tự động từ `COUNT(questions)`, không cần lưu riêng hoặc có thể cache.
+5. **Chat history fields:** Group dùng `contextId` + `contextName`. Session dùng `characterImage` (không phải `characterImageUrl`).
 
-7. **Role check** — staff endpoint nên check `role IN ('STAFF', 'ADMIN')` từ JWT, trả về `403 Forbidden` nếu không đủ quyền.
+6. **Era enum:** Backend nhận và trả **UPPERCASE** (`ANCIENT`, `MEDIEVAL`, `MODERN`, `CONTEMPORARY`). FE tự convert lowercase cho UI.
+
+7. **Category enum:** Backend nhận và trả **UPPERCASE** (`WAR`, `POLITICS`, `CULTURE`, `SCIENCE`, `RELIGION`, `OTHER`).
+
+8. **Pagination:** `currentPage` là **0-indexed**. FE gửi `page=0` cho trang đầu.
+
+9. **Quiz /quizzes (GET):** Backend trả `data` là **array trực tiếp** (không pagination object). FE tự wrap.
+
+10. **MessageRole:** Phải là `USER` và `ASSISTANT` (UPPERCASE) — không phải `user`/`assistant`.
+
+### Datetime
+
+- Tất cả datetime dùng **ISO 8601 UTC**: `"2026-05-22T14:30:00Z"`
+- `createdDate` / `updatedDate` (Staff Quiz) — cùng format ISO 8601.
+
+### Soft Delete pattern
+
+- Thêm `deletedAt: datetime (nullable)` vào `Character`, `HistoricalContext`, `Quiz`, `QuizQuestion`.
+- Mọi GET query filter `WHERE deletedAt IS NULL` mặc định.
+- PATCH `/soft-delete` set `deletedAt = now()`.
+- PATCH `/restore` set `deletedAt = null`.
+
+### Role check
+
+- `/staff/*` endpoints: check `role IN ('STAFF', 'ADMIN')` từ JWT → `403` nếu không đủ quyền.
+- `POST /auth/register-staff`: chỉ `ADMIN` được gọi.

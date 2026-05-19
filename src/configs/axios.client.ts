@@ -15,6 +15,25 @@ export const axiosClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// Biến lưu trạng thái refresh token và hàng đợi request
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token as string);
+    }
+  });
+
+  failedQueue = [];
+};
+
 // Gắn token vào mỗi request
 axiosClient.interceptors.request.use(
   (config) => {
@@ -44,7 +63,22 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    if (isRefreshing) {
+      // Đưa vào hàng đợi nếu đang refresh token
+      return new Promise(function (resolve, reject) {
+        failedQueue.push({ resolve, reject });
+      })
+        .then((token) => {
+          original.headers.Authorization = `Bearer ${token}`;
+          return axiosClient(original);
+        })
+        .catch((err) => {
+          return Promise.reject(err);
+        });
+    }
+
     original._retried = true;
+    isRefreshing = true;
 
     try {
       const refreshToken = useAuthStore.getState().tokens?.refreshToken;
@@ -58,19 +92,40 @@ axiosClient.interceptors.response.use(
 
       if (!data.success) throw new Error("Refresh failed");
 
+      const newAccessToken = data.data.accessToken;
+
       useAuthStore.getState().setTokens({
-        accessToken: data.data.accessToken,
+        accessToken: newAccessToken,
         refreshToken: data.data.refreshToken,
         tokenType: data.data.tokenType,
         expiresIn: data.data.expiresIn,
       });
 
-      original.headers.Authorization = `Bearer ${data.data.accessToken}`;
+      if (typeof document !== "undefined") {
+        document.cookie = `auth-token=${newAccessToken}; path=/; max-age=${data.data.expiresIn / 1000}`;
+      }
+
+      // Xử lý hàng đợi thành công
+      processQueue(null, newAccessToken);
+
+      original.headers.Authorization = `Bearer ${newAccessToken}`;
       return axiosClient(original);
-    } catch {
+    } catch (refreshError) {
+      // Báo lỗi cho hàng đợi
+      processQueue(refreshError, null);
+      
       useAuthStore.getState().clearAuth();
-      window.location.href = "/login";
+      if (typeof document !== "undefined") {
+        document.cookie = "auth-token=; path=/; max-age=0";
+        document.cookie = "auth-role=; path=/; max-age=0";
+      }
+      
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
       return Promise.reject(error);
+    } finally {
+      isRefreshing = false;
     }
   },
 );

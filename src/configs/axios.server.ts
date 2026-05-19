@@ -15,7 +15,7 @@ export const axiosServer = axios.create({
 // Instance có auth — dùng cho protected routes
 export async function getAuthAxios() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+  const token = cookieStore.get("auth-token")?.value;
 
   return axios.create({
     baseURL: BASE_URL,
