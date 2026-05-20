@@ -12,7 +12,7 @@ export function StaffShell({
 }: {
   title: string;
   description: string;
-  icon?: React.ElementType;
+  icon?: React.ComponentType<any>;
   accent?: string;
   children: React.ReactNode;
 }) {
