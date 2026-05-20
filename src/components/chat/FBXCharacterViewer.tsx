@@ -183,7 +183,7 @@ function GLBCharacterModel({
     const box2 = new THREE.Box3().setFromObject(gltf.scene);
     const center2 = box2.getCenter(new THREE.Vector3());
     gltf.scene.position.sub(center2);
-    gltf.scene.position.y += (box2.max.y - box2.min.y) / 2;
+    gltf.scene.position.y += (box2.max.y - box2.min.y) / 2 -2;
 
     const { blendshapes, bones, meshCount, lipMesh, lipMorphIdx, jawBone, jawRest } =
       scanForLipTargets(gltf.scene);
@@ -391,7 +391,7 @@ export function FBXCharacterViewer({
       </div>
 
       <Canvas
-        camera={{ position: [0, 2.8, 5.0], fov: 35 }}
+        camera={{ position: [0, 4.0, 5.0], fov: 35 }}
         style={{ background: "transparent" }}
       >
         <ambientLight intensity={0.7} />
