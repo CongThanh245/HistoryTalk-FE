@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import {
   HouseIcon,
   BankIcon,
@@ -12,7 +13,7 @@ import {
 } from "@phosphor-icons/react";
 
 export interface SidebarMenuItem {
-  icon: React.ElementType;
+  icon: ComponentType<any>;
   label: string;
   href: string;
   /** Nếu true, chỉ active khi pathname khớp chính xác href */
