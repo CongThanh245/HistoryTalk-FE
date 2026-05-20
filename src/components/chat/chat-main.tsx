@@ -16,7 +16,7 @@ import {
 } from "@/features/chat/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
-import { VoiceChatModal } from "./VoiceChatModal";
+import { Avatar3DModal } from "./Avatar3DModal";
 import { KeywordDetailPanel } from "./KeywordDetailPanel";
 import type { KeywordData } from "@/data/keywords";
 import { cn } from "@/lib/utils/cn";
@@ -323,9 +323,9 @@ export function ChatMain({
         characterName={character.name}
       />
 
-      {/* ── Voice Chat Modal ── */}
+      {/* ── 3D Avatar Modal ── */}
       {isVoiceOpen && sessionId && (
-        <VoiceChatModal
+        <Avatar3DModal
           character={character}
           sessionId={sessionId}
           contextId={contextId}

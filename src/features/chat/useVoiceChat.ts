@@ -35,6 +35,10 @@ interface UseVoiceChatReturn {
   startCall: () => Promise<void>;
   endCall: () => void;
   toggleMute: () => void;
+  /** AnalyserNode đang phân tích audio TTS (để lip-sync) */
+  ttsAnalyserRef: React.RefObject<AnalyserNode | null>;
+  /** AudioContext đang dùng để phát TTS */
+  audioContextRef: React.RefObject<AudioContext | null>;
 }
 import { buildVoiceWsUrl } from "@/configs/websocket.config";
 
@@ -59,7 +63,8 @@ export function useVoiceChat({
   const isPlayingRef = useRef(false);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);   // VAD (mic)
+  const ttsAnalyserRef = useRef<AnalyserNode | null>(null); // TTS (lip-sync)
   const vadIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Cleanup ───────────────────────────────────────────
@@ -77,8 +82,27 @@ export function useVoiceChat({
     mediaRecorderRef.current = null;
     streamRef.current = null;
     audioContextRef.current = null;
+    ttsAnalyserRef.current = null;
     audioQueueRef.current = [];
     isPlayingRef.current = false;
+  }, []);
+
+  // ── Lấy / tạo AudioContext & TTS AnalyserNode ────────
+  const getAudioContext = useCallback((): AudioContext => {
+    if (!audioContextRef.current || audioContextRef.current.state === "closed") {
+      const ctx = new AudioContext({ sampleRate: 24000 });
+      audioContextRef.current = ctx;
+
+      // Tạo AnalyserNode dùng chung cho toàn bộ TTS stream
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.5;
+      ttsAnalyserRef.current = analyser;
+
+      // Kết nối analyser → destination để vừa phân tích vừa phát ra loa
+      analyser.connect(ctx.destination);
+    }
+    return audioContextRef.current!;
   }, []);
 
   // ── Play audio queue (PCM/MP3 từ server) ─────────────
@@ -91,14 +115,22 @@ export function useVoiceChat({
     const buffer = audioQueueRef.current.shift()!;
 
     try {
-      const ctx =
-        audioContextRef.current ?? new AudioContext({ sampleRate: 24000 });
-      audioContextRef.current = ctx;
+      const ctx = getAudioContext();
+
+      // Resume context nếu bị suspended (autoplay policy)
+      if (ctx.state === "suspended") await ctx.resume();
 
       const decoded = await ctx.decodeAudioData(buffer.slice(0));
       const source = ctx.createBufferSource();
       source.buffer = decoded;
-      source.connect(ctx.destination);
+
+      // source → ttsAnalyser → destination
+      // Analyser đã được connect tới destination ở trên rồi
+      if (ttsAnalyserRef.current) {
+        source.connect(ttsAnalyserRef.current);
+      } else {
+        source.connect(ctx.destination);
+      }
 
       source.onended = () => {
         isPlayingRef.current = false;
@@ -116,7 +148,7 @@ export function useVoiceChat({
       isPlayingRef.current = false;
       setStatus("listening");
     }
-  }, []);
+  }, [getAudioContext]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── VAD (Voice Activity Detection) đơn giản ──────────
   const startVAD = useCallback((stream: MediaStream) => {
@@ -204,6 +236,9 @@ export function useVoiceChat({
         },
       });
       streamRef.current = stream;
+
+      // Khởi tạo AudioContext + TTS analyser ngay
+      getAudioContext();
 
       // Kết nối WebSocket
       // URL pattern: ws://host/ws/voice/{sessionId}?characterId=...&contextId=...
@@ -326,6 +361,7 @@ export function useVoiceChat({
     sessionId,
     characterId,
     contextId,
+    getAudioContext,
     playNextInQueue,
     startVAD,
     startRecording,
@@ -368,5 +404,7 @@ export function useVoiceChat({
     startCall,
     endCall,
     toggleMute,
+    ttsAnalyserRef,
+    audioContextRef,
   };
 }
