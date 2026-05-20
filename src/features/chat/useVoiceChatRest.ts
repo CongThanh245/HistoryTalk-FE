@@ -106,9 +106,16 @@ export function useVoiceChatRest({
       setStatus("loading");
 
       try {
+        const useInternal =
+          process.env.NEXT_PUBLIC_VOICE_USE_INTERNAL === "true";
+
+        // Internal: Next.js Route Handler (không cần BE, không lộ API key)
+        // External: Spring Boot backend
+        const endpoint = useInternal
+          ? "/api/voice/chat"
+          : `${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}${process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1"}/voice/chat`;
+
         const token = useAuthStore.getState().tokens?.accessToken;
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
-        const basePath = process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
 
         const formData = new FormData();
         formData.append("audio", audioBlob, "recording.webm");
@@ -116,9 +123,15 @@ export function useVoiceChatRest({
         formData.append("characterId", characterId);
         formData.append("contextId", contextId);
 
-        const res = await fetch(`${baseUrl}${basePath}/voice/chat`, {
+        const headers: HeadersInit = {};
+        // Chỉ gửi Authorization khi gọi BE
+        if (!useInternal && token) {
+          (headers as Record<string, string>).Authorization = `Bearer ${token}`;
+        }
+
+        const res = await fetch(endpoint, {
           method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          headers,
           body: formData,
         });
 
@@ -129,10 +142,13 @@ export function useVoiceChatRest({
           );
         }
 
-        // Đọc transcript từ header nếu server trả về
-        const userTranscript = res.headers.get("X-User-Transcript") ?? "";
-        const assistantTranscript =
-          res.headers.get("X-Assistant-Transcript") ?? "";
+        // Đọc transcript từ header (URL-encoded để tránh lỗi ký tự Unicode)
+        const userTranscript = decodeURIComponent(
+          res.headers.get("X-User-Transcript") ?? "",
+        );
+        const assistantTranscript = decodeURIComponent(
+          res.headers.get("X-Assistant-Transcript") ?? "",
+        );
 
         if (userTranscript) {
           setMessages((prev) => [

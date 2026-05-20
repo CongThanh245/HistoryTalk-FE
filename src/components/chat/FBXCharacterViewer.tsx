@@ -391,7 +391,7 @@ export function FBXCharacterViewer({
       </div>
 
       <Canvas
-        camera={{ position: [0, 2.5, 5.0], fov: 35 }}
+        camera={{ position: [0, 2.8, 5.0], fov: 35 }}
         style={{ background: "transparent" }}
       >
         <ambientLight intensity={0.7} />
@@ -414,7 +414,7 @@ export function FBXCharacterViewer({
           maxDistance={10}
           minPolarAngle={Math.PI / 8}
           maxPolarAngle={(Math.PI * 2) / 3}
-          target={[0, 2.2, 0]}
+          target={[0, 2.6, 0]}
         />
       </Canvas>
     </div>
