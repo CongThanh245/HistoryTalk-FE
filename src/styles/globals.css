@@ -90,8 +90,8 @@ body {
   --accent: var(--accent-blue);
   --accent-foreground: var(--bg-main);
   --destructive: var(--accent-danger);
-  --border: var(--border-default);
-  --input: var(--border-default);
+  --border: rgba(27, 38, 50, 0.14);
+  --input: rgba(27, 38, 50, 0.14);
   --ring: var(--accent-gold);
   --radius: 0.625rem;
   --toast-success-bg: rgba(16, 40, 24, 0.96);
@@ -133,6 +133,24 @@ body {
    còn không thì theme cinematic của bạn mặc định đã là tone tối rồi */
 .dark {
   color-scheme: dark;
+}
+
+/* ─────────────────────────────────────────
+   Staff / admin panel: light theme tokens
+   for Radix portal elements (Select, Dropdown) & staff container
+────────────────────────────────────────── */
+[data-radix-popper-content-wrapper], .staff-theme {
+  --background: #f5f1ea;
+  --foreground: #1b2632;
+  --popover: #ffffff;
+  --popover-foreground: #1b2632;
+  --accent: rgba(27, 38, 50, 0.06);
+  --accent-foreground: #1b2632;
+  --border: rgba(27, 38, 50, 0.14);
+  --input: rgba(27, 38, 50, 0.14);
+  --muted-foreground: #7a7469;
+  --muted: #e7dfd3;
+  --color-muted: #e7dfd3;
 }
 
 @layer base {

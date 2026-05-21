@@ -15,10 +15,15 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+  StaffFormLabel,
+  StaffFormInput,
+  StaffFormTextarea,
+  StaffFormSelect,
+} from "@/components/staff/staff-form";
 import {
   Select,
   SelectContent,
@@ -32,6 +37,7 @@ import { useChatSessions, useCreateSession } from "@/features/chat/hooks";
 import type { ChatCharacter } from "@/services/chat.service";
 import type { HistoricalEvent, EventEraBackend, EventCategory } from "@/services/event.service";
 import { useCreateEvent, useUpdateEvent } from "@/features/events/hooks";
+import { toast } from "sonner";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -358,86 +364,74 @@ export function StaffCharacterDetailView({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
-                <Label className="text-[var(--content-muted)] text-[11px] font-semibold uppercase tracking-wider">Tên nhân vật *</Label>
-                <Input
+                <StaffFormLabel>Tên nhân vật *</StaffFormLabel>
+                <StaffFormInput
                   value={draft.name}
                   onChange={(e) => set("name")(e.target.value)}
                   placeholder="VD: Ngô Quyền"
                   disabled={!isEditing}
-                  className="bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10"
-                  style={{ color: "var(--content-heading)" }}
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label className="text-[var(--content-muted)] text-[11px] font-semibold uppercase tracking-wider">Chức vị *</Label>
-                <Input
+                <StaffFormLabel>Chức vị *</StaffFormLabel>
+                <StaffFormInput
                   value={draft.title}
                   onChange={(e) => set("title")(e.target.value)}
                   placeholder="VD: Tiết độ sứ"
                   disabled={!isEditing}
-                  className="bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10"
-                  style={{ color: "var(--content-heading)" }}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
-                <Label className="text-[var(--content-muted)] text-[11px] font-semibold uppercase tracking-wider">Phe / Quốc gia</Label>
-                <Input
+                <StaffFormLabel>Phe / Quốc gia</StaffFormLabel>
+                <StaffFormInput
                   value={draft.side}
                   onChange={(e) => set("side")(e.target.value)}
                   placeholder="VD: Đại Việt"
                   disabled={!isEditing}
-                  className="bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10"
-                  style={{ color: "var(--content-heading)" }}
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label className="text-[var(--content-muted)] text-[11px] font-semibold uppercase tracking-wider">Năm sống</Label>
-                <Input
+                <StaffFormLabel>Năm sống</StaffFormLabel>
+                <StaffFormInput
                   value={draft.lifespan}
                   onChange={(e) => set("lifespan")(e.target.value)}
                   placeholder="VD: 898–944"
                   disabled={!isEditing}
-                  className="bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10"
-                  style={{ color: "var(--content-heading)" }}
                 />
               </div>
             </div>
 
             <div className="grid gap-1.5">
-              <Label className="text-[var(--content-muted)] text-[11px] font-semibold uppercase tracking-wider">URL hình ảnh</Label>
-              <Input
+              <StaffFormLabel>URL hình ảnh</StaffFormLabel>
+              <StaffFormInput
                 value={draft.image}
                 onChange={(e) => set("image")(e.target.value)}
                 placeholder="https://..."
                 disabled={!isEditing}
-                className="bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10"
-                style={{ color: "var(--content-heading)" }}
               />
             </div>
 
             <div className="grid gap-1.5">
-              <Label className="text-[var(--content-muted)] text-[11px] font-semibold uppercase tracking-wider">Tiểu sử / Bối cảnh</Label>
-              <Textarea
+              <StaffFormLabel>Tiểu sử / Bối cảnh</StaffFormLabel>
+              <StaffFormTextarea
                 value={draft.background}
                 onChange={(e) => set("background")(e.target.value)}
                 placeholder="Mô tả cuộc đời, vai trò lịch sử..."
-                className="min-h-[120px] resize-none bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all"
-                style={{ color: "var(--content-heading)" }}
+                style={{ minHeight: "120px" }}
                 disabled={!isEditing}
               />
             </div>
 
             <div className="grid gap-1.5">
-              <Label className="text-[var(--content-muted)] text-[11px] font-semibold uppercase tracking-wider">Tính cách</Label>
-              <Textarea
+              <StaffFormLabel>Tính cách</StaffFormLabel>
+              <StaffFormTextarea
                 value={draft.personality}
                 onChange={(e) => set("personality")(e.target.value)}
                 placeholder="Đặc điểm tính cách, phong cách nói chuyện..."
-                className="min-h-[90px] resize-none bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all"
-                style={{ color: "var(--content-heading)" }}
+                style={{ minHeight: "90px" }}
                 disabled={!isEditing}
               />
             </div>
@@ -492,7 +486,10 @@ export function StaffCharacterDetailView({
               confirmLabel="Đồng ý, xuất bản"
               onConfirm={() => {
                 if (isContextDraft && mappedContextId) {
-                  updateEvent.mutate({ id: mappedContextId, data: { isDraft: false } });
+                  updateEvent.mutate(
+                    { id: mappedContextId, data: { isDraft: false } },
+                    { onSuccess: () => toast.success("Bối cảnh đã được xuất bản") },
+                  );
                 }
                 set("isDraft")(false);
                 setPublishDialogOpen(false);
@@ -711,8 +708,9 @@ export function StaffCharacterDetailView({
                                 setSelectedContextId(newCtx.id);
                                 setShowQuickCreate(false);
                                 setQuickCtx({ name: "", description: "", era: "", category: "", year: "" });
+                                toast.success("Tạo bối cảnh thành công");
                               },
-                            }
+                            },
                           );
                         }}
                       >

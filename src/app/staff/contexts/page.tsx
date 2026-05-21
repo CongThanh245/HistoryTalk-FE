@@ -10,14 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  StaffFormLabel,
+  StaffFormInput,
+  StaffFormTextarea,
+  StaffFormSelect,
+} from "@/components/staff/staff-form";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +72,23 @@ const EMPTY_DRAFT: DraftState = {
   isDraft: true,
 };
 
+// Constants for Select Options
+const ERA_OPTIONS = [
+  { value: "ANCIENT" as const, label: "Cổ đại" },
+  { value: "MEDIEVAL" as const, label: "Trung đại" },
+  { value: "MODERN" as const, label: "Cận đại" },
+  { value: "CONTEMPORARY" as const, label: "Hiện đại" },
+];
+
+const CATEGORY_OPTIONS = [
+  { value: "WAR" as const, label: "Chiến tranh" },
+  { value: "POLITICS" as const, label: "Chính trị" },
+  { value: "CULTURE" as const, label: "Văn hoá" },
+  { value: "SCIENCE" as const, label: "Khoa học" },
+  { value: "RELIGION" as const, label: "Tôn giáo" },
+  { value: "OTHER" as const, label: "Khác" },
+];
+
 export default function StaffContextsPage() {
   const [search, setSearch] = React.useState("");
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -123,12 +139,45 @@ export default function StaffContextsPage() {
       isDraft: draft.isDraft,
     };
 
+    const name = payload.name;
     if (mode === "create") {
-      createEvent.mutate(payload, { onSuccess: () => setDialogOpen(false) });
+      createEvent.mutate(payload, {
+        onSuccess: () => {
+          setDialogOpen(false);
+          if (payload.isDraft) {
+            toast("Đã lưu bản nháp", {
+              description: `"${name}" được lưu dạng bản nháp.`,
+              duration: 4000,
+              style: { background: "#fef3c7", color: "#92400e", border: "1px solid #fbbf24" },
+            });
+          } else {
+            toast.success("Xuất bản thành công", {
+              description: `"${name}" đã được công bố.`,
+              duration: 4000,
+            });
+          }
+        },
+      });
     } else {
       updateEvent.mutate(
         { id: draft.id!, data: payload },
-        { onSuccess: () => setDialogOpen(false) },
+        {
+          onSuccess: () => {
+            setDialogOpen(false);
+            if (payload.isDraft) {
+              toast("Đã lưu bản nháp", {
+                description: `"${name}" được lưu dạng bản nháp.`,
+                duration: 4000,
+                style: { background: "#fef3c7", color: "#92400e", border: "1px solid #fbbf24" },
+              });
+            } else {
+              toast.success("Xuất bản thành công", {
+                description: `"${name}" đã được công bố.`,
+                duration: 4000,
+              });
+            }
+          },
+        },
       );
     }
   };
@@ -443,6 +492,7 @@ export default function StaffContextsPage() {
           columns={showTrash ? trashColumns : columns}
           data={displayedItems}
           emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy bối cảnh phù hợp."}
+          isLoading={isLoading}
         />
       </section>
 
@@ -472,9 +522,9 @@ export default function StaffContextsPage() {
               </p>
 
               {/* Name */}
-              <div className="grid gap-2">
-                <Label>Tên sự kiện *</Label>
-                <Input
+              <div className="grid gap-1.5">
+                <StaffFormLabel>Tên sự kiện *</StaffFormLabel>
+                <StaffFormInput
                   value={draft.name}
                   onChange={(e) => set("name")(e.target.value)}
                   placeholder="VD: Trận Bạch Đằng"
@@ -482,20 +532,19 @@ export default function StaffContextsPage() {
               </div>
 
               {/* Description */}
-              <div className="grid gap-2">
-                <Label>Mô tả *</Label>
-                <Textarea
+              <div className="grid gap-1.5">
+                <StaffFormLabel>Mô tả *</StaffFormLabel>
+                <StaffFormTextarea
                   value={draft.description}
                   onChange={(e) => set("description")(e.target.value)}
                   placeholder="Bối cảnh lịch sử..."
-                  className="min-h-[140px] resize-none"
                 />
               </div>
 
               {/* Location */}
-              <div className="grid gap-2">
-                <Label>Địa điểm</Label>
-                <Input
+              <div className="grid gap-1.5">
+                <StaffFormLabel>Địa điểm</StaffFormLabel>
+                <StaffFormInput
                   value={draft.location}
                   onChange={(e) => set("location")(e.target.value)}
                   placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
@@ -511,61 +560,49 @@ export default function StaffContextsPage() {
 
               {/* Era + Category */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-2">
-                  <Label>Thời đại *</Label>
-                  <Select value={draft.era} onValueChange={set("era")}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn thời đại" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ANCIENT">Cổ đại</SelectItem>
-                      <SelectItem value="MEDIEVAL">Trung đại</SelectItem>
-                      <SelectItem value="MODERN">Cận đại</SelectItem>
-                      <SelectItem value="CONTEMPORARY">Hiện đại</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid gap-1.5">
+                  <StaffFormLabel>Thời đại *</StaffFormLabel>
+                  <StaffFormSelect
+                    value={draft.era}
+                    onValueChange={set("era")}
+                    placeholder="Chọn thời đại"
+                    options={ERA_OPTIONS}
+                  />
                 </div>
-                <div className="grid gap-2">
-                  <Label>Danh mục *</Label>
-                  <Select value={draft.category} onValueChange={set("category")}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn danh mục" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="WAR">Chiến tranh</SelectItem>
-                      <SelectItem value="POLITICS">Chính trị</SelectItem>
-                      <SelectItem value="CULTURE">Văn hoá</SelectItem>
-                      <SelectItem value="SCIENCE">Khoa học</SelectItem>
-                      <SelectItem value="RELIGION">Tôn giáo</SelectItem>
-                      <SelectItem value="OTHER">Khác</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid gap-1.5">
+                  <StaffFormLabel>Danh mục *</StaffFormLabel>
+                  <StaffFormSelect
+                    value={draft.category}
+                    onValueChange={set("category")}
+                    placeholder="Chọn danh mục"
+                    options={CATEGORY_OPTIONS}
+                  />
                 </div>
               </div>
 
               {/* Year + startYear + endYear */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="grid gap-2">
-                  <Label>Năm *</Label>
-                  <Input
+                <div className="grid gap-1.5">
+                  <StaffFormLabel>Năm *</StaffFormLabel>
+                  <StaffFormInput
                     type="number"
                     value={draft.year}
                     onChange={(e) => set("year")(e.target.value)}
                     placeholder="938"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label>Năm bắt đầu</Label>
-                  <Input
+                <div className="grid gap-1.5">
+                  <StaffFormLabel>Năm bắt đầu</StaffFormLabel>
+                  <StaffFormInput
                     type="number"
                     value={draft.startYear}
                     onChange={(e) => set("startYear")(e.target.value)}
                     placeholder="938"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label>Năm kết thúc</Label>
-                  <Input
+                <div className="grid gap-1.5">
+                  <StaffFormLabel>Năm kết thúc</StaffFormLabel>
+                  <StaffFormInput
                     type="number"
                     value={draft.endYear}
                     onChange={(e) => set("endYear")(e.target.value)}
@@ -579,36 +616,51 @@ export default function StaffContextsPage() {
                   checked={draft.beforeTCN}
                   onCheckedChange={set("beforeTCN")}
                 />
-                <Label>Trước Công Nguyên (TCN)</Label>
+                <StaffFormLabel>Trước Công Nguyên (TCN)</StaffFormLabel>
               </div>
 
-              {/* isDraft Checkbox */}
+              {/* isDraft Toggle */}
               <div
-                className="flex items-center gap-3 py-3 px-4 rounded-xl border transition-colors"
+                className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors"
                 style={{
-                  borderColor: "var(--card-light-border)",
-                  background: "rgba(27,38,50,0.03)",
+                  borderColor: draft.isDraft ? "rgba(234,179,8,0.35)" : "rgba(34,197,94,0.35)",
+                  background: draft.isDraft ? "rgba(254,243,199,0.25)" : "rgba(34,197,94,0.06)",
                 }}
               >
-                <Checkbox
-                  checked={draft.isDraft}
-                  onCheckedChange={(val) => {
-                    if (!val) {
+                <div className="flex-1">
+                  <p className="text-sm font-semibold" style={{ color: draft.isDraft ? "#92400e" : "rgb(22,163,74)" }}>
+                    {draft.isDraft ? "Bản nháp" : "Đã xuất bản"}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                    {draft.isDraft
+                      ? "Chưa hiển thị cho học sinh."
+                      : "Đang hiển thị công khai cho người dùng."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={!draft.isDraft}
+                  onClick={() => {
+                    if (draft.isDraft) {
                       setPublishDialogOpen(true);
                     } else {
                       set("isDraft")(true);
                     }
                   }}
-                  id="isDraft"
-                />
-                <div className="flex-1">
-                  <Label htmlFor="isDraft" className="cursor-pointer text-sm font-medium">
-                    Lưu dạng bản nháp (Draft)
-                  </Label>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                    Bản nháp không hiển thị cho học sinh. Bỏ tick để xuất bản.
-                  </p>
-                </div>
+                  className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                  style={{
+                    background: draft.isDraft ? "rgba(234,179,8,0.4)" : "rgb(34,197,94)",
+                  }}
+                >
+                  <span
+                    className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
+                    style={{
+                      background: "#fff",
+                      transform: draft.isDraft ? "translateX(0)" : "translateX(20px)",
+                    }}
+                  />
+                </button>
               </div>
 
               {/* Media URLs */}
@@ -616,17 +668,17 @@ export default function StaffContextsPage() {
                 <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
                   Media
                 </p>
-                <div className="grid gap-2">
-                  <Label>URL hình ảnh</Label>
-                  <Input
+                <div className="grid gap-1.5">
+                  <StaffFormLabel>URL hình ảnh</StaffFormLabel>
+                  <StaffFormInput
                     value={draft.imageUrl}
                     onChange={(e) => set("imageUrl")(e.target.value)}
                     placeholder="https://..."
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label>URL video (YouTube)</Label>
-                  <Input
+                <div className="grid gap-1.5">
+                  <StaffFormLabel>URL video (YouTube)</StaffFormLabel>
+                  <StaffFormInput
                     value={draft.videoUrl}
                     onChange={(e) => set("videoUrl")(e.target.value)}
                     placeholder="https://youtube.com/watch?v=..."
@@ -655,8 +707,9 @@ export default function StaffContextsPage() {
         open={publishDialogOpen}
         onOpenChange={setPublishDialogOpen}
         title="Xác nhận xuất bản bối cảnh?"
-        description='Khi bỏ chọn "Bản nháp", bối cảnh này sẽ được hiển thị công khai cho người dùng. Bạn có chắc chắn muốn thực hiện không?'
+        description='Khi chuyển sang "Đã xuất bản", bối cảnh này sẽ được hiển thị công khai cho người dùng. Bạn có chắc chắn muốn thực hiện không?'
         confirmLabel="Đồng ý, xuất bản"
+        variant="warning"
         onConfirm={() => {
           set("isDraft")(false);
           setPublishDialogOpen(false);

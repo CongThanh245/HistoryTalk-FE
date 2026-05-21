@@ -353,6 +353,7 @@ export default function StaffCharactersPage() {
           columns={showTrash ? trashColumns : columns}
           data={items}
           emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy nhân vật phù hợp."}
+          isLoading={isLoading}
         />
       </section>
 
