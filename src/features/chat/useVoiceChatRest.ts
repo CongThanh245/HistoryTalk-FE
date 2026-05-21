@@ -124,8 +124,8 @@ export function useVoiceChatRest({
         formData.append("contextId", contextId);
 
         const headers: HeadersInit = {};
-        // Chỉ gửi Authorization khi gọi BE
-        if (!useInternal && token) {
+        // Internal route giờ cũng cần token để forward sang Spring Boot
+        if (token) {
           (headers as Record<string, string>).Authorization = `Bearer ${token}`;
         }
 

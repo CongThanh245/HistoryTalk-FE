@@ -1,9 +1,13 @@
 /**
  * POST /api/voice/chat
  *
- * Pipeline: audio → Gemini (STT + LLM) → Gemini TTS → audio/wav
+ * Pipeline:
+ *   (1) audio  ──► Gemini STT       ──► userTranscript
+ *   (2) userTranscript ──► Spring Boot /chat/messages (RAG + LLM) ──► aiResponse
+ *   (3) aiResponse     ──► Gemini TTS ──► audio/wav
  *
  * Request  : multipart/form-data { audio: File, sessionId, characterId, contextId }
+ *            Header: Authorization: Bearer <token>   (forward sang BE)
  * Response : audio/wav binary
  *   Headers: X-User-Transcript      (URL-encoded)
  *            X-Assistant-Transcript (URL-encoded)
@@ -11,12 +15,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import {
-  getCharacterPrompt,
-  getOrCreateSession,
-  pushToSession,
-  pcmToWav,
-} from "@/lib/voice-gemini";
+import { pcmToWav } from "@/lib/voice-gemini";
 
 // ── Gemini client (module-level, shared across requests) ─────────────────────
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? "";
@@ -44,17 +43,32 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const audioFile = formData.get("audio") as File | null;
-  const sessionId = (formData.get("sessionId") as string) || "default";
+  const sessionId = formData.get("sessionId") as string | null;
   const characterId = (formData.get("characterId") as string) || "default";
-  // contextId reserved for future use (e.g. RAG context)
+  // contextId reserved (BE đã biết qua sessionId)
   // const contextId = formData.get("contextId") as string;
 
   if (!audioFile || audioFile.size === 0) {
     return NextResponse.json({ message: "Thiếu file audio" }, { status: 400 });
   }
+  if (!sessionId) {
+    return NextResponse.json(
+      { message: "Thiếu sessionId" },
+      { status: 400 },
+    );
+  }
+
+  // Forward Authorization sang BE
+  const authHeader = req.headers.get("authorization") ?? "";
+  if (!authHeader) {
+    return NextResponse.json(
+      { message: "Thiếu Authorization để gọi backend" },
+      { status: 401 },
+    );
+  }
 
   try {
-    // ── Step 1 + 2: STT + LLM — một lần gọi Gemini ─────────────────────────
+    // ── Step 1: STT — Gemini chỉ làm transcribe ────────────────────────────
     const audioBytes = await audioFile.arrayBuffer();
     const base64Audio = Buffer.from(audioBytes).toString("base64");
     const mimeType = (audioFile.type || "audio/webm") as
@@ -62,69 +76,72 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       | "audio/mp4"
       | "audio/ogg";
 
-    const characterPrompt = getCharacterPrompt(characterId);
-    const history = getOrCreateSession(sessionId);
-
-    const model = genAI.getGenerativeModel({
+    const sttModel = genAI.getGenerativeModel({
       model: "gemini-3.5-flash",
-      systemInstruction: `${characterPrompt}
-
-Khi người dùng nói chuyện với bạn qua âm thanh, hãy:
-1. Nhận biết chính xác nội dung họ nói (bằng tiếng Việt hoặc ngôn ngữ họ dùng).
-2. Trả lời ngắn gọn, súc tích (2-4 câu) với tư cách là nhân vật lịch sử đó.
-3. Luôn trả về đúng định dạng JSON sau và KHÔNG thêm bất kỳ text nào khác ngoài JSON:
-{"userTranscript":"<nội dung người dùng nói>","response":"<câu trả lời của bạn>"}`,
+      systemInstruction:
+        "Bạn là một bộ chuyển giọng nói thành văn bản (STT). Chỉ trả về CHÍNH XÁC những gì người dùng nói trong audio, KHÔNG diễn giải, KHÔNG thêm dấu nháy, KHÔNG thêm bất kỳ text nào khác. Nếu không nghe rõ, trả về chuỗi rỗng.",
     });
 
-    const chat = model.startChat({ history });
-
-    const llmResult = await chat.sendMessage([
-      {
-        inlineData: {
-          data: base64Audio,
-          mimeType,
-        },
-      },
-      {
-        text: "Hãy lắng nghe âm thanh và phản hồi theo định dạng JSON đã yêu cầu.",
-      },
+    const sttResult = await sttModel.generateContent([
+      { inlineData: { data: base64Audio, mimeType } },
+      { text: "Hãy chuyển audio này thành văn bản tiếng Việt." },
     ]);
 
-    const rawText = llmResult.response.text().trim();
+    const userTranscript = sttResult.response
+      .text()
+      .trim()
+      .replace(/^["']|["']$/g, "");
 
-    // Parse JSON — strip markdown fences nếu model trả thêm
-    let userTranscript = "";
-    let aiResponse = "";
-    try {
-      const cleaned = rawText
-        .replace(/^```json\s*/i, "")
-        .replace(/\s*```$/, "")
-        .trim();
-      const parsed: { userTranscript?: string; response?: string } =
-        JSON.parse(cleaned);
-      userTranscript = parsed.userTranscript ?? "";
-      aiResponse = parsed.response ?? "";
-    } catch {
-      // Fallback: coi toàn bộ text là câu trả lời
-      aiResponse = rawText;
-      console.warn("[VoiceChat] Không parse được JSON, dùng raw text:", rawText);
+    if (!userTranscript) {
+      return NextResponse.json(
+        { message: "Không nghe rõ nội dung, vui lòng thử lại" },
+        { status: 422 },
+      );
     }
 
-    // Cập nhật session history
-    pushToSession(sessionId, [
-      ...(userTranscript
-        ? [{ role: "user" as const, parts: [{ text: userTranscript }] }]
-        : []),
-      ...(aiResponse
-        ? [{ role: "model" as const, parts: [{ text: aiResponse }] }]
-        : []),
-    ]);
+    // ── Step 2: Gọi Spring Boot /chat/messages (RAG + LLM) ─────────────────
+    const BE_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+    const BE_BASE_PATH =
+      process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
+    const beEndpoint = `${BE_BASE_URL}${BE_BASE_PATH}/chat/messages`;
+
+    const beRes = await fetch(beEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+      },
+      body: JSON.stringify({ sessionId, content: userTranscript }),
+    });
+
+    if (!beRes.ok) {
+      const errText = await beRes.text();
+      console.error("[VoiceChat] BE /chat/messages error:", beRes.status, errText);
+      return NextResponse.json(
+        { message: `Backend lỗi: ${beRes.status}` },
+        { status: 502 },
+      );
+    }
+
+    const beJson = (await beRes.json()) as {
+      data?: {
+        assistantMessage?: { content?: string };
+      };
+    };
+
+    const aiResponse = beJson.data?.assistantMessage?.content?.trim() ?? "";
+    if (!aiResponse) {
+      return NextResponse.json(
+        { message: "Backend không trả về câu trả lời" },
+        { status: 502 },
+      );
+    }
 
     // ── Step 3: TTS — Gemini 2.5 Flash TTS ──────────────────────────────────
     const ttsBody = {
       contents: [
         {
-          parts: [{ text: aiResponse || "Xin lỗi, tôi chưa hiểu câu hỏi." }],
+          parts: [{ text: aiResponse }],
           role: "user",
         },
       ],
@@ -206,15 +223,6 @@ Khi người dùng nói chuyện với bạn qua âm thanh, hãy:
     console.error("[VoiceChat] Unexpected error:", err);
     return NextResponse.json({ message }, { status: 500 });
   }
-}
-
-// ── DELETE: xoá session history ──────────────────────────────────────────────
-export async function DELETE(req: NextRequest): Promise<NextResponse> {
-  const { searchParams } = new URL(req.url);
-  const sessionId = searchParams.get("sessionId") ?? "default";
-  const { clearSession } = await import("@/lib/voice-gemini");
-  clearSession(sessionId);
-  return NextResponse.json({ message: "Session cleared", sessionId });
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
