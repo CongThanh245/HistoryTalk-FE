@@ -9,7 +9,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDownIcon } from "lucide-react";
+import { ArrowUpDownIcon, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export type StaffDataTableProps<TData> = {
   data: TData[];
   emptyMessage?: string;
   className?: string;
+  isLoading?: boolean;
 };
 
 export function StaffDataTable<TData>({
@@ -34,6 +35,7 @@ export function StaffDataTable<TData>({
   data,
   emptyMessage = "Không có dữ liệu phù hợp.",
   className,
+  isLoading = false,
 }: StaffDataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -95,9 +97,22 @@ export function StaffDataTable<TData>({
         </TableHeader>
 
         <TableBody>
-          {table.getRowModel().rows.length ? (
+          {isLoading ? (
+            <TableRow>
+              <TableCell
+                colSpan={table.getAllColumns().length}
+                className="h-28"
+                style={{ color: "var(--content-muted)" }}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-gold)]" />
+                  <span className="text-xs font-medium">Đang tải dữ liệu...</span>
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow key={row.id} className="hover:bg-[var(--card-light-hover)]!">
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className="px-4">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

@@ -41,7 +41,9 @@ export function useCreateEvent() {
           return { ...old, content: [newEvent, ...old.content] };
         },
       );
-      toast.success("Tạo sự kiện thành công");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Tạo sự kiện thất bại");
     },
   });
 }
@@ -64,7 +66,9 @@ export function useUpdateEvent() {
           };
         },
       );
-      toast.success("Cập nhật thành công");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Cập nhật thất bại");
     },
   });
 }

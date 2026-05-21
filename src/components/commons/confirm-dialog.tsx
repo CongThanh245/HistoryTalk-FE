@@ -22,7 +22,7 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   onConfirm: () => void;
   isPending?: boolean;
-  variant?: "danger" | "primary";
+  variant?: "danger" | "primary" | "warning";
 }
 
 export function ConfirmDialog({
@@ -39,7 +39,13 @@ export function ConfirmDialog({
   
   const confirmStyles =
     variant === "danger"
-      ? { backgroundColor: "#ef4444", color: "#fff" } // fallback to red if var fails
+      ? { backgroundColor: "#ef4444", color: "#fff" }
+      : variant === "warning"
+      ? {
+          backgroundColor: "var(--accent-gold)",
+          color: "var(--bg-deep)",
+          boxShadow: "0 0 14px var(--accent-gold-glow)",
+        }
       : { backgroundColor: "var(--accent-blue)", color: "#fff" };
 
   return (

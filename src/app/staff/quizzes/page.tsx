@@ -750,17 +750,12 @@ export default function StaffQuizzesPage() {
               Không thể tải danh sách quiz. Vui lòng thử lại.
             </p>
           )}
-          {isLoading ? (
-            <p className="text-sm text-center py-6" style={{ color: "var(--content-muted)" }}>
-              Đang tải...
-            </p>
-          ) : (
-            <StaffDataTable
-              columns={showTrash ? trashColumns : columns}
-              data={items}
-              emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy quiz phù hợp."}
-            />
-          )}
+          <StaffDataTable
+            columns={showTrash ? trashColumns : columns}
+            data={items}
+            emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy quiz phù hợp."}
+            isLoading={isLoading}
+          />
           <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
             Hiển thị {items.length} / {totalItems} bộ quiz
           </p>
