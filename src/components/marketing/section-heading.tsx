@@ -25,7 +25,7 @@ export function SectionHeading({
         {title}
       </h2>
       {subtitle && (
-        <p className="text-lg md:text-xl text-[#9a948c] max-w-3xl mx-auto">
+        <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-3xl mx-auto">
           {subtitle}
         </p>
       )}

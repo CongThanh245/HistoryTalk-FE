@@ -17,9 +17,9 @@
       Text – Dark backgrounds
    ───────────────────────────── */
   --text-primary: #ff9215; /* Warm parchment */
-  --text-secondary: #b5b183; /* Text phụ */
-  --text-tertiary: #cdd316;
-  --text-muted: #6f7c84; /* Placeholder / hint */
+  --text-secondary: #dfdab5; /* Text phụ - Brighter and warmer creamy beige for better readability & contrast */
+  --text-tertiary: #e1e62a; /* Slightly brighter yellow-green */
+  --text-muted: #8da0ab; /* Placeholder / hint - Brighter gray-blue for compliance with contrast guidelines */
   --text-inverse: #0e1a2b; /* Text trên nền sáng */
   --text-on-dark: rgba(255, 255, 255, 0.85); /* Chữ trắng sidebar nav */
   --text-on-dark-muted: rgba(
