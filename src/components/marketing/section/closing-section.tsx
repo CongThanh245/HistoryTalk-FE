@@ -32,7 +32,7 @@ export function ClosingSection() {
           </div>
 
           {/* LỚP 2: NỘI DUNG CHỮ (Dùng Grid để chia 2 bên) */}
-          <div className="relative z-20 w-full h-full grid grid-cols-1 lg:grid-cols-3 px-6 sm:px-10 lg:px-16 py-10 sm:py-14 lg:py-0">
+          <div className="relative z-20 w-full h-full grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-0 px-6 sm:px-10 lg:px-16 py-10 sm:py-14 lg:py-0">
             {/* Cột trái */}
             <div className="flex items-center">
               <h2 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-[var(--text-primary)]">

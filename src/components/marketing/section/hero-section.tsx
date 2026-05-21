@@ -96,18 +96,16 @@ export function HeroSection() {
               className="space-y-5 lg:space-y-8 opacity-0"
             >
               <MaskedText>
-                <p className="text-sm sm:text-base lg:text-lg text-[var(--text-secondary)] leading-relaxed max-w-xl">
-                  Chúng tôi giúp thế hệ trẻ trên toàn thế giới hiểu sâu sắc về
-                  lịch sử nhân loại bằng cách cho họ trò chuyện với các nhân vật
-                  lịch sử được mô phỏng.
+                <p className="text-sm sm:text-base lg:text-lg text-[var(--text-secondary)] leading-relaxed max-w-xl my-2">
+                  Trò chuyện trực tiếp với các nhân vật lịch sử được tái hiện bằng AI. Khám phá những câu chuyện chân thực nhất từ quá khứ.
                 </p>
               </MaskedText>
 
-              <div className="py-2 space-y-0.5 border-l-2 border-[var(--accent-gold)]/30 pl-4 lg:pl-6">
-                <p className="text-sm lg:text-base text-[var(--text-primary)] font-medium italic">
+              <div className="py-3 space-y-0.5 border-l-2 border-[var(--accent-gold)]/40 pl-5 lg:pl-6 my-4">
+                <p className="text-sm lg:text-base text-[var(--text-primary)] font-semibold italic">
                   "Học sinh chỉ chán học Lịch sử trên trường
                 </p>
-                <p className="text-sm lg:text-base text-[var(--accent-gold)] font-medium italic">
+                <p className="text-sm lg:text-base text-[var(--accent-gold)] font-semibold italic">
                   chứ không học sinh nào chán lịch sử dân tộc cả!"
                 </p>
               </div>

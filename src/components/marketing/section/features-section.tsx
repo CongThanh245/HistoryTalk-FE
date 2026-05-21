@@ -3,9 +3,7 @@
 import { useRef, useState } from "react";
 import { Container } from "../container";
 import { useRevealAnimation } from "@/lib/hooks/use-reveal-animation";
-
-const PLACEHOLDER_CHAT = "https://placehold.co/680x480/1a2436/c9a24d?text=Chat+Preview";
-const PLACEHOLDER_QUIZ = "https://placehold.co/680x480/1a2436/c9a24d?text=Quiz+Preview";
+import { InteractivePreview } from "./interactive-preview";
 
 const BLOCKS = [
   {
@@ -14,9 +12,9 @@ const BLOCKS = [
     reverse: false,
     bg: "bg-[var(--bg-deep)]",
     features: [
-      { id: 0, step: "01", title: "Tạo tài khoản của bạn", body: "Bắt đầu hành trình khám phá lịch sử theo cách của riêng bạn.", image: PLACEHOLDER_CHAT },
-      { id: 1, step: "02", title: "Chọn một trận đánh hoặc thời kỳ lịch sử", body: "Khám phá các sự kiện lịch sử quan trọng qua góc nhìn con người.", image: PLACEHOLDER_CHAT },
-      { id: 2, step: "03", title: "Trò chuyện với các anh hùng lịch sử", body: "Đặt câu hỏi và nghe câu chuyện trực tiếp từ những nhân vật đã sống trong thời đại đó. Không chỉ đọc lịch sử — mà là trò chuyện với lịch sử.", image: PLACEHOLDER_CHAT },
+      { id: 0, step: "01", title: "Tạo tài khoản của bạn", body: "Bắt đầu hành trình khám phá lịch sử theo cách của riêng bạn.", image: "" },
+      { id: 1, step: "02", title: "Chọn một trận đánh hoặc thời kỳ lịch sử", body: "Khám phá các sự kiện lịch sử quan trọng qua góc nhìn con người.", image: "" },
+      { id: 2, step: "03", title: "Trò chuyện với các anh hùng lịch sử", body: "Đặt câu hỏi và nghe câu chuyện trực tiếp từ những nhân vật đã sống trong thời đại đó. Không chỉ đọc lịch sử — mà là trò chuyện với lịch sử.", image: "" },
     ],
   },
   {
@@ -25,17 +23,17 @@ const BLOCKS = [
     reverse: true,
     bg: "bg-[var(--bg-main)]",
     features: [
-      { id: 0, step: "01", title: "Làm quiz sau khi trò chuyện", body: "Ôn lại kiến thức ngay sau khi bạn khám phá một trận đánh hoặc nhân vật.", image: PLACEHOLDER_QUIZ },
-      { id: 1, step: "02", title: "Bộ câu hỏi riêng để ôn tập", body: "Mỗi chủ đề đều có bộ câu hỏi giúp bạn kiểm tra lại những gì đã học.", image: PLACEHOLDER_QUIZ },
-      { id: 2, step: "03", title: "Chuỗi học hàng ngày", body: "Duy trì thói quen học lịch sử mỗi ngày với các bài quiz ngắn và dễ làm.", image: PLACEHOLDER_QUIZ },
+      { id: 0, step: "01", title: "Làm quiz sau khi trò chuyện", body: "Ôn lại kiến thức ngay sau khi bạn khám phá một trận đánh hoặc nhân vật.", image: "" },
+      { id: 1, step: "02", title: "Bộ câu hỏi riêng để ôn tập", body: "Mỗi chủ đề đều có bộ câu hỏi giúp bạn kiểm tra lại những gì đã học.", image: "" },
+      { id: 2, step: "03", title: "Chuỗi học hàng ngày", body: "Duy trì thói quen học lịch sử mỗi ngày với các bài quiz ngắn và dễ làm.", image: "" },
     ],
   },
 ];
 
 type Feature = { id: number; step: string; title: string; body: string; image: string };
 
-function FeatureBlock({ label, title, features, reverse, bg }: {
-  label: string; title: string; features: Feature[]; reverse: boolean; bg: string;
+function FeatureBlock({ label, title, features, reverse, bg, blockIndex }: {
+  label: string; title: string; features: Feature[]; reverse: boolean; bg: string; blockIndex: number;
 }) {
   const [active, setActive] = useState(0);
   const blockRef = useRef<HTMLDivElement>(null);
@@ -81,20 +79,8 @@ function FeatureBlock({ label, title, features, reverse, bg }: {
             </div>
           </div>
 
-          <div data-reveal="block" className={`relative rounded-[var(--radius-lg)] overflow-hidden bg-[var(--bg-surface)] border border-[var(--border-default)] aspect-[4/3] ${reverse ? "[direction:ltr]" : ""}`}>
-            {features.map((f, i) => (
-              <img key={f.id} src={f.image} alt={f.title}
-                className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-in-out ${active === i ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"}`}
-              />
-            ))}
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-deep)]/60 via-transparent to-transparent pointer-events-none" />
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-              {features.map((_, i) => (
-                <button key={i} onClick={() => setActive(i)}
-                  className={`rounded-full transition-all duration-300 ${active === i ? "w-5 h-1.5 bg-[var(--accent-gold)]" : "w-1.5 h-1.5 bg-[var(--text-muted)] hover:bg-[var(--text-secondary)]"}`}
-                />
-              ))}
-            </div>
+          <div data-reveal="block" className={`relative rounded-[var(--radius-lg)] overflow-hidden bg-[var(--bg-surface)] border border-[var(--border-default)] aspect-[4/3] flex flex-col justify-between ${reverse ? "[direction:ltr]" : ""}`}>
+            <InteractivePreview blockIndex={blockIndex} stepIndex={active} />
           </div>
         </div>
       </Container>
@@ -105,8 +91,8 @@ function FeatureBlock({ label, title, features, reverse, bg }: {
 export function FeaturesSection() {
   return (
     <section>
-      {BLOCKS.map((block) => (
-        <FeatureBlock key={block.label} {...block} />
+      {BLOCKS.map((block, idx) => (
+        <FeatureBlock key={block.label} blockIndex={idx} {...block} />
       ))}
     </section>
   );
