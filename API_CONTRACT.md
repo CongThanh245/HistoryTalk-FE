@@ -189,6 +189,7 @@ Yêu cầu role `SYSTEM_ADMIN`.
   isPublished?: boolean     // true = đã publish cho người dùng xem
   createdAt?: string        // ISO8601 - thời gian tạo (admin only)
   updatedAt?: string        // ISO8601 - thời gian cập nhật (admin only)
+  deletedAt?: string | null // ISO8601 - thời gian xóa tạm thời (null nếu chưa xóa)
   context?: { contextId: string }   // nested object
   events?: { id: string; title: string; year: number }[]
 }
@@ -319,6 +320,12 @@ Permanent delete. Response `200`.
 
 ---
 
+### `PATCH /characters/:id/soft-delete`
+
+Chuyển nhân vật vào thùng rác (set `deletedAt` thành thời gian hiện tại). Response `200`.
+
+---
+
 ### `PATCH /characters/:id/toggle-active`
 
 Bật/Tắt hoạt động (đảo ngược `isActive`). Response `200`.
@@ -351,6 +358,7 @@ Gắn nhân vật vào bối cảnh. Response `200`.
   videoUrl?: string | null
   period?: string
   isActive?: boolean
+  deletedAt?: string | null // ISO8601 - thời gian xóa tạm thời (null nếu chưa xóa)
 }
 ```
 
@@ -435,6 +443,12 @@ Yêu cầu role `CONTENT_ADMIN` | `SYSTEM_ADMIN`.
 ### `DELETE /historical-contexts/:id`
 
 Permanent delete. Response `200`.
+
+---
+
+### `PATCH /historical-contexts/:id/soft-delete`
+
+Chuyển bối cảnh lịch sử vào thùng rác (set `deletedAt` thành thời gian hiện tại). Response `200`.
 
 ---
 
@@ -831,6 +845,7 @@ Bắt đầu phiên làm bài. Không cần body.
   createdDate: string      // ISO8601
   updatedDate: string      // ISO8601
   isActive: boolean
+  deletedAt?: string | null // ISO8601 - thời gian xóa tạm thời (null nếu chưa xóa)
   questions: QuizQuestion[]
 }
 ```
@@ -920,6 +935,12 @@ Permanent delete. Response `200`.
 
 ---
 
+### `PATCH /staff/quizzes/:quizId/soft-delete`
+
+Chuyển bộ Quiz vào thùng rác (set `deletedAt` thành thời gian hiện tại). Response `200`.
+
+---
+
 ### `PATCH /staff/quizzes/:quizId/toggle-active`
 
 Bật/Tắt hoạt động (đảo `isActive`). Response `200`.
@@ -1006,11 +1027,14 @@ Xóa câu hỏi. Response `200`.
 - Tất cả datetime dùng **ISO 8601 UTC**: `"2026-05-22T14:30:00Z"`
 - `createdDate` / `updatedDate` (Staff Quiz) — cùng format ISO 8601.
 
-### Active State pattern
+### Active State & Soft Delete pattern
 
 - Thêm `isActive: boolean (default true)` vào `Character`, `HistoricalContext`, `Quiz`.
-- Mọi GET query filter `WHERE isActive = true` mặc định cho phía Customer.
+- Mọi GET query filter `WHERE isActive = true AND deletedAt IS NULL` mặc định cho phía Customer.
 - PATCH `/:id/toggle-active` thực hiện bật/tắt (đảo trạng thái `isActive`).
+- Thêm `deletedAt: string | null (default null)` vào `Character`, `HistoricalContext`, `Quiz` (ISO8601 UTC).
+- PATCH `/:id/soft-delete` thực hiện xóa tạm thời bằng cách cập nhật `deletedAt` thành thời gian hiện tại.
+- Mọi GET query filter `WHERE deletedAt IS NULL` cho phía Admin/Staff theo mặc định (trừ khi có param lọc thùng rác hoặc yêu cầu cụ thể).
 
 ### Role check
 

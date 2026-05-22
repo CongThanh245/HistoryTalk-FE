@@ -361,6 +361,20 @@
         }
       }
     },
+    "/characters/{id}/soft-delete": {
+      "patch": {
+        "tags": ["Characters"],
+        "summary": "Chuyển nhân vật vào thùng rác (Soft Delete)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chuyển vào thùng rác thành công"
+          }
+        }
+      }
+    },
     "/characters/{id}/toggle-active": {
       "patch": {
         "tags": ["Characters"],
@@ -575,6 +589,20 @@
         "responses": {
           "200": {
             "description": "Thành công"
+          }
+        }
+      }
+    },
+    "/historical-contexts/{id}/soft-delete": {
+      "patch": {
+        "tags": ["Historical Contexts"],
+        "summary": "Chuyển bối cảnh lịch sử vào thùng rác (Soft Delete)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chuyển vào thùng rác thành công"
           }
         }
       }
@@ -1196,6 +1224,20 @@
         }
       }
     },
+    "/staff/quizzes/{quizId}/soft-delete": {
+      "patch": {
+        "tags": ["Quiz - Manage"],
+        "summary": "Chuyển bộ Quiz vào thùng rác (Soft Delete)",
+        "parameters": [
+          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chuyển vào thùng rác thành công"
+          }
+        }
+      }
+    },
     "/staff/quizzes/{quizId}/toggle-active": {
       "patch": {
         "tags": ["Quiz - Manage"],
@@ -1386,6 +1428,7 @@
           "isPublished": { "type": "boolean", "description": "true = đã publish cho người dùng xem" },
           "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo - chỉ trả cho ADMIN/STAFF" },
           "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật - chỉ trả cho ADMIN/STAFF" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Thời gian xóa tạm thời (null nếu chưa xóa)" },
           "context": {
             "type": "object",
             "properties": {
@@ -1422,7 +1465,8 @@
           "imageUrl": { "type": "string", "nullable": true },
           "videoUrl": { "type": "string", "nullable": true },
           "period": { "type": "string" },
-          "isActive": { "type": "boolean" }
+          "isActive": { "type": "boolean" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Thời gian xóa tạm thời (null nếu chưa xóa)" }
         },
         "required": ["contextId", "name", "description", "year", "era", "isActive"]
       },
@@ -1535,6 +1579,7 @@
           "createdDate": { "type": "string", "format": "date-time" },
           "updatedDate": { "type": "string", "format": "date-time" },
           "isActive": { "type": "boolean" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Thời gian xóa tạm thời (null nếu chưa xóa)" },
           "questions": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/QuizQuestion" }
