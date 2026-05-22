@@ -2,18 +2,51 @@
 
 Dự án hỗ trợ 2 backend khác nhau cùng chung 1 frontend codebase.
 
-## Quick Switch
+## Lần đầu clone về (Cả 2 team đều làm như nhau)
 
-```powershell
-# Chạy với Spring Boot
-.\switch-backend.ps1 spring
+```bash
+# 1. Clone repo
+git clone <repo-url>
+cd core-app-fe
 
-# Chạy với Node.js
-.\switch-backend.ps1 nodejs
+# 2. Cài dependencies
+npm install
 
-# Sau đó start dev server
+# 3. Tạo env file - Copy từ template rồi sửa URL cho đúng backend đang dùng
+copy .env.example .env.local        # Windows
+cp .env.example .env.local         # Mac/Linux
+
+# 4. Mở .env.local và sửa URL theo backend bạn đang chạy:
+#    - Team Spring Boot: dùng port 8080
+#    - Team Node.js: dùng port 3001
+
+# 5. Chạy dev server
 npm run dev
 ```
+
+## Đổi backend nhanh bằng script
+
+Script `switch-backend.ps1` (Windows) hoặc `switch-backend.sh` (Mac/Linux) dùng để:
+- **Test cùng 1 feature** với cả 2 backend trước khi push code
+- **Switch nhanh** khi muốn đổi backend mà không cần sửa file thủ công
+
+```powershell
+# Windows - Chạy script rồi start dev server riêng
+.\switch-backend.ps1 spring
+npm run dev
+
+# Sau đó muốn test với Node.js
+.\switch-backend.ps1 nodejs
+npm run dev
+```
+
+```bash
+# Mac/Linux
+./switch-backend.sh spring
+npm run dev
+```
+
+**Lưu ý:** Script chỉ copy file env, bạn vẫn phải tự restart dev server.
 
 ## File Structure
 
@@ -24,54 +57,28 @@ npm run dev
 switch-backend.ps1  # Script switch nhanh
 ```
 
-## Git Workflow
+## Git Workflow (Chỉ dùng 1 branch chung)
 
-### Cách 1: Chỉ dùng main branch (Khuyến nghị)
+**Nguyên tắc:** Cả 2 team đều push code lên cùng 1 branch (`main` hoặc `master`)
 
 ```bash
-# 1. Code feature trên main
+# 1. Lấy code mới nhất
 git checkout main
 git pull origin main
-# ... sửa code ...
+
+# 2. Code feature...
+
+# 3. Test với cả 2 backend trước khi push
+.\switch-backend.ps1 spring   # Test Spring → Ctrl+C khi xong
+.\switch-backend.ps1 nodejs   # Test Node.js → Ctrl+C khi xong
+
+# 4. Push code
 git add .
 git commit -m "feat: landmark filter"
 git push origin main
-
-# 2. Test với Spring
-.\switch-backend.ps1 spring
-npm run dev
-
-# 3. Test với Node.js
-.\switch-backend.ps1 nodejs
-npm run dev
 ```
 
-### Cách 2: Có branch riêng cho từng backend (Nếu cần hotfix riêng)
-
-```bash
-# Setup lần đầu
-git checkout -b backend-spring
-copy .env.spring .env.local
-git add .env.spring switch-backend.ps1 BACKEND_SETUP.md
-git commit -m "chore: setup spring backend config"
-
-git checkout main
-git checkout -b backend-nodejs
-copy .env.nodejs .env.local
-git add .env.nodejs
-git commit -m "chore: setup nodejs backend config"
-
-# Workflow hàng ngày
-git checkout backend-spring
-git merge main  # Lấy code mới nhất từ main
-npm run dev     # Test Spring backend
-
-git checkout backend-nodejs
-git merge main  # Lấy code mới nhất từ main
-npm run dev     # Test Node.js backend
-```
-
-## Checklist Khi Sửa Feature
+## Checklist trước khi push code
 
 - [ ] Code trên main branch
 - [ ] Test với Spring: `.\switch-backend.ps1 spring`
