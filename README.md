@@ -12,6 +12,9 @@ Tài liệu này mô tả **cấu trúc thư mục**, **cách sử dụng từng
 ```bash
 npm install
 ```
+```bash
+copy .env.example .env.local  
+```
 
 ### Chạy dev
 
