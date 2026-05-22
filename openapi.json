@@ -1392,7 +1392,7 @@
               "contextId": { "type": "string" }
             }
           }
-        },
+        },  
         "required": ["characterId", "name", "title", "background", "isActive", "isPublished"]
       },
       "CharacterUpsertRequest": {

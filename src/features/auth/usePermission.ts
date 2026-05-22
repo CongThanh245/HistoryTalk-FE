@@ -3,7 +3,7 @@ import { useAuthStore } from "@/store/auth.store";
 // Hook kiểm tra user có phải là staff/admin không
 export function useIsStaff() {
   const role = useAuthStore((s) => s.user?.role);
-  return role === "STAFF" || role === "ADMIN";
+  return role === "CONTENT_ADMIN";
 }
 
 // Hook kiểm tra user có phải là customer không

@@ -58,7 +58,7 @@ export const authApi = {
     email: string;
     password: string;
     confirmPassword: string;
-    roleName: "STAFF" | "ADMIN";
+    roleName: "CONTENT_ADMIN";
   }): Promise<void> => {
     const res = await axiosClient.post("/auth/register-staff", data);
     if (!res.data.success) {

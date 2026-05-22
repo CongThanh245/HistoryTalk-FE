@@ -14,7 +14,7 @@ export interface User {
   uid: string;
   userName: string;
   email: string;
-  role: "CUSTOMER" | "STAFF" | "ADMIN";
+  role: "CUSTOMER" | "CONTENT_ADMIN" | "SYSTEM_ADMIN";
   avatarUrl?: string;
 }
 

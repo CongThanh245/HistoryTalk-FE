@@ -122,7 +122,7 @@ export function useVoiceChatRest({
         formData.append("sessionId", sessionId);
         formData.append("characterId", characterId);
         formData.append("contextId", contextId);
-
+        
         const headers: HeadersInit = {};
         // Internal route giờ cũng cần token để forward sang Spring Boot
         if (token) {

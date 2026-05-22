@@ -18,7 +18,7 @@ const CUSTOMER_ROUTES = [
 ];
 
 const isStaffRole = (role: string | undefined) =>
-  role === "STAFF" || role === "ADMIN";
+  role === "CONTENT_ADMIN";
 
 export function authMiddleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
