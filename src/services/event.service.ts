@@ -4,23 +4,6 @@ import { isValidUrl } from "@/lib/utils/url";
 
 // ── Types map với backend ────────────────────────────────
 
-// UI dùng lowercase
-export type EventCategoryLower =
-  | "war"
-  | "politics"
-  | "culture"
-  | "science"
-  | "religion"
-  | "other";
-// Backend dùng uppercase
-export type EventCategory =
-  | "WAR"
-  | "POLITICS"
-  | "CULTURE"
-  | "SCIENCE"
-  | "RELIGION"
-  | "OTHER";
-
 // UI dùng lowercase + "all"
 export type EventEra =
   | "all"
@@ -35,38 +18,31 @@ export type EventEraBackend =
   | "MODERN"
   | "CONTEMPORARY";
 
-// Map với backend response
+// Map với backend HistoricalContext API contract
 export interface HistoricalEvent {
-  id: string;
+  id: string;              // contextId từ backend
   year: number;
   yearLabel?: string;
-  title: string;
-  summary: string;
-  category: EventCategoryLower;
+  title: string;           // name từ backend
+  summary: string;         // description từ backend
   location?: string;
   imageUrl?: string | null;
   videoUrl?: string | null;
   era?: EventEraBackend;
   period?: string;
-  startYear?: number;
-  endYear?: number;
-  beforeTCN?: boolean;
-  isDraft?: boolean;
+  isActive?: boolean;
   deletedAt?: string | null;
 }
 export interface CreateEventRequest {
   name: string;
   description: string;
   era: EventEraBackend;
-  category: EventCategory;
   year: number;
-  startYear?: number;
-  endYear?: number;
-  beforeTCN?: boolean;
+  period?: string;
   location?: string;
   imageUrl?: string | null;
   videoUrl?: string | null;
-  isDraft?: boolean;
+  isActive?: boolean;
 }
 export interface UpdateEventRequest extends Partial<CreateEventRequest> {}
 
@@ -75,7 +51,6 @@ export interface GetEventsParams {
   page?: number;
   limit?: number;
   era?: EventEraBackend; // ANCIENT | MEDIEVAL | MODERN | CONTEMPORARY
-  category?: EventCategory; // WAR | POLITICS | CULTURE | SCIENCE | RELIGION | OTHER
 }
 
 export interface GetEventsResponse {
@@ -92,21 +67,17 @@ export interface GetEventsResponse {
 
 export function mapContext(raw: any): HistoricalEvent {
   return {
-    id: raw.contextId,
+    id: raw.contextId ?? raw.id,
     title: raw.name,
     summary: raw.description,
-    year: raw.year ?? raw.startYear ?? 0,
+    year: raw.year ?? 0,
     yearLabel: raw.yearLabel,
-    category: (raw.category?.toLowerCase() as EventCategoryLower) ?? "other",
     location: raw.location,
     imageUrl: isValidUrl(raw.imageUrl) ? raw.imageUrl : null,
     videoUrl: isValidUrl(raw.videoUrl) ? raw.videoUrl : null,
     era: raw.era as EventEraBackend,
     period: raw.period,
-    startYear: raw.startYear,
-    endYear: raw.endYear,
-    beforeTCN: raw.beforeTCN,
-    isDraft: raw.isDraft ?? false,
+    isActive: raw.isActive ?? true,
     deletedAt: raw.deletedAt ?? null,
   };
 }
@@ -126,8 +97,6 @@ export const eventService = {
       .map(mapContext)
       .sort((a: HistoricalEvent, b: HistoricalEvent) => {
         if (a.year !== b.year) return a.year - b.year;
-        if (a.startYear !== b.startYear)
-          return (a.startYear ?? 0) - (b.startYear ?? 0);
         return a.title.localeCompare(b.title, "vi");
       });
 

@@ -4,10 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { XIcon, PlayIcon, SkipForwardIcon, TimerIcon, MapPinIcon } from "@phosphor-icons/react";
-import type {
-  HistoricalEvent,
-  EventCategoryLower,
-} from "@/services/event.service";
+import type { HistoricalEvent } from "@/services/event.service";
 import {
   CharacterCarouselCard,
   CharacterCompactCard,
@@ -15,18 +12,6 @@ import {
 import { characterService, type Character } from "@/services/character.service";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
-
-// ── Mock ──────────────────────────────────────────────────
-// TODO: fetch từ API /events/:id/characters
-
-const CATEGORY_COLOR: Record<EventCategoryLower, string> = {
-  war: "var(--accent-danger)",
-  politics: "var(--accent-gold)",
-  culture: "var(--accent-blue)",
-  science: "var(--accent-teal)",
-  religion: "var(--accent-bronze)",
-  other: "var(--content-muted)",
-};
 
 // ── Fake Video Player ─────────────────────────────────────
 // Thay thế toàn bộ FakeVideoPlayer component
@@ -248,7 +233,6 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
 
   if (!event) return null;
 
-  const color = CATEGORY_COLOR[event.category];
   const yearLabel =
     event.yearLabel ??
     `${Math.abs(event.year)} ${event.year < 0 ? "TCN" : "SCN"}`;
@@ -312,7 +296,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
             <div
               className="h-1 w-full shrink-0"
               style={{
-                background: `linear-gradient(90deg, ${color}, transparent)`,
+                background: "linear-gradient(90deg, var(--accent-gold), transparent)",
               }}
             />
 
@@ -323,7 +307,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
               <div className="flex items-center gap-2 mb-3">
                 <span
                   className="text-[11px] font-bold px-2.5 py-1 rounded-full"
-                  style={{ background: `${color}18`, color }}
+                  style={{ background: "rgba(201,162,77,0.1)", color: "var(--accent-gold)" }}
                 >
                   {yearLabel}
                 </span>
@@ -339,7 +323,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
             <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
               <div className="flex flex-col gap-2.5">
                 <div className="flex items-center gap-2.5">
-                  <TimerIcon className="w-4 h-4 shrink-0" style={{ color }} />
+                  <TimerIcon className="w-4 h-4 shrink-0" style={{ color: "var(--accent-gold)" }} />
                   <span
                     className="text-sm"
                     style={{ color: "var(--content-text)" }}

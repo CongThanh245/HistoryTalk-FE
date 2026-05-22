@@ -36,7 +36,6 @@ import {
 import {
   type HistoricalEvent,
   type EventEraBackend,
-  type EventCategory,
   ERA_CONFIG,
   EventEra,
 } from "@/services/event.service";
@@ -46,30 +45,24 @@ type DraftState = {
   name: string;
   description: string;
   era: EventEraBackend | "";
-  category: EventCategory | "";
   year: string;
-  startYear: string;
-  endYear: string;
-  beforeTCN: boolean;
+  period: string;
   location: string;
   imageUrl: string;
   videoUrl: string;
-  isDraft: boolean;
+  isActive: boolean;
 };
 
 const EMPTY_DRAFT: DraftState = {
   name: "",
   description: "",
   era: "",
-  category: "",
   year: "",
-  startYear: "",
-  endYear: "",
-  beforeTCN: false,
+  period: "",
   location: "",
   imageUrl: "",
   videoUrl: "",
-  isDraft: true,
+  isActive: true,
 };
 
 // Constants for Select Options
@@ -80,14 +73,6 @@ const ERA_OPTIONS = [
   { value: "CONTEMPORARY" as const, label: "Hiện đại" },
 ];
 
-const CATEGORY_OPTIONS = [
-  { value: "WAR" as const, label: "Chiến tranh" },
-  { value: "POLITICS" as const, label: "Chính trị" },
-  { value: "CULTURE" as const, label: "Văn hoá" },
-  { value: "SCIENCE" as const, label: "Khoa học" },
-  { value: "RELIGION" as const, label: "Tôn giáo" },
-  { value: "OTHER" as const, label: "Khác" },
-];
 
 export default function StaffContextsPage() {
   const [search, setSearch] = React.useState("");
@@ -128,15 +113,12 @@ export default function StaffContextsPage() {
       name: draft.name.trim(),
       description: draft.description.trim(),
       era: draft.era as EventEraBackend,
-      category: draft.category as EventCategory,
       year: Number(draft.year) || 0,
-      startYear: draft.startYear ? Number(draft.startYear) : undefined,
-      endYear: draft.endYear ? Number(draft.endYear) : undefined,
-      beforeTCN: draft.beforeTCN,
+      period: draft.period.trim() || undefined,
       location: draft.location.trim() || undefined,
       imageUrl: draft.imageUrl.trim() || undefined,
       videoUrl: draft.videoUrl.trim() || undefined,
-      isDraft: draft.isDraft,
+      isActive: draft.isActive,
     };
 
     const name = payload.name;
@@ -144,18 +126,10 @@ export default function StaffContextsPage() {
       createEvent.mutate(payload, {
         onSuccess: () => {
           setDialogOpen(false);
-          if (payload.isDraft) {
-            toast("Đã lưu bản nháp", {
-              description: `"${name}" được lưu dạng bản nháp.`,
-              duration: 4000,
-              style: { background: "#fef3c7", color: "#92400e", border: "1px solid #fbbf24" },
-            });
-          } else {
-            toast.success("Xuất bản thành công", {
-              description: `"${name}" đã được công bố.`,
-              duration: 4000,
-            });
-          }
+          toast.success("Tạo thành công", {
+            description: `"${name}" đã được tạo.`,
+            duration: 4000,
+          });
         },
       });
     } else {
@@ -164,18 +138,10 @@ export default function StaffContextsPage() {
         {
           onSuccess: () => {
             setDialogOpen(false);
-            if (payload.isDraft) {
-              toast("Đã lưu bản nháp", {
-                description: `"${name}" được lưu dạng bản nháp.`,
-                duration: 4000,
-                style: { background: "#fef3c7", color: "#92400e", border: "1px solid #fbbf24" },
-              });
-            } else {
-              toast.success("Xuất bản thành công", {
-                description: `"${name}" đã được công bố.`,
-                duration: 4000,
-              });
-            }
+            toast.success("Cập nhật thành công", {
+              description: `"${name}" đã được cập nhật.`,
+              duration: 4000,
+            });
           },
         },
       );
@@ -217,18 +183,18 @@ export default function StaffContextsPage() {
         accessorKey: "isDraft",
         header: "Trạng thái",
         cell: ({ row }) => {
-          const isDraft = row.original.isDraft;
+          const isActive = row.original.isActive ?? true;
           return (
             <div
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
               style={{
-                background: isDraft ? "rgba(234,179,8,0.1)" : "rgba(34,197,94,0.1)",
-                color: isDraft ? "rgb(161,98,7)" : "rgb(22,163,74)",
-                border: `1px solid ${isDraft ? "rgba(234,179,8,0.2)" : "rgba(34,197,94,0.2)"}`,
+                background: isActive ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                color: isActive ? "rgb(22,163,74)" : "rgb(220,38,38)",
+                border: `1px solid ${isActive ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
               }}
             >
               <EyeIcon className="h-3 w-3" />
-              {isDraft ? "Bản nháp" : "Đã công bố"}
+              {isActive ? "Hoạt động" : "Vô hiệu"}
             </div>
           );
         },
@@ -279,17 +245,12 @@ export default function StaffContextsPage() {
                   name: e.title,
                   description: e.summary,
                   era: (e.era ?? "") as EventEraBackend | "",
-                  category: (e.category.toUpperCase() ?? "") as
-                    | EventCategory
-                    | "",
                   year: String(e.year ?? ""),
-                  startYear: String(e.startYear ?? ""),
-                  endYear: String(e.endYear ?? ""),
-                  beforeTCN: e.beforeTCN ?? false,
+                  period: e.period ?? "",
                   location: e.location ?? "",
                   imageUrl: e.imageUrl ?? "",
                   videoUrl: e.videoUrl ?? "",
-                  isDraft: e.isDraft ?? false,
+                  isActive: e.isActive ?? true,
                 });
                 setDialogOpen(true);
               }}
@@ -558,30 +519,19 @@ export default function StaffContextsPage() {
                 Phân loại & Thời gian
               </p>
 
-              {/* Era + Category */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>Thời đại *</StaffFormLabel>
-                  <StaffFormSelect
-                    value={draft.era}
-                    onValueChange={set("era")}
-                    placeholder="Chọn thời đại"
-                    options={ERA_OPTIONS}
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>Danh mục *</StaffFormLabel>
-                  <StaffFormSelect
-                    value={draft.category}
-                    onValueChange={set("category")}
-                    placeholder="Chọn danh mục"
-                    options={CATEGORY_OPTIONS}
-                  />
-                </div>
+              {/* Era */}
+              <div className="grid gap-1.5">
+                <StaffFormLabel>Thời đại *</StaffFormLabel>
+                <StaffFormSelect
+                  value={draft.era}
+                  onValueChange={set("era")}
+                  placeholder="Chọn thời đại"
+                  options={ERA_OPTIONS}
+                />
               </div>
 
-              {/* Year + startYear + endYear */}
-              <div className="grid grid-cols-3 gap-3">
+              {/* Year + Period */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1.5">
                   <StaffFormLabel>Năm *</StaffFormLabel>
                   <StaffFormInput
@@ -592,72 +542,48 @@ export default function StaffContextsPage() {
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <StaffFormLabel>Năm bắt đầu</StaffFormLabel>
+                  <StaffFormLabel>Giai đoạn / Thời kỳ</StaffFormLabel>
                   <StaffFormInput
-                    type="number"
-                    value={draft.startYear}
-                    onChange={(e) => set("startYear")(e.target.value)}
-                    placeholder="938"
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>Năm kết thúc</StaffFormLabel>
-                  <StaffFormInput
-                    type="number"
-                    value={draft.endYear}
-                    onChange={(e) => set("endYear")(e.target.value)}
-                    placeholder="939"
+                    value={draft.period}
+                    onChange={(e) => set("period")(e.target.value)}
+                    placeholder="VD: Thời kỳ Bắc thuộc"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 py-1">
-                <Switch
-                  checked={draft.beforeTCN}
-                  onCheckedChange={set("beforeTCN")}
-                />
-                <StaffFormLabel>Trước Công Nguyên (TCN)</StaffFormLabel>
-              </div>
-
-              {/* isDraft Toggle */}
+              {/* isActive Toggle */}
               <div
                 className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors"
                 style={{
-                  borderColor: draft.isDraft ? "rgba(234,179,8,0.35)" : "rgba(34,197,94,0.35)",
-                  background: draft.isDraft ? "rgba(254,243,199,0.25)" : "rgba(34,197,94,0.06)",
+                  borderColor: draft.isActive ? "rgba(34,197,94,0.35)" : "rgba(239,68,68,0.35)",
+                  background: draft.isActive ? "rgba(34,197,94,0.06)" : "rgba(239,68,68,0.06)",
                 }}
               >
                 <div className="flex-1">
-                  <p className="text-sm font-semibold" style={{ color: draft.isDraft ? "#92400e" : "rgb(22,163,74)" }}>
-                    {draft.isDraft ? "Bản nháp" : "Đã xuất bản"}
+                  <p className="text-sm font-semibold" style={{ color: draft.isActive ? "rgb(22,163,74)" : "rgb(220,38,38)" }}>
+                    {draft.isActive ? "Hoạt động" : "Vô hiệu"}
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                    {draft.isDraft
-                      ? "Chưa hiển thị cho học sinh."
-                      : "Đang hiển thị công khai cho người dùng."}
+                    {draft.isActive
+                      ? "Đang hiển thị công khai cho người dùng."
+                      : "Không hiển thị cho người dùng."}
                   </p>
                 </div>
                 <button
                   type="button"
                   role="switch"
-                  aria-checked={!draft.isDraft}
-                  onClick={() => {
-                    if (draft.isDraft) {
-                      setPublishDialogOpen(true);
-                    } else {
-                      set("isDraft")(true);
-                    }
-                  }}
+                  aria-checked={draft.isActive}
+                  onClick={() => set("isActive")(!draft.isActive)}
                   className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                   style={{
-                    background: draft.isDraft ? "rgba(234,179,8,0.4)" : "rgb(34,197,94)",
+                    background: draft.isActive ? "rgb(34,197,94)" : "rgba(239,68,68,0.4)",
                   }}
                 >
                   <span
                     className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
                     style={{
                       background: "#fff",
-                      transform: draft.isDraft ? "translateX(0)" : "translateX(20px)",
+                      transform: draft.isActive ? "translateX(20px)" : "translateX(0)",
                     }}
                   />
                 </button>
@@ -695,26 +621,13 @@ export default function StaffContextsPage() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={!draft.name.trim() || !draft.era || !draft.category || isPending}
+              disabled={!draft.name.trim() || !draft.era || !draft.year || isPending}
             >
               {isPending ? "Đang lưu..." : "Save"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-
-      <ConfirmDialog
-        open={publishDialogOpen}
-        onOpenChange={setPublishDialogOpen}
-        title="Xác nhận xuất bản bối cảnh?"
-        description='Khi chuyển sang "Đã xuất bản", bối cảnh này sẽ được hiển thị công khai cho người dùng. Bạn có chắc chắn muốn thực hiện không?'
-        confirmLabel="Đồng ý, xuất bản"
-        variant="warning"
-        onConfirm={() => {
-          set("isDraft")(false);
-          setPublishDialogOpen(false);
-        }}
-      />
 
       {/* Delete confirm */}
       <ConfirmDialog

@@ -36,8 +36,6 @@ export function ChatRightPanel({
           title: c.title,
           description: c.background,
           imageUrl: isValidUrl(c.imageUrl) ? c.imageUrl : "/card.jpg",
-          side: c.side,
-          contextId: c.contextId ?? activeCharacter.contextId,
         }),
       ),
   });
@@ -82,21 +80,6 @@ export function ChatRightPanel({
                   "linear-gradient(to bottom, transparent 40%, var(--abyssal-blue) 100%)",
               }}
             />
-            {activeCharacter.side && (
-              <div className="absolute top-3 right-3">
-                <span
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  style={{
-                    background: "rgba(201,162,77,0.2)",
-                    color: "var(--accent-gold)",
-                    backdropFilter: "blur(4px)",
-                    border: "1px solid rgba(201,162,77,0.3)",
-                  }}
-                >
-                  {activeCharacter.side}
-                </span>
-              </div>
-            )}
           </div>
 
           <div
@@ -183,14 +166,6 @@ export function ChatRightPanel({
                     >
                       {char.title}
                     </p>
-                    {char.side && (
-                      <span
-                        className="text-[9px] font-medium"
-                        style={{ color: "var(--accent-gold)", opacity: 0.7 }}
-                      >
-                        {char.side}
-                      </span>
-                    )}
                   </div>
                   <ChatTextIcon
                     className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"

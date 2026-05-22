@@ -4,21 +4,17 @@ import { ERA_CONFIG } from "./event.service";
 
 export interface Character {
   id: string;
+  characterId?: string;
   name: string;
   title: string;
   background?: string;
-  description?: string;
   imageUrl?: string | null;
   personality?: string;
   lifespan?: string;
-  side?: string;
-  contextId?: string;
   era?: string;
-  role?: string;
-  avatarUrl?: string | null;
+  isActive?: boolean;
   isDraft?: boolean;
   deletedAt?: string | null;
-  events?: { id: string; title: string; year: number }[];
 }
 
 export interface GetCharactersParams {
@@ -45,8 +41,8 @@ export interface CreateCharacterRequest {
   image?: string | null;
   personality?: string;
   lifespan?: string;
-  side?: string;
-  isDraft?: boolean;
+  era?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateCharacterRequest extends Partial<CreateCharacterRequest> { }
@@ -54,19 +50,16 @@ export interface UpdateCharacterRequest extends Partial<CreateCharacterRequest> 
 function mapCharacter(raw: any): Character {
   const imageUrl = raw.image || raw.imageUrl || null;
   return {
-    id: raw.characterId ?? raw.id ?? `char-${Math.random().toString(36).slice(2)}`,
+    id: raw.characterId ?? raw.id,
+    characterId: raw.characterId,
     name: raw.name,
     title: raw.title,
     background: raw.background,
-    description: raw.background, // map background → description cho UI
     imageUrl: isValidUrl(raw.image ?? raw.imageUrl) ? (raw.image ?? raw.imageUrl) : null,
-    avatarUrl: isValidUrl(raw.image ?? raw.imageUrl) ? (raw.image ?? raw.imageUrl) : null,
     personality: raw.personality,
     lifespan: raw.lifespan,
-    side: raw.side,
-    contextId: raw.contextId ?? raw.context?.contextId,
-    role: raw.role,
     era: mapEraLabel(raw.era),
+    isActive: raw.isActive,
     isDraft: raw.isDraft ?? false,
     deletedAt: raw.deletedAt ?? null,
   };

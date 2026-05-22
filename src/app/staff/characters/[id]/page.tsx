@@ -32,8 +32,7 @@ export default function EditCharacterPage() {
       image: draft.image.trim() || undefined,
       personality: draft.personality.trim() || undefined,
       lifespan: draft.lifespan.trim() || undefined,
-      side: draft.side.trim() || undefined,
-      isDraft: draft.isDraft,
+      isActive: draft.isActive,
     };
 
     updateCharacter.mutate({ id, data: payload });
@@ -64,8 +63,7 @@ export default function EditCharacterPage() {
     image: character.imageUrl || "",
     personality: character.personality || "",
     lifespan: character.lifespan || "",
-    side: character.side || "",
-    isDraft: character.isDraft || false,
+    isActive: character.isActive ?? true,
   };
 
   return (

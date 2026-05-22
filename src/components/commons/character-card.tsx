@@ -19,13 +19,10 @@ export interface Character {
   name: string;
   title: string; // vd: "Tiết độ sứ Tĩnh Hải quân"
   era?: string; // vd: "medieval" hoặc "898–944" tuỳ context
-  description?: string;
   lifespan?: string; // vd: "898–944"
-  role?: string; // context trong 1 sự kiện cụ thể
-  side?: string; // vd: "Đại Việt"
-  avatarUrl?: string | null;
   imageUrl?: string | null;
-  events?: CharacterEvent[];
+  background?: string;
+  personality?: string;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -66,19 +63,8 @@ export function CharacterCarouselCard({
         className="text-xs font-medium mt-0.5"
         style={{ color: "var(--text-secondary)" }}
       >
-        {character.role ?? character.title}
+        {character.title}
       </p>
-      {character.side && (
-        <span
-          className="inline-block w-fit text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5"
-          style={{
-            background: "rgba(201,162,77,0.15)",
-            color: "var(--accent-gold-soft)",
-          }}
-        >
-          {character.side}
-        </span>
-      )}
       <div className="mt-auto pt-3 flex items-center gap-2">
         <div
           className="h-px flex-1"
@@ -140,20 +126,6 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
               "linear-gradient(to bottom, transparent 45%, var(--card-light-bg) 100%)",
           }}
         />
-        {character.side && (
-          <div className="absolute top-3 right-3 z-10">
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm"
-              style={{
-                background: "rgba(201,162,77,0.18)",
-                color: "var(--gold-on-light)",
-                border: "1px solid rgba(201,162,77,0.3)",
-              }}
-            >
-              {character.side}
-            </span>
-          </div>
-        )}
         {character.lifespan && (
           <div className="absolute bottom-3 left-3 z-10">
             <span
@@ -185,60 +157,6 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
           {character.title}
         </p>
 
-        {character.description && (
-          <p
-            className="text-xs leading-relaxed line-clamp-2 mb-3"
-            style={{ color: "var(--content-muted)" }}
-          >
-            {character.description}
-          </p>
-        )}
-
-        {/* Events */}
-        {character.events && character.events.length > 0 && (
-          <>
-            <div
-              className="h-px mb-3"
-              style={{ background: "var(--card-light-border)" }}
-            />
-            <div className="space-y-1 mb-3">
-              <p
-                className="text-[10px] font-bold uppercase tracking-wider mb-1.5"
-                style={{ color: "var(--content-subtle)" }}
-              >
-                Bối cảnh lịch sử
-              </p>
-              {character.events.slice(0, 2).map((ev) => (
-                <div key={ev.id} className="flex items-center gap-1.5">
-                  <SwordIcon
-                    className="w-3 h-3 shrink-0"
-                    style={{ color: "var(--content-subtle)" }}
-                  />
-                  <span
-                    className="text-[11px] truncate"
-                    style={{ color: "var(--content-text)" }}
-                  >
-                    {ev.title}
-                  </span>
-                  <span
-                    className="text-[10px] shrink-0"
-                    style={{ color: "var(--content-subtle)" }}
-                  >
-                    {ev.year < 0 ? `${Math.abs(ev.year)} TCN` : ev.year}
-                  </span>
-                </div>
-              ))}
-              {character.events.length > 2 && (
-                <p
-                  className="text-[10px]"
-                  style={{ color: "var(--content-subtle)" }}
-                >
-                  +{character.events.length - 2} sự kiện khác
-                </p>
-              )}
-            </div>
-          </>
-        )}
 
         {/* CTA */}
         <div
@@ -269,7 +187,7 @@ interface CompactCardProps {
 
 export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
   if (!character) return null;
-  const avatarSrc = isValidUrl(character.avatarUrl) ? character.avatarUrl : (isValidUrl(character.imageUrl) ? character.imageUrl : "/ngo-quyen.jpg");
+  const avatarSrc = isValidUrl(character.imageUrl) ? character.imageUrl : "/ngo-quyen.jpg";
 
   return (
     <button
@@ -310,7 +228,7 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
           className="text-[10px] truncate"
           style={{ color: "var(--content-muted)" }}
         >
-          {character.role ?? character.title}
+          {character.title}
         </p>
       </div>
 

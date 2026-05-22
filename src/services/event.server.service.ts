@@ -16,8 +16,6 @@ export const eventServerService = {
       .map(mapContext)
       .sort((a: HistoricalEvent, b: HistoricalEvent) => {
         if (a.year !== b.year) return a.year - b.year;
-        if (a.startYear !== b.startYear)
-          return (a.startYear ?? 0) - (b.startYear ?? 0);
         return a.title.localeCompare(b.title, "vi");
       });
 

@@ -46,8 +46,7 @@ export default function StaffCharactersPage() {
     return filteredItems.filter(
       (x) =>
         x.name.toLowerCase().includes(q) ||
-        x.title?.toLowerCase().includes(q) ||
-        x.side?.toLowerCase().includes(q),
+        x.title?.toLowerCase().includes(q),
     );
   }, [filteredItems, search]);
 
@@ -86,39 +85,27 @@ export default function StaffCharactersPage() {
         ),
       },
       {
-        accessorKey: "isDraft",
+        accessorKey: "isActive",
         header: "Trạng thái",
         cell: ({ row }) => {
-          const isDraft = row.original.isDraft;
+          const isActive = row.original.isActive ?? true;
           return (
             <span
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
               style={{
-                background: isDraft
-                  ? "rgba(234,179,8,0.12)"
-                  : "rgba(34,197,94,0.12)",
-                color: isDraft
-                  ? "rgb(161,98,7)"
-                  : "rgb(22,163,74)",
-                border: `1px solid ${isDraft ? "rgba(234,179,8,0.3)" : "rgba(34,197,94,0.3)"}`,
+                background: isActive
+                  ? "rgba(34,197,94,0.12)"
+                  : "rgba(239,68,68,0.12)",
+                color: isActive
+                  ? "rgb(22,163,74)"
+                  : "rgb(220,38,38)",
+                border: `1px solid ${isActive ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
               }}
             >
-              {isDraft ? "Bản nháp" : "Đã xuất bản"}
+              {isActive ? "Hoạt động" : "Vô hiệu"}
             </span>
           );
         },
-      },
-      {
-        accessorKey: "side",
-        header: "Phe",
-        cell: ({ row }) => (
-          <span
-            className="text-xs font-medium"
-            style={{ color: "var(--content-text)" }}
-          >
-            {row.original.side ?? "—"}
-          </span>
-        ),
       },
       {
         accessorKey: "lifespan",
@@ -224,18 +211,6 @@ export default function StaffCharactersPage() {
             </span>
           );
         },
-      },
-      {
-        accessorKey: "side",
-        header: "Phe",
-        cell: ({ row }) => (
-          <span
-            className="text-xs font-medium"
-            style={{ color: "var(--content-text)", opacity: 0.6 }}
-          >
-            {row.original.side ?? "—"}
-          </span>
-        ),
       },
       {
         id: "actions",
