@@ -4,7 +4,7 @@
 > **Base URL:** `{BACKEND_BASE_URL}/api/v1`  
 > **Response Wrapper:** `{ success: boolean, message: string, data: T, timestamp: string }`  
 > **Auth:** `Authorization: Bearer <accessToken>`  
-> **Roles:** `CUSTOMER` | `STAFF` | `ADMIN`
+> **Roles:** `CUSTOMER` | `CONTENT_ADMIN` | `SYSTEM_ADMIN`
 
 ---
 
@@ -36,19 +36,6 @@
 
 > **Backend phải dùng UPPERCASE.** FE tự convert sang lowercase cho UI.  
 > `all` chỉ dùng nội bộ FE cho filter — **không gửi lên API**.
-
-### EventCategory
-
-| Backend Value | Label |
-|---|---|
-| `WAR` | Chiến tranh |
-| `POLITICS` | Chính trị |
-| `CULTURE` | Văn hoá |
-| `SCIENCE` | Khoa học |
-| `RELIGION` | Tôn giáo |
-| `OTHER` | Khác |
-
-> Backend nhận và trả về **UPPERCASE**. FE tự convert lowercase cho UI.
 
 ### MessageRole
 
@@ -132,7 +119,7 @@
 }
 ```
 
-> `role`: `CUSTOMER` | `STAFF` | `ADMIN`
+> `role`: `CUSTOMER` | `CONTENT_ADMIN` | `SYSTEM_ADMIN`
 
 ---
 
@@ -162,9 +149,9 @@ Yêu cầu auth. Không cần body. Response `200`.
 
 ---
 
-### `POST /auth/register-staff`
+### `POST /auth/register-content-admin`
 
-Yêu cầu role `ADMIN`.
+Yêu cầu role `SYSTEM_ADMIN`.
 
 **Request:**
 ```json
@@ -174,11 +161,11 @@ Yêu cầu role `ADMIN`.
   "email": "string",
   "password": "string",
   "confirmPassword": "string",
-  "roleName": "STAFF"
+  "roleName": "CONTENT_ADMIN"
 }
 ```
 
-> `roleName`: `STAFF` | `ADMIN`
+> `roleName`: `CONTENT_ADMIN` | `SYSTEM_ADMIN`
 
 **Response `200`:** `{ "success": true, "message": "string" }`
 
@@ -197,11 +184,8 @@ Yêu cầu role `ADMIN`.
   image: string | null     // URL ảnh (FE map sang imageUrl + avatarUrl)
   personality?: string
   lifespan?: string        // VD: "898–944"
-  side?: string            // Phe, VD: "Đại Việt"
   era?: string             // ANCIENT | MEDIEVAL | MODERN | CONTEMPORARY
-  role?: string            // Vai trò cụ thể trong context
-  isDraft?: boolean
-  deletedAt?: string | null
+  isActive?: boolean
   context?: { contextId: string }   // nested object
   events?: { id: string; title: string; year: number }[]
 }
@@ -229,7 +213,7 @@ Yêu cầu role `ADMIN`.
 {
   "success": true,
   "data": {
-    "content": [ { "characterId": "...", "name": "...", "title": "...", "background": "...", "image": "url", "era": "MEDIEVAL", "isDraft": false } ],
+    "content": [ { "characterId": "...", "name": "...", "title": "...", "background": "...", "image": "url", "era": "MEDIEVAL", "isActive": true } ],
     "totalElements": 24,
     "totalPages": 3,
     "currentPage": 0,
@@ -256,11 +240,8 @@ Yêu cầu role `ADMIN`.
     "image": "string | null",
     "personality": "string",
     "lifespan": "string",
-    "side": "string",
     "era": "MEDIEVAL",
-    "role": "string",
-    "isDraft": false,
-    "deletedAt": null,
+    "isActive": true,
     "context": { "contextId": "string" }
   }
 }
@@ -283,7 +264,6 @@ Lấy danh sách nhân vật thuộc 1 bối cảnh lịch sử.
       "title": "string",
       "background": "string",
       "image": "string | null",
-      "side": "string",
       "context": { "contextId": "string" }
     }
   ]
@@ -294,7 +274,7 @@ Lấy danh sách nhân vật thuộc 1 bối cảnh lịch sử.
 
 ### `POST /characters`
 
-Yêu cầu role `STAFF` | `ADMIN`.
+Yêu cầu role `CONTENT_ADMIN` | `SYSTEM_ADMIN`.
 
 **Request:**
 ```json
@@ -305,8 +285,7 @@ Yêu cầu role `STAFF` | `ADMIN`.
   "image": "string | null",
   "personality": "string",
   "lifespan": "string",
-  "side": "string",
-  "isDraft": false
+  "isActive": true
 }
 ```
 
@@ -328,9 +307,9 @@ Permanent delete. Response `200`.
 
 ---
 
-### `PATCH /characters/:id/soft-delete`
+### `PATCH /characters/:id/toggle-active`
 
-Soft delete — set `deletedAt`. Response `200`.
+Bật/Tắt hoạt động (đảo ngược `isActive`). Response `200`.
 
 ---
 
@@ -351,20 +330,15 @@ Gắn nhân vật vào bối cảnh. Response `200`.
 {
   contextId: string        // ID (FE map sang id)
   name: string             // Tên sự kiện (FE map sang title)
-  description: string      // Mô tả (FE map sang summary)
-  year: number
+  description: string      // Mô tả (FE map sang summary, endYear ghi trong description)
+  year: number             // Năm bắt đầu
   yearLabel?: string       // VD: "938 SCN", "258 TCN" — backend tự format
-  startYear?: number
-  endYear?: number
-  beforeTCN?: boolean
-  category: string         // WAR | POLITICS | CULTURE | SCIENCE | RELIGION | OTHER
   era: string              // ANCIENT | MEDIEVAL | MODERN | CONTEMPORARY
   location?: string
   imageUrl?: string | null
   videoUrl?: string | null
   period?: string
-  isDraft?: boolean
-  deletedAt?: string | null
+  isActive?: boolean
 }
 ```
 
@@ -380,7 +354,6 @@ Gắn nhân vật vào bối cảnh. Response `200`.
 | `page` | number | 0-indexed |
 | `limit` | number | Số item/trang |
 | `era` | string | `ANCIENT` \| `MEDIEVAL` \| `MODERN` \| `CONTEMPORARY` |
-| `category` | string | `WAR` \| `POLITICS` \| ... |
 
 **Response `200`:**
 ```json
@@ -394,12 +367,11 @@ Gắn nhân vật vào bối cảnh. Response `200`.
         "description": "string",
         "year": 938,
         "yearLabel": "938 SCN",
-        "category": "WAR",
         "era": "MEDIEVAL",
         "location": "Sông Bạch Đằng",
         "imageUrl": "string | null",
         "videoUrl": "string | null",
-        "isDraft": false
+        "isActive": true
       }
     ],
     "totalElements": 48,
@@ -422,7 +394,7 @@ Gắn nhân vật vào bối cảnh. Response `200`.
 
 ### `POST /historical-contexts`
 
-Yêu cầu role `STAFF` | `ADMIN`.
+Yêu cầu role `CONTENT_ADMIN` | `SYSTEM_ADMIN`.
 
 **Request:**
 ```json
@@ -430,15 +402,11 @@ Yêu cầu role `STAFF` | `ADMIN`.
   "name": "string",
   "description": "string",
   "era": "MEDIEVAL",
-  "category": "WAR",
   "year": 938,
-  "startYear": 938,
-  "endYear": 938,
-  "beforeTCN": false,
   "location": "string",
   "imageUrl": "string | null",
   "videoUrl": "string | null",
-  "isDraft": false
+  "isActive": true
 }
 ```
 
@@ -458,9 +426,9 @@ Permanent delete. Response `200`.
 
 ---
 
-### `PATCH /historical-contexts/:id/soft-delete`
+### `PATCH /historical-contexts/:id/toggle-active`
 
-Soft delete. Response `200`.
+Bật/Tắt hoạt động. Response `200`.
 
 ---
 
@@ -677,15 +645,10 @@ Lấy lịch sử chat của user đang auth, **đã group theo context**.
 {
   quizId: string
   title: string
-  description: string
   era: "ALL" | "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY"
-  durationSeconds: number
   playCount: number
   rating: number
   contextTitle?: string
-  grade?: 10 | 11 | 12
-  chapterNumber?: number
-  chapterTitle?: string
 }
 ```
 
@@ -697,7 +660,6 @@ Lấy lịch sử chat của user đang auth, **đã group theo context**.
   content: string
   options: string[]      // 4 phần tử
   correctAnswer: number  // index 0-3
-  orderIndex: number
   explanation?: string
 }
 ```
@@ -723,12 +685,7 @@ Lấy lịch sử chat của user đang auth, **đã group theo context**.
     {
       "quizId": "string",
       "title": "string",
-      "description": "string",
-      "grade": 12,
-      "chapterNumber": 1,
-      "chapterTitle": "string",
       "era": "CONTEMPORARY",
-      "durationSeconds": 900,
       "playCount": 3241,
       "rating": 4.8,
       "contextTitle": "string"
@@ -757,14 +714,12 @@ Bắt đầu phiên làm bài. Không cần body.
     "sessionId": "string",
     "quizId": "string",
     "title": "string",
-    "durationSeconds": 900,
     "questions": [
       {
         "questionId": "string",
         "content": "string",
         "options": ["A", "B", "C", "D"],
         "correctAnswer": 0,
-        "orderIndex": 0,
         "explanation": "string"
       }
     ]
@@ -785,8 +740,7 @@ Bắt đầu phiên làm bài. Không cần body.
   "sessionId": "string",
   "answers": [
     { "questionId": "string", "selectedAnswer": 0 }
-  ],
-  "durationSeconds": 480
+  ]
 }
 ```
 
@@ -831,7 +785,6 @@ Bắt đầu phiên làm bài. Không cần body.
         "score": 8,
         "totalQuestions": 10,
         "percentage": 80,
-        "durationSeconds": 480,
         "completedAt": "ISO8601"
       }
     ],
@@ -847,22 +800,17 @@ Bắt đầu phiên làm bài. Không cần body.
 
 ---
 
-## 8. Quiz — Staff/Admin
+## 8. Quiz — Content Admin/System Admin
 
-> Tất cả endpoint dưới yêu cầu role `STAFF` hoặc `ADMIN`.
+> Tất cả endpoint dưới yêu cầu role `CONTENT_ADMIN` hoặc `SYSTEM_ADMIN`.
 
-### Object `StaffQuizSet`
+### Object `ContentAdminQuizSet`
 
 ```typescript
 {
   quizId: string
   title: string
-  description: string
-  grade: number            // 10 | 11 | 12
-  chapterNumber: number
-  chapterTitle: string
   era: "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY"
-  durationSeconds: number
   playCount: number
   rating: number
   contextId: string
@@ -870,7 +818,7 @@ Bắt đầu phiên làm bài. Không cần body.
   createdBy: string
   createdDate: string      // ISO8601
   updatedDate: string      // ISO8601
-  deletedAt: string | null
+  isActive: boolean
   questions: QuizQuestion[]
 }
 ```
@@ -884,7 +832,6 @@ Bắt đầu phiên làm bài. Không cần body.
 | Param | Type | Mô tả |
 |---|---|---|
 | `search` | string | Tìm theo title |
-| `grade` | number | 10 \| 11 \| 12 |
 | `era` | string | Era enum |
 | `page` | number | 0-indexed |
 | `size` | number | Số item/trang |
@@ -894,7 +841,7 @@ Bắt đầu phiên làm bài. Không cần body.
 {
   "success": true,
   "data": {
-    "content": [ "StaffQuizSet..." ],
+    "content": [ "ContentAdminQuizSet..." ],
     "totalElements": 0,
     "totalPages": 0,
     "currentPage": 0,
@@ -911,7 +858,7 @@ Bắt đầu phiên làm bài. Không cần body.
 
 Chi tiết quiz kèm toàn bộ câu hỏi.
 
-**Response `200`:** `{ "success": true, "data": StaffQuizSet }`
+**Response `200`:** `{ "success": true, "data": ContentAdminQuizSet }`
 
 ---
 
@@ -921,26 +868,20 @@ Chi tiết quiz kèm toàn bộ câu hỏi.
 ```json
 {
   "title": "string",
-  "description": "string",
   "contextId": "string",
-  "grade": 12,
-  "chapterNumber": 1,
-  "chapterTitle": "string",
   "era": "CONTEMPORARY",
-  "durationSeconds": 900,
   "questions": [
     {
       "content": "string",
       "options": ["A", "B", "C", "D"],
       "correctAnswer": 0,
-      "orderIndex": 0,
       "explanation": "string"
     }
   ]
 }
 ```
 
-**Response `200`:** `{ "success": true, "data": StaffQuizSet }`
+**Response `200`:** `{ "success": true, "data": ContentAdminQuizSet }`
 
 ---
 
@@ -952,17 +893,12 @@ Cập nhật metadata (không bao gồm questions).
 ```json
 {
   "title": "string",
-  "description": "string",
   "contextId": "string",
-  "grade": 12,
-  "chapterNumber": 1,
-  "chapterTitle": "string",
-  "era": "CONTEMPORARY",
-  "durationSeconds": 900
+  "era": "CONTEMPORARY"
 }
 ```
 
-**Response `200`:** `{ "success": true, "data": StaffQuizSet }`
+**Response `200`:** `{ "success": true, "data": ContentAdminQuizSet }`
 
 ---
 
@@ -972,15 +908,9 @@ Permanent delete. Response `200`.
 
 ---
 
-### `PATCH /staff/quizzes/:quizId/soft-delete`
+### `PATCH /staff/quizzes/:quizId/toggle-active`
 
-Soft delete — set `deletedAt`. Response `200`.
-
----
-
-### `PATCH /staff/quizzes/:quizId/restore`
-
-Khôi phục quiz đã soft-delete. Response `200`.
+Bật/Tắt hoạt động (đảo `isActive`). Response `200`.
 
 ---
 
@@ -994,7 +924,6 @@ Thêm câu hỏi vào quiz.
   "content": "string",
   "options": ["A", "B", "C", "D"],
   "correctAnswer": 0,
-  "orderIndex": 0,
   "explanation": "string"
 }
 ```
@@ -1054,27 +983,24 @@ Xóa câu hỏi. Response `200`.
 
 6. **Era enum:** Backend nhận và trả **UPPERCASE** (`ANCIENT`, `MEDIEVAL`, `MODERN`, `CONTEMPORARY`). FE tự convert lowercase cho UI.
 
-7. **Category enum:** Backend nhận và trả **UPPERCASE** (`WAR`, `POLITICS`, `CULTURE`, `SCIENCE`, `RELIGION`, `OTHER`).
+7. **MessageRole:** Phải là `USER` và `ASSISTANT` (UPPERCASE) — không phải `user`/`assistant`.
 
 8. **Pagination:** `currentPage` là **0-indexed**. FE gửi `page=0` cho trang đầu.
 
 9. **Quiz /quizzes (GET):** Backend trả `data` là **array trực tiếp** (không pagination object). FE tự wrap.
-
-10. **MessageRole:** Phải là `USER` và `ASSISTANT` (UPPERCASE) — không phải `user`/`assistant`.
 
 ### Datetime
 
 - Tất cả datetime dùng **ISO 8601 UTC**: `"2026-05-22T14:30:00Z"`
 - `createdDate` / `updatedDate` (Staff Quiz) — cùng format ISO 8601.
 
-### Soft Delete pattern
+### Active State pattern
 
-- Thêm `deletedAt: datetime (nullable)` vào `Character`, `HistoricalContext`, `Quiz`, `QuizQuestion`.
-- Mọi GET query filter `WHERE deletedAt IS NULL` mặc định.
-- PATCH `/soft-delete` set `deletedAt = now()`.
-- PATCH `/restore` set `deletedAt = null`.
+- Thêm `isActive: boolean (default true)` vào `Character`, `HistoricalContext`, `Quiz`.
+- Mọi GET query filter `WHERE isActive = true` mặc định cho phía Customer.
+- PATCH `/:id/toggle-active` thực hiện bật/tắt (đảo trạng thái `isActive`).
 
 ### Role check
 
-- `/staff/*` endpoints: check `role IN ('STAFF', 'ADMIN')` từ JWT → `403` nếu không đủ quyền.
-- `POST /auth/register-staff`: chỉ `ADMIN` được gọi.
+- `/staff/*` endpoints: check `role IN ('CONTENT_ADMIN', 'SYSTEM_ADMIN')` từ JWT → `403` nếu không đủ quyền.
+- `POST /auth/register-content-admin`: chỉ `SYSTEM_ADMIN` được gọi.
