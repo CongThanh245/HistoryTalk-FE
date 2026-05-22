@@ -8,6 +8,7 @@ Dự án hỗ trợ 2 backend khác nhau cùng chung 1 frontend codebase.
 # 1. Clone repo
 git clone <repo-url>
 cd core-app-fe
+git checkout develop
 
 # 2. Cài dependencies
 npm install
@@ -57,14 +58,14 @@ npm run dev
 switch-backend.ps1  # Script switch nhanh
 ```
 
-## Git Workflow (Chỉ dùng 1 branch chung)
+## Git Workflow (Chỉ dùng nhánh develop)
 
-**Nguyên tắc:** Cả 2 team đều push code lên cùng 1 branch (`main` hoặc `master`)
+**Nguyên tắc:** Cả 2 team đều push code lên nhánh `develop` (không dùng `master`)
 
 ```bash
 # 1. Lấy code mới nhất
-git checkout main
-git pull origin main
+git checkout develop
+git pull origin develop
 
 # 2. Code feature...
 
@@ -75,15 +76,15 @@ git pull origin main
 # 4. Push code
 git add .
 git commit -m "feat: landmark filter"
-git push origin main
+git push origin develop
 ```
 
 ## Checklist trước khi push code
 
-- [ ] Code trên main branch
+- [ ] Code trên develop branch
 - [ ] Test với Spring: `.\switch-backend.ps1 spring`
 - [ ] Test với Node.js: `.\switch-backend.ps1 nodejs`
-- [ ] Commit & push lên main
+- [ ] Commit & push lên develop
 
 ## Lưu Ý
 
