@@ -7,19 +7,37 @@ Tài liệu này mô tả **cấu trúc thư mục**, **cách sử dụng từng
 
 ## 🚀 Bắt đầu nhanh
 
-### Cài đặt phụ thuộc
+> **⚠️ Lưu ý:** Dùng nhánh `develop` cho tất cả công việc. Không dùng `master`.
+
+### 1. Clone và checkout nhánh develop
+
+```bash
+git clone <repo-url>
+cd core-app-fe
+git checkout develop
+```
+
+### 2. Cài đặt & setup env
 
 ```bash
 npm install
-```
-```bash
-copy .env.example .env.local  
+copy .env.example .env.local  # Windows
+cp .env.example .env.local     # Mac/Linux
+# Mở .env.local sửa URL theo backend bạn dùng
 ```
 
-### Chạy dev
+### 3. Chạy dev
 
 ```bash
 npm run dev
+```
+
+### Push code lên develop
+
+```bash
+git add .
+git commit -m "feat: your feature"
+git push origin develop
 ```
 
 ### Build
