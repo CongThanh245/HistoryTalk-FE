@@ -6,7 +6,8 @@
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next build && next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "fetch:landmarks": "node scripts/fetch-wikidata-landmarks.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

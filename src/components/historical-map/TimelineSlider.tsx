@@ -1,220 +1,204 @@
 "use client";
 
 // components/historical-map/TimelineSlider.tsx
-// Trục thời gian lịch sử — snap vào các mốc period
+// Discrete slider — chỉ dừng tại các năm có trận chiến thực sự.
 
-import React, { useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
-import type { HistoricalPeriod } from "@/services/period.service";
+import React, { useEffect, useState } from "react";
+import { Play, Pause, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface TimelineSliderProps {
-  periods: HistoricalPeriod[];
-  currentPeriodId: string;
-  onChange: (periodId: string) => void;
+  currentYear: number;
+  onChange: (year: number) => void;
+  /** Danh sách năm có trận (sorted asc) — slider chỉ dừng tại đây */
+  battleYears: number[];
+  /** Thông báo số landmark đang visible (optional) */
+  visibleCount?: number;
 }
 
 export function TimelineSlider({
-  periods,
-  currentPeriodId,
+  currentYear,
   onChange,
+  battleYears,
+  visibleCount,
 }: TimelineSliderProps) {
-  const [isPlaying, setIsPlaying] = React.useState(false);
-  const trackRef = useRef<HTMLDivElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  const currentIdx = periods.findIndex((p) => p.periodId === currentPeriodId);
-  const current = periods[currentIdx];
+  const years = battleYears.length > 0 ? battleYears : [currentYear];
+  const currentIdx = years.indexOf(currentYear);
+  // Nếu currentYear không nằm trong list, snap về index gần nhất
+  const safeIdx =
+    currentIdx >= 0
+      ? currentIdx
+      : years.findIndex((y) => y >= currentYear) ?? years.length - 1;
 
   const goPrev = () => {
-    if (currentIdx > 0) onChange(periods[currentIdx - 1].periodId);
+    const idx = currentIdx >= 0 ? currentIdx : safeIdx;
+    if (idx > 0) onChange(years[idx - 1]);
   };
-
   const goNext = () => {
-    if (currentIdx < periods.length - 1)
-      onChange(periods[currentIdx + 1].periodId);
+    const idx = currentIdx >= 0 ? currentIdx : safeIdx;
+    if (idx < years.length - 1) onChange(years[idx + 1]);
+    else setIsPlaying(false);
   };
 
-  // Auto-play
+  // Auto-play: nhảy từng trận
   useEffect(() => {
     if (!isPlaying) return;
     const timer = setInterval(() => {
-      if (currentIdx >= periods.length - 1) {
+      const idx = years.indexOf(currentYear);
+      if (idx < 0 || idx >= years.length - 1) {
         setIsPlaying(false);
-        return;
+      } else {
+        onChange(years[idx + 1]);
       }
-      onChange(periods[currentIdx + 1].periodId);
-    }, 2500);
+    }, 900);
     return () => clearInterval(timer);
-  }, [isPlaying, currentIdx, periods, onChange]);
+  }, [isPlaying, currentYear, years, onChange]);
 
-  // Keyboard
+  // Keyboard ←/→
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") goPrev();
-      else if (e.key === "ArrowRight") goNext();
+      if (e.target instanceof HTMLInputElement) return;
+      if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); goNext(); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIdx]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentYear, years]);
 
-  // Scroll selected tick into view
-  useEffect(() => {
-    const el = trackRef.current?.querySelector(
-      `[data-period="${currentPeriodId}"]`,
-    );
-    el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-  }, [currentPeriodId]);
+  const formatYear = (y: number) =>
+    y < 0 ? `${Math.abs(y)} TCN` : `${y}`;
+
+  const minYear = years[0] ?? currentYear;
+  const maxYear = years[years.length - 1] ?? currentYear;
+  const progressPct =
+    years.length > 1
+      ? ((safeIdx) / (years.length - 1)) * 100
+      : 0;
 
   return (
     <div
-      className="flex-shrink-0 flex flex-col gap-2 px-4 py-3 z-10"
+      className="shrink-0 flex items-center gap-3 px-4 py-2 z-10"
       style={{
         background: "var(--palladian)",
         borderTop: "1px solid var(--oatmeal)",
         boxShadow: "0 -2px 8px rgba(27,38,50,0.06)",
+        minHeight: 52,
       }}
     >
-      {/* Current period info */}
-      <div className="flex items-baseline gap-2 px-1">
+      {/* Year + counter */}
+      <div className="shrink-0 flex items-baseline gap-2">
         <span
-          className="text-xs font-semibold uppercase tracking-wide"
+          className="text-xl font-black tabular-nums leading-none"
           style={{ color: "var(--accent-gold)" }}
         >
-          {current?.dynasty ?? "—"}
+          {formatYear(currentYear)}
         </span>
-        <span
-          className="text-sm font-bold"
-          style={{ color: "var(--content-heading)" }}
-        >
-          {current?.name}
-        </span>
-        <span
-          className="text-xs ml-auto truncate"
-          style={{ color: "var(--content-muted)" }}
-        >
-          {current?.description}
+        <span className="text-[11px]" style={{ color: "var(--content-muted)" }}>
+          {safeIdx + 1}/{years.length}
         </span>
       </div>
 
-      {/* Slider track */}
-      <div className="flex items-center gap-2">
-        {/* Prev */}
-        <button
-          onClick={goPrev}
-          disabled={currentIdx <= 0}
-          className="flex-shrink-0 p-1.5 rounded-lg transition-colors disabled:opacity-30 hover:bg-black/5"
-          style={{ color: "var(--content-heading)" }}
-          aria-label="Mốc trước"
-        >
-          <ChevronLeft size={18} />
-        </button>
+      {/* Prev */}
+      <button
+        onClick={goPrev}
+        disabled={safeIdx === 0}
+        className="shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors disabled:opacity-30"
+        style={{ color: "var(--content-heading)" }}
+        aria-label="Trận trước"
+      >
+        <ChevronLeft size={16} />
+      </button>
 
-        {/* Track */}
-        <div
-          ref={trackRef}
-          className="flex-1 relative overflow-x-auto scrollbar-hide"
-          style={{ scrollbarWidth: "none" }}
-        >
-          {/* Line */}
+      {/* Draggable dot track */}
+      <div className="flex-1 relative h-10 flex items-center">
+          {/* Track line */}
           <div
-            className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 rounded-full"
+            className="absolute left-0 right-0 h-1 rounded-full pointer-events-none"
             style={{ background: "var(--oatmeal)" }}
           />
-          {/* Progress line */}
+          {/* Progress fill */}
           <div
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 rounded-full transition-all duration-500"
+            className="absolute left-0 h-1 rounded-full pointer-events-none transition-[width] duration-150"
             style={{
-              width: `${((currentIdx + 0.5) / periods.length) * 100}%`,
+              width: `${progressPct}%`,
               background: "var(--accent-gold)",
             }}
           />
-
-          {/* Ticks */}
-          <div
-            className="relative flex items-center justify-between gap-2 py-2"
-            style={{ minWidth: `${periods.length * 80}px` }}
-          >
-            {periods.map((p, idx) => {
-              const isActive = p.periodId === currentPeriodId;
-              const isPast = idx < currentIdx;
-              return (
-                <button
-                  key={p.periodId}
-                  data-period={p.periodId}
-                  onClick={() => onChange(p.periodId)}
-                  className="relative flex flex-col items-center gap-1 group flex-1 min-w-[80px]"
+          {/* Dots (clickable, visual only — range input handles dragging) */}
+          {years.map((y, i) => {
+            const pct = years.length > 1 ? (i / (years.length - 1)) * 100 : 50;
+            const isActive = y === currentYear;
+            const isPast = i <= safeIdx;
+            return (
+              <button
+                key={y}
+                onClick={() => onChange(y)}
+                title={formatYear(y)}
+                className="absolute group pointer-events-auto"
+                style={{
+                  left: `${pct}%`,
+                  transform: "translate(-50%, -50%)",
+                  top: "50%",
+                  zIndex: 5,
+                }}
+              >
+                <div
+                  className="rounded-full transition-all duration-150"
+                  style={{
+                    width: isActive ? 16 : 8,
+                    height: isActive ? 16 : 8,
+                    background: isPast ? "var(--accent-gold)" : "var(--content-muted)",
+                    opacity: isPast ? 1 : 0.45,
+                    boxShadow: isActive ? "0 0 0 4px rgba(201,162,77,0.25)" : "none",
+                  }}
+                />
+                <span
+                  className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none px-1.5 py-0.5 rounded"
+                  style={{ background: "var(--content-heading)", color: "white" }}
                 >
-                  {/* Dot */}
-                  <div
-                    className="relative z-10 rounded-full transition-all duration-300"
-                    style={{
-                      width: isActive ? 16 : 10,
-                      height: isActive ? 16 : 10,
-                      background: isActive
-                        ? "var(--accent-gold)"
-                        : isPast
-                          ? "var(--accent-gold)"
-                          : "var(--bg-content)",
-                      border: `2px solid ${
-                        isActive || isPast
-                          ? "var(--accent-gold)"
-                          : "var(--oatmeal)"
-                      }`,
-                      boxShadow: isActive
-                        ? "0 0 0 4px var(--accent-gold-glow), 0 2px 6px rgba(201,162,77,0.4)"
-                        : "none",
-                    }}
-                  />
-                  {/* Label */}
-                  <span
-                    className="text-[10px] font-semibold whitespace-nowrap transition-colors"
-                    style={{
-                      color: isActive
-                        ? "var(--accent-gold)"
-                        : "var(--content-muted)",
-                    }}
-                  >
-                    {p.shortName}
-                  </span>
-                  {/* Hover tooltip */}
-                  <span
-                    className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 rounded-md text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                    style={{
-                      background: "var(--content-heading)",
-                      color: "white",
-                    }}
-                  >
-                    {p.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Next */}
-        <button
-          onClick={goNext}
-          disabled={currentIdx >= periods.length - 1}
-          className="flex-shrink-0 p-1.5 rounded-lg transition-colors disabled:opacity-30 hover:bg-black/5"
-          style={{ color: "var(--content-heading)" }}
-          aria-label="Mốc sau"
-        >
-          <ChevronRight size={18} />
-        </button>
-
-        {/* Play */}
-        <button
-          onClick={() => setIsPlaying((v) => !v)}
-          className="flex-shrink-0 p-1.5 rounded-lg transition-colors hover:bg-black/5"
-          style={{
-            color: isPlaying ? "var(--accent-gold)" : "var(--content-heading)",
-          }}
-          aria-label={isPlaying ? "Tạm dừng" : "Tự động chạy"}
-        >
-          {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-        </button>
+                  {formatYear(y)}
+                </span>
+              </button>
+            );
+          })}
+          {/* Native range input — invisible but handles drag interaction */}
+          <input
+            type="range"
+            min={0}
+            max={years.length - 1}
+            step={1}
+            value={safeIdx}
+            onChange={(e) => onChange(years[Number(e.target.value)])}
+            className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full opacity-0 cursor-pointer"
+            style={{ height: 40, zIndex: 10 }}
+          />
       </div>
+
+      {/* Next */}
+      <button
+        onClick={goNext}
+        disabled={safeIdx >= years.length - 1}
+        className="shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors disabled:opacity-30"
+        style={{ color: "var(--content-heading)" }}
+        aria-label="Trận tiếp theo"
+      >
+        <ChevronRight size={16} />
+      </button>
+
+      {/* Play */}
+      <button
+        onClick={() => setIsPlaying((v) => !v)}
+        disabled={years.length <= 1}
+        className="shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors disabled:opacity-30"
+        style={{
+          color: isPlaying ? "var(--accent-gold)" : "var(--content-heading)",
+        }}
+        aria-label={isPlaying ? "Tạm dừng" : "Tự động chạy"}
+      >
+        {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+      </button>
     </div>
   );
 }
