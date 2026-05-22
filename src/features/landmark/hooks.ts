@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   LandmarkContextEvent,
   landmarkService,
+  ALL_LANDMARKS,
   MOCK_CONTEXT_EVENTS,
   type GetLandmarksParams,
 } from "@/services/landmark.service";
@@ -14,8 +15,14 @@ import { queryKeys } from "@/shared/query-key";
 export function useLandmarks(params?: GetLandmarksParams) {
   return useQuery({
     queryKey: ["landmarks", "list", params ?? {}],
-    queryFn: () => landmarkService.getAll(params),
-    staleTime: 5 * 60 * 1000, // landmark ít thay đổi
+    queryFn: async () => {
+      await new Promise((r) => setTimeout(r, 0));
+      let result = [...ALL_LANDMARKS];
+      if (params?.era) result = result.filter((l) => l.era === params.era);
+      if (params?.type) result = result.filter((l) => l.type === params.type);
+      return result;
+    },
+    staleTime: Infinity,
   });
 }
 

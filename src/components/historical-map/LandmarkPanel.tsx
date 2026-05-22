@@ -24,9 +24,23 @@ export function LandmarkPanel({
   onSelectEvent,
   selectedContextId,
 }: LandmarkPanelProps) {
-  const { data: events = [], isLoading } = useLandmarkEvents(
+  const { data: rawEvents = [], isLoading } = useLandmarkEvents(
     landmark.contextIds,
   );
+
+  // Fallback: nếu không có context nào (vd Wikidata landmarks), tạo 1 event từ chính landmark
+  const events =
+    rawEvents.length > 0
+      ? rawEvents
+      : [
+          {
+            contextId: landmark.landmarkId,
+            name: landmark.name,
+            year: landmark.yearStart,
+            description: landmark.description,
+            era: landmark.era as any,
+          },
+        ];
   const typeConfig = LANDMARK_TYPE_CONFIG[landmark.type];
   const eraConfig = ERA_CONFIG_MAP[landmark.era as keyof typeof ERA_CONFIG_MAP];
   // 2. Trong component, thêm:
