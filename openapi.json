@@ -206,12 +206,13 @@
     "/characters": {
       "get": {
         "tags": ["Characters"],
-        "summary": "Lấy danh sách nhân vật (Phân trang)",
+        "summary": "Lấy danh sách nhân vật (Phân trang). CUSTOMER: auto-filter published only. ADMIN/STAFF: có thể filter bằng param `published`",
         "parameters": [
           { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Tìm theo tên, chức danh" },
           { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 }, "description": "0-indexed page" },
           { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 8 }, "description": "Số lượng một trang" },
-          { "name": "era", "in": "query", "schema": { "$ref": "#/components/schemas/Era" }, "description": "Lọc theo thời đại" }
+          { "name": "era", "in": "query", "schema": { "$ref": "#/components/schemas/Era" }, "description": "Lọc theo thời đại" },
+          { "name": "published", "in": "query", "schema": { "type": "boolean" }, "description": "Lọc theo trạng thái publish. `true`=chỉ published, `false`=chỉ unpublished, không truyền=tất cả (chỉ Admin/Staff)" }
         ],
         "responses": {
           "200": {
@@ -377,7 +378,7 @@
     "/characters/context/{contextId}": {
       "get": {
         "tags": ["Characters"],
-        "summary": "Lấy danh sách nhân vật thuộc bối cảnh lịch sử",
+        "summary": "Lấy danh sách nhân vật thuộc bối cảnh lịch sử. CUSTOMER: chỉ nhận published. ADMIN/STAFF: nhận tất cả",
         "parameters": [
           { "name": "contextId", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
@@ -1382,6 +1383,9 @@
           "lifespan": { "type": "string" },
           "era": { "type": "string" },
           "isActive": { "type": "boolean" },
+          "isPublished": { "type": "boolean", "description": "true = đã publish cho người dùng xem" },
+          "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo - chỉ trả cho ADMIN/STAFF" },
+          "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật - chỉ trả cho ADMIN/STAFF" },
           "context": {
             "type": "object",
             "properties": {
@@ -1389,7 +1393,7 @@
             }
           }
         },
-        "required": ["characterId", "name", "title", "background", "isActive"]
+        "required": ["characterId", "name", "title", "background", "isActive", "isPublished"]
       },
       "CharacterUpsertRequest": {
         "type": "object",
@@ -1400,7 +1404,8 @@
           "image": { "type": "string", "nullable": true },
           "personality": { "type": "string" },
           "lifespan": { "type": "string" },
-          "isActive": { "type": "boolean" }
+          "isActive": { "type": "boolean" },
+          "isPublished": { "type": "boolean", "default": false, "description": "Mặc định false khi tạo mới" }
         },
         "required": ["name", "title", "background", "isActive"]
       },
