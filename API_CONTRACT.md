@@ -186,6 +186,9 @@ Yêu cầu role `SYSTEM_ADMIN`.
   lifespan?: string        // VD: "898–944"
   era?: string             // ANCIENT | MEDIEVAL | MODERN | CONTEMPORARY
   isActive?: boolean
+  isPublished?: boolean     // true = đã publish cho người dùng xem
+  createdAt?: string        // ISO8601 - thời gian tạo (admin only)
+  updatedAt?: string        // ISO8601 - thời gian cập nhật (admin only)
   context?: { contextId: string }   // nested object
   events?: { id: string; title: string; year: number }[]
 }
@@ -193,7 +196,10 @@ Yêu cầu role `SYSTEM_ADMIN`.
 
 > **Quan trọng:** FE dùng `raw.characterId ?? raw.id` làm id. Phải trả `characterId`.  
 > **Quan trọng:** FE dùng `raw.image ?? raw.imageUrl`. Ưu tiên trả field `image`.  
-> **Quan trọng:** `contextId` nằm trong `context.contextId` (nested).
+> **Quan trọng:** `contextId` nằm trong `context.contextId` (nested).  
+> **Quan trọng:** CUSTOMER: GET /characters auto-filter `isPublished=true`, ignore `published` param.  
+> **Quan trọng:** ADMIN/STAFF: `?published=true` chỉ published, `?published=false` chỉ unpublished, không truyền = tất cả.  
+> **Quan trọng:** `createdAt` và `updatedAt` chỉ trả về cho ADMIN/STAFF, CUSTOMER sẽ không thấy.
 
 ---
 
@@ -207,13 +213,14 @@ Yêu cầu role `SYSTEM_ADMIN`.
 | `page` | number | 0-indexed |
 | `limit` | number | Số item/trang |
 | `era` | string | `ANCIENT` \| `MEDIEVAL` \| `MODERN` \| `CONTEMPORARY` |
+| `published` | boolean | `true` = chỉ published, `false` = chỉ unpublished, không truyền = tất cả |
 
 **Response `200`:**
 ```json
 {
   "success": true,
   "data": {
-    "content": [ { "characterId": "...", "name": "...", "title": "...", "background": "...", "image": "url", "era": "MEDIEVAL", "isActive": true } ],
+    "content": [ { "characterId": "...", "name": "...", "title": "...", "background": "...", "image": "url", "era": "MEDIEVAL", "isActive": true, "isPublished": true } ],
     "totalElements": 24,
     "totalPages": 3,
     "currentPage": 0,
@@ -242,6 +249,7 @@ Yêu cầu role `SYSTEM_ADMIN`.
     "lifespan": "string",
     "era": "MEDIEVAL",
     "isActive": true,
+    "isPublished": true,
     "context": { "contextId": "string" }
   }
 }
@@ -252,6 +260,8 @@ Yêu cầu role `SYSTEM_ADMIN`.
 ### `GET /characters/context/:contextId`
 
 Lấy danh sách nhân vật thuộc 1 bối cảnh lịch sử.
+
+> **Quan trọng:** BE auto-filter theo role. CUSTOMER chỉ thấy `isPublished: true`. ADMIN/STAFF thấy tất cả.
 
 **Response `200`:**
 ```json
@@ -264,6 +274,7 @@ Lấy danh sách nhân vật thuộc 1 bối cảnh lịch sử.
       "title": "string",
       "background": "string",
       "image": "string | null",
+      "isPublished": true,
       "context": { "contextId": "string" }
     }
   ]
@@ -285,7 +296,8 @@ Yêu cầu role `CONTENT_ADMIN` | `SYSTEM_ADMIN`.
   "image": "string | null",
   "personality": "string",
   "lifespan": "string",
-  "isActive": true
+  "isActive": true,
+  "isPublished": false     // mặc định false khi tạo mới
 }
 ```
 
