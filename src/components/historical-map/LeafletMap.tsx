@@ -1,40 +1,70 @@
 "use client";
 
 // components/historical-map/LeafletMap.tsx
-// Leaflet map với custom markers — dynamic import để tránh SSR error
+// Leaflet map: territory GeoJSON layer + landmark markers
+// - Hover region → call onRegionHover với screen coords
+// - Click region → call onRegionClick
+// - Click landmark → call onSelectLandmark
 
 import React, { useEffect, useRef } from "react";
 import type { Landmark } from "@/services/landmark.service";
+import type {
+  HistoricalPeriod,
+  RegionProperties,
+} from "@/services/period.service";
 import { LANDMARK_TYPE_CONFIG } from "./landmark-config";
 
 interface LeafletMapProps {
   landmarks: Landmark[];
   selectedLandmarkId: string | null;
   onSelectLandmark: (landmark: Landmark) => void;
+  period: HistoricalPeriod | null;
+  selectedRegionId: string | null;
+  onRegionHover: (
+    region: RegionProperties | null,
+    screenX: number,
+    screenY: number,
+  ) => void;
+  onRegionClick: (region: RegionProperties) => void;
 }
 
 export function LeafletMap({
   landmarks,
   selectedLandmarkId,
   onSelectLandmark,
+  period,
+  selectedRegionId,
+  onRegionHover,
+  onRegionClick,
 }: LeafletMapProps) {
   const mapRef = useRef<any>(null);
   const markersRef = useRef<Record<string, any>>({});
+  const geoJsonLayerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Stable refs for callbacks (avoid re-binding handlers on every render)
+  const onRegionHoverRef = useRef(onRegionHover);
+  const onRegionClickRef = useRef(onRegionClick);
+  const onSelectLandmarkRef = useRef(onSelectLandmark);
+  useEffect(() => {
+    onRegionHoverRef.current = onRegionHover;
+    onRegionClickRef.current = onRegionClick;
+    onSelectLandmarkRef.current = onSelectLandmark;
+  });
+
+  // ── Init map ──────────────────────────────────────────────
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!containerRef.current) return;
     if (mapRef.current) return;
 
-    // Delay nhỏ để đảm bảo container đã mount xong
     const timer = setTimeout(() => {
       if (!containerRef.current) return;
-      if ((containerRef.current as any)._leaflet_id) return; // ← guard chính
+      if ((containerRef.current as any)._leaflet_id) return;
 
       import("leaflet").then((L) => {
         if (!containerRef.current) return;
-        if ((containerRef.current as any)._leaflet_id) return; // ← check lại trong async
+        if ((containerRef.current as any)._leaflet_id) return;
 
         delete (L.Icon.Default.prototype as any)._getIconUrl;
         L.Icon.Default.mergeOptions({
@@ -62,17 +92,13 @@ export function LeafletMap({
         ).addTo(map);
 
         const vietnamBounds = L.latLngBounds(
-          L.latLng(6.0, 102.0),
-          L.latLng(30, 115.0),
+          L.latLng(6.0, 100.0),
+          L.latLng(24, 115.0),
         );
         map.setMaxBounds(vietnamBounds.pad(0.5));
         map.setMinZoom(5);
 
         mapRef.current = map;
-
-        landmarks.forEach((landmark) => {
-          addMarker(L, map, landmark, false, onSelectLandmark, markersRef);
-        });
       });
     }, 0);
 
@@ -82,40 +108,131 @@ export function LeafletMap({
         mapRef.current.remove();
         mapRef.current = null;
         markersRef.current = {};
+        geoJsonLayerRef.current = null;
       }
     };
-  }, []); // eslint-disable-line
+  }, []);
 
-  // Update markers when selection changes
+  // ── Update territory layer when period changes ────────────
+  useEffect(() => {
+    if (!mapRef.current || !period) return;
+
+    import("leaflet").then((L) => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      // Remove old layer
+      if (geoJsonLayerRef.current) {
+        map.removeLayer(geoJsonLayerRef.current);
+        geoJsonLayerRef.current = null;
+      }
+
+      // Add new layer
+      const layer = L.geoJSON(period.geojson as any, {
+        style: (feature: any) => {
+          const props = feature.properties as RegionProperties;
+          const isSelected = props.regionId === selectedRegionId;
+          return {
+            color: props.color,
+            weight: isSelected ? 3 : 1.5,
+            opacity: 0.9,
+            fillColor: props.color,
+            fillOpacity: isSelected ? 0.55 : 0.35,
+            className: "territory-region",
+          };
+        },
+        onEachFeature: (feature: any, lyr: any) => {
+          const props = feature.properties as RegionProperties;
+
+          lyr.on("mouseover", (e: any) => {
+            lyr.setStyle({ fillOpacity: 0.6, weight: 2.5 });
+            lyr.bringToFront();
+            const point = map.latLngToContainerPoint(e.latlng);
+            onRegionHoverRef.current(props, point.x, point.y);
+          });
+
+          lyr.on("mousemove", (e: any) => {
+            const point = map.latLngToContainerPoint(e.latlng);
+            onRegionHoverRef.current(props, point.x, point.y);
+          });
+
+          lyr.on("mouseout", () => {
+            const isSelected = props.regionId === selectedRegionId;
+            lyr.setStyle({
+              fillOpacity: isSelected ? 0.55 : 0.35,
+              weight: isSelected ? 3 : 1.5,
+            });
+            onRegionHoverRef.current(null, 0, 0);
+          });
+
+          lyr.on("click", () => {
+            onRegionClickRef.current(props);
+          });
+        },
+      });
+
+      layer.addTo(map);
+      geoJsonLayerRef.current = layer;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period?.periodId]);
+
+  // ── Re-style when selectedRegionId changes ────────────────
+  useEffect(() => {
+    if (!geoJsonLayerRef.current) return;
+    geoJsonLayerRef.current.eachLayer((lyr: any) => {
+      const props = lyr.feature?.properties as RegionProperties;
+      if (!props) return;
+      const isSelected = props.regionId === selectedRegionId;
+      lyr.setStyle({
+        weight: isSelected ? 3 : 1.5,
+        fillOpacity: isSelected ? 0.55 : 0.35,
+      });
+    });
+  }, [selectedRegionId]);
+
+  // ── Update landmark markers ───────────────────────────────
   useEffect(() => {
     if (!mapRef.current) return;
+
     import("leaflet").then((L) => {
-      landmarks.forEach((landmark) => {
-        const marker = markersRef.current[landmark.landmarkId];
-        if (marker) {
-          // Re-create icon with selected state
-          const icon = createCustomIcon(
-            L,
-            landmark,
-            landmark.landmarkId === selectedLandmarkId,
-          );
-          marker.setIcon(icon);
+      const map = mapRef.current;
+      if (!map) return;
+
+      // Remove markers not in current landmarks list
+      const currentIds = new Set(landmarks.map((l) => l.landmarkId));
+      Object.keys(markersRef.current).forEach((id) => {
+        if (!currentIds.has(id)) {
+          map.removeLayer(markersRef.current[id]);
+          delete markersRef.current[id];
         }
       });
 
-      // Pan to selected
-      if (selectedLandmarkId) {
-        const lm = landmarks.find((l) => l.landmarkId === selectedLandmarkId);
-        if (lm) {
-          mapRef.current.flyTo([lm.lat, lm.lng], 9, { duration: 1 });
+      // Add / update markers
+      landmarks.forEach((landmark) => {
+        const isSelected = landmark.landmarkId === selectedLandmarkId;
+        const icon = createCustomIcon(L, landmark, isSelected);
+
+        if (markersRef.current[landmark.landmarkId]) {
+          markersRef.current[landmark.landmarkId].setIcon(icon);
+        } else {
+          addMarker(L, map, landmark, isSelected, markersRef, onSelectLandmarkRef);
         }
-      }
+      });
     });
-  }, [selectedLandmarkId]); // eslint-disable-line
+  }, [landmarks, selectedLandmarkId]);
+
+  // ── Fly to selected landmark ──────────────────────────────
+  useEffect(() => {
+    if (!mapRef.current || !selectedLandmarkId) return;
+    const lm = landmarks.find((l) => l.landmarkId === selectedLandmarkId);
+    if (lm) {
+      mapRef.current.flyTo([lm.lat, lm.lng], 9, { duration: 1 });
+    }
+  }, [selectedLandmarkId, landmarks]);
 
   return (
     <>
-      {/* Leaflet CSS */}
       <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -125,6 +242,12 @@ export function LeafletMap({
         className="w-full h-full"
         style={{ background: "#f5f1ea" }}
       />
+      <style>{`
+        .territory-region {
+          transition: fill-opacity 200ms ease, stroke-width 200ms ease;
+          cursor: pointer;
+        }
+      `}</style>
     </>
   );
 }
@@ -179,15 +302,18 @@ function addMarker(
   map: any,
   landmark: Landmark,
   isSelected: boolean,
-  onSelect: (lm: Landmark) => void,
   markersRef: React.MutableRefObject<Record<string, any>>,
+  onSelectRef: React.MutableRefObject<(landmark: Landmark) => void>,
 ) {
   const icon = createCustomIcon(L, landmark, isSelected);
-  const marker = L.marker([landmark.lat, landmark.lng], { icon });
+  const marker = L.marker([landmark.lat, landmark.lng], { icon, zIndexOffset: 1000 });
 
-  marker.on("click", () => onSelect(landmark));
+  marker.on("click", (e: any) => {
+    // Prevent click bubbling to region polygon
+    (L as any).DomEvent.stopPropagation(e);
+    onSelectRef.current(landmark);
+  });
 
-  // Tooltip on hover
   marker.bindTooltip(
     `<div style="font-family:system-ui;font-size:12px;font-weight:600;color:#1b2632;padding:4px 8px;">
       ${LANDMARK_TYPE_CONFIG[landmark.type].emoji} ${landmark.name}

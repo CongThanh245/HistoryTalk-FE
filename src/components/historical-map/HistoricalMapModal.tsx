@@ -2,16 +2,29 @@
 
 // components/historical-map/HistoricalMapModal.tsx
 // Fullscreen modal chứa toàn bộ map experience
+// + Timeline trục thời gian
+// + Territory layer (GeoJSON polygon) thay đổi theo period
+// + Region hover card (Google Maps style)
+// + Region detail panel (right side)
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { X, Map, Filter, Loader2 } from "lucide-react";
 import type { Landmark, LandmarkType } from "@/services/landmark.service";
 import type { EventEraBackend } from "@/services/event.service";
+import {
+  PERIODS,
+  DEFAULT_PERIOD,
+  type RegionProperties,
+} from "@/services/period.service";
 import { LandmarkPanel } from "./LandmarkPanel";
 import { EventDetailPanel } from "./EventDetailPanel";
+import { RegionDetailPanel } from "./RegionDetailPanel";
+import { RegionHoverCard } from "./RegionHoverCard";
+import { TimelineSlider } from "./TimelineSlider";
 import { LANDMARK_TYPE_CONFIG, ERA_CONFIG_MAP } from "./landmark-config";
 import { useLandmarks } from "@/features/landmark/hooks";
+import { getRegionFeature, landmarksInRegion } from "./geo-utils";
 
 // Dynamic import LeafletMap để tránh SSR
 const LeafletMap = dynamic(
@@ -50,12 +63,32 @@ export function HistoricalMapModal({
   isOpen,
   onClose,
 }: HistoricalMapModalProps) {
+  // Selection state
   const [selectedLandmark, setSelectedLandmark] = useState<Landmark | null>(
     null,
   );
   const [selectedContextId, setSelectedContextId] = useState<string | null>(
     null,
   );
+  const [selectedRegion, setSelectedRegion] = useState<RegionProperties | null>(
+    null,
+  );
+
+  // Period state
+  const [periodId, setPeriodId] = useState<string>(DEFAULT_PERIOD.periodId);
+  const period = useMemo(
+    () => PERIODS.find((p) => p.periodId === periodId) ?? DEFAULT_PERIOD,
+    [periodId],
+  );
+
+  // Hover state for region card
+  const [hoveredRegion, setHoveredRegion] = useState<{
+    region: RegionProperties;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  // Filter state
   const [filterEra, setFilterEra] = useState<FilterEra>("ALL");
   const [filterType, setFilterType] = useState<FilterType>("ALL");
   const [showFilters, setShowFilters] = useState(false);
@@ -76,19 +109,24 @@ export function HistoricalMapModal({
 
   // Lock body scroll
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (isOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
     return () => {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
 
+  // Reset region selection when period changes
+  useEffect(() => {
+    setSelectedRegion(null);
+    setHoveredRegion(null);
+  }, [periodId]);
+
+  // ── Callbacks ──────────────────────────────────────────────
   const handleSelectLandmark = useCallback((landmark: Landmark) => {
     setSelectedLandmark(landmark);
-    setSelectedContextId(null); // reset event detail when switching landmark
+    setSelectedContextId(null);
+    setSelectedRegion(null); // landmark takes priority over region
   }, []);
 
   const handleCloseLandmark = useCallback(() => {
@@ -96,9 +134,31 @@ export function HistoricalMapModal({
     setSelectedContextId(null);
   }, []);
 
-  // if (!isOpen) return null;
+  const handleRegionHover = useCallback(
+    (region: RegionProperties | null, x: number, y: number) => {
+      if (region) setHoveredRegion({ region, x, y });
+      else setHoveredRegion(null);
+    },
+    [],
+  );
 
-  const panelOpen = !!selectedLandmark;
+  const handleRegionClick = useCallback((region: RegionProperties) => {
+    setSelectedRegion(region);
+    setSelectedLandmark(null); // close landmark panel
+    setSelectedContextId(null);
+    setHoveredRegion(null);
+  }, []);
+
+  // ── Landmarks in selected region ───────────────────────────
+  const regionLandmarks = useMemo(() => {
+    if (!selectedRegion) return [];
+    const feature = getRegionFeature(period.geojson, selectedRegion.regionId);
+    if (!feature) return [];
+    return landmarksInRegion(landmarks, feature);
+  }, [selectedRegion, period, landmarks]);
+
+  // ── Render ─────────────────────────────────────────────────
+  const panelOpen = !!selectedLandmark || !!selectedRegion;
 
   return (
     <div
@@ -107,7 +167,7 @@ export function HistoricalMapModal({
     >
       {/* Top bar */}
       <div
-        className="flex-shrink-0 flex items-center gap-3 px-4 h-14 z-10"
+        className="shrink-0 flex items-center gap-3 px-4 h-14 z-10"
         style={{
           background: "var(--palladian)",
           borderBottom: "1px solid var(--oatmeal)",
@@ -123,11 +183,10 @@ export function HistoricalMapModal({
             Bản đồ lịch sử Việt Nam
           </h2>
           <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-            {isLoading ? "Đang tải..." : `${landmarks.length} di tích lịch sử`}
+            {isLoading ? "Đang tải..." : `${landmarks.length} di tích · ${period.geojson.features.length} vùng lãnh thổ`}
           </p>
         </div>
 
-        {/* Filter toggle */}
         <button
           onClick={() => setShowFilters((v) => !v)}
           className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
@@ -148,7 +207,6 @@ export function HistoricalMapModal({
           Lọc
         </button>
 
-        {/* Close */}
         <button
           onClick={onClose}
           className="p-2 rounded-lg transition-colors hover:bg-black/5"
@@ -161,22 +219,15 @@ export function HistoricalMapModal({
       {/* Filter bar */}
       {showFilters && (
         <div
-          className="flex-shrink-0 flex flex-wrap gap-2 px-4 py-2.5 z-10"
+          className="shrink-0 flex flex-wrap gap-2 px-4 py-2.5 z-10"
           style={{
             background: "var(--palladian)",
             borderBottom: "1px solid var(--oatmeal)",
           }}
         >
-          {/* Era filters */}
           <div className="flex gap-1.5 flex-wrap">
             {(
-              [
-                "ALL",
-                "ANCIENT",
-                "MEDIEVAL",
-                "MODERN",
-                "CONTEMPORARY",
-              ] as FilterEra[]
+              ["ALL", "ANCIENT", "MEDIEVAL", "MODERN", "CONTEMPORARY"] as FilterEra[]
             ).map((era) => (
               <button
                 key={era}
@@ -202,7 +253,6 @@ export function HistoricalMapModal({
             style={{ background: "var(--oatmeal)" }}
           />
 
-          {/* Type filters */}
           <div className="flex gap-1.5 flex-wrap">
             {(
               [
@@ -250,10 +300,23 @@ export function HistoricalMapModal({
             landmarks={landmarks}
             selectedLandmarkId={selectedLandmark?.landmarkId ?? null}
             onSelectLandmark={handleSelectLandmark}
+            period={period}
+            selectedRegionId={selectedRegion?.regionId ?? null}
+            onRegionHover={handleRegionHover}
+            onRegionClick={handleRegionClick}
           />
 
-          {/* Hint overlay (only when no landmark selected) */}
-          {!selectedLandmark && !isLoading && (
+          {/* Floating hover card */}
+          {hoveredRegion && !selectedRegion && (
+            <RegionHoverCard
+              region={hoveredRegion.region}
+              x={hoveredRegion.x}
+              y={hoveredRegion.y}
+            />
+          )}
+
+          {/* Hint overlay */}
+          {!selectedLandmark && !selectedRegion && !hoveredRegion && !isLoading && (
             <div
               className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-full text-sm font-medium pointer-events-none"
               style={{
@@ -264,14 +327,14 @@ export function HistoricalMapModal({
                 backdropFilter: "blur(8px)",
               }}
             >
-              🗺️ Chọn một di tích để xem sự kiện lịch sử
+              🗺️ Di chuột vào vùng lãnh thổ hoặc click di tích để khám phá
             </div>
           )}
         </div>
 
         {/* Side panel */}
         <div
-          className="flex-shrink-0 overflow-hidden transition-all duration-300"
+          className="shrink-0 overflow-hidden transition-all duration-300"
           style={{
             width: panelOpen ? "360px" : "0px",
             borderLeft: panelOpen
@@ -297,8 +360,27 @@ export function HistoricalMapModal({
               )}
             </div>
           )}
+          {selectedRegion && !selectedLandmark && (
+            <div className="w-[360px] h-full overflow-hidden">
+              <RegionDetailPanel
+                region={selectedRegion}
+                periodName={period.name}
+                periodYear={period.year}
+                landmarksInRegion={regionLandmarks}
+                onClose={() => setSelectedRegion(null)}
+                onSelectLandmark={handleSelectLandmark}
+              />
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Timeline (đáy) */}
+      <TimelineSlider
+        periods={PERIODS}
+        currentPeriodId={periodId}
+        onChange={setPeriodId}
+      />
 
       {/* Custom Leaflet tooltip style */}
       <style>{`
