@@ -20,13 +20,13 @@ export default function CreateCharacterPage() {
 
   const handleSave = (draft: any) => {
     const payload = {
-      name: draft.name.trim(),
-      title: draft.title.trim(),
-      background: draft.background.trim() || undefined,
-      image: draft.image.trim() || undefined,
-      personality: draft.personality.trim() || undefined,
-      lifespan: draft.lifespan.trim() || undefined,
-      side: draft.side.trim() || undefined,
+      name: draft.name?.trim(),
+      title: draft.title?.trim(),
+      background: draft.background?.trim() || undefined,
+      image: draft.image?.trim() || undefined,
+      personality: draft.personality?.trim() || undefined,
+      lifespan: draft.lifespan?.trim() || undefined,
+      side: draft.side?.trim() || undefined,
       isDraft: draft.isDraft,
     };
 

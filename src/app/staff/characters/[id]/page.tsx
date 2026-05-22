@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { StaffCharacterDetailView, type CharacterDraft } from "@/components/staff/staff-character-detail-view";
 import { 
   useCharacter, 
@@ -13,6 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EditCharacterPage() {
   const { id } = useParams() as { id: string };
+  const searchParams = useSearchParams();
+  const initialEditing = searchParams.get("edit") === "true";
   
   const { data: character, isLoading: isLoadingChar } = useCharacter(id);
   const updateCharacter = useUpdateCharacter();
@@ -70,6 +72,7 @@ export default function EditCharacterPage() {
     <StaffCharacterDetailView
       mode="edit"
       initialDraft={initialDraft}
+      initialEditing={initialEditing}
       onSave={handleSave}
       isPending={updateCharacter.isPending}
       eventOptions={eventOptions}
