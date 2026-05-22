@@ -246,6 +246,7 @@ Yêu cầu role `SYSTEM_ADMIN`.
     "background": "string",
     "image": "string | null",
     "personality": "string",
+    "side": "string",
     "lifespan": "string",
     "era": "MEDIEVAL",
     "isActive": true,
