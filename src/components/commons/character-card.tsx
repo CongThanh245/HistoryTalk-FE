@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ChatTextIcon, SwordIcon } from "@phosphor-icons/react";
+import { ChatTextIcon } from "@phosphor-icons/react";
 import { DarkCard } from "@/components/commons/card";
 import { isValidUrl } from "@/lib/utils/url";
 
@@ -107,25 +108,67 @@ interface PageCardProps {
   onClick: (id: string) => void;
 }
 
+interface TypewriterTextProps {
+  text: string;
+  isHovered: boolean;
+  speed?: number;
+}
+
+export function TypewriterText({ text, isHovered, speed = 8 }: TypewriterTextProps) {
+  const [displayedText, setDisplayedText] = useState("");
+
+  useEffect(() => {
+    if (!isHovered) {
+      setDisplayedText("");
+      return;
+    }
+
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      if (currentIndex < text.length) {
+        setDisplayedText(text.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+      }
+    }, speed);
+
+    return () => clearInterval(interval);
+  }, [text, isHovered, speed]);
+
+  return <span>{displayedText}</span>;
+}
+
+function getChatCount(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const count = Math.abs(hash % 160) + 15; // range: 15K - 175K
+  return `${count.toFixed(1)}K`;
+}
+
 export function CharacterPageCard({ character, onClick }: PageCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const avatarSrc = isValidUrl(character.avatarUrl)
+    ? character.avatarUrl!
+    : (isValidUrl(character.imageUrl) ? character.imageUrl! : "/ngo-quyen.jpg");
+
   return (
     <button
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(character.id)}
-      className="group relative w-full flex flex-col text-left rounded-xl border overflow-hidden transition-all duration-200 cursor-pointer hover:-translate-y-1"
+      className="group relative w-full h-[400px] flex flex-col justify-end text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5"
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
       }}
     >
-      {/* Hover border glow */}
-      <div
-        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10"
-        style={{ boxShadow: "inset 0 0 0 1px rgba(201,162,77,0.35)" }}
-      />
-
-      {/* Ảnh */}
-      <div className="relative w-full overflow-hidden" style={{ height: "340px", background: "var(--card-light-border)" }}>
+      {/* Background Image & Gradient overlay */}
+      <div className="absolute inset-0 w-full h-full z-0">
         <Image
           src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
           alt={character.name}
@@ -136,122 +179,83 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         <div
           className="absolute inset-0"
           style={{
-            background:
-              "linear-gradient(to bottom, transparent 45%, var(--card-light-bg) 100%)",
+            background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 55%, transparent 100%)",
           }}
         />
-        {character.side && (
-          <div className="absolute top-3 right-3 z-10">
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm"
-              style={{
-                background: "rgba(201,162,77,0.18)",
-                color: "var(--gold-on-light)",
-                border: "1px solid rgba(201,162,77,0.3)",
-              }}
-            >
-              {character.side}
-            </span>
-          </div>
-        )}
-        {character.lifespan && (
-          <div className="absolute bottom-3 left-3 z-10">
-            <span
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
-              style={{
-                background: "rgba(255,255,255,0.85)",
-                color: "var(--content-muted)",
-                backdropFilter: "blur(4px)",
-              }}
-            >
-              {character.lifespan}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Content */}
-      <div className="px-4 pt-3 pb-4">
-        <h3
-          className="text-sm font-bold leading-snug mb-0.5 transition-colors group-hover:text-[var(--gold-on-light)]"
-          style={{ color: "var(--content-heading)" }}
-        >
+      {/* Badges */}
+      {character.side && (
+        <div className="absolute top-3 right-3 z-10">
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm"
+            style={{
+              background: "rgba(201,162,77,0.3)",
+              color: "#ffffff",
+              border: "1px solid rgba(201,162,77,0.5)",
+            }}
+          >
+            {character.side}
+          </span>
+        </div>
+      )}
+      {character.lifespan && (
+        <div className="absolute top-3 left-3 z-10">
+          <span
+            className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
+            style={{
+              background: "rgba(0,0,0,0.55)",
+              color: "#ffffff",
+              backdropFilter: "blur(4px)",
+            }}
+          >
+            {character.lifespan}
+          </span>
+        </div>
+      )}
+
+      {/* Normal State Text Content */}
+      <div className="relative px-4 pb-5 pt-20 z-20 text-white mt-auto pointer-events-none transition-opacity duration-300 group-hover:opacity-0">
+        <h3 className="text-base font-bold leading-snug mb-1 text-white">
           {character.name}
         </h3>
-        <p
-          className="text-[11px] mb-2.5"
-          style={{ color: "var(--gold-on-light)" }}
-        >
-          {character.title}
-        </p>
-
+        <div className="flex items-center gap-1.5 text-xs text-neutral-300 font-semibold mb-2">
+          <ChatTextIcon className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
+          <span>{getChatCount(character.id)}</span>
+          <span className="text-neutral-400 font-normal">· {character.title}</span>
+        </div>
         {character.description && (
-          <p
-            className="text-xs leading-relaxed line-clamp-2 mb-3"
-            style={{ color: "var(--content-muted)" }}
-          >
+          <p className="text-[11px] leading-relaxed text-neutral-300 line-clamp-2">
             {character.description}
           </p>
         )}
+      </div>
 
-        {/* Events */}
-        {character.events && character.events.length > 0 && (
-          <>
-            <div
-              className="h-px mb-3"
-              style={{ background: "var(--card-light-border)" }}
+      {/* Hover State Overlay */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 flex flex-col p-4 bg-neutral-950/85 backdrop-blur-[4px] text-white">
+        {/* Avatar top left */}
+        <div className="flex items-start mb-4">
+          <div className="relative w-12 h-12 rounded-full border-2 border-white overflow-hidden shadow-md">
+            <Image
+              src={avatarSrc}
+              alt={character.name}
+              fill
+              className="object-cover"
             />
-            <div className="space-y-1 mb-3">
-              <p
-                className="text-[10px] font-bold uppercase tracking-wider mb-1.5"
-                style={{ color: "var(--content-subtle)" }}
-              >
-                Bối cảnh lịch sử
-              </p>
-              {character.events.slice(0, 2).map((ev) => (
-                <div key={ev.id} className="flex items-center gap-1.5">
-                  <SwordIcon
-                    className="w-3 h-3 shrink-0"
-                    style={{ color: "var(--content-subtle)" }}
-                  />
-                  <span
-                    className="text-[11px] truncate"
-                    style={{ color: "var(--content-text)" }}
-                  >
-                    {ev.title}
-                  </span>
-                  <span
-                    className="text-[10px] shrink-0"
-                    style={{ color: "var(--content-subtle)" }}
-                  >
-                    {ev.year < 0 ? `${Math.abs(ev.year)} TCN` : ev.year}
-                  </span>
-                </div>
-              ))}
-              {character.events.length > 2 && (
-                <p
-                  className="text-[10px]"
-                  style={{ color: "var(--content-subtle)" }}
-                >
-                  +{character.events.length - 2} sự kiện khác
-                </p>
-              )}
-            </div>
-          </>
-        )}
+          </div>
+        </div>
 
-        {/* CTA */}
-        <div
-          className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg text-xs font-semibold opacity-0 group-hover:opacity-100 transition-all duration-150"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(201,162,77,0.10) 0%, rgba(163,81,57,0.06) 100%)",
-            border: "1px solid rgba(201,162,77,0.2)",
-            color: "var(--gold-on-light)",
-          }}
-        >
-          <ChatTextIcon className="w-3.5 h-3.5" />
-          Trò chuyện ngay
+        {/* Description text with typewriter effect */}
+        <div className="flex-1 text-xs leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium">
+          <TypewriterText text={character.description ?? ""} isHovered={isHovered} />
+        </div>
+
+        {/* Button Trò chuyện ngay */}
+        <div className="mt-4">
+          <div className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full text-xs font-bold bg-white text-black hover:bg-neutral-200 transition-colors shadow-lg">
+            <ChatTextIcon className="w-4 h-4 fill-current text-black" />
+            Trò chuyện ngay
+          </div>
         </div>
       </div>
     </button>
