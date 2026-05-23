@@ -14,6 +14,8 @@ export interface Character {
   era?: string;
   isActive?: boolean;
   isDraft?: boolean;
+  contextId?: string; // Linked historical context (from nested context.contextId)
+  context?: { contextId: string }; // Nested context object from API
   deletedAt?: string | null;
 }
 
@@ -49,6 +51,8 @@ export interface UpdateCharacterRequest extends Partial<CreateCharacterRequest> 
 
 function mapCharacter(raw: any): Character {
   const imageUrl = raw.image || raw.imageUrl || null;
+  // Handle nested context object from API
+  const contextId = raw.context?.contextId || raw.contextId;
   return {
     id: raw.characterId ?? raw.id,
     characterId: raw.characterId,
@@ -61,6 +65,8 @@ function mapCharacter(raw: any): Character {
     era: mapEraLabel(raw.era),
     isActive: raw.isActive,
     isDraft: raw.isDraft ?? false,
+    contextId,
+    context: raw.context,
     deletedAt: raw.deletedAt ?? null,
   };
 }
