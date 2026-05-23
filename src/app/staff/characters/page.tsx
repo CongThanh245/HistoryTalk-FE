@@ -18,9 +18,11 @@ import {
 } from "@/features/characters/hooks";
 import type { Character } from "@/services/character.service";
 import { isValidUrl } from "@/lib/utils/url";
+import { useIsStaff } from "@/features/auth/usePermission";
 
 export default function StaffCharactersPage() {
   const router = useRouter();
+  const isStaff = useIsStaff();
   const [search, setSearch] = React.useState("");
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<Character | null>(null);
@@ -36,8 +38,8 @@ export default function StaffCharactersPage() {
   const permanentDeleteCharacter = usePermanentDeleteCharacter();
 
   const allItems = data?.content ?? [];
-  const activeItems = allItems.filter((c) => !c.deletedAt);
-  const trashedItems = allItems.filter((c) => !!c.deletedAt);
+  const activeItems = allItems.filter((c) => c.isActive !== false);
+  const trashedItems = allItems.filter((c) => c.isActive === false);
   const filteredItems = showTrash ? trashedItems : activeItems;
 
   const items = React.useMemo(() => {
@@ -294,22 +296,24 @@ export default function StaffCharactersPage() {
                 }}
               />
             </div>
-            <Button
-              variant="outline"
-              className="h-10 rounded-xl px-4 font-semibold"
-              onClick={() => setShowTrash(!showTrash)}
-              style={{
-                borderColor: showTrash ? "var(--accent-danger)" : "var(--card-light-border)",
-                color: showTrash ? "var(--accent-danger)" : "var(--content-heading)",
-                background: showTrash ? "rgba(239,68,68,0.08)" : "transparent",
-              }}
-            >
-              {showTrash ? (
-                <><ArrowCounterClockwiseIcon className="h-4 w-4 mr-1.5" /> Danh sách</>
-              ) : (
-                <><TrashIcon className="h-4 w-4 mr-1.5" /> Thùng rác {trashedItems.length > 0 && `(${trashedItems.length})`}</>
-              )}
-            </Button>
+            {isStaff && (
+              <Button
+                variant="outline"
+                className="h-10 rounded-xl px-4 font-semibold"
+                onClick={() => setShowTrash(!showTrash)}
+                style={{
+                  borderColor: showTrash ? "var(--accent-danger)" : "var(--card-light-border)",
+                  color: showTrash ? "var(--accent-danger)" : "var(--content-heading)",
+                  background: showTrash ? "rgba(239,68,68,0.08)" : "transparent",
+                }}
+              >
+                {showTrash ? (
+                  <><ArrowCounterClockwiseIcon className="h-4 w-4 mr-1.5" /> Danh sách</>
+                ) : (
+                  <><TrashIcon className="h-4 w-4 mr-1.5" /> Thùng rác {trashedItems.length > 0 && `(${trashedItems.length})`}</>
+                )}
+              </Button>
+            )}
             {!showTrash && (
               <Button
                 className="h-10 rounded-xl px-4 font-semibold border-0"

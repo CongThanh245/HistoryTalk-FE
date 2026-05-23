@@ -31,6 +31,7 @@ export interface HistoricalEvent {
   era?: EventEraBackend;
   period?: string;
   isActive?: boolean;
+  isPublished?: boolean;
   deletedAt?: string | null;
 }
 export interface CreateEventRequest {
@@ -78,6 +79,7 @@ export function mapContext(raw: any): HistoricalEvent {
     era: raw.era as EventEraBackend,
     period: raw.period,
     isActive: raw.isActive ?? true,
+    isPublished: raw.isPublished ?? false,
     deletedAt: raw.deletedAt ?? null,
   };
 }

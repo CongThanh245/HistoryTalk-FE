@@ -1,9 +1,9 @@
 import { useAuthStore } from "@/store/auth.store";
 
-// Hook kiểm tra user có phải là staff/admin không
+// Hook kiểm tra user có phải là staff/admin không (CONTENT_ADMIN hoặc SYSTEM_ADMIN)
 export function useIsStaff() {
   const role = useAuthStore((s) => s.user?.role);
-  return role === "CONTENT_ADMIN";
+  return role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN";
 }
 
 // Hook kiểm tra user có phải là customer không

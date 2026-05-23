@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon } from "@phosphor-icons/react";
+import { useIsStaff } from "@/features/auth/usePermission";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ type DraftState = {
   imageUrl: string;
   videoUrl: string;
   isActive: boolean;
+  isPublished?: boolean;
 };
 
 const EMPTY_DRAFT: DraftState = {
@@ -63,6 +65,7 @@ const EMPTY_DRAFT: DraftState = {
   imageUrl: "",
   videoUrl: "",
   isActive: true,
+  isPublished: false,
 };
 
 // Constants for Select Options
@@ -75,6 +78,7 @@ const ERA_OPTIONS = [
 
 
 export default function StaffContextsPage() {
+  const isStaff = useIsStaff();
   const [search, setSearch] = React.useState("");
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [mode, setMode] = React.useState<"create" | "edit">("create");
@@ -98,11 +102,11 @@ export default function StaffContextsPage() {
   const deleteEvent = useDeleteEvent();
   const permanentDeleteEvent = usePermanentDeleteEvent();
 
-  const items = data?.content ?? [];
+  const allItems = data?.content ?? [];
 
   // FE filter: active vs trashed
-  const activeItems = items.filter((e) => !e.deletedAt);
-  const trashedItems = items.filter((e) => !!e.deletedAt);
+  const activeItems = allItems.filter((e) => e.isActive !== false);
+  const trashedItems = allItems.filter((e) => e.isActive === false);
   const displayedItems = showTrash ? trashedItems : activeItems;
 
   const set = (field: keyof DraftState) => (val: any) =>
@@ -119,6 +123,7 @@ export default function StaffContextsPage() {
       imageUrl: draft.imageUrl.trim() || undefined,
       videoUrl: draft.videoUrl.trim() || undefined,
       isActive: draft.isActive,
+      isPublished: draft.isPublished,
     };
 
     const name = payload.name;
@@ -180,21 +185,21 @@ export default function StaffContextsPage() {
         },
       },
       {
-        accessorKey: "isDraft",
+        accessorKey: "isPublished",
         header: "Trạng thái",
         cell: ({ row }) => {
-          const isActive = row.original.isActive ?? true;
+          const isPublished = row.original.isPublished ?? false;
           return (
             <div
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
               style={{
-                background: isActive ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
-                color: isActive ? "rgb(22,163,74)" : "rgb(220,38,38)",
-                border: `1px solid ${isActive ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                background: isPublished ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                color: isPublished ? "rgb(22,163,74)" : "rgb(220,38,38)",
+                border: `1px solid ${isPublished ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
               }}
             >
               <EyeIcon className="h-3 w-3" />
-              {isActive ? "Hoạt động" : "Vô hiệu"}
+              {isPublished ? "Công khai" : "Riêng tư"}
             </div>
           );
         },
@@ -251,6 +256,7 @@ export default function StaffContextsPage() {
                   imageUrl: e.imageUrl ?? "",
                   videoUrl: e.videoUrl ?? "",
                   isActive: e.isActive ?? true,
+                  isPublished: e.isPublished ?? false,
                 });
                 setDialogOpen(true);
               }}
@@ -413,22 +419,24 @@ export default function StaffContextsPage() {
                 }}
               />
             </div>
-            <Button
-              variant="outline"
-              className="h-10 rounded-xl px-4 font-semibold"
-              onClick={() => setShowTrash(!showTrash)}
-              style={{
-                borderColor: showTrash ? "var(--accent-danger)" : "var(--card-light-border)",
-                color: showTrash ? "var(--accent-danger)" : "var(--content-heading)",
-                background: showTrash ? "rgba(239,68,68,0.08)" : "transparent",
-              }}
-            >
-              {showTrash ? (
-                <><ArrowCounterClockwiseIcon className="h-4 w-4 mr-1.5" /> Danh sách</>
-              ) : (
-                <><TrashIcon className="h-4 w-4 mr-1.5" /> Thùng rác {trashedItems.length > 0 && `(${trashedItems.length})`}</>
-              )}
-            </Button>
+            {isStaff && (
+              <Button
+                variant="outline"
+                className="h-10 rounded-xl px-4 font-semibold"
+                onClick={() => setShowTrash(!showTrash)}
+                style={{
+                  borderColor: showTrash ? "var(--accent-danger)" : "var(--card-light-border)",
+                  color: showTrash ? "var(--accent-danger)" : "var(--content-heading)",
+                  background: showTrash ? "rgba(239,68,68,0.08)" : "transparent",
+                }}
+              >
+                {showTrash ? (
+                  <><ArrowCounterClockwiseIcon className="h-4 w-4 mr-1.5" /> Danh sách</>
+                ) : (
+                  <><TrashIcon className="h-4 w-4 mr-1.5" /> Thùng rác {trashedItems.length > 0 && `(${trashedItems.length})`}</>
+                )}
+              </Button>
+            )}
             {!showTrash && (
               <Button
                 className="h-10 rounded-xl px-4 font-semibold border-0"
@@ -551,20 +559,20 @@ export default function StaffContextsPage() {
                 </div>
               </div>
 
-              {/* isActive Toggle */}
+              {/* isPublished Toggle */}
               <div
                 className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors"
                 style={{
-                  borderColor: draft.isActive ? "rgba(34,197,94,0.35)" : "rgba(239,68,68,0.35)",
-                  background: draft.isActive ? "rgba(34,197,94,0.06)" : "rgba(239,68,68,0.06)",
+                  borderColor: draft.isPublished ? "rgba(34,197,94,0.35)" : "rgba(239,68,68,0.35)",
+                  background: draft.isPublished ? "rgba(34,197,94,0.06)" : "rgba(239,68,68,0.06)",
                 }}
               >
                 <div className="flex-1">
-                  <p className="text-sm font-semibold" style={{ color: draft.isActive ? "rgb(22,163,74)" : "rgb(220,38,38)" }}>
-                    {draft.isActive ? "Hoạt động" : "Vô hiệu"}
+                  <p className="text-sm font-semibold" style={{ color: draft.isPublished ? "rgb(22,163,74)" : "rgb(220,38,38)" }}>
+                    {draft.isPublished ? "Công khai" : "Riêng tư"}
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                    {draft.isActive
+                    {draft.isPublished
                       ? "Đang hiển thị công khai cho người dùng."
                       : "Không hiển thị cho người dùng."}
                   </p>
@@ -572,18 +580,18 @@ export default function StaffContextsPage() {
                 <button
                   type="button"
                   role="switch"
-                  aria-checked={draft.isActive}
-                  onClick={() => set("isActive")(!draft.isActive)}
+                  aria-checked={draft.isPublished}
+                  onClick={() => set("isPublished")(!draft.isPublished)}
                   className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                   style={{
-                    background: draft.isActive ? "rgb(34,197,94)" : "rgba(239,68,68,0.4)",
+                    background: draft.isPublished ? "rgb(34,197,94)" : "rgba(239,68,68,0.4)",
                   }}
                 >
                   <span
                     className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
                     style={{
                       background: "#fff",
-                      transform: draft.isActive ? "translateX(20px)" : "translateX(0)",
+                      transform: draft.isPublished ? "translateX(20px)" : "translateX(0)",
                     }}
                   />
                 </button>

@@ -52,6 +52,7 @@ export type CharacterDraft = {
   personality: string;
   lifespan: string;
   isActive?: boolean;
+  isPublished?: boolean;
 };
 
 export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
@@ -62,6 +63,7 @@ export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
   personality: "",
   lifespan: "",
   isActive: true,
+  isPublished: false,
 };
 
 interface StaffCharacterDetailViewProps {
@@ -111,7 +113,7 @@ export function StaffCharacterDetailView({
     
     // Deep comparison of relevant fields
     const keys: (keyof CharacterDraft)[] = [
-      "name", "title", "background", "image", "personality", "lifespan", "isActive"
+      "name", "title", "background", "image", "personality", "lifespan", "isActive", "isPublished"
     ];
     
     return keys.some(key => {
@@ -433,19 +435,19 @@ export function StaffCharacterDetailView({
               }}
             >
               <Checkbox
-                checked={draft.isActive}
+                checked={draft.isPublished}
                 onCheckedChange={(val) => {
-                  set("isActive")(!!val);
+                  set("isPublished")(!!val);
                 }}
                 disabled={!isEditing}
-                id="isActive"
+                id="isPublished"
               />
               <div className="flex-1">
-                <Label htmlFor="isActive" className="cursor-pointer text-sm font-medium">
-                  Đang hoạt động (Active)
+                <Label htmlFor="isPublished" className="cursor-pointer text-sm font-medium">
+                  Công khai (Published)
                 </Label>
                 <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                  Nhân vật đang hoạt động sẽ hiển thị cho người dùng. Bỏ tick để vô hiệu hóa.
+                  Nhân vật công khai sẽ hiển thị cho người dùng. Bỏ tick để ẩn.
                 </p>
               </div>
             </div>
@@ -726,15 +728,15 @@ export function StaffCharacterDetailView({
             <div
               className="absolute top-6 right-6 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
               style={{
-                background: draft.isActive ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
-                color: draft.isActive ? "rgb(22,163,74)" : "rgb(220,38,38)",
-                border: `1px solid ${draft.isActive ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+                background: draft.isPublished ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                color: draft.isPublished ? "rgb(22,163,74)" : "rgb(220,38,38)",
+                border: `1px solid ${draft.isPublished ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
                 boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
                 backdropFilter: "blur(8px)",
               }}
             >
               <EyeIcon className="h-4 w-4" />
-              {draft.isActive ? "HOẠT ĐỘNG" : "VÔ HIỆU"}
+              {draft.isPublished ? "CÔNG KHAI" : "RIÊNG TƯ"}
             </div>
           )}
         </div>
