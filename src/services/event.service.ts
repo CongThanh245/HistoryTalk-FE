@@ -48,6 +48,11 @@ export interface HistoricalEvent {
   isDraft?: boolean;
   isActive?: boolean;
   isPublished?: boolean;
+  characterIds?: {
+    _id?: string;
+    id?: string;
+    characterId?: string;
+  }[];
   deletedAt?: string | null;
 }
 
@@ -105,6 +110,7 @@ export function mapContext(raw: any): HistoricalEvent {
     isDraft: raw.isDraft,
     isActive: raw.isActive ?? true,
     isPublished: raw.isPublished ?? false,
+    characterIds: raw.characterIds ?? [],
     deletedAt: raw.deletedAt ?? null,
   };
 }
@@ -173,11 +179,11 @@ export const ERA_CONFIG: Record<
   EventEra,
   { label: string; range: [number, number] }
 > = {
-  all: { label: "Tat ca", range: [-Infinity, Infinity] },
-  ancient: { label: "Co dai", range: [-Infinity, 937] },
-  medieval: { label: "Trung dai", range: [938, 1857] },
-  modern: { label: "Can dai", range: [1858, 1944] },
-  contemporary: { label: "Hien dai", range: [1945, Infinity] },
+  all: { label: "Tất cả", range: [-Infinity, Infinity] },
+  ancient: { label: "Cổ đại", range: [-Infinity, 937] },
+  medieval: { label: "Trung đại", range: [938, 1857] },
+  modern: { label: "Cận đại", range: [1858, 1944] },
+  contemporary: { label: "Hiện đại", range: [1945, Infinity] },
 };
 
 export function getEraFromYear(year: number): Exclude<EventEra, "all"> {

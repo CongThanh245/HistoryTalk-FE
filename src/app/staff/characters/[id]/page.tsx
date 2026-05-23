@@ -24,6 +24,16 @@ export default function EditCharacterPage() {
     limit: 100,
   });
   const eventOptions = eventsData?.content || [];
+  const linkedContextId =
+    character?.contextId ??
+    eventOptions.find((event) =>
+      event.characterIds?.some(
+        (linkedCharacter) =>
+          linkedCharacter.characterId === character?.id ||
+          linkedCharacter.id === character?.backendId ||
+          linkedCharacter._id === character?.backendId,
+      ),
+    )?.id;
 
   const handleSave = (draft: CharacterDraft) => {
     const payload = {
@@ -84,7 +94,7 @@ export default function EditCharacterPage() {
         )
       }
       isMapContextPending={mapContextToCharacter.isPending}
-      initialContextId={character.contextId}
+      initialContextId={linkedContextId}
     />
   );
 }
