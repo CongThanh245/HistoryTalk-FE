@@ -1,8 +1,18 @@
-"use client"
+"use client";
 // components/layout/staff-sidebar.tsx
-import { STAFF_SIDEBAR } from "@/routers/sidebar";
+import { usePathname } from "next/navigation";
+import { STAFF_SIDEBAR, SYSTEM_ADMIN_SIDEBAR } from "@/routers/sidebar";
 import Sidebar from "./sidebar";
 
 export default function StaffSidebar() {
-  return <Sidebar sections={STAFF_SIDEBAR} showUpgrade={false} logoHref="/staff" />;
-}
+  const pathname = usePathname();
+  const isAdminPath = pathname.startsWith("/staff/admin");
+
+  return (
+    <Sidebar
+      sections={isAdminPath ? SYSTEM_ADMIN_SIDEBAR : STAFF_SIDEBAR}
+      showUpgrade={false}
+      logoHref={isAdminPath ? "/staff/admin" : "/staff"}
+    />
+  );
+}

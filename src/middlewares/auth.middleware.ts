@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_ROUTES = ["/login", "/register", "/"];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/",
+];
 const STAFF_ROUTES = ["/staff"];
 
 // Tất cả các route thuộc (app) group - chỉ dành cho customer

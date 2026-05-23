@@ -64,7 +64,7 @@ function mapCharacter(raw: any): Character {
     personality: raw.personality,
     lifespan: raw.lifespan,
     side: raw.side,
-    contextId: raw.contextId ?? raw.context?.contextId,
+    contextId: raw.context?.contextId ?? raw.context?.id ?? raw.contextId ?? undefined,
     role: raw.role,
     era: mapEraLabel(raw.era),
     isDraft: raw.isDraft ?? false,
