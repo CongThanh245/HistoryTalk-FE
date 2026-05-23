@@ -3,6 +3,7 @@ import { isValidUrl } from "@/lib/utils/url";
 import { ERA_CONFIG } from "./event.service";
 
 export interface Character {
+  backendId?: string;
   id: string;
   name: string;
   title: string;
@@ -61,6 +62,7 @@ function mapCharacter(raw: any): Character {
     raw.contextIds?.[0]?.contextId ??
     raw.contexts?.[0]?.contextId;
   return {
+    backendId: raw._id,
     id: raw.characterId ?? raw.id ?? `char-${Math.random().toString(36).slice(2)}`,
     name: raw.name,
     title: raw.title,
@@ -90,13 +92,15 @@ export const characterService = {
 
   getByContext: async (contextId: string): Promise<Character[]> => {
     const res = await axiosClient.get(`/characters/context/${contextId}`);
-    return res.data.data.map((raw: any): Character => {
+    const rawData = res.data.data;
+    const characters = Array.isArray(rawData) ? rawData : rawData?.characters ?? [];
+    return characters.map((raw: any): Character => {
       // Normalize raw để mapCharacter có thể xử lý đúng
       const normalized = {
         ...raw,
         characterId: raw.characterId ?? raw.id,
         image: raw.image ?? raw.imageUrl,
-        contextId: raw.context?.contextId ?? raw.contextId,
+        contextId: raw.context?.contextId ?? raw.contextId ?? contextId,
       };
       return mapCharacter(normalized);
     });
