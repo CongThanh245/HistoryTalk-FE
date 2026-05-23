@@ -44,58 +44,110 @@ export function CharacterCarouselCard({
   priority = false,
   onClick,
 }: CarouselCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const avatarSrc = isValidUrl(character.avatarUrl)
+    ? character.avatarUrl!
+    : (isValidUrl(character.imageUrl) ? character.imageUrl! : "/ngo-quyen.jpg");
+
   return (
-    <DarkCard
-      imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
-      imageAlt={character.name}
-      imageHeight="65%"
-      badge={{
-        label: character.era ?? "",
-        color: "var(--accent-gold)",
-        bg: "transparent",
-      }}
-      priority={priority}
+    <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick?.(character.id)}
+      className="group relative w-full h-full rounded-[var(--radius-lg)] overflow-hidden cursor-pointer"
     >
-      <h3
-        className="text-base font-bold line-clamp-1 transition-colors group-hover:text-[var(--accent-gold)]"
-        style={{ color: "var(--text-primary)" }}
+      <DarkCard
+        imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
+        imageAlt={character.name}
+        imageHeight="65%"
+        badge={{
+          label: character.era ?? "",
+          color: "var(--accent-gold)",
+          bg: "transparent",
+        }}
+        priority={priority}
       >
-        {character.name}
-      </h3>
-      <p
-        className="text-xs font-medium mt-0.5"
-        style={{ color: "var(--text-secondary)" }}
+        <h3
+          className="text-base font-bold line-clamp-1 transition-colors group-hover:text-[var(--accent-gold)]"
+          style={{ color: "var(--text-primary)" }}
+        >
+          {character.name}
+        </h3>
+        <p
+          className="text-xs font-medium mt-0.5"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          {character.role ?? character.title}
+        </p>
+        {character.side && (
+          <span
+            className="inline-block w-fit text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5"
+            style={{
+              background: "rgba(201,162,77,0.15)",
+              color: "var(--accent-gold-soft)",
+            }}
+          >
+            {character.side}
+          </span>
+        )}
+        <div className="mt-auto pt-3 flex items-center gap-2">
+          <div
+            className="h-px flex-1"
+            style={{
+              background:
+                "linear-gradient(to right, rgba(201,162,77,0.5), transparent)",
+            }}
+          />
+          <span
+            className="text-[10px] uppercase font-bold opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0"
+            style={{ color: "var(--accent-gold)" }}
+          >
+            Chat ngay
+          </span>
+        </div>
+      </DarkCard>
+
+      {/* Hover State Overlay */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 flex flex-col p-4 bg-neutral-950/85 backdrop-blur-[6px] text-white"
       >
-        {character.role ?? character.title}
-      </p>
-      {character.side && (
-        <span
-          className="inline-block w-fit text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5"
-          style={{
-            background: "rgba(201,162,77,0.15)",
-            color: "var(--accent-gold-soft)",
-          }}
-        >
-          {character.side}
-        </span>
-      )}
-      <div className="mt-auto pt-3 flex items-center gap-2">
-        <div
-          className="h-px flex-1"
-          style={{
-            background:
-              "linear-gradient(to right, rgba(201,162,77,0.5), transparent)",
-          }}
-        />
-        <span
-          className="text-[10px] uppercase font-bold opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0"
-          style={{ color: "var(--accent-gold)" }}
-        >
-          Chat ngay
-        </span>
+        {/* Avatar top left */}
+        <div className="flex items-start mb-4">
+          <div className="relative w-12 h-12 rounded-full border-2 border-[var(--accent-gold)] overflow-hidden shadow-md shrink-0">
+            <Image
+              src={avatarSrc}
+              alt={character.name}
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="ml-3 min-w-0">
+            <h4 className="text-sm font-bold text-white leading-tight truncate">
+              {character.name}
+            </h4>
+            {character.era && (
+              <p className="text-[10px] text-[var(--accent-gold-soft)] font-medium mt-0.5 truncate">
+                {character.era}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Description text with typewriter effect */}
+        <div className="flex-1 text-xs leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium">
+          <TypewriterText text={character.description ?? ""} isHovered={isHovered} />
+        </div>
+
+        {/* Button Trò chuyện ngay */}
+        <div className="mt-4">
+          <div className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full text-xs font-bold bg-[var(--accent-gold)] text-black hover:bg-[var(--accent-gold-soft)] transition-colors shadow-lg">
+            <ChatTextIcon className="w-4 h-4 fill-current text-black" />
+            Trò chuyện ngay
+          </div>
+        </div>
       </div>
-    </DarkCard>
+    </div>
   );
 }
 
