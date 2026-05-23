@@ -54,7 +54,7 @@ type DraftState = {
   location: string;
   imageUrl: string;
   videoUrl: string;
-  isDraft: boolean;
+  isPublished: boolean;
 };
 
 const EMPTY_DRAFT: DraftState = {
@@ -69,7 +69,7 @@ const EMPTY_DRAFT: DraftState = {
   location: "",
   imageUrl: "",
   videoUrl: "",
-  isDraft: true,
+  isPublished: false,
 };
 
 // Constants for Select Options
@@ -136,7 +136,7 @@ export default function StaffContextsPage() {
       location: draft.location.trim() || undefined,
       imageUrl: draft.imageUrl.trim() || undefined,
       videoUrl: draft.videoUrl.trim() || undefined,
-      isDraft: draft.isDraft,
+      isPublished: draft.isPublished,
     };
 
     const name = payload.name;
@@ -144,7 +144,7 @@ export default function StaffContextsPage() {
       createEvent.mutate(payload, {
         onSuccess: () => {
           setDialogOpen(false);
-          if (payload.isDraft) {
+          if (!payload.isPublished) {
             toast("Đã lưu bản nháp", {
               description: `"${name}" được lưu dạng bản nháp.`,
               duration: 4000,
@@ -164,7 +164,7 @@ export default function StaffContextsPage() {
         {
           onSuccess: () => {
             setDialogOpen(false);
-            if (payload.isDraft) {
+            if (!payload.isPublished) {
               toast("Đã lưu bản nháp", {
                 description: `"${name}" được lưu dạng bản nháp.`,
                 duration: 4000,
@@ -214,10 +214,10 @@ export default function StaffContextsPage() {
         },
       },
       {
-        accessorKey: "isDraft",
+        accessorKey: "isPublished",
         header: "Trạng thái",
         cell: ({ row }) => {
-          const isDraft = row.original.isDraft;
+          const isDraft = !row.original.isPublished;
           return (
             <div
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
@@ -228,7 +228,7 @@ export default function StaffContextsPage() {
               }}
             >
               <EyeIcon className="h-3 w-3" />
-              {isDraft ? "Bản nháp" : "Đã công bố"}
+              {isDraft ? "Chưa công bố" : "Đã công bố"}
             </div>
           );
         },
@@ -289,7 +289,7 @@ export default function StaffContextsPage() {
                   location: e.location ?? "",
                   imageUrl: e.imageUrl ?? "",
                   videoUrl: e.videoUrl ?? "",
-                  isDraft: e.isDraft ?? false,
+                  isPublished: e.isPublished ?? false,
                 });
                 setDialogOpen(true);
               }}
@@ -619,20 +619,20 @@ export default function StaffContextsPage() {
                 <StaffFormLabel>Trước Công Nguyên (TCN)</StaffFormLabel>
               </div>
 
-              {/* isDraft Toggle */}
+              {/* isPublished Toggle */}
               <div
                 className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors"
                 style={{
-                  borderColor: draft.isDraft ? "rgba(234,179,8,0.35)" : "rgba(34,197,94,0.35)",
-                  background: draft.isDraft ? "rgba(254,243,199,0.25)" : "rgba(34,197,94,0.06)",
+                  borderColor: draft.isPublished ? "rgba(34,197,94,0.35)" : "rgba(234,179,8,0.35)",
+                  background: draft.isPublished ? "rgba(34,197,94,0.06)" : "rgba(254,243,199,0.25)",
                 }}
               >
                 <div className="flex-1">
-                  <p className="text-sm font-semibold" style={{ color: draft.isDraft ? "#92400e" : "rgb(22,163,74)" }}>
-                    {draft.isDraft ? "Bản nháp" : "Đã xuất bản"}
+                  <p className="text-sm font-semibold" style={{ color: draft.isPublished ? "rgb(22,163,74)" : "#92400e" }}>
+                    {draft.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                    {draft.isDraft
+                    {!draft.isPublished
                       ? "Chưa hiển thị cho học sinh."
                       : "Đang hiển thị công khai cho người dùng."}
                   </p>
@@ -640,24 +640,24 @@ export default function StaffContextsPage() {
                 <button
                   type="button"
                   role="switch"
-                  aria-checked={!draft.isDraft}
+                  aria-checked={draft.isPublished}
                   onClick={() => {
-                    if (draft.isDraft) {
+                    if (!draft.isPublished) {
                       setPublishDialogOpen(true);
                     } else {
-                      set("isDraft")(true);
+                      set("isPublished")(false);
                     }
                   }}
                   className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                   style={{
-                    background: draft.isDraft ? "rgba(234,179,8,0.4)" : "rgb(34,197,94)",
+                    background: draft.isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)",
                   }}
                 >
                   <span
                     className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
                     style={{
                       background: "#fff",
-                      transform: draft.isDraft ? "translateX(0)" : "translateX(20px)",
+                      transform: draft.isPublished ? "translateX(20px)" : "translateX(0)",
                     }}
                   />
                 </button>
@@ -711,7 +711,7 @@ export default function StaffContextsPage() {
         confirmLabel="Đồng ý, xuất bản"
         variant="warning"
         onConfirm={() => {
-          set("isDraft")(false);
+          set("isPublished")(true);
           setPublishDialogOpen(false);
         }}
       />

@@ -112,6 +112,7 @@ export function usePermanentDeleteStaffQuiz() {
 }
 
 // PATCH /staff/quizzes/{quizId}/restore — khôi phục
+// DELETE /staff/quizzes/{quizId}/questions/{questionId} — xóa câu hỏi
 export function useRestoreStaffQuiz() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -122,7 +123,6 @@ export function useRestoreStaffQuiz() {
   });
 }
 
-// DELETE /staff/quizzes/{quizId}/questions/{questionId} — xóa câu hỏi
 export function useDeleteQuizQuestion() {
   const queryClient = useQueryClient();
   return useMutation({

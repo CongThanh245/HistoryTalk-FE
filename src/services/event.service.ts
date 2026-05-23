@@ -1,18 +1,19 @@
 import { axiosClient } from "@/configs/axios.client";
 import { isValidUrl } from "@/lib/utils/url";
-// import { axiosServer } from "@/configs/axios.server";
 
-// ── Types map với backend ────────────────────────────────
+export type EventEra =
+  | "all"
+  | "ancient"
+  | "medieval"
+  | "modern"
+  | "contemporary";
 
-// UI dùng lowercase
-export type EventCategoryLower =
-  | "war"
-  | "politics"
-  | "culture"
-  | "science"
-  | "religion"
-  | "other";
-// Backend dùng uppercase
+export type EventEraBackend =
+  | "ANCIENT"
+  | "MEDIEVAL"
+  | "MODERN"
+  | "CONTEMPORARY";
+
 export type EventCategory =
   | "WAR"
   | "POLITICS"
@@ -21,21 +22,14 @@ export type EventCategory =
   | "RELIGION"
   | "OTHER";
 
-// UI dùng lowercase + "all"
-export type EventEra =
-  | "all"
-  | "ancient"
-  | "medieval"
-  | "modern"
-  | "contemporary";
-// Backend dùng uppercase, không có "all"
-export type EventEraBackend =
-  | "ANCIENT"
-  | "MEDIEVAL"
-  | "MODERN"
-  | "CONTEMPORARY";
+export type EventCategoryLower =
+  | "war"
+  | "politics"
+  | "culture"
+  | "science"
+  | "religion"
+  | "other";
 
-// Map với backend response
 export interface HistoricalEvent {
   id: string;
   year: number;
@@ -52,13 +46,16 @@ export interface HistoricalEvent {
   endYear?: number;
   beforeTCN?: boolean;
   isDraft?: boolean;
+  isActive?: boolean;
+  isPublished?: boolean;
   deletedAt?: string | null;
 }
+
 export interface CreateEventRequest {
   name: string;
   description: string;
   era: EventEraBackend;
-  category: EventCategory;
+  category?: EventCategory;
   year: number;
   startYear?: number;
   endYear?: number;
@@ -66,16 +63,17 @@ export interface CreateEventRequest {
   location?: string;
   imageUrl?: string | null;
   videoUrl?: string | null;
-  isDraft?: boolean;
+  isActive?: boolean;
+  isPublished?: boolean;
 }
+
 export interface UpdateEventRequest extends Partial<CreateEventRequest> {}
 
 export interface GetEventsParams {
   search?: string;
   page?: number;
   limit?: number;
-  era?: EventEraBackend; // ANCIENT | MEDIEVAL | MODERN | CONTEMPORARY
-  category?: EventCategory; // WAR | POLITICS | CULTURE | SCIENCE | RELIGION | OTHER
+  era?: EventEraBackend;
 }
 
 export interface GetEventsResponse {
@@ -88,16 +86,14 @@ export interface GetEventsResponse {
   hasPrevious: boolean;
 }
 
-// ── Map backend → HistoricalEvent ───────────────────────
-
 export function mapContext(raw: any): HistoricalEvent {
   return {
     id: raw.contextId,
     title: raw.name,
     summary: raw.description,
-    year: raw.year ?? raw.startYear ?? 0,
+    year: raw.year ?? 0,
     yearLabel: raw.yearLabel,
-    category: (raw.category?.toLowerCase() as EventCategoryLower) ?? "other",
+    category: (raw.category?.toLowerCase() as EventCategoryLower | undefined) ?? "other",
     location: raw.location,
     imageUrl: isValidUrl(raw.imageUrl) ? raw.imageUrl : null,
     videoUrl: isValidUrl(raw.videoUrl) ? raw.videoUrl : null,
@@ -106,16 +102,14 @@ export function mapContext(raw: any): HistoricalEvent {
     startYear: raw.startYear,
     endYear: raw.endYear,
     beforeTCN: raw.beforeTCN,
-    isDraft: raw.isDraft ?? false,
+    isDraft: raw.isDraft,
+    isActive: raw.isActive ?? true,
+    isPublished: raw.isPublished ?? false,
     deletedAt: raw.deletedAt ?? null,
   };
 }
 
-// ── Service ──────────────────────────────────────────────
-
 export const eventService = {
-  // Server-side (prefetch trong Server Component)
-  // Client-side (dùng trong hooks)
   getAllClient: async (
     params?: GetEventsParams,
   ): Promise<GetEventsResponse> => {
@@ -126,15 +120,15 @@ export const eventService = {
       .map(mapContext)
       .sort((a: HistoricalEvent, b: HistoricalEvent) => {
         if (a.year !== b.year) return a.year - b.year;
-        if (a.startYear !== b.startYear)
-          return (a.startYear ?? 0) - (b.startYear ?? 0);
         return a.title.localeCompare(b.title, "vi");
       });
 
     return { ...raw, content };
   },
+
   create: async (data: CreateEventRequest): Promise<HistoricalEvent> => {
-    const res = await axiosClient.post("/historical-contexts", data);
+    const payload = toContractEventPayload(data);
+    const res = await axiosClient.post("/historical-contexts", payload);
     return mapContext(res.data.data);
   },
 
@@ -142,7 +136,8 @@ export const eventService = {
     id: string,
     data: UpdateEventRequest,
   ): Promise<HistoricalEvent> => {
-    const res = await axiosClient.put(`/historical-contexts/${id}`, data);
+    const payload = toContractEventPayload(data);
+    const res = await axiosClient.put(`/historical-contexts/${id}`, payload);
     return mapContext(res.data.data);
   },
 
@@ -153,23 +148,36 @@ export const eventService = {
   softDelete: async (id: string): Promise<void> => {
     await axiosClient.patch(`/historical-contexts/${id}/soft-delete`);
   },
+
   getById: async (id: string): Promise<HistoricalEvent> => {
     const res = await axiosClient.get(`/historical-contexts/${id}`);
     return mapContext(res.data.data);
   },
 };
 
-// ── Era helpers ──────────────────────────────────────────
+function toContractEventPayload(data: UpdateEventRequest) {
+  return {
+    ...(data.name !== undefined && { name: data.name }),
+    ...(data.description !== undefined && { description: data.description }),
+    ...(data.era !== undefined && { era: data.era }),
+    ...(data.year !== undefined && { year: data.year }),
+    ...(data.location !== undefined && { location: data.location }),
+    ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
+    ...(data.videoUrl !== undefined && { videoUrl: data.videoUrl }),
+    ...(data.isActive !== undefined && { isActive: data.isActive }),
+    ...(data.isPublished !== undefined && { isPublished: data.isPublished }),
+  };
+}
 
 export const ERA_CONFIG: Record<
   EventEra,
   { label: string; range: [number, number] }
 > = {
-  all: { label: "Tất cả", range: [-Infinity, Infinity] },
-  ancient: { label: "Cổ đại", range: [-Infinity, 937] },
-  medieval: { label: "Trung đại", range: [938, 1857] },
-  modern: { label: "Cận đại", range: [1858, 1944] },
-  contemporary: { label: "Hiện đại", range: [1945, Infinity] },
+  all: { label: "Tat ca", range: [-Infinity, Infinity] },
+  ancient: { label: "Co dai", range: [-Infinity, 937] },
+  medieval: { label: "Trung dai", range: [938, 1857] },
+  modern: { label: "Can dai", range: [1858, 1944] },
+  contemporary: { label: "Hien dai", range: [1945, Infinity] },
 };
 
 export function getEraFromYear(year: number): Exclude<EventEra, "all"> {

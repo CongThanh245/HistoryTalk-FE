@@ -18,11 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isValidUrl } from "@/lib/utils/url";
 import {
   StaffFormLabel,
   StaffFormInput,
   StaffFormTextarea,
-  StaffFormSelect,
 } from "@/components/staff/staff-form";
 import {
   Select,
@@ -35,8 +35,8 @@ import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { ChatMain } from "@/components/chat/chat-main";
 import { useChatSessions, useCreateSession } from "@/features/chat/hooks";
 import type { ChatCharacter } from "@/services/chat.service";
-import type { HistoricalEvent, EventEraBackend, EventCategory } from "@/services/event.service";
-import { useCreateEvent, useUpdateEvent } from "@/features/events/hooks";
+import type { HistoricalEvent, EventEraBackend } from "@/services/event.service";
+import { useCreateEvent } from "@/features/events/hooks";
 import { toast } from "sonner";
 
 /* ------------------------------------------------------------------ */
@@ -51,8 +51,8 @@ export type CharacterDraft = {
   image: string;
   personality: string;
   lifespan: string;
-  side: string;
-  isDraft: boolean;
+  isActive: boolean;
+  isPublished: boolean;
 };
 
 export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
@@ -62,8 +62,8 @@ export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
   image: "",
   personality: "",
   lifespan: "",
-  side: "",
-  isDraft: true,
+  isActive: true,
+  isPublished: false,
 };
 
 interface StaffCharacterDetailViewProps {
@@ -76,7 +76,11 @@ interface StaffCharacterDetailViewProps {
   /** After a character is created/exists, this is the created character id */
   createdCharacterId?: string | null;
   /** Callback to map a context to the character */
-  onMapContext: (characterId: string, contextId: string) => void;
+  onMapContext: (
+    characterId: string,
+    contextId: string,
+    options?: { onSuccess?: () => void },
+  ) => void;
   isMapContextPending?: boolean;
   /** The currently mapped contextId (from character data) */
   initialContextId?: string;
@@ -116,7 +120,7 @@ export function StaffCharacterDetailView({
     
     // Deep comparison of relevant fields
     const keys: (keyof CharacterDraft)[] = [
-      "name", "title", "background", "image", "personality", "lifespan", "side", "isDraft"
+      "name", "title", "background", "image", "personality", "lifespan", "isActive", "isPublished"
     ];
     
     return keys.some(key => {
@@ -144,18 +148,10 @@ export function StaffCharacterDetailView({
     name: "",
     description: "",
     era: "" as EventEraBackend | "",
-    category: "" as EventCategory | "",
+    category: "",
     year: "",
   });
   const createEvent = useCreateEvent();
-  const updateEvent = useUpdateEvent();
-
-  const linkedContext = React.useMemo(() => {
-    if (!mappedContextId) return null;
-    return eventOptions.find((e) => e.id === mappedContextId);
-  }, [mappedContextId, eventOptions]);
-
-  const isContextDraft = linkedContext?.isDraft ?? false;
 
   // Reset state/sync when props change (especially for edit mode)
   React.useEffect(() => {
@@ -232,8 +228,7 @@ export function StaffCharacterDetailView({
     name: draft.name || "Nhân vật mới",
     title: draft.title || "Chức vị",
     description: draft.background || undefined,
-    imageUrl: draft.image || "",
-    side: draft.side || undefined,
+    imageUrl: isValidUrl(draft.image) ? draft.image : "",
     contextId: mappedContextId || undefined,
   };
 
@@ -243,10 +238,13 @@ export function StaffCharacterDetailView({
   /* Handle context mapping */
   const handleMapContext = () => {
     if (!selectedContextId || !characterId) return;
-    onMapContext(characterId, selectedContextId);
-    setMappedContextId(selectedContextId);
-    setSessionId(null);
-    sessionInitialized.current = false;
+    onMapContext(characterId, selectedContextId, {
+      onSuccess: () => {
+        setMappedContextId(selectedContextId);
+        setSessionId(null);
+        sessionInitialized.current = false;
+      },
+    });
   };
 
   /* Get the name of the mapped context */
@@ -284,7 +282,7 @@ export function StaffCharacterDetailView({
               className="w-10 h-10 rounded-lg overflow-hidden relative shrink-0"
               style={{ background: "var(--card-light-border)" }}
             >
-              {draft.image && (
+              {isValidUrl(draft.image) && (
                 <Image
                   src={draft.image}
                   alt={draft.name || "avatar"}
@@ -388,15 +386,6 @@ export function StaffCharacterDetailView({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
-                <StaffFormLabel>Phe / Quốc gia</StaffFormLabel>
-                <StaffFormInput
-                  value={draft.side}
-                  onChange={(e) => set("side")(e.target.value)}
-                  placeholder="VD: Đại Việt"
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="grid gap-1.5">
                 <StaffFormLabel>Năm sống</StaffFormLabel>
                 <StaffFormInput
                   value={draft.lifespan}
@@ -451,28 +440,26 @@ export function StaffCharacterDetailView({
               }}
             >
               <Checkbox
-                checked={draft.isDraft}
+                checked={draft.isPublished}
                 onCheckedChange={(val) => {
-                  if (!val) {
-                    // Cố gắng bỏ tick (sang trạng thái Published)
-                    if (!mappedContextId) return; // Vẫn giữ rule cũ: cần context mới được publish
+                  if (val) {
+                    if (!mappedContextId) return;
                     setPublishDialogOpen(true);
                   } else {
-                    // Tick vào (sang trạng thái Draft)
-                    set("isDraft")(true);
+                    set("isPublished")(false);
                   }
                 }}
-                disabled={!isEditing || (!draft.isDraft && !mappedContextId)}
-                id="isDraft"
+                disabled={!isEditing}
+                id="isPublished"
               />
               <div className="flex-1">
-                <Label htmlFor="isDraft" className="cursor-pointer text-sm font-medium">
-                  Lưu dạng bản nháp (Draft)
+                <Label htmlFor="isPublished" className="cursor-pointer text-sm font-medium">
+                  Xuất bản cho người dùng
                 </Label>
                 <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
                   {!mappedContextId && isEditing
                     ? "⚠ Cần liên kết bối cảnh lịch sử trước khi xuất bản."
-                    : "Bản nháp không hiển thị cho học sinh. Bỏ tick để xuất bản."}
+                    : "Chỉ nhân vật có isPublished = true mới hiển thị cho người dùng."}
                 </p>
               </div>
             </div>
@@ -480,21 +467,11 @@ export function StaffCharacterDetailView({
             <ConfirmDialog
               open={publishDialogOpen}
               onOpenChange={setPublishDialogOpen}
-              title={isContextDraft ? "Xác nhận xuất bản nhân vật & bối cảnh?" : "Xác nhận xuất bản nhân vật?"}
-              description={
-                isContextDraft
-                  ? 'Nhân vật này đang liên kết với bối cảnh "' + (linkedContext?.title || "") + '" hiện đang là bản nháp. Việc xuất bản nhân vật sẽ đồng thời xuất bản bối cảnh này để người dùng có thể xem được đầy đủ thông tin. Bạn có chắc chắn muốn thực hiện không?'
-                  : 'Khi bỏ chọn "Bản nháp", nhân vật này sẽ được hiển thị công khai cho người dùng. Bạn có chắc chắn muốn thực hiện không?'
-              }
+              title="Xác nhận xuất bản nhân vật?"
+              description="Khi xuất bản, nhân vật này sẽ được hiển thị công khai cho người dùng."
               confirmLabel="Đồng ý, xuất bản"
               onConfirm={() => {
-                if (isContextDraft && mappedContextId) {
-                  updateEvent.mutate(
-                    { id: mappedContextId, data: { isDraft: false } },
-                    { onSuccess: () => toast.success("Bối cảnh đã được xuất bản") },
-                  );
-                }
-                set("isDraft")(false);
+                set("isPublished")(true);
                 setPublishDialogOpen(false);
               }}
             />
@@ -652,7 +629,7 @@ export function StaffCharacterDetailView({
                           <Label className="text-[11px]">Danh mục *</Label>
                           <Select
                             value={quickCtx.category}
-                            onValueChange={(v) => setQuickCtx((s) => ({ ...s, category: v as EventCategory }))}
+                            onValueChange={(v) => setQuickCtx((s) => ({ ...s, category: v }))}
                           >
                             <SelectTrigger className="h-9 text-xs">
                               <SelectValue placeholder="Chọn danh mục" />
@@ -692,7 +669,6 @@ export function StaffCharacterDetailView({
                         disabled={
                           !quickCtx.name.trim() ||
                           !quickCtx.era ||
-                          !quickCtx.category ||
                           !quickCtx.year ||
                           createEvent.isPending
                         }
@@ -703,7 +679,6 @@ export function StaffCharacterDetailView({
                               name: quickCtx.name.trim(),
                               description: quickCtx.description.trim() || quickCtx.name.trim(),
                               era: quickCtx.era as EventEraBackend,
-                              category: quickCtx.category as EventCategory,
                               year: Number(quickCtx.year),
                             },
                             {
@@ -774,15 +749,15 @@ export function StaffCharacterDetailView({
             <div
               className="absolute top-6 right-6 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
               style={{
-                background: draft.isDraft ? "rgba(234,179,8,0.1)" : "rgba(34,197,94,0.1)",
-                color: draft.isDraft ? "rgb(161,98,7)" : "rgb(22,163,74)",
-                border: `1px solid ${draft.isDraft ? "rgba(234,179,8,0.2)" : "rgba(34,197,94,0.2)"}`,
+                background: draft.isPublished ? "rgba(34,197,94,0.1)" : "rgba(234,179,8,0.1)",
+                color: draft.isPublished ? "rgb(22,163,74)" : "rgb(161,98,7)",
+                border: `1px solid ${draft.isPublished ? "rgba(34,197,94,0.2)" : "rgba(234,179,8,0.2)"}`,
                 boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
                 backdropFilter: "blur(8px)",
               }}
             >
               <EyeIcon className="h-4 w-4" />
-              {draft.isDraft ? "BẢN NHÁP" : "ĐÃ XUẤT BẢN"}
+              {draft.isPublished ? "ĐÃ XUẤT BẢN" : "CHƯA XUẤT BẢN"}
             </div>
           )}
         </div>

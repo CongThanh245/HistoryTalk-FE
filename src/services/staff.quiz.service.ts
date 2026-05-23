@@ -1,14 +1,10 @@
 import { axiosClient } from "@/configs/axios.client";
 
-// ── Types ──────────────────────────────────────────────────
-
 export type StaffQuizEra =
   | "ANCIENT"
   | "MEDIEVAL"
   | "MODERN"
   | "CONTEMPORARY";
-
-// ── Question types ─────────────────────────────────────────
 
 export interface StaffQuizQuestion {
   questionId: string;
@@ -23,11 +19,9 @@ export interface CreateQuestionPayload {
   content: string;
   options: string[];
   correctAnswer: number;
-  orderIndex: number;
+  orderIndex?: number;
   explanation?: string;
 }
-
-// ── Quiz types ─────────────────────────────────────────────
 
 export interface StaffQuizSet {
   quizId: string;
@@ -45,15 +39,13 @@ export interface StaffQuizSet {
   createdBy: string;
   createdDate: string;
   updatedDate: string;
+  isActive: boolean;
   deletedAt?: string | null;
   questions: StaffQuizQuestion[];
 }
 
-// ── Request / Response types ───────────────────────────────
-
 export interface GetStaffQuizzesParams {
   search?: string;
-  grade?: number;
   era?: StaffQuizEra;
   page?: number;
   size?: number;
@@ -71,17 +63,16 @@ export interface GetStaffQuizzesResponse {
 
 export interface CreateQuizPayload {
   title: string;
-  description: string;
+  description?: string;
   contextId: string;
-  grade: number;
-  chapterNumber: number;
-  chapterTitle: string;
+  grade?: number;
+  chapterNumber?: number;
+  chapterTitle?: string;
   era: StaffQuizEra;
-  durationSeconds: number;
+  durationSeconds?: number;
   questions: CreateQuestionPayload[];
 }
 
-// Partial update — tất cả field đều optional
 export interface UpdateQuizPayload {
   title?: string;
   description?: string;
@@ -97,12 +88,8 @@ export interface UpdateQuestionPayload {
   content?: string;
   options?: string[];
   correctAnswer?: number;
-  orderIndex?: number;
   explanation?: string;
 }
-
-
-// ── Map functions ──────────────────────────────────────────
 
 export function mapStaffQuestion(raw: any): StaffQuizQuestion {
   return {
@@ -110,7 +97,7 @@ export function mapStaffQuestion(raw: any): StaffQuizQuestion {
     content: raw.content,
     options: raw.options ?? [],
     correctAnswer: raw.correctAnswer,
-    orderIndex: raw.orderIndex,
+    orderIndex: raw.orderIndex ?? 0,
     explanation: raw.explanation,
   };
 }
@@ -132,15 +119,13 @@ export function mapStaffQuizSet(raw: any): StaffQuizSet {
     createdBy: raw.createdBy ?? "",
     createdDate: raw.createdDate ?? "",
     updatedDate: raw.updatedDate ?? "",
+    isActive: raw.isActive ?? true,
     deletedAt: raw.deletedAt ?? null,
     questions: (raw.questions ?? []).map(mapStaffQuestion),
   };
 }
 
-// ── Service ────────────────────────────────────────────────
-
 export const staffQuizService = {
-  // GET /staff/quizzes — danh sách bộ quiz (staff)
   getAll: async (
     params?: GetStaffQuizzesParams,
   ): Promise<GetStaffQuizzesResponse> => {
@@ -152,40 +137,35 @@ export const staffQuizService = {
     };
   },
 
-  // POST /staff/quizzes — tạo bộ quiz mới
   create: async (payload: CreateQuizPayload): Promise<StaffQuizSet> => {
-    const res = await axiosClient.post("/staff/quizzes", payload);
+    const res = await axiosClient.post("/staff/quizzes", toContractQuizPayload(payload));
     return mapStaffQuizSet(res.data.data);
   },
 
-  // POST /staff/quizzes/{quizId}/questions — thêm câu hỏi vào quiz
   addQuestion: async (
     quizId: string,
     payload: CreateQuestionPayload,
   ): Promise<StaffQuizQuestion> => {
     const res = await axiosClient.post(
       `/staff/quizzes/${quizId}/questions`,
-      payload,
+      toContractQuestionPayload(payload),
     );
     return mapStaffQuestion(res.data.data);
   },
 
-  // GET /staff/quizzes/{quizId} — chi tiết quiz kèm toàn bộ câu hỏi
   getById: async (quizId: string): Promise<StaffQuizSet> => {
     const res = await axiosClient.get(`/staff/quizzes/${quizId}`);
     return mapStaffQuizSet(res.data.data);
   },
 
-  // PUT /staff/quizzes/{quizId} — cập nhật thông tin quiz
   updateQuiz: async (
     quizId: string,
     payload: UpdateQuizPayload,
   ): Promise<StaffQuizSet> => {
-    const res = await axiosClient.put(`/staff/quizzes/${quizId}`, payload);
+    const res = await axiosClient.put(`/staff/quizzes/${quizId}`, toContractQuizPayload(payload));
     return mapStaffQuizSet(res.data.data);
   },
 
-  // PUT /staff/quizzes/{quizId}/questions/{questionId} — sửa câu hỏi
   updateQuestion: async (
     quizId: string,
     questionId: string,
@@ -193,26 +173,22 @@ export const staffQuizService = {
   ): Promise<void> => {
     await axiosClient.put(
       `/staff/quizzes/${quizId}/questions/${questionId}`,
-      payload,
+      toContractQuestionPayload(payload as CreateQuestionPayload),
     );
   },
 
-  // DELETE /staff/quizzes/{quizId} — xóa bộ quiz (permanent)
   permanentDelete: async (quizId: string): Promise<void> => {
     await axiosClient.delete(`/staff/quizzes/${quizId}`);
   },
 
-  // PATCH /staff/quizzes/{quizId}/soft-delete — xóa tạm thời
   softDelete: async (quizId: string): Promise<void> => {
     await axiosClient.patch(`/staff/quizzes/${quizId}/soft-delete`);
   },
 
-  // PATCH /staff/quizzes/{quizId}/restore — khôi phục
   restore: async (quizId: string): Promise<void> => {
     await axiosClient.patch(`/staff/quizzes/${quizId}/restore`);
   },
 
-  // DELETE /staff/quizzes/{quizId}/questions/{questionId} — xóa câu hỏi
   deleteQuestion: async (
     quizId: string,
     questionId: string,
@@ -223,3 +199,22 @@ export const staffQuizService = {
   },
 };
 
+function toContractQuestionPayload(question: CreateQuestionPayload) {
+  return {
+    content: question.content,
+    options: question.options,
+    correctAnswer: question.correctAnswer,
+    ...(question.explanation !== undefined && { explanation: question.explanation }),
+  };
+}
+
+function toContractQuizPayload(payload: CreateQuizPayload | UpdateQuizPayload) {
+  return {
+    ...(payload.title !== undefined && { title: payload.title }),
+    ...(payload.contextId !== undefined && { contextId: payload.contextId }),
+    ...(payload.era !== undefined && { era: payload.era }),
+    ...("questions" in payload && {
+      questions: payload.questions.map(toContractQuestionPayload),
+    }),
+  };
+}

@@ -76,6 +76,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID || !googleButtonRef.current) return;
+    const googleClientId = GOOGLE_CLIENT_ID;
 
     let disposed = false;
 
@@ -84,7 +85,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
       googleButtonRef.current.innerHTML = "";
       window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
+        client_id: googleClientId,
         callback: (response) => {
           if (!response.credential) {
             toast.error("Không nhận được Google ID token");

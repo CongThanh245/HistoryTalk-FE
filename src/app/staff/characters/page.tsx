@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import {
   useCharacters,
-  useCreateCharacter,
   useDeleteCharacter,
   usePermanentDeleteCharacter,
 } from "@/features/characters/hooks";
@@ -36,8 +35,8 @@ export default function StaffCharactersPage() {
   const permanentDeleteCharacter = usePermanentDeleteCharacter();
 
   const allItems = data?.content ?? [];
-  const activeItems = allItems.filter((c) => !c.deletedAt);
-  const trashedItems = allItems.filter((c) => !!c.deletedAt);
+  const activeItems = allItems.filter((c) => !c.deletedAt && c.isActive !== false);
+  const trashedItems = allItems.filter((c) => !!c.deletedAt || c.isActive === false);
   const filteredItems = showTrash ? trashedItems : activeItems;
 
   const items = React.useMemo(() => {
@@ -46,8 +45,7 @@ export default function StaffCharactersPage() {
     return filteredItems.filter(
       (x) =>
         x.name.toLowerCase().includes(q) ||
-        x.title?.toLowerCase().includes(q) ||
-        x.side?.toLowerCase().includes(q),
+        x.title?.toLowerCase().includes(q),
     );
   }, [filteredItems, search]);
 
@@ -86,10 +84,10 @@ export default function StaffCharactersPage() {
         ),
       },
       {
-        accessorKey: "isDraft",
+        accessorKey: "isPublished",
         header: "Trạng thái",
         cell: ({ row }) => {
-          const isDraft = row.original.isDraft;
+          const isDraft = !row.original.isPublished;
           return (
             <span
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
@@ -107,18 +105,6 @@ export default function StaffCharactersPage() {
             </span>
           );
         },
-      },
-      {
-        accessorKey: "side",
-        header: "Phe",
-        cell: ({ row }) => (
-          <span
-            className="text-xs font-medium"
-            style={{ color: "var(--content-text)" }}
-          >
-            {row.original.side ?? "—"}
-          </span>
-        ),
       },
       {
         accessorKey: "lifespan",
@@ -226,18 +212,6 @@ export default function StaffCharactersPage() {
         },
       },
       {
-        accessorKey: "side",
-        header: "Phe",
-        cell: ({ row }) => (
-          <span
-            className="text-xs font-medium"
-            style={{ color: "var(--content-text)", opacity: 0.6 }}
-          >
-            {row.original.side ?? "—"}
-          </span>
-        ),
-      },
-      {
         id: "actions",
         header: () => <div className="text-right pr-4">Thao tác</div>,
         cell: ({ row }) => (
@@ -310,7 +284,7 @@ export default function StaffCharactersPage() {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm theo tên, chức vị, phe..."
+                placeholder="Tìm theo tên, chức vị..."
                 className="pl-10 h-10 rounded-xl border"
                 style={{
                   background: "rgba(27,38,50,0.05)",

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   characterService,
+  type Character,
   type GetCharactersParams,
   type CreateCharacterRequest,
   type UpdateCharacterRequest,
@@ -8,6 +9,14 @@ import {
 } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
+
+function isCharactersResponse(value: unknown): value is GetCharactersResponse {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Array.isArray((value as GetCharactersResponse).content)
+  );
+}
 
 export function useCharacters(params?: GetCharactersParams) {
   return useQuery({
@@ -31,13 +40,14 @@ export function useCreateCharacter() {
   return useMutation({
     mutationFn: (data: CreateCharacterRequest) => characterService.create(data),
     onSuccess: (newChar) => {
-      qc.setQueryData(
-        queryKeys.characters.list({ page: 1, limit: 100 }),
-        (old: GetCharactersResponse | undefined) => {
-          if (!old) return old;
+      qc.setQueriesData(
+        { queryKey: queryKeys.characters.all },
+        (old: unknown) => {
+          if (!isCharactersResponse(old)) return old;
           return { ...old, content: [newChar, ...old.content] };
         },
       );
+      qc.setQueryData(queryKeys.characters.detail(newChar.id), newChar);
       toast.success("Tạo nhân vật thành công");
     },
     onError: (err: any) => {
@@ -51,15 +61,25 @@ export function useUpdateCharacter() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateCharacterRequest }) =>
       characterService.update(id, data),
-    onSuccess: (updated) => {
+    onSuccess: (updated, { id }) => {
       qc.setQueryData(
-        queryKeys.characters.list({ page: 1, limit: 100 }),
-        (old: GetCharactersResponse | undefined) => {
-          if (!old) return old;
+        queryKeys.characters.detail(id),
+        (old: Character | undefined) => ({
+          ...old,
+          ...updated,
+          contextId: updated.contextId ?? old?.contextId,
+        }),
+      );
+      qc.setQueriesData(
+        { queryKey: queryKeys.characters.all },
+        (old: unknown) => {
+          if (!isCharactersResponse(old)) return old;
           return {
             ...old,
             content: old.content.map((c) =>
-              c.id === updated.id ? updated : c,
+              c.id === updated.id
+                ? { ...c, ...updated, contextId: updated.contextId ?? c.contextId }
+                : c,
             ),
           };
         },
@@ -85,6 +105,7 @@ export function useDeleteCharacter() {
     },
   });
 }
+
 export function usePermanentDeleteCharacter() {
   const qc = useQueryClient();
   return useMutation({
@@ -104,8 +125,25 @@ export function useMapContextToCharacter() {
   return useMutation({
     mutationFn: ({ characterId, contextId }: { characterId: string; contextId: string }) =>
       characterService.mapContext(characterId, contextId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.characters.all });
+    onSuccess: (_result, { characterId, contextId }) => {
+      qc.setQueryData(
+        queryKeys.characters.detail(characterId),
+        (old: Character | undefined) =>
+          old ? { ...old, contextId } : old,
+      );
+      qc.setQueriesData(
+        { queryKey: queryKeys.characters.all },
+        (old: unknown) => {
+          if (!isCharactersResponse(old)) return old;
+          return {
+            ...old,
+            content: old.content.map((c) =>
+              c.id === characterId ? { ...c, contextId } : c,
+            ),
+          };
+        },
+      );
+      qc.invalidateQueries({ queryKey: queryKeys.characters.byContext(contextId) });
       toast.success("Liên kết bối cảnh thành công");
     },
     onError: (err: any) => {
