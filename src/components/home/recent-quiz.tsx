@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { TimerIcon, ArrowRight, Trophy } from "@phosphor-icons/react";
 import { quizService, type QuizResult } from "@/services/quiz.service";
 import { queryKeys } from "@/shared/query-key";
+import { useAuthStore } from "@/store/auth.store";
 
 // ── Skeleton ──────────────────────────────────────────────
 function SkeletonRow() {
@@ -184,9 +185,12 @@ function RecentQuizCard({ item }: { item: QuizResult }) {
 }
 // ── Main component ────────────────────────────────────────
 export function RecentQuiz() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.quizzes.myResults,
     queryFn: () => quizService.getMyResults({ page: 0, size: 3 }),
+    enabled: isAuthenticated,
   });
 
   const results = data?.content ?? [];
@@ -216,7 +220,7 @@ export function RecentQuiz() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {isLoading ? (
+        {isAuthenticated && isLoading ? (
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
         ) : results.length === 0 ? (
           <p
