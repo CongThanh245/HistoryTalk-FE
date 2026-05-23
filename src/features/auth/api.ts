@@ -18,7 +18,13 @@ type ApiEnvelope<T> = {
 };
 
 type SkipAuthRefreshConfig = AxiosRequestConfig & {
-  skipAuthRefresh: boolean;
+  skipAuth?: boolean;
+  skipAuthRefresh?: boolean;
+};
+
+const PUBLIC_AUTH_CONFIG: SkipAuthRefreshConfig = {
+  skipAuth: true,
+  skipAuthRefresh: true,
 };
 
 type RawLoginData = {
@@ -65,6 +71,7 @@ export const authApi = {
     const res = await axiosClient.post<ApiEnvelope<RawLoginData>>(
       "/auth/login",
       data,
+      PUBLIC_AUTH_CONFIG,
     );
 
     if (!res.data.success || !res.data.data) {
@@ -78,6 +85,7 @@ export const authApi = {
     const res = await axiosClient.post<ApiEnvelope<RawLoginData>>(
       "/auth/google",
       data,
+      PUBLIC_AUTH_CONFIG,
     );
 
     if (!res.data.success || !res.data.data) {
@@ -88,7 +96,7 @@ export const authApi = {
   },
 
   register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-    const res = await axiosClient.post("/auth/register", data);
+    const res = await axiosClient.post("/auth/register", data, PUBLIC_AUTH_CONFIG);
     return res.data.data;
   },
 
@@ -98,6 +106,7 @@ export const authApi = {
     const res = await axiosClient.post<ApiEnvelope<MessageResponse | null>>(
       "/auth/forgot-password",
       data,
+      PUBLIC_AUTH_CONFIG,
     );
     return unwrapMessageResponse(res, "Không thể gửi email đặt lại mật khẩu");
   },
@@ -108,6 +117,7 @@ export const authApi = {
     const res = await axiosClient.post<ApiEnvelope<MessageResponse | null>>(
       "/auth/reset-password",
       data,
+      PUBLIC_AUTH_CONFIG,
     );
     return unwrapMessageResponse(res, "Không thể đặt lại mật khẩu");
   },
@@ -122,7 +132,7 @@ export const authApi = {
     const res = await axiosClient.post(
       "/auth/refresh-token",
       { refreshToken },
-      { skipAuthRefresh: true } as SkipAuthRefreshConfig,
+      PUBLIC_AUTH_CONFIG,
     );
     return res.data.data;
   },
