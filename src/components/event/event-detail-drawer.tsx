@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { XIcon, PlayIcon, SkipForwardIcon, TimerIcon, MapPinIcon } from "@phosphor-icons/react";
 import type {
   HistoricalEvent,
@@ -15,6 +14,7 @@ import {
 import { characterService, type Character } from "@/services/character.service";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
+import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 
 // ── Mock ──────────────────────────────────────────────────
 // TODO: fetch từ API /events/:id/characters
@@ -233,8 +233,8 @@ interface EventDetailModalProps {
 }
 
 export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
-  const router = useRouter();
-  const [videoFinished, setVideoFinished] = useState(false);
+  const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
+  const [finishedEventId, setFinishedEventId] = useState<string | null>(null);
 
   const { data: characters = [] } = useQuery({
     queryKey: queryKeys.characters.byContext(event?.id ?? ""),
@@ -242,23 +242,21 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
     enabled: !!event?.id, // chỉ fetch khi có event
   });
 
-  useEffect(() => {
-    setVideoFinished(false);
-  }, [event?.id]);
-
   if (!event) return null;
 
+  const videoFinished = finishedEventId === event.id;
   const color = CATEGORY_COLOR[event.category];
   const yearLabel =
     event.yearLabel ??
     `${Math.abs(event.year)} ${event.year < 0 ? "TCN" : "SCN"}`;
 
   const handleSelectChar = (charId: string) => {
-    router.push(`/chat/${charId}`);
+    navigateWithAuth(`/chat/${charId}`);
   };
 
   return (
     <>
+      {authRequiredDialog}
       <div
         className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md"
         onClick={onClose}
@@ -296,7 +294,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
             ) : (
               <FakeVideoPlayer
                 event={event}
-                onFinish={() => setVideoFinished(true)}
+                onFinish={() => setFinishedEventId(event.id)}
               />
             )}
           </div>
