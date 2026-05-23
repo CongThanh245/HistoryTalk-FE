@@ -16,7 +16,8 @@ export interface Character {
   era?: string;
   role?: string;
   avatarUrl?: string | null;
-  isDraft?: boolean;
+  isActive?: boolean;
+  isPublished?: boolean;
   deletedAt?: string | null;
   events?: { id: string; title: string; year: number }[];
 }
@@ -45,14 +46,20 @@ export interface CreateCharacterRequest {
   image?: string | null;
   personality?: string;
   lifespan?: string;
-  side?: string;
-  isDraft?: boolean;
+  isActive?: boolean;
+  isPublished?: boolean;
 }
 
 export interface UpdateCharacterRequest extends Partial<CreateCharacterRequest> { }
 
 function mapCharacter(raw: any): Character {
   const imageUrl = raw.image || raw.imageUrl || null;
+  const contextId =
+    raw.context?.contextId ??
+    raw.context?.id ??
+    raw.contextId ??
+    raw.contextIds?.[0]?.contextId ??
+    raw.contexts?.[0]?.contextId;
   return {
     id: raw.characterId ?? raw.id ?? `char-${Math.random().toString(36).slice(2)}`,
     name: raw.name,
@@ -63,11 +70,11 @@ function mapCharacter(raw: any): Character {
     avatarUrl: isValidUrl(raw.image ?? raw.imageUrl) ? (raw.image ?? raw.imageUrl) : null,
     personality: raw.personality,
     lifespan: raw.lifespan,
-    side: raw.side,
-    contextId: raw.context?.contextId ?? raw.context?.id ?? raw.contextId ?? undefined,
+    contextId,
     role: raw.role,
     era: mapEraLabel(raw.era),
-    isDraft: raw.isDraft ?? false,
+    isActive: raw.isActive ?? true,
+    isPublished: raw.isPublished ?? false,
     deletedAt: raw.deletedAt ?? null,
   };
 }

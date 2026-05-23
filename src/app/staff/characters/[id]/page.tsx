@@ -10,6 +10,7 @@ import {
 } from "@/features/characters/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isValidUrl } from "@/lib/utils/url";
 
 export default function EditCharacterPage() {
   const { id } = useParams() as { id: string };
@@ -29,11 +30,11 @@ export default function EditCharacterPage() {
       name: draft.name.trim(),
       title: draft.title.trim(),
       background: draft.background.trim() || undefined,
-      image: draft.image.trim() || undefined,
+      image: isValidUrl(draft.image.trim()) ? draft.image.trim() : undefined,
       personality: draft.personality.trim() || undefined,
       lifespan: draft.lifespan.trim() || undefined,
-      side: draft.side.trim() || undefined,
-      isDraft: draft.isDraft,
+      isActive: draft.isActive,
+      isPublished: draft.isPublished,
     };
 
     updateCharacter.mutate({ id, data: payload });
@@ -64,8 +65,8 @@ export default function EditCharacterPage() {
     image: character.imageUrl || "",
     personality: character.personality || "",
     lifespan: character.lifespan || "",
-    side: character.side || "",
-    isDraft: character.isDraft || false,
+    isActive: character.isActive ?? true,
+    isPublished: character.isPublished ?? false,
   };
 
   return (
@@ -76,8 +77,11 @@ export default function EditCharacterPage() {
       isPending={updateCharacter.isPending}
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
-      onMapContext={(characterId, contextId) =>
-        mapContextToCharacter.mutate({ characterId, contextId })
+      onMapContext={(characterId, contextId, options) =>
+        mapContextToCharacter.mutate(
+          { characterId, contextId },
+          { onSuccess: options?.onSuccess },
+        )
       }
       isMapContextPending={mapContextToCharacter.isPending}
       initialContextId={character.contextId}

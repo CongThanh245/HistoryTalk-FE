@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { StaffCharacterDetailView } from "@/components/staff/staff-character-detail-view";
 import { useCreateCharacter, useMapContextToCharacter } from "@/features/characters/hooks";
 import { useEvents } from "@/features/events/hooks";
+import { isValidUrl } from "@/lib/utils/url";
 
 export default function CreateCharacterPage() {
   const router = useRouter();
@@ -23,11 +24,11 @@ export default function CreateCharacterPage() {
       name: draft.name.trim(),
       title: draft.title.trim(),
       background: draft.background.trim() || undefined,
-      image: draft.image.trim() || undefined,
+      image: isValidUrl(draft.image.trim()) ? draft.image.trim() : undefined,
       personality: draft.personality.trim() || undefined,
       lifespan: draft.lifespan.trim() || undefined,
-      side: draft.side.trim() || undefined,
-      isDraft: draft.isDraft,
+      isActive: draft.isActive,
+      isPublished: draft.isPublished,
     };
 
     createCharacter.mutate(payload, {
@@ -46,8 +47,11 @@ export default function CreateCharacterPage() {
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
       createdCharacterId={createdCharacterId}
-      onMapContext={(characterId, contextId) =>
-        mapContextToCharacter.mutate({ characterId, contextId })
+      onMapContext={(characterId, contextId, options) =>
+        mapContextToCharacter.mutate(
+          { characterId, contextId },
+          { onSuccess: options?.onSuccess },
+        )
       }
       isMapContextPending={mapContextToCharacter.isPending}
     />
