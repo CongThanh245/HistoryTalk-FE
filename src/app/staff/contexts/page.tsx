@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   StaffFormLabel,
@@ -48,9 +47,6 @@ type DraftState = {
   era: EventEraBackend | "";
   category: EventCategory | "";
   year: string;
-  startYear: string;
-  endYear: string;
-  beforeTCN: boolean;
   location: string;
   imageUrl: string;
   videoUrl: string;
@@ -63,9 +59,6 @@ const EMPTY_DRAFT: DraftState = {
   era: "",
   category: "",
   year: "",
-  startYear: "",
-  endYear: "",
-  beforeTCN: false,
   location: "",
   imageUrl: "",
   videoUrl: "",
@@ -130,9 +123,6 @@ export default function StaffContextsPage() {
       era: draft.era as EventEraBackend,
       category: draft.category as EventCategory,
       year: Number(draft.year) || 0,
-      startYear: draft.startYear ? Number(draft.startYear) : undefined,
-      endYear: draft.endYear ? Number(draft.endYear) : undefined,
-      beforeTCN: draft.beforeTCN,
       location: draft.location.trim() || undefined,
       imageUrl: draft.imageUrl.trim() || undefined,
       videoUrl: draft.videoUrl.trim() || undefined,
@@ -283,9 +273,6 @@ export default function StaffContextsPage() {
                     | EventCategory
                     | "",
                   year: String(e.year ?? ""),
-                  startYear: String(e.startYear ?? ""),
-                  endYear: String(e.endYear ?? ""),
-                  beforeTCN: e.beforeTCN ?? false,
                   location: e.location ?? "",
                   imageUrl: e.imageUrl ?? "",
                   videoUrl: e.videoUrl ?? "",
@@ -580,43 +567,14 @@ export default function StaffContextsPage() {
                 </div>
               </div>
 
-              {/* Year + startYear + endYear */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>Năm *</StaffFormLabel>
-                  <StaffFormInput
-                    type="number"
-                    value={draft.year}
-                    onChange={(e) => set("year")(e.target.value)}
-                    placeholder="938"
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>Năm bắt đầu</StaffFormLabel>
-                  <StaffFormInput
-                    type="number"
-                    value={draft.startYear}
-                    onChange={(e) => set("startYear")(e.target.value)}
-                    placeholder="938"
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>Năm kết thúc</StaffFormLabel>
-                  <StaffFormInput
-                    type="number"
-                    value={draft.endYear}
-                    onChange={(e) => set("endYear")(e.target.value)}
-                    placeholder="939"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 py-1">
-                <Switch
-                  checked={draft.beforeTCN}
-                  onCheckedChange={set("beforeTCN")}
+              <div className="grid gap-1.5">
+                <StaffFormLabel>Năm *</StaffFormLabel>
+                <StaffFormInput
+                  type="number"
+                  value={draft.year}
+                  onChange={(e) => set("year")(e.target.value)}
+                  placeholder="938"
                 />
-                <StaffFormLabel>Trước Công Nguyên (TCN)</StaffFormLabel>
               </div>
 
               {/* isPublished Toggle */}
