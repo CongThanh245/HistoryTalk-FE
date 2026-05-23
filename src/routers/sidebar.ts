@@ -10,6 +10,9 @@ import {
   ShieldIcon,
   ScrollIcon,
   MapTrifoldIcon,
+  UsersIcon,
+  GaugeIcon,
+  CreditCardIcon,
 } from "@phosphor-icons/react";
 
 export interface SidebarMenuItem {
@@ -60,3 +63,31 @@ export const STAFF_SIDEBAR: SidebarSection[] = [
     items: [{ icon: UserIcon, label: "Hồ sơ", href: "/profile" }],
   },
 ];
+
+export const SYSTEM_ADMIN_SIDEBAR: SidebarSection[] = [
+  {
+    title: "Dashboard",
+    items: [
+      { icon: GaugeIcon, label: "Tổng quan", href: "/staff/admin", exact: true },
+    ],
+  },
+  {
+    title: "Tài khoản",
+    items: [
+      { icon: UsersIcon, label: "Khách hàng", href: "/staff/admin/accounts/customer" },
+      { icon: UserIcon, label: "Content Admin", href: "/staff/admin/accounts/content-admin" },
+      { icon: ShieldIcon, label: "System Admin", href: "/staff/admin/accounts/system-admin" },
+    ],
+  },
+  {
+    title: "Hệ thống",
+    items: [
+      { icon: CreditCardIcon, label: "Gói dịch vụ", href: "/staff/admin/subscriptions" },
+    ],
+  },
+  {
+    title: "Account",
+    items: [{ icon: UserIcon, label: "Hồ sơ", href: "/profile" }],
+  },
+];
+

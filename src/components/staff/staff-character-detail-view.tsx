@@ -80,6 +80,8 @@ interface StaffCharacterDetailViewProps {
   isMapContextPending?: boolean;
   /** The currently mapped contextId (from character data) */
   initialContextId?: string;
+  /** If true, start in editing mode immediately (e.g. navigated from Edit button) */
+  initialEditing?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -97,12 +99,13 @@ export function StaffCharacterDetailView({
   onMapContext,
   isMapContextPending,
   initialContextId,
+  initialEditing,
 }: StaffCharacterDetailViewProps) {
   const router = useRouter();
 
   /* ── State ── */
   const [draft, setDraft] = React.useState<CharacterDraft>(initialDraft || EMPTY_CHARACTER_DRAFT);
-  const [isEditing, setIsEditing] = React.useState(mode === "create");
+  const [isEditing, setIsEditing] = React.useState(mode === "create" || !!initialEditing);
   const [publishDialogOpen, setPublishDialogOpen] = React.useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = React.useState(false);
