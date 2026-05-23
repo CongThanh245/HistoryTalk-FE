@@ -139,8 +139,9 @@ export default function StaffCharactersPage() {
               variant="ghost"
               size="icon-sm"
               className="rounded-full"
+              title="Chỉnh sửa nhân vật"
               onClick={() => {
-                router.push(`/staff/characters/${row.original.id}`);
+                router.push(`/staff/characters/${row.original.id}?edit=true`);
               }}
               style={{ color: "var(--header-text-muted)" }}
             >
