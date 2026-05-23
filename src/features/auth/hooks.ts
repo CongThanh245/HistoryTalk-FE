@@ -26,7 +26,17 @@ function persistAuthCookies(
 }
 
 function redirectAfterLogin(role: string, router: ReturnType<typeof useRouter>) {
-  router.push(role === "CONTENT_ADMIN" ? "/staff" : "/home");
+  if (role === "CONTENT_ADMIN") {
+    router.push("/staff");
+    return;
+  }
+
+  if (role === "SYSTEM_ADMIN") {
+    router.push("/staff/admin");
+    return;
+  }
+
+  router.push("/home");
 }
 
 export function useLogin() {

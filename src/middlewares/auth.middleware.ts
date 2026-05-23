@@ -1,30 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_ROUTES = [
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/reset-password",
-  "/",
-];
 const STAFF_ROUTES = ["/staff"];
+const SYSTEM_ADMIN_ROUTES = ["/staff/admin"];
 
-// Tất cả các route thuộc (app) group - chỉ dành cho customer
-const CUSTOMER_ROUTES = [
-  "/home",
-  "/chat",
-  "/chat-history",
-  "/quiz",
-  "/library",
-  "/map",
-  "/profile",
-  "/saved",
-  "/characters",
-  "/events",
-];
+const isContentAdminRole = (role: string | undefined) =>
+  role === "CONTENT_ADMIN";
 
-const isStaffRole = (role: string | undefined) =>
-  role === "STAFF" || role === "ADMIN";
+const isSystemAdminRole = (role: string | undefined) =>
+  role === "SYSTEM_ADMIN";
+
+const isAdminRole = (role: string | undefined) =>
+  isContentAdminRole(role) || isSystemAdminRole(role);
 
 export function authMiddleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -32,26 +18,30 @@ export function authMiddleware(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value;
   const role = request.cookies.get("auth-role")?.value;
 
-  const isPublic = PUBLIC_ROUTES.some(
-    (r) => pathname === r || pathname.startsWith(r + "/")
-  );
   const isStaffRoute = STAFF_ROUTES.some((r) => pathname.startsWith(r));
-  const isCustomerRoute = CUSTOMER_ROUTES.some((r) =>
+  const isSystemAdminRoute = SYSTEM_ADMIN_ROUTES.some((r) =>
     pathname.startsWith(r)
   );
 
-  // Chưa đăng nhập nhưng cố vào /staff → về login
   if (!token && isStaffRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Thắt chặt: STAFF/ADMIN chỉ được ở trong /staff, nếu đi lạc ra ngoài -> redirect về /staff
-  if (token && isStaffRole(role) && !isStaffRoute) {
+  // Content Admin uses the current staff UI and cannot access System Admin pages.
+  if (
+    token &&
+    isContentAdminRole(role) &&
+    (!isStaffRoute || isSystemAdminRoute)
+  ) {
     return NextResponse.redirect(new URL("/staff", request.url));
   }
 
-  // Đã đăng nhập nhưng là customer/marketing → không cho vào /staff
-  if (token && isStaffRoute && !isStaffRole(role)) {
+  // System Admin uses the admin/account/subscription area.
+  if (token && isSystemAdminRole(role) && !isSystemAdminRoute) {
+    return NextResponse.redirect(new URL("/staff/admin", request.url));
+  }
+
+  if (token && isStaffRoute && !isAdminRole(role)) {
     return NextResponse.redirect(new URL("/home", request.url));
   }
 
