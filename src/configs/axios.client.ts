@@ -6,6 +6,7 @@ const BASE_PATH = process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
 
 type RetryConfig = InternalAxiosRequestConfig & {
   _retried?: boolean;
+  skipAuth?: boolean;
   skipAuthRefresh?: boolean;
 };
 
@@ -37,9 +38,10 @@ const processQueue = (error: any, token: string | null = null) => {
 // Gắn token vào mỗi request
 axiosClient.interceptors.request.use(
   (config) => {
+    const authConfig = config as RetryConfig;
     const token = useAuthStore.getState().tokens?.accessToken;
 
-    if (token) {
+    if (!authConfig.skipAuth && token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
 
