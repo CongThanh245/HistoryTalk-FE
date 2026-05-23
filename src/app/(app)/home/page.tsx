@@ -1,7 +1,6 @@
 import { RecentQuiz } from "@/components/home/recent-quiz";
 import { SuggestedQuiz } from "@/components/home/suggested-quiz";
-import { FeatureCards } from "@/components/home/feature-card";
-import { WelcomeHeading } from "@/components/home/welcome-heading";
+import { HomeBanner } from "@/components/home/home-banner";
 import { HistoricalContexts } from "@/components/home/historical-contexts";
 
 export const metadata = {
@@ -13,33 +12,17 @@ export default function HomePage() {
   return (
     <div className="px-3 py-6 md:px-6 md:py-8">
       <div className="max-w-7xl mx-auto space-y-8 pb-10">
-        {/* ── Main section ── */}
-        <section>
-          <div className="flex items-center gap-3 mb-5">
-            <div
-              className="h-10 w-1 rounded-full"
-              style={{ background: "var(--accent-gold)" }}
-            />
-            <WelcomeHeading />
-            <div
-              className="flex-1 h-px"
-              style={{ background: "var(--card-light-border)" }}
-            />
-          </div>
+        {/* Hero Banner with Quick Navigation */}
+        <HomeBanner />
 
-          <HistoricalContexts />
+        {/* Khám phá bối cảnh lịch sử */}
+        <HistoricalContexts />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-            {/* Left: Feature cards */}
-            <FeatureCards />
-
-            {/* Right: Recent quiz & Suggestions */}
-            <div className="flex flex-col gap-5">
-              <RecentQuiz />
-              <SuggestedQuiz />
-            </div>
-          </div>
-        </section>
+        {/* Quizzes Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          <RecentQuiz />
+          <SuggestedQuiz />
+        </div>
       </div>
     </div>
   );
