@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import Image from "next/image";
 import { MapPinIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { Card } from "@/components/commons/card";
+import { isValidUrl } from "@/lib/utils/url";
 import type {
   HistoricalEvent,
   EventCategoryLower,
@@ -157,70 +159,129 @@ export function TimelineStripCard({
   direction,
   onOpenDetail,
 }: StripCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const cat = CATEGORY_CONFIG[event.category];
   const yearLabel =
     event.yearLabel ??
     `${Math.abs(event.year)} ${event.year < 0 ? "TCN" : "SCN"}`;
-  // CSS animation thay GSAP translateX — không tràn ra ngoài viewport gây scrollbar ngang
+  
   const animClass =
     direction === 1 ? "strip-card-enter-right" : "strip-card-enter-left";
 
+  const imageSrc = event.imageUrl ?? cat.image;
+
   return (
-    <div className={animClass} style={{ willChange: "opacity, transform" }}>
-      <Card
-        imageSrc={event.imageUrl ?? cat.image}
-        imageAlt={event.title}
-        imageHeight={300}
-        imageWidth={500}
-        imageSizes="(max-width: 768px) 100vw, 900px"
-        badge={{ label: cat.label, color: "#fff", bg: `${cat.color}cc` }}
-        accentColor={cat.color}
+    <div 
+      className={animClass} 
+      style={{ willChange: "opacity, transform" }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <button
         onClick={() => onOpenDetail(event)}
-        layout="horizontal"
+        className="group relative w-full flex flex-col md:flex-row text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1"
+        style={{
+          background: "var(--card-light-bg)",
+          borderColor: "var(--card-light-border)",
+        }}
       >
-        <span
-          className="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full tracking-wide mb-2"
-          style={{ background: cat.bg, color: cat.color }}
+        {/* Glow border on hover matching category color */}
+        <div
+          className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20"
+          style={{ boxShadow: `inset 0 0 0 1.5px ${cat.color}50` }}
+        />
+
+        {/* Image Container */}
+        <div
+          className="relative w-full md:w-[480px] h-[260px] md:h-[320px] overflow-hidden shrink-0"
         >
-          {yearLabel}
-        </span>
-        <h2
-          className="text-xl sm:text-2xl font-bold leading-snug mb-2"
-          style={{ color: "var(--content-heading)" }}
-        >
-          {event.title}
-        </h2>
-        <p
-          className="text-sm leading-relaxed line-clamp-3 mb-4 italic"
-          style={{ color: "var(--content-muted)" }}
-        >
-          {event.summary}
-        </p>
-        <div className="flex items-center justify-between mt-auto">
-          {event.location ? (
-            <div className="flex items-center gap-1">
-              <MapPinIcon
-                className="w-3 h-3 shrink-0"
-                style={{ color: "var(--content-subtle)" }}
-              />
-              <span
-                className="text-[11px]"
-                style={{ color: "var(--content-subtle)" }}
-              >
-                {event.location}
-              </span>
-            </div>
-          ) : (
-            <div />
-          )}
+          <Image
+            src={isValidUrl(imageSrc) ? imageSrc : "/card.jpg"}
+            alt={event.title}
+            fill
+            className="object-cover transition-all duration-700 ease-out grayscale group-hover:grayscale-0 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 500px"
+          />
+          {/* Gradient transition from image to card bg */}
           <div
-            className="flex items-center gap-1 text-[11px] font-medium opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ color: cat.color }}
-          >
-            Xem chi tiết <CaretRightIcon className="w-3 h-3" />
+            className="absolute inset-0 z-10 bg-gradient-to-t from-[var(--card-light-bg)] via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-[var(--card-light-bg)]"
+          />
+          
+          {/* Category Badge */}
+          <div className="absolute top-3 left-3 z-20">
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white shadow-sm"
+              style={{ backgroundColor: cat.color }}
+            >
+              {cat.label}
+            </span>
           </div>
         </div>
-      </Card>
+
+        {/* Content Container */}
+        <div className="flex-1 px-5 py-6 md:px-7 md:py-8 flex flex-col justify-center relative z-10">
+          {/* Year badge with glow effect */}
+          <div>
+            <span
+              className="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full tracking-wide mb-3 transition-all duration-300"
+              style={{
+                background: cat.bg,
+                color: cat.color,
+                boxShadow: isHovered ? `0 0 10px ${cat.color}60` : "none",
+                transform: isHovered ? "scale(1.05)" : "scale(1)",
+              }}
+            >
+              {yearLabel}
+            </span>
+          </div>
+
+          <h2
+            className="text-xl sm:text-2xl font-extrabold leading-snug mb-2.5 transition-colors duration-300"
+            style={{ color: isHovered ? cat.color : "var(--content-heading)" }}
+          >
+            {event.title}
+          </h2>
+          
+          <p
+            className="text-sm leading-relaxed line-clamp-3 mb-5 italic"
+            style={{ color: "var(--content-muted)" }}
+          >
+            {event.summary}
+          </p>
+
+          <div className="flex items-center justify-between mt-auto pt-2">
+            {event.location ? (
+              <div className="flex items-center gap-1.5">
+                <MapPinIcon
+                  className="w-3.5 h-3.5 shrink-0"
+                  style={{ color: "var(--content-subtle)" }}
+                />
+                <span
+                  className="text-xs"
+                  style={{ color: "var(--content-subtle)" }}
+                >
+                  {event.location}
+                </span>
+              </div>
+            ) : (
+              <div />
+            )}
+            
+            <div
+              className="flex items-center gap-1 text-xs font-bold transition-all duration-300 translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0"
+              style={{ color: cat.color }}
+            >
+              Xem chi tiết <CaretRightIcon className="w-3.5 h-3.5" />
+            </div>
+          </div>
+        </div>
+
+        {/* Chronological Progress Line at the bottom */}
+        <div
+          className="absolute bottom-0 left-0 h-1 transition-all duration-700 ease-out w-0 group-hover:w-full z-20"
+          style={{ background: cat.color }}
+        />
+      </button>
     </div>
   );
 }
