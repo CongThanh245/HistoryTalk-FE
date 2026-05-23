@@ -3,17 +3,17 @@
 import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { useRouter } from "next/navigation";
 import {
   CharacterCarouselCard,
   type Character,
 } from "@/components/commons/character-card";
 import { useCharacters } from "@/features/characters/hooks";
+import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 
 const RADIUS = 250;
 
 export function Carousel3DVertical() {
-  const router = useRouter();
+  const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
   const containerRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const skeletonCardsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -122,17 +122,19 @@ export function Carousel3DVertical() {
   }, [isHovered]);
 
   const handleSelect = (id: string) => {
-    router.push(`/chat/${id}`);
+    navigateWithAuth(`/chat/${id}`);
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="relative w-full h-[650px] flex items-center justify-center"
-      style={{ perspective: "1200px" }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <>
+      {authRequiredDialog}
+      <div
+        ref={containerRef}
+        className="relative w-full h-[650px] flex items-center justify-center"
+        style={{ perspective: "1200px" }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
       {/* Glow */}
       <div
         className="absolute pointer-events-none"
@@ -219,6 +221,7 @@ export function Carousel3DVertical() {
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

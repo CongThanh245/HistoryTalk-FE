@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { EraFilter } from "@/components/commons/era-filter";
 import { SearchInput } from "@/components/commons/search-input";
 import { useQuery } from "@tanstack/react-query";
@@ -11,12 +10,12 @@ import {
 } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key"; // ← dùng queryKeys chung
 import type { EventEra, EventEraBackend } from "@/services/event.service";
-import { ERA_CONFIG } from "@/services/event.service";
 import {
   CharacterPageCard,
   CharacterPageCardSkeleton,
 } from "../commons/character-card";
 import { CustomPagination } from "../commons/pagination";
+import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 
 const PAGE_LIMIT = 8;
 
@@ -49,7 +48,7 @@ function useCharacters(era: EventEra, search: string, page: number) {
 // ── Component ─────────────────────────────────────────────
 
 export function CharactersClient() {
-  const router = useRouter();
+  const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
   const [era, setEra] = useState<EventEra>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -64,10 +63,12 @@ export function CharactersClient() {
     setSearch(s);
     setPage(1);
   };
-  const handleClick = (id: string) => router.push(`/chat/${id}`);
+  const handleClick = (id: string) => navigateWithAuth(`/chat/${id}`);
 
   return (
-    <div className="space-y-5">
+    <>
+      {authRequiredDialog}
+      <div className="space-y-5">
       {/* Filters */}
       <div className="flex flex-col gap-3">
         <EraFilter active={era} onChange={handleEraChange} />
@@ -139,6 +140,7 @@ export function CharactersClient() {
           onChange={setPage}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 }
