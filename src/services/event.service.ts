@@ -14,29 +14,12 @@ export type EventEraBackend =
   | "MODERN"
   | "CONTEMPORARY";
 
-export type EventCategory =
-  | "WAR"
-  | "POLITICS"
-  | "CULTURE"
-  | "SCIENCE"
-  | "RELIGION"
-  | "OTHER";
-
-export type EventCategoryLower =
-  | "war"
-  | "politics"
-  | "culture"
-  | "science"
-  | "religion"
-  | "other";
-
 export interface HistoricalEvent {
   id: string;
   year: number;
   yearLabel?: string;
   title: string;
   summary: string;
-  category: EventCategoryLower;
   location?: string;
   imageUrl?: string | null;
   videoUrl?: string | null;
@@ -60,7 +43,6 @@ export interface CreateEventRequest {
   name: string;
   description: string;
   era: EventEraBackend;
-  category?: EventCategory;
   year: number;
   startYear?: number;
   endYear?: number;
@@ -98,7 +80,6 @@ export function mapContext(raw: any): HistoricalEvent {
     summary: raw.description,
     year: raw.year ?? 0,
     yearLabel: raw.yearLabel,
-    category: (raw.category?.toLowerCase() as EventCategoryLower | undefined) ?? "other",
     location: raw.location,
     imageUrl: isValidUrl(raw.imageUrl) ? raw.imageUrl : null,
     videoUrl: isValidUrl(raw.videoUrl) ? raw.videoUrl : null,

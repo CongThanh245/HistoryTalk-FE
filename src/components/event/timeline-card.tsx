@@ -5,52 +5,12 @@ import Image from "next/image";
 import { MapPinIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { Card } from "@/components/commons/card";
 import { isValidUrl } from "@/lib/utils/url";
-import type {
-  HistoricalEvent,
-  EventCategoryLower,
-} from "@/services/event.service";
+import type { HistoricalEvent } from "@/services/event.service";
 
-export const CATEGORY_CONFIG: Record<
-  EventCategoryLower,
-  { label: string; color: string; bg: string; image: string }
-> = {
-  war: {
-    label: "Chiến tranh",
-    color: "var(--accent-danger)",
-    bg: "rgba(184,50,42,0.10)",
-    image: "/war.jpg",
-  },
-  politics: {
-    label: "Chính trị",
-    color: "var(--accent-gold)",
-    bg: "rgba(201,162,77,0.10)",
-    image: "/war.jpg",
-  },
-  culture: {
-    label: "Văn hoá",
-    color: "var(--accent-blue)",
-    bg: "rgba(143,179,200,0.10)",
-    image: "/war.jpg",
-  },
-  science: {
-    label: "Khoa học",
-    color: "var(--accent-teal)",
-    bg: "rgba(47,111,115,0.12)",
-    image: "/war.jpg",
-  },
-  religion: {
-    label: "Tôn giáo",
-    color: "var(--accent-bronze)",
-    bg: "rgba(196,106,47,0.10)",
-    image: "/war.jpg",
-  },
-  other: {
-    label: "Khác",
-    color: "var(--content-muted)",
-    bg: "rgba(122,116,105,0.10)",
-    image: "/war.jpg",
-  },
-  // TODO: thay ảnh riêng từng category khi có assets
+const EVENT_CARD_STYLE = {
+  color: "var(--accent-gold)",
+  bg: "rgba(201,162,77,0.10)",
+  image: "/war.jpg",
 };
 
 // ─────────────────────────────────────────────────────────
@@ -64,7 +24,7 @@ interface TimelineCardProps {
 }
 
 export function TimelineCard({ event, index, onClick }: TimelineCardProps) {
-  const cat = CATEGORY_CONFIG[event.category];
+  const style = EVENT_CARD_STYLE;
   const isLeft = index % 2 === 0;
   const yearLabel =
     event.yearLabel ??
@@ -76,17 +36,16 @@ export function TimelineCard({ event, index, onClick }: TimelineCardProps) {
     >
       <Card
         className="w-[calc(50%-28px)]"
-        imageSrc={event.imageUrl ?? cat.image}
+        imageSrc={event.imageUrl ?? style.image}
         imageAlt={event.title}
         imageHeight={300}
         imageSizes="(max-width: 768px) 100vw, 400px"
-        badge={{ label: cat.label, color: "#fff", bg: `${cat.color}cc` }}
-        accentColor={cat.color}
+        accentColor={style.color}
         onClick={() => onClick(event)}
       >
         <span
           className="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full tracking-wide mb-2"
-          style={{ background: cat.bg, color: cat.color }}
+          style={{ background: style.bg, color: style.color }}
         >
           {yearLabel}
         </span>
@@ -121,7 +80,7 @@ export function TimelineCard({ event, index, onClick }: TimelineCardProps) {
           )}
           <div
             className="flex items-center gap-0.5 text-[11px] font-medium opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ color: cat.color }}
+            style={{ color: style.color }}
           >
             Xem chi tiết <CaretRightIcon className="w-3 h-3" />
           </div>
@@ -133,9 +92,9 @@ export function TimelineCard({ event, index, onClick }: TimelineCardProps) {
         <div
           className="w-3.5 h-3.5 rounded-full border-2"
           style={{
-            background: cat.color,
+            background: style.color,
             borderColor: "var(--bg-content)",
-            boxShadow: `0 0 0 3px ${cat.bg}, 0 0 10px ${cat.color}60`,
+            boxShadow: `0 0 0 3px ${style.bg}, 0 0 10px ${style.color}60`,
           }}
         />
       </div>
@@ -160,7 +119,7 @@ export function TimelineStripCard({
   onOpenDetail,
 }: StripCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const cat = CATEGORY_CONFIG[event.category];
+  const style = EVENT_CARD_STYLE;
   const yearLabel =
     event.yearLabel ??
     `${Math.abs(event.year)} ${event.year < 0 ? "TCN" : "SCN"}`;
@@ -168,7 +127,7 @@ export function TimelineStripCard({
   const animClass =
     direction === 1 ? "strip-card-enter-right" : "strip-card-enter-left";
 
-  const imageSrc = event.imageUrl ?? cat.image;
+  const imageSrc = event.imageUrl ?? style.image;
 
   return (
     <div 
@@ -185,10 +144,10 @@ export function TimelineStripCard({
           borderColor: "var(--card-light-border)",
         }}
       >
-        {/* Glow border on hover matching category color */}
+        {/* Glow border on hover */}
         <div
           className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20"
-          style={{ boxShadow: `inset 0 0 0 1.5px ${cat.color}50` }}
+          style={{ boxShadow: `inset 0 0 0 1.5px ${style.color}50` }}
         />
 
         {/* Image Container */}
@@ -206,16 +165,6 @@ export function TimelineStripCard({
           <div
             className="absolute inset-0 z-10 bg-gradient-to-t from-[var(--card-light-bg)] via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-[var(--card-light-bg)]"
           />
-          
-          {/* Category Badge */}
-          <div className="absolute top-3 left-3 z-20">
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white shadow-sm"
-              style={{ backgroundColor: cat.color }}
-            >
-              {cat.label}
-            </span>
-          </div>
         </div>
 
         {/* Content Container */}
@@ -225,9 +174,9 @@ export function TimelineStripCard({
             <span
               className="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full tracking-wide mb-3 transition-all duration-300"
               style={{
-                background: cat.bg,
-                color: cat.color,
-                boxShadow: isHovered ? `0 0 10px ${cat.color}60` : "none",
+                background: style.bg,
+                color: style.color,
+                boxShadow: isHovered ? `0 0 10px ${style.color}60` : "none",
                 transform: isHovered ? "scale(1.05)" : "scale(1)",
               }}
             >
@@ -237,7 +186,7 @@ export function TimelineStripCard({
 
           <h2
             className="text-xl sm:text-2xl font-extrabold leading-snug mb-2.5 transition-colors duration-300"
-            style={{ color: isHovered ? cat.color : "var(--content-heading)" }}
+            style={{ color: isHovered ? style.color : "var(--content-heading)" }}
           >
             {event.title}
           </h2>
@@ -269,7 +218,7 @@ export function TimelineStripCard({
             
             <div
               className="flex items-center gap-1 text-xs font-bold transition-all duration-300 translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0"
-              style={{ color: cat.color }}
+              style={{ color: style.color }}
             >
               Xem chi tiết <CaretRightIcon className="w-3.5 h-3.5" />
             </div>
@@ -279,7 +228,7 @@ export function TimelineStripCard({
         {/* Chronological Progress Line at the bottom */}
         <div
           className="absolute bottom-0 left-0 h-1 transition-all duration-700 ease-out w-0 group-hover:w-full z-20"
-          style={{ background: cat.color }}
+          style={{ background: style.color }}
         />
       </button>
     </div>
