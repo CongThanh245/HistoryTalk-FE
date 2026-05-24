@@ -1382,9 +1382,6 @@
                         "data": {
                           "type": "object",
                           "properties": {
-                            "resultId": {
-                              "type": "string"
-                            },
                             "score": {
                               "type": "number"
                             },
@@ -1406,6 +1403,10 @@
                               "items": {
                                 "type": "integer"
                               }
+                            },
+                            "sessionId": {
+                              "type": "string",
+                              "description": "QuizSession.session_id; there is no separate Result table."
                             }
                           }
                         }
@@ -1469,9 +1470,6 @@
                                   "items": {
                                     "type": "object",
                                     "properties": {
-                                      "resultId": {
-                                        "type": "string"
-                                      },
                                       "quizId": {
                                         "type": "string"
                                       },
@@ -1496,6 +1494,10 @@
                                       "durationSeconds": {
                                         "type": "integer",
                                         "description": "Seconds between QuizSession.start_time and QuizSession.end_time"
+                                      },
+                                      "sessionId": {
+                                        "type": "string",
+                                        "description": "QuizSession.session_id; this completed session is the result record."
                                       }
                                     }
                                   }

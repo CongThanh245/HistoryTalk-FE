@@ -828,7 +828,7 @@ Bắt đầu phiên làm bài. Không cần body.
 {
   "success": true,
   "data": {
-    "resultId": "string",
+    "sessionId": "string",
     "score": 8,
     "totalQuestions": 10,
     "percentage": 80,
@@ -839,6 +839,7 @@ Bắt đầu phiên làm bài. Không cần body.
 ```
 
 > `correctAnswers` / `wrongAnswers`: mảng **index** (0-based) trong danh sách questions.
+> `sessionId` là `QuizSession.session_id`; DB không có bảng Result riêng.
 
 ---
 
@@ -858,7 +859,7 @@ Bắt đầu phiên làm bài. Không cần body.
   "data": {
     "content": [
       {
-        "resultId": "string",
+        "sessionId": "string",
         "quizId": "string",
         "quizTitle": "string",
         "score": 8,

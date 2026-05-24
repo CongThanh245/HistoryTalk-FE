@@ -1,52 +1,31 @@
 "use client";
 
-// components/quiz/QuizCard.tsx — v2
-// Card đơn giản: title + grade badge + nút làm bài
-
 import React from "react";
-import { ChevronRight } from "lucide-react";
-import { QuizSetV2 } from "@/services/quiz.service";
+import { ChevronRight, Gauge, Users } from "lucide-react";
+import type { QuizSet } from "@/services/quiz.service";
 
-const GRADE_CONFIG = {
-  10: {
-    label: "Lịch sử 10",
-    color: "#3b82f6",
-    bg: "rgba(59,130,246,0.08)",
-    border: "rgba(59,130,246,0.2)",
-  },
-  11: {
-    label: "Lịch sử 11",
-    color: "#8b5cf6",
-    bg: "rgba(139,92,246,0.08)",
-    border: "rgba(139,92,246,0.2)",
-  },
-  12: {
-    label: "Lịch sử 12",
-    color: "#f97316",
-    bg: "rgba(249,115,22,0.08)",
-    border: "rgba(249,115,22,0.2)",
-  },
+const ERA_LABELS: Record<QuizSet["era"], string> = {
+  ALL: "Tổng hợp",
+  ANCIENT: "Cổ đại",
+  MEDIEVAL: "Trung đại",
+  MODERN: "Cận đại",
+  CONTEMPORARY: "Hiện đại",
 };
 
-const FALLBACK_GRADE = {
-  label: "Tổng hợp",
-  color: "#a07828",
-  bg: "rgba(160,120,40,0.08)",
-  border: "rgba(160,120,40,0.2)",
+const LEVEL_LABELS: Record<QuizSet["level"], string> = {
+  EASY: "Dễ",
+  MEDIUM: "Trung bình",
+  HARD: "Khó",
 };
 
 interface QuizCardProps {
-  quiz: QuizSetV2;
+  quiz: QuizSet;
   isActive?: boolean;
   onStart: (quizId: string) => void;
   compact?: boolean;
 }
 
 export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
-  const gradeConfig = quiz.grade
-    ? (GRADE_CONFIG[quiz.grade] ?? FALLBACK_GRADE)
-    : FALLBACK_GRADE;
-
   if (compact) {
     return (
       <button
@@ -68,7 +47,9 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
           <div
             className="w-2 h-2 rounded-full shrink-0 mt-1.5"
             style={{
-              background: isActive ? "var(--accent-gold)" : gradeConfig.color,
+              background: isActive
+                ? "var(--accent-gold)"
+                : "var(--content-subtle)",
             }}
           />
           <div className="flex-1 min-w-0">
@@ -80,17 +61,16 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
                   : "var(--content-heading)",
               }}
             >
-              {quiz.chapterTitle ?? quiz.title}
+              {quiz.title}
             </p>
-            <span
-              className="text-xs mt-0.5 block"
-              style={{
-                color: isActive ? "var(--accent-gold)" : gradeConfig.color,
-                opacity: 0.8,
-              }}
-            >
-              {gradeConfig.label}
-            </span>
+            {quiz.contextTitle && (
+              <span
+                className="text-xs mt-0.5 block truncate"
+                style={{ color: "var(--content-muted)" }}
+              >
+                {quiz.contextTitle}
+              </span>
+            )}
           </div>
         </div>
       </button>
@@ -109,37 +89,50 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
       }}
     >
       <div className="p-4">
-        {/* Grade badge */}
-        <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center justify-between gap-2 mb-3">
           <span
             className="text-xs font-semibold px-2.5 py-1 rounded-full"
             style={{
-              background: gradeConfig.bg,
-              color: gradeConfig.color,
-              border: `1px solid ${gradeConfig.border}`,
+              background: "rgba(201,162,77,0.1)",
+              color: "var(--gold-on-light)",
+              border: "1px solid rgba(201,162,77,0.2)",
             }}
           >
-            {gradeConfig.label}
+            {ERA_LABELS[quiz.era] ?? quiz.era}
           </span>
+          <div
+            className="flex items-center gap-1 text-xs"
+            style={{ color: "var(--content-muted)" }}
+          >
+            <Gauge size={12} />
+            {LEVEL_LABELS[quiz.level] ?? quiz.level}
+          </div>
         </div>
 
-        {/* Title */}
         <h3
-          className="text-sm font-semibold leading-snug mb-3 line-clamp-2 group-hover:text-[var(--accent-gold)] transition-colors"
+          className="text-sm font-semibold leading-snug mb-2 line-clamp-2 group-hover:text-[var(--accent-gold)] transition-colors"
           style={{ color: "var(--content-heading)" }}
         >
-          {quiz.chapterTitle ?? quiz.title}
+          {quiz.title}
         </h3>
 
-        {/* Subject line */}
-        <p
-          className="text-xs line-clamp-1 mb-3"
-          style={{ color: "var(--content-muted)" }}
-        >
-          {quiz.title.split("—")[1]?.trim() ?? quiz.title}
-        </p>
+        {quiz.contextTitle && (
+          <p
+            className="text-xs line-clamp-1 mb-3"
+            style={{ color: "var(--content-muted)" }}
+          >
+            {quiz.contextTitle}
+          </p>
+        )}
 
-        {/* Start button */}
+        <div
+          className="flex items-center gap-1.5 text-xs mb-3"
+          style={{ color: "var(--content-subtle)" }}
+        >
+          <Users size={12} />
+          {quiz.playCount.toLocaleString("vi-VN")} lượt làm
+        </div>
+
         <button
           onClick={() => onStart(quiz.quizId)}
           className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
@@ -150,7 +143,7 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
             color: "white",
           }}
         >
-          {isActive ? "Đang làm bài" : "Làm bài"}
+          {isActive ? "Đang làm bài" : "Xem quiz"}
           {!isActive && <ChevronRight size={12} />}
         </button>
       </div>

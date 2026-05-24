@@ -4,7 +4,6 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import {
-  Clock,
   ChevronLeft,
   TimerOff,
   LayoutGrid,
@@ -19,9 +18,6 @@ interface QuizProgressBarProps {
   answeredCount: number;
   answers: Record<string, number>; // questionId → selectedIndex
   questionIds: string[]; // ordered list để biết câu nào là câu mấy
-  durationSeconds: number;
-  useTimer: boolean;
-  onTimeUp: () => void;
   onBack: () => void;
   onGoHome: () => void; // ← mới
   onRetry: () => void; // ← mới
@@ -34,32 +30,19 @@ export function QuizProgressBar({
   answeredCount,
   answers,
   questionIds,
-  durationSeconds,
-  useTimer,
-  onTimeUp,
   onBack,
   onGoHome,
   onRetry,
   scrollToQuestion,
 }: QuizProgressBarProps) {
-  const [secondsLeft, setSecondsLeft] = useState(durationSeconds);
   const [elapsed, setElapsed] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (useTimer) {
-      if (secondsLeft <= 0) {
-        onTimeUp();
-        return;
-      }
-      const t = setInterval(() => setSecondsLeft((s) => s - 1), 1000);
-      return () => clearInterval(t);
-    } else {
-      const t = setInterval(() => setElapsed((s) => s + 1), 1000);
-      return () => clearInterval(t);
-    }
-  }, [secondsLeft, useTimer]);
+    const t = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   // Click outside đóng panel
   useEffect(() => {
@@ -73,8 +56,6 @@ export function QuizProgressBar({
   }, [panelOpen]);
 
   const pct = Math.round((answeredCount / totalQuestions) * 100);
-  const isUrgent = useTimer && secondsLeft < 60;
-
   function formatTime(s: number) {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -141,39 +122,17 @@ export function QuizProgressBar({
         </button>
 
         {/* Timer */}
-        {useTimer ? (
-          <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold flex-shrink-0"
-            style={
-              isUrgent
-                ? {
-                    background: "rgba(239,68,68,0.1)",
-                    color: "#ef4444",
-                    border: "1px solid rgba(239,68,68,0.2)",
-                  }
-                : {
-                    background: "var(--card-light-bg)",
-                    color: "var(--content-heading)",
-                    border: "1px solid var(--card-light-border)",
-                  }
-            }
-          >
-            <Clock size={13} className={isUrgent ? "animate-pulse" : ""} />
-            {formatTime(secondsLeft)}
-          </div>
-        ) : (
-          <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs flex-shrink-0"
-            style={{
-              background: "var(--card-light-bg)",
-              color: "var(--content-muted)",
-              border: "1px solid var(--card-light-border)",
-            }}
-          >
-            <TimerOff size={12} />
-            {formatTime(elapsed)}
-          </div>
-        )}
+        <div
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs flex-shrink-0"
+          style={{
+            background: "var(--card-light-bg)",
+            color: "var(--content-muted)",
+            border: "1px solid var(--card-light-border)",
+          }}
+        >
+          <TimerOff size={12} />
+          {formatTime(elapsed)}
+        </div>
 
         {/* Divider */}
         <div

@@ -11,18 +11,11 @@ import {
   Home,
   CheckCircle2,
   XCircle,
-  Clock,
   TrendingUp,
 } from "lucide-react";
-import type { QuizSetV2, QuizQuestion } from "@/services/quiz.service";
+import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
-
-function formatDuration(seconds: number) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
 
 interface SubmitResult {
   score: number;
@@ -33,10 +26,9 @@ interface SubmitResult {
 }
 
 interface QuizResultPageProps {
-  quiz: QuizSetV2;
+  quiz: QuizSet;
   questions: QuizQuestion[];
   answers: Record<string, number>; // questionId → selectedIndex
-  durationSeconds: number;
   submitResult: SubmitResult | null;
   onRetry: () => void;
 }
@@ -45,7 +37,6 @@ export function QuizResultPage({
   quiz,
   questions,
   answers,
-  durationSeconds,
   submitResult,
   onRetry,
 }: QuizResultPageProps) {
@@ -102,7 +93,7 @@ export function QuizResultPage({
             className="text-sm font-medium mb-2"
             style={{ color: "rgba(255,255,255,0.6)" }}
           >
-            {quiz.chapterTitle}
+            {quiz.title}
           </p>
           <div className="mb-2">
             <span
@@ -146,12 +137,6 @@ export function QuizResultPage({
                 value: totalQuestions - score,
                 color: "#ef4444",
                 icon: <XCircle size={14} />,
-              },
-              {
-                label: "Thời gian",
-                value: formatDuration(durationSeconds),
-                color: "rgba(255,255,255,0.7)",
-                icon: <Clock size={14} />,
               },
             ].map((s) => (
               <div key={s.label} className="text-center">
@@ -334,3 +319,4 @@ export function QuizResultPage({
     </div>
   );
 }
+

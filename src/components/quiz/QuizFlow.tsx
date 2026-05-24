@@ -3,11 +3,11 @@
 // components/quiz/QuizFlow.tsx
 // Dùng API thật: POST /quizzes/:id/start để lấy questions
 import {
-  type QuizSetV2,
+  type QuizSet,
   type QuizQuestion,
   type SubmitQuizPayload,
 } from "@/services/quiz.service";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Loader2, PanelLeftOpen, PanelLeftClose } from "lucide-react";
 import {
   useQuizSets,
@@ -22,26 +22,30 @@ import { QuizSidebar } from "./QuizSidebar";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation"; // thêm nếu chưa có
 import { cn } from "@/lib/utils/cn";
+import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 
 type QuizPhase = "detail" | "session" | "result";
 
 interface QuizFlowProps {
-  quiz: QuizSetV2;
+  quiz: QuizSet;
 }
 
 export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
+  const { authRequiredDialog, runWithAuth } = useAuthRequiredNavigation({
+    title: "Bạn cần đăng nhập để làm quiz",
+    description:
+      "Bạn vẫn có thể xem nội dung quiz. Đăng nhập để bắt đầu làm bài, nộp kết quả và lưu lại lịch sử luyện tập.",
+  });
   const { data: quizData } = useQuizSets();
-  const allQuizzes = quizData?.content ?? [];
+  const allQuizzes = useMemo(() => quizData?.content ?? [], [quizData?.content]);
 
-  const [currentQuiz, setCurrentQuiz] = useState<QuizSetV2>(initialQuiz);
+  const [currentQuiz, setCurrentQuiz] = useState<QuizSet>(initialQuiz);
   const [phase, setPhase] = useState<QuizPhase>("detail");
   const [sessionId, setSessionId] = useState<string>("");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [startTime, setStartTime] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [useTimer, setUseTimer] = useState(false);
 
   // Submission result state — lưu lại để hiện ở ResultPage
   const [submitResult, setSubmitResult] = useState<{
@@ -58,9 +62,8 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
   const handleGoHome = useCallback(() => {
     router.push("/quiz");
   }, [router]);
-  const handleStart = useCallback(
-    async (withTimer: boolean) => {
-      setUseTimer(withTimer);
+  const startQuiz = useCallback(
+    async () => {
       try {
         // POST /quizzes/:id/start → nhận sessionId + questions
         const session = await startQuizMutation.mutateAsync(currentQuiz.quizId);
@@ -74,13 +77,19 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
     },
     [currentQuiz.quizId, startQuizMutation],
   );
+  const handleStart = useCallback(
+    () => {
+      runWithAuth(() => {
+        void startQuiz();
+      });
+    },
+    [runWithAuth, startQuiz],
+  );
   const queryClient = useQueryClient();
 
   const handleSubmit = useCallback(
-    async (finalAnswers: Record<string, number>, duration: number) => {
+    async (finalAnswers: Record<string, number>) => {
       setAnswers(finalAnswers);
-      setElapsedSeconds(duration);
-
       try {
         const payload: SubmitQuizPayload = {
           sessionId,
@@ -90,7 +99,6 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
               selectedAnswer,
             }),
           ),
-          durationSeconds: duration,
         };
         const result = await submitQuizMutation.mutateAsync(payload);
         setSubmitResult(result);
@@ -109,7 +117,6 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
 
   const handleRetry = useCallback(() => {
     setAnswers({});
-    setElapsedSeconds(0);
     setQuestions([]);
     setSessionId("");
     setSubmitResult(null);
@@ -128,9 +135,8 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
       setQuestions([]);
       setSessionId("");
       setSubmitResult(null);
-      setElapsedSeconds(0);
     },
-    [currentQuiz.quizId],
+    [allQuizzes, currentQuiz.quizId],
   );
 
   const isLoading = startQuizMutation.isPending;
@@ -141,6 +147,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
       className="flex h-full overflow-hidden"
       style={{ background: "var(--bg-content)" }}
     >
+      {authRequiredDialog}
       {/* Left Sidebar */}
       <>
         {/* Backdrop on mobile */}
@@ -214,14 +221,12 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
               onGoHome={handleGoHome} // ← thêm
               onRetry={handleRetry} // ← thêm
               startTime={startTime}
-              useTimer={useTimer}
             />
           ) : (
             <QuizResultPage
               quiz={currentQuiz}
               questions={questions}
               answers={answers}
-              durationSeconds={elapsedSeconds}
               submitResult={submitResult}
               onRetry={handleRetry}
             />
@@ -231,3 +236,4 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
     </div>
   );
 }
+

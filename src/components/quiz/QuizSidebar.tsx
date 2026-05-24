@@ -1,17 +1,12 @@
 "use client";
 
-// components/quiz/QuizSidebar.tsx
-// Sidebar trái trong trang làm bài — danh sách quiz để chuyển nhanh
-
-import React, { useState } from "react";
-import { Search, BookOpen } from "lucide-react";
-import { QuizSetV2 } from "@/services/quiz.service";
+import React, { useMemo, useState } from "react";
+import { BookOpen, Search } from "lucide-react";
+import type { QuizSet } from "@/services/quiz.service";
 import { QuizCard } from "./quiz-card";
 
-type GradeFilter = "ALL" | 10 | 11 | 12;
-
 interface QuizSidebarProps {
-  quizzes: QuizSetV2[];
+  quizzes: QuizSet[];
   activeQuizId: string;
   onSelectQuiz: (quizId: string) => void;
 }
@@ -22,32 +17,17 @@ export function QuizSidebar({
   onSelectQuiz,
 }: QuizSidebarProps) {
   const [search, setSearch] = useState("");
-  const [gradeFilter, setGradeFilter] = useState<GradeFilter>("ALL");
 
-  const filtered = quizzes.filter((q) => {
-    const matchSearch =
-      !search ||
-      q.title.toLowerCase().includes(search.toLowerCase()) ||
-      q.chapterTitle?.toLowerCase().includes(search.toLowerCase());
-    const matchGrade = gradeFilter === "ALL" || q.grade === gradeFilter;
-    return matchSearch && matchGrade;
-  });
+  const filtered = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    if (!keyword) return quizzes;
 
-  // Group by grade
-  const grouped = filtered.reduce<Record<number, QuizSetV2[]>>((acc, q) => {
-    const key = q.grade || 0;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(q);
-    return acc;
-  }, {});
-
-  const grades = [12, 11, 10] as const;
-  const gradeColors: Record<number, string> = {
-    0: "#6b7280",
-    10: "#3b82f6",
-    11: "#8b5cf6",
-    12: "#f97316",
-  };
+    return quizzes.filter(
+      (q) =>
+        q.title.toLowerCase().includes(keyword) ||
+        q.contextTitle?.toLowerCase().includes(keyword),
+    );
+  }, [quizzes, search]);
 
   return (
     <div
@@ -57,7 +37,6 @@ export function QuizSidebar({
         borderRight: "1px solid var(--card-light-border)",
       }}
     >
-      {/* Header */}
       <div
         className="flex-shrink-0 px-4 pt-4 pb-3"
         style={{ borderBottom: "1px solid var(--card-light-border)" }}
@@ -81,9 +60,8 @@ export function QuizSidebar({
           </span>
         </div>
 
-        {/* Search */}
         <div
-          className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl"
           style={{
             background: "var(--bg-surface)",
             border: "1px solid var(--card-light-border)",
@@ -99,38 +77,9 @@ export function QuizSidebar({
             style={{ color: "var(--text-on-dark)" }}
           />
         </div>
-
-        {/* Grade filters */}
-        <div className="flex gap-1.5">
-          {(["ALL", 12, 11, 10] as GradeFilter[]).map((g) => (
-            <button
-              key={g}
-              onClick={() => setGradeFilter(g)}
-              className="flex-1 py-1 rounded-lg text-xs font-medium transition-all"
-              style={
-                gradeFilter === g
-                  ? {
-                      background:
-                        g === "ALL"
-                          ? "var(--abyssal-blue)"
-                          : gradeColors[g as 10 | 11 | 12],
-                      color: "white",
-                    }
-                  : {
-                      background: "var(--bg-surface)",
-                      color: "var(--content-muted)",
-                      border: "1px solid var(--card-light-border)",
-                    }
-              }
-            >
-              {g === "ALL" ? "Tất cả" : `Lớp ${g}`}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* Quiz list */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+      <div className="flex-1 overflow-y-auto px-3 py-3">
         {filtered.length === 0 ? (
           <p
             className="text-center text-xs py-6"
@@ -138,8 +87,7 @@ export function QuizSidebar({
           >
             Không tìm thấy đề nào
           </p>
-        ) : gradeFilter !== "ALL" ? (
-          // Single grade list
+        ) : (
           <div className="space-y-1">
             {filtered.map((q) => (
               <QuizCard
@@ -151,45 +99,6 @@ export function QuizSidebar({
               />
             ))}
           </div>
-        ) : (
-          // Grouped by grade
-          [0, ...grades].map((grade) => {
-            const items = grouped[grade];
-            if (!items?.length) return null;
-            return (
-              <div key={grade}>
-                <div className="flex items-center gap-2 mb-1.5 px-1">
-                  <div
-                    className="w-2.5 h-2.5 rounded-full"
-                    style={{ background: gradeColors[grade] }}
-                  />
-                  <span
-                    className="text-xs font-bold"
-                    style={{ color: gradeColors[grade] }}
-                  >
-                    {grade === 0 ? "Tổng hợp" : `Lịch sử ${grade}`}
-                  </span>
-                  <span
-                    className="text-xs"
-                    style={{ color: "var(--content-subtle)" }}
-                  >
-                    ({items.length})
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  {items.map((q) => (
-                    <QuizCard
-                      key={q.quizId}
-                      quiz={q}
-                      isActive={q.quizId === activeQuizId}
-                      onStart={onSelectQuiz}
-                      compact
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })
         )}
       </div>
     </div>

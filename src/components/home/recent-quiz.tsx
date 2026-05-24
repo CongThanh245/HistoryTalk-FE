@@ -8,38 +8,6 @@ import { queryKeys } from "@/shared/query-key";
 import { useAuthStore } from "@/store/auth.store";
 
 // ── Skeleton ──────────────────────────────────────────────
-function SkeletonRow() {
-  return (
-    <div
-      className="flex items-center justify-between px-4 py-3 rounded-xl border animate-pulse"
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className="w-8 h-8 rounded-lg"
-          style={{ background: "var(--card-light-border)" }}
-        />
-        <div className="space-y-2">
-          <div
-            className="h-3 w-36 rounded"
-            style={{ background: "var(--card-light-border)" }}
-          />
-          <div
-            className="h-2.5 w-24 rounded"
-            style={{ background: "var(--card-light-border)" }}
-          />
-        </div>
-      </div>
-      <div
-        className="h-5 w-10 rounded-full"
-        style={{ background: "var(--card-light-border)" }}
-      />
-    </div>
-  );
-}
 function SkeletonCard() {
   return (
     <div
@@ -67,71 +35,8 @@ function SkeletonCard() {
   );
 }
 // ── Score badge ───────────────────────────────────────────
-function ScoreBadge({ percentage }: { percentage: number }) {
-  const color =
-    percentage >= 85
-      ? "var(--accent-teal)"
-      : percentage >= 70
-        ? "var(--gold-on-light)"
-        : "var(--burning-flame)";
-
-  return (
-    <span
-      className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-      style={{ background: `${color}18`, color }}
-    >
-      {percentage}%
-    </span>
-  );
-}
-
 // ── Helper ────────────────────────────────────────────────
-function formatDuration(seconds: number) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
 // ── Row ───────────────────────────────────────────────────
-function RecentQuizRow({ item }: { item: QuizResult }) {
-  return (
-    <div
-      className="flex items-center justify-between px-4 py-3 rounded-xl border transition-colors duration-150"
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
-    >
-      <div className="flex items-center gap-3 min-w-0">
-        <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: "rgba(160,120,40,0.10)" }}
-        >
-          <Trophy
-            className="w-4 h-4"
-            style={{ color: "var(--gold-on-light)" }}
-          />
-        </div>
-        <div className="min-w-0">
-          <p
-            className="text-sm font-medium truncate"
-            style={{ color: "var(--content-text)" }}
-          >
-            {item.quizTitle}
-          </p>
-          <p
-            className="text-xs mt-0.5"
-            style={{ color: "var(--content-muted)" }}
-          >
-            {item.score}/{item.totalQuestions} câu ·{" "}
-            {formatDuration(item.durationSeconds)}
-          </p>
-        </div>
-      </div>
-      <ScoreBadge percentage={item.percentage} />
-    </div>
-  );
-}
 function RecentQuizCard({ item }: { item: QuizResult }) {
   const color =
     item.percentage >= 85
@@ -176,8 +81,7 @@ function RecentQuizCard({ item }: { item: QuizResult }) {
           {item.quizTitle}
         </p>
         <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
-          {item.score}/{item.totalQuestions} câu ·{" "}
-          {formatDuration(item.durationSeconds)}
+          {item.score}/{item.totalQuestions} câu
         </p>
       </div>
     </div>
@@ -231,10 +135,13 @@ export function RecentQuiz() {
           </p>
         ) : (
           results.map((item) => (
-            <RecentQuizCard key={item.resultId} item={item} />
+            <RecentQuizCard key={item.sessionId} item={item} />
           ))
         )}
       </div>
     </section>
   );
 }
+
+
+

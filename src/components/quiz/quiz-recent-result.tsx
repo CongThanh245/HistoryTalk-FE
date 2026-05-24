@@ -2,7 +2,7 @@
 // Bảng lịch sử làm bài gần đây
 
 import React from "react";
-import { Trophy, Clock, Calendar } from "lucide-react";
+import { Trophy, Calendar, Timer } from "lucide-react";
 import type { QuizResult } from "@/services/quiz.service";
 
 
@@ -16,14 +16,25 @@ function formatDate(iso: string) {
   return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-function formatDuration(seconds: number) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
+function formatDuration(totalSeconds: number) {
+  if (!totalSeconds) return "0 phút";
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes === 0) return `${seconds} giây`;
+  if (seconds === 0) return `${minutes} phút`;
+  return `${minutes} phút ${seconds} giây`;
 }
 
-function ScoreBadge({ score, total }: { score: number; total: number }) {
-  const pct = Math.round((score / total) * 100);
+function ScoreBadge({
+  score,
+  total,
+  percentage,
+}: {
+  score: number;
+  total: number;
+  percentage: number;
+}) {
+  const pct = Math.round(percentage);
   const color =
     pct >= 80
       ? "text-emerald-500 bg-emerald-500/10"
@@ -67,7 +78,7 @@ export function QuizRecentResults({ results, isLoading }: QuizRecentResultsProps
       ) : (
         <div className="divide-y" style={{ borderColor: "var(--card-light-border)" }}>
           {results.map((r) => (
-            <div key={r.resultId} className="flex items-center justify-between px-5 py-3 hover:bg-[var(--card-light-hover)] transition-colors">
+            <div key={r.sessionId} className="flex items-center justify-between px-5 py-3 hover:bg-[var(--card-light-hover)] transition-colors">
               <div className="flex-1 min-w-0 mr-4">
                 <p className="text-sm font-medium truncate" style={{ color: "var(--content-heading)" }}>
                   {r.quizTitle}
@@ -78,13 +89,16 @@ export function QuizRecentResults({ results, isLoading }: QuizRecentResultsProps
                     {formatDate(r.completedAt)}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Clock size={11} />
+                    <Timer size={11} />
                     {formatDuration(r.durationSeconds)}
                   </span>
-
                 </div>
               </div>
-              <ScoreBadge score={r.score} total={r.totalQuestions} />
+              <ScoreBadge
+                score={r.score}
+                total={r.totalQuestions}
+                percentage={r.percentage}
+              />
             </div>
           ))}
         </div>
