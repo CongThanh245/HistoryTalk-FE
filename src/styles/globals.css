@@ -236,6 +236,12 @@ body {
   padding: 28px 32px 30px;
   outline: none;
   animation: upgradeContentIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.upgrade-pro-content::-webkit-scrollbar {
+  display: none;
 }
 
 .upgrade-pro-brand {
@@ -738,37 +744,37 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-deep);
+  background: rgba(7, 13, 24, 0.42);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(
     180deg,
-    var(--accent-gold) 0%,
-    var(--truffle) 100%
+    rgba(226, 199, 122, 0.55) 0%,
+    rgba(163, 81, 57, 0.48) 100%
   );
   border-radius: 999px;
-  border: 2px solid var(--bg-deep); /* tạo khoảng cách giữa thumb và track */
+  border: 2px solid rgba(7, 13, 24, 0.5); /* tạo khoảng cách giữa thumb và track */
   transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(
     180deg,
-    var(--accent-gold-soft) 0%,
-    var(--accent-gold) 100%
+    rgba(226, 199, 122, 0.72) 0%,
+    rgba(255, 146, 21, 0.58) 100%
   );
 }
 
 ::-webkit-scrollbar-corner {
-  background: var(--bg-deep);
+  background: rgba(7, 13, 24, 0.42);
 }
 
 /* ── Firefox ── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--accent-gold) var(--bg-deep);
+  scrollbar-color: rgba(226, 199, 122, 0.58) rgba(7, 13, 24, 0.42);
 }
 
 /* ── Scrollbar mỏng hơn cho các panel nhỏ (sidebar, modal) ── */
@@ -777,7 +783,7 @@ body {
 }
 
 .thin-scroll::-webkit-scrollbar-thumb {
-  border: 1px solid var(--bg-deep);
+  border: 1px solid rgba(7, 13, 24, 0.5);
 }
 /* ─────────────────────────────────────────
    Timeline Strip Card — slide animation
