@@ -4,7 +4,6 @@
 // Một câu hỏi: chọn đáp án → hiện đúng/sai + explanation
 
 import React from "react";
-import { CheckCircle2, XCircle, Lightbulb } from "lucide-react";
 import type { QuizQuestion } from "@/services/quiz.service";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
@@ -63,22 +62,9 @@ export function QuizQuestionCard({
     };
   }
 
-  function getOptionIcon(optionIndex: number) {
-    if (!hasAnswered) return null;
-    if (optionIndex === question.correctAnswer) {
-      return (
-        <CheckCircle2 size={16} color="#10b981" className="flex-shrink-0" />
-      );
-    }
-    if (optionIndex === selectedAnswer) {
-      return <XCircle size={16} color="#ef4444" className="flex-shrink-0" />;
-    }
-    return null;
-  }
-
   return (
     <div
-      className="rounded-2xl overflow-hidden transition-all duration-200"
+      className="rounded-xl overflow-hidden transition-all duration-200"
       style={{
         background: "var(--card-light-bg)",
         border: `1.5px solid ${hasAnswered ? (isCorrect ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.25)") : "var(--card-light-border)"}`,
@@ -133,9 +119,9 @@ export function QuizQuestionCard({
               className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
               style={
                 hasAnswered && optIndex === question.correctAnswer
-                  ? { background: "#10b981", color: "white" }
+                  ? { background: "#10b981", color: "#fff" }
                   : hasAnswered && optIndex === selectedAnswer
-                    ? { background: "#ef4444", color: "white" }
+                    ? { background: "#ef4444", color: "#fff" }
                     : {
                         background: "var(--card-light-bg)",
                         color: "var(--content-muted)",
@@ -145,7 +131,6 @@ export function QuizQuestionCard({
               {OPTION_LABELS[optIndex]}
             </span>
             <span className="flex-1 text-sm">{option}</span>
-            {getOptionIcon(optIndex)}
           </button>
         ))}
       </div>
@@ -160,8 +145,7 @@ export function QuizQuestionCard({
             animation: "fade-in 0.3s ease-out",
           }}
         >
-          <div className="flex items-center gap-2 mb-1.5">
-            <Lightbulb size={13} style={{ color: "var(--accent-gold)" }} />
+          <div className="mb-1.5">
             <span
               className="text-xs font-semibold"
               style={{ color: "var(--accent-gold)" }}
@@ -190,25 +174,19 @@ export function QuizQuestionCard({
           }}
         >
           {isCorrect ? (
-            <>
-              <CheckCircle2 size={13} color="#10b981" />
-              <span
-                className="text-xs font-medium"
-                style={{ color: "#10b981" }}
-              >
-                Chính xác!
-              </span>
-            </>
+            <span
+              className="text-xs font-medium"
+              style={{ color: "#10b981" }}
+            >
+              Chính xác!
+            </span>
           ) : (
-            <>
-              <XCircle size={13} color="#ef4444" />
-              <span
-                className="text-xs font-medium"
-                style={{ color: "#ef4444" }}
-              >
-                Chưa đúng. Đáp án: {OPTION_LABELS[question.correctAnswer]}
-              </span>
-            </>
+            <span
+              className="text-xs font-medium"
+              style={{ color: "#ef4444" }}
+            >
+              Chưa đúng. Đáp án: {OPTION_LABELS[question.correctAnswer]}
+            </span>
           )}
         </div>
       )}

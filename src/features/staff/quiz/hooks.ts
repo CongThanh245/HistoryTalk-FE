@@ -45,7 +45,6 @@ export function useUpdateStaffQuiz() {
     mutationFn: ({ quizId, payload }: { quizId: string; payload: UpdateQuizPayload }) =>
       staffQuizService.updateQuiz(quizId, payload),
     onSuccess: (updated) => {
-      // Cập nhật detail cache luôn, rồi invalidate list
       queryClient.setQueryData(
         queryKeys.staffQuizzes.detail(updated.quizId),
         updated,
@@ -82,7 +81,6 @@ export function useUpdateQuizQuestion() {
       payload: UpdateQuestionPayload;
     }) => staffQuizService.updateQuestion(quizId, questionId, payload),
     onSuccess: (_result, { quizId }) => {
-      // API chỉ trả string, invalidate detail để refetch câu hỏi mới nhất
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.detail(quizId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
     },
@@ -96,6 +94,19 @@ export function useSoftDeleteStaffQuiz() {
     mutationFn: (quizId: string) => staffQuizService.softDelete(quizId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.all });
+    },
+  });
+}
+
+// PATCH /staff/quizzes/{quizId}/toggle-active — bật/tắt hiển thị
+export function useToggleStaffQuizActive() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (quizId: string) => staffQuizService.toggleActive(quizId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.all });
     },
   });
 }
@@ -107,22 +118,12 @@ export function usePermanentDeleteStaffQuiz() {
     mutationFn: (quizId: string) => staffQuizService.permanentDelete(quizId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.all });
     },
   });
 }
 
-// PATCH /staff/quizzes/{quizId}/restore — khôi phục
 // DELETE /staff/quizzes/{quizId}/questions/{questionId} — xóa câu hỏi
-export function useRestoreStaffQuiz() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (quizId: string) => staffQuizService.restore(quizId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
-    },
-  });
-}
-
 export function useDeleteQuizQuestion() {
   const queryClient = useQueryClient();
   return useMutation({

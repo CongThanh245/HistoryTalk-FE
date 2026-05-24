@@ -1,10 +1,5 @@
-// components/quiz/QuizRecentResults.tsx
-// Bảng lịch sử làm bài gần đây
-
 import React from "react";
-import { Trophy, Calendar, Timer } from "lucide-react";
 import type { QuizResult } from "@/services/quiz.service";
-
 
 interface QuizRecentResultsProps {
   results: QuizResult[];
@@ -14,15 +9,6 @@ interface QuizRecentResultsProps {
 function formatDate(iso: string) {
   const d = new Date(iso);
   return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
-
-function formatDuration(totalSeconds: number) {
-  if (!totalSeconds) return "0 phút";
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  if (minutes === 0) return `${seconds} giây`;
-  if (seconds === 0) return `${minutes} phút`;
-  return `${minutes} phút ${seconds} giây`;
 }
 
 function ScoreBadge({
@@ -35,14 +21,17 @@ function ScoreBadge({
   percentage: number;
 }) {
   const pct = Math.round(percentage);
-  const color =
+  const tone =
     pct >= 80
-      ? "text-emerald-500 bg-emerald-500/10"
+      ? { bg: "rgba(16,185,129,0.10)", fg: "#047857" }
       : pct >= 50
-      ? "text-[var(--burning-flame)] bg-[var(--streak-bg)]"
-      : "text-[var(--accent-danger)] bg-[var(--accent-blood)]/20";
+        ? { bg: "rgba(201,162,77,0.14)", fg: "var(--gold-on-light)" }
+        : { bg: "rgba(184,50,42,0.10)", fg: "var(--accent-danger)" };
   return (
-    <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${color}`}>
+    <span
+      className="rounded-md px-2 py-1 text-xs font-bold"
+      style={{ background: tone.bg, color: tone.fg }}
+    >
       {score}/{total} ({pct}%)
     </span>
   );
@@ -50,21 +39,20 @@ function ScoreBadge({
 
 export function QuizRecentResults({ results, isLoading }: QuizRecentResultsProps) {
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
+    <section
+      className="rounded-xl border"
       style={{
         background: "var(--card-light-bg)",
-        border: "1px solid var(--card-light-border)",
+        borderColor: "var(--card-light-border)",
       }}
     >
-      <div
-        className="flex items-center gap-2 px-5 py-4"
-        style={{ borderBottom: "1px solid var(--card-light-border)" }}
-      >
-        <Trophy size={16} style={{ color: "var(--accent-gold)" }} />
-        <h3 className="font-semibold text-sm" style={{ color: "var(--content-heading)" }}>
+      <div className="px-5 py-4" style={{ borderBottom: "1px solid var(--card-light-border)" }}>
+        <h3 className="text-sm font-bold" style={{ color: "var(--content-heading)" }}>
           Lịch sử làm bài
         </h3>
+        <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
+          Các lần nộp gần đây của bạn
+        </p>
       </div>
 
       {isLoading ? (
@@ -78,31 +66,20 @@ export function QuizRecentResults({ results, isLoading }: QuizRecentResultsProps
       ) : (
         <div className="divide-y" style={{ borderColor: "var(--card-light-border)" }}>
           {results.map((r) => (
-            <div key={r.sessionId} className="flex items-center justify-between px-5 py-3 hover:bg-[var(--card-light-hover)] transition-colors">
-              <div className="flex-1 min-w-0 mr-4">
-                <p className="text-sm font-medium truncate" style={{ color: "var(--content-heading)" }}>
+            <div key={r.sessionId} className="px-5 py-4 transition-colors hover:bg-black/[0.025]">
+              <div className="mb-2 flex items-start justify-between gap-3">
+                <p className="min-w-0 flex-1 truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
                   {r.quizTitle}
                 </p>
-                <div className="flex items-center gap-3 mt-0.5 text-xs" style={{ color: "var(--content-muted)" }}>
-                  <span className="flex items-center gap-1">
-                    <Calendar size={11} />
-                    {formatDate(r.completedAt)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Timer size={11} />
-                    {formatDuration(r.durationSeconds)}
-                  </span>
-                </div>
+                <ScoreBadge score={r.score} total={r.totalQuestions} percentage={r.percentage} />
               </div>
-              <ScoreBadge
-                score={r.score}
-                total={r.totalQuestions}
-                percentage={r.percentage}
-              />
+              <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                {formatDate(r.completedAt)}
+              </p>
             </div>
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

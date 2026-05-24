@@ -4,21 +4,22 @@ import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   ClipboardTextIcon, PencilIcon, TrashIcon, ArrowLeftIcon,
-  TimerIcon, GameControllerIcon,
+  GameControllerIcon, EyeIcon, EyeSlashIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
-import { StaffSearchBar } from "@/components/staff/staff-search-bar";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
-import { EraBadge, GradeBadge, ERA_OPTIONS, type EraKey } from "@/components/staff/staff-badge";
+import {
+  DifficultyBadge, EraBadge,
+  type DifficultyKey, type EraKey,
+} from "@/components/staff/staff-badge";
 import { QuizQuestionEditor, type QuizQuestion } from "@/components/staff/quiz-question-editor";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -28,47 +29,40 @@ import {
   useCreateStaffQuiz,
   useUpdateStaffQuiz,
   useSoftDeleteStaffQuiz,
-  useRestoreStaffQuiz,
   usePermanentDeleteStaffQuiz,
+  useToggleStaffQuizActive,
 } from "@/features/staff/quiz/hooks";
 import { useEvents } from "@/features/events/hooks";
-import type { StaffQuizSet, StaffQuizEra } from "@/services/staff.quiz.service";
-import { ArrowCounterClockwiseIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
+import type { StaffQuizSet } from "@/services/staff.quiz.service";
+import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-/** Draft cho editor — chỉ các field mà POST /staff/quizzes chấp nhận */
+/** Draft cho editor — align với POST /staff/quizzes */
 interface QuizDraft {
-  quizId?: string;           // chỉ có khi edit
+  quizId?: string;          // chỉ có khi edit
   title: string;
-  description: string;
   contextId: string;
-  grade: 10 | 11 | 12 | null;
-  chapterNumber: number;
-  chapterTitle: string;
-  era: StaffQuizEra;
-  durationSeconds: number;
+  level: "EASY" | "MEDIUM" | "HARD";
   questions: QuizQuestion[];
 }
+
+// ─── Constants ─────────────────────────────────────────────────────────────────
+
+const LEVEL_OPTIONS: { value: "EASY" | "MEDIUM" | "HARD"; label: string }[] = [
+  { value: "EASY", label: "Dễ" },
+  { value: "MEDIUM", label: "Trung bình" },
+  { value: "HARD", label: "Khó" },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const emptyDraft = (): QuizDraft => ({
   title: "",
-  description: "",
   contextId: "",
-  grade: null,
-  chapterNumber: 1,
-  chapterTitle: "",
-  era: "CONTEMPORARY",
-  durationSeconds: 900,
+  level: "MEDIUM",
   questions: [],
 });
-
-const fmtDuration = (s: number) => {
-  const m = Math.floor(s / 60);
-  return m > 0 ? `${m} phút` : `${s}s`;
-};
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -81,12 +75,22 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+function FormattedDate({ date }: { date: string }) {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return <span>—</span>;
+  return (
+    <span className="text-xs" style={{ color: "var(--content-muted)" }}>
+      {d.toLocaleDateString("vi-VN")}
+    </span>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StaffQuizzesPage() {
   // ── Filter state ──────────────────────────────────────────
   const [search, setSearch] = React.useState("");
-  const [filterGrade, setFilterGrade] = React.useState<"" | "10" | "11" | "12">("");
+  const [filterLevel, setFilterLevel] = React.useState<"" | "EASY" | "MEDIUM" | "HARD">("");
   const [page] = React.useState(0);
 
   // ── View / editor state ───────────────────────────────────
@@ -95,31 +99,36 @@ export default function StaffQuizzesPage() {
   const [draft, setDraft] = React.useState<QuizDraft>(emptyDraft());
   const [deleteTarget, setDeleteTarget] = React.useState<StaffQuizSet | null>(null);
   const [showTrash, setShowTrash] = React.useState(false);
-  const [restoreTarget, setRestoreTarget] = React.useState<StaffQuizSet | null>(null);
   const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<StaffQuizSet | null>(null);
+  const [publishTarget, setPublishTarget] = React.useState<StaffQuizSet | null>(null);
   const [contextSearch, setContextSearch] = React.useState("");
 
   // ── API hooks ─────────────────────────────────────────────
   const params = React.useMemo(() => ({
     ...(search.trim() && { search: search.trim() }),
-    ...(filterGrade && { grade: Number(filterGrade) }),
     page,
     size: 20,
-  }), [search, filterGrade, page]);
+  }), [search, page]);
 
   const { data, isLoading, isError } = useStaffQuizzes(params);
   const createQuiz = useCreateStaffQuiz();
   const updateQuiz = useUpdateStaffQuiz();
   const softDeleteQuiz = useSoftDeleteStaffQuiz();
-  const restoreQuiz = useRestoreStaffQuiz();
   const permanentDeleteQuiz = usePermanentDeleteStaffQuiz();
-  // Load toàn bộ contexts để chọn trong dropdown (chỉ cần khi mở editor)
+  const toggleActiveQuiz = useToggleStaffQuizActive();
+
+  // Load toàn bộ contexts để chọn trong dropdown
   const { data: contextsData } = useEvents({ page: 1, limit: 200 });
 
   const allItems = data?.content ?? [];
   const activeItems = allItems.filter((q) => !q.deletedAt);
   const trashedItems = allItems.filter((q) => !!q.deletedAt);
   const items = showTrash ? trashedItems : activeItems;
+
+  // Filter theo level nếu có
+  const filteredItems = filterLevel
+    ? items.filter((q) => q.level === filterLevel)
+    : items;
 
   // ── Handlers ──────────────────────────────────────────────
   const openCreate = () => {
@@ -132,21 +141,14 @@ export default function StaffQuizzesPage() {
     setDraft({
       quizId: q.quizId,
       title: q.title,
-      description: q.description,
       contextId: q.contextId,
-      grade: ([10, 11, 12].includes(q.grade) ? q.grade : null) as 10 | 11 | 12 | null,
-      chapterNumber: q.chapterNumber,
-      chapterTitle: q.chapterTitle,
-      era: q.era,
-      durationSeconds: q.durationSeconds,
-      // Map StaffQuizQuestion → QuizQuestion (same shape)
+      level: q.level,
       questions: q.questions.map((qq) => {
-        // Pad options to exactly 4 elements to satisfy the [s,s,s,s] tuple type
         const opts = [...qq.options];
         while (opts.length < 4) opts.push("");
         return {
           questionId: qq.questionId,
-          orderIndex: qq.orderIndex,
+          orderIndex: 0,
           content: qq.content,
           options: opts.slice(0, 4) as [string, string, string, string],
           correctAnswer: (Math.min(qq.correctAnswer, 3)) as 0 | 1 | 2 | 3,
@@ -160,25 +162,18 @@ export default function StaffQuizzesPage() {
 
   const handleSave = () => {
     const title = draft.title.trim();
-    const chapterTitle = draft.chapterTitle.trim();
-    if (!title || !chapterTitle) return;
+    if (!title) return;
 
     if (editorMode === "create") {
       createQuiz.mutate(
         {
           title,
-          description: draft.description.trim(),
           contextId: draft.contextId.trim(),
-          grade: draft.grade ?? 0,
-          chapterNumber: draft.chapterNumber,
-          chapterTitle,
-          era: draft.era,
-          durationSeconds: draft.durationSeconds,
-          questions: draft.questions.map((q, i) => ({
+          level: draft.level,
+          questions: draft.questions.map((q) => ({
             content: q.content,
             options: q.options,
             correctAnswer: q.correctAnswer,
-            orderIndex: q.orderIndex ?? i + 1,
             explanation: q.explanation,
           })),
         },
@@ -193,20 +188,14 @@ export default function StaffQuizzesPage() {
         },
       );
     } else {
-      // Edit — gọi PUT /staff/quizzes/{quizId}
       if (!draft.quizId) return;
       updateQuiz.mutate(
         {
           quizId: draft.quizId,
           payload: {
             title,
-            description: draft.description.trim(),
             contextId: draft.contextId,
-            grade: draft.grade ?? 0,
-            chapterNumber: draft.chapterNumber,
-            chapterTitle,
-            era: draft.era,
-            durationSeconds: draft.durationSeconds,
+            level: draft.level,
           },
         },
         {
@@ -215,14 +204,13 @@ export default function StaffQuizzesPage() {
             setView("list");
           },
           onError: () => {
-            toast.error("Ấp nhật quiz thất bại. Vui lòng thử lại.");
+            toast.error("Cập nhật quiz thất bại. Vui lòng thử lại.");
           },
         },
       );
     }
   };
 
-  // PATCH /staff/quizzes/{quizId}/soft-delete
   const handleSoftDelete = () => {
     if (!deleteTarget) return;
     softDeleteQuiz.mutate(deleteTarget.quizId, {
@@ -236,21 +224,6 @@ export default function StaffQuizzesPage() {
     });
   };
 
-  // PATCH /staff/quizzes/{quizId}/restore
-  const handleRestore = () => {
-    if (!restoreTarget) return;
-    restoreQuiz.mutate(restoreTarget.quizId, {
-      onSuccess: () => {
-        toast.success(`Đã khôi phục quiz "${restoreTarget.title}".`);
-        setRestoreTarget(null);
-      },
-      onError: () => {
-        toast.error("Khôi phục quiz thất bại.");
-      },
-    });
-  };
-
-  // DELETE /staff/quizzes/{quizId}
   const handlePermanentDelete = () => {
     if (!permanentDeleteTarget) return;
     permanentDeleteQuiz.mutate(permanentDeleteTarget.quizId, {
@@ -260,6 +233,24 @@ export default function StaffQuizzesPage() {
       },
       onError: () => {
         toast.error("Xóa vĩnh viễn thất bại.");
+      },
+    });
+  };
+
+  const handleToggleActive = () => {
+    if (!publishTarget) return;
+    const nextActive = !publishTarget.isActive;
+    toggleActiveQuiz.mutate(publishTarget.quizId, {
+      onSuccess: () => {
+        toast.success(
+          nextActive
+            ? `Đã publish quiz "${publishTarget.title}".`
+            : `Đã ẩn quiz "${publishTarget.title}" khỏi người dùng.`,
+        );
+        setPublishTarget(null);
+      },
+      onError: () => {
+        toast.error("Cập nhật trạng thái hiển thị thất bại. Vui lòng thử lại.");
       },
     });
   };
@@ -274,9 +265,11 @@ export default function StaffQuizzesPage() {
           <p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
             {r.original.title}
           </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-            Bài {r.original.chapterNumber}: {r.original.chapterTitle}
-          </p>
+          {r.original.contextTitle && (
+            <p className="text-xs mt-0.5 truncate max-w-[260px]" style={{ color: "var(--content-muted)" }}>
+              {r.original.contextTitle}
+            </p>
+          )}
         </div>
       ),
     },
@@ -285,7 +278,7 @@ export default function StaffQuizzesPage() {
       header: "Phân loại",
       cell: ({ row: r }) => (
         <div className="flex items-center gap-1.5 flex-wrap">
-          {!!r.original.grade && <GradeBadge value={r.original.grade as 10 | 11 | 12} />}
+          <DifficultyBadge value={r.original.level as DifficultyKey} />
           <EraBadge value={r.original.era as EraKey} />
         </div>
       ),
@@ -296,7 +289,7 @@ export default function StaffQuizzesPage() {
       cell: ({ row: r }) => (
         <div>
           <p className="text-xs" style={{ color: "var(--content-text)" }}>
-            {r.original.questions.length} câu · {fmtDuration(r.original.durationSeconds)}
+            {r.original.questions.length} câu hỏi
           </p>
           <p className="text-xs" style={{ color: "var(--content-muted)" }}>
             {r.original.playCount.toLocaleString()} lượt chơi
@@ -305,10 +298,31 @@ export default function StaffQuizzesPage() {
       ),
     },
     {
+      accessorKey: "isActive",
+      header: "Hiển thị",
+      cell: ({ row: r }) => {
+        const isPublished = r.original.isActive !== false;
+        const StatusIcon = isPublished ? EyeIcon : EyeSlashIcon;
+        return (
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+            style={{
+              background: isPublished ? "rgba(34,197,94,0.1)" : "rgba(234,179,8,0.1)",
+              color: isPublished ? "rgb(22,163,74)" : "rgb(161,98,7)",
+              border: `1px solid ${isPublished ? "rgba(34,197,94,0.2)" : "rgba(234,179,8,0.2)"}`,
+            }}
+          >
+            <StatusIcon className="h-3 w-3" />
+            {isPublished ? "Đang publish" : "Đang ẩn"}
+          </span>
+        );
+      },
+    },
+    {
       accessorKey: "updatedDate",
       header: "Cập nhật",
       cell: ({ row: r }) => (
-        r.original.updatedDate ? <FormattedDate date={r.original.updatedDate} /> : "—"
+        r.original.updatedDate ? <FormattedDate date={r.original.updatedDate} /> : <span>—</span>
       ),
     },
     {
@@ -316,6 +330,18 @@ export default function StaffQuizzesPage() {
       header: () => <div className="text-right pr-4">Thao tác</div>,
       cell: ({ row: r }) => (
         <div className="flex items-center justify-end gap-1">
+          <Button
+            type="button" variant="ghost" size="icon-sm" className="rounded-full"
+            title={r.original.isActive !== false ? "Ẩn khỏi người dùng" : "Publish cho người dùng"}
+            onClick={() => setPublishTarget(r.original)}
+            style={{ color: r.original.isActive !== false ? "rgb(22,163,74)" : "rgb(161,98,7)" }}
+          >
+            {r.original.isActive !== false ? (
+              <EyeIcon className="h-4 w-4" />
+            ) : (
+              <EyeSlashIcon className="h-4 w-4" />
+            )}
+          </Button>
           <Button
             type="button" variant="ghost" size="icon-sm" className="rounded-full"
             onClick={() => openEdit(r.original)}
@@ -346,9 +372,11 @@ export default function StaffQuizzesPage() {
           <p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
             {r.original.title}
           </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-            Bài {r.original.chapterNumber}: {r.original.chapterTitle}
-          </p>
+          {r.original.contextTitle && (
+            <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+              {r.original.contextTitle}
+            </p>
+          )}
         </div>
       ),
     },
@@ -371,14 +399,6 @@ export default function StaffQuizzesPage() {
         <div className="flex items-center justify-end gap-1">
           <Button
             type="button" variant="ghost" size="icon-sm" className="rounded-full"
-            title="Khôi phục"
-            onClick={() => setRestoreTarget(r.original)}
-            style={{ color: "var(--accent-teal)" }}
-          >
-            <ArrowCounterClockwiseIcon className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button" variant="ghost" size="icon-sm" className="rounded-full"
             title="Xóa vĩnh viễn"
             onClick={() => setPermanentDeleteTarget(r.original)}
             style={{ color: "var(--accent-danger)" }}
@@ -390,21 +410,26 @@ export default function StaffQuizzesPage() {
     },
   ], []);
 
-  // ── Filter chips ──────────────────────────────────────────
+  // ── Filter chips (level) ───────────────────────────────────
   const filterChips = (
     <div className="flex items-center gap-1.5 flex-wrap">
-      {(["", "10", "11", "12"] as const).map((g) => (
+      {([
+        { value: "", label: "Tất cả" },
+        { value: "EASY", label: "Dễ" },
+        { value: "MEDIUM", label: "Trung bình" },
+        { value: "HARD", label: "Khó" },
+      ] as const).map((opt) => (
         <button
-          key={g || "all"} type="button"
-          onClick={() => setFilterGrade(g)}
+          key={opt.value || "all"} type="button"
+          onClick={() => setFilterLevel(opt.value)}
           className="px-3 h-8 rounded-lg text-xs font-semibold border transition-all"
           style={
-            filterGrade === g
+            filterLevel === opt.value
               ? { background: "var(--accent-gold-active-bg)", borderColor: "var(--accent-gold)", color: "var(--content-heading)" }
               : { background: "transparent", borderColor: "var(--card-light-border)", color: "var(--content-muted)" }
           }
         >
-          {g ? `Lớp ${g}` : "Tất cả"}
+          {opt.label}
         </button>
       ))}
     </div>
@@ -413,13 +438,14 @@ export default function StaffQuizzesPage() {
   // ═══ EDITOR VIEW ══════════════════════════════════════════════════════════
   if (view === "editor") {
     const canSave =
-      !!(draft.title.trim() && draft.chapterTitle.trim()) &&
+      !!(draft.title.trim()) &&
       !createQuiz.isPending &&
       !updateQuiz.isPending;
+
     return (
       <StaffShell
         title={editorMode === "create" ? "Tạo Quiz mới" : "Chỉnh sửa Quiz"}
-        description={editorMode === "create" ? "Điền metadata và thêm câu hỏi." : `Đang chỉnh sửa: ${draft.title}`}
+        description={editorMode === "create" ? "Điền thông tin và thêm câu hỏi." : `Đang chỉnh sửa: ${draft.title}`}
         icon={ClipboardTextIcon}
         accent="var(--accent-blue)"
       >
@@ -432,7 +458,7 @@ export default function StaffQuizzesPage() {
           <ArrowLeftIcon className="h-4 w-4" /> Quay lại danh sách
         </button>
 
-        <div className="grid grid-cols-[380px_1fr] gap-6 items-start">
+        <div className="grid grid-cols-[360px_1fr] gap-6 items-start">
           {/* ── Metadata panel ── */}
           <div
             className="rounded-2xl border p-6 space-y-4 sticky top-6"
@@ -446,21 +472,11 @@ export default function StaffQuizzesPage() {
               <Input
                 value={draft.title}
                 onChange={(e) => setDraft((s) => ({ ...s, title: e.target.value }))}
-                placeholder="VD: Lịch sử 12 — Bài 1: Liên Hợp Quốc"
-              />
-            </Field>
-
-            <Field label="Mô tả">
-              <Textarea
-                value={draft.description}
-                onChange={(e) => setDraft((s) => ({ ...s, description: e.target.value }))}
-                placeholder="Mô tả ngắn về bộ quiz..."
-                className="min-h-[60px] text-sm"
+                placeholder="VD: Chiến thắng Bạch Đằng — Bài kiểm tra"
               />
             </Field>
 
             <Field label="Sự kiện lịch sử (Context)">
-              {/* Filtered list từ API /historical-contexts */}
               {(() => {
                 const allContexts = contextsData?.content ?? [];
                 const q = contextSearch.trim().toLowerCase();
@@ -487,14 +503,13 @@ export default function StaffQuizzesPage() {
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="max-h-64">
-                      {/* Search box bên trong dropdown */}
                       <div className="px-2 pb-1 pt-1 sticky top-0 z-10" style={{ background: "var(--popover)" }}>
                         <Input
                           placeholder="Tìm sự kiện..."
                           value={contextSearch}
                           onChange={(e) => setContextSearch(e.target.value)}
                           className="h-8 text-xs"
-                          onKeyDown={(e) => e.stopPropagation()} // tránh Select bắt phím
+                          onKeyDown={(e) => e.stopPropagation()}
                         />
                       </div>
                       {filtered.length === 0 && (
@@ -523,83 +538,33 @@ export default function StaffQuizzesPage() {
               )}
             </Field>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Lớp (tuỳ chọn)">
-                <div className="flex gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setDraft((s) => ({ ...s, grade: null }))}
-                    className="flex-1 h-9 rounded-lg border text-sm font-semibold transition-all"
-                    style={
-                      draft.grade === null
-                        ? { background: "rgba(100,100,100,0.15)", borderColor: "var(--content-muted)", color: "var(--content-text)" }
-                        : { background: "transparent", borderColor: "var(--card-light-border)", color: "var(--content-muted)" }
-                    }
-                  >
-                    —
-                  </button>
-                  {([10, 11, 12] as const).map((g) => (
+            <Field label="Độ khó">
+              <div className="flex gap-2">
+                {LEVEL_OPTIONS.map((opt) => {
+                  const colors: Record<string, { active: string; activeBg: string; activeBorder: string }> = {
+                    EASY: { active: "var(--accent-teal)", activeBg: "rgba(47,111,115,0.12)", activeBorder: "var(--accent-teal)" },
+                    MEDIUM: { active: "var(--accent-gold)", activeBg: "rgba(201,162,77,0.12)", activeBorder: "var(--accent-gold)" },
+                    HARD: { active: "var(--accent-danger)", activeBg: "rgba(184,50,42,0.10)", activeBorder: "var(--accent-danger)" },
+                  };
+                  const c = colors[opt.value];
+                  const isActive = draft.level === opt.value;
+                  return (
                     <button
-                      key={g}
+                      key={opt.value}
                       type="button"
-                      onClick={() => setDraft((s) => ({ ...s, grade: g }))}
+                      onClick={() => setDraft((s) => ({ ...s, level: opt.value }))}
                       className="flex-1 h-9 rounded-lg border text-sm font-semibold transition-all"
                       style={
-                        draft.grade === g
-                          ? { background: "rgba(59,130,246,0.15)", borderColor: "var(--accent-blue)", color: "var(--accent-blue)" }
+                        isActive
+                          ? { background: c.activeBg, borderColor: c.activeBorder, color: c.active }
                           : { background: "transparent", borderColor: "var(--card-light-border)", color: "var(--content-muted)" }
                       }
                     >
-                      {g}
+                      {opt.label}
                     </button>
-                  ))}
-                </div>
-                {draft.grade === null && (
-                  <p className="text-[10px] mt-1" style={{ color: "var(--content-subtle)" }}>
-                    Không gắn lớp — dùng cho quiz ngoài chương trình.
-                  </p>
-                )}
-              </Field>
-
-              <Field label="Số bài (VD: Bài 3 → nhập 3)">
-                <Input
-                  type="number" min={1} max={99}
-                  value={draft.chapterNumber}
-                  onChange={(e) => setDraft((s) => ({ ...s, chapterNumber: Number(e.target.value) || 1 }))}
-                  className="h-9"
-                />
-              </Field>
-            </div>
-
-            <Field label="Tên chủ đề *">
-              <Input
-                value={draft.chapterTitle}
-                onChange={(e) => setDraft((s) => ({ ...s, chapterTitle: e.target.value }))}
-                placeholder="VD: Liên Hợp Quốc"
-              />
-            </Field>
-
-            <Field label="Thời đại lịch sử">
-              <Select
-                value={draft.era}
-                onValueChange={(v) => setDraft((s) => ({ ...s, era: v as StaffQuizEra }))}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {ERA_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field label={`Thời gian gợi ý (giây) — ${fmtDuration(draft.durationSeconds)}`}>
-              <Input
-                type="number" min={60} step={60}
-                value={draft.durationSeconds}
-                onChange={(e) => setDraft((s) => ({ ...s, durationSeconds: Number(e.target.value) || 600 }))}
-                className="h-9"
-              />
+                  );
+                })}
+              </div>
             </Field>
 
             <div className="flex gap-2 pt-1">
@@ -608,7 +573,7 @@ export default function StaffQuizzesPage() {
                 className="flex-1 font-semibold border-0"
                 disabled={!canSave}
                 onClick={handleSave}
-                style={{ background: "#3b82f6", color: "#fff" }}
+                style={{ background: "var(--accent-blue)", color: "#fff" }}
               >
                 {createQuiz.isPending || updateQuiz.isPending
                   ? "Đang lưu..."
@@ -634,10 +599,6 @@ export default function StaffQuizzesPage() {
                 <ClipboardTextIcon className="h-4 w-4" />
                 <span>{draft.questions.length} câu hỏi</span>
               </div>
-              <div className="flex items-center gap-1.5 text-sm" style={{ color: "var(--content-muted)" }}>
-                <TimerIcon className="h-4 w-4" />
-                <span>{fmtDuration(draft.durationSeconds)}</span>
-              </div>
             </div>
             <QuizQuestionEditor
               questions={draft.questions}
@@ -659,7 +620,7 @@ export default function StaffQuizzesPage() {
   return (
     <StaffShell
       title="Quản lý câu đố"
-      description="Quản lý bộ câu hỏi lịch sử theo lớp, bài và độ khó."
+      description="Quản lý bộ câu hỏi lịch sử theo độ khó và thời đại."
       icon={ClipboardTextIcon}
       accent="var(--accent-blue)"
     >
@@ -740,9 +701,11 @@ export default function StaffQuizzesPage() {
           </div>
         </div>
 
-        <div className="pb-2">
-          {filterChips}
-        </div>
+        {!showTrash && (
+          <div className="pb-2">
+            {filterChips}
+          </div>
+        )}
 
         <div className="space-y-2">
           {isError && (
@@ -752,35 +715,40 @@ export default function StaffQuizzesPage() {
           )}
           <StaffDataTable
             columns={showTrash ? trashColumns : columns}
-            data={items}
+            data={filteredItems}
             emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy quiz phù hợp."}
             isLoading={isLoading}
           />
           <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
-            Hiển thị {items.length} / {totalItems} bộ quiz
+            Hiển thị {filteredItems.length} / {totalItems} bộ quiz
           </p>
         </div>
       </section>
 
       <ConfirmDialog
+        open={!!publishTarget}
+        onOpenChange={(o) => !o && setPublishTarget(null)}
+        title={publishTarget?.isActive !== false ? "Ẩn quiz khỏi người dùng?" : "Publish quiz cho người dùng?"}
+        description={
+          publishTarget?.isActive !== false
+            ? `Quiz "${publishTarget?.title}" sẽ không hiển thị cho người dùng nữa.`
+            : `Quiz "${publishTarget?.title}" sẽ hiển thị cho người dùng.`
+        }
+        isPending={toggleActiveQuiz.isPending}
+        confirmLabel={publishTarget?.isActive !== false ? "Ẩn quiz" : "Publish quiz"}
+        variant="warning"
+        onConfirm={handleToggleActive}
+      />
+
+      <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(o) => !o && setDeleteTarget(null)}
         title="Chuyển vào thùng rác?"
-        description={`Quiz "${deleteTarget?.title}" sẽ được chuyển vào thùng rác. Bạn có thể khôi phục sau.`}
+        description={`Quiz "${deleteTarget?.title}" sẽ được chuyển vào thùng rác.`}
         isPending={softDeleteQuiz.isPending}
         confirmLabel="Chuyển vào thùng rác"
         variant="danger"
         onConfirm={handleSoftDelete}
-      />
-
-      <ConfirmDialog
-        open={!!restoreTarget}
-        onOpenChange={(o) => !o && setRestoreTarget(null)}
-        title="Khôi phục quiz?"
-        description={`Khôi phục quiz "${restoreTarget?.title}" về danh sách hoạt động.`}
-        isPending={restoreQuiz.isPending}
-        confirmLabel="Khôi phục"
-        onConfirm={handleRestore}
       />
 
       <ConfirmDialog
@@ -794,22 +762,5 @@ export default function StaffQuizzesPage() {
         onConfirm={handlePermanentDelete}
       />
     </StaffShell>
-  );
-}
-
-
-function FormattedDate({ date }: { date: string }) {
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return <span className="text-xs">—</span>;
-
-  return (
-    <span className="text-xs" style={{ color: "var(--content-muted)" }}>
-      {new Date(date).toLocaleDateString("vi-VN")}
-    </span>
   );
 }

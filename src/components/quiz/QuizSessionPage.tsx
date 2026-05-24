@@ -3,7 +3,7 @@
 // components/quiz/QuizSessionPage.tsx — v3
 
 import React, { useState, useCallback, useRef } from "react";
-import { CheckCircle2, Send } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
 import { QuizProgressBar } from "./QuizProgressBar";
 import { QuizQuestionCard } from "./QuizQuestionCard";
@@ -115,12 +115,12 @@ export function QuizSessionPage({
 
           {/* Submit */}
           <div
-            className="rounded-2xl p-5 text-center"
+            className="rounded-xl border p-5 text-center"
             style={{
               background: allAnswered
                 ? "rgba(16,185,129,0.06)"
                 : "var(--card-light-bg)",
-              border: `1.5px solid ${allAnswered ? "rgba(16,185,129,0.25)" : "var(--card-light-border)"}`,
+              borderColor: allAnswered ? "rgba(16,185,129,0.25)" : "var(--card-light-border)",
             }}
           >
             {allAnswered ? (
@@ -152,18 +152,17 @@ export function QuizSessionPage({
 
             <button
               onClick={handleSubmit}
-              className="flex items-center gap-2 mx-auto px-8 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
+              className="mx-auto h-11 rounded-lg px-8 text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
               style={{
                 background: allAnswered
-                  ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
-                  : "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-                color: "white",
+                  ? "#047857"
+                  : "var(--abyssal-blue)",
+                color: "var(--text-on-dark)",
                 boxShadow: allAnswered
-                  ? "0 6px 20px rgba(16,185,129,0.3)"
-                  : "0 6px 20px rgba(201,162,77,0.3)",
+                  ? "0 8px 18px rgba(4,120,87,0.18)"
+                  : "0 8px 18px rgba(27,38,50,0.18)",
               }}
             >
-              <Send size={15} />
               Nộp bài
             </button>
           </div>

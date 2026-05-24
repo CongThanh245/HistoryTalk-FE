@@ -1,13 +1,9 @@
-// components/quiz/QuizStatsBar.tsx
-// Thanh thống kê tổng quan (tổng quiz, đã làm, trung bình điểm)
-
 import React from "react";
-import { BookOpen, CheckCircle, TrendingUp } from "lucide-react";
 
 interface QuizStatsBarProps {
   totalQuizzes: number;
   completedCount: number;
-  averageScore: number; // 0-100
+  averageScore: number;
 }
 
 export function QuizStatsBar({
@@ -16,55 +12,31 @@ export function QuizStatsBar({
   averageScore,
 }: QuizStatsBarProps) {
   const stats = [
-    {
-      icon: <BookOpen size={18} />,
-      label: "Bộ câu hỏi",
-      value: totalQuizzes,
-      suffix: "",
-      color: "text-[var(--accent-gold)]",
-      bg: "bg-[var(--accent-gold-active-bg)]",
-    },
-    {
-      icon: <CheckCircle size={18} />,
-      label: "Đã hoàn thành",
-      value: completedCount,
-      suffix: " lần",
-      color: "text-emerald-400",
-      bg: "bg-emerald-400/10",
-    },
-    {
-      icon: <TrendingUp size={18} />,
-      label: "Điểm trung bình",
-      value: averageScore,
-      suffix: "%",
-      color: "text-[var(--accent-blue)]",
-      bg: "bg-[var(--accent-blue)]/10",
-    },
+    { label: "Bộ đề đang mở", value: totalQuizzes, suffix: "" },
+    { label: "Lần đã làm", value: completedCount, suffix: "" },
+    { label: "Điểm trung bình", value: averageScore, suffix: "%" },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+    <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
       {stats.map((s) => (
         <div
           key={s.label}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl"
+          className="rounded-xl border px-5 py-4"
           style={{
             background: "var(--card-light-bg)",
-            border: "1px solid var(--border-default)",
+            borderColor: "var(--card-light-border)",
           }}
         >
-          <div className={`p-2 rounded-lg ${s.bg} ${s.color} flex-shrink-0`}>
-            {s.icon}
-          </div>
-          <div>
-            <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-              {s.label}
-            </p>
-            <p className={`text-lg font-bold leading-tight ${s.color}`}>
-              {s.value}
-              <span className="text-sm font-normal">{s.suffix}</span>
-            </p>
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--content-subtle)" }}>
+            {s.label}
+          </p>
+          <p className="mt-2 text-2xl font-bold leading-none" style={{ color: "var(--content-heading)" }}>
+            {s.value}
+            <span className="text-base font-semibold" style={{ color: "var(--gold-on-light)" }}>
+              {s.suffix}
+            </span>
+          </p>
         </div>
       ))}
     </div>

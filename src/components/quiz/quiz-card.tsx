@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { ChevronRight, Gauge, Users } from "lucide-react";
 import type { QuizSet } from "@/services/quiz.service";
 
 const ERA_LABELS: Record<QuizSet["era"], string> = {
@@ -18,6 +17,24 @@ const LEVEL_LABELS: Record<QuizSet["level"], string> = {
   HARD: "Khó",
 };
 
+const LEVEL_TONE: Record<QuizSet["level"], { bg: string; fg: string; border: string }> = {
+  EASY: {
+    bg: "rgba(47,111,115,0.10)",
+    fg: "var(--accent-teal)",
+    border: "rgba(47,111,115,0.22)",
+  },
+  MEDIUM: {
+    bg: "rgba(201,162,77,0.12)",
+    fg: "var(--gold-on-light)",
+    border: "rgba(201,162,77,0.24)",
+  },
+  HARD: {
+    bg: "rgba(184,50,42,0.10)",
+    fg: "var(--accent-danger)",
+    border: "rgba(184,50,42,0.22)",
+  },
+};
+
 interface QuizCardProps {
   quiz: QuizSet;
   isActive?: boolean;
@@ -26,16 +43,19 @@ interface QuizCardProps {
 }
 
 export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
+  const levelTone = LEVEL_TONE[quiz.level] ?? LEVEL_TONE.MEDIUM;
+
   if (compact) {
     return (
       <button
         onClick={() => onStart(quiz.quizId)}
-        className="w-full text-left px-3 py-2.5 rounded-xl transition-all duration-150 group"
+        className="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1"
         style={
           isActive
             ? {
-                background: "var(--accent-gold-active-bg)",
-                border: "1px solid var(--accent-gold-glow)",
+                background: "rgba(201,162,77,0.14)",
+                border: "1px solid rgba(201,162,77,0.34)",
+                boxShadow: "inset 3px 0 0 var(--accent-gold)",
               }
             : {
                 background: "transparent",
@@ -43,110 +63,94 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
               }
         }
       >
-        <div className="flex items-start gap-2.5">
-          <div
-            className="w-2 h-2 rounded-full shrink-0 mt-1.5"
-            style={{
-              background: isActive
-                ? "var(--accent-gold)"
-                : "var(--content-subtle)",
-            }}
-          />
-          <div className="flex-1 min-w-0">
-            <p
-              className="text-xs font-medium leading-snug line-clamp-2"
-              style={{
-                color: isActive
-                  ? "var(--accent-gold)"
-                  : "var(--content-heading)",
-              }}
-            >
-              {quiz.title}
-            </p>
-            {quiz.contextTitle && (
-              <span
-                className="text-xs mt-0.5 block truncate"
-                style={{ color: "var(--content-muted)" }}
-              >
-                {quiz.contextTitle}
-              </span>
-            )}
-          </div>
-        </div>
+        <p
+          className="text-sm font-semibold leading-snug line-clamp-2"
+          style={{ color: isActive ? "var(--gold-on-light)" : "var(--content-heading)" }}
+        >
+          {quiz.title}
+        </p>
+        {quiz.contextTitle && (
+          <p className="text-xs mt-1 truncate" style={{ color: "var(--content-muted)" }}>
+            {quiz.contextTitle}
+          </p>
+        )}
       </button>
     );
   }
 
   return (
-    <div
-      className="group rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
+    <article
+      className="group rounded-xl transition-all duration-200 hover:-translate-y-1"
       style={{
         background: "var(--card-light-bg)",
-        border: `1px solid ${isActive ? "var(--accent-gold-glow)" : "var(--card-light-border)"}`,
+        border: `1px solid ${isActive ? "rgba(201,162,77,0.35)" : "var(--card-light-border)"}`,
         boxShadow: isActive
-          ? "0 4px 16px rgba(201,162,77,0.15)"
-          : "0 2px 8px rgba(27,38,50,0.05)",
+          ? "0 10px 24px rgba(201,162,77,0.14)"
+          : "0 8px 20px rgba(27,38,50,0.06)",
       }}
     >
-      <div className="p-4">
-        <div className="flex items-center justify-between gap-2 mb-3">
+      <div className="p-5">
+        <div className="flex items-center gap-2 mb-4">
           <span
-            className="text-xs font-semibold px-2.5 py-1 rounded-full"
+            className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
             style={{
-              background: "rgba(201,162,77,0.1)",
+              background: "rgba(201,162,77,0.10)",
               color: "var(--gold-on-light)",
-              border: "1px solid rgba(201,162,77,0.2)",
+              border: "1px solid rgba(201,162,77,0.22)",
             }}
           >
             {ERA_LABELS[quiz.era] ?? quiz.era}
           </span>
-          <div
-            className="flex items-center gap-1 text-xs"
-            style={{ color: "var(--content-muted)" }}
+          <span
+            className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+            style={{
+              background: levelTone.bg,
+              color: levelTone.fg,
+              border: `1px solid ${levelTone.border}`,
+            }}
           >
-            <Gauge size={12} />
             {LEVEL_LABELS[quiz.level] ?? quiz.level}
-          </div>
+          </span>
         </div>
 
         <h3
-          className="text-sm font-semibold leading-snug mb-2 line-clamp-2 group-hover:text-[var(--accent-gold)] transition-colors"
+          className="text-base font-bold leading-snug line-clamp-2 transition-colors"
           style={{ color: "var(--content-heading)" }}
         >
           {quiz.title}
         </h3>
 
         {quiz.contextTitle && (
-          <p
-            className="text-xs line-clamp-1 mb-3"
-            style={{ color: "var(--content-muted)" }}
-          >
+          <p className="text-sm line-clamp-1 mt-2" style={{ color: "var(--content-muted)" }}>
             {quiz.contextTitle}
           </p>
         )}
 
         <div
-          className="flex items-center gap-1.5 text-xs mb-3"
-          style={{ color: "var(--content-subtle)" }}
+          className="mt-5 pt-4 flex items-center justify-between"
+          style={{ borderTop: "1px solid var(--card-light-border)" }}
         >
-          <Users size={12} />
-          {quiz.playCount.toLocaleString("vi-VN")} lượt làm
+          <div>
+            <p className="text-[11px] uppercase tracking-wide" style={{ color: "var(--content-subtle)" }}>
+              Lượt làm
+            </p>
+            <p className="text-sm font-bold" style={{ color: "var(--content-heading)" }}>
+              {quiz.playCount.toLocaleString("vi-VN")}
+            </p>
+          </div>
+          <button
+            onClick={() => onStart(quiz.quizId)}
+            className="h-10 px-4 rounded-lg text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+            style={{
+              background: "var(--abyssal-blue)",
+              color: "var(--text-on-dark)",
+              boxShadow: "0 8px 18px rgba(27,38,50,0.16)",
+            }}
+          >
+            Xem bài
+          </button>
         </div>
-
-        <button
-          onClick={() => onStart(quiz.quizId)}
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
-          style={{
-            background: isActive
-              ? "var(--accent-gold)"
-              : "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-            color: "white",
-          }}
-        >
-          {isActive ? "Đang làm bài" : "Xem quiz"}
-          {!isActive && <ChevronRight size={12} />}
-        </button>
       </div>
-    </div>
+    </article>
   );
 }
