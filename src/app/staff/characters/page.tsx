@@ -311,12 +311,8 @@ export default function StaffCharactersPage() {
             </Button>
             {!showTrash && (
               <Button
-                className="h-10 rounded-xl px-4 font-semibold border-0"
+                className="h-10 rounded-xl px-4 font-semibold border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] shadow-sm shadow-[var(--accent-blue)]/20 transition-all duration-200 hover:brightness-90 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                 onClick={() => router.push("/staff/characters/create")}
-                style={{
-                  background: "var(--accent-blue)",
-                  color: "#fff",
-                }}
               >
                 <PlusIcon className="h-4 w-4 mr-1.5" /> Add New
               </Button>

@@ -592,8 +592,9 @@ export function StaffCharacterDetailView({
                 <Button
                   onClick={() => onSave(draft)}
                   disabled={!canSave}
-                  className={isCreated ? "flex-1" : "w-full"}
-                  style={{ background: "var(--accent-blue)", color: "#fff" }}
+                  className={`border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-90 hover:shadow-sm cursor-pointer ${
+                    isCreated ? "flex-1" : "w-full h-10 rounded-xl"
+                  }`}
                 >
                   <FloppyDiskIcon className="h-4 w-4 mr-2" />
                   {isPending
@@ -660,11 +661,11 @@ export function StaffCharacterDetailView({
                       isMapContextPending ||
                       selectedContextId === mappedContextId
                     }
-                    className="shrink-0"
-                    style={{
-                      background: selectedContextId && selectedContextId !== mappedContextId ? "var(--accent-blue)" : undefined,
-                      color: selectedContextId && selectedContextId !== mappedContextId ? "#fff" : undefined,
-                    }}
+                    className={`shrink-0 border-0 transition-all duration-200 ${
+                      selectedContextId && selectedContextId !== mappedContextId
+                        ? "bg-[var(--accent-blue)] text-[var(--bg-deep)] hover:brightness-90 hover:shadow-sm cursor-pointer"
+                        : ""
+                    }`}
                   >
                     <LinkIcon className="h-4 w-4 mr-1.5" />
                     {isMapContextPending ? "Đang liên kết..." : "Liên kết"}
@@ -947,7 +948,7 @@ export function StaffCharacterDetailView({
                           !quickCtx.year ||
                           createEvent.isPending
                         }
-                        style={{ background: "var(--accent-blue)", color: "#fff" }}
+                        className="border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] transition-all duration-200 hover:brightness-90 hover:shadow-sm cursor-pointer"
                         onClick={() => {
                           createEvent.mutate(
                             {
