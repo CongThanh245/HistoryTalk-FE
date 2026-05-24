@@ -30,11 +30,15 @@ export function useQuizDetail(quizId: string | null) {
 }
 
 // GET /quizzes/results/me
-export function useMyQuizResults(params?: GetQuizResultsParams) {
+export function useMyQuizResults(
+  params?: GetQuizResultsParams,
+  enabled = true,
+) {
   return useQuery({
     queryKey: queryKeys.quizzes.myResults,
     queryFn: () => quizService.getMyResults(params),
-        staleTime: 0, 
+    enabled,
+    staleTime: 0,
   });
 }
 

@@ -11,12 +11,11 @@ import { QuizQuestionCard } from "./QuizQuestionCard";
 interface QuizSessionPageProps {
   quiz: QuizSet;
   questions: QuizQuestion[];
-  onSubmit: (answers: Record<string, number>, durationSeconds: number) => void;
+  onSubmit: (answers: Record<string, number>, elapsedSeconds: number) => void;
   onBack: () => void;
   onGoHome: () => void; // ← mới
   onRetry: () => void; // ← mới
   startTime: number;
-  useTimer: boolean;
 }
 
 export function QuizSessionPage({
@@ -27,7 +26,6 @@ export function QuizSessionPage({
   onGoHome,
   onRetry,
   startTime,
-  useTimer,
 }: QuizSessionPageProps) {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -80,10 +78,6 @@ export function QuizSessionPage({
     onSubmit(answers, elapsed);
   };
 
-  const handleTimeUp = () => {
-    onSubmit(answers, quiz.durationSeconds);
-  };
-
   return (
     <div
       className="flex flex-col h-full"
@@ -95,9 +89,6 @@ export function QuizSessionPage({
         answeredCount={answeredCount}
         answers={answers}
         questionIds={questionIds}
-        durationSeconds={quiz.durationSeconds}
-        useTimer={useTimer}
-        onTimeUp={handleTimeUp}
         onBack={onBack}
         onGoHome={onGoHome}
         onRetry={onRetry}

@@ -4,7 +4,7 @@
 "use client";
 
 import React from "react";
-import type { QuizSet, QuizSetV2 } from "@/services/quiz.service";
+import type { QuizSet } from "@/services/quiz.service";
 import { QuizCard } from "./quiz-card";
 
 function QuizCardSkeleton() {
@@ -36,7 +36,7 @@ function QuizCardSkeleton() {
 }
 
 interface QuizGridProps {
-  quizzes: QuizSetV2[]; // ← đổi QuizSet → QuizSetV2
+  quizzes: QuizSet[];
   isLoading: boolean;
   onStart: (quizId: string) => void;
 }
@@ -80,3 +80,4 @@ export function QuizGrid({ quizzes, isLoading, onStart }: QuizGridProps) {
     </div>
   );
 }
+

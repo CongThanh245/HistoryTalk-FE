@@ -2,20 +2,20 @@
 // Thanh thống kê tổng quan (tổng quiz, đã làm, trung bình điểm)
 
 import React from "react";
-import { BookOpen, CheckCircle, TrendingUp, Zap } from "lucide-react";
+import { BookOpen, CheckCircle, TrendingUp, Users } from "lucide-react";
 
 interface QuizStatsBarProps {
   totalQuizzes: number;
   completedCount: number;
   averageScore: number; // 0-100
-  streakDays: number;
+  totalPlayCount: number;
 }
 
 export function QuizStatsBar({
   totalQuizzes,
   completedCount,
   averageScore,
-  streakDays,
+  totalPlayCount,
 }: QuizStatsBarProps) {
   const stats = [
     {
@@ -43,10 +43,10 @@ export function QuizStatsBar({
       bg: "bg-[var(--accent-blue)]/10",
     },
     {
-      icon: <Zap size={18} />,
-      label: "Ngày liên tiếp",
-      value: streakDays,
-      suffix: " ngày",
+      icon: <Users size={18} />,
+      label: "Tổng lượt làm",
+      value: totalPlayCount,
+      suffix: "",
       color: "text-[var(--burning-flame)]",
       bg: "bg-[var(--streak-bg)]",
     },
