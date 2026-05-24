@@ -437,16 +437,11 @@ export default function StaffContextsPage() {
             </Button>
             {!showTrash && (
               <Button
-                className="h-10 rounded-xl px-4 font-semibold border-0"
+                className="h-10 rounded-xl px-4 font-semibold border-0 bg-[var(--accent-gold)] text-[var(--bg-deep)] shadow-[0_0_14px_var(--accent-gold-glow)] transition-all duration-200 hover:brightness-90 hover:shadow-[0_0_18px_var(--accent-gold-glow)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                 onClick={() => {
                   setMode("create");
                   setDraft(EMPTY_DRAFT);
                   setDialogOpen(true);
-                }}
-                style={{
-                  background: "var(--accent-gold)",
-                  color: "var(--bg-deep)",
-                  boxShadow: "0 0 14px var(--accent-gold-glow)",
                 }}
               >
                 <PlusIcon className="h-4 w-4 mr-1.5" /> Add New
