@@ -19,7 +19,9 @@
   "paths": {
     "/auth/register": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Đăng ký tài khoản Customer",
         "security": [],
         "requestBody": {
@@ -39,14 +41,18 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "type": "object",
                           "properties": {
-                            "message": { "type": "string" }
+                            "message": {
+                              "type": "string"
+                            }
                           }
                         }
                       }
@@ -61,7 +67,9 @@
     },
     "/auth/login": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Đăng nhập tài khoản",
         "security": [],
         "requestBody": {
@@ -81,7 +89,9 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
@@ -100,7 +110,9 @@
     },
     "/auth/logout": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Đăng xuất tài khoản",
         "responses": {
           "200": {
@@ -118,7 +130,9 @@
     },
     "/auth/refresh-token": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Refresh Access Token",
         "security": [],
         "requestBody": {
@@ -128,9 +142,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "refreshToken": { "type": "string" }
+                  "refreshToken": {
+                    "type": "string"
+                  }
                 },
-                "required": ["refreshToken"]
+                "required": [
+                  "refreshToken"
+                ]
               }
             }
           }
@@ -142,15 +160,21 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "type": "object",
                           "properties": {
-                            "accessToken": { "type": "string" },
-                            "refreshToken": { "type": "string" }
+                            "accessToken": {
+                              "type": "string"
+                            },
+                            "refreshToken": {
+                              "type": "string"
+                            }
                           }
                         }
                       }
@@ -165,7 +189,9 @@
     },
     "/auth/register-content-admin": {
       "post": {
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Đăng ký tài khoản Admin/Staff (Yêu cầu SYSTEM_ADMIN)",
         "requestBody": {
           "required": true,
@@ -174,17 +200,37 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "userName": { "type": "string" },
-                  "name": { "type": "string" },
-                  "email": { "type": "string" },
-                  "password": { "type": "string" },
-                  "confirmPassword": { "type": "string" },
+                  "userName": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "confirmPassword": {
+                    "type": "string"
+                  },
                   "roleName": {
                     "type": "string",
-                    "enum": ["CONTENT_ADMIN", "SYSTEM_ADMIN"]
+                    "enum": [
+                      "CONTENT_ADMIN",
+                      "SYSTEM_ADMIN"
+                    ]
                   }
                 },
-                "required": ["userName", "name", "email", "password", "confirmPassword", "roleName"]
+                "required": [
+                  "userName",
+                  "name",
+                  "email",
+                  "password",
+                  "confirmPassword",
+                  "roleName"
+                ]
               }
             }
           }
@@ -205,14 +251,53 @@
     },
     "/characters": {
       "get": {
-        "tags": ["Characters"],
+        "tags": [
+          "Characters"
+        ],
         "summary": "Lấy danh sách nhân vật (Phân trang). CUSTOMER: auto-filter published only. ADMIN/STAFF: có thể filter bằng param `published`",
         "parameters": [
-          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Tìm theo tên, chức danh" },
-          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 }, "description": "0-indexed page" },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 8 }, "description": "Số lượng một trang" },
-          { "name": "era", "in": "query", "schema": { "$ref": "#/components/schemas/Era" }, "description": "Lọc theo thời đại" },
-          { "name": "published", "in": "query", "schema": { "type": "boolean" }, "description": "Lọc theo trạng thái publish. `true`=chỉ published, `false`=chỉ unpublished, không truyền=tất cả (chỉ Admin/Staff)" }
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Tìm theo tên, chức danh"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "0-indexed page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 8
+            },
+            "description": "Số lượng một trang"
+          },
+          {
+            "name": "era",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Era"
+            },
+            "description": "Lọc theo thời đại"
+          },
+          {
+            "name": "published",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Lọc theo trạng thái publish. `true`=chỉ published, `false`=chỉ unpublished, không truyền=tất cả (chỉ Admin/Staff)"
+          }
         ],
         "responses": {
           "200": {
@@ -221,19 +306,25 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "allOf": [
-                            { "$ref": "#/components/schemas/Pagination" },
+                            {
+                              "$ref": "#/components/schemas/Pagination"
+                            },
                             {
                               "type": "object",
                               "properties": {
                                 "content": {
                                   "type": "array",
-                                  "items": { "$ref": "#/components/schemas/Character" }
+                                  "items": {
+                                    "$ref": "#/components/schemas/Character"
+                                  }
                                 }
                               }
                             }
@@ -249,7 +340,9 @@
         }
       },
       "post": {
-        "tags": ["Characters"],
+        "tags": [
+          "Characters"
+        ],
         "summary": "Tạo nhân vật mới (Yêu cầu CONTENT_ADMIN | SYSTEM_ADMIN)",
         "requestBody": {
           "required": true,
@@ -268,11 +361,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/Character" }
+                        "data": {
+                          "$ref": "#/components/schemas/Character"
+                        }
                       }
                     }
                   ]
@@ -285,10 +382,19 @@
     },
     "/characters/{id}": {
       "get": {
-        "tags": ["Characters"],
+        "tags": [
+          "Characters"
+        ],
         "summary": "Chi tiết nhân vật theo ID",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -297,11 +403,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/Character" }
+                        "data": {
+                          "$ref": "#/components/schemas/Character"
+                        }
                       }
                     }
                   ]
@@ -312,10 +422,19 @@
         }
       },
       "put": {
-        "tags": ["Characters"],
+        "tags": [
+          "Characters"
+        ],
         "summary": "Cập nhật nhân vật theo ID (CONTENT_ADMIN | SYSTEM_ADMIN)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -334,11 +453,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/Character" }
+                        "data": {
+                          "$ref": "#/components/schemas/Character"
+                        }
                       }
                     }
                   ]
@@ -349,10 +472,19 @@
         }
       },
       "delete": {
-        "tags": ["Characters"],
+        "tags": [
+          "Characters"
+        ],
         "summary": "Xóa vĩnh viễn nhân vật",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -363,10 +495,19 @@
     },
     "/characters/{id}/soft-delete": {
       "patch": {
-        "tags": ["Characters"],
+        "tags": [
+          "Characters"
+        ],
         "summary": "Chuyển nhân vật vào thùng rác (Soft Delete)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -377,10 +518,19 @@
     },
     "/characters/{id}/toggle-active": {
       "patch": {
-        "tags": ["Characters"],
+        "tags": [
+          "Characters"
+        ],
         "summary": "Bật/Tắt hoạt động của nhân vật (Ẩn/Hiện với Customer)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -391,10 +541,19 @@
     },
     "/characters/context/{contextId}": {
       "get": {
-        "tags": ["Characters"],
+        "tags": [
+          "Characters"
+        ],
         "summary": "Lấy danh sách nhân vật thuộc bối cảnh lịch sử. CUSTOMER: chỉ nhận published. ADMIN/STAFF: nhận tất cả",
         "parameters": [
-          { "name": "contextId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "contextId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -403,13 +562,17 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "type": "array",
-                          "items": { "$ref": "#/components/schemas/Character" }
+                          "items": {
+                            "$ref": "#/components/schemas/Character"
+                          }
                         }
                       }
                     }
@@ -423,11 +586,27 @@
     },
     "/characters/{characterId}/contexts/{contextId}": {
       "post": {
-        "tags": ["Characters"],
+        "tags": [
+          "Characters"
+        ],
         "summary": "Gắn nhân vật vào bối cảnh lịch sử",
         "parameters": [
-          { "name": "characterId", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "contextId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "characterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "contextId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -438,13 +617,42 @@
     },
     "/historical-contexts": {
       "get": {
-        "tags": ["Historical Contexts"],
+        "tags": [
+          "Historical Contexts"
+        ],
         "summary": "Lấy danh sách bối cảnh lịch sử (Phân trang)",
         "parameters": [
-          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Tìm theo tên" },
-          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 6 } },
-          { "name": "era", "in": "query", "schema": { "$ref": "#/components/schemas/Era" } }
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Tìm theo tên"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 6
+            }
+          },
+          {
+            "name": "era",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Era"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -453,19 +661,25 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "allOf": [
-                            { "$ref": "#/components/schemas/Pagination" },
+                            {
+                              "$ref": "#/components/schemas/Pagination"
+                            },
                             {
                               "type": "object",
                               "properties": {
                                 "content": {
                                   "type": "array",
-                                  "items": { "$ref": "#/components/schemas/HistoricalContext" }
+                                  "items": {
+                                    "$ref": "#/components/schemas/HistoricalContext"
+                                  }
                                 }
                               }
                             }
@@ -481,7 +695,9 @@
         }
       },
       "post": {
-        "tags": ["Historical Contexts"],
+        "tags": [
+          "Historical Contexts"
+        ],
         "summary": "Tạo bối cảnh lịch sử mới (CONTENT_ADMIN | SYSTEM_ADMIN)",
         "requestBody": {
           "required": true,
@@ -500,11 +716,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/HistoricalContext" }
+                        "data": {
+                          "$ref": "#/components/schemas/HistoricalContext"
+                        }
                       }
                     }
                   ]
@@ -517,10 +737,19 @@
     },
     "/historical-contexts/{id}": {
       "get": {
-        "tags": ["Historical Contexts"],
+        "tags": [
+          "Historical Contexts"
+        ],
         "summary": "Chi tiết bối cảnh lịch sử",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -529,11 +758,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/HistoricalContext" }
+                        "data": {
+                          "$ref": "#/components/schemas/HistoricalContext"
+                        }
                       }
                     }
                   ]
@@ -544,10 +777,19 @@
         }
       },
       "put": {
-        "tags": ["Historical Contexts"],
+        "tags": [
+          "Historical Contexts"
+        ],
         "summary": "Cập nhật bối cảnh lịch sử",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -566,11 +808,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/HistoricalContext" }
+                        "data": {
+                          "$ref": "#/components/schemas/HistoricalContext"
+                        }
                       }
                     }
                   ]
@@ -581,10 +827,19 @@
         }
       },
       "delete": {
-        "tags": ["Historical Contexts"],
+        "tags": [
+          "Historical Contexts"
+        ],
         "summary": "Xóa vĩnh viễn bối cảnh",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -595,10 +850,19 @@
     },
     "/historical-contexts/{id}/soft-delete": {
       "patch": {
-        "tags": ["Historical Contexts"],
+        "tags": [
+          "Historical Contexts"
+        ],
         "summary": "Chuyển bối cảnh lịch sử vào thùng rác (Soft Delete)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -609,10 +873,19 @@
     },
     "/historical-contexts/{id}/toggle-active": {
       "patch": {
-        "tags": ["Historical Contexts"],
+        "tags": [
+          "Historical Contexts"
+        ],
         "summary": "Bật/Tắt hoạt động bối cảnh (Ẩn/Hiện với Customer)",
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -623,11 +896,27 @@
     },
     "/chat/sessions": {
       "get": {
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "summary": "Lấy danh sách session của user hiện tại",
         "parameters": [
-          { "name": "contextId", "in": "query", "required": true, "schema": { "type": "string" } },
-          { "name": "characterId", "in": "query", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "contextId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "characterId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -636,13 +925,17 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "type": "array",
-                          "items": { "$ref": "#/components/schemas/ChatSession" }
+                          "items": {
+                            "$ref": "#/components/schemas/ChatSession"
+                          }
                         }
                       }
                     }
@@ -654,7 +947,9 @@
         }
       },
       "post": {
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "summary": "Tạo session trò chuyện mới",
         "requestBody": {
           "required": true,
@@ -663,10 +958,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "contextId": { "type": "string" },
-                  "characterId": { "type": "string" }
+                  "contextId": {
+                    "type": "string"
+                  },
+                  "characterId": {
+                    "type": "string"
+                  }
                 },
-                "required": ["contextId", "characterId"]
+                "required": [
+                  "contextId",
+                  "characterId"
+                ]
               }
             }
           }
@@ -678,11 +980,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/ChatSession" }
+                        "data": {
+                          "$ref": "#/components/schemas/ChatSession"
+                        }
                       }
                     }
                   ]
@@ -695,10 +1001,19 @@
     },
     "/chat/sessions/{sessionId}": {
       "delete": {
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "summary": "Xóa hoàn toàn session và tin nhắn liên quan",
         "parameters": [
-          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -709,10 +1024,19 @@
     },
     "/chat/sessions/{sessionId}/messages": {
       "get": {
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "summary": "Lấy danh sách tin nhắn của 1 Session",
         "parameters": [
-          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -721,7 +1045,9 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
@@ -730,11 +1056,15 @@
                           "properties": {
                             "messages": {
                               "type": "array",
-                              "items": { "$ref": "#/components/schemas/ChatMessage" }
+                              "items": {
+                                "$ref": "#/components/schemas/ChatMessage"
+                              }
                             },
                             "suggestedQuestions": {
                               "type": "array",
-                              "items": { "type": "string" }
+                              "items": {
+                                "type": "string"
+                              }
                             }
                           }
                         }
@@ -750,7 +1080,9 @@
     },
     "/chat/messages": {
       "post": {
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "summary": "Gửi tin nhắn và nhận câu trả lời AI (Sử dụng Synchronous)",
         "requestBody": {
           "required": true,
@@ -759,10 +1091,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "sessionId": { "type": "string" },
-                  "content": { "type": "string" }
+                  "sessionId": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
                 },
-                "required": ["sessionId", "content"]
+                "required": [
+                  "sessionId",
+                  "content"
+                ]
               }
             }
           }
@@ -774,18 +1113,26 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "type": "object",
                           "properties": {
-                            "userMessage": { "$ref": "#/components/schemas/ChatMessage" },
-                            "assistantMessage": { "$ref": "#/components/schemas/ChatMessage" },
+                            "userMessage": {
+                              "$ref": "#/components/schemas/ChatMessage"
+                            },
+                            "assistantMessage": {
+                              "$ref": "#/components/schemas/ChatMessage"
+                            },
                             "suggestedQuestions": {
                               "type": "array",
-                              "items": { "type": "string" }
+                              "items": {
+                                "type": "string"
+                              }
                             }
                           }
                         }
@@ -801,7 +1148,9 @@
     },
     "/chat/history": {
       "get": {
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "summary": "Lịch sử trò chuyện nhóm theo bối cảnh",
         "responses": {
           "200": {
@@ -810,13 +1159,17 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "type": "array",
-                          "items": { "$ref": "#/components/schemas/ChatHistoryGroup" }
+                          "items": {
+                            "$ref": "#/components/schemas/ChatHistoryGroup"
+                          }
                         }
                       }
                     }
@@ -830,10 +1183,18 @@
     },
     "/quizzes": {
       "get": {
-        "tags": ["Quiz - Customer"],
+        "tags": [
+          "Quiz - Customer"
+        ],
         "summary": "Lấy danh sách bộ Quiz cho học sinh",
         "parameters": [
-          { "name": "search", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -842,13 +1203,17 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "type": "array",
-                          "items": { "$ref": "#/components/schemas/QuizSet" }
+                          "items": {
+                            "$ref": "#/components/schemas/QuizSet"
+                          }
                         }
                       }
                     }
@@ -862,10 +1227,19 @@
     },
     "/quizzes/{quizId}": {
       "get": {
-        "tags": ["Quiz - Customer"],
+        "tags": [
+          "Quiz - Customer"
+        ],
         "summary": "Chi tiết bộ Quiz",
         "parameters": [
-          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -874,11 +1248,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/QuizSet" }
+                        "data": {
+                          "$ref": "#/components/schemas/QuizSet"
+                        }
                       }
                     }
                   ]
@@ -891,10 +1269,19 @@
     },
     "/quizzes/{quizId}/start": {
       "post": {
-        "tags": ["Quiz - Customer"],
+        "tags": [
+          "Quiz - Customer"
+        ],
         "summary": "Bắt đầu phiên làm bài Quiz",
         "parameters": [
-          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -903,19 +1290,30 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "type": "object",
                           "properties": {
-                            "sessionId": { "type": "string" },
-                            "quizId": { "type": "string" },
-                            "title": { "type": "string" },
+                            "sessionId": {
+                              "type": "string"
+                            },
+                            "quizId": {
+                              "type": "string"
+                            },
+                            "title": {
+                              "type": "string"
+                            },
                             "questions": {
                               "type": "array",
-                              "items": { "$ref": "#/components/schemas/QuizQuestion" }
+                              "items": {
+                                "$ref": "#/components/schemas/QuizQuestion"
+                              },
+                              "description": "Questions must be returned in a stable order. orderIndex is not required because the current DB schema does not have it."
                             }
                           }
                         }
@@ -931,7 +1329,9 @@
     },
     "/quizzes/submit": {
       "post": {
-        "tags": ["Quiz - Customer"],
+        "tags": [
+          "Quiz - Customer"
+        ],
         "summary": "Nộp bài Quiz",
         "requestBody": {
           "required": true,
@@ -940,19 +1340,28 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "sessionId": { "type": "string" },
+                  "sessionId": {
+                    "type": "string"
+                  },
                   "answers": {
                     "type": "array",
                     "items": {
                       "type": "object",
                       "properties": {
-                        "questionId": { "type": "string" },
-                        "selectedAnswer": { "type": "integer" }
+                        "questionId": {
+                          "type": "string"
+                        },
+                        "selectedAnswer": {
+                          "type": "integer"
+                        }
                       }
                     }
                   }
                 },
-                "required": ["sessionId", "answers"]
+                "required": [
+                  "sessionId",
+                  "answers"
+                ]
               }
             }
           }
@@ -964,19 +1373,40 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "type": "object",
                           "properties": {
-                            "resultId": { "type": "string" },
-                            "score": { "type": "number" },
-                            "totalQuestions": { "type": "integer" },
-                            "percentage": { "type": "number" },
-                            "correctAnswers": { "type": "array", "items": { "type": "integer" } },
-                            "wrongAnswers": { "type": "array", "items": { "type": "integer" } }
+                            "resultId": {
+                              "type": "string"
+                            },
+                            "score": {
+                              "type": "number"
+                            },
+                            "totalQuestions": {
+                              "type": "integer"
+                            },
+                            "percentage": {
+                              "type": "number",
+                              "description": "Derived value: score / totalQuestions * 100 when score is the number of correct answers."
+                            },
+                            "correctAnswers": {
+                              "type": "array",
+                              "items": {
+                                "type": "integer"
+                              }
+                            },
+                            "wrongAnswers": {
+                              "type": "array",
+                              "items": {
+                                "type": "integer"
+                              }
+                            }
                           }
                         }
                       }
@@ -991,11 +1421,27 @@
     },
     "/quizzes/results/me": {
       "get": {
-        "tags": ["Quiz - Customer"],
+        "tags": [
+          "Quiz - Customer"
+        ],
         "summary": "Xem lại các kết quả đã làm",
         "parameters": [
-          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
-          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 10 } }
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -1004,13 +1450,17 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "allOf": [
-                            { "$ref": "#/components/schemas/Pagination" },
+                            {
+                              "$ref": "#/components/schemas/Pagination"
+                            },
                             {
                               "type": "object",
                               "properties": {
@@ -1019,13 +1469,34 @@
                                   "items": {
                                     "type": "object",
                                     "properties": {
-                                      "resultId": { "type": "string" },
-                                      "quizId": { "type": "string" },
-                                      "quizTitle": { "type": "string" },
-                                      "score": { "type": "number" },
-                                      "totalQuestions": { "type": "integer" },
-                                      "percentage": { "type": "number" },
-                                      "completedAt": { "type": "string" }
+                                      "resultId": {
+                                        "type": "string"
+                                      },
+                                      "quizId": {
+                                        "type": "string"
+                                      },
+                                      "quizTitle": {
+                                        "type": "string"
+                                      },
+                                      "score": {
+                                        "type": "number"
+                                      },
+                                      "totalQuestions": {
+                                        "type": "integer"
+                                      },
+                                      "percentage": {
+                                        "type": "number",
+                                        "description": "Derived value: score / totalQuestions * 100 when score is the number of correct answers."
+                                      },
+                                      "completedAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "description": "Mapped from QuizSession.end_time"
+                                      },
+                                      "durationSeconds": {
+                                        "type": "integer",
+                                        "description": "Seconds between QuizSession.start_time and QuizSession.end_time"
+                                      }
                                     }
                                   }
                                 }
@@ -1045,13 +1516,48 @@
     },
     "/staff/quizzes": {
       "get": {
-        "tags": ["Quiz - Manage"],
+        "tags": [
+          "Quiz - Manage"
+        ],
         "summary": "Lấy danh sách bộ Quiz cho Admin (Phân trang)",
         "parameters": [
-          { "name": "search", "in": "query", "schema": { "type": "string" } },
-          { "name": "era", "in": "query", "schema": { "$ref": "#/components/schemas/Era" } },
-          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 0 } },
-          { "name": "size", "in": "query", "schema": { "type": "integer", "default": 10 } }
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "era",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Era"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/QuizLevel"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -1060,19 +1566,25 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
                         "data": {
                           "allOf": [
-                            { "$ref": "#/components/schemas/Pagination" },
+                            {
+                              "$ref": "#/components/schemas/Pagination"
+                            },
                             {
                               "type": "object",
                               "properties": {
                                 "content": {
                                   "type": "array",
-                                  "items": { "$ref": "#/components/schemas/ContentAdminQuizSet" }
+                                  "items": {
+                                    "$ref": "#/components/schemas/ContentAdminQuizSet"
+                                  }
                                 }
                               }
                             }
@@ -1088,7 +1600,9 @@
         }
       },
       "post": {
-        "tags": ["Quiz - Manage"],
+        "tags": [
+          "Quiz - Manage"
+        ],
         "summary": "Tạo bộ Quiz mới",
         "requestBody": {
           "required": true,
@@ -1097,24 +1611,53 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "title": { "type": "string" },
-                  "contextId": { "type": "string" },
-                  "era": { "$ref": "#/components/schemas/Era" },
+                  "title": {
+                    "type": "string"
+                  },
+                  "contextId": {
+                    "type": "string"
+                  },
+                  "era": {
+                    "$ref": "#/components/schemas/Era"
+                  },
                   "questions": {
                     "type": "array",
                     "items": {
                       "type": "object",
                       "properties": {
-                        "content": { "type": "string" },
-                        "options": { "type": "array", "items": { "type": "string" } },
-                        "correctAnswer": { "type": "integer" },
-                        "explanation": { "type": "string" }
+                        "content": {
+                          "type": "string"
+                        },
+                        "options": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "correctAnswer": {
+                          "type": "integer"
+                        },
+                        "explanation": {
+                          "type": "string"
+                        }
                       },
-                      "required": ["content", "options", "correctAnswer"]
+                      "required": [
+                        "content",
+                        "options",
+                        "correctAnswer"
+                      ]
                     }
+                  },
+                  "level": {
+                    "$ref": "#/components/schemas/QuizLevel"
                   }
                 },
-                "required": ["title", "contextId", "era"]
+                "required": [
+                  "title",
+                  "contextId",
+                  "era",
+                  "level"
+                ]
               }
             }
           }
@@ -1126,11 +1669,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/ContentAdminQuizSet" }
+                        "data": {
+                          "$ref": "#/components/schemas/ContentAdminQuizSet"
+                        }
                       }
                     }
                   ]
@@ -1143,10 +1690,19 @@
     },
     "/staff/quizzes/{quizId}": {
       "get": {
-        "tags": ["Quiz - Manage"],
+        "tags": [
+          "Quiz - Manage"
+        ],
         "summary": "Chi tiết bộ Quiz Admin",
         "parameters": [
-          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -1155,11 +1711,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/ContentAdminQuizSet" }
+                        "data": {
+                          "$ref": "#/components/schemas/ContentAdminQuizSet"
+                        }
                       }
                     }
                   ]
@@ -1170,10 +1730,19 @@
         }
       },
       "put": {
-        "tags": ["Quiz - Manage"],
+        "tags": [
+          "Quiz - Manage"
+        ],
         "summary": "Cập nhật thông tin bộ Quiz",
         "parameters": [
-          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -1182,9 +1751,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "title": { "type": "string" },
-                  "contextId": { "type": "string" },
-                  "era": { "$ref": "#/components/schemas/Era" }
+                  "title": {
+                    "type": "string"
+                  },
+                  "contextId": {
+                    "type": "string"
+                  },
+                  "era": {
+                    "$ref": "#/components/schemas/Era"
+                  },
+                  "level": {
+                    "$ref": "#/components/schemas/QuizLevel"
+                  }
                 }
               }
             }
@@ -1197,11 +1775,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/ContentAdminQuizSet" }
+                        "data": {
+                          "$ref": "#/components/schemas/ContentAdminQuizSet"
+                        }
                       }
                     }
                   ]
@@ -1212,10 +1794,19 @@
         }
       },
       "delete": {
-        "tags": ["Quiz - Manage"],
+        "tags": [
+          "Quiz - Manage"
+        ],
         "summary": "Xóa vĩnh viễn Quiz",
         "parameters": [
-          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -1226,10 +1817,19 @@
     },
     "/staff/quizzes/{quizId}/soft-delete": {
       "patch": {
-        "tags": ["Quiz - Manage"],
+        "tags": [
+          "Quiz - Manage"
+        ],
         "summary": "Chuyển bộ Quiz vào thùng rác (Soft Delete)",
         "parameters": [
-          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -1240,10 +1840,19 @@
     },
     "/staff/quizzes/{quizId}/toggle-active": {
       "patch": {
-        "tags": ["Quiz - Manage"],
+        "tags": [
+          "Quiz - Manage"
+        ],
         "summary": "Bật/Tắt hoạt động bộ Quiz (Ẩn/Hiện với Customer)",
         "parameters": [
-          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -1254,10 +1863,19 @@
     },
     "/staff/quizzes/{quizId}/questions": {
       "post": {
-        "tags": ["Quiz - Manage"],
+        "tags": [
+          "Quiz - Manage"
+        ],
         "summary": "Thêm câu hỏi mới vào bộ Quiz",
         "parameters": [
-          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -1266,12 +1884,27 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "content": { "type": "string" },
-                  "options": { "type": "array", "items": { "type": "string" } },
-                  "correctAnswer": { "type": "integer" },
-                  "explanation": { "type": "string" }
+                  "content": {
+                    "type": "string"
+                  },
+                  "options": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "correctAnswer": {
+                    "type": "integer"
+                  },
+                  "explanation": {
+                    "type": "string"
+                  }
                 },
-                "required": ["content", "options", "correctAnswer"]
+                "required": [
+                  "content",
+                  "options",
+                  "correctAnswer"
+                ]
               }
             }
           }
@@ -1283,11 +1916,15 @@
               "application/json": {
                 "schema": {
                   "allOf": [
-                    { "$ref": "#/components/schemas/ResponseWrapper" },
+                    {
+                      "$ref": "#/components/schemas/ResponseWrapper"
+                    },
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/QuizQuestion" }
+                        "data": {
+                          "$ref": "#/components/schemas/QuizQuestion"
+                        }
                       }
                     }
                   ]
@@ -1300,11 +1937,27 @@
     },
     "/staff/quizzes/{quizId}/questions/{questionId}": {
       "put": {
-        "tags": ["Quiz - Manage"],
+        "tags": [
+          "Quiz - Manage"
+        ],
         "summary": "Sửa câu hỏi trong bộ Quiz",
         "parameters": [
-          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "questionId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -1313,10 +1966,21 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "content": { "type": "string" },
-                  "options": { "type": "array", "items": { "type": "string" } },
-                  "correctAnswer": { "type": "integer" },
-                  "explanation": { "type": "string" }
+                  "content": {
+                    "type": "string"
+                  },
+                  "options": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "correctAnswer": {
+                    "type": "integer"
+                  },
+                  "explanation": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -1329,11 +1993,27 @@
         }
       },
       "delete": {
-        "tags": ["Quiz - Manage"],
+        "tags": [
+          "Quiz - Manage"
+        ],
         "summary": "Xóa câu hỏi khỏi bộ Quiz",
         "parameters": [
-          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "questionId", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "questionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -1354,184 +2034,464 @@
     "schemas": {
       "Era": {
         "type": "string",
-        "enum": ["ANCIENT", "MEDIEVAL", "MODERN", "CONTEMPORARY"]
+        "enum": [
+          "ANCIENT",
+          "MEDIEVAL",
+          "MODERN",
+          "CONTEMPORARY"
+        ]
       },
       "ResponseWrapper": {
         "type": "object",
         "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
-          "data": { "type": "object" },
-          "timestamp": { "type": "string", "format": "date-time" }
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
         },
-        "required": ["success", "message", "timestamp"]
+        "required": [
+          "success",
+          "message",
+          "timestamp"
+        ]
       },
       "Pagination": {
         "type": "object",
         "properties": {
-          "totalElements": { "type": "integer" },
-          "totalPages": { "type": "integer" },
-          "currentPage": { "type": "integer" },
-          "pageSize": { "type": "integer" },
-          "hasNext": { "type": "boolean" },
-          "hasPrevious": { "type": "boolean" }
+          "totalElements": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          },
+          "currentPage": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "hasPrevious": {
+            "type": "boolean"
+          }
         },
-        "required": ["totalElements", "totalPages", "currentPage", "pageSize", "hasNext", "hasPrevious"]
+        "required": [
+          "totalElements",
+          "totalPages",
+          "currentPage",
+          "pageSize",
+          "hasNext",
+          "hasPrevious"
+        ]
       },
       "RegisterRequest": {
         "type": "object",
         "properties": {
-          "userName": { "type": "string" },
-          "email": { "type": "string" },
-          "password": { "type": "string" },
-          "confirmPassword": { "type": "string" }
+          "userName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "confirmPassword": {
+            "type": "string"
+          }
         },
-        "required": ["userName", "email", "password", "confirmPassword"]
+        "required": [
+          "userName",
+          "email",
+          "password",
+          "confirmPassword"
+        ]
       },
       "LoginRequest": {
         "type": "object",
         "properties": {
-          "email": { "type": "string" },
-          "password": { "type": "string" }
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "LoginResponseData": {
         "type": "object",
         "properties": {
-          "uid": { "type": "string" },
-          "userName": { "type": "string" },
-          "email": { "type": "string" },
+          "uid": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
           "role": {
             "type": "string",
-            "enum": ["CUSTOMER", "CONTENT_ADMIN", "SYSTEM_ADMIN"]
+            "enum": [
+              "CUSTOMER",
+              "CONTENT_ADMIN",
+              "SYSTEM_ADMIN"
+            ]
           },
-          "accessToken": { "type": "string" },
-          "refreshToken": { "type": "string" },
-          "tokenType": { "type": "string" },
-          "expiresIn": { "type": "integer" }
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer"
+          }
         },
-        "required": ["uid", "userName", "email", "role", "accessToken", "refreshToken", "tokenType", "expiresIn"]
+        "required": [
+          "uid",
+          "userName",
+          "email",
+          "role",
+          "accessToken",
+          "refreshToken",
+          "tokenType",
+          "expiresIn"
+        ]
       },
       "Character": {
         "type": "object",
         "properties": {
-          "characterId": { "type": "string" },
-          "name": { "type": "string" },
-          "title": { "type": "string" },
-          "background": { "type": "string" },
-          "image": { "type": "string", "nullable": true },
-          "personality": { "type": "string" },
-          "lifespan": { "type": "string" },
-          "era": { "type": "string" },
-          "isActive": { "type": "boolean" },
-          "isPublished": { "type": "boolean", "description": "true = đã publish cho người dùng xem" },
-          "createdAt": { "type": "string", "format": "date-time", "description": "Thời gian tạo - chỉ trả cho ADMIN/STAFF" },
-          "updatedAt": { "type": "string", "format": "date-time", "description": "Thời gian cập nhật - chỉ trả cho ADMIN/STAFF" },
-          "deletedAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Thời gian xóa tạm thời (null nếu chưa xóa)" },
+          "characterId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "background": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string",
+            "nullable": true
+          },
+          "personality": {
+            "type": "string"
+          },
+          "lifespan": {
+            "type": "string"
+          },
+          "era": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isPublished": {
+            "type": "boolean",
+            "description": "true = đã publish cho người dùng xem"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Thời gian tạo - chỉ trả cho ADMIN/STAFF"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Thời gian cập nhật - chỉ trả cho ADMIN/STAFF"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Thời gian xóa tạm thời (null nếu chưa xóa)"
+          },
           "context": {
             "type": "object",
             "properties": {
-              "contextId": { "type": "string" }
+              "contextId": {
+                "type": "string"
+              }
             }
           }
         },
-        "required": ["characterId", "name", "title", "background", "isActive", "isPublished"]
+        "required": [
+          "characterId",
+          "name",
+          "title",
+          "background",
+          "isActive",
+          "isPublished"
+        ]
       },
       "CharacterUpsertRequest": {
         "type": "object",
         "properties": {
-          "name": { "type": "string" },
-          "title": { "type": "string" },
-          "background": { "type": "string" },
-          "image": { "type": "string", "nullable": true },
-          "personality": { "type": "string" },
-          "lifespan": { "type": "string" },
-          "isActive": { "type": "boolean" },
-          "isPublished": { "type": "boolean", "default": false, "description": "Mặc định false khi tạo mới" }
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "background": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string",
+            "nullable": true
+          },
+          "personality": {
+            "type": "string"
+          },
+          "lifespan": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isPublished": {
+            "type": "boolean",
+            "default": false,
+            "description": "Mặc định false khi tạo mới"
+          }
         },
-        "required": ["name", "title", "background", "isActive"]
+        "required": [
+          "name",
+          "title",
+          "background",
+          "isActive"
+        ]
       },
       "HistoricalContext": {
         "type": "object",
         "properties": {
-          "contextId": { "type": "string" },
-          "name": { "type": "string" },
-          "description": { "type": "string" },
-          "year": { "type": "integer" },
-          "yearLabel": { "type": "string" },
-          "era": { "type": "string" },
-          "location": { "type": "string" },
-          "imageUrl": { "type": "string", "nullable": true },
-          "videoUrl": { "type": "string", "nullable": true },
-          "period": { "type": "string" },
-          "isActive": { "type": "boolean" },
-          "deletedAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Thời gian xóa tạm thời (null nếu chưa xóa)" }
+          "contextId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer"
+          },
+          "yearLabel": {
+            "type": "string"
+          },
+          "era": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "videoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "period": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Thời gian xóa tạm thời (null nếu chưa xóa)"
+          }
         },
-        "required": ["contextId", "name", "description", "year", "era", "isActive"]
+        "required": [
+          "contextId",
+          "name",
+          "description",
+          "year",
+          "era",
+          "isActive"
+        ]
       },
       "HistoricalContextUpsertRequest": {
         "type": "object",
         "properties": {
-          "name": { "type": "string" },
-          "description": { "type": "string" },
-          "era": { "$ref": "#/components/schemas/Era" },
-          "year": { "type": "integer" },
-          "location": { "type": "string" },
-          "imageUrl": { "type": "string", "nullable": true },
-          "videoUrl": { "type": "string", "nullable": true },
-          "isActive": { "type": "boolean" }
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "era": {
+            "$ref": "#/components/schemas/Era"
+          },
+          "year": {
+            "type": "integer"
+          },
+          "location": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "videoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
         },
-        "required": ["name", "description", "era", "year", "isActive"]
+        "required": [
+          "name",
+          "description",
+          "era",
+          "year",
+          "isActive"
+        ]
       },
       "ChatSession": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "characterId": { "type": "string" },
-          "contextId": { "type": "string" },
-          "title": { "type": "string" },
-          "lastMessage": { "type": "string" },
-          "lastMessageAt": { "type": "string", "format": "date-time" },
-          "messageCount": { "type": "integer" }
+          "id": {
+            "type": "string"
+          },
+          "characterId": {
+            "type": "string"
+          },
+          "contextId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "lastMessage": {
+            "type": "string"
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "messageCount": {
+            "type": "integer"
+          }
         },
-        "required": ["id", "characterId", "contextId", "title", "lastMessage", "lastMessageAt", "messageCount"]
+        "required": [
+          "id",
+          "characterId",
+          "contextId",
+          "title",
+          "lastMessage",
+          "lastMessageAt",
+          "messageCount"
+        ]
       },
       "ChatMessage": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "sessionId": { "type": "string" },
+          "id": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          },
           "role": {
             "type": "string",
-            "enum": ["USER", "ASSISTANT"]
+            "enum": [
+              "USER",
+              "ASSISTANT"
+            ]
           },
-          "content": { "type": "string" },
-          "createdAt": { "type": "string", "format": "date-time" }
+          "content": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         },
-        "required": ["id", "sessionId", "role", "content", "createdAt"]
+        "required": [
+          "id",
+          "sessionId",
+          "role",
+          "content",
+          "createdAt"
+        ]
       },
       "ChatHistoryGroup": {
         "type": "object",
         "properties": {
-          "contextId": { "type": "string" },
-          "contextName": { "type": "string" },
+          "contextId": {
+            "type": "string"
+          },
+          "contextName": {
+            "type": "string"
+          },
           "sessions": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "id": { "type": "string" },
-                "characterId": { "type": "string" },
-                "characterName": { "type": "string" },
-                "characterTitle": { "type": "string" },
-                "characterImage": { "type": "string" },
-                "contextId": { "type": "string" },
-                "contextName": { "type": "string" },
-                "sessionTitle": { "type": "string" },
-                "lastMessage": { "type": "string" },
-                "lastMessageAt": { "type": "string", "format": "date-time" },
-                "messageCount": { "type": "integer" }
+                "id": {
+                  "type": "string"
+                },
+                "characterId": {
+                  "type": "string"
+                },
+                "characterName": {
+                  "type": "string"
+                },
+                "characterTitle": {
+                  "type": "string"
+                },
+                "characterImage": {
+                  "type": "string"
+                },
+                "contextId": {
+                  "type": "string"
+                },
+                "contextName": {
+                  "type": "string"
+                },
+                "sessionTitle": {
+                  "type": "string"
+                },
+                "lastMessage": {
+                  "type": "string"
+                },
+                "lastMessageAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "messageCount": {
+                  "type": "integer"
+                }
               }
             }
           }
@@ -1540,52 +2500,141 @@
       "QuizSet": {
         "type": "object",
         "properties": {
-          "quizId": { "type": "string" },
-          "title": { "type": "string" },
-          "era": { "$ref": "#/components/schemas/Era" },
-          "playCount": { "type": "integer" },
-          "rating": { "type": "number" },
-          "contextTitle": { "type": "string" }
+          "quizId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "era": {
+            "$ref": "#/components/schemas/Era"
+          },
+          "playCount": {
+            "type": "integer",
+            "description": "Total quiz attempts, calculated from COUNT(QuizSession WHERE quiz_id = ...)"
+          },
+          "contextTitle": {
+            "type": "string"
+          },
+          "level": {
+            "$ref": "#/components/schemas/QuizLevel"
+          }
         },
-        "required": ["quizId", "title", "era", "playCount", "rating"]
+        "required": [
+          "quizId",
+          "title",
+          "era",
+          "level",
+          "playCount"
+        ]
       },
       "QuizQuestion": {
         "type": "object",
         "properties": {
-          "questionId": { "type": "string" },
-          "content": { "type": "string" },
+          "questionId": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
           "options": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "minItems": 4,
-            "maxItems": 4
+            "maxItems": 4,
+            "description": "Backend stores options as a DB string and must return a parsed string[]; JSON array string is recommended."
           },
-          "correctAnswer": { "type": "integer" },
-          "explanation": { "type": "string" }
+          "correctAnswer": {
+            "type": "integer"
+          },
+          "explanation": {
+            "type": "string"
+          }
         },
-        "required": ["questionId", "content", "options", "correctAnswer"]
+        "required": [
+          "questionId",
+          "content",
+          "options",
+          "correctAnswer"
+        ]
       },
       "ContentAdminQuizSet": {
         "type": "object",
         "properties": {
-          "quizId": { "type": "string" },
-          "title": { "type": "string" },
-          "era": { "$ref": "#/components/schemas/Era" },
-          "playCount": { "type": "integer" },
-          "rating": { "type": "number" },
-          "contextId": { "type": "string" },
-          "contextTitle": { "type": "string" },
-          "createdBy": { "type": "string" },
-          "createdDate": { "type": "string", "format": "date-time" },
-          "updatedDate": { "type": "string", "format": "date-time" },
-          "isActive": { "type": "boolean" },
-          "deletedAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Thời gian xóa tạm thời (null nếu chưa xóa)" },
+          "quizId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "era": {
+            "$ref": "#/components/schemas/Era"
+          },
+          "playCount": {
+            "type": "integer",
+            "description": "Total quiz attempts, calculated from COUNT(QuizSession WHERE quiz_id = ...)"
+          },
+          "contextId": {
+            "type": "string"
+          },
+          "contextTitle": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Thời gian xóa tạm thời (null nếu chưa xóa)"
+          },
           "questions": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/QuizQuestion" }
+            "items": {
+              "$ref": "#/components/schemas/QuizQuestion"
+            }
+          },
+          "level": {
+            "$ref": "#/components/schemas/QuizLevel"
           }
         },
-        "required": ["quizId", "title", "era", "playCount", "rating", "contextId", "contextTitle", "createdBy", "createdDate", "updatedDate", "isActive", "questions"]
+        "required": [
+          "quizId",
+          "title",
+          "era",
+          "level",
+          "playCount",
+          "contextId",
+          "contextTitle",
+          "createdBy",
+          "createdDate",
+          "updatedDate",
+          "isActive",
+          "questions"
+        ]
+      },
+      "QuizLevel": {
+        "type": "string",
+        "enum": [
+          "EASY",
+          "MEDIUM",
+          "HARD"
+        ],
+        "description": "Quiz difficulty level"
       }
     }
   }
