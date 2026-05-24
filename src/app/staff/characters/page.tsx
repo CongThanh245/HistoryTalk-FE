@@ -17,6 +17,7 @@ import {
 } from "@/features/characters/hooks";
 import type { Character } from "@/services/character.service";
 import { isValidUrl } from "@/lib/utils/url";
+import { formatCharacterLifespan } from "@/lib/utils/character-date";
 
 export default function StaffCharactersPage() {
   const router = useRouter();
@@ -107,11 +108,11 @@ export default function StaffCharactersPage() {
         },
       },
       {
-        accessorKey: "lifespan",
+        id: "lifespan",
         header: "Thời gian sống",
         cell: ({ row }) => (
           <span className="text-xs" style={{ color: "var(--content-muted)" }}>
-            {row.original.lifespan ?? "—"}
+            {formatCharacterLifespan(row.original)}
           </span>
         ),
       },
@@ -161,7 +162,7 @@ export default function StaffCharactersPage() {
         ),
       },
     ],
-    [],
+    [router],
   );
 
   const trashColumns = React.useMemo<ColumnDef<Character>[]>(

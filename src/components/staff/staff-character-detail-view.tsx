@@ -50,7 +50,14 @@ export type CharacterDraft = {
   background: string;
   image: string;
   personality: string;
-  lifespan: string;
+  bornYear: string;
+  bornMonth: string;
+  bornDay: string;
+  isBornBc: boolean;
+  deathYear: string;
+  deathMonth: string;
+  deathDay: string;
+  isDeathBc: boolean;
   isActive: boolean;
   isPublished: boolean;
 };
@@ -61,7 +68,14 @@ export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
   background: "",
   image: "",
   personality: "",
-  lifespan: "",
+  bornYear: "",
+  bornMonth: "",
+  bornDay: "",
+  isBornBc: false,
+  deathYear: "",
+  deathMonth: "",
+  deathDay: "",
+  isDeathBc: false,
   isActive: true,
   isPublished: false,
 };
@@ -120,7 +134,10 @@ export function StaffCharacterDetailView({
     
     // Deep comparison of relevant fields
     const keys: (keyof CharacterDraft)[] = [
-      "name", "title", "background", "image", "personality", "lifespan", "isActive", "isPublished"
+      "name", "title", "background", "image", "personality",
+      "bornYear", "bornMonth", "bornDay", "isBornBc",
+      "deathYear", "deathMonth", "deathDay", "isDeathBc",
+      "isActive", "isPublished"
     ];
     
     return keys.some(key => {
@@ -383,15 +400,81 @@ export function StaffCharacterDetailView({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-1.5">
-                <StaffFormLabel>Năm sống</StaffFormLabel>
+            <div className="grid gap-3">
+              <StaffFormLabel>Ngày sinh</StaffFormLabel>
+              <div className="grid grid-cols-[1fr_1fr_1.2fr_auto] gap-2 items-end">
                 <StaffFormInput
-                  value={draft.lifespan}
-                  onChange={(e) => set("lifespan")(e.target.value)}
-                  placeholder="VD: 898–944"
+                  type="number"
+                  min={1}
+                  max={31}
+                  value={draft.bornDay}
+                  onChange={(e) => set("bornDay")(e.target.value)}
+                  placeholder="Ngày"
                   disabled={!isEditing}
                 />
+                <StaffFormInput
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={draft.bornMonth}
+                  onChange={(e) => set("bornMonth")(e.target.value)}
+                  placeholder="Tháng"
+                  disabled={!isEditing}
+                />
+                <StaffFormInput
+                  type="number"
+                  value={draft.bornYear}
+                  onChange={(e) => set("bornYear")(e.target.value)}
+                  placeholder="Năm"
+                  disabled={!isEditing}
+                />
+                <label className="flex h-10 items-center gap-2 rounded-md border px-3 text-xs font-medium" style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}>
+                  <Checkbox
+                    checked={draft.isBornBc}
+                    onCheckedChange={(val) => set("isBornBc")(!!val)}
+                    disabled={!isEditing}
+                  />
+                  TCN
+                </label>
+              </div>
+            </div>
+
+            <div className="grid gap-3">
+              <StaffFormLabel>Ngày mất</StaffFormLabel>
+              <div className="grid grid-cols-[1fr_1fr_1.2fr_auto] gap-2 items-end">
+                <StaffFormInput
+                  type="number"
+                  min={1}
+                  max={31}
+                  value={draft.deathDay}
+                  onChange={(e) => set("deathDay")(e.target.value)}
+                  placeholder="Ngày"
+                  disabled={!isEditing}
+                />
+                <StaffFormInput
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={draft.deathMonth}
+                  onChange={(e) => set("deathMonth")(e.target.value)}
+                  placeholder="Tháng"
+                  disabled={!isEditing}
+                />
+                <StaffFormInput
+                  type="number"
+                  value={draft.deathYear}
+                  onChange={(e) => set("deathYear")(e.target.value)}
+                  placeholder="Năm"
+                  disabled={!isEditing}
+                />
+                <label className="flex h-10 items-center gap-2 rounded-md border px-3 text-xs font-medium" style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}>
+                  <Checkbox
+                    checked={draft.isDeathBc}
+                    onCheckedChange={(val) => set("isDeathBc")(!!val)}
+                    disabled={!isEditing}
+                  />
+                  TCN
+                </label>
               </div>
             </div>
 
