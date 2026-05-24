@@ -43,6 +43,8 @@ export function useMyQuizResults(
 }
 
 // POST /quizzes/:id/start
+
+// POST /quizzes/:id/start
 export function useStartQuiz() {
   return useMutation({
     mutationFn: (quizId: string) => quizService.startQuiz(quizId),
@@ -54,6 +56,17 @@ export function useSubmitQuiz() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: SubmitQuizPayload) => quizService.submitQuiz(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.myResults });
+    },
+  });
+}
+
+// PATCH /quizzes/sessions/:sessionId/soft-delete
+export function useSoftDeleteQuizSession() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => quizService.softDeleteSession(sessionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.myResults });
     },
