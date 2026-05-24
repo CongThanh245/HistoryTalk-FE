@@ -57,11 +57,6 @@ export function QuizPageClient() {
     return Math.round(total / results.length);
   }, [results]);
 
-  const totalPlayCount = useMemo(
-    () => allQuizzes.reduce((acc, q) => acc + q.playCount, 0),
-    [allQuizzes],
-  );
-
   const handleStartQuiz = (quizId: string) => {
     router.push(`/quiz/${quizId}`);
   };
@@ -87,7 +82,6 @@ export function QuizPageClient() {
         totalQuizzes={quizData?.totalElements ?? 0}
         completedCount={resultsData?.totalElements ?? results.length}
         averageScore={avgScore}
-        totalPlayCount={totalPlayCount}
       />
 
       <div className="flex flex-col lg:flex-row gap-6">

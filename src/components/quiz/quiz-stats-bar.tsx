@@ -2,20 +2,18 @@
 // Thanh thống kê tổng quan (tổng quiz, đã làm, trung bình điểm)
 
 import React from "react";
-import { BookOpen, CheckCircle, TrendingUp, Users } from "lucide-react";
+import { BookOpen, CheckCircle, TrendingUp } from "lucide-react";
 
 interface QuizStatsBarProps {
   totalQuizzes: number;
   completedCount: number;
   averageScore: number; // 0-100
-  totalPlayCount: number;
 }
 
 export function QuizStatsBar({
   totalQuizzes,
   completedCount,
   averageScore,
-  totalPlayCount,
 }: QuizStatsBarProps) {
   const stats = [
     {
@@ -42,18 +40,10 @@ export function QuizStatsBar({
       color: "text-[var(--accent-blue)]",
       bg: "bg-[var(--accent-blue)]/10",
     },
-    {
-      icon: <Users size={18} />,
-      label: "Tổng lượt làm",
-      value: totalPlayCount,
-      suffix: "",
-      color: "text-[var(--burning-flame)]",
-      bg: "bg-[var(--streak-bg)]",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
       {stats.map((s) => (
         <div
           key={s.label}
