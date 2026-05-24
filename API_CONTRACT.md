@@ -44,6 +44,14 @@
 | `USER` | Tin nhắn người dùng |
 | `ASSISTANT` | Tin nhắn nhân vật AI |
 
+### QuizLevel
+
+| Value | Ý nghĩa |
+|---|---|
+| `EASY` | Dễ |
+| `MEDIUM` | Trung bình |
+| `HARD` | Khó |
+
 ### Pagination Response (dùng chung)
 
 ```json
@@ -713,8 +721,8 @@ Lấy lịch sử chat của user đang auth, **đã group theo context**.
   quizId: string
   title: string
   era: "ALL" | "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY"
-  playCount: number
-  rating: number
+  level: "EASY" | "MEDIUM" | "HARD"
+  playCount: number        // tổng số lượt làm quiz (COUNT QuizSession)
   contextTitle?: string
 }
 ```
@@ -730,6 +738,8 @@ Lấy lịch sử chat của user đang auth, **đã group theo context**.
   explanation?: string
 }
 ```
+
+> `options` trong DB là string, backend phải parse/trả về `string[]` cho FE. Khuyến nghị lưu DB dạng JSON array string.
 
 ---
 
@@ -753,13 +763,15 @@ Lấy lịch sử chat của user đang auth, **đã group theo context**.
       "quizId": "string",
       "title": "string",
       "era": "CONTEMPORARY",
+      "level": "MEDIUM",
       "playCount": 3241,
-      "rating": 4.8,
       "contextTitle": "string"
     }
   ]
 }
 ```
+
+> `playCount` là tổng số phiên làm bài của quiz, tính từ `COUNT(QuizSession WHERE quiz_id = ...)`. Không phải số lần admin cho phép làm.
 
 ---
 
@@ -795,7 +807,7 @@ Bắt đầu phiên làm bài. Không cần body.
 ```
 
 > `correctAnswer` trả về ngay vì đây là app học tập (hiện đúng/sai sau mỗi câu).  
-> FE sort questions theo `orderIndex` ASC.
+> Backend trả questions theo thứ tự ổn định. DB hiện chưa có `orderIndex`, nên không bắt buộc field này trong contract.
 
 ---
 
@@ -852,7 +864,8 @@ Bắt đầu phiên làm bài. Không cần body.
         "score": 8,
         "totalQuestions": 10,
         "percentage": 80,
-        "completedAt": "ISO8601"
+        "completedAt": "ISO8601",
+        "durationSeconds": 420
       }
     ],
     "totalElements": 20,
@@ -864,6 +877,9 @@ Bắt đầu phiên làm bài. Không cần body.
   }
 }
 ```
+
+> `completedAt` map từ `QuizSession.end_time`.  
+> `durationSeconds` = số giây giữa `QuizSession.start_time` và `QuizSession.end_time`.
 
 ---
 
@@ -878,8 +894,8 @@ Bắt đầu phiên làm bài. Không cần body.
   quizId: string
   title: string
   era: "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY"
-  playCount: number
-  rating: number
+  level: "EASY" | "MEDIUM" | "HARD"
+  playCount: number        // tổng số lượt làm quiz (COUNT QuizSession)
   contextId: string
   contextTitle: string
   createdBy: string
@@ -901,6 +917,7 @@ Bắt đầu phiên làm bài. Không cần body.
 |---|---|---|
 | `search` | string | Tìm theo title |
 | `era` | string | Era enum |
+| `level` | string | `EASY` \| `MEDIUM` \| `HARD` |
 | `page` | number | 0-indexed |
 | `size` | number | Số item/trang |
 
@@ -938,6 +955,7 @@ Chi tiết quiz kèm toàn bộ câu hỏi.
   "title": "string",
   "contextId": "string",
   "era": "CONTEMPORARY",
+  "level": "MEDIUM",
   "questions": [
     {
       "content": "string",
@@ -962,7 +980,8 @@ Cập nhật metadata (không bao gồm questions).
 {
   "title": "string",
   "contextId": "string",
-  "era": "CONTEMPORARY"
+  "era": "CONTEMPORARY",
+  "level": "MEDIUM"
 }
 ```
 
