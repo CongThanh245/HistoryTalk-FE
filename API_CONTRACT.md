@@ -183,7 +183,14 @@ Yêu cầu role `SYSTEM_ADMIN`.
   background: string       // Tiểu sử (FE map sang description)
   image: string | null     // URL ảnh (FE map sang imageUrl + avatarUrl)
   personality?: string
-  lifespan?: string        // VD: "898–944"
+  bornYear?: number | null // null nếu không rõ năm sinh
+  bornMonth?: number | null // null nếu không rõ tháng sinh
+  bornDay?: number | null  // null nếu không rõ ngày sinh
+  isBornBc?: boolean       // true = trước Công nguyên (BC)
+  deathYear?: number | null // null nếu không rõ năm mất
+  deathMonth?: number | null // null nếu không rõ tháng mất
+  deathDay?: number | null // null nếu không rõ ngày mất
+  isDeathBc?: boolean      // true = trước Công nguyên (BC)
   era?: string             // ANCIENT | MEDIEVAL | MODERN | CONTEMPORARY
   isActive?: boolean
   isPublished?: boolean     // true = đã publish cho người dùng xem
@@ -201,6 +208,7 @@ Yêu cầu role `SYSTEM_ADMIN`.
 > **Quan trọng:** CUSTOMER: GET /characters auto-filter `isPublished=true`, ignore `published` param.  
 > **Quan trọng:** ADMIN/STAFF: `?published=true` chỉ published, `?published=false` chỉ unpublished, không truyền = tất cả.  
 > **Quan trọng:** `createdAt` và `updatedAt` chỉ trả về cho ADMIN/STAFF, CUSTOMER sẽ không thấy.
+> **Quan trọng:** Không dùng `lifespan`. Ngày sinh/mất tách thành từng field; phần không rõ trả `null` để FE hiển thị `?`.
 
 ---
 
@@ -221,7 +229,26 @@ Yêu cầu role `SYSTEM_ADMIN`.
 {
   "success": true,
   "data": {
-    "content": [ { "characterId": "...", "name": "...", "title": "...", "background": "...", "image": "url", "era": "MEDIEVAL", "isActive": true, "isPublished": true } ],
+    "content": [
+      {
+        "characterId": "...",
+        "name": "...",
+        "title": "...",
+        "background": "...",
+        "image": "url",
+        "bornYear": null,
+        "bornMonth": null,
+        "bornDay": null,
+        "isBornBc": true,
+        "deathYear": null,
+        "deathMonth": null,
+        "deathDay": null,
+        "isDeathBc": true,
+        "era": "MEDIEVAL",
+        "isActive": true,
+        "isPublished": true
+      }
+    ],
     "totalElements": 24,
     "totalPages": 3,
     "currentPage": 0,
@@ -247,7 +274,14 @@ Yêu cầu role `SYSTEM_ADMIN`.
     "background": "string",
     "image": "string | null",
     "personality": "string",
-    "lifespan": "string",
+    "bornYear": null,
+    "bornMonth": null,
+    "bornDay": null,
+    "isBornBc": true,
+    "deathYear": null,
+    "deathMonth": null,
+    "deathDay": null,
+    "isDeathBc": true,
     "era": "MEDIEVAL",
     "isActive": true,
     "isPublished": true,
@@ -296,7 +330,14 @@ Yêu cầu role `CONTENT_ADMIN` | `SYSTEM_ADMIN`.
   "background": "string",
   "image": "string | null",
   "personality": "string",
-  "lifespan": "string",
+  "bornYear": null,
+  "bornMonth": null,
+  "bornDay": null,
+  "isBornBc": true,
+  "deathYear": null,
+  "deathMonth": null,
+  "deathDay": null,
+  "isDeathBc": true,
   "isActive": true,
   "isPublished": false     // mặc định false khi tạo mới
 }
