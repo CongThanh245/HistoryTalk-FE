@@ -55,6 +55,12 @@ declare global {
 
 const GOOGLE_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const GOOGLE_AUTH_MODE = process.env.NEXT_PUBLIC_GOOGLE_AUTH_MODE ?? "id_token";
+const GOOGLE_OAUTH_START_URL =
+  process.env.NEXT_PUBLIC_GOOGLE_OAUTH_START_URL ??
+  `${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}${(
+    process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1"
+  ).replace(/\/api\/v1\/?$/, "")}/oauth2/authorization/google`;
 
 export default function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
@@ -73,8 +79,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const register = useRegister();
 
   const loading = login.isPending || register.isPending || googleLogin.isPending;
+  const usesRedirectGoogleLogin = GOOGLE_AUTH_MODE === "redirect";
 
   useEffect(() => {
+    if (usesRedirectGoogleLogin) return;
     if (!GOOGLE_CLIENT_ID || !googleButtonRef.current) return;
     const googleClientId = GOOGLE_CLIENT_ID;
 
@@ -141,7 +149,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
     return () => {
       disposed = true;
     };
-  }, [googleLogin, isRegister]);
+  }, [googleLogin, isRegister, usesRedirectGoogleLogin]);
+
+  function handleGoogleRedirect() {
+    window.location.href = GOOGLE_OAUTH_START_URL;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -379,7 +391,22 @@ export default function AuthForm({ mode }: AuthFormProps) {
               className="flex min-h-12 w-full items-center justify-center"
               aria-disabled={loading}
             >
-              {GOOGLE_CLIENT_ID ? (
+              {usesRedirectGoogleLogin ? (
+                <Button
+                  type="button"
+                  onClick={handleGoogleRedirect}
+                  disabled={loading}
+                  className="h-12 w-full rounded-xl border text-sm font-semibold"
+                  variant="outline"
+                  style={{
+                    background: "var(--card-light-bg)",
+                    borderColor: "var(--card-light-border)",
+                    color: "var(--content-text)",
+                  }}
+                >
+                  Continue with Google
+                </Button>
+              ) : GOOGLE_CLIENT_ID ? (
                 <div ref={googleButtonRef} className={loading ? "opacity-60" : ""} />
               ) : (
                 <button
