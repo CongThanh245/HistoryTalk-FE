@@ -515,8 +515,8 @@ export default function AdminDashboardPage() {
                                 background: r.role.toLowerCase().includes("system")
                                   ? "#10b981"
                                   : r.role.toLowerCase().includes("content")
-                                  ? "#8b5cf6"
-                                  : "#3b82f6",
+                                    ? "#8b5cf6"
+                                    : "#3b82f6",
                               }}
                             />
                           </div>
