@@ -38,9 +38,6 @@ export const ROUTES = {
   PRODUCT_CREATE: '/dashboard/products/create',
   PRODUCT_EDIT: (id: string) => `/dashboard/products/${id}/edit`,
   
-  // Categories (Admin only)
-  CATEGORIES: '/dashboard/categories',
-  
   // Orders Management (Admin + Moderator + Seller)
   ORDERS_MANAGE: '/dashboard/orders',
   ORDER_MANAGE_DETAIL: (id: string) => `/dashboard/orders/${id}`,

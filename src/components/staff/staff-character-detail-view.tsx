@@ -148,7 +148,6 @@ export function StaffCharacterDetailView({
     name: "",
     description: "",
     era: "" as EventEraBackend | "",
-    category: "",
     year: "",
   });
   const createEvent = useCreateEvent();
@@ -626,25 +625,6 @@ export function StaffCharacterDetailView({
                           </Select>
                         </div>
                         <div className="grid gap-1">
-                          <Label className="text-[11px]">Danh mục *</Label>
-                          <Select
-                            value={quickCtx.category}
-                            onValueChange={(v) => setQuickCtx((s) => ({ ...s, category: v }))}
-                          >
-                            <SelectTrigger className="h-9 text-xs">
-                              <SelectValue placeholder="Chọn danh mục" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="WAR">Chiến tranh</SelectItem>
-                              <SelectItem value="POLITICS">Chính trị</SelectItem>
-                              <SelectItem value="CULTURE">Văn hóa</SelectItem>
-                              <SelectItem value="SCIENCE">Khoa học</SelectItem>
-                              <SelectItem value="RELIGION">Tôn giáo</SelectItem>
-                              <SelectItem value="OTHER">Khác</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid gap-1">
                           <Label className="text-[11px]">Năm *</Label>
                           <Input
                             type="number"
@@ -685,7 +665,7 @@ export function StaffCharacterDetailView({
                               onSuccess: (newCtx) => {
                                 setSelectedContextId(newCtx.id);
                                 setShowQuickCreate(false);
-                                setQuickCtx({ name: "", description: "", era: "", category: "", year: "" });
+                                setQuickCtx({ name: "", description: "", era: "", year: "" });
                                 toast.success("Tạo bối cảnh thành công");
                               },
                             },

@@ -8,8 +8,7 @@ export interface TimelineItem {
   id: string;
   year: number;
   yearLabel: string;
-  category?: string;
-  categoryColor?: string; // css color string
+  accentColor?: string;
 }
 
 interface TimelineStripProps {
@@ -110,7 +109,7 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
         >
           {items.map((item, i) => {
             const isActive = item.id === activeId;
-            const dotColor = item.categoryColor ?? "var(--accent-gold)";
+            const dotColor = item.accentColor ?? "var(--accent-gold)";
             return (
               <button
                 key={item.id}

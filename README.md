@@ -109,28 +109,14 @@ import { axiosClient } from "@/configs/axios.client";
 
 // ── 1. Khai báo types khớp với backend response ──────────
 
-// Backend trả về uppercase → dùng cho params gửi lên
-export type EventCategory =
-  | "WAR"
-  | "POLITICS"
-  | "CULTURE"
-  | "SCIENCE"
-  | "RELIGION"
-  | "OTHER";
+// Backend trả về uppercase -> dùng cho params gửi lên
 export type EventEraBackend =
   | "ANCIENT"
   | "MEDIEVAL"
   | "MODERN"
   | "CONTEMPORARY";
 
-// UI dùng lowercase (để match với config màu sắc, label...)
-export type EventCategoryLower =
-  | "war"
-  | "politics"
-  | "culture"
-  | "science"
-  | "religion"
-  | "other";
+// UI dùng lowercase cho filter thời đại
 export type EventEra =
   | "all"
   | "ancient"
@@ -145,7 +131,6 @@ export interface HistoricalEvent {
   summary: string; // ← map từ description của backend
   year: number;
   yearLabel?: string;
-  category: EventCategoryLower;
   location?: string;
   imageUrl?: string;
   era?: EventEraBackend;
@@ -161,7 +146,6 @@ export interface GetEventsParams {
   page?: number;
   limit?: number;
   era?: EventEraBackend; // Chỉ gửi khi không phải "all"
-  category?: EventCategory; // Chỉ gửi khi có filter
 }
 
 // Interface cho response (pagination)
@@ -185,7 +169,6 @@ export function mapContext(raw: any): HistoricalEvent {
     summary: raw.description, // rename
     year: raw.year ?? raw.startYear ?? 0,
     yearLabel: raw.yearLabel,
-    category: (raw.category?.toLowerCase() as EventCategoryLower) ?? "other", // uppercase → lowercase
     location: raw.location,
     imageUrl: raw.imageUrl,
     era: raw.era as EventEraBackend,
@@ -393,7 +376,6 @@ const params: GetEventsParams = {
   page: 1,
   limit: 100,
   ...(era !== "all" && { era: era.toUpperCase() as EventEraBackend }),
-  ...(category && { category: category.toUpperCase() as EventCategory }),
 };
 ```
 

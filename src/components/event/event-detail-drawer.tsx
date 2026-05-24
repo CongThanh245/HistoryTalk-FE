@@ -3,10 +3,7 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { XIcon, PlayIcon, SkipForwardIcon, TimerIcon, MapPinIcon } from "@phosphor-icons/react";
-import type {
-  HistoricalEvent,
-  EventCategoryLower,
-} from "@/services/event.service";
+import type { HistoricalEvent } from "@/services/event.service";
 import {
   CharacterCarouselCard,
   CharacterCompactCard,
@@ -19,14 +16,7 @@ import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-nav
 // ── Mock ──────────────────────────────────────────────────
 // TODO: fetch từ API /events/:id/characters
 
-const CATEGORY_COLOR: Record<EventCategoryLower, string> = {
-  war: "var(--accent-danger)",
-  politics: "var(--accent-gold)",
-  culture: "var(--accent-blue)",
-  science: "var(--accent-teal)",
-  religion: "var(--accent-bronze)",
-  other: "var(--content-muted)",
-};
+const EVENT_ACCENT_COLOR = "var(--accent-gold)";
 
 // ── Fake Video Player ─────────────────────────────────────
 // Thay thế toàn bộ FakeVideoPlayer component
@@ -245,7 +235,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   if (!event) return null;
 
   const videoFinished = finishedEventId === event.id;
-  const color = CATEGORY_COLOR[event.category];
+  const color = EVENT_ACCENT_COLOR;
   const yearLabel =
     event.yearLabel ??
     `${Math.abs(event.year)} ${event.year < 0 ? "TCN" : "SCN"}`;

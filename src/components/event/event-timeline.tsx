@@ -47,8 +47,7 @@
       year: ev.year,
       yearLabel:
         ev.yearLabel ?? `${Math.abs(ev.year)} ${ev.year < 0 ? "TCN" : "SCN"}`,
-      category: ev.category,
-      categoryColor: getCatColor(ev.category),
+      accentColor: EVENT_ACCENT_COLOR,
     }));
 
     return (
@@ -107,7 +106,7 @@
                     height: 6,
                     background:
                       ev.id === resolvedActiveId
-                        ? getCatColor(ev.category)
+                        ? EVENT_ACCENT_COLOR
                         : "var(--card-light-border)",
                     border: "none",
                     padding: 0,
@@ -146,15 +145,4 @@
     );
   }
 
-  const CAT_COLORS: Record<string, string> = {
-    war: "var(--accent-danger)",
-    politics: "var(--accent-gold)",
-    culture: "var(--accent-blue)",
-    science: "var(--accent-teal)",
-    religion: "var(--accent-bronze)",
-    other: "var(--content-muted)",
-  };
-
-  function getCatColor(cat: string): string {
-    return CAT_COLORS[cat] ?? CAT_COLORS.other;
-  }
+  const EVENT_ACCENT_COLOR = "var(--accent-gold)";

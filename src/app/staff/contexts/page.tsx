@@ -7,8 +7,6 @@ import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   StaffFormLabel,
@@ -20,8 +18,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -35,7 +31,6 @@ import {
 import {
   type HistoricalEvent,
   type EventEraBackend,
-  type EventCategory,
   ERA_CONFIG,
   EventEra,
 } from "@/services/event.service";
@@ -45,7 +40,6 @@ type DraftState = {
   name: string;
   description: string;
   era: EventEraBackend | "";
-  category: EventCategory | "";
   year: string;
   location: string;
   imageUrl: string;
@@ -57,7 +51,6 @@ const EMPTY_DRAFT: DraftState = {
   name: "",
   description: "",
   era: "",
-  category: "",
   year: "",
   location: "",
   imageUrl: "",
@@ -71,15 +64,6 @@ const ERA_OPTIONS = [
   { value: "MEDIEVAL" as const, label: "Trung đại" },
   { value: "MODERN" as const, label: "Cận đại" },
   { value: "CONTEMPORARY" as const, label: "Hiện đại" },
-];
-
-const CATEGORY_OPTIONS = [
-  { value: "WAR" as const, label: "Chiến tranh" },
-  { value: "POLITICS" as const, label: "Chính trị" },
-  { value: "CULTURE" as const, label: "Văn hoá" },
-  { value: "SCIENCE" as const, label: "Khoa học" },
-  { value: "RELIGION" as const, label: "Tôn giáo" },
-  { value: "OTHER" as const, label: "Khác" },
 ];
 
 export default function StaffContextsPage() {
@@ -121,7 +105,6 @@ export default function StaffContextsPage() {
       name: draft.name.trim(),
       description: draft.description.trim(),
       era: draft.era as EventEraBackend,
-      category: draft.category as EventCategory,
       year: Number(draft.year) || 0,
       location: draft.location.trim() || undefined,
       imageUrl: draft.imageUrl.trim() || undefined,
@@ -269,9 +252,6 @@ export default function StaffContextsPage() {
                   name: e.title,
                   description: e.summary,
                   era: (e.era ?? "") as EventEraBackend | "",
-                  category: (e.category.toUpperCase() ?? "") as
-                    | EventCategory
-                    | "",
                   year: String(e.year ?? ""),
                   location: e.location ?? "",
                   imageUrl: e.imageUrl ?? "",
@@ -545,8 +525,7 @@ export default function StaffContextsPage() {
                 Phân loại & Thời gian
               </p>
 
-              {/* Era + Category */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3">
                 <div className="grid gap-1.5">
                   <StaffFormLabel>Thời đại *</StaffFormLabel>
                   <StaffFormSelect
@@ -554,15 +533,6 @@ export default function StaffContextsPage() {
                     onValueChange={set("era")}
                     placeholder="Chọn thời đại"
                     options={ERA_OPTIONS}
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>Danh mục *</StaffFormLabel>
-                  <StaffFormSelect
-                    value={draft.category}
-                    onValueChange={set("category")}
-                    placeholder="Chọn danh mục"
-                    options={CATEGORY_OPTIONS}
                   />
                 </div>
               </div>
@@ -653,7 +623,7 @@ export default function StaffContextsPage() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={!draft.name.trim() || !draft.era || !draft.category || isPending}
+              disabled={!draft.name.trim() || !draft.era || isPending}
             >
               {isPending ? "Đang lưu..." : "Save"}
             </Button>
