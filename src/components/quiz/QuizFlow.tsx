@@ -88,7 +88,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
   const queryClient = useQueryClient();
 
   const handleSubmit = useCallback(
-    async (finalAnswers: Record<string, number>) => {
+    async (finalAnswers: Record<string, number>, elapsedSeconds: number) => {
       setAnswers(finalAnswers);
       try {
         const payload: SubmitQuizPayload = {
@@ -236,4 +236,3 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
     </div>
   );
 }
-
