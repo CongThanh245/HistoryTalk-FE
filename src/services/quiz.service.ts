@@ -16,26 +16,21 @@ export interface QuizQuestion {
   content: string;
   options: string[];
   correctAnswer: number;
-  orderIndex?: number;
   explanation?: string;
 }
 
 // ── QuizSet ────────────────────────────────────────────────
-// Field đã xóa: thumbnailUrl, tags, createdAt, totalQuestions, difficulty
-// Field thêm mới: contextTitle
 
 export interface QuizSet {
   quizId: string;
   title: string;
-  era: QuizEra;
   level: "EASY" | "MEDIUM" | "HARD";
+  era: QuizEra;
   playCount: number;
   contextTitle?: string;
 }
 
 // ── QuizResult ─────────────────────────────────────────────
-// Field đã xóa: difficulty
-// Field thêm mới: percentage
 
 export interface QuizResult {
   sessionId: string;
@@ -45,15 +40,13 @@ export interface QuizResult {
   totalQuestions: number;
   percentage: number;
   completedAt: string;
-  durationSeconds: number;
+  durationSeconds?: number; // fallback compatibility
 }
 
 // ── Params & Responses ─────────────────────────────────────
 
 export interface GetQuizSetsParams {
   search?: string;
-  // Lưu ý: backend hiện chỉ hỗ trợ search
-  // grade, era → filter local phía frontend
 }
 
 export interface GetQuizSetsResponse {
@@ -86,7 +79,6 @@ export interface StartQuizResponse {
   quizId: string;
   title: string;
   questions: QuizQuestion[];
-  // Field đã xóa: startedAt, expiresAt (không có từ backend)
 }
 
 export interface SubmitQuizPayload {
@@ -101,7 +93,6 @@ export interface SubmitQuizResponse {
   percentage: number;
   correctAnswers: number[];
   wrongAnswers: number[];
-  // Field đã xóa: completedAt (không có từ response submit)
 }
 
 // ── Map functions ──────────────────────────────────────────
@@ -113,20 +104,20 @@ type RawQuizResult = Partial<QuizResult> &
     "sessionId" | "quizId" | "quizTitle" | "score" | "totalQuestions" | "completedAt"
   >;
 type RawQuizQuestion = Partial<QuizQuestion> &
-  Pick<QuizQuestion, "questionId" | "content" | "correctAnswer">;
+  Pick<QuizQuestion, "questionId" | "content" | "options" | "correctAnswer">;
 
-export function mapQuizSet(raw: RawQuizSet): QuizSet {
+export function mapQuizSet(raw: any): QuizSet {
   return {
     quizId: raw.quizId,
     title: raw.title,
+    level: (raw.level as QuizSet["level"]) ?? "MEDIUM",
     era: (raw.era as QuizEra) ?? "ALL",
-    level: raw.level ?? "MEDIUM",
     playCount: raw.playCount ?? 0,
     contextTitle: raw.contextTitle,
   };
 }
 
-export function mapQuizResult(raw: RawQuizResult): QuizResult {
+export function mapQuizResult(raw: any): QuizResult {
   return {
     sessionId: raw.sessionId,
     quizId: raw.quizId,
@@ -134,28 +125,25 @@ export function mapQuizResult(raw: RawQuizResult): QuizResult {
     score: raw.score,
     totalQuestions: raw.totalQuestions,
     percentage: raw.percentage ?? 0,
-    completedAt: raw.completedAt,
-    durationSeconds: raw.durationSeconds ?? 0,
+    completedAt: raw.completedAt ?? "",
+    durationSeconds: 0, // default since BE removed this field
   };
 }
 
-export function mapQuizQuestion(raw: RawQuizQuestion): QuizQuestion {
+export function mapQuizQuestion(raw: any): QuizQuestion {
   return {
     questionId: raw.questionId,
     content: raw.content,
     options: raw.options ?? [],
     correctAnswer: raw.correctAnswer,
-    orderIndex: raw.orderIndex ?? 0,
     explanation: raw.explanation,
   };
 }
 
-// ── Mock Data ──────────────────────────────────────────────
+// ── Service Methods ────────────────────────────────────────
 
 export const quizService = {
   // GET /quizzes?search=...
-  // Lưu ý: backend trả về array trực tiếp (không pagination)
-  // → frontend tự wrap vào GetQuizSetsResponse
   getAll: async (params?: GetQuizSetsParams): Promise<GetQuizSetsResponse> => {
     const res = await axiosClient.get("/quizzes", {
       params: { search: params?.search },
@@ -180,18 +168,16 @@ export const quizService = {
   },
 
   // POST /quizzes/:quizId/start
-  startQuiz: async (quizId: string): Promise<StartQuizResponse> => {
-    const res = await axiosClient.post(`/quizzes/${quizId}/start`);
+  startQuiz: async (quizId: string, limitedTime?: number): Promise<StartQuizResponse> => {
+    const res = await axiosClient.post(`/quizzes/${quizId}/start`, null, {
+      params: limitedTime ? { limitedTime } : undefined,
+    });
     const raw = res.data.data;
     return {
       sessionId: raw.sessionId,
       quizId: raw.quizId,
       title: raw.title,
-      questions: (raw.questions ?? [])
-        .map(mapQuizQuestion)
-        .sort(
-          (a: QuizQuestion, b: QuizQuestion) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0),
-        ),
+      questions: (raw.questions ?? []).map(mapQuizQuestion),
     };
   },
 
@@ -223,5 +209,10 @@ export const quizService = {
       ...raw,
       content: raw.content.map(mapQuizResult),
     };
+  },
+
+  // PATCH /quizzes/sessions/:sessionId/soft-delete
+  softDeleteSession: async (sessionId: string): Promise<void> => {
+    await axiosClient.patch(`/quizzes/sessions/${sessionId}/soft-delete`);
   },
 };
