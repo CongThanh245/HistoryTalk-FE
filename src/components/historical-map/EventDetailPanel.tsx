@@ -7,6 +7,7 @@ import React from "react";
 import { ArrowLeft, Users, Calendar, Sword } from "lucide-react";
 import { MOCK_CONTEXT_EVENTS } from "@/services/landmark.service";
 import { useEventCharacters } from "@/features/landmark/hooks";
+import { formatCharacterLifespan } from "@/lib/utils/character-date";
 
 interface EventDetailPanelProps {
   contextId: string;
@@ -188,14 +189,12 @@ export function EventDetailPanel({ contextId, onBack }: EventDetailPanelProps) {
                     >
                       {char.title}
                     </p>
-                    {char.lifespan && (
-                      <p
-                        className="text-xs mt-0.5"
-                        style={{ color: "var(--content-muted)" }}
-                      >
-                        {char.lifespan}
-                      </p>
-                    )}
+                    <p
+                      className="text-xs mt-0.5"
+                      style={{ color: "var(--content-muted)" }}
+                    >
+                      {formatCharacterLifespan(char)}
+                    </p>
                   </div>
                 </div>
               ))}

@@ -2,6 +2,47 @@ import { axiosClient } from "@/configs/axios.client";
 import { isValidUrl } from "@/lib/utils/url";
 import { ERA_CONFIG } from "./event.service";
 
+type RawContextRef = {
+  contextId?: string;
+  id?: string;
+};
+
+type RawCharacterEvent = {
+  id?: string;
+  title?: string;
+  year?: number;
+};
+
+type RawCharacter = {
+  _id?: string;
+  characterId?: string;
+  id?: string;
+  name?: string;
+  title?: string;
+  background?: string;
+  image?: string | null;
+  imageUrl?: string | null;
+  personality?: string;
+  bornYear?: number | null;
+  bornMonth?: number | null;
+  bornDay?: number | null;
+  isBornBc?: boolean;
+  deathYear?: number | null;
+  deathMonth?: number | null;
+  deathDay?: number | null;
+  isDeathBc?: boolean;
+  context?: RawContextRef;
+  contextId?: string;
+  contextIds?: RawContextRef[];
+  contexts?: RawContextRef[];
+  role?: string;
+  era?: string;
+  isActive?: boolean;
+  isPublished?: boolean;
+  deletedAt?: string | null;
+  events?: RawCharacterEvent[];
+};
+
 export interface Character {
   backendId?: string;
   id: string;
@@ -11,7 +52,14 @@ export interface Character {
   description?: string;
   imageUrl?: string | null;
   personality?: string;
-  lifespan?: string;
+  bornYear?: number | null;
+  bornMonth?: number | null;
+  bornDay?: number | null;
+  isBornBc?: boolean;
+  deathYear?: number | null;
+  deathMonth?: number | null;
+  deathDay?: number | null;
+  isDeathBc?: boolean;
   side?: string;
   contextId?: string;
   era?: string;
@@ -46,15 +94,21 @@ export interface CreateCharacterRequest {
   background?: string;
   image?: string | null;
   personality?: string;
-  lifespan?: string;
+  bornYear?: number | null;
+  bornMonth?: number | null;
+  bornDay?: number | null;
+  isBornBc?: boolean;
+  deathYear?: number | null;
+  deathMonth?: number | null;
+  deathDay?: number | null;
+  isDeathBc?: boolean;
   isActive?: boolean;
   isPublished?: boolean;
 }
 
-export interface UpdateCharacterRequest extends Partial<CreateCharacterRequest> { }
+export type UpdateCharacterRequest = Partial<CreateCharacterRequest>;
 
-function mapCharacter(raw: any): Character {
-  const imageUrl = raw.image || raw.imageUrl || null;
+function mapCharacter(raw: RawCharacter): Character {
   const contextId =
     raw.context?.contextId ??
     raw.context?.id ??
@@ -64,20 +118,32 @@ function mapCharacter(raw: any): Character {
   return {
     backendId: raw._id,
     id: raw.characterId ?? raw.id ?? `char-${Math.random().toString(36).slice(2)}`,
-    name: raw.name,
-    title: raw.title,
+    name: raw.name ?? "",
+    title: raw.title ?? "",
     background: raw.background,
     description: raw.background, // map background → description cho UI
     imageUrl: isValidUrl(raw.image ?? raw.imageUrl) ? (raw.image ?? raw.imageUrl) : null,
     avatarUrl: isValidUrl(raw.image ?? raw.imageUrl) ? (raw.image ?? raw.imageUrl) : null,
     personality: raw.personality,
-    lifespan: raw.lifespan,
+    bornYear: raw.bornYear ?? null,
+    bornMonth: raw.bornMonth ?? null,
+    bornDay: raw.bornDay ?? null,
+    isBornBc: raw.isBornBc ?? false,
+    deathYear: raw.deathYear ?? null,
+    deathMonth: raw.deathMonth ?? null,
+    deathDay: raw.deathDay ?? null,
+    isDeathBc: raw.isDeathBc ?? false,
     contextId,
     role: raw.role,
     era: mapEraLabel(raw.era),
     isActive: raw.isActive ?? true,
     isPublished: raw.isPublished ?? false,
     deletedAt: raw.deletedAt ?? null,
+    events: raw.events?.map((event) => ({
+      id: event.id ?? "",
+      title: event.title ?? "",
+      year: event.year ?? 0,
+    })),
   };
 }
 
@@ -94,7 +160,7 @@ export const characterService = {
     const res = await axiosClient.get(`/characters/context/${contextId}`);
     const rawData = res.data.data;
     const characters = Array.isArray(rawData) ? rawData : rawData?.characters ?? [];
-    return characters.map((raw: any): Character => {
+    return characters.map((raw: RawCharacter): Character => {
       // Normalize raw để mapCharacter có thể xử lý đúng
       const normalized = {
         ...raw,

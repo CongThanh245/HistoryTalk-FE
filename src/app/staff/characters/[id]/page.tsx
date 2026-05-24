@@ -12,6 +12,15 @@ import { useEvents } from "@/features/events/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isValidUrl } from "@/lib/utils/url";
 
+function toInputValue(value: number | null | undefined): string {
+  return value == null ? "" : String(value);
+}
+
+function toNullableNumber(value: string): number | null {
+  const trimmed = value.trim();
+  return trimmed ? Number(trimmed) : null;
+}
+
 export default function EditCharacterPage() {
   const { id } = useParams() as { id: string };
   
@@ -42,7 +51,14 @@ export default function EditCharacterPage() {
       background: draft.background.trim() || undefined,
       image: isValidUrl(draft.image.trim()) ? draft.image.trim() : undefined,
       personality: draft.personality.trim() || undefined,
-      lifespan: draft.lifespan.trim() || undefined,
+      bornYear: toNullableNumber(draft.bornYear),
+      bornMonth: toNullableNumber(draft.bornMonth),
+      bornDay: toNullableNumber(draft.bornDay),
+      isBornBc: draft.isBornBc,
+      deathYear: toNullableNumber(draft.deathYear),
+      deathMonth: toNullableNumber(draft.deathMonth),
+      deathDay: toNullableNumber(draft.deathDay),
+      isDeathBc: draft.isDeathBc,
       isActive: draft.isActive,
       isPublished: draft.isPublished,
     };
@@ -74,7 +90,14 @@ export default function EditCharacterPage() {
     background: character.background || "",
     image: character.imageUrl || "",
     personality: character.personality || "",
-    lifespan: character.lifespan || "",
+    bornYear: toInputValue(character.bornYear),
+    bornMonth: toInputValue(character.bornMonth),
+    bornDay: toInputValue(character.bornDay),
+    isBornBc: character.isBornBc ?? false,
+    deathYear: toInputValue(character.deathYear),
+    deathMonth: toInputValue(character.deathMonth),
+    deathDay: toInputValue(character.deathDay),
+    isDeathBc: character.isDeathBc ?? false,
     isActive: character.isActive ?? true,
     isPublished: character.isPublished ?? false,
   };

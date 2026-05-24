@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChatTextIcon } from "@phosphor-icons/react";
 import { DarkCard } from "@/components/commons/card";
 import { isValidUrl } from "@/lib/utils/url";
+import { formatCharacterLifespan } from "@/lib/utils/character-date";
 
 // ── Type dùng chung cho TẤT CẢ nơi dùng Character ────────
 // Thay thế cả character-card.tsx lẫn character.service.ts
@@ -21,7 +22,14 @@ export interface Character {
   title: string; // vd: "Tiết độ sứ Tĩnh Hải quân"
   era?: string; // vd: "medieval" hoặc "898–944" tuỳ context
   description?: string;
-  lifespan?: string; // vd: "898–944"
+  bornYear?: number | null;
+  bornMonth?: number | null;
+  bornDay?: number | null;
+  isBornBc?: boolean;
+  deathYear?: number | null;
+  deathMonth?: number | null;
+  deathDay?: number | null;
+  isDeathBc?: boolean;
   role?: string; // context trong 1 sự kiện cụ thể
   side?: string; // vd: "Đại Việt"
   avatarUrl?: string | null;
@@ -202,6 +210,7 @@ function getChatCount(id: string): string {
 
 export function CharacterPageCard({ character, onClick }: PageCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const lifespan = formatCharacterLifespan(character);
 
   const avatarSrc = isValidUrl(character.avatarUrl)
     ? character.avatarUrl!
@@ -251,20 +260,18 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
           </span>
         </div>
       )}
-      {character.lifespan && (
-        <div className="absolute top-3 left-3 z-10">
-          <span
-            className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
-            style={{
-              background: "rgba(0,0,0,0.55)",
-              color: "#ffffff",
-              backdropFilter: "blur(4px)",
-            }}
-          >
-            {character.lifespan}
-          </span>
-        </div>
-      )}
+      <div className="absolute top-3 left-3 z-10">
+        <span
+          className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
+          style={{
+            background: "rgba(0,0,0,0.55)",
+            color: "#ffffff",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          {lifespan}
+        </span>
+      </div>
 
       {/* Normal State Text Content */}
       <div className="relative px-4 pb-5 pt-20 z-20 text-white mt-auto pointer-events-none transition-opacity duration-300 group-hover:opacity-0">

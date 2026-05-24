@@ -1,15 +1,18 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
-import { StaffCharacterDetailView } from "@/components/staff/staff-character-detail-view";
+import { StaffCharacterDetailView, type CharacterDraft } from "@/components/staff/staff-character-detail-view";
 import { useCreateCharacter, useMapContextToCharacter } from "@/features/characters/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { isValidUrl } from "@/lib/utils/url";
 
+function toNullableNumber(value: string): number | null {
+  const trimmed = value.trim();
+  return trimmed ? Number(trimmed) : null;
+}
+
 export default function CreateCharacterPage() {
   const router = useRouter();
-  const [createdCharacterId, setCreatedCharacterId] = React.useState<string | null>(null);
 
   const createCharacter = useCreateCharacter();
   const mapContextToCharacter = useMapContextToCharacter();
@@ -19,14 +22,21 @@ export default function CreateCharacterPage() {
   });
   const eventOptions = eventsData?.content || [];
 
-  const handleSave = (draft: any) => {
+  const handleSave = (draft: CharacterDraft) => {
     const payload = {
       name: draft.name.trim(),
       title: draft.title.trim(),
       background: draft.background.trim() || undefined,
       image: isValidUrl(draft.image.trim()) ? draft.image.trim() : undefined,
       personality: draft.personality.trim() || undefined,
-      lifespan: draft.lifespan.trim() || undefined,
+      bornYear: toNullableNumber(draft.bornYear),
+      bornMonth: toNullableNumber(draft.bornMonth),
+      bornDay: toNullableNumber(draft.bornDay),
+      isBornBc: draft.isBornBc,
+      deathYear: toNullableNumber(draft.deathYear),
+      deathMonth: toNullableNumber(draft.deathMonth),
+      deathDay: toNullableNumber(draft.deathDay),
+      isDeathBc: draft.isDeathBc,
       isActive: draft.isActive,
       isPublished: draft.isPublished,
     };
@@ -46,7 +56,6 @@ export default function CreateCharacterPage() {
       isPending={createCharacter.isPending}
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
-      createdCharacterId={createdCharacterId}
       onMapContext={(characterId, contextId, options) =>
         mapContextToCharacter.mutate(
           { characterId, contextId },
