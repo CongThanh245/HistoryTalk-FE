@@ -6,12 +6,15 @@ export type StaffQuizEra =
   | "MODERN"
   | "CONTEMPORARY";
 
+export type StaffQuizLevel = "EASY" | "MEDIUM" | "HARD";
+
+// ── Question ───────────────────────────────────────────────
+
 export interface StaffQuizQuestion {
   questionId: string;
   content: string;
   options: string[];
   correctAnswer: number;
-  orderIndex: number;
   explanation?: string;
 }
 
@@ -19,21 +22,17 @@ export interface CreateQuestionPayload {
   content: string;
   options: string[];
   correctAnswer: number;
-  orderIndex?: number;
   explanation?: string;
 }
+
+// ── QuizSet ────────────────────────────────────────────────
 
 export interface StaffQuizSet {
   quizId: string;
   title: string;
-  description: string;
-  grade: number;
-  chapterNumber: number;
-  chapterTitle: string;
   era: StaffQuizEra;
-  durationSeconds: number;
+  level: StaffQuizLevel;
   playCount: number;
-  rating: number;
   contextId: string;
   contextTitle: string;
   createdBy: string;
@@ -43,6 +42,8 @@ export interface StaffQuizSet {
   deletedAt?: string | null;
   questions: StaffQuizQuestion[];
 }
+
+// ── Params & Responses ─────────────────────────────────────
 
 export interface GetStaffQuizzesParams {
   search?: string;
@@ -61,27 +62,19 @@ export interface GetStaffQuizzesResponse {
   hasPrevious: boolean;
 }
 
+// ── Payloads ───────────────────────────────────────────────
+
 export interface CreateQuizPayload {
   title: string;
-  description?: string;
   contextId: string;
-  grade?: number;
-  chapterNumber?: number;
-  chapterTitle?: string;
-  era: StaffQuizEra;
-  durationSeconds?: number;
+  level: string;
   questions: CreateQuestionPayload[];
 }
 
 export interface UpdateQuizPayload {
   title?: string;
-  description?: string;
   contextId?: string;
-  grade?: number;
-  chapterNumber?: number;
-  chapterTitle?: string;
-  era?: StaffQuizEra;
-  durationSeconds?: number;
+  level?: string;
 }
 
 export interface UpdateQuestionPayload {
@@ -91,13 +84,14 @@ export interface UpdateQuestionPayload {
   explanation?: string;
 }
 
+// ── Map functions ──────────────────────────────────────────
+
 export function mapStaffQuestion(raw: any): StaffQuizQuestion {
   return {
     questionId: raw.questionId,
     content: raw.content,
     options: raw.options ?? [],
     correctAnswer: raw.correctAnswer,
-    orderIndex: raw.orderIndex ?? 0,
     explanation: raw.explanation,
   };
 }
@@ -106,14 +100,9 @@ export function mapStaffQuizSet(raw: any): StaffQuizSet {
   return {
     quizId: raw.quizId,
     title: raw.title,
-    description: raw.description ?? "",
-    grade: raw.grade ?? 0,
-    chapterNumber: raw.chapterNumber ?? 1,
-    chapterTitle: raw.chapterTitle ?? "",
     era: raw.era as StaffQuizEra,
-    durationSeconds: raw.durationSeconds ?? 0,
+    level: (raw.level as StaffQuizLevel) ?? "MEDIUM",
     playCount: raw.playCount ?? 0,
-    rating: raw.rating ?? 0,
     contextId: raw.contextId ?? "",
     contextTitle: raw.contextTitle ?? "",
     createdBy: raw.createdBy ?? "",
@@ -125,7 +114,10 @@ export function mapStaffQuizSet(raw: any): StaffQuizSet {
   };
 }
 
+// ── Service Methods ────────────────────────────────────────
+
 export const staffQuizService = {
+  // GET /staff/quizzes
   getAll: async (
     params?: GetStaffQuizzesParams,
   ): Promise<GetStaffQuizzesResponse> => {
@@ -137,11 +129,46 @@ export const staffQuizService = {
     };
   },
 
+  // GET /staff/quizzes/:quizId
+  getById: async (quizId: string): Promise<StaffQuizSet> => {
+    const res = await axiosClient.get(`/staff/quizzes/${quizId}`);
+    return mapStaffQuizSet(res.data.data);
+  },
+
+  // POST /staff/quizzes
   create: async (payload: CreateQuizPayload): Promise<StaffQuizSet> => {
     const res = await axiosClient.post("/staff/quizzes", toContractQuizPayload(payload));
     return mapStaffQuizSet(res.data.data);
   },
 
+  // PUT /staff/quizzes/:quizId
+  updateQuiz: async (
+    quizId: string,
+    payload: UpdateQuizPayload,
+  ): Promise<StaffQuizSet> => {
+    const res = await axiosClient.put(
+      `/staff/quizzes/${quizId}`,
+      toContractQuizPayload(payload),
+    );
+    return mapStaffQuizSet(res.data.data);
+  },
+
+  // DELETE /staff/quizzes/:quizId
+  permanentDelete: async (quizId: string): Promise<void> => {
+    await axiosClient.delete(`/staff/quizzes/${quizId}`);
+  },
+
+  // PATCH /staff/quizzes/:quizId/soft-delete
+  softDelete: async (quizId: string): Promise<void> => {
+    await axiosClient.patch(`/staff/quizzes/${quizId}/soft-delete`);
+  },
+
+  // PATCH /staff/quizzes/:quizId/toggle-active
+  toggleActive: async (quizId: string): Promise<void> => {
+    await axiosClient.patch(`/staff/quizzes/${quizId}/toggle-active`);
+  },
+
+  // POST /staff/quizzes/:quizId/questions
   addQuestion: async (
     quizId: string,
     payload: CreateQuestionPayload,
@@ -153,19 +180,7 @@ export const staffQuizService = {
     return mapStaffQuestion(res.data.data);
   },
 
-  getById: async (quizId: string): Promise<StaffQuizSet> => {
-    const res = await axiosClient.get(`/staff/quizzes/${quizId}`);
-    return mapStaffQuizSet(res.data.data);
-  },
-
-  updateQuiz: async (
-    quizId: string,
-    payload: UpdateQuizPayload,
-  ): Promise<StaffQuizSet> => {
-    const res = await axiosClient.put(`/staff/quizzes/${quizId}`, toContractQuizPayload(payload));
-    return mapStaffQuizSet(res.data.data);
-  },
-
+  // PUT /staff/quizzes/:quizId/questions/:questionId
   updateQuestion: async (
     quizId: string,
     questionId: string,
@@ -177,18 +192,7 @@ export const staffQuizService = {
     );
   },
 
-  permanentDelete: async (quizId: string): Promise<void> => {
-    await axiosClient.delete(`/staff/quizzes/${quizId}`);
-  },
-
-  softDelete: async (quizId: string): Promise<void> => {
-    await axiosClient.patch(`/staff/quizzes/${quizId}/soft-delete`);
-  },
-
-  restore: async (quizId: string): Promise<void> => {
-    await axiosClient.patch(`/staff/quizzes/${quizId}/restore`);
-  },
-
+  // DELETE /staff/quizzes/:quizId/questions/:questionId
   deleteQuestion: async (
     quizId: string,
     questionId: string,
@@ -198,6 +202,8 @@ export const staffQuizService = {
     );
   },
 };
+
+// ── Internal helpers ───────────────────────────────────────
 
 function toContractQuestionPayload(question: CreateQuestionPayload) {
   return {
@@ -212,7 +218,7 @@ function toContractQuizPayload(payload: CreateQuizPayload | UpdateQuizPayload) {
   return {
     ...(payload.title !== undefined && { title: payload.title }),
     ...(payload.contextId !== undefined && { contextId: payload.contextId }),
-    ...(payload.era !== undefined && { era: payload.era }),
+    ...((payload as any).level !== undefined && { level: (payload as any).level }),
     ...("questions" in payload && {
       questions: payload.questions.map(toContractQuestionPayload),
     }),
