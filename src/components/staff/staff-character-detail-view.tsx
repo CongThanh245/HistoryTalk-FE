@@ -10,8 +10,18 @@ import {
   LinkIcon,
   CheckCircleIcon,
   PlusIcon,
-  CaretDownIcon,
+  ScrollIcon,
+  MapPinIcon,
+  ImageIcon,
+  VideoIcon,
 } from "@phosphor-icons/react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -160,12 +170,16 @@ export function StaffCharacterDetailView({
   const [mappedContextId, setMappedContextId] = React.useState<string>("");
 
   /* ── Quick-create context state ── */
-  const [showQuickCreate, setShowQuickCreate] = React.useState(false);
+  const [quickCreateOpen, setQuickCreateOpen] = React.useState(false);
   const [quickCtx, setQuickCtx] = React.useState({
     name: "",
     description: "",
     era: "" as EventEraBackend | "",
     year: "",
+    location: "",
+    imageUrl: "",
+    videoUrl: "",
+    isPublished: false,
   });
   const createEvent = useCreateEvent();
 
@@ -657,80 +671,278 @@ export function StaffCharacterDetailView({
                   </Button>
                 </div>
 
-                {/* ── Quick-create context ── */}
-                <div
-                  className="mt-2 rounded-xl border overflow-hidden"
+                {/* ── Quick-create context — Sheet trigger ── */}
+                <button
+                  type="button"
+                  className="w-full mt-2 flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all hover:bg-black/[0.04] border"
                   style={{
-                    borderColor: showQuickCreate ? "var(--accent-blue)" : "var(--card-light-border)",
-                    background: showQuickCreate ? "rgba(59,130,246,0.03)" : "transparent",
+                    color: "var(--accent-blue)",
+                    borderColor: "var(--card-light-border)",
+                    background: "transparent",
                   }}
+                  onClick={() => setQuickCreateOpen(true)}
                 >
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold transition-colors hover:bg-black/[0.03]"
-                    style={{ color: "var(--accent-blue)" }}
-                    onClick={() => setShowQuickCreate(!showQuickCreate)}
+                  <PlusIcon className="h-3.5 w-3.5 shrink-0" />
+                  Tạo nhanh bối cảnh mới
+                  <span
+                    className="ml-auto text-[10px] font-normal px-1.5 py-0.5 rounded"
+                    style={{ background: "rgba(59,130,246,0.1)", color: "var(--accent-blue)" }}
                   >
-                    <PlusIcon className="h-3.5 w-3.5" />
-                    Tạo nhanh bối cảnh mới
-                    <CaretDownIcon
-                      className={`h-3 w-3 ml-auto transition-transform ${showQuickCreate ? "rotate-180" : ""}`}
-                    />
-                  </button>
+                    Mới
+                  </span>
+                </button>
 
-                  {showQuickCreate && (
-                    <div className="px-3 pb-3 space-y-3 border-t" style={{ borderColor: "var(--card-light-border)" }}>
-                      <div className="pt-4 grid grid-cols-2 gap-3">
-                        <div className="col-span-2 grid gap-1">
-                          <Label className="text-[11px]">Tên bối cảnh *</Label>
+                {/* ── Quick-create Sheet ── */}
+                <Sheet open={quickCreateOpen} onOpenChange={setQuickCreateOpen}>
+                  <SheetContent
+                    side="right"
+                    className="w-full sm:max-w-[480px] p-0 flex flex-col overflow-hidden"
+                    style={{
+                      background: "var(--bg-content)",
+                      borderColor: "var(--card-light-border)",
+                    }}
+                  >
+                    {/* Sheet Header */}
+                    <SheetHeader
+                      className="px-6 py-5 border-b shrink-0"
+                      style={{ borderColor: "var(--card-light-border)" }}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(59,130,246,0.1)" }}
+                        >
+                          <ScrollIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
+                        </div>
+                        <div>
+                          <SheetTitle
+                            className="text-base font-bold"
+                            style={{ color: "var(--content-heading)" }}
+                          >
+                            Tạo bối cảnh lịch sử mới
+                          </SheetTitle>
+                          <SheetDescription
+                            className="text-xs mt-0.5"
+                            style={{ color: "var(--content-muted)" }}
+                          >
+                            Bối cảnh sẽ được liên kết với nhân vật này ngay sau khi tạo.
+                          </SheetDescription>
+                        </div>
+                      </div>
+                    </SheetHeader>
+
+                    {/* Sheet Body — scrollable */}
+                    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+
+                      {/* Section: Nội dung */}
+                      <div className="space-y-4">
+                        <p
+                          className="text-[10px] font-bold uppercase tracking-widest"
+                          style={{ color: "var(--content-muted)" }}
+                        >
+                          Nội dung
+                        </p>
+
+                        <div className="grid gap-1.5">
+                          <Label className="text-xs font-medium" style={{ color: "var(--content-heading)" }}>
+                            Tên bối cảnh <span style={{ color: "var(--accent-danger)" }}>*</span>
+                          </Label>
                           <Input
+                            id="qc-name"
                             value={quickCtx.name}
                             onChange={(e) => setQuickCtx((s) => ({ ...s, name: e.target.value }))}
                             placeholder="VD: Chiến thắng Bạch Đằng"
-                            className="h-9 text-xs"
+                            className="h-9 text-sm"
                           />
                         </div>
-                        <div className="grid gap-1">
-                          <Label className="text-[11px]">Thời kỳ *</Label>
-                          <Select
-                            value={quickCtx.era}
-                            onValueChange={(v) => setQuickCtx((s) => ({ ...s, era: v as EventEraBackend }))}
-                          >
-                            <SelectTrigger className="h-9 text-xs">
-                              <SelectValue placeholder="Chọn thời kỳ" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="ANCIENT">Cổ đại</SelectItem>
-                              <SelectItem value="MEDIEVAL">Trung đại</SelectItem>
-                              <SelectItem value="MODERN">Cận đại</SelectItem>
-                              <SelectItem value="CONTEMPORARY">Hiện đại</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid gap-1">
-                          <Label className="text-[11px]">Năm *</Label>
-                          <Input
-                            type="number"
-                            value={quickCtx.year}
-                            onChange={(e) => setQuickCtx((s) => ({ ...s, year: e.target.value }))}
-                            placeholder="VD: 938"
-                            className="h-9 text-xs"
-                          />
-                        </div>
-                        <div className="grid gap-1">
-                          <Label className="text-[11px]">Mô tả</Label>
-                          <Input
+
+                        <div className="grid gap-1.5">
+                          <Label className="text-xs font-medium" style={{ color: "var(--content-heading)" }}>
+                            Mô tả <span style={{ color: "var(--accent-danger)" }}>*</span>
+                          </Label>
+                          <textarea
+                            id="qc-description"
                             value={quickCtx.description}
                             onChange={(e) => setQuickCtx((s) => ({ ...s, description: e.target.value }))}
-                            placeholder="Mô tả ngắn..."
-                            className="h-9 text-xs"
+                            placeholder="Bối cảnh lịch sử, ý nghĩa sự kiện..."
+                            rows={4}
+                            className="w-full resize-none rounded-md border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-400 transition-colors"
+                            style={{
+                              borderColor: "var(--card-light-border)",
+                              background: "var(--bg-content)",
+                              color: "var(--content-text)",
+                            }}
+                          />
+                        </div>
+
+                        <div className="grid gap-1.5">
+                          <Label className="text-xs font-medium flex items-center gap-1.5" style={{ color: "var(--content-heading)" }}>
+                            <MapPinIcon className="h-3.5 w-3.5" />
+                            Địa điểm
+                          </Label>
+                          <Input
+                            id="qc-location"
+                            value={quickCtx.location}
+                            onChange={(e) => setQuickCtx((s) => ({ ...s, location: e.target.value }))}
+                            placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
+                            className="h-9 text-sm"
                           />
                         </div>
                       </div>
+
+                      {/* Divider */}
+                      <div className="h-px" style={{ background: "var(--card-light-border)" }} />
+
+                      {/* Section: Phân loại & Thời gian */}
+                      <div className="space-y-4">
+                        <p
+                          className="text-[10px] font-bold uppercase tracking-widest"
+                          style={{ color: "var(--content-muted)" }}
+                        >
+                          Phân loại &amp; Thời gian
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="grid gap-1.5">
+                            <Label className="text-xs font-medium" style={{ color: "var(--content-heading)" }}>
+                              Thời đại <span style={{ color: "var(--accent-danger)" }}>*</span>
+                            </Label>
+                            <Select
+                              value={quickCtx.era}
+                              onValueChange={(v) => setQuickCtx((s) => ({ ...s, era: v as EventEraBackend }))}
+                            >
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Chọn thời đại" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="ANCIENT">Cổ đại</SelectItem>
+                                <SelectItem value="MEDIEVAL">Trung đại</SelectItem>
+                                <SelectItem value="MODERN">Cận đại</SelectItem>
+                                <SelectItem value="CONTEMPORARY">Hiện đại</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="grid gap-1.5">
+                            <Label className="text-xs font-medium" style={{ color: "var(--content-heading)" }}>
+                              Năm <span style={{ color: "var(--accent-danger)" }}>*</span>
+                            </Label>
+                            <Input
+                              id="qc-year"
+                              type="number"
+                              value={quickCtx.year}
+                              onChange={(e) => setQuickCtx((s) => ({ ...s, year: e.target.value }))}
+                              placeholder="VD: 938"
+                              className="h-9 text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="h-px" style={{ background: "var(--card-light-border)" }} />
+
+                      {/* Section: Media */}
+                      <div className="space-y-4">
+                        <p
+                          className="text-[10px] font-bold uppercase tracking-widest"
+                          style={{ color: "var(--content-muted)" }}
+                        >
+                          Media (tuỳ chọn)
+                        </p>
+
+                        <div className="grid gap-1.5">
+                          <Label className="text-xs font-medium flex items-center gap-1.5" style={{ color: "var(--content-heading)" }}>
+                            <ImageIcon className="h-3.5 w-3.5" />
+                            URL hình ảnh
+                          </Label>
+                          <Input
+                            id="qc-imageUrl"
+                            value={quickCtx.imageUrl}
+                            onChange={(e) => setQuickCtx((s) => ({ ...s, imageUrl: e.target.value }))}
+                            placeholder="https://..."
+                            className="h-9 text-sm"
+                          />
+                        </div>
+
+                        <div className="grid gap-1.5">
+                          <Label className="text-xs font-medium flex items-center gap-1.5" style={{ color: "var(--content-heading)" }}>
+                            <VideoIcon className="h-3.5 w-3.5" />
+                            URL video (YouTube)
+                          </Label>
+                          <Input
+                            id="qc-videoUrl"
+                            value={quickCtx.videoUrl}
+                            onChange={(e) => setQuickCtx((s) => ({ ...s, videoUrl: e.target.value }))}
+                            placeholder="https://youtube.com/watch?v=..."
+                            className="h-9 text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="h-px" style={{ background: "var(--card-light-border)" }} />
+
+                      {/* Section: Trạng thái */}
+                      <div
+                        className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors"
+                        style={{
+                          borderColor: quickCtx.isPublished ? "rgba(34,197,94,0.35)" : "rgba(234,179,8,0.35)",
+                          background: quickCtx.isPublished ? "rgba(34,197,94,0.06)" : "rgba(254,243,199,0.25)",
+                        }}
+                      >
+                        <div className="flex-1">
+                          <p
+                            className="text-sm font-semibold"
+                            style={{ color: quickCtx.isPublished ? "rgb(22,163,74)" : "#92400e" }}
+                          >
+                            {quickCtx.isPublished ? "Xuất bản ngay" : "Lưu nháp"}
+                          </p>
+                          <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                            {quickCtx.isPublished
+                              ? "Bối cảnh hiển thị công khai cho người dùng."
+                              : "Bối cảnh chưa hiển thị cho học sinh."}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={quickCtx.isPublished}
+                          onClick={() => setQuickCtx((s) => ({ ...s, isPublished: !s.isPublished }))}
+                          className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none"
+                          style={{ background: quickCtx.isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)" }}
+                        >
+                          <span
+                            className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
+                            style={{
+                              background: "#fff",
+                              transform: quickCtx.isPublished ? "translateX(20px)" : "translateX(0)",
+                            }}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Sheet Footer */}
+                    <div
+                      className="px-6 py-4 border-t shrink-0 flex items-center justify-end gap-2"
+                      style={{ borderColor: "var(--card-light-border)" }}
+                    >
                       <Button
-                        className="w-full h-9 text-xs font-semibold"
+                        variant="outline"
+                        className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5"
+                        style={{ color: "var(--content-heading)" }}
+                        onClick={() => {
+                          setQuickCreateOpen(false);
+                          setQuickCtx({ name: "", description: "", era: "", year: "", location: "", imageUrl: "", videoUrl: "", isPublished: false });
+                        }}
+                      >
+                        Huỷ
+                      </Button>
+                      <Button
                         disabled={
                           !quickCtx.name.trim() ||
+                          !quickCtx.description.trim() ||
                           !quickCtx.era ||
                           !quickCtx.year ||
                           createEvent.isPending
@@ -740,27 +952,31 @@ export function StaffCharacterDetailView({
                           createEvent.mutate(
                             {
                               name: quickCtx.name.trim(),
-                              description: quickCtx.description.trim() || quickCtx.name.trim(),
+                              description: quickCtx.description.trim(),
                               era: quickCtx.era as EventEraBackend,
                               year: Number(quickCtx.year),
+                              location: quickCtx.location.trim() || undefined,
+                              imageUrl: quickCtx.imageUrl.trim() || undefined,
+                              videoUrl: quickCtx.videoUrl.trim() || undefined,
+                              isPublished: quickCtx.isPublished,
                             },
                             {
                               onSuccess: (newCtx) => {
                                 setSelectedContextId(newCtx.id);
-                                setShowQuickCreate(false);
-                                setQuickCtx({ name: "", description: "", era: "", year: "" });
-                                toast.success("Tạo bối cảnh thành công");
+                                setQuickCreateOpen(false);
+                                setQuickCtx({ name: "", description: "", era: "", year: "", location: "", imageUrl: "", videoUrl: "", isPublished: false });
+                                toast.success("Tạo bối cảnh thành công!");
                               },
                             },
                           );
                         }}
                       >
-                        <PlusIcon className="h-3.5 w-3.5 mr-1.5" />
-                        {createEvent.isPending ? "Đang tạo..." : "Khởi tạo bối cảnh"}
+                        <PlusIcon className="h-4 w-4 mr-1.5" />
+                        {createEvent.isPending ? "Đang tạo..." : "Tạo bối cảnh"}
                       </Button>
                     </div>
-                  )}
-                </div>
+                  </SheetContent>
+                </Sheet>
               </div>
             )}
           </div>
