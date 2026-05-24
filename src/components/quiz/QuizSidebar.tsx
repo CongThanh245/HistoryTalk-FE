@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { BookOpen, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import type { QuizSet } from "@/services/quiz.service";
 import { QuizCard } from "./quiz-card";
 
@@ -30,61 +30,45 @@ export function QuizSidebar({
   }, [quizzes, search]);
 
   return (
-    <div
-      className="flex flex-col h-full"
+    <aside
+      className="flex h-full flex-col"
       style={{
         background: "var(--bg-content)",
         borderRight: "1px solid var(--card-light-border)",
       }}
     >
-      <div
-        className="flex-shrink-0 px-4 pt-4 pb-3"
-        style={{ borderBottom: "1px solid var(--card-light-border)" }}
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <BookOpen size={15} style={{ color: "var(--accent-gold)" }} />
-          <h3
-            className="text-sm font-bold"
-            style={{ color: "var(--content-heading)" }}
-          >
+      <div className="flex-shrink-0 px-4 pb-4 pt-5" style={{ borderBottom: "1px solid var(--card-light-border)" }}>
+        <div className="mb-3 flex items-baseline justify-between">
+          <h3 className="text-sm font-bold" style={{ color: "var(--content-heading)" }}>
             Danh sách đề
           </h3>
-          <span
-            className="ml-auto text-xs px-1.5 py-0.5 rounded-full font-medium"
-            style={{
-              background: "var(--accent-gold-active-bg)",
-              color: "var(--accent-gold)",
-            }}
-          >
+          <span className="text-xs font-semibold" style={{ color: "var(--gold-on-light)" }}>
             {quizzes.length}
           </span>
         </div>
 
         <div
-          className="flex items-center gap-2 px-3 py-2 rounded-xl"
+          className="flex h-10 items-center gap-2 rounded-lg px-3"
           style={{
-            background: "var(--bg-surface)",
+            background: "rgba(27,38,50,0.05)",
             border: "1px solid var(--card-light-border)",
           }}
         >
-          <Search size={13} style={{ color: "var(--text-on-dark)" }} />
+          <Search size={14} style={{ color: "var(--content-muted)" }} />
           <input
             type="text"
             placeholder="Tìm đề..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-xs outline-none"
-            style={{ color: "var(--text-on-dark)" }}
+            className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+            style={{ color: "var(--content-heading)" }}
           />
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-3">
         {filtered.length === 0 ? (
-          <p
-            className="text-center text-xs py-6"
-            style={{ color: "var(--content-muted)" }}
-          >
+          <p className="py-6 text-center text-xs" style={{ color: "var(--content-muted)" }}>
             Không tìm thấy đề nào
           </p>
         ) : (
@@ -101,6 +85,6 @@ export function QuizSidebar({
           </div>
         )}
       </div>
-    </div>
+    </aside>
   );
 }

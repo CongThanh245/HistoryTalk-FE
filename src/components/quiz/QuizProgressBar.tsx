@@ -4,11 +4,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import {
-  ChevronLeft,
-  TimerOff,
   LayoutGrid,
-  Home,
-  RotateCcw,
   X,
 } from "lucide-react";
 
@@ -77,11 +73,11 @@ export function QuizProgressBar({
         {/* Back */}
         <button
           onClick={onBack}
-          className="p-1.5 rounded-lg transition-colors hover:bg-black/5 ml-8 flex-shrink-0"
+          className="ml-8 h-9 rounded-lg px-3 text-sm font-medium transition-colors hover:bg-black/5 flex-shrink-0"
           style={{ color: "var(--content-muted)" }}
           title="Quay lại"
         >
-          <ChevronLeft size={18} />
+          Quay lại
         </button>
 
         {/* Title */}
@@ -114,7 +110,7 @@ export function QuizProgressBar({
           {answeredCount < totalQuestions && (
             <span
               className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center"
-              style={{ background: "var(--accent-gold)", color: "white" }}
+              style={{ background: "var(--accent-gold)", color: "var(--bg-deep)" }}
             >
               {totalQuestions - answeredCount}
             </span>
@@ -130,7 +126,6 @@ export function QuizProgressBar({
             border: "1px solid var(--card-light-border)",
           }}
         >
-          <TimerOff size={12} />
           {formatTime(elapsed)}
         </div>
 
@@ -143,7 +138,7 @@ export function QuizProgressBar({
         {/* Home */}
         <button
           onClick={onGoHome}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-80 flex-shrink-0"
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-80 flex-shrink-0"
           style={{
             background: "var(--card-light-bg)",
             color: "var(--content-muted)",
@@ -151,22 +146,19 @@ export function QuizProgressBar({
           }}
           title="Về trang quiz"
         >
-          <Home size={13} />
           <span className="hidden sm:inline">Về trang</span>
         </button>
 
         {/* Retry */}
         <button
           onClick={onRetry}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-90 flex-shrink-0"
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:-translate-y-0.5 active:translate-y-0 flex-shrink-0"
           style={{
-            background:
-              "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-            color: "white",
+            background: "var(--abyssal-blue)",
+            color: "var(--text-on-dark)",
           }}
           title="Làm lại"
         >
-          <RotateCcw size={13} />
           <span className="hidden sm:inline">Làm lại</span>
         </button>
       </div>
@@ -177,10 +169,7 @@ export function QuizProgressBar({
           className="h-full transition-all duration-500"
           style={{
             width: `${pct}%`,
-            background:
-              pct === 100
-                ? "linear-gradient(90deg, #10b981, #059669)"
-                : "linear-gradient(90deg, var(--accent-gold), var(--truffle))",
+            background: pct === 100 ? "#047857" : "var(--accent-gold)",
           }}
         />
       </div>
@@ -241,7 +230,7 @@ export function QuizProgressBar({
                   className="w-8 h-8 rounded-lg text-xs font-bold transition-all hover:scale-105 active:scale-95"
                   style={
                     answered
-                      ? { background: "var(--accent-gold)", color: "white" }
+                      ? { background: "var(--accent-gold)", color: "var(--bg-deep)" }
                       : {
                           background: "var(--card-light-bg)",
                           color: "var(--content-muted)",
