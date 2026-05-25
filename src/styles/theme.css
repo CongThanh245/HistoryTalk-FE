@@ -7,19 +7,19 @@
   /* ─────────────────────────────
       Backgrounds
    ───────────────────────────── */
-  --bg-main: #0e1a2b; /* Nền chính (deep navy) */
-  --bg-deep: #070d18; /* Nền sâu / sidebar */
-  --bg-content: #16223a; /* Nền main content — sáng hơn bg-main 1 bậc */
-  --bg-surface: #1a2436; /* Card / panel */
-  --bg-elevated: #24314a; /* Modal / hover surface */
+  --bg-main: #f7f1e8; /* Nền chính light */
+  --bg-deep: #e8dccb; /* Nền sâu / sidebar light */
+  --bg-content: #f7f1e8; /* Nền main content light */
+  --bg-surface: #fffaf2; /* Card / panel */
+  --bg-elevated: #ffffff; /* Modal / hover surface */
 
   /* ─────────────────────────────
       Text – Dark backgrounds
    ───────────────────────────── */
-  --text-primary: #ff9215; /* Warm parchment */
-  --text-secondary: #dfdab5; /* Text phụ - Brighter and warmer creamy beige for better readability & contrast */
-  --text-tertiary: #e1e62a; /* Slightly brighter yellow-green */
-  --text-muted: #8da0ab; /* Placeholder / hint - Brighter gray-blue for compliance with contrast guidelines */
+  --text-primary: #1b2632; /* Text chính */
+  --text-secondary: #536273; /* Text phụ */
+  --text-tertiary: #8a6a22; /* Highlight phụ */
+  --text-muted: #7a7469; /* Placeholder / hint */
   --text-inverse: #0e1a2b; /* Text trên nền sáng */
   --text-on-dark: rgba(255, 255, 255, 0.85); /* Chữ trắng sidebar nav */
   --text-on-dark-muted: rgba(
@@ -56,8 +56,8 @@
   /* ─────────────────────────────
       Palette từ ảnh màu
    ───────────────────────────── */
-  --palladian: #eee9df; /* Nền sáng ấm / header bg */
-  --oatmeal: #c9c1b1; /* Border header / text phụ trên nền sáng */
+  --palladian: #f1eadf; /* Nền sáng ấm / header bg */
+  --oatmeal: #d6cab8; /* Border header / text phụ trên nền sáng */
   --burning-flame: #FAB95B; /* Streak counter / badge nổi bật */
   --truffle: #a35139; /* Active gradient end / tone đất trầm */
   --blue-fantastic: #2c3b4d; /* Surface trung tính (gần bg-elevated) */
@@ -66,19 +66,19 @@
   /* ─────────────────────────────
       Header (nền sáng – như ảnh)
    ───────────────────────────── */
-  --header-bg: var(--palladian); /* #EEE9DF */
-  --header-border: var(--oatmeal); /* #C9C1B1 */
+  --header-bg: var(--palladian); /* #f1eadf */
+  --header-border: var(--oatmeal); /* #d6cab8 */
   --header-text: var(--abyssal-blue); /* #1B2632 – text chính */
-  --header-text-muted: #6b7280; /* text phụ trong header */
-  --header-input-bg: rgba(27, 38, 50, 0.07); /* Search input bg */
-  --bg-content: #f5f1ea; /* Nền main — ấm hơn trắng thuần */
+  --header-text-muted: #6f6658; /* text phụ trong header */
+  --header-input-bg: rgba(255, 250, 242, 0.82); /* Search input bg */
+  --bg-content: #f7f1e8; /* Nền main sáng beige */
   --content-heading: #1b2632; /* Tiêu đề lớn */
   --content-text: #2d3d4f; /* Body text */
   --content-muted: #7a7469; /* Text phụ, hint */
-  --content-subtle: #9e9890; /* Label section mờ */
-  --card-light-bg: #ffffff; /* Card bg */
-  --card-light-border: rgba(27, 38, 50, 0.1);
-  --card-light-hover: rgba(27, 38, 50, 0.04);
+  --content-subtle: #9e9488; /* Label section mờ */
+  --card-light-bg: #fffaf2; /* Card bg */
+  --card-light-border: rgba(92, 72, 44, 0.16);
+  --card-light-hover: rgba(255, 146, 21, 0.08);
   /* ─────────────────────────────
       Streak counter
    ───────────────────────────── */
@@ -90,25 +90,43 @@
   /* ─────────────────────────────
       Sidebar nav text
    ───────────────────────────── */
-  --sidebar-nav-text: rgba(255, 255, 255, 0.75); /* Nav item text */
-  --sidebar-nav-icon: rgba(255, 255, 255, 0.45); /* Nav icon */
-  --sidebar-active-text: var(--accent-gold-soft); /* #e2c77a */
-  --sidebar-section-label: rgba(255, 255, 255, 0.28); /* Section title */
+  --sidebar-bg: #efe5d6;
+  --sidebar-border: rgba(92, 72, 44, 0.18);
+  --sidebar-hover-bg: rgba(255, 146, 21, 0.1);
+  --sidebar-nav-text: rgba(27, 38, 50, 0.76); /* Nav item text */
+  --sidebar-nav-icon: rgba(27, 38, 50, 0.52); /* Nav icon */
+  --sidebar-active-text: #a35139; /* Active item text */
+  --sidebar-section-label: rgba(27, 38, 50, 0.42); /* Section title */
   --sidebar-pin-active: var(--accent-gold); /* Pin icon khi ghim */
-  --sidebar-pin-inactive: rgba(255, 255, 255, 0.3); /* Pin icon khi chưa ghim */
+  --sidebar-pin-inactive: rgba(27, 38, 50, 0.38); /* Pin icon khi chưa ghim */
 
   /* ─────────────────────────────
       Borders & Lines
    ───────────────────────────── */
-  --border-default: rgba(231, 221, 200, 0.12);
-  --border-strong: rgba(231, 221, 200, 0.24);
+  --border-default: rgba(92, 72, 44, 0.14);
+  --border-strong: rgba(92, 72, 44, 0.24);
 
   /* ─────────────────────────────
       Shadows
    ───────────────────────────── */
-  --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.35);
-  --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.6);
+  --shadow-soft: 0 12px 28px rgba(27, 38, 50, 0.12);
+  --shadow-strong: 0 20px 60px rgba(27, 38, 50, 0.18);
   --shadow-gold: 0 0 18px rgba(201, 162, 77, 0.3);
+
+  --home-banner-bg: linear-gradient(135deg, #fffaf2 0%, #f1eadf 52%, #e8dccb 100%);
+  --home-banner-border: rgba(92, 72, 44, 0.16);
+  --home-banner-shadow: 0 16px 34px rgba(27, 38, 50, 0.12);
+  --home-banner-title: var(--content-heading);
+  --home-banner-text: rgba(45, 61, 79, 0.76);
+  --home-banner-button-bg: rgba(255, 255, 255, 0.62);
+  --home-banner-button-hover-bg: rgba(255, 146, 21, 0.1);
+  --home-banner-button-border: rgba(92, 72, 44, 0.16);
+  --home-banner-button-hover-border: rgba(255, 146, 21, 0.34);
+  --home-banner-button-text: var(--content-heading);
+  --home-banner-card-bg: rgba(27, 38, 50, 0.08);
+  --home-banner-card-border: rgba(27, 38, 50, 0.12);
+  --home-banner-card-footer: var(--abyssal-blue);
+  --home-banner-card-fade: #1b2632;
 
   /* ─────────────────────────────
       Radius
@@ -120,4 +138,63 @@
 
 .dark {
   color-scheme: dark;
+
+  --bg-main: #0e1a2b;
+  --bg-deep: #070d18;
+  --bg-content: #16223a;
+  --bg-surface: #1a2436;
+  --bg-elevated: #24314a;
+
+  --text-primary: #ff9215;
+  --text-secondary: #dfdab5;
+  --text-tertiary: #e1e62a;
+  --text-muted: #8da0ab;
+  --text-inverse: #0e1a2b;
+  --text-on-dark: rgba(255, 255, 255, 0.85);
+  --text-on-dark-muted: rgba(255, 255, 255, 0.35);
+
+  --palladian: #0e1a2b;
+  --oatmeal: rgba(231, 221, 200, 0.12);
+  --header-bg: #0e1a2b;
+  --header-border: rgba(231, 221, 200, 0.12);
+  --header-text: #f0e8d5;
+  --header-text-muted: rgba(255, 255, 255, 0.58);
+  --header-input-bg: rgba(255, 255, 255, 0.06);
+  --content-heading: #f7f1e8;
+  --content-text: rgba(255, 255, 255, 0.82);
+  --content-muted: rgba(223, 218, 181, 0.68);
+  --content-subtle: rgba(255, 255, 255, 0.4);
+  --card-light-bg: #1a2436;
+  --card-light-border: rgba(231, 221, 200, 0.12);
+  --card-light-hover: rgba(255, 255, 255, 0.05);
+
+  --sidebar-bg: #1b2632;
+  --sidebar-border: rgba(231, 221, 200, 0.12);
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
+  --sidebar-nav-text: rgba(255, 255, 255, 0.75);
+  --sidebar-nav-icon: rgba(255, 255, 255, 0.45);
+  --sidebar-active-text: var(--accent-gold-soft);
+  --sidebar-section-label: rgba(255, 255, 255, 0.28);
+  --sidebar-pin-active: var(--accent-gold);
+  --sidebar-pin-inactive: rgba(255, 255, 255, 0.3);
+
+  --border-default: rgba(231, 221, 200, 0.12);
+  --border-strong: rgba(231, 221, 200, 0.24);
+  --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.6);
+
+  --home-banner-bg: linear-gradient(135deg, #0e1a2b 0%, #16223a 50%, #070d18 100%);
+  --home-banner-border: rgba(255, 255, 255, 0.08);
+  --home-banner-shadow: 0 10px 30px rgba(7, 13, 24, 0.25);
+  --home-banner-title: #ffffff;
+  --home-banner-text: rgba(255, 255, 255, 0.7);
+  --home-banner-button-bg: rgba(255, 255, 255, 0.06);
+  --home-banner-button-hover-bg: rgba(255, 255, 255, 0.12);
+  --home-banner-button-border: rgba(255, 255, 255, 0.1);
+  --home-banner-button-hover-border: rgba(255, 255, 255, 0.2);
+  --home-banner-button-text: #ffffff;
+  --home-banner-card-bg: rgba(255, 255, 255, 0.08);
+  --home-banner-card-border: rgba(255, 255, 255, 0.1);
+  --home-banner-card-footer: #0e1a2b;
+  --home-banner-card-fade: #0e1a2b;
 }
