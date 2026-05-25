@@ -10,20 +10,21 @@ import { SidebarSection } from "@/routers/sidebar";
 import { useSidebar } from "./sidebar-context";
 
 export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }: { sections: SidebarSection[]; showUpgrade?: boolean; logoHref?: string }) {
-  const [isPinned, setIsPinned] = useState(false);
+  const [isPinned, setIsPinned] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const saved = localStorage.getItem("ht-sidebar-pinned");
+      return saved !== null ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
+  });
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDesktopExpanded = isPinned || isHovered;
 
   // Mobile drawer state from context
   const { isMobileOpen, closeMobileSidebar } = useSidebar();
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("ht-sidebar-pinned");
-      if (saved !== null) setIsPinned(JSON.parse(saved));
-    } catch {}
-  }, []);
 
   // Close mobile drawer on route change / resize past md
   useEffect(() => {
@@ -58,8 +59,8 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
         isExpanded ? "w-[220px]" : "w-[68px]",
       )}
       style={{
-        background: "var(--abyssal-blue)",
-        borderColor: "var(--border-default)",
+        background: "var(--sidebar-bg)",
+        borderColor: "var(--sidebar-border)",
       }}
     >
       {/* Grain texture */}
