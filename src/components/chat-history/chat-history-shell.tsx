@@ -81,7 +81,9 @@ export function ChatHistoryShell() {
   const hasFilter = era !== "all" || !!search.trim();
 
   const handleSelectSession = (session: ChatHistoryItem) => {
-    router.push(`/chat/${session.characterId}`);
+    router.push(
+      `/chat/${session.characterId}?contextId=${session.contextId}&sessionId=${session.id}`,
+    );
   };
 
   const handleDeleteSession = (sessionId: string) => {

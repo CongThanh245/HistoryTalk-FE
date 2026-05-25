@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { ChatCharacter } from "@/services/chat.service";
 import { chatService } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
@@ -12,12 +12,21 @@ import { useCreateSession, useChatSessions } from "@/features/chat/hooks";
 
 interface ChatClientProps {
   initialCharacterId: string;
+  initialContextId?: string;
+  initialSessionId?: string;
 }
 
-export function ChatClient({ initialCharacterId }: ChatClientProps) {
+export function ChatClient({
+  initialCharacterId,
+  initialContextId,
+  initialSessionId,
+}: ChatClientProps) {
   const [activeCharacterId, setActiveCharacterId] =
     useState(initialCharacterId);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeContextId, setActiveContextId] = useState(initialContextId ?? "");
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(
+    initialSessionId ?? null,
+  );
   const sessionInitialized = useRef(false); // ← tránh gọi nhiều lần
 
   const { data: activeCharacter, isLoading: isLoadingCharacter } = useQuery({
@@ -26,7 +35,7 @@ export function ChatClient({ initialCharacterId }: ChatClientProps) {
     staleTime: 1000 * 60 * 10,
   });
 
-  const contextId = activeCharacter?.contextId ?? "";
+  const contextId = activeContextId || activeCharacter?.contextId || "";
   const characterId = activeCharacter?.id ?? "";
 
   // Fetch sessions — chỉ khi đã có character
@@ -45,7 +54,7 @@ export function ChatClient({ initialCharacterId }: ChatClientProps) {
   // Reset ref khi character thay đổi (bao gồm lần mount đầu tiên)
   useEffect(() => {
     sessionInitialized.current = false;
-  }, [characterId]);
+  }, [characterId, contextId]);
 
   // Init session: dùng session gần nhất nếu có, không thì tạo mới
   useEffect(() => {
@@ -64,10 +73,11 @@ export function ChatClient({ initialCharacterId }: ChatClientProps) {
         setActiveSessionId(session.id);
       });
     }
-  }, [contextId, characterId, isSessionsSuccess, sessions]);
+  }, [contextId, characterId, isSessionsSuccess, sessions, activeSessionId, createSession]);
   // Reset khi đổi nhân vật
   const handleSelectCharacter = useCallback((char: ChatCharacter) => {
     setActiveCharacterId(char.id);
+    setActiveContextId(char.contextId ?? "");
     setActiveSessionId(null);
     sessionInitialized.current = false; // ← reset để init lại cho nhân vật mới
   }, []);

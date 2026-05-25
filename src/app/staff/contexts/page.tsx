@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon } from "@phosphor-icons/react";
+import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon, CaretDownIcon } from "@phosphor-icons/react";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,6 @@ import {
   StaffFormTextarea,
   StaffFormSelect,
 } from "@/components/staff/staff-form";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import {
   useEvents,
@@ -28,6 +22,13 @@ import {
   useDeleteEvent,
   usePermanentDeleteEvent,
 } from "@/features/events/hooks";
+import {
+  useCreateHistoricalDocument,
+  useDeleteHistoricalDocument,
+  useHistoricalDocuments,
+  useUpdateHistoricalDocument,
+} from "@/features/documents/hooks";
+import type { RagDocument } from "@/services/document.service";
 import {
   type HistoricalEvent,
   type EventEraBackend,
@@ -45,6 +46,9 @@ type DraftState = {
   imageUrl: string;
   videoUrl: string;
   isPublished: boolean;
+  documentId?: string;
+  documentTitle: string;
+  documentContent: string;
 };
 
 const EMPTY_DRAFT: DraftState = {
@@ -56,6 +60,9 @@ const EMPTY_DRAFT: DraftState = {
   imageUrl: "",
   videoUrl: "",
   isPublished: false,
+  documentId: undefined,
+  documentTitle: "",
+  documentContent: "",
 };
 
 // Constants for Select Options
@@ -71,6 +78,7 @@ export default function StaffContextsPage() {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [mode, setMode] = React.useState<"create" | "edit">("create");
   const [draft, setDraft] = React.useState<DraftState>(EMPTY_DRAFT);
+  const editorRef = React.useRef<HTMLElement>(null);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] =
     React.useState<HistoricalEvent | null>(null);
@@ -79,6 +87,7 @@ export default function StaffContextsPage() {
   const [permanentDeleteTarget, setPermanentDeleteTarget] =
     React.useState<HistoricalEvent | null>(null);
   const [publishDialogOpen, setPublishDialogOpen] = React.useState(false);
+  const [documentOpen, setDocumentOpen] = React.useState(false);
 
   const { data, isLoading, isFetching } = useEvents({
     search: search || undefined,
@@ -87,6 +96,11 @@ export default function StaffContextsPage() {
   });
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
+  const createHistoricalDocument = useCreateHistoricalDocument();
+  const editContextId = mode === "edit" ? draft.id : undefined;
+  const historicalDocuments = useHistoricalDocuments(editContextId);
+  const updateHistoricalDocument = useUpdateHistoricalDocument(editContextId);
+  const deleteHistoricalDocument = useDeleteHistoricalDocument(editContextId);
   const deleteEvent = useDeleteEvent();
   const permanentDeleteEvent = usePermanentDeleteEvent();
 
@@ -97,10 +111,53 @@ export default function StaffContextsPage() {
   const trashedItems = items.filter((e) => !!e.deletedAt);
   const displayedItems = showTrash ? trashedItems : activeItems;
 
-  const set = (field: keyof DraftState) => (val: any) =>
+  const set = <K extends keyof DraftState>(field: K) => (val: DraftState[K]) =>
     setDraft((s) => ({ ...s, [field]: val }));
 
-  const handleSave = () => {
+  const getDocumentId = React.useCallback(
+    (document: RagDocument) => document.id ?? document.documentId,
+    [],
+  );
+
+  const selectDocument = (document: RagDocument) => {
+    setDraft((s) => ({
+      ...s,
+      documentId: getDocumentId(document),
+      documentTitle: document.title ?? "",
+      documentContent: document.content ?? "",
+    }));
+    setDocumentOpen(true);
+  };
+
+  const clearDocumentDraft = () => {
+    setDraft((s) => ({
+      ...s,
+      documentId: undefined,
+      documentTitle: "",
+      documentContent: "",
+    }));
+    setDocumentOpen(true);
+  };
+
+  React.useEffect(() => {
+    if (!dialogOpen) return;
+    editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [dialogOpen, mode]);
+
+  React.useEffect(() => {
+    if (mode !== "edit" || !dialogOpen || draft.documentId || draft.documentContent) return;
+    const firstDocument = historicalDocuments.data?.[0];
+    if (!firstDocument) return;
+    setDraft((s) => ({
+      ...s,
+      documentId: getDocumentId(firstDocument),
+      documentTitle: firstDocument.title ?? "",
+      documentContent: firstDocument.content ?? "",
+    }));
+    setDocumentOpen(true);
+  }, [dialogOpen, draft.documentContent, draft.documentId, getDocumentId, historicalDocuments.data, mode]);
+
+  const handleSave = async () => {
     const payload = {
       name: draft.name.trim(),
       description: draft.description.trim(),
@@ -115,7 +172,22 @@ export default function StaffContextsPage() {
     const name = payload.name;
     if (mode === "create") {
       createEvent.mutate(payload, {
-        onSuccess: () => {
+        onSuccess: async (newContext) => {
+          const documentContent = draft.documentContent.trim();
+
+          if (documentContent) {
+            try {
+              await createHistoricalDocument.mutateAsync({
+                contextId: newContext.id,
+                title: draft.documentTitle.trim() || name,
+                content: documentContent,
+                type: "TEXT",
+              });
+            } catch {
+              toast.warning("Bối cảnh đã tạo, nhưng import tài liệu chưa thành công");
+            }
+          }
+
           setDialogOpen(false);
           if (!payload.isPublished) {
             toast("Đã lưu bản nháp", {
@@ -135,7 +207,33 @@ export default function StaffContextsPage() {
       updateEvent.mutate(
         { id: draft.id!, data: payload },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
+            const documentContent = draft.documentContent.trim();
+
+            if (documentContent) {
+              try {
+                if (draft.documentId) {
+                  await updateHistoricalDocument.mutateAsync({
+                    docId: draft.documentId,
+                    data: {
+                      title: draft.documentTitle.trim() || name,
+                      content: documentContent,
+                      type: "TEXT",
+                    },
+                  });
+                } else {
+                  await createHistoricalDocument.mutateAsync({
+                    contextId: draft.id!,
+                    title: draft.documentTitle.trim() || name,
+                    content: documentContent,
+                    type: "TEXT",
+                  });
+                }
+              } catch {
+                toast.warning("Bối cảnh đã cập nhật, nhưng import tài liệu chưa thành công");
+              }
+            }
+
             setDialogOpen(false);
             if (!payload.isPublished) {
               toast("Đã lưu bản nháp", {
@@ -257,7 +355,11 @@ export default function StaffContextsPage() {
                   imageUrl: e.imageUrl ?? "",
                   videoUrl: e.videoUrl ?? "",
                   isPublished: e.isPublished ?? false,
+                  documentId: undefined,
+                  documentTitle: "",
+                  documentContent: "",
                 });
+                setDocumentOpen(false);
                 setDialogOpen(true);
               }}
               style={{ color: "var(--header-text-muted)" }}
@@ -360,7 +462,12 @@ export default function StaffContextsPage() {
     [],
   );
 
-  const isPending = createEvent.isPending || updateEvent.isPending;
+  const isPending =
+    createEvent.isPending ||
+    updateEvent.isPending ||
+    createHistoricalDocument.isPending ||
+    updateHistoricalDocument.isPending ||
+    deleteHistoricalDocument.isPending;
 
   return (
     <StaffShell
@@ -369,6 +476,7 @@ export default function StaffContextsPage() {
       icon={ScrollIcon}
       accent="var(--accent-gold)"
     >
+      {!dialogOpen && (
       <section
         className="rounded-2xl border p-6 space-y-5"
         style={{
@@ -441,10 +549,11 @@ export default function StaffContextsPage() {
                 onClick={() => {
                   setMode("create");
                   setDraft(EMPTY_DRAFT);
+                  setDocumentOpen(false);
                   setDialogOpen(true);
                 }}
               >
-                <PlusIcon className="h-4 w-4 mr-1.5" /> Add New
+                <PlusIcon className="h-4 w-4 mr-1.5" /> Tạo bối cảnh
               </Button>
             )}
           </div>
@@ -457,28 +566,43 @@ export default function StaffContextsPage() {
           isLoading={isLoading}
         />
       </section>
+      )}
 
-      {/* Dialog create/edit — wide 2-column layout */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent
-          className="w-[95vw] sm:max-w-none max-w-none p-0 overflow-hidden"
-          style={{ background: "var(--bg-content)", borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
+      {/* Context editor workspace */}
+      {dialogOpen && (
+        <section
+          ref={editorRef}
+          className="min-h-[calc(100vh-220px)] overflow-hidden rounded-2xl border shadow-[0_18px_50px_rgba(27,38,50,0.08)]"
+          style={{
+            background: "var(--bg-content)",
+            borderColor: "var(--card-light-border)",
+            color: "var(--content-heading)",
+          }}
         >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!draft.name.trim() || !draft.era || isPending) return;
+              handleSave();
+            }}
+          >
           {/* Header */}
-          <div className="px-8 pt-7 pb-5 border-b" style={{ borderColor: "var(--card-light-border)" }}>
-            <DialogTitle style={{ color: "var(--content-heading)", fontSize: 18 }}>
-              {mode === "create" ? "Add Historical Context" : "Edit Historical Context"}
-            </DialogTitle>
-            <DialogDescription style={{ color: "var(--content-muted)", marginTop: 4 }}>
+          <div className="border-b px-8 pb-5 pt-7" style={{ borderColor: "var(--card-light-border)" }}>
+            <h2 className="text-lg font-bold" style={{ color: "var(--content-heading)" }}>
+              {mode === "create" ? "Tạo bối cảnh lịch sử" : "Chỉnh sửa bối cảnh"}
+            </h2>
+            <p className="text-sm mt-1" style={{ color: "var(--content-muted)" }}>
               Thông tin bối cảnh lịch sử hiển thị cho người dùng.
-            </DialogDescription>
+            </p>
           </div>
 
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <div>
           {/* Two-column body */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 overflow-y-auto max-h-[calc(100vh-140px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.12fr)_minmax(340px,0.88fr)]">
 
             {/* ── Left column: content fields ── */}
-            <div className="px-8 py-6 space-y-5">
+            <div className="space-y-5 px-8 py-6">
               <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
                 Nội dung
               </p>
@@ -503,7 +627,6 @@ export default function StaffContextsPage() {
                 />
               </div>
 
-              {/* Location */}
               <div className="grid gap-1.5">
                 <StaffFormLabel>Địa điểm</StaffFormLabel>
                 <StaffFormInput
@@ -512,10 +635,144 @@ export default function StaffContextsPage() {
                   placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
                 />
               </div>
+
+              <div
+                  className="mt-2 space-y-3 border-t pt-5"
+                  style={{ borderColor: "var(--card-light-border)" }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setDocumentOpen((value) => !value)}
+                    className="flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-black/[0.03]"
+                    style={{
+                      borderColor: "var(--card-light-border)",
+                      background: draft.documentContent.trim()
+                        ? "rgba(59,130,246,0.08)"
+                        : "rgba(255,255,255,0.4)",
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <ScrollIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
+                      <span>
+                        <span className="block text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                          Tài liệu RAG kèm theo
+                        </span>
+                        <span className="block text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                          {draft.documentContent.trim()
+                            ? "Đã có nội dung tài liệu"
+                            : "Tuỳ chọn, có thể bổ sung sau"}
+                        </span>
+                      </span>
+                    </span>
+                    <CaretDownIcon
+                      className="h-4 w-4 transition-transform"
+                      style={{
+                        color: "var(--content-muted)",
+                        transform: documentOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      }}
+                    />
+                  </button>
+
+                  {documentOpen && (
+                    <div className="space-y-3">
+                      {mode === "edit" && (
+                        <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+                          <div className="mb-2 flex items-center justify-between gap-3">
+                            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                              Tài liệu đã import
+                            </p>
+                            <Button type="button" size="sm" variant="outline" onClick={clearDocumentDraft}>
+                              <PlusIcon className="mr-1.5 h-3.5 w-3.5" />
+                              Tài liệu mới
+                            </Button>
+                          </div>
+
+                          {historicalDocuments.isLoading ? (
+                            <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tải tài liệu...</p>
+                          ) : historicalDocuments.data?.length ? (
+                            <div className="space-y-2">
+                              {historicalDocuments.data.map((document, index) => {
+                                const documentId = getDocumentId(document);
+                                const selected = !!documentId && draft.documentId === documentId;
+
+                                return (
+                                  <div
+                                    key={documentId ?? `historical-document-${index}`}
+                                    className="flex items-start gap-2 rounded-md border p-2"
+                                    style={{
+                                      borderColor: selected
+                                        ? "rgba(59,130,246,0.45)"
+                                        : "var(--card-light-border)",
+                                      background: selected
+                                        ? "rgba(59,130,246,0.08)"
+                                        : "rgba(255,255,255,0.35)",
+                                    }}
+                                  >
+                                    <button
+                                      type="button"
+                                      className="min-w-0 flex-1 text-left"
+                                      onClick={() => selectDocument(document)}
+                                    >
+                                      <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                                        {document.title || "Tài liệu chưa đặt tên"}
+                                      </p>
+                                      <p className="mt-0.5 line-clamp-2 text-xs" style={{ color: "var(--content-muted)" }}>
+                                        {document.content || "Chưa có nội dung"}
+                                      </p>
+                                    </button>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      className="shrink-0 rounded-full"
+                                      onClick={() => {
+                                        if (!documentId) return;
+                                        deleteHistoricalDocument.mutate(documentId, {
+                                          onSuccess: () => {
+                                            if (draft.documentId === documentId) {
+                                              clearDocumentDraft();
+                                            }
+                                          },
+                                        });
+                                      }}
+                                      style={{ color: "var(--accent-danger)" }}
+                                    >
+                                      <TrashIcon className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-xs" style={{ color: "var(--content-muted)" }}>Chưa có tài liệu nào.</p>
+                          )}
+                        </div>
+                      )}
+                      <div className="grid gap-1.5">
+                        <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
+                        <StaffFormInput
+                          value={draft.documentTitle}
+                          onChange={(e) => set("documentTitle")(e.target.value)}
+                          placeholder="Để trống sẽ dùng tên bối cảnh"
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
+                        <StaffFormTextarea
+                          value={draft.documentContent}
+                          onChange={(e) => set("documentContent")(e.target.value)}
+                          placeholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
+                          style={{ minHeight: "120px" }}
+                        />
+                      </div>
+                    </div>
+                  )}
+              </div>
+
             </div>
 
             {/* ── Right column: meta fields ── */}
-            <div className="px-8 py-6 space-y-5 border-t lg:border-t-0 lg:border-l" style={{ borderColor: "var(--card-light-border)" }}>
+            <div className="space-y-5 border-t px-8 py-6 lg:border-l lg:border-t-0" style={{ borderColor: "var(--card-light-border)", background: "rgba(27,38,50,0.025)" }}>
               <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
                 Phân loại & Thời gian
               </p>
@@ -612,19 +869,106 @@ export default function StaffContextsPage() {
           </div>
 
           {/* Footer */}
-          <div className="px-8 py-4 border-t flex justify-end gap-2" style={{ borderColor: "var(--card-light-border)" }}>
-            <Button variant="outline" className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]" onClick={() => setDialogOpen(false)}>
-              Cancel
+          <div className="sticky bottom-0 z-10 px-8 py-4 border-t flex justify-end gap-2" style={{ borderColor: "var(--card-light-border)", background: "var(--bg-content)" }}>
+            <Button type="button" variant="outline" className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]" onClick={() => setDialogOpen(false)}>
+              Đóng form
             </Button>
             <Button
-              onClick={handleSave}
+              type="submit"
               disabled={!draft.name.trim() || !draft.era || isPending}
             >
-              {isPending ? "Đang lưu..." : "Save"}
+              {isPending ? "Đang lưu..." : "Lưu bối cảnh"}
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+            </div>
+
+            <aside
+              className="border-t px-5 py-6 xl:border-l xl:border-t-0"
+              style={{
+                borderColor: "var(--card-light-border)",
+                background: "rgba(27,38,50,0.035)",
+              }}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                    Bối cảnh đã có
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
+                    {activeItems.length} bản ghi
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="bg-transparent border-[var(--card-light-border)] text-[var(--content-heading)]"
+                  onClick={() => setDialogOpen(false)}
+                >
+                  Danh sách
+                </Button>
+              </div>
+
+              <div className="mt-4 space-y-2 max-h-[calc(100vh-360px)] overflow-y-auto pr-1">
+                {activeItems.length === 0 ? (
+                  <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+                    Chưa có bối cảnh nào.
+                  </p>
+                ) : (
+                  activeItems.map((event) => (
+                    <button
+                      key={event.id}
+                      type="button"
+                      onClick={() => {
+                        setMode("edit");
+                        setDraft({
+                          id: event.id,
+                          name: event.title,
+                          description: event.summary,
+                          era: (event.era ?? "") as EventEraBackend | "",
+                          year: String(event.year ?? ""),
+                          location: event.location ?? "",
+                          imageUrl: event.imageUrl ?? "",
+                          videoUrl: event.videoUrl ?? "",
+                          isPublished: event.isPublished ?? false,
+                          documentId: undefined,
+                          documentTitle: "",
+                          documentContent: "",
+                        });
+                        setDocumentOpen(false);
+                      }}
+                      className="w-full rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-black/[0.03]"
+                      style={{
+                        borderColor:
+                          draft.id === event.id
+                            ? "rgba(201,168,76,0.5)"
+                            : "var(--card-light-border)",
+                        background:
+                          draft.id === event.id
+                            ? "rgba(201,168,76,0.08)"
+                            : "rgba(255,255,255,0.35)",
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="text-sm font-semibold line-clamp-1" style={{ color: "var(--content-heading)" }}>
+                          {event.title}
+                        </p>
+                        <span className="shrink-0 text-[11px]" style={{ color: "var(--content-muted)" }}>
+                          {event.year < 0 ? `${Math.abs(event.year)} TCN` : event.year}
+                        </span>
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-xs" style={{ color: "var(--content-muted)" }}>
+                        {event.summary || "Chưa có mô tả"}
+                      </p>
+                    </button>
+                  ))
+                )}
+              </div>
+            </aside>
+          </div>
+          </form>
+        </section>
+      )}
 
       <ConfirmDialog
         open={publishDialogOpen}
