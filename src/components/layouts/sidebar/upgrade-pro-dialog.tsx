@@ -1,64 +1,132 @@
 "use client";
 
+import { useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { CheckIcon, CrownIcon, SparklesIcon, XIcon } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryKeys } from "@/shared/query-key";
+import { paymentService, type PaymentTier } from "@/services/payment.service";
+import { toast } from "sonner";
 
-const plans = [
-  {
-    name: "Miễn phí",
-    subtitle: "Bắt đầu học lịch sử ngay.",
-    price: "Free",
-    period: "Trọn đời",
-    action: "Mở khóa sau khi đăng nhập",
-    tone: "neutral",
-    features: [
-      ["Lượt chat", "Giới hạn"],
-      ["Quảng cáo", "Có quảng cáo"],
-      ["Gợi ý hội thoại", "Giới hạn"],
-      ["Chỉnh sửa", "Giới hạn"],
-      ["Ghi nhớ ngữ cảnh", "Giới hạn"],
-      ["Đồng bộ đám mây", "60 ngày"],
-    ],
-  },
-  {
-    name: "HistoryTalk Standard",
-    subtitle: "Mở khóa toàn bộ trải nghiệm học tập.",
-    price: "79.000đ",
-    period: "/tháng",
-    action: "Đăng ký",
-    tone: "featured",
-    badge: "Phổ biến nhất",
-    note: "Ưu đãi -50% năm đầu",
-    features: [
-      ["Lượt chat", "Không giới hạn"],
-      ["Quảng cáo", "Không quảng cáo"],
-      ["Gợi ý hội thoại", "Không giới hạn"],
-      ["Chỉnh sửa", "Không giới hạn"],
-      ["Ghi nhớ ngữ cảnh", "Không giới hạn"],
-      ["Đồng bộ đám mây", "120 ngày"],
-      ["Lợi ích trên app", "Đã mở"],
-    ],
-  },
-  {
-    name: "HistoryTalk Pro",
-    subtitle: "Dành cho người học chuyên sâu.",
-    price: "199.000đ",
-    period: "/tháng",
-    action: "Sắp ra mắt",
-    tone: "pro",
-    features: [
-      ["Lượt chat", "Không giới hạn"],
-      ["Quảng cáo", "Không quảng cáo"],
-      ["Gợi ý hội thoại", "Không giới hạn"],
-      ["Chỉnh sửa", "Không giới hạn"],
-      ["Ghi nhớ ngữ cảnh", "Không giới hạn"],
-      ["Không gian học nhóm", "Sắp ra mắt"],
-      ["Tính năng nâng cao", "Sắp ra mắt"],
-    ],
-  },
-];
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function TierCard({
+  tier,
+  index,
+  onCheckout,
+  loadingId,
+}: {
+  tier: PaymentTier;
+  index: number;
+  onCheckout: (tierId: string) => void;
+  loadingId: string | null;
+}) {
+  const isFeatured = index === 0;
+  const isLoading = loadingId === tier.tierId;
+
+  const features: [string, string][] = [
+    ["Thời hạn", `${tier.noMonth} tháng`],
+    ["Token AI", tier.limitedToken.toLocaleString("vi-VN")],
+    ["Lượt chat", "Không giới hạn"],
+    ["Tính năng", "Đầy đủ"],
+  ];
+
+  return (
+    <section
+      className={`upgrade-pro-card upgrade-pro-card-${index} ${isFeatured ? "is-featured" : ""}`}
+    >
+      {isFeatured ? <div className="upgrade-pro-badge">Phổ biến nhất</div> : null}
+
+      <div className="upgrade-pro-card-head">
+        <CrownIcon className="size-5" />
+        <div>
+          <h3>{tier.title}</h3>
+          <p>{tier.noMonth} tháng sử dụng</p>
+        </div>
+      </div>
+
+      <div className="upgrade-pro-price">
+        <span>{formatCurrency(tier.amount)}</span>
+        <small>/{tier.noMonth} tháng</small>
+      </div>
+
+      <button
+        type="button"
+        disabled={isLoading}
+        onClick={() => onCheckout(tier.tierId)}
+        className={`upgrade-pro-action ${isFeatured ? "is-featured" : ""}`}
+        style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? "wait" : "pointer" }}
+      >
+        {isLoading ? "Đang xử lý..." : "Đăng ký ngay"}
+      </button>
+
+      <div className="upgrade-pro-features">
+        {features.map(([label, value]) => (
+          <div key={label} className="upgrade-pro-feature">
+            <span>{label}</span>
+            <strong>
+              {value}
+              {isFeatured ? (
+                <SparklesIcon className="size-3.5" />
+              ) : (
+                <CheckIcon className="size-3.5" />
+              )}
+            </strong>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SkeletonCard({ index }: { index: number }) {
+  return (
+    <section className={`upgrade-pro-card upgrade-pro-card-${index}`} style={{ opacity: 0.6 }}>
+      <div className="upgrade-pro-card-head">
+        <CrownIcon className="size-5" style={{ color: "rgba(255,255,255,0.2)" }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ height: 18, width: "60%", background: "rgba(255,255,255,0.1)", borderRadius: 6, marginBottom: 8 }} />
+          <div style={{ height: 14, width: "80%", background: "rgba(255,255,255,0.07)", borderRadius: 6 }} />
+        </div>
+      </div>
+      <div style={{ height: 40, width: "50%", background: "rgba(255,255,255,0.1)", borderRadius: 8, marginTop: 28 }} />
+      <div style={{ height: 44, background: "rgba(255,255,255,0.08)", borderRadius: 8, marginTop: 22 }} />
+    </section>
+  );
+}
 
 export function UpgradeProDialog({ children }: { children: React.ReactNode }) {
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const { data: tiers, isLoading } = useQuery({
+    queryKey: queryKeys.payments.tiers,
+    queryFn: paymentService.getTiers,
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: (tierId: string) => paymentService.checkout(tierId),
+    onSuccess: (data) => {
+      window.location.href = data.checkoutUrl;
+    },
+    onError: () => {
+      toast.error("Không thể tạo đơn thanh toán. Vui lòng thử lại.");
+      setLoadingId(null);
+    },
+  });
+
+  const handleCheckout = (tierId: string) => {
+    setLoadingId(tierId);
+    checkoutMutation.mutate(tierId);
+  };
+
+  const activeTiers = tiers?.filter((t) => t.isActive).sort((a, b) => a.amount - b.amount) ?? [];
+
   return (
     <DialogPrimitive.Root>
       <DialogPrimitive.Trigger asChild>{children}</DialogPrimitive.Trigger>
@@ -76,67 +144,22 @@ export function UpgradeProDialog({ children }: { children: React.ReactNode }) {
             <XIcon className="size-5" />
           </DialogPrimitive.Close>
 
-          <div className="upgrade-pro-billing" aria-label="Chu kỳ thanh toán">
-            <button type="button">Hàng tháng</button>
-            <button type="button">Theo quý -10%</button>
-            <button type="button" className="is-active">
-              Hàng năm -20%
-            </button>
-          </div>
-
-          <div className="upgrade-pro-grid">
-            {plans.map((plan, index) => (
-              <section
-                key={plan.name}
-                className={`upgrade-pro-card upgrade-pro-card-${index} ${
-                  plan.tone === "featured" ? "is-featured" : ""
-                }`}
-              >
-                {plan.badge ? <div className="upgrade-pro-badge">{plan.badge}</div> : null}
-
-                <div className="upgrade-pro-card-head">
-                  <CrownIcon className="size-5" />
-                  <div>
-                    <h3>{plan.name}</h3>
-                    <p>{plan.subtitle}</p>
-                  </div>
-                </div>
-
-                <div className="upgrade-pro-price">
-                  <span>{plan.price}</span>
-                  <small>{plan.period}</small>
-                </div>
-
-                {plan.note ? <div className="upgrade-pro-note">{plan.note}</div> : null}
-
-                <button
-                  type="button"
-                  className={`upgrade-pro-action ${plan.tone === "featured" ? "is-featured" : ""}`}
-                >
-                  {plan.action}
-                </button>
-
-                <div className="upgrade-pro-features">
-                  {plan.features.map(([label, value]) => (
-                    <div key={label} className="upgrade-pro-feature">
-                      <span>{label}</span>
-                      <strong>
-                        {value}
-                        {plan.tone !== "neutral" ? (
-                          <SparklesIcon className="size-3.5" />
-                        ) : (
-                          <CheckIcon className="size-3.5" />
-                        )}
-                      </strong>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
+          <div className="upgrade-pro-grid" style={{ marginTop: 60 }}>
+            {isLoading
+              ? [0, 1, 2].map((i) => <SkeletonCard key={i} index={i} />)
+              : activeTiers.map((tier, index) => (
+                  <TierCard
+                    key={tier.tierId}
+                    tier={tier}
+                    index={index}
+                    onCheckout={handleCheckout}
+                    loadingId={loadingId}
+                  />
+                ))}
           </div>
 
           <footer className="upgrade-pro-foot">
-            <p>Giao diện minh họa. Thanh toán sẽ được kết nối sau.</p>
+            <p>Thanh toán an toàn qua PayOS · Chuyển khoản ngân hàng & QR</p>
             <div>
               <span>FAQ</span>
               <span>Chính sách riêng tư</span>

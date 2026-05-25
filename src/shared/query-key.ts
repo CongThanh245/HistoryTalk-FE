@@ -1,4 +1,4 @@
-import type { GetEventsParams } from "@/services/event.service";
+﻿import type { GetEventsParams } from "@/services/event.service";
 import { GetLandmarksParams } from "@/services/landmark.service";
 import { GetQuizSetsParams } from "@/services/quiz.service";
 import { GetStaffQuizzesParams } from "@/services/staff.quiz.service";
@@ -14,9 +14,9 @@ export const queryKeys = {
     list: (params?: GetEventsParams) =>
       ["events", "list", params ?? {}] as const,
     detail: (id: string) => ["events", "detail", id] as const,
-    create: ["events", "create"] as const, // ← thêm
-    update: (id: string) => ["events", "update", id] as const, // ← thêm
-    delete: (id: string) => ["events", "delete", id] as const, // ← thêm
+    create: ["events", "create"] as const, // â† thÃªm
+    update: (id: string) => ["events", "update", id] as const, // â† thÃªm
+    delete: (id: string) => ["events", "delete", id] as const, // â† thÃªm
   },
 
   characters: {
@@ -25,7 +25,7 @@ export const queryKeys = {
       ["characters", "list", params ?? {}] as const,
     detail: (id: string) => ["characters", "detail", id] as const,
     byContext: (
-      contextId: string, // ← thêm
+      contextId: string, // â† thÃªm
     ) => ["characters", "context", contextId] as const,
   },
 
@@ -45,6 +45,14 @@ export const queryKeys = {
   chatHistory: {
     all: ["chatHistory"] as const,
     list: () => ["chatHistory", "list"] as const,
+  },
+
+  documents: {
+    all: ["documents"] as const,
+    historicalByContext: (contextId: string) =>
+      ["documents", "historical", "context", contextId] as const,
+    characterByCharacter: (characterId: string) =>
+      ["documents", "character", "character", characterId] as const,
   },
 
   quizzes: {
@@ -68,5 +76,10 @@ export const queryKeys = {
     list: (params?: GetStaffQuizzesParams) =>
       ["staff", "quizzes", "list", params ?? {}] as const,
     detail: (id: string) => ["staff", "quizzes", "detail", id] as const,
+  },
+
+  payments: {
+    tiers: ["payments", "tiers"] as const,
+    history: ["payments", "history"] as const,
   },
 } as const;

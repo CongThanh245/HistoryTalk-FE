@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+﻿import type { ComponentType, CSSProperties } from "react";
 import {
   HouseIcon,
   BankIcon,
@@ -13,10 +13,11 @@ import {
   UsersIcon,
   GaugeIcon,
   CreditCardIcon,
+  ReceiptIcon,
 } from "@phosphor-icons/react";
 
 export interface SidebarMenuItem {
-  icon: ComponentType<any>;
+  icon: ComponentType<{ className?: string; style?: CSSProperties }>;
   label: string;
   href: string;
   /** Nếu true, chỉ active khi pathname khớp chính xác href */
@@ -37,14 +38,17 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
       { icon: UserIcon, label: "Nhân vật", href: "/characters" },
       { icon: ChatTextIcon, label: "Lịch sử chat", href: "/chat-history" },
       { icon: ClipboardTextIcon, label: "Trắc nghiệm", href: "/quiz" },
-      { icon: MapTrifoldIcon, label: "Bản đồ lịch sử", href: "/map" }, // ← thêm
+      { icon: MapTrifoldIcon, label: "Bản đồ lịch sử", href: "/map" },
       { icon: BooksIcon, label: "Library", href: "/library" },
       { icon: BookmarkIcon, label: "Đã lưu", href: "/saved" },
     ],
   },
   {
     title: "Account",
-    items: [{ icon: UserIcon, label: "Hồ sơ", href: "/profile" }],
+    items: [
+      { icon: UserIcon, label: "Hồ sơ", href: "/profile" },
+      { icon: ReceiptIcon, label: "Đơn hàng", href: "/payment/history" },
+    ],
   },
 ];
 
@@ -55,6 +59,7 @@ export const STAFF_SIDEBAR: SidebarSection[] = [
       { icon: ShieldIcon, label: "Tổng quan", href: "/staff", exact: true },
       { icon: ScrollIcon, label: "Bối cảnh", href: "/staff/contexts" },
       { icon: UserIcon, label: "Nhân vật", href: "/staff/characters" },
+      { icon: BooksIcon, label: "Tài liệu", href: "/staff/documents" },
       { icon: ClipboardTextIcon, label: "Trắc nghiệm", href: "/staff/quizzes" },
     ],
   },
@@ -90,4 +95,3 @@ export const SYSTEM_ADMIN_SIDEBAR: SidebarSection[] = [
     items: [{ icon: UserIcon, label: "Hồ sơ", href: "/profile" }],
   },
 ];
-
