@@ -9,15 +9,21 @@ import { ChatClient } from "@/components/chat/chat-client";
 
 interface ChatPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ contextId?: string; sessionId?: string }>;
 }
 
-export default async function ChatPage({ params }: ChatPageProps) {
+export default async function ChatPage({ params, searchParams }: ChatPageProps) {
   const { id } = await params;
+  const { contextId, sessionId } = await searchParams;
 
   return (
     // h-full kế thừa từ layout — không có padding vì chat cần full height
     <div className="flex h-full w-full overflow-hidden">
-      <ChatClient initialCharacterId={id} />
+      <ChatClient
+        initialCharacterId={id}
+        initialContextId={contextId}
+        initialSessionId={sessionId}
+      />
     </div>
   );
 }

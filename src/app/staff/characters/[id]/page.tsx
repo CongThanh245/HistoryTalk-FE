@@ -8,9 +8,16 @@ import {
   useUpdateCharacter, 
   useMapContextToCharacter 
 } from "@/features/characters/hooks";
+import {
+  useCharacterDocuments,
+  useCreateCharacterDocument,
+  useDeleteCharacterDocument,
+  useUpdateCharacterDocument,
+} from "@/features/documents/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isValidUrl } from "@/lib/utils/url";
+import { toast } from "sonner";
 
 function toInputValue(value: number | null | undefined): string {
   return value == null ? "" : String(value);
@@ -26,6 +33,10 @@ export default function EditCharacterPage() {
   
   const { data: character, isLoading: isLoadingChar } = useCharacter(id);
   const updateCharacter = useUpdateCharacter();
+  const characterDocuments = useCharacterDocuments(id);
+  const createCharacterDocument = useCreateCharacterDocument();
+  const updateCharacterDocument = useUpdateCharacterDocument(id);
+  const deleteCharacterDocument = useDeleteCharacterDocument(id);
   const mapContextToCharacter = useMapContextToCharacter();
   
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
@@ -44,7 +55,7 @@ export default function EditCharacterPage() {
       ),
     )?.id;
 
-  const handleSave = (draft: CharacterDraft) => {
+  const handleSave = async (draft: CharacterDraft) => {
     const payload = {
       name: draft.name.trim(),
       title: draft.title.trim(),
@@ -63,7 +74,36 @@ export default function EditCharacterPage() {
       isPublished: draft.isPublished,
     };
 
-    updateCharacter.mutate({ id, data: payload });
+    try {
+      await updateCharacter.mutateAsync({ id, data: payload });
+
+      const documentContent = draft.documentContent.trim();
+      if (documentContent) {
+        try {
+          if (draft.documentId) {
+            await updateCharacterDocument.mutateAsync({
+              docId: draft.documentId,
+              data: {
+                title: draft.documentTitle.trim() || draft.name.trim(),
+                content: documentContent,
+                type: "TEXT",
+              },
+            });
+          } else {
+            await createCharacterDocument.mutateAsync({
+              characterId: id,
+              title: draft.documentTitle.trim() || draft.name.trim(),
+              content: documentContent,
+              type: "TEXT",
+            });
+          }
+        } catch {
+          toast.warning("Nhân vật đã cập nhật, nhưng import tài liệu chưa thành công");
+        }
+      }
+    } catch {
+      // useUpdateCharacter already shows the API error toast.
+    }
   };
 
   if (isLoadingChar) {
@@ -100,6 +140,9 @@ export default function EditCharacterPage() {
     isDeathBc: character.isDeathBc ?? false,
     isActive: character.isActive ?? true,
     isPublished: character.isPublished ?? false,
+    documentId: undefined,
+    documentTitle: "",
+    documentContent: "",
   };
 
   return (
@@ -107,7 +150,11 @@ export default function EditCharacterPage() {
       mode="edit"
       initialDraft={initialDraft}
       onSave={handleSave}
-      isPending={updateCharacter.isPending}
+      isPending={updateCharacter.isPending || createCharacterDocument.isPending || updateCharacterDocument.isPending}
+      documents={characterDocuments.data ?? []}
+      isLoadingDocuments={characterDocuments.isLoading}
+      onDeleteDocument={(docId) => deleteCharacterDocument.mutate(docId)}
+      isDeleteDocumentPending={deleteCharacterDocument.isPending}
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
       onMapContext={(characterId, contextId, options) =>

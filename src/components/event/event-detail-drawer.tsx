@@ -241,7 +241,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
     `${Math.abs(event.year)} ${event.year < 0 ? "TCN" : "SCN"}`;
 
   const handleSelectChar = (charId: string) => {
-    navigateWithAuth(`/chat/${charId}`);
+    navigateWithAuth(`/chat/${charId}?contextId=${event.id}`);
   };
 
   return (

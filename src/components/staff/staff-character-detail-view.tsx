@@ -11,6 +11,7 @@ import {
   CheckCircleIcon,
   PlusIcon,
   ScrollIcon,
+  TrashIcon,
   MapPinIcon,
   ImageIcon,
   VideoIcon,
@@ -48,6 +49,7 @@ import type { ChatCharacter } from "@/services/chat.service";
 import type { HistoricalEvent, EventEraBackend } from "@/services/event.service";
 import { useCreateEvent } from "@/features/events/hooks";
 import { toast } from "sonner";
+import type { RagDocument } from "@/services/document.service";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -70,6 +72,9 @@ export type CharacterDraft = {
   isDeathBc: boolean;
   isActive: boolean;
   isPublished: boolean;
+  documentId?: string;
+  documentTitle: string;
+  documentContent: string;
 };
 
 export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
@@ -88,6 +93,9 @@ export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
   isDeathBc: false,
   isActive: true,
   isPublished: false,
+  documentId: undefined,
+  documentTitle: "",
+  documentContent: "",
 };
 
 interface StaffCharacterDetailViewProps {
@@ -110,6 +118,10 @@ interface StaffCharacterDetailViewProps {
   initialContextId?: string;
   /** If true, start in editing mode immediately (e.g. navigated from Edit button) */
   initialEditing?: boolean;
+  documents?: RagDocument[];
+  isLoadingDocuments?: boolean;
+  onDeleteDocument?: (docId: string) => void;
+  isDeleteDocumentPending?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -128,6 +140,10 @@ export function StaffCharacterDetailView({
   isMapContextPending,
   initialContextId,
   initialEditing,
+  documents = [],
+  isLoadingDocuments = false,
+  onDeleteDocument,
+  isDeleteDocumentPending = false,
 }: StaffCharacterDetailViewProps) {
   const router = useRouter();
 
@@ -147,7 +163,7 @@ export function StaffCharacterDetailView({
       "name", "title", "background", "image", "personality",
       "bornYear", "bornMonth", "bornDay", "isBornBc",
       "deathYear", "deathMonth", "deathDay", "isDeathBc",
-      "isActive", "isPublished"
+      "isActive", "isPublished", "documentId", "documentTitle", "documentContent"
     ];
     
     return keys.some(key => {
@@ -161,6 +177,29 @@ export function StaffCharacterDetailView({
   const set =
     (field: keyof CharacterDraft) => (val: string | boolean) =>
       setDraft((s) => ({ ...s, [field]: val }));
+
+  const getDocumentId = React.useCallback(
+    (document: RagDocument) => document.id ?? document.documentId,
+    [],
+  );
+
+  const selectDocument = (document: RagDocument) => {
+    setDraft((s) => ({
+      ...s,
+      documentId: getDocumentId(document),
+      documentTitle: document.title ?? "",
+      documentContent: document.content ?? "",
+    }));
+  };
+
+  const clearDocumentDraft = () => {
+    setDraft((s) => ({
+      ...s,
+      documentId: undefined,
+      documentTitle: "",
+      documentContent: "",
+    }));
+  };
 
   /* ── Chat state ── */
   const [sessionId, setSessionId] = React.useState<string | null>(null);
@@ -189,6 +228,18 @@ export function StaffCharacterDetailView({
       setDraft(initialDraft);
     }
   }, [initialDraft]);
+
+  React.useEffect(() => {
+    if (mode !== "edit" || draft.documentId || draft.documentContent) return;
+    const firstDocument = documents[0];
+    if (!firstDocument) return;
+    setDraft((s) => ({
+      ...s,
+      documentId: getDocumentId(firstDocument),
+      documentTitle: firstDocument.title ?? "",
+      documentContent: firstDocument.content ?? "",
+    }));
+  }, [documents, draft.documentContent, draft.documentId, getDocumentId, mode]);
 
   React.useEffect(() => {
     setSelectedContextId(initialContextId ?? "");
@@ -522,6 +573,111 @@ export function StaffCharacterDetailView({
                 style={{ minHeight: "90px" }}
                 disabled={!isEditing}
               />
+            </div>
+
+            <div
+              className="pt-5 mt-2 border-t space-y-3"
+              style={{ borderColor: "var(--card-light-border)" }}
+            >
+                <div className="flex items-center gap-2">
+                  <ScrollIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
+                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                    Tài liệu RAG kèm theo
+                  </p>
+                </div>
+                {mode === "edit" && (
+                  <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                        Tài liệu đã import
+                      </p>
+                      <Button type="button" size="sm" variant="outline" onClick={clearDocumentDraft} disabled={!isEditing}>
+                        <PlusIcon className="mr-1.5 h-3.5 w-3.5" />
+                        Tài liệu mới
+                      </Button>
+                    </div>
+
+                    {isLoadingDocuments ? (
+                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tải tài liệu...</p>
+                    ) : documents.length ? (
+                      <div className="space-y-2">
+                        {documents.map((document, index) => {
+                          const documentId = getDocumentId(document);
+                          const selected = !!documentId && draft.documentId === documentId;
+
+                          return (
+                            <div
+                              key={documentId ?? `character-document-${index}`}
+                              className="flex items-start gap-2 rounded-md border p-2"
+                              style={{
+                                borderColor: selected
+                                  ? "rgba(59,130,246,0.45)"
+                                  : "var(--card-light-border)",
+                                background: selected
+                                  ? "rgba(59,130,246,0.08)"
+                                  : "rgba(255,255,255,0.35)",
+                              }}
+                            >
+                              <button
+                                type="button"
+                                className="min-w-0 flex-1 text-left"
+                                onClick={() => selectDocument(document)}
+                                disabled={!isEditing}
+                              >
+                                <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                                  {document.title || "Tài liệu chưa đặt tên"}
+                                </p>
+                                <p className="mt-0.5 line-clamp-2 text-xs" style={{ color: "var(--content-muted)" }}>
+                                  {document.content || "Chưa có nội dung"}
+                                </p>
+                              </button>
+                              {onDeleteDocument && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  className="shrink-0 rounded-full"
+                                  disabled={!isEditing || isDeleteDocumentPending}
+                                  onClick={() => {
+                                    if (!documentId) return;
+                                    onDeleteDocument(documentId);
+                                    if (draft.documentId === documentId) {
+                                      clearDocumentDraft();
+                                    }
+                                  }}
+                                  style={{ color: "var(--accent-danger)" }}
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>Chưa có tài liệu nào.</p>
+                    )}
+                  </div>
+                )}
+                <div className="grid gap-1.5">
+                  <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
+                  <StaffFormInput
+                    value={draft.documentTitle}
+                    onChange={(e) => set("documentTitle")(e.target.value)}
+                    placeholder="Để trống sẽ dùng tên nhân vật"
+                    disabled={!isEditing}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
+                  <StaffFormTextarea
+                    value={draft.documentContent}
+                    onChange={(e) => set("documentContent")(e.target.value)}
+                    placeholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
+                    style={{ minHeight: "140px" }}
+                    disabled={!isEditing}
+                  />
+                </div>
             </div>
 
             <div
