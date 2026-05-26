@@ -1,4 +1,4 @@
-"use client";
+﻿﻿﻿﻿﻿﻿﻿"use client";
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -12,10 +12,10 @@ import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import {
   useCharacters,
-  useDeleteCharacter,
-  usePermanentDeleteCharacter,
+  useDeleteCharacter
 } from "@/features/characters/hooks";
 import type { Character } from "@/services/character.service";
+import type { TrashItem } from "@/services/trash.service";
 import { isValidUrl } from "@/lib/utils/url";
 import { formatCharacterLifespan } from "@/lib/utils/character-date";
 
@@ -26,29 +26,31 @@ export default function StaffCharactersPage() {
   const [deleteTarget, setDeleteTarget] = React.useState<Character | null>(null);
   const [showTrash, setShowTrash] = React.useState(false);
   const [permanentDeleteOpen, setPermanentDeleteOpen] = React.useState(false);
-  const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<Character | null>(null);
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<{ id: string; title: string } | null>(null);
+  const [restoreTarget, setRestoreTarget] = React.useState<{ id: string; title: string } | null>(null);
+  const [restoreOpen, setRestoreOpen] = React.useState(false);
 
   const { data, isLoading, isFetching } = useCharacters({
     page: 1,
     limit: 100,
   });
   const deleteCharacter = useDeleteCharacter();
-  const permanentDeleteCharacter = usePermanentDeleteCharacter();
+  const { data: trashItems = [], isLoading: isTrashLoading } = useTrashList("characters");
+  const restoreCharacter = useTrashRestore("characters");
+  const permanentDeleteCharacter = useTrashPermanentDelete("characters");
 
   const allItems = data?.content ?? [];
-  const activeItems = allItems.filter((c) => !c.deletedAt && c.isActive !== false);
-  const trashedItems = allItems.filter((c) => !!c.deletedAt || c.isActive === false);
-  const filteredItems = showTrash ? trashedItems : activeItems;
+  const activeItems = allItems;
 
   const items = React.useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return filteredItems;
-    return filteredItems.filter(
+    if (!q) return activeItems;
+    return activeItems.filter(
       (x) =>
         x.name.toLowerCase().includes(q) ||
         x.title?.toLowerCase().includes(q),
     );
-  }, [filteredItems, search]);
+  }, [activeItems, search]);
 
   const columns = React.useMemo<ColumnDef<Character>[]>(
     () => [
@@ -223,7 +225,7 @@ export default function StaffCharactersPage() {
               className="rounded-full"
               title="Xóa vĩnh viễn"
               onClick={() => {
-                setPermanentDeleteTarget(row.original);
+                setPermanentDeleteTarget({ id: row.original.id, title: row.original.name });
                 setPermanentDeleteOpen(true);
               }}
               style={{ color: "var(--accent-danger)" }}
@@ -306,7 +308,7 @@ export default function StaffCharactersPage() {
               {showTrash ? (
                 <><ArrowCounterClockwiseIcon className="h-4 w-4 mr-1.5" /> Danh sách</>
               ) : (
-                <><TrashIcon className="h-4 w-4 mr-1.5" /> Thùng rác {trashedItems.length > 0 && `(${trashedItems.length})`}</>
+                <><TrashIcon className="h-4 w-4 mr-1.5" /> Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}</>
               )}
             </Button>
             {!showTrash && (
@@ -358,7 +360,7 @@ export default function StaffCharactersPage() {
         variant="danger"
         onConfirm={() => {
           if (!permanentDeleteTarget) return;
-          permanentDeleteCharacter.mutate(permanentDeleteTarget.id, {
+          permanentDeleteCharacter.mutate([permanentDeleteTarget.id], {
             onSuccess: () => {
               setPermanentDeleteOpen(false);
               setPermanentDeleteTarget(null);

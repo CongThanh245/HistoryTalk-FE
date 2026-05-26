@@ -38,7 +38,7 @@ export interface StaffQuizSet {
   createdBy: string;
   createdDate: string;
   updatedDate: string;
-  isActive: boolean;
+  isPublished: boolean;
   deletedAt?: string | null;
   questions: StaffQuizQuestion[];
 }
@@ -69,6 +69,7 @@ export interface CreateQuizPayload {
   contextId: string;
   level: string;
   questions: CreateQuestionPayload[];
+  isPublished?: boolean;
 }
 
 export interface UpdateQuizPayload {
@@ -108,7 +109,7 @@ export function mapStaffQuizSet(raw: any): StaffQuizSet {
     createdBy: raw.createdBy ?? "",
     createdDate: raw.createdDate ?? "",
     updatedDate: raw.updatedDate ?? "",
-    isActive: raw.isActive ?? true,
+    isPublished: raw.isPublished ?? false,
     deletedAt: raw.deletedAt ?? null,
     questions: (raw.questions ?? []).map(mapStaffQuestion),
   };
@@ -219,6 +220,7 @@ function toContractQuizPayload(payload: CreateQuizPayload | UpdateQuizPayload) {
     ...(payload.title !== undefined && { title: payload.title }),
     ...(payload.contextId !== undefined && { contextId: payload.contextId }),
     ...((payload as any).level !== undefined && { level: (payload as any).level }),
+    ...((payload as any).isPublished !== undefined && { isPublished: (payload as any).isPublished }),
     ...("questions" in payload && {
       questions: payload.questions.map(toContractQuestionPayload),
     }),

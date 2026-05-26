@@ -4,7 +4,8 @@ import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   ClipboardTextIcon, PencilIcon, TrashIcon, ArrowLeftIcon,
-  GameControllerIcon, EyeIcon, EyeSlashIcon,
+  GameControllerIcon, EyeIcon, EyeSlashIcon, ArrowCounterClockwiseIcon,
+  CaretLeftIcon, CaretRightIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
@@ -29,9 +30,13 @@ import {
   useCreateStaffQuiz,
   useUpdateStaffQuiz,
   useSoftDeleteStaffQuiz,
-  usePermanentDeleteStaffQuiz,
   useToggleStaffQuizActive,
 } from "@/features/staff/quiz/hooks";
+import {
+  useTrashList,
+  useTrashRestore,
+  useTrashPermanentDelete,
+} from "@/features/trash/hooks";
 import { useEvents } from "@/features/events/hooks";
 import type { StaffQuizSet } from "@/services/staff.quiz.service";
 import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
@@ -91,7 +96,7 @@ export default function StaffQuizzesPage() {
   // ── Filter state ──────────────────────────────────────────
   const [search, setSearch] = React.useState("");
   const [filterLevel, setFilterLevel] = React.useState<"" | "EASY" | "MEDIUM" | "HARD">("");
-  const [page] = React.useState(0);
+  const [page, setPage] = React.useState(0);
 
   // ── View / editor state ───────────────────────────────────
   const [view, setView] = React.useState<"list" | "editor">("list");
@@ -99,7 +104,8 @@ export default function StaffQuizzesPage() {
   const [draft, setDraft] = React.useState<QuizDraft>(emptyDraft());
   const [deleteTarget, setDeleteTarget] = React.useState<StaffQuizSet | null>(null);
   const [showTrash, setShowTrash] = React.useState(false);
-  const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<StaffQuizSet | null>(null);
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<{ id: string; title: string } | null>(null);
+  const [restoreTarget, setRestoreTarget] = React.useState<{ id: string; title: string } | null>(null);
   const [publishTarget, setPublishTarget] = React.useState<StaffQuizSet | null>(null);
   const [contextSearch, setContextSearch] = React.useState("");
 
@@ -114,21 +120,23 @@ export default function StaffQuizzesPage() {
   const createQuiz = useCreateStaffQuiz();
   const updateQuiz = useUpdateStaffQuiz();
   const softDeleteQuiz = useSoftDeleteStaffQuiz();
-  const permanentDeleteQuiz = usePermanentDeleteStaffQuiz();
   const toggleActiveQuiz = useToggleStaffQuizActive();
+
+  const { data: trashItems = [], isLoading: isTrashLoading } = useTrashList("quizzes");
+  const restoreQuiz = useTrashRestore("quizzes");
+  const permanentDeleteQuiz = useTrashPermanentDelete("quizzes");
 
   // Load toàn bộ contexts để chọn trong dropdown
   const { data: contextsData } = useEvents({ page: 1, limit: 200 });
 
   const allItems = data?.content ?? [];
-  const activeItems = allItems.filter((q) => !q.deletedAt);
-  const trashedItems = allItems.filter((q) => !!q.deletedAt);
-  const items = showTrash ? trashedItems : activeItems;
 
-  // Filter theo level nếu có
+  // Filter theo level nếu có (active list)
   const filteredItems = filterLevel
-    ? items.filter((q) => q.level === filterLevel)
-    : items;
+    ? allItems.filter((q) => q.level === filterLevel)
+    : allItems;
+
+  const totalPages = data?.totalPages ?? 1;
 
   // ── Handlers ──────────────────────────────────────────────
   const openCreate = () => {
@@ -224,9 +232,22 @@ export default function StaffQuizzesPage() {
     });
   };
 
+  const handleRestore = () => {
+    if (!restoreTarget) return;
+    restoreQuiz.mutate([restoreTarget.id], {
+      onSuccess: () => {
+        toast.success(`Đã khôi phục quiz "${restoreTarget.title}".`);
+        setRestoreTarget(null);
+      },
+      onError: () => {
+        toast.error("Khôi phục thất bại. Vui lòng thử lại.");
+      },
+    });
+  };
+
   const handlePermanentDelete = () => {
     if (!permanentDeleteTarget) return;
-    permanentDeleteQuiz.mutate(permanentDeleteTarget.quizId, {
+    permanentDeleteQuiz.mutate([permanentDeleteTarget.id], {
       onSuccess: () => {
         toast.success(`Đã xóa vĩnh viễn quiz "${permanentDeleteTarget.title}".`);
         setPermanentDeleteTarget(null);
@@ -239,11 +260,11 @@ export default function StaffQuizzesPage() {
 
   const handleToggleActive = () => {
     if (!publishTarget) return;
-    const nextActive = !publishTarget.isActive;
+    const nextPublished = !publishTarget.isPublished;
     toggleActiveQuiz.mutate(publishTarget.quizId, {
       onSuccess: () => {
         toast.success(
-          nextActive
+          nextPublished
             ? `Đã publish quiz "${publishTarget.title}".`
             : `Đã ẩn quiz "${publishTarget.title}" khỏi người dùng.`,
         );
@@ -298,10 +319,10 @@ export default function StaffQuizzesPage() {
       ),
     },
     {
-      accessorKey: "isActive",
+      accessorKey: "isPublished",
       header: "Hiển thị",
       cell: ({ row: r }) => {
-        const isPublished = r.original.isActive !== false;
+        const isPublished = r.original.isPublished === true;
         const StatusIcon = isPublished ? EyeIcon : EyeSlashIcon;
         return (
           <span
@@ -332,11 +353,11 @@ export default function StaffQuizzesPage() {
         <div className="flex items-center justify-end gap-1">
           <Button
             type="button" variant="ghost" size="icon-sm" className="rounded-full"
-            title={r.original.isActive !== false ? "Ẩn khỏi người dùng" : "Publish cho người dùng"}
+            title={r.original.isPublished ? "Ẩn khỏi người dùng" : "Publish cho người dùng"}
             onClick={() => setPublishTarget(r.original)}
-            style={{ color: r.original.isActive !== false ? "rgb(22,163,74)" : "rgb(161,98,7)" }}
+            style={{ color: r.original.isPublished ? "rgb(22,163,74)" : "rgb(161,98,7)" }}
           >
-            {r.original.isActive !== false ? (
+            {r.original.isPublished ? (
               <EyeIcon className="h-4 w-4" />
             ) : (
               <EyeSlashIcon className="h-4 w-4" />
@@ -363,7 +384,8 @@ export default function StaffQuizzesPage() {
     [],
   );
 
-  const trashColumns = React.useMemo<ColumnDef<StaffQuizSet>[]>(() => [
+  type TrashRow = (typeof trashItems)[number];
+  const trashColumns = React.useMemo<ColumnDef<TrashRow>[]>(() => [
     {
       accessorKey: "title",
       header: "Bài quiz",
@@ -372,11 +394,6 @@ export default function StaffQuizzesPage() {
           <p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
             {r.original.title}
           </p>
-          {r.original.contextTitle && (
-            <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-              {r.original.contextTitle}
-            </p>
-          )}
         </div>
       ),
     },
@@ -384,10 +401,10 @@ export default function StaffQuizzesPage() {
       accessorKey: "deletedAt",
       header: "Đã xóa lúc",
       cell: ({ row: r }) => {
-        const date = r.original.deletedAt ? new Date(r.original.deletedAt) : null;
+        const date = new Date(r.original.deletedAt);
         return (
           <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
-            {date && !isNaN(date.getTime()) ? date.toLocaleString("vi-VN") : "—"}
+            {!isNaN(date.getTime()) ? date.toLocaleString("vi-VN") : "—"}
           </span>
         );
       },
@@ -399,8 +416,16 @@ export default function StaffQuizzesPage() {
         <div className="flex items-center justify-end gap-1">
           <Button
             type="button" variant="ghost" size="icon-sm" className="rounded-full"
+            title="Khôi phục"
+            onClick={() => setRestoreTarget({ id: r.original.id, title: r.original.title })}
+            style={{ color: "var(--accent-blue)" }}
+          >
+            <ArrowCounterClockwiseIcon className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button" variant="ghost" size="icon-sm" className="rounded-full"
             title="Xóa vĩnh viễn"
-            onClick={() => setPermanentDeleteTarget(r.original)}
+            onClick={() => setPermanentDeleteTarget({ id: r.original.id, title: r.original.title })}
             style={{ color: "var(--accent-danger)" }}
           >
             <TrashIcon className="h-4 w-4" />
@@ -614,8 +639,8 @@ export default function StaffQuizzesPage() {
 
   // ═══ LIST VIEW ═══════════════════════════════════════════════════════════
   const totalItems = data?.totalElements ?? 0;
-  const totalPlays = items.reduce((a, x) => a + x.playCount, 0);
-  const totalQues = items.reduce((a, x) => a + x.questions.length, 0);
+  const totalPlays = allItems.reduce((a, x) => a + x.playCount, 0);
+  const totalQues = allItems.reduce((a, x) => a + x.questions.length, 0);
 
   return (
     <StaffShell
@@ -673,7 +698,7 @@ export default function StaffQuizzesPage() {
               {showTrash ? (
                 <><ArrowLeftIcon className="h-3.5 w-3.5" /> Quay lại</>
               ) : (
-                <><TrashIcon className="h-3.5 w-3.5" /> Thùng rác {trashedItems.length > 0 && `(${trashedItems.length})`}</>
+                <><TrashIcon className="h-3.5 w-3.5" /> Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}</>
               )}
             </Button>
           </div>
@@ -713,29 +738,65 @@ export default function StaffQuizzesPage() {
               Không thể tải danh sách quiz. Vui lòng thử lại.
             </p>
           )}
-          <StaffDataTable
-            columns={showTrash ? trashColumns : columns}
-            data={filteredItems}
-            emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy quiz phù hợp."}
-            isLoading={isLoading}
-          />
-          <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
-            Hiển thị {filteredItems.length} / {totalItems} bộ quiz
-          </p>
+          {showTrash ? (
+            <StaffDataTable
+              columns={trashColumns}
+              data={trashItems}
+              emptyMessage="Thùng rác trống."
+              isLoading={isTrashLoading}
+            />
+          ) : (
+            <>
+              <StaffDataTable
+                columns={columns}
+                data={filteredItems}
+                emptyMessage="Không tìm thấy quiz phù hợp."
+                isLoading={isLoading}
+              />
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
+                    Trang {page + 1} / {totalPages} · {totalItems} bộ quiz
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost" size="icon-sm" className="rounded-lg"
+                      disabled={page === 0}
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    >
+                      <CaretLeftIcon className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon-sm" className="rounded-lg"
+                      disabled={page + 1 >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      <CaretRightIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {totalPages <= 1 && (
+                <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
+                  Hiển thị {filteredItems.length} / {totalItems} bộ quiz
+                </p>
+              )}
+            </>
+          )}
         </div>
       </section>
 
       <ConfirmDialog
         open={!!publishTarget}
         onOpenChange={(o) => !o && setPublishTarget(null)}
-        title={publishTarget?.isActive !== false ? "Ẩn quiz khỏi người dùng?" : "Publish quiz cho người dùng?"}
+        title={publishTarget?.isPublished ? "Ẩn quiz khỏi người dùng?" : "Publish quiz cho người dùng?"}
         description={
-          publishTarget?.isActive !== false
+          publishTarget?.isPublished
             ? `Quiz "${publishTarget?.title}" sẽ không hiển thị cho người dùng nữa.`
             : `Quiz "${publishTarget?.title}" sẽ hiển thị cho người dùng.`
         }
         isPending={toggleActiveQuiz.isPending}
-        confirmLabel={publishTarget?.isActive !== false ? "Ẩn quiz" : "Publish quiz"}
+        confirmLabel={publishTarget?.isPublished ? "Ẩn quiz" : "Publish quiz"}
         variant="warning"
         onConfirm={handleToggleActive}
       />
@@ -749,6 +810,17 @@ export default function StaffQuizzesPage() {
         confirmLabel="Chuyển vào thùng rác"
         variant="danger"
         onConfirm={handleSoftDelete}
+      />
+
+      <ConfirmDialog
+        open={!!restoreTarget}
+        onOpenChange={(o) => !o && setRestoreTarget(null)}
+        title="Khôi phục quiz?"
+        description={`Quiz "${restoreTarget?.title}" sẽ được khôi phục.`}
+        isPending={restoreQuiz.isPending}
+        confirmLabel="Khôi phục"
+        variant="warning"
+        onConfirm={handleRestore}
       />
 
       <ConfirmDialog
