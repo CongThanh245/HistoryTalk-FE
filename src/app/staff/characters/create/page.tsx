@@ -31,6 +31,7 @@ export default function CreateCharacterPage() {
       title: draft.title.trim(),
       background: draft.background.trim() || undefined,
       image: isValidUrl(draft.image.trim()) ? draft.image.trim() : undefined,
+      modelUrl: isValidUrl(draft.modelUrl.trim()) ? draft.modelUrl.trim() : undefined,
       personality: draft.personality.trim() || undefined,
       bornYear: toNullableNumber(draft.bornYear),
       bornMonth: toNullableNumber(draft.bornMonth),

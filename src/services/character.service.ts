@@ -22,6 +22,7 @@ type RawCharacter = {
   background?: string;
   image?: string | null;
   imageUrl?: string | null;
+  modelUrl?: string | null;
   personality?: string;
   bornYear?: number | null;
   bornMonth?: number | null;
@@ -65,6 +66,7 @@ export interface Character {
   era?: string;
   role?: string;
   avatarUrl?: string | null;
+  modelUrl?: string | null;
   isActive?: boolean;
   isPublished?: boolean;
   deletedAt?: string | null;
@@ -93,6 +95,7 @@ export interface CreateCharacterRequest {
   title: string;
   background?: string;
   image?: string | null;
+  modelUrl?: string | null;
   personality?: string;
   bornYear?: number | null;
   bornMonth?: number | null;
@@ -124,6 +127,7 @@ function mapCharacter(raw: RawCharacter): Character {
     description: raw.background, // map background → description cho UI
     imageUrl: isValidUrl(raw.image ?? raw.imageUrl) ? (raw.image ?? raw.imageUrl) : null,
     avatarUrl: isValidUrl(raw.image ?? raw.imageUrl) ? (raw.image ?? raw.imageUrl) : null,
+    modelUrl: isValidUrl(raw.modelUrl) ? raw.modelUrl : null,
     personality: raw.personality,
     bornYear: raw.bornYear ?? null,
     bornMonth: raw.bornMonth ?? null,

@@ -36,6 +36,7 @@ export function ChatRightPanel({
           title: c.title,
           description: c.background,
           imageUrl: isValidUrl(c.imageUrl) ? c.imageUrl : "/card.jpg",
+          modelUrl: c.modelUrl ?? null,
           side: c.side,
           contextId: c.contextId ?? activeCharacter.contextId,
         }),
