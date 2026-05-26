@@ -76,6 +76,7 @@ export interface UpdateQuizPayload {
   title?: string;
   contextId?: string;
   level?: string;
+  isPublished?: boolean;
 }
 
 export interface UpdateQuestionPayload {
