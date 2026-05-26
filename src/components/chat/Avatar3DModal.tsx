@@ -250,7 +250,7 @@ export function Avatar3DModal({ character, sessionId, contextId, onClose }: Avat
             background: "radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.08) 0%, transparent 60%)",
           }}>
             <FBXCharacterViewer
-              modelUrl="/models/character.glb"
+              modelUrl={character.modelUrl ?? "/models/character.glb"}
               isSpeaking={isSpeaking}
               isListening={false}
               isRecording={isRecording}

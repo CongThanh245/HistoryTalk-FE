@@ -57,6 +57,7 @@ export interface ChatCharacter {
   title: string;
   description?: string;
   imageUrl?: string | null;
+  modelUrl?: string | null;
   side?: string;
   contextId?: string; // character thuộc context nào
 }
@@ -130,6 +131,7 @@ export const chatService = {
       title: raw.title,
       description: raw.background,
       imageUrl: raw.image || raw.imageUrl || null,
+      modelUrl: raw.modelUrl || null,
       side: raw.side,
       contextId: raw.context?.contextId, // ← nằm trong nested object
     };

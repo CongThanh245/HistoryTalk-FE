@@ -61,6 +61,7 @@ export type CharacterDraft = {
   title: string;
   background: string;
   image: string;
+  modelUrl: string;
   personality: string;
   bornYear: string;
   bornMonth: string;
@@ -82,6 +83,7 @@ export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
   title: "",
   background: "",
   image: "",
+  modelUrl: "",
   personality: "",
   bornYear: "",
   bornMonth: "",
@@ -160,7 +162,7 @@ export function StaffCharacterDetailView({
     
     // Deep comparison of relevant fields
     const keys: (keyof CharacterDraft)[] = [
-      "name", "title", "background", "image", "personality",
+      "name", "title", "background", "image", "modelUrl", "personality",
       "bornYear", "bornMonth", "bornDay", "isBornBc",
       "deathYear", "deathMonth", "deathDay", "isDeathBc",
       "isActive", "isPublished", "documentId", "documentTitle", "documentContent"
@@ -310,6 +312,7 @@ export function StaffCharacterDetailView({
     title: draft.title || "Chức vị",
     description: draft.background || undefined,
     imageUrl: isValidUrl(draft.image) ? draft.image : "",
+    modelUrl: isValidUrl(draft.modelUrl) ? draft.modelUrl : null,
     contextId: mappedContextId || undefined,
   };
 
@@ -549,6 +552,16 @@ export function StaffCharacterDetailView({
                 value={draft.image}
                 onChange={(e) => set("image")(e.target.value)}
                 placeholder="https://..."
+                disabled={!isEditing}
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <StaffFormLabel>URL mô hình 3D (.glb / .fbx)</StaffFormLabel>
+              <StaffFormInput
+                value={draft.modelUrl}
+                onChange={(e) => set("modelUrl")(e.target.value)}
+                placeholder="https://...model.glb"
                 disabled={!isEditing}
               />
             </div>
