@@ -149,8 +149,15 @@ export function CharacterCarouselCard({
 
         {/* Button Trò chuyện ngay */}
         <div className="mt-4">
-          <div className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full text-xs font-bold bg-[var(--accent-gold)] text-black hover:bg-[var(--accent-gold-soft)] transition-colors shadow-lg">
-            <ChatTextIcon className="w-4 h-4 fill-current text-black" />
+          <div
+            className="flex items-center justify-center gap-1.5 w-full py-3 rounded-full text-xs font-extrabold transition-all shadow-lg hover:brightness-110"
+            style={{
+              background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-soft) 100%)",
+              color: "var(--text-inverse)",
+              boxShadow: "0 12px 26px var(--accent-gold-glow)",
+            }}
+          >
+            <ChatTextIcon className="w-4 h-4 fill-current" />
             Trò chuyện ngay
           </div>
         </div>

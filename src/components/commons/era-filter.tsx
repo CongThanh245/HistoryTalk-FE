@@ -25,14 +25,15 @@ export function EraFilter({ active, onChange, counts }: EraFilterProps) {
             style={
               isActive
                 ? {
-                    background: "var(--burning-flame)",
-                    color: "var(--bg-deep)",
-                    boxShadow: "0 2px 10px var(--accent-gold-glow)",
+                    background: "var(--era-filter-active-bg, var(--accent-gold))",
+                    color: "var(--era-filter-active-text, var(--text-inverse))",
+                    border: "1px solid var(--era-filter-active-bg, var(--accent-gold))",
+                    boxShadow: "0 4px 14px var(--accent-gold-glow)",
                   }
                 : {
-                    background: "var(--card-light-bg)",
-                    border: "1px solid var(--card-light-border)",
-                    color: "var(--content-text)",
+                    background: "var(--era-filter-bg, var(--card-light-bg))",
+                    border: "1px solid var(--era-filter-border, var(--card-light-border))",
+                    color: "var(--era-filter-text, var(--content-text))",
                   }
             }
           >
@@ -42,7 +43,7 @@ export function EraFilter({ active, onChange, counts }: EraFilterProps) {
                 className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
                 style={{
                   background: isActive ? "rgba(0,0,0,0.15)" : "var(--card-light-border)",
-                  color: isActive ? "var(--bg-deep)" : "var(--content-muted)",
+                  color: isActive ? "var(--era-filter-active-text, var(--text-inverse))" : "var(--era-filter-count-text, var(--content-muted))",
                 }}
               >
                 {count}

@@ -59,14 +59,14 @@ export function QuizFilterBar({
             style={
               selectedEra === f.value
                 ? {
-                    background: "var(--accent-gold)",
-                    color: "var(--text-inverse)",
-                    border: "1px solid var(--accent-gold)",
+                    background: "var(--era-filter-active-bg, var(--accent-gold))",
+                    color: "var(--era-filter-active-text, var(--text-inverse))",
+                    border: "1px solid var(--era-filter-active-bg, var(--accent-gold))",
                   }
                 : {
-                    background: "var(--card-light-bg)",
-                    color: "var(--content-text)",
-                    border: "1px solid var(--border-default)",
+                    background: "var(--era-filter-bg, var(--card-light-bg))",
+                    color: "var(--era-filter-text, var(--content-text))",
+                    border: "1px solid var(--era-filter-border, var(--border-default))",
                   }
             }
           >
