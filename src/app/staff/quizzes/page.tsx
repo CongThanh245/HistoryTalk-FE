@@ -30,7 +30,6 @@ import {
   useCreateStaffQuiz,
   useUpdateStaffQuiz,
   useSoftDeleteStaffQuiz,
-  useToggleStaffQuizActive,
 } from "@/features/staff/quiz/hooks";
 import {
   useTrashList,
@@ -120,7 +119,6 @@ export default function StaffQuizzesPage() {
   const createQuiz = useCreateStaffQuiz();
   const updateQuiz = useUpdateStaffQuiz();
   const softDeleteQuiz = useSoftDeleteStaffQuiz();
-  const toggleActiveQuiz = useToggleStaffQuizActive();
 
   const { data: trashItems = [], isLoading: isTrashLoading } = useTrashList("quizzes");
   const restoreQuiz = useTrashRestore("quizzes");
@@ -261,19 +259,25 @@ export default function StaffQuizzesPage() {
   const handleToggleActive = () => {
     if (!publishTarget) return;
     const nextPublished = !publishTarget.isPublished;
-    toggleActiveQuiz.mutate(publishTarget.quizId, {
-      onSuccess: () => {
-        toast.success(
-          nextPublished
-            ? `Đã publish quiz "${publishTarget.title}".`
-            : `Đã ẩn quiz "${publishTarget.title}" khỏi người dùng.`,
-        );
-        setPublishTarget(null);
+    updateQuiz.mutate(
+      {
+        quizId: publishTarget.quizId,
+        payload: { isPublished: nextPublished },
       },
-      onError: () => {
-        toast.error("Cập nhật trạng thái hiển thị thất bại. Vui lòng thử lại.");
+      {
+        onSuccess: () => {
+          toast.success(
+            nextPublished
+              ? `Đã publish quiz "${publishTarget.title}".`
+              : `Đã ẩn quiz "${publishTarget.title}" khỏi người dùng.`,
+          );
+          setPublishTarget(null);
+        },
+        onError: () => {
+          toast.error("Cập nhật trạng thái hiển thị thất bại. Vui lòng thử lại.");
+        },
       },
-    });
+    );
   };
 
   // ── Columns ───────────────────────────────────────────────
@@ -795,7 +799,7 @@ export default function StaffQuizzesPage() {
             ? `Quiz "${publishTarget?.title}" sẽ không hiển thị cho người dùng nữa.`
             : `Quiz "${publishTarget?.title}" sẽ hiển thị cho người dùng.`
         }
-        isPending={toggleActiveQuiz.isPending}
+        isPending={updateQuiz.isPending}
         confirmLabel={publishTarget?.isPublished ? "Ẩn quiz" : "Publish quiz"}
         variant="warning"
         onConfirm={handleToggleActive}
