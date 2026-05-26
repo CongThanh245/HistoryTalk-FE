@@ -47,7 +47,6 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
     title: "Account",
     items: [
       { icon: UserIcon, label: "Hồ sơ", href: "/profile" },
-      { icon: ReceiptIcon, label: "Đơn hàng", href: "/payment/history" },
     ],
   },
 ];
@@ -88,6 +87,7 @@ export const SYSTEM_ADMIN_SIDEBAR: SidebarSection[] = [
     title: "Hệ thống",
     items: [
       { icon: CreditCardIcon, label: "Gói dịch vụ", href: "/staff/admin/subscriptions" },
+      { icon: ReceiptIcon, label: "Lịch sử giao dịch", href: "/staff/admin/payment/history" },
     ],
   },
   {

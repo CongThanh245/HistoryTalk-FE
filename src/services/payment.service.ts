@@ -26,6 +26,20 @@ export interface CheckoutResponse {
   expiredAt: string;
 }
 
+export interface PayosReturnRequest {
+  code: string;
+  id: string;
+  cancel: boolean;
+  status: string;
+  orderCode: number;
+}
+
+export interface PayosReturnResponse {
+  orderCode: number;
+  resolvedStatus: string;
+  message: string;
+}
+
 export interface PaymentHistoryItem {
   orderId: string;
   orderCode: number;
@@ -54,6 +68,11 @@ export const paymentService = {
 
   getHistory: async (): Promise<PaymentHistoryItem[]> => {
     const res = await axiosClient.get("/payments/history");
+    return res.data.data;
+  },
+
+  notifyReturn: async (payload: PayosReturnRequest): Promise<PayosReturnResponse> => {
+    const res = await axiosClient.post("/payments/payos/return", payload);
     return res.data.data;
   },
 };
