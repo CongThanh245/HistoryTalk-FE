@@ -14,6 +14,11 @@ import {
   useCharacters,
   useDeleteCharacter
 } from "@/features/characters/hooks";
+import {
+  useTrashList,
+  useTrashRestore,
+  useTrashPermanentDelete,
+} from "@/features/trash/hooks";
 import type { Character } from "@/services/character.service";
 import type { TrashItem } from "@/services/trash.service";
 import { isValidUrl } from "@/lib/utils/url";
@@ -167,37 +172,20 @@ export default function StaffCharactersPage() {
     [router],
   );
 
-  const trashColumns = React.useMemo<ColumnDef<Character>[]>(
+  type TrashRow = (typeof trashItems)[number];
+  const trashColumns = React.useMemo<ColumnDef<TrashRow>[]>(
     () => [
       {
-        accessorKey: "name",
+        accessorKey: "title",
         header: "Nhân vật",
         cell: ({ row }) => (
-          <div className="flex items-center gap-3 min-w-[220px]">
-            <div
-              className="w-9 h-9 rounded-lg overflow-hidden shrink-0 relative"
-              style={{ background: "var(--card-light-border)", opacity: 0.6 }}
+          <div className="min-w-[220px] opacity-60">
+            <p
+              className="text-sm font-semibold"
+              style={{ color: "var(--content-heading)" }}
             >
-              {isValidUrl(row.original.imageUrl) && (
-                <Image
-                  src={row.original.imageUrl!}
-                  alt={row.original.name}
-                  fill
-                  className="object-cover grayscale"
-                />
-              )}
-            </div>
-            <div>
-              <p
-                className="text-sm font-semibold"
-                style={{ color: "var(--content-heading)", opacity: 0.6 }}
-              >
-                {row.original.name}
-              </p>
-              <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                {row.original.title}
-              </p>
-            </div>
+              {row.original.title}
+            </p>
           </div>
         ),
       },
@@ -205,11 +193,10 @@ export default function StaffCharactersPage() {
         accessorKey: "deletedAt",
         header: "Đã xóa lúc",
         cell: ({ row }) => {
-          const date = row.original.deletedAt ? new Date(row.original.deletedAt) : null;
-          const isValidDate = date && !isNaN(date.getTime());
+          const date = new Date(row.original.deletedAt);
           return (
             <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
-              {isValidDate ? date.toLocaleString("vi-VN") : "—"}
+              {!isNaN(date.getTime()) ? date.toLocaleString("vi-VN") : "—"}
             </span>
           );
         },
@@ -218,14 +205,27 @@ export default function StaffCharactersPage() {
         id: "actions",
         header: () => <div className="text-right pr-4">Thao tác</div>,
         cell: ({ row }) => (
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full"
+              title="Khôi phục"
+              onClick={() => {
+                setRestoreTarget({ id: row.original.id, title: row.original.title });
+                setRestoreOpen(true);
+              }}
+              style={{ color: "var(--accent-blue)" }}
+            >
+              <ArrowCounterClockwiseIcon className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon-sm"
               className="rounded-full"
               title="Xóa vĩnh viễn"
               onClick={() => {
-                setPermanentDeleteTarget({ id: row.original.id, title: row.original.name });
+                setPermanentDeleteTarget({ id: row.original.id, title: row.original.title });
                 setPermanentDeleteOpen(true);
               }}
               style={{ color: "var(--accent-danger)" }}
@@ -322,12 +322,21 @@ export default function StaffCharactersPage() {
           </div>
         </div>
 
-        <StaffDataTable
-          columns={showTrash ? trashColumns : columns}
-          data={items}
-          emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy nhân vật phù hợp."}
-          isLoading={isLoading}
-        />
+        {showTrash ? (
+          <StaffDataTable
+            columns={trashColumns}
+            data={trashItems}
+            emptyMessage="Thùng rác trống."
+            isLoading={isTrashLoading}
+          />
+        ) : (
+          <StaffDataTable
+            columns={columns}
+            data={items}
+            emptyMessage="Không tìm thấy nhân vật phù hợp."
+            isLoading={isLoading}
+          />
+        )}
       </section>
 
       {/* Delete confirm */}
@@ -348,6 +357,26 @@ export default function StaffCharactersPage() {
           });
         }}
         isPending={deleteCharacter.isPending}
+      />
+
+      {/* Restore confirm */}
+      <ConfirmDialog
+        open={restoreOpen}
+        onOpenChange={setRestoreOpen}
+        title="Khôi phục nhân vật?"
+        description={`Nhân vật "${restoreTarget?.title}" sẽ được khôi phục và hiển thị trở lại.`}
+        confirmLabel={restoreCharacter.isPending ? "Đang khôi phục..." : "Khôi phục"}
+        variant="primary"
+        onConfirm={() => {
+          if (!restoreTarget) return;
+          restoreCharacter.mutate([restoreTarget.id], {
+            onSuccess: () => {
+              setRestoreOpen(false);
+              setRestoreTarget(null);
+            },
+          });
+        }}
+        isPending={restoreCharacter.isPending}
       />
 
       {/* Permanent Delete confirm */}
