@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { paymentService } from "@/services/payment.service";
 import {
   ArrowLeftIcon,
   CheckCircleIcon,
@@ -94,6 +96,20 @@ export default function PaymentResult() {
   const amount = params.get("amount");
   const isSuccess = status === "success";
 
+  useEffect(() => {
+    const code = params.get("code") ?? "";
+    const id = params.get("id") ?? "";
+    const cancel = params.get("cancel") === "true";
+    const payosStatus = params.get("status") ?? "";
+    const orderCodeNum = Number(params.get("orderCode") ?? "0");
+
+    if (!orderCodeNum) return;
+
+    paymentService
+      .notifyReturn({ code, id, cancel, status: payosStatus, orderCode: orderCodeNum })
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="flex min-h-full items-center justify-center px-4 py-8 md:py-12">
       <section className="w-full max-w-4xl overflow-hidden rounded-lg border border-[rgba(27,38,50,0.1)] bg-white/75 shadow-[0_24px_70px_rgba(27,38,50,0.1)] animate-in fade-in zoom-in-95 duration-500">
@@ -175,20 +191,20 @@ export default function PaymentResult() {
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                onClick={() => router.push(isSuccess ? "/home" : "/payment/history")}
+                onClick={() => router.push("/home")}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--abyssal-blue)] px-4 text-sm font-bold text-white shadow-[0_12px_28px_rgba(27,38,50,0.2)] transition hover:-translate-y-0.5 hover:bg-[var(--blue-fantastic)]"
               >
-                {isSuccess ? <HouseIcon size={17} /> : <ReceiptIcon size={17} />}
-                {isSuccess ? "Về trang chủ" : "Xem đơn hàng"}
+                <HouseIcon size={17} />
+                Về trang chủ
               </button>
 
               <button
                 type="button"
-                onClick={() => router.push("/payment/history")}
+                onClick={() => router.push("/home")}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[rgba(27,38,50,0.12)] bg-white px-4 text-sm font-bold text-[var(--content-heading)] transition hover:-translate-y-0.5 hover:border-[rgba(255,146,21,0.36)] hover:text-[var(--accent-gold)]"
               >
                 <ArrowLeftIcon size={16} />
-                Lịch sử đơn hàng
+                Quay lại
               </button>
             </div>
           </div>

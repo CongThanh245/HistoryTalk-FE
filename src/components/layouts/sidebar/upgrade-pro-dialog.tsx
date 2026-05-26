@@ -7,6 +7,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
 import { paymentService, type PaymentTier } from "@/services/payment.service";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth.store";
+import { useRouter } from "next/navigation";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -29,6 +31,7 @@ function TierCard({
 }) {
   const isFeatured = index === 0;
   const isLoading = loadingId === tier.tierId;
+  const isFree = tier.amount === 0;
 
   const features: [string, string][] = [
     ["Thời hạn", `${tier.noMonth} tháng`],
@@ -52,19 +55,28 @@ function TierCard({
       </div>
 
       <div className="upgrade-pro-price">
-        <span>{formatCurrency(tier.amount)}</span>
-        <small>/{tier.noMonth} tháng</small>
+        <span>{isFree ? "Miễn phí" : formatCurrency(tier.amount)}</span>
+        {!isFree && <small>/{tier.noMonth} tháng</small>}
       </div>
 
-      <button
-        type="button"
-        disabled={isLoading}
-        onClick={() => onCheckout(tier.tierId)}
-        className={`upgrade-pro-action ${isFeatured ? "is-featured" : ""}`}
-        style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? "wait" : "pointer" }}
-      >
-        {isLoading ? "Đang xử lý..." : "Đăng ký ngay"}
-      </button>
+      {isFree ? (
+        <div
+          className={`upgrade-pro-action ${isFeatured ? "is-featured" : ""}`}
+          style={{ opacity: 0.5, cursor: "default", textAlign: "center", pointerEvents: "none" }}
+        >
+          Gói hiện tại
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={isLoading}
+          onClick={() => onCheckout(tier.tierId)}
+          className={`upgrade-pro-action ${isFeatured ? "is-featured" : ""}`}
+          style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? "wait" : "pointer" }}
+        >
+          {isLoading ? "Đang xử lý..." : "Đăng ký ngay"}
+        </button>
+      )}
 
       <div className="upgrade-pro-features">
         {features.map(([label, value]) => (
@@ -103,10 +115,14 @@ function SkeletonCard({ index }: { index: number }) {
 
 export function UpgradeProDialog({ children }: { children: React.ReactNode }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const router = useRouter();
 
   const { data: tiers, isLoading } = useQuery({
     queryKey: queryKeys.payments.tiers,
     queryFn: paymentService.getTiers,
+    enabled: open,
   });
 
   const checkoutMutation = useMutation({
@@ -120,6 +136,19 @@ export function UpgradeProDialog({ children }: { children: React.ReactNode }) {
     },
   });
 
+  const handleTriggerClick = () => {
+    if (!isAuthenticated) {
+      toast.error("Vui lòng đăng nhập để nâng cấp Pro.", {
+        action: {
+          label: "Đăng nhập",
+          onClick: () => router.push("/login"),
+        },
+      });
+      return;
+    }
+    setOpen(true);
+  };
+
   const handleCheckout = (tierId: string) => {
     setLoadingId(tierId);
     checkoutMutation.mutate(tierId);
@@ -128,8 +157,8 @@ export function UpgradeProDialog({ children }: { children: React.ReactNode }) {
   const activeTiers = tiers?.filter((t) => t.isActive).sort((a, b) => a.amount - b.amount) ?? [];
 
   return (
-    <DialogPrimitive.Root>
-      <DialogPrimitive.Trigger asChild>{children}</DialogPrimitive.Trigger>
+    <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
+      <div onClick={handleTriggerClick} style={{ display: "contents" }}>{children}</div>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="upgrade-pro-overlay" />
         <DialogPrimitive.Content className="upgrade-pro-content">
