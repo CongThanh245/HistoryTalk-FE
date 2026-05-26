@@ -1,4 +1,4 @@
-"use client";
+﻿﻿﻿"use client";
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -20,8 +20,12 @@ import {
   useCreateEvent,
   useUpdateEvent,
   useDeleteEvent,
-  usePermanentDeleteEvent,
 } from "@/features/events/hooks";
+import {
+  useTrashList,
+  useTrashRestore,
+  useTrashPermanentDelete,
+} from "@/features/trash/hooks";
 import {
   useCreateHistoricalDocument,
   useDeleteHistoricalDocument,
@@ -35,6 +39,7 @@ import {
   ERA_CONFIG,
   EventEra,
 } from "@/services/event.service";
+import type { TrashItem } from "@/services/trash.service";
 
 type DraftState = {
   id?: string;
@@ -85,7 +90,10 @@ export default function StaffContextsPage() {
   const [showTrash, setShowTrash] = React.useState(false);
   const [permanentDeleteOpen, setPermanentDeleteOpen] = React.useState(false);
   const [permanentDeleteTarget, setPermanentDeleteTarget] =
-    React.useState<HistoricalEvent | null>(null);
+    React.useState<{ id: string; title: string } | null>(null);
+  const [restoreTarget, setRestoreTarget] =
+    React.useState<{ id: string; title: string } | null>(null);
+  const [restoreOpen, setRestoreOpen] = React.useState(false);
   const [publishDialogOpen, setPublishDialogOpen] = React.useState(false);
   const [documentOpen, setDocumentOpen] = React.useState(false);
 
@@ -102,14 +110,13 @@ export default function StaffContextsPage() {
   const updateHistoricalDocument = useUpdateHistoricalDocument(editContextId);
   const deleteHistoricalDocument = useDeleteHistoricalDocument(editContextId);
   const deleteEvent = useDeleteEvent();
-  const permanentDeleteEvent = usePermanentDeleteEvent();
+  const { data: trashItems = [], isLoading: isTrashLoading } = useTrashList("historical-contexts");
+  const restoreContext = useTrashRestore("historical-contexts");
+  const permanentDeleteContext = useTrashPermanentDelete("historical-contexts");
 
   const items = data?.content ?? [];
-
-  // FE filter: active vs trashed
-  const activeItems = items.filter((e) => !e.deletedAt);
-  const trashedItems = items.filter((e) => !!e.deletedAt);
-  const displayedItems = showTrash ? trashedItems : activeItems;
+  const activeItems = items;
+  const displayedItems = items;
 
   const set = <K extends keyof DraftState>(field: K) => (val: DraftState[K]) =>
     setDraft((s) => ({ ...s, [field]: val }));
@@ -386,26 +393,15 @@ export default function StaffContextsPage() {
   );
 
   // Trash view columns
-  const trashColumns = React.useMemo<ColumnDef<HistoricalEvent>[]>(
+  const trashColumns = React.useMemo<ColumnDef<TrashItem>[]>(
     () => [
       {
         accessorKey: "title",
         header: "Tiêu đề",
         cell: ({ row }) => (
           <div className="min-w-[260px]">
-            <p
-              className="text-sm font-semibold"
-              style={{ color: "var(--content-heading)", opacity: 0.6 }}
-            >
+            <p className="text-sm font-semibold" style={{ color: "var(--content-heading)", opacity: 0.6 }}>
               {row.original.title}
-            </p>
-            <p
-              className="text-xs mt-0.5"
-              style={{ color: "var(--content-muted)" }}
-            >
-              {row.original.summary?.length > 80
-                ? row.original.summary.slice(0, 80) + "..."
-                : row.original.summary}
             </p>
           </div>
         ),
@@ -414,25 +410,10 @@ export default function StaffContextsPage() {
         accessorKey: "deletedAt",
         header: "Đã xóa lúc",
         cell: ({ row }) => {
-          const date = row.original.deletedAt ? new Date(row.original.deletedAt) : null;
-          const isValidDate = date && !isNaN(date.getTime());
+          const date = new Date(row.original.deletedAt);
           return (
             <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
-              {isValidDate ? date.toLocaleString("vi-VN") : "—"}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: "era",
-        header: "Thời đại",
-        cell: ({ row }) => {
-          const eraRaw = row.original.era;
-          const era = eraRaw?.toLowerCase() as EventEra | undefined;
-          const label = era && era in ERA_CONFIG ? ERA_CONFIG[era]?.label : undefined;
-          return (
-            <span className="text-xs font-medium" style={{ color: "var(--content-text)" }}>
-              {label ?? "—"}
+              {!isNaN(date.getTime()) ? date.toLocaleString("vi-VN") : "\u2014"}
             </span>
           );
         },
@@ -441,16 +422,15 @@ export default function StaffContextsPage() {
         id: "actions",
         header: () => <div className="text-right pr-4">Thao tác</div>,
         cell: ({ row }) => (
-          <div className="flex items-center justify-end">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="rounded-full"
-              title="Xóa vĩnh viễn"
-              onClick={() => {
-                setPermanentDeleteTarget(row.original);
-                setPermanentDeleteOpen(true);
-              }}
+          <div className="flex items-center justify-end gap-1">
+            <Button variant="ghost" size="icon-sm" className="rounded-full" title="Khôi phục"
+              onClick={() => { setRestoreTarget({ id: row.original.id, title: row.original.title }); setRestoreOpen(true); }}
+              style={{ color: "var(--accent-blue)" }}
+            >
+              <ArrowCounterClockwiseIcon className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon-sm" className="rounded-full" title="Xoa vinh vien"
+              onClick={() => { setPermanentDeleteTarget({ id: row.original.id, title: row.original.title }); setPermanentDeleteOpen(true); }}
               style={{ color: "var(--accent-danger)" }}
             >
               <TrashIcon className="h-4 w-4" />
@@ -540,7 +520,7 @@ export default function StaffContextsPage() {
               {showTrash ? (
                 <><ArrowCounterClockwiseIcon className="h-4 w-4 mr-1.5" /> Danh sách</>
               ) : (
-                <><TrashIcon className="h-4 w-4 mr-1.5" /> Thùng rác {trashedItems.length > 0 && `(${trashedItems.length})`}</>
+                <><TrashIcon className="h-4 w-4 mr-1.5" /> Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}</>
               )}
             </Button>
             {!showTrash && (
@@ -559,12 +539,11 @@ export default function StaffContextsPage() {
           </div>
         </div>
 
-        <StaffDataTable
-          columns={showTrash ? trashColumns : columns}
-          data={displayedItems}
-          emptyMessage={showTrash ? "Thùng rác trống." : "Không tìm thấy bối cảnh phù hợp."}
-          isLoading={isLoading}
-        />
+        {showTrash ? (
+          <StaffDataTable columns={trashColumns} data={trashItems} emptyMessage="Thùng rác trống." isLoading={isTrashLoading} />
+        ) : (
+          <StaffDataTable columns={columns} data={displayedItems} emptyMessage="Không tìm thấy bối cảnh phù hợp." isLoading={isLoading} />
+        )}
       </section>
       )}
 
@@ -1003,24 +982,44 @@ export default function StaffContextsPage() {
         isPending={deleteEvent.isPending}
       />
 
+      {/* Restore confirm */}
+      <ConfirmDialog
+        open={restoreOpen}
+        onOpenChange={setRestoreOpen}
+        title="Khôi phục bối cảnh?"
+        description={`Bối cảnh "${restoreTarget?.title}" sẽ được khôi phục.`}
+        confirmLabel="Khôi phục"
+        variant="warning"
+        onConfirm={() => {
+          if (!restoreTarget) return;
+          restoreContext.mutate([restoreTarget.id], {
+            onSuccess: () => {
+              setRestoreOpen(false);
+              setRestoreTarget(null);
+            },
+          });
+        }}
+        isPending={restoreContext.isPending}
+      />
+
       {/* Permanent Delete confirm */}
       <ConfirmDialog
         open={permanentDeleteOpen}
         onOpenChange={setPermanentDeleteOpen}
         title="Xóa vĩnh viễn bối cảnh?"
         description="Hành động này không thể hoàn tác. Bối cảnh sẽ bị xóa hoàn toàn khỏi hệ thống."
-        confirmLabel={permanentDeleteEvent.isPending ? "Đang xóa..." : "Xóa vĩnh viễn"}
+        confirmLabel={permanentDeleteContext.isPending ? "Đang xóa..." : "Xóa vĩnh viễn"}
         variant="danger"
         onConfirm={() => {
           if (!permanentDeleteTarget) return;
-          permanentDeleteEvent.mutate(permanentDeleteTarget.id, {
+          permanentDeleteContext.mutate([permanentDeleteTarget.id], {
             onSuccess: () => {
               setPermanentDeleteOpen(false);
               setPermanentDeleteTarget(null);
             },
           });
         }}
-        isPending={permanentDeleteEvent.isPending}
+        isPending={permanentDeleteContext.isPending}
       />
     </StaffShell>
   );
