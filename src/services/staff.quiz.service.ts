@@ -165,11 +165,6 @@ export const staffQuizService = {
     await axiosClient.patch(`/staff/quizzes/${quizId}/soft-delete`);
   },
 
-  // PATCH /staff/quizzes/:quizId/toggle-active
-  toggleActive: async (quizId: string): Promise<void> => {
-    await axiosClient.patch(`/staff/quizzes/${quizId}/toggle-active`);
-  },
-
   // POST /staff/quizzes/:quizId/questions
   addQuestion: async (
     quizId: string,
