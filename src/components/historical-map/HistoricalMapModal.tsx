@@ -44,6 +44,21 @@ interface HistoricalMapModalProps {
 }
 
 const DEFAULT_YEAR = 938; // Trận Bạch Đằng — trận đầu tiên có ý nghĩa lớn
+const VIETNAM_VIEW_BOUNDS = {
+  minLat: 7.1,
+  maxLat: 23.7,
+  minLng: 101.6,
+  maxLng: 116.3,
+};
+
+function isInsideVietnamView(landmark: Landmark) {
+  return (
+    landmark.lat >= VIETNAM_VIEW_BOUNDS.minLat &&
+    landmark.lat <= VIETNAM_VIEW_BOUNDS.maxLat &&
+    landmark.lng >= VIETNAM_VIEW_BOUNDS.minLng &&
+    landmark.lng <= VIETNAM_VIEW_BOUNDS.maxLng
+  );
+}
 
 export function HistoricalMapModal({
   isOpen,
@@ -60,7 +75,12 @@ export function HistoricalMapModal({
   // Year (timeline) state
   const [currentYear, setCurrentYear] = useState<number>(DEFAULT_YEAR);
 
-  const { data: allLandmarks = [], isLoading } = useLandmarks({});
+  const { data: allLandmarksRaw = [], isLoading } = useLandmarks({});
+
+  const allLandmarks = useMemo(
+    () => allLandmarksRaw.filter(isInsideVietnamView),
+    [allLandmarksRaw],
+  );
 
   // Danh sách năm có trận (sorted, unique) — dùng cho discrete slider
   const battleYears = useMemo(() => {
@@ -96,19 +116,6 @@ export function HistoricalMapModal({
     };
   }, [isOpen]);
 
-  // Auto-close landmark panel nếu landmark đó không còn visible (do đổi năm)
-  useEffect(() => {
-    if (
-      selectedLandmark &&
-      !visibleLandmarks.find(
-        (lm) => lm.landmarkId === selectedLandmark.landmarkId,
-      )
-    ) {
-      setSelectedLandmark(null);
-      setSelectedContextId(null);
-    }
-  }, [visibleLandmarks, selectedLandmark]);
-
   // ── Callbacks ──────────────────────────────────────────────
   const handleSelectLandmark = useCallback((landmark: Landmark) => {
     setSelectedLandmark(landmark);
@@ -120,42 +127,63 @@ export function HistoricalMapModal({
     setSelectedContextId(null);
   }, []);
 
+  const handleYearChange = useCallback(
+    (year: number) => {
+      setCurrentYear(year);
+      if (
+        selectedLandmark &&
+        (selectedLandmark.yearStart > year || selectedLandmark.yearEnd < year)
+      ) {
+        setSelectedLandmark(null);
+        setSelectedContextId(null);
+      }
+    },
+    [selectedLandmark],
+  );
+
   // ── Render ─────────────────────────────────────────────────
   const panelOpen = !!selectedLandmark;
 
   return (
     <div
       className="flex flex-col h-full"
-      style={{ background: "var(--bg-content)" }}
+      style={{
+        background:
+          "linear-gradient(180deg, #2f1d10 0%, #4b2d15 42%, #2a1a0e 100%)",
+      }}
     >
       {/* Top bar */}
       <div
         className="shrink-0 flex items-center gap-3 px-4 h-14 z-10"
         style={{
-          background: "var(--palladian)",
-          borderBottom: "1px solid var(--oatmeal)",
-          boxShadow: "0 1px 4px rgba(27,38,50,0.08)",
+          background:
+            "linear-gradient(90deg, #3b2312 0%, #6e461f 45%, #3b2312 100%)",
+          borderBottom: "1px solid rgba(246, 209, 132, 0.28)",
+          boxShadow: "0 2px 16px rgba(35, 20, 8, 0.35)",
         }}
       >
-        <Map size={18} style={{ color: "var(--accent-gold)" }} />
+        <Map size={18} style={{ color: "#f1c66f" }} />
         <div>
           <h2
             className="font-bold text-sm leading-tight"
-            style={{ color: "var(--content-heading)" }}
+            style={{
+              color: "#ffe8b1",
+            }}
           >
             Bản đồ lịch sử Việt Nam
           </h2>
-          <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+          <p className="text-xs" style={{ color: "rgba(255, 232, 177, 0.7)" }}>
             {isLoading
               ? "Đang tải..."
-              : `${visibleLandmarks.length}/${allLandmarks.length} di tích đang hiển thị`}
+              : `${visibleLandmarks.length}/${allLandmarks.length} di tích trong lãnh thổ Việt Nam`}
           </p>
         </div>
 
         <button
           onClick={onClose}
-          className="p-2 rounded-lg transition-colors hover:bg-black/5"
-          style={{ color: "var(--content-muted)" }}
+          className="ml-auto p-2 rounded-md transition-colors hover:bg-white/10"
+          style={{ color: "rgba(255, 232, 177, 0.78)" }}
+          aria-label="Đóng bản đồ"
         >
           <X size={18} />
         </button>
@@ -176,22 +204,22 @@ export function HistoricalMapModal({
             <div
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-5 py-4 rounded-xl text-sm font-medium pointer-events-none text-center"
               style={{
-                background: "rgba(255,255,255,0.95)",
-                color: "var(--content-heading)",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-                border: "1px solid var(--card-light-border)",
+                background: "rgba(74, 45, 20, 0.92)",
+                color: "#ffe8b1",
+                boxShadow: "0 12px 30px rgba(50,26,8,0.28)",
+                border: "1px solid rgba(246, 209, 132, 0.32)",
                 backdropFilter: "blur(8px)",
                 maxWidth: 320,
               }}
             >
               <div className="text-2xl mb-1">🗺️</div>
               Chưa có di tích nào ở năm{" "}
-              <span style={{ color: "var(--accent-gold)" }}>
+              <span style={{ color: "#f1c66f" }}>
                 {currentYear < 0 ? `${Math.abs(currentYear)} TCN` : currentYear}
               </span>
               <div
                 className="text-xs mt-1 font-normal"
-                style={{ color: "var(--content-muted)" }}
+                style={{ color: "rgba(255, 232, 177, 0.7)" }}
               >
                 Hãy kéo trục thời gian đến mốc khác
               </div>
@@ -233,7 +261,7 @@ export function HistoricalMapModal({
       {/* Timeline (đáy) */}
       <TimelineSlider
         currentYear={currentYear}
-        onChange={setCurrentYear}
+        onChange={handleYearChange}
         battleYears={battleYears}
         visibleCount={visibleLandmarks.length}
       />
@@ -241,22 +269,22 @@ export function HistoricalMapModal({
       {/* Custom Leaflet tooltip style */}
       <style>{`
         .leaflet-tooltip-custom {
-          background: white !important;
-          border: 1px solid #e5e0d8 !important;
-          border-radius: 8px !important;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
+          background: #f6dda7 !important;
+          border: 1px solid rgba(76, 44, 18, 0.35) !important;
+          border-radius: 6px !important;
+          box-shadow: 0 8px 18px rgba(67,38,16,0.24) !important;
           padding: 0 !important;
         }
         .leaflet-tooltip-custom::before {
-          border-top-color: #e5e0d8 !important;
+          border-top-color: rgba(76, 44, 18, 0.35) !important;
         }
         .leaflet-control-zoom {
-          border: 1px solid #e5e0d8 !important;
-          border-radius: 8px !important;
+          border: 1px solid rgba(76, 44, 18, 0.28) !important;
+          border-radius: 6px !important;
           overflow: hidden !important;
         }
         .leaflet-control-zoom a {
-          color: #1b2632 !important;
+          color: #4f2f15 !important;
         }
       `}</style>
     </div>
