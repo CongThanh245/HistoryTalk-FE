@@ -99,18 +99,6 @@ export function useSoftDeleteStaffQuiz() {
   });
 }
 
-// PATCH /staff/quizzes/{quizId}/toggle-active — bật/tắt hiển thị
-export function useToggleStaffQuizActive() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (quizId: string) => staffQuizService.toggleActive(quizId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.all });
-    },
-  });
-}
-
 // DELETE /staff/quizzes/{quizId} — xóa vĩnh viễn
 export function usePermanentDeleteStaffQuiz() {
   const queryClient = useQueryClient();
