@@ -51,6 +51,19 @@ export interface PaymentHistoryItem {
   createdAt: string;
   paidAt: string | null;
   expiredAt: string;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+}
+
+export interface PaymentHistoryPage {
+  content: PaymentHistoryItem[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
 // ── Service ──────────────────────────────────────────────
@@ -66,13 +79,19 @@ export const paymentService = {
     return res.data.data;
   },
 
-  getHistory: async (): Promise<PaymentHistoryItem[]> => {
-    const res = await axiosClient.get("/payments/history");
+  getHistory: async (params?: { status?: string; userId?: string; page?: number; size?: number }): Promise<PaymentHistoryPage> => {
+    const res = await axiosClient.get("/payments/history", { params });
     return res.data.data;
   },
 
   notifyReturn: async (payload: PayosReturnRequest): Promise<PayosReturnResponse> => {
     const res = await axiosClient.post("/payments/payos/return", payload);
     return res.data.data;
+  },
+
+  /** Customer view their own payment history (array response, no pagination) */
+  getMyHistory: async (): Promise<PaymentHistoryItem[]> => {
+    const res = await axiosClient.get("/payments/me");
+    return res.data.data ?? [];
   },
 };
