@@ -12,6 +12,7 @@ import {
   PackageIcon,
   ReceiptIcon,
   ShieldCheckIcon,
+  UserIcon,
   XCircleIcon,
 } from "@phosphor-icons/react";
 import { queryKeys } from "@/shared/query-key";
@@ -149,6 +150,13 @@ function HistoryRow({ item, index }: { item: PaymentHistoryItem; index: number }
               />
               {paid ? `Thanh toán ${formatDate(item.paidAt)}` : `Hết hạn ${formatDate(item.expiredAt)}`}
             </div>
+            {item.userName && (
+              <div className="inline-flex items-center gap-2 sm:col-span-2">
+                <UserIcon size={15} className="text-[var(--content-subtle)]" />
+                <span className="font-medium text-[var(--content-heading)]">{item.userName}</span>
+                {item.userEmail && <span className="text-[var(--content-subtle)]">&middot; {item.userEmail}</span>}
+              </div>
+            )}
           </div>
         </div>
 
@@ -186,25 +194,47 @@ function SkeletonRow() {
   );
 }
 
-export default function PaymentHistory() {
-  const { data, isLoading, isError, refetch, isFetching } = useQuery({
+interface PaymentHistoryProps {
+  variant?: "admin" | "customer";
+}
+
+export default function PaymentHistory({ variant = "customer" }: PaymentHistoryProps) {
+  const isAdmin = variant === "admin";
+
+  const adminQuery = useQuery({
     queryKey: queryKeys.payments.history,
-    queryFn: paymentService.getHistory,
+    queryFn: () => paymentService.getHistory(),
+    enabled: isAdmin,
   });
 
+  const customerQuery = useQuery({
+    queryKey: ["payments", "me"],
+    queryFn: () => paymentService.getMyHistory(),
+    enabled: !isAdmin,
+  });
+
+  const { data, isLoading, isError, refetch, isFetching } = isAdmin ? adminQuery : customerQuery;
+
+  // Admin: paginated response with content array
+  // Customer: direct array response
+  const items = isAdmin
+    ? (data as import("@/services/payment.service").PaymentHistoryPage | undefined)?.content ?? []
+    : (data as import("@/services/payment.service").PaymentHistoryItem[] | undefined) ?? [];
+
   const summary = useMemo(() => {
-    const items = data ?? [];
     const paidItems = items.filter((item) => item.status.toUpperCase() === "PAID");
     const pendingItems = items.filter((item) => item.status.toUpperCase() === "PENDING");
     const totalPaid = paidItems.reduce((sum, item) => sum + item.amount, 0);
 
     return {
-      total: items.length,
+      total: isAdmin
+        ? ((data as import("@/services/payment.service").PaymentHistoryPage | undefined)?.totalElements ?? items.length)
+        : items.length,
       paid: paidItems.length,
       pending: pendingItems.length,
       totalPaid,
     };
-  }, [data]);
+  }, [data, items, isAdmin]);
 
   return (
     <div className="px-4 py-6 md:px-8 md:py-8">
@@ -221,10 +251,12 @@ export default function PaymentHistory() {
                   Payment
                 </p>
                 <h1 className="mt-1 text-2xl font-extrabold text-[var(--content-heading)] sm:text-3xl">
-                  Lịch sử đơn hàng
+                  {isAdmin ? "Lịch sử giao dịch" : "Lịch sử đơn hàng"}
                 </h1>
                 <p className="mt-1 max-w-2xl text-sm text-[var(--content-muted)]">
-                  Theo dõi các giao dịch Pro, trạng thái thanh toán và thời hạn xử lý của từng đơn.
+                  {isAdmin
+                    ? "Quản lý tất cả giao dịch thanh toán trong hệ thống."
+                    : "Theo dõi các giao dịch Pro, trạng thái thanh toán và thời hạn xử lý của từng đơn."}
                 </p>
               </div>
             </div>
@@ -256,26 +288,30 @@ export default function PaymentHistory() {
         <div className="space-y-3">
           {isLoading
             ? Array.from({ length: 4 }).map((_, index) => <SkeletonRow key={index} />)
-            : data && data.length > 0
-              ? data.map((item, index) => <HistoryRow key={item.orderId} item={item} index={index} />)
+            : items.length > 0
+              ? items.map((item, index) => <HistoryRow key={item.orderId} item={item} index={index} />)
               : !isLoading && (
                   <div className="rounded-lg border border-dashed border-[rgba(27,38,50,0.18)] bg-white/60 p-10 text-center">
                     <div className="mx-auto grid size-14 place-items-center rounded-lg bg-[rgba(255,146,21,0.12)] text-[var(--accent-gold)]">
                       <ReceiptIcon size={30} weight="duotone" />
                     </div>
                     <h2 className="mt-4 text-lg font-bold text-[var(--content-heading)]">
-                      Chưa có đơn hàng nào
+                      Chưa có giao dịch nào
                     </h2>
                     <p className="mt-1 text-sm text-[var(--content-muted)]">
-                      Khi bạn nâng cấp Pro, thông tin thanh toán sẽ xuất hiện tại đây.
+                      Chưa có giao dịch thanh toán nào trong hệ thống.
                     </p>
                   </div>
                 )}
         </div>
 
-        {summary.total > 0 && (
+        {items.length > 0 && (
           <div className="rounded-lg border border-[rgba(27,38,50,0.1)] bg-[rgba(27,38,50,0.04)] px-4 py-3 text-sm text-[var(--content-muted)]">
-            Tổng giá trị đã thanh toán:{" "}
+            {isAdmin ? (
+              <>Hiển thị {items.length} / {summary.total} giao dịch &nbsp;&middot;&nbsp; Tổng doanh thu đã thanh toán:{" "}</>
+            ) : (
+              <>Tổng đơn hàng: {summary.total} &nbsp;&middot;&nbsp; Đã thanh toán:{" "}</>
+            )}
             <span className="font-bold text-[var(--content-heading)]">
               {formatCurrency(summary.totalPaid)}
             </span>
