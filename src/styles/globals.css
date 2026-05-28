@@ -377,7 +377,7 @@ body {
 
 .upgrade-pro-card p {
   margin-top: 8px;
-  color: var(--text-secondary);
+  color: rgba(247, 241, 232, 0.72);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -414,21 +414,38 @@ body {
 }
 
 .upgrade-pro-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 44px;
   margin-top: 22px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-secondary);
+  border: 1px solid rgba(231, 221, 200, 0.12);
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(247, 241, 232, 0.92);
   font-size: 14px;
   font-weight: 800;
+  line-height: 1;
+  text-align: center;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .upgrade-pro-action.is-featured {
-  color: var(--bg-deep);
+  color: #ffffff;
   background: linear-gradient(90deg, var(--accent-gold-soft), var(--accent-gold), var(--truffle));
+  border-color: rgba(255, 255, 255, 0.12);
   box-shadow: 0 0 22px rgba(255, 146, 21, 0.32);
+}
+
+.upgrade-pro-action.is-current {
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(247, 241, 232, 0.9);
+  box-shadow: none;
+}
+
+.upgrade-pro-action:disabled {
+  opacity: 0.75;
 }
 
 .upgrade-pro-action:hover {
@@ -447,7 +464,7 @@ body {
   min-height: 38px;
   gap: 14px;
   border-top: 1px solid rgba(231, 221, 200, 0.1);
-  color: var(--text-secondary);
+  color: rgba(247, 241, 232, 0.68);
   font-size: 14px;
 }
 
@@ -468,7 +485,7 @@ body {
 .upgrade-pro-foot {
   margin-top: 34px;
   text-align: center;
-  color: var(--text-secondary);
+  color: rgba(247, 241, 232, 0.68);
   font-size: 13px;
 }
 

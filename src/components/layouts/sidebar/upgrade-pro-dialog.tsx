@@ -61,8 +61,8 @@ function TierCard({
 
       {isFree ? (
         <div
-          className={`upgrade-pro-action ${isFeatured ? "is-featured" : ""}`}
-          style={{ opacity: 0.5, cursor: "default", textAlign: "center", pointerEvents: "none" }}
+          className={`upgrade-pro-action is-current ${isFeatured ? "is-featured" : ""}`}
+          style={{ cursor: "default", pointerEvents: "none" }}
         >
           Gói hiện tại
         </div>

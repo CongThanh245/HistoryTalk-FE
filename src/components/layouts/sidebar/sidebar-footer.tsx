@@ -44,7 +44,7 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
                 boxShadow: "0 2px 8px var(--accent-gold-glow)",
               }}
             >
-              <LightningIcon className="w-3.5 h-3.5" style={{ color: "var(--bg-deep)" }} />
+              <LightningIcon className="w-3.5 h-3.5" style={{ color: "var(--text-inverse)" }} />
             </div>
 
             <div
@@ -57,7 +57,7 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
                 <p className="text-xs font-semibold whitespace-nowrap" style={{ color: "var(--accent-gold-soft)" }}>
                   Nâng cấp Pro
                 </p>
-                <p className="text-[11px] whitespace-nowrap" style={{ color: "var(--text-on-dark-muted)" }}>
+                <p className="text-[11px] whitespace-nowrap" style={{ color: "var(--text-secondary)" }}>
                   Mở khóa toàn bộ tính năng.
                 </p>
               </div>
@@ -65,7 +65,7 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
                 className="block w-full py-1 rounded-lg text-[11px] font-semibold text-center whitespace-nowrap transition-all duration-150"
                 style={{
                   background: "linear-gradient(90deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-                  color: "var(--bg-deep)",
+                  color: "var(--text-inverse)",
                   boxShadow: "0 2px 8px var(--accent-gold-glow)",
                 }}
               >

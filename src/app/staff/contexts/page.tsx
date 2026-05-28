@@ -96,6 +96,8 @@ export default function StaffContextsPage() {
   const [restoreOpen, setRestoreOpen] = React.useState(false);
   const [publishDialogOpen, setPublishDialogOpen] = React.useState(false);
   const [documentOpen, setDocumentOpen] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState<"content" | "meta" | "rag">("content");
+  const ragSectionRef = React.useRef<HTMLDivElement>(null);
 
   const { data, isLoading, isFetching } = useEvents({
     search: search || undefined,
@@ -144,6 +146,10 @@ export default function StaffContextsPage() {
       documentContent: "",
     }));
     setDocumentOpen(true);
+    setActiveTab("rag");
+    setTimeout(() => {
+      ragSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
   };
 
   React.useEffect(() => {
@@ -565,23 +571,56 @@ export default function StaffContextsPage() {
               handleSave();
             }}
           >
-          {/* Header */}
-          <div className="border-b px-8 pb-5 pt-7" style={{ borderColor: "var(--card-light-border)" }}>
-            <h2 className="text-lg font-bold" style={{ color: "var(--content-heading)" }}>
-              {mode === "create" ? "Tạo bối cảnh lịch sử" : "Chỉnh sửa bối cảnh"}
-            </h2>
-            <p className="text-sm mt-1" style={{ color: "var(--content-muted)" }}>
-              Thông tin bối cảnh lịch sử hiển thị cho người dùng.
-            </p>
+          {/* Header with Tabs */}
+          <div className="border-b px-6 pb-0 pt-5" style={{ borderColor: "var(--card-light-border)" }}>
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-lg font-bold" style={{ color: "var(--content-heading)" }}>
+                  {mode === "create" ? "Tạo bối cảnh lịch sử" : "Chỉnh sửa bối cảnh"}
+                </h2>
+                <p className="text-sm mt-0.5" style={{ color: "var(--content-muted)" }}>
+                  Thông tin bối cảnh lịch sử hiển thị cho người dùng.
+                </p>
+              </div>
+            </div>
+
+            {/* Tab Navigation */}
+            <div className="flex gap-1">
+              {[
+                { id: "content", label: "Nội dung", icon: "📄" },
+                { id: "meta", label: "Phân loại", icon: "🏷️" },
+                { id: "rag", label: "Tài liệu RAG", icon: "📚", badge: draft.documentContent.trim() ? "1" : null },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                  className={`relative px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
+                    activeTab === tab.id
+                      ? "text-[var(--accent-gold)] border-b-2 border-[var(--accent-gold)]"
+                      : "text-[var(--content-muted)] hover:text-[var(--content-heading)] hover:bg-black/5"
+                  }`}
+                  style={{ background: activeTab === tab.id ? "rgba(114,56,61,0.06)" : "transparent" }}
+                >
+                  <span className="flex items-center gap-1.5">
+                    {tab.label}
+                    {tab.badge && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/15 text-[var(--accent-gold)]">
+                        {tab.badge}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px]">
-            <div>
-          {/* Two-column body */}
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.12fr)_minmax(340px,0.88fr)]">
-
-            {/* ── Left column: content fields ── */}
-            <div className="space-y-5 px-8 py-6">
+            <div className="max-h-[calc(100vh-280px)] overflow-y-auto thin-scroll">
+            {/* Tab Content */}
+            <div className="px-6 py-5">
+              {activeTab === "content" && (
+                <div className="space-y-4 max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
                 Nội dung
               </p>
@@ -614,53 +653,132 @@ export default function StaffContextsPage() {
                   placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
                 />
               </div>
+                </div>
+              )}
 
-              <div
-                  className="mt-2 space-y-3 border-t pt-5"
-                  style={{ borderColor: "var(--card-light-border)" }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setDocumentOpen((value) => !value)}
-                    className="flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-black/[0.03]"
+              {activeTab === "meta" && (
+                <div className="space-y-4 max-w-2xl">
+                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                    Phân loại & Thời gian
+                  </p>
+
+                  <div className="grid gap-3">
+                    <div className="grid gap-1.5">
+                      <StaffFormLabel>Thời đại *</StaffFormLabel>
+                      <StaffFormSelect
+                        value={draft.era}
+                        onValueChange={set("era")}
+                        placeholder="Chọn thời đại"
+                        options={ERA_OPTIONS}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-1.5">
+                    <StaffFormLabel>Năm *</StaffFormLabel>
+                    <StaffFormInput
+                      type="number"
+                      value={draft.year}
+                      onChange={(e) => set("year")(e.target.value)}
+                      placeholder="938"
+                    />
+                  </div>
+
+                  {/* isPublished Toggle */}
+                  <div
+                    className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors"
                     style={{
-                      borderColor: "var(--card-light-border)",
-                      background: draft.documentContent.trim()
-                        ? "rgba(59,130,246,0.08)"
-                        : "rgba(255,255,255,0.4)",
+                      borderColor: draft.isPublished ? "rgba(34,197,94,0.35)" : "rgba(234,179,8,0.35)",
+                      background: draft.isPublished ? "rgba(34,197,94,0.06)" : "rgba(254,243,199,0.25)",
                     }}
                   >
-                    <span className="flex items-center gap-2">
-                      <ScrollIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
-                      <span>
-                        <span className="block text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                          Tài liệu RAG kèm theo
-                        </span>
-                        <span className="block text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                          {draft.documentContent.trim()
-                            ? "Đã có nội dung tài liệu"
-                            : "Tuỳ chọn, có thể bổ sung sau"}
-                        </span>
-                      </span>
-                    </span>
-                    <CaretDownIcon
-                      className="h-4 w-4 transition-transform"
-                      style={{
-                        color: "var(--content-muted)",
-                        transform: documentOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold" style={{ color: draft.isPublished ? "rgb(22,163,74)" : "#92400e" }}>
+                        {draft.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
+                      </p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                        {!draft.isPublished
+                          ? "Chưa hiển thị cho học sinh."
+                          : "Đang hiển thị công khai cho người dùng."}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={draft.isPublished}
+                      onClick={() => {
+                        if (!draft.isPublished) {
+                          setPublishDialogOpen(true);
+                        } else {
+                          set("isPublished")(false);
+                        }
                       }}
-                    />
-                  </button>
+                      className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                      style={{
+                        background: draft.isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)",
+                      }}
+                    >
+                      <span
+                        className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
+                        style={{
+                          background: "#fff",
+                          transform: draft.isPublished ? "translateX(20px)" : "translateX(0)",
+                        }}
+                      />
+                    </button>
+                  </div>
 
-                  {documentOpen && (
-                    <div className="space-y-3">
-                      {mode === "edit" && (
+                  {/* Media URLs */}
+                  <div className="space-y-3 pt-1">
+                    <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                      Media
+                    </p>
+                    <div className="grid gap-1.5">
+                      <StaffFormLabel>URL hình ảnh</StaffFormLabel>
+                      <StaffFormInput
+                        value={draft.imageUrl}
+                        onChange={(e) => set("imageUrl")(e.target.value)}
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <StaffFormLabel>URL video (YouTube)</StaffFormLabel>
+                      <StaffFormInput
+                        value={draft.videoUrl}
+                        onChange={(e) => set("videoUrl")(e.target.value)}
+                        placeholder="https://youtube.com/watch?v=..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "rag" && (
+                <div ref={ragSectionRef} className="space-y-4 max-w-2xl">
+                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                    Tài liệu RAG kèm theo
+                  </p>
+
+                  {mode === "edit" && (
                         <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
                           <div className="mb-2 flex items-center justify-between gap-3">
                             <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
                               Tài liệu đã import
+                              {historicalDocuments.data && historicalDocuments.data.length > 0 && (
+                                <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
+                                  {historicalDocuments.data.length}
+                                </span>
+                              )}
                             </p>
-                            <Button type="button" size="sm" variant="outline" onClick={clearDocumentDraft}>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                clearDocumentDraft();
+                              }}
+                              className="shrink-0"
+                            >
                               <PlusIcon className="mr-1.5 h-3.5 w-3.5" />
                               Tài liệu mới
                             </Button>
@@ -669,7 +787,10 @@ export default function StaffContextsPage() {
                           {historicalDocuments.isLoading ? (
                             <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tải tài liệu...</p>
                           ) : historicalDocuments.data?.length ? (
-                            <div className="space-y-2">
+                            <div
+                              className="space-y-2 max-h-[180px] overflow-y-auto pr-1 thin-scroll"
+                              style={{ scrollbarWidth: "thin" }}
+                            >
                               {historicalDocuments.data.map((document, index) => {
                                 const documentId = getDocumentId(document);
                                 const selected = !!documentId && draft.documentId === documentId;
@@ -728,7 +849,20 @@ export default function StaffContextsPage() {
                         </div>
                       )}
                       <div className="grid gap-1.5">
-                        <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
+                        <div className="flex items-center justify-between">
+                          <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
+                          {draft.documentId && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                              Đang sửa: {historicalDocuments.data?.find(d => getDocumentId(d) === draft.documentId)?.title?.slice(0, 20) || 'Tài liệu'}
+                              {historicalDocuments.data?.find(d => getDocumentId(d) === draft.documentId)?.title && (historicalDocuments.data?.find(d => getDocumentId(d) === draft.documentId)?.title?.length || 0) > 20 ? '...' : ''}
+                            </span>
+                          )}
+                          {!draft.documentId && draft.documentContent.trim() && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+                              Tài liệu mới
+                            </span>
+                          )}
+                        </div>
                         <StaffFormInput
                           value={draft.documentTitle}
                           onChange={(e) => set("documentTitle")(e.target.value)}
@@ -736,138 +870,47 @@ export default function StaffContextsPage() {
                         />
                       </div>
                       <div className="grid gap-1.5">
-                        <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
+                        <div className="flex items-center justify-between">
+                          <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
+                          <span className="text-[10px]" style={{ color: "var(--content-muted)" }}>
+                            {draft.documentContent.length.toLocaleString()} ký tự
+                          </span>
+                        </div>
                         <StaffFormTextarea
                           value={draft.documentContent}
                           onChange={(e) => set("documentContent")(e.target.value)}
                           placeholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
-                          style={{ minHeight: "120px" }}
+                          style={{ minHeight: "100px", maxHeight: "200px" }}
+                          className="resize-y"
                         />
                       </div>
                     </div>
-                  )}
-              </div>
-
-            </div>
-
-            {/* ── Right column: meta fields ── */}
-            <div className="space-y-5 border-t px-8 py-6 lg:border-l lg:border-t-0" style={{ borderColor: "var(--card-light-border)", background: "rgba(27,38,50,0.025)" }}>
-              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                Phân loại & Thời gian
-              </p>
-
-              <div className="grid gap-3">
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>Thời đại *</StaffFormLabel>
-                  <StaffFormSelect
-                    value={draft.era}
-                    onValueChange={set("era")}
-                    placeholder="Chọn thời đại"
-                    options={ERA_OPTIONS}
-                  />
                 </div>
-              </div>
+              )}
+            )}
 
-              <div className="grid gap-1.5">
-                <StaffFormLabel>Năm *</StaffFormLabel>
-                <StaffFormInput
-                  type="number"
-                  value={draft.year}
-                  onChange={(e) => set("year")(e.target.value)}
-                  placeholder="938"
-                />
-              </div>
-
-              {/* isPublished Toggle */}
-              <div
-                className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors"
-                style={{
-                  borderColor: draft.isPublished ? "rgba(34,197,94,0.35)" : "rgba(234,179,8,0.35)",
-                  background: draft.isPublished ? "rgba(34,197,94,0.06)" : "rgba(254,243,199,0.25)",
-                }}
-              >
-                <div className="flex-1">
-                  <p className="text-sm font-semibold" style={{ color: draft.isPublished ? "rgb(22,163,74)" : "#92400e" }}>
-                    {draft.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                    {!draft.isPublished
-                      ? "Chưa hiển thị cho học sinh."
-                      : "Đang hiển thị công khai cho người dùng."}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={draft.isPublished}
-                  onClick={() => {
-                    if (!draft.isPublished) {
-                      setPublishDialogOpen(true);
-                    } else {
-                      set("isPublished")(false);
-                    }
-                  }}
-                  className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                  style={{
-                    background: draft.isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)",
-                  }}
+              {/* Footer */}
+              <div className="sticky bottom-0 z-10 px-6 py-3 border-t flex justify-end gap-2" style={{ borderColor: "var(--card-light-border)", background: "var(--bg-content)" }}>
+                <Button type="button" variant="outline" className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]" onClick={() => setDialogOpen(false)}>
+                  Đóng form
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!draft.name.trim() || !draft.era || isPending}
                 >
-                  <span
-                    className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
-                    style={{
-                      background: "#fff",
-                      transform: draft.isPublished ? "translateX(20px)" : "translateX(0)",
-                    }}
-                  />
-                </button>
-              </div>
-
-              {/* Media URLs */}
-              <div className="space-y-3 pt-1">
-                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                  Media
-                </p>
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>URL hình ảnh</StaffFormLabel>
-                  <StaffFormInput
-                    value={draft.imageUrl}
-                    onChange={(e) => set("imageUrl")(e.target.value)}
-                    placeholder="https://..."
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>URL video (YouTube)</StaffFormLabel>
-                  <StaffFormInput
-                    value={draft.videoUrl}
-                    onChange={(e) => set("videoUrl")(e.target.value)}
-                    placeholder="https://youtube.com/watch?v=..."
-                  />
-                </div>
+                  {isPending ? "Đang lưu..." : "Lưu bối cảnh"}
+                </Button>
               </div>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="sticky bottom-0 z-10 px-8 py-4 border-t flex justify-end gap-2" style={{ borderColor: "var(--card-light-border)", background: "var(--bg-content)" }}>
-            <Button type="button" variant="outline" className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]" onClick={() => setDialogOpen(false)}>
-              Đóng form
-            </Button>
-            <Button
-              type="submit"
-              disabled={!draft.name.trim() || !draft.era || isPending}
-            >
-              {isPending ? "Đang lưu..." : "Lưu bối cảnh"}
-            </Button>
-          </div>
-            </div>
-
-            <aside
-              className="border-t px-5 py-6 xl:border-l xl:border-t-0"
-              style={{
-                borderColor: "var(--card-light-border)",
-                background: "rgba(27,38,50,0.035)",
-              }}
-            >
+          <aside
+            className="border-t px-5 py-6 xl:border-l xl:border-t-0"
+            style={{
+              borderColor: "var(--card-light-border)",
+              background: "rgba(27,38,50,0.035)",
+            }}
+          >
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
@@ -945,8 +988,8 @@ export default function StaffContextsPage() {
               </div>
             </aside>
           </div>
-          </form>
-        </section>
+        </form>
+      </section>
       )}
 
       <ConfirmDialog

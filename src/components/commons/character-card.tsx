@@ -128,6 +128,7 @@ export function CharacterCarouselCard({
               alt={character.name}
               fill
               className="object-cover"
+              sizes="48px"
             />
           </div>
           <div className="ml-3 min-w-0">
@@ -186,8 +187,8 @@ export function TypewriterText({ text, isHovered, speed = 8 }: TypewriterTextPro
 
   useEffect(() => {
     if (!isHovered) {
-      setDisplayedText("");
-      return;
+      const timeoutId = window.setTimeout(() => setDisplayedText(""), 0);
+      return () => window.clearTimeout(timeoutId);
     }
 
     let currentIndex = 0;
@@ -307,6 +308,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
               alt={character.name}
               fill
               className="object-cover"
+              sizes="48px"
             />
           </div>
         </div>
@@ -361,6 +363,7 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
             alt={character.name ?? "Avatar"}
             fill
             className="object-cover z-10"
+            sizes="32px"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = "none";
             }}

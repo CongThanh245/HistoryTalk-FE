@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { useChatSessions, useCreateSession } from "@/features/chat/hooks";
+import { useCreateSession } from "@/features/chat/hooks";
 import { ChatSession } from "@/services/chat.service";
 
 interface ChatLeftPanelProps {
@@ -178,7 +178,7 @@ export function ChatLeftPanel({
           <div
             className="w-full h-full flex flex-col border-r shadow-2xl lg:shadow-none overflow-hidden"
             style={{
-              background: "var(--abyssal-blue)",
+              background: "var(--bg-surface)",
               borderColor: "var(--border-default)",
             }}
           >
@@ -222,7 +222,7 @@ export function ChatLeftPanel({
                     <div
                       key={i}
                       className="h-16 rounded-lg animate-pulse"
-                      style={{ background: "rgba(255,255,255,0.05)" }}
+                      style={{ background: "var(--card-light-hover)" }}
                     />
                   ))}
                 </div>
@@ -246,7 +246,7 @@ export function ChatLeftPanel({
                           : "transparent",
                       borderColor:
                         activeSessionId === session.id
-                          ? "rgba(201,162,77,0.3)"
+                          ? "var(--border-strong)"
                           : "transparent",
                     }}
                   >
@@ -307,9 +307,8 @@ export function ChatLeftPanel({
                 disabled={createSession.isPending}
                 className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150"
                 style={{
-                  background:
-                    "linear-gradient(135deg, rgba(201,162,77,0.12) 0%, rgba(163,81,57,0.08) 100%)",
-                  border: "1px solid rgba(201,162,77,0.2)",
+                  background: "var(--accent-gold-active-bg)",
+                  border: "1px solid var(--border-strong)",
                   color: "var(--accent-gold-soft)",
                 }}
               >

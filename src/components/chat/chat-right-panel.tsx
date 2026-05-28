@@ -63,7 +63,7 @@ export function ChatRightPanel({
           isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0",
         )}
         style={{
-          background: "var(--abyssal-blue)",
+          background: "var(--bg-surface)",
           borderColor: "var(--border-default)",
         }}
       >
@@ -80,7 +80,7 @@ export function ChatRightPanel({
               className="absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(to bottom, transparent 40%, var(--abyssal-blue) 100%)",
+                  "linear-gradient(to bottom, transparent 40%, var(--bg-surface) 100%)",
               }}
             />
             {activeCharacter.side && (
@@ -140,7 +140,7 @@ export function ChatRightPanel({
                 <div
                   key={i}
                   className="h-16 rounded-xl animate-pulse"
-                  style={{ background: "rgba(255,255,255,0.05)" }}
+                  style={{ background: "var(--card-light-hover)" }}
                 />
               ))}
             </div>
@@ -159,8 +159,8 @@ export function ChatRightPanel({
                   onClick={() => onSelectCharacter(char)}
                   className="group w-full flex items-center gap-3 p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-150 hover:-translate-y-0.5"
                   style={{
-                    background: "rgba(255,255,255,0.03)",
-                    borderColor: "rgba(255,255,255,0.07)",
+                    background: "var(--bg-elevated)",
+                    borderColor: "var(--border-default)",
                   }}
                 >
                   <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0">

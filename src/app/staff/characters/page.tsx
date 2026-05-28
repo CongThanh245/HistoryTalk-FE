@@ -20,7 +20,6 @@ import {
   useTrashPermanentDelete,
 } from "@/features/trash/hooks";
 import type { Character } from "@/services/character.service";
-import type { TrashItem } from "@/services/trash.service";
 import { isValidUrl } from "@/lib/utils/url";
 import { formatCharacterLifespan } from "@/lib/utils/character-date";
 
@@ -74,6 +73,7 @@ export default function StaffCharactersPage() {
                   alt={row.original.name}
                   fill
                   className="object-cover"
+                  sizes="36px"
                 />
               )}
             </div>

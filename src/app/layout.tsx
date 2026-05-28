@@ -16,8 +16,8 @@ const bodyFont = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "HistoryTalk - KhÃ¡m phÃ¡ lá»‹ch sá»­ qua cuá»™c trÃ² chuyá»‡n",
-  description: "TrÃ² chuyá»‡n vá»›i cÃ¡c nhÃ¢n váº­t lá»‹ch sá»­",
+  title: "HistoryTalk - Khám phá lịch sử qua cuộc trò chuyện",
+  description: "Trò chuyện với các nhân vật lịch sử",
 };
 
 export default function RootLayout({
