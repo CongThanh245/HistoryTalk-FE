@@ -92,6 +92,7 @@ export default function FeaturePage() {
 
   useEffect(() => {
     let ctx: ReturnType<typeof import("gsap").gsap.context> | null = null;
+    let matchMediaCleanup: (() => void) | null = null;
 
     const init = async () => {
       const { gsap } = await import("gsap");
@@ -137,16 +138,43 @@ export default function FeaturePage() {
         );
 
         if (visualTrackRef.current) {
-          gsap.to(visualTrackRef.current, {
-            xPercent: -18,
-            ease: "none",
-            scrollTrigger: {
-              trigger: "[data-visual-section]",
-              start: "top bottom",
-              end: "bottom top",
-              scrub: 1,
-            },
+          const mm = gsap.matchMedia();
+
+          mm.add("(min-width: 1024px)", () => {
+            gsap.fromTo(
+              visualTrackRef.current,
+              { xPercent: 18 },
+              {
+                xPercent: -18,
+                ease: "none",
+                scrollTrigger: {
+                  trigger: "[data-visual-section]",
+                  start: "top 75%",
+                  end: "bottom top",
+                  scrub: 1,
+                },
+              },
+            );
           });
+
+          mm.add("(max-width: 1023px)", () => {
+            gsap.fromTo(
+              "[data-visual-card]",
+              { x: 52 },
+              {
+                x: 0,
+                ease: "power3.out",
+                duration: 0.8,
+                stagger: 0.12,
+                scrollTrigger: {
+                  trigger: "[data-visual-section]",
+                  start: "top 70%",
+                },
+              },
+            );
+          });
+
+          matchMediaCleanup = () => mm.revert();
         }
 
         gsap.fromTo(
@@ -202,7 +230,10 @@ export default function FeaturePage() {
     };
 
     init();
-    return () => ctx?.revert();
+    return () => {
+      matchMediaCleanup?.();
+      ctx?.revert();
+    };
   }, []);
 
   const ActiveIcon = featureGroups[activeFeature].icon;
