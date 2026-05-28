@@ -8,6 +8,7 @@ import { GreetingSection } from "../home/greeting-section";
 import { MagneticButton } from "../commons/MagneticButton";
 import { useSidebar } from "./sidebar/sidebar-context";
 import { UserProfileDropdown } from "./user-profile-dropdown";
+import { ThemeToggle } from "./theme-toggle";
 
 export default function Header() {
   const user = useAuthStore((s) => s.user);
@@ -51,6 +52,8 @@ export default function Header() {
         <div className="flex-1 md:hidden" />
 
         <div className="flex items-center gap-2 shrink-0">
+          <ThemeToggle />
+
           {user ? (
             /* --- TRẠNG THÁI ĐÃ ĐĂNG NHẬP --- */
             <>

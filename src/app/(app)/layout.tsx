@@ -12,7 +12,7 @@ function layout({ children }: { children: React.ReactNode }) {
       <SidebarProvider>
         {/* On mobile: sidebar is a fixed overlay, main takes full width.   */}
         {/* On md+:    sidebar sits in the flex row beside the main content. */}
-        <div className="flex h-[100dvh] bg-gray-50/50">
+        <div className="flex h-[100dvh]" style={{ background: "var(--bg-content)" }}>
           <CustomerSidebar />
           <div className="flex-1 flex flex-col min-w-0">
             <Header />
