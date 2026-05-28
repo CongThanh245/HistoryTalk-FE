@@ -9,6 +9,19 @@ Tài liệu này mô tả **cấu trúc thư mục**, **cách sử dụng từng
 
 > **⚠️ Lưu ý:** Dùng nhánh `develop` cho tất cả công việc. Không dùng `master`.
 
+### 0. Yêu cầu hệ thống (Cài đặt Bun)
+Dự án này sử dụng **Bun** làm trình quản lý gói chính thay thế hoàn toàn cho `npm` hay `yarn`. Hãy đảm bảo bạn đã cài đặt Bun trước khi tiếp tục:
+
+* **Windows (PowerShell):**
+  ```powershell
+  powershell -c "irm bun.sh/install.ps1 | iex"
+  ```
+* **macOS / Linux:**
+  ```bash
+  curl -fsSL https://bun.sh/install | bash
+  ```
+> *Lưu ý: Sau khi cài đặt xong, bạn hãy khởi động lại terminal/editor mới để nạp lệnh `bun`.*
+
 ### 1. Clone và checkout nhánh develop
 
 ```bash
@@ -20,7 +33,7 @@ git checkout develop
 ### 2. Cài đặt & setup env
 
 ```bash
-npm install
+bun install
 copy .env.example .env.local  # Windows
 cp .env.example .env.local     # Mac/Linux
 # Mở .env.local sửa URL theo backend bạn dùng
@@ -29,7 +42,7 @@ cp .env.example .env.local     # Mac/Linux
 ### 3. Chạy dev
 
 ```bash
-npm run dev
+bun dev
 ```
 
 ### Push code lên develop
@@ -43,22 +56,22 @@ git push origin develop
 ### Build
 
 ```bash
-npm run build
+bun run build
 ```
 
 ### Chạy production
 
 ```bash
-npm start
+bun start
 ```
 
 ### Lint
 
 ```bash
-npm run lint
+bun run lint
 ```
 
-> Lưu ý: sử dụng Node tương thích với Next.js 16 và TypeScript.
+> Lưu ý: Dự án hiện tại sử dụng **Bun** (phiên bản `>= 1.0`) để quản lý package và chạy ứng dụng Next.js 16 với TypeScript.
 
 ---
 
