@@ -58,7 +58,7 @@ export function ChatRightPanel({
 
       <div
         className={cn(
-          "shrink-0 h-full flex flex-col transition-transform duration-300 z-50 border-l overflow-hidden",
+          "shrink-0 h-full flex flex-col transition-transform duration-300 z-50 border-l overflow-hidden lg:sticky lg:top-0 lg:self-start",
           "lg:relative absolute right-0 top-0 bottom-0 shadow-2xl lg:shadow-none w-[260px]",
           isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0",
         )}

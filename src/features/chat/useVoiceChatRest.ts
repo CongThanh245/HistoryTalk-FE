@@ -6,10 +6,12 @@ import { useAuthStore } from "@/store/auth.store";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type VoiceRestStatus =
-  | "idle"       // chưa bắt đầu
-  | "recording"  // đang ghi âm
-  | "loading"    // đang gửi + chờ server
-  | "speaking"   // đang phát TTS
+  | "idle"              // chưa bắt đầu
+  | "recording"         // đang ghi âm
+  | "processing_stt"    // đang nhận dạng giọng nói (STT)
+  | "processing_chat"   // đang chờ AI trả lời
+  | "processing_tts"    // đang tổng hợp giọng nói
+  | "speaking"          // đang phát TTS
   | "error";
 
 export interface VoiceRestMessage {
@@ -103,36 +105,67 @@ export function useVoiceChatRest({
   // ── Gửi audio lên server, nhận về audio TTS ─────────────────────────────────
   const sendAudio = useCallback(
     async (audioBlob: Blob) => {
-      setStatus("loading");
+      setStatus("processing_stt");
 
       try {
         const useInternal =
           process.env.NEXT_PUBLIC_VOICE_USE_INTERNAL === "true";
 
-        // Internal: Next.js Route Handler (không cần BE, không lộ API key)
-        // External: Spring Boot backend
-        const endpoint = useInternal
-          ? "/api/voice/chat"
-          : `${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}${process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1"}/voice/chat`;
-
         const token = useAuthStore.getState().tokens?.accessToken;
-
-        const formData = new FormData();
-        formData.append("audio", audioBlob, "recording.webm");
-        formData.append("sessionId", sessionId);
-        formData.append("characterId", characterId);
-        formData.append("contextId", contextId);
-
         const headers: HeadersInit = {};
-        // Internal route giờ cũng cần token để forward sang Spring Boot
         if (token) {
           (headers as Record<string, string>).Authorization = `Bearer ${token}`;
         }
 
+        let userTranscript = "";
+
+        // ── Step 1: STT ─ Hiển thị user text NGAY sau khi nhận dạng ─────────────
+        if (useInternal) {
+          const sttFormData = new FormData();
+          sttFormData.append("audio", audioBlob, "recording.webm");
+
+          const sttRes = await fetch("/api/voice/stt", {
+            method: "POST",
+            headers,
+            body: sttFormData,
+          });
+
+          if (!sttRes.ok) {
+            const errJson = await sttRes.json().catch(() => ({}));
+            throw new Error(
+              (errJson as { message?: string }).message ?? `STT Error ${sttRes.status}`,
+            );
+          }
+
+          const sttData = await sttRes.json();
+          userTranscript = sttData.transcript?.trim() ?? "";
+        }
+
+        // Hiển thị user text NGAY LẬP TỨC sau STT
+        if (userTranscript) {
+          setMessages((prev) => [
+            ...prev,
+            { role: "user", text: userTranscript, timestamp: new Date() },
+          ]);
+        }
+
+        // ── Step 2: Chat + TTS ─ Hiển thị AI thinking ───────────────────────────
+        setStatus("processing_chat");
+
+        const chatFormData = new FormData();
+        chatFormData.append("audio", audioBlob, "recording.webm");
+        chatFormData.append("sessionId", sessionId);
+        chatFormData.append("characterId", characterId);
+        chatFormData.append("contextId", contextId);
+
+        const endpoint = useInternal
+          ? "/api/voice/chat"
+          : `${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}${process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1"}/voice/chat`;
+
         const res = await fetch(endpoint, {
           method: "POST",
           headers,
-          body: formData,
+          body: chatFormData,
         });
 
         if (!res.ok) {
@@ -142,20 +175,15 @@ export function useVoiceChatRest({
           );
         }
 
-        // Đọc transcript từ header (URL-encoded để tránh lỗi ký tự Unicode)
-        const userTranscript = decodeURIComponent(
-          res.headers.get("X-User-Transcript") ?? "",
-        );
+        // Đọc assistant transcript từ header
         const assistantTranscript = decodeURIComponent(
           res.headers.get("X-Assistant-Transcript") ?? "",
         );
 
-        if (userTranscript) {
-          setMessages((prev) => [
-            ...prev,
-            { role: "user", text: userTranscript, timestamp: new Date() },
-          ]);
-        }
+        // Giả lập delay tự nhiên để UX mượt
+        await new Promise(r => setTimeout(r, 300 + Math.random() * 300));
+
+        // Hiển thị AI response
         if (assistantTranscript) {
           setMessages((prev) => [
             ...prev,
@@ -170,6 +198,10 @@ export function useVoiceChatRest({
         // Nhận audio binary
         const audioBuffer = await res.arrayBuffer();
 
+        // Giả lập đang chuẩn bị phát âm thanh
+        setStatus("processing_tts");
+        await new Promise(r => setTimeout(r, 200));
+
         setStatus("speaking");
         await playAudio(audioBuffer);
         setStatus("idle");
@@ -179,7 +211,6 @@ export function useVoiceChatRest({
         console.error("[VoiceChatRest] sendAudio error:", err);
         onError?.(msg);
         setStatus("error");
-        // Reset về idle sau 2s
         setTimeout(() => setStatus("idle"), 2000);
       }
     },
@@ -188,7 +219,7 @@ export function useVoiceChatRest({
 
   // ── Bắt đầu ghi âm ─────────────────────────────────────────────────────────
   const startRecording = useCallback(async () => {
-    if (isRecording || status === "loading" || status === "speaking") return;
+    if (isRecording || status === "speaking" || status.startsWith("processing")) return;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({

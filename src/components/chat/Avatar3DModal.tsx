@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type { ChatCharacter } from "@/services/chat.service";
 import { useVoiceChatRest, type VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
+import { useVoiceChatStream, type VoiceMessage as VoiceStreamMessage } from "@/features/chat/useVoiceChatStream";
 
 // Dynamically import 3D viewer (no SSR)
 const FBXCharacterViewer = dynamic(
@@ -36,17 +37,66 @@ function ModelLoadingPlaceholder() {
 const STATUS_LABEL: Record<string, string> = {
   idle: "Nhấn và giữ để nói",
   recording: "🔴 Đang ghi âm... (thả để gửi)",
-  loading: "⏳ Đang xử lý...",
+  processing_stt: "🎤 Đang nhận dạng giọng nói...",
+  processing_chat: "🤔 Đang suy nghĩ...",
+  processing_tts: "🔊 Đang chuẩn bị nói...",
   speaking: "💬 Đang trả lời...",
+  thinking: "🤔 Đang suy nghĩ...",       // Streaming: đã hiện user text
   error: "⚠️ Lỗi — thử lại",
 };
+
+// ── Thinking indicator (typing dots) ───────────────────────────────────────────
+
+function ThinkingIndicator() {
+  return (
+    <div style={{
+      display: "flex",
+      justifyContent: "flex-start",
+      padding: "4px 0",
+    }}>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "8px 16px",
+        borderRadius: "16px 16px 16px 4px",
+        background: "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05))",
+        border: "1px solid rgba(201,168,76,0.2)",
+      }}>
+        <span style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: "#c9a84c",
+          animation: "thinkingBounce 0.6s ease-in-out infinite",
+        }} />
+        <span style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: "#c9a84c",
+          animation: "thinkingBounce 0.6s ease-in-out infinite 0.15s",
+        }} />
+        <span style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: "#c9a84c",
+          animation: "thinkingBounce 0.6s ease-in-out infinite 0.3s",
+        }} />
+      </div>
+    </div>
+  );
+}
 
 // ── Transcript feed ───────────────────────────────────────────────────────────
 
 function TranscriptFeed({
   messages,
+  isThinking,
 }: {
   messages: VoiceRestMessage[];
+  isThinking?: boolean;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -78,6 +128,7 @@ function TranscriptFeed({
           </div>
         </div>
       ))}
+      {isThinking && <ThinkingIndicator />}
       <div ref={bottomRef} />
     </div>
   );
@@ -90,12 +141,28 @@ interface Avatar3DModalProps {
   sessionId: string;
   contextId: string;
   onClose: () => void;
+  useStream?: boolean; // true = streaming mode, false = REST mode
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function Avatar3DModal({ character, sessionId, contextId, onClose }: Avatar3DModalProps) {
+export function Avatar3DModal({ character, sessionId, contextId, onClose, useStream = true }: Avatar3DModalProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Use streaming hook or REST hook based on prop
+  const restHook = useVoiceChatRest({
+    sessionId,
+    characterId: character.id,
+    contextId,
+    onError: (e) => setErrorMsg(e),
+  });
+
+  const streamHook = useVoiceChatStream({
+    sessionId,
+    characterId: character.id,
+    contextId,
+    onError: (e) => setErrorMsg(e),
+  });
 
   const {
     status,
@@ -104,19 +171,14 @@ export function Avatar3DModal({ character, sessionId, contextId, onClose }: Avat
     stopRecording,
     ttsAnalyserRef,
     isRecording,
-  } = useVoiceChatRest({
-    sessionId,
-    characterId: character.id,
-    contextId,
-    onError: (e) => setErrorMsg(e),
-  });
+  } = useStream ? streamHook : restHook;
 
   const isSpeaking = status === "speaking";
 
   // ── Hold-to-talk handlers ─────────────────────────────────────────────────
 
   const handlePointerDown = () => {
-    if (status === "loading" || status === "speaking") return;
+    if (status.startsWith("processing") || status === "speaking") return;
     setErrorMsg(null);
     startRecording();
   };
@@ -137,7 +199,7 @@ export function Avatar3DModal({ character, sessionId, contextId, onClose }: Avat
       if (e.code === "Space" && !spaceHeld.current) {
         e.preventDefault();
         spaceHeld.current = true;
-        if (status !== "loading" && status !== "speaking") {
+        if (!status.startsWith("processing") && status !== "speaking") {
           setErrorMsg(null);
           startRecording();
         }
@@ -160,7 +222,7 @@ export function Avatar3DModal({ character, sessionId, contextId, onClose }: Avat
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  const isBusy = status === "loading" || status === "speaking";
+  const isBusy = status.startsWith("processing") || status === "speaking" || status === "thinking";
 
   return (
     <>
@@ -177,6 +239,14 @@ export function Avatar3DModal({ character, sessionId, contextId, onClose }: Avat
         @keyframes micPulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(239,83,80,0.5); }
           50%       { box-shadow: 0 0 0 16px rgba(239,83,80,0); }
+        }
+        @keyframes thinkingBounce {
+          0%, 100% { transform: translateY(0); }
+          50%       { transform: translateY(-4px); }
+        }
+        @keyframes progressShimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
         }
       `}</style>
 
@@ -254,6 +324,7 @@ export function Avatar3DModal({ character, sessionId, contextId, onClose }: Avat
               isSpeaking={isSpeaking}
               isListening={false}
               isRecording={isRecording}
+              isProcessing={status.startsWith("processing") || status === "thinking"}
               ttsAnalyserRef={ttsAnalyserRef}
             />
           </div>
@@ -272,7 +343,7 @@ export function Avatar3DModal({ character, sessionId, contextId, onClose }: Avat
 
           {/* ── Transcript ── */}
           <div style={{ width: "100%", maxWidth: 600, padding: "8px 16px 0", flexShrink: 0 }}>
-            <TranscriptFeed messages={messages} />
+            <TranscriptFeed messages={messages} isThinking={status === "processing_chat" || status === "thinking"} />
           </div>
 
           {/* ── Controls ── */}
