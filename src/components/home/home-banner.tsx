@@ -9,9 +9,9 @@ export function HomeBanner() {
     <div
       className="relative overflow-hidden rounded-3xl p-6 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 border"
       style={{
-        background: "linear-gradient(135deg, #0e1a2b 0%, #16223a 50%, #070d18 100%)",
-        borderColor: "rgba(255, 255, 255, 0.08)",
-        boxShadow: "0 10px 30px rgba(7, 13, 24, 0.25)",
+        background: "var(--home-banner-bg)",
+        borderColor: "var(--home-banner-border)",
+        boxShadow: "var(--home-banner-shadow)",
         minHeight: "260px",
       }}
     >
@@ -33,15 +33,15 @@ export function HomeBanner() {
       {/* Left Column: Text & Action Buttons */}
       <div className="flex-1 z-10 max-w-2xl text-left">
         <h1
-          className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white mb-3"
-          style={{ lineHeight: 1.25 }}
+          className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight mb-3"
+          style={{ color: "var(--home-banner-title)", lineHeight: 1.25 }}
         >
           Trò chuyện cùng nhân vật lịch sử, <br className="hidden sm:inline" />
           mọi lúc, mọi nơi
         </h1>
         <p
           className="text-sm md:text-base mb-6 font-normal"
-          style={{ color: "rgba(255, 255, 255, 0.7)", lineHeight: 1.5 }}
+          style={{ color: "var(--home-banner-text)", lineHeight: 1.5 }}
         >
           Khám phá di sản và tìm hiểu lịch sử trực quan qua góc nhìn của các bậc vĩ nhân và tiền nhân.
         </p>
@@ -52,19 +52,19 @@ export function HomeBanner() {
             href="/events"
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 border hover:-translate-y-0.5"
             style={{
-              background: "rgba(255, 255, 255, 0.06)",
-              borderColor: "rgba(255, 255, 255, 0.1)",
-              color: "#ffffff",
+              background: "var(--home-banner-button-bg)",
+              borderColor: "var(--home-banner-button-border)",
+              color: "var(--home-banner-button-text)",
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.12)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+              e.currentTarget.style.background = "var(--home-banner-button-hover-bg)";
+              e.currentTarget.style.borderColor = "var(--home-banner-button-hover-border)";
               e.currentTarget.style.boxShadow = "0 6px 16px rgba(255, 146, 21, 0.15)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+              e.currentTarget.style.background = "var(--home-banner-button-bg)";
+              e.currentTarget.style.borderColor = "var(--home-banner-button-border)";
               e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
             }}
           >
@@ -76,19 +76,19 @@ export function HomeBanner() {
             href="/characters"
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 border hover:-translate-y-0.5"
             style={{
-              background: "rgba(255, 255, 255, 0.06)",
-              borderColor: "rgba(255, 255, 255, 0.1)",
-              color: "#ffffff",
+              background: "var(--home-banner-button-bg)",
+              borderColor: "var(--home-banner-button-border)",
+              color: "var(--home-banner-button-text)",
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.12)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+              e.currentTarget.style.background = "var(--home-banner-button-hover-bg)";
+              e.currentTarget.style.borderColor = "var(--home-banner-button-hover-border)";
               e.currentTarget.style.boxShadow = "0 6px 16px rgba(196, 106, 47, 0.15)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+              e.currentTarget.style.background = "var(--home-banner-button-bg)";
+              e.currentTarget.style.borderColor = "var(--home-banner-button-border)";
               e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
             }}
           >
@@ -100,19 +100,19 @@ export function HomeBanner() {
             href="/quiz"
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 border hover:-translate-y-0.5"
             style={{
-              background: "rgba(255, 255, 255, 0.06)",
-              borderColor: "rgba(255, 255, 255, 0.1)",
-              color: "#ffffff",
+              background: "var(--home-banner-button-bg)",
+              borderColor: "var(--home-banner-button-border)",
+              color: "var(--home-banner-button-text)",
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.12)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+              e.currentTarget.style.background = "var(--home-banner-button-hover-bg)";
+              e.currentTarget.style.borderColor = "var(--home-banner-button-hover-border)";
               e.currentTarget.style.boxShadow = "0 6px 16px rgba(248, 146, 74, 0.15)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+              e.currentTarget.style.background = "var(--home-banner-button-bg)";
+              e.currentTarget.style.borderColor = "var(--home-banner-button-border)";
               e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
             }}
           >
@@ -130,8 +130,8 @@ export function HomeBanner() {
           style={{
             transform: "rotate(-12deg) translate(-50px, 0px) scale(0.95)",
             zIndex: 10,
-            background: "rgba(255, 255, 255, 0.08)",
-            borderColor: "rgba(255, 255, 255, 0.1)",
+            background: "var(--home-banner-card-bg)",
+            borderColor: "var(--home-banner-card-border)",
           }}
         >
           <div className="relative w-full h-[100px]">
@@ -141,9 +141,9 @@ export function HomeBanner() {
               fill
               className="object-cover opacity-80"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0e1a2b] to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--home-banner-card-fade)] to-transparent" />
           </div>
-          <div className="p-1.5 text-center bg-[#0e1a2b]">
+          <div className="p-1.5 text-center" style={{ background: "var(--home-banner-card-footer)" }}>
             <p className="text-[10px] font-bold text-white truncate">Ngô Quyền</p>
           </div>
         </div>
@@ -154,8 +154,8 @@ export function HomeBanner() {
           style={{
             transform: "rotate(14deg) translate(50px, 10px) scale(0.95)",
             zIndex: 10,
-            background: "rgba(255, 255, 255, 0.08)",
-            borderColor: "rgba(255, 255, 255, 0.1)",
+            background: "var(--home-banner-card-bg)",
+            borderColor: "var(--home-banner-card-border)",
           }}
         >
           <div className="relative w-full h-[100px]">
@@ -165,9 +165,9 @@ export function HomeBanner() {
               fill
               className="object-cover opacity-70"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0e1a2b] to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--home-banner-card-fade)] to-transparent" />
           </div>
-          <div className="p-1.5 text-center bg-[#0e1a2b]">
+          <div className="p-1.5 text-center" style={{ background: "var(--home-banner-card-footer)" }}>
             <p className="text-[10px] font-bold text-white truncate">Bạch Đằng</p>
           </div>
         </div>

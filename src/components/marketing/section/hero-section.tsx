@@ -124,10 +124,10 @@ export function HeroSection() {
 
               <div className="my-4 space-y-0.5 border-l-2 border-[var(--accent-gold)]/40 py-3 pl-5 lg:pl-6">
                 <p className="text-sm font-semibold italic text-[var(--text-primary)] lg:text-base">
-                  Học sinh chỉ chán học Lịch sử trên trường
+                  &quot;Học sinh chỉ chán học Lịch sử trên trường
                 </p>
                 <p className="text-sm font-semibold italic text-[var(--accent-gold)] lg:text-base">
-                  chứ không học sinh nào chán lịch sử dân tộc cả.
+                  chứ không học sinh nào chán lịch sử dân tộc cả!&quot;
                 </p>
               </div>
 
