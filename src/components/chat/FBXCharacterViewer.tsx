@@ -104,6 +104,63 @@ function ExternalAudioLipDriver({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Thinking animation — subtle head nod / breathing when processing
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ThinkingAnimation({
+  rootRef,
+  isProcessing,
+}: {
+  rootRef: React.RefObject<THREE.Group | null>;
+  isProcessing: boolean;
+}) {
+  const timeRef = useRef(0);
+  const headBoneRef = useRef<THREE.Bone | null>(null);
+  const baseRotationRef = useRef<number | null>(null);
+
+  // Find head bone once on mount
+  useEffect(() => {
+    if (!rootRef.current) return;
+    rootRef.current.traverse((obj) => {
+      const bone = obj as THREE.Bone;
+      if (bone.isBone && /head|neck/i.test(obj.name) && !headBoneRef.current) {
+        headBoneRef.current = bone;
+        baseRotationRef.current = bone.rotation.x;
+      }
+    });
+  }, []);
+
+  useFrame((_, delta) => {
+    if (!isProcessing) {
+      // Reset head rotation when not processing
+      if (headBoneRef.current && baseRotationRef.current !== null) {
+        headBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+          headBoneRef.current.rotation.x,
+          baseRotationRef.current,
+          delta * 5
+        );
+      }
+      return;
+    }
+
+    timeRef.current += delta;
+    const t = timeRef.current;
+
+    // Subtle head nod (rotate x slightly)
+    if (headBoneRef.current && baseRotationRef.current !== null) {
+      const nod = baseRotationRef.current + Math.sin(t * 2.5) * 0.02;
+      headBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+        headBoneRef.current.rotation.x,
+        nod,
+        delta * 8
+      );
+    }
+  });
+
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Shared lip-sync frame logic
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -148,12 +205,14 @@ function useLipSyncFrame(
 function GLBCharacterModel({
   url,
   isSpeaking,
+  isProcessing,
   testVolumeRef,
   ttsAnalyserRef,
   onDiagnostic,
 }: {
   url: string;
   isSpeaking: boolean;
+  isProcessing: boolean;
   testVolumeRef: React.RefObject<number>;
   ttsAnalyserRef: React.RefObject<AnalyserNode | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
@@ -161,6 +220,7 @@ function GLBCharacterModel({
   const gltf = useGLTF(url) as unknown as GLTF & { scene: THREE.Group };
   const { actions, names } = useAnimations(gltf.animations, gltf.scene);
   const reported = useRef(false);
+  const sceneRef = useRef<THREE.Group>(gltf.scene);
 
   const lipMeshRef = useRef<THREE.Mesh | null>(null);
   const lipMorphIdxRef = useRef(-1);
@@ -201,6 +261,7 @@ function GLBCharacterModel({
   return (
     <>
       <ExternalAudioLipDriver analyserRef={ttsAnalyserRef} onVolume={(v) => { volumeRef.current = v; }} />
+      <ThinkingAnimation rootRef={sceneRef} isProcessing={isProcessing} />
       <primitive object={gltf.scene} />
     </>
   );
@@ -213,12 +274,14 @@ function GLBCharacterModel({
 function FBXCharacterModel({
   url,
   isSpeaking,
+  isProcessing,
   testVolumeRef,
   ttsAnalyserRef,
   onDiagnostic,
 }: {
   url: string;
   isSpeaking: boolean;
+  isProcessing: boolean;
   testVolumeRef: React.RefObject<number>;
   ttsAnalyserRef: React.RefObject<AnalyserNode | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
@@ -226,6 +289,7 @@ function FBXCharacterModel({
   const fbx = useFBX(url);
   const { actions, names } = useAnimations(fbx.animations, fbx);
   const reported = useRef(false);
+  const fbxRef = useRef<THREE.Group>(fbx);
 
   const lipMeshRef = useRef<THREE.Mesh | null>(null);
   const lipMorphIdxRef = useRef(-1);
@@ -266,6 +330,7 @@ function FBXCharacterModel({
   return (
     <>
       <ExternalAudioLipDriver analyserRef={ttsAnalyserRef} onVolume={(v) => { volumeRef.current = v; }} />
+      <ThinkingAnimation rootRef={fbxRef} isProcessing={isProcessing} />
       <primitive object={fbx} />
     </>
   );
@@ -278,6 +343,7 @@ function FBXCharacterModel({
 function AutoModel(props: {
   url: string;
   isSpeaking: boolean;
+  isProcessing: boolean;
   testVolumeRef: React.RefObject<number>;
   ttsAnalyserRef: React.RefObject<AnalyserNode | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
@@ -309,6 +375,7 @@ export type FBXCharacterViewerProps = {
   isSpeaking?: boolean;
   isListening?: boolean;
   isRecording?: boolean;
+  isProcessing?: boolean;
   /** AnalyserNode phân tích audio TTS — truyền từ useVoiceChatRest */
   ttsAnalyserRef?: React.RefObject<AnalyserNode | null>;
   onDiagnostic?: (d: DiagnosticInfo) => void;
@@ -322,6 +389,7 @@ export function FBXCharacterViewer({
   isSpeaking = false,
   isListening = false,
   isRecording = false,
+  isProcessing = false,
   ttsAnalyserRef = EMPTY_ANALYSER_REF,
   onDiagnostic,
 }: FBXCharacterViewerProps) {
@@ -342,6 +410,8 @@ export function FBXCharacterViewer({
     ? "#ef5350"
     : isListening
     ? "#4caf50"
+    : isProcessing
+    ? "#2196f3"
     : "#555";
 
   const statusLabel = effectiveSpeaking
@@ -350,9 +420,11 @@ export function FBXCharacterViewer({
     ? "🔴 Đang ghi âm..."
     : isListening
     ? "Đang nghe..."
+    : isProcessing
+    ? "🤔 Đang suy nghĩ..."
     : "Chờ...";
 
-  const shouldAnimate = effectiveSpeaking || isRecording || isListening;
+  const shouldAnimate = effectiveSpeaking || isRecording || isListening || isProcessing;
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -402,6 +474,7 @@ export function FBXCharacterViewer({
           <AutoModel
             url={modelUrl}
             isSpeaking={effectiveSpeaking}
+            isProcessing={isProcessing}
             testVolumeRef={testVolumeRef}
             ttsAnalyserRef={ttsAnalyserRef}
             onDiagnostic={handleDiagnostic}
