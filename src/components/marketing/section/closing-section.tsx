@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { Container } from "../container";
 import { MagneticButton } from "@/components/commons/MagneticButton";
 import { useRevealAnimation } from "@/lib/hooks/use-reveal-animation";
@@ -10,53 +11,44 @@ export function ClosingSection() {
   useRevealAnimation(sectionRef);
 
   return (
-    <section ref={sectionRef} className="py-20 bg-[var(--bg-deep)]">
+    <section ref={sectionRef} className="bg-[var(--bg-deep)] py-20">
       <Container>
-        {/* Thẻ cha dùng flex justify-center để làm mốc căn giữa cho ảnh */}
-        <div className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] border border-[var(--border-default)] bg-[var(--bg-surface)] h-auto min-h-[380px] sm:min-h-[520px] lg:h-[600px] flex justify-center">
-          {/* LỚP 1: ẢNH ĐIỆN THOẠI (Căn giữa theo Card cha) */}
-          <div className="hidden sm:flex absolute inset-0 justify-center items-end pointer-events-none z-10">
-            <img
+        <div className="relative flex h-auto min-h-[380px] justify-center overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] sm:min-h-[520px] lg:h-[600px]">
+          <div className="absolute left-1/2 top-0 hidden h-28 w-px -translate-x-1/2 bg-gradient-to-b from-[var(--accent-gold)] to-transparent lg:block" />
+
+          <div className="absolute inset-0 z-10 hidden items-end justify-center pointer-events-none sm:flex">
+            <Image
               src="/phone_mock.png"
-              alt="Preview"
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: "50%",
-                transform: "translateX(-50%) translateY(12%)",
-                width: "clamp(200px, 50vw, 370px)",
-                zIndex: 10,
-                pointerEvents: "none",
-              }}
+              alt="History Talk mobile preview"
+              width={370}
+              height={740}
+              className="absolute bottom-0 left-1/2 z-10 w-[clamp(200px,50vw,370px)] -translate-x-1/2 translate-y-[12%] pointer-events-none"
             />
           </div>
 
-          {/* LỚP 2: NỘI DUNG CHỮ (Dùng Grid để chia 2 bên) */}
-          <div className="relative z-20 w-full h-full grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-0 px-6 sm:px-10 lg:px-16 py-10 sm:py-14 lg:py-0">
-            {/* Cột trái */}
+          <div className="relative z-20 grid h-full w-full grid-cols-1 gap-8 px-6 py-10 sm:px-10 sm:py-14 lg:grid-cols-3 lg:gap-0 lg:px-16 lg:py-0">
             <div className="flex items-center">
-              <h2 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-[var(--text-primary)]">
+              <h2 data-reveal="fast" className="text-3xl font-bold text-[var(--text-primary)] sm:text-4xl lg:text-6xl">
                 LỊCH SỬ KHÔNG <br /> CHỈ LÀ{" "}
                 <span className="text-[var(--accent-gold)]">QUÁ KHỨ.</span>
               </h2>
             </div>
 
-            {/* Cột giữa rỗng: Tạo khoảng không cho điện thoại ở lớp dưới hiện lên */}
-            <div className="hidden lg:block"></div>
+            <div className="hidden lg:block" />
 
-            {/* Cột phải */}
-            <div className="flex flex-col justify-center items-start lg:items-end gap-6 text-left lg:text-right">
-              <p className="text-base lg:text-lg text-[var(--text-secondary)] max-w-[280px]">
-                Bước vào cuộc trò chuyện với những người đã tạo nên lịch sử. Đặt
-                câu hỏi, khám phá sự thật, và hiểu về lịch sử theo góc nhìn của nhân vật.{" "}
+            <div className="flex flex-col items-start justify-center gap-6 text-left lg:items-end lg:text-right">
+              <p data-reveal="block" className="max-w-[280px] text-base text-[var(--text-secondary)] lg:text-lg">
+                Bước vào cuộc trò chuyện với những người đã tạo nên lịch sử. Đặt câu hỏi, khám phá bối cảnh và hiểu quá khứ qua góc nhìn của nhân vật.
               </p>
-              <MagneticButton
-                href="/home"
-                size="lg"
-                className="!rounded-full px-10 py-5"
-              >
-                Bắt đầu ngay
-              </MagneticButton>
+              <div data-reveal="block">
+                <MagneticButton
+                  href="/home"
+                  size="lg"
+                  className="!rounded-full px-10 py-5"
+                >
+                  Bắt đầu ngay
+                </MagneticButton>
+              </div>
             </div>
           </div>
         </div>
