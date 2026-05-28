@@ -1,9 +1,10 @@
 "use client";
 
-import { ScrollIcon, PushPinIcon, PushPinSlashIcon, XIcon } from "@phosphor-icons/react";
+import { PushPinIcon, PushPinSlashIcon, XIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { BrandLogo } from "@/components/commons/brand-logo";
 
 interface SidebarHeaderProps {
   isExpanded: boolean;
@@ -41,31 +42,13 @@ export default function SidebarHeader({
           isExpanded ? "flex-1 gap-3 overflow-hidden" : "",
         )}
       >
-        {/* Logo icon */}
-        <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{
-            background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-            boxShadow: "var(--shadow-gold)",
-          }}
-        >
-          <ScrollIcon className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
-        </div>
-
-        {/* Brand name */}
-        {isExpanded && (
-          <span
-            className="text-[15px] font-bold tracking-wide truncate"
-            style={{
-              background: "linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-gold-soft) 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontFamily: "'Georgia', 'Times New Roman', serif",
-            }}
-          >
-            HistoryTalk
-          </span>
-        )}
+        <BrandLogo
+          animatedMark
+          showText={isExpanded}
+          markClassName="h-8 w-8"
+          textClassName="truncate"
+          priority
+        />
       </Link>
 
       {/* Mobile: × close button */}

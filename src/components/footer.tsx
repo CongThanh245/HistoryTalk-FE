@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Container } from "./marketing/container";
+import { BrandLogo } from "./commons/brand-logo";
 
 const NAV_LINKS = [
   {
@@ -39,9 +40,12 @@ export function Footer() {
               href="/"
               className="inline-flex items-center gap-2 mb-6 group"
             >
-              <span className="text-xl font-bold tracking-wide text-[var(--text-primary)] group-hover:text-[var(--accent-gold)] transition-colors duration-200">
-                History<span className="text-[var(--accent-gold)]">Talk</span>
-              </span>
+              <BrandLogo
+                animatedText
+                glow="warm"
+                markClassName="h-10 w-10"
+                textClassName="text-xl transition-colors duration-200 group-hover:text-[var(--accent-gold)]"
+              />
             </Link>
 
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-8">
