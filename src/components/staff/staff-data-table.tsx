@@ -28,6 +28,7 @@ export type StaffDataTableProps<TData> = {
   emptyMessage?: string;
   className?: string;
   isLoading?: boolean;
+  onRowClick?: (row: TData) => void;
 };
 
 export function StaffDataTable<TData>({
@@ -36,6 +37,7 @@ export function StaffDataTable<TData>({
   emptyMessage = "Không có dữ liệu phù hợp.",
   className,
   isLoading = false,
+  onRowClick,
 }: StaffDataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
@@ -112,7 +114,14 @@ export function StaffDataTable<TData>({
             </TableRow>
           ) : table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} className="hover:bg-[var(--card-light-hover)]!">
+              <TableRow
+                key={row.id}
+                className={cn(
+                  "hover:bg-[var(--card-light-hover)]!",
+                  onRowClick && "cursor-pointer"
+                )}
+                onClick={() => onRowClick?.(row.original)}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className="px-4">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

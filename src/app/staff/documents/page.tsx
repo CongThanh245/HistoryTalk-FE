@@ -10,7 +10,14 @@ import {
   UserIcon,
   ScrollIcon,
   ArrowSquareOutIcon,
+  XIcon,
 } from "@phosphor-icons/react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
@@ -67,6 +74,7 @@ export default function StaffDocumentsPage() {
   const [search, setSearch] = React.useState("");
   const [filter, setFilter] = React.useState<"all" | DocumentOwnerType>("all");
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
+  const [detailOpen, setDetailOpen] = React.useState(false);
 
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
     page: 1,
@@ -333,102 +341,141 @@ export default function StaffDocumentsPage() {
           })}
         </div>
 
-        <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="mt-5">
           <StaffDataTable
             columns={columns}
             data={filteredRows}
             isLoading={isLoadingDocuments}
             emptyMessage="Không tìm thấy tài liệu phù hợp."
-          />
-
-          <aside
-            className="rounded-xl border p-4"
-            style={{
-              background: "var(--card-light-bg)",
-              borderColor: "var(--card-light-border)",
+            onRowClick={(row) => {
+              setSelectedKey(row.key);
+              setDetailOpen(true);
             }}
-          >
-            <div className="flex items-center gap-2">
-              <FileTextIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
-              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                Chi tiết tài liệu
-              </p>
-            </div>
-
-            {selectedRow ? (
-              <div className="mt-4 space-y-4">
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
-                    {selectedRow.document.title || "Tài liệu chưa đặt tên"}
-                  </p>
-                  <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
-                    {selectedRow.ownerType === "character" ? "Gắn trực tiếp với nhân vật" : "Gắn với bối cảnh lịch sử"}
-                  </p>
-                </div>
-
-                <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                    Đối tượng liên kết
-                  </p>
-                  <p className="mt-2 text-sm font-medium" style={{ color: "var(--content-heading)" }}>
-                    {selectedRow.ownerName}
-                  </p>
-                  {selectedRow.ownerSubtitle && (
-                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                      {selectedRow.ownerSubtitle}
-                    </p>
-                  )}
-                </div>
-
-                <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                    Nhân vật sử dụng
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {selectedRow.linkedCharacters.length ? (
-                      selectedRow.linkedCharacters.map((character) => (
-                        <span
-                          key={character.id}
-                          className="rounded-full border px-2 py-1 text-xs"
-                          style={{
-                            borderColor: "rgba(59,130,246,0.25)",
-                            background: "rgba(59,130,246,0.08)",
-                            color: "rgb(37,99,235)",
-                          }}
-                        >
-                          {character.name}
-                        </span>
-                      ))
-                    ) : (
-                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                        Chưa có nhân vật liên quan.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                    Nội dung
-                  </p>
-                  <div
-                    className="mt-2 max-h-[360px] overflow-y-auto whitespace-pre-wrap rounded-lg border p-3 text-sm leading-6"
-                    style={{
-                      borderColor: "var(--card-light-border)",
-                      color: "var(--content-muted)",
-                    }}
-                  >
-                    {selectedRow.document.content || "Chưa có nội dung."}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-4 text-sm" style={{ color: "var(--content-muted)" }}>
-                Chọn một tài liệu để xem chi tiết.
-              </p>
-            )}
-          </aside>
+          />
         </div>
+
+        {/* Document Detail Dialog */}
+        <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+          <DialogContent className="!w-[95vw] !max-w-none max-h-[90vh] overflow-hidden p-0">
+            {selectedRow ? (
+              <>
+                <DialogHeader className="px-6 pt-6 pb-4 border-b" style={{ borderColor: "var(--card-light-border)" }}>
+                  <div className="flex items-center gap-2">
+                    <FileTextIcon className="h-5 w-5" style={{ color: "var(--accent-blue)" }} />
+                    <DialogTitle className="text-base font-semibold" style={{ color: "var(--content-heading)" }}>
+                      Chi tiết tài liệu
+                    </DialogTitle>
+                  </div>
+                </DialogHeader>
+
+                <div className="px-6 py-5 overflow-y-auto max-h-[calc(90vh-140px)] space-y-5">
+                  {/* Title & Type */}
+                  <div>
+                    <p className="text-lg font-semibold" style={{ color: "var(--content-heading)" }}>
+                      {selectedRow.document.title || "Tài liệu chưa đặt tên"}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                        style={{
+                          background: selectedRow.ownerType === "character" ? "rgba(59,130,246,0.12)" : "rgba(201,168,76,0.12)",
+                          color: selectedRow.ownerType === "character" ? "rgb(37,99,235)" : "rgb(146,64,14)",
+                          border: `1px solid ${selectedRow.ownerType === "character" ? "rgba(59,130,246,0.25)" : "rgba(201,168,76,0.3)"}`,
+                        }}
+                      >
+                        {selectedRow.ownerType === "character" ? <UserIcon className="h-3 w-3" /> : <ScrollIcon className="h-3 w-3" />}
+                        {selectedRow.ownerType === "character" ? "Nhân vật" : "Bối cảnh"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Two column layout for meta info */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Owner Info */}
+                    <div className="rounded-xl border p-4" style={{ borderColor: "var(--card-light-border)", background: "var(--card-light-bg)" }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                        Đối tượng liên kết
+                      </p>
+                      <p className="mt-2 text-sm font-medium" style={{ color: "var(--content-heading)" }}>
+                        {selectedRow.ownerName}
+                      </p>
+                      {selectedRow.ownerSubtitle && (
+                        <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                          {selectedRow.ownerSubtitle}
+                        </p>
+                      )}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="mt-3"
+                        onClick={() => {
+                          setDetailOpen(false);
+                          router.push(
+                            selectedRow.ownerType === "character"
+                              ? `/staff/characters/${selectedRow.ownerId}`
+                              : `/staff/contexts`,
+                          );
+                        }}
+                      >
+                        <ArrowSquareOutIcon className="mr-1.5 h-3.5 w-3.5" />
+                        Mở {selectedRow.ownerType === "character" ? "nhân vật" : "bối cảnh"}
+                      </Button>
+                    </div>
+
+                    {/* Linked Characters */}
+                    <div className="rounded-xl border p-4" style={{ borderColor: "var(--card-light-border)", background: "var(--card-light-bg)" }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                        Nhân vật sử dụng
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {selectedRow.linkedCharacters.length ? (
+                          selectedRow.linkedCharacters.map((character) => (
+                            <span
+                              key={character.id}
+                              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
+                              style={{
+                                borderColor: "rgba(59,130,246,0.25)",
+                                background: "rgba(59,130,246,0.08)",
+                                color: "rgb(37,99,235)",
+                              }}
+                            >
+                              <UserIcon className="h-3 w-3" />
+                              {character.name}
+                            </span>
+                          ))
+                        ) : (
+                          <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                            Chưa có nhân vật liên quan.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--content-heading)" }}>
+                      Nội dung tài liệu
+                    </p>
+                    <div
+                      className="whitespace-pre-wrap rounded-xl border p-5 text-sm leading-7"
+                      style={{
+                        borderColor: "var(--card-light-border)",
+                        background: "var(--card-light-bg)",
+                        color: "var(--content-muted)",
+                        maxHeight: "50vh",
+                        overflowY: "auto",
+                      }}
+                    >
+                      {selectedRow.document.content || "Chưa có nội dung."}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </DialogContent>
+        </Dialog>
       </section>
     </StaffShell>
   );

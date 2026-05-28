@@ -138,7 +138,10 @@ export default function StaffContextsPage() {
     setDocumentOpen(true);
   };
 
+  const [skipAutoSelect, setSkipAutoSelect] = React.useState(false);
+
   const clearDocumentDraft = () => {
+    setSkipAutoSelect(true);
     setDraft((s) => ({
       ...s,
       documentId: undefined,
@@ -157,8 +160,15 @@ export default function StaffContextsPage() {
     editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [dialogOpen, mode]);
 
+  // Reset skipAutoSelect when dialog closes so auto-select works for other contexts
   React.useEffect(() => {
-    if (mode !== "edit" || !dialogOpen || draft.documentId || draft.documentContent) return;
+    if (!dialogOpen && skipAutoSelect) {
+      setSkipAutoSelect(false);
+    }
+  }, [dialogOpen, skipAutoSelect]);
+
+  React.useEffect(() => {
+    if (mode !== "edit" || !dialogOpen || draft.documentId || draft.documentContent || skipAutoSelect) return;
     const firstDocument = historicalDocuments.data?.[0];
     if (!firstDocument) return;
     setDraft((s) => ({
@@ -168,7 +178,7 @@ export default function StaffContextsPage() {
       documentContent: firstDocument.content ?? "",
     }));
     setDocumentOpen(true);
-  }, [dialogOpen, draft.documentContent, draft.documentId, getDocumentId, historicalDocuments.data, mode]);
+  }, [dialogOpen, draft.documentContent, draft.documentId, getDocumentId, historicalDocuments.data, mode, skipAutoSelect]);
 
   const handleSave = async () => {
     const payload = {
@@ -312,7 +322,7 @@ export default function StaffContextsPage() {
               }}
             >
               <EyeIcon className="h-3 w-3" />
-              {isDraft ? "Chưa công bố" : "Đã công bố"}
+              {isDraft ? "Chưa xuất bản" : "Đã xuất bản"}
             </div>
           );
         },
@@ -582,6 +592,48 @@ export default function StaffContextsPage() {
                   Thông tin bối cảnh lịch sử hiển thị cho người dùng.
                 </p>
               </div>
+
+              {/* Publish Status Toggle - Prominent placement */}
+              <div
+                className="flex items-center gap-3 py-2 px-3 rounded-xl border transition-colors"
+                style={{
+                  borderColor: draft.isPublished ? "rgba(34,197,94,0.35)" : "rgba(234,179,8,0.35)",
+                  background: draft.isPublished ? "rgba(34,197,94,0.06)" : "rgba(254,243,199,0.25)",
+                }}
+              >
+                <div className="text-right">
+                  <p className="text-sm font-semibold" style={{ color: draft.isPublished ? "rgb(22,163,74)" : "#92400e" }}>
+                    {draft.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                    {draft.isPublished ? "Đang hiển thị cho người dùng" : "Bật để xuất bản"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={draft.isPublished}
+                  onClick={() => {
+                    if (!draft.isPublished) {
+                      setPublishDialogOpen(true);
+                    } else {
+                      set("isPublished")(false);
+                    }
+                  }}
+                  className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                  style={{
+                    background: draft.isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)",
+                  }}
+                >
+                  <span
+                    className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
+                    style={{
+                      background: "#fff",
+                      transform: draft.isPublished ? "translateX(20px)" : "translateX(0)",
+                    }}
+                  />
+                </button>
+              </div>
             </div>
 
             {/* Tab Navigation */}
@@ -684,49 +736,6 @@ export default function StaffContextsPage() {
                     />
                   </div>
 
-                  {/* isPublished Toggle */}
-                  <div
-                    className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors"
-                    style={{
-                      borderColor: draft.isPublished ? "rgba(34,197,94,0.35)" : "rgba(234,179,8,0.35)",
-                      background: draft.isPublished ? "rgba(34,197,94,0.06)" : "rgba(254,243,199,0.25)",
-                    }}
-                  >
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold" style={{ color: draft.isPublished ? "rgb(22,163,74)" : "#92400e" }}>
-                        {draft.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
-                      </p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                        {!draft.isPublished
-                          ? "Chưa hiển thị cho học sinh."
-                          : "Đang hiển thị công khai cho người dùng."}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={draft.isPublished}
-                      onClick={() => {
-                        if (!draft.isPublished) {
-                          setPublishDialogOpen(true);
-                        } else {
-                          set("isPublished")(false);
-                        }
-                      }}
-                      className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                      style={{
-                        background: draft.isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)",
-                      }}
-                    >
-                      <span
-                        className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
-                        style={{
-                          background: "#fff",
-                          transform: draft.isPublished ? "translateX(20px)" : "translateX(0)",
-                        }}
-                      />
-                    </button>
-                  </div>
 
                   {/* Media URLs */}
                   <div className="space-y-3 pt-1">
@@ -884,14 +893,12 @@ export default function StaffContextsPage() {
                           className="resize-y"
                         />
                       </div>
-                    </div>
                 </div>
               )}
-            )}
 
               {/* Footer */}
-              <div className="sticky bottom-0 z-10 px-6 py-3 border-t flex justify-end gap-2" style={{ borderColor: "var(--card-light-border)", background: "var(--bg-content)" }}>
-                <Button type="button" variant="outline" className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]" onClick={() => setDialogOpen(false)}>
+              <div className="px-6 py-4 flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Đóng form
                 </Button>
                 <Button
