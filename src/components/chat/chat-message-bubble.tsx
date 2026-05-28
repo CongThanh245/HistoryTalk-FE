@@ -89,7 +89,7 @@ export function MessageBubble({
       <div className="max-w-[75%] flex flex-col gap-1.5">
         <span
           className="text-[11px] font-bold px-1 tracking-wide"
-          style={{ color: "--accent-gold" }}
+          style={{ color: "var(--accent-gold)" }}
         >
           {character.name.toUpperCase()}
         </span>
@@ -97,7 +97,7 @@ export function MessageBubble({
           className="relative px-4 py-3 pr-9 rounded-2xl rounded-tl-sm text-sm leading-relaxed border"
           style={{
             background: "var(--bg-surface)",
-            color: "var(--text-on-dark)",
+            color: "var(--text-primary)",
             borderColor: "var(--border-strong)",
           }}
         >

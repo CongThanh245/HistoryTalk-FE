@@ -48,7 +48,6 @@ export default function Breadcrumbs() {
       aria-label="Breadcrumb" 
       className="px-3 md:px-6 py-2.5 border-b"
       style={{ 
-        background: "var(--bg-content)",
         borderColor: "var(--header-border)"
       }}
     >

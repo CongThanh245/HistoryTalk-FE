@@ -10,21 +10,24 @@ import { SidebarSection } from "@/routers/sidebar";
 import { useSidebar } from "./sidebar-context";
 
 export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }: { sections: SidebarSection[]; showUpgrade?: boolean; logoHref?: string }) {
-  const [isPinned, setIsPinned] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      const saved = localStorage.getItem("ht-sidebar-pinned");
-      return saved !== null ? JSON.parse(saved) : false;
-    } catch {
-      return false;
-    }
-  });
+  const [isPinned, setIsPinned] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDesktopExpanded = isPinned || isHovered;
 
   // Mobile drawer state from context
   const { isMobileOpen, closeMobileSidebar } = useSidebar();
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      try {
+        const saved = localStorage.getItem("ht-sidebar-pinned");
+        if (saved !== null) setIsPinned(JSON.parse(saved));
+      } catch {}
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   // Close mobile drawer on route change / resize past md
   useEffect(() => {
@@ -51,6 +54,12 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
   const handleMouseLeave = () => {
     hoverTimeout.current = setTimeout(() => setIsHovered(false), 120);
   };
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    };
+  }, []);
 
   const sidebarContent = (isExpanded: boolean) => (
     <aside
