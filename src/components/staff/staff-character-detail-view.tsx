@@ -194,7 +194,10 @@ export function StaffCharacterDetailView({
     }));
   };
 
+  const [skipAutoSelect, setSkipAutoSelect] = React.useState(false);
+
   const clearDocumentDraft = () => {
+    setSkipAutoSelect(true);
     setDraft((s) => ({
       ...s,
       documentId: undefined,
@@ -231,8 +234,15 @@ export function StaffCharacterDetailView({
     }
   }, [initialDraft]);
 
+  // Reset skipAutoSelect when initialDraft changes (different character loaded)
   React.useEffect(() => {
-    if (mode !== "edit" || draft.documentId || draft.documentContent) return;
+    if (skipAutoSelect) {
+      setSkipAutoSelect(false);
+    }
+  }, [initialDraft?.id]);
+
+  React.useEffect(() => {
+    if (mode !== "edit" || draft.documentId || draft.documentContent || skipAutoSelect) return;
     const firstDocument = documents[0];
     if (!firstDocument) return;
     setDraft((s) => ({
@@ -241,7 +251,7 @@ export function StaffCharacterDetailView({
       documentTitle: firstDocument.title ?? "",
       documentContent: firstDocument.content ?? "",
     }));
-  }, [documents, draft.documentContent, draft.documentId, getDocumentId, mode]);
+  }, [documents, draft.documentContent, draft.documentId, getDocumentId, mode, skipAutoSelect]);
 
   React.useEffect(() => {
     setSelectedContextId(initialContextId ?? "");
@@ -694,20 +704,38 @@ export function StaffCharacterDetailView({
             </div>
 
             <div
-              className="flex items-center gap-3 py-3 px-4 rounded-xl border transition-colors"
+              className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors"
               style={{
-                borderColor: !isEditing || mappedContextId
-                  ? "var(--card-light-border)"
-                  : "rgba(234,179,8,0.3)",
-                background: !isEditing || mappedContextId
-                  ? "rgba(27,38,50,0.03)"
-                  : "rgba(234,179,8,0.05)",
+                borderColor: draft.isPublished
+                  ? "rgba(34,197,94,0.35)"
+                  : !isEditing || mappedContextId
+                    ? "var(--card-light-border)"
+                    : "rgba(234,179,8,0.3)",
+                background: draft.isPublished
+                  ? "rgba(34,197,94,0.06)"
+                  : !isEditing || mappedContextId
+                    ? "rgba(27,38,50,0.03)"
+                    : "rgba(234,179,8,0.05)",
               }}
             >
-              <Checkbox
-                checked={draft.isPublished}
-                onCheckedChange={(val) => {
-                  if (val) {
+              <div className="flex-1">
+                <p className="text-sm font-semibold" style={{ color: draft.isPublished ? "rgb(22,163,74)" : !isEditing || mappedContextId ? "var(--content-heading)" : "#92400e" }}>
+                  {draft.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                  {!mappedContextId && isEditing
+                    ? "⚠ Cần liên kết bối cảnh lịch sử trước khi xuất bản."
+                    : draft.isPublished
+                      ? "Nhân vật đang hiển thị công khai cho người dùng."
+                      : "Bật để hiển thị nhân vật cho người dùng."}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={draft.isPublished}
+                onClick={() => {
+                  if (!draft.isPublished) {
                     if (!mappedContextId) return;
                     setPublishDialogOpen(true);
                   } else {
@@ -715,18 +743,19 @@ export function StaffCharacterDetailView({
                   }
                 }}
                 disabled={!isEditing}
-                id="isPublished"
-              />
-              <div className="flex-1">
-                <Label htmlFor="isPublished" className="cursor-pointer text-sm font-medium">
-                  Xuất bản cho người dùng
-                </Label>
-                <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                  {!mappedContextId && isEditing
-                    ? "⚠ Cần liên kết bối cảnh lịch sử trước khi xuất bản."
-                    : "Chỉ nhân vật có isPublished = true mới hiển thị cho người dùng."}
-                </p>
-              </div>
+                className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: draft.isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)",
+                }}
+              >
+                <span
+                  className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
+                  style={{
+                    background: "#fff",
+                    transform: draft.isPublished ? "translateX(20px)" : "translateX(0)",
+                  }}
+                />
+              </button>
             </div>
 
             <ConfirmDialog
@@ -1066,12 +1095,12 @@ export function StaffCharacterDetailView({
                             className="text-sm font-semibold"
                             style={{ color: quickCtx.isPublished ? "rgb(22,163,74)" : "#92400e" }}
                           >
-                            {quickCtx.isPublished ? "Xuất bản ngay" : "Lưu nháp"}
+                            {quickCtx.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
                           </p>
                           <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
                             {quickCtx.isPublished
-                              ? "Bối cảnh hiển thị công khai cho người dùng."
-                              : "Bối cảnh chưa hiển thị cho học sinh."}
+                              ? "Bối cảnh đang hiển thị công khai cho người dùng."
+                              : "Bật để hiển thị bối cảnh cho người dùng."}
                           </p>
                         </div>
                         <button

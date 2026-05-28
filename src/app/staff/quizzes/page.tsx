@@ -338,7 +338,7 @@ export default function StaffQuizzesPage() {
             }}
           >
             <StatusIcon className="h-3 w-3" />
-            {isPublished ? "Đang publish" : "Đang ẩn"}
+            {isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
           </span>
         );
       },
@@ -357,7 +357,7 @@ export default function StaffQuizzesPage() {
         <div className="flex items-center justify-end gap-1">
           <Button
             type="button" variant="ghost" size="icon-sm" className="rounded-full"
-            title={r.original.isPublished ? "Ẩn khỏi người dùng" : "Publish cho người dùng"}
+            title={r.original.isPublished ? "Ngừng hiển thị cho người dùng" : "Xuất bản cho người dùng"}
             onClick={() => setPublishTarget(r.original)}
             style={{ color: r.original.isPublished ? "rgb(22,163,74)" : "rgb(161,98,7)" }}
           >
@@ -793,14 +793,14 @@ export default function StaffQuizzesPage() {
       <ConfirmDialog
         open={!!publishTarget}
         onOpenChange={(o) => !o && setPublishTarget(null)}
-        title={publishTarget?.isPublished ? "Ẩn quiz khỏi người dùng?" : "Publish quiz cho người dùng?"}
+        title={publishTarget?.isPublished ? "Ngừng xuất bản quiz?" : "Xuất bản quiz?"}
         description={
           publishTarget?.isPublished
             ? `Quiz "${publishTarget?.title}" sẽ không hiển thị cho người dùng nữa.`
             : `Quiz "${publishTarget?.title}" sẽ hiển thị cho người dùng.`
         }
         isPending={updateQuiz.isPending}
-        confirmLabel={publishTarget?.isPublished ? "Ẩn quiz" : "Publish quiz"}
+        confirmLabel={publishTarget?.isPublished ? "Ngừng xuất bản" : "Xuất bản"}
         variant="warning"
         onConfirm={handleToggleActive}
       />

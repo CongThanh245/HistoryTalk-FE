@@ -109,7 +109,7 @@ export default function StaffCharactersPage() {
                 border: `1px solid ${isDraft ? "rgba(234,179,8,0.3)" : "rgba(34,197,94,0.3)"}`,
               }}
             >
-              {isDraft ? "Bản nháp" : "Đã xuất bản"}
+              {isDraft ? "Chưa xuất bản" : "Đã xuất bản"}
             </span>
           );
         },
