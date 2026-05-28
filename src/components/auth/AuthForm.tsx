@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EyeIcon, EyeClosedIcon, XIcon, ScrollIcon } from "@phosphor-icons/react";
+import { EyeIcon, EyeClosedIcon, XIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useGoogleLogin, useLogin, useRegister } from "@/features/auth/hooks";
 
@@ -313,14 +314,17 @@ export default function AuthForm({ mode }: AuthFormProps) {
           </div>
           <div className="flex items-center gap-3">
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{
-                background:
-                  "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-                boxShadow: "var(--shadow-gold)",
-              }}
+              className="relative h-10 w-10 overflow-hidden rounded-md border bg-transparent shadow-[0_6px_16px_rgba(255,146,21,0.22)]"
+              style={{ borderColor: "rgba(255, 146, 21, 0.32)" }}
             >
-              <ScrollIcon className="w-4 h-4" style={{ color: "var(--bg-deep)" }} />
+              <Image
+                src="/historytalk-logo.png"
+                alt="HistoryTalk logo"
+                fill
+                sizes="40px"
+                priority
+                className="object-contain"
+              />
             </div>
             <span
               className="text-xl font-bold"

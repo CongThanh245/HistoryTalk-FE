@@ -4,19 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { MagneticButton } from "../commons/MagneticButton";
-import { useIsMobile } from "@/lib/hooks/use-mobile";
 import Image from "next/image";
 import { useAuthStore } from "@/store/auth.store";
 import { UserProfileDropdown } from "../layouts/user-profile-dropdown";
-import { useLogout } from "@/features/auth/hooks";
 
 
 export function MarketingNavbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const isMobile = useIsMobile();
   const user = useAuthStore((s) => s.user);
-  const { mutate: logout, isPending } = useLogout();
   const isLoggedIn = !!user;
 
   const navLinks = [
@@ -73,15 +69,105 @@ export function MarketingNavbar() {
         .auth-group:hover .auth-divider { background: color-mix(in srgb, var(--accent-gold) 30%, transparent); }
         .auth-group .cta-wrapper > * { border-radius: 0 9999px 9999px 0 !important; }
 
+        .marketing-nav {
+          background:
+            linear-gradient(135deg, rgba(14, 26, 43, 0.86), rgba(19, 35, 43, 0.74)),
+            color-mix(in srgb, var(--bg-main) 72%, transparent);
+          border-color: rgba(255, 146, 21, 0.18);
+          box-shadow:
+            0 18px 48px rgba(0, 0, 0, 0.26),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+        .brand-link {
+          border-radius: 9999px;
+          padding: 4px 10px 4px 5px;
+          transition: transform 0.25s ease;
+        }
+        .brand-link:hover {
+          transform: translateY(-1px);
+        }
+        .brand-mark {
+          position: relative;
+          display: grid;
+          place-items: center;
+          width: 44px;
+          height: 44px;
+          border-radius: 0;
+          background: radial-gradient(circle at 50% 50%, rgba(255, 146, 21, 0.34), rgba(255, 146, 21, 0.12) 38%, transparent 68%);
+          border: 0;
+          box-shadow: none;
+        }
+        .brand-mark::after {
+          content: "";
+          position: absolute;
+          inset: -7px;
+          border-radius: inherit;
+          background: radial-gradient(circle, rgba(255, 146, 21, 0.24), transparent 68%);
+          opacity: 0.72;
+          transition: opacity 0.25s ease;
+          pointer-events: none;
+        }
+        .brand-logo-img {
+          position: relative;
+          z-index: 1;
+          filter: saturate(1.45) contrast(1.2) drop-shadow(0 0 5px rgba(255, 146, 21, 0.72));
+          transform: scale(1.18);
+        }
+        .brand-wordmark {
+          color: #ffb95c;
+        }
+        .brand-letter {
+          display: inline-block;
+          transform: translateY(0);
+        }
+        .brand-link:hover .brand-letter {
+          animation: brand-letter-drop 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+          animation-delay: calc(var(--i) * 34ms);
+        }
+        @keyframes brand-letter-drop {
+          0% {
+            transform: translateY(0);
+          }
+          42% {
+            transform: translateY(-8px);
+          }
+          72% {
+            transform: translateY(2px);
+          }
+          100% {
+            transform: translateY(0);
+          }
+        }
+        .nav-link {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          min-height: 36px;
+          padding: 0 13px;
+          border-radius: 9999px;
+          overflow: hidden;
+          color: rgba(247, 241, 232, 0.72);
+          transition: color 0.2s ease, transform 0.2s ease, text-shadow 0.2s ease;
+        }
+        .nav-link:hover,
+        .nav-link.is-active {
+          color: #ffb95c;
+          transform: translateY(-2px);
+          text-shadow: 0 0 14px rgba(255, 146, 21, 0.38);
+        }
+        .nav-link > span {
+          position: relative;
+          z-index: 1;
+        }
+
       `}</style>
 
       <div className="fixed top-0 left-0 right-0 z-50 flex justify-center p-3 md:p-4 pointer-events-none">
         <nav
           className={`
             pointer-events-auto
-            bg-[var(--bg-main)]/80 backdrop-blur-xl
-            border border-[var(--border-default)]
-            shadow-[var(--shadow-soft)]
+            marketing-nav backdrop-blur-xl
+            border
             transition-all duration-300
             w-full rounded-2xl
             md:max-w-fit md:rounded-full
@@ -91,39 +177,43 @@ export function MarketingNavbar() {
           <div className="flex items-center px-4 py-3 md:px-6 md:py-2">
             <Link
               href="/"
-              className="flex items-center gap-2 hover:opacity-85 transition-opacity"
+              className="brand-link flex items-center gap-2.5"
             >
-              <Image
-                src="https://p1.hiclipart.com/preview/198/296/36/tv-channel-icons-history-black-black-history-logo-png-clipart.jpg"
-                alt="HistoryTalk Logo"
-                width={50}
-                height={50}
-                priority
-                className="object-contain invert"
-              />
+              <span className="brand-mark">
+                <Image
+                  src="/historytalk-logo.png"
+                  alt="HistoryTalk Logo"
+                  width={34}
+                  height={34}
+                  priority
+                  className="brand-logo-img object-contain"
+                />
+              </span>
+              <span className="brand-wordmark hidden sm:inline text-[15px] font-bold tracking-wide font-serif" aria-label="HistoryTalk">
+                {"HistoryTalk".split("").map((letter, index) => (
+                  <span
+                    key={`${letter}-${index}`}
+                    aria-hidden="true"
+                    className={letter === "T" || index > 6 ? "brand-letter text-[var(--accent-gold)]" : "brand-letter"}
+                    style={{ "--i": index } as React.CSSProperties}
+                  >
+                    {letter}
+                  </span>
+                ))}
+              </span>
             </Link>
 
             {/* Desktop links */}
-            <div className="hidden md:flex items-center gap-6 ml-8">
+            <div className="hidden md:flex items-center gap-1.5 ml-7">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`
-                      relative py-1 text-[14px] font-medium tracking-wide transition-colors group
-                      ${isActive
-                        ? "text-[var(--accent-gold)]"
-                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                      }
-                    `}
+                    className={`nav-link text-[14px] font-semibold tracking-wide ${isActive ? "is-active" : ""}`}
                   >
-                    {link.label}
-                    <span
-                      className={`absolute -bottom-1 left-0 h-0.5 bg-[var(--accent-gold)] transition-all duration-300
-                      ${isActive ? "w-full" : "w-0 group-hover:w-full"}`}
-                    />
+                    <span>{link.label}</span>
                   </Link>
                 );
               })}
