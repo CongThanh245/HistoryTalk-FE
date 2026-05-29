@@ -58,7 +58,16 @@ export function useSendMessage() {
       sessionId: string;
       content: string;
     }) => chatService.sendMessage(sessionId, content),
-    onError: () => toast.error("Không thể gửi tin nhắn"),
+    onError: (error: any) => {
+      const serverMessage = error?.response?.data?.message;
+      if (
+        serverMessage &&
+        (serverMessage.includes("hết token") || serverMessage.includes("nạp thêm"))
+      ) {
+        return;
+      }
+      toast.error("Không thể gửi tin nhắn");
+    },
   });
 }
 

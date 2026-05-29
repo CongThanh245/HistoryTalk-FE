@@ -55,6 +55,7 @@ interface ChatInputProps {
   isLoading?: boolean;
   disabled?: boolean;
   characterName?: string;
+  isTokenExhausted?: boolean;
 }
 
 export function ChatInput({
@@ -62,6 +63,7 @@ export function ChatInput({
   isLoading,
   disabled,
   characterName,
+  isTokenExhausted,
 }: ChatInputProps) {
   const [text, setText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -179,7 +181,9 @@ export function ChatInput({
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={
-            isRecording
+            isTokenExhausted
+              ? "Bạn đã hết token. Vui lòng nâng cấp gói để tiếp tục chat."
+              : isRecording
               ? "Đang nhận giọng nói..."
               : `Nhắn tin với ${characterName ?? "nhân vật"}...`
           }
