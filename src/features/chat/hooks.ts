@@ -50,6 +50,7 @@ export function useCreateSession() {
 }
 
 export function useSendMessage() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
       sessionId,
@@ -58,6 +59,10 @@ export function useSendMessage() {
       sessionId: string;
       content: string;
     }) => chatService.sendMessage(sessionId, content),
+    onSuccess: () => {
+      // Invalidate profile to update token count in sidebar
+      qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+    },
     onError: (error: any) => {
       const serverMessage = error?.response?.data?.message;
       if (

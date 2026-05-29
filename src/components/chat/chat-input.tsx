@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MicrophoneIcon, PaperPlaneRightIcon } from "@phosphor-icons/react";
+import { MicrophoneIcon, PaperPlaneRightIcon, WarningIcon } from "@phosphor-icons/react";
 
 // ── Web Speech API types (chưa có trong lib dom mặc định) ──
 declare global {
@@ -94,10 +94,14 @@ export function ChatInput({
     if (textareaRef.current) textareaRef.current.style.height = "auto";
   }, [text, isLoading, disabled, onSend]);
 
+  const MAX_LENGTH = 200;
+  const isOverLimit = text.length > MAX_LENGTH;
+  const remainingChars = MAX_LENGTH - text.length;
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      if (!isOverLimit) handleSend();
     }
   };
 
@@ -188,6 +192,7 @@ export function ChatInput({
               : `Nhắn tin với ${characterName ?? "nhân vật"}...`
           }
           disabled={disabled || isRecording}
+          maxLength={MAX_LENGTH + 20}
           rows={1}
           className="flex-1 resize-none rounded-xl px-4 py-2.5 text-sm outline-none
                      transition-all placeholder:text-[var(--text-secondary)]
@@ -234,7 +239,7 @@ export function ChatInput({
         {/* Send button */}
         <button
           onClick={handleSend}
-          disabled={!text.trim() || isLoading || disabled}
+          disabled={!text.trim() || isLoading || disabled || isOverLimit}
           className="w-10 h-10 flex items-center justify-center rounded-xl
                      transition-all hover:brightness-110 active:scale-95
                      disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
@@ -264,13 +269,33 @@ export function ChatInput({
         </button>
       </div>
 
-      <p
-        className="text-[10px] mt-1.5 px-1"
-        style={{ color: "var(--text-secondary)", opacity: 0.5 }}
-      >
-        Enter để gửi · Shift+Enter xuống dòng
-        {isSupported ? " · Giữ 🎙 để nói" : ""}
-      </p>
+      <div className="flex items-center justify-between mt-1.5 px-1">
+        <p
+          className="text-[10px]"
+          style={{ color: "var(--text-secondary)", opacity: 0.5 }}
+        >
+          Enter để gửi · Shift+Enter xuống dòng
+          {isSupported ? " · Giữ 🎙 để nói" : ""}
+        </p>
+        <div
+          className="flex items-center gap-1 text-[10px]"
+          style={{
+            color: isOverLimit
+              ? "var(--accent-danger, #ef4444)"
+              : remainingChars <= 20
+              ? "var(--accent-gold)"
+              : "var(--text-secondary)",
+            opacity: isOverLimit ? 1 : 0.7,
+          }}
+        >
+          {isOverLimit && <WarningIcon className="w-3 h-3" />}
+          <span>
+            {isOverLimit
+              ? `Vượt quá ${text.length - MAX_LENGTH} ký tự`
+              : `${remainingChars} ký tự còn lại`}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
