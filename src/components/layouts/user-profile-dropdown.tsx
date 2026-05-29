@@ -148,11 +148,11 @@ export function UserProfileDropdown({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator
-          className="-mx-1 my-1"
+          className="-mx-1"
           style={{ background: "rgba(255,255,255,0.08)" }}
         />
-        
-        <div className="py-1">
+
+        <div>
           {showDiscovery && (
             <DropdownMenuItem 
               className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium focus:bg-[var(--accent-blue)] focus:text-[var(--bg-main)] transition-colors" 
@@ -176,42 +176,6 @@ export function UserProfileDropdown({
           <DropdownMenuItem className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium focus:bg-[var(--accent-blue)] focus:text-[var(--bg-main)] transition-colors">
             Cài đặt
           </DropdownMenuItem>
-          
-          {showPremium && user.role === "CUSTOMER" && (
-            proUser ? (
-              /* Tài khoản đã PRO — thay bằng trạng thái kích hoạt */
-              <DropdownMenuItem
-                className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium justify-between"
-                asChild
-              >
-                <Link href="/profile?tab=billing" className="flex items-center w-full justify-end">
-                  <Badge
-                    className="text-[9px] px-1.5 py-0 border-0 font-bold"
-                    style={{
-                      background: "var(--accent-gold-active-bg)",
-                      color: "var(--accent-gold)",
-                    }}
-                  >
-                    ✦ Active
-                  </Badge>
-                </Link>
-              </DropdownMenuItem>
-            ) : (
-              /* Chưa PRO — nút mời nâng cấp */
-              <DropdownMenuItem className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium focus:bg-[var(--accent-blue)] focus:text-[var(--bg-main)] transition-colors justify-between group">
-                <span style={{ color: "inherit" }}>Nâng cấp Pro</span>
-                <Badge
-                  className="text-[9px] px-1.5 py-0 border-0 font-bold"
-                  style={{
-                    background: "var(--accent-gold-active-bg)",
-                    color: "var(--accent-gold)",
-                  }}
-                >
-                  Pro
-                </Badge>
-              </DropdownMenuItem>
-            )
-          )}
         </div>
         
         <DropdownMenuSeparator
