@@ -43,7 +43,7 @@ import {
 // ─────────────────────────────────────────────
 type TabKey = "profile" | "billing" | "security";
 
-const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
+const TABS: { key: TabKey; label: string; icon: React.ComponentType<{ className?: string; weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone" }> }[] = [
   { key: "profile", label: "Hồ sơ cá nhân", icon: UserIcon },
   { key: "billing", label: "Gói & Token", icon: CrownSimpleIcon },
   { key: "security", label: "Bảo mật", icon: LockSimpleIcon },

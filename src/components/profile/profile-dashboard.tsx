@@ -43,7 +43,7 @@ import {
 // ─────────────────────────────────────────────
 type TabKey = "profile" | "billing" | "security";
 
-const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
+const TABS: { key: TabKey; label: string; icon: React.ComponentType<{ className?: string; weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone" }> }[] = [
   { key: "profile", label: "Hồ sơ cá nhân", icon: UserIcon },
   { key: "billing", label: "Gói & Token", icon: CrownSimpleIcon },
   { key: "security", label: "Bảo mật", icon: LockSimpleIcon },
@@ -70,7 +70,7 @@ function formatCurrency(amount: number): string {
 }
 
 function statusBadge(status: string) {
-  const map: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  const map: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
     PAID: { label: "Thành công", color: "#22c55e", icon: CheckCircleIcon },
     PENDING: { label: "Chờ thanh toán", color: "#f59e0b", icon: ClockIcon },
     CANCELLED: { label: "Đã hủy", color: "#ef4444", icon: XCircleIcon },
@@ -122,7 +122,7 @@ function FormField({
   disabled = false,
 }: {
   label: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
