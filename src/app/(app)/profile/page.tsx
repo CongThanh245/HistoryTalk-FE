@@ -330,7 +330,7 @@ function FormField({
   disabled = false,
 }: {
   label: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
