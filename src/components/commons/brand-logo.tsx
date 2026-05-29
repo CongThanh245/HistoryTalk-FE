@@ -28,7 +28,7 @@ export function BrandLogo({
     ? "/solo-logo.png"
     : isDark
       ? "/logo-dark-theme.png"
-      : "/logo-light-theme .png";
+      : "/logo-light-theme.png";
 
   // Dimensions based on collapsed state and size prop
   const isLarge = size === "large";

@@ -3,16 +3,20 @@ import "../styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProviders from "@/components/context/query-client-provider";
 import { ThemeProvider } from "@/components/context/theme-provider";
-import localFont from "next/font/local";
+import { Playfair_Display, Inter } from "next/font/google";
 
-const titleFont = localFont({
-  src: "../styles/fonts/Helvep-6.ttf",
+const titleFont = Playfair_Display({
+  subsets: ["latin", "vietnamese"],
+  weight: ["600", "700", "800"],
   variable: "--font-title",
+  display: "swap",
 });
 
-const bodyFont = localFont({
-  src: "../styles/fonts/Helvep-6.ttf",
-  variable: "--font-title",
+const bodyFont = Inter({
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-body",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
