@@ -11,7 +11,6 @@ export function GreetingSection() {
         className="text-sm font-semibold" // Giảm từ 3xl xuống sm/base
         style={{ color: "var(--text-inverse)" }}
       >
-        Xin chào,{" "}
         <span
           style={{
             background:

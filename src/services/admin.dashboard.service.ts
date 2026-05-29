@@ -96,6 +96,32 @@ export interface ChatActivityParams {
   granularity?: "day" | "week" | "month";
 }
 
+export interface PaymentTransactionTrendPoint {
+  date: string;
+  success: number;
+  failed: number;
+}
+
+export interface PaymentAnalyticsData {
+  summary: {
+    totalOrders: number;
+    pendingOrders: number;
+    paidOrders: number;
+    cancelledOrders: number;
+    expiredOrders: number;
+    failedOrders: number;
+    successfulTransactions: number;
+    failedTransactions: number;
+  };
+  transactionTrend: PaymentTransactionTrendPoint[];
+}
+
+export interface PaymentAnalyticsParams {
+  from?: string;
+  to?: string;
+  granularity?: "day" | "week" | "month";
+}
+
 // ─── System Health ────────────────────────────────────────────────────────────
 
 export interface SystemHealthData {
@@ -106,6 +132,93 @@ export interface SystemHealthData {
   httpRequestCount: number;
   httpErrorCount: number;
   lastCheckedAt: string;
+}
+
+// ─── Tiers ────────────────────────────────────────────────────────────────────
+
+export interface TierAnalyticsData {
+  summary: {
+    activeTiers: number;
+    currentPaidUsers: number;
+    currentFreeUsers: number;
+    activeSubscriptions: number;
+    expiringSoonSubscriptions: number;
+    freeToPaidConversionRate: number;
+  };
+  usersByTier: {
+    tierId: string;
+    tierTitle: string;
+    users: number;
+  }[];
+  purchasesByTier: {
+    tierId: string;
+    tierTitle: string;
+    paidOrders: number;
+    revenue: number;
+  }[];
+}
+
+// ─── Revenue ──────────────────────────────────────────────────────────────────
+
+export interface RevenueAnalyticsData {
+  summary: {
+    totalRevenue: number;
+    revenueToday: number;
+    revenueThisMonth: number;
+    paidOrders: number;
+    averageOrderValue: number;
+  };
+  ordersByStatus: {
+    status: string;
+    count: number;
+  }[];
+  revenueByTier: {
+    tierId: string;
+    tierTitle: string;
+    revenue: number;
+    paidOrders: number;
+  }[];
+  trend: {
+    date: string;
+    revenue: number;
+    paidOrders: number;
+  }[];
+}
+
+// ─── Quiz ─────────────────────────────────────────────────────────────────────
+
+export interface QuizAnalyticsData {
+  summary: {
+    totalQuizzes: number;
+    publishedQuizzes: number;
+    draftQuizzes: number;
+    deletedQuizzes: number;
+    startedSessions: number;
+    completedSessions: number;
+    completionRate: number;
+    averageScorePercentage: number;
+  };
+  sessionsTrend: {
+    date: string;
+    started: number;
+    completed: number;
+  }[];
+  topQuizzes: {
+    quizId: string;
+    title: string;
+    level: string;
+    startedSessions: number;
+    completedSessions: number;
+    averageScorePercentage: number;
+  }[];
+  topWrongQuestions: {
+    questionId: string;
+    quizId: string;
+    quizTitle: string;
+    wrongAnswers: number;
+    totalAnswers: number;
+    wrongRate: number;
+  }[];
 }
 
 // ─── Service ─────────────────────────────────────────────────────────────────
@@ -133,8 +246,28 @@ export const adminDashboardService = {
     return res.data.data as ChatActivityData;
   },
 
+  getPaymentAnalytics: async (params?: PaymentAnalyticsParams): Promise<PaymentAnalyticsData> => {
+    const res = await axiosClient.get(`${BASE}/payments`, { params });
+    return res.data.data as PaymentAnalyticsData;
+  },
+
   getSystemHealth: async (): Promise<SystemHealthData> => {
     const res = await axiosClient.get(`${BASE}/system-health`);
     return res.data.data as SystemHealthData;
+  },
+
+  getTierAnalytics: async (params?: PaymentAnalyticsParams): Promise<TierAnalyticsData> => {
+    const res = await axiosClient.get(`${BASE}/tiers`, { params });
+    return res.data.data as TierAnalyticsData;
+  },
+
+  getRevenueAnalytics: async (params?: PaymentAnalyticsParams): Promise<RevenueAnalyticsData> => {
+    const res = await axiosClient.get(`${BASE}/revenue`, { params });
+    return res.data.data as RevenueAnalyticsData;
+  },
+
+  getQuizAnalytics: async (params?: PaymentAnalyticsParams): Promise<QuizAnalyticsData> => {
+    const res = await axiosClient.get(`${BASE}/quiz`, { params });
+    return res.data.data as QuizAnalyticsData;
   },
 };

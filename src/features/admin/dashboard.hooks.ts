@@ -4,6 +4,7 @@ import {
   adminDashboardService,
   type UserAnalyticsParams,
   type ChatActivityParams,
+  type PaymentAnalyticsParams,
 } from "@/services/admin.dashboard.service";
 
 const DASHBOARD_KEYS = {
@@ -11,7 +12,11 @@ const DASHBOARD_KEYS = {
   users: (params?: UserAnalyticsParams) => ["admin", "dashboard", "users", params] as const,
   content: ["admin", "dashboard", "content"] as const,
   chat: (params?: ChatActivityParams) => ["admin", "dashboard", "chat", params] as const,
+  payments: (params?: PaymentAnalyticsParams) => ["admin", "dashboard", "payments", params] as const,
   health: ["admin", "dashboard", "health"] as const,
+  tiers: (params?: PaymentAnalyticsParams) => ["admin", "dashboard", "tiers", params] as const,
+  revenue: (params?: PaymentAnalyticsParams) => ["admin", "dashboard", "revenue", params] as const,
+  quiz: (params?: PaymentAnalyticsParams) => ["admin", "dashboard", "quiz", params] as const,
 };
 
 export function useAdminOverview() {
@@ -46,11 +51,43 @@ export function useAdminChatActivity(params?: ChatActivityParams) {
   });
 }
 
+export function useAdminPaymentAnalytics(params?: PaymentAnalyticsParams) {
+  return useQuery({
+    queryKey: DASHBOARD_KEYS.payments(params),
+    queryFn: () => adminDashboardService.getPaymentAnalytics(params),
+    staleTime: 1000 * 60,
+  });
+}
+
 export function useAdminSystemHealth() {
   return useQuery({
     queryKey: DASHBOARD_KEYS.health,
     queryFn: () => adminDashboardService.getSystemHealth(),
     staleTime: 1000 * 30,         // 30s
     refetchInterval: 1000 * 60,   // auto-refresh every 60s
+  });
+}
+
+export function useAdminTierAnalytics(params?: PaymentAnalyticsParams) {
+  return useQuery({
+    queryKey: DASHBOARD_KEYS.tiers(params),
+    queryFn: () => adminDashboardService.getTierAnalytics(params),
+    staleTime: 1000 * 60,
+  });
+}
+
+export function useAdminRevenueAnalytics(params?: PaymentAnalyticsParams) {
+  return useQuery({
+    queryKey: DASHBOARD_KEYS.revenue(params),
+    queryFn: () => adminDashboardService.getRevenueAnalytics(params),
+    staleTime: 1000 * 60,
+  });
+}
+
+export function useAdminQuizAnalytics(params?: PaymentAnalyticsParams) {
+  return useQuery({
+    queryKey: DASHBOARD_KEYS.quiz(params),
+    queryFn: () => adminDashboardService.getQuizAnalytics(params),
+    staleTime: 1000 * 60,
   });
 }

@@ -40,10 +40,10 @@ export function HomeBanner() {
       }}
     >
       <div
-        className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full blur-[80px] pointer-events-none opacity-20"
+        className="absolute top-0 right-0 w-100 h-100 rounded-full blur-[100px] pointer-events-none opacity-30"
         style={{
-          background: "radial-gradient(circle, var(--accent-gold, #ff9215) 0%, transparent 70%)",
-          transform: "translate(100px, -100px)",
+          background: "radial-gradient(circle, var(--burning-flame, #72383D) 0%, transparent 70%)",
+          transform: "translate(50px, -50px)",
         }}
       />
       <div
@@ -98,35 +98,19 @@ export function HomeBanner() {
         </div>
       </div>
 
-      <div className="hidden md:flex items-center justify-center relative w-[320px] h-[210px] shrink-0 mr-1 lg:mr-5">
+      <div className="hidden md:flex items-end justify-end relative w-100 h-75 shrink-0">
         <div
-          className="absolute z-10 w-[190px] h-[150px] transition-transform duration-500"
+          className="absolute z-20"
           style={{
-            transform: "rotate(-8deg) translate(-38px, 0)",
-            filter: "drop-shadow(0 14px 22px rgba(50, 45, 41, 0.18))",
-          }}
-        >
-          <Image
-            src="/dragon_card.png"
-            alt="HistoryTalk card"
-            fill
-            className="object-contain"
-            priority
-          />
-        </div>
-
-        <div
-          className="absolute z-20 transition-transform duration-500 hover:scale-105"
-          style={{
-            width: "168px",
-            height: "168px",
+            width: "280px",
+            height: "280px",
             filter: "drop-shadow(0 14px 22px rgba(50, 45, 41, 0.26))",
-            transform: "translate(48px, 2px)",
+            transform: "translate(80px, 40px)",
           }}
         >
           <Image
-            src="/history_talk_mascot.png"
-            alt="HistoryTalk mascot"
+            src="/ngo_quyen.png"
+            alt="HistoryTalk banner character"
             fill
             className="object-contain"
             priority

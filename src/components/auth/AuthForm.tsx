@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EyeIcon, EyeClosedIcon, XIcon } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useGoogleLogin, useLogin, useRegister } from "@/features/auth/hooks";
+import { BrandLogo } from "@/components/commons/brand-logo";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -312,33 +312,12 @@ export default function AuthForm({ mode }: AuthFormProps) {
               kiểm tra kiến thức của bạn.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div
-              className="relative h-10 w-10 overflow-hidden rounded-md border bg-transparent shadow-[0_6px_16px_rgba(255,146,21,0.22)]"
-              style={{ borderColor: "rgba(255, 146, 21, 0.32)" }}
-            >
-              <Image
-                src="/historytalk-logo.png"
-                alt="HistoryTalk logo"
-                fill
-                sizes="40px"
-                priority
-                className="object-contain"
-              />
-            </div>
-            <span
-              className="text-xl font-bold"
-              style={{
-                background:
-                  "linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-gold-soft) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                fontFamily: "'Georgia', serif",
-              }}
-            >
-              HistoryTalk
-            </span>
-          </div>
+          <BrandLogo
+            animatedText
+            glow="warm"
+            markClassName="h-10 w-10"
+            textClassName="text-xl"
+          />
         </div>
       </div>
 
