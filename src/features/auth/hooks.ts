@@ -1,7 +1,8 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authApi } from "./api";
 import { useAuthStore } from "@/store/auth.store";
+import { queryKeys } from "@/shared/query-key";
 import {
   ForgotPasswordRequest,
   GoogleLoginRequest,
@@ -98,11 +99,15 @@ export function useResetPassword() {
 export function useLogout() {
   const router = useRouter();
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: () => authApi.logout(),
     onSettled: () => {
       clearAuth();
+
+      // Xóa profile cache để đảm bảo token được làm mới khi login tài khoản mới
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile.me });
 
       document.cookie = "auth-token=; path=/; max-age=0";
       document.cookie = "auth-role=; path=/; max-age=0";
