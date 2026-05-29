@@ -47,14 +47,20 @@ import {
   useAdminRestoreUser,
   useAdminPermanentDeleteUser,
   useAdminAddTokens,
+  useAdminTokenAnalytics,
+  type AdminUser,
 } from "@/features/admin/hooks";
-import type { MockUser } from "@/features/admin/mock-data";
 
 // ────────────────────────────────────────────────────────────────────────────
 // Types & helpers
 // ────────────────────────────────────────────────────────────────────────────
 
 type AdminRole = "CUSTOMER" | "CONTENT_ADMIN" | "SYSTEM_ADMIN";
+
+// Helper to check if user is soft-deleted (API may use different field)
+function isUserDeleted(user: AdminUser): boolean {
+  return !!user.deletedAt;
+}
 
 interface RoleMeta {
   label: string;
@@ -131,14 +137,14 @@ function timeAgo(iso: string) {
 // Empty user form state
 // ────────────────────────────────────────────────────────────────────────────
 
-function buildEmptyUser(role: AdminRole): Omit<MockUser, "uid" | "created_date" | "updated_date" | "deleted_date" | "last_active_date"> {
+function buildEmptyUser(role: AdminRole): Partial<AdminUser> {
   return {
     role,
-    user_name: "",
+    userName: "",
     email: "",
-    tier_id: "tier_free",
+    fullName: "",
+    tierId: "tier_free",
     token: 0,
-    is_active: true,
   };
 }
 
@@ -153,13 +159,19 @@ export default function AdminAccountsPage() {
   const roleEnum = ROLE_ENUM[roleSlug] ?? "CUSTOMER";
 
   // Data
-  const { data: allUsers = [], isLoading, isFetching } = useAdminUsers(roleEnum);
+  const { data: usersResponse, isLoading, isFetching } = useAdminUsers(roleEnum, { page: 0, size: 100 });
+  const allUsers = usersResponse?.content ?? [];
   const createUser = useAdminCreateUser();
   const updateUser = useAdminUpdateUser();
   const deleteUser = useAdminDeleteUser();
   const restoreUser = useAdminRestoreUser();
   const permanentDeleteUser = useAdminPermanentDeleteUser();
   const addTokens = useAdminAddTokens();
+
+  // Token analytics (only for customer role)
+  const { data: tokenAnalytics } = useAdminTokenAnalytics(
+    roleEnum === "CUSTOMER" ? { granularity: "day" } : undefined
+  );
 
   // UI state
   const [search, setSearch] = React.useState("");
@@ -168,29 +180,30 @@ export default function AdminAccountsPage() {
   // Dialogs
   const [formOpen, setFormOpen] = React.useState(false);
   const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
-  const [formTarget, setFormTarget] = React.useState<MockUser | null>(null);
-  const [formData, setFormData] = React.useState(() => buildEmptyUser(roleEnum));
+  const [formTarget, setFormTarget] = React.useState<AdminUser | null>(null);
+  const [formData, setFormData] = React.useState<Partial<AdminUser>>(() => buildEmptyUser(roleEnum));
 
   const [tokenDialogOpen, setTokenDialogOpen] = React.useState(false);
-  const [tokenTarget, setTokenTarget] = React.useState<MockUser | null>(null);
+  const [tokenTarget, setTokenTarget] = React.useState<AdminUser | null>(null);
   const [tokenAmount, setTokenAmount] = React.useState("100");
 
   const [deleteOpen, setDeleteOpen] = React.useState(false);
-  const [deleteTarget, setDeleteTarget] = React.useState<MockUser | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<AdminUser | null>(null);
   const [permanentDeleteOpen, setPermanentDeleteOpen] = React.useState(false);
-  const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<MockUser | null>(null);
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<AdminUser | null>(null);
 
   // Derived
-  const activeItems = allUsers.filter((u) => !u.deleted_date);
-  const trashedItems = allUsers.filter((u) => !!u.deleted_date);
+  const activeItems = allUsers.filter((u) => !isUserDeleted(u));
+  const trashedItems = allUsers.filter((u) => isUserDeleted(u));
   const baseList = showTrash ? trashedItems : activeItems;
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return baseList;
     return baseList.filter(
       (u) =>
-        u.user_name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q)
+        u.userName?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.fullName?.toLowerCase().includes(q)
     );
   }, [baseList, search]);
 
@@ -203,34 +216,53 @@ export default function AdminAccountsPage() {
     setFormOpen(true);
   }
 
-  function openEdit(user: MockUser) {
+  function openEdit(user: AdminUser) {
     setFormMode("edit");
     setFormTarget(user);
     setFormData({
-      role: user.role,
-      user_name: user.user_name,
+      userName: user.userName,
+      fullName: user.fullName,
       email: user.email,
-      tier_id: user.tier_id,
-      token: user.token,
-      is_active: user.is_active,
+      dob: user.dob ?? undefined,
+      gender: user.gender ?? undefined,
+      phoneNumber: user.phoneNumber ?? undefined,
+      address: user.address ?? undefined,
+      avatarUrl: user.avatarUrl ?? undefined,
     });
     setFormOpen(true);
   }
 
   function handleFormSave() {
-    if (!formData.user_name.trim() || !formData.email.trim()) return;
+    if (!formData.userName?.trim() || !formData.email?.trim()) return;
     if (formMode === "create") {
-      createUser.mutate(formData, { onSuccess: () => setFormOpen(false) });
+      createUser.mutate(formData as AdminUser, { onSuccess: () => setFormOpen(false) });
     } else if (formTarget) {
+      // Only send allowed fields for update
+      const updates = {
+        userName: formData.userName,
+        fullName: formData.fullName,
+        dob: formData.dob,
+        gender: formData.gender,
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
+        avatarUrl: formData.avatarUrl,
+      };
       updateUser.mutate(
-        { uid: formTarget.uid, updates: formData },
+        { uid: formTarget.uid, updates },
         { onSuccess: () => setFormOpen(false) }
       );
     }
   }
 
-  function handleToggleActive(user: MockUser) {
-    updateUser.mutate({ uid: user.uid, updates: { is_active: !user.is_active } });
+  // Toggle active status via deactivate/restore API
+  function handleToggleActive(user: AdminUser) {
+    if (isUserDeleted(user)) {
+      // Reactivate
+      restoreUser.mutate({ uid: user.uid, role: user.role });
+    } else {
+      // Deactivate
+      deleteUser.mutate({ uid: user.uid, role: user.role });
+    }
   }
 
   function handleAddTokens() {
@@ -245,20 +277,21 @@ export default function AdminAccountsPage() {
 
   // ── Columns ───────────────────────────────────────────────────────────────
 
-  const columns = React.useMemo<ColumnDef<MockUser>[]>(() => {
-    const base: ColumnDef<MockUser>[] = [
+  const columns = React.useMemo<ColumnDef<AdminUser>[]>(() => {
+    const base: ColumnDef<AdminUser>[] = [
       {
-        accessorKey: "user_name",
+        accessorKey: "userName",
         header: "Người dùng",
         cell: ({ row }) => {
           const u = row.original;
           // Generate initials avatar
-          const initials = u.user_name
+          const displayName = u.fullName || u.userName || "Unknown";
+          const initials = displayName
             .split(" ")
             .slice(-2)
-            .map((w) => w[0])
+            .map((w: string) => w[0])
             .join("")
-            .toUpperCase();
+            .toUpperCase() || "?";
           const colors = [
             "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981",
             "#06b6d4", "#ef4444", "#6366f1",
@@ -274,11 +307,16 @@ export default function AdminAccountsPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
-                  {u.user_name}
+                  {u.fullName || u.userName}
                 </p>
                 <p className="text-xs" style={{ color: "var(--content-muted)" }}>
                   {u.email}
                 </p>
+                {u.tierTitle && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                    {u.tierTitle}
+                  </span>
+                )}
               </div>
             </div>
           );
@@ -289,10 +327,10 @@ export default function AdminAccountsPage() {
     // Customer specific columns
     if (meta.showTier) {
       base.push({
-        accessorKey: "tier_id",
+        accessorKey: "tierId",
         header: "Gói",
         cell: ({ row }) => {
-          const tier = row.original.tier_id;
+          const tier = row.original.tierId || "tier_free";
           const c = TIER_COLORS[tier] ?? TIER_COLORS["tier_free"];
           return (
             <span
@@ -323,41 +361,42 @@ export default function AdminAccountsPage() {
 
     base.push(
       {
-        accessorKey: "last_active_date",
+        accessorKey: "lastActiveDate",
         header: "Hoạt động cuối",
         cell: ({ row }) => (
           <span className="text-xs" style={{ color: "var(--content-muted)" }}>
-            {timeAgo(row.original.last_active_date)}
+            {row.original.lastActiveDate ? timeAgo(row.original.lastActiveDate) : "—"}
           </span>
         ),
       },
       {
-        accessorKey: "created_date",
+        accessorKey: "createdAt",
         header: "Ngày tạo",
         cell: ({ row }) => (
           <span className="text-xs" style={{ color: "var(--content-muted)" }}>
-            {formatDate(row.original.created_date)}
+            {formatDate(row.original.createdAt)}
           </span>
         ),
       },
       {
-        accessorKey: "is_active",
+        accessorKey: "deletedAt",
         header: "Trạng thái",
         cell: ({ row }) => {
           const u = row.original;
+          const isDeleted = isUserDeleted(u);
           return (
             <div className="flex items-center gap-2">
               <Switch
-                checked={u.is_active}
+                checked={!isDeleted}
                 onCheckedChange={() => handleToggleActive(u)}
-                disabled={updateUser.isPending}
+                disabled={deleteUser.isPending || restoreUser.isPending}
                 className="data-[state=checked]:!bg-emerald-500"
               />
               <span
                 className="text-xs font-semibold"
-                style={{ color: u.is_active ? "rgb(22,163,74)" : "var(--accent-danger)" }}
+                style={{ color: !isDeleted ? "rgb(22,163,74)" : "var(--accent-danger)" }}
               >
-                {u.is_active ? "Kích hoạt" : "Đã khoá"}
+                {!isDeleted ? "Kích hoạt" : "Đã khoá"}
               </span>
             </div>
           );
@@ -436,10 +475,10 @@ export default function AdminAccountsPage() {
 
   // ── Trash columns ─────────────────────────────────────────────────────────
 
-  const trashColumns = React.useMemo<ColumnDef<MockUser>[]>(
+  const trashColumns = React.useMemo<ColumnDef<AdminUser>[]>(
     () => [
       {
-        accessorKey: "user_name",
+        accessorKey: "userName",
         header: "Người dùng",
         cell: ({ row }) => {
           const u = row.original;
@@ -450,7 +489,7 @@ export default function AdminAccountsPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold line-through" style={{ color: "var(--content-heading)" }}>
-                  {u.user_name}
+                  {u.fullName || u.userName}
                 </p>
                 <p className="text-xs" style={{ color: "var(--content-muted)" }}>
                   {u.email}
@@ -461,11 +500,11 @@ export default function AdminAccountsPage() {
         },
       },
       {
-        accessorKey: "deleted_date",
+        accessorKey: "deletedAt",
         header: "Đã xoá lúc",
         cell: ({ row }) => {
-          const d = row.original.deleted_date
-            ? new Date(row.original.deleted_date)
+          const d = row.original.deletedAt
+            ? new Date(row.original.deletedAt)
             : null;
           return (
             <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
@@ -637,6 +676,89 @@ export default function AdminAccountsPage() {
         />
       </section>
 
+      {/* ── Token Analytics ───────────────────────────────────────────── */}
+      {meta.showToken && !showTrash && !isLoading && tokenAnalytics && (
+        <section
+          className="rounded-2xl border p-6 space-y-4"
+          style={{
+            background: "var(--card-light-bg)",
+            borderColor: "var(--card-light-border)",
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <CoinsIcon className="h-5 w-5" style={{ color: "var(--accent-gold)" }} />
+            <h2 className="text-base font-semibold" style={{ color: "var(--content-heading)" }}>
+              Thống kê Token Usage
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="rounded-xl border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+              <p className="text-xs text-muted-foreground">Total Tokens Used</p>
+              <p className="text-lg font-bold" style={{ color: "var(--accent-gold)" }}>
+                {tokenAnalytics.summary.totalTokens.toLocaleString()}
+              </p>
+            </div>
+            <div className="rounded-xl border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+              <p className="text-xs text-muted-foreground">Remaining Tokens</p>
+              <p className="text-lg font-bold" style={{ color: "rgb(22,163,74)" }}>
+                {tokenAnalytics.summary.remainingTokens.toLocaleString()}
+              </p>
+            </div>
+            <div className="rounded-xl border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+              <p className="text-xs text-muted-foreground">Users Out of Tokens</p>
+              <p className="text-lg font-bold" style={{ color: "var(--accent-danger)" }}>
+                {tokenAnalytics.summary.usersOutOfTokens}
+              </p>
+            </div>
+            <div className="rounded-xl border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+              <p className="text-xs text-muted-foreground">Avg Remaining</p>
+              <p className="text-lg font-bold" style={{ color: "var(--accent-blue)" }}>
+                {Math.round(tokenAnalytics.summary.averageRemainingTokens).toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Top Token Users */}
+          {tokenAnalytics.topUsersByTokenUsage.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                Top người dùng tiêu thụ token
+              </h3>
+              <div className="space-y-2">
+                {tokenAnalytics.topUsersByTokenUsage.slice(0, 5).map((user) => (
+                  <div
+                    key={user.uid}
+                    className="flex items-center justify-between p-3 rounded-xl border"
+                    style={{ borderColor: "var(--card-light-border)" }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
+                        {user.userName?.[0]?.toUpperCase() || "?"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: "var(--content-heading)" }}>
+                          {user.userName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold" style={{ color: "var(--accent-gold)" }}>
+                        {user.totalTokens.toLocaleString()} tokens
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Còn: {user.remainingTokens.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* ── Stats summary strip ─────────────────────────────────────────── */}
       {!showTrash && !isLoading && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -648,19 +770,19 @@ export default function AdminAccountsPage() {
             },
             {
               label: "Đang kích hoạt",
-              value: activeItems.filter((u) => u.is_active).length,
+              value: activeItems.filter((u) => !isUserDeleted(u)).length,
               color: "rgb(22,163,74)",
             },
             {
               label: "Đang bị khoá",
-              value: activeItems.filter((u) => !u.is_active).length,
+              value: activeItems.filter((u) => isUserDeleted(u)).length,
               color: "var(--accent-danger)",
             },
             ...(meta.showToken
               ? [
                   {
-                    label: "Tổng token",
-                    value: activeItems.reduce((s, u) => s + u.token, 0).toLocaleString(),
+                    label: "Tổng token (hệ thống)",
+                    value: tokenAnalytics?.summary.remainingTokens.toLocaleString() ?? activeItems.reduce((s, u) => s + (u.token || 0), 0).toLocaleString(),
                     color: "var(--accent-gold)",
                   },
                 ]
@@ -718,12 +840,30 @@ export default function AdminAccountsPage() {
             {/* Username */}
             <div className="space-y-1.5">
               <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>
-                Tên người dùng <span className="text-[var(--accent-danger)]">*</span>
+                Tên người dùng <span className="text-destructive">*</span>
               </Label>
               <Input
-                value={formData.user_name}
-                onChange={(e) => setFormData((p) => ({ ...p, user_name: e.target.value }))}
+                value={formData.userName ?? ""}
+                onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, userName: e.target.value }))}
                 placeholder="Nhập tên người dùng"
+                className="h-10 rounded-xl border"
+                style={{
+                  background: "rgba(27,38,50,0.05)",
+                  borderColor: "var(--card-light-border)",
+                  color: "var(--content-heading)",
+                }}
+              />
+            </div>
+
+            {/* Full Name */}
+            <div className="space-y-1.5">
+              <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>
+                Họ và tên
+              </Label>
+              <Input
+                value={formData.fullName ?? ""}
+                onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, fullName: e.target.value }))}
+                placeholder="Nhập họ và tên"
                 className="h-10 rounded-xl border"
                 style={{
                   background: "rgba(27,38,50,0.05)",
@@ -736,12 +876,12 @@ export default function AdminAccountsPage() {
             {/* Email */}
             <div className="space-y-1.5">
               <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>
-                Email <span className="text-[var(--accent-danger)]">*</span>
+                Email <span className="text-destructive">*</span>
               </Label>
               <Input
                 type="email"
-                value={formData.email}
-                onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
+                value={formData.email ?? ""}
+                onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, email: e.target.value }))}
                 placeholder="example@historytalk.vn"
                 className="h-10 rounded-xl border"
                 style={{
@@ -752,72 +892,57 @@ export default function AdminAccountsPage() {
               />
             </div>
 
-            {/* Tier – customer only */}
-            {meta.showTier && (
-              <div className="space-y-1.5">
-                <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>Gói dịch vụ</Label>
-                <Select
-                  value={formData.tier_id}
-                  onValueChange={(v) => setFormData((p) => ({ ...p, tier_id: v }))}
-                >
-                  <SelectTrigger
-                    className="h-10 w-full rounded-xl border"
-                    style={{
-                      background: "rgba(27,38,50,0.05)",
-                      borderColor: "var(--card-light-border)",
-                      color: "var(--content-heading)",
-                    }}
-                  >
-                    <SelectValue placeholder="Chọn gói" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="tier_free">Free</SelectItem>
-                    <SelectItem value="tier_plus">Plus</SelectItem>
-                    <SelectItem value="tier_pro">Pro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Phone Number */}
+            <div className="space-y-1.5">
+              <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>
+                Số điện thoại
+              </Label>
+              <Input
+                value={formData.phoneNumber ?? ""}
+                onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, phoneNumber: e.target.value }))}
+                placeholder="Nhập số điện thoại"
+                className="h-10 rounded-xl border"
+                style={{
+                  background: "rgba(27,38,50,0.05)",
+                  borderColor: "var(--card-light-border)",
+                  color: "var(--content-heading)",
+                }}
+              />
+            </div>
 
-            {/* Token – customer only */}
-            {meta.showToken && (
+            {/* Address */}
+            <div className="space-y-1.5">
+              <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>
+                Địa chỉ
+              </Label>
+              <Input
+                value={formData.address ?? ""}
+                onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, address: e.target.value }))}
+                placeholder="Nhập địa chỉ"
+                className="h-10 rounded-xl border"
+                style={{
+                  background: "rgba(27,38,50,0.05)",
+                  borderColor: "var(--card-light-border)",
+                  color: "var(--content-heading)",
+                }}
+              />
+            </div>
+
+            {/* Tier – customer only (read only, can't change via update API) */}
+            {meta.showTier && formTarget?.tierTitle && (
               <div className="space-y-1.5">
-                <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>Token ban đầu</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={formData.token}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, token: parseInt(e.target.value, 10) || 0 }))
-                  }
-                  className="h-10 rounded-xl border"
+                <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>Gói dịch vụ hiện tại</Label>
+                <div className="h-10 rounded-xl border px-3 flex items-center text-sm"
                   style={{
                     background: "rgba(27,38,50,0.05)",
                     borderColor: "var(--card-light-border)",
                     color: "var(--content-heading)",
                   }}
-                />
+                >
+                  {formTarget.tierTitle}
+                </div>
               </div>
             )}
-
-            {/* Active toggle */}
-            <div className="flex items-center justify-between rounded-xl border px-4 py-3"
-              style={{ borderColor: "var(--card-light-border)", background: "rgba(27,38,50,0.03)" }}
-            >
-              <div>
-                <p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
-                  Trạng thái tài khoản
-                </p>
-                <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                  Kích hoạt để người dùng có thể đăng nhập
-                </p>
-              </div>
-              <Switch
-                checked={formData.is_active}
-                onCheckedChange={(v) => setFormData((p) => ({ ...p, is_active: v }))}
-                className="data-[state=checked]:!bg-emerald-500"
-              />
-            </div>
           </div>
 
           <DialogFooter>
@@ -862,9 +987,9 @@ export default function AdminAccountsPage() {
             <DialogDescription style={{ color: "var(--content-muted)" }}>
               Token sẽ được cộng thêm vào tài khoản{" "}
               <strong style={{ color: "var(--content-heading)" }}>
-                {tokenTarget?.user_name}
+                {tokenTarget?.fullName || tokenTarget?.userName}
               </strong>
-              . Hiện tại: <strong style={{ color: "var(--accent-gold)" }}>{tokenTarget?.token.toLocaleString()}</strong> token.
+              . Hiện tại: <strong style={{ color: "var(--accent-gold)" }}>{tokenTarget?.token?.toLocaleString()}</strong> token.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5 py-2">
@@ -929,7 +1054,7 @@ export default function AdminAccountsPage() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="Chuyển vào thùng rác?"
-        description={`Tài khoản "${deleteTarget?.user_name}" sẽ bị chuyển vào thùng rác. Bạn có thể khôi phục sau.`}
+        description={`Tài khoản "${deleteTarget?.fullName || deleteTarget?.userName}" sẽ bị chuyển vào thùng rác. Bạn có thể khôi phục sau.`}
         confirmLabel={deleteUser.isPending ? "Đang xoá..." : "Chuyển vào thùng rác"}
         variant="danger"
         isPending={deleteUser.isPending}
@@ -952,7 +1077,7 @@ export default function AdminAccountsPage() {
         open={permanentDeleteOpen}
         onOpenChange={setPermanentDeleteOpen}
         title="Xoá vĩnh viễn tài khoản?"
-        description={`Tài khoản "${permanentDeleteTarget?.user_name}" sẽ bị xoá hoàn toàn khỏi hệ thống. Hành động này không thể hoàn tác.`}
+        description={`Tài khoản "${permanentDeleteTarget?.fullName || permanentDeleteTarget?.userName}" sẽ bị xoá hoàn toàn khỏi hệ thống. Hành động này không thể hoàn tác.`}
         confirmLabel={permanentDeleteUser.isPending ? "Đang xoá..." : "Xoá vĩnh viễn"}
         variant="danger"
         isPending={permanentDeleteUser.isPending}
