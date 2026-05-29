@@ -49,7 +49,15 @@ export function useLogin() {
     onSuccess: ({ user, tokens }) => {
       setAuth(user, tokens);
       persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
-      redirectAfterLogin(user.role, router);
+      
+      // Force redirect based on role, regardless of current page
+      if (user.role === "CONTENT_ADMIN") {
+        router.replace("/staff");
+      } else if (user.role === "SYSTEM_ADMIN") {
+        router.replace("/staff/admin");
+      } else {
+        router.replace("/home");
+      }
     },
   });
 }
@@ -63,7 +71,15 @@ export function useGoogleLogin() {
     onSuccess: ({ user, tokens }) => {
       setAuth(user, tokens);
       persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
-      redirectAfterLogin(user.role, router);
+      
+      // Force redirect based on role, regardless of current page
+      if (user.role === "CONTENT_ADMIN") {
+        router.replace("/staff");
+      } else if (user.role === "SYSTEM_ADMIN") {
+        router.replace("/staff/admin");
+      } else {
+        router.replace("/home");
+      }
     },
   });
 }
