@@ -81,6 +81,11 @@ export const queryKeys = {
   payments: {
     tiers: ["payments", "tiers"] as const,
     history: ["payments", "history"] as const,
+    myHistory: ["payments", "me"] as const,
+  },
+
+  profile: {
+    me: ["profile", "me"] as const,
   },
 
   trash: {

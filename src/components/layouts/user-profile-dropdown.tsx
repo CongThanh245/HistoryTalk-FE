@@ -13,8 +13,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useLogout } from "@/features/auth/hooks";
 import { useAuthStore } from "@/store/auth.store";
+import { useProfile } from "@/features/profile/hooks";
+import { isPro } from "@/services/user.service";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
+import { CrownIcon } from "lucide-react";
 
 interface UserProfileDropdownProps {
   align?: "start" | "center" | "end";
@@ -35,6 +38,9 @@ export function UserProfileDropdown({
 }: UserProfileDropdownProps) {
   const { mutate: logout, isPending } = useLogout();
   const user = useAuthStore((s) => s.user);
+  const { data: profile } = useProfile();
+
+  const proUser = isPro(profile ?? null);
 
   if (!user) return null;
 
@@ -57,12 +63,22 @@ export function UserProfileDropdown({
             className
           )}
         >
+          {/* PRO: vòng sáng vàng bao quanh avatar */}
+          {proUser && (
+            <span
+              className="absolute inset-0 rounded-full pointer-events-none z-10"
+              style={{
+                boxShadow: "0 0 0 2px var(--accent-gold), 0 0 10px 2px var(--accent-gold-glow, rgba(201,162,77,0.5))",
+                borderRadius: "50%",
+              }}
+            />
+          )}
           <Avatar
             className={cn(
               "h-9 w-9 transition-transform duration-200",
               showBorder ? "border" : "border-0"
             )}
-            style={{ borderColor: "var(--header-border)" }}
+            style={{ borderColor: proUser ? "var(--accent-gold)" : "var(--header-border)" }}
           >
             <AvatarImage
               src={user?.avatarUrl ?? undefined}
@@ -88,23 +104,47 @@ export function UserProfileDropdown({
         className="w-56 border p-1"
         style={{
           background: "var(--bg-elevated)",
-          borderColor: "var(--border-strong)",
+          borderColor: proUser ? "rgba(201,162,77,0.35)" : "var(--border-strong)",
           color: "var(--text-primary)",
           borderRadius: "14px",
-          boxShadow: "0 10px 40px -10px rgba(0,0,0,0.5)",
+          boxShadow: proUser
+            ? "0 10px 40px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,162,77,0.1)"
+            : "0 10px 40px -10px rgba(0,0,0,0.5)",
         }}
       >
         <DropdownMenuLabel className="font-normal px-2.5 py-3">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-semibold leading-none" style={{ color: "var(--text-primary)" }}>
-              {user?.userName ?? "—"}
-            </p>
+            {/* Tên + PRO Crown */}
+            <div className="flex items-center gap-1.5">
+              {proUser && (
+                <CrownIcon
+                  className="w-3.5 h-3.5 shrink-0"
+                  style={{ color: "var(--accent-gold)" }}
+                />
+              )}
+              <p className="text-sm font-semibold leading-none truncate" style={{ color: "var(--text-primary)" }}>
+                {user?.userName ?? "—"}
+              </p>
+            </div>
             <p
               className="text-[11px] leading-none"
               style={{ color: "var(--text-muted)" }}
             >
               {user?.email ?? "—"}
             </p>
+            {/* PRO tier label */}
+            {proUser && profile?.tierTitle && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded-md w-fit"
+                style={{
+                  background: "linear-gradient(90deg, rgba(201,162,77,0.18) 0%, rgba(163,81,57,0.12) 100%)",
+                  color: "var(--accent-gold)",
+                  border: "1px solid rgba(201,162,77,0.25)",
+                }}
+              >
+                ✦ {profile.tierTitle}
+              </span>
+            )}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator
@@ -138,18 +178,40 @@ export function UserProfileDropdown({
           </DropdownMenuItem>
           
           {showPremium && (
-            <DropdownMenuItem className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium focus:bg-[var(--accent-blue)] focus:text-[var(--bg-main)] transition-colors justify-between group">
-              <span style={{ color: "inherit" }}>Nâng cấp Premium</span>
-              <Badge
-                className="text-[9px] px-1.5 py-0 border-0 font-bold"
-                style={{
-                  background: "var(--accent-gold-active-bg)",
-                  color: "var(--accent-gold)",
-                }}
+            proUser ? (
+              /* Tài khoản đã PRO — thay bằng trạng thái kích hoạt */
+              <DropdownMenuItem
+                className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium justify-between"
+                asChild
               >
-                Pro
-              </Badge>
-            </DropdownMenuItem>
+                <Link href="/profile?tab=billing" className="flex items-center w-full justify-between">
+                  <span style={{ color: "var(--accent-gold-soft)" }}>Gói Pro đang hoạt động</span>
+                  <Badge
+                    className="text-[9px] px-1.5 py-0 border-0 font-bold"
+                    style={{
+                      background: "var(--accent-gold-active-bg)",
+                      color: "var(--accent-gold)",
+                    }}
+                  >
+                    ✦ Active
+                  </Badge>
+                </Link>
+              </DropdownMenuItem>
+            ) : (
+              /* Chưa PRO — nút mời nâng cấp */
+              <DropdownMenuItem className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium focus:bg-[var(--accent-blue)] focus:text-[var(--bg-main)] transition-colors justify-between group">
+                <span style={{ color: "inherit" }}>Nâng cấp Premium</span>
+                <Badge
+                  className="text-[9px] px-1.5 py-0 border-0 font-bold"
+                  style={{
+                    background: "var(--accent-gold-active-bg)",
+                    color: "var(--accent-gold)",
+                  }}
+                >
+                  Pro
+                </Badge>
+              </DropdownMenuItem>
+            )
           )}
         </div>
         

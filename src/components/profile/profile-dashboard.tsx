@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -92,7 +92,6 @@ function statusBadge(status: string) {
 // ─────────────────────────────────────────────
 // Sub-components
 // ─────────────────────────────────────────────
-
 function ProfileSkeleton() {
   return (
     <div className="space-y-4">
@@ -109,6 +108,51 @@ function ProfileSkeleton() {
           <Skeleton className="h-10 w-full" />
         </div>
       ))}
+    </div>
+  );
+}
+
+function FormField({
+  label,
+  icon: Icon,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  disabled = false,
+}: {
+  label: string;
+  icon: React.ElementType;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  type?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label
+        className="text-sm font-medium flex items-center gap-1.5"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        <Icon className="w-3.5 h-3.5" />
+        {label}
+      </Label>
+      <Input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        disabled={disabled}
+        className="h-10 border text-sm"
+        style={{
+          background: disabled ? "var(--bg-main)" : "var(--bg-elevated)",
+          borderColor: "var(--border-default)",
+          color: disabled ? "var(--text-muted)" : "var(--text-primary)",
+          borderRadius: "10px",
+          opacity: disabled ? 0.7 : 1,
+        }}
+      />
     </div>
   );
 }
@@ -164,6 +208,8 @@ function PersonalProfileTab() {
     .toUpperCase()
     .slice(0, 2);
 
+  const proUser = isPro(profile ?? null);
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Avatar preview */}
@@ -171,7 +217,7 @@ function PersonalProfileTab() {
         <div className="relative">
           <Avatar
             className="w-20 h-20 border-2"
-            style={{ borderColor: isPro(profile ?? null) ? "var(--accent-gold)" : "var(--border-strong)" }}
+            style={{ borderColor: proUser ? "var(--accent-gold)" : "var(--border-strong)" }}
           >
             <AvatarImage src={form.avatarUrl || undefined} alt={profile?.userName} />
             <AvatarFallback
@@ -184,6 +230,14 @@ function PersonalProfileTab() {
               {initials}
             </AvatarFallback>
           </Avatar>
+          {proUser && (
+            <span
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                boxShadow: "0 0 0 2px var(--accent-gold), 0 0 12px 2px rgba(201,162,77,0.4)",
+              }}
+            />
+          )}
         </div>
         <div>
           <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
@@ -192,7 +246,7 @@ function PersonalProfileTab() {
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             {profile?.email}
           </p>
-          {isPro(profile ?? null) && (
+          {proUser && (
             <span
               className="inline-flex items-center gap-1 text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full"
               style={{
@@ -210,63 +264,21 @@ function PersonalProfileTab() {
 
       {/* Form grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          label="Họ và tên"
-          icon={UserIcon}
-          value={form.fullName}
-          onChange={(v) => setForm({ ...form, fullName: v })}
-          placeholder="Nguyễn Văn A"
-        />
-        <FormField
-          label="Tên người dùng"
-          icon={UserIcon}
-          value={form.userName}
-          onChange={(v) => setForm({ ...form, userName: v })}
-          placeholder="nguyenvana"
-        />
-        <FormField
-          label="Email"
-          icon={EnvelopeIcon}
-          value={profile?.email ?? ""}
-          onChange={() => {}}
-          disabled
-          placeholder="email@example.com"
-        />
-        <FormField
-          label="Số điện thoại"
-          icon={PhoneIcon}
-          value={form.phoneNumber}
-          onChange={(v) => setForm({ ...form, phoneNumber: v })}
-          placeholder="0901234567"
-          type="tel"
-        />
-        <FormField
-          label="Ngày sinh"
-          icon={CalendarIcon}
-          value={form.dob}
-          onChange={(v) => setForm({ ...form, dob: v })}
-          placeholder=""
-          type="date"
-        />
+        <FormField label="Họ và tên" icon={UserIcon} value={form.fullName} onChange={(v) => setForm({ ...form, fullName: v })} placeholder="Nguyễn Văn A" />
+        <FormField label="Tên người dùng" icon={UserIcon} value={form.userName} onChange={(v) => setForm({ ...form, userName: v })} placeholder="nguyenvana" />
+        <FormField label="Email" icon={EnvelopeIcon} value={profile?.email ?? ""} onChange={() => {}} disabled placeholder="email@example.com" />
+        <FormField label="Số điện thoại" icon={PhoneIcon} value={form.phoneNumber} onChange={(v) => setForm({ ...form, phoneNumber: v })} placeholder="0901234567" type="tel" />
+        <FormField label="Ngày sinh" icon={CalendarIcon} value={form.dob} onChange={(v) => setForm({ ...form, dob: v })} placeholder="" type="date" />
 
-        {/* Gender Select */}
         <div className="space-y-1.5">
           <Label className="text-sm font-medium flex items-center gap-1.5" style={{ color: "var(--text-secondary)" }}>
             <UserIcon className="w-3.5 h-3.5" />
             Giới tính
           </Label>
-          <Select
-            value={form.gender}
-            onValueChange={(v) => setForm({ ...form, gender: v })}
-          >
+          <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
             <SelectTrigger
               className="h-10 border text-sm"
-              style={{
-                background: "var(--bg-elevated)",
-                borderColor: "var(--border-default)",
-                color: "var(--text-primary)",
-                borderRadius: "10px",
-              }}
+              style={{ background: "var(--bg-elevated)", borderColor: "var(--border-default)", color: "var(--text-primary)", borderRadius: "10px" }}
             >
               <SelectValue placeholder="Chọn giới tính" />
             </SelectTrigger>
@@ -279,24 +291,10 @@ function PersonalProfileTab() {
         </div>
 
         <div className="md:col-span-2">
-          <FormField
-            label="Địa chỉ"
-            icon={MapPinIcon}
-            value={form.address}
-            onChange={(v) => setForm({ ...form, address: v })}
-            placeholder="123 Lê Lợi, Quận 1, TP.HCM"
-          />
+          <FormField label="Địa chỉ" icon={MapPinIcon} value={form.address} onChange={(v) => setForm({ ...form, address: v })} placeholder="123 Lê Lợi, Quận 1, TP.HCM" />
         </div>
-
         <div className="md:col-span-2">
-          <FormField
-            label="Đường dẫn Avatar (URL)"
-            icon={LinkIcon}
-            value={form.avatarUrl}
-            onChange={(v) => setForm({ ...form, avatarUrl: v })}
-            placeholder="https://example.com/avatar.jpg"
-            type="url"
-          />
+          <FormField label="Đường dẫn Avatar (URL)" icon={LinkIcon} value={form.avatarUrl} onChange={(v) => setForm({ ...form, avatarUrl: v })} placeholder="https://example.com/avatar.jpg" type="url" />
         </div>
       </div>
 
@@ -309,7 +307,7 @@ function PersonalProfileTab() {
             background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
             color: "var(--text-inverse)",
             borderRadius: "10px",
-            boxShadow: "0 2px 10px var(--accent-gold-glow, rgba(201,162,77,0.35))",
+            boxShadow: "0 2px 10px rgba(201,162,77,0.35)",
             opacity: isPending ? 0.7 : 1,
           }}
         >
@@ -317,51 +315,6 @@ function PersonalProfileTab() {
         </Button>
       </div>
     </form>
-  );
-}
-
-function FormField({
-  label,
-  icon: Icon,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-  disabled = false,
-}: {
-  label: string;
-  icon: React.ElementType;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  type?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label
-        className="text-sm font-medium flex items-center gap-1.5"
-        style={{ color: "var(--text-secondary)" }}
-      >
-        <Icon className="w-3.5 h-3.5" />
-        {label}
-      </Label>
-      <Input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className="h-10 border text-sm"
-        style={{
-          background: disabled ? "var(--bg-main)" : "var(--bg-elevated)",
-          borderColor: "var(--border-default)",
-          color: disabled ? "var(--text-muted)" : "var(--text-primary)",
-          borderRadius: "10px",
-          opacity: disabled ? 0.7 : 1,
-        }}
-      />
-    </div>
   );
 }
 
@@ -378,7 +331,7 @@ function BillingTab() {
         className="rounded-2xl p-5 border relative overflow-hidden"
         style={{
           background: proUser
-            ? "linear-gradient(135deg, rgba(201,162,77,0.14) 0%, rgba(163,81,57,0.10) 100%)"
+            ? "linear-gradient(135deg,rgba(201,162,77,0.14) 0%,rgba(163,81,57,0.10) 100%)"
             : "var(--bg-elevated)",
           borderColor: proUser ? "rgba(201,162,77,0.4)" : "var(--border-default)",
           boxShadow: proUser ? "0 4px 20px rgba(201,162,77,0.1)" : "none",
@@ -396,10 +349,10 @@ function BillingTab() {
               className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
               style={{
                 background: proUser
-                  ? "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)"
+                  ? "linear-gradient(135deg,var(--accent-gold) 0%,var(--truffle) 100%)"
                   : "var(--bg-main)",
                 border: proUser ? "none" : "1px solid var(--border-default)",
-                boxShadow: proUser ? "0 2px 12px var(--accent-gold-glow,rgba(201,162,77,0.4))" : "none",
+                boxShadow: proUser ? "0 2px 12px rgba(201,162,77,0.4)" : "none",
               }}
             >
               <CrownSimpleIcon
@@ -418,17 +371,11 @@ function BillingTab() {
             </div>
           </div>
           {proUser ? (
-            <Badge
-              className="font-bold text-[10px] px-2 py-1 border-0 shrink-0"
-              style={{ background: "rgba(201,162,77,0.15)", color: "var(--accent-gold)" }}
-            >
+            <Badge className="font-bold text-[10px] px-2 py-1 border-0 shrink-0" style={{ background: "rgba(201,162,77,0.15)", color: "var(--accent-gold)" }}>
               ✦ PRO
             </Badge>
           ) : (
-            <Badge
-              className="font-bold text-[10px] px-2 py-1 border-0 shrink-0"
-              style={{ background: "var(--bg-main)", color: "var(--text-muted)", border: "1px solid var(--border-default)" }}
-            >
+            <Badge className="font-bold text-[10px] px-2 py-1 border-0 shrink-0" style={{ background: "var(--bg-main)", color: "var(--text-muted)", border: "1px solid var(--border-default)" }}>
               Free
             </Badge>
           )}
@@ -440,10 +387,7 @@ function BillingTab() {
         ) : (
           <div
             className="mt-4 rounded-xl p-4 flex items-center gap-3"
-            style={{
-              background: "var(--bg-main)",
-              border: "1px solid var(--border-default)",
-            }}
+            style={{ background: "var(--bg-main)", border: "1px solid var(--border-default)" }}
           >
             <CoinsIcon
               className="w-8 h-8 shrink-0"
@@ -470,9 +414,7 @@ function BillingTab() {
 
         {paymentsLoading ? (
           <div className="space-y-2">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-xl" />
-            ))}
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
           </div>
         ) : !payments || payments.length === 0 ? (
           <div
@@ -480,9 +422,7 @@ function BillingTab() {
             style={{ background: "var(--bg-elevated)", borderColor: "var(--border-default)" }}
           >
             <CoinsIcon className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--text-muted)" }} />
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              Chưa có giao dịch nào
-            </p>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>Chưa có giao dịch nào</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -490,18 +430,13 @@ function BillingTab() {
               <div
                 key={p.orderId}
                 className="rounded-xl p-4 border flex items-center justify-between gap-4"
-                style={{
-                  background: "var(--bg-elevated)",
-                  borderColor: "var(--border-default)",
-                }}
+                style={{ background: "var(--bg-elevated)", borderColor: "var(--border-default)" }}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
                     className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
                     style={{
-                      background: p.status === "PAID"
-                        ? "rgba(34,197,94,0.12)"
-                        : "var(--bg-main)",
+                      background: p.status === "PAID" ? "rgba(34,197,94,0.12)" : "var(--bg-main)",
                       border: "1px solid var(--border-default)",
                     }}
                   >
@@ -551,8 +486,7 @@ function SecurityTab() {
     if (!form.newPassword) errs.newPassword = "Vui lòng nhập mật khẩu mới";
     else if (form.newPassword.length < 8) errs.newPassword = "Mật khẩu tối thiểu 8 ký tự";
     if (!form.confirmPassword) errs.confirmPassword = "Vui lòng xác nhận mật khẩu";
-    else if (form.newPassword !== form.confirmPassword)
-      errs.confirmPassword = "Mật khẩu xác nhận không khớp";
+    else if (form.newPassword !== form.confirmPassword) errs.confirmPassword = "Mật khẩu xác nhận không khớp";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -561,17 +495,16 @@ function SecurityTab() {
     e.preventDefault();
     if (!validate()) return;
     changePassword(
-      {
-        currentPassword: form.currentPassword,
-        newPassword: form.newPassword,
-        confirmPassword: form.confirmPassword,
-      },
-      {
-        onSuccess: () =>
-          setForm({ currentPassword: "", newPassword: "", confirmPassword: "" }),
-      }
+      { currentPassword: form.currentPassword, newPassword: form.newPassword, confirmPassword: form.confirmPassword },
+      { onSuccess: () => setForm({ currentPassword: "", newPassword: "", confirmPassword: "" }) }
     );
   };
+
+  const passwordFields = [
+    { key: "currentPassword" as const, label: "Mật khẩu hiện tại" },
+    { key: "newPassword" as const, label: "Mật khẩu mới" },
+    { key: "confirmPassword" as const, label: "Xác nhận mật khẩu mới" },
+  ];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 max-w-md">
@@ -587,57 +520,42 @@ function SecurityTab() {
         <span>Để bảo vệ tài khoản, mật khẩu mới phải có ít nhất 8 ký tự và khác mật khẩu hiện tại.</span>
       </div>
 
-      {(["currentPassword", "newPassword", "confirmPassword"] as const).map((field) => {
-        const labels: Record<string, string> = {
-          currentPassword: "Mật khẩu hiện tại",
-          newPassword: "Mật khẩu mới",
-          confirmPassword: "Xác nhận mật khẩu mới",
-        };
-        return (
-          <div key={field} className="space-y-1.5">
-            <Label
-              htmlFor={field}
-              className="text-sm font-medium flex items-center gap-1.5"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              <LockSimpleIcon className="w-3.5 h-3.5" />
-              {labels[field]}
-            </Label>
-            <Input
-              id={field}
-              type="password"
-              value={form[field]}
-              onChange={(e) => {
-                setForm({ ...form, [field]: e.target.value });
-                if (errors[field]) setErrors({ ...errors, [field]: "" });
-              }}
-              placeholder="••••••••"
-              className="h-10 border text-sm"
-              style={{
-                background: "var(--bg-elevated)",
-                borderColor: errors[field] ? "var(--accent-danger, #ef4444)" : "var(--border-default)",
-                color: "var(--text-primary)",
-                borderRadius: "10px",
-              }}
-            />
-            {errors[field] && (
-              <p className="text-xs" style={{ color: "var(--accent-danger, #ef4444)" }}>
-                {errors[field]}
-              </p>
-            )}
-          </div>
-        );
-      })}
+      {passwordFields.map(({ key, label }) => (
+        <div key={key} className="space-y-1.5">
+          <Label htmlFor={key} className="text-sm font-medium flex items-center gap-1.5" style={{ color: "var(--text-secondary)" }}>
+            <LockSimpleIcon className="w-3.5 h-3.5" />
+            {label}
+          </Label>
+          <Input
+            id={key}
+            type="password"
+            value={form[key]}
+            onChange={(e) => {
+              setForm({ ...form, [key]: e.target.value });
+              if (errors[key]) setErrors({ ...errors, [key]: "" });
+            }}
+            placeholder="••••••••"
+            className="h-10 border text-sm"
+            style={{
+              background: "var(--bg-elevated)",
+              borderColor: errors[key] ? "#ef4444" : "var(--border-default)",
+              color: "var(--text-primary)",
+              borderRadius: "10px",
+            }}
+          />
+          {errors[key] && <p className="text-xs" style={{ color: "#ef4444" }}>{errors[key]}</p>}
+        </div>
+      ))}
 
       <Button
         type="submit"
         disabled={isPending}
         className="w-full font-semibold"
         style={{
-          background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+          background: "linear-gradient(135deg,var(--accent-gold) 0%,var(--truffle) 100%)",
           color: "var(--text-inverse)",
           borderRadius: "10px",
-          boxShadow: "0 2px 10px var(--accent-gold-glow, rgba(201,162,77,0.35))",
+          boxShadow: "0 2px 10px rgba(201,162,77,0.35)",
           opacity: isPending ? 0.7 : 1,
         }}
       >
@@ -648,16 +566,15 @@ function SecurityTab() {
 }
 
 // ─────────────────────────────────────────────
-// Main Page
+// Main Dashboard (inner — needs Suspense for useSearchParams)
 // ─────────────────────────────────────────────
-export default function ProfilePage() {
+function ProfileDashboardInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tabParam = searchParams.get("tab") as TabKey | null;
   const [activeTab, setActiveTab] = useState<TabKey>(
     TABS.find((t) => t.key === tabParam)?.key ?? "profile"
   );
-  const user = useAuthStore((s) => s.user);
   const { data: profile } = useProfile();
   const proUser = isPro(profile ?? null);
 
@@ -669,25 +586,15 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen px-4 py-8 md:px-8 md:py-12">
       <div className="max-w-3xl mx-auto space-y-6">
-        {/* ── Page Header ── */}
+        {/* Page Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1
-              className="text-2xl md:text-3xl font-extrabold tracking-tight"
-              style={{ color: "var(--text-primary)" }}
-            >
-              {proUser && (
-                <span
-                  className="inline-flex items-center mr-2 align-middle"
-                  style={{ color: "var(--accent-gold)" }}
-                >
-                  ✦
-                </span>
-              )}
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight" style={{ color: "var(--text-primary)" }}>
+              {proUser && <span className="inline-flex items-center mr-2 align-middle" style={{ color: "var(--accent-gold)" }}>✦</span>}
               Hồ sơ của tôi
             </h1>
             <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-              Quản lý thông tin tài khoản & gói dịch vụ
+              Quản lý thông tin tài khoản &amp; gói dịch vụ
             </p>
           </div>
 
@@ -707,16 +614,14 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* ── Tab nav ── */}
+        {/* Tab nav */}
         <div
           className="flex gap-1 p-1 rounded-2xl border"
-          style={{
-            background: "var(--bg-elevated)",
-            borderColor: "var(--border-default)",
-          }}
+          style={{ background: "var(--bg-elevated)", borderColor: "var(--border-default)" }}
         >
           {TABS.map(({ key, label, icon: Icon }) => {
             const isActive = activeTab === key;
+            const isProBilling = key === "billing" && proUser;
             return (
               <button
                 key={key}
@@ -724,19 +629,15 @@ export default function ProfilePage() {
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
                 style={{
                   background: isActive
-                    ? key === "billing" && proUser
+                    ? isProBilling
                       ? "linear-gradient(135deg,rgba(201,162,77,0.22),rgba(163,81,57,0.15))"
                       : "var(--bg-main)"
                     : "transparent",
                   color: isActive
-                    ? key === "billing" && proUser
-                      ? "var(--accent-gold)"
-                      : "var(--text-primary)"
+                    ? isProBilling ? "var(--accent-gold)" : "var(--text-primary)"
                     : "var(--text-muted)",
                   boxShadow: isActive ? "0 2px 8px rgba(0,0,0,0.12)" : "none",
-                  border: isActive && key === "billing" && proUser
-                    ? "1px solid rgba(201,162,77,0.3)"
-                    : "1px solid transparent",
+                  border: isActive && isProBilling ? "1px solid rgba(201,162,77,0.3)" : "1px solid transparent",
                 }}
               >
                 <Icon className="w-4 h-4" weight={isActive ? "fill" : "regular"} />
@@ -746,7 +647,7 @@ export default function ProfilePage() {
           })}
         </div>
 
-        {/* ── Tab content ── */}
+        {/* Tab content */}
         <div
           className="rounded-2xl border p-6"
           style={{
@@ -761,5 +662,26 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Export: wrap with Suspense (required by useSearchParams)
+// ─────────────────────────────────────────────
+export default function ProfileDashboard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen px-4 py-8 md:px-8 md:py-12">
+          <div className="max-w-3xl mx-auto space-y-6">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-14 w-full rounded-2xl" />
+            <Skeleton className="h-80 w-full rounded-2xl" />
+          </div>
+        </div>
+      }
+    >
+      <ProfileDashboardInner />
+    </Suspense>
   );
 }
