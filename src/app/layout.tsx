@@ -18,6 +18,11 @@ const bodyFont = localFont({
 export const metadata: Metadata = {
   title: "HistoryTalk - Khám phá lịch sử qua cuộc trò chuyện",
   description: "Trò chuyện với các nhân vật lịch sử",
+  icons: {
+    icon: "/solo-logo.png",
+    shortcut: "/solo-logo.png",
+    apple: "/solo-logo.png",
+  },
 };
 
 export default function RootLayout({
