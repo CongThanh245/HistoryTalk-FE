@@ -177,15 +177,14 @@ export function UserProfileDropdown({
             Cài đặt
           </DropdownMenuItem>
           
-          {showPremium && (
+          {showPremium && user.role === "CUSTOMER" && (
             proUser ? (
               /* Tài khoản đã PRO — thay bằng trạng thái kích hoạt */
               <DropdownMenuItem
                 className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium justify-between"
                 asChild
               >
-                <Link href="/profile?tab=billing" className="flex items-center w-full justify-between">
-                  <span style={{ color: "var(--accent-gold-soft)" }}>Gói Pro đang hoạt động</span>
+                <Link href="/profile?tab=billing" className="flex items-center w-full justify-end">
                   <Badge
                     className="text-[9px] px-1.5 py-0 border-0 font-bold"
                     style={{
@@ -200,7 +199,7 @@ export function UserProfileDropdown({
             ) : (
               /* Chưa PRO — nút mời nâng cấp */
               <DropdownMenuItem className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium focus:bg-[var(--accent-blue)] focus:text-[var(--bg-main)] transition-colors justify-between group">
-                <span style={{ color: "inherit" }}>Nâng cấp Premium</span>
+                <span style={{ color: "inherit" }}>Nâng cấp Pro</span>
                 <Badge
                   className="text-[9px] px-1.5 py-0 border-0 font-bold"
                   style={{
