@@ -97,12 +97,47 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
     );
   }
 
-  /* ── Upgrade button (tài khoản thường) ──────────────── */
+  /* ── Free User: Token card + Upgrade button ──────────────── */
   return (
     <div
-      className="relative z-10 shrink-0 px-2 py-3 border-t"
+      className="relative z-10 shrink-0 px-2 py-3 border-t flex flex-col gap-2"
       style={{ borderColor: "var(--border-default)" }}
     >
+      {/* Token display for free users */}
+      <Link
+        href="/profile?tab=billing"
+        className={cn(
+          "flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors hover:bg-white/5",
+          !isExpanded && "justify-center"
+        )}
+      >
+        <div
+          className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
+          style={{
+            background: "var(--bg-main)",
+            border: "1px solid var(--border-default)",
+          }}
+        >
+          <CoinsIcon className="w-3.5 h-3.5" style={{ color: "var(--text-muted)" }} />
+        </div>
+        <div
+          className={cn(
+            "flex flex-col overflow-hidden transition-all duration-250",
+            isExpanded ? "opacity-100 w-full" : "opacity-0 w-0 pointer-events-none"
+          )}
+        >
+          <span
+            className="text-[11px] font-semibold whitespace-nowrap tabular-nums"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {profile?.token?.toLocaleString("vi-VN") ?? 0} Token
+          </span>
+          <span className="text-[10px] whitespace-nowrap" style={{ color: "var(--text-muted)" }}>
+            Còn lại
+          </span>
+        </div>
+      </Link>
+
       <UpgradeProDialog>
         <button
           type="button"

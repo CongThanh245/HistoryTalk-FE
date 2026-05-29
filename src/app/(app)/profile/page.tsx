@@ -36,6 +36,8 @@ import {
   CheckCircleIcon,
   ClockIcon,
   XCircleIcon,
+  EyeIcon,
+  EyeSlashIcon,
 } from "@phosphor-icons/react";
 
 // ─────────────────────────────────────────────
@@ -544,6 +546,11 @@ function SecurityTab() {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({
+    currentPassword: false,
+    newPassword: false,
+    confirmPassword: false,
+  });
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -603,23 +610,37 @@ function SecurityTab() {
               <LockSimpleIcon className="w-3.5 h-3.5" />
               {labels[field]}
             </Label>
-            <Input
-              id={field}
-              type="password"
-              value={form[field]}
-              onChange={(e) => {
-                setForm({ ...form, [field]: e.target.value });
-                if (errors[field]) setErrors({ ...errors, [field]: "" });
-              }}
-              placeholder="••••••••"
-              className="h-10 border text-sm"
-              style={{
-                background: "var(--bg-elevated)",
-                borderColor: errors[field] ? "var(--accent-danger, #ef4444)" : "var(--border-default)",
-                color: "var(--text-primary)",
-                borderRadius: "10px",
-              }}
-            />
+            <div className="relative">
+              <Input
+                id={field}
+                type={showPassword[field] ? "text" : "password"}
+                value={form[field]}
+                onChange={(e) => {
+                  setForm({ ...form, [field]: e.target.value });
+                  if (errors[field]) setErrors({ ...errors, [field]: "" });
+                }}
+                placeholder="••••••••"
+                className="h-10 border text-sm pr-10"
+                style={{
+                  background: "var(--bg-elevated)",
+                  borderColor: errors[field] ? "var(--accent-danger, #ef4444)" : "var(--border-default)",
+                  color: "var(--text-primary)",
+                  borderRadius: "10px",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword({ ...showPassword, [field]: !showPassword[field] })}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-white/10 transition-colors"
+                style={{ color: "var(--text-muted)" }}
+              >
+                {showPassword[field] ? (
+                  <EyeSlashIcon className="w-4 h-4" />
+                ) : (
+                  <EyeIcon className="w-4 h-4" />
+                )}
+              </button>
+            </div>
             {errors[field] && (
               <p className="text-xs" style={{ color: "var(--accent-danger, #ef4444)" }}>
                 {errors[field]}
