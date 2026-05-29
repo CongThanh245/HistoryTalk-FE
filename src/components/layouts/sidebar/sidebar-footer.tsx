@@ -77,7 +77,7 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
                 className="text-[11px] font-bold whitespace-nowrap tracking-wide"
                 style={{ color: "var(--accent-gold)" }}
               >
-                ✦ HistoryTalk Pro Member
+                ✦ {profile.tierTitle || 'Pro Member'}
               </p>
 
               {/* Token count */}
