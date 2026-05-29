@@ -70,7 +70,7 @@ function formatCurrency(amount: number): string {
 }
 
 function statusBadge(status: string) {
-  const map: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  const map: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
     PAID: { label: "Thành công", color: "#22c55e", icon: CheckCircleIcon },
     PENDING: { label: "Chờ thanh toán", color: "#f59e0b", icon: ClockIcon },
     CANCELLED: { label: "Đã hủy", color: "#ef4444", icon: XCircleIcon },
