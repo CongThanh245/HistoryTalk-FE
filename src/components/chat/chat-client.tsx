@@ -90,6 +90,13 @@ export function ChatClient({
     // invalidate để left panel cập nhật list
   }, []);
 
+  const handleDeleteSession = useCallback((deletedSessionId: string) => {
+    if (activeSessionId === deletedSessionId) {
+      setActiveSessionId(null);
+      sessionInitialized.current = false;
+    }
+  }, [activeSessionId]);
+
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
 
@@ -125,6 +132,7 @@ export function ChatClient({
         activeSessionId={activeSessionId}
         onSelectSession={setActiveSessionId}
         onNewSession={handleNewSession}
+        onDeleteSession={handleDeleteSession}
         isOpen={isLeftPanelOpen}
         setIsOpen={setIsLeftPanelOpen}
       />

@@ -95,3 +95,16 @@ export function useDeleteSession() {
     onError: () => toast.error("Không thể xóa cuộc trò chuyện"),
   });
 }
+
+export function useSoftDeleteSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => chatService.softDeleteSession(sessionId),
+    onSuccess: (_, sessionId) => {
+      qc.invalidateQueries({ queryKey: queryKeys.chat.sessions("", "") });
+      qc.invalidateQueries({ queryKey: ["chat", "history"] });
+      toast.success("Đã xóa cuộc trò chuyện");
+    },
+    onError: () => toast.error("Không thể xóa cuộc trò chuyện"),
+  });
+}

@@ -9,6 +9,7 @@ import {
   ChatTextIcon,
   TimerIcon,
   ClockCounterClockwiseIcon,
+  TrashIcon,
 } from "@phosphor-icons/react";
 import {
   Tooltip,
@@ -16,8 +17,9 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { useCreateSession } from "@/features/chat/hooks";
+import { useCreateSession, useSoftDeleteSession } from "@/features/chat/hooks";
 import { ChatSession } from "@/services/chat.service";
+import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 
 interface ChatLeftPanelProps {
   characterId: string;
@@ -29,6 +31,7 @@ interface ChatLeftPanelProps {
   onNewSession: (sessionId: string) => void;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  onDeleteSession?: (sessionId: string) => void;
 }
 
 export function ChatLeftPanel({
@@ -41,10 +44,13 @@ export function ChatLeftPanel({
   onNewSession,
   isOpen,
   setIsOpen,
+  onDeleteSession,
 }: ChatLeftPanelProps) {
   const [showHint, setShowHint] = useState(false);
+  const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
 
   const createSession = useCreateSession();
+  const softDeleteSession = useSoftDeleteSession();
 
   useEffect(() => {
     const seen = localStorage.getItem("ht-chat-panel-hint");
@@ -235,10 +241,10 @@ export function ChatLeftPanel({
                 </p>
               ) : (
                 sessions.map((session) => (
-                  <button
+                  <div
                     key={session.id}
+                    className="group relative w-full text-left px-3 py-2.5 rounded-lg transition-all duration-150 cursor-pointer border"
                     onClick={() => onSelectSession(session.id)}
-                    className="w-full text-left px-3 py-2.5 rounded-lg transition-all duration-150 cursor-pointer border"
                     style={{
                       background:
                         activeSessionId === session.id
@@ -293,7 +299,17 @@ export function ChatLeftPanel({
                         </div>
                       </div>
                     </div>
-                  </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteSessionId(session.id);
+                      }}
+                      className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50"
+                      style={{ color: "var(--content-subtle)" }}
+                    >
+                      <TrashIcon className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
+                    </button>
+                  </div>
                 ))
               )}
             </div>
@@ -321,6 +337,25 @@ export function ChatLeftPanel({
           </div>
         )}
         </div>
+
+        <ConfirmDialog
+          open={!!deleteSessionId}
+          onOpenChange={(open) => !open && setDeleteSessionId(null)}
+          title="Xóa cuộc trò chuyện?"
+          description="Cuộc trò chuyện này sẽ bị xóa. Bạn có thể khôi phục nếu cần."
+          confirmLabel="Xóa"
+          variant="danger"
+          onConfirm={() => {
+            if (deleteSessionId) {
+              softDeleteSession.mutate(deleteSessionId, {
+                onSuccess: () => {
+                  onDeleteSession?.(deleteSessionId);
+                  setDeleteSessionId(null);
+                },
+              });
+            }
+          }}
+        />
       </>
     </TooltipProvider>
   );

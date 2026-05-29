@@ -122,6 +122,10 @@ export const chatService = {
   deleteSession: async (sessionId: string): Promise<void> => {
     await axiosClient.delete(`/chat/sessions/${sessionId}`);
   },
+
+  softDeleteSession: async (sessionId: string): Promise<void> => {
+    await axiosClient.patch(`/chat/sessions/${sessionId}/soft-delete`);
+  },
   getCharacter: async (characterId: string): Promise<ChatCharacter> => {
     const res = await axiosClient.get(`/characters/${characterId}`);
     const raw = res.data.data;
