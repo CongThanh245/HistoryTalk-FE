@@ -91,7 +91,7 @@ export function SolutionSection() {
           <div data-reveal="block" className="group relative">
             <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-[var(--accent-gold)]/10 to-[#8fb3c8]/10 opacity-50 blur-2xl transition-opacity duration-500 pointer-events-none group-hover:opacity-100" />
 
-            <div className="relative flex h-[260px] w-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[#0d1627] shadow-2xl transition-all duration-300 group-hover:border-[var(--accent-gold)]/30 sm:h-[340px] lg:h-[420px]">
+            <div className="relative flex h-[320px] w-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[#0d1627] shadow-2xl transition-all duration-300 group-hover:border-[var(--accent-gold)]/30 sm:h-[400px] lg:h-[520px]">
               <div className="flex h-9 shrink-0 items-center justify-between border-b border-[var(--border-default)] bg-[#111c2e] px-4">
                 <div className="flex gap-1.5">
                   <div className="h-2.5 w-2.5 rounded-full bg-[#f87171]/40" />

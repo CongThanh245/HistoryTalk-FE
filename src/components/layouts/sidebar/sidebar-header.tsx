@@ -39,15 +39,12 @@ export default function SidebarHeader({
         href={logoHref}
         className={cn(
           "flex items-center outline-none transition-opacity hover:opacity-80",
-          isExpanded ? "flex-1 gap-3 overflow-hidden" : "",
+          isExpanded ? "flex-1 justify-center" : "",
         )}
       >
         <BrandLogo
-          animatedMark
-          showText={isExpanded}
-          markClassName="h-8 w-8"
-          textClassName="truncate"
           priority
+          isCollapsed={!isExpanded}
         />
       </Link>
 

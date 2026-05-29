@@ -90,7 +90,7 @@ export function ProblemSection() {
               <h2 className="mb-4 text-[clamp(2.5rem,6vw,6rem)] font-bold uppercase leading-[0.88] tracking-wide text-[var(--text-secondary)]">
                 Vấn đề
                 <br />
-                học <span className="text-[var(--text-primary)]">lịch sử</span>
+                học <span className="text-[var(--accent-gold)]">lịch sử</span>
                 <br />
                 ngày nay
               </h2>

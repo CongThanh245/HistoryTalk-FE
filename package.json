@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
+    "dev:spring-prod": "env-cmd -f .env.spring.production next dev --webpack",
     "build": "next build",
     "start": "next build && next start",
     "lint": "eslint",
@@ -50,6 +51,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "env-cmd": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",

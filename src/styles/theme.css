@@ -149,7 +149,7 @@
   --bg-main: #0e1a2b;
   --bg-deep: #070d18;
   --bg-content:
-    radial-gradient(circle at 18% 12%, rgba(255, 146, 21, 0.08), transparent 24rem),
+    radial-gradient(circle at 18% 12%, rgba(234, 122, 10, 0.08), transparent 24rem),
     radial-gradient(circle at 86% 18%, rgba(143, 179, 200, 0.12), transparent 28rem),
     linear-gradient(180deg, #0e1a2b 0%, #16223a 56%, #070d18 100%);
   --bg-surface: #1a2436;
@@ -157,16 +157,16 @@
 
   --text-primary: #f7f1e8;
   --text-secondary: #dfdab5;
-  --text-tertiary: #ff9215;
+  --text-tertiary: #EA7A0A;
   --text-muted: #8da0ab;
   --text-inverse: #0e1a2b;
   --text-on-dark: rgba(255, 255, 255, 0.85);
   --text-on-dark-muted: rgba(255, 255, 255, 0.35);
 
-  --accent-gold: #ff9215;
+  --accent-gold: #EA7A0A;
   --accent-gold-soft: #e2c77a;
-  --accent-gold-active-bg: rgba(255, 146, 21, 0.16);
-  --accent-gold-glow: rgba(255, 146, 21, 0.26);
+  --accent-gold-active-bg: rgba(234, 122, 10, 0.16);
+  --accent-gold-glow: rgba(234, 122, 10, 0.26);
   --gold-on-light: #ffb95c;
   --accent-blue: #8fb3c8;
   --accent-teal: #2f6f73;
@@ -229,7 +229,7 @@
   --home-banner-card-footer: #0e1a2b;
   --home-banner-card-fade: #0e1a2b;
 
-  --era-filter-active-bg: #ff9215;
+  --era-filter-active-bg: #EA7A0A;
   --era-filter-active-text: #0e1a2b;
   --era-filter-bg: rgba(255, 255, 255, 0.06);
   --era-filter-text: rgba(255, 255, 255, 0.78);
