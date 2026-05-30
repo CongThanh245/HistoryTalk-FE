@@ -50,13 +50,13 @@ export function useLogin() {
       setAuth(user, tokens);
       persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
       
-      // Force redirect based on role, regardless of current page
+      // Force full page reload to trigger middleware with fresh cookies
       if (user.role === "CONTENT_ADMIN") {
-        router.replace("/staff");
+        window.location.href = "/staff";
       } else if (user.role === "SYSTEM_ADMIN") {
-        router.replace("/staff/admin");
+        window.location.href = "/staff/admin";
       } else {
-        router.replace("/home");
+        window.location.href = "/home";
       }
     },
   });
@@ -72,13 +72,13 @@ export function useGoogleLogin() {
       setAuth(user, tokens);
       persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
       
-      // Force redirect based on role, regardless of current page
+      // Force full page reload to trigger middleware with fresh cookies
       if (user.role === "CONTENT_ADMIN") {
-        router.replace("/staff");
+        window.location.href = "/staff";
       } else if (user.role === "SYSTEM_ADMIN") {
-        router.replace("/staff/admin");
+        window.location.href = "/staff/admin";
       } else {
-        router.replace("/home");
+        window.location.href = "/home";
       }
     },
   });

@@ -70,7 +70,8 @@ export default function GoogleOAuthSuccessPage() {
       { accessToken, refreshToken, tokenType, expiresIn },
     );
     persistAuthCookies(accessToken, role, expiresIn);
-    router.replace(getRedirectPath(role));
+    // Force full page reload to trigger middleware with fresh cookies
+    window.location.href = getRedirectPath(role);
   }, [clearAuth, router, setAuth]);
 
   return (
