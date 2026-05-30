@@ -39,7 +39,7 @@ yarn-error.log*
 .env.test
 .env.spring
 .env.nodejs
-
+.env.spring.production
 # vercel
 .vercel
 
