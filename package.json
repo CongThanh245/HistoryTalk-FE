@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
+    "dev:spring": "env-cmd -f .env.spring next dev --webpack",
+    "dev:nodejs": "env-cmd -f .env.nodejs next dev --webpack",
     "dev:spring-prod": "env-cmd -f .env.spring.production next dev --webpack",
     "build": "next build",
     "start": "next build && next start",
