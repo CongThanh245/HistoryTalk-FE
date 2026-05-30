@@ -20,6 +20,8 @@ import { Avatar3DModal } from "./Avatar3DModal";
 import { KeywordDetailPanel } from "./KeywordDetailPanel";
 import type { KeywordData } from "@/data/keywords";
 import { cn } from "@/lib/utils/cn";
+import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
+import { toast } from "sonner";
 
 interface ChatMainProps {
   character: ChatCharacter;
@@ -49,6 +51,8 @@ export function ChatMain({
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordData | null>(null);
+  const [isTokenExhausted, setIsTokenExhausted] = useState(false);
+  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
 
   const handleKeywordSelect = useCallback((kw: KeywordData) => {
     setSelectedKeyword(kw);
@@ -158,10 +162,26 @@ export function ChatMain({
             }),
           );
         },
-        onError: () => {
+        onError: (err: any) => {
           setOptimisticMessages((prev) =>
             prev.filter((m) => m.id !== tempUserMsg.id),
           );
+          
+          const serverMessage = err?.response?.data?.message || "";
+          if (
+            serverMessage.includes("hết token") ||
+            serverMessage.includes("nạp thêm") ||
+            err?.response?.data?.errorCode === 400
+          ) {
+            setIsTokenExhausted(true);
+            toast.error("Bạn đã hết token. Vui lòng nạp thêm để tiếp tục chat.", {
+              action: {
+                label: "Nạp thêm",
+                onClick: () => setIsUpgradeOpen(true),
+              },
+              duration: 8000,
+            });
+          }
         },
       },
     );
@@ -316,11 +336,38 @@ export function ChatMain({
         <div ref={bottomRef} />
       </div>
 
+      {isTokenExhausted && (
+        <div 
+          className="px-4 py-2.5 border-t border-b flex items-center justify-between gap-3 text-xs shrink-0 backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
+          style={{
+            borderColor: "rgba(212, 175, 55, 0.25)",
+            background: "rgba(212, 175, 55, 0.08)",
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[var(--accent-gold)] animate-pulse shrink-0" />
+            <span style={{ color: "var(--text-secondary)" }}>
+              Bạn đã dùng hết số token giới hạn. Vui lòng nâng cấp gói để tiếp tục cuộc trò chuyện.
+            </span>
+          </div>
+          <button
+            onClick={() => setIsUpgradeOpen(true)}
+            className="px-3 py-1.5 rounded-lg text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-110 active:scale-95 shrink-0 cursor-pointer"
+            style={{
+              background: "linear-gradient(135deg, var(--accent-gold), var(--truffle))",
+            }}
+          >
+            Nâng cấp ngay
+          </button>
+        </div>
+      )}
+
       <ChatInput
         onSend={handleSend}
         isLoading={sendMessage.isPending}
-        disabled={sendMessage.isPending}
+        disabled={sendMessage.isPending || isTokenExhausted}
         characterName={character.name}
+        isTokenExhausted={isTokenExhausted}
       />
 
       {/* ── 3D Avatar Modal ── */}
@@ -338,6 +385,9 @@ export function ChatMain({
         keyword={selectedKeyword}
         onClose={handleKeywordClose}
       />
+
+      {/* ── Upgrade Pro Dialog ── */}
+      <UpgradeProDialog open={isUpgradeOpen} onOpenChange={setIsUpgradeOpen} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 # HistoryTalk — API Contract
 
-> **Version:** 2.1 — Synced with FE source code  
+> **Version:** 2.2 — Updated Characters, HistoricalContexts, Quiz fields & soft-delete API flow  
 > **Base URL:** `{BACKEND_BASE_URL}/api/v1`  
 > **Response Wrapper:** `{ success: boolean, message: string, data: T, timestamp: string }`  
 > **Auth:** `Authorization: Bearer <accessToken>`  
@@ -190,6 +190,7 @@ Yêu cầu role `SYSTEM_ADMIN`.
   title: string            // Chức danh
   background: string       // Tiểu sử (FE map sang description)
   image: string | null     // URL ảnh (FE map sang imageUrl + avatarUrl)
+  modelUrl?: string | null  // URL model 3D (GLB/GLTF)
   personality?: string
   bornYear?: number | null // null nếu không rõ năm sinh
   bornMonth?: number | null // null nếu không rõ tháng sinh
@@ -212,6 +213,7 @@ Yêu cầu role `SYSTEM_ADMIN`.
 
 > **Quan trọng:** FE dùng `raw.characterId ?? raw.id` làm id. Phải trả `characterId`.  
 > **Quan trọng:** FE dùng `raw.image ?? raw.imageUrl`. Ưu tiên trả field `image`.  
+> **Quan trọng:** FE dùng `raw.modelUrl` cho model 3D. Trả `null` nếu không có.  
 > **Quan trọng:** `contextId` nằm trong `context.contextId` (nested).  
 > **Quan trọng:** CUSTOMER: GET /characters auto-filter `isPublished=true`, ignore `published` param.  
 > **Quan trọng:** ADMIN/STAFF: `?published=true` chỉ published, `?published=false` chỉ unpublished, không truyền = tất cả.  
@@ -254,7 +256,8 @@ Yêu cầu role `SYSTEM_ADMIN`.
         "isDeathBc": true,
         "era": "MEDIEVAL",
         "isActive": true,
-        "isPublished": true
+        "isPublished": true,
+        "modelUrl": null
       }
     ],
     "totalElements": 24,
@@ -337,6 +340,7 @@ Yêu cầu role `CONTENT_ADMIN` | `SYSTEM_ADMIN`.
   "title": "string",
   "background": "string",
   "image": "string | null",
+  "modelUrl": "string | null",    // URL model 3D (GLB/GLTF)
   "personality": "string",
   "bornYear": null,
   "bornMonth": null,
@@ -373,6 +377,8 @@ Permanent delete. Response `200`.
 
 Chuyển nhân vật vào thùng rác (set `deletedAt` thành thời gian hiện tại). Response `200`.
 
+> **Lưu ý:** FE gọi API này thay vì tự set `deletedAt` trong body.
+
 ---
 
 ### `PATCH /characters/:id/toggle-active`
@@ -398,7 +404,7 @@ Gắn nhân vật vào bối cảnh. Response `200`.
 {
   contextId: string        // ID (FE map sang id)
   name: string             // Tên sự kiện (FE map sang title)
-  description: string      // Mô tả (FE map sang summary, endYear ghi trong description)
+  description: string      // Mô tả (FE map sang summary)
   year: number             // Năm bắt đầu
   yearLabel?: string       // VD: "938 SCN", "258 TCN" — backend tự format
   era: string              // ANCIENT | MEDIEVAL | MODERN | CONTEMPORARY
@@ -407,6 +413,12 @@ Gắn nhân vật vào bối cảnh. Response `200`.
   videoUrl?: string | null
   period?: string
   isActive?: boolean
+  isPublished?: boolean    // true = đã publish cho Customer xem
+  isDraft?: boolean        // true = đang ở trạng thái nháp
+  startYear?: number       // Năm bắt đầu sự kiện (phân biệt với year)
+  endYear?: number         // Năm kết thúc sự kiện
+  beforeTCN?: boolean      // true = trước Công nguyên (TCN)
+  characterIds?: string[]  // Danh sách ID nhân vật liên quan
   deletedAt?: string | null // ISO8601 - thời gian xóa tạm thời (null nếu chưa xóa)
 }
 ```
@@ -472,10 +484,15 @@ Yêu cầu role `CONTENT_ADMIN` | `SYSTEM_ADMIN`.
   "description": "string",
   "era": "MEDIEVAL",
   "year": 938,
+  "startYear": 938,         // Năm bắt đầu (optional)
+  "endYear": 939,           // Năm kết thúc (optional)
+  "beforeTCN": false,       // true = trước Công nguyên
   "location": "string",
   "imageUrl": "string | null",
   "videoUrl": "string | null",
-  "isActive": true
+  "isActive": true,
+  "isPublished": false,     // mặc định false
+  "characterIds": ["char-1", "char-2"]  // Danh sách nhân vật liên quan (optional)
 }
 ```
 
@@ -498,6 +515,8 @@ Permanent delete. Response `200`.
 ### `PATCH /historical-contexts/:id/soft-delete`
 
 Chuyển bối cảnh lịch sử vào thùng rác (set `deletedAt` thành thời gian hiện tại). Response `200`.
+
+> **Lưu ý:** FE gọi API này thay vì tự set `deletedAt` trong body.
 
 ---
 
@@ -884,6 +903,20 @@ Bắt đầu phiên làm bài. Không cần body.
 
 ---
 
+### `PATCH /quizzes/sessions/:sessionId/soft-delete`
+
+Xóa mềm một session quiz đã làm (chuyển vào thùng rác). Yêu cầu auth.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Xóa thành công"
+}
+```
+
+---
+
 ## 8. Quiz — Content Admin/System Admin
 
 > Tất cả endpoint dưới yêu cầu role `CONTENT_ADMIN` hoặc `SYSTEM_ADMIN`.
@@ -1069,7 +1102,9 @@ Xóa câu hỏi. Response `200`.
 
 2. **Character ID field:** Phải trả `characterId` (không phải `id`). FE dùng `raw.characterId ?? raw.id`.
 
-3. **Character image field:** Phải trả `image` (không phải `imageUrl`). FE dùng `raw.image ?? raw.imageUrl`.
+3. **Character image & model fields:** 
+   - `image` (không phải `imageUrl`). FE dùng `raw.image ?? raw.imageUrl`.
+   - `modelUrl` cho model 3D (GLB/GLTF). Trả `null` nếu không có.
 
 4. **Character contextId:** Phải nằm trong `context.contextId` (nested object), không phải flat `contextId`.
 
@@ -1093,8 +1128,9 @@ Xóa câu hỏi. Response `200`.
 - Thêm `isActive: boolean (default true)` vào `Character`, `HistoricalContext`, `Quiz`.
 - Mọi GET query filter `WHERE isActive = true AND deletedAt IS NULL` mặc định cho phía Customer.
 - PATCH `/:id/toggle-active` thực hiện bật/tắt (đảo trạng thái `isActive`).
-- Thêm `deletedAt: string | null (default null)` vào `Character`, `HistoricalContext`, `Quiz` (ISO8601 UTC).
-- PATCH `/:id/soft-delete` thực hiện xóa tạm thời bằng cách cập nhật `deletedAt` thành thời gian hiện tại.
+- Thêm `deletedAt: string | null (default null)` vào `Character`, `HistoricalContext`, `Quiz`, `QuizSession` (ISO8601 UTC).
+- **Soft Delete API flow:** FE gọi `PATCH /:id/soft-delete` để xóa mềm. **KHÔNG** cho phép FE tự set `deletedAt` trong body của PUT/POST.
+- Các endpoint soft-delete: `PATCH /characters/:id/soft-delete`, `PATCH /historical-contexts/:id/soft-delete`, `PATCH /staff/quizzes/:quizId/soft-delete`, `PATCH /quizzes/sessions/:sessionId/soft-delete`.
 - Mọi GET query filter `WHERE deletedAt IS NULL` cho phía Admin/Staff theo mặc định (trừ khi có param lọc thùng rác hoặc yêu cầu cụ thể).
 
 ### Role check

@@ -50,6 +50,7 @@ export function useCreateSession() {
 }
 
 export function useSendMessage() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
       sessionId,
@@ -58,7 +59,20 @@ export function useSendMessage() {
       sessionId: string;
       content: string;
     }) => chatService.sendMessage(sessionId, content),
-    onError: () => toast.error("Không thể gửi tin nhắn"),
+    onSuccess: () => {
+      // Invalidate profile to update token count in sidebar
+      qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+    },
+    onError: (error: any) => {
+      const serverMessage = error?.response?.data?.message;
+      if (
+        serverMessage &&
+        (serverMessage.includes("hết token") || serverMessage.includes("nạp thêm"))
+      ) {
+        return;
+      }
+      toast.error("Không thể gửi tin nhắn");
+    },
   });
 }
 
@@ -75,6 +89,19 @@ export function useDeleteSession() {
   return useMutation({
     mutationFn: (sessionId: string) => chatService.deleteSession(sessionId),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["chat", "history"] });
+      toast.success("Đã xóa cuộc trò chuyện");
+    },
+    onError: () => toast.error("Không thể xóa cuộc trò chuyện"),
+  });
+}
+
+export function useSoftDeleteSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => chatService.softDeleteSession(sessionId),
+    onSuccess: (_, sessionId) => {
+      qc.invalidateQueries({ queryKey: queryKeys.chat.sessions("", "") });
       qc.invalidateQueries({ queryKey: ["chat", "history"] });
       toast.success("Đã xóa cuộc trò chuyện");
     },

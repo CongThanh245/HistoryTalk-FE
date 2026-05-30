@@ -67,11 +67,11 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 body {
-  font-family: var(--font-body), sans-serif;
+  font-family: var(--font-body), "Inter", sans-serif;
 }
 
 .font-title {
-  font-family: var(--font-title), cursive;
+  font-family: var(--font-title), "Playfair Display", serif;
 }
 /* Ghi đè các biến CSS của Shadcn bằng các biến Cinematic */
 :root {
@@ -94,45 +94,488 @@ body {
   --input: rgba(27, 38, 50, 0.14);
   --ring: var(--accent-gold);
   --radius: 0.625rem;
+
+  /* Toast - HistoryTalk Light Theme */
+  /* Success - Xanh lá nhạt trên nền sáng */
+  --toast-success-bg: #F7F1EA;
+  --toast-success-border: rgba(74, 140, 98, 0.55);
+  --toast-success-icon: #4A8C62;
+  --toast-success-glow: rgba(74, 140, 98, 0.22);
+  --toast-success-inner: rgba(74, 140, 98, 0.08);
+
+  /* Error - Đỏ đất trên nền sáng */
+  --toast-error-bg: #F7F1EA;
+  --toast-error-border: rgba(154, 63, 67, 0.55);
+  --toast-error-icon: #9A3F43;
+  --toast-error-glow: rgba(154, 63, 67, 0.22);
+  --toast-error-inner: rgba(154, 63, 67, 0.08);
+
+  /* Warning - Vàng đất trên nền sáng */
+  --toast-warning-bg: #F7F1EA;
+  --toast-warning-border: rgba(184, 140, 60, 0.55);
+  --toast-warning-icon: #B88C3C;
+  --toast-warning-glow: rgba(184, 140, 60, 0.22);
+  --toast-warning-inner: rgba(184, 140, 60, 0.08);
+
+  /* Info - Xanh đậm trên nền sáng */
+  --toast-info-bg: #F7F1EA;
+  --toast-info-border: rgba(114, 56, 61, 0.45);
+  --toast-info-icon: #72383D;
+  --toast-info-glow: rgba(114, 56, 61, 0.18);
+  --toast-info-inner: rgba(114, 56, 61, 0.06);
+
+  /* Default - Burgundy accent trên nền sáng */
+  --toast-default-bg: #F7F1EA;
+  --toast-default-border: rgba(114, 56, 61, 0.4);
+  --toast-default-icon: #72383D;
+  --toast-default-glow: rgba(114, 56, 61, 0.15);
+  --toast-default-inner: rgba(114, 56, 61, 0.05);
+}
+
+/* Nếu bạn muốn Dark Mode khác biệt, chỉnh ở đây,
+   còn không thì theme cinematic của bạn mặc định đã là tone tối rồi */
+.dark {
+  color-scheme: dark;
+
+  /* Toast - Dark Theme */
   --toast-success-bg: rgba(16, 40, 24, 0.96);
   --toast-success-border: rgba(74, 178, 98, 0.7);
   --toast-success-icon: #5dcc78;
   --toast-success-glow: rgba(74, 178, 98, 0.25);
   --toast-success-inner: rgba(74, 178, 98, 0.07);
 
-  /* Error / Destructive */
   --toast-error-bg: rgba(44, 12, 12, 0.96);
   --toast-error-border: rgba(224, 85, 80, 0.7);
   --toast-error-icon: #f07070;
   --toast-error-glow: rgba(224, 85, 80, 0.25);
   --toast-error-inner: rgba(224, 85, 80, 0.07);
 
-  /* Warning */
   --toast-warning-bg: rgba(40, 26, 6, 0.96);
   --toast-warning-border: rgba(255, 177, 98, 0.7);
   --toast-warning-icon: #ffc070;
   --toast-warning-glow: rgba(255, 177, 98, 0.25);
   --toast-warning-inner: rgba(255, 177, 98, 0.07);
 
-  /* Info */
   --toast-info-bg: rgba(10, 22, 38, 0.96);
   --toast-info-border: rgba(143, 179, 200, 0.65);
   --toast-info-icon: #a8ccde;
   --toast-info-glow: rgba(143, 179, 200, 0.22);
   --toast-info-inner: rgba(143, 179, 200, 0.06);
 
-  /* Default */
   --toast-default-bg: rgba(26, 36, 54, 0.96);
   --toast-default-border: rgba(201, 162, 77, 0.55);
-  --toast-default-icon: var(--accent-gold-soft);
+  --toast-default-icon: #e2c77a;
   --toast-default-glow: rgba(201, 162, 77, 0.2);
   --toast-default-inner: rgba(201, 162, 77, 0.06);
 }
 
-/* Nếu bạn muốn Dark Mode khác biệt, chỉnh ở đây, 
-   còn không thì theme cinematic của bạn mặc định đã là tone tối rồi */
-.dark {
-  color-scheme: dark;
+/* ─────────────────────────────────────────
+   Staff / admin panel: light theme tokens
+   for Radix portal elements (Select, Dropdown) & staff container
+────────────────────────────────────────── */
+[data-radix-popper-content-wrapper], .staff-theme {
+  --background: #f5f1ea;
+  --foreground: #1b2632;
+  --popover: #ffffff;
+  --popover-foreground: #1b2632;
+  --accent: rgba(27, 38, 50, 0.06);
+  --accent-foreground: #1b2632;
+  --border: rgba(27, 38, 50, 0.14);
+  --input: rgba(27, 38, 50, 0.14);
+  --muted-foreground: #7a7469;
+  --muted: #e7dfd3;
+  --color-muted: #e7dfd3;
+}
+
+@keyframes upgradeOverlayIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(16px);
+  }
+}
+
+@keyframes upgradeContentIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes upgradeCardSpreadLeft {
+  from {
+    opacity: 0;
+    transform: translateX(118%) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes upgradeCardRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes upgradeCardSpreadRight {
+  from {
+    opacity: 0;
+    transform: translateX(-118%) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.upgrade-pro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 146, 21, 0.12), transparent 34rem),
+    rgba(7, 13, 24, 0.9);
+  animation: upgradeOverlayIn 0.28s ease-out both;
+}
+
+.upgrade-pro-content {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 71;
+  width: min(1280px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  border: 1px solid rgba(226, 199, 122, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(14, 26, 43, 0.98), rgba(7, 13, 24, 0.98)),
+    var(--bg-main);
+  box-shadow: var(--shadow-strong);
+  color: var(--text-on-dark);
+  padding: 28px 32px 30px;
+  outline: none;
+  animation: upgradeContentIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.upgrade-pro-content::-webkit-scrollbar {
+  display: none;
+}
+
+.upgrade-pro-brand {
+  position: absolute;
+  left: 28px;
+  top: 24px;
+  font-family: var(--font-title), var(--font-body), sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent-gold-soft);
+}
+
+.upgrade-pro-close {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.18s ease;
+}
+
+.upgrade-pro-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.upgrade-pro-billing {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(560px, 100%);
+  min-height: 44px;
+  margin: 20px auto 44px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.upgrade-pro-billing button {
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+
+.upgrade-pro-billing button.is-active {
+  color: white;
+  background: rgba(226, 199, 122, 0.14);
+  border: 1px solid rgba(226, 199, 122, 0.85);
+  box-shadow: 0 0 18px rgba(255, 146, 21, 0.16);
+}
+
+.upgrade-pro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.upgrade-pro-card {
+  position: relative;
+  min-height: 560px;
+  padding: 32px 24px 26px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(36, 49, 74, 0.82), rgba(26, 36, 54, 0.9));
+  border: 1px solid rgba(231, 221, 200, 0.12);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.upgrade-pro-card-0 {
+  animation: upgradeCardSpreadLeft 0.56s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+}
+
+.upgrade-pro-card-1 {
+  animation: upgradeCardRise 0.48s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.upgrade-pro-card-2 {
+  animation: upgradeCardSpreadRight 0.56s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+}
+
+.upgrade-pro-card.is-featured {
+  background:
+    radial-gradient(circle at 70% 15%, rgba(255, 146, 21, 0.2), transparent 18rem),
+    linear-gradient(180deg, rgba(58, 42, 62, 0.96), rgba(27, 38, 50, 0.96));
+  border-color: rgba(226, 199, 122, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(255, 146, 21, 0.2),
+    0 24px 54px rgba(0, 0, 0, 0.32);
+}
+
+.upgrade-pro-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 140px;
+  padding: 10px 16px;
+  border-radius: 0 16px 0 16px;
+  background: linear-gradient(90deg, var(--accent-gold), var(--burning-flame));
+  color: var(--bg-deep);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.upgrade-pro-card-head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  min-height: 76px;
+}
+
+.upgrade-pro-card-head svg {
+  color: var(--accent-gold-soft);
+  filter: drop-shadow(0 0 8px rgba(255, 146, 21, 0.3));
+}
+
+.upgrade-pro-card h3 {
+  color: white;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.upgrade-pro-card p {
+  margin-top: 8px;
+  color: rgba(247, 241, 232, 0.72);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.upgrade-pro-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 28px;
+}
+
+.upgrade-pro-price span {
+  color: white;
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+.upgrade-pro-price small {
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.upgrade-pro-note {
+  display: inline-flex;
+  margin-top: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--accent-gold-soft);
+  background: rgba(255, 146, 21, 0.14);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.upgrade-pro-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 44px;
+  margin-top: 22px;
+  border-radius: 8px;
+  border: 1px solid rgba(231, 221, 200, 0.12);
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(247, 241, 232, 0.92);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.upgrade-pro-action.is-featured {
+  color: #ffffff;
+  background: linear-gradient(90deg, var(--accent-gold-soft), var(--accent-gold), var(--truffle));
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 22px rgba(255, 146, 21, 0.32);
+}
+
+.upgrade-pro-action.is-current {
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(247, 241, 232, 0.9);
+  box-shadow: none;
+}
+
+.upgrade-pro-action:disabled {
+  opacity: 0.75;
+}
+
+.upgrade-pro-action:hover {
+  transform: translateY(-1px);
+}
+
+.upgrade-pro-features {
+  display: grid;
+  margin-top: 26px;
+}
+
+.upgrade-pro-feature {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  gap: 14px;
+  border-top: 1px solid rgba(231, 221, 200, 0.1);
+  color: rgba(247, 241, 232, 0.68);
+  font-size: 14px;
+}
+
+.upgrade-pro-feature strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.upgrade-pro-feature svg {
+  color: var(--accent-gold-soft);
+}
+
+.upgrade-pro-foot {
+  margin-top: 34px;
+  text-align: center;
+  color: rgba(247, 241, 232, 0.68);
+  font-size: 13px;
+}
+
+.upgrade-pro-foot div {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  color: white;
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .upgrade-pro-content {
+    padding: 76px 18px 24px;
+  }
+
+  .upgrade-pro-brand {
+    font-size: 22px;
+  }
+
+  .upgrade-pro-billing {
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+
+  .upgrade-pro-grid {
+    grid-template-columns: 1fr;
+    max-width: 460px;
+  }
+
+  .upgrade-pro-card {
+    min-height: auto;
+    animation: upgradeCardRise 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@media (max-width: 520px) {
+  .upgrade-pro-content {
+    width: calc(100vw - 18px);
+    border-radius: 14px;
+  }
+
+  .upgrade-pro-billing {
+    grid-template-columns: 1fr;
+    border-radius: 14px;
+  }
+
+  .upgrade-pro-card {
+    padding: 28px 18px 22px;
+  }
+
+  .upgrade-pro-price span {
+    font-size: 31px;
+  }
 }
 
 /* ─────────────────────────────────────────
@@ -584,22 +1027,21 @@ body {
 }
 
 /* ─────────────────────────────────────────
-   Typography
+   Typography - Light theme toast
 ───────────────────────────────────────── */
 [data-sonner-toaster] [data-sonner-toast] [data-title] {
   font-size: 13.5px !important;
   font-weight: 600 !important;
   line-height: 1.4 !important;
-  color: #f0e8d5 !important;
+  color: #322D29 !important;
   letter-spacing: 0.01em !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast] [data-description] {
   font-size: 12px !important;
   line-height: 1.6 !important;
-  color: var(--text-secondary) !important;
+  color: #5F554E !important;
   margin-top: 2px !important;
-  opacity: 0.9 !important;
 }
 
 /* ─────────────────────────────────────────
@@ -611,20 +1053,20 @@ body {
 }
 
 /* ─────────────────────────────────────────
-   Close button
+   Close button - Light theme
 ───────────────────────────────────────── */
 [data-sonner-toaster] [data-sonner-toast] [data-close-button] {
-  background: rgba(255, 255, 255, 0.15) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  color: rgba(255, 255, 255, 0.8) !important; /* sáng hơn */
+  background: rgba(50, 45, 41, 0.08) !important;
+  border: 1px solid rgba(50, 45, 41, 0.15) !important;
+  color: rgba(50, 45, 41, 0.6) !important;
   border-radius: 6px !important;
   transition: all 0.15s !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast] [data-close-button]:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
-  color: #ffffff !important;
+  background: rgba(114, 56, 61, 0.12) !important;
+  border-color: rgba(114, 56, 61, 0.25) !important;
+  color: #72383D !important;
 }
 
 /* ─────────────────────────────────────────
@@ -738,6 +1180,37 @@ body {
 [data-sonner-toaster] [data-sonner-toast][data-type="info"] [data-progress] {
   background: var(--toast-info-icon) !important;
   box-shadow: 0 0 8px var(--toast-info-glow) !important;
+}
+
+/* ─────────────────────────────────────────
+   AuthForm input placeholder styling
+───────────────────────────────────────── */
+[data-sonner-toaster] ~ div [role="dialog"] input::placeholder,
+div[style*="--palladian"] input::placeholder {
+  color: rgba(50, 45, 41, 0.5) !important;
+}
+
+/* ─────────────────────────────────────────
+   Dark mode toast overrides
+───────────────────────────────────────── */
+.dark [data-sonner-toaster] [data-sonner-toast] [data-title] {
+  color: #f0e8d5 !important;
+}
+
+.dark [data-sonner-toaster] [data-sonner-toast] [data-description] {
+  color: rgba(223, 218, 181, 0.85) !important;
+}
+
+.dark [data-sonner-toaster] [data-sonner-toast] [data-close-button] {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.dark [data-sonner-toaster] [data-sonner-toast] [data-close-button]:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  color: #ffffff !important;
 }
 
 /* ─────────────────────────────────────────

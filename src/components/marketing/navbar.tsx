@@ -80,7 +80,7 @@ export function MarketingNavbar() {
         }
         .brand-link {
           border-radius: 9999px;
-          padding: 4px 10px 4px 5px;
+          padding: 0;
           transition: transform 0.25s ease;
         }
         .brand-link:hover {
@@ -88,55 +88,17 @@ export function MarketingNavbar() {
         }
         .brand-mark {
           position: relative;
-          display: grid;
-          place-items: center;
-          width: 44px;
-          height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           border-radius: 0;
-          background: radial-gradient(circle at 50% 50%, rgba(255, 146, 21, 0.34), rgba(255, 146, 21, 0.12) 38%, transparent 68%);
           border: 0;
           box-shadow: none;
-        }
-        .brand-mark::after {
-          content: "";
-          position: absolute;
-          inset: -7px;
-          border-radius: inherit;
-          background: radial-gradient(circle, rgba(255, 146, 21, 0.24), transparent 68%);
-          opacity: 0.72;
-          transition: opacity 0.25s ease;
-          pointer-events: none;
         }
         .brand-logo-img {
           position: relative;
           z-index: 1;
-          filter: saturate(1.45) contrast(1.2) drop-shadow(0 0 5px rgba(255, 146, 21, 0.72));
-          transform: scale(1.18);
-        }
-        .brand-wordmark {
-          color: #ffb95c;
-        }
-        .brand-letter {
-          display: inline-block;
-          transform: translateY(0);
-        }
-        .brand-link:hover .brand-letter {
-          animation: brand-letter-drop 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
-          animation-delay: calc(var(--i) * 34ms);
-        }
-        @keyframes brand-letter-drop {
-          0% {
-            transform: translateY(0);
-          }
-          42% {
-            transform: translateY(-8px);
-          }
-          72% {
-            transform: translateY(2px);
-          }
-          100% {
-            transform: translateY(0);
-          }
+          object-fit: contain;
         }
         .nav-link {
           position: relative;
@@ -177,29 +139,17 @@ export function MarketingNavbar() {
           <div className="flex items-center px-4 py-3 md:px-6 md:py-2">
             <Link
               href="/"
-              className="brand-link flex items-center gap-2.5"
+              className="brand-link flex items-center"
             >
               <span className="brand-mark">
                 <Image
-                  src="/historytalk-logo.png"
+                  src="/logo-dark-theme.png"
                   alt="HistoryTalk Logo"
-                  width={34}
-                  height={34}
+                  width={180}
+                  height={56}
                   priority
                   className="brand-logo-img object-contain"
                 />
-              </span>
-              <span className="brand-wordmark hidden sm:inline text-[15px] font-bold tracking-wide font-serif" aria-label="HistoryTalk">
-                {"HistoryTalk".split("").map((letter, index) => (
-                  <span
-                    key={`${letter}-${index}`}
-                    aria-hidden="true"
-                    className={letter === "T" || index > 6 ? "brand-letter text-[var(--accent-gold)]" : "brand-letter"}
-                    style={{ "--i": index } as React.CSSProperties}
-                  >
-                    {letter}
-                  </span>
-                ))}
               </span>
             </Link>
 

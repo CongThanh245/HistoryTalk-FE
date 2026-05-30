@@ -40,12 +40,7 @@ export function Footer() {
               href="/"
               className="inline-flex items-center gap-2 mb-6 group"
             >
-              <BrandLogo
-                animatedText
-                glow="warm"
-                markClassName="h-10 w-10"
-                textClassName="text-xl transition-colors duration-200 group-hover:text-[var(--accent-gold)]"
-              />
+              <BrandLogo forceDark size="large" />
             </Link>
 
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-8">

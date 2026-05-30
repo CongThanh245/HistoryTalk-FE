@@ -113,9 +113,21 @@ function SkeletonCard({ index }: { index: number }) {
   );
 }
 
-export function UpgradeProDialog({ children }: { children: React.ReactNode }) {
+interface UpgradeProDialogProps {
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function UpgradeProDialog({
+  children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: UpgradeProDialogProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : localOpen;
+  const setOpen = controlledOnOpenChange !== undefined ? controlledOnOpenChange : setLocalOpen;
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const router = useRouter();
 
@@ -158,7 +170,11 @@ export function UpgradeProDialog({ children }: { children: React.ReactNode }) {
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
-      <div onClick={handleTriggerClick} style={{ display: "contents" }}>{children}</div>
+      {children && (
+        <div onClick={handleTriggerClick} style={{ display: "contents" }}>
+          {children}
+        </div>
+      )}
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="upgrade-pro-overlay" />
         <DialogPrimitive.Content className="upgrade-pro-content">

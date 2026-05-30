@@ -127,7 +127,7 @@ export function FeaturesSection() {
             <span className="mb-4 block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-gold)]">
               Hành trình học
             </span>
-            <h2 className="max-w-xl text-3xl font-bold uppercase leading-tight tracking-wide text-[var(--text-primary)] sm:text-4xl lg:text-5xl">
+            <h2 className="max-w-xl text-3xl font-bold uppercase leading-tight tracking-wide sm:text-4xl lg:text-5xl bg-gradient-to-r from-[var(--text-primary)] via-[var(--accent-gold)] to-[var(--text-primary)] bg-clip-text text-transparent">
               Một dòng thời gian, bốn lần chạm vào lịch sử
             </h2>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-[var(--text-secondary)] lg:text-base">

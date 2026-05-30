@@ -149,7 +149,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
           {/* Simulated Map Canvas */}
           <div className="absolute inset-0 opacity-20 pointer-events-none">
             <div className="w-full h-full" style={{
-              backgroundImage: `radial-gradient(circle, #ff9215 1px, transparent 1px), linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px)`,
+              backgroundImage: `radial-gradient(circle, #EA7A0A 1px, transparent 1px), linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px)`,
               backgroundSize: "20px 20px, 40px 40px"
             }} />
           </div>
@@ -222,7 +222,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#c9a24d] to-[#ff9215] flex items-center justify-center text-lg shadow-md">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#c9a24d] to-[#EA7A0A] flex items-center justify-center text-lg shadow-md">
                 ⚔️
               </div>
               <div>

@@ -10,6 +10,8 @@ interface AuthState {
   setAuth: (user: User, tokens: AuthTokens) => void;
   clearAuth: () => void;
   setTokens: (tokens: AuthTokens) => void;
+  /** Đồng bộ một phần thông tin user (avatar, tên, tier…) từ /users/me lên store */
+  updateUser: (user: Partial<User>) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,6 +27,11 @@ export const useAuthStore = create<AuthState>()(
         set({ user: null, tokens: null, isAuthenticated: false }),
 
       setTokens: (tokens) => set((state) => ({ ...state, tokens })),
+
+      updateUser: (partial) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...partial } : state.user,
+        })),
     }),
     {
       name: "auth-storage",

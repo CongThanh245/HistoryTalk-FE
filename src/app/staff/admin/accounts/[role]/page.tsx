@@ -237,15 +237,15 @@ export default function AdminAccountsPage() {
     if (formMode === "create") {
       createUser.mutate(formData as AdminUser, { onSuccess: () => setFormOpen(false) });
     } else if (formTarget) {
-      // Only send allowed fields for update
+      // Only send allowed fields for update (filter out nulls)
       const updates = {
         userName: formData.userName,
         fullName: formData.fullName,
-        dob: formData.dob,
-        gender: formData.gender,
-        phoneNumber: formData.phoneNumber,
-        address: formData.address,
-        avatarUrl: formData.avatarUrl,
+        dob: formData.dob ?? undefined,
+        gender: formData.gender ?? undefined,
+        phoneNumber: formData.phoneNumber ?? undefined,
+        address: formData.address ?? undefined,
+        avatarUrl: formData.avatarUrl ?? undefined,
       };
       updateUser.mutate(
         { uid: formTarget.uid, updates },
@@ -429,12 +429,12 @@ export default function AdminAccountsPage() {
                 variant="ghost"
                 size="icon-sm"
                 className="rounded-full"
-                title={u.is_active ? "Khoá tài khoản" : "Mở khoá tài khoản"}
+                title={!isUserDeleted(u) ? "Khoá tài khoản" : "Mở khoá tài khoản"}
                 onClick={() => handleToggleActive(u)}
-                disabled={updateUser.isPending}
-                style={{ color: u.is_active ? "var(--accent-danger)" : "rgb(22,163,74)" }}
+                disabled={deleteUser.isPending || restoreUser.isPending}
+                style={{ color: !isUserDeleted(u) ? "var(--accent-danger)" : "rgb(22,163,74)" }}
               >
-                {u.is_active ? (
+                {!isUserDeleted(u) ? (
                   <LockKeyIcon className="h-4 w-4" />
                 ) : (
                   <LockOpenIcon className="h-4 w-4" />

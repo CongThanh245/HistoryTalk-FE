@@ -1,7 +1,8 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { authApi } from "./api";
 import { useAuthStore } from "@/store/auth.store";
+import { queryKeys } from "@/shared/query-key";
 import {
   ForgotPasswordRequest,
   GoogleLoginRequest,
@@ -48,7 +49,15 @@ export function useLogin() {
     onSuccess: ({ user, tokens }) => {
       setAuth(user, tokens);
       persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
-      redirectAfterLogin(user.role, router);
+      
+      // Force redirect based on role, regardless of current page
+      if (user.role === "CONTENT_ADMIN") {
+        router.replace("/staff");
+      } else if (user.role === "SYSTEM_ADMIN") {
+        router.replace("/staff/admin");
+      } else {
+        router.replace("/home");
+      }
     },
   });
 }
@@ -62,7 +71,15 @@ export function useGoogleLogin() {
     onSuccess: ({ user, tokens }) => {
       setAuth(user, tokens);
       persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
-      redirectAfterLogin(user.role, router);
+      
+      // Force redirect based on role, regardless of current page
+      if (user.role === "CONTENT_ADMIN") {
+        router.replace("/staff");
+      } else if (user.role === "SYSTEM_ADMIN") {
+        router.replace("/staff/admin");
+      } else {
+        router.replace("/home");
+      }
     },
   });
 }
@@ -98,11 +115,15 @@ export function useResetPassword() {
 export function useLogout() {
   const router = useRouter();
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: () => authApi.logout(),
     onSettled: () => {
       clearAuth();
+
+      // Xóa profile cache để đảm bảo token được làm mới khi login tài khoản mới
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile.me });
 
       document.cookie = "auth-token=; path=/; max-age=0";
       document.cookie = "auth-role=; path=/; max-age=0";

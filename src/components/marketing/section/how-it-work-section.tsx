@@ -38,6 +38,7 @@ export function HowItWorksSection() {
         <SectionHeading
           title="Cách hoạt động"
           subtitle="Bốn bước đơn giản để bắt đầu hành trình khám phá lịch sử của bạn"
+          variant="warm"
         />
 
         <div className="max-w-5xl mx-auto">

@@ -10,7 +10,7 @@ import { SidebarSection } from "@/routers/sidebar";
 import { useSidebar } from "./sidebar-context";
 
 export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }: { sections: SidebarSection[]; showUpgrade?: boolean; logoHref?: string }) {
-  const [isPinned, setIsPinned] = useState(false);
+  const [isPinned, setIsPinned] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDesktopExpanded = isPinned || isHovered;

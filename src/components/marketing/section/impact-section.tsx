@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { BrainIcon, LinkIcon, ScalesIcon, SparkleIcon } from "@phosphor-icons/react";
 import { Container } from "../container";
+import { SectionHeading } from "../section-heading";
 import { useRevealAnimation } from "@/lib/hooks/use-reveal-animation";
 
 const impacts = [
@@ -34,14 +35,11 @@ export function ImpactSection() {
     >
       <Container>
         <div className="mx-auto max-w-5xl">
-          <div className="mb-12 text-center">
-            <span data-reveal="block" className="mb-4 block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-gold)]">
-              Sau hành trình
-            </span>
-            <h2 data-reveal="fast" className="mx-auto max-w-3xl text-3xl font-bold uppercase leading-tight text-[var(--text-primary)] sm:text-4xl lg:text-5xl">
-              Điều còn lại không phải là đáp án, mà là sự hiểu biết
-            </h2>
-          </div>
+          <SectionHeading
+            title="Điều còn lại không phải là đáp án, mà là sự hiểu biết"
+            subtitle="Sau hành trình"
+            variant="cream"
+          />
 
           <div className="grid gap-4 md:grid-cols-3">
             {impacts.map((impact) => {

@@ -36,6 +36,7 @@ yarn-error.log*
 .env.local
 .env.development
 .env.production
+.env.spring.production
 .env.test
 .env.spring
 .env.nodejs

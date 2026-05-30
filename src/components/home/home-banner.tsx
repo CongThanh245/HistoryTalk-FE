@@ -9,7 +9,7 @@ const bannerLinks = [
     href: "/events",
     icon: BankIcon,
     label: "Sự kiện lịch sử",
-    color: "var(--accent-gold, #ff9215)",
+    color: "var(--accent-gold, #EA7A0A)",
     shadow: "0 6px 16px rgba(255, 146, 21, 0.15)",
   },
   {

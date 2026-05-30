@@ -312,12 +312,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               kiểm tra kiến thức của bạn.
             </p>
           </div>
-          <BrandLogo
-            animatedText
-            glow="warm"
-            markClassName="h-10 w-10"
-            textClassName="text-xl"
-          />
+          <BrandLogo forceDark size="large" />
         </div>
       </div>
 

@@ -812,7 +812,7 @@ export default function AdminDashboardPage() {
                               style={{
                                 width: `${pct}%`,
                                 background: t.tierTitle.toLowerCase().includes("pro")
-                                  ? "#ff9215"
+                                  ? "#EA7A0A"
                                   : t.tierTitle.toLowerCase().includes("plus")
                                     ? "#8b5cf6"
                                     : "#3b82f6",
@@ -874,7 +874,7 @@ export default function AdminDashboardPage() {
                               style={{
                                 width: `${pct}%`,
                                 background: t.tierTitle.toLowerCase().includes("pro")
-                                  ? "#ff9215"
+                                  ? "#EA7A0A"
                                   : t.tierTitle.toLowerCase().includes("plus")
                                     ? "#8b5cf6"
                                     : "#3b82f6",

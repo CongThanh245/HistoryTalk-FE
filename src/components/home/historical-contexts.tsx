@@ -47,7 +47,7 @@ export function HistoricalContexts() {
           : events.map((event) => (
             <Link
               key={event.id}
-              href={`/events`}
+              href={`/events?event=${event.id}`}
               className="w-full group block outline-none ring-0"
               style={{ textDecoration: "none" }}
             >
