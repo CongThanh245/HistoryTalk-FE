@@ -17,9 +17,11 @@ export const metadata: Metadata = {
   title: "HistoryTalk - Khám phá lịch sử qua cuộc trò chuyện",
   description: "Trò chuyện với các nhân vật lịch sử",
   icons: {
-    icon: "/solo-logo.png",
-    shortcut: "/solo-logo.png",
-    apple: "/solo-logo.png",
+    icon: [
+      { url: "/solo-logo.png?v=2", type: "image/png", sizes: "32x32" },
+    ],
+    shortcut: "/solo-logo.png?v=2",
+    apple: "/solo-logo.png?v=2",
   },
 };
 
