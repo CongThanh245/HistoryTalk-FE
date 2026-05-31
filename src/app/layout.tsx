@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     shortcut: "/solo-logo.png?v=2",
     apple: "/solo-logo.png?v=2",
   },
+  metadataBase: new URL("https://history-talk.vercel.app"),
   openGraph: {
     title: "HistoryTalk - Khám phá lịch sử qua cuộc trò chuyện",
     description: "Trò chuyện với các nhân vật lịch sử",
