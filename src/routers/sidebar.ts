@@ -53,7 +53,7 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
 
 export const STAFF_SIDEBAR: SidebarSection[] = [
   {
-    title: "Staff",
+    title: "Content Admin",
     items: [
       { icon: ShieldIcon, label: "Tổng quan", href: "/staff", exact: true },
       { icon: ScrollIcon, label: "Bối cảnh", href: "/staff/contexts" },
