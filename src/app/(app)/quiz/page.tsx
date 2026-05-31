@@ -6,5 +6,9 @@ export const metadata = {
 };
 
 export default function QuizPage() {
-  return <QuizPageClient />;
+  return (
+    <div className="px-3 py-6 md:px-6 md:py-8">
+      <QuizPageClient />
+    </div>
+  );
 }

@@ -104,7 +104,7 @@ export function HeroSection() {
         <div className="flex flex-col lg:grid lg:grid-cols-2 lg:items-center lg:gap-20 lg:py-10">
           <div
             ref={contentWrapperRef}
-            className="z-10 space-y-5 pb-6 pt-28 will-change-transform lg:space-y-8 lg:pb-0 lg:pt-0"
+            className="z-10 space-y-4 pb-4 pt-24 will-change-transform md:space-y-5 md:pb-6 md:pt-28 lg:space-y-8 lg:pb-0 lg:pt-0"
           >
             <h1 className="text-hero text-[var(--text-primary)]">
               <TypingText text="HISTORY TALK" className="typing-title" />
@@ -118,16 +118,16 @@ export function HeroSection() {
 
             <div ref={subContentRef} className="space-y-5 opacity-0 lg:space-y-8">
               <MaskedText>
-                <p className="vi-text max-w-xl text-[var(--text-secondary)]">
+                <p className="text-sm md:text-base lg:text-lg leading-relaxed max-w-xl text-[var(--text-secondary)]">
                   Trò chuyện trực tiếp với các nhân vật lịch sử được tái hiện bằng AI. Khám phá quá khứ như một hành trình có bối cảnh, cảm xúc và lựa chọn.
                 </p>
               </MaskedText>
 
-              <div className="my-4 space-y-0.5 border-l-2 border-[var(--accent-gold)]/40 py-3 pl-5 lg:pl-6">
-                <p className="text-small font-semibold italic text-[var(--text-primary)]">
+              <div className="my-3 md:my-4 space-y-0.5 border-l-2 border-[var(--accent-gold)]/40 py-2 pl-4 md:py-3 md:pl-5 lg:pl-6">
+                <p className="text-xs md:text-sm font-semibold italic text-[var(--text-primary)]">
                   &quot;Học sinh chỉ chán học Lịch sử trên trường
                 </p>
-                <p className="text-small font-semibold italic text-[var(--accent-gold)]">
+                <p className="text-xs md:text-sm font-semibold italic text-[var(--accent-gold)]">
                   chứ không học sinh nào chán lịch sử dân tộc cả!&quot;
                 </p>
               </div>
@@ -151,7 +151,7 @@ export function HeroSection() {
 
           <div
             ref={carouselRef}
-            className="relative flex h-[300px] w-full items-center justify-center will-change-transform sm:h-[380px] lg:h-[650px] lg:overflow-visible"
+            className="relative flex h-[320px] w-full items-center justify-center will-change-transform sm:h-[380px] md:h-[500px] lg:h-[650px] lg:overflow-visible"
           >
             <Carousel3DVertical />
           </div>

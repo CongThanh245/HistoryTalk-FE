@@ -237,8 +237,7 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
   }, [data, items, isAdmin]);
 
   return (
-    <div className="px-4 py-6 md:px-8 md:py-8">
-      <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
         <section className="relative overflow-hidden rounded-lg border border-[rgba(27,38,50,0.1)] bg-white/65 p-5 shadow-[0_18px_48px_rgba(27,38,50,0.06)] sm:p-6 animate-in fade-in slide-in-from-bottom-2">
           <div className="absolute right-0 top-0 h-28 w-56 rounded-bl-full bg-[rgba(255,146,21,0.1)] blur-2xl" />
           <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

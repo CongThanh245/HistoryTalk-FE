@@ -145,10 +145,10 @@ export function MarketingNavbar() {
                 <Image
                   src="/logo-dark-theme.png"
                   alt="HistoryTalk Logo"
-                  width={180}
-                  height={56}
+                  width={140}
+                  height={44}
                   priority
-                  className="brand-logo-img object-contain"
+                  className="brand-logo-img object-contain w-[140px] h-auto md:w-[180px]"
                 />
               </span>
             </Link>
@@ -197,13 +197,13 @@ export function MarketingNavbar() {
             </div>
 
             {/* Mobile: Login + Hamburger */}
-            <div className="flex items-center gap-2 ml-auto md:hidden">
+            <div className="flex items-center gap-1.5 ml-auto md:hidden">
               {isLoggedIn ? (
                 <UserProfileDropdown align="end" showPremium={false} showBorder={false} />
               ) : (
                 <Link
                   href="/login"
-                  className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-3 py-2"
+                  className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-2 py-2 whitespace-nowrap"
                 >
                   Đăng nhập
                 </Link>
@@ -212,7 +212,7 @@ export function MarketingNavbar() {
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="Toggle menu"
-                className="flex items-center justify-center w-11 h-11 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] transition-colors active:bg-[var(--bg-surface)]"
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] transition-colors active:bg-[var(--bg-surface)] shrink-0"
               >
                 {isOpen ? (
                   <svg

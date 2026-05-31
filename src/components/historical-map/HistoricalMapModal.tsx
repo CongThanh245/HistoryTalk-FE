@@ -7,6 +7,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { X, Map, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 import type { Landmark } from "@/services/landmark.service";
 import { LandmarkPanel } from "./LandmarkPanel";
 import { EventDetailPanel } from "./EventDetailPanel";
@@ -192,7 +193,12 @@ export function HistoricalMapModal({
       {/* Main content: map + panel */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Map */}
-        <div className="flex-1 relative">
+        <div
+          className={cn(
+            "flex-1 relative transition-all duration-300",
+            panelOpen && "hidden md:block"
+          )}
+        >
           <LeafletMap
             landmarks={visibleLandmarks}
             selectedLandmarkId={selectedLandmark?.landmarkId ?? null}
@@ -227,11 +233,13 @@ export function HistoricalMapModal({
           )}
         </div>
 
-        {/* Side panel */}
+        {/* Side panel - full width on mobile, fixed 360px on md+ */}
         <div
-          className="shrink-0 overflow-hidden transition-all duration-300"
+          className={cn(
+            "shrink-0 overflow-hidden transition-all duration-300",
+            panelOpen ? "w-full md:w-[360px]" : "w-0"
+          )}
           style={{
-            width: panelOpen ? "360px" : "0px",
             borderLeft: panelOpen
               ? "1px solid var(--card-light-border)"
               : "none",
@@ -239,7 +247,7 @@ export function HistoricalMapModal({
           }}
         >
           {selectedLandmark && (
-            <div className="w-[360px] h-full overflow-hidden">
+            <div className="w-full md:w-[360px] h-full overflow-hidden">
               {selectedContextId ? (
                 <EventDetailPanel
                   contextId={selectedContextId}

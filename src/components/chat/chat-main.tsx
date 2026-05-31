@@ -201,17 +201,17 @@ export function ChatMain({
     <div className="relative flex-1 flex flex-col min-w-0 h-full overflow-hidden">
       {/* Header */}
       <div
-        className="px-4 lg:px-6 py-4 border-b flex items-center gap-3 shrink-0"
+        className="px-4 md:px-6 py-4 border-b flex items-center gap-3 shrink-0"
         style={{
           borderColor: "var(--border-default)",
           background: "var(--bg-main)",
         }}
       >
-        {/* Toggle Left (Mobile) */}
+        {/* Toggle Left (Mobile/Tablet) */}
         {toggleLeftPanel && (
           <button
             onClick={toggleLeftPanel}
-            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
+            className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
             style={{ color: isLeftOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
           >
             <ListIcon className="w-5 h-5" />
@@ -270,11 +270,11 @@ export function ChatMain({
           />
         </button>
 
-        {/* Toggle Right (Mobile) */}
+        {/* Toggle Right (Mobile/Tablet) */}
         {toggleRightPanel && (
           <button
             onClick={toggleRightPanel}
-            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
+            className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
             style={{ color: isRightOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
           >
             <InfoIcon className="w-5 h-5" />

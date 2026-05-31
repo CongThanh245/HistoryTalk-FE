@@ -99,10 +99,10 @@ export function ChatLeftPanel({
   return (
     <TooltipProvider delayDuration={0}>
       <>
-        {/* Backdrop on mobile */}
+        {/* Backdrop on mobile/tablet */}
         <div
           className={cn(
-            "lg:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-[2px] transition-opacity duration-300",
+            "md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-[2px] transition-opacity duration-300",
             isOpen ? "opacity-100 visible" : "opacity-0 invisible"
           )}
           onClick={() => setIsOpen(false)}
@@ -111,8 +111,8 @@ export function ChatLeftPanel({
         <div
           className={cn(
             "shrink-0 h-full transition-all duration-300 z-50",
-            "lg:relative absolute left-0 top-0 bottom-0",
-            isOpen ? "w-[260px]" : "w-0 lg:w-[28px]",
+            "md:relative absolute left-0 top-0 bottom-0",
+            isOpen ? "w-[260px]" : "w-0 md:w-[28px]",
           )}
         >
           <Tooltip>
@@ -121,8 +121,8 @@ export function ChatLeftPanel({
               onClick={isOpen ? () => setIsOpen(false) : handleOpen}
               onMouseEnter={dismissHint}
               className={cn(
-                "absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-6 h-10 flex items-center justify-center rounded-full border cursor-pointer transition-all duration-150 hover:scale-110",
-                !isOpen && "hidden lg:flex",
+                "hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-6 h-10 items-center justify-center rounded-full border cursor-pointer transition-all duration-150 hover:scale-110",
+                !isOpen && "opacity-0 pointer-events-none",
               )}
               style={{
                 background: "var(--bg-elevated)",
@@ -145,7 +145,7 @@ export function ChatLeftPanel({
 
         {!isOpen && showHint && (
           <div
-            className="hidden lg:absolute left-6 top-1/2 -translate-y-1/2 z-30 flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap"
+            className="hidden md:absolute left-6 top-1/2 -translate-y-1/2 z-30 flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap"
             style={{
               background: "var(--bg-elevated)",
               border: "1px solid var(--border-default)",

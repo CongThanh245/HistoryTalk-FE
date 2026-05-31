@@ -584,7 +584,7 @@ function ProfileDashboardInner() {
   };
 
   return (
-    <div className="min-h-screen px-4 py-8 md:px-8 md:py-12">
+    <div className="px-3 py-6 md:px-6 md:py-8">
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Page Header */}
         <div className="flex items-center justify-between">

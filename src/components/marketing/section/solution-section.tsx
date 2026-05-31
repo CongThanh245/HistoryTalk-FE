@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { UserCircleIcon } from "@phosphor-icons/react";
@@ -60,10 +60,12 @@ function TypingText({
   const [displayText, setDisplayText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const completedRef = useRef(hasCompleted);
+  const prevIsActiveRef = useRef(isActive);
 
   // Reset ref when hasCompleted changes from true to false (restart)
   if (!hasCompleted && completedRef.current) {
     completedRef.current = false;
+    prevIsActiveRef.current = false;
   }
 
   useEffect(() => {
@@ -78,24 +80,31 @@ function TypingText({
     if (!isActive) {
       setDisplayText("");
       setIsTyping(false);
+      prevIsActiveRef.current = isActive;
       return;
     }
 
-    setIsTyping(true);
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < text.length) {
-        setDisplayText(text.slice(0, index + 1));
-        index++;
-      } else {
-        clearInterval(interval);
-        setIsTyping(false);
-        completedRef.current = true;
-        onComplete?.();
-      }
-    }, 30);
+    // Only start typing when isActive changes from false to true
+    if (isActive && !prevIsActiveRef.current && !completedRef.current) {
+      setIsTyping(true);
+      let index = 0;
+      const interval = setInterval(() => {
+        if (index < text.length) {
+          setDisplayText(text.slice(0, index + 1));
+          index++;
+        } else {
+          clearInterval(interval);
+          setIsTyping(false);
+          completedRef.current = true;
+          onComplete?.();
+        }
+      }, 30);
 
-    return () => clearInterval(interval);
+      prevIsActiveRef.current = isActive;
+      return () => clearInterval(interval);
+    }
+
+    prevIsActiveRef.current = isActive;
   }, [text, isActive, onComplete, hasCompleted]);
 
   return (
@@ -108,7 +117,7 @@ function TypingText({
   );
 }
 
-function ChatBubble({
+const ChatBubble = React.memo(function ChatBubble({
   message,
   isActive,
   onComplete,
@@ -167,13 +176,13 @@ function ChatBubble({
       </div>
     </div>
   );
-}
+});
 
 export function SolutionSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const [activeMessage, setActiveMessage] = useState(0);
+  const [activeMessage, setActiveMessage] = useState(-1);
   const [completedMessages, setCompletedMessages] = useState<Set<number>>(new Set());
   const [isAnimating, setIsAnimating] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -206,11 +215,11 @@ export function SolutionSection() {
   }, [hasStarted]);
 
   useEffect(() => {
-    if (!hasStarted || activeMessage >= chatMessages.length) return;
+    if (!hasStarted || activeMessage < 0 || activeMessage >= chatMessages.length) return;
     setIsAnimating(true);
   }, [activeMessage, hasStarted]);
 
-  const handleMessageComplete = (messageIndex: number) => {
+  const handleMessageComplete = useCallback((messageIndex: number) => {
     setCompletedMessages((prev) => new Set(prev).add(messageIndex));
     if (messageIndex < chatMessages.length - 1) {
       setTimeout(() => {
@@ -219,13 +228,13 @@ export function SolutionSection() {
     } else {
       setIsAnimating(false);
     }
-  };
+  }, []);
 
-  const handleRestart = () => {
+  const handleRestart = useCallback(() => {
     setActiveMessage(0);
     setCompletedMessages(new Set());
     setIsAnimating(true);
-  };
+  }, []);
 
   return (
     <section

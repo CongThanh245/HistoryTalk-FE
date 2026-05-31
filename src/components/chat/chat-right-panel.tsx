@@ -47,10 +47,10 @@ export function ChatRightPanel({
 
   return (
     <>
-      {/* Backdrop on mobile */}
+      {/* Backdrop on mobile/tablet */}
       <div
         className={cn(
-          "lg:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-[2px] transition-opacity duration-300",
+          "md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-[2px] transition-opacity duration-300",
           isOpen ? "opacity-100 visible" : "opacity-0 invisible"
         )}
         onClick={() => setIsOpen(false)}
@@ -58,9 +58,9 @@ export function ChatRightPanel({
 
       <div
         className={cn(
-          "shrink-0 h-full flex flex-col transition-transform duration-300 z-50 border-l overflow-hidden lg:sticky lg:top-0 lg:self-start",
-          "lg:relative absolute right-0 top-0 bottom-0 shadow-2xl lg:shadow-none w-[260px]",
-          isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0",
+          "shrink-0 h-full flex flex-col transition-transform duration-300 z-50 border-l overflow-hidden md:sticky md:top-0 md:self-start",
+          "md:relative absolute right-0 top-0 bottom-0 shadow-2xl md:shadow-none w-[260px]",
+          isOpen ? "translate-x-0" : "translate-x-full md:translate-x-0",
         )}
         style={{
           background: "var(--bg-surface)",

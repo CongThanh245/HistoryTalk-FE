@@ -130,7 +130,7 @@ export function Carousel3DVertical() {
       {authRequiredDialog}
       <div
         ref={containerRef}
-        className="relative w-full h-[650px] flex items-center justify-center"
+        className="relative w-full h-[320px] sm:h-[380px] md:h-[500px] lg:h-[650px] flex items-center justify-center"
         style={{ perspective: "1200px" }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -163,8 +163,8 @@ export function Carousel3DVertical() {
             ref={(el) => {
               skeletonCardsRef.current[i] = el;
             }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            style={{ transformStyle: "preserve-3d", width: 280, height: 400 }}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[160px] h-[230px] sm:w-[200px] sm:h-[280px] md:w-[240px] md:h-[340px] lg:w-[280px] lg:h-[400px]"
+            style={{ transformStyle: "preserve-3d" }}
           >
             <div
               className="w-full h-full rounded-[var(--radius-lg)] animate-pulse overflow-hidden"
@@ -210,8 +210,8 @@ export function Carousel3DVertical() {
             ref={(el) => {
               cardsRef.current[index] = el;
             }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            style={{ transformStyle: "preserve-3d", width: 280, height: 400 }}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[160px] h-[230px] sm:w-[200px] sm:h-[280px] md:w-[240px] md:h-[340px] lg:w-[280px] lg:h-[400px]"
+            style={{ transformStyle: "preserve-3d" }}
           >
             <CharacterCarouselCard
               character={figure}

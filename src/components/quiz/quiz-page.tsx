@@ -63,7 +63,7 @@ export function QuizPageClient() {
 
   return (
     <main className="min-h-screen" style={{ background: "var(--bg-content)" }}>
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
+      <div className="mx-auto max-w-7xl">
         <section
           className="mb-6 rounded-xl border px-5 py-5 md:px-6"
           style={{

@@ -3,6 +3,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import { gsap } from "gsap";
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
+import { cn } from "@/lib/utils/cn";
 
 export interface TimelineItem {
   id: string;
@@ -64,11 +65,11 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
   };
 
   const btnBase =
-    "w-8 h-8 shrink-0 rounded-full border flex items-center justify-center transition-all duration-150 " +
+    "w-7 h-7 md:w-8 md:h-8 shrink-0 rounded-full border flex items-center justify-center transition-all duration-150 " +
     "hover:border-[var(--accent-gold)] hover:text-[var(--gold-on-light)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer";
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1 md:gap-2">
       {/* Prev arrow */}
       <button
         onClick={handlePrev}
@@ -80,7 +81,7 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
       </button>
 
       {/* Track outer — clipping container */}
-      <div className="flex-1 overflow-hidden relative" style={{ height: 72 }}>
+      <div className="flex-1 overflow-hidden relative h-16 md:h-[72px]">
         {/* Axis line */}
         <div
           className="absolute left-0 right-0 pointer-events-none"
@@ -104,8 +105,8 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
         {/* Scrollable items — khoảng cách đều nhau */}
         <div
           ref={trackRef}
-          className="absolute top-0 flex items-center"
-          style={{ height: 72, willChange: "transform", paddingLeft: 24, paddingRight: 24 }}
+          className="absolute top-0 flex items-center h-16 md:h-[72px]"
+          style={{ willChange: "transform", paddingLeft: 16, paddingRight: 16 }}
         >
           {items.map((item, i) => {
             const isActive = item.id === activeId;
@@ -114,15 +115,16 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
               <button
                 key={item.id}
                 onClick={() => onSelect(item.id)}
-                className="tl-item flex flex-col items-center relative cursor-pointer group"
-                style={{ width: 80, flexShrink: 0, height: 72, background: "none", border: "none", padding: 0 }}
+                className="tl-item flex flex-col items-center relative cursor-pointer group w-[64px] md:w-20 h-16 md:h-[72px] bg-transparent border-0 p-0"
               >
                 {/* Year label — alternating top/bottom */}
                 <span
-                  className="absolute text-[10px] font-bold tracking-wide transition-colors duration-150 whitespace-nowrap"
+                  className={cn(
+                    "absolute text-[9px] md:text-[10px] font-bold tracking-wide transition-colors duration-150 whitespace-nowrap",
+                    i % 2 === 0 ? "bottom-1.5 md:bottom-2.5" : "top-1.5 md:top-2.5"
+                  )}
                   style={{
                     fontFamily: "Georgia, serif",
-                    [i % 2 === 0 ? "bottom" : "top"]: 10,
                     color: isActive ? "var(--gold-on-light, #a07828)" : "var(--content-subtle)",
                   }}
                 >
