@@ -23,6 +23,25 @@ export const metadata: Metadata = {
     shortcut: "/solo-logo.png?v=2",
     apple: "/solo-logo.png?v=2",
   },
+  openGraph: {
+    title: "HistoryTalk - Khám phá lịch sử qua cuộc trò chuyện",
+    description: "Trò chuyện với các nhân vật lịch sử",
+    images: [
+      {
+        url: "/historytalk-banner.png",
+        width: 1200,
+        height: 630,
+        alt: "HistoryTalk Banner",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HistoryTalk - Khám phá lịch sử qua cuộc trò chuyện",
+    description: "Trò chuyện với các nhân vật lịch sử",
+    images: ["/historytalk-banner.png"],
+  },
 };
 
 export default function RootLayout({
