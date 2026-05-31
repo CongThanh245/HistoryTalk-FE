@@ -38,6 +38,7 @@ import {
   XCircleIcon,
   EyeIcon,
   EyeSlashIcon,
+  HourglassIcon,
 } from "@phosphor-icons/react";
 
 // ─────────────────────────────────────────────
@@ -458,6 +459,37 @@ function BillingTab() {
               </p>
               <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
                 Token AI còn lại
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Subscription end time display */}
+        {profileLoading ? (
+          <Skeleton className="h-14 w-full mt-3 rounded-xl" />
+        ) : profile?.subscriptionEndTime && (
+          <div
+            className="mt-3 rounded-xl p-4 flex items-center gap-3"
+            style={{
+              background: proUser
+                ? "linear-gradient(135deg, rgba(201,162,77,0.08) 0%, rgba(163,81,57,0.05) 100%)"
+                : "var(--bg-main)",
+              border: proUser
+                ? "1px solid rgba(201,162,77,0.3)"
+                : "1px solid var(--border-default)",
+            }}
+          >
+            <HourglassIcon
+              className="w-8 h-8 shrink-0"
+              weight="duotone"
+              style={{ color: proUser ? "var(--accent-gold)" : "var(--text-muted)" }}
+            />
+            <div>
+              <p className="text-base font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                {formatDate(profile.subscriptionEndTime)}
+              </p>
+              <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+                Ngày hết hạn gói
               </p>
             </div>
           </div>

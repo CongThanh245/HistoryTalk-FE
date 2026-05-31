@@ -129,4 +129,25 @@ export const documentService = {
   deleteCharacterDocument: async (docId: string): Promise<void> => {
     await axiosClient.delete(`/character-documents/${docId}`);
   },
+
+  // POST /documents/{docId}/upload-pdf - Upload PDF file for an existing document
+  uploadPdf: async (docId: string, file: File): Promise<RagDocument> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await axiosClient.post(`/documents/${docId}/upload-pdf`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return normalizeDocument(res.data.data);
+  },
+
+  // GET /documents/{docId}/pdf-url - Create a signed Supabase URL for an existing PDF document
+  getPdfUrl: async (docId: string): Promise<{ url: string; expiresIn: number }> => {
+    const res = await axiosClient.get(`/documents/${docId}/pdf-url`);
+    return {
+      url: res.data.data.url,
+      expiresIn: res.data.data.expiresIn,
+    };
+  },
 };

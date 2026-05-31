@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import {
   ClipboardTextIcon, PencilIcon, TrashIcon, ArrowLeftIcon,
   GameControllerIcon, EyeIcon, EyeSlashIcon, ArrowCounterClockwiseIcon,
-  CaretLeftIcon, CaretRightIcon,
+  CaretLeftIcon, CaretRightIcon, UploadSimpleIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
@@ -30,6 +30,7 @@ import {
   useCreateStaffQuiz,
   useUpdateStaffQuiz,
   useSoftDeleteStaffQuiz,
+  useImportQuizzesFromCsv,
 } from "@/features/staff/quiz/hooks";
 import {
   useTrashList,
@@ -107,6 +108,10 @@ export default function StaffQuizzesPage() {
   const [restoreTarget, setRestoreTarget] = React.useState<{ id: string; title: string } | null>(null);
   const [publishTarget, setPublishTarget] = React.useState<StaffQuizSet | null>(null);
   const [contextSearch, setContextSearch] = React.useState("");
+
+  // ── CSV Import ─────────────────────────────────────────────
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const importCsv = useImportQuizzesFromCsv();
 
   // ── API hooks ─────────────────────────────────────────────
   const params = React.useMemo(() => ({
@@ -718,14 +723,41 @@ export default function StaffQuizzesPage() {
               />
             </div>
             {!showTrash && (
-              <Button
-                size="sm"
-                className="h-9 rounded-xl px-4 font-semibold gap-1.5 shadow-sm shadow-blue-500/20"
-                onClick={openCreate}
-                style={{ background: "var(--accent-blue)", color: "#fff" }}
-              >
-                <PlusIcon className="h-4 w-4" /> Tạo Quiz
-              </Button>
+              <>
+                {/* Hidden file input for CSV import */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      importCsv.mutate(file);
+                    }
+                    e.target.value = "";
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 rounded-xl px-4 font-semibold gap-1.5"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={importCsv.isPending}
+                  style={{ borderColor: "var(--card-light-border)", color: "var(--content-text)" }}
+                >
+                  <UploadSimpleIcon className="h-4 w-4" />
+                  {importCsv.isPending ? "Đang import..." : "Import CSV"}
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-9 rounded-xl px-4 font-semibold gap-1.5 shadow-sm shadow-blue-500/20"
+                  onClick={openCreate}
+                  style={{ background: "var(--accent-blue)", color: "#fff" }}
+                >
+                  <PlusIcon className="h-4 w-4" /> Tạo Quiz
+                </Button>
+              </>
             )}
           </div>
         </div>

@@ -11,6 +11,10 @@ import {
   ScrollIcon,
   ArrowSquareOutIcon,
   XIcon,
+  UploadSimpleIcon,
+  FilePdfIcon,
+  DownloadIcon,
+  EyeIcon,
 } from "@phosphor-icons/react";
 import {
   Dialog,
@@ -25,7 +29,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCharacters } from "@/features/characters/hooks";
 import { useEvents } from "@/features/events/hooks";
+import {
+  useUploadDocumentPdf,
+  useGetDocumentPdfUrl,
+} from "@/features/documents/hooks";
 import { documentService, type RagDocument } from "@/services/document.service";
+import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
+import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import type { Character } from "@/services/character.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { queryKeys } from "@/shared/query-key";
@@ -75,6 +85,17 @@ export default function StaffDocumentsPage() {
   const [filter, setFilter] = React.useState<"all" | DocumentOwnerType>("all");
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
   const [detailOpen, setDetailOpen] = React.useState(false);
+
+  // PDF upload/download
+  const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
+  const [uploadTargetDocId, setUploadTargetDocId] = React.useState<string | null>(null);
+  const uploadPdf = useUploadDocumentPdf();
+  const getPdfUrl = useGetDocumentPdfUrl();
+
+  // PDF viewer
+  const [viewerOpen, setViewerOpen] = React.useState(false);
+  const [viewerUrl, setViewerUrl] = React.useState<string | null>(null);
+  const [viewerLoading, setViewerLoading] = React.useState(false);
 
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
     page: 1,
@@ -255,29 +276,79 @@ export default function StaffDocumentsPage() {
       {
         id: "actions",
         header: () => <div className="text-right pr-2">Thao tác</div>,
-        cell: ({ row }) => (
-          <div className="flex justify-end gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="rounded-full"
-              onClick={() =>
-                router.push(
-                  row.original.ownerType === "character"
-                    ? `/staff/characters/${row.original.ownerId}`
-                    : `/staff/contexts`,
-                )
-              }
-              style={{ color: "var(--header-text-muted)" }}
-            >
-              <ArrowSquareOutIcon className="h-4 w-4" />
-            </Button>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const docId = getDocumentId(row.original.document);
+          const hasDocId = !!docId;
+          return (
+            <div className="flex justify-end gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="rounded-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(
+                    row.original.ownerType === "character"
+                      ? `/staff/characters/${row.original.ownerId}`
+                      : `/staff/contexts`,
+                  );
+                }}
+                style={{ color: "var(--header-text-muted)" }}
+              >
+                <ArrowSquareOutIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="rounded-full"
+                disabled={!hasDocId || uploadPdf.isPending}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (docId) {
+                    setUploadTargetDocId(docId);
+                    setUploadDialogOpen(true);
+                  }
+                }}
+                style={{ color: "var(--accent-blue)" }}
+                title="Upload PDF"
+              >
+                <UploadSimpleIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="rounded-full"
+                disabled={!hasDocId || getPdfUrl.isPending}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!docId) return;
+                  setViewerLoading(true);
+                  setViewerOpen(true);
+                  try {
+                    const result = await getPdfUrl.mutateAsync(docId);
+                    if (result.url) {
+                      setViewerUrl(result.url);
+                    }
+                  } catch {
+                    setViewerUrl(null);
+                  } finally {
+                    setViewerLoading(false);
+                  }
+                }}
+                style={{ color: "var(--accent-gold)" }}
+                title="Xem PDF"
+              >
+                <EyeIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          );
+        },
       },
     ],
-    [router],
+    [router, uploadPdf.isPending, getPdfUrl, uploadTargetDocId, setUploadDialogOpen, setUploadTargetDocId, setViewerOpen, setViewerUrl, setViewerLoading],
   );
 
   return (
@@ -340,6 +411,40 @@ export default function StaffDocumentsPage() {
             );
           })}
         </div>
+
+        {/* PDF Upload Dialog */}
+        <PdfUploadDialog
+          open={uploadDialogOpen}
+          onOpenChange={(open) => {
+            setUploadDialogOpen(open);
+            if (!open) setUploadTargetDocId(null);
+          }}
+          onUpload={(file) => {
+            if (uploadTargetDocId) {
+              uploadPdf.mutate(
+                { docId: uploadTargetDocId, file },
+                {
+                  onSuccess: () => {
+                    setUploadDialogOpen(false);
+                    setUploadTargetDocId(null);
+                  },
+                }
+              );
+            }
+          }}
+          isUploading={uploadPdf.isPending}
+          title="Upload PDF"
+          description="Chọn file PDF để upload cho tài liệu này. Bạn có thể xem preview trước khi xác nhận."
+        />
+
+        {/* PDF Viewer Dialog */}
+        <PdfViewerDialog
+          open={viewerOpen}
+          onOpenChange={setViewerOpen}
+          pdfUrl={viewerUrl}
+          isLoading={viewerLoading}
+          title="Xem PDF"
+        />
 
         <div className="mt-5">
           <StaffDataTable
@@ -404,23 +509,52 @@ export default function StaffDocumentsPage() {
                           {selectedRow.ownerSubtitle}
                         </p>
                       )}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="mt-3"
-                        onClick={() => {
-                          setDetailOpen(false);
-                          router.push(
-                            selectedRow.ownerType === "character"
-                              ? `/staff/characters/${selectedRow.ownerId}`
-                              : `/staff/contexts`,
-                          );
-                        }}
-                      >
-                        <ArrowSquareOutIcon className="mr-1.5 h-3.5 w-3.5" />
-                        Mở {selectedRow.ownerType === "character" ? "nhân vật" : "bối cảnh"}
-                      </Button>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setDetailOpen(false);
+                            router.push(
+                              selectedRow.ownerType === "character"
+                                ? `/staff/characters/${selectedRow.ownerId}`
+                                : `/staff/contexts`,
+                            );
+                          }}
+                        >
+                          <ArrowSquareOutIcon className="mr-1.5 h-3.5 w-3.5" />
+                          Mở {selectedRow.ownerType === "character" ? "nhân vật" : "bối cảnh"}
+                        </Button>
+                        {getDocumentId(selectedRow.document) && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={getPdfUrl.isPending}
+                            onClick={async () => {
+                              const docId = getDocumentId(selectedRow.document);
+                              if (!docId) return;
+                              setViewerLoading(true);
+                              setViewerOpen(true);
+                              try {
+                                const result = await getPdfUrl.mutateAsync(docId);
+                                if (result.url) {
+                                  setViewerUrl(result.url);
+                                }
+                              } catch {
+                                setViewerUrl(null);
+                              } finally {
+                                setViewerLoading(false);
+                              }
+                            }}
+                            style={{ color: "var(--accent-gold)", borderColor: "rgba(201,168,76,0.3)" }}
+                          >
+                            <EyeIcon className="mr-1.5 h-3.5 w-3.5" />
+                            {getPdfUrl.isPending ? "Đang tải..." : "Xem PDF"}
+                          </Button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Linked Characters */}

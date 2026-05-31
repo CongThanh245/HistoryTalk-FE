@@ -24,6 +24,9 @@ export interface SendMessageResponse {
   userMessage: ChatMessage;
   assistantMessage: ChatMessage;
   suggestedQuestions: string[];
+  remainingTokens: number;
+  promptTokens: number;
+  completionTokens: number;
 }
 
 export interface GetMessagesResponse {

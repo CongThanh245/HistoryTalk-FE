@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon, CaretDownIcon } from "@phosphor-icons/react";
+import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon, CaretDownIcon, UploadSimpleIcon, FilePdfIcon } from "@phosphor-icons/react";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,11 @@ import {
   useDeleteHistoricalDocument,
   useHistoricalDocuments,
   useUpdateHistoricalDocument,
+  useUploadDocumentPdf,
+  useGetDocumentPdfUrl,
 } from "@/features/documents/hooks";
+import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
+import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import type { RagDocument } from "@/services/document.service";
 import {
   type HistoricalEvent,
@@ -54,6 +58,7 @@ type DraftState = {
   documentId?: string;
   documentTitle: string;
   documentContent: string;
+  pendingPdfFile?: File | null;
 };
 
 const EMPTY_DRAFT: DraftState = {
@@ -68,6 +73,7 @@ const EMPTY_DRAFT: DraftState = {
   documentId: undefined,
   documentTitle: "",
   documentContent: "",
+  pendingPdfFile: null,
 };
 
 // Constants for Select Options
@@ -111,7 +117,22 @@ export default function StaffContextsPage() {
   const historicalDocuments = useHistoricalDocuments(editContextId);
   const updateHistoricalDocument = useUpdateHistoricalDocument(editContextId);
   const deleteHistoricalDocument = useDeleteHistoricalDocument(editContextId);
+  const uploadDocumentPdf = useUploadDocumentPdf();
+  const getDocumentPdfUrl = useGetDocumentPdfUrl();
   const deleteEvent = useDeleteEvent();
+
+  // PDF Dialog State
+  const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
+  const [uploadTargetDocId, setUploadTargetDocId] = React.useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = React.useState(false);
+  const [viewerUrl, setViewerUrl] = React.useState<string | null>(null);
+  const [viewerLoading, setViewerLoading] = React.useState(false);
+
+  // PDF File for Create Mode
+  const [pendingPdfFile, setPendingPdfFile] = React.useState<File | null>(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   const { data: trashItems = [], isLoading: isTrashLoading } = useTrashList("historical-contexts");
   const restoreContext = useTrashRestore("historical-contexts");
   const permanentDeleteContext = useTrashPermanentDelete("historical-contexts");
@@ -198,17 +219,38 @@ export default function StaffContextsPage() {
         onSuccess: async (newContext) => {
           const documentContent = draft.documentContent.trim();
 
-          if (documentContent) {
+          // Create document if has content or PDF file
+          if (documentContent || pendingPdfFile) {
             try {
-              await createHistoricalDocument.mutateAsync({
+              const newDoc = await createHistoricalDocument.mutateAsync({
                 contextId: newContext.id,
                 title: draft.documentTitle.trim() || name,
-                content: documentContent,
+                content: documentContent || "PDF Document",
                 type: "TEXT",
               });
+
+              // Upload PDF if file was selected
+              if (pendingPdfFile && newDoc.id) {
+                try {
+                  await uploadDocumentPdf.mutateAsync({
+                    docId: newDoc.id,
+                    file: pendingPdfFile,
+                  });
+                  toast.success("Đã upload PDF thành công");
+                } catch {
+                  toast.warning("Tài liệu đã tạo nhưng upload PDF thất bại");
+                }
+              }
             } catch {
               toast.warning("Bối cảnh đã tạo, nhưng import tài liệu chưa thành công");
             }
+          }
+
+          // Reset pending PDF
+          setPendingPdfFile(null);
+          if (pdfPreviewUrl) {
+            URL.revokeObjectURL(pdfPreviewUrl);
+            setPdfPreviewUrl(null);
           }
 
           setDialogOpen(false);
@@ -829,25 +871,70 @@ export default function StaffContextsPage() {
                                         {document.content || "Chưa có nội dung"}
                                       </p>
                                     </button>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon-sm"
-                                      className="shrink-0 rounded-full"
-                                      onClick={() => {
-                                        if (!documentId) return;
-                                        deleteHistoricalDocument.mutate(documentId, {
-                                          onSuccess: () => {
-                                            if (draft.documentId === documentId) {
-                                              clearDocumentDraft();
+                                    <div className="flex items-center gap-1">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="shrink-0 rounded-full"
+                                        disabled={getDocumentPdfUrl.isPending}
+                                        onClick={async () => {
+                                          if (!documentId) return;
+                                          setViewerLoading(true);
+                                          setViewerOpen(true);
+                                          try {
+                                            const result = await getDocumentPdfUrl.mutateAsync(documentId);
+                                            if (result.url) {
+                                              setViewerUrl(result.url);
                                             }
-                                          },
-                                        });
-                                      }}
-                                      style={{ color: "var(--accent-danger)" }}
-                                    >
-                                      <TrashIcon className="h-4 w-4" />
-                                    </Button>
+                                          } catch {
+                                            setViewerUrl(null);
+                                          } finally {
+                                            setViewerLoading(false);
+                                          }
+                                        }}
+                                        style={{ color: "var(--accent-gold)" }}
+                                        title="Xem PDF"
+                                      >
+                                        <EyeIcon className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="shrink-0 rounded-full"
+                                        disabled={uploadDocumentPdf.isPending}
+                                        onClick={() => {
+                                          if (documentId) {
+                                            setUploadTargetDocId(documentId);
+                                            setUploadDialogOpen(true);
+                                          }
+                                        }}
+                                        style={{ color: "var(--accent-blue)" }}
+                                        title="Upload PDF"
+                                      >
+                                        <UploadSimpleIcon className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="shrink-0 rounded-full"
+                                        onClick={() => {
+                                          if (!documentId) return;
+                                          deleteHistoricalDocument.mutate(documentId, {
+                                            onSuccess: () => {
+                                              if (draft.documentId === documentId) {
+                                                clearDocumentDraft();
+                                              }
+                                            },
+                                          });
+                                        }}
+                                        style={{ color: "var(--accent-danger)" }}
+                                      >
+                                        <TrashIcon className="h-4 w-4" />
+                                      </Button>
+                                    </div>
                                   </div>
                                 );
                               })}
@@ -857,6 +944,117 @@ export default function StaffContextsPage() {
                           )}
                         </div>
                       )}
+
+                      {/* PDF Upload for Create Mode */}
+                      {mode === "create" && (
+                        <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+                          <div className="mb-2 flex items-center justify-between gap-3">
+                            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                              File PDF đính kèm
+                              {pendingPdfFile && (
+                                <span className="ml-1.5 text-micro px-1.5 py-0.5 rounded-full bg-(--accent-gold)/10 text-(--accent-gold)">
+                                  Đã chọn
+                                </span>
+                              )}
+                            </p>
+                            {pendingPdfFile && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setPendingPdfFile(null);
+                                  if (pdfPreviewUrl) {
+                                    URL.revokeObjectURL(pdfPreviewUrl);
+                                    setPdfPreviewUrl(null);
+                                  }
+                                }}
+                              >
+                                <TrashIcon className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+
+                          {!pendingPdfFile ? (
+                            <div
+                              onClick={() => fileInputRef.current?.click()}
+                              className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors hover:border-(--accent-gold)/50 hover:bg-(--accent-gold)/5"
+                              style={{ borderColor: "var(--card-light-border)" }}
+                            >
+                              <FilePdfIcon className="h-8 w-8 mx-auto mb-2" style={{ color: "var(--content-muted)" }} />
+                              <p className="text-sm font-medium" style={{ color: "var(--content-heading)" }}>
+                                Click để chọn file PDF
+                              </p>
+                              <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
+                                Hoặc kéo thả file vào đây
+                              </p>
+                              <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".pdf"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file && file.type === "application/pdf") {
+                                    setPendingPdfFile(file);
+                                    setPdfPreviewUrl(URL.createObjectURL(file));
+                                  } else if (file) {
+                                    toast.error("Vui lòng chọn file PDF");
+                                  }
+                                  e.target.value = "";
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <div
+                                className="flex items-center gap-3 p-3 rounded-lg border"
+                                style={{ borderColor: "rgba(234,179,8,0.3)", background: "rgba(234,179,8,0.05)" }}
+                              >
+                                <div
+                                  className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                                  style={{ background: "rgba(234,179,8,0.1)" }}
+                                >
+                                  <FilePdfIcon className="h-5 w-5" style={{ color: "var(--accent-gold)" }} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium truncate" style={{ color: "var(--content-heading)" }}>
+                                    {pendingPdfFile.name}
+                                  </p>
+                                  <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                                    {(pendingPdfFile.size / 1024 / 1024).toFixed(2)} MB
+                                  </p>
+                                </div>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setUploadDialogOpen(true)}
+                                  style={{ color: "var(--accent-gold)", borderColor: "rgba(234,179,8,0.3)" }}
+                                >
+                                  <EyeIcon className="h-4 w-4 mr-1.5" />
+                                  Xem trước
+                                </Button>
+                              </div>
+
+                              {pdfPreviewUrl && (
+                                <div
+                                  className="border rounded-lg overflow-hidden"
+                                  style={{ borderColor: "var(--card-light-border)", height: "200px" }}
+                                >
+                                  <iframe
+                                    src={pdfPreviewUrl}
+                                    className="w-full h-full"
+                                    title="PDF Preview"
+                                    style={{ border: "none" }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="grid gap-1.5">
                         <div className="flex items-center justify-between">
                           <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
@@ -1070,6 +1268,34 @@ export default function StaffContextsPage() {
           });
         }}
         isPending={permanentDeleteContext.isPending}
+      />
+
+      {/* PDF Upload Dialog */}
+      <PdfUploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={(open) => {
+          setUploadDialogOpen(open);
+          if (!open) setUploadTargetDocId(null);
+        }}
+        onUpload={async (file) => {
+          if (uploadTargetDocId) {
+            await uploadDocumentPdf.mutateAsync({ docId: uploadTargetDocId, file });
+            setUploadDialogOpen(false);
+            setUploadTargetDocId(null);
+          }
+        }}
+        isUploading={uploadDocumentPdf.isPending}
+        title="Upload PDF"
+        description="Chọn file PDF để upload cho tài liệu này. Bạn có thể xem preview trước khi xác nhận."
+      />
+
+      {/* PDF Viewer Dialog */}
+      <PdfViewerDialog
+        open={viewerOpen}
+        onOpenChange={setViewerOpen}
+        pdfUrl={viewerUrl}
+        isLoading={viewerLoading}
+        title="Xem PDF"
       />
     </StaffShell>
   );

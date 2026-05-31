@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
+import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
 import type {
   ChatCharacter,
   ChatMessage,
@@ -53,6 +53,11 @@ export function ChatMain({
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordData | null>(null);
   const [isTokenExhausted, setIsTokenExhausted] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+  const [lastTokenUsage, setLastTokenUsage] = useState<{
+    remainingTokens: number;
+    promptTokens: number;
+    completionTokens: number;
+  } | null>(null);
 
   const handleKeywordSelect = useCallback((kw: KeywordData) => {
     setSelectedKeyword(kw);
@@ -147,6 +152,11 @@ export function ChatMain({
         onSuccess: (res) => {
           setOptimisticMessages([]);
           setSuggestedQuestions(res.suggestedQuestions);
+          setLastTokenUsage({
+            remainingTokens: res.remainingTokens,
+            promptTokens: res.promptTokens,
+            completionTokens: res.completionTokens,
+          });
           if (res.assistantMessage?.content) {
             speak(res.assistantMessage.content);
           }
@@ -330,6 +340,20 @@ export function ChatMain({
                 {q}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Token usage display */}
+        {lastTokenUsage && !sendMessage.isPending && (
+          <div className="px-4 flex items-center justify-end gap-3 text-[10px]" style={{ color: "var(--text-muted)" }}>
+            <div className="flex items-center gap-1.5">
+              <CoinsIcon className="w-3 h-3" style={{ color: "var(--accent-gold)" }} />
+              <span>Còn: <strong className="tabular-nums" style={{ color: "var(--text-secondary)" }}>{lastTokenUsage.remainingTokens.toLocaleString()}</strong></span>
+            </div>
+            <span className="w-px h-3 bg-[var(--border-default)]" />
+            <span className="tabular-nums">Prompt: {lastTokenUsage.promptTokens}</span>
+            <span className="tabular-nums">Response: {lastTokenUsage.completionTokens}</span>
+            <span className="tabular-nums">Tổng: {lastTokenUsage.promptTokens + lastTokenUsage.completionTokens}</span>
           </div>
         )}
 

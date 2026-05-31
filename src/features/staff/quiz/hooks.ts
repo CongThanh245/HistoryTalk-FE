@@ -7,7 +7,9 @@ import {
   type CreateQuestionPayload,
   type UpdateQuizPayload,
   type UpdateQuestionPayload,
+  type ImportQuizFromCsvResponse,
 } from "@/services/staff.quiz.service";
+import { toast } from "sonner";
 
 // GET /staff/quizzes — danh sách quiz của staff
 export function useStaffQuizzes(params?: GetStaffQuizzesParams) {
@@ -120,6 +122,39 @@ export function useDeleteQuizQuestion() {
     onSuccess: (_result, { quizId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.detail(quizId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+    },
+  });
+}
+
+// POST /staff/quizzes/import — import quiz từ CSV
+export function useImportQuizzesFromCsv() {
+  const queryClient = useQueryClient();
+  return useMutation<ImportQuizFromCsvResponse, Error, File>({
+    mutationFn: (file: File) => staffQuizService.importFromCsv(file),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.all });
+
+      if (result.successCount > 0) {
+        toast.success(`Đã import thành công ${result.successCount} bộ quiz từ CSV`);
+      }
+
+      if (result.skippedCount > 0) {
+        toast.warning(`Đã bỏ qua ${result.skippedCount} bộ quiz (trùng lặp hoặc lỗi)`);
+      }
+
+      if (result.errors.length > 0) {
+        result.errors.slice(0, 3).forEach((error) => {
+          toast.error(error);
+        });
+        if (result.errors.length > 3) {
+          toast.error(`... và ${result.errors.length - 3} lỗi khác`);
+        }
+      }
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || "Import CSV thất bại";
+      toast.error(message);
     },
   });
 }

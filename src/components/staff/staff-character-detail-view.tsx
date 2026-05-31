@@ -15,6 +15,8 @@ import {
   MapPinIcon,
   ImageIcon,
   VideoIcon,
+  UploadSimpleIcon,
+  FilePdfIcon,
 } from "@phosphor-icons/react";
 import {
   Sheet,
@@ -50,6 +52,8 @@ import type { HistoricalEvent, EventEraBackend } from "@/services/event.service"
 import { useCreateEvent } from "@/features/events/hooks";
 import { toast } from "sonner";
 import type { RagDocument } from "@/services/document.service";
+import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
+import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -76,6 +80,7 @@ export type CharacterDraft = {
   documentId?: string;
   documentTitle: string;
   documentContent: string;
+  pendingPdfFile?: File | null;
 };
 
 export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
@@ -98,6 +103,7 @@ export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
   documentId: undefined,
   documentTitle: "",
   documentContent: "",
+  pendingPdfFile: null,
 };
 
 interface StaffCharacterDetailViewProps {
@@ -124,6 +130,15 @@ interface StaffCharacterDetailViewProps {
   isLoadingDocuments?: boolean;
   onDeleteDocument?: (docId: string) => void;
   isDeleteDocumentPending?: boolean;
+  /** Callback to upload PDF to a document */
+  onUploadDocumentPdf?: (docId: string, file: File) => Promise<void>;
+  isUploadDocumentPdfPending?: boolean;
+  /** Callback to get PDF URL for viewing */
+  onGetDocumentPdfUrl?: (docId: string) => Promise<{ url: string; expiresIn: number }>;
+  isGetDocumentPdfUrlPending?: boolean;
+  /** Callback after create success to upload PDF (only for create mode) */
+  onUploadPdfAfterCreate?: (docId: string, file: File) => Promise<void>;
+  isUploadPdfAfterCreatePending?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -146,6 +161,12 @@ export function StaffCharacterDetailView({
   isLoadingDocuments = false,
   onDeleteDocument,
   isDeleteDocumentPending = false,
+  onUploadDocumentPdf,
+  isUploadDocumentPdfPending = false,
+  onGetDocumentPdfUrl,
+  isGetDocumentPdfUrlPending = false,
+  onUploadPdfAfterCreate,
+  isUploadPdfAfterCreatePending = false,
 }: StaffCharacterDetailViewProps) {
   const router = useRouter();
 
@@ -155,6 +176,18 @@ export function StaffCharacterDetailView({
   const [publishDialogOpen, setPublishDialogOpen] = React.useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = React.useState(false);
+
+  /* ── PDF Dialog State ── */
+  const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
+  const [uploadTargetDocId, setUploadTargetDocId] = React.useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = React.useState(false);
+  const [viewerUrl, setViewerUrl] = React.useState<string | null>(null);
+  const [viewerLoading, setViewerLoading] = React.useState(false);
+
+  /* ── PDF File for Create Mode ── */
+  const [pendingPdfFile, setPendingPdfFile] = React.useState<File | null>(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   /* Detect if form is dirty */
   const isDirty = React.useMemo(() => {
@@ -654,25 +687,74 @@ export function StaffCharacterDetailView({
                                   {document.content || "Chưa có nội dung"}
                                 </p>
                               </button>
-                              {onDeleteDocument && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  className="shrink-0 rounded-full"
-                                  disabled={!isEditing || isDeleteDocumentPending}
-                                  onClick={() => {
-                                    if (!documentId) return;
-                                    onDeleteDocument(documentId);
-                                    if (draft.documentId === documentId) {
-                                      clearDocumentDraft();
-                                    }
-                                  }}
-                                  style={{ color: "var(--accent-danger)" }}
-                                >
-                                  <TrashIcon className="h-4 w-4" />
-                                </Button>
-                              )}
+                              <div className="flex items-center gap-1">
+                                {onGetDocumentPdfUrl && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="shrink-0 rounded-full"
+                                    disabled={isGetDocumentPdfUrlPending}
+                                    onClick={async () => {
+                                      if (!documentId) return;
+                                      setViewerLoading(true);
+                                      setViewerOpen(true);
+                                      try {
+                                        const result = await onGetDocumentPdfUrl(documentId);
+                                        if (result.url) {
+                                          setViewerUrl(result.url);
+                                        }
+                                      } catch {
+                                        setViewerUrl(null);
+                                      } finally {
+                                        setViewerLoading(false);
+                                      }
+                                    }}
+                                    style={{ color: "var(--accent-gold)" }}
+                                    title="Xem PDF"
+                                  >
+                                    <EyeIcon className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {onUploadDocumentPdf && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="shrink-0 rounded-full"
+                                    disabled={isUploadDocumentPdfPending}
+                                    onClick={() => {
+                                      if (documentId) {
+                                        setUploadTargetDocId(documentId);
+                                        setUploadDialogOpen(true);
+                                      }
+                                    }}
+                                    style={{ color: "var(--accent-blue)" }}
+                                    title="Upload PDF"
+                                  >
+                                    <UploadSimpleIcon className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {onDeleteDocument && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="shrink-0 rounded-full"
+                                    disabled={!isEditing || isDeleteDocumentPending}
+                                    onClick={() => {
+                                      if (!documentId) return;
+                                      onDeleteDocument(documentId);
+                                      if (draft.documentId === documentId) {
+                                        clearDocumentDraft();
+                                      }
+                                    }}
+                                    style={{ color: "var(--accent-danger)" }}
+                                  >
+                                    <TrashIcon className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           );
                         })}
@@ -682,6 +764,117 @@ export function StaffCharacterDetailView({
                     )}
                   </div>
                 )}
+
+                {/* PDF Upload for Create Mode */}
+                {mode === "create" && (
+                  <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                        File PDF đính kèm
+                        {pendingPdfFile && (
+                          <span className="ml-1.5 text-micro px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
+                            Đã chọn
+                          </span>
+                        )}
+                      </p>
+                      {pendingPdfFile && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setPendingPdfFile(null);
+                            if (pdfPreviewUrl) {
+                              URL.revokeObjectURL(pdfPreviewUrl);
+                              setPdfPreviewUrl(null);
+                            }
+                          }}
+                        >
+                          <TrashIcon className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+
+                    {!pendingPdfFile ? (
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors hover:border-[var(--accent-gold)]/50 hover:bg-[var(--accent-gold)]/5"
+                        style={{ borderColor: "var(--card-light-border)" }}
+                      >
+                        <FilePdfIcon className="h-8 w-8 mx-auto mb-2" style={{ color: "var(--content-muted)" }} />
+                        <p className="text-sm font-medium" style={{ color: "var(--content-heading)" }}>
+                          Click để chọn file PDF
+                        </p>
+                        <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
+                          Hoặc kéo thả file vào đây
+                        </p>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file && file.type === "application/pdf") {
+                              setPendingPdfFile(file);
+                              setPdfPreviewUrl(URL.createObjectURL(file));
+                            } else if (file) {
+                              toast.error("Vui lòng chọn file PDF");
+                            }
+                            e.target.value = "";
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div
+                          className="flex items-center gap-3 p-3 rounded-lg border"
+                          style={{ borderColor: "rgba(234,179,8,0.3)", background: "rgba(234,179,8,0.05)" }}
+                        >
+                          <div
+                            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ background: "rgba(234,179,8,0.1)" }}
+                          >
+                            <FilePdfIcon className="h-5 w-5" style={{ color: "var(--accent-gold)" }} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate" style={{ color: "var(--content-heading)" }}>
+                              {pendingPdfFile.name}
+                            </p>
+                            <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                              {(pendingPdfFile.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setUploadDialogOpen(true)}
+                            style={{ color: "var(--accent-gold)", borderColor: "rgba(234,179,8,0.3)" }}
+                          >
+                            <EyeIcon className="h-4 w-4 mr-1.5" />
+                            Xem trước
+                          </Button>
+                        </div>
+
+                        {pdfPreviewUrl && (
+                          <div
+                            className="border rounded-lg overflow-hidden"
+                            style={{ borderColor: "var(--card-light-border)", height: "200px" }}
+                          >
+                            <iframe
+                              src={pdfPreviewUrl}
+                              className="w-full h-full"
+                              title="PDF Preview"
+                              style={{ border: "none" }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="grid gap-1.5">
                   <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
                   <StaffFormInput
@@ -1240,6 +1433,34 @@ export function StaffCharacterDetailView({
           )}
         </div>
       </div>
+
+      {/* PDF Upload Dialog */}
+      <PdfUploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={(open) => {
+          setUploadDialogOpen(open);
+          if (!open) setUploadTargetDocId(null);
+        }}
+        onUpload={async (file) => {
+          if (uploadTargetDocId && onUploadDocumentPdf) {
+            await onUploadDocumentPdf(uploadTargetDocId, file);
+            setUploadDialogOpen(false);
+            setUploadTargetDocId(null);
+          }
+        }}
+        isUploading={isUploadDocumentPdfPending}
+        title="Upload PDF"
+        description="Chọn file PDF để upload cho tài liệu này. Bạn có thể xem preview trước khi xác nhận."
+      />
+
+      {/* PDF Viewer Dialog */}
+      <PdfViewerDialog
+        open={viewerOpen}
+        onOpenChange={setViewerOpen}
+        pdfUrl={viewerUrl}
+        isLoading={viewerLoading}
+        title="Xem PDF"
+      />
     </div>
   );
 }

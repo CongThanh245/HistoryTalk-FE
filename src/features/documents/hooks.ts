@@ -151,3 +151,30 @@ export function useDeleteCharacterDocument(characterId?: string) {
     },
   });
 }
+
+// POST /documents/{docId}/upload-pdf - Upload PDF file for an existing document
+export function useUploadDocumentPdf() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ docId, file }: { docId: string; file: File }) =>
+      documentService.uploadPdf(docId, file),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.documents.all });
+      toast.success("Đã upload PDF thành công");
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Upload PDF thất bại"));
+    },
+  });
+}
+
+// GET /documents/{docId}/pdf-url - Create a signed Supabase URL for downloading PDF
+export function useGetDocumentPdfUrl() {
+  return useMutation({
+    mutationFn: (docId: string) => documentService.getPdfUrl(docId),
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Không thể lấy link tải PDF"));
+    },
+  });
+}

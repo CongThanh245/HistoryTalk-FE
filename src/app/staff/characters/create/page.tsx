@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { StaffCharacterDetailView, type CharacterDraft } from "@/components/staff/staff-character-detail-view";
 import { useCreateCharacter, useMapContextToCharacter } from "@/features/characters/hooks";
-import { useCreateCharacterDocument } from "@/features/documents/hooks";
+import { useCreateCharacterDocument, useUploadDocumentPdf, useGetDocumentPdfUrl } from "@/features/documents/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { isValidUrl } from "@/lib/utils/url";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ export default function CreateCharacterPage() {
 
   const createCharacter = useCreateCharacter();
   const createCharacterDocument = useCreateCharacterDocument();
+  const uploadDocumentPdf = useUploadDocumentPdf();
   const mapContextToCharacter = useMapContextToCharacter();
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
     page: 1,
@@ -48,15 +49,30 @@ export default function CreateCharacterPage() {
     try {
       const newChar = await createCharacter.mutateAsync(payload);
       const documentContent = draft.documentContent.trim();
+      const pendingPdfFile = draft.pendingPdfFile;
 
-      if (documentContent) {
+      // Create document if has content or PDF file
+      if (documentContent || pendingPdfFile) {
         try {
-          await createCharacterDocument.mutateAsync({
+          const newDoc = await createCharacterDocument.mutateAsync({
             characterId: newChar.id,
             title: draft.documentTitle.trim() || draft.name.trim(),
-            content: documentContent,
+            content: documentContent || "PDF Document",
             type: "TEXT",
           });
+
+          // Upload PDF if file was selected
+          if (pendingPdfFile && newDoc.id) {
+            try {
+              await uploadDocumentPdf.mutateAsync({
+                docId: newDoc.id,
+                file: pendingPdfFile,
+              });
+              toast.success("Đã upload PDF thành công");
+            } catch {
+              toast.warning("Tài liệu đã tạo nhưng upload PDF thất bại");
+            }
+          }
         } catch {
           toast.warning("Nhân vật đã tạo, nhưng import tài liệu chưa thành công");
         }

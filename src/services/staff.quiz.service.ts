@@ -86,6 +86,16 @@ export interface UpdateQuestionPayload {
   explanation?: string;
 }
 
+// ── Import CSV Types ──────────────────────────────────────
+
+export interface ImportQuizFromCsvResponse {
+  totalQuizzesAttempted: number;
+  successCount: number;
+  skippedCount: number;
+  errors: string[];
+  imported: StaffQuizSet[];
+}
+
 // ── Map functions ──────────────────────────────────────────
 
 export function mapStaffQuestion(raw: any): StaffQuizQuestion {
@@ -197,6 +207,25 @@ export const staffQuizService = {
     await axiosClient.delete(
       `/staff/quizzes/${quizId}/questions/${questionId}`,
     );
+  },
+
+  // POST /staff/quizzes/import
+  importFromCsv: async (file: File): Promise<ImportQuizFromCsvResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await axiosClient.post("/staff/quizzes/import", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    const data = res.data.data;
+    return {
+      totalQuizzesAttempted: data.totalQuizzesAttempted ?? 0,
+      successCount: data.successCount ?? 0,
+      skippedCount: data.skippedCount ?? 0,
+      errors: data.errors ?? [],
+      imported: (data.imported ?? []).map(mapStaffQuizSet),
+    };
   },
 };
 

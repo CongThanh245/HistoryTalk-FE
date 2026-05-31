@@ -13,6 +13,8 @@ import {
   useCreateCharacterDocument,
   useDeleteCharacterDocument,
   useUpdateCharacterDocument,
+  useUploadDocumentPdf,
+  useGetDocumentPdfUrl,
 } from "@/features/documents/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,6 +39,8 @@ export default function EditCharacterPage() {
   const createCharacterDocument = useCreateCharacterDocument();
   const updateCharacterDocument = useUpdateCharacterDocument(id);
   const deleteCharacterDocument = useDeleteCharacterDocument(id);
+  const uploadDocumentPdf = useUploadDocumentPdf();
+  const getDocumentPdfUrl = useGetDocumentPdfUrl();
   const mapContextToCharacter = useMapContextToCharacter();
   
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
@@ -157,6 +161,14 @@ export default function EditCharacterPage() {
       isLoadingDocuments={characterDocuments.isLoading}
       onDeleteDocument={(docId) => deleteCharacterDocument.mutate(docId)}
       isDeleteDocumentPending={deleteCharacterDocument.isPending}
+      onUploadDocumentPdf={async (docId, file) => {
+        await uploadDocumentPdf.mutateAsync({ docId, file });
+      }}
+      isUploadDocumentPdfPending={uploadDocumentPdf.isPending}
+      onGetDocumentPdfUrl={async (docId) => {
+        return await getDocumentPdfUrl.mutateAsync(docId);
+      }}
+      isGetDocumentPdfUrlPending={getDocumentPdfUrl.isPending}
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
       onMapContext={(characterId, contextId, options) =>
