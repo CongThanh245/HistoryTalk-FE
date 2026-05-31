@@ -7,6 +7,7 @@
     "dev:spring": "env-cmd -f .env.spring next dev --webpack",
     "dev:nodejs": "env-cmd -f .env.nodejs next dev --webpack",
     "dev:spring-prod": "env-cmd -f .env.spring.production next dev --webpack",
+    "dev:nodejs-prod": "env-cmd -f .env.nodejs.production next dev --webpack",
     "build": "next build",
     "start": "next build && next start",
     "lint": "eslint",

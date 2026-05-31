@@ -89,7 +89,11 @@ export const chatService = {
         timeout: 90000,
       },
     );
-    return res.data.data;
+    const sessionData = res.data.data.session;
+    return {
+      ...sessionData,
+      id: sessionData.id || sessionData._id, // Use id if exists, otherwise use _id
+    };
   },
 
   getMessages: async (sessionId: string): Promise<GetMessagesResponse> => {
@@ -129,6 +133,14 @@ export const chatService = {
   getCharacter: async (characterId: string): Promise<ChatCharacter> => {
     const res = await axiosClient.get(`/characters/${characterId}`);
     const raw = res.data.data;
+    // Handle multiple API response formats for contextId
+    const contextId =
+      raw.context?.contextId ??
+      raw.context?.id ??
+      raw.contextId ??
+      raw.contextIds?.[0]?.contextId ??
+      raw.contexts?.[0]?.contextId ??
+      null;
     return {
       id: raw.characterId,
       name: raw.name,
@@ -137,7 +149,7 @@ export const chatService = {
       imageUrl: raw.image || raw.imageUrl || null,
       modelUrl: raw.modelUrl || null,
       side: raw.side,
-      contextId: raw.context?.contextId, // ← nằm trong nested object
+      contextId,
     };
   },
 };

@@ -240,11 +240,12 @@ export function ChatLeftPanel({
                   Chưa có cuộc trò chuyện nào
                 </p>
               ) : (
-                sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className="group relative w-full text-left px-3 py-2.5 rounded-lg transition-all duration-150 cursor-pointer border"
-                    onClick={() => onSelectSession(session.id)}
+                <div className="space-y-1.5">
+                  {sessions.map((session, index) => (
+                    <div
+                      key={`session-${session.id ?? index}-${index}`}
+                      className="group relative w-full text-left px-3 py-2.5 rounded-lg transition-all duration-150 cursor-pointer border"
+                      onClick={() => onSelectSession(session.id)}
                     style={{
                       background:
                         activeSessionId === session.id
@@ -310,7 +311,8 @@ export function ChatLeftPanel({
                       <TrashIcon className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
                     </button>
                   </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
 

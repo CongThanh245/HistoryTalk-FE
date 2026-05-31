@@ -384,6 +384,75 @@ export type FBXCharacterViewerProps = {
 // Fallback analyser ref (rỗng) khi không truyền từ ngoài
 const EMPTY_ANALYSER_REF: React.RefObject<AnalyserNode | null> = { current: null };
 
+// Check if model URL is valid (not null/undefined/empty and not the non-existent default)
+function isValidModelUrl(url?: string | null): boolean {
+  if (!url || url.trim() === "") return false;
+  // Exclude the default fallback path that doesn't exist
+  if (url === "/models/character.glb") return false;
+  return true;
+}
+
+// Placeholder when no 3D model is available
+function NoModelPlaceholder({ statusLabel, dotColor, shouldAnimate }: {
+  statusLabel: string;
+  dotColor: string;
+  shouldAnimate: boolean;
+}) {
+  return (
+    <div style={{
+      width: "100%",
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "rgba(201,168,76,0.6)",
+    }}>
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+      <p style={{ marginTop: 12, fontSize: 13, opacity: 0.7 }}>
+        Hiện tại nhân vật này chưa có mô hình 3D. Chúng tôi đang bổ sung...
+      </p>
+
+      {/* Status dot - same styling as in main component */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 12,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "4px 14px",
+          borderRadius: 20,
+          background: "rgba(0,0,0,0.6)",
+          border: "1px solid rgba(201,168,76,0.3)",
+          color: "#c9a84c",
+          fontSize: 12,
+          pointerEvents: "none",
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            flexShrink: 0,
+            background: dotColor,
+            animation: shouldAnimate ? "pulse 1s ease-in-out infinite" : "none",
+          }}
+        />
+        {statusLabel}
+      </div>
+    </div>
+  );
+}
+
 export function FBXCharacterViewer({
   modelUrl = "/models/character.glb",
   isSpeaking = false,
@@ -425,6 +494,21 @@ export function FBXCharacterViewer({
     : "Chờ...";
 
   const shouldAnimate = effectiveSpeaking || isRecording || isListening || isProcessing;
+
+  const hasValidModel = isValidModelUrl(modelUrl);
+
+  // Show placeholder if no valid model URL
+  if (!hasValidModel) {
+    return (
+      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+        <NoModelPlaceholder
+          statusLabel={statusLabel}
+          dotColor={dotColor}
+          shouldAnimate={shouldAnimate}
+        />
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
