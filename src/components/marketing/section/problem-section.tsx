@@ -6,21 +6,18 @@ import { Container } from "../container";
 const problems = [
   {
     id: 1,
-    tag: "VẤN ĐỀ 01",
     title: "Áp lực thi cử và hệ quả của lối học vẹt",
     body: "Thay vì khơi gợi sự thấu hiểu về dòng chảy thời đại, lịch sử thường bị đóng khung thành những mốc thời gian cần ghi nhớ để vượt qua bài kiểm tra.",
     rotate: "-2.5deg",
   },
   {
     id: 2,
-    tag: "VẤN ĐỀ 02",
     title: "Thiếu nền tảng tự học tương tác và đáng tin cậy",
     body: "Người học dễ tìm thấy video ngắn, phim ảnh hay trò chơi, nhưng lại thiếu một nơi giúp đặt câu hỏi, kiểm chứng bối cảnh và hiểu sâu hơn sau mỗi câu chuyện.",
     rotate: "1.5deg",
   },
   {
     id: 3,
-    tag: "VẤN ĐỀ 03",
     title: "Đứt gãy cảm xúc với phương pháp truyền thống",
     body: "Khi lịch sử chỉ còn là kết quả sự kiện, người học khó cảm nhận được con người, niềm tin, xung đột và cái giá nằm phía sau mỗi quyết định.",
     rotate: "-1deg",
@@ -84,16 +81,16 @@ export function ProblemSection() {
 
       <div className="relative z-10 w-full py-16 md:py-0">
         <Container>
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1fr_2fr] lg:gap-16">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
             <div>
-              <h2 className="mb-4 text-[clamp(2.5rem,6vw,6rem)] font-bold uppercase leading-[0.88] tracking-wide text-[var(--text-secondary)]">
+              <h2 className="mb-4 text-[clamp(2.2rem,5.5vw,5.5rem)] font-bold uppercase leading-[0.95] tracking-wide text-[var(--text-secondary)]">
                 Vấn đề
-                <br />
-                học <span className="text-[var(--accent-gold)]">lịch sử</span>
+               
+                học  <br /><span className="text-[var(--accent-gold)] font-title">lịch sử</span>
                 <br />
                 ngày nay
               </h2>
-              <p className="max-w-[340px] text-sm leading-relaxed text-[var(--text-secondary)] lg:text-base">
+              <p className="max-w-[320px] text-sm leading-relaxed text-[var(--text-secondary)] lg:text-base">
                 Ba rào cản lớn đang ngăn người học chạm vào chiều sâu của lịch sử: bối cảnh, cảm xúc và khả năng tự đặt câu hỏi.
               </p>
             </div>
@@ -109,13 +106,13 @@ export function ProblemSection() {
                     className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] px-6 py-5 shadow-[var(--shadow-strong)] transition-colors duration-200 will-change-transform hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated)]"
                   >
                     <span className="mb-2 block text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[var(--accent-gold)] opacity-80">
-                      {problem.tag}
+                      {/* {problem.tag} */}
                     </span>
-                    <h3 className="mb-2.5 text-[0.95rem] font-bold uppercase leading-snug tracking-wide text-[var(--text-primary)] lg:text-[1.05rem]">
+                    <h3 className="mb-2.5 text-[1rem] font-bold uppercase leading-snug tracking-wide text-[var(--text-primary)] lg:text-[1.15rem]">
                       {problem.title}
                     </h3>
                     <div className="mb-2.5 h-[1.5px] w-7 bg-[var(--accent-gold)] opacity-30" />
-                    <p className="text-[0.82rem] leading-relaxed text-[var(--text-secondary)] lg:text-[0.88rem]">
+                    <p className="text-[0.9rem] leading-relaxed text-[var(--text-secondary)] lg:text-[0.95rem]">
                       {problem.body}
                     </p>
                   </div>

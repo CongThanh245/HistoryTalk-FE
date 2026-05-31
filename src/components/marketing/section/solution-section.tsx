@@ -1,44 +1,206 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ChatTextIcon, CompassIcon, UsersIcon } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
+import { UserCircleIcon } from "@phosphor-icons/react";
 import { Container } from "../container";
-import { SectionHeading } from "../section-heading";
 import { useRevealAnimation } from "@/lib/hooks/use-reveal-animation";
 
 const solutions = [
   {
     title: "Từ người đọc thành người đối thoại",
-    description:
-      "Thay vì chỉ đọc về sự kiện, bạn bước vào một cuộc trò chuyện với nhân vật đã sống trong thời kỳ đó.",
-    icon: ChatTextIcon,
-    iconBg: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    description: "Thay vì chỉ đọc về sự kiện, bạn bước vào một cuộc trò chuyện với nhân vật.",
   },
   {
     title: "Từ sự kiện thành con người",
-    description:
-      "Lịch sử không chỉ là điều đã xảy ra, mà là những con người, lựa chọn và hoàn cảnh đã tạo nên nó.",
-    icon: UsersIcon,
-    iconBg: "bg-sky-500/10 text-sky-400 border-sky-500/20",
+    description: "Lịch sử không chỉ là điều đã xảy ra, mà là những con người, lựa chọn và hoàn cảnh.",
   },
   {
     title: "Từ ghi nhớ thành thấu hiểu",
-    description:
-      "Khi nhìn sự kiện từ góc nhìn nhân vật, người học dễ kết nối nguyên nhân, hậu quả và ý nghĩa hơn.",
-    icon: CompassIcon,
-    iconBg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    description: "Khi nhìn sự kiện từ góc nhìn nhân vật, người học dễ kết nối nguyên nhân và ý nghĩa.",
   },
 ];
 
+const chatMessages = [
+  {
+    id: 1,
+    sender: "character",
+    name: "Ngô Quyền",
+    avatar: "/ngo-quyen-chan-dung.png",
+    text: "Ta đã cắm cọc trên sông Bạch Đằng, dòng sông đã trở thành vũ khí của quân ta",
+  },
+  {
+    id: 2,
+    sender: "user",
+    name: "Người học",
+    icon: UserCircleIcon,
+    text: "Tại sao lại chọn sông Bạch Đằng ạ?",
+  },
+  {
+    id: 3,
+    sender: "character",
+    name: "Ngô Quyền",
+    avatar: "/ngo-quyen-chan-dung.png",
+    text: "Đây là con đường thủy huyết mạch và ngắn nhất để quân Bắc tiến vào Đại La. Nơi đây lòng sông rộng, triều lên xuống mạnh mẽ, hai bên bờ lại nhiều gò bãi, rạch sâu, cây cối um tùm, chính là địa thế trời cho để ta đặt bẫy cọc ngầm và mai phục đại quân!",
+  },
+];
+
+function TypingText({
+  text,
+  onComplete,
+  isActive,
+  hasCompleted,
+}: {
+  text: string;
+  onComplete?: () => void;
+  isActive: boolean;
+  hasCompleted: boolean;
+}) {
+  const [displayText, setDisplayText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const completedRef = useRef(hasCompleted);
+
+  useEffect(() => {
+    // If already completed before, show full text immediately
+    if (hasCompleted || completedRef.current) {
+      setDisplayText(text);
+      setIsTyping(false);
+      completedRef.current = true;
+      return;
+    }
+
+    if (!isActive) {
+      setDisplayText("");
+      setIsTyping(false);
+      return;
+    }
+
+    setIsTyping(true);
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index < text.length) {
+        setDisplayText(text.slice(0, index + 1));
+        index++;
+      } else {
+        clearInterval(interval);
+        setIsTyping(false);
+        completedRef.current = true;
+        onComplete?.();
+      }
+    }, 30);
+
+    return () => clearInterval(interval);
+  }, [text, isActive, onComplete, hasCompleted]);
+
+  return (
+    <span>
+      {displayText}
+      {isTyping && (
+        <span className="animate-pulse text-[var(--accent-gold)]">|</span>
+      )}
+    </span>
+  );
+}
+
+function ChatBubble({
+  message,
+  isActive,
+  onComplete,
+  hasCompleted,
+}: {
+  message: (typeof chatMessages)[0];
+  isActive: boolean;
+  onComplete?: () => void;
+  hasCompleted: boolean;
+}) {
+  const isCharacter = message.sender === "character";
+  const Icon = message.icon;
+
+  return (
+    <div
+      className={`flex gap-3 ${isCharacter ? "flex-row" : "flex-row-reverse"} ${
+        isActive ? "opacity-100" : "opacity-0"
+      } transition-all duration-500`}
+    >
+      {/* Avatar */}
+      <div className="shrink-0">
+        {isCharacter ? (
+          <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-[var(--accent-gold)]/30">
+            <Image
+              src={message.avatar || ""}
+              alt={message.name}
+              fill
+              className="object-cover"
+              sizes="40px"
+            />
+          </div>
+        ) : (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
+            {Icon && <Icon className="h-5 w-5" />}
+          </div>
+        )}
+      </div>
+
+      {/* Bubble */}
+      <div className={`max-w-[75%] ${isCharacter ? "text-left" : "text-right"}`}>
+        <div className="mb-0.5 text-xs font-medium text-[var(--text-muted)]">{message.name}</div>
+        <div
+          className={`rounded-2xl px-3 py-2 text-xs leading-relaxed ${
+            isCharacter
+              ? "rounded-tl-none bg-[var(--bg-surface)] text-[var(--text-secondary)]"
+              : "rounded-tr-none bg-[var(--accent-gold)]/10 text-[var(--accent-gold)] border border-[var(--accent-gold)]/20"
+          }`}
+        >
+          <TypingText
+            text={message.text}
+            isActive={isActive}
+            onComplete={onComplete}
+            hasCompleted={hasCompleted}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SolutionSection() {
   const sectionRef = useRef<HTMLElement>(null);
+  const router = useRouter();
+  const [activeMessage, setActiveMessage] = useState(0);
+  const [completedMessages, setCompletedMessages] = useState<Set<number>>(new Set());
+  const [isAnimating, setIsAnimating] = useState(false);
   useRevealAnimation(sectionRef);
+
+  const handleNavigateToHome = () => {
+    router.push("/home");
+  };
+
+  useEffect(() => {
+    if (activeMessage >= chatMessages.length) return;
+    setIsAnimating(true);
+  }, [activeMessage]);
+
+  const handleMessageComplete = (messageIndex: number) => {
+    setCompletedMessages((prev) => new Set(prev).add(messageIndex));
+    if (messageIndex < chatMessages.length - 1) {
+      setTimeout(() => {
+        setActiveMessage(messageIndex + 1);
+      }, 800);
+    } else {
+      setIsAnimating(false);
+    }
+  };
+
+  const handleRestart = () => {
+    setActiveMessage(0);
+    setCompletedMessages(new Set());
+  };
 
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-main)] py-24 md:py-32"
+      className="relative flex min-h-screen items-center overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-main)] py-12 md:py-16"
     >
       <div
         className="absolute inset-0 z-0 pointer-events-none"
@@ -51,68 +213,101 @@ export function SolutionSection() {
       />
 
       <Container className="relative z-10">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-          <div className="space-y-10">
-            <div data-reveal="fast" className="text-left">
-              <SectionHeading
-                centered={false}
-                className="!mb-6 text-left"
-                title="Bước vào góc nhìn của người làm nên lịch sử"
-                subtitle="History Talk biến những dòng chữ tĩnh thành cuộc đối thoại có bối cảnh, ký ức và phản hồi."
-              />
-            </div>
+        {/* Cards - Full width at top */}
+        <div data-reveal="block" className="mb-6">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {solutions.map((item) => (
+              <div
+                key={item.title}
+                className="group rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]/50 p-3 transition-all duration-300 hover:border-[var(--accent-gold)]/40 hover:bg-[var(--bg-surface)]"
+              >
+                <h3 className="mb-1 text-sm font-bold text-[var(--text-primary)] transition-colors duration-300 group-hover:text-[var(--accent-gold)]">
+                  {item.title}
+                </h3>
+                <p className="text-xs leading-relaxed text-[var(--text-secondary)]">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
-            <div className="space-y-6">
-              {solutions.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={item.title}
-                    data-reveal="block"
-                    className="group flex gap-4 rounded-xl border border-transparent p-4 transition-all duration-300 hover:border-[var(--border-default)] hover:bg-[var(--bg-surface)]/30"
-                  >
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-transform duration-300 group-hover:scale-105 ${item.iconBg}`}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h3 className="mb-1.5 text-lg font-bold text-[var(--text-primary)] transition-colors duration-300 group-hover:text-[var(--accent-gold)]">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
-                        {item.description}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
+        <div className="grid items-start gap-8 lg:grid-cols-[0.85fr_1.4fr] lg:gap-12">
+          {/* Left Column */}
+          <div className="space-y-4">
+            <div data-reveal="fast" className="text-left">
+              <h2 className="mb-2 text-[clamp(2rem,4vw,4rem)] font-bold uppercase leading-[0.95] tracking-wide text-[var(--text-secondary)]">
+                Bước vào
+                <br />
+                góc nhìn của
+                <br />
+                <span className="text-[var(--accent-gold)] font-title">người làm nên lịch sử</span>
+              </h2>
+              <p className="max-w-[320px] text-sm leading-relaxed text-[var(--text-secondary)]">
+                History Talk biến những dòng chữ tĩnh thành cuộc đối thoại có bối cảnh, ký ức và phản hồi.
+              </p>
             </div>
           </div>
 
-          <div data-reveal="block" className="group relative">
-            <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-[var(--accent-gold)]/10 to-[#8fb3c8]/10 opacity-50 blur-2xl transition-opacity duration-500 pointer-events-none group-hover:opacity-100" />
+          {/* Right Column - Chat Animation */}
+          <div data-reveal="block" className="relative">
+            <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-[var(--accent-gold)]/10 to-[#8fb3c8]/10 opacity-50 blur-2xl" />
 
-            <div className="relative flex h-[320px] w-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[#0d1627] shadow-2xl transition-all duration-300 group-hover:border-[var(--accent-gold)]/30 sm:h-[400px] lg:h-[520px]">
-              <div className="flex h-9 shrink-0 items-center justify-between border-b border-[var(--border-default)] bg-[#111c2e] px-4">
-                <div className="flex gap-1.5">
-                  <div className="h-2.5 w-2.5 rounded-full bg-[#f87171]/40" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-[#fbbf24]/40" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-[#34d399]/40" />
+            <div className="relative flex h-[380px] w-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[#0d1627] shadow-2xl">
+              {/* Chat Header */}
+              <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border-default)] bg-[#111c2e] px-4">
+                <div className="flex items-center gap-2">
+                  <div className="relative h-8 w-8 overflow-hidden rounded-full border border-[var(--accent-gold)]/30">
+                    <Image
+                      src="/ngo-quyen-chan-dung.png"
+                      alt="Ngô Quyền"
+                      fill
+                      className="object-cover"
+                      sizes="32px"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-[var(--text-primary)]">Ngô Quyền</div>
+                    <div className="flex items-center gap-1 text-xs text-emerald-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                      Đang trò chuyện
+                    </div>
+                  </div>
                 </div>
-                <div className="flex h-5 w-[60%] items-center justify-center truncate rounded-md border border-white/5 bg-[#1a2436] px-8 font-mono text-[10px] text-zinc-500">
-                  historytalk.vn/app/chat
-                </div>
-                <div className="w-6" />
+                <button
+                  onClick={handleRestart}
+                  className="rounded-md px-3 py-1 text-xs font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-surface)] hover:text-[var(--accent-gold)]"
+                >
+                  Xem lại
+                </button>
               </div>
 
-              <div className="relative flex-1 overflow-hidden bg-[var(--bg-surface)]">
-                <Image
-                  src="/history-talk-ui.png"
-                  alt="History Talk chat interface"
-                  fill
-                  sizes="(min-width: 1024px) 50vw, 100vw"
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#070d18]/40 via-transparent to-transparent pointer-events-none" />
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-hidden bg-[var(--bg-surface)] p-3">
+                <div className="space-y-3">
+                  {chatMessages.map((message, index) => (
+                    <ChatBubble
+                      key={message.id}
+                      message={message}
+                      isActive={index <= activeMessage}
+                      onComplete={() => handleMessageComplete(index)}
+                      hasCompleted={completedMessages.has(index)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Chat Input Placeholder */}
+              <div className="flex h-11 shrink-0 items-center gap-2 border-t border-[var(--border-default)] bg-[#111c2e] px-3">
+                <button
+                  onClick={handleNavigateToHome}
+                  className="flex-1 rounded-full bg-[var(--bg-surface)] px-3 py-1.5 text-left text-sm text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-surface)]/80 hover:text-[var(--text-secondary)]"
+                >
+                  Nhập câu hỏi của bạn...
+                </button>
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   BookOpenTextIcon,
   BrainIcon,
@@ -10,6 +11,8 @@ import {
   CompassIcon,
   MapTrifoldIcon,
   ShieldCheckIcon,
+  UserCircleIcon,
+  VideoCameraIcon,
 } from "@phosphor-icons/react";
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
@@ -83,12 +86,218 @@ const capabilityRows = [
   },
 ];
 
+const chatMessages = [
+  {
+    id: 1,
+    sender: "character",
+    name: "Ngô Quyền",
+    avatar: "/ngo-quyen-chan-dung.png",
+    text: "Ta đã cắm cọc trên sông Bạch Đằng, dòng sông đã trở thành vũ khí của quân ta",
+  },
+  {
+    id: 2,
+    sender: "user",
+    name: "Người học",
+    icon: UserCircleIcon,
+    text: "Tại sao lại chọn sông Bạch Đằng ạ?",
+  },
+  {
+    id: 3,
+    sender: "character",
+    name: "Ngô Quyền",
+    avatar: "/ngo-quyen-chan-dung.png",
+    text: "Đây là con đường thủy huyết mạch và ngắn nhất để quân Bắc tiến vào Đại La. Nơi đây lòng sông rộng, triều lên xuống mạnh mẽ, hai bên bờ lại nhiều gò bãi, rạch sâu, cây cối um tùm, chính là địa thế trời cho để ta đặt bẫy cọc ngầm và mai phục đại quân!",
+  },
+];
+
+const journeySteps = [
+  {
+    step: "01",
+    eyebrow: "Chọn bối cảnh",
+    title: "Bắt đầu từ một thời kỳ lịch sử",
+    body: "Người học chọn bối cảnh lịch sử để bước vào thế giới của nhân vật, sự kiện và không khí thời đại đó.",
+    icon: MapTrifoldIcon,
+    image: "/placeholder-step1.jpg", // User will replace with actual screenshot
+  },
+  {
+    step: "02",
+    eyebrow: "Xem video",
+    title: "Đắm mình trong không khí lịch sử",
+    body: "Video mô tả bối cảnh, địa điểm và diễn biến giúp người học hình dung rõ nét thời khắc lịch sử trước khi bắt đầu cuộc trò chuyện.",
+    icon: VideoCameraIcon,
+    image: "/placeholder-step2.jpg", // User will replace with actual screenshot
+  },
+  {
+    step: "03",
+    eyebrow: "Trò chuyện",
+    title: "Đối thoại cùng nhân vật lịch sử",
+    body: "Người học trò chuyện với nhân vật trong bối cảnh đó để đào sâu nguyên nhân, niềm tin và những quyết định lịch sử.",
+    icon: ChatTextIcon,
+    image: "/placeholder-step3.jpg", // User will replace with actual screenshot
+  },
+  {
+    step: "04",
+    eyebrow: "Ôn tập",
+    title: "Chốt kiến thức bằng quiz sau hành trình",
+    body: "Sau khi trò chuyện, người học kiểm tra lại những gì đã hiểu bằng câu hỏi ngắn gắn liền với bối cảnh vừa trải nghiệm.",
+    icon: BrainIcon,
+    image: "/placeholder-step4.jpg", // User will replace with actual screenshot
+  },
+];
+
+function TypingText({
+  text,
+  onComplete,
+  isActive,
+  hasCompleted,
+}: {
+  text: string;
+  onComplete?: () => void;
+  isActive: boolean;
+  hasCompleted: boolean;
+}) {
+  const [displayText, setDisplayText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const completedRef = useRef(hasCompleted);
+
+  useEffect(() => {
+    // If already completed before, show full text immediately
+    if (hasCompleted || completedRef.current) {
+      setDisplayText(text);
+      setIsTyping(false);
+      completedRef.current = true;
+      return;
+    }
+
+    if (!isActive) {
+      setDisplayText("");
+      setIsTyping(false);
+      return;
+    }
+
+    setIsTyping(true);
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index < text.length) {
+        setDisplayText(text.slice(0, index + 1));
+        index++;
+      } else {
+        clearInterval(interval);
+        setIsTyping(false);
+        completedRef.current = true;
+        onComplete?.();
+      }
+    }, 30);
+
+    return () => clearInterval(interval);
+  }, [text, isActive, onComplete, hasCompleted]);
+
+  return (
+    <span>
+      {displayText}
+      {isTyping && (
+        <span className="animate-pulse text-(--accent-gold)">|</span>
+      )}
+    </span>
+  );
+}
+
+function ChatBubble({
+  message,
+  isActive,
+  onComplete,
+  hasCompleted,
+}: {
+  message: (typeof chatMessages)[0];
+  isActive: boolean;
+  onComplete?: () => void;
+  hasCompleted: boolean;
+}) {
+  const isCharacter = message.sender === "character";
+  const Icon = message.icon;
+
+  return (
+    <div
+      className={`flex gap-3 ${isCharacter ? "flex-row" : "flex-row-reverse"} ${
+        isActive ? "opacity-100" : "opacity-0"
+      } transition-all duration-500`}
+    >
+      {/* Avatar */}
+      <div className="shrink-0">
+        {isCharacter ? (
+          <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-(--accent-gold)/30">
+            <Image
+              src={message.avatar || ""}
+              alt={message.name}
+              fill
+              className="object-cover"
+              sizes="40px"
+            />
+          </div>
+        ) : (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--accent-gold)/10 text-(--accent-gold)">
+            {Icon && <Icon className="h-5 w-5" />}
+          </div>
+        )}
+      </div>
+
+      {/* Bubble */}
+      <div className={`max-w-[75%] ${isCharacter ? "text-left" : "text-right"}`}>
+        <div className="mb-0.5 text-xs font-medium text-(--text-muted)">{message.name}</div>
+        <div
+          className={`rounded-2xl px-3 py-2 text-xs leading-relaxed ${
+            isCharacter
+              ? "rounded-tl-none bg-(--bg-surface) text-muted-foreground"
+              : "rounded-tr-none bg-(--accent-gold)/10 text-(--accent-gold) border border-(--accent-gold)/20"
+          }`}
+        >
+          <TypingText
+            text={message.text}
+            isActive={isActive}
+            onComplete={onComplete}
+            hasCompleted={hasCompleted}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function FeaturePage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const heroVisualRef = useRef<HTMLDivElement>(null);
   const visualTrackRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const [activeFeature, setActiveFeature] = useState(0);
+  const [activeMessage, setActiveMessage] = useState(0);
+  const [completedMessages, setCompletedMessages] = useState<Set<number>>(new Set());
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleNavigateToHome = () => {
+    router.push("/home");
+  };
+
+  useEffect(() => {
+    if (activeMessage >= chatMessages.length) return;
+    setIsAnimating(true);
+  }, [activeMessage]);
+
+  const handleMessageComplete = (messageIndex: number) => {
+    setCompletedMessages((prev) => new Set(prev).add(messageIndex));
+    if (messageIndex < chatMessages.length - 1) {
+      setTimeout(() => {
+        setActiveMessage(messageIndex + 1);
+      }, 800);
+    } else {
+      setIsAnimating(false);
+    }
+  };
+
+  const handleRestart = () => {
+    setActiveMessage(0);
+    setCompletedMessages(new Set());
+  };
 
   useEffect(() => {
     let ctx: ReturnType<typeof import("gsap").gsap.context> | null = null;
@@ -226,6 +435,97 @@ export default function FeaturePage() {
             },
           );
         }
+
+        // Animate full-screen timeline sections
+        const journeySections = gsap.utils.toArray<HTMLElement>("[data-journey-step]");
+        const journeyWrapper = document.querySelector("[data-journey-wrapper]");
+
+        // Global progress bar - fills continuously through all sections
+        const globalProgressBar = document.querySelector("[data-journey-progress]");
+        if (globalProgressBar && journeyWrapper) {
+          gsap.fromTo(
+            globalProgressBar,
+            { scaleY: 0 },
+            {
+              scaleY: 1,
+              transformOrigin: "top",
+              ease: "none",
+              scrollTrigger: {
+                trigger: journeyWrapper,
+                start: "top center",
+                end: "bottom center",
+                scrub: true,
+              },
+            },
+          );
+        }
+
+        journeySections.forEach((section, index) => {
+          const content = section.querySelector(".max-w-lg");
+          const image = section.querySelector('[class*="aspect-"]');
+          const stepIndicator = section.querySelector("[data-step-indicator]");
+
+          // Content entrance animation - slow and gradual
+          if (content) {
+            gsap.fromTo(
+              content,
+              { x: index % 2 === 0 ? -120 : 120, opacity: 0 },
+              {
+                x: 0,
+                opacity: 1,
+                duration: 1.5,
+                ease: "power2.out",
+                scrollTrigger: {
+                  trigger: section,
+                  start: "top 85%",
+                  end: "top 40%",
+                  scrub: 1,
+                },
+              },
+            );
+          }
+
+          // Image entrance animation - slow and gradual
+          if (image) {
+            gsap.fromTo(
+              image,
+              { scale: 0.8, opacity: 0, y: 60 },
+              {
+                scale: 1,
+                opacity: 1,
+                y: 0,
+                duration: 1.8,
+                ease: "power2.out",
+                scrollTrigger: {
+                  trigger: section,
+                  start: "top 80%",
+                  end: "top 35%",
+                  scrub: 1,
+                },
+              },
+            );
+          }
+
+          // Step indicator animation - slow pop in
+          if (stepIndicator) {
+            gsap.fromTo(
+              stepIndicator,
+              { scale: 0.3, opacity: 0 },
+              {
+                scale: 1,
+                opacity: 1,
+                duration: 1.2,
+                ease: "back.out(2)",
+                scrollTrigger: {
+                  trigger: section,
+                  start: "top 70%",
+                  end: "top 50%",
+                  scrub: 1,
+                },
+              },
+            );
+          }
+        });
       }, pageRef);
     };
 
@@ -239,57 +539,98 @@ export default function FeaturePage() {
   const ActiveIcon = featureGroups[activeFeature].icon;
 
   return (
-    <main ref={pageRef} className="relative overflow-hidden bg-[var(--bg-deep)] text-[var(--text-secondary)]">
-      <div className="fixed inset-x-0 top-0 z-50 h-[2px] bg-white/5">
-        <div ref={progressRef} className="h-full origin-left bg-[var(--accent-gold)] shadow-[0_0_18px_rgba(255,146,21,0.65)]" />
+    <main ref={pageRef} className="relative overflow-hidden bg-(--bg-deep) text-muted-foreground">
+      <div className="fixed inset-x-0 top-0 z-50 h-0.5 bg-white/5">
+        <div ref={progressRef} className="h-full origin-left bg-(--accent-gold) shadow-[0_0_18px_rgba(255,146,21,0.65)]" />
       </div>
 
       <section className="relative min-h-[calc(100svh-80px)] overflow-hidden pb-20 pt-32">
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_72%_26%,rgba(143,179,200,0.18),transparent_34%),radial-gradient(circle_at_16%_72%,rgba(255,146,21,0.12),transparent_30%)]" />
-        <div className="absolute inset-0 pointer-events-none opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.45)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.45)_1px,transparent_1px)] [background-size:72px_72px]" />
+        <div className="absolute inset-0 pointer-events-none opacity-[0.08] bg-[linear-gradient(rgba(255,255,255,0.45)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.45)_1px,transparent_1px)] bg-size-[72px_72px]" />
 
         <Container className="relative z-10">
           <div className="grid items-center gap-12 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16">
             <div>
-              <h1 data-hero-copy className="max-w-3xl text-4xl font-bold leading-[1.08] text-[var(--text-primary)] sm:text-5xl lg:text-6xl">
-                Bộ tính năng giúp lịch sử trở thành một cuộc đối thoại
+              <h1 data-hero-copy className="mb-4 text-[clamp(1.6rem,4vw,3rem)] font-bold uppercase leading-[1.1] tracking-wide text-muted-foreground">
+                Bộ tính năng
+                <br />
+                giúp lịch sử
+                <br />
+                <span className="text-(--accent-gold) font-title">trở thành một cuộc đối thoại</span>
               </h1>
-              <p data-hero-copy className="mt-6 max-w-2xl text-base leading-8 text-[var(--text-secondary)] lg:text-lg">
+              <p data-hero-copy className="mt-6 max-w-2xl text-base leading-8 text-muted-foreground lg:text-lg">
                 History Talk kết hợp nhân vật AI, bối cảnh sự kiện và quiz ôn tập để biến mỗi chủ đề thành một hành trình học có mạch.
               </p>
 
               <div data-hero-copy className="mt-8 flex flex-wrap gap-3">
                 {["AI hội thoại", "Dòng thời gian", "Quiz theo chủ đề"].map((item) => (
-                  <span key={item} className="rounded-full border border-[var(--border-default)] bg-white/[0.03] px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+                  <span key={item} className="rounded-full border border-(--border-default) bg-white/3 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                     {item}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div ref={heroVisualRef} className="relative min-h-[430px] perspective-[1200px]">
-              <div className="absolute inset-4 rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--accent-gold)]/20 via-transparent to-[#8fb3c8]/20 blur-2xl" />
-              <div className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[#101a2c] shadow-[var(--shadow-strong)]">
-                <div className="flex h-10 items-center justify-between border-b border-[var(--border-default)] bg-[#111c2e] px-4">
-                  <div className="flex gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-rose-400/45" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-amber-300/45" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-300/45" />
+            <div ref={heroVisualRef} className="relative min-h-107.5">
+              <div className="absolute -inset-2 rounded-2xl bg-linear-to-r from-(--accent-gold)/10 to-[#8fb3c8]/10 opacity-50 blur-2xl" />
+
+              <div className="relative flex h-107.5 w-full flex-col overflow-hidden rounded-lg border border-(--border-default) bg-[#0d1627] shadow-2xl">
+                {/* Chat Header */}
+                <div className="flex h-12 shrink-0 items-center justify-between border-b border-(--border-default) bg-[#111c2e] px-4">
+                  <div className="flex items-center gap-2">
+                    <div className="relative h-8 w-8 overflow-hidden rounded-full border border-(--accent-gold)/30">
+                      <Image
+                        src="/ngo-quyen-chan-dung.png"
+                        alt="Ngô Quyền"
+                        fill
+                        className="object-cover"
+                        sizes="32px"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-(--text-primary)">Ngô Quyền</div>
+                      <div className="flex items-center gap-1 text-xs text-emerald-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        Đang trò chuyện
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
-                    historytalk.vn/features
-                  </span>
+                  <button
+                    onClick={handleRestart}
+                    className="rounded-md px-3 py-1 text-xs font-medium text-(--text-muted) transition-colors hover:bg-(--bg-surface) hover:text-(--accent-gold)"
+                  >
+                    Xem lại
+                  </button>
                 </div>
-                <div className="relative aspect-[16/10]">
-                  <Image
-                    src="/history-talk-ui.png"
-                    alt="History Talk interface preview"
-                    fill
-                    priority
-                    sizes="(min-width: 1024px) 52vw, 100vw"
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#070d18]/75 via-transparent to-transparent" />
+
+                {/* Chat Messages */}
+                <div className="flex-1 overflow-hidden bg-(--bg-surface) p-3">
+                  <div className="space-y-3">
+                    {chatMessages.map((message, index) => (
+                      <ChatBubble
+                        key={message.id}
+                        message={message}
+                        isActive={index <= activeMessage}
+                        onComplete={() => handleMessageComplete(index)}
+                        hasCompleted={completedMessages.has(index)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Chat Input Placeholder */}
+                <div className="flex h-11 shrink-0 items-center gap-2 border-t border-(--border-default) bg-[#111c2e] px-3">
+                  <button
+                    onClick={handleNavigateToHome}
+                    className="flex-1 rounded-full bg-(--bg-surface) px-3 py-1.5 text-left text-sm text-(--text-muted) transition-colors hover:bg-(--bg-surface)/80 hover:text-muted-foreground"
+                  >
+                    Nhập câu hỏi của bạn...
+                  </button>
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-(--accent-gold)/10 text-(--accent-gold)">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  </div>
                 </div>
               </div>
 
@@ -301,7 +642,7 @@ export default function FeaturePage() {
                 ].map((item) => (
                   <div
                     key={item}
-                    className="rounded-md border border-[var(--border-default)] bg-white/[0.03] px-4 py-3 text-sm font-medium text-[var(--text-secondary)]"
+                    className="rounded-md border border-(--border-default) bg-white/3 px-4 py-3 text-sm font-medium text-muted-foreground"
                   >
                     {item}
                   </div>
@@ -312,143 +653,86 @@ export default function FeaturePage() {
         </Container>
       </section>
 
-      <section data-visual-section className="relative overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-main)] py-20 md:py-28">
-        <Container>
-          <div className="mb-10 grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
-            <h2 className="text-3xl font-bold leading-tight text-[var(--text-primary)] sm:text-4xl lg:text-5xl">
-              Tính năng nên được nhìn thấy trước khi được giải thích
-            </h2>
-            <p className="max-w-2xl text-base leading-8 text-[var(--text-secondary)] lg:ml-auto">
-              Trang này dùng hình ảnh như các lát cắt của sản phẩm: người học chọn nhân vật, bước vào hội thoại, rồi ôn lại kiến thức trên thiết bị cá nhân.
-            </p>
-          </div>
+      {/* Full-screen Timeline Sections - wrapped for progress bar */}
+      <div data-journey-wrapper className="relative">
+        {/* Global Progress Bar - spans all journey sections */}
+        <div className="absolute left-1/2 top-0 z-10 h-full w-0.5 -translate-x-1/2 bg-(--border-default)">
+          <div
+            data-journey-progress
+            className="h-full w-0.5 origin-top bg-(--accent-gold)"
+          />
+        </div>
 
-          <div ref={visualTrackRef} className="grid gap-5 lg:grid-cols-3 lg:will-change-transform">
-            {visualChapters.map((chapter, index) => (
-              <article
-                key={chapter.title}
-                data-visual-card
-                className={cn(
-                  "group overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-[var(--shadow-soft)]",
-                  index === 1 && "lg:translate-y-10",
-                )}
-              >
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <Image
-                    src={chapter.image}
-                    alt={chapter.alt}
-                    fill
-                    sizes="(min-width: 1024px) 33vw, 100vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-[1.05]"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#070d18]/75 via-transparent to-transparent" />
+        {journeySteps.map((item, index) => {
+          const Icon = item.icon;
+          const isEven = index % 2 === 0;
+
+          return (
+            <section
+              key={item.step}
+              data-journey-step
+              className="relative min-h-screen overflow-hidden border-t border-(--border-default) bg-(--bg-main)"
+            >
+              {/* Step Number Indicator - positioned within section */}
+              <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2" data-step-indicator>
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-(--accent-gold) bg-(--accent-gold) text-(--bg-deep) shadow-lg">
+                  <span className="text-sm font-bold">{item.step}</span>
                 </div>
-                <div className="p-5">
-                  <h3 className="text-xl font-bold text-[var(--text-primary)]">{chapter.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">{chapter.body}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      <section className="relative border-t border-[var(--border-default)] bg-[var(--bg-main)] py-20 md:py-28">
-        <Container>
-          <div className="mb-12 max-w-3xl">
-            <h2 className="text-3xl font-bold leading-tight text-[var(--text-primary)] sm:text-4xl lg:text-5xl">
-              Ba lớp trải nghiệm nối thành một hành trình
-            </h2>
-          </div>
-
-          <div data-feature-grid className="grid gap-5 lg:grid-cols-3">
-            {featureGroups.map((feature, index) => {
-              const Icon = feature.icon;
-              const isActive = activeFeature === index;
-
-              return (
-                <button
-                  key={feature.title}
-                  data-feature-card
-                  type="button"
-                  onClick={() => setActiveFeature(index)}
-                  onMouseEnter={() => setActiveFeature(index)}
-                  className={cn(
-                    "group relative overflow-hidden rounded-[var(--radius-lg)] border p-6 text-left transition-all duration-300",
-                    isActive
-                      ? "border-[var(--accent-gold)]/45 bg-[var(--bg-surface)] shadow-[var(--shadow-soft)]"
-                      : "border-[var(--border-default)] bg-transparent hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)]/40",
-                  )}
-                >
-                  <div className={cn("absolute inset-0 bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100", feature.glow)} />
-                  <div className="relative z-10">
-                    <div className={cn("mb-6 flex h-12 w-12 items-center justify-center rounded-md border border-white/10 bg-white/[0.04]", feature.accent)}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <span className="mb-3 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[var(--accent-gold)]">
-                      {feature.label}
-                    </span>
-                    <h3 className="text-xl font-bold text-[var(--text-primary)]">{feature.title}</h3>
-                    <p className="mt-4 text-sm leading-relaxed text-[var(--text-secondary)]">{feature.body}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-8 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[#101a2c]">
-            <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
-              <div className="border-b border-[var(--border-default)] p-6 lg:border-b-0 lg:border-r">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--accent-gold)]/30 bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
-                    <ActiveIcon className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-xl font-bold text-[var(--text-primary)]">{featureGroups[activeFeature].title}</h3>
-                </div>
-                <p className="text-sm leading-relaxed text-[var(--text-secondary)]">{featureGroups[activeFeature].body}</p>
               </div>
 
-              <div className="grid gap-3 p-6 sm:grid-cols-3">
-                {featureGroups[activeFeature].bullets.map((bullet) => (
-                  <div key={bullet} className="flex items-start gap-2 rounded-md border border-[var(--border-default)] bg-white/[0.03] p-3 text-sm text-[var(--text-secondary)]">
-                    <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-                    <span>{bullet}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      <section className="relative border-t border-[var(--border-default)] bg-[var(--bg-deep)] py-20 md:py-28">
-        <Container>
-          <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
-            <div>
-              <h2 className="text-3xl font-bold leading-tight text-[var(--text-primary)] sm:text-4xl">
-                Không chỉ có AI chat, mà là một hệ sinh thái học
-              </h2>
-            </div>
-
-            <div data-capability-list className="space-y-4">
-              {capabilityRows.map((row) => {
-                const Icon = row.icon;
-                return (
-                  <div key={row.title} data-capability-row className="grid gap-4 border-b border-[var(--border-default)] pb-5 sm:grid-cols-[52px_1fr]">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--accent-gold)]">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-[var(--text-primary)]">{row.title}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{row.body}</p>
+              <Container className="relative z-10 flex h-screen items-center">
+                <div className={`grid w-full items-center gap-12 lg:grid-cols-2 lg:gap-20 ${isEven ? '' : 'lg:grid-flow-col-dense'}`}>
+                  {/* Content */}
+                  <div className={`${isEven ? '' : 'lg:col-start-2'}`}>
+                    <div className="max-w-lg">
+                      <span className="mb-4 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-(--accent-gold)">
+                        {item.eyebrow}
+                      </span>
+                      <h2 className="mb-6 text-2xl font-bold uppercase leading-tight text-(--text-primary) sm:text-3xl lg:text-4xl">
+                        {item.title}
+                      </h2>
+                      <p className="mb-8 text-lg leading-relaxed text-muted-foreground">
+                        {item.body}
+                      </p>
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-(--accent-gold)/30 bg-(--accent-gold)/10 text-(--accent-gold)">
+                          <Icon className="h-7 w-7" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-(--text-primary)">Bước {item.step}</p>
+                          <p className="text-xs text-(--text-muted)">Hành trình học lịch sử</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </Container>
-      </section>
+
+                  {/* Image */}
+                  <div className={`${isEven ? '' : 'lg:col-start-1'}`}>
+                    <div className="relative aspect-4/3 overflow-hidden rounded-2xl border border-(--border-default) bg-(--bg-surface) shadow-2xl">
+                      <div className="absolute inset-0 flex items-center justify-center text-(--text-muted)">
+                        <div className="text-center p-8">
+                          <Icon className="mx-auto h-16 w-16 mb-4 opacity-50" />
+                          <p className="text-lg font-medium mb-2">Hình ảnh sẽ được cập nhật</p>
+                          <p className="text-sm">Chụp màn hình bước {item.step} để thêm vào đây</p>
+                        </div>
+                      </div>
+                      {/* Uncomment when user provides actual images */}
+                      {/* <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                        sizes="(min-width: 1024px) 50vw, 100vw"
+                      /> */}
+                    </div>
+                  </div>
+                </div>
+              </Container>
+
+            </section>
+          );
+        })}
+      </div>
     </main>
   );
 }

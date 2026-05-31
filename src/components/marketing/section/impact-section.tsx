@@ -3,7 +3,6 @@
 import { useRef } from "react";
 import { BrainIcon, LinkIcon, ScalesIcon, SparkleIcon } from "@phosphor-icons/react";
 import { Container } from "../container";
-import { SectionHeading } from "../section-heading";
 import { useRevealAnimation } from "@/lib/hooks/use-reveal-animation";
 
 const impacts = [
@@ -31,17 +30,29 @@ export function ImpactSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-deep)] py-20 md:py-32"
+      className="relative flex h-auto min-h-[600px] items-start overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-deep)] py-16 md:h-svh md:items-center md:py-0"
     >
-      <Container>
-        <div className="mx-auto max-w-5xl">
-          <SectionHeading
-            title="Điều còn lại không phải là đáp án, mà là sự hiểu biết"
-            subtitle="Sau hành trình"
-            variant="cream"
-          />
+      <div className="relative z-10 w-full py-16 md:py-0">
+        <Container>
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
+            <div className="min-w-0">
+              <span className="mb-4 block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-gold)]">
+                Sau hành trình
+              </span>
+              <h2 className="mb-4 break-words text-[clamp(2rem,4.5vw,4rem)] font-bold uppercase leading-[1.05] tracking-wide text-[var(--text-secondary)]">
+                Điều còn lại
+                <br />
+                không phải đáp án,
+                <br />
+                <span className="font-title text-[var(--accent-gold)]">mà là hiểu biết</span>
+              </h2>
+              <p className="max-w-[320px] text-sm leading-relaxed text-[var(--text-secondary)] lg:text-base">
+                History Talk giúp bạn hiểu lịch sử thông qua bối cảnh và lựa chọn của những người đã sống.
+              </p>
+            </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+            <div className="-mx-4 overflow-hidden px-4">
+              <div className="grid gap-4 md:grid-cols-3">
             {impacts.map((impact) => {
               const Icon = impact.icon;
               return (
@@ -60,16 +71,18 @@ export function ImpactSection() {
             })}
           </div>
 
-          <div data-reveal="block" className="mt-12 border-l-2 border-[var(--accent-gold)]/50 pl-6">
-            <div className="flex items-start gap-4">
-              <SparkleIcon className="mt-1 h-6 w-6 shrink-0 text-[var(--accent-gold)]" />
-              <p className="max-w-3xl text-xl font-semibold leading-relaxed text-[var(--text-secondary)] md:text-2xl">
-                History Talk không dạy người học phải nghĩ gì. Nó giúp họ có đủ bối cảnh để tự hiểu vì sao lịch sử đã diễn ra như vậy.
-              </p>
+              <div data-reveal="block" className="mt-8 border-l-2 border-[var(--accent-gold)]/50 pl-6">
+                <div className="flex items-start gap-4">
+                  <SparkleIcon className="mt-1 h-6 w-6 shrink-0 text-[var(--accent-gold)]" />
+                  <p className="max-w-3xl text-xl font-semibold leading-relaxed text-[var(--text-secondary)] md:text-2xl">
+                    History Talk không dạy người học phải nghĩ gì. Nó giúp họ có đủ bối cảnh để tự hiểu vì sao lịch sử đã diễn ra như vậy.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </Container>
+        </Container>
+      </div>
     </section>
   );
 }

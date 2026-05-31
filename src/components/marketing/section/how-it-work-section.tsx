@@ -1,5 +1,4 @@
 import { Container } from "../container";
-import { SectionHeading } from "../section-heading";
 
 export function HowItWorksSection() {
   const steps = [
@@ -30,18 +29,28 @@ export function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="py-20 md:py-32 bg-[var(--bg-deep)] relative">
-      {/* Top decorative line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-[var(--border-default)]" />
+    <section id="how-it-works" className="relative flex h-auto min-h-[600px] items-start overflow-hidden bg-[var(--bg-deep)] py-16 md:h-svh md:items-center md:py-0">
+      <div className="absolute inset-x-0 top-0 h-px bg-[var(--border-default)]" />
 
-      <Container>
-        <SectionHeading
-          title="Cách hoạt động"
-          subtitle="Bốn bước đơn giản để bắt đầu hành trình khám phá lịch sử của bạn"
-          variant="warm"
-        />
+      <div className="relative z-10 w-full py-16 md:py-0">
+        <Container>
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
+            <div>
+              <span className="mb-4 block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-gold)]">
+                Cách hoạt động
+              </span>
+              <h2 className="mb-4 text-[clamp(2.2rem,5.5vw,5.5rem)] font-bold uppercase leading-[0.95] tracking-wide text-[var(--text-secondary)]">
+                Bốn bước
+                <br />
+                <span className="text-[var(--accent-gold)] font-title">đơn giản</span>
+              </h2>
+              <p className="max-w-[320px] text-sm leading-relaxed text-[var(--text-secondary)] lg:text-base">
+                Bắt đầu hành trình khám phá lịch sử của bạn qua những cuộc đối thoại ý nghĩa.
+              </p>
+            </div>
 
-        <div className="max-w-5xl mx-auto">
+            <div className="-mx-4 overflow-hidden px-4">
+              <div className="max-w-5xl">
           {/* Steps grid */}
           <div className="grid md:grid-cols-2 gap-8">
             {steps.map((step, index) => (
@@ -84,21 +93,20 @@ export function HowItWorksSection() {
               </div>
             ))}
           </div>
+              </div>
 
-          {/* Bottom message */}
-          <div className="mt-12 text-center space-y-4">
-            <p className="text-xl md:text-2xl text-[var(--accent-gold)] font-medium italic">
-              Mỗi cuộc trò chuyện là độc nhất.
-            </p>
-            <p className="text-xl md:text-2xl text-[var(--text-primary)] font-medium italic">
-              Mỗi người học có một con đường khác nhau.
-            </p>
+              {/* Bottom message */}
+              <div className="mt-8 border-l-2 border-[var(--accent-gold)]/50 pl-6">
+                <p className="max-w-3xl text-lg font-semibold leading-relaxed text-[var(--text-secondary)] md:text-xl">
+                  Mỗi cuộc trò chuyện là độc nhất. Mỗi người học có một con đường khác nhau.
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      </Container>
+        </Container>
+      </div>
 
-      {/* Bottom decorative line */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-[var(--border-default)]" />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-[var(--border-default)]" />
     </section>
   );
 }
