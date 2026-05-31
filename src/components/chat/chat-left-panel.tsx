@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils/cn";
 import {
-  CaretLeftIcon,
-  CaretRightIcon,
   PlusIcon,
   ChatTextIcon,
   TimerIcon,
   ClockCounterClockwiseIcon,
   TrashIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
 } from "@phosphor-icons/react";
 import {
   Tooltip,
@@ -17,6 +17,11 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useCreateSession, useSoftDeleteSession } from "@/features/chat/hooks";
 import { ChatSession } from "@/services/chat.service";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -96,22 +101,171 @@ export function ChatLeftPanel({
     fontSize: 12,
   };
 
+  // Mobile bottom sheet content
+  const renderSessionList = () => (
+    <div className="flex flex-col h-full">
+      <div
+        className="px-4 py-4 border-b shrink-0"
+        style={{ borderColor: "var(--border-default)" }}
+      >
+        <p
+          className="text-[10px] font-bold uppercase tracking-widest mb-1"
+          style={{ color: "var(--accent-gold)", opacity: 0.7 }}
+        >
+          Lịch sử trò chuyện
+        </p>
+        <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+          {sessions.length} cuộc trò chuyện
+        </p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
+        <div className="flex items-center justify-between mb-2 px-1">
+          <span
+            className="text-[10px] font-bold uppercase tracking-widest"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Sessions
+          </span>
+          <button
+            onClick={handleNewSession}
+            disabled={createSession.isPending}
+            className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md cursor-pointer transition-colors hover:bg-white/5"
+            style={{ color: "var(--accent-gold)" }}
+          >
+            <PlusIcon className="w-3 h-3" />
+            {createSession.isPending ? "..." : "Mới"}
+          </button>
+        </div>
+
+        {isLoadingSessions ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-16 rounded-lg animate-pulse"
+                style={{ background: "var(--card-light-hover)" }}
+              />
+            ))}
+          </div>
+        ) : sessions.length === 0 ? (
+          <p
+            className="text-[11px] text-center py-4"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Chưa có cuộc trò chuyện nào
+          </p>
+        ) : (
+          <div className="space-y-1.5">
+            {sessions.map((session, index) => (
+              <div
+                key={`session-${session.id ?? index}-${index}`}
+                className="group relative w-full text-left px-3 py-2.5 rounded-lg transition-all duration-150 cursor-pointer border"
+                onClick={() => {
+                  onSelectSession(session.id);
+                  setIsOpen(false); // Close sheet on mobile
+                }}
+                style={{
+                  background:
+                    activeSessionId === session.id
+                      ? "var(--accent-gold-active-bg)"
+                      : "transparent",
+                  borderColor:
+                    activeSessionId === session.id
+                      ? "var(--border-strong)"
+                      : "transparent",
+                }}
+              >
+                <div className="flex items-start gap-2">
+                  <ChatTextIcon
+                    className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                    style={{
+                      color:
+                        activeSessionId === session.id
+                          ? "var(--accent-gold)"
+                          : "var(--text-secondary)",
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="text-[12px] font-semibold truncate"
+                      style={{
+                        color:
+                          activeSessionId === session.id
+                            ? "var(--accent-gold-soft)"
+                            : "var(--text-primary)",
+                      }}
+                    >
+                      {session.title || "Cuộc trò chuyện"}
+                    </p>
+                    <p
+                      className="text-[10px] truncate mt-0.5"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      {session.lastMessage}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <TimerIcon
+                        className="w-2.5 h-2.5"
+                        style={{ color: "var(--text-secondary)" }}
+                      />
+                      <span
+                        className="text-[9px]"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        {formatDate(session.lastMessageAt)} ·{" "}
+                        {session.messageCount} tin
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteSessionId(session.id);
+                  }}
+                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50"
+                  style={{ color: "var(--content-subtle)" }}
+                >
+                  <TrashIcon className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div
+        className="px-3 py-3 border-t shrink-0"
+        style={{ borderColor: "var(--border-default)" }}
+      >
+        <button
+          onClick={handleNewSession}
+          disabled={createSession.isPending}
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150"
+          style={{
+            background: "var(--accent-gold-active-bg)",
+            border: "1px solid var(--border-strong)",
+            color: "var(--accent-gold-soft)",
+          }}
+        >
+          <PlusIcon className="w-3.5 h-3.5" />
+          {createSession.isPending
+            ? "Đang tạo..."
+            : "Cuộc trò chuyện mới"}
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <TooltipProvider delayDuration={0}>
       <>
-        {/* Backdrop on mobile/tablet */}
+        {/* Desktop: Sidebar */}
         <div
           className={cn(
-            "md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-[2px] transition-opacity duration-300",
-            isOpen ? "opacity-100 visible" : "opacity-0 invisible"
-          )}
-          onClick={() => setIsOpen(false)}
-        />
-
-        <div
-          className={cn(
-            "shrink-0 h-full transition-all duration-300 z-50",
-            "md:relative absolute left-0 top-0 bottom-0",
+            "hidden md:block shrink-0 h-full transition-all duration-300 z-50",
+            "relative",
             isOpen ? "w-[260px]" : "w-0 md:w-[28px]",
           )}
         >
@@ -188,156 +342,26 @@ export function ChatLeftPanel({
               borderColor: "var(--border-default)",
             }}
           >
-            <div
-              className="px-4 py-4 border-b shrink-0"
-              style={{ borderColor: "var(--border-default)" }}
-            >
-              <p
-                className="text-[10px] font-bold uppercase tracking-widest mb-1"
-                style={{ color: "var(--accent-gold)", opacity: 0.7 }}
-              >
-                Lịch sử trò chuyện
-              </p>
-              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                {sessions.length} cuộc trò chuyện
-              </p>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
-              <div className="flex items-center justify-between mb-2 px-1">
-                <span
-                  className="text-[10px] font-bold uppercase tracking-widest"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  Sessions
-                </span>
-                <button
-                  onClick={handleNewSession}
-                  disabled={createSession.isPending}
-                  className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md cursor-pointer transition-colors hover:bg-white/5"
-                  style={{ color: "var(--accent-gold)" }}
-                >
-                  <PlusIcon className="w-3 h-3" />
-                  {createSession.isPending ? "..." : "Mới"}
-                </button>
-              </div>
-
-              {isLoadingSessions ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="h-16 rounded-lg animate-pulse"
-                      style={{ background: "var(--card-light-hover)" }}
-                    />
-                  ))}
-                </div>
-              ) : sessions.length === 0 ? (
-                <p
-                  className="text-[11px] text-center py-4"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  Chưa có cuộc trò chuyện nào
-                </p>
-              ) : (
-                <div className="space-y-1.5">
-                  {sessions.map((session, index) => (
-                    <div
-                      key={`session-${session.id ?? index}-${index}`}
-                      className="group relative w-full text-left px-3 py-2.5 rounded-lg transition-all duration-150 cursor-pointer border"
-                      onClick={() => onSelectSession(session.id)}
-                    style={{
-                      background:
-                        activeSessionId === session.id
-                          ? "var(--accent-gold-active-bg)"
-                          : "transparent",
-                      borderColor:
-                        activeSessionId === session.id
-                          ? "var(--border-strong)"
-                          : "transparent",
-                    }}
-                  >
-                    <div className="flex items-start gap-2">
-                      <ChatTextIcon
-                        className="w-3.5 h-3.5 mt-0.5 shrink-0"
-                        style={{
-                          color:
-                            activeSessionId === session.id
-                              ? "var(--accent-gold)"
-                              : "var(--text-secondary)",
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className="text-[12px] font-semibold truncate"
-                          style={{
-                            color:
-                              activeSessionId === session.id
-                                ? "var(--accent-gold-soft)"
-                                : "var(--text-primary)",
-                          }}
-                        >
-                          {session.title || "Cuộc trò chuyện"}
-                        </p>
-                        <p
-                          className="text-[10px] truncate mt-0.5"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          {session.lastMessage}
-                        </p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <TimerIcon
-                            className="w-2.5 h-2.5"
-                            style={{ color: "var(--text-secondary)" }}
-                          />
-                          <span
-                            className="text-[9px]"
-                            style={{ color: "var(--text-secondary)" }}
-                          >
-                            {formatDate(session.lastMessageAt)} ·{" "}
-                            {session.messageCount} tin
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteSessionId(session.id);
-                      }}
-                      className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50"
-                      style={{ color: "var(--content-subtle)" }}
-                    >
-                      <TrashIcon className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
-                    </button>
-                  </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div
-              className="px-3 py-3 border-t shrink-0"
-              style={{ borderColor: "var(--border-default)" }}
-            >
-              <button
-                onClick={handleNewSession}
-                disabled={createSession.isPending}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150"
-                style={{
-                  background: "var(--accent-gold-active-bg)",
-                  border: "1px solid var(--border-strong)",
-                  color: "var(--accent-gold-soft)",
-                }}
-              >
-                <PlusIcon className="w-3.5 h-3.5" />
-                {createSession.isPending
-                  ? "Đang tạo..."
-                  : "Cuộc trò chuyện mới"}
-              </button>
-            </div>
+            {renderSessionList()}
           </div>
         )}
+        </div>
+
+        {/* Mobile: Bottom Sheet */}
+        <div className="md:hidden">
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetContent 
+              side="bottom" 
+              className="h-[70vh] p-0 border-t"
+              style={{
+                background: "var(--bg-surface)",
+                borderColor: "var(--border-default)",
+              }}
+            >
+              <SheetTitle className="sr-only">Lịch sử trò chuyện</SheetTitle>
+              {renderSessionList()}
+            </SheetContent>
+          </Sheet>
         </div>
 
         <ConfirmDialog
