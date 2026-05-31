@@ -28,9 +28,8 @@ export function ClosingSection() {
 
           <div className="relative z-20 grid h-full w-full grid-cols-1 gap-8 px-6 py-10 sm:px-10 sm:py-14 lg:grid-cols-3 lg:gap-0 lg:px-16 lg:py-0">
             <div className="flex items-center">
-              <h2 data-reveal="fast" className="vi-heading text-3xl font-bold text-[var(--text-primary)] sm:text-4xl lg:text-6xl">
-                LỊCH SỬ KHÔNG <br /> CHỈ LÀ{" "}
-                <span className="text-[var(--accent-gold)]">QUÁ KHỨ.</span>
+              <h2 data-reveal="fast" className="vi-heading text-[var(--text-primary)]">
+                Lịch sử không chỉ là <span className="text-[var(--accent-gold)]">quá khứ.</span>
               </h2>
             </div>
 

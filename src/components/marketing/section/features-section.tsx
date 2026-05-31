@@ -110,12 +110,8 @@ export function FeaturesSection() {
       <Container className="relative z-10">
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
           <div className="lg:sticky lg:top-28 lg:self-start">
-            <h2 className="vi-heading mb-4 text-[clamp(2.2rem,5.5vw,5.5rem)] font-bold uppercase tracking-wide text-[var(--text-secondary)]">
-              Một dòng
-              <br />
-              thời gian,
-              <br />
-              <span className="text-[var(--accent-gold)] font-title">bốn lần chạm</span>
+            <h2 className="vi-heading mb-4 text-[var(--text-secondary)]">
+              Một dòng thời gian, <span className="text-[var(--accent-gold)] font-title">bốn lần chạm</span>
             </h2>
             <p className="vi-text max-w-[320px] text-sm text-[var(--text-secondary)] lg:text-base">
               Mỗi bước dẫn người học từ tò mò đến đối thoại, rồi khép lại bằng ôn tập có ý nghĩa.

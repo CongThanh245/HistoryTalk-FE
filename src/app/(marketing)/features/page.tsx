@@ -551,12 +551,8 @@ export default function FeaturePage() {
         <Container className="relative z-10">
           <div className="grid items-center gap-12 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16">
             <div>
-              <h1 data-hero-copy className="mb-4 text-[clamp(1.6rem,4vw,3rem)] font-bold uppercase leading-[1.1] tracking-wide text-muted-foreground">
-                Bộ tính năng
-                <br />
-                giúp lịch sử
-                <br />
-                <span className="text-(--accent-gold) font-title">trở thành một cuộc đối thoại</span>
+              <h1 data-hero-copy className="text-hero uppercase tracking-wide text-muted-foreground mb-4">
+                Bộ tính năng giúp lịch sử <span className="text-(--accent-gold) font-title">trở thành một cuộc đối thoại</span>
               </h1>
               <p data-hero-copy className="mt-6 max-w-2xl text-base leading-8 text-muted-foreground lg:text-lg">
                 History Talk kết hợp nhân vật AI, bối cảnh sự kiện và quiz ôn tập để biến mỗi chủ đề thành một hành trình học có mạch.

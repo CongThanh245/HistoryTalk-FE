@@ -83,7 +83,7 @@ export function ProblemSection() {
         <Container>
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
             <div>
-              <h2 className="vi-heading mb-4 text-[clamp(2.5rem,5.5vw,5rem)] font-bold uppercase tracking-wide text-[var(--text-secondary)]">
+              <h2 className="vi-heading mb-4 text-[var(--text-secondary)]">
                 Vấn đề học <span className="text-[var(--accent-gold)] font-title">lịch sử</span> ngày nay
               </h2>
               <p className="vi-text max-w-[320px] text-sm text-[var(--text-secondary)] lg:text-base">

@@ -18,6 +18,7 @@ export interface UserProfile {
   tierId: string | null;
   tierTitle: string | null;
   token: number;
+  subscriptionEndTime: string | null;
   lastActiveDate: string | null;
   createdAt: string;
   updatedAt: string;

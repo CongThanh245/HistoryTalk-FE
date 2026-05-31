@@ -259,12 +259,8 @@ export function SolutionSection() {
           {/* Left Column */}
           <div className="space-y-4">
             <div data-reveal="fast" className="text-left">
-              <h2 className="vi-heading mb-2 text-[clamp(2rem,4vw,4rem)] font-bold uppercase tracking-wide text-[var(--text-secondary)]">
-                Bước vào
-                <br />
-                góc nhìn của
-                <br />
-                <span className="text-[var(--accent-gold)] font-title">người làm nên lịch sử</span>
+              <h2 className="vi-heading mb-2 text-[var(--text-secondary)]">
+                Bước vào góc nhìn của <span className="text-[var(--accent-gold)] font-title">người làm nên lịch sử</span>
               </h2>
               <p className="vi-text max-w-[320px] text-sm text-[var(--text-secondary)]">
                 History Talk biến những dòng chữ tĩnh thành cuộc đối thoại có bối cảnh, ký ức và phản hồi.

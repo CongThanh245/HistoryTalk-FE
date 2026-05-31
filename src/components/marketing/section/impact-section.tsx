@@ -39,12 +39,8 @@ export function ImpactSection() {
               <span className="mb-4 block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-gold)]">
                 Sau hành trình
               </span>
-              <h2 className="mb-4 break-words text-[clamp(2rem,4.5vw,4rem)] font-bold uppercase leading-[1.05] tracking-wide text-[var(--text-secondary)]">
-                Điều còn lại
-                <br />
-                không phải đáp án,
-                <br />
-                <span className="font-title text-[var(--accent-gold)]">mà là hiểu biết</span>
+              <h2 className="vi-heading mb-4 break-words text-[var(--text-secondary)]">
+                Điều còn lại không phải đáp án, <span className="font-title text-[var(--accent-gold)]">mà là hiểu biết</span>
               </h2>
               <p className="max-w-[320px] text-sm leading-relaxed text-[var(--text-secondary)] lg:text-base">
                 History Talk giúp bạn hiểu lịch sử thông qua bối cảnh và lựa chọn của những người đã sống.

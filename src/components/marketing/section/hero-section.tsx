@@ -106,9 +106,9 @@ export function HeroSection() {
             ref={contentWrapperRef}
             className="z-10 space-y-5 pb-6 pt-28 will-change-transform lg:space-y-8 lg:pb-0 lg:pt-0"
           >
-            <h1 className="text-4xl font-bold leading-[1.1] text-[var(--text-primary)] sm:text-5xl lg:text-5xl xl:text-6xl">
+            <h1 className="text-hero text-[var(--text-primary)]">
               <TypingText text="HISTORY TALK" className="typing-title" />
-              <span className="mt-2 block text-xl text-[var(--text-tertiary)] sm:text-2xl">
+              <span className="text-subtitle mt-2 block font-normal normal-case text-[var(--text-tertiary)]">
                 <TypingTextBody
                   text="Khi lịch sử trở nên sống động"
                   className="typing-subtitle"
@@ -118,16 +118,16 @@ export function HeroSection() {
 
             <div ref={subContentRef} className="space-y-5 opacity-0 lg:space-y-8">
               <MaskedText>
-                <p className="my-2 max-w-xl text-sm leading-relaxed text-[var(--text-secondary)] sm:text-base lg:text-lg">
+                <p className="vi-text max-w-xl text-[var(--text-secondary)]">
                   Trò chuyện trực tiếp với các nhân vật lịch sử được tái hiện bằng AI. Khám phá quá khứ như một hành trình có bối cảnh, cảm xúc và lựa chọn.
                 </p>
               </MaskedText>
 
               <div className="my-4 space-y-0.5 border-l-2 border-[var(--accent-gold)]/40 py-3 pl-5 lg:pl-6">
-                <p className="text-sm font-semibold italic text-[var(--text-primary)] lg:text-base">
+                <p className="text-small font-semibold italic text-[var(--text-primary)]">
                   &quot;Học sinh chỉ chán học Lịch sử trên trường
                 </p>
-                <p className="text-sm font-semibold italic text-[var(--accent-gold)] lg:text-base">
+                <p className="text-small font-semibold italic text-[var(--accent-gold)]">
                   chứ không học sinh nào chán lịch sử dân tộc cả!&quot;
                 </p>
               </div>
