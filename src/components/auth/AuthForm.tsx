@@ -226,7 +226,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               "radial-gradient(circle, rgba(201,162,77,0.12) 0%, transparent 70%)",
           }}
         />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px]">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-105 h-105">
           {[
             {
               rotate: "-18deg",
@@ -283,15 +283,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <div className="relative z-20 p-14 flex flex-col justify-between h-full">
           <div>
             <h1
-              className="text-4xl font-bold leading-tight mb-4"
+              className="text-4xl font-bold leading-tight mb-4 font-title"
               style={{
                 color: "var(--text-primary)",
-                fontFamily: "'Georgia', serif",
               }}
             >
-              Khám phá lịch sử
+              KHÁM PHÁ LỊCH SỬ
               <br />
-              theo cách
+              THEO CÁCH
               <br />
               <span
                 style={{
@@ -301,12 +300,12 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   WebkitTextFillColor: "transparent",
                 }}
               >
-                hoàn toàn mới.
+                HOÀN TOÀN MỚI.
               </span>
             </h1>
             <p
               className="text-sm leading-relaxed max-w-xs"
-              style={{ color: "var(--text-secondary)" }}
+              style={{ color: "var(--text-primary)" }}
             >
               Chat với nhân vật lịch sử, khám phá sự kiện qua dòng thời gian và
               kiểm tra kiến thức của bạn.

@@ -3,21 +3,15 @@ import "../styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProviders from "@/components/context/query-client-provider";
 import { ThemeProvider } from "@/components/context/theme-provider";
-import { Playfair_Display, Inter } from "next/font/google";
 
-const titleFont = Playfair_Display({
-  subsets: ["latin", "vietnamese"],
-  weight: ["600", "700", "800"],
+// Define CSS variables for local fonts
+const titleFont = {
   variable: "--font-title",
-  display: "swap",
-});
+};
 
-const bodyFont = Inter({
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
+const bodyFont = {
   variable: "--font-body",
-  display: "swap",
-});
+};
 
 export const metadata: Metadata = {
   title: "HistoryTalk - Khám phá lịch sử qua cuộc trò chuyện",

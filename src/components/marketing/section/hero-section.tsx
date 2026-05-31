@@ -5,6 +5,7 @@ import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TypingText from "@/components/commons/TypingText";
+import TypingTextBody from "@/components/commons/TypingTextBody";
 import MaskedText from "@/components/commons/MaskedText";
 import { cn } from "@/lib/utils/cn";
 import { Container } from "../container";
@@ -108,7 +109,7 @@ export function HeroSection() {
             <h1 className="text-4xl font-bold leading-[1.1] text-[var(--text-primary)] sm:text-5xl lg:text-5xl xl:text-6xl">
               <TypingText text="HISTORY TALK" className="typing-title" />
               <span className="mt-2 block text-xl text-[var(--text-tertiary)] sm:text-2xl">
-                <TypingText
+                <TypingTextBody
                   text="Khi lịch sử trở nên sống động"
                   className="typing-subtitle"
                 />

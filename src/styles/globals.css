@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 /* Import file theme của bạn vào đây */
 @import "./theme.css";
+/* Import custom fonts */
+@import "./fonts.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -65,13 +67,18 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Font families */
+  --font-body: "VL Outfit";
+  --font-title: "VL ZOLINA";
 }
 body {
-  font-family: var(--font-body), "Inter", sans-serif;
+  font-family: var(--font-body), "VL Outfit", sans-serif;
 }
 
 .font-title {
-  font-family: var(--font-title), "Playfair Display", serif;
+  font-family: var(--font-title), "VL ZOLINA", serif;
+  text-transform: uppercase;
 }
 /* Ghi đè các biến CSS của Shadcn bằng các biến Cinematic */
 :root {

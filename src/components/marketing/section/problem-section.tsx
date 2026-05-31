@@ -86,7 +86,6 @@ export function ProblemSection() {
         <Container>
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1fr_2fr] lg:gap-16">
             <div>
-              <div className="mb-5 h-12 w-[3px] rounded-full bg-gradient-to-b from-[var(--text-secondary)] to-transparent" />
               <h2 className="mb-4 text-[clamp(2.5rem,6vw,6rem)] font-bold uppercase leading-[0.88] tracking-wide text-[var(--text-secondary)]">
                 Vấn đề
                 <br />
