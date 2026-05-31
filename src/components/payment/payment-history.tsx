@@ -307,7 +307,7 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
         {items.length > 0 && (
           <div className="rounded-lg border border-[rgba(27,38,50,0.1)] bg-[rgba(27,38,50,0.04)] px-4 py-3 text-sm text-[var(--content-muted)]">
             {isAdmin ? (
-              <>Hiển thị {items.length} / {summary.total} giao dịch &nbsp;&middot;&nbsp; Tổng doanh thu đã thanh toán:{" "}</>
+              <>Hiển thị {items.length}/{summary.total} giao dịch &nbsp;&middot;&nbsp; Tổng doanh thu đã thanh toán:{" "}</>
             ) : (
               <>Tổng đơn hàng: {summary.total} &nbsp;&middot;&nbsp; Đã thanh toán:{" "}</>
             )}
@@ -317,6 +317,5 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
           </div>
         )}
       </div>
-    </div>
   );
 }
