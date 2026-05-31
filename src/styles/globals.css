@@ -1004,6 +1004,21 @@ body {
 }
 
 /* ─────────────────────────────────────────
+   Vietnamese text spacing - for diacritics
+───────────────────────────────────────── */
+.vi-text {
+  line-height: 1.75;
+}
+
+.vi-text-lg {
+  line-height: 1.85;
+}
+
+.vi-heading {
+  line-height: 1.2;
+}
+
+/* ─────────────────────────────────────────
    Base toast
 ───────────────────────────────────────── */
 [data-sonner-toaster] [data-sonner-toast] {

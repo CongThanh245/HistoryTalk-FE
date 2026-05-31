@@ -3,10 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ChatTextIcon,
-  CheckCircleIcon,
-  CompassIcon,
   MapTrifoldIcon,
   QuestionIcon,
+  VideoCameraIcon,
 } from "@phosphor-icons/react";
 import { Container } from "../container";
 import { cn } from "@/lib/utils/cn";
@@ -14,42 +13,31 @@ import { cn } from "@/lib/utils/cn";
 const journeySteps = [
   {
     step: "01",
-    eyebrow: "Chọn điểm khởi hành",
-    title: "Bắt đầu từ một nhân vật hoặc một biến cố",
-    body: "Người học chọn thời kỳ, trận đánh hoặc nhân vật để bước vào đúng bối cảnh lịch sử trước khi đặt câu hỏi.",
+    eyebrow: "Chọn bối cảnh",
+    title: "Bắt đầu từ một thời kỳ lịch sử",
+    body: "Người học chọn bối cảnh lịch sử để bước vào thế giới của nhân vật, sự kiện và không khí thời đại đó.",
     icon: MapTrifoldIcon,
-    previewTitle: "Bạch Đằng 938",
-    previewBody:
-      "Ngô Quyền chuẩn bị thế trận cọc gỗ trên sông, chờ thủy triều rút để phản công.",
   },
   {
     step: "02",
-    eyebrow: "Đặt câu hỏi",
-    title: "Trò chuyện tự nhiên thay vì đọc một chiều",
-    body: "Câu hỏi mở giúp người học đào sâu nguyên nhân, niềm tin và lựa chọn của nhân vật trong từng thời khắc.",
-    icon: ChatTextIcon,
-    previewTitle: "Bạn hỏi",
-    previewBody: "Vì sao phải chờ nước triều rút mới tổng tiến công?",
+    eyebrow: "Xem video",
+    title: "Đắm mình trong không khí lịch sử",
+    body: "Video mô tả bối cảnh, địa điểm và diễn biến giúp người học hình dung rõ nét thời khắc lịch sử trước khi bắt đầu cuộc trò chuyện.",
+    icon: VideoCameraIcon,
   },
   {
     step: "03",
-    eyebrow: "Hiểu bối cảnh",
-    title: "Kết nối sự kiện với con người và hệ quả",
-    body: "History Talk giúp biến dữ kiện rời rạc thành mạch truyện: ai quyết định, vì sao quyết định và điều gì xảy ra sau đó.",
-    icon: CompassIcon,
-    previewTitle: "AI phản hồi",
-    previewBody:
-      "Kế sách phụ thuộc vào con nước. Khi thuyền địch mắc cạn, thế trận mới thật sự khép lại.",
+    eyebrow: "Trò chuyện",
+    title: "Đối thoại cùng nhân vật lịch sử",
+    body: "Người học trò chuyện với nhân vật trong bối cảnh đó để đào sâu nguyên nhân, niềm tin và những quyết định lịch sử.",
+    icon: ChatTextIcon,
   },
   {
     step: "04",
-    eyebrow: "Ôn tập",
+    eyebrow: "Kiểm tra",
     title: "Chốt kiến thức bằng quiz sau hành trình",
-    body: "Sau mỗi cuộc trò chuyện, người học kiểm tra lại điều vừa hiểu bằng câu hỏi ngắn, rõ bối cảnh và có giải thích.",
+    body: "Sau khi trò chuyện, người học kiểm tra lại những gì đã hiểu bằng câu hỏi ngắn gắn liền với bối cảnh vừa trải nghiệm.",
     icon: QuestionIcon,
-    previewTitle: "Quiz nhanh",
-    previewBody:
-      "Chiến thuật nào giúp Ngô Quyền đánh bại quân Nam Hán trên sông Bạch Đằng?",
   },
 ];
 
@@ -111,55 +99,27 @@ export function FeaturesSection() {
     return () => ctx?.revert();
   }, []);
 
-  const activeStep = journeySteps[active];
-  const ActiveIcon = activeStep.icon;
 
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-main)] py-20 md:py-32"
+      className="relative overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-main)] py-12 md:py-20 lg:py-24"
     >
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(90deg,rgba(255,146,21,0.06)_0,transparent_28%,transparent_72%,rgba(143,179,200,0.06)_100%)]" />
 
       <Container className="relative z-10">
-        <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
           <div className="lg:sticky lg:top-28 lg:self-start">
-            <span className="mb-4 block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-gold)]">
-              Hành trình học
-            </span>
-            <h2 className="max-w-xl text-3xl font-bold uppercase leading-tight tracking-wide sm:text-4xl lg:text-5xl bg-gradient-to-r from-[var(--text-primary)] via-[var(--accent-gold)] to-[var(--text-primary)] bg-clip-text text-transparent">
-              Một dòng thời gian, bốn lần chạm vào lịch sử
+            <h2 className="vi-heading mb-4 text-[clamp(2.2rem,5.5vw,5.5rem)] font-bold uppercase tracking-wide text-[var(--text-secondary)]">
+              Một dòng
+              <br />
+              thời gian,
+              <br />
+              <span className="text-[var(--accent-gold)] font-title">bốn lần chạm</span>
             </h2>
-            <p className="mt-5 max-w-md text-sm leading-relaxed text-[var(--text-secondary)] lg:text-base">
+            <p className="vi-text max-w-[320px] text-sm text-[var(--text-secondary)] lg:text-base">
               Mỗi bước dẫn người học từ tò mò đến đối thoại, rồi khép lại bằng ôn tập có ý nghĩa.
             </p>
-
-            <div className="mt-8 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[#101a2c] shadow-[var(--shadow-strong)]">
-              <div className="border-b border-[var(--border-default)] px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ActiveIcon className="h-5 w-5 text-[var(--accent-gold)]" />
-                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                      {activeStep.previewTitle}
-                    </span>
-                  </div>
-                  <span className="text-[0.65rem] font-semibold text-[var(--accent-gold)]">
-                    {activeStep.step}/04
-                  </span>
-                </div>
-              </div>
-              <div className="min-h-[190px] p-5">
-                <div className="mb-4 flex justify-start">
-                  <div className="max-w-[88%] rounded-lg rounded-tl-none border border-[var(--border-default)] bg-[var(--bg-surface)] p-4 text-sm leading-relaxed text-[var(--text-secondary)]">
-                    {activeStep.previewBody}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                  <CheckCircleIcon className="h-4 w-4 text-emerald-400" />
-                  <span>Bối cảnh được giữ trong mạch học, không tách rời thành dữ kiện khô.</span>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="relative">
@@ -169,7 +129,7 @@ export function FeaturesSection() {
               className="absolute left-[19px] top-0 hidden h-full w-px origin-top bg-[var(--accent-gold)] md:block"
             />
 
-            <div className="space-y-5">
+            <div className="space-y-3">
               {journeySteps.map((item, index) => {
                 const Icon = item.icon;
                 const isActive = active === index;
@@ -196,22 +156,22 @@ export function FeaturesSection() {
 
                     <span
                       className={cn(
-                        "block rounded-[var(--radius-lg)] border p-5 transition-all duration-300",
+                        "block rounded-[var(--radius-lg)] border p-4 transition-all duration-300",
                         isActive
                           ? "border-[var(--accent-gold)]/40 bg-[var(--bg-surface)] shadow-[var(--shadow-soft)]"
                           : "border-[var(--border-default)] bg-transparent hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)]/40",
                       )}
                     >
-                      <span className="mb-3 flex items-center justify-between gap-4">
+                      <span className="mb-2 flex items-center justify-between gap-4">
                         <span className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[var(--accent-gold)]">
                           {item.eyebrow}
                         </span>
                         <span className="text-xs font-bold text-[var(--text-muted)]">{item.step}</span>
                       </span>
-                      <span className="block text-lg font-bold uppercase leading-snug text-[var(--text-primary)]">
+                      <span className="block text-base font-bold uppercase leading-snug text-[var(--text-primary)]">
                         {item.title}
                       </span>
-                      <span className="mt-3 block text-sm leading-relaxed text-[var(--text-secondary)]">
+                      <span className="vi-text mt-2 block text-sm text-[var(--text-secondary)]">
                         {item.body}
                       </span>
                     </span>

@@ -28,7 +28,7 @@ export function ClosingSection() {
 
           <div className="relative z-20 grid h-full w-full grid-cols-1 gap-8 px-6 py-10 sm:px-10 sm:py-14 lg:grid-cols-3 lg:gap-0 lg:px-16 lg:py-0">
             <div className="flex items-center">
-              <h2 data-reveal="fast" className="text-3xl font-bold text-[var(--text-primary)] sm:text-4xl lg:text-6xl">
+              <h2 data-reveal="fast" className="vi-heading text-3xl font-bold text-[var(--text-primary)] sm:text-4xl lg:text-6xl">
                 LỊCH SỬ KHÔNG <br /> CHỈ LÀ{" "}
                 <span className="text-[var(--accent-gold)]">QUÁ KHỨ.</span>
               </h2>
@@ -37,7 +37,7 @@ export function ClosingSection() {
             <div className="hidden lg:block" />
 
             <div className="flex flex-col items-start justify-center gap-6 text-left lg:items-end lg:text-right">
-              <p data-reveal="block" className="max-w-[280px] text-base text-[var(--text-secondary)] lg:text-lg">
+              <p data-reveal="block" className="vi-text max-w-[280px] text-base text-[var(--text-secondary)] lg:text-lg">
                 Bước vào cuộc trò chuyện với những người đã tạo nên lịch sử. Đặt câu hỏi, khám phá bối cảnh và hiểu quá khứ qua góc nhìn của nhân vật.
               </p>
               <div data-reveal="block">

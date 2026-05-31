@@ -166,20 +166,44 @@ function ChatBubble({
 
 export function SolutionSection() {
   const sectionRef = useRef<HTMLElement>(null);
+  const chatRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [activeMessage, setActiveMessage] = useState(0);
   const [completedMessages, setCompletedMessages] = useState<Set<number>>(new Set());
   const [isAnimating, setIsAnimating] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
   useRevealAnimation(sectionRef);
 
   const handleNavigateToHome = () => {
     router.push("/home");
   };
 
+  // Intersection Observer to start animation when scrolled into view
   useEffect(() => {
-    if (activeMessage >= chatMessages.length) return;
+    const chatElement = chatRef.current;
+    if (!chatElement) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasStarted) {
+            setHasStarted(true);
+            setActiveMessage(0);
+            setIsAnimating(true);
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(chatElement);
+    return () => observer.disconnect();
+  }, [hasStarted]);
+
+  useEffect(() => {
+    if (!hasStarted || activeMessage >= chatMessages.length) return;
     setIsAnimating(true);
-  }, [activeMessage]);
+  }, [activeMessage, hasStarted]);
 
   const handleMessageComplete = (messageIndex: number) => {
     setCompletedMessages((prev) => new Set(prev).add(messageIndex));
@@ -195,6 +219,7 @@ export function SolutionSection() {
   const handleRestart = () => {
     setActiveMessage(0);
     setCompletedMessages(new Set());
+    setIsAnimating(true);
   };
 
   return (
@@ -224,7 +249,7 @@ export function SolutionSection() {
                 <h3 className="mb-1 text-sm font-bold text-[var(--text-primary)] transition-colors duration-300 group-hover:text-[var(--accent-gold)]">
                   {item.title}
                 </h3>
-                <p className="text-xs leading-relaxed text-[var(--text-secondary)]">{item.description}</p>
+                <p className="vi-text text-xs text-[var(--text-secondary)]">{item.description}</p>
               </div>
             ))}
           </div>
@@ -234,21 +259,21 @@ export function SolutionSection() {
           {/* Left Column */}
           <div className="space-y-4">
             <div data-reveal="fast" className="text-left">
-              <h2 className="mb-2 text-[clamp(2rem,4vw,4rem)] font-bold uppercase leading-[0.95] tracking-wide text-[var(--text-secondary)]">
+              <h2 className="vi-heading mb-2 text-[clamp(2rem,4vw,4rem)] font-bold uppercase tracking-wide text-[var(--text-secondary)]">
                 Bước vào
                 <br />
                 góc nhìn của
                 <br />
                 <span className="text-[var(--accent-gold)] font-title">người làm nên lịch sử</span>
               </h2>
-              <p className="max-w-[320px] text-sm leading-relaxed text-[var(--text-secondary)]">
+              <p className="vi-text max-w-[320px] text-sm text-[var(--text-secondary)]">
                 History Talk biến những dòng chữ tĩnh thành cuộc đối thoại có bối cảnh, ký ức và phản hồi.
               </p>
             </div>
           </div>
 
           {/* Right Column - Chat Animation */}
-          <div data-reveal="block" className="relative">
+          <div ref={chatRef} data-reveal="block" className="relative">
             <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-[var(--accent-gold)]/10 to-[#8fb3c8]/10 opacity-50 blur-2xl" />
 
             <div className="relative flex h-[380px] w-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[#0d1627] shadow-2xl">

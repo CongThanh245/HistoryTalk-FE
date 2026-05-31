@@ -83,14 +83,10 @@ export function ProblemSection() {
         <Container>
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
             <div>
-              <h2 className="mb-4 text-[clamp(2.2rem,5.5vw,5.5rem)] font-bold uppercase leading-[0.95] tracking-wide text-[var(--text-secondary)]">
-                Vấn đề
-               
-                học  <br /><span className="text-[var(--accent-gold)] font-title">lịch sử</span>
-                <br />
-                ngày nay
+              <h2 className="vi-heading mb-4 text-[clamp(2.5rem,5.5vw,5rem)] font-bold uppercase tracking-wide text-[var(--text-secondary)]">
+                Vấn đề học <span className="text-[var(--accent-gold)] font-title">lịch sử</span> ngày nay
               </h2>
-              <p className="max-w-[320px] text-sm leading-relaxed text-[var(--text-secondary)] lg:text-base">
+              <p className="vi-text max-w-[320px] text-sm text-[var(--text-secondary)] lg:text-base">
                 Ba rào cản lớn đang ngăn người học chạm vào chiều sâu của lịch sử: bối cảnh, cảm xúc và khả năng tự đặt câu hỏi.
               </p>
             </div>
@@ -112,7 +108,7 @@ export function ProblemSection() {
                       {problem.title}
                     </h3>
                     <div className="mb-2.5 h-[1.5px] w-7 bg-[var(--accent-gold)] opacity-30" />
-                    <p className="text-[0.9rem] leading-relaxed text-[var(--text-secondary)] lg:text-[0.95rem]">
+                    <p className="vi-text text-[0.9rem] text-[var(--text-secondary)] lg:text-[0.95rem]">
                       {problem.body}
                     </p>
                   </div>
