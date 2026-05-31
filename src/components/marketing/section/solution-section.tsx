@@ -61,6 +61,11 @@ function TypingText({
   const [isTyping, setIsTyping] = useState(false);
   const completedRef = useRef(hasCompleted);
 
+  // Reset ref when hasCompleted changes from true to false (restart)
+  if (!hasCompleted && completedRef.current) {
+    completedRef.current = false;
+  }
+
   useEffect(() => {
     // If already completed before, show full text immediately
     if (hasCompleted || completedRef.current) {
