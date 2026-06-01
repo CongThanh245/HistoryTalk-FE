@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { ChatTextIcon } from "@phosphor-icons/react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ChatCharacter } from "@/services/chat.service";
 import { characterService } from "@/services/character.service";
@@ -28,6 +29,23 @@ export function ChatRightPanel({
   isOpen,
   setIsOpen,
 }: ChatRightPanelProps) {
+  const [isDesktopPointer, setIsDesktopPointer] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(pointer: fine)").matches;
+  });
+
+  useEffect(() => {
+    const mql = window.matchMedia("(pointer: fine)");
+    const update = () => setIsDesktopPointer(mql.matches);
+    update();
+    mql.addEventListener?.("change", update);
+    return () => mql.removeEventListener?.("change", update);
+  }, []);
+
+  const disableSheetAnimationOnDesktop = useMemo(
+    () => isDesktopPointer,
+    [isDesktopPointer],
+  );
   const { data: characters = [], isLoading } = useQuery({
     queryKey: queryKeys.characters.byContext(activeCharacter.contextId ?? ""),
     queryFn: () => characterService.getByContext(activeCharacter.contextId!),
@@ -199,7 +217,8 @@ export function ChatRightPanel({
       {/* Desktop: Sidebar */}
       <div
         className={cn(
-          "hidden md:flex shrink-0 h-full flex-col transition-transform duration-300 z-50 border-l overflow-hidden",
+          (isDesktopPointer ? "flex" : "hidden md:flex") +
+            " shrink-0 h-full flex-col transition-transform duration-300 z-50 border-l overflow-hidden",
           "relative w-[260px]",
           isOpen ? "translate-x-0" : "translate-x-0",
         )}
@@ -212,10 +231,13 @@ export function ChatRightPanel({
       </div>
 
       {/* Mobile: Bottom Sheet */}
+      {!isDesktopPointer && (
       <div className="md:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetContent 
             side="bottom" 
+            disableAnimation={disableSheetAnimationOnDesktop}
+            disableOverlayAnimation={disableSheetAnimationOnDesktop}
             className="h-[80vh] p-0 border-t"
             style={{
               background: "var(--bg-surface)",
@@ -229,6 +251,7 @@ export function ChatRightPanel({
           </SheetContent>
         </Sheet>
       </div>
+      )}
     </>
   );
 }

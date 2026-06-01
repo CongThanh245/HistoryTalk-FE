@@ -97,16 +97,8 @@ export function ChatClient({
     }
   }, [activeSessionId]);
 
-  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
-  const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
-
-  // Default hide on mobile/tablet (< md breakpoint)
-  useEffect(() => {
-    if (window.innerWidth < 768) {
-      setIsLeftPanelOpen(false);
-      setIsRightPanelOpen(false);
-    }
-  }, []);
+  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(false);
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
 
   if (isLoadingCharacter || !activeCharacter) {
     return (
