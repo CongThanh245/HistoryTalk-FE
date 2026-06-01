@@ -53,23 +53,12 @@ export function ChatLeftPanel({
 }: ChatLeftPanelProps) {
   const [showHint, setShowHint] = useState(false);
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
-  const [isDesktopPointer, setIsDesktopPointer] = useState(() => {
+  const disableSheetAnimationOnDesktop = useMemo(() => {
     if (typeof window === "undefined") return false;
-    return window.matchMedia("(pointer: fine)").matches;
-  });
-
-  useEffect(() => {
-    const mql = window.matchMedia("(pointer: fine)");
-    const update = () => setIsDesktopPointer(mql.matches);
-    update();
-    mql.addEventListener?.("change", update);
-    return () => mql.removeEventListener?.("change", update);
+    // Desktop/laptop: if user somehow sees the bottom sheet (narrow window),
+    // do not animate it sliding up.
+    return window.innerWidth >= 768;
   }, []);
-
-  const disableSheetAnimationOnDesktop = useMemo(
-    () => isDesktopPointer,
-    [isDesktopPointer],
-  );
 
   const createSession = useCreateSession();
   const softDeleteSession = useSoftDeleteSession();
@@ -281,10 +270,9 @@ export function ChatLeftPanel({
         {/* Desktop: Sidebar */}
         <div
           className={cn(
-            (isDesktopPointer ? "block" : "hidden md:block") +
-              " shrink-0 h-full transition-all duration-300 z-50",
+            "hidden md:block shrink-0 h-full transition-all duration-300 z-50",
             "relative",
-            isOpen ? "w-[260px]" : isDesktopPointer ? "w-[28px]" : "w-0 md:w-[28px]",
+            isOpen ? "w-[260px]" : "w-0 md:w-[28px]",
           )}
         >
           <Tooltip>
@@ -293,8 +281,7 @@ export function ChatLeftPanel({
               onClick={isOpen ? () => setIsOpen(false) : handleOpen}
               onMouseEnter={dismissHint}
               className={cn(
-                (isDesktopPointer ? "flex" : "hidden md:flex") +
-                  " absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-6 h-10 items-center justify-center rounded-full border cursor-pointer transition-all duration-150 hover:scale-110",
+                "hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-6 h-10 items-center justify-center rounded-full border cursor-pointer transition-all duration-150 hover:scale-110",
               )}
               style={{
                 background: "var(--bg-elevated)",
@@ -317,10 +304,7 @@ export function ChatLeftPanel({
 
         {!isOpen && showHint && (
           <div
-            className={
-              (isDesktopPointer ? "absolute" : "hidden md:absolute") +
-              " left-6 top-1/2 -translate-y-1/2 z-30 flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap"
-            }
+            className="hidden md:absolute left-6 top-1/2 -translate-y-1/2 z-30 flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap"
             style={{
               background: "var(--bg-elevated)",
               border: "1px solid var(--border-default)",
@@ -369,7 +353,6 @@ export function ChatLeftPanel({
         </div>
 
         {/* Mobile: Bottom Sheet */}
-        {!isDesktopPointer && (
         <div className="md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetContent 
@@ -387,7 +370,6 @@ export function ChatLeftPanel({
             </SheetContent>
           </Sheet>
         </div>
-        )}
 
         <ConfirmDialog
           open={!!deleteSessionId}
