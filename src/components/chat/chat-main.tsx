@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
+import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
 import type {
   ChatCharacter,
   ChatMessage,
@@ -22,6 +22,7 @@ import type { KeywordData } from "@/data/keywords";
 import { cn } from "@/lib/utils/cn";
 import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
 import { toast } from "sonner";
+import { useSidebar } from "@/components/layouts/sidebar/sidebar-context";
 
 interface ChatMainProps {
   character: ChatCharacter;
@@ -44,6 +45,7 @@ export function ChatMain({
   isLeftOpen = false,
   isRightOpen = false,
 }: ChatMainProps) {
+  const { toggleMobileSidebar } = useSidebar();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>(
     [],
@@ -207,14 +209,25 @@ export function ChatMain({
           background: "var(--bg-main)",
         }}
       >
-        {/* Toggle Left (Mobile/Tablet) */}
+        {/* Mobile hamburger: open website sidebar */}
+        <button
+          onClick={toggleMobileSidebar}
+          className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
+          style={{ color: "var(--text-secondary)" }}
+          aria-label="Mở menu"
+        >
+          <ListIcon className="w-5 h-5" />
+        </button>
+
+        {/* Toggle Chat History (Mobile/Tablet) */}
         {toggleLeftPanel && (
           <button
             onClick={toggleLeftPanel}
             className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
             style={{ color: isLeftOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
+            aria-label="Lịch sử trò chuyện"
           >
-            <ListIcon className="w-5 h-5" />
+            <ClockCounterClockwiseIcon className="w-5 h-5" />
           </button>
         )}
 
