@@ -1,10 +1,11 @@
 "use client";
 
 // components/quiz/QuizQuestionCard.tsx
-// Một câu hỏi: chọn đáp án → hiện đúng/sai + explanation
+// Một câu hỏi: chọn đáp án → hiện đúng/sai + explanation (có toggle)
 
-import React from "react";
+import React, { useState } from "react";
 import type { QuizQuestion } from "@/services/quiz.service";
+import { Eye, EyeOff } from "lucide-react";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
 
@@ -23,6 +24,7 @@ export function QuizQuestionCard({
 }: QuizQuestionCardProps) {
   const hasAnswered = selectedAnswer !== null;
   const isCorrect = selectedAnswer === question.correctAnswer;
+  const [showExplanation, setShowExplanation] = useState(false);
 
   function getOptionStyle(optionIndex: number) {
     if (!hasAnswered) {
@@ -135,8 +137,8 @@ export function QuizQuestionCard({
         ))}
       </div>
 
-      {/* Explanation — chỉ hiện sau khi trả lời */}
-      {hasAnswered && question.explanation && (
+      {/* Explanation — chỉ hiện khi đã trả lời và bật toggle */}
+      {hasAnswered && showExplanation && question.explanation && (
         <div
           className="mx-4 mb-4 p-3.5 rounded-xl"
           style={{
@@ -165,7 +167,7 @@ export function QuizQuestionCard({
       {/* Status strip at bottom */}
       {hasAnswered && (
         <div
-          className="px-5 py-2.5 flex items-center gap-2"
+          className="px-5 py-2.5 flex items-center justify-between"
           style={{
             background: isCorrect
               ? "rgba(16,185,129,0.06)"
@@ -173,20 +175,42 @@ export function QuizQuestionCard({
             borderTop: `1px solid ${isCorrect ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.12)"}`,
           }}
         >
-          {isCorrect ? (
-            <span
-              className="text-xs font-medium"
-              style={{ color: "#10b981" }}
+          <div className="flex items-center gap-2">
+            {isCorrect ? (
+              <span
+                className="text-xs font-medium"
+                style={{ color: "#10b981" }}
+              >
+                Chính xác!
+              </span>
+            ) : (
+              <span
+                className="text-xs font-medium"
+                style={{ color: "#ef4444" }}
+              >
+                Chưa đúng. Đáp án: {OPTION_LABELS[question.correctAnswer]}
+              </span>
+            )}
+          </div>
+
+          {question.explanation && (
+            <button
+              onClick={() => setShowExplanation((v) => !v)}
+              className="flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-lg transition-all hover:bg-black/5"
+              style={{ color: "var(--content-muted)" }}
             >
-              Chính xác!
-            </span>
-          ) : (
-            <span
-              className="text-xs font-medium"
-              style={{ color: "#ef4444" }}
-            >
-              Chưa đúng. Đáp án: {OPTION_LABELS[question.correctAnswer]}
-            </span>
+              {showExplanation ? (
+                <>
+                  <EyeOff size={14} />
+                  <span>Ẩn giải thích</span>
+                </>
+              ) : (
+                <>
+                  <Eye size={14} />
+                  <span>Xem giải thích</span>
+                </>
+              )}
+            </button>
           )}
         </div>
       )}

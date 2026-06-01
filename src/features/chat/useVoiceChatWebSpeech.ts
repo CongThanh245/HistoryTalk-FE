@@ -142,10 +142,9 @@ export function useVoiceChatWebSpeech({
         return;
       }
       
-      console.error("[WebSpeech] STT error:", err);
       onError?.(err.message || "Lỗi nhận dạng giọng nói");
       setStatus("error");
-      setTimeout(() => setStatus("idle"), 2000);
+      setTimeout(() => setStatus("idle"), 3000);
     } finally {
       setIsListening(false);
     }
@@ -177,15 +176,32 @@ export function useVoiceChatWebSpeech({
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.error('[WebSpeech] API Error:', res.status, errorText);
-        console.error('[WebSpeech] Request body:', { sessionId, content: text });
-        // Parse BE error message
+        let userFriendlyError = "Lỗi kết nối máy chủ";
+        
         try {
           const errorJson = JSON.parse(errorText);
-          throw new Error(errorJson.message || `HTTP ${res.status}`);
+          const beMessage = errorJson.message || "";
+          
+          // Phân loại lỗi để hiển thị message phù hợp
+          if (beMessage.includes("Connection refused") || beMessage.includes("I/O error")) {
+            userFriendlyError = "Dịch vụ AI đang bảo trì. Vui lòng thử lại sau.";
+          } else if (res.status === 503) {
+            userFriendlyError = "Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau.";
+          } else if (res.status === 429) {
+            userFriendlyError = "Quá nhiều yêu cầu. Vui lòng đợi một chút.";
+          } else if (res.status === 401) {
+            userFriendlyError = "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
+          } else if (beMessage) {
+            userFriendlyError = beMessage;
+          }
         } catch {
-          throw new Error(`HTTP ${res.status}: ${errorText}`);
+          // Không parse được JSON, dùng status code
+          if (res.status === 500) {
+            userFriendlyError = "Lỗi máy chủ nội bộ. Vui lòng thử lại sau.";
+          }
         }
+        
+        throw new Error(userFriendlyError);
       }
 
       const resData = await res.json();
@@ -220,10 +236,10 @@ export function useVoiceChatWebSpeech({
 
       setStatus("idle");
     } catch (err: any) {
-      console.error("[WebSpeech] Chat error:", err);
-      onError?.(err.message || "Lỗi kết nối");
+      const errorMsg = err.message || "Lỗi kết nối";
+      onError?.(errorMsg);
       setStatus("error");
-      setTimeout(() => setStatus("idle"), 2000);
+      setTimeout(() => setStatus("idle"), 3000);
     }
   }, [sessionId, onError]);
 
