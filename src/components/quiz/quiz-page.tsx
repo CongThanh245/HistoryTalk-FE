@@ -81,7 +81,7 @@ export function QuizPageClient() {
                 Luyện tập theo chủ đề
               </p>
               <h1 className="text-xl font-bold md:text-3xl" style={{ color: "var(--content-heading)" }}>
-                Trắc nghiệm lịch sử
+                Câu đố lịch sử
               </h1>
               <p className="mt-1.5 md:mt-2 text-xs md:text-sm leading-5 md:leading-6" style={{ color: "var(--content-muted)" }}>
                 Chọn một bộ đề, làm nhanh theo bối cảnh lịch sử và xem lại đáp án ngay sau khi nộp bài.

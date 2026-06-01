@@ -37,10 +37,11 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
       { icon: BankIcon, label: "Sự kiện lịch sử", href: "/events" },
       { icon: UserIcon, label: "Nhân vật", href: "/characters" },
       { icon: ChatTextIcon, label: "Lịch sử chat", href: "/chat-history" },
-      { icon: ClipboardTextIcon, label: "Trắc nghiệm", href: "/quiz" },
+      { icon: ClipboardTextIcon, label: "Câu đố lịch sử", href: "/quiz" },
       { icon: MapTrifoldIcon, label: "Bản đồ lịch sử", href: "/map" },
-      { icon: BooksIcon, label: "Library", href: "/library" },
-      { icon: BookmarkIcon, label: "Đã lưu", href: "/saved" },
+      // MVP: Ẩn Library và Đã lưu
+      // { icon: BooksIcon, label: "Library", href: "/library" },
+      // { icon: BookmarkIcon, label: "Đã lưu", href: "/saved" },
     ],
   },
   {
@@ -59,7 +60,7 @@ export const STAFF_SIDEBAR: SidebarSection[] = [
       { icon: ScrollIcon, label: "Bối cảnh", href: "/staff/contexts" },
       { icon: UserIcon, label: "Nhân vật", href: "/staff/characters" },
       { icon: BooksIcon, label: "Tài liệu", href: "/staff/documents" },
-      { icon: ClipboardTextIcon, label: "Trắc nghiệm", href: "/staff/quizzes" },
+      { icon: ClipboardTextIcon, label: "Câu đố lịch sử", href: "/staff/quizzes" },
     ],
   },
   {

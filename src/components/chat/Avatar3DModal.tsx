@@ -189,7 +189,8 @@ export function Avatar3DModal({
 }: Avatar3DModalProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // Internal mode state (can be toggled by user)
-  const [internalMode, setInternalMode] = useState<VoiceMode>(modeProp ?? (useStream ? "stream" : "rest"));
+  // MVP: Luôn dùng web-speech (free) - ẩn toggle Pro/Free
+  const [internalMode, setInternalMode] = useState<VoiceMode>("web-speech");
   
   // Update internal mode when prop changes
   useEffect(() => {
@@ -358,37 +359,8 @@ export function Avatar3DModal({
               {errorMsg ?? STATUS_LABEL[status]}
             </div>
 
-            {/* Mode Toggle - cho phép chuyển đổi giữa các modes */}
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <button
-                onClick={() => setInternalMode("stream")}
-                disabled={isBusy}
-                title="Chất lượng cao (cần API key)"
-                style={{
-                  padding: "4px 10px", borderRadius: 12, border: "none",
-                  fontSize: 11, cursor: isBusy ? "not-allowed" : "pointer",
-                  background: mode === "stream" ? "rgba(201,168,76,0.3)" : "rgba(255,255,255,0.06)",
-                  color: mode === "stream" ? "#c9a84c" : "rgba(255,255,255,0.5)",
-                  transition: "all 0.2s",
-                }}
-              >
-                🎙️ Pro
-              </button>
-              <button
-                onClick={() => setInternalMode("web-speech")}
-                disabled={isBusy}
-                title="Tiết kiệm - không cần API key"
-                style={{
-                  padding: "4px 10px", borderRadius: 12, border: "none",
-                  fontSize: 11, cursor: isBusy ? "not-allowed" : "pointer",
-                  background: mode === "web-speech" ? "rgba(76,201,120,0.3)" : "rgba(255,255,255,0.06)",
-                  color: mode === "web-speech" ? "#4cc978" : "rgba(255,255,255,0.5)",
-                  transition: "all 0.2s",
-                }}
-              >
-                💰 Free
-              </button>
-            </div>
+            {/* Mode Toggle - MVP: đã ẩn, luôn dùng web-speech (free) */}
+            <div />
 
             {/* Close */}
             <button

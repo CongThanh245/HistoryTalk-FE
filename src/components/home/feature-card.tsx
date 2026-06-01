@@ -39,7 +39,7 @@ const ALL_CARDS = [
   },
   {
     icon: ClipboardTextIcon,
-    title: "Trắc nghiệm",
+    title: "Câu đố lịch sử",
     desc: "Hàng nghìn câu hỏi theo chủ đề",
     href: "/quiz",
     accentHex: "#e8924a",

@@ -173,9 +173,11 @@ export function UserProfileDropdown({
             </Link>
           </DropdownMenuItem>
           
+          {/* MVP: Ẩn Cài đặt
           <DropdownMenuItem className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium focus:bg-[var(--accent-blue)] focus:text-[var(--bg-main)] transition-colors">
             Cài đặt
           </DropdownMenuItem>
+          */}
         </div>
         
         <DropdownMenuSeparator

@@ -19,7 +19,7 @@ const routeLabels: Record<string, string> = {
   library: "Thư viện",
   map: "Bản đồ",
   profile: "Hồ sơ",
-  quiz: "Trắc nghiệm",
+  quiz: "Câu đố lịch sử",
   saved: "Đã lưu",
   chat: "Nhân vật",
   "chat-history": "Lịch sử trò chuyện",

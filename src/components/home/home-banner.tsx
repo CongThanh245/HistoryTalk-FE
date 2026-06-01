@@ -22,7 +22,7 @@ const bannerLinks = [
   {
     href: "/quiz",
     icon: ClipboardTextIcon,
-    label: "Trắc nghiệm",
+    label: "Câu đố lịch sử",
     color: "var(--burning-flame, #FAB95B)",
     shadow: "0 6px 16px rgba(248, 146, 74, 0.15)",
   },

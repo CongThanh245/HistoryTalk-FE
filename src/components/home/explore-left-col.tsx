@@ -46,7 +46,7 @@ const FEATURE_CARDS = [
   },
   {
     icon: ClipboardTextIcon,
-    title: "Trắc nghiệm",
+    title: "Câu đố lịch sử",
     desc: "Hàng nghìn câu hỏi theo chủ đề",
     href: "/quiz",
     accentHex: "#ffb162",

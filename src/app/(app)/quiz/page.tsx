@@ -1,8 +1,8 @@
 import { QuizPageClient } from "@/components/quiz/quiz-page";
 
 export const metadata = {
-  title: "Trắc nghiệm lịch sử",
-  description: "Kiểm tra kiến thức lịch sử của bạn với các bộ câu hỏi trắc nghiệm",
+  title: "Câu đố lịch sử",
+  description: "Kiểm tra kiến thức lịch sử của bạn với các bộ câu hỏi",
 };
 
 export default function QuizPage() {
