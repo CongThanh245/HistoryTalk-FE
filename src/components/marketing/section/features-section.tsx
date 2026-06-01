@@ -114,7 +114,7 @@ export function FeaturesSection() {
               Một dòng thời gian, <span className="text-[var(--accent-gold)] font-title">bốn lần chạm</span>
             </h2>
             <p className="vi-text max-w-[320px] text-sm text-[var(--text-secondary)] lg:text-base">
-              Mỗi bước dẫn người học từ tò mò đến đối thoại, rồi khép lại bằng ôn tập có ý nghĩa.
+              Mỗi bước đều dẫn dắt người học từ sự tò mò đến những cuộc đối thoại sâu sắc, và khép lại bằng các bài ôn tập đầy ý nghĩa.
             </p>
           </div>
 

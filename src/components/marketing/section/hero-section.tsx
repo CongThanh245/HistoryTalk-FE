@@ -124,10 +124,10 @@ export function HeroSection() {
               </MaskedText>
 
               <div className="my-3 md:my-4 space-y-0.5 border-l-2 border-[var(--accent-gold)]/40 py-2 pl-4 md:py-3 md:pl-5 lg:pl-6">
-                <p className="text-xs md:text-sm font-semibold italic text-[var(--text-primary)]">
+                <p className="text-sm md:text-base font-light italic text-[var(--text-primary)]">
                   &quot;Học sinh chỉ chán học Lịch sử trên trường
                 </p>
-                <p className="text-xs md:text-sm font-semibold italic text-[var(--accent-gold)]">
+                <p className="text-sm md:text-base font-light italic text-[var(--accent-gold)]">
                   chứ không học sinh nào chán lịch sử dân tộc cả!&quot;
                 </p>
               </div>

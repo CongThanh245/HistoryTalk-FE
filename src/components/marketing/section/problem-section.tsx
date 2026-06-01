@@ -91,8 +91,8 @@ export function ProblemSection() {
               </p>
             </div>
 
-            <div className="-mx-4 overflow-hidden px-4">
-              <div className="flex flex-col gap-[14px]">
+            <div className="-mx-4 px-4">
+              <div className="flex flex-col gap-6">
                 {problems.map((problem, i) => (
                   <div
                     key={problem.id}
