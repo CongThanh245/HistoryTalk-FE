@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ChatCharacter } from "@/services/chat.service";
 import { useVoiceChatRest, type VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
 import { useVoiceChatStream, type VoiceMessage as VoiceStreamMessage } from "@/features/chat/useVoiceChatStream";
+import { useVoiceChatWebSpeech, type WebSpeechMessage } from "@/features/chat/useVoiceChatWebSpeech";
 
 // Dynamically import 3D viewer (no SSR)
 const FBXCharacterViewer = dynamic(
@@ -94,17 +95,20 @@ function ThinkingIndicator() {
 function TranscriptFeed({
   messages,
   isThinking,
+  interimText,
 }: {
   messages: VoiceRestMessage[];
   isThinking?: boolean;
+  interimText?: string; // Text đang nói (real-time)
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, interimText]);
 
-  if (messages.length === 0) return null;
+  const hasContent = messages.length > 0 || interimText;
+  if (!hasContent) return null;
 
   return (
     <div style={{
@@ -128,6 +132,31 @@ function TranscriptFeed({
           </div>
         </div>
       ))}
+      
+      {/* Hiển thị text đang nói (real-time) với style italic */}
+      {interimText && (
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <div style={{
+            maxWidth: "80%",
+            borderRadius: "16px 16px 4px 16px",
+            padding: "6px 12px", fontSize: 13, lineHeight: 1.5,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px dashed rgba(255,255,255,0.2)",
+            color: "rgba(255,255,255,0.5)",
+            fontStyle: "italic",
+          }}>
+            {interimText}
+            <span style={{
+              display: "inline-block",
+              width: 2, height: 14,
+              background: "rgba(255,255,255,0.5)",
+              marginLeft: 4,
+              animation: "pulse 0.8s ease-in-out infinite",
+            }} />
+          </div>
+        </div>
+      )}
+      
       {isThinking && <ThinkingIndicator />}
       <div ref={bottomRef} />
     </div>
@@ -136,20 +165,41 @@ function TranscriptFeed({
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
+type VoiceMode = "rest" | "stream" | "web-speech";
+
 interface Avatar3DModalProps {
   character: ChatCharacter;
   sessionId: string;
   contextId: string;
   onClose: () => void;
+  /** @deprecated use mode instead */
   useStream?: boolean; // true = streaming mode, false = REST mode
+  mode?: VoiceMode; // "rest" | "stream" | "web-speech" (miễn phí, không API key)
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function Avatar3DModal({ character, sessionId, contextId, onClose, useStream = true }: Avatar3DModalProps) {
+export function Avatar3DModal({ 
+  character, 
+  sessionId, 
+  contextId, 
+  onClose, 
+  useStream = true,
+  mode: modeProp
+}: Avatar3DModalProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // Internal mode state (can be toggled by user)
+  const [internalMode, setInternalMode] = useState<VoiceMode>(modeProp ?? (useStream ? "stream" : "rest"));
+  
+  // Update internal mode when prop changes
+  useEffect(() => {
+    if (modeProp) setInternalMode(modeProp);
+  }, [modeProp]);
+  
+  // Determine active mode
+  const mode = internalMode;
 
-  // Use streaming hook or REST hook based on prop
+  // Use appropriate hook based on mode
   const restHook = useVoiceChatRest({
     sessionId,
     characterId: character.id,
@@ -164,6 +214,18 @@ export function Avatar3DModal({ character, sessionId, contextId, onClose, useStr
     onError: (e) => setErrorMsg(e),
   });
 
+  const webSpeechHook = useVoiceChatWebSpeech({
+    sessionId,
+    characterId: character.id,
+    contextId,
+    onError: (e) => setErrorMsg(e),
+  });
+
+  // Select active hook based on mode
+  const activeHook = mode === "web-speech" ? webSpeechHook : 
+                     mode === "stream" ? streamHook : 
+                     restHook;
+
   const {
     status,
     messages,
@@ -171,9 +233,16 @@ export function Avatar3DModal({ character, sessionId, contextId, onClose, useStr
     stopRecording,
     ttsAnalyserRef,
     isRecording,
-  } = useStream ? streamHook : restHook;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    interimText,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    currentSentence,
+  } = activeHook as any;
 
   const isSpeaking = status === "speaking";
+  
+  // Lấy interim text cho hiển thị real-time (web-speech mode)
+  const liveTranscript = interimText || currentSentence || "";
 
   // ── Hold-to-talk handlers ─────────────────────────────────────────────────
 
@@ -289,6 +358,38 @@ export function Avatar3DModal({ character, sessionId, contextId, onClose, useStr
               {errorMsg ?? STATUS_LABEL[status]}
             </div>
 
+            {/* Mode Toggle - cho phép chuyển đổi giữa các modes */}
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <button
+                onClick={() => setInternalMode("stream")}
+                disabled={isBusy}
+                title="Chất lượng cao (cần API key)"
+                style={{
+                  padding: "4px 10px", borderRadius: 12, border: "none",
+                  fontSize: 11, cursor: isBusy ? "not-allowed" : "pointer",
+                  background: mode === "stream" ? "rgba(201,168,76,0.3)" : "rgba(255,255,255,0.06)",
+                  color: mode === "stream" ? "#c9a84c" : "rgba(255,255,255,0.5)",
+                  transition: "all 0.2s",
+                }}
+              >
+                🎙️ Pro
+              </button>
+              <button
+                onClick={() => setInternalMode("web-speech")}
+                disabled={isBusy}
+                title="Tiết kiệm - không cần API key"
+                style={{
+                  padding: "4px 10px", borderRadius: 12, border: "none",
+                  fontSize: 11, cursor: isBusy ? "not-allowed" : "pointer",
+                  background: mode === "web-speech" ? "rgba(76,201,120,0.3)" : "rgba(255,255,255,0.06)",
+                  color: mode === "web-speech" ? "#4cc978" : "rgba(255,255,255,0.5)",
+                  transition: "all 0.2s",
+                }}
+              >
+                💰 Free
+              </button>
+            </div>
+
             {/* Close */}
             <button
               onClick={onClose}
@@ -343,7 +444,11 @@ export function Avatar3DModal({ character, sessionId, contextId, onClose, useStr
 
           {/* ── Transcript ── */}
           <div style={{ width: "100%", maxWidth: 600, padding: "8px 16px 0", flexShrink: 0 }}>
-            <TranscriptFeed messages={messages} isThinking={status === "processing_chat" || status === "thinking"} />
+            <TranscriptFeed 
+              messages={messages} 
+              isThinking={status === "processing_chat" || status === "thinking"}
+              interimText={isRecording ? liveTranscript : ""} // Chỉ hiện khi đang thu
+            />
           </div>
 
           {/* ── Controls ── */}

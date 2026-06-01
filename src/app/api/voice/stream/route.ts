@@ -14,6 +14,7 @@
 
 import { NextRequest } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { ttsCache, getVoiceForCharacter } from "@/lib/tts-cache";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? "";
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -27,18 +28,7 @@ function splitToSentences(text: string): string[] {
     .filter((s) => s.length > 0);
 }
 
-// Get voice for character
-function getVoiceForCharacter(characterId: string): string {
-  const voiceMap: Record<string, string> = {
-    "nguyen-hue": "Fenrir",
-    "tran-hung-dao": "Charon",
-    "ly-thuong-kiet": "Charon",
-    "ho-chi-minh": "Fenrir",
-    "hai-ba-trung": "Aoede",
-    "nguyen-trai": "Puck",
-  };
-  return voiceMap[characterId] ?? "Aoede";
-}
+// getVoiceForCharacter imported from @/lib/tts-cache
 
 // PCM to WAV conversion (Gemini TTS returns raw PCM L16 24000Hz)
 function pcmToWav(pcmData: Buffer, sampleRate = 24000, channels = 1, bitDepth = 16): Buffer {
@@ -64,26 +54,36 @@ function pcmToWav(pcmData: Buffer, sampleRate = 24000, channels = 1, bitDepth = 
   return Buffer.concat([header, pcmData]);
 }
 
-// TTS for a single sentence
+// TTS for a single sentence with caching
 async function ttsSentence(
   text: string,
   characterId: string
 ): Promise<Buffer | null> {
   try {
+    const voiceName = getVoiceForCharacter(characterId);
+    
+    // Check cache first
+    const cached = ttsCache.get(text, voiceName);
+    if (cached) {
+      console.log(`[TTS Stream] Cache hit for: "${text.slice(0, 30)}..." (${voiceName})`);
+      return cached.audio;
+    }
+    
+    // Call Gemini 1.5 Flash TTS API
     const ttsBody = {
       contents: [{ parts: [{ text }], role: "user" }],
       generationConfig: {
         responseModalities: ["AUDIO"],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: getVoiceForCharacter(characterId) },
+            prebuiltVoiceConfig: { voiceName },
           },
         },
       },
     };
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,7 +104,12 @@ async function ttsSentence(
     if (audioPart?.inlineData?.data) {
       const pcmBuffer = Buffer.from(audioPart.inlineData.data, "base64");
       // Convert PCM to WAV so browser can decode it
-      return pcmToWav(pcmBuffer);
+      const wavBuffer = pcmToWav(pcmBuffer);
+      
+      // Store in cache
+      ttsCache.set(text, voiceName, wavBuffer, "audio/wav");
+      
+      return wavBuffer;
     }
     return null;
   } catch (err) {

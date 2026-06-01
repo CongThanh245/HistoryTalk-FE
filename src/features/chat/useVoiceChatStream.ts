@@ -6,6 +6,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useAuthStore } from "@/store/auth.store";
+import { getWebSpeechTTS, WebSpeechTTS } from "@/lib/web-speech-tts";
 
 export type VoiceStreamStatus =
   | "idle"
@@ -113,6 +114,8 @@ export function useVoiceChatStream({
   const audioQueueRef = useRef<AudioQueue | null>(null);
   const abortRef = useRef<boolean>(false);
   const assistantTextRef = useRef<string[]>([]);
+  const webSpeechRef = useRef<WebSpeechTTS | null>(null);
+  const hasReceivedAudioRef = useRef(false);
 
   // Init audio context
   const ensureAudioCtx = useCallback(() => {
@@ -157,6 +160,17 @@ export function useVoiceChatStream({
       formData.append("characterId", characterId);
       formData.append("contextId", contextId);
 
+      hasReceivedAudioRef.current = false;
+      
+      // Safety timeout: đảm bảo không bị stuck quá 45s
+      const safetyTimeout = setTimeout(() => {
+        console.warn('[VoiceChatStream] Safety timeout triggered');
+        abortRef.current = true;
+        onError?.("Quá thời gian chờ phản hồi từ server");
+        setStatus("error");
+        setTimeout(() => setStatus("idle"), 2000);
+      }, 45000);
+      
       try {
         const res = await fetch("/api/voice/stream", {
           method: "POST",
@@ -206,6 +220,7 @@ export function useVoiceChatStream({
                 case "audioChunk":
                   // Chuyển sang speaking khi có audio đầu tiên
                   setStatus("speaking");
+                  hasReceivedAudioRef.current = true;
 
                   // Decode and queue audio
                   const audioData = Uint8Array.from(atob(data.data), (c) =>
@@ -236,6 +251,15 @@ export function useVoiceChatStream({
                   break;
 
                 case "error":
+                  // Check for API key errors - need to exit and fallback
+                  const isApiKeyError = data.message?.includes("API key") || 
+                                        data.message?.includes("API_KEY") ||
+                                        data.message?.includes("quota") ||
+                                        data.message?.includes("exhausted");
+                  if (isApiKeyError) {
+                    console.warn('[VoiceChatStream] API key error, triggering fallback');
+                    throw new Error(data.message); // Exit loop to trigger fallback
+                  }
                   throw new Error(data.message);
 
                 case "done":
@@ -246,12 +270,64 @@ export function useVoiceChatStream({
             }
           }
         }
+        
+        // Check nếu không nhận được audio nào nhưng có text → trigger fallback
+        if (!hasReceivedAudioRef.current) {
+          if (assistantTextRef.current.length > 0) {
+            throw new Error("No audio received");
+          }
+          // Không có cả audio lẫn text → server error
+          throw new Error("Không nhận được phản hồi từ server");
+        }
       } catch (err: any) {
         if (abortRef.current) return;
         console.error("[VoiceChatStream] Error:", err);
-        onError?.(err.message);
+        
+        // Check for API key errors
+        const isApiKeyError = err.message?.includes("API key") || 
+                              err.message?.includes("API_KEY") ||
+                              err.message?.includes("quota") ||
+                              err.message?.includes("exhausted");
+        
+        // Fallback to Web Speech API nếu: 
+        // 1. Có text nhưng không có audio, HOẶC
+        // 2. Lỗi API key (cần fallback hoàn toàn)
+        const shouldFallback = (!hasReceivedAudioRef.current && assistantTextRef.current.length > 0) || isApiKeyError;
+        
+        if (shouldFallback && assistantTextRef.current.length > 0) {
+          const fullText = assistantTextRef.current.join(" ");
+          try {
+            if (!webSpeechRef.current) {
+              webSpeechRef.current = getWebSpeechTTS();
+            }
+            if (webSpeechRef.current?.isSupported()) {
+              console.log('[VoiceChatStream] Falling back to Web Speech API');
+              setStatus("speaking");
+              await webSpeechRef.current.speak(fullText);
+              setStatus("idle");
+              
+              // Thông báo user đang dùng chế độ fallback
+              if (isApiKeyError) {
+                console.warn('[VoiceChatStream] API key expired/quota exceeded - using free Web Speech');
+              }
+              return;
+            }
+          } catch (e) {
+            console.error('[VoiceChatStream] Web Speech fallback failed:', e);
+          }
+        }
+        
+        // Nếu là lỗi API key và không có text -> không thể fallback
+        if (isApiKeyError && assistantTextRef.current.length === 0) {
+          onError?.("API key hết hạn hoặc quota đã hết. Vui lòng liên hệ admin hoặc thử lại sau.");
+        } else {
+          onError?.(err.message);
+        }
+        
         setStatus("error");
-        setTimeout(() => setStatus("idle"), 2000);
+        setTimeout(() => setStatus("idle"), 3000);
+      } finally {
+        clearTimeout(safetyTimeout);
       }
     },
     [sessionId, characterId, contextId, ensureAudioCtx, onError]
@@ -306,7 +382,11 @@ export function useVoiceChatStream({
   useEffect(() => {
     return () => {
       cancel();
-      audioCtxRef.current?.close();
+      // Only close if not already closed to avoid InvalidStateError
+      if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
+        audioCtxRef.current.close().catch(() => {});
+      }
+      webSpeechRef.current?.cancel();
     };
   }, [cancel]);
 

@@ -1,7 +1,12 @@
 /**
  * Chia text thành sentences và TTS từng câu để phát streaming
  * Giảm perceived latency cho câu trả lời dài
+ * 
+ * NOTE: Hàm này chỉ dùng cho client-side direct API calls.
+ * Server-side caching được xử lý trong /api/voice/stream
  */
+
+import { getVoiceForCharacter, ttsCache } from "./tts-cache";
 
 export function splitToSentences(text: string): string[] {
   // Tách theo dấu câu tiếng Việt: . ! ?
@@ -15,17 +20,37 @@ export function splitToSentences(text: string): string[] {
 /**
  * TTS stream - Gọi TTS cho từng câu và phát luôn
  * Thay vì chờ full audio, bắt đầu phát câu đầu tiên ngay
+ * 
+ * Chỉ dùng trên client với direct API calls (không qua server)
+ * Note: ttsCache trên client là in-memory, không shared giữa sessions
  */
 export async function* streamTTS(
   sentences: string[],
   characterId: string,
   apiKey: string
 ): AsyncGenerator<{ audio: ArrayBuffer; text: string; index: number }, void, unknown> {
+  const voiceName = getVoiceForCharacter(characterId);
+  
   for (let i = 0; i < sentences.length; i++) {
     const sentence = sentences[i];
     
     // Skip TTS cho câu quá ngắn
     if (sentence.length < 3) continue;
+
+    // Check cache first (client-side cache)
+    const cached = ttsCache.get(sentence, voiceName);
+    if (cached) {
+      console.log(`[streamTTS] Client cache hit: "${sentence.slice(0, 30)}..."`);
+      yield { 
+        audio: cached.audio.buffer.slice(
+          cached.audio.byteOffset, 
+          cached.audio.byteOffset + cached.audio.byteLength
+        ) as ArrayBuffer, 
+        text: sentence, 
+        index: i 
+      };
+      continue;
+    }
 
     const ttsBody = {
       contents: [{ parts: [{ text: sentence }], role: "user" }],
@@ -33,14 +58,14 @@ export async function* streamTTS(
         responseModalities: ["AUDIO"],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: getVoiceForCharacter(characterId) },
+            prebuiltVoiceConfig: { voiceName },
           },
         },
       },
     };
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,20 +84,22 @@ export async function* streamTTS(
     );
 
     if (audioPart?.inlineData?.data) {
-      const audio = Buffer.from(audioPart.inlineData.data, "base64");
-      yield { audio: audio.buffer.slice(audio.byteOffset, audio.byteOffset + audio.byteLength), text: sentence, index: i };
+      const audioBuf = Buffer.from(audioPart.inlineData.data, "base64");
+      
+      // Store in client cache
+      ttsCache.set(sentence, voiceName, audioBuf, "audio/wav");
+      
+      yield { 
+        audio: audioBuf.buffer.slice(
+          audioBuf.byteOffset, 
+          audioBuf.byteOffset + audioBuf.byteLength
+        ) as ArrayBuffer, 
+        text: sentence, 
+        index: i 
+      };
     }
   }
 }
 
-function getVoiceForCharacter(characterId: string): string {
-  const voiceMap: Record<string, string> = {
-    "nguyen-hue": "Fenrir",
-    "tran-hung-dao": "Charon",
-    "ly-thuong-kiet": "Charon",
-    "ho-chi-minh": "Fenrir",
-    "hai-ba-trung": "Aoede",
-    "nguyen-trai": "Puck",
-  };
-  return voiceMap[characterId] ?? "Aoede";
-}
+// Re-export for convenience
+export { getVoiceForCharacter, ttsCache };

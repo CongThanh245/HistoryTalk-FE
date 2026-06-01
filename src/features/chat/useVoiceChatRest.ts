@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
+import { getWebSpeechTTS, WebSpeechTTS } from "@/lib/web-speech-tts";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -102,10 +103,47 @@ export function useVoiceChatRest({
     [ensureAudioCtx],
   );
 
+  // ── Web Speech API fallback ─────────────────────────────────────────────────
+  const webSpeechRef = useRef<WebSpeechTTS | null>(null);
+  
+  const playWithFallback = useCallback(
+    async (buffer: ArrayBuffer | null, text: string): Promise<void> => {
+      // Thử phát audio từ API trước
+      if (buffer && buffer.byteLength > 0) {
+        try {
+          await playAudio(buffer);
+          return;
+        } catch (e) {
+          console.warn('[VoiceChat] API audio failed, trying Web Speech:', e);
+        }
+      }
+
+      // Fallback to Web Speech API
+      try {
+        if (!webSpeechRef.current) {
+          webSpeechRef.current = getWebSpeechTTS();
+        }
+        
+        if (webSpeechRef.current?.isSupported()) {
+          console.log('[VoiceChat] Using Web Speech API fallback');
+          await webSpeechRef.current.speak(text);
+        } else {
+          throw new Error('Web Speech API không khả dụng');
+        }
+      } catch (e) {
+        console.error('[VoiceChat] Web Speech fallback failed:', e);
+        throw e;
+      }
+    },
+    [playAudio],
+  );
+
   // ── Gửi audio lên server, nhận về audio TTS ─────────────────────────────────
   const sendAudio = useCallback(
     async (audioBlob: Blob) => {
       setStatus("processing_stt");
+      
+      let assistantTranscript = ""; // Khai báo ở ngoài để catch block dùng được
 
       try {
         const useInternal =
@@ -176,7 +214,7 @@ export function useVoiceChatRest({
         }
 
         // Đọc assistant transcript từ header
-        const assistantTranscript = decodeURIComponent(
+        assistantTranscript = decodeURIComponent(
           res.headers.get("X-Assistant-Transcript") ?? "",
         );
 
@@ -203,12 +241,31 @@ export function useVoiceChatRest({
         await new Promise(r => setTimeout(r, 200));
 
         setStatus("speaking");
-        await playAudio(audioBuffer);
+        await playWithFallback(audioBuffer.byteLength > 0 ? audioBuffer : null, assistantTranscript);
         setStatus("idle");
       } catch (err: unknown) {
         const msg =
           err instanceof Error ? err.message : "Lỗi không xác định";
         console.error("[VoiceChatRest] sendAudio error:", err);
+        
+        // Thử Web Speech API khi API lỗi hoàn toàn (nhưng vẫn có transcript)
+        if (assistantTranscript) {
+          try {
+            if (!webSpeechRef.current) {
+              webSpeechRef.current = getWebSpeechTTS();
+            }
+            if (webSpeechRef.current?.isSupported()) {
+              console.log('[VoiceChat] Fallback to Web Speech API');
+              setStatus("speaking");
+              await webSpeechRef.current.speak(assistantTranscript);
+              setStatus("idle");
+              return;
+            }
+          } catch (e) {
+            console.error('[VoiceChat] Final fallback failed:', e);
+          }
+        }
+        
         onError?.(msg);
         setStatus("error");
         setTimeout(() => setStatus("idle"), 2000);
@@ -277,7 +334,11 @@ export function useVoiceChatRest({
   useEffect(() => {
     return () => {
       streamRef.current?.getTracks().forEach((t) => t.stop());
-      audioCtxRef.current?.close();
+      // Only close if not already closed to avoid InvalidStateError
+      if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
+        audioCtxRef.current.close().catch(() => {});
+      }
+      webSpeechRef.current?.cancel();
     };
   }, []);
 

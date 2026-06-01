@@ -72,7 +72,10 @@ export function useVoiceChat({
     mediaRecorderRef.current?.stop();
     streamRef.current?.getTracks().forEach((t) => t.stop());
     wsRef.current?.close();
-    audioContextRef.current?.close();
+    // Only close if not already closed to avoid InvalidStateError
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close().catch(() => {});
+    }
 
     if (durationIntervalRef.current) clearInterval(durationIntervalRef.current);
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);

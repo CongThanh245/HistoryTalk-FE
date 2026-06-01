@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { pcmToWav } from "@/lib/voice-gemini";
+import { ttsCache, getVoiceForCharacter } from "@/lib/tts-cache";
 
 // ── Gemini client (module-level, shared across requests) ─────────────────────
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? "";
@@ -137,72 +138,85 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // ── Step 3: TTS — Gemini 2.5 Flash TTS ──────────────────────────────────
-    const ttsBody = {
-      contents: [
-        {
-          parts: [{ text: aiResponse }],
-          role: "user",
-        },
-      ],
-      generationConfig: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: {
-              // Giọng đọc: Aoede (nữ), Charon (nam trầm), Fenrir (nam), Puck (nam trẻ)
-              voiceName: getVoiceForCharacter(characterId),
+    // ── Step 3: TTS — Gemini 1.5 Flash (nhiều voice hơn) ───────────────────
+    const voiceName = getVoiceForCharacter(characterId);
+    
+    // Check cache first
+    let outputBuffer: Buffer;
+    let outputContentType: string;
+    
+    const cached = ttsCache.get(aiResponse, voiceName);
+    
+    if (cached) {
+      outputBuffer = cached.audio;
+      outputContentType = cached.mimeType;
+      console.log(`[VoiceChat] Cache hit for voice ${voiceName}`);
+    } else {
+      // Call Gemini TTS API
+      const ttsBody = {
+        contents: [
+          {
+            parts: [{ text: aiResponse }],
+            role: "user",
+          },
+        ],
+        generationConfig: {
+          responseModalities: ["AUDIO"],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName },
             },
           },
         },
-      },
-    };
+      };
 
-    const ttsRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(ttsBody),
-      },
-    );
-
-    if (!ttsRes.ok) {
-      const errText = await ttsRes.text();
-      console.error("[VoiceChat] TTS API error:", errText);
-      return NextResponse.json(
-        { message: `Lỗi TTS: ${ttsRes.status}` },
-        { status: 502 },
+      const ttsRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(ttsBody),
+        },
       );
+
+      if (!ttsRes.ok) {
+        const errText = await ttsRes.text();
+        console.error("[VoiceChat] TTS API error:", errText);
+        return NextResponse.json(
+          { message: `Lỗi TTS: ${ttsRes.status}` },
+          { status: 502 },
+        );
+      }
+
+      const ttsData = (await ttsRes.json()) as GeminiTTSResponse;
+
+      const audioPart = ttsData.candidates
+        ?.at(0)
+        ?.content?.parts?.find(
+          (p) => p.inlineData?.mimeType?.startsWith("audio/"),
+        );
+
+      if (!audioPart?.inlineData?.data) {
+        console.error("[VoiceChat] TTS trả về không có audio part:", ttsData);
+        return NextResponse.json(
+          { message: "TTS không trả về audio" },
+          { status: 502 },
+        );
+      }
+
+      const rawAudioBuf = Buffer.from(audioPart.inlineData.data, "base64");
+
+      // Gemini TTS trả raw PCM (audio/L16;rate=24000) → cần thêm WAV header
+      const isRawPcm =
+        audioPart.inlineData.mimeType.includes("L16") ||
+        audioPart.inlineData.mimeType === "audio/pcm";
+
+      outputBuffer = isRawPcm ? pcmToWav(rawAudioBuf) : rawAudioBuf;
+      outputContentType = isRawPcm ? "audio/wav" : audioPart.inlineData.mimeType;
+      
+      // Store in cache
+      ttsCache.set(aiResponse, voiceName, outputBuffer, outputContentType);
     }
-
-    const ttsData = (await ttsRes.json()) as GeminiTTSResponse;
-
-    const audioPart = ttsData.candidates
-      ?.at(0)
-      ?.content?.parts?.find(
-        (p) => p.inlineData?.mimeType?.startsWith("audio/"),
-      );
-
-    if (!audioPart?.inlineData?.data) {
-      console.error("[VoiceChat] TTS trả về không có audio part:", ttsData);
-      return NextResponse.json(
-        { message: "TTS không trả về audio" },
-        { status: 502 },
-      );
-    }
-
-    const rawAudioBuf = Buffer.from(audioPart.inlineData.data, "base64");
-
-    // Gemini TTS trả raw PCM (audio/L16;rate=24000) → cần thêm WAV header
-    const isRawPcm =
-      audioPart.inlineData.mimeType.includes("L16") ||
-      audioPart.inlineData.mimeType === "audio/pcm";
-
-    const outputBuffer = isRawPcm ? pcmToWav(rawAudioBuf) : rawAudioBuf;
-    const outputContentType = isRawPcm
-      ? "audio/wav"
-      : audioPart.inlineData.mimeType;
 
     // ── Response ─────────────────────────────────────────────────────────────
     // NextResponse accepts Uint8Array (not Buffer directly) as BodyInit
@@ -226,19 +240,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Map character → giọng TTS phù hợp */
-function getVoiceForCharacter(characterId: string): string {
-  const voiceMap: Record<string, string> = {
-    "nguyen-hue": "Fenrir", // nam, mạnh mẽ
-    "tran-hung-dao": "Charon", // nam, trầm ổn
-    "ly-thuong-kiet": "Charon",
-    "ho-chi-minh": "Fenrir",
-    "hai-ba-trung": "Aoede", // nữ
-    "nguyen-trai": "Puck",
-  };
-  return voiceMap[characterId] ?? "Aoede";
-}
+// getVoiceForCharacter now imported from @/lib/tts-cache
 
 // ── Type helpers ──────────────────────────────────────────────────────────────
 interface GeminiTTSResponse {
