@@ -9,10 +9,15 @@ import { MagneticButton } from "../commons/MagneticButton";
 import { useSidebar } from "./sidebar/sidebar-context";
 import { UserProfileDropdown } from "./user-profile-dropdown";
 import { ThemeToggle } from "./theme-toggle";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
   const user = useAuthStore((s) => s.user);
   const { toggleMobileSidebar } = useSidebar();
+  const pathname = usePathname();
+
+  // Chat has a dedicated full-screen header inside ChatMain.
+  if (pathname?.startsWith("/chat")) return null;
 
   return (
     <header

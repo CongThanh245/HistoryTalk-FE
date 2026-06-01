@@ -229,7 +229,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(character.id)}
-      className="group relative w-full h-[400px] flex flex-col justify-end text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5"
+      className="group relative w-full h-[260px] sm:h-[400px] flex flex-col justify-end text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5"
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
@@ -255,9 +255,9 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
 
       {/* Badges */}
       {character.side && (
-        <div className="absolute top-3 right-3 z-10">
+      <div className="absolute top-2.5 sm:top-3 right-2.5 sm:right-3 z-10">
           <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm"
+            className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm"
             style={{
               background: "rgba(201,162,77,0.3)",
               color: "#ffffff",
@@ -268,9 +268,9 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
           </span>
         </div>
       )}
-      <div className="absolute top-3 left-3 z-10">
+      <div className="absolute top-2.5 sm:top-3 left-2.5 sm:left-3 z-10">
         <span
-          className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
+          className="text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-md"
           style={{
             background: "rgba(0,0,0,0.55)",
             color: "#ffffff",
@@ -282,27 +282,27 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       </div>
 
       {/* Normal State Text Content */}
-      <div className="relative px-4 pb-5 pt-20 z-20 text-white mt-auto pointer-events-none transition-opacity duration-300 group-hover:opacity-0">
-        <h3 className="text-base font-bold leading-snug mb-1 text-white">
+      <div className="relative px-3 sm:px-4 pb-3.5 sm:pb-5 pt-16 sm:pt-20 z-20 text-white mt-auto pointer-events-none transition-opacity duration-300 group-hover:opacity-0">
+        <h3 className="text-sm sm:text-base font-bold leading-snug mb-1 text-white line-clamp-1 sm:line-clamp-2">
           {character.name}
         </h3>
-        <div className="flex items-center gap-1.5 text-xs text-neutral-300 font-semibold mb-2">
+        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-300 font-semibold mb-1.5 sm:mb-2">
           <ChatTextIcon className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
           <span>{getChatCount(character.id)}</span>
           <span className="text-neutral-400 font-normal">· {character.title}</span>
         </div>
         {character.description && (
-          <p className="text-[11px] leading-relaxed text-neutral-300 line-clamp-2">
+          <p className="text-[10px] sm:text-[11px] leading-relaxed text-neutral-300 line-clamp-2">
             {character.description}
           </p>
         )}
       </div>
 
       {/* Hover State Overlay */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 flex flex-col p-4 bg-neutral-950/85 backdrop-blur-[4px] text-white">
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 flex flex-col p-3 sm:p-4 bg-neutral-950/85 backdrop-blur-[4px] text-white">
         {/* Avatar top left */}
-        <div className="flex items-start mb-4">
-          <div className="relative w-12 h-12 rounded-full border-2 border-white overflow-hidden shadow-md">
+        <div className="flex items-start mb-3 sm:mb-4">
+          <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-white overflow-hidden shadow-md">
             <Image
               src={avatarSrc}
               alt={character.name}
@@ -314,13 +314,13 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         </div>
 
         {/* Description text with typewriter effect */}
-        <div className="flex-1 text-xs leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium">
+        <div className="flex-1 text-[11px] sm:text-xs leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium">
           <TypewriterText text={character.description ?? ""} isHovered={isHovered} />
         </div>
 
         {/* Button Trò chuyện ngay */}
-        <div className="mt-4">
-          <div className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full text-xs font-bold bg-white text-black hover:bg-neutral-200 transition-colors shadow-lg">
+        <div className="mt-3 sm:mt-4">
+          <div className="flex items-center justify-center gap-1.5 w-full py-2 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-bold bg-white text-black hover:bg-neutral-200 transition-colors shadow-lg">
             <ChatTextIcon className="w-4 h-4 fill-current text-black" />
             Trò chuyện ngay
           </div>
@@ -409,7 +409,7 @@ export function CharacterPageCardSkeleton() {
       }}
     >
       <div
-        className="w-full h-48"
+        className="w-full h-40 sm:h-48"
         style={{ background: "var(--card-light-border)" }}
       />
       <div className="px-4 pt-3 pb-4 space-y-2">

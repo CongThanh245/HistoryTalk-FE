@@ -158,7 +158,7 @@ export function ChatInput({
 
   return (
     <div
-      className="px-4 py-3 border-t shrink-0"
+      className="sticky bottom-0 z-10 px-4 py-3 border-t shrink-0 pb-[calc(env(safe-area-inset-bottom)+12px)]"
       style={{
         borderColor: "var(--border-default)",
         background: "var(--bg-main)",
@@ -202,7 +202,7 @@ export function ChatInput({
             border: `1px solid ${isRecording ? "rgba(239,68,68,0.4)" : "var(--border-default)"}`,
             color: "var(--text-primary)",
             lineHeight: "1.5",
-            minHeight: "42px",
+            minHeight: "48px",
             maxHeight: "160px",
           }}
         />

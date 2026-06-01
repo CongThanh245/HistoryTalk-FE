@@ -35,6 +35,7 @@ export default function Breadcrumbs() {
   if (
     pathname === "/" ||
     pathname === "/home" ||
+    pathname?.startsWith("/chat") ||
     pathname?.startsWith("/login") ||
     pathname?.startsWith("/register")
   ) {
@@ -81,7 +82,7 @@ export default function Breadcrumbs() {
                   </span>
                 ) : (
                   <Link
-                    href={href}
+                    href={segment === "chat" ? "/character" : href}
                     className="hover:text-[--accent-gold] transition-colors truncate max-w-[200px]"
                     style={{ color: "var(--content-text)" }}
                   >

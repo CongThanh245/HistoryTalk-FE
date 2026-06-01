@@ -22,18 +22,18 @@ export default async function EventsPage() {
   });
 
   return (
-    <div className="px-3 py-6 md:px-6 md:py-8">
-      <div className="space-y-8">
+    <div className="px-3 py-4 md:px-6 md:py-8">
+      <div className="space-y-5 md:space-y-8">
         <div className="flex items-center gap-3">
           <div>
             <h1
-              className="text-2xl font-bold"
+              className="text-xl md:text-2xl font-bold"
               style={{ color: "var(--content-heading)" }}
             >
               Sự kiện lịch sử
             </h1>
             <p
-              className="text-sm mt-0.5"
+              className="text-xs md:text-sm mt-0.5"
               style={{ color: "var(--content-muted)" }}
             >
               Hành trình qua các mốc lịch sử quan trọng của dân tộc

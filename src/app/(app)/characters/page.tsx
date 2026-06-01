@@ -30,17 +30,17 @@ export default async function CharactersPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="px-3 py-6 md:px-6 md:py-8">
-        <div className="flex items-center gap-3 mb-8">
+      <div className="px-3 py-4 md:px-6 md:py-8">
+        <div className="flex items-center gap-3 mb-5 md:mb-8">
           <div>
             <h1
-              className="text-2xl font-bold"
+              className="text-xl md:text-2xl font-bold"
               style={{ color: "var(--content-heading)" }}
             >
               Nhân vật lịch sử
             </h1>
             <p
-              className="text-sm mt-0.5"
+              className="text-xs md:text-sm mt-0.5"
               style={{ color: "var(--content-muted)" }}
             >
               Trò chuyện với những nhân vật đã làm nên lịch sử Việt Nam

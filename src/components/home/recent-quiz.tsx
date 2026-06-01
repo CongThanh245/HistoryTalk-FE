@@ -11,14 +11,14 @@ import { useAuthStore } from "@/store/auth.store";
 function SkeletonCard() {
   return (
     <div
-      className="flex flex-col gap-3 p-4 rounded-2xl border animate-pulse"
+      className="flex flex-col gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl sm:rounded-2xl border animate-pulse"
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
       }}
     >
       <div
-        className="w-10 h-10 rounded-xl"
+        className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl"
         style={{ background: "var(--card-light-border)" }}
       />
       <div className="space-y-2">
@@ -47,7 +47,7 @@ function RecentQuizCard({ item }: { item: QuizResult }) {
 
   return (
     <div
-      className="flex flex-col gap-3 p-4 rounded-2xl border transition-colors duration-150 cursor-pointer hover:opacity-80"
+      className="flex flex-col gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-colors duration-150 cursor-pointer hover:opacity-80"
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
@@ -56,16 +56,16 @@ function RecentQuizCard({ item }: { item: QuizResult }) {
       {/* Icon + score badge */}
       <div className="flex items-start justify-between">
         <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
+          className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center"
           style={{ background: "rgba(160,120,40,0.10)" }}
         >
           <Trophy
-            className="w-5 h-5"
+            className="w-4 h-4 sm:w-5 sm:h-5"
             style={{ color: "var(--gold-on-light)" }}
           />
         </div>
         <span
-          className="text-xs font-bold px-2 py-0.5 rounded-full"
+          className="text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-full"
           style={{ background: `${color}18`, color }}
         >
           {item.percentage}%
@@ -75,12 +75,12 @@ function RecentQuizCard({ item }: { item: QuizResult }) {
       {/* Title + meta */}
       <div className="min-w-0">
         <p
-          className="text-sm font-medium leading-snug line-clamp-2"
+          className="text-xs sm:text-sm font-medium leading-snug line-clamp-2"
           style={{ color: "var(--content-text)" }}
         >
           {item.quizTitle}
         </p>
-        <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
+        <p className="text-[11px] sm:text-xs mt-1" style={{ color: "var(--content-muted)" }}>
           {item.score}/{item.totalQuestions} câu
         </p>
       </div>
@@ -101,7 +101,7 @@ export function RecentQuiz() {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
         <div className="flex items-center gap-2">
           <TimerIcon
             className="w-4 h-4"

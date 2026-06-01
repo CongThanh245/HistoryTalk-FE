@@ -254,13 +254,13 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
 
       <div className="fixed inset-0 z-50 flex overflow-hidden">
         <div
-          className="relative flex w-full h-full"
+          className="relative flex flex-col md:flex-row w-full h-full"
           style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.06)" }}
         >
           {/* Close */}
           <button
             onClick={onClose}
-            className="absolute top-8 right-8 z-50 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer hover:rotate-90 active:scale-95 group"
+            className="absolute top-4 right-4 md:top-8 md:right-8 z-50 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer hover:rotate-90 active:scale-95 group"
             style={{
               background: "var(--bg-elevated)", // Sử dụng màu nền nổi hơn
               border: "1px solid var(--border-default)",
@@ -274,7 +274,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
           </button>
 
           {/* ── Left 60% ── */}
-          <div className="w-[60%] shrink-0 h-full">
+          <div className="w-full md:w-[60%] shrink-0 h-[55dvh] md:h-full">
             {videoFinished ? (
               <CharactersReveal
                 event={event}
@@ -291,7 +291,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
 
           {/* ── Right 40% ── */}
           <div
-            className="flex-1 flex flex-col h-full overflow-hidden"
+            className="flex-1 flex flex-col h-[45dvh] md:h-full overflow-hidden"
             style={{
               background: "var(--palladian)",
               borderLeft: "1px solid var(--card-light-border)",
@@ -305,7 +305,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
             />
 
             <div
-              className="px-8 py-6 border-b shrink-0"
+              className="px-5 md:px-8 py-4 md:py-6 border-b shrink-0"
               style={{ borderColor: "var(--card-light-border)" }}
             >
               <div className="flex items-center gap-2 mb-3">
@@ -324,7 +324,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
               </h2>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+            <div className="flex-1 overflow-y-auto px-5 md:px-8 py-5 md:py-6 space-y-6">
               <div className="flex flex-col gap-2.5">
                 <div className="flex items-center gap-2.5">
                   <TimerIcon className="w-4 h-4 shrink-0" style={{ color }} />

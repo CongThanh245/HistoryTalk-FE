@@ -89,10 +89,10 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
           : "0 8px 20px rgba(27,38,50,0.06)",
       }}
     >
-      <div className="p-5">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="p-3.5 sm:p-5">
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-3 sm:mb-4 flex-wrap">
           <span
-            className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+            className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full"
             style={{
               background: "rgba(201,162,77,0.10)",
               color: "var(--gold-on-light)",
@@ -102,7 +102,7 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
             {ERA_LABELS[quiz.era] ?? quiz.era}
           </span>
           <span
-            className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+            className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full"
             style={{
               background: levelTone.bg,
               color: levelTone.fg,
@@ -114,7 +114,7 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
         </div>
 
         <h3
-          className="text-base font-bold leading-snug line-clamp-2 transition-colors"
+          className="text-[13px] sm:text-base font-bold leading-snug line-clamp-2 transition-colors"
           style={{ color: "var(--content-heading)" }}
         >
           {quiz.title}
@@ -127,20 +127,20 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
         )}
 
         <div
-          className="mt-5 pt-4 flex items-center justify-between"
+          className="mt-4 sm:mt-5 pt-3 sm:pt-4 flex items-center justify-between gap-2"
           style={{ borderTop: "1px solid var(--card-light-border)" }}
         >
           <div>
-            <p className="text-[11px] uppercase tracking-wide" style={{ color: "var(--content-subtle)" }}>
+            <p className="text-[10px] sm:text-[11px] uppercase tracking-wide" style={{ color: "var(--content-subtle)" }}>
               Lượt làm
             </p>
-            <p className="text-sm font-bold" style={{ color: "var(--content-heading)" }}>
+            <p className="text-xs sm:text-sm font-bold" style={{ color: "var(--content-heading)" }}>
               {quiz.playCount.toLocaleString("vi-VN")}
             </p>
           </div>
           <button
             onClick={() => onStart(quiz.quizId)}
-            className="h-10 px-4 rounded-lg text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+            className="h-8 sm:h-10 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
             style={{
               background: "var(--abyssal-blue)",
               color: "var(--text-on-dark)",

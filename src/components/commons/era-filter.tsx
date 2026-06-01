@@ -12,7 +12,7 @@ interface EraFilterProps {
 
 export function EraFilter({ active, onChange, counts }: EraFilterProps) {
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
       {ERAS.map(([era, cfg]) => {
         const isActive = active === era;
         const count = counts?.[era];
@@ -21,7 +21,7 @@ export function EraFilter({ active, onChange, counts }: EraFilterProps) {
           <button
             key={era}
             onClick={() => onChange(era)}
-            className="relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-150 cursor-pointer"
+            className="relative flex items-center gap-1 md:gap-1.5 px-2.5 md:px-3.5 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-medium transition-all duration-150 cursor-pointer"
             style={
               isActive
                 ? {

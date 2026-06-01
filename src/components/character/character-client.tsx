@@ -68,7 +68,7 @@ export function CharactersClient() {
   return (
     <>
       {authRequiredDialog}
-      <div className="space-y-5">
+      <div className="space-y-4 md:space-y-5">
       {/* Filters */}
       <div className="flex flex-col gap-3">
         <EraFilter active={era} onChange={handleEraChange} />
@@ -103,7 +103,7 @@ export function CharactersClient() {
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
         {isLoading
           ? Array.from({ length: PAGE_LIMIT }).map((_, i) => (
               <CharacterPageCardSkeleton key={i} />

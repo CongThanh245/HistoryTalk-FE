@@ -10,7 +10,7 @@ import { queryKeys } from "@/shared/query-key";
 function SkeletonRow() {
   return (
     <div
-      className="flex items-center justify-between px-4 py-3 rounded-xl border animate-pulse"
+      className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border animate-pulse"
       style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
     >
       <div className="flex items-center gap-3">
@@ -39,26 +39,26 @@ function SuggestedQuizRow({ item }: { item: SuggestedQuizItem }) {
   return (
     <Link
       href="/quiz"
-      className="flex items-center justify-between px-4 py-3 rounded-xl border transition-all duration-150 group"
+      className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border transition-all duration-150 group"
       style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
           style={{ background: "rgba(255,177,98,0.10)" }}
         >
           <Star className="w-4 h-4" style={{ color: "var(--burning-flame)" }} />
         </div>
-        <div>
-          <p className="text-sm font-medium" style={{ color: "var(--content-text)" }}>
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm font-medium truncate" style={{ color: "var(--content-text)" }}>
             {item.title}
           </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+          <p className="text-[11px] sm:text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
             {item.questions} câu
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         <span
           className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
           style={{ background: bg, color }}
@@ -83,7 +83,7 @@ export function SuggestedQuiz() {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
         <div className="flex items-center gap-2">
           <Flame className="w-4 h-4" style={{ color: "var(--burning-flame)" }} />
           <h2 className="text-base font-semibold" style={{ color: "var(--content-heading)" }}>

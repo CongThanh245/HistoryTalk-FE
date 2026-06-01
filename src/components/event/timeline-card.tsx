@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { MapPinIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { Card } from "@/components/commons/card";
@@ -152,7 +152,7 @@ export function TimelineStripCard({
 
         {/* Image Container */}
         <div
-          className="relative w-full md:w-[480px] h-[260px] md:h-[320px] overflow-hidden shrink-0"
+          className="relative w-full md:w-[480px] h-[150px] sm:h-[260px] md:h-[320px] overflow-hidden shrink-0"
         >
           <Image
             src={isValidUrl(imageSrc) ? imageSrc : "/card.jpg"}
@@ -168,11 +168,11 @@ export function TimelineStripCard({
         </div>
 
         {/* Content Container */}
-        <div className="flex-1 px-5 py-6 md:px-7 md:py-8 flex flex-col justify-center relative z-10">
+        <div className="flex-1 px-4 sm:px-5 py-4 sm:py-6 md:px-7 md:py-8 flex flex-col justify-center relative z-10">
           {/* Year badge with glow effect */}
           <div>
             <span
-              className="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full tracking-wide mb-3 transition-all duration-300"
+              className="inline-block text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full tracking-wide mb-2 sm:mb-3 transition-all duration-300"
               style={{
                 background: style.bg,
                 color: style.color,
@@ -185,20 +185,20 @@ export function TimelineStripCard({
           </div>
 
           <h2
-            className="text-xl sm:text-2xl font-extrabold leading-snug mb-2.5 transition-colors duration-300"
+            className="text-base sm:text-2xl font-extrabold leading-snug mb-1.5 sm:mb-2.5 transition-colors duration-300"
             style={{ color: isHovered ? style.color : "var(--content-heading)" }}
           >
             {event.title}
           </h2>
           
           <p
-            className="text-sm leading-relaxed line-clamp-3 mb-5 italic"
+            className="text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3 mb-3 sm:mb-5 italic"
             style={{ color: "var(--content-muted)" }}
           >
             {event.summary}
           </p>
 
-          <div className="flex items-center justify-between mt-auto pt-2">
+          <div className="flex items-center justify-between mt-auto pt-1 sm:pt-2">
             {event.location ? (
               <div className="flex items-center gap-1.5">
                 <MapPinIcon
@@ -206,7 +206,7 @@ export function TimelineStripCard({
                   style={{ color: "var(--content-subtle)" }}
                 />
                 <span
-                  className="text-xs"
+                  className="text-[11px] sm:text-xs line-clamp-1"
                   style={{ color: "var(--content-subtle)" }}
                 >
                   {event.location}

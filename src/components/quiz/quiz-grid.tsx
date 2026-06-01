@@ -10,14 +10,14 @@ import { QuizCard } from "./quiz-card";
 function QuizCardSkeleton() {
   return (
     <div
-      className="rounded-2xl overflow-hidden animate-pulse"
+      className="rounded-xl sm:rounded-2xl overflow-hidden animate-pulse"
       style={{
         background: "var(--card-light-bg)",
         border: "1px solid var(--card-light-border)",
       }}
     >
-      <div className="h-36" style={{ background: "var(--bg-surface)" }} />
-      <div className="p-4 space-y-2">
+      <div className="h-20 sm:h-36" style={{ background: "var(--bg-surface)" }} />
+      <div className="p-3 sm:p-4 space-y-2">
         <div
           className="h-4 rounded"
           style={{ background: "var(--bg-surface)", width: "80%" }}
@@ -44,7 +44,7 @@ interface QuizGridProps {
 export function QuizGrid({ quizzes, isLoading, onStart }: QuizGridProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
           <QuizCardSkeleton key={i} />
         ))}
@@ -73,7 +73,7 @@ export function QuizGrid({ quizzes, isLoading, onStart }: QuizGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
       {quizzes.map((quiz) => (
         <QuizCard key={quiz.quizId} quiz={quiz} onStart={onStart} />
       ))}

@@ -283,7 +283,7 @@ export function ChatMain({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto py-5 space-y-4">
+      <div className="flex-1 overflow-y-auto py-5 pb-28 md:pb-6 space-y-4">
         {isLoading ? (
           <div className="flex justify-center py-10">
             <div
