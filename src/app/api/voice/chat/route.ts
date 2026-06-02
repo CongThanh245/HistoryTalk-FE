@@ -1,5 +1,3 @@
-export const runtime = 'edge';
-
 /**
  * POST /api/voice/chat
  *

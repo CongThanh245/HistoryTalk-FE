@@ -1,5 +1,3 @@
-export const runtime = 'edge';
-
 /**
  * POST /api/voice/stream
  * Streaming TTS - Trả về audio chunks qua Server-Sent Events

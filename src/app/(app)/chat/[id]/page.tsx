@@ -1,5 +1,3 @@
-export const runtime = 'edge';
-
 /**
  * src/app/(app)/chat/[id]/page.tsx
  * Server Component — không có "use client"

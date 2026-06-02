@@ -1,5 +1,3 @@
-export const runtime = 'edge';
-
 "use client";
 
 import * as React from "react";

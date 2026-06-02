@@ -1,5 +1,3 @@
-export const runtime = 'edge';
-
 // app/(app)/characters/page.tsx
 import { dehydrate } from "@tanstack/react-query";
 import { HydrationBoundary } from "@/components/context/hydration-boundary";
