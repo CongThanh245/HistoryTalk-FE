@@ -117,7 +117,7 @@ const journeySteps = [
     title: "Bắt đầu từ một thời kỳ lịch sử",
     body: "Người học chọn bối cảnh lịch sử để bước vào thế giới của nhân vật, sự kiện và không khí thời đại đó.",
     icon: MapTrifoldIcon,
-    image: "/placeholder-step1.jpg", // User will replace with actual screenshot
+    image: "/feature-pic1.png",
   },
   {
     step: "02",
@@ -125,7 +125,7 @@ const journeySteps = [
     title: "Đắm mình trong không khí lịch sử",
     body: "Video mô tả bối cảnh, địa điểm và diễn biến giúp người học hình dung rõ nét thời khắc lịch sử trước khi bắt đầu cuộc trò chuyện.",
     icon: VideoCameraIcon,
-    image: "/placeholder-step2.jpg", // User will replace with actual screenshot
+    image: "/feature-pic2.png",
   },
   {
     step: "03",
@@ -133,7 +133,7 @@ const journeySteps = [
     title: "Đối thoại cùng nhân vật lịch sử",
     body: "Người học trò chuyện với nhân vật trong bối cảnh đó để đào sâu nguyên nhân, niềm tin và những quyết định lịch sử.",
     icon: ChatTextIcon,
-    image: "/placeholder-step3.jpg", // User will replace with actual screenshot
+    image: "/feature-pic3.png",
   },
   {
     step: "04",
@@ -141,7 +141,7 @@ const journeySteps = [
     title: "Chốt kiến thức bằng quiz sau hành trình",
     body: "Sau khi trò chuyện, người học kiểm tra lại những gì đã hiểu bằng câu hỏi ngắn gắn liền với bối cảnh vừa trải nghiệm.",
     icon: BrainIcon,
-    image: "/placeholder-step4.jpg", // User will replace with actual screenshot
+    image: "/feature-pic4.png",
   },
 ];
 
@@ -705,21 +705,13 @@ export default function FeaturePage() {
                   {/* Image */}
                   <div className={`${isEven ? '' : 'lg:col-start-1'}`}>
                     <div className="relative aspect-4/3 overflow-hidden rounded-2xl border border-(--border-default) bg-(--bg-surface) shadow-2xl">
-                      <div className="absolute inset-0 flex items-center justify-center text-(--text-muted)">
-                        <div className="text-center p-8">
-                          <Icon className="mx-auto h-16 w-16 mb-4 opacity-50" />
-                          <p className="text-lg font-medium mb-2">Hình ảnh sẽ được cập nhật</p>
-                          <p className="text-sm">Chụp màn hình bước {item.step} để thêm vào đây</p>
-                        </div>
-                      </div>
-                      {/* Uncomment when user provides actual images */}
-                      {/* <Image
+                      <Image
                         src={item.image}
                         alt={item.title}
                         fill
                         className="object-cover"
                         sizes="(min-width: 1024px) 50vw, 100vw"
-                      /> */}
+                      />
                     </div>
                   </div>
                 </div>
