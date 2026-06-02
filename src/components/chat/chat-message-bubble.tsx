@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { isValidUrl } from "@/lib/utils/url";
 import type { ChatMessage, ChatCharacter } from "@/services/chat.service";
-import { SpeakerHighIcon, SpeakerXIcon } from "@phosphor-icons/react";
+import { SpeakerHighIcon, SpeakerXIcon, MicrophoneIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { HighlightedText } from "./HighlightedText";
@@ -34,7 +34,7 @@ export function MessageBubble({
       <div className="flex justify-end gap-3 px-4 mb-4">
         <div className="max-w-[70%] flex flex-col items-end gap-1.5">
           <div
-            className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-lg"
+            className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-lg flex items-center gap-2"
             style={{
               // Phối màu Gradient Bronze -> Truffle (Cổ điển & Sang trọng)
               background: "var(--accent-bronze)",
@@ -42,6 +42,9 @@ export function MessageBubble({
             }}
           >
             {message.content}
+            {message.messageType === "VOICE" && (
+              <MicrophoneIcon size={12} weight="fill" className="opacity-70" />
+            )}
           </div>
           <span
             className="text-[10px] opacity-60"
@@ -87,12 +90,17 @@ export function MessageBubble({
       </div>
 
       <div className="max-w-[75%] flex flex-col gap-1.5">
-        <span
-          className="text-[11px] font-bold px-1 tracking-wide"
-          style={{ color: "var(--accent-gold)" }}
-        >
-          {character.name.toUpperCase()}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span
+            className="text-[11px] font-bold px-1 tracking-wide"
+            style={{ color: "var(--accent-gold)" }}
+          >
+            {character.name.toUpperCase()}
+          </span>
+          {message.messageType === "VOICE" && (
+            <MicrophoneIcon size={12} weight="fill" style={{ color: "var(--accent-gold)" }} />
+          )}
+        </div>
         <div
           className="relative px-4 py-3 pr-9 rounded-2xl rounded-tl-sm text-sm leading-relaxed border"
           style={{

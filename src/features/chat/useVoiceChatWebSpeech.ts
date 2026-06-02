@@ -171,6 +171,7 @@ export function useVoiceChatWebSpeech({
         body: JSON.stringify({
           sessionId,
           content: text,
+          messageType: "VOICE",
         }),
       });
 
