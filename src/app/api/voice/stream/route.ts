@@ -1,3 +1,5 @@
+export const runtime = 'edge';
+
 /**
  * POST /api/voice/stream
  * Streaming TTS - Trả về audio chunks qua Server-Sent Events
@@ -15,6 +17,7 @@
 import { NextRequest } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ttsCache, getVoiceForCharacter } from "@/lib/tts-cache";
+import { pcmToWav, base64ToUint8Array } from "@/lib/voice-gemini";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? "";
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -30,35 +33,11 @@ function splitToSentences(text: string): string[] {
 
 // getVoiceForCharacter imported from @/lib/tts-cache
 
-// PCM to WAV conversion (Gemini TTS returns raw PCM L16 24000Hz)
-function pcmToWav(pcmData: Buffer, sampleRate = 24000, channels = 1, bitDepth = 16): Buffer {
-  const byteRate = (sampleRate * channels * bitDepth) / 8;
-  const blockAlign = (channels * bitDepth) / 8;
-  const dataSize = pcmData.length;
-
-  const header = Buffer.alloc(44);
-  header.write("RIFF", 0);
-  header.writeUInt32LE(36 + dataSize, 4);
-  header.write("WAVE", 8);
-  header.write("fmt ", 12);
-  header.writeUInt32LE(16, 16);
-  header.writeUInt16LE(1, 20); // PCM format
-  header.writeUInt16LE(channels, 22);
-  header.writeUInt32LE(sampleRate, 24);
-  header.writeUInt32LE(byteRate, 28);
-  header.writeUInt16LE(blockAlign, 32);
-  header.writeUInt16LE(bitDepth, 34);
-  header.write("data", 36);
-  header.writeUInt32LE(dataSize, 40);
-
-  return Buffer.concat([header, pcmData]);
-}
-
 // TTS for a single sentence with caching
 async function ttsSentence(
   text: string,
   characterId: string
-): Promise<Buffer | null> {
+): Promise<Uint8Array | null> {
   try {
     const voiceName = getVoiceForCharacter(characterId);
     
@@ -102,7 +81,7 @@ async function ttsSentence(
     );
 
     if (audioPart?.inlineData?.data) {
-      const pcmBuffer = Buffer.from(audioPart.inlineData.data, "base64");
+      const pcmBuffer = base64ToUint8Array(audioPart.inlineData.data);
       // Convert PCM to WAV so browser can decode it
       const wavBuffer = pcmToWav(pcmBuffer);
       
@@ -223,7 +202,8 @@ export async function POST(req: NextRequest) {
           const audioBuffer = await ttsSentence(sentence, characterId);
 
           if (audioBuffer) {
-            const base64Audio = audioBuffer.toString("base64");
+            // Convert Uint8Array to base64 for Edge Runtime
+            const base64Audio = btoa(String.fromCharCode(...audioBuffer));
             send({
               type: "audioChunk",
               data: base64Audio,

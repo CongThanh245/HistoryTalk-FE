@@ -1,3 +1,5 @@
+export const runtime = 'edge';
+
 /**
  * POST /api/voice/stt
  * Chỉ xử lý Speech-to-Text, trả về transcript ngay lập tức

@@ -1,3 +1,5 @@
+export const runtime = 'edge';
+
 /**
  * POST /api/voice/chat
  *
@@ -15,7 +17,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { pcmToWav } from "@/lib/voice-gemini";
+import { pcmToWav, base64ToUint8Array } from "@/lib/voice-gemini";
 import { ttsCache, getVoiceForCharacter } from "@/lib/tts-cache";
 
 // ── Gemini client (module-level, shared across requests) ─────────────────────
@@ -142,7 +144,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const voiceName = getVoiceForCharacter(characterId);
     
     // Check cache first
-    let outputBuffer: Buffer;
+    let outputBuffer: Uint8Array;
     let outputContentType: string;
     
     const cached = ttsCache.get(aiResponse, voiceName);
@@ -204,7 +206,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         );
       }
 
-      const rawAudioBuf = Buffer.from(audioPart.inlineData.data, "base64");
+      const rawAudioBuf = base64ToUint8Array(audioPart.inlineData.data);
 
       // Gemini TTS trả raw PCM (audio/L16;rate=24000) → cần thêm WAV header
       const isRawPcm =

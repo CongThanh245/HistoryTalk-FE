@@ -5,13 +5,23 @@
  * Storage: In-memory with TTL + Redis/Upstash nếu cần persistent
  */
 
-import { createHash } from "crypto";
-
 interface CacheEntry {
-  audio: Buffer;
+  audio: Uint8Array;
   mimeType: string;
   timestamp: number;
   hits: number;
+}
+
+// Simple sync hash for Edge Runtime compatibility
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  // Convert to positive hex string and pad to 32 chars
+  return Math.abs(hash).toString(16).padStart(32, '0').slice(0, 32);
 }
 
 // LRU Cache với limit
@@ -21,10 +31,13 @@ class TTSCache {
   private ttlMs = 24 * 60 * 60 * 1000; // 24 hours
 
   private generateKey(text: string, voiceName: string): string {
-    return createHash("sha256").update(`${text}|${voiceName}`).digest("hex").slice(0, 32);
+    // Use simple hash + slice of text for readability
+    const hash = simpleHash(`${text}|${voiceName}`);
+    const textKey = text.slice(0, 20).replace(/[^a-zA-Z0-9]/g, '_');
+    return `${textKey}_${hash}`;
   }
 
-  get(text: string, voiceName: string): { audio: Buffer; mimeType: string } | null {
+  get(text: string, voiceName: string): { audio: Uint8Array; mimeType: string } | null {
     const key = this.generateKey(text, voiceName);
     const entry = this.cache.get(key);
 
@@ -46,7 +59,7 @@ class TTSCache {
     return { audio: entry.audio, mimeType: entry.mimeType };
   }
 
-  set(text: string, voiceName: string, audio: Buffer, mimeType: string): void {
+  set(text: string, voiceName: string, audio: Uint8Array, mimeType: string): void {
     // Evict nếu đầy
     if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value;

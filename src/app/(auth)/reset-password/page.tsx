@@ -1,3 +1,5 @@
+export const runtime = 'edge';
+
 import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
 
 type ResetPasswordPageProps = {
