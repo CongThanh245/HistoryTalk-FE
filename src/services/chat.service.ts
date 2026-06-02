@@ -1,4 +1,5 @@
 import { axiosClient } from "@/configs/axios.client";
+import { useAuthStore } from "@/store/auth.store";
 
 // ── Types theo API response ───────────────────────────────
 
@@ -136,7 +137,7 @@ export const chatService = {
     onError: (error: unknown) => void
   ) => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = useAuthStore.getState().tokens?.accessToken;
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
