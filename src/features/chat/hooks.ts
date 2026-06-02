@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { chatService } from "@/services/chat.service";
+import { chatService, type ChatHistoryGroup } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
 
@@ -88,11 +88,39 @@ export function useDeleteSession() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (sessionId: string) => chatService.deleteSession(sessionId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["chat", "history"] });
+    onMutate: async (sessionId) => {
+      // Cancel any outgoing refetches
+      await qc.cancelQueries({ queryKey: queryKeys.chat.history });
+      
+      // Snapshot previous value
+      const previousHistory = qc.getQueryData<ChatHistoryGroup[]>(queryKeys.chat.history);
+      
+      // Optimistically update to new value (remove deleted session)
+      if (previousHistory) {
+        const newHistory = previousHistory
+          .map((group) => ({
+            ...group,
+            sessions: group.sessions.filter((s: { id: string }) => s.id !== sessionId),
+          }))
+          .filter((group) => group.sessions.length > 0); // Remove empty groups
+        
+        qc.setQueryData(queryKeys.chat.history, newHistory);
+      }
+      
+      return { previousHistory };
+    },
+    onSuccess: async () => {
+      // Force refetch để đảm bảo UI đồng bộ
+      await qc.refetchQueries({ queryKey: queryKeys.chat.history });
       toast.success("Đã xóa cuộc trò chuyện");
     },
-    onError: () => toast.error("Không thể xóa cuộc trò chuyện"),
+    onError: (err, sessionId, context) => {
+      // Rollback on error
+      if (context?.previousHistory) {
+        qc.setQueryData(queryKeys.chat.history, context.previousHistory);
+      }
+      toast.error("Không thể xóa cuộc trò chuyện");
+    },
   });
 }
 
@@ -100,11 +128,39 @@ export function useSoftDeleteSession() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (sessionId: string) => chatService.softDeleteSession(sessionId),
-    onSuccess: (_, sessionId) => {
-      qc.invalidateQueries({ queryKey: queryKeys.chat.sessions("", "") });
-      qc.invalidateQueries({ queryKey: ["chat", "history"] });
+    onMutate: async (sessionId) => {
+      // Cancel any outgoing refetches
+      await qc.cancelQueries({ queryKey: queryKeys.chat.history });
+      
+      // Snapshot previous value
+      const previousHistory = qc.getQueryData<ChatHistoryGroup[]>(queryKeys.chat.history);
+      
+      // Optimistically update to new value (remove deleted session)
+      if (previousHistory) {
+        const newHistory = previousHistory
+          .map((group) => ({
+            ...group,
+            sessions: group.sessions.filter((s: { id: string }) => s.id !== sessionId),
+          }))
+          .filter((group) => group.sessions.length > 0); // Remove empty groups
+        
+        qc.setQueryData(queryKeys.chat.history, newHistory);
+      }
+      
+      return { previousHistory };
+    },
+    onSuccess: async (_, sessionId) => {
+      // Invalidate và refetch để đảm bảo UI đồng bộ
+      await qc.invalidateQueries({ queryKey: ["chat", "sessions"] });
+      await qc.refetchQueries({ queryKey: queryKeys.chat.history });
       toast.success("Đã xóa cuộc trò chuyện");
     },
-    onError: () => toast.error("Không thể xóa cuộc trò chuyện"),
+    onError: (err, sessionId, context) => {
+      // Rollback on error
+      if (context?.previousHistory) {
+        qc.setQueryData(queryKeys.chat.history, context.previousHistory);
+      }
+      toast.error("Không thể xóa cuộc trò chuyện");
+    },
   });
 }

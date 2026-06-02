@@ -145,6 +145,7 @@ export function ChatMain({
       sessionId: currentSessionId,
       role: "USER",
       content,
+      messageType: "TEXT",
       createdAt: new Date().toISOString(),
     };
     setOptimisticMessages((prev) => [...prev, tempUserMsg]);
@@ -176,6 +177,7 @@ export function ChatMain({
           sessionId: currentSessionId,
           role: "ASSISTANT",
           content: resData.fullContent,
+          messageType: "TEXT",
           createdAt: new Date().toISOString(),
         };
 
@@ -192,7 +194,7 @@ export function ChatMain({
         );
         qc.invalidateQueries({ queryKey: queryKeys.profile.me });
       },
-      (err) => {
+      (err: any) => {
         setIsStreaming(false);
         setOptimisticMessages((prev) =>
           prev.filter((m) => m.id !== tempUserMsg.id),
@@ -361,6 +363,7 @@ export function ChatMain({
                   sessionId: sessionId!,
                   role: "ASSISTANT",
                   content: streamingMessage,
+                  messageType: "TEXT",
                   createdAt: new Date().toISOString()
                 }}
                 character={character}
