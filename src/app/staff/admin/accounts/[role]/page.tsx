@@ -377,7 +377,6 @@ export default function AdminAccountsPage() {
     );
 
     return base;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meta, deleteUser.isPending]);
 
 
