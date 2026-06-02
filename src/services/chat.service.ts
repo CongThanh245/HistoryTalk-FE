@@ -126,7 +126,7 @@ export const chatService = {
     content: string,
     onData: (chunk: string) => void,
     onDone: (data: { remainingTokens?: number, suggestedQuestions?: string[], fullContent: string }) => void,
-    onError: (error: any) => void
+    onError: (error: unknown) => void
   ) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -137,7 +137,10 @@ export const chatService = {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/chat/messages/stream`, {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+      const basePath = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/v1';
+      
+      const response = await fetch(`${baseUrl}${basePath}/chat/messages/stream`, {
         method: "POST",
         headers,
         body: JSON.stringify({ sessionId, content }),
