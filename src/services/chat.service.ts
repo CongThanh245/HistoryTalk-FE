@@ -1,4 +1,5 @@
 import { axiosClient } from "@/configs/axios.client";
+import { useAuthStore } from "@/store/auth.store";
 
 // ── Types theo API response ───────────────────────────────
 
@@ -136,7 +137,7 @@ export const chatService = {
     onError: (error: unknown) => void
   ) => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = useAuthStore.getState().tokens?.accessToken;
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
@@ -176,9 +177,9 @@ export const chatService = {
           const chunk = decoder.decode(value, { stream: true });
           const lines = chunk.split("\n");
           for (const line of lines) {
-            if (line.startsWith("data: ")) {
+            if (line.startsWith("data:")) {
               try {
-                const dataStr = line.substring(6).trim();
+                const dataStr = line.substring(line.indexOf(":") + 1).trim();
                 if (!dataStr) continue;
                 const parsed = JSON.parse(dataStr);
                 
