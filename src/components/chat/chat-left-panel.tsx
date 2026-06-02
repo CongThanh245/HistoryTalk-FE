@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils/cn";
 import {
   PlusIcon,
@@ -53,11 +53,14 @@ export function ChatLeftPanel({
 }: ChatLeftPanelProps) {
   const [showHint, setShowHint] = useState(false);
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
-  const disableSheetAnimationOnDesktop = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    // Desktop/laptop: if user somehow sees the bottom sheet (narrow window),
-    // do not animate it sliding up.
-    return window.innerWidth >= 768;
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const createSession = useCreateSession();
@@ -352,13 +355,11 @@ export function ChatLeftPanel({
         )}
         </div>
 
-        {/* Mobile: Bottom Sheet */}
-        <div className="md:hidden">
+        {/* Mobile: Bottom Sheet - only render on mobile */}
+        {isMobile && (
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetContent 
-              side="bottom" 
-              disableAnimation={disableSheetAnimationOnDesktop}
-              disableOverlayAnimation={disableSheetAnimationOnDesktop}
+            <SheetContent
+              side="bottom"
               className="h-[70vh] p-0 border-t"
               style={{
                 background: "var(--bg-surface)",
@@ -369,7 +370,7 @@ export function ChatLeftPanel({
               {renderSessionList()}
             </SheetContent>
           </Sheet>
-        </div>
+        )}
 
         <ConfirmDialog
           open={!!deleteSessionId}
