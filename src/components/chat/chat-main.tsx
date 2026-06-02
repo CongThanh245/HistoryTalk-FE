@@ -12,8 +12,8 @@ import { ChatInput } from "./chat-input";
 import {
   useChatMessages,
   useCreateSession,
-  useSendMessage,
 } from "@/features/chat/hooks";
+import { chatService } from "@/services/chat.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
 import { Avatar3DModal } from "./Avatar3DModal";
@@ -50,6 +50,8 @@ export function ChatMain({
   const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>(
     [],
   );
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState("");
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordData | null>(null);
@@ -69,7 +71,6 @@ export function ChatMain({
   }, []);
 
   const { data, isLoading } = useChatMessages(sessionId);
-  const sendMessage = useSendMessage();
   const createSession = useCreateSession();
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
@@ -119,7 +120,7 @@ export function ChatMain({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, sendMessage.isPending]);
+  }, [messages, isStreaming, streamingMessage]);
 
   const qc = useQueryClient();
 
@@ -147,55 +148,74 @@ export function ChatMain({
       createdAt: new Date().toISOString(),
     };
     setOptimisticMessages((prev) => [...prev, tempUserMsg]);
+    setIsStreaming(true);
+    setStreamingMessage("");
 
-    sendMessage.mutate(
-      { sessionId: currentSessionId, content },
-      {
-        onSuccess: (res) => {
-          setOptimisticMessages([]);
-          setSuggestedQuestions(res.suggestedQuestions);
-          setLastTokenUsage({
-            remainingTokens: res.remainingTokens,
-            promptTokens: res.promptTokens,
-            completionTokens: res.completionTokens,
-          });
-          if (res.assistantMessage?.content) {
-            speak(res.assistantMessage.content);
-          }
-          qc.setQueryData(
-            queryKeys.chat.messages(currentSessionId!),
-            (old: GetMessagesResponse | undefined) => ({
-              messages: [
-                ...(old?.messages ?? []),
-                res.userMessage,
-                res.assistantMessage,
-              ],
-              suggestedQuestions: res.suggestedQuestions,
-            }),
-          );
-        },
-        onError: (err: any) => {
-          setOptimisticMessages((prev) =>
-            prev.filter((m) => m.id !== tempUserMsg.id),
-          );
-          
-          const serverMessage = err?.response?.data?.message || "";
-          if (
-            serverMessage.includes("hết token") ||
-            serverMessage.includes("nạp thêm") ||
-            err?.response?.data?.errorCode === 400
-          ) {
-            setIsTokenExhausted(true);
-            toast.error("Bạn đã hết token. Vui lòng nạp thêm để tiếp tục chat.", {
-              action: {
-                label: "Nạp thêm",
-                onClick: () => setIsUpgradeOpen(true),
-              },
-              duration: 8000,
-            });
-          }
-        },
+    chatService.sendMessageStream(
+      currentSessionId,
+      content,
+      (chunk) => {
+        setStreamingMessage((prev) => prev + chunk);
       },
+      (resData) => {
+        setIsStreaming(false);
+        setOptimisticMessages([]);
+        setSuggestedQuestions(resData.suggestedQuestions || []);
+        if (resData.remainingTokens !== undefined) {
+          setLastTokenUsage((prev) => ({
+             remainingTokens: resData.remainingTokens!,
+             promptTokens: prev?.promptTokens || 0,
+             completionTokens: prev?.completionTokens || 0
+          }));
+        }
+        
+        speak(resData.fullContent);
+
+        const newAssistantMsg: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          sessionId: currentSessionId,
+          role: "ASSISTANT",
+          content: resData.fullContent,
+          createdAt: new Date().toISOString(),
+        };
+
+        qc.setQueryData(
+          queryKeys.chat.messages(currentSessionId!),
+          (old: GetMessagesResponse | undefined) => ({
+            messages: [
+              ...(old?.messages ?? []),
+              tempUserMsg,
+              newAssistantMsg,
+            ],
+            suggestedQuestions: resData.suggestedQuestions,
+          }),
+        );
+        qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+      },
+      (err) => {
+        setIsStreaming(false);
+        setOptimisticMessages((prev) =>
+          prev.filter((m) => m.id !== tempUserMsg.id),
+        );
+        
+        const serverMessage = err?.message || err?.response?.data?.message || "";
+        if (
+          serverMessage.includes("hết token") ||
+          serverMessage.includes("nạp thêm") ||
+          err?.response?.data?.errorCode === 400
+        ) {
+          setIsTokenExhausted(true);
+          toast.error("Bạn đã hết token. Vui lòng nạp thêm để tiếp tục chat.", {
+            action: {
+              label: "Nạp thêm",
+              onClick: () => setIsUpgradeOpen(true),
+            },
+            duration: 8000,
+          });
+        } else {
+          toast.error("Không thể gửi tin nhắn");
+        }
+      }
     );
   };
 
@@ -333,11 +353,24 @@ export function ChatMain({
                 }
               />
             ))}
-            {sendMessage.isPending && <TypingIndicator character={character} />}
+            {isStreaming && streamingMessage && (
+              <MessageBubble
+                key={`streaming-${Date.now()}`}
+                message={{
+                  id: `streaming-${Date.now()}`,
+                  sessionId: sessionId!,
+                  role: "ASSISTANT",
+                  content: streamingMessage,
+                  createdAt: new Date().toISOString()
+                }}
+                character={character}
+              />
+            )}
+            {(isStreaming && !streamingMessage) && <TypingIndicator character={character} />}
           </>
         )}
 
-        {suggestedQuestions.length > 0 && !sendMessage.isPending && (
+        {suggestedQuestions.length > 0 && !isStreaming && (
           <div className="px-4 flex flex-wrap gap-2">
             {suggestedQuestions.map((q, i) => (
               <button
@@ -357,7 +390,7 @@ export function ChatMain({
         )}
 
         {/* Token usage display */}
-        {lastTokenUsage && !sendMessage.isPending && (
+        {lastTokenUsage && !isStreaming && (
           <div className="px-4 flex items-center justify-end gap-3 text-[10px]" style={{ color: "var(--text-muted)" }}>
             <div className="flex items-center gap-1.5">
               <CoinsIcon className="w-3 h-3" style={{ color: "var(--accent-gold)" }} />
@@ -401,8 +434,8 @@ export function ChatMain({
 
       <ChatInput
         onSend={handleSend}
-        isLoading={sendMessage.isPending}
-        disabled={sendMessage.isPending || isTokenExhausted}
+        isLoading={isStreaming}
+        disabled={isStreaming || isTokenExhausted}
         characterName={character.name}
         isTokenExhausted={isTokenExhausted}
       />
