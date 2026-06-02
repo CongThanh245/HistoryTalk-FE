@@ -113,7 +113,7 @@ export function HeroSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-[100svh] flex-col overflow-hidden lg:items-center lg:justify-center"
+      className="relative flex min-h-[100svh] flex-col overflow-hidden pb-8 lg:items-center lg:justify-center lg:pb-0"
       style={{ 
         isolation: "isolate"
       }}
@@ -138,10 +138,10 @@ export function HeroSection() {
       </div>
 
       <Container className="relative w-full">
-        <div className="flex flex-col lg:grid lg:grid-cols-2 lg:items-center lg:gap-20 lg:py-10">
+        <div className="flex min-h-[100svh] flex-col justify-start lg:grid lg:min-h-0 lg:grid-cols-2 lg:items-center lg:gap-20 lg:py-10">
           <div
             ref={contentWrapperRef}
-            className="z-10 space-y-4 pb-4 pt-24 md:space-y-5 md:pb-6 md:pt-28 lg:space-y-8 lg:pb-0 lg:pt-0"
+            className="z-10 space-y-4 pb-4 pt-28 sm:pt-[7.5rem] md:space-y-5 md:pb-6 md:pt-28 lg:space-y-8 lg:pb-0 lg:pt-0"
           >
             <h1 className="text-hero text-[var(--text-primary)]">
               <TypingText text="HISTORY TALK" className="typing-title" />
@@ -173,7 +173,7 @@ export function HeroSection() {
                 <Link
                   href="/home"
                   className={cn(
-                    "group relative flex w-full items-center justify-center overflow-visible border border-white/10 bg-white/[0.03] px-6 py-3.5 text-sm font-semibold tracking-wider text-white backdrop-blur-md transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08] active:scale-[0.98] lg:inline-flex lg:w-auto lg:px-8 lg:py-4 lg:text-base",
+                    "group relative flex w-full items-center justify-center overflow-hidden border border-white/10 bg-white/[0.03] px-6 py-3.5 text-sm font-semibold tracking-wider text-white backdrop-blur-md transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08] active:scale-[0.98] lg:inline-flex lg:w-auto lg:overflow-visible lg:px-8 lg:py-4 lg:text-base",
                   )}
                 >
                   <span className="absolute left-0 top-0 h-[1.5px] w-full origin-left -translate-x-[7.5%] scale-x-0 bg-[var(--text-tertiary)] transition-transform duration-700 ease-out group-hover:scale-x-[1.15]" />
@@ -188,7 +188,7 @@ export function HeroSection() {
 
           <div
             ref={carouselRef}
-            className="relative flex h-[320px] w-full items-center justify-center will-change-transform sm:h-[380px] md:h-[500px] lg:h-[650px] lg:overflow-visible"
+            className="relative -mx-4 mt-2 flex h-[260px] w-[calc(100%+2rem)] items-center justify-center overflow-hidden will-change-transform sm:mx-0 sm:h-[340px] sm:w-full md:h-[500px] lg:mt-0 lg:h-[650px] lg:overflow-visible"
           >
             {showCarousel ? (
               <Suspense fallback={<CarouselPlaceholder />}>

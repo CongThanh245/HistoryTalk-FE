@@ -10,7 +10,14 @@ import {
 import { useCharacters } from "@/features/characters/hooks";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 
-const RADIUS = 250;
+const DESKTOP_RADIUS = 250;
+
+function getResponsiveRadius() {
+  if (typeof window === "undefined") return DESKTOP_RADIUS;
+  if (window.innerWidth < 640) return 145;
+  if (window.innerWidth < 768) return 185;
+  return DESKTOP_RADIUS;
+}
 
 export function Carousel3DVertical() {
   const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
@@ -18,7 +25,8 @@ export function Carousel3DVertical() {
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const skeletonCardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const rotationProxy = useRef({ rotation: 0 });
-  const radiusProxy = useRef({ value: RADIUS });
+  const radiusProxy = useRef({ value: getResponsiveRadius() });
+  const baseRadiusRef = useRef(getResponsiveRadius());
   const animationRef = useRef<gsap.core.Tween | null>(null);
   const skeletonAnimRef = useRef<gsap.core.Tween | null>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -39,6 +47,19 @@ export function Carousel3DVertical() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    const updateRadius = () => {
+      const nextRadius = getResponsiveRadius();
+      baseRadiusRef.current = nextRadius;
+      radiusProxy.current.value = nextRadius;
+    };
+
+    updateRadius();
+    window.addEventListener("resize", updateRadius);
+
+    return () => window.removeEventListener("resize", updateRadius);
+  }, []);
+
   // ── Skeleton rotation (chỉ chạy khi ready) ─────────────────────
   useGSAP(() => {
     if (!isAnimationReady) return;
@@ -52,9 +73,10 @@ export function Carousel3DVertical() {
       const rot = skeletonProxy.rotation;
       cards.forEach((card, i) => {
         const angle = rot + i * skeletonAngleIncrement;
-        const x = Math.sin(angle) * RADIUS;
-        const z = Math.cos(angle) * RADIUS;
-        const normalizedZ = (z + RADIUS) / (RADIUS * 2);
+        const r = baseRadiusRef.current;
+        const x = Math.sin(angle) * r;
+        const z = Math.cos(angle) * r;
+        const normalizedZ = (z + r) / (r * 2);
         gsap.set(card, {
           x,
           z,
@@ -125,7 +147,7 @@ export function Carousel3DVertical() {
 
   useGSAP(() => {
     gsap.to(radiusProxy.current, {
-      value: isHovered ? RADIUS * 0.7 : RADIUS,
+      value: isHovered ? baseRadiusRef.current * 0.7 : baseRadiusRef.current,
       duration: 0.5,
       ease: "power2.out",
     });
@@ -143,7 +165,7 @@ export function Carousel3DVertical() {
       {authRequiredDialog}
       <div
         ref={containerRef}
-        className="relative w-full h-[320px] sm:h-[380px] md:h-[500px] lg:h-[650px] flex items-center justify-center"
+        className="relative flex h-[260px] w-full items-center justify-center sm:h-[340px] md:h-[500px] lg:h-[650px]"
         style={{ perspective: "1200px" }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -176,7 +198,7 @@ export function Carousel3DVertical() {
             ref={(el) => {
               skeletonCardsRef.current[i] = el;
             }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[160px] h-[230px] sm:w-[200px] sm:h-[280px] md:w-[240px] md:h-[340px] lg:w-[280px] lg:h-[400px]"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[136px] h-[198px] sm:w-[190px] sm:h-[266px] md:w-[240px] md:h-[340px] lg:w-[280px] lg:h-[400px]"
             style={{ transformStyle: "preserve-3d" }}
           >
             <div
@@ -223,7 +245,7 @@ export function Carousel3DVertical() {
             ref={(el) => {
               cardsRef.current[index] = el;
             }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[160px] h-[230px] sm:w-[200px] sm:h-[280px] md:w-[240px] md:h-[340px] lg:w-[280px] lg:h-[400px]"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[136px] h-[198px] sm:w-[190px] sm:h-[266px] md:w-[240px] md:h-[340px] lg:w-[280px] lg:h-[400px]"
             style={{ transformStyle: "preserve-3d" }}
           >
             <CharacterCarouselCard
