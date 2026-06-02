@@ -40,8 +40,8 @@ export default function GoogleOAuthSuccessPage() {
     const tokenType = params.get("tokenType");
     const expiresInRaw = params.get("expiresIn");
     const uid = params.get("uid");
-    const userName = params.get("userName");
-    const email = params.get("email");
+    const userName = decodeURIComponent(params.get("userName") ?? "");
+    const email = decodeURIComponent(params.get("email") ?? "");
     const role = params.get("role");
     const expiresIn = Number(expiresInRaw);
 
