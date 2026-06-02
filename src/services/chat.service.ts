@@ -12,11 +12,14 @@ export interface ChatSession {
   messageCount: number;
 }
 
+export type MessageType = "TEXT" | "VOICE";
+
 export interface ChatMessage {
   id: string;
   sessionId: string;
   role: "USER" | "ASSISTANT";
   content: string;
+  messageType: MessageType;
   createdAt: string;
 }
 
@@ -92,7 +95,10 @@ export const chatService = {
         timeout: 90000,
       },
     );
-    const sessionData = res.data.data.session;
+    const sessionData = res.data.data?.session ?? res.data.data;
+    if (!sessionData) {
+      throw new Error("Invalid response: session data is undefined");
+    }
     return {
       ...sessionData,
       id: sessionData.id || sessionData._id, // Use id if exists, otherwise use _id
@@ -113,6 +119,7 @@ export const chatService = {
       {
         sessionId,
         content,
+        messageType: "TEXT",
       },
       {
         timeout: 90000,

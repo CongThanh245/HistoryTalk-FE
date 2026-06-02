@@ -2,22 +2,17 @@
 
 import { Bell } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { SearchInput } from "@/components/commons/search-input";
+import { SearchInputWithSuggestions } from "@/components/commons/search-input-with-suggestions";
 import { useAuthStore } from "@/store/auth.store";
 import { GreetingSection } from "../home/greeting-section";
 import { MagneticButton } from "../commons/MagneticButton";
 import { useSidebar } from "./sidebar/sidebar-context";
 import { UserProfileDropdown } from "./user-profile-dropdown";
 import { ThemeToggle } from "./theme-toggle";
-import { usePathname } from "next/navigation";
 
 export default function Header() {
   const user = useAuthStore((s) => s.user);
   const { toggleMobileSidebar } = useSidebar();
-  const pathname = usePathname();
-
-  // Chat has a dedicated full-screen header inside ChatMain.
-  if (pathname?.startsWith("/chat")) return null;
 
   return (
     <header
@@ -46,9 +41,7 @@ export default function Header() {
 
         {/* Search — hidden on mobile, visible on md+ */}
         <div className="hidden md:flex flex-1 max-w-md">
-          <SearchInput
-            value=""
-            onChange={() => {}}
+          <SearchInputWithSuggestions
             placeholder="Tìm kiếm sự kiện, nhân vật..."
           />
         </div>

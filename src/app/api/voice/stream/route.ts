@@ -186,7 +186,7 @@ export async function POST(req: NextRequest) {
             "Content-Type": "application/json",
             Authorization: authHeader,
           },
-          body: JSON.stringify({ sessionId, content: userTranscript }),
+          body: JSON.stringify({ sessionId, content: userTranscript, messageType: "VOICE" }),
         });
 
         if (!beRes.ok) {
