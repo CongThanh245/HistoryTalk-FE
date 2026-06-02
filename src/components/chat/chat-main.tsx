@@ -357,9 +357,9 @@ export function ChatMain({
             ))}
             {isStreaming && streamingMessage && (
               <MessageBubble
-                key={`streaming-${Date.now()}`}
+                key="streaming-bubble"
                 message={{
-                  id: `streaming-${Date.now()}`,
+                  id: "streaming-bubble",
                   sessionId: sessionId!,
                   role: "ASSISTANT",
                   content: streamingMessage,
