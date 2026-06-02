@@ -121,6 +121,78 @@ export const chatService = {
     return res.data.data;
   },
 
+  sendMessageStream: async (
+    sessionId: string,
+    content: string,
+    onData: (chunk: string) => void,
+    onDone: (data: { remainingTokens?: number, suggestedQuestions?: string[], fullContent: string }) => void,
+    onError: (error: any) => void
+  ) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/chat/messages/stream`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ sessionId, content }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error("ReadableStream not yet supported in this browser.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let done = false;
+      let remainingTokens: number | undefined;
+      let suggestedQuestions: string[] | undefined;
+
+      let fullContent = "";
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const dataStr = line.substring(6).trim();
+                if (!dataStr) continue;
+                const parsed = JSON.parse(dataStr);
+                
+                if (parsed.type === "text") {
+                  fullContent += parsed.data;
+                  onData(parsed.data);
+                } else if (parsed.type === "metadata") {
+                   suggestedQuestions = parsed.data?.suggestedQuestions;
+                } else if (parsed.type === "done") {
+                   remainingTokens = parsed.remainingTokens;
+                }
+              } catch (e) {
+                console.warn("Failed to parse SSE data line", line);
+              }
+            }
+          }
+        }
+      }
+      onDone({ remainingTokens, suggestedQuestions, fullContent });
+    } catch (err) {
+      onError(err);
+    }
+  },
+
   getHistory: async (): Promise<ChatHistoryGroup[]> => {
     const res = await axiosClient.get("/chat/history");
     return res.data.data;
