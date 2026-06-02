@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "../styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProviders from "@/components/context/query-client-provider";
@@ -43,6 +43,21 @@ export const metadata: Metadata = {
     description: "Trò chuyện với các nhân vật lịch sử",
     images: ["/historytalk-banner.png"],
   },
+  // Thêm preconnect cho external resources
+  other: {
+    preconnect: [
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com",
+    ],
+  },
+};
+
+// Tách viewport export theo chuẩn Next.js 16
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#0a0c10",
 };
 
 export default function RootLayout({
@@ -54,6 +69,10 @@ export default function RootLayout({
     <html lang="vi" suppressHydrationWarning>
       <body
         className={`${titleFont.variable} ${bodyFont.variable} antialiased`}
+        style={{
+          // CSS containment để giảm repaint area
+          contain: "layout style paint",
+        }}
       >
         <ThemeProvider>
           <ReactQueryProviders>{children}</ReactQueryProviders>

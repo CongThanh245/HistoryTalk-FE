@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import {
@@ -22,6 +22,7 @@ export function Carousel3DVertical() {
   const animationRef = useRef<gsap.core.Tween | null>(null);
   const skeletonAnimRef = useRef<gsap.core.Tween | null>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [isAnimationReady, setIsAnimationReady] = useState(false);
 
   const { data, isLoading } = useCharacters({ page: 1, limit: 6 });
   const FIGURES: Character[] = data?.content ?? [];
@@ -30,8 +31,18 @@ export function Carousel3DVertical() {
   const SKELETON_COUNT = 6;
   const skeletonAngleIncrement = (Math.PI * 2) / SKELETON_COUNT;
 
-  // ── Skeleton rotation (luôn chạy) ─────────────────────
+  // Defer animation khởi động để giảm lag initial load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsAnimationReady(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ── Skeleton rotation (chỉ chạy khi ready) ─────────────────────
   useGSAP(() => {
+    if (!isAnimationReady) return;
+    
     const cards = skeletonCardsRef.current.filter(Boolean) as HTMLDivElement[];
     if (cards.length === 0) return;
 
@@ -58,7 +69,7 @@ export function Carousel3DVertical() {
 
     skeletonAnimRef.current = gsap.to(skeletonProxy, {
       rotation: Math.PI * 2,
-      duration: 30,
+      duration: 40, // Tăng duration để giảm CPU usage
       ease: "none",
       repeat: -1,
       onUpdate: updateSkeletons,
@@ -68,12 +79,14 @@ export function Carousel3DVertical() {
     });
 
     return () => skeletonAnimRef.current?.kill();
-  }, []);
+  }, [isAnimationReady]);
 
   // ── Real cards rotation ────────────────────────────────
   useGSAP(() => {
+    if (!isAnimationReady || cardsRef.current.length === 0 || cardCount === 0) return;
+
     const cards = cardsRef.current.filter(Boolean) as HTMLDivElement[];
-    if (cards.length === 0 || cardCount === 0) return;
+    if (cards.length === 0) return;
 
     const updateCards = () => {
       const rot = rotationProxy.current.rotation;
@@ -98,7 +111,7 @@ export function Carousel3DVertical() {
 
     animationRef.current = gsap.to(rotationProxy.current, {
       rotation: Math.PI * 2,
-      duration: 30,
+      duration: 40, // Tăng duration để giảm CPU usage
       ease: "none",
       repeat: -1,
       onUpdate: updateCards,
@@ -108,7 +121,7 @@ export function Carousel3DVertical() {
     });
 
     return () => animationRef.current?.kill();
-  }, [cardCount, angleIncrement]);
+  }, [cardCount, angleIncrement, isAnimationReady]);
 
   useGSAP(() => {
     gsap.to(radiusProxy.current, {
@@ -117,7 +130,7 @@ export function Carousel3DVertical() {
       ease: "power2.out",
     });
     if (animationRef.current) {
-      animationRef.current.timeScale(isHovered ? 2 : 1);
+      animationRef.current.timeScale(isHovered ? 1.5 : 1); // Giảm tốc độ khi hover
     }
   }, [isHovered]);
 

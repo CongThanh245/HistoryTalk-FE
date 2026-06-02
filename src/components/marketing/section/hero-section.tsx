@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -19,10 +19,33 @@ export function HeroSection() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const subContentRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  // Defer animations để tránh chạy ngay lập tức khi mount
+  useEffect(() => {
+    // Chờ initial paint xong rồi mới bắt đầu animations
+    const rafId = requestAnimationFrame(() => {
+      // Sử dụng requestIdleCallback nếu có, hoặc setTimeout fallback
+      const startAnimation = () => setIsReady(true);
+      
+      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+        (window as Window & { requestIdleCallback: typeof requestIdleCallback }).requestIdleCallback(startAnimation, { timeout: 100 });
+      } else {
+        setTimeout(startAnimation, 50);
+      }
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, []);
 
   useEffect(() => {
+    if (!isReady) return;
+
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+      const tl = gsap.timeline({ 
+        defaults: { ease: "power2.out" },
+        delay: 0.1 // Nhỏ delay để đảm bảo browser đã render xong
+      });
 
       tl.fromTo(
         ".typing-title .char",
@@ -73,7 +96,7 @@ export function HeroSection() {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [isReady]);
 
   return (
     <section
