@@ -155,7 +155,13 @@ export const chatService = {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => null);
+        const error = new Error(errorData?.message || `HTTP error! status: ${response.status}`);
+        (error as any).response = {
+          status: response.status,
+          data: errorData,
+        };
+        throw error;
       }
 
       if (!response.body) {

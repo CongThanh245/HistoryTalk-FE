@@ -201,11 +201,17 @@ export function ChatMain({
         );
         
         const serverMessage = err?.message || err?.response?.data?.message || "";
-        if (
-          serverMessage.includes("hết token") ||
-          serverMessage.includes("nạp thêm") ||
-          err?.response?.data?.errorCode === 400
-        ) {
+        const errorCode = err?.response?.data?.errorCode;
+        
+        // Check for token exhaustion - broader matching
+        const isTokenExhausted = 
+          serverMessage.toLowerCase().includes("hết token") ||
+          serverMessage.toLowerCase().includes("nạp thêm") ||
+          serverMessage.toLowerCase().includes("token") ||
+          errorCode === 400 ||
+          errorCode === "400";
+        
+        if (isTokenExhausted) {
           setIsTokenExhausted(true);
           toast.error("Bạn đã hết token. Vui lòng nạp thêm để tiếp tục chat.", {
             action: {
