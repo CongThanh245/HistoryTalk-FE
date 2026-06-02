@@ -79,7 +79,7 @@ export function RoomView({ room, onBack }: RoomViewProps) {
               }}
             >
               <ArrowLeft size={14} />
-              Quay lại bản đồ
+              Quay lại
             </button>
 
             <div className="flex-1" />
@@ -211,7 +211,7 @@ export function RoomViewEmpty({ onBack }: { onBack?: () => void }) {
           border: "1px solid rgba(201,162,77,0.3)",
         }}
       >
-        Quay lại bản đồ
+        Quay lại
       </button>
     </div>
   );

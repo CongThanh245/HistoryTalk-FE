@@ -17,7 +17,8 @@ const routeLabels: Record<string, string> = {
   contexts: "Bối cảnh",
   events: "Sự kiện",
   library: "Thư viện",
-  map: "Bản đồ",
+  // MVP: Ẩn map
+  // map: "Bản đồ",
   profile: "Hồ sơ",
   quiz: "Câu đố lịch sử",
   saved: "Đã lưu",

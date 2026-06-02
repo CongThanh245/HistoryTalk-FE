@@ -38,8 +38,8 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
       { icon: UserIcon, label: "Nhân vật", href: "/characters" },
       { icon: ChatTextIcon, label: "Lịch sử chat", href: "/chat-history" },
       { icon: ClipboardTextIcon, label: "Câu đố lịch sử", href: "/quiz" },
-      { icon: MapTrifoldIcon, label: "Bản đồ lịch sử", href: "/map" },
-      // MVP: Ẩn Library và Đã lưu
+      // MVP: Ẩn Bản đồ lịch sử, Library và Đã lưu
+      // { icon: MapTrifoldIcon, label: "Bản đồ lịch sử", href: "/map" },
       // { icon: BooksIcon, label: "Library", href: "/library" },
       // { icon: BookmarkIcon, label: "Đã lưu", href: "/saved" },
     ],
