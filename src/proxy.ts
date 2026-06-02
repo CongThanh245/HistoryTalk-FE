@@ -1,3 +1,5 @@
+export const runtime = 'experimental-edge';
+
 import { NextRequest } from "next/server";
 import { authMiddleware } from "./middlewares/auth.middleware";
 
