@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils/cn";
+import { useEffect, useState } from "react";
 
 type BrandLogoProps = {
   className?: string;
@@ -20,15 +21,24 @@ export function BrandLogo({
   size = "default",
 }: BrandLogoProps) {
   const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const isDark = forceDark || resolvedTheme === "dark";
 
   // When collapsed, use solo-logo.png
   // Otherwise use theme-based logo
+  // During SSR, use light theme logo to avoid hydration mismatch
   const logoSrc = isCollapsed
     ? "/solo-logo.png"
-    : isDark
-      ? "/logo-dark-theme.png"
-      : "/logo-light-theme.png";
+    : !mounted
+      ? "/logo-light-theme.png"
+      : isDark
+        ? "/logo-dark-theme.png"
+        : "/logo-light-theme.png";
 
   // Dimensions based on collapsed state and size prop
   const isLarge = size === "large";
