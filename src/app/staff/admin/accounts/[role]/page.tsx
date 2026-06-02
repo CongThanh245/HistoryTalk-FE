@@ -4,17 +4,13 @@ import * as React from "react";
 import { useParams } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-  PlusIcon,
   PencilIcon,
-  TrashIcon,
-  ArrowCounterClockwiseIcon,
   MagnifyingGlassIcon,
   UsersIcon,
   UserIcon,
   ShieldCheckIcon,
   CoinsIcon,
   LockKeyIcon,
-  LockOpenIcon,
 } from "@phosphor-icons/react";
 
 import { StaffShell } from "@/components/staff/staff-shell";
@@ -30,24 +26,12 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import {
   useAdminUsers,
-  useAdminCreateUser,
   useAdminUpdateUser,
   useAdminDeleteUser,
-  useAdminRestoreUser,
-  useAdminPermanentDeleteUser,
-  useAdminAddTokens,
-  useAdminTokenAnalytics,
   type AdminUser,
 } from "@/features/admin/hooks";
 
@@ -64,7 +48,7 @@ function isUserDeleted(user: AdminUser): boolean {
 
 interface RoleMeta {
   label: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   accent: string;
   description: string;
   showToken: boolean;
@@ -76,7 +60,7 @@ const ROLE_META: Record<string, RoleMeta> = {
     label: "Khách hàng",
     icon: UsersIcon,
     accent: "var(--accent-blue)",
-    description: "Quản lý tài khoản khách hàng: khoá, đặt lại token, đổi gói.",
+    description: "Quản lý tài khoản khách hàng: xem danh sách, chỉnh sửa hồ sơ và khoá tài khoản.",
     showToken: true,
     showTier: true,
   },
@@ -160,64 +144,36 @@ export default function AdminAccountsPage() {
 
   // Data
   const { data: usersResponse, isLoading, isFetching } = useAdminUsers(roleEnum, { page: 0, size: 100 });
-  const allUsers = usersResponse?.content ?? [];
-  const createUser = useAdminCreateUser();
+  const allUsers = React.useMemo(() => usersResponse?.content ?? [], [usersResponse?.content]);
   const updateUser = useAdminUpdateUser();
   const deleteUser = useAdminDeleteUser();
-  const restoreUser = useAdminRestoreUser();
-  const permanentDeleteUser = useAdminPermanentDeleteUser();
-  const addTokens = useAdminAddTokens();
-
-  // Token analytics (only for customer role)
-  const { data: tokenAnalytics } = useAdminTokenAnalytics(
-    roleEnum === "CUSTOMER" ? { granularity: "day" } : undefined
-  );
 
   // UI state
   const [search, setSearch] = React.useState("");
-  const [showTrash, setShowTrash] = React.useState(false);
 
   // Dialogs
   const [formOpen, setFormOpen] = React.useState(false);
-  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
   const [formTarget, setFormTarget] = React.useState<AdminUser | null>(null);
   const [formData, setFormData] = React.useState<Partial<AdminUser>>(() => buildEmptyUser(roleEnum));
 
-  const [tokenDialogOpen, setTokenDialogOpen] = React.useState(false);
-  const [tokenTarget, setTokenTarget] = React.useState<AdminUser | null>(null);
-  const [tokenAmount, setTokenAmount] = React.useState("100");
-
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<AdminUser | null>(null);
-  const [permanentDeleteOpen, setPermanentDeleteOpen] = React.useState(false);
-  const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<AdminUser | null>(null);
 
   // Derived
-  const activeItems = allUsers.filter((u) => !isUserDeleted(u));
-  const trashedItems = allUsers.filter((u) => isUserDeleted(u));
-  const baseList = showTrash ? trashedItems : activeItems;
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return baseList;
-    return baseList.filter(
+    if (!q) return allUsers;
+    return allUsers.filter(
       (u) =>
         u.userName?.toLowerCase().includes(q) ||
         u.email?.toLowerCase().includes(q) ||
         u.fullName?.toLowerCase().includes(q)
     );
-  }, [baseList, search]);
+  }, [allUsers, search]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
-  function openCreate() {
-    setFormMode("create");
-    setFormTarget(null);
-    setFormData(buildEmptyUser(roleEnum));
-    setFormOpen(true);
-  }
-
   function openEdit(user: AdminUser) {
-    setFormMode("edit");
     setFormTarget(user);
     setFormData({
       userName: user.userName,
@@ -233,45 +189,19 @@ export default function AdminAccountsPage() {
   }
 
   function handleFormSave() {
-    if (!formData.userName?.trim() || !formData.email?.trim()) return;
-    if (formMode === "create") {
-      createUser.mutate(formData as AdminUser, { onSuccess: () => setFormOpen(false) });
-    } else if (formTarget) {
-      // Only send allowed fields for update (filter out nulls)
-      const updates = {
-        userName: formData.userName,
-        fullName: formData.fullName,
-        dob: formData.dob ?? undefined,
-        gender: formData.gender ?? undefined,
-        phoneNumber: formData.phoneNumber ?? undefined,
-        address: formData.address ?? undefined,
-        avatarUrl: formData.avatarUrl ?? undefined,
-      };
-      updateUser.mutate(
-        { uid: formTarget.uid, updates },
-        { onSuccess: () => setFormOpen(false) }
-      );
-    }
-  }
-
-  // Toggle active status via deactivate/restore API
-  function handleToggleActive(user: AdminUser) {
-    if (isUserDeleted(user)) {
-      // Reactivate
-      restoreUser.mutate({ uid: user.uid, role: user.role });
-    } else {
-      // Deactivate
-      deleteUser.mutate({ uid: user.uid, role: user.role });
-    }
-  }
-
-  function handleAddTokens() {
-    if (!tokenTarget) return;
-    const amount = parseInt(tokenAmount, 10);
-    if (isNaN(amount) || amount <= 0) return;
-    addTokens.mutate(
-      { uid: tokenTarget.uid, amount },
-      { onSuccess: () => setTokenDialogOpen(false) }
+    if (!formTarget || !formData.userName?.trim()) return;
+    const updates = {
+      userName: formData.userName,
+      fullName: formData.fullName,
+      dob: formData.dob ?? undefined,
+      gender: formData.gender ?? undefined,
+      phoneNumber: formData.phoneNumber ?? undefined,
+      address: formData.address ?? undefined,
+      avatarUrl: formData.avatarUrl ?? undefined,
+    };
+    updateUser.mutate(
+      { uid: formTarget.uid, updates },
+      { onSuccess: () => setFormOpen(false) }
     );
   }
 
@@ -388,8 +318,13 @@ export default function AdminAccountsPage() {
             <div className="flex items-center gap-2">
               <Switch
                 checked={!isDeleted}
-                onCheckedChange={() => handleToggleActive(u)}
-                disabled={deleteUser.isPending || restoreUser.isPending}
+                onCheckedChange={(checked) => {
+                  if (!checked) {
+                    setDeleteTarget(u);
+                    setDeleteOpen(true);
+                  }
+                }}
+                disabled={isDeleted || deleteUser.isPending}
                 className="data-[state=checked]:!bg-emerald-500"
               />
               <span
@@ -409,37 +344,22 @@ export default function AdminAccountsPage() {
           const u = row.original;
           return (
             <div className="flex items-center justify-end gap-1">
-              {meta.showToken && (
+              {!isUserDeleted(u) && (
                 <Button
                   variant="ghost"
                   size="icon-sm"
                   className="rounded-full"
-                  title="Cộng token"
+                  title="Khoá tài khoản"
                   onClick={() => {
-                    setTokenTarget(u);
-                    setTokenAmount("100");
-                    setTokenDialogOpen(true);
+                    setDeleteTarget(u);
+                    setDeleteOpen(true);
                   }}
-                  style={{ color: "var(--accent-gold)" }}
+                  disabled={deleteUser.isPending}
+                  style={{ color: "var(--accent-danger)" }}
                 >
-                  <CoinsIcon className="h-4 w-4" />
+                  <LockKeyIcon className="h-4 w-4" />
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full"
-                title={!isUserDeleted(u) ? "Khoá tài khoản" : "Mở khoá tài khoản"}
-                onClick={() => handleToggleActive(u)}
-                disabled={deleteUser.isPending || restoreUser.isPending}
-                style={{ color: !isUserDeleted(u) ? "var(--accent-danger)" : "rgb(22,163,74)" }}
-              >
-                {!isUserDeleted(u) ? (
-                  <LockKeyIcon className="h-4 w-4" />
-                ) : (
-                  <LockOpenIcon className="h-4 w-4" />
-                )}
-              </Button>
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -450,19 +370,6 @@ export default function AdminAccountsPage() {
               >
                 <PencilIcon className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full"
-                title="Xoá tạm"
-                onClick={() => {
-                  setDeleteTarget(u);
-                  setDeleteOpen(true);
-                }}
-                style={{ color: "var(--accent-danger)" }}
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
             </div>
           );
         },
@@ -471,86 +378,8 @@ export default function AdminAccountsPage() {
 
     return base;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meta, updateUser.isPending]);
+  }, [meta, deleteUser.isPending]);
 
-  // ── Trash columns ─────────────────────────────────────────────────────────
-
-  const trashColumns = React.useMemo<ColumnDef<AdminUser>[]>(
-    () => [
-      {
-        accessorKey: "userName",
-        header: "Người dùng",
-        cell: ({ row }) => {
-          const u = row.original;
-          return (
-            <div className="flex items-center gap-3 min-w-[200px] opacity-60">
-              <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
-                <UserIcon className="h-4 w-4 text-gray-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold line-through" style={{ color: "var(--content-heading)" }}>
-                  {u.fullName || u.userName}
-                </p>
-                <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                  {u.email}
-                </p>
-              </div>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "deletedAt",
-        header: "Đã xoá lúc",
-        cell: ({ row }) => {
-          const d = row.original.deletedAt
-            ? new Date(row.original.deletedAt)
-            : null;
-          return (
-            <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
-              {d && !isNaN(d.getTime()) ? d.toLocaleString("vi-VN") : "—"}
-            </span>
-          );
-        },
-      },
-      {
-        id: "actions",
-        header: () => <div className="text-right pr-2">Thao tác</div>,
-        cell: ({ row }) => {
-          const u = row.original;
-          return (
-            <div className="flex items-center justify-end gap-1">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full"
-                title="Khôi phục"
-                onClick={() => restoreUser.mutate({ uid: u.uid, role: u.role })}
-                disabled={restoreUser.isPending}
-                style={{ color: "rgb(22,163,74)" }}
-              >
-                <ArrowCounterClockwiseIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full"
-                title="Xoá vĩnh viễn"
-                onClick={() => {
-                  setPermanentDeleteTarget(u);
-                  setPermanentDeleteOpen(true);
-                }}
-                style={{ color: "var(--accent-danger)" }}
-              >
-                <TrashIcon className="h-4 w-4" />
-              </Button>
-            </div>
-          );
-        },
-      },
-    ],
-    [restoreUser]
-  );
 
   const Icon = meta.icon;
 
@@ -581,7 +410,7 @@ export default function AdminAccountsPage() {
               className="text-base font-semibold"
               style={{ color: "var(--content-heading)" }}
             >
-              {showTrash ? `Thùng rác – ${meta.label}` : `Danh sách ${meta.label}`}
+              {`Danh sách ${meta.label}`}
             </h2>
             <p className="text-sm" style={{ color: "var(--content-muted)" }}>
               {isLoading ? (
@@ -616,183 +445,45 @@ export default function AdminAccountsPage() {
                 }}
               />
             </div>
-
-            {/* Trash toggle */}
-            <Button
-              variant="outline"
-              className="h-10 rounded-xl px-4 font-semibold whitespace-nowrap"
-              onClick={() => setShowTrash(!showTrash)}
-              style={{
-                borderColor: showTrash
-                  ? "var(--accent-danger)"
-                  : "var(--card-light-border)",
-                color: showTrash
-                  ? "var(--accent-danger)"
-                  : "var(--content-heading)",
-                background: showTrash ? "rgba(239,68,68,0.08)" : "transparent",
-              }}
-            >
-              {showTrash ? (
-                <>
-                  <ArrowCounterClockwiseIcon className="h-4 w-4 mr-1.5" />
-                  Danh sách
-                </>
-              ) : (
-                <>
-                  <TrashIcon className="h-4 w-4 mr-1.5" />
-                  Thùng rác
-                  {trashedItems.length > 0 && ` (${trashedItems.length})`}
-                </>
-              )}
-            </Button>
-
-            {/* Add button – only for active list */}
-            {!showTrash && (
-              <Button
-                className="h-10 rounded-xl px-4 font-semibold border-0 whitespace-nowrap"
-                onClick={openCreate}
-                style={{
-                  background: meta.accent,
-                  color: "#fff",
-                }}
-              >
-                <PlusIcon className="h-4 w-4 mr-1.5" />
-                Thêm tài khoản
-              </Button>
-            )}
           </div>
         </div>
 
         {/* Table */}
         <StaffDataTable
-          columns={showTrash ? trashColumns : columns}
+          columns={columns}
           data={filtered}
           isLoading={isLoading}
-          emptyMessage={
-            showTrash
-              ? "Thùng rác trống."
-              : `Không tìm thấy ${meta.label.toLowerCase()} phù hợp.`
-          }
+          emptyMessage={`Không tìm thấy ${meta.label.toLowerCase()} phù hợp.`}
         />
       </section>
 
-      {/* ── Token Analytics ───────────────────────────────────────────── */}
-      {meta.showToken && !showTrash && !isLoading && tokenAnalytics && (
-        <section
-          className="rounded-2xl border p-6 space-y-4"
-          style={{
-            background: "var(--card-light-bg)",
-            borderColor: "var(--card-light-border)",
-          }}
-        >
-          <div className="flex items-center gap-2">
-            <CoinsIcon className="h-5 w-5" style={{ color: "var(--accent-gold)" }} />
-            <h2 className="text-base font-semibold" style={{ color: "var(--content-heading)" }}>
-              Thống kê Token Usage
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="rounded-xl border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-              <p className="text-xs text-muted-foreground">Total Tokens Used</p>
-              <p className="text-lg font-bold" style={{ color: "var(--accent-gold)" }}>
-                {tokenAnalytics.summary.totalTokens.toLocaleString()}
-              </p>
-            </div>
-            <div className="rounded-xl border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-              <p className="text-xs text-muted-foreground">Remaining Tokens</p>
-              <p className="text-lg font-bold" style={{ color: "rgb(22,163,74)" }}>
-                {tokenAnalytics.summary.remainingTokens.toLocaleString()}
-              </p>
-            </div>
-            <div className="rounded-xl border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-              <p className="text-xs text-muted-foreground">Users Out of Tokens</p>
-              <p className="text-lg font-bold" style={{ color: "var(--accent-danger)" }}>
-                {tokenAnalytics.summary.usersOutOfTokens}
-              </p>
-            </div>
-            <div className="rounded-xl border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-              <p className="text-xs text-muted-foreground">Avg Remaining</p>
-              <p className="text-lg font-bold" style={{ color: "var(--accent-blue)" }}>
-                {Math.round(tokenAnalytics.summary.averageRemainingTokens).toLocaleString()}
-              </p>
-            </div>
-          </div>
-
-          {/* Top Token Users */}
-          {tokenAnalytics.topUsersByTokenUsage.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
-                Top người dùng tiêu thụ token
-              </h3>
-              <div className="space-y-2">
-                {tokenAnalytics.topUsersByTokenUsage.slice(0, 5).map((user) => (
-                  <div
-                    key={user.uid}
-                    className="flex items-center justify-between p-3 rounded-xl border"
-                    style={{ borderColor: "var(--card-light-border)" }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
-                        {user.userName?.[0]?.toUpperCase() || "?"}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium" style={{ color: "var(--content-heading)" }}>
-                          {user.userName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold" style={{ color: "var(--accent-gold)" }}>
-                        {user.totalTokens.toLocaleString()} tokens
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Còn: {user.remainingTokens.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-
       {/* ── Stats summary strip ─────────────────────────────────────────── */}
-      {!showTrash && !isLoading && (
+      {!isLoading && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             {
               label: "Tổng tài khoản",
-              value: activeItems.length,
+              value: allUsers.length,
               color: "var(--accent-blue)",
             },
             {
               label: "Đang kích hoạt",
-              value: activeItems.filter((u) => !isUserDeleted(u)).length,
+              value: allUsers.filter((u) => !isUserDeleted(u)).length,
               color: "rgb(22,163,74)",
             },
             {
               label: "Đang bị khoá",
-              value: activeItems.filter((u) => isUserDeleted(u)).length,
+              value: allUsers.filter((u) => isUserDeleted(u)).length,
               color: "var(--accent-danger)",
             },
             ...(meta.showToken
               ? [
                   {
-                    label: "Tổng token (hệ thống)",
-                    value: tokenAnalytics?.summary.remainingTokens.toLocaleString() ?? activeItems.reduce((s, u) => s + (u.token || 0), 0).toLocaleString(),
+                    label: "Tổng token còn lại",
+                    value: allUsers.reduce((s, u) => s + (u.token || 0), 0).toLocaleString(),
                     color: "var(--accent-gold)",
                   },
-                ]
-              : [
-                  {
-                    label: "Trong thùng rác",
-                    value: trashedItems.length,
-                    color: "var(--content-muted)",
-                  },
-                ]),
+                ] : []),
           ].map((stat) => (
             <div
               key={stat.label}
@@ -825,14 +516,10 @@ export default function AdminAccountsPage() {
         >
           <DialogHeader>
             <DialogTitle style={{ color: "var(--content-heading)" }}>
-              {formMode === "create"
-                ? `Thêm ${meta.label} mới`
-                : `Chỉnh sửa tài khoản`}
+              Chỉnh sửa tài khoản
             </DialogTitle>
             <DialogDescription style={{ color: "var(--content-muted)" }}>
-              {formMode === "create"
-                ? `Điền thông tin để tạo tài khoản ${meta.label.toLowerCase()} mới.`
-                : "Cập nhật thông tin tài khoản người dùng."}
+              Cập nhật thông tin tài khoản người dùng.
             </DialogDescription>
           </DialogHeader>
 
@@ -956,94 +643,11 @@ export default function AdminAccountsPage() {
             </Button>
             <Button
               onClick={handleFormSave}
-              disabled={createUser.isPending || updateUser.isPending}
+              disabled={updateUser.isPending}
               className="rounded-xl border-0"
               style={{ background: meta.accent, color: "#fff" }}
             >
-              {createUser.isPending || updateUser.isPending
-                ? "Đang lưu..."
-                : formMode === "create"
-                ? "Tạo tài khoản"
-                : "Lưu thay đổi"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Add Token dialog (customer only) ──────────────────────────── */}
-      <Dialog open={tokenDialogOpen} onOpenChange={setTokenDialogOpen}>
-        <DialogContent
-          className="max-w-sm staff-theme"
-          style={{
-            background: "var(--card-light-bg)",
-            borderColor: "var(--card-light-border)",
-            color: "var(--content-text)",
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle style={{ color: "var(--content-heading)" }}>
-              Cộng thêm Token
-            </DialogTitle>
-            <DialogDescription style={{ color: "var(--content-muted)" }}>
-              Token sẽ được cộng thêm vào tài khoản{" "}
-              <strong style={{ color: "var(--content-heading)" }}>
-                {tokenTarget?.fullName || tokenTarget?.userName}
-              </strong>
-              . Hiện tại: <strong style={{ color: "var(--accent-gold)" }}>{tokenTarget?.token?.toLocaleString()}</strong> token.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-1.5 py-2">
-            <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>
-              Số token muốn cộng thêm
-            </Label>
-            <div className="flex gap-2">
-              {["50", "100", "500", "1000"].map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setTokenAmount(v)}
-                  className="flex-1 py-2 rounded-lg text-xs font-bold border transition-all"
-                  style={{
-                    background: tokenAmount === v ? "var(--accent-gold)" : "rgba(27,38,50,0.05)",
-                    color: tokenAmount === v ? "#fff" : "var(--content-heading)",
-                    borderColor: tokenAmount === v ? "var(--accent-gold)" : "var(--card-light-border)",
-                  }}
-                >
-                  +{v}
-                </button>
-              ))}
-            </div>
-            <Input
-              type="number"
-              min={1}
-              value={tokenAmount}
-              onChange={(e) => setTokenAmount(e.target.value)}
-              className="h-10 rounded-xl border mt-2"
-              placeholder="Hoặc nhập tuỳ ý..."
-              style={{
-                background: "rgba(27,38,50,0.05)",
-                borderColor: "var(--card-light-border)",
-                color: "var(--content-heading)",
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setTokenDialogOpen(false)}
-              className="rounded-xl"
-              style={{ borderColor: "var(--card-light-border)" }}
-            >
-              Huỷ
-            </Button>
-            <Button
-              onClick={handleAddTokens}
-              disabled={addTokens.isPending}
-              className="rounded-xl border-0"
-              style={{ background: "var(--accent-gold)", color: "#fff" }}
-            >
-              <CoinsIcon className="h-4 w-4 mr-1.5" />
-              {addTokens.isPending ? "Đang cộng..." : `Cộng ${tokenAmount} Token`}
+              {updateUser.isPending ? "Đang lưu..." : "Lưu thay đổi"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1053,9 +657,9 @@ export default function AdminAccountsPage() {
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title="Chuyển vào thùng rác?"
-        description={`Tài khoản "${deleteTarget?.fullName || deleteTarget?.userName}" sẽ bị chuyển vào thùng rác. Bạn có thể khôi phục sau.`}
-        confirmLabel={deleteUser.isPending ? "Đang xoá..." : "Chuyển vào thùng rác"}
+        title="Khoá tài khoản?"
+        description={`Tài khoản "${deleteTarget?.fullName || deleteTarget?.userName}" sẽ bị vô hiệu hoá. Hiện backend chưa có API mở khoá.`}
+        confirmLabel={deleteUser.isPending ? "Đang khoá..." : "Khoá tài khoản"}
         variant="danger"
         isPending={deleteUser.isPending}
         onConfirm={() => {
@@ -1072,28 +676,6 @@ export default function AdminAccountsPage() {
         }}
       />
 
-      {/* ── Permanent delete confirm ───────────────────────────────────── */}
-      <ConfirmDialog
-        open={permanentDeleteOpen}
-        onOpenChange={setPermanentDeleteOpen}
-        title="Xoá vĩnh viễn tài khoản?"
-        description={`Tài khoản "${permanentDeleteTarget?.fullName || permanentDeleteTarget?.userName}" sẽ bị xoá hoàn toàn khỏi hệ thống. Hành động này không thể hoàn tác.`}
-        confirmLabel={permanentDeleteUser.isPending ? "Đang xoá..." : "Xoá vĩnh viễn"}
-        variant="danger"
-        isPending={permanentDeleteUser.isPending}
-        onConfirm={() => {
-          if (!permanentDeleteTarget) return;
-          permanentDeleteUser.mutate(
-            { uid: permanentDeleteTarget.uid, role: permanentDeleteTarget.role },
-            {
-              onSuccess: () => {
-                setPermanentDeleteOpen(false);
-                setPermanentDeleteTarget(null);
-              },
-            }
-          );
-        }}
-      />
     </StaffShell>
   );
 }

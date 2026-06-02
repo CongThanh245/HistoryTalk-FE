@@ -108,12 +108,12 @@ export function FeaturesSection() {
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(90deg,rgba(255,146,21,0.06)_0,transparent_28%,transparent_72%,rgba(143,179,200,0.06)_100%)]" />
 
       <Container className="relative z-10">
-        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
-          <div className="lg:sticky lg:top-28 lg:self-start">
-            <h2 className="vi-heading mb-4 text-[var(--text-secondary)]">
+        <div className="grid gap-6 md:gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
+          <div className="lg:sticky lg:top-28 lg:self-start px-2 md:px-0">
+            <h2 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-bold leading-tight mb-3 md:mb-4 text-[var(--text-secondary)]">
               Một dòng thời gian, <span className="text-[var(--accent-gold)] font-title">bốn lần chạm</span>
             </h2>
-            <p className="vi-text max-w-[320px] text-sm text-[var(--text-secondary)] lg:text-base">
+            <p className="text-sm md:text-base max-w-[320px] text-[var(--text-secondary)]">
               Mỗi bước đều dẫn dắt người học từ sự tò mò đến những cuộc đối thoại sâu sắc, và khép lại bằng các bài ôn tập đầy ý nghĩa.
             </p>
           </div>
@@ -152,22 +152,22 @@ export function FeaturesSection() {
 
                     <span
                       className={cn(
-                        "block rounded-[var(--radius-lg)] border p-4 transition-all duration-300",
+                        "block rounded-lg md:rounded-[var(--radius-lg)] border p-3 md:p-4 transition-all duration-300",
                         isActive
                           ? "border-[var(--accent-gold)]/40 bg-[var(--bg-surface)] shadow-[var(--shadow-soft)]"
                           : "border-[var(--border-default)] bg-transparent hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)]/40",
                       )}
                     >
-                      <span className="mb-2 flex items-center justify-between gap-4">
-                        <span className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[var(--accent-gold)]">
+                      <span className="mb-1.5 md:mb-2 flex items-center justify-between gap-4">
+                        <span className="text-[0.6rem] md:text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[var(--accent-gold)]">
                           {item.eyebrow}
                         </span>
-                        <span className="text-xs font-bold text-[var(--text-muted)]">{item.step}</span>
+                        <span className="text-[0.7rem] md:text-xs font-bold text-[var(--text-muted)]">{item.step}</span>
                       </span>
-                      <span className="block text-base font-bold uppercase leading-snug text-[var(--text-primary)]">
+                      <span className="block text-sm md:text-base font-bold uppercase leading-snug text-[var(--text-primary)]">
                         {item.title}
                       </span>
-                      <span className="vi-text mt-2 block text-sm text-[var(--text-secondary)]">
+                      <span className="mt-1.5 md:mt-2 block text-xs md:text-sm text-[var(--text-secondary)]">
                         {item.body}
                       </span>
                     </span>

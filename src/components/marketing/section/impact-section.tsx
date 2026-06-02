@@ -30,16 +30,16 @@ export function ImpactSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative flex h-auto min-h-[600px] items-start overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-deep)] py-16 md:h-svh md:items-center md:py-0"
+      className="relative flex h-auto min-h-[500px] md:min-h-[600px] items-start overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-deep)] py-10 md:py-16 lg:py-0 md:h-svh md:items-center"
     >
-      <div className="relative z-10 w-full py-16 md:py-0">
+      <div className="relative z-10 w-full py-10 md:py-16 lg:py-0">
         <Container>
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
-            <div className="min-w-0">
-              <span className="mb-4 block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-gold)]">
+          <div className="grid grid-cols-1 items-center gap-6 md:gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
+            <div className="min-w-0 px-2 md:px-0">
+              <span className="mb-3 md:mb-4 block text-[0.65rem] md:text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-gold)]">
                 Sau hành trình
               </span>
-              <h2 className="vi-heading mb-4 break-words text-[var(--text-secondary)]">
+              <h2 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-bold leading-tight mb-3 md:mb-4 break-words text-[var(--text-secondary)]">
                 Điều còn lại không phải đáp án, <span className="font-title text-[var(--accent-gold)]">mà là hiểu biết</span>
               </h2>
               <p className="max-w-[320px] text-sm leading-relaxed text-[var(--text-secondary)] lg:text-base">
@@ -47,30 +47,30 @@ export function ImpactSection() {
               </p>
             </div>
 
-            <div className="-mx-4 overflow-hidden px-4">
-              <div className="grid gap-4 md:grid-cols-3">
+            <div className="-mx-2 md:-mx-4 overflow-hidden px-2 md:px-4">
+              <div className="grid gap-3 md:gap-4 md:grid-cols-3">
             {impacts.map((impact) => {
               const Icon = impact.icon;
               return (
                 <div
                   key={impact.title}
                   data-reveal="block"
-                  className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]/70 p-6"
+                  className="rounded-lg md:rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]/70 p-4 md:p-6"
                 >
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-md border border-[var(--accent-gold)]/25 bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
-                    <Icon className="h-6 w-6" />
+                  <div className="mb-3 md:mb-5 flex h-9 w-9 md:h-11 md:w-11 items-center justify-center rounded-md border border-[var(--accent-gold)]/25 bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
+                    <Icon className="h-5 w-5 md:h-6 md:w-6" />
                   </div>
-                  <h3 className="text-lg font-bold text-[var(--text-primary)]">{impact.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">{impact.description}</p>
+                  <h3 className="text-base md:text-lg font-bold text-[var(--text-primary)]">{impact.title}</h3>
+                  <p className="mt-2 md:mt-3 text-xs md:text-sm leading-relaxed text-[var(--text-secondary)]">{impact.description}</p>
                 </div>
               );
             })}
           </div>
 
-              <div data-reveal="block" className="mt-8 border-l-2 border-[var(--accent-gold)]/50 pl-6">
-                <div className="flex items-start gap-4">
-                  <SparkleIcon className="mt-1 h-6 w-6 shrink-0 text-[var(--accent-gold)]" />
-                  <p className="max-w-3xl text-xl font-semibold leading-relaxed text-[var(--text-secondary)] md:text-2xl">
+              <div data-reveal="block" className="mt-6 md:mt-8 border-l-2 border-[var(--accent-gold)]/50 pl-4 md:pl-6">
+                <div className="flex items-start gap-3 md:gap-4">
+                  <SparkleIcon className="mt-1 h-5 w-5 md:h-6 md:w-6 shrink-0 text-[var(--accent-gold)]" />
+                  <p className="max-w-3xl text-lg md:text-xl lg:text-2xl font-semibold leading-relaxed text-[var(--text-secondary)]">
                     History Talk không dạy người học phải nghĩ gì. Nó giúp họ có đủ bối cảnh để tự hiểu vì sao lịch sử đã diễn ra như vậy.
                   </p>
                 </div>

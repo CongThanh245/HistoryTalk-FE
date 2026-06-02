@@ -253,17 +253,17 @@ export function SolutionSection() {
 
       <Container className="relative z-10">
         {/* Cards - Full width at top */}
-        <div data-reveal="block" className="mb-6">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div data-reveal="block" className="mb-4 md:mb-6 px-2 md:px-0">
+          <div className="grid grid-cols-1 gap-2 md:gap-3 md:grid-cols-3">
             {solutions.map((item) => (
               <div
                 key={item.title}
-                className="group rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]/50 p-3 transition-all duration-300 hover:border-[var(--accent-gold)]/40 hover:bg-[var(--bg-surface)]"
+                className="group rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]/50 p-2.5 md:p-3 transition-all duration-300 hover:border-[var(--accent-gold)]/40 hover:bg-[var(--bg-surface)]"
               >
-                <h3 className="mb-1 text-sm font-bold text-[var(--text-primary)] transition-colors duration-300 group-hover:text-[var(--accent-gold)]">
+                <h3 className="mb-1 text-xs md:text-sm font-bold text-[var(--text-primary)] transition-colors duration-300 group-hover:text-[var(--accent-gold)]">
                   {item.title}
                 </h3>
-                <p className="vi-text text-xs text-[var(--text-secondary)]">{item.description}</p>
+                <p className="text-xs text-[var(--text-secondary)]">{item.description}</p>
               </div>
             ))}
           </div>
@@ -271,12 +271,12 @@ export function SolutionSection() {
 
         <div className="grid items-start gap-8 lg:grid-cols-[0.85fr_1.4fr] lg:gap-12">
           {/* Left Column */}
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4 px-2 md:px-0">
             <div data-reveal="fast" className="text-left">
-              <h2 className="vi-heading mb-2 text-[var(--text-secondary)]">
+              <h2 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-bold leading-tight mb-2 md:mb-3 text-[var(--text-secondary)]">
                 Bước vào góc nhìn của <span className="text-[var(--accent-gold)] font-title">người làm nên lịch sử</span>
               </h2>
-              <p className="vi-text max-w-[320px] text-sm text-[var(--text-secondary)]">
+              <p className="max-w-[320px] text-sm text-[var(--text-secondary)]">
                 History Talk biến những dòng chữ tĩnh thành cuộc đối thoại có bối cảnh, ký ức và phản hồi.
               </p>
             </div>
@@ -286,11 +286,11 @@ export function SolutionSection() {
           <div ref={chatRef} data-reveal="block" className="relative">
             <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-[var(--accent-gold)]/10 to-[#8fb3c8]/10 opacity-50 blur-2xl" />
 
-            <div className="relative flex h-[380px] w-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[#0d1627] shadow-2xl">
+            <div className="relative flex h-[320px] md:h-[380px] w-full flex-col overflow-hidden rounded-lg md:rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[#0d1627] shadow-2xl">
               {/* Chat Header */}
-              <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border-default)] bg-[#111c2e] px-4">
+              <div className="flex h-10 md:h-12 shrink-0 items-center justify-between border-b border-[var(--border-default)] bg-[#111c2e] px-3 md:px-4">
                 <div className="flex items-center gap-2">
-                  <div className="relative h-8 w-8 overflow-hidden rounded-full border border-[var(--accent-gold)]/30">
+                  <div className="relative h-7 w-7 md:h-8 md:w-8 overflow-hidden rounded-full border border-[var(--accent-gold)]/30">
                     <Image
                       src="/ngo-quyen-chan-dung.png"
                       alt="Ngô Quyền"
@@ -300,8 +300,8 @@ export function SolutionSection() {
                     />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-[var(--text-primary)]">Ngô Quyền</div>
-                    <div className="flex items-center gap-1 text-xs text-emerald-400">
+                    <div className="text-xs md:text-sm font-semibold text-[var(--text-primary)]">Ngô Quyền</div>
+                    <div className="flex items-center gap-1 text-[0.65rem] md:text-xs text-emerald-400">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                       Đang trò chuyện
                     </div>
@@ -316,7 +316,7 @@ export function SolutionSection() {
               </div>
 
               {/* Chat Messages */}
-              <div className="flex-1 overflow-hidden bg-[var(--bg-surface)] p-3">
+              <div className="flex-1 overflow-hidden bg-[var(--bg-surface)] p-2 md:p-3">
                 <div className="space-y-3">
                   {chatMessages.map((message, index) => (
                     <ChatBubble
@@ -331,14 +331,14 @@ export function SolutionSection() {
               </div>
 
               {/* Chat Input Placeholder */}
-              <div className="flex h-11 shrink-0 items-center gap-2 border-t border-[var(--border-default)] bg-[#111c2e] px-3">
+              <div className="flex h-9 md:h-11 shrink-0 items-center gap-2 border-t border-[var(--border-default)] bg-[#111c2e] px-2 md:px-3">
                 <button
                   onClick={handleNavigateToHome}
-                  className="flex-1 rounded-full bg-[var(--bg-surface)] px-3 py-1.5 text-left text-sm text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-surface)]/80 hover:text-[var(--text-secondary)]"
+                  className="flex-1 rounded-full bg-[var(--bg-surface)] px-2 md:px-3 py-1 md:py-1.5 text-left text-xs md:text-sm text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-surface)]/80 hover:text-[var(--text-secondary)]"
                 >
                   Nhập câu hỏi của bạn...
                 </button>
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
+                <div className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Container } from "../container";
 
 const problems = [
@@ -27,8 +27,19 @@ const problems = [
 export function ProblemSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const [isReady, setIsReady] = useState(false);
+
+  // Defer animation để tránh chạy ngay khi mount gây khựng
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
+    if (!isReady) return;
+    
     let ctx: ReturnType<typeof import("gsap").gsap.context> | null = null;
 
     const init = async () => {
@@ -70,7 +81,7 @@ export function ProblemSection() {
 
     init();
     return () => ctx?.revert();
-  }, []);
+  }, [isReady]);
 
   return (
     <section
@@ -79,36 +90,36 @@ export function ProblemSection() {
     >
       <div className="absolute inset-x-0 top-0 h-px bg-[var(--border-default)]" />
 
-      <div className="relative z-10 w-full py-16 md:py-0">
+      <div className="relative z-10 w-full py-10 md:py-16 lg:py-0">
         <Container>
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
-            <div>
-              <h2 className="vi-heading mb-4 text-[var(--text-secondary)]">
+          <div className="grid grid-cols-1 items-center gap-6 md:gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
+            <div className="px-2 md:px-0">
+              <h2 className="text-[1.75rem] font-bold leading-tight md:text-[2.25rem] lg:text-[2.75rem] mb-3 md:mb-4 text-[var(--text-secondary)]">
                 Vấn đề học <span className="text-[var(--accent-gold)] font-title">lịch sử</span> ngày nay
               </h2>
-              <p className="vi-text max-w-[320px] text-sm text-[var(--text-secondary)] lg:text-base">
+              <p className="text-sm md:text-base max-w-[320px] text-[var(--text-secondary)]">
                 Ba rào cản lớn đang ngăn người học chạm vào chiều sâu của lịch sử: bối cảnh, cảm xúc và khả năng tự đặt câu hỏi.
               </p>
             </div>
 
-            <div className="-mx-4 px-4">
-              <div className="flex flex-col gap-6">
+            <div className="-mx-2 px-2 md:-mx-4 md:px-4">
+              <div className="flex flex-col gap-4 md:gap-6">
                 {problems.map((problem, i) => (
                   <div
                     key={problem.id}
                     ref={(el) => {
                       cardsRef.current[i] = el;
                     }}
-                    className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] px-6 py-5 shadow-[var(--shadow-strong)] transition-colors duration-200 will-change-transform hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated)]"
+                    className="rounded-lg md:rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] px-4 py-4 md:px-6 md:py-5 shadow-[var(--shadow-strong)] transition-colors duration-200 will-change-transform hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated)]"
                   >
-                    <span className="mb-2 block text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[var(--accent-gold)] opacity-80">
+                    <span className="mb-1.5 md:mb-2 block text-[0.55rem] md:text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[var(--accent-gold)] opacity-80">
                       {/* {problem.tag} */}
                     </span>
-                    <h3 className="mb-2.5 text-[1rem] font-bold uppercase leading-snug tracking-wide text-[var(--text-primary)] lg:text-[1.15rem]">
+                    <h3 className="mb-2 md:mb-2.5 text-[0.875rem] md:text-[1rem] font-bold uppercase leading-snug tracking-wide text-[var(--text-primary)] lg:text-[1.15rem]">
                       {problem.title}
                     </h3>
-                    <div className="mb-2.5 h-[1.5px] w-7 bg-[var(--accent-gold)] opacity-30" />
-                    <p className="vi-text text-[0.9rem] text-[var(--text-secondary)] lg:text-[0.95rem]">
+                    <div className="mb-2 md:mb-2.5 h-[1.5px] w-6 md:w-7 bg-[var(--accent-gold)] opacity-30" />
+                    <p className="text-[0.85rem] md:text-[0.9rem] text-[var(--text-secondary)] lg:text-[0.95rem] leading-relaxed">
                       {problem.body}
                     </p>
                   </div>

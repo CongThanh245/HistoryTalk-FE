@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { HeroSection } from "@/components/marketing/section/hero-section";
+import { FadeInSection } from "@/components/marketing/section/fade-in-section";
 
 // Lazy load sections below the fold để giảm initial bundle size
 const ProblemSection = dynamic(
@@ -51,19 +52,29 @@ export default function MarketingPage() {
     <div className="w-full">
       <HeroSection />
       <Suspense fallback={<SectionSkeleton />}>
-        <ProblemSection />
+        <FadeInSection>
+          <ProblemSection />
+        </FadeInSection>
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
-        <SolutionSection />
+        <FadeInSection>
+          <SolutionSection />
+        </FadeInSection>
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
-        <FeaturesSection />
+        <FadeInSection>
+          <FeaturesSection />
+        </FadeInSection>
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
-        <ImpactSection />
+        <FadeInSection>
+          <ImpactSection />
+        </FadeInSection>
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
-        <ClosingSection />
+        <FadeInSection>
+          <ClosingSection />
+        </FadeInSection>
       </Suspense>
     </div>
   );

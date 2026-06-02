@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -9,7 +9,16 @@ import TypingTextBody from "@/components/commons/TypingTextBody";
 import MaskedText from "@/components/commons/MaskedText";
 import { cn } from "@/lib/utils/cn";
 import { Container } from "../container";
-import { Carousel3DVertical } from "./vertical-carousel";
+
+// Lazy load carousel để giảm initial render load
+const Carousel3DVertical = lazy(() => import("./vertical-carousel").then(m => ({ default: m.Carousel3DVertical })));
+
+// Simple placeholder cho carousel
+const CarouselPlaceholder = () => (
+  <div className="flex items-center justify-center h-full">
+    <div className="w-32 h-32 rounded-full bg-[var(--bg-surface)] animate-pulse" />
+  </div>
+);
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,18 +29,21 @@ export function HeroSection() {
   const subContentRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
+  const [showCarousel, setShowCarousel] = useState(false);
 
   // Defer animations để tránh chạy ngay lập tức khi mount
   useEffect(() => {
-    // Chờ initial paint xong rồi mới bắt đầu animations
+    // Phase 1: Cho phép render content tĩnh trước
     const rafId = requestAnimationFrame(() => {
-      // Sử dụng requestIdleCallback nếu có, hoặc setTimeout fallback
-      const startAnimation = () => setIsReady(true);
+      setIsReady(true);
+      
+      // Phase 2: Defer carousel load để tránh lag initial render
+      const loadCarousel = () => setShowCarousel(true);
       
       if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-        (window as Window & { requestIdleCallback: typeof requestIdleCallback }).requestIdleCallback(startAnimation, { timeout: 100 });
+        (window as Window & { requestIdleCallback: typeof requestIdleCallback }).requestIdleCallback(loadCarousel, { timeout: 200 });
       } else {
-        setTimeout(startAnimation, 50);
+        setTimeout(loadCarousel, 150);
       }
     });
 
@@ -102,7 +114,9 @@ export function HeroSection() {
     <section
       ref={sectionRef}
       className="relative flex min-h-[100svh] flex-col overflow-hidden lg:items-center lg:justify-center"
-      style={{ isolation: "isolate" }}
+      style={{ 
+        isolation: "isolate"
+      }}
     >
       <div
         className="absolute inset-0 pointer-events-none"
@@ -127,7 +141,7 @@ export function HeroSection() {
         <div className="flex flex-col lg:grid lg:grid-cols-2 lg:items-center lg:gap-20 lg:py-10">
           <div
             ref={contentWrapperRef}
-            className="z-10 space-y-4 pb-4 pt-24 will-change-transform md:space-y-5 md:pb-6 md:pt-28 lg:space-y-8 lg:pb-0 lg:pt-0"
+            className="z-10 space-y-4 pb-4 pt-24 md:space-y-5 md:pb-6 md:pt-28 lg:space-y-8 lg:pb-0 lg:pt-0"
           >
             <h1 className="text-hero text-[var(--text-primary)]">
               <TypingText text="HISTORY TALK" className="typing-title" />
@@ -176,7 +190,13 @@ export function HeroSection() {
             ref={carouselRef}
             className="relative flex h-[320px] w-full items-center justify-center will-change-transform sm:h-[380px] md:h-[500px] lg:h-[650px] lg:overflow-visible"
           >
-            <Carousel3DVertical />
+            {showCarousel ? (
+              <Suspense fallback={<CarouselPlaceholder />}>
+                <Carousel3DVertical />
+              </Suspense>
+            ) : (
+              <CarouselPlaceholder />
+            )}
           </div>
         </div>
       </Container>

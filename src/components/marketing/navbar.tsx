@@ -2,18 +2,32 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import { MagneticButton } from "../commons/MagneticButton";
 import Image from "next/image";
 import { useAuthStore } from "@/store/auth.store";
-import { UserProfileDropdown } from "../layouts/user-profile-dropdown";
+
+// Lazy load UserProfileDropdown để giảm initial render load
+const UserProfileDropdown = lazy(() => import("../layouts/user-profile-dropdown").then(m => ({ default: m.UserProfileDropdown })));
+
+// Simple placeholder cho avatar
+const AvatarPlaceholder = () => (
+  <div className="w-9 h-9 rounded-full bg-[var(--bg-surface)] animate-pulse" />
+);
 
 
 export function MarketingNavbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const user = useAuthStore((s) => s.user);
   const isLoggedIn = !!user;
+
+  // Defer dropdown render để tránh lag initial render
+  useEffect(() => {
+    const timer = setTimeout(() => setShowDropdown(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const navLinks = [
     { href: "/", label: "Trang Chủ" },
@@ -71,12 +85,15 @@ export function MarketingNavbar() {
 
         .marketing-nav {
           background:
-            linear-gradient(135deg, rgba(14, 26, 43, 0.86), rgba(19, 35, 43, 0.74)),
-            color-mix(in srgb, var(--bg-main) 72%, transparent);
-          border-color: rgba(255, 146, 21, 0.18);
+            linear-gradient(135deg, rgba(14, 26, 43, 0.9), rgba(19, 35, 43, 0.85)),
+            color-mix(in srgb, var(--bg-main) 80%, transparent);
+          border-color: rgba(255, 146, 21, 0.15);
           box-shadow:
-            0 18px 48px rgba(0, 0, 0, 0.26),
-            inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            0 8px 24px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+          /* Giảm blur để tăng performance */
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
         }
         .brand-link {
           border-radius: 9999px;
@@ -124,16 +141,17 @@ export function MarketingNavbar() {
 
       `}</style>
 
-      <div className="fixed top-0 left-0 right-0 z-50 flex justify-center p-3 md:p-4 pointer-events-none">
+      <div className="fixed top-0 left-0 right-0 z-50 flex justify-center p-3 md:p-4 pointer-events-none" style={{ contain: "layout" }}>
         <nav
           className={`
             pointer-events-auto
-            marketing-nav backdrop-blur-xl
+            marketing-nav
             border
             transition-all duration-300
             w-full rounded-2xl
             md:max-w-fit md:rounded-full
           `}
+          style={{ contain: "layout style paint" }}
         >
           {/* ── Top bar ── */}
           <div className="flex items-center px-4 py-3 md:px-6 md:py-2">
@@ -172,7 +190,13 @@ export function MarketingNavbar() {
             {/* Desktop CTA — đã đăng nhập: avatar pill, chưa: auth group */}
             <div className="hidden md:flex items-center ml-6">
               {isLoggedIn ? (
-                <UserProfileDropdown align="end" showPremium={false} showBorder={false} />
+                showDropdown ? (
+                  <Suspense fallback={<AvatarPlaceholder />}>
+                    <UserProfileDropdown align="end" showPremium={false} showBorder={false} />
+                  </Suspense>
+                ) : (
+                  <AvatarPlaceholder />
+                )
               ) : (
                 <div className="auth-group">
                   <MagneticButton
@@ -199,7 +223,13 @@ export function MarketingNavbar() {
             {/* Mobile: Login + Hamburger */}
             <div className="flex items-center gap-1.5 ml-auto md:hidden">
               {isLoggedIn ? (
-                <UserProfileDropdown align="end" showPremium={false} showBorder={false} />
+                showDropdown ? (
+                  <Suspense fallback={<AvatarPlaceholder />}>
+                    <UserProfileDropdown align="end" showPremium={false} showBorder={false} />
+                  </Suspense>
+                ) : (
+                  <AvatarPlaceholder />
+                )
               ) : (
                 <Link
                   href="/login"

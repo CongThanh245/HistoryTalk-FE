@@ -69,10 +69,6 @@ export default function RootLayout({
     <html lang="vi" suppressHydrationWarning>
       <body
         className={`${titleFont.variable} ${bodyFont.variable} antialiased`}
-        style={{
-          // CSS containment để giảm repaint area
-          contain: "layout style paint",
-        }}
       >
         <ThemeProvider>
           <ReactQueryProviders>{children}</ReactQueryProviders>
