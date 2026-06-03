@@ -20,6 +20,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { getWebSpeechTTS, WebSpeechTTS } from "@/lib/web-speech-tts";
 import { getWebSpeechSTT, WebSpeechSTT } from "@/lib/web-speech-stt";
+import { SimulatedAnalyserNode, createSimulatedAnalyser } from "@/lib/text-lipsync";
+import type { AnalyserLike } from "@/components/chat/FBXCharacterViewer";
 
 export type WebSpeechVoiceStatus =
   | "idle"
@@ -60,6 +62,19 @@ export function useVoiceChatWebSpeech({
   const ttsRef = useRef<WebSpeechTTS | null>(null);
   const abortRef = useRef(false);
   const finalTranscriptRef = useRef(""); // Lưu transcript khi stop
+  
+  // Simulated analyser cho lip-sync (vì Web Speech API không cung cấp audio data)
+  const simulatedAnalyserRef = useRef<SimulatedAnalyserNode | null>(null);
+  
+  // Khởi tạo simulated analyser
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      simulatedAnalyserRef.current = createSimulatedAnalyser();
+    }
+    return () => {
+      simulatedAnalyserRef.current?.stop();
+    };
+  }, []);
 
   // Init Web Speech instances
   useEffect(() => {
@@ -228,11 +243,17 @@ export function useVoiceChatWebSpeech({
       }
 
       if (ttsRef.current?.isSupported()) {
+        // Bắt đầu lip-sync simulation trước khi nói
+        simulatedAnalyserRef.current?.start(aiResponse, 4.5);
+        
         await ttsRef.current.speak(aiResponse, {
           rate: 0.9,
           pitch: 1,
           volume: 1,
         });
+        
+        // Dừng lip-sync khi nói xong
+        simulatedAnalyserRef.current?.stop();
       }
 
       setStatus("idle");
@@ -280,6 +301,7 @@ export function useVoiceChatWebSpeech({
     abortRef.current = true;
     sttRef.current?.abort();
     ttsRef.current?.cancel();
+    simulatedAnalyserRef.current?.stop();
     setIsListening(false);
     setInterimText("");
     setStatus("idle");
@@ -296,7 +318,7 @@ export function useVoiceChatWebSpeech({
     startRecording: startListening,
     stopRecording: stopListening,
     cancel,
-    ttsAnalyserRef: { current: null }, // Web Speech không có analyser
+    ttsAnalyserRef: simulatedAnalyserRef as React.RefObject<AnalyserLike | null>, // Simulated analyser cho lip-sync
     // Check support
     isSupported: typeof window !== 'undefined' && 
       ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) &&

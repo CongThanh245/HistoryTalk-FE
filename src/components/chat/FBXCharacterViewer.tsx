@@ -76,14 +76,20 @@ function scanForLipTargets(root: THREE.Object3D) {
 // Volume reader — reads from an external AnalyserNode (TTS audio)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Type that matches both AnalyserNode and SimulatedAnalyserNode
+export type AnalyserLike = {
+  frequencyBinCount: number;
+  getByteFrequencyData(dataArray: Uint8Array): void;
+};
+
 function ExternalAudioLipDriver({
   analyserRef,
   onVolume,
 }: {
-  analyserRef: React.RefObject<AnalyserNode | null>;
+  analyserRef: React.RefObject<AnalyserLike | null>;
   onVolume: (v: number) => void;
 }) {
-  const dataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+  const dataRef = useRef<Uint8Array | null>(null);
 
   useFrame(() => {
     const analyser = analyserRef.current;
@@ -92,7 +98,7 @@ function ExternalAudioLipDriver({
       return;
     }
     if (!dataRef.current || dataRef.current.length !== analyser.frequencyBinCount) {
-      dataRef.current = new Uint8Array(analyser.frequencyBinCount) as unknown as Uint8Array<ArrayBuffer>;
+      dataRef.current = new Uint8Array(analyser.frequencyBinCount);
     }
     analyser.getByteFrequencyData(dataRef.current);
     const slice = dataRef.current.slice(0, 16);
@@ -214,7 +220,7 @@ function GLBCharacterModel({
   isSpeaking: boolean;
   isProcessing: boolean;
   testVolumeRef: React.RefObject<number>;
-  ttsAnalyserRef: React.RefObject<AnalyserNode | null>;
+  ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
 }) {
   const gltf = useGLTF(url) as unknown as GLTF & { scene: THREE.Group };
@@ -283,7 +289,7 @@ function FBXCharacterModel({
   isSpeaking: boolean;
   isProcessing: boolean;
   testVolumeRef: React.RefObject<number>;
-  ttsAnalyserRef: React.RefObject<AnalyserNode | null>;
+  ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
 }) {
   const fbx = useFBX(url);
@@ -345,7 +351,7 @@ function AutoModel(props: {
   isSpeaking: boolean;
   isProcessing: boolean;
   testVolumeRef: React.RefObject<number>;
-  ttsAnalyserRef: React.RefObject<AnalyserNode | null>;
+  ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
 }) {
   const ext = props.url.split(".").pop()?.toLowerCase();
@@ -376,13 +382,13 @@ export type FBXCharacterViewerProps = {
   isListening?: boolean;
   isRecording?: boolean;
   isProcessing?: boolean;
-  /** AnalyserNode phân tích audio TTS — truyền từ useVoiceChatRest */
-  ttsAnalyserRef?: React.RefObject<AnalyserNode | null>;
+  /** AnalyserNode hoặc SimulatedAnalyserNode phân tích audio TTS */
+  ttsAnalyserRef?: React.RefObject<AnalyserLike | null>;
   onDiagnostic?: (d: DiagnosticInfo) => void;
 };
 
 // Fallback analyser ref (rỗng) khi không truyền từ ngoài
-const EMPTY_ANALYSER_REF: React.RefObject<AnalyserNode | null> = { current: null };
+const EMPTY_ANALYSER_REF: React.RefObject<AnalyserLike | null> = { current: null };
 
 // Check if model URL is valid (not null/undefined/empty and not the non-existent default)
 function isValidModelUrl(url?: string | null): boolean {
