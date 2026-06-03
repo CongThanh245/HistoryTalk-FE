@@ -138,7 +138,7 @@ export const chatService = {
     messageTypeParam: "TEXT" | "VOICE" = "TEXT"
   ) => {
     try {
-      const messageType = messageTypeParam;
+      let messageType = messageTypeParam;
       const token = useAuthStore.getState().tokens?.accessToken;
       
       const headers: Record<string, string> = {
