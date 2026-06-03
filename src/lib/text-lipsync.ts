@@ -68,7 +68,7 @@ export function analyzeTextForLipSync(text: string, speechRate: number = 4.5): L
 export class SimulatedAnalyserNode {
   public fftSize = 256;
   public frequencyBinCount = 128;
-  public smoothingTimeConstant = 0.8;
+  public smoothingTimeConstant = 0.4; // Giảm smoothing để đóng mở nhanh hơn
   
   private isRunning = false;
   private startTime = 0;
@@ -113,22 +113,22 @@ export class SimulatedAnalyserNode {
     const syllableProgress = (elapsed % syllableDuration) / syllableDuration;
     
     // Tạo hiệu ứng "mở miệng" theo từng âm tiết
-    // Nguyên âm → miệng mở to, phụ âm → miệng đóng/mở nhỏ
+    // Giảm intensity để miệng không mở quá to
     let baseVolume: number;
     
     if (syllableProgress < 0.3) {
-      // Đầu âm tiết - phụ âm (miệng đóng/mở nhỏ)
-      baseVolume = 0.3 + (this.vowelRatio * 0.2);
-    } else if (syllableProgress < 0.7) {
-      // Giữa âm tiết - nguyên âm (miệng mở to) - LUÔN mở ít nhất 70%
-      baseVolume = 0.7 + (this.vowelRatio * 0.3);
+      // Đầu âm tiết - phụ âm (miệng gần như đóng)
+      baseVolume = 0.1 + (this.vowelRatio * 0.15);
+    } else if (syllableProgress < 0.6) {
+      // Giữa âm tiết - nguyên âm (miệng mở vừa phải)
+      baseVolume = 0.4 + (this.vowelRatio * 0.25);
     } else {
-      // Cuối âm tiết - giảm dần nhưng vẫn mở một chút
-      baseVolume = 0.2 + (this.vowelRatio * 0.2);
+      // Cuối âm tiết - giảm dần về đóng
+      baseVolume = 0.1 + (this.vowelRatio * 0.1);
     }
     
-    // Thêm nhiễu ngẫu nhiên để tự nhiên hơn
-    const noise = (Math.sin(elapsed * 15) + Math.sin(elapsed * 23)) * 0.1;
+    // Thêm nhiễu ngẫu nhiên - tần số cao hơn để có nhiều chu kỳ đóng mở
+    const noise = (Math.sin(elapsed * 25) + Math.sin(elapsed * 35)) * 0.08;
     let targetVolume = Math.max(0, Math.min(1, baseVolume + noise));
     
     // Smoothing
