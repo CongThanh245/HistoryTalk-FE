@@ -152,13 +152,39 @@ export function ChatMain({
     setIsStreaming(true);
     setStreamingMessage("");
 
+    // Queue for smooth typing effect
+    let localQueue = "";
+    let isTyping = false;
+    let typingInterval: NodeJS.Timeout;
+
+    const processQueue = () => {
+      if (isTyping) return;
+      isTyping = true;
+      typingInterval = setInterval(() => {
+        if (localQueue.length > 0) {
+          // Dynamic typing speed: if queue is large, type faster to catch up
+          let charsToTake = 1;
+          if (localQueue.length > 15) charsToTake = 2;
+          if (localQueue.length > 40) charsToTake = 4;
+          if (localQueue.length > 100) charsToTake = 8;
+          
+          const textToAdd = localQueue.substring(0, charsToTake);
+          localQueue = localQueue.substring(charsToTake);
+          setStreamingMessage((prev) => prev + textToAdd);
+        }
+      }, 30); // 30ms delay per update for a smooth typewriter effect
+    };
+
     chatService.sendMessageStream(
       currentSessionId,
       content,
       (chunk) => {
-        setStreamingMessage((prev) => prev + chunk);
+        localQueue += chunk;
+        processQueue();
       },
       (resData) => {
+        // Ensure the remaining queue is flushed quickly before ending
+        clearInterval(typingInterval);
         setIsStreaming(false);
         setOptimisticMessages([]);
         setSuggestedQuestions(resData.suggestedQuestions || []);
