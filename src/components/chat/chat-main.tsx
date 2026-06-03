@@ -124,7 +124,19 @@ export function ChatMain({
 
   const qc = useQueryClient();
 
+  const enqueueSpeech = (text: string) => {
+    const voices = speechSynthesis.getVoices();
+    const vietnameseVoice = voices.find((v) => v.name.includes("Vietnamese"));
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (vietnameseVoice) utterance.voice = vietnameseVoice;
+    utterance.lang = "vi-VN";
+    speechSynthesis.speak(utterance);
+  };
+
   const handleSend = async (content: string) => {
+    // Cancel any ongoing speech when starting a new message
+    speechSynthesis.cancel();
+
     let currentSessionId = sessionId;
 
     if (!currentSessionId) {
@@ -157,6 +169,10 @@ export function ChatMain({
     let isTyping = false;
     let typingInterval: NodeJS.Timeout;
 
+    // Buffer for streaming speech chunk-by-chunk
+    let sentenceBuffer = "";
+    const punctuationRegex = /([.,!?;\n]+)/;
+
     const processQueue = () => {
       if (isTyping) return;
       isTyping = true;
@@ -181,6 +197,18 @@ export function ChatMain({
       (chunk) => {
         localQueue += chunk;
         processQueue();
+
+        // Streaming voice logic: speak phrases as soon as punctuation is detected
+        sentenceBuffer += chunk;
+        const match = sentenceBuffer.match(punctuationRegex);
+        if (match && match.index !== undefined) {
+          const splitIndex = match.index + match[0].length;
+          const phraseToSpeak = sentenceBuffer.slice(0, splitIndex).trim();
+          sentenceBuffer = sentenceBuffer.slice(splitIndex);
+          if (phraseToSpeak.length > 1) { // Avoid speaking stray punctuation
+            enqueueSpeech(phraseToSpeak);
+          }
+        }
       },
       (resData) => {
         // Ensure the remaining queue is flushed quickly before ending
@@ -188,15 +216,18 @@ export function ChatMain({
         setIsStreaming(false);
         setOptimisticMessages([]);
         setSuggestedQuestions(resData.suggestedQuestions || []);
-        if (resData.remainingTokens !== undefined) {
-          setLastTokenUsage((prev) => ({
-             remainingTokens: resData.remainingTokens!,
-             promptTokens: prev?.promptTokens || 0,
-             completionTokens: prev?.completionTokens || 0
-          }));
-        }
         
-        speak(resData.fullContent);
+        // Update tokens correctly, using values from resData or defaulting to 0
+        setLastTokenUsage((prev) => ({
+           remainingTokens: resData.remainingTokens !== undefined ? resData.remainingTokens : (prev?.remainingTokens || 0),
+           promptTokens: resData.promptTokens || 0,
+           completionTokens: resData.completionTokens || 0
+        }));
+
+        // Speak any remaining buffer when stream finishes
+        if (sentenceBuffer.trim().length > 0) {
+           enqueueSpeech(sentenceBuffer.trim());
+        }
 
         const newAssistantMsg: ChatMessage = {
           id: `ai-${Date.now()}`,

@@ -173,6 +173,8 @@ export const chatService = {
       let done = false;
       let remainingTokens: number | undefined;
       let suggestedQuestions: string[] | undefined;
+      let promptTokens: number | undefined;
+      let completionTokens: number | undefined;
 
       let fullContent = "";
 
@@ -194,6 +196,8 @@ export const chatService = {
                   onData(parsed.data);
                 } else if (parsed.type === "metadata") {
                    suggestedQuestions = parsed.data?.suggestedQuestions;
+                   promptTokens = parsed.data?.promptTokens;
+                   completionTokens = parsed.data?.completionTokens;
                 } else if (parsed.type === "done") {
                    remainingTokens = parsed.remainingTokens;
                 }
@@ -204,7 +208,7 @@ export const chatService = {
           }
         }
       }
-      onDone({ remainingTokens, suggestedQuestions, fullContent });
+      onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens });
     } catch (err) {
       onError(err);
     }
