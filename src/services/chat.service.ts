@@ -135,10 +135,12 @@ export const chatService = {
     onData: (chunk: string) => void,
     onDone: (data: { remainingTokens?: number, suggestedQuestions?: string[], fullContent: string, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE" }) => void,
     onError: (error: unknown) => void,
-    messageType: "TEXT" | "VOICE" = "TEXT"
+    messageTypeParam: "TEXT" | "VOICE" = "TEXT"
   ) => {
     try {
+      const messageType = messageTypeParam;
       const token = useAuthStore.getState().tokens?.accessToken;
+      
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
@@ -147,7 +149,7 @@ export const chatService = {
       }
 
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-      const basePath = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/v1';
+      const basePath = process.env.NEXT_PUBLIC_API_BASE_PATH || '/Historical-tell/api/v1';
       
       const response = await fetch(`${baseUrl}${basePath}/chat/messages/stream`, {
         method: "POST",
@@ -176,7 +178,6 @@ export const chatService = {
       let suggestedQuestions: string[] | undefined;
       let promptTokens: number | undefined;
       let completionTokens: number | undefined;
-      let messageType: "TEXT" | "VOICE" = "TEXT";
 
       let fullContent = "";
 

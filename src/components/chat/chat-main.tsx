@@ -150,7 +150,7 @@ export function ChatMain({
         });
         currentSessionId = newSession.id;
         onSessionCreated?.(currentSessionId);
-      } catch {
+      } catch (error) {
         return;
       }
     }
