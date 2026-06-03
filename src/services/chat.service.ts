@@ -133,8 +133,9 @@ export const chatService = {
     sessionId: string,
     content: string,
     onData: (chunk: string) => void,
-    onDone: (data: { remainingTokens?: number, suggestedQuestions?: string[], fullContent: string }) => void,
-    onError: (error: unknown) => void
+    onDone: (data: { remainingTokens?: number, suggestedQuestions?: string[], fullContent: string, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE" }) => void,
+    onError: (error: unknown) => void,
+    messageType: "TEXT" | "VOICE" = "TEXT"
   ) => {
     try {
       const token = useAuthStore.getState().tokens?.accessToken;
@@ -151,7 +152,7 @@ export const chatService = {
       const response = await fetch(`${baseUrl}${basePath}/chat/messages/stream`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ sessionId, content }),
+        body: JSON.stringify({ sessionId, content, messageType }),
       });
 
       if (!response.ok) {
@@ -175,6 +176,7 @@ export const chatService = {
       let suggestedQuestions: string[] | undefined;
       let promptTokens: number | undefined;
       let completionTokens: number | undefined;
+      let messageType: "TEXT" | "VOICE" = "TEXT";
 
       let fullContent = "";
 
@@ -200,6 +202,9 @@ export const chatService = {
                    completionTokens = parsed.data?.completionTokens;
                 } else if (parsed.type === "done") {
                    remainingTokens = parsed.remainingTokens;
+                   if (parsed.messageType) {
+                     messageType = parsed.messageType;
+                   }
                 }
               } catch (e) {
                 console.warn("Failed to parse SSE data line", line);
@@ -208,7 +213,7 @@ export const chatService = {
           }
         }
       }
-      onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens });
+      onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens, messageType });
     } catch (err) {
       onError(err);
     }

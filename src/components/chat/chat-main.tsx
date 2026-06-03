@@ -133,9 +133,12 @@ export function ChatMain({
     speechSynthesis.speak(utterance);
   };
 
-  const handleSend = async (content: string) => {
+  const handleSend = async (content: string, type?: "TEXT" | "VOICE") => {
     // Cancel any ongoing speech when starting a new message
     speechSynthesis.cancel();
+    
+    // If not specified, default to VOICE if the 3D avatar modal is open, else TEXT
+    const msgType = type || (isVoiceOpen ? "VOICE" : "TEXT");
 
     let currentSessionId = sessionId;
 
@@ -157,7 +160,7 @@ export function ChatMain({
       sessionId: currentSessionId,
       role: "USER",
       content,
-      messageType: "TEXT",
+      messageType: msgType,
       createdAt: new Date().toISOString(),
     };
     setOptimisticMessages((prev) => [...prev, tempUserMsg]);
@@ -234,7 +237,7 @@ export function ChatMain({
           sessionId: currentSessionId,
           role: "ASSISTANT",
           content: resData.fullContent,
-          messageType: "TEXT",
+          messageType: resData.messageType as any || "TEXT",
           createdAt: new Date().toISOString(),
         };
 
@@ -280,7 +283,8 @@ export function ChatMain({
         } else {
           toast.error("Không thể gửi tin nhắn");
         }
-      }
+      },
+      msgType
     );
   };
 
