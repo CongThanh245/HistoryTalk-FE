@@ -124,7 +124,22 @@ export function ChatMain({
 
   const qc = useQueryClient();
 
-  const handleSend = async (content: string) => {
+  const enqueueSpeech = (text: string) => {
+    const voices = speechSynthesis.getVoices();
+    const vietnameseVoice = voices.find((v) => v.name.includes("Vietnamese"));
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (vietnameseVoice) utterance.voice = vietnameseVoice;
+    utterance.lang = "vi-VN";
+    speechSynthesis.speak(utterance);
+  };
+
+  const handleSend = async (content: string, type?: "TEXT" | "VOICE") => {
+    // Cancel any ongoing speech when starting a new message
+    speechSynthesis.cancel();
+    
+    // If not specified, default to VOICE if the 3D avatar modal is open, else TEXT
+    const msgType = type || (isVoiceOpen ? "VOICE" : "TEXT");
+
     let currentSessionId = sessionId;
 
     if (!currentSessionId) {
@@ -145,39 +160,84 @@ export function ChatMain({
       sessionId: currentSessionId,
       role: "USER",
       content,
-      messageType: "TEXT",
+      messageType: msgType,
       createdAt: new Date().toISOString(),
     };
     setOptimisticMessages((prev) => [...prev, tempUserMsg]);
     setIsStreaming(true);
     setStreamingMessage("");
 
+    // Queue for smooth typing effect
+    let localQueue = "";
+    let isTyping = false;
+    let typingInterval: NodeJS.Timeout;
+
+    // Buffer for streaming speech chunk-by-chunk
+    let sentenceBuffer = "";
+    const punctuationRegex = /([.,!?;\n]+)/;
+
+    const processQueue = () => {
+      if (isTyping) return;
+      isTyping = true;
+      typingInterval = setInterval(() => {
+        if (localQueue.length > 0) {
+          // Dynamic typing speed: if queue is large, type faster to catch up
+          let charsToTake = 1;
+          if (localQueue.length > 30) charsToTake = 2;
+          if (localQueue.length > 80) charsToTake = 4;
+          if (localQueue.length > 150) charsToTake = 8;
+          
+          const textToAdd = localQueue.substring(0, charsToTake);
+          localQueue = localQueue.substring(charsToTake);
+          setStreamingMessage((prev) => prev + textToAdd);
+        }
+      }, 60); // 60ms delay (slower speed) to sync better with voice
+    };
+
     chatService.sendMessageStream(
       currentSessionId,
       content,
       (chunk) => {
-        setStreamingMessage((prev) => prev + chunk);
+        localQueue += chunk;
+        processQueue();
+
+        // Streaming voice logic: speak phrases as soon as punctuation is detected
+        sentenceBuffer += chunk;
+        const match = sentenceBuffer.match(punctuationRegex);
+        if (match && match.index !== undefined) {
+          const splitIndex = match.index + match[0].length;
+          const phraseToSpeak = sentenceBuffer.slice(0, splitIndex).trim();
+          sentenceBuffer = sentenceBuffer.slice(splitIndex);
+          if (phraseToSpeak.length > 1) { // Avoid speaking stray punctuation
+            enqueueSpeech(phraseToSpeak);
+          }
+        }
       },
       (resData) => {
+        // Ensure the remaining queue is flushed quickly before ending
+        clearInterval(typingInterval);
         setIsStreaming(false);
         setOptimisticMessages([]);
         setSuggestedQuestions(resData.suggestedQuestions || []);
-        if (resData.remainingTokens !== undefined) {
-          setLastTokenUsage((prev) => ({
-             remainingTokens: resData.remainingTokens!,
-             promptTokens: prev?.promptTokens || 0,
-             completionTokens: prev?.completionTokens || 0
-          }));
-        }
         
-        speak(resData.fullContent);
+        // Update tokens correctly, using values from resData or defaulting to 0
+        setLastTokenUsage((prev) => ({
+           remainingTokens: resData.remainingTokens !== undefined ? resData.remainingTokens : (prev?.remainingTokens || 0),
+           promptTokens: resData.promptTokens || 0,
+           completionTokens: resData.completionTokens || 0
+        }));
+
+        // Speak any remaining buffer when stream finishes
+        if (sentenceBuffer.trim().length > 0) {
+           enqueueSpeech(sentenceBuffer.trim());
+        }
 
         const newAssistantMsg: ChatMessage = {
           id: `ai-${Date.now()}`,
           sessionId: currentSessionId,
           role: "ASSISTANT",
           content: resData.fullContent,
-          messageType: "TEXT",
+          messageType: resData.messageType as any || "TEXT",
           createdAt: new Date().toISOString(),
         };
 
@@ -223,7 +283,8 @@ export function ChatMain({
         } else {
           toast.error("Không thể gửi tin nhắn");
         }
-      }
+      },
+      msgType
     );
   };
 
