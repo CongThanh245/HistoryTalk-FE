@@ -190,6 +190,28 @@ export function Avatar3DModal({
   mode: modeProp
 }: Avatar3DModalProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
+  // Audio nền hùng hồn
+  const bgmRef = useRef<HTMLAudioElement | null>(null);
+  
+  useEffect(() => {
+    // Khởi tạo audio
+    const audio = new Audio("/epic-bgm.mp3");
+    // Nếu bạn chưa có file epic-bgm.mp3, nó sẽ dùng link dự phòng miễn phí từ Pixabay:
+    // const audio = new Audio("https://cdn.pixabay.com/audio/2022/10/25/audio_40df035728.mp3");
+    audio.loop = true;
+    audio.volume = 0.15; // Âm lượng nhỏ làm nền
+    bgmRef.current = audio;
+
+    // Phát nhạc ngay khi mở modal (user đã tương tác bấm nút call)
+    audio.play().catch(e => console.warn("Auto-play BGM blocked:", e));
+
+    return () => {
+      // Tắt nhạc khi đóng modal
+      audio.pause();
+      audio.src = "";
+    };
+  }, []);
   // Internal mode state (can be toggled by user)
   // MVP: Luôn dùng web-speech (free) - ẩn toggle Pro/Free
   const [internalMode, setInternalMode] = useState<VoiceMode>("web-speech");
@@ -243,6 +265,18 @@ export function Avatar3DModal({
   } = activeHook as any;
 
   const isSpeaking = status === "speaking";
+
+  // Hiệu ứng âm lượng BGM: Nhỏ đi khi AI đang nói, to lên khi AI đang nghĩ
+  useEffect(() => {
+    if (!bgmRef.current) return;
+    if (isSpeaking) {
+      bgmRef.current.volume = 0.05; // AI nói -> Nhạc nền bé lại
+    } else if (status === "thinking" || status === "processing_chat") {
+      bgmRef.current.volume = 0.25; // AI đang nghĩ -> Nhạc nền dồn dập, to hơn
+    } else {
+      bgmRef.current.volume = 0.15; // Bình thường
+    }
+  }, [status, isSpeaking]);
   
   // Lấy interim text cho hiển thị real-time (web-speech mode)
   const liveTranscript = interimText || currentSentence || "";
