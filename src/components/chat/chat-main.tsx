@@ -147,6 +147,7 @@ export function ChatMain({
     remainingTokens: number;
     promptTokens: number;
     completionTokens: number;
+    messageType?: "TEXT" | "VOICE";
   } | null>(null);
 
   const handleKeywordSelect = useCallback((kw: KeywordData) => {
@@ -357,7 +358,8 @@ export function ChatMain({
         setLastTokenUsage((prev) => ({
            remainingTokens: resData.remainingTokens !== undefined ? resData.remainingTokens : (prev?.remainingTokens || 0),
            promptTokens: resData.promptTokens || 0,
-           completionTokens: resData.completionTokens || 0
+           completionTokens: resData.completionTokens || 0,
+           messageType: msgType
         }));
 
         // Speak any remaining buffer when stream finishes
@@ -621,9 +623,15 @@ export function ChatMain({
               <span>Còn: <strong className="tabular-nums" style={{ color: "var(--text-secondary)" }}>{lastTokenUsage.remainingTokens.toLocaleString()}</strong></span>
             </div>
             <span className="w-px h-3 bg-[var(--border-default)]" />
-            <span className="tabular-nums">Prompt: {lastTokenUsage.promptTokens}</span>
-            <span className="tabular-nums">Response: {lastTokenUsage.completionTokens}</span>
-            <span className="tabular-nums">Tổng: {lastTokenUsage.promptTokens + lastTokenUsage.completionTokens}</span>
+            {lastTokenUsage.messageType === "VOICE" ? (
+              <span className="tabular-nums">Tổng dùng: {lastTokenUsage.promptTokens + lastTokenUsage.completionTokens}</span>
+            ) : (
+              <>
+                <span className="tabular-nums">Prompt: {lastTokenUsage.promptTokens}</span>
+                <span className="tabular-nums">Response: {lastTokenUsage.completionTokens}</span>
+                <span className="tabular-nums">Tổng: {lastTokenUsage.promptTokens + lastTokenUsage.completionTokens}</span>
+              </>
+            )}
           </div>
         )}
 
@@ -672,6 +680,14 @@ export function ChatMain({
           contextId={contextId}
           onClose={handleCloseVoiceCall}
           onMessagesChange={handleVoiceMessagesChange}
+          onTokenUpdate={(remainingTokens, promptTokens, completionTokens, messageType) => {
+            setLastTokenUsage({
+              remainingTokens,
+              promptTokens: promptTokens || 0,
+              completionTokens: completionTokens || 0,
+              messageType: messageType || "VOICE"
+            });
+          }}
         />
       )}
 

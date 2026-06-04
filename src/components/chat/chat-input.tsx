@@ -46,7 +46,7 @@ interface SpeechRecognition extends EventTarget {
 }
 
 declare const SpeechRecognition: {
-  new (): SpeechRecognition;
+  new(): SpeechRecognition;
   prototype: SpeechRecognition;
 };
 
@@ -105,7 +105,9 @@ export function ChatInput({
     }
   };
 
-  // ── Push-to-talk ─────────────────────────────────────
+  // ── Voice Input (Toggled via Click) ───────────────────
+  const transcriptRef = useRef("");
+
   const startRecording = useCallback(() => {
     const SpeechRecognition =
       window.SpeechRecognition ?? (window as any).webkitSpeechRecognition;
@@ -116,45 +118,51 @@ export function ChatInput({
     recognition.interimResults = true; // hiện text tạm thời khi đang nói
     recognition.continuous = false;
 
+    transcriptRef.current = "";
+
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = Array.from(event.results)
         .map((r) => r[0].transcript)
         .join("");
       setText(transcript);
+      transcriptRef.current = transcript;
     };
 
     recognition.onend = () => {
       setIsRecording(false);
       recognitionRef.current = null;
-      // Focus textarea sau khi nhả mic
-      textareaRef.current?.focus();
+
+      const finalVal = transcriptRef.current.trim();
+      if (finalVal) {
+        onSend(finalVal);
+        setText("");
+        if (textareaRef.current) textareaRef.current.style.height = "auto";
+      }
+      transcriptRef.current = "";
     };
 
     recognition.onerror = () => {
       setIsRecording(false);
       recognitionRef.current = null;
+      transcriptRef.current = "";
     };
 
     recognition.start();
     recognitionRef.current = recognition;
     setIsRecording(true);
-  }, []);
+  }, [onSend]);
 
   const stopRecording = useCallback(() => {
     recognitionRef.current?.stop();
   }, []);
 
-  // Mouse / Touch events cho push-to-talk
-  const micProps = {
-    onMouseDown: startRecording,
-    onMouseUp: stopRecording,
-    onMouseLeave: stopRecording, // nhả nếu kéo chuột ra ngoài
-    onTouchStart: (e: React.TouchEvent) => {
-      e.preventDefault(); // tránh trigger click sau touch
+  const handleMicClick = useCallback(() => {
+    if (isRecording) {
+      stopRecording();
+    } else {
       startRecording();
-    },
-    onTouchEnd: stopRecording,
-  };
+    }
+  }, [isRecording, startRecording, stopRecording]);
 
   return (
     <div
@@ -172,7 +180,7 @@ export function ChatInput({
             style={{ background: "#ef4444" }}
           />
           <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Đang nghe... nhả để dừng
+            Đang nghe... ấn lần nữa để gửi
           </span>
         </div>
       )}
@@ -188,8 +196,8 @@ export function ChatInput({
             isTokenExhausted
               ? "Bạn đã hết token. Vui lòng nâng cấp gói để tiếp tục chat."
               : isRecording
-              ? "Đang nhận giọng nói..."
-              : `Nhắn tin với ${characterName ?? "nhân vật"}...`
+                ? "Đang nhận giọng nói..."
+                : `Nhắn tin với ${characterName ?? "nhân vật"}...`
           }
           disabled={disabled || isRecording}
           maxLength={MAX_LENGTH + 20}
@@ -207,12 +215,12 @@ export function ChatInput({
           }}
         />
 
-        {/* Mic button (push-to-talk) — chỉ hiện khi browser support */}
+        {/* Mic button (click-to-toggle) — chỉ hiện khi browser support */}
         {isSupported && (
           <button
-            {...micProps}
+            onClick={handleMicClick}
             disabled={disabled || isLoading}
-            title="Giữ để nói"
+            title={isRecording ? "Click để gửi" : "Click để nói"}
             className="w-10 h-10 flex items-center justify-center rounded-xl
                        transition-all active:scale-95 select-none
                        disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
@@ -222,7 +230,6 @@ export function ChatInput({
                 : "var(--bg-elevated)",
               border: `1px solid ${isRecording ? "rgba(239,68,68,0.5)" : "var(--border-default)"}`,
               boxShadow: isRecording ? "0 0 12px rgba(239,68,68,0.2)" : "none",
-              // Tắt context menu khi giữ chuột phải
               WebkitUserSelect: "none",
               userSelect: "none",
             }}
@@ -275,7 +282,7 @@ export function ChatInput({
           style={{ color: "var(--text-secondary)", opacity: 0.5 }}
         >
           Enter để gửi · Shift+Enter xuống dòng
-          {isSupported ? " · Giữ 🎙 để nói" : ""}
+          {isSupported ? " · Click 🎙 để nói/gửi" : ""}
         </p>
         <div
           className="flex items-center gap-1 text-[10px]"
@@ -283,8 +290,8 @@ export function ChatInput({
             color: isOverLimit
               ? "var(--accent-danger, #ef4444)"
               : remainingChars <= 20
-              ? "var(--accent-gold)"
-              : "var(--text-secondary)",
+                ? "var(--accent-gold)"
+                : "var(--text-secondary)",
             opacity: isOverLimit ? 1 : 0.7,
           }}
         >

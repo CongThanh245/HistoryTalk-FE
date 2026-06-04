@@ -41,9 +41,9 @@ function ModelLoadingPlaceholder() {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  idle: "Nhấn và giữ để nói",
+  idle: "Click để nói",
   listening: "Đang lắng nghe...",
-  recording: " Đang ghi âm... (thả để gửi)",
+  recording: " Đang ghi âm... (click để gửi)",
   processing: " Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ...",
   processing_stt: " Đang nhận dạng giọng nói...",
   processing_chat: "Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ...",
@@ -208,6 +208,7 @@ interface Avatar3DModalProps {
   /** @deprecated use mode instead */
   useStream?: boolean; // true = streaming mode, false = REST mode
   mode?: VoiceMode; // "rest" | "stream" | "web-speech" (miễn phí, không API key)
+  onTokenUpdate?: (remainingTokens: number, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE") => void;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -218,7 +219,8 @@ export function Avatar3DModal({
   contextId, 
   onClose, 
   onMessagesChange,
-  mode: modeProp
+  mode: modeProp,
+  onTokenUpdate
 }: Avatar3DModalProps) {
   const queryClient = useQueryClient();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -252,15 +254,16 @@ export function Avatar3DModal({
   const mode = modeProp ?? internalMode;
 
   const syncRemainingTokens = useCallback(
-    (remainingTokens: number) => {
+    (remainingTokens: number, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE") => {
       queryClient.setQueryData(
         queryKeys.profile.me,
         (old: UserProfile | undefined) =>
           old ? { ...old, token: remainingTokens } : old,
       );
       useAuthStore.getState().updateUser({ token: remainingTokens });
+      onTokenUpdate?.(remainingTokens, promptTokens, completionTokens, messageType);
     },
-    [queryClient],
+    [queryClient, onTokenUpdate],
   );
 
   const refreshProfile = useCallback(() => {
@@ -336,20 +339,15 @@ export function Avatar3DModal({
     onMessagesChange?.(messages);
   }, [messages, onMessagesChange]);
 
-  // ── Hold-to-talk handlers ─────────────────────────────────────────────────
+  // ── Toggle Voice Recording handler ────────────────────────────────────────
 
-  const handlePointerDown = () => {
-    if (status !== "idle") return;
-    setErrorMsg(null);
-    startRecording();
-  };
-
-  const handlePointerUp = () => {
-    if (isRecording) stopRecording();
-  };
-
-  const handlePointerCancel = () => {
-    if (isRecording) stopRecording();
+  const handleMicClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else if (status === "idle") {
+      setErrorMsg(null);
+      startRecording();
+    }
   };
 
   const handleClose = () => {
@@ -358,31 +356,24 @@ export function Avatar3DModal({
     onClose();
   };
 
-  // ── Keyboard shortcut: Space = hold to talk ───────────────────────────────
-  const spaceHeld = useRef(false);
+  // ── Keyboard shortcut: Space = toggle voice ───────────────────────────────
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space" && !spaceHeld.current) {
+      if (e.code === "Space") {
         e.preventDefault();
-        spaceHeld.current = true;
-        if (status === "idle") {
+        if (e.repeat) return;
+        
+        if (isRecording) {
+          stopRecording();
+        } else if (status === "idle") {
           setErrorMsg(null);
           startRecording();
         }
       }
     };
-    const onKeyUp = (e: KeyboardEvent) => {
-      if (e.code === "Space") {
-        e.preventDefault();
-        spaceHeld.current = false;
-        if (isRecording) stopRecording();
-      }
-    };
     window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
     };
   }, [status, isRecording, startRecording, stopRecording]);
 
@@ -535,13 +526,11 @@ export function Avatar3DModal({
             display: "flex", alignItems: "center", justifyContent: "center",
             gap: 20, padding: "16px 0 28px", flexShrink: 0,
           }}>
-            {/* Hold-to-talk mic button */}
+            {/* Toggle mic button */}
             <button
-              onPointerDown={handlePointerDown}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerCancel}
+              onClick={handleMicClick}
               disabled={isBusy}
-              title="Giữ để nói (hoặc giữ Space)"
+              title="Bấm để nói/gửi (hoặc bấm Space)"
               style={{
                 width: 72, height: 72, borderRadius: "50%",
                 background: isRecording
@@ -598,7 +587,7 @@ export function Avatar3DModal({
             margin: "0 0 16px", fontSize: 11,
             color: "rgba(255,255,255,0.2)", letterSpacing: "0.03em",
           }}>
-            Giữ nút mic hoặc phím Space để nói
+            Bấm nút mic hoặc phím Space để nói/dừng
           </p>
         </div>
       </div>

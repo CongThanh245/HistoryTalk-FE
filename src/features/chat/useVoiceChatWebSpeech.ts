@@ -43,7 +43,7 @@ export type UseVoiceChatWebSpeechOptions = {
   contextId: string;
   onError?: (msg: string) => void;
   onProfileRefresh?: () => void;
-  onTokenUpdate?: (remainingTokens: number) => void;
+  onTokenUpdate?: (remainingTokens: number, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE") => void;
 };
 
 export function useVoiceChatWebSpeech({
@@ -285,9 +285,11 @@ export function useVoiceChatWebSpeech({
       const apiData = resData.data || resData;
       const aiResponse = apiData.assistantMessage?.content || apiData.message || apiData.content || apiData.text || "";
       const remainingTokens = apiData.remainingTokens ?? resData.remainingTokens;
+      const promptTokens = apiData.promptTokens ?? resData.promptTokens;
+      const completionTokens = apiData.completionTokens ?? resData.completionTokens;
 
       if (typeof remainingTokens === "number") {
-        onTokenUpdate?.(remainingTokens);
+        onTokenUpdate?.(remainingTokens, promptTokens, completionTokens, "VOICE");
       }
       onProfileRefresh?.();
 
