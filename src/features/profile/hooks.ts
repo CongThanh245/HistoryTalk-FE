@@ -5,6 +5,24 @@ import { queryKeys } from "@/shared/query-key";
 import { useAuthStore } from "@/store/auth.store";
 import { toast } from "sonner";
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof error.response === "object" &&
+    error.response !== null &&
+    "data" in error.response &&
+    typeof error.response.data === "object" &&
+    error.response.data !== null &&
+    "message" in error.response.data &&
+    typeof error.response.data.message === "string"
+  ) {
+    return error.response.data.message;
+  }
+  return fallback;
+}
+
 // ── useProfile ────────────────────────────────────────────────────────────────
 /**
  * Lấy profile đầy đủ từ /users/me và đồng bộ avatar/tier vào auth store
@@ -44,6 +62,7 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: (payload: UpdateProfilePayload) => userService.updateProfile(payload),
     onSuccess: (updatedProfile) => {
+      qc.setQueryData(queryKeys.profile.me, updatedProfile);
       // Đồng bộ ngay lên store
       updateUser({
         userName: updatedProfile.userName,
@@ -57,9 +76,8 @@ export function useUpdateProfile() {
       qc.invalidateQueries({ queryKey: queryKeys.profile.me });
       toast.success("Cập nhật hồ sơ thành công!");
     },
-    onError: (error: any) => {
-      const msg = error?.response?.data?.message ?? "Cập nhật thất bại. Vui lòng thử lại.";
-      toast.error(msg);
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Cập nhật thất bại. Vui lòng thử lại."));
     },
   });
 }
@@ -72,9 +90,8 @@ export function useChangePassword() {
     onSuccess: () => {
       toast.success("Đổi mật khẩu thành công!");
     },
-    onError: (error: any) => {
-      const msg = error?.response?.data?.message ?? "Đổi mật khẩu thất bại. Vui lòng kiểm tra lại.";
-      toast.error(msg);
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Đổi mật khẩu thất bại. Vui lòng kiểm tra lại."));
     },
   });
 }

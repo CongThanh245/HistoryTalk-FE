@@ -56,7 +56,6 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
             ? {
                 background: "rgba(201,162,77,0.14)",
                 border: "1px solid rgba(201,162,77,0.34)",
-                boxShadow: "inset 3px 0 0 var(--accent-gold)",
               }
             : {
                 background: "transparent",
@@ -154,14 +153,14 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
               event.stopPropagation();
               onStart(quiz.quizId);
             }}
-            className="h-8 sm:h-10 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-200"
+            className="h-8 sm:h-10 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-[filter,transform,box-shadow] duration-200 hover:brightness-110 hover:shadow-[0_10px_22px_rgba(27,38,50,0.22)] active:translate-y-px"
             style={{
               background: "var(--abyssal-blue)",
               color: "var(--text-on-dark)",
               boxShadow: "0 8px 18px rgba(27,38,50,0.16)",
             }}
           >
-            Xem bài
+            Làm bài ngay
           </button>
         </div>
       </div>

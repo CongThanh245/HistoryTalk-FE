@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,6 @@ import {
   useMyPaymentHistory,
 } from "@/features/profile/hooks";
 import { isPro } from "@/services/user.service";
-import { useAuthStore } from "@/store/auth.store";
 import {
   UserIcon,
   CrownSimpleIcon,
@@ -70,6 +70,15 @@ function formatCurrency(amount: number): string {
     currency: "VND",
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+function normalizeGender(value: string | null | undefined): "MALE" | "FEMALE" | "OTHER" | "" {
+  if (!value) return "";
+  const normalized = value.trim().toUpperCase();
+  if (["MALE", "NAM"].includes(normalized)) return "MALE";
+  if (["FEMALE", "NU", "NỮ"].includes(normalized)) return "FEMALE";
+  if (["OTHER", "KHAC", "KHÁC"].includes(normalized)) return "OTHER";
+  return "";
 }
 
 function statusBadge(status: string) {
@@ -133,13 +142,14 @@ function PersonalProfileTab() {
 
   useEffect(() => {
     if (profile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         fullName: profile.fullName ?? "",
         userName: profile.userName ?? "",
         phoneNumber: profile.phoneNumber ?? "",
         address: profile.address ?? "",
         dob: profile.dob ? profile.dob.slice(0, 10) : "",
-        gender: profile.gender ?? "",
+        gender: normalizeGender(profile.gender),
         avatarUrl: profile.avatarUrl ?? "",
       });
     }
@@ -153,7 +163,7 @@ function PersonalProfileTab() {
       phoneNumber: form.phoneNumber || undefined,
       address: form.address || undefined,
       dob: form.dob || undefined,
-      gender: (form.gender as "MALE" | "FEMALE" | "OTHER") || undefined,
+      gender: normalizeGender(form.gender) || undefined,
       avatarUrl: form.avatarUrl || undefined,
     });
   };
@@ -613,7 +623,7 @@ function SecurityTab() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 max-w-md">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-md space-y-5">
       <div
         className="rounded-xl p-4 border text-sm flex items-start gap-2"
         style={{
@@ -696,6 +706,16 @@ function SecurityTab() {
       >
         {isPending ? "Đang đổi mật khẩu..." : "Đổi mật khẩu"}
       </Button>
+
+      <div className="text-center">
+        <Link
+          href="/forgot-password"
+          className="text-sm font-semibold transition-colors hover:underline"
+          style={{ color: "var(--accent-gold)" }}
+        >
+          Quên mật khẩu?
+        </Link>
+      </div>
     </form>
   );
 }
@@ -710,7 +730,6 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<TabKey>(
     TABS.find((t) => t.key === tabParam)?.key ?? "profile"
   );
-  const user = useAuthStore((s) => s.user);
   const { data: profile } = useProfile();
   const proUser = isPro(profile ?? null);
 
@@ -721,7 +740,7 @@ export default function ProfilePage() {
 
   return (
     <div className="px-3 py-6 md:px-6 md:py-8">
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* ── Page Header ── */}
         <div className="flex items-center justify-between">
           <div>
