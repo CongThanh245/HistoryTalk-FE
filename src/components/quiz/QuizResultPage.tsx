@@ -10,6 +10,7 @@ interface SubmitResult {
   score: number;
   totalQuestions: number;
   percentage: number;
+  durationSeconds?: number;
   correctAnswers: number[];
   wrongAnswers: number[];
 }
@@ -20,6 +21,14 @@ interface QuizResultPageProps {
   answers: Record<string, number>;
   submitResult: SubmitResult | null;
   onRetry: () => void;
+}
+
+function formatDuration(seconds?: number) {
+  if (seconds === undefined) return "Không ghi nhận";
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (minutes <= 0) return `${remainingSeconds}s`;
+  return `${minutes}m ${remainingSeconds}s`;
 }
 
 export function QuizResultPage({
@@ -39,6 +48,7 @@ export function QuizResultPage({
     }).length;
 
   const totalQuestions = submitResult?.totalQuestions ?? questions.length;
+  const durationSeconds = submitResult?.durationSeconds;
   const percentage =
     submitResult?.percentage ?? Math.round((score / Math.max(totalQuestions, 1)) * 100);
 
@@ -96,11 +106,12 @@ export function QuizResultPage({
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="mt-6 grid gap-3 sm:grid-cols-4">
             {[
               { label: "Đúng", value: score, color: "#047857" },
               { label: "Sai", value: totalQuestions - score, color: "var(--accent-danger)" },
               { label: "Tổng câu", value: totalQuestions, color: "var(--content-heading)" },
+              { label: "Thời gian", value: formatDuration(durationSeconds), color: "var(--gold-on-light)" },
             ].map((item) => (
               <div
                 key={item.label}
@@ -213,7 +224,7 @@ export function QuizResultPage({
         <div className="flex gap-3 pb-6 pt-6">
           <button
             onClick={() => router.push("/quiz")}
-            className="h-12 flex-1 rounded-lg text-sm font-bold transition-all hover:-translate-y-0.5 active:translate-y-0"
+            className="h-12 flex-1 rounded-lg text-sm font-bold transition-colors"
             style={{
               background: "var(--card-light-bg)",
               color: "var(--content-heading)",
@@ -224,7 +235,7 @@ export function QuizResultPage({
           </button>
           <button
             onClick={() => router.push("/quiz?view=history")}
-            className="h-12 flex-1 rounded-lg text-sm font-bold transition-all hover:-translate-y-0.5 active:translate-y-0"
+            className="h-12 flex-1 rounded-lg text-sm font-bold transition-colors"
             style={{
               background: "var(--accent-gold-active-bg)",
               color: "var(--gold-on-light)",
@@ -235,7 +246,7 @@ export function QuizResultPage({
           </button>
           <button
             onClick={onRetry}
-            className="h-12 flex-1 rounded-lg text-sm font-bold transition-all hover:-translate-y-0.5 active:translate-y-0"
+            className="h-12 flex-1 rounded-lg text-sm font-bold transition-colors"
             style={{
               background: "var(--abyssal-blue)",
               color: "var(--text-on-dark)",

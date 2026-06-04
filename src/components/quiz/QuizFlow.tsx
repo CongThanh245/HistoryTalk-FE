@@ -1,30 +1,48 @@
 "use client";
 
-// components/quiz/QuizFlow.tsx
-// Dùng API thật: POST /quizzes/:id/start để lấy questions
+import React, { useState, useCallback, useMemo } from "react";
+import { Loader2, PanelLeftOpen, PanelLeftClose } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import { toast } from "sonner";
 import {
   type QuizSet,
   type QuizQuestion,
   type SubmitQuizPayload,
+  type SubmitQuizResponse,
 } from "@/services/quiz.service";
-import React, { useState, useCallback, useMemo } from "react";
-import { Loader2, PanelLeftOpen, PanelLeftClose } from "lucide-react";
-import {
-  useQuizSets,
-  useStartQuiz,
-  useSubmitQuiz,
-} from "@/features/quiz/hooks";
+import { useQuizSets, useStartQuiz, useSubmitQuiz } from "@/features/quiz/hooks";
+import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 import { queryKeys } from "@/shared/query-key";
+import { cn } from "@/lib/utils/cn";
 import { QuizDetailPage } from "./QuizDetailPage";
 import { QuizSessionPage } from "./QuizSessionPage";
 import { QuizResultPage } from "./QuizResultPage";
 import { QuizSidebar } from "./QuizSidebar";
-import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation"; // thêm nếu chưa có
-import { cn } from "@/lib/utils/cn";
-import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 
 type QuizPhase = "detail" | "session" | "result";
+
+type ApiErrorBody = {
+  message?: string;
+  errors?: Record<string, string | string[]>;
+};
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (!axios.isAxiosError<ApiErrorBody>(error)) return fallback;
+
+  const data = error.response?.data;
+  const fieldErrors = data?.errors
+    ? Object.entries(data.errors)
+        .map(([field, value]) => {
+          const text = Array.isArray(value) ? value.join(", ") : value;
+          return `${field}: ${text}`;
+        })
+        .join("\n")
+    : "";
+
+  return [data?.message, fieldErrors].filter(Boolean).join("\n") || fallback;
+}
 
 interface QuizFlowProps {
   quiz: QuizSet;
@@ -41,35 +59,34 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
 
   const [currentQuiz, setCurrentQuiz] = useState<QuizSet>(initialQuiz);
   const [phase, setPhase] = useState<QuizPhase>("detail");
-  const [sessionId, setSessionId] = useState<string>("");
+  const [sessionId, setSessionId] = useState("");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [startTime, setStartTime] = useState(0);
+  const [limitedTime, setLimitedTime] = useState<number | undefined>();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  // Submission result state — lưu lại để hiện ở ResultPage
-  const [submitResult, setSubmitResult] = useState<{
-    score: number;
-    totalQuestions: number;
-    percentage: number;
-    correctAnswers: number[];
-    wrongAnswers: number[];
-  } | null>(null);
+  const [submitResult, setSubmitResult] = useState<SubmitQuizResponse | null>(null);
 
   const startQuizMutation = useStartQuiz();
   const submitQuizMutation = useSubmitQuiz();
+  const queryClient = useQueryClient();
   const router = useRouter();
+
   const handleGoHome = useCallback(() => {
     router.push("/quiz");
   }, [router]);
+
   const startQuiz = useCallback(
-    async () => {
+    async (nextLimitedTime?: number) => {
       try {
-        // POST /quizzes/:id/start → nhận sessionId + questions
-        const session = await startQuizMutation.mutateAsync(currentQuiz.quizId);
+        const session = await startQuizMutation.mutateAsync({
+          quizId: currentQuiz.quizId,
+          limitedTime: nextLimitedTime,
+        });
         setSessionId(session.sessionId);
         setQuestions(session.questions);
         setStartTime(Date.now());
+        setLimitedTime(nextLimitedTime);
         setPhase("session");
       } catch (err) {
         console.error("Không thể bắt đầu quiz:", err);
@@ -77,15 +94,15 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
     },
     [currentQuiz.quizId, startQuizMutation],
   );
+
   const handleStart = useCallback(
-    () => {
+    (nextLimitedTime?: number) => {
       runWithAuth(() => {
-        void startQuiz();
+        void startQuiz(nextLimitedTime);
       });
     },
     [runWithAuth, startQuiz],
   );
-  const queryClient = useQueryClient();
 
   const handleSubmit = useCallback(
     async (finalAnswers: Record<string, number>, elapsedSeconds: number) => {
@@ -101,42 +118,47 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
           ),
         };
         const result = await submitQuizMutation.mutateAsync(payload);
-        setSubmitResult(result);
+        setSubmitResult({ ...result, durationSeconds: elapsedSeconds });
 
-        // ← Thêm dòng này sau khi submit thành công
         await queryClient.invalidateQueries({
           queryKey: queryKeys.quizzes.myResults,
         });
+        setPhase("result");
+        return true;
       } catch (err) {
-        console.error("Lỗi nộp bài:", err);
+        const message = getApiErrorMessage(
+          err,
+          "Nộp bài thất bại. Vui lòng thử lại.",
+        );
+        console?.error(
+          "Lỗi nộp bài:",
+          axios.isAxiosError(err) ? err.response?.data ?? err.message : err,
+        );
+        toast.error(message, { duration: 6000 });
+        return false;
       }
-      setPhase("result");
     },
-    [sessionId, submitQuizMutation, queryClient], // ← thêm queryClient vào deps
+    [sessionId, submitQuizMutation, queryClient],
   );
 
-  const handleRetry = useCallback(() => {
+  const resetSession = useCallback(() => {
     setAnswers({});
     setQuestions([]);
     setSessionId("");
     setSubmitResult(null);
+    setLimitedTime(undefined);
     setPhase("detail");
   }, []);
 
-  // Switch sang quiz khác từ sidebar — reset toàn bộ state
   const handleSwitchQuiz = useCallback(
     (quizId: string) => {
       if (quizId === currentQuiz.quizId) return;
       const next = allQuizzes.find((q) => q.quizId === quizId);
       if (!next) return;
       setCurrentQuiz(next);
-      setPhase("detail");
-      setAnswers({});
-      setQuestions([]);
-      setSessionId("");
-      setSubmitResult(null);
+      resetSession();
     },
-    [allQuizzes, currentQuiz.quizId],
+    [allQuizzes, currentQuiz.quizId, resetSession],
   );
 
   const isLoading = startQuizMutation.isPending;
@@ -148,13 +170,11 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
       style={{ background: "var(--bg-content)" }}
     >
       {authRequiredDialog}
-      {/* Left Sidebar */}
       <>
-        {/* Backdrop on mobile */}
         <div
           className={cn(
             "lg:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-[2px] transition-opacity duration-300",
-            sidebarOpen ? "opacity-100 visible" : "opacity-0 invisible"
+            sidebarOpen ? "opacity-100 visible" : "opacity-0 invisible",
           )}
           onClick={() => setSidebarOpen(false)}
         />
@@ -162,7 +182,9 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
           className={cn(
             "flex-shrink-0 h-full transition-all duration-300 z-50 border-r",
             "lg:relative absolute left-0 top-0 bottom-0 shadow-2xl lg:shadow-none bg-[var(--bg-content)] overflow-hidden",
-            sidebarOpen ? `w-[${sidebarWidth}px] translate-x-0` : "w-0 lg:w-0 -translate-x-[260px] lg:translate-x-0 border-none",
+            sidebarOpen
+              ? `w-[${sidebarWidth}px] translate-x-0`
+              : "w-0 lg:w-0 -translate-x-[260px] lg:translate-x-0 border-none",
           )}
         >
           <div style={{ width: `${sidebarWidth}px`, height: "100%" }}>
@@ -175,9 +197,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
         </div>
       </>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* Toggle sidebar button */}
         <button
           onClick={() => setSidebarOpen((v) => !v)}
           className="absolute top-3 left-3 z-30 p-1.5 rounded-lg transition-all hover:bg-black/5"
@@ -217,10 +237,11 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
               quiz={currentQuiz}
               questions={questions}
               onSubmit={handleSubmit}
-              onBack={handleRetry}
-              onGoHome={handleGoHome} // ← thêm
-              onRetry={handleRetry} // ← thêm
+              onBack={resetSession}
+              onGoHome={handleGoHome}
+              onRetry={resetSession}
               startTime={startTime}
+              limitedTime={limitedTime}
             />
           ) : (
             <QuizResultPage
@@ -228,7 +249,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
               questions={questions}
               answers={answers}
               submitResult={submitResult}
-              onRetry={handleRetry}
+              onRetry={resetSession}
             />
           )}
         </div>

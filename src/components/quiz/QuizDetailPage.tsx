@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { QuizSet } from "@/services/quiz.service";
 
@@ -18,13 +18,31 @@ const LEVEL_LABELS: Record<QuizSet["level"], string> = {
   HARD: "Khó",
 };
 
+const TIME_PRESETS = [
+  { label: "Không giới hạn", seconds: undefined },
+  { label: "5 phút", seconds: 5 * 60 },
+  { label: "10 phút", seconds: 10 * 60 },
+  { label: "15 phút", seconds: 15 * 60 },
+  { label: "30 phút", seconds: 30 * 60 },
+] as const;
+
 interface QuizDetailPageProps {
   quiz: QuizSet;
-  onStart: () => void;
+  onStart: (limitedTime?: number) => void;
 }
 
 export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
   const router = useRouter();
+  const [selectedTime, setSelectedTime] = useState<number | undefined>();
+  const [customMinutes, setCustomMinutes] = useState("");
+
+  const resolvedLimitedTime = useMemo(() => {
+    const minutes = Number(customMinutes);
+    if (Number.isFinite(minutes) && minutes > 0) {
+      return Math.round(minutes * 60);
+    }
+    return selectedTime;
+  }, [customMinutes, selectedTime]);
 
   return (
     <main className="min-h-full px-5 py-7 md:px-8" style={{ background: "var(--bg-content)" }}>
@@ -45,7 +63,7 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
             boxShadow: "0 16px 36px rgba(27,38,50,0.08)",
           }}
         >
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
             <div>
               <div className="mb-4 flex flex-wrap gap-2">
                 <span
@@ -115,11 +133,61 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                 Sẵn sàng luyện tập?
               </p>
               <p className="mt-2 text-sm leading-6" style={{ color: "var(--content-muted)" }}>
-                Sau khi bắt đầu, hệ thống sẽ tạo phiên làm bài và lưu kết quả vào lịch sử của bạn.
+                Chọn giới hạn thời gian nếu muốn làm bài theo đồng hồ đếm ngược.
               </p>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {TIME_PRESETS.map((preset) => {
+                  const active = selectedTime === preset.seconds && customMinutes.trim() === "";
+                  return (
+                    <button
+                      key={preset.label}
+                      onClick={() => {
+                        setSelectedTime(preset.seconds);
+                        setCustomMinutes("");
+                      }}
+                      className="h-9 rounded-lg text-xs font-bold transition-colors"
+                      style={
+                        active
+                          ? {
+                              background: "var(--abyssal-blue)",
+                              color: "var(--text-on-dark)",
+                              border: "1px solid var(--abyssal-blue)",
+                            }
+                          : {
+                              background: "var(--card-light-bg)",
+                              color: "var(--content-muted)",
+                              border: "1px solid var(--card-light-border)",
+                            }
+                      }
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <label className="mt-4 block">
+                <span className="text-xs font-semibold" style={{ color: "var(--content-subtle)" }}>
+                  Tùy chỉnh theo phút
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  value={customMinutes}
+                  onChange={(event) => setCustomMinutes(event.target.value)}
+                  placeholder="Ví dụ: 20"
+                  className="mt-1 h-10 w-full rounded-lg border bg-transparent px-3 text-sm outline-none"
+                  style={{
+                    borderColor: "var(--card-light-border)",
+                    color: "var(--content-heading)",
+                  }}
+                />
+              </label>
+
               <button
-                onClick={onStart}
-                className="mt-5 h-12 w-full rounded-lg text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+                onClick={() => onStart(resolvedLimitedTime)}
+                className="mt-5 h-12 w-full rounded-lg text-sm font-bold transition-colors duration-200"
                 style={{
                   background: "var(--abyssal-blue)",
                   color: "var(--text-on-dark)",

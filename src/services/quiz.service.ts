@@ -19,6 +19,11 @@ export interface QuizQuestion {
   explanation?: string;
 }
 
+export interface QuizSessionQuestion extends QuizQuestion {
+  selectedAnswer: number | null;
+  correct: boolean;
+}
+
 // ── QuizSet ────────────────────────────────────────────────
 
 export interface QuizSet {
@@ -41,6 +46,19 @@ export interface QuizResult {
   percentage: number;
   completedAt: string;
   durationSeconds?: number; // fallback compatibility
+}
+
+export interface QuizSessionDetail {
+  sessionId: string;
+  quizId: string;
+  quizTitle: string;
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  limitedTime?: number;
+  startedAt: string;
+  completedAt: string;
+  questions: QuizSessionQuestion[];
 }
 
 // ── Params & Responses ─────────────────────────────────────
@@ -87,56 +105,106 @@ export interface SubmitQuizPayload {
 }
 
 export interface SubmitQuizResponse {
-  sessionId: string;
+  sessionId?: string;
+  resultId?: string;
   score: number;
   totalQuestions: number;
   percentage: number;
+  durationSeconds?: number;
   correctAnswers: number[];
   wrongAnswers: number[];
 }
 
 // ── Map functions ──────────────────────────────────────────
 
-type RawQuizSet = Partial<QuizSet> & Pick<QuizSet, "quizId" | "title">;
-type RawQuizResult = Partial<QuizResult> &
-  Pick<
-    QuizResult,
-    "sessionId" | "quizId" | "quizTitle" | "score" | "totalQuestions" | "completedAt"
-  >;
-type RawQuizQuestion = Partial<QuizQuestion> &
-  Pick<QuizQuestion, "questionId" | "content" | "options" | "correctAnswer">;
+type RawRecord = Record<string, unknown>;
 
-export function mapQuizSet(raw: any): QuizSet {
+function asRecord(value: unknown): RawRecord {
+  return typeof value === "object" && value !== null ? value as RawRecord : {};
+}
+
+function asString(value: unknown, fallback = "") {
+  return typeof value === "string" ? value : fallback;
+}
+
+function asOptionalString(value: unknown) {
+  return typeof value === "string" ? value : undefined;
+}
+
+function asNumber(value: unknown, fallback = 0) {
+  return typeof value === "number" ? value : fallback;
+}
+
+function asStringArray(value: unknown) {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+export function mapQuizSet(rawValue: unknown): QuizSet {
+  const raw = asRecord(rawValue);
   return {
-    quizId: raw.quizId,
-    title: raw.title,
+    quizId: asString(raw.quizId),
+    title: asString(raw.title),
     level: (raw.level as QuizSet["level"]) ?? "MEDIUM",
     era: (raw.era as QuizEra) ?? "ALL",
-    playCount: raw.playCount ?? 0,
-    contextTitle: raw.contextTitle,
+    playCount: asNumber(raw.playCount),
+    contextTitle: asOptionalString(raw.contextTitle),
   };
 }
 
-export function mapQuizResult(raw: any): QuizResult {
+export function mapQuizResult(rawValue: unknown): QuizResult {
+  const raw = asRecord(rawValue);
   return {
-    sessionId: raw.sessionId,
-    quizId: raw.quizId,
-    quizTitle: raw.quizTitle,
-    score: raw.score,
-    totalQuestions: raw.totalQuestions,
-    percentage: raw.percentage ?? 0,
-    completedAt: raw.completedAt ?? "",
+    sessionId: asString(raw.sessionId),
+    quizId: asString(raw.quizId),
+    quizTitle: asString(raw.quizTitle),
+    score: asNumber(raw.score),
+    totalQuestions: asNumber(raw.totalQuestions),
+    percentage: asNumber(raw.percentage),
+    completedAt: asString(raw.completedAt),
     durationSeconds: 0, // default since BE removed this field
   };
 }
 
-export function mapQuizQuestion(raw: any): QuizQuestion {
+export function mapQuizQuestion(rawValue: unknown): QuizQuestion {
+  const raw = asRecord(rawValue);
   return {
-    questionId: raw.questionId,
-    content: raw.content,
-    options: raw.options ?? [],
-    correctAnswer: raw.correctAnswer,
-    explanation: raw.explanation,
+    questionId: asString(raw.questionId),
+    content: asString(raw.content),
+    options: asStringArray(raw.options),
+    correctAnswer: asNumber(raw.correctAnswer),
+    explanation: asOptionalString(raw.explanation),
+  };
+}
+
+export function mapQuizSessionDetail(rawValue: unknown): QuizSessionDetail {
+  const raw = asRecord(rawValue);
+  return {
+    sessionId: asString(raw.sessionId),
+    quizId: asString(raw.quizId),
+    quizTitle: asString(raw.quizTitle),
+    score: asNumber(raw.score),
+    totalQuestions: asNumber(raw.totalQuestions),
+    percentage: asNumber(raw.percentage),
+    limitedTime: typeof raw.limitedTime === "number" ? raw.limitedTime : undefined,
+    startedAt: asString(raw.startedAt),
+    completedAt: asString(raw.completedAt),
+    questions: Array.isArray(raw.questions)
+      ? raw.questions.map((questionValue) => {
+          const question = asRecord(questionValue);
+          return {
+            questionId: asString(question.questionId),
+            content: asString(question.content),
+            options: asStringArray(question.options),
+            correctAnswer: asNumber(question.correctAnswer),
+            selectedAnswer:
+              typeof question.selectedAnswer === "number"
+                ? question.selectedAnswer
+                : null,
+            explanation: asOptionalString(question.explanation),
+            correct: Boolean(question.correct),
+          };
+        })
+      : [],
   };
 }
 
@@ -148,7 +216,7 @@ export const quizService = {
     const res = await axiosClient.get("/quizzes", {
       params: { search: params?.search },
     });
-    const raw = res.data.data as RawQuizSet[];
+    const raw = res.data.data as unknown[];
     const content = raw.map(mapQuizSet);
     return {
       content,
@@ -189,6 +257,7 @@ export const quizService = {
     const raw = res.data.data;
     return {
       sessionId: raw.sessionId,
+      resultId: raw.resultId,
       score: raw.score,
       totalQuestions: raw.totalQuestions,
       percentage: raw.percentage,
@@ -209,6 +278,12 @@ export const quizService = {
       ...raw,
       content: raw.content.map(mapQuizResult),
     };
+  },
+
+  // GET /quizzes/results/me/:sessionId
+  getMyResultDetail: async (sessionId: string): Promise<QuizSessionDetail> => {
+    const res = await axiosClient.get(`/quizzes/results/me/${sessionId}`);
+    return mapQuizSessionDetail(res.data.data);
   },
 
   // PATCH /quizzes/sessions/:sessionId/soft-delete

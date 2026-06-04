@@ -46,7 +46,22 @@ export function useMyQuizResults(
 // POST /quizzes/:id/start
 export function useStartQuiz() {
   return useMutation({
-    mutationFn: (quizId: string) => quizService.startQuiz(quizId),
+    mutationFn: ({
+      quizId,
+      limitedTime,
+    }: {
+      quizId: string;
+      limitedTime?: number;
+    }) => quizService.startQuiz(quizId, limitedTime),
+  });
+}
+
+// GET /quizzes/results/me/:sessionId
+export function useQuizSessionDetail(sessionId: string | null) {
+  return useQuery({
+    queryKey: [...queryKeys.quizzes.myResults, "detail", sessionId ?? ""],
+    queryFn: () => quizService.getMyResultDetail(sessionId!),
+    enabled: !!sessionId,
   });
 }
 

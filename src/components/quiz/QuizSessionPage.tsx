@@ -1,19 +1,27 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 import { CheckCircle2 } from "lucide-react";
 import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
 import { QuizProgressBar } from "./QuizProgressBar";
 import { QuizQuestionCard } from "./QuizQuestionCard";
 
+const AUTO_SUBMIT_BUFFER_SECONDS = 2;
+
 interface QuizSessionPageProps {
   quiz: QuizSet;
   questions: QuizQuestion[];
-  onSubmit: (answers: Record<string, number>, elapsedSeconds: number) => void;
+  onSubmit: (answers: Record<string, number>, elapsedSeconds: number) => Promise<boolean>;
   onBack: () => void;
   onGoHome: () => void;
   onRetry: () => void;
   startTime: number;
+  limitedTime?: number;
 }
 
 export function QuizSessionPage({
@@ -24,14 +32,54 @@ export function QuizSessionPage({
   onGoHome,
   onRetry,
   startTime,
+  limitedTime,
 }: QuizSessionPageProps) {
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const answersRef = useRef<Record<string, number>>({});
+  const submittedRef = useRef(false);
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hasTimeLimit = typeof limitedTime === "number" && limitedTime > 0;
 
   const answeredCount = Object.keys(answers).length;
   const allAnswered = answeredCount === questions.length;
   const questionIds = questions.map((q) => q.questionId);
+
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  const submitOnce = useCallback(
+    async (finalAnswers: Record<string, number>, elapsed: number) => {
+      if (submittedRef.current) return false;
+      submittedRef.current = true;
+      setIsSubmitted(true);
+      const ok = await onSubmit(finalAnswers, elapsed);
+      if (!ok) {
+        submittedRef.current = false;
+        setIsSubmitted(false);
+      }
+      return ok;
+    },
+    [onSubmit],
+  );
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const nextElapsed = Math.floor((Date.now() - startTime) / 1000);
+      setElapsedSeconds(nextElapsed);
+
+      const submitAt = Math.max((limitedTime ?? 0) - AUTO_SUBMIT_BUFFER_SECONDS, 0);
+      if (hasTimeLimit && nextElapsed >= submitAt) {
+        window.clearInterval(timer);
+        void submitOnce(answersRef.current, nextElapsed);
+      }
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [hasTimeLimit, limitedTime, startTime, submitOnce]);
 
   const handleAnswer = useCallback(
     (questionId: string, answerIndex: number) => {
@@ -74,7 +122,7 @@ export function QuizSessionPage({
 
   const handleSubmit = () => {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    onSubmit(answers, elapsed);
+    void submitOnce(answers, elapsed);
   };
 
   return (
@@ -88,6 +136,8 @@ export function QuizSessionPage({
         answeredCount={answeredCount}
         answers={answers}
         questionIds={questionIds}
+        elapsedSeconds={elapsedSeconds}
+        limitedTime={limitedTime}
         onBack={onBack}
         onGoHome={onGoHome}
         onRetry={onRetry}
@@ -96,6 +146,19 @@ export function QuizSessionPage({
 
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+          {hasTimeLimit && (
+            <div
+              className="rounded-xl border px-4 py-3 text-sm"
+              style={{
+                background: "rgba(201,162,77,0.08)",
+                borderColor: "rgba(201,162,77,0.24)",
+                color: "var(--content-muted)",
+              }}
+            >
+              Hết thời gian hệ thống sẽ tự động nộp bài với các câu đã chọn.
+            </div>
+          )}
+
           {questions.map((q, idx) => (
             <div
               key={q.questionId}
@@ -152,7 +215,8 @@ export function QuizSessionPage({
 
             <button
               onClick={handleSubmit}
-              className="mx-auto h-11 rounded-lg px-8 text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+              disabled={isSubmitted}
+              className="mx-auto h-11 rounded-lg px-8 text-sm font-bold transition-colors duration-200 disabled:opacity-60"
               style={{
                 background: allAnswered ? "#047857" : "var(--abyssal-blue)",
                 color: "var(--text-on-dark)",
