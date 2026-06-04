@@ -63,10 +63,14 @@ export function useSendMessage() {
       // Invalidate profile to update token count in sidebar
       qc.invalidateQueries({ queryKey: queryKeys.profile.me });
     },
-    onError: (error: any) => {
-      const serverMessage = error?.response?.data?.message;
+    onError: (error: unknown) => {
+      const serverMessage =
+        typeof error === "object" && error !== null && "response" in error
+          ? (error as { response?: { data?: { message?: unknown } } }).response
+              ?.data?.message
+          : undefined;
       if (
-        serverMessage &&
+        typeof serverMessage === "string" &&
         (serverMessage.includes("hết token") || serverMessage.includes("nạp thêm"))
       ) {
         return;
@@ -88,37 +92,12 @@ export function useDeleteSession() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (sessionId: string) => chatService.deleteSession(sessionId),
-    onMutate: async (sessionId) => {
-      // Cancel any outgoing refetches
-      await qc.cancelQueries({ queryKey: queryKeys.chat.history });
-      
-      // Snapshot previous value
-      const previousHistory = qc.getQueryData<ChatHistoryGroup[]>(queryKeys.chat.history);
-      
-      // Optimistically update to new value (remove deleted session)
-      if (previousHistory) {
-        const newHistory = previousHistory
-          .map((group) => ({
-            ...group,
-            sessions: group.sessions.filter((s: { id: string }) => s.id !== sessionId),
-          }))
-          .filter((group) => group.sessions.length > 0); // Remove empty groups
-        
-        qc.setQueryData(queryKeys.chat.history, newHistory);
-      }
-      
-      return { previousHistory };
-    },
     onSuccess: async () => {
       // Force refetch để đảm bảo UI đồng bộ
       await qc.refetchQueries({ queryKey: queryKeys.chat.history });
       toast.success("Đã xóa cuộc trò chuyện");
     },
-    onError: (err, sessionId, context) => {
-      // Rollback on error
-      if (context?.previousHistory) {
-        qc.setQueryData(queryKeys.chat.history, context.previousHistory);
-      }
+    onError: () => {
       toast.error("Không thể xóa cuộc trò chuyện");
     },
   });
@@ -149,7 +128,7 @@ export function useSoftDeleteSession() {
       
       return { previousHistory };
     },
-    onSuccess: async (_, sessionId) => {
+    onSuccess: async () => {
       // Invalidate và refetch để đảm bảo UI đồng bộ
       await qc.invalidateQueries({ queryKey: ["chat", "sessions"] });
       await qc.refetchQueries({ queryKey: queryKeys.chat.history });

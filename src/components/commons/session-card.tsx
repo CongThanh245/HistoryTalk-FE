@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ChatTextIcon, TimerIcon , CaretRightIcon, TrashIcon } from "@phosphor-icons/react";
+import { ChatTextIcon, TimerIcon , CaretRightIcon, TrashIcon, CircleNotchIcon } from "@phosphor-icons/react";
 import type { ChatHistoryItem } from "@/services/chat-history.service";
 import { isValidUrl } from "@/lib/utils/url";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -26,6 +26,7 @@ interface SessionCardProps {
   session: ChatHistoryItem;
   onClick: (session: ChatHistoryItem) => void;
   onDelete?: (sessionId: string) => void;
+  isDeleting?: boolean;
   showEvent?: boolean;
 }
 
@@ -33,6 +34,7 @@ export function SessionCard({
   session,
   onClick,
   onDelete,
+  isDeleting = false,
   showEvent = false,
 }: SessionCardProps) {
   const [deleteOpen, setDeleteOpen] = React.useState(false);
@@ -54,14 +56,20 @@ export function SessionCard({
       {onDelete && (
         <>
           <button
+            disabled={isDeleting}
             onClick={(e) => {
               e.stopPropagation();
+              if (isDeleting) return;
               setDeleteOpen(true);
             }}
-            className="absolute top-3 right-3 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50"
+            className="absolute top-3 right-3 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70"
             style={{ color: "var(--content-subtle)" }}
           >
-            <TrashIcon className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
+            {isDeleting ? (
+              <CircleNotchIcon className="w-3.5 h-3.5 animate-spin text-red-500" />
+            ) : (
+              <TrashIcon className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
+            )}
           </button>
 
           <ConfirmDialog
@@ -71,9 +79,9 @@ export function SessionCard({
             description={`Cuộc trò chuyện "${session.sessionTitle || "này"}" sẽ bị xóa vĩnh viễn và không thể khôi phục.`}
             confirmLabel="Xóa"
             variant="danger"
+            isPending={isDeleting}
             onConfirm={() => {
               onDelete(session.id);
-              setDeleteOpen(false);
             }}
           />
         </>
@@ -135,7 +143,7 @@ export function SessionCard({
           className="text-xs leading-relaxed line-clamp-2 mt-1.5 italic"
           style={{ color: "var(--content-muted)" }}
         >
-          "{session.lastMessage}"
+          &quot;{session.lastMessage}&quot;
         </p>
 
         {/* Footer */}

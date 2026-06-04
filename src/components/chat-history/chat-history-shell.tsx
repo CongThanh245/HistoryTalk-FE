@@ -23,6 +23,7 @@ export function ChatHistoryShell() {
   const router = useRouter();
   const [era, setEra] = useState<EventEra>("all");
   const [search, setSearch] = useState("");
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
 
   // Data đã được prefetch trên server → hook này chỉ đọc từ cache
   const { data: allGroups = [], isLoading } = useChatHistory();
@@ -87,7 +88,11 @@ export function ChatHistoryShell() {
   };
 
   const handleDeleteSession = (sessionId: string) => {
-    deleteSession.mutate(sessionId);
+    if (deleteSession.isPending) return;
+    setDeletingSessionId(sessionId);
+    deleteSession.mutate(sessionId, {
+      onSettled: () => setDeletingSessionId(null),
+    });
   };
 
   return (
@@ -115,6 +120,7 @@ export function ChatHistoryShell() {
             groups={filtered}
             onSelectSession={handleSelectSession}
             onDeleteSession={handleDeleteSession}
+            deletingSessionId={deletingSessionId}
           />
         )}
       </div>

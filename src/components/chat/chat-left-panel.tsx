@@ -8,6 +8,7 @@ import {
   TimerIcon,
   ClockCounterClockwiseIcon,
   TrashIcon,
+  CircleNotchIcon,
   CaretLeftIcon,
   CaretRightIcon,
 } from "@phosphor-icons/react";
@@ -229,14 +230,20 @@ export function ChatLeftPanel({
                   </div>
                 </div>
                 <button
+                  disabled={softDeleteSession.isPending}
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (softDeleteSession.isPending) return;
                     setDeleteSessionId(session.id);
                   }}
-                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50"
+                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70"
                   style={{ color: "var(--content-subtle)" }}
                 >
-                  <TrashIcon className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
+                  {softDeleteSession.isPending && deleteSessionId === session.id ? (
+                    <CircleNotchIcon className="w-3.5 h-3.5 animate-spin text-red-500" />
+                  ) : (
+                    <TrashIcon className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
+                  )}
                 </button>
               </div>
             ))}
@@ -376,14 +383,16 @@ export function ChatLeftPanel({
           open={!!deleteSessionId}
           onOpenChange={(open) => !open && setDeleteSessionId(null)}
           title="Xóa cuộc trò chuyện?"
-          description="Cuộc trò chuyện này sẽ bị xóa. Bạn có thể khôi phục nếu cần."
+          description="Cuộc trò chuyện này sẽ bị xóa vĩnh viễn và không thể khôi phục."
           confirmLabel="Xóa"
           variant="danger"
+          isPending={softDeleteSession.isPending}
           onConfirm={() => {
-            if (deleteSessionId) {
-              softDeleteSession.mutate(deleteSessionId, {
+            if (deleteSessionId && !softDeleteSession.isPending) {
+              const sessionId = deleteSessionId;
+              softDeleteSession.mutate(sessionId, {
                 onSuccess: () => {
-                  onDeleteSession?.(deleteSessionId);
+                  onDeleteSession?.(sessionId);
                   setDeleteSessionId(null);
                 },
               });

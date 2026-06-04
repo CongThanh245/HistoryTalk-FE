@@ -12,12 +12,14 @@ interface ChatHistoryListProps {
   groups: ChatHistoryGroup[];
   onSelectSession: (session: ChatHistoryItem) => void;
   onDeleteSession: (sessionId: string) => void;
+  deletingSessionId?: string | null;
 }
 
 export function ChatHistoryList({
   groups,
   onSelectSession,
   onDeleteSession,
+  deletingSessionId = null,
 }: ChatHistoryListProps) {
   return (
     <div className="space-y-10 pb-16">
@@ -27,6 +29,7 @@ export function ChatHistoryList({
           group={group}
           onSelectSession={onSelectSession}
           onDeleteSession={onDeleteSession}
+          deletingSessionId={deletingSessionId}
         />
       ))}
     </div>

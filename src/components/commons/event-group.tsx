@@ -11,12 +11,14 @@ interface EventGroupProps {
   group: ChatHistoryGroup;
   onSelectSession: (session: ChatHistoryItem) => void;
   onDeleteSession?: (sessionId: string) => void;
+  deletingSessionId?: string | null;
 }
 
 export function EventGroup({
   group,
   onSelectSession,
   onDeleteSession,
+  deletingSessionId = null,
 }: EventGroupProps) {
   return (
     <div className="space-y-3">
@@ -64,6 +66,7 @@ export function EventGroup({
             session={session}
             onClick={onSelectSession}
             onDelete={onDeleteSession}
+            isDeleting={deletingSessionId === session.id}
           />
         ))}
       </div>
