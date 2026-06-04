@@ -27,7 +27,7 @@ export type WebSpeechVoiceStatus =
   | "idle"
   | "listening"     // Đang nghe (STT active)
   | "processing"    // Đã có text, gửi đi xử lý
-  | "thinking"      // BE đang suy nghĩ
+  | "thinking"      // BE Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ
   | "speaking"      // Đang phát âm (TTS)
   | "error";
 
@@ -161,6 +161,7 @@ export function useVoiceChatWebSpeech({
         // Nếu bị abort nhưng có transcript trong ref → vẫn gửi
         const savedText = finalTranscriptRef.current;
         if (savedText.trim()) {
+          setIsListening(false); // ← Dừng trạng thái "recording" trước khi gọi API
           await processAndSend(savedText);
         }
         return;
@@ -185,6 +186,7 @@ export function useVoiceChatWebSpeech({
 
       // Có transcript từ STT → xử lý
       if (finalText) {
+        setIsListening(false); // ← Dừng trạng thái "recording" trước khi gọi API
         await processAndSend(finalText);
       }
     } catch (err: unknown) {

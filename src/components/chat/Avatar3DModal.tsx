@@ -42,13 +42,15 @@ function ModelLoadingPlaceholder() {
 
 const STATUS_LABEL: Record<string, string> = {
   idle: "Nhấn và giữ để nói",
-  recording: "🔴 Đang ghi âm... (thả để gửi)",
-  processing_stt: "🎤 Đang nhận dạng giọng nói...",
-  processing_chat: "🤔 Đang suy nghĩ...",
-  processing_tts: "🔊 Đang chuẩn bị nói...",
-  speaking: "💬 Đang trả lời...",
-  thinking: "🤔 Đang suy nghĩ...",       // Streaming: đã hiện user text
-  error: "⚠️ Lỗi — thử lại",
+  listening: "Đang lắng nghe...",
+  recording: " Đang ghi âm... (thả để gửi)",
+  processing: " Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ...",
+  processing_stt: " Đang nhận dạng giọng nói...",
+  processing_chat: "Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ...",
+  processing_tts: " Đang chuẩn bị nói...",
+  speaking: " Đang trả lời...",
+  thinking: " Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ...",
+  error: " Lỗi — thử lại",
 };
 
 const PROFILE_REFRESH_DELAYS_MS = [300, 1000, 2500, 5000];
@@ -387,6 +389,7 @@ export function Avatar3DModal({
   // ── Render ────────────────────────────────────────────────────────────────
 
   const isBusy = status.startsWith("processing") || status === "speaking" || status === "thinking";
+  const isListeningStatus = status === "listening";
 
   return (
     <>
@@ -443,14 +446,16 @@ export function Avatar3DModal({
               border: "1px solid rgba(201,168,76,0.2)",
               color: "#c9a84c", fontSize: 12,
             }}>
-              {(isRecording || isBusy) && (
+              {(isRecording || isBusy || isListeningStatus) && (
                 <span style={{
                   width: 7, height: 7, borderRadius: "50%",
-                  background: isRecording ? "#ef5350" : "#c9a84c",
+                  background: isRecording ? "#ef5350" 
+                    : (isBusy && !status.includes("speaking")) ? "#4fc3f7" 
+                    : "#c9a84c",
                   animation: "pulse 1s ease-in-out infinite",
                 }} />
               )}
-              {errorMsg ?? STATUS_LABEL[status]}
+              {errorMsg ?? (STATUS_LABEL[status] ?? STATUS_LABEL["idle"])}
             </div>
 
             {/* Mode Toggle - MVP: đã ẩn, luôn dùng web-speech (free) */}
@@ -488,11 +493,28 @@ export function Avatar3DModal({
           }}>
             <FBXCharacterViewer
               modelUrl={character.modelUrl ?? "/models/character.glb"}
-              isSpeaking={isSpeaking}
-              isListening={false}
-              isRecording={isRecording}
+              isSpeaking={status === "speaking"}
+              isListening={status === "listening"}
+              isRecording={status === "listening"}
               isProcessing={status.startsWith("processing") || status === "thinking"}
               ttsAnalyserRef={ttsAnalyserRef}
+            />
+          </div>
+
+          {/* ── Transcript (below 3D, không che model) ── */}
+          <div style={{
+            width: "100%",
+            maxWidth: 600,
+            alignSelf: "center",
+            padding: "0 16px",
+            flexShrink: 0,
+            maxHeight: 140,
+            overflowY: "auto",
+          }}>
+            <TranscriptFeed 
+              messages={messages} 
+              isThinking={status === "processing_chat" || status === "thinking" || status === "processing"}
+              interimText={isRecording ? liveTranscript : ""}
             />
           </div>
 
@@ -506,15 +528,6 @@ export function Avatar3DModal({
                 {character.title}
               </p>
             )}
-          </div>
-
-          {/* ── Transcript ── */}
-          <div style={{ width: "100%", maxWidth: 600, padding: "8px 16px 0", flexShrink: 0 }}>
-            <TranscriptFeed 
-              messages={messages} 
-              isThinking={status === "processing_chat" || status === "thinking"}
-              interimText={isRecording ? liveTranscript : ""} // Chỉ hiện khi đang thu
-            />
           </div>
 
           {/* ── Controls ── */}
@@ -546,6 +559,7 @@ export function Avatar3DModal({
                 display: "flex", alignItems: "center", justifyContent: "center",
                 transition: "background 0.2s, border 0.2s",
                 userSelect: "none", WebkitUserSelect: "none",
+                touchAction: "none",
               } as React.CSSProperties}
             >
               {/* Mic icon */}

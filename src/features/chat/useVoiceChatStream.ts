@@ -12,7 +12,7 @@ export type VoiceStreamStatus =
   | "idle"
   | "recording"
   | "processing_stt"
-  | "thinking"      // AI đang suy nghĩ, đã hiện user text
+  | "thinking"      // AI Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ, đã hiện user text
   | "speaking"      // Đang phát audio streaming
   | "error";
 

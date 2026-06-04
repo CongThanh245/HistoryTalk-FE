@@ -5,6 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useAnimations, useFBX, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -224,9 +225,24 @@ function GLBCharacterModel({
   onDiagnostic: (d: DiagnosticInfo) => void;
 }) {
   const gltf = useGLTF(url) as unknown as GLTF & { scene: THREE.Group };
-  const { actions, names } = useAnimations(gltf.animations, gltf.scene);
+
+  // Clone scene + animations so each mount has its own independent objects.
+  // useGLTF returns cached shared objects — attaching them directly causes
+  // the scene to be "stolen" from any previous render, making every 2nd open fail.
+  const clonedScene = React.useMemo(
+    () => SkeletonUtils.clone(gltf.scene) as THREE.Group,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [gltf.scene],
+  );
+  const clonedAnimations = React.useMemo(
+    () => gltf.animations.map((clip) => clip.clone()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [gltf.animations],
+  );
+
+  const { actions, names } = useAnimations(clonedAnimations, clonedScene);
   const reported = useRef(false);
-  const sceneRef = useRef<THREE.Group>(gltf.scene);
+  const sceneRef = useRef<THREE.Group>(clonedScene);
 
   const lipMeshRef = useRef<THREE.Mesh | null>(null);
   const lipMorphIdxRef = useRef(-1);
@@ -242,17 +258,17 @@ function GLBCharacterModel({
     if (reported.current) return;
     reported.current = true;
 
-    const box = new THREE.Box3().setFromObject(gltf.scene);
+    const box = new THREE.Box3().setFromObject(clonedScene);
     const size = box.getSize(new THREE.Vector3());
     const s = size.y > 0 ? 4.5 / size.y : 1;
-    gltf.scene.scale.setScalar(s);
-    const box2 = new THREE.Box3().setFromObject(gltf.scene);
+    clonedScene.scale.setScalar(s);
+    const box2 = new THREE.Box3().setFromObject(clonedScene);
     const center2 = box2.getCenter(new THREE.Vector3());
-    gltf.scene.position.sub(center2);
-    gltf.scene.position.y += (box2.max.y - box2.min.y) / 2 - 0.8;
+    clonedScene.position.sub(center2);
+    clonedScene.position.y += (box2.max.y - box2.min.y) / 2 - 0.8;
 
     const { blendshapes, bones, meshCount, lipMesh, lipMorphIdx, jawBone, jawRest } =
-      scanForLipTargets(gltf.scene);
+      scanForLipTargets(clonedScene);
 
     lipMeshRef.current = lipMesh;
     lipMorphIdxRef.current = lipMorphIdx;
@@ -260,7 +276,7 @@ function GLBCharacterModel({
     jawRestRef.current = jawRest;
 
     onDiagnostic({ blendshapes, bones, meshCount, animCount: names.length });
-  }, [gltf.scene, names, onDiagnostic]);
+  }, [clonedScene, names, onDiagnostic]);
 
   useLipSyncFrame(lipMeshRef, lipMorphIdxRef, jawBoneRef, jawRestRef, volumeRef, isSpeaking, testVolumeRef);
 
@@ -268,7 +284,7 @@ function GLBCharacterModel({
     <>
       <ExternalAudioLipDriver analyserRef={ttsAnalyserRef} onVolume={(v) => { volumeRef.current = v; }} />
       <ThinkingAnimation rootRef={sceneRef} isProcessing={isProcessing} />
-      <primitive object={gltf.scene} />
+      <primitive object={clonedScene} />
     </>
   );
 }
@@ -492,11 +508,11 @@ export function FBXCharacterViewer({
   const statusLabel = effectiveSpeaking
     ? "Đang nói..."
     : isRecording
-    ? "🔴 Đang ghi âm..."
+    ? " Đang ghi âm..."
     : isListening
     ? "Đang nghe..."
     : isProcessing
-    ? "🤔 Đang suy nghĩ..."
+    ? " Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ..."
     : "Chờ...";
 
   const shouldAnimate = effectiveSpeaking || isRecording || isListening || isProcessing;

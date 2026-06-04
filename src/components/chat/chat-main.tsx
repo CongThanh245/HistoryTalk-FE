@@ -249,6 +249,7 @@ export function ChatMain({
 
   const handleCloseVoiceCall = useCallback(() => {
     setIsVoiceOpen(false);
+    qc.invalidateQueries({ queryKey: queryKeys.profile.me });
     if (sessionId) {
       qc.invalidateQueries({ queryKey: queryKeys.chat.messages(sessionId) });
     }
