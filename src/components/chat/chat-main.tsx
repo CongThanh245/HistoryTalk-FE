@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
+import { PhoneCallIcon } from "@phosphor-icons/react";
 import type {
   ChatCharacter,
   ChatMessage,
@@ -17,12 +18,94 @@ import { chatService } from "@/services/chat.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
 import { Avatar3DModal } from "./Avatar3DModal";
+import type { VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
 import { KeywordDetailPanel } from "./KeywordDetailPanel";
 import type { KeywordData } from "@/data/keywords";
 import { cn } from "@/lib/utils/cn";
 import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
 import { toast } from "sonner";
 import { useSidebar } from "@/components/layouts/sidebar/sidebar-context";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+const isVoiceMessage = (message: ChatMessage) =>
+  message.messageType?.toUpperCase() === "VOICE";
+
+const toMessageType = (value?: string): ChatMessage["messageType"] =>
+  value?.toUpperCase() === "VOICE" ? "VOICE" : "TEXT";
+
+const VOICE_CALL_GAP_MS = 2 * 60 * 1000;
+
+type VoiceCallGroup = {
+  id: string;
+  startedAt: string;
+  messages: ChatMessage[];
+};
+
+type ChatDisplayItem =
+  | { type: "message"; message: ChatMessage }
+  | { type: "voice-call"; call: VoiceCallGroup };
+
+const parseApiDate = (value: string) => {
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value);
+  return new Date(hasTimezone ? value : `${value}Z`);
+};
+
+const formatVietnamTime = (value: string) =>
+  parseApiDate(value).toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
+
+const groupChatDisplayItems = (messages: ChatMessage[]): ChatDisplayItem[] => {
+  const items: ChatDisplayItem[] = [];
+  let currentCall: VoiceCallGroup | null = null;
+  let previousVoiceAt = 0;
+
+  messages.forEach((message) => {
+    if (!isVoiceMessage(message)) {
+      if (currentCall) {
+        items.push({ type: "voice-call", call: currentCall });
+        currentCall = null;
+        previousVoiceAt = 0;
+      }
+
+      items.push({ type: "message", message });
+      return;
+    }
+
+    const messageTime = parseApiDate(message.createdAt).getTime();
+    const shouldStartNewCall =
+      !currentCall || messageTime - previousVoiceAt > VOICE_CALL_GAP_MS;
+
+    if (shouldStartNewCall) {
+      if (currentCall) {
+        items.push({ type: "voice-call", call: currentCall });
+      }
+
+      currentCall = {
+        id: `voice-call-${message.id}`,
+        startedAt: message.createdAt,
+        messages: [message],
+      };
+    } else if (currentCall) {
+      currentCall.messages.push(message);
+    }
+
+    previousVoiceAt = messageTime;
+  });
+
+  if (currentCall) {
+    items.push({ type: "voice-call", call: currentCall });
+  }
+
+  return items;
+};
 
 interface ChatMainProps {
   character: ChatCharacter;
@@ -52,9 +135,12 @@ export function ChatMain({
   );
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState("");
+  const [streamingMessageType, setStreamingMessageType] = useState<"TEXT" | "VOICE">("TEXT");
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordData | null>(null);
+  const [selectedVoiceCall, setSelectedVoiceCall] = useState<VoiceCallGroup | null>(null);
+  const [voiceCallDraftMessages, setVoiceCallDraftMessages] = useState<ChatMessage[]>([]);
   const [isTokenExhausted, setIsTokenExhausted] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const [lastTokenUsage, setLastTokenUsage] = useState<{
@@ -99,8 +185,24 @@ export function ChatMain({
     speechSynthesis.speak(utterance);
   };
 
-  const serverMessages = data?.messages ?? [];
-  const messages = [...serverMessages, ...optimisticMessages];
+  const messages = useMemo(
+    () => {
+      const persistedMessages = data?.messages ?? [];
+      const pendingVoiceDrafts = voiceCallDraftMessages.filter(
+        (draft) =>
+          !persistedMessages.some(
+            (message) =>
+              isVoiceMessage(message) &&
+              message.role === draft.role &&
+              message.content === draft.content,
+          ),
+      );
+
+      return [...persistedMessages, ...pendingVoiceDrafts, ...optimisticMessages];
+    },
+    [data?.messages, voiceCallDraftMessages, optimisticMessages],
+  );
+  const displayItems = useMemo(() => groupChatDisplayItems(messages), [messages]);
   const sessionIdRef = useRef(sessionId);
 
   useEffect(() => {
@@ -124,6 +226,34 @@ export function ChatMain({
 
   const qc = useQueryClient();
 
+  const handleVoiceMessagesChange = useCallback(
+    (voiceMessages: VoiceRestMessage[]) => {
+      setVoiceCallDraftMessages(
+        voiceMessages.map((message, index) => ({
+          id: `voice-draft-${sessionId}-${message.timestamp.getTime()}-${index}`,
+          sessionId: sessionId!,
+          role: message.role === "user" ? "USER" : "ASSISTANT",
+          content: message.text,
+          messageType: "VOICE",
+          createdAt: message.timestamp.toISOString(),
+        })),
+      );
+    },
+    [sessionId],
+  );
+
+  const handleOpenVoiceCall = useCallback(() => {
+    setVoiceCallDraftMessages([]);
+    setIsVoiceOpen(true);
+  }, []);
+
+  const handleCloseVoiceCall = useCallback(() => {
+    setIsVoiceOpen(false);
+    if (sessionId) {
+      qc.invalidateQueries({ queryKey: queryKeys.chat.messages(sessionId) });
+    }
+  }, [qc, sessionId]);
+
   const enqueueSpeech = (text: string) => {
     const voices = speechSynthesis.getVoices();
     const vietnameseVoice = voices.find((v) => v.name.includes("Vietnamese"));
@@ -139,6 +269,7 @@ export function ChatMain({
     
     // If not specified, default to VOICE if the 3D avatar modal is open, else TEXT
     const msgType = type || (isVoiceOpen ? "VOICE" : "TEXT");
+    setStreamingMessageType(msgType);
 
     let currentSessionId = sessionId;
 
@@ -237,7 +368,7 @@ export function ChatMain({
           sessionId: currentSessionId,
           role: "ASSISTANT",
           content: resData.fullContent,
-          messageType: resData.messageType as any || "TEXT",
+          messageType: toMessageType(resData.messageType),
           createdAt: new Date().toISOString(),
         };
 
@@ -254,14 +385,24 @@ export function ChatMain({
         );
         qc.invalidateQueries({ queryKey: queryKeys.profile.me });
       },
-      (err: any) => {
+      (err: unknown) => {
         setIsStreaming(false);
         setOptimisticMessages((prev) =>
           prev.filter((m) => m.id !== tempUserMsg.id),
         );
+
+        const error = err as {
+          message?: string;
+          response?: {
+            data?: {
+              message?: string;
+              errorCode?: string | number;
+            };
+          };
+        };
         
-        const serverMessage = err?.message || err?.response?.data?.message || "";
-        const errorCode = err?.response?.data?.errorCode;
+        const serverMessage = error.message || error.response?.data?.message || "";
+        const errorCode = error.response?.data?.errorCode;
         
         // Check for token exhaustion - broader matching
         const isTokenExhausted = 
@@ -354,7 +495,7 @@ export function ChatMain({
 
         {/* ── Nút Voice Call ── */}
         <button
-          onClick={() => setIsVoiceOpen(true)}
+          onClick={handleOpenVoiceCall}
           disabled={!sessionId}
           title={
             sessionId ? `Gọi thoại với ${character.name}` : "Đang khởi tạo..."
@@ -411,18 +552,27 @@ export function ChatMain({
           </div>
         ) : (
           <>
-            {messages.map((msg) => (
-              <MessageBubble
-                key={msg.id}
-                message={msg}
-                character={character}
-                speak={speak}
-                onKeywordSelect={
-                  msg.role === "ASSISTANT" ? handleKeywordSelect : undefined
-                }
-              />
-            ))}
-            {isStreaming && streamingMessage && (
+            {displayItems.map((item) =>
+              item.type === "voice-call" ? (
+                <VoiceCallBubble
+                  key={item.call.id}
+                  call={item.call}
+                  onOpen={setSelectedVoiceCall}
+                  onCallAgain={handleOpenVoiceCall}
+                />
+              ) : (
+                <MessageBubble
+                  key={item.message.id}
+                  message={item.message}
+                  character={character}
+                  speak={speak}
+                  onKeywordSelect={
+                    item.message.role === "ASSISTANT" ? handleKeywordSelect : undefined
+                  }
+                />
+              ),
+            )}
+            {isStreaming && streamingMessage && streamingMessageType !== "VOICE" && (
               <MessageBubble
                 key="streaming-bubble"
                 message={{
@@ -436,7 +586,9 @@ export function ChatMain({
                 character={character}
               />
             )}
-            {(isStreaming && !streamingMessage) && <TypingIndicator character={character} />}
+            {(isStreaming && !streamingMessage && streamingMessageType !== "VOICE") && (
+              <TypingIndicator character={character} />
+            )}
           </>
         )}
 
@@ -516,7 +668,8 @@ export function ChatMain({
           character={character}
           sessionId={sessionId}
           contextId={contextId}
-          onClose={() => setIsVoiceOpen(false)}
+          onClose={handleCloseVoiceCall}
+          onMessagesChange={handleVoiceMessagesChange}
         />
       )}
 
@@ -527,7 +680,125 @@ export function ChatMain({
       />
 
       {/* ── Upgrade Pro Dialog ── */}
+      <VoiceCallTranscriptDialog
+        call={selectedVoiceCall}
+        character={character}
+        onOpenChange={(open) => !open && setSelectedVoiceCall(null)}
+      />
+
       <UpgradeProDialog open={isUpgradeOpen} onOpenChange={setIsUpgradeOpen} />
     </div>
+  );
+}
+
+function VoiceCallBubble({
+  call,
+  onOpen,
+  onCallAgain,
+}: {
+  call: VoiceCallGroup;
+  onOpen: (call: VoiceCallGroup) => void;
+  onCallAgain: () => void;
+}) {
+  return (
+    <div className="flex justify-end px-4 mb-4">
+      <div
+        className="w-[240px] overflow-hidden rounded-2xl border shadow-lg"
+        style={{
+          background: "var(--bg-elevated)",
+          borderColor: "var(--border-strong)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => onOpen(call)}
+          className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-white/5"
+        >
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+            style={{
+              background: "var(--accent-gold-active-bg)",
+              color: "var(--accent-gold)",
+            }}
+          >
+            <PhoneCallIcon className="w-5 h-5" weight="fill" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+              Cuộc gọi thoại
+            </p>
+            <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+              {formatVietnamTime(call.startedAt)}
+            </p>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={onCallAgain}
+          className="w-full py-2.5 text-sm font-semibold cursor-pointer transition-colors hover:brightness-110"
+          style={{
+            background: "var(--accent-gold-active-bg)",
+            color: "var(--accent-gold-soft)",
+          }}
+        >
+          Gọi lại
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function VoiceCallTranscriptDialog({
+  call,
+  character,
+  onOpenChange,
+}: {
+  call: VoiceCallGroup | null;
+  character: ChatCharacter;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open={!!call} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="max-h-[80vh] overflow-hidden border"
+        style={{
+          background: "var(--bg-surface)",
+          borderColor: "var(--border-default)",
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle style={{ color: "var(--text-primary)" }}>
+            Cuộc gọi thoại - {call ? formatVietnamTime(call.startedAt) : ""}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="max-h-[56vh] overflow-y-auto space-y-3 pr-1">
+          {call?.messages.map((message) => {
+            const isUser = message.role === "USER";
+
+            return (
+              <div
+                key={message.id}
+                className={cn("flex", isUser ? "justify-end" : "justify-start")}
+              >
+                <div
+                  className="max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
+                  style={{
+                    background: isUser ? "var(--accent-bronze)" : "var(--bg-elevated)",
+                    color: isUser ? "white" : "var(--text-primary)",
+                    border: isUser ? "none" : "1px solid var(--border-default)",
+                  }}
+                >
+                  <p className="mb-1 text-[10px] font-semibold opacity-70">
+                    {isUser ? "Bạn" : character.name} - {formatVietnamTime(message.createdAt)}
+                  </p>
+                  <p>{message.content}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

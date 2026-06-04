@@ -172,6 +172,7 @@ interface Avatar3DModalProps {
   sessionId: string;
   contextId: string;
   onClose: () => void;
+  onMessagesChange?: (messages: VoiceRestMessage[]) => void;
   /** @deprecated use mode instead */
   useStream?: boolean; // true = streaming mode, false = REST mode
   mode?: VoiceMode; // "rest" | "stream" | "web-speech" (miễn phí, không API key)
@@ -184,6 +185,7 @@ export function Avatar3DModal({
   sessionId, 
   contextId, 
   onClose, 
+  onMessagesChange,
   useStream = true,
   mode: modeProp
 }: Avatar3DModalProps) {
@@ -244,6 +246,10 @@ export function Avatar3DModal({
   
   // Lấy interim text cho hiển thị real-time (web-speech mode)
   const liveTranscript = interimText || currentSentence || "";
+
+  useEffect(() => {
+    onMessagesChange?.(messages);
+  }, [messages, onMessagesChange]);
 
   // ── Hold-to-talk handlers ─────────────────────────────────────────────────
 
