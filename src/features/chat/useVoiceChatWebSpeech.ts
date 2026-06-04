@@ -247,7 +247,7 @@ export function useVoiceChatWebSpeech({
         simulatedAnalyserRef.current?.start(aiResponse, 4.5);
         
         await ttsRef.current.speak(aiResponse, {
-          rate: 0.9,
+          rate: 1.0,
           pitch: 1,
           volume: 1,
         });
