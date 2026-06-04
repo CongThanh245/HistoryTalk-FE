@@ -59,6 +59,7 @@ export function useVoiceChat({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const micAudioContextRef = useRef<AudioContext | null>(null);
   const audioQueueRef = useRef<ArrayBuffer[]>([]);
   const isPlayingRef = useRef(false);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -66,6 +67,13 @@ export function useVoiceChat({
   const analyserRef = useRef<AnalyserNode | null>(null);   // VAD (mic)
   const ttsAnalyserRef = useRef<AnalyserNode | null>(null); // TTS (lip-sync)
   const vadIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const statusRef = useRef<VoiceStatus>("idle");
+  const playNextInQueueRef = useRef<() => void>(() => {});
+  const startRecordingRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   // ── Cleanup ───────────────────────────────────────────
   const cleanup = useCallback(() => {
@@ -76,6 +84,12 @@ export function useVoiceChat({
     if (audioContextRef.current && audioContextRef.current.state !== "closed") {
       audioContextRef.current.close().catch(() => {});
     }
+    if (
+      micAudioContextRef.current &&
+      micAudioContextRef.current.state !== "closed"
+    ) {
+      micAudioContextRef.current.close().catch(() => {});
+    }
 
     if (durationIntervalRef.current) clearInterval(durationIntervalRef.current);
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
@@ -85,6 +99,7 @@ export function useVoiceChat({
     mediaRecorderRef.current = null;
     streamRef.current = null;
     audioContextRef.current = null;
+    micAudioContextRef.current = null;
     ttsAnalyserRef.current = null;
     audioQueueRef.current = [];
     isPlayingRef.current = false;
@@ -138,10 +153,10 @@ export function useVoiceChat({
       source.onended = () => {
         isPlayingRef.current = false;
         if (audioQueueRef.current.length > 0) {
-          playNextInQueue();
+          playNextInQueueRef.current();
         } else {
           setStatus("listening");
-          startRecording(); // auto bắt đầu nghe lại sau khi nhân vật nói xong
+          startRecordingRef.current(); // auto bắt đầu nghe lại sau khi nhân vật nói xong
         }
       };
 
@@ -151,30 +166,49 @@ export function useVoiceChat({
       isPlayingRef.current = false;
       setStatus("listening");
     }
-  }, [getAudioContext]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getAudioContext]);
+
+  useEffect(() => {
+    playNextInQueueRef.current = playNextInQueue;
+  }, [playNextInQueue]);
 
   // ── VAD (Voice Activity Detection) đơn giản ──────────
   const startVAD = useCallback((stream: MediaStream) => {
     const ctx = new AudioContext();
+    micAudioContextRef.current = ctx;
     const analyser = ctx.createAnalyser();
-    analyser.fftSize = 512;
+    analyser.fftSize = 1024;
     const source = ctx.createMediaStreamSource(stream);
     source.connect(analyser);
     analyserRef.current = analyser;
 
-    const data = new Uint8Array(analyser.frequencyBinCount);
+    const data = new Uint8Array(analyser.fftSize);
     let silentFrames = 0;
-    const SILENCE_THRESHOLD = 10;
-    const SILENCE_FRAMES_TO_SEND = 40; // ~800ms silence
+    let hasSpeech = false;
+    const SPEECH_THRESHOLD = 0.018;
+    const SILENCE_THRESHOLD = 0.01;
+    const SILENCE_FRAMES_TO_SEND = 45; // ~900ms silence
 
     vadIntervalRef.current = setInterval(() => {
-      analyser.getByteFrequencyData(data);
-      const avg = data.reduce((a, b) => a + b, 0) / data.length;
+      analyser.getByteTimeDomainData(data);
+      let sum = 0;
+      for (const value of data) {
+        const normalized = (value - 128) / 128;
+        sum += normalized * normalized;
+      }
+      const rms = Math.sqrt(sum / data.length);
 
-      if (avg < SILENCE_THRESHOLD) {
+      if (rms > SPEECH_THRESHOLD) {
+        hasSpeech = true;
+        silentFrames = 0;
+        return;
+      }
+
+      if (hasSpeech && rms < SILENCE_THRESHOLD) {
         silentFrames++;
         if (silentFrames >= SILENCE_FRAMES_TO_SEND) {
           silentFrames = 0;
+          hasSpeech = false;
           // Flush chunk hiện tại để server xử lý
           if (
             mediaRecorderRef.current?.state === "recording" &&
@@ -183,8 +217,6 @@ export function useVoiceChat({
             mediaRecorderRef.current.requestData();
           }
         }
-      } else {
-        silentFrames = 0;
       }
     }, 20);
   }, []);
@@ -200,7 +232,7 @@ export function useVoiceChat({
 
     const recorder = new MediaRecorder(streamRef.current, {
       mimeType,
-      audioBitsPerSecond: 16000,
+      audioBitsPerSecond: 64000,
     });
 
     recorder.ondataavailable = (e) => {
@@ -215,11 +247,15 @@ export function useVoiceChat({
       }
     };
 
-    // Gửi chunks mỗi 250ms
-    recorder.start(250);
+    // Chunk dài hơn giúp STT có thêm ngữ cảnh, VAD vẫn flush khi người dùng ngừng nói.
+    recorder.start(1000);
     mediaRecorderRef.current = recorder;
     setStatus("listening");
   }, [isMuted]);
+
+  useEffect(() => {
+    startRecordingRef.current = startRecording;
+  }, [startRecording]);
 
   // ── Kết nối WebSocket & khởi động call ───────────────
   const startCall = useCallback(async () => {
@@ -231,7 +267,7 @@ export function useVoiceChat({
       // Xin quyền mic
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: 16000,
+          sampleRate: 48000,
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
@@ -340,7 +376,7 @@ export function useVoiceChat({
       };
 
       ws.onclose = () => {
-        if (status !== "ended") setStatus("ended");
+        if (statusRef.current !== "ended") setStatus("ended");
         cleanup();
       };
 

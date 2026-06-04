@@ -6,6 +6,21 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { ChatCharacter } from "@/services/chat.service";
 import { useVoiceChat, VoiceStatus } from "@/features/chat/useVoiceChat";
 import { queryKeys } from "@/shared/query-key";
+import { useAuthStore } from "@/store/auth.store";
+import { userService, type UserProfile } from "@/services/user.service";
+
+const PROFILE_REFRESH_DELAYS_MS = [400, 1200, 2500, 5000];
+
+function syncProfileUser(profile: UserProfile) {
+  useAuthStore.getState().updateUser({
+    userName: profile.userName,
+    avatarUrl: profile.avatarUrl ?? undefined,
+    fullName: profile.fullName,
+    tierId: profile.tierId,
+    tierTitle: profile.tierTitle,
+    token: profile.token,
+  });
+}
 
 interface VoiceChatModalProps {
   character: ChatCharacter;
@@ -193,8 +208,14 @@ export function VoiceChatModal({
   const isListening = status === "listening";
 
   const refreshProfile = () => {
-    void queryClient.invalidateQueries({ queryKey: queryKeys.profile.me });
-    void queryClient.refetchQueries({ queryKey: queryKeys.profile.me });
+    PROFILE_REFRESH_DELAYS_MS.forEach((delay) => {
+      window.setTimeout(() => {
+        void userService.getProfile().then((profile) => {
+          queryClient.setQueryData(queryKeys.profile.me, profile);
+          syncProfileUser(profile);
+        });
+      }, delay);
+    });
   };
 
   const handleEnd = () => {

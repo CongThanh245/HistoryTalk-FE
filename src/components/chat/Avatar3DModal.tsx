@@ -1,12 +1,17 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import type { ChatCharacter } from "@/services/chat.service";
 import { useVoiceChatRest, type VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
-import { useVoiceChatStream, type VoiceMessage as VoiceStreamMessage } from "@/features/chat/useVoiceChatStream";
-import { useVoiceChatWebSpeech, type WebSpeechMessage } from "@/features/chat/useVoiceChatWebSpeech";
+import { useVoiceChatStream } from "@/features/chat/useVoiceChatStream";
+import { useVoiceChatWebSpeech } from "@/features/chat/useVoiceChatWebSpeech";
+import { queryKeys } from "@/shared/query-key";
+import { useAuthStore } from "@/store/auth.store";
+import { userService, type UserProfile } from "@/services/user.service";
+import type { AnalyserLike } from "./FBXCharacterViewer";
 
 // Dynamically import 3D viewer (no SSR)
 const FBXCharacterViewer = dynamic(
@@ -45,6 +50,19 @@ const STATUS_LABEL: Record<string, string> = {
   thinking: "🤔 Đang suy nghĩ...",       // Streaming: đã hiện user text
   error: "⚠️ Lỗi — thử lại",
 };
+
+const PROFILE_REFRESH_DELAYS_MS = [300, 1000, 2500, 5000];
+
+function syncProfileUser(profile: UserProfile) {
+  useAuthStore.getState().updateUser({
+    userName: profile.userName,
+    avatarUrl: profile.avatarUrl ?? undefined,
+    fullName: profile.fullName,
+    tierId: profile.tierId,
+    tierTitle: profile.tierTitle,
+    token: profile.token,
+  });
+}
 
 // ── Thinking indicator (typing dots) ───────────────────────────────────────────
 
@@ -167,6 +185,18 @@ function TranscriptFeed({
 
 type VoiceMode = "rest" | "stream" | "web-speech";
 
+type ActiveVoiceHook = {
+  status: string;
+  messages: VoiceRestMessage[];
+  startRecording: () => Promise<void> | void;
+  stopRecording: () => void;
+  cancel?: () => void;
+  ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
+  isRecording: boolean;
+  interimText?: string;
+  currentSentence?: string;
+};
+
 interface Avatar3DModalProps {
   character: ChatCharacter;
   sessionId: string;
@@ -186,21 +216,39 @@ export function Avatar3DModal({
   contextId, 
   onClose, 
   onMessagesChange,
-  useStream = true,
   mode: modeProp
 }: Avatar3DModalProps) {
+  const queryClient = useQueryClient();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // Internal mode state (can be toggled by user)
   // MVP: Luôn dùng web-speech (free) - ẩn toggle Pro/Free
-  const [internalMode, setInternalMode] = useState<VoiceMode>("web-speech");
-  
-  // Update internal mode when prop changes
-  useEffect(() => {
-    if (modeProp) setInternalMode(modeProp);
-  }, [modeProp]);
+  const [internalMode] = useState<VoiceMode>("web-speech");
   
   // Determine active mode
-  const mode = internalMode;
+  const mode = modeProp ?? internalMode;
+
+  const syncRemainingTokens = useCallback(
+    (remainingTokens: number) => {
+      queryClient.setQueryData(
+        queryKeys.profile.me,
+        (old: UserProfile | undefined) =>
+          old ? { ...old, token: remainingTokens } : old,
+      );
+      useAuthStore.getState().updateUser({ token: remainingTokens });
+    },
+    [queryClient],
+  );
+
+  const refreshProfile = useCallback(() => {
+    PROFILE_REFRESH_DELAYS_MS.forEach((delay) => {
+      window.setTimeout(() => {
+        void userService.getProfile().then((profile) => {
+          queryClient.setQueryData(queryKeys.profile.me, profile);
+          syncProfileUser(profile);
+        });
+      }, delay);
+    });
+  }, [queryClient]);
 
   // Use appropriate hook based on mode
   const restHook = useVoiceChatRest({
@@ -222,6 +270,8 @@ export function Avatar3DModal({
     characterId: character.id,
     contextId,
     onError: (e) => setErrorMsg(e),
+    onProfileRefresh: refreshProfile,
+    onTokenUpdate: syncRemainingTokens,
   });
 
   // Select active hook based on mode
@@ -234,13 +284,12 @@ export function Avatar3DModal({
     messages,
     startRecording,
     stopRecording,
+    cancel,
     ttsAnalyserRef,
     isRecording,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     interimText,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     currentSentence,
-  } = activeHook as any;
+  } = activeHook as ActiveVoiceHook;
 
   const isSpeaking = status === "speaking";
   
@@ -254,7 +303,7 @@ export function Avatar3DModal({
   // ── Hold-to-talk handlers ─────────────────────────────────────────────────
 
   const handlePointerDown = () => {
-    if (status.startsWith("processing") || status === "speaking") return;
+    if (status !== "idle") return;
     setErrorMsg(null);
     startRecording();
   };
@@ -263,9 +312,14 @@ export function Avatar3DModal({
     if (isRecording) stopRecording();
   };
 
-  // Stop recording if pointer leaves button while held
-  const handlePointerLeave = () => {
+  const handlePointerCancel = () => {
     if (isRecording) stopRecording();
+  };
+
+  const handleClose = () => {
+    cancel?.();
+    refreshProfile();
+    onClose();
   };
 
   // ── Keyboard shortcut: Space = hold to talk ───────────────────────────────
@@ -275,7 +329,7 @@ export function Avatar3DModal({
       if (e.code === "Space" && !spaceHeld.current) {
         e.preventDefault();
         spaceHeld.current = true;
-        if (!status.startsWith("processing") && status !== "speaking") {
+        if (status === "idle") {
           setErrorMsg(null);
           startRecording();
         }
@@ -370,7 +424,7 @@ export function Avatar3DModal({
 
             {/* Close */}
             <button
-              onClick={onClose}
+              onClick={handleClose}
               style={{
                 width: 32, height: 32, borderRadius: "50%", border: "none",
                 background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)",
@@ -438,7 +492,7 @@ export function Avatar3DModal({
             <button
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
-              onPointerLeave={handlePointerLeave}
+              onPointerCancel={handlePointerCancel}
               disabled={isBusy}
               title="Giữ để nói (hoặc giữ Space)"
               style={{
@@ -473,7 +527,7 @@ export function Avatar3DModal({
 
             {/* End / Close */}
             <button
-              onClick={onClose}
+              onClick={handleClose}
               title="Kết thúc"
               style={{
                 width: 56, height: 56, borderRadius: "50%", border: "none",
