@@ -314,15 +314,15 @@ export function ChatMain({
         if (localQueue.length > 0) {
           // Dynamic typing speed: if queue is large, type faster to catch up
           let charsToTake = 1;
-          if (localQueue.length > 30) charsToTake = 2;
-          if (localQueue.length > 80) charsToTake = 4;
-          if (localQueue.length > 150) charsToTake = 8;
+          if (localQueue.length > 40) charsToTake = 2;
+          if (localQueue.length > 100) charsToTake = 4;
+          if (localQueue.length > 250) charsToTake = 8;
           
           const textToAdd = localQueue.substring(0, charsToTake);
           localQueue = localQueue.substring(charsToTake);
           setStreamingMessage((prev) => prev + textToAdd);
         }
-      }, 60); // 60ms delay (slower speed) to sync better with voice
+      }, 90); // 90ms delay for a slower, more deliberate typing effect
     };
 
     chatService.sendMessageStream(
