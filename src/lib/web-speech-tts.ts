@@ -61,7 +61,7 @@ export class WebSpeechTTS {
       const utterance = new SpeechSynthesisUtterance(text);
       
       // Cấu hình
-      utterance.rate = options.rate ?? 0.9; // Hơi chậm cho rõ
+      utterance.rate = options.rate ?? 1.0; // Tốc độ bình thường
       utterance.pitch = options.pitch ?? 1;
       utterance.volume = options.volume ?? 1;
       utterance.lang = 'vi-VN';

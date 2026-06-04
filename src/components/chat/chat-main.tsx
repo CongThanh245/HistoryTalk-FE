@@ -305,7 +305,8 @@ export function ChatMain({
 
     // Buffer for streaming speech chunk-by-chunk
     let sentenceBuffer = "";
-    const punctuationRegex = /([.,!?;\n]+)/;
+    // Only split on sentence endings (. ! ? \n) to avoid unnatural TTS pauses between commas
+    const punctuationRegex = /([.!?\n]+)/;
 
     const processQueue = () => {
       if (isTyping) return;
