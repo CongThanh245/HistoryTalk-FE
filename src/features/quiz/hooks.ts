@@ -35,7 +35,7 @@ export function useMyQuizResults(
   enabled = true,
 ) {
   return useQuery({
-    queryKey: queryKeys.quizzes.myResults,
+    queryKey: [...queryKeys.quizzes.myResults, params ?? {}],
     queryFn: () => quizService.getMyResults(params),
     enabled,
     staleTime: 0,

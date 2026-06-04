@@ -1,4 +1,5 @@
 import { QuizPageClient } from "@/components/quiz/quiz-page";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Câu đố lịch sử",
@@ -8,7 +9,9 @@ export const metadata = {
 export default function QuizPage() {
   return (
     <div className="px-3 py-4 md:px-6 md:py-8">
-      <QuizPageClient />
+      <Suspense fallback={null}>
+        <QuizPageClient />
+      </Suspense>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import React from "react";
 interface QuizStatsBarProps {
   totalQuizzes: number;
   completedCount: number;
-  averageScore: number;
+  averageScore: number | string;
 }
 
 export function QuizStatsBar({
@@ -14,7 +14,7 @@ export function QuizStatsBar({
   const stats = [
     { label: "Bộ đề đang mở", value: totalQuizzes, suffix: "" },
     { label: "Lần đã làm", value: completedCount, suffix: "" },
-    { label: "Điểm trung bình", value: averageScore, suffix: "%" },
+    { label: "Điểm trung bình", value: averageScore, suffix: "" },
   ];
 
   return (

@@ -1,7 +1,5 @@
 "use client";
 
-// components/quiz/QuizSessionPage.tsx — v3
-
 import React, { useState, useCallback, useRef } from "react";
 import { CheckCircle2 } from "lucide-react";
 import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
@@ -13,8 +11,8 @@ interface QuizSessionPageProps {
   questions: QuizQuestion[];
   onSubmit: (answers: Record<string, number>, elapsedSeconds: number) => void;
   onBack: () => void;
-  onGoHome: () => void; // ← mới
-  onRetry: () => void; // ← mới
+  onGoHome: () => void;
+  onRetry: () => void;
   startTime: number;
 }
 
@@ -38,29 +36,30 @@ export function QuizSessionPage({
   const handleAnswer = useCallback(
     (questionId: string, answerIndex: number) => {
       setAnswers((prev) => {
-        if (prev[questionId] !== undefined) return prev;
+        const alreadyAnswered = prev[questionId] !== undefined;
         const next = { ...prev, [questionId]: answerIndex };
 
-        // Auto-scroll câu tiếp theo
-        const currentIdx = questions.findIndex(
-          (q) => q.questionId === questionId,
-        );
-        const nextQ = questions[currentIdx + 1];
-        if (nextQ) {
-          setTimeout(() => {
-            questionRefs.current[nextQ.questionId]?.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
-          }, 600);
+        if (!alreadyAnswered) {
+          const currentIdx = questions.findIndex(
+            (q) => q.questionId === questionId,
+          );
+          const nextQ = questions[currentIdx + 1];
+          if (nextQ) {
+            setTimeout(() => {
+              questionRefs.current[nextQ.questionId]?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+            }, 450);
+          }
         }
+
         return next;
       });
     },
     [questions],
   );
 
-  // ← Scroll đến câu theo index từ dropdown panel
   const scrollToQuestion = useCallback(
     (index: number) => {
       const qId = questions[index]?.questionId;
@@ -113,14 +112,15 @@ export function QuizSessionPage({
             </div>
           ))}
 
-          {/* Submit */}
           <div
             className="rounded-xl border p-5 text-center"
             style={{
               background: allAnswered
                 ? "rgba(16,185,129,0.06)"
                 : "var(--card-light-bg)",
-              borderColor: allAnswered ? "rgba(16,185,129,0.25)" : "var(--card-light-border)",
+              borderColor: allAnswered
+                ? "rgba(16,185,129,0.25)"
+                : "var(--card-light-border)",
             }}
           >
             {allAnswered ? (
@@ -154,9 +154,7 @@ export function QuizSessionPage({
               onClick={handleSubmit}
               className="mx-auto h-11 rounded-lg px-8 text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
               style={{
-                background: allAnswered
-                  ? "#047857"
-                  : "var(--abyssal-blue)",
+                background: allAnswered ? "#047857" : "var(--abyssal-blue)",
                 color: "var(--text-on-dark)",
                 boxShadow: allAnswered
                   ? "0 8px 18px rgba(4,120,87,0.18)"

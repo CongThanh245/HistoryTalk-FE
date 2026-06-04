@@ -48,7 +48,7 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     }
 
     resetPassword.mutate(
-      { token, password, confirmPassword },
+      { token, newPassword: password, confirmPassword },
       {
         onSuccess: () =>
           toast.success("Đặt lại mật khẩu thành công", {

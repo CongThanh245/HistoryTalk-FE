@@ -1,16 +1,18 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { History, ListChecks, Search } from "lucide-react";
 import { useQuizSets, useMyQuizResults } from "@/features/quiz/hooks";
 import { useAuthStore } from "@/store/auth.store";
 import { type QuizEra, type QuizResult } from "@/services/quiz.service";
 import { QuizStatsBar } from "./quiz-stats-bar";
 import { QuizRecentResults } from "./quiz-recent-result";
+import { QuizHistoryView } from "./quiz-history-view";
 import { QuizCard } from "./quiz-card";
 
 type EraFilter = "ALL" | Exclude<QuizEra, "ALL">;
+type QuizView = "list" | "history";
 
 const ERA_FILTERS: { label: string; value: EraFilter }[] = [
   { label: "Tất cả", value: "ALL" },
@@ -22,15 +24,18 @@ const ERA_FILTERS: { label: string; value: EraFilter }[] = [
 
 export function QuizPageClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [search, setSearch] = useState("");
   const [selectedEra, setSelectedEra] = useState<EraFilter>("ALL");
+  const activeView: QuizView =
+    searchParams.get("view") === "history" ? "history" : "list";
 
   const { data: quizData } = useQuizSets();
   const allQuizzes = useMemo(() => quizData?.content ?? [], [quizData?.content]);
 
   const { data: resultsData, isLoading: resultsLoading } = useMyQuizResults(
-    undefined,
+    { page: 0, size: 50 },
     isAuthenticated,
   );
   const results: QuizResult[] = useMemo(
@@ -53,12 +58,19 @@ export function QuizPageClient() {
 
   const avgScore = useMemo(() => {
     if (!results.length) return 0;
-    const total = results.reduce((acc, r) => acc + r.percentage, 0);
-    return Math.round(total / results.length);
+    const totalScore = results.reduce((acc, r) => acc + r.score, 0);
+    const totalQuestions = results.reduce((acc, r) => acc + r.totalQuestions, 0);
+    const averageScore = Number((totalScore / results.length).toFixed(1));
+    const averageTotal = Number((totalQuestions / results.length).toFixed(1));
+    return `${averageScore}/${averageTotal}`;
   }, [results]);
 
   const handleStartQuiz = (quizId: string) => {
     router.push(`/quiz/${quizId}`);
+  };
+
+  const handleViewChange = (view: QuizView) => {
+    router.push(view === "history" ? "/quiz?view=history" : "/quiz");
   };
 
   return (
@@ -88,22 +100,61 @@ export function QuizPageClient() {
               </p>
             </div>
 
-            <div
-              className="flex h-10 md:h-11 w-full items-center gap-3 rounded-lg px-3 md:px-4 lg:w-[360px]"
-              style={{
-                background: "rgba(27,38,50,0.05)",
-                border: "1px solid var(--card-light-border)",
-              }}
-            >
-              <Search size={16} style={{ color: "var(--content-muted)" }} />
-              <input
-                type="text"
-                placeholder="Tìm quiz hoặc bối cảnh..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-                style={{ color: "var(--content-heading)" }}
-              />
+            <div className="flex w-full flex-col gap-3 lg:w-[420px]">
+              <div
+                className="grid grid-cols-2 rounded-lg p-1"
+                style={{
+                  background: "rgba(27,38,50,0.05)",
+                  border: "1px solid var(--card-light-border)",
+                }}
+              >
+                {[
+                  { label: "Danh sách đề", value: "list" as const, icon: ListChecks },
+                  { label: "Lịch sử", value: "history" as const, icon: History },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const active = activeView === item.value;
+                  return (
+                    <button
+                      key={item.value}
+                      onClick={() => handleViewChange(item.value)}
+                      className="inline-flex h-9 items-center justify-center gap-2 rounded-md text-sm font-bold transition-all"
+                      style={
+                        active
+                          ? {
+                              background: "var(--card-light-bg)",
+                              color: "var(--content-heading)",
+                              boxShadow: "0 4px 12px rgba(27,38,50,0.08)",
+                            }
+                          : { color: "var(--content-muted)" }
+                      }
+                    >
+                      <Icon size={16} />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {activeView === "list" && (
+                <div
+                  className="flex h-10 md:h-11 w-full items-center gap-3 rounded-lg px-3 md:px-4"
+                  style={{
+                    background: "rgba(27,38,50,0.05)",
+                    border: "1px solid var(--card-light-border)",
+                  }}
+                >
+                  <Search size={16} style={{ color: "var(--content-muted)" }} />
+                  <input
+                    type="text"
+                    placeholder="Tìm quiz hoặc bối cảnh..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                    style={{ color: "var(--content-heading)" }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -114,81 +165,93 @@ export function QuizPageClient() {
           averageScore={avgScore}
         />
 
-        <div className="grid gap-5 md:gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="min-w-0">
-            <div className="mb-3 md:mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-base font-bold" style={{ color: "var(--content-heading)" }}>
-                  Danh sách đề
-                </h2>
-                <p className="text-xs md:text-sm" style={{ color: "var(--content-muted)" }}>
-                  {filteredQuizzes.length} đề phù hợp
-                </p>
+        {activeView === "history" ? (
+          <QuizHistoryView
+            results={results}
+            isLoading={resultsLoading}
+            onRetake={handleStartQuiz}
+          />
+        ) : (
+          <div className="grid gap-5 md:gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <section className="min-w-0">
+              <div className="mb-3 md:mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-base font-bold" style={{ color: "var(--content-heading)" }}>
+                    Danh sách đề
+                  </h2>
+                  <p className="text-xs md:text-sm" style={{ color: "var(--content-muted)" }}>
+                    {filteredQuizzes.length} đề phù hợp
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 md:gap-2">
+                  {ERA_FILTERS.map((f) => {
+                    const active = selectedEra === f.value;
+                    return (
+                      <button
+                        key={f.value}
+                        onClick={() => setSelectedEra(f.value)}
+                        className="h-8 md:h-9 rounded-lg px-2.5 md:px-3 text-xs md:text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5"
+                        style={
+                          active
+                            ? {
+                                background: "var(--abyssal-blue)",
+                                color: "var(--text-on-dark)",
+                                border: "1px solid var(--abyssal-blue)",
+                              }
+                            : {
+                                background: "var(--card-light-bg)",
+                                color: "var(--content-muted)",
+                                border: "1px solid var(--card-light-border)",
+                              }
+                        }
+                      >
+                        {f.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-1.5 md:gap-2">
-                {ERA_FILTERS.map((f) => {
-                  const active = selectedEra === f.value;
-                  return (
-                    <button
-                      key={f.value}
-                      onClick={() => setSelectedEra(f.value)}
-                      className="h-8 md:h-9 rounded-lg px-2.5 md:px-3 text-xs md:text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5"
-                      style={
-                        active
-                          ? {
-                              background: "var(--abyssal-blue)",
-                              color: "var(--text-on-dark)",
-                              border: "1px solid var(--abyssal-blue)",
-                            }
-                          : {
-                              background: "var(--card-light-bg)",
-                              color: "var(--content-muted)",
-                              border: "1px solid var(--card-light-border)",
-                            }
-                      }
+              {filteredQuizzes.length === 0 ? (
+                <div
+                  className="rounded-xl border px-6 py-16 text-center"
+                  style={{
+                    background: "var(--card-light-bg)",
+                    borderColor: "var(--card-light-border)",
+                  }}
+                >
+                  <p className="font-semibold" style={{ color: "var(--content-heading)" }}>
+                    Không tìm thấy bộ câu hỏi
+                  </p>
+                  <p className="mt-1 text-sm" style={{ color: "var(--content-muted)" }}>
+                    Thử đổi bộ lọc hoặc từ khóa tìm kiếm.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-3">
+                  {filteredQuizzes.map((quiz, index) => (
+                    <div
+                      key={quiz.quizId}
+                      className="animate-[quiz-card-in_260ms_ease-out_both]"
+                      style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
                     >
-                      {f.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+                      <QuizCard quiz={quiz} onStart={handleStartQuiz} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
 
-            {filteredQuizzes.length === 0 ? (
-              <div
-                className="rounded-xl border px-6 py-16 text-center"
-                style={{
-                  background: "var(--card-light-bg)",
-                  borderColor: "var(--card-light-border)",
-                }}
-              >
-                <p className="font-semibold" style={{ color: "var(--content-heading)" }}>
-                  Không tìm thấy bộ câu hỏi
-                </p>
-                <p className="mt-1 text-sm" style={{ color: "var(--content-muted)" }}>
-                  Thử đổi bộ lọc hoặc từ khóa tìm kiếm.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-3">
-                {filteredQuizzes.map((quiz, index) => (
-                  <div
-                    key={quiz.quizId}
-                    className="animate-[quiz-card-in_260ms_ease-out_both]"
-                    style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
-                  >
-                    <QuizCard quiz={quiz} onStart={handleStartQuiz} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <aside className="lg:sticky lg:top-6 lg:self-start">
-            <QuizRecentResults results={results} isLoading={resultsLoading} />
-          </aside>
-        </div>
+            <aside className="lg:sticky lg:top-6 lg:self-start">
+              <QuizRecentResults
+                results={results.slice(0, 10)}
+                isLoading={resultsLoading}
+                onViewAll={() => handleViewChange("history")}
+              />
+            </aside>
+          </div>
+        )}
       </div>
 
       <style>{`

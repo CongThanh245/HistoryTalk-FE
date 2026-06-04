@@ -4,11 +4,16 @@ import type { QuizResult } from "@/services/quiz.service";
 interface QuizRecentResultsProps {
   results: QuizResult[];
   isLoading?: boolean;
+  onViewAll?: () => void;
 }
 
 function formatDate(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return d.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 function ScoreBadge({
@@ -32,12 +37,16 @@ function ScoreBadge({
       className="rounded-md px-2 py-1 text-xs font-bold"
       style={{ background: tone.bg, color: tone.fg }}
     >
-      {score}/{total} ({pct}%)
+      {score}/{total}
     </span>
   );
 }
 
-export function QuizRecentResults({ results, isLoading }: QuizRecentResultsProps) {
+export function QuizRecentResults({
+  results,
+  isLoading,
+  onViewAll,
+}: QuizRecentResultsProps) {
   return (
     <section
       className="rounded-xl border"
@@ -46,13 +55,27 @@ export function QuizRecentResults({ results, isLoading }: QuizRecentResultsProps
         borderColor: "var(--card-light-border)",
       }}
     >
-      <div className="px-5 py-4" style={{ borderBottom: "1px solid var(--card-light-border)" }}>
-        <h3 className="text-sm font-bold" style={{ color: "var(--content-heading)" }}>
-          Lịch sử làm bài
-        </h3>
-        <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
-          Các lần nộp gần đây của bạn
-        </p>
+      <div
+        className="flex items-start justify-between gap-3 px-5 py-4"
+        style={{ borderBottom: "1px solid var(--card-light-border)" }}
+      >
+        <div>
+          <h3 className="text-sm font-bold" style={{ color: "var(--content-heading)" }}>
+            Lịch sử làm bài
+          </h3>
+          <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
+            Các lần nộp gần đây của bạn
+          </p>
+        </div>
+        {onViewAll && (
+          <button
+            onClick={onViewAll}
+            className="shrink-0 rounded-md px-2 py-1 text-xs font-bold transition-colors hover:bg-black/[0.04]"
+            style={{ color: "var(--gold-on-light)" }}
+          >
+            Xem tất cả
+          </button>
+        )}
       </div>
 
       {isLoading ? (

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import type { ChatCharacter } from "@/services/chat.service";
 import { useVoiceChat, VoiceStatus } from "@/features/chat/useVoiceChat";
+import { queryKeys } from "@/shared/query-key";
 
 interface VoiceChatModalProps {
   character: ChatCharacter;
@@ -39,22 +41,27 @@ function Waveform({ active }: { active: boolean }) {
   const bars = Array.from({ length: 28 });
   return (
     <div className="flex items-center justify-center gap-[3px] h-10">
-      {bars.map((_, i) => (
-        <div
-          key={i}
-          className="rounded-full transition-all"
-          style={{
-            width: 3,
-            backgroundColor: "var(--accent-gold, #c9a84c)",
-            height: active ? `${8 + Math.random() * 24}px` : "4px",
-            opacity: active ? 0.7 + Math.random() * 0.3 : 0.3,
-            animation: active
-              ? `waveBar ${0.4 + (i % 5) * 0.08}s ease-in-out infinite alternate`
-              : "none",
-            animationDelay: `${(i * 37) % 300}ms`,
-          }}
-        />
-      ))}
+      {bars.map((_, i) => {
+        const height = 8 + ((i * 11) % 24);
+        const opacity = 0.7 + (((i * 7) % 30) / 100);
+
+        return (
+          <div
+            key={i}
+            className="rounded-full transition-all"
+            style={{
+              width: 3,
+              backgroundColor: "var(--accent-gold, #c9a84c)",
+              height: active ? `${height}px` : "4px",
+              opacity: active ? opacity : 0.3,
+              animation: active
+                ? `waveBar ${0.4 + (i % 5) * 0.08}s ease-in-out infinite alternate`
+                : "none",
+              animationDelay: `${(i * 37) % 300}ms`,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -151,8 +158,10 @@ export function VoiceChatModal({
   contextId,
   onClose,
 }: VoiceChatModalProps) {
+  const queryClient = useQueryClient();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const hasStarted = useRef(false);
+  const hasEnded = useRef(false);
 
   const {
     status,
@@ -183,8 +192,16 @@ export function VoiceChatModal({
   const isSpeaking = status === "speaking";
   const isListening = status === "listening";
 
+  const refreshProfile = () => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.profile.me });
+    void queryClient.refetchQueries({ queryKey: queryKeys.profile.me });
+  };
+
   const handleEnd = () => {
+    if (hasEnded.current) return;
+    hasEnded.current = true;
     endCall();
+    refreshProfile();
     onClose();
   };
 

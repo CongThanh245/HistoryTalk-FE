@@ -90,8 +90,8 @@ export function QuizResultPage({
                 Điểm
               </p>
               <p className="mt-2 text-5xl font-black leading-none" style={{ color: tier.color }}>
-                {percentage}
-                <span className="text-2xl">%</span>
+                {score}
+                <span className="text-2xl">/{totalQuestions}</span>
               </p>
             </div>
           </div>
@@ -221,6 +221,17 @@ export function QuizResultPage({
             }}
           >
             Về trang quiz
+          </button>
+          <button
+            onClick={() => router.push("/quiz?view=history")}
+            className="h-12 flex-1 rounded-lg text-sm font-bold transition-all hover:-translate-y-0.5 active:translate-y-0"
+            style={{
+              background: "var(--accent-gold-active-bg)",
+              color: "var(--gold-on-light)",
+              border: "1px solid rgba(201,162,77,0.35)",
+            }}
+          >
+            Xem lịch sử
           </button>
           <button
             onClick={onRetry}
