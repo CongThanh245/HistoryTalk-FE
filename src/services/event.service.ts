@@ -54,7 +54,7 @@ export interface CreateEventRequest {
   isPublished?: boolean;
 }
 
-export interface UpdateEventRequest extends Partial<CreateEventRequest> {}
+export type UpdateEventRequest = Partial<CreateEventRequest>;
 
 export interface GetEventsParams {
   search?: string;
@@ -73,15 +73,58 @@ export interface GetEventsResponse {
   hasPrevious: boolean;
 }
 
-export function mapContext(raw: any): HistoricalEvent {
+type RawHistoricalContext = {
+  _id?: string;
+  id?: string;
+  contextId?: string;
+  name?: string;
+  title?: string;
+  description?: string;
+  summary?: string;
+  year?: number;
+  yearLabel?: string;
+  location?: string;
+  imageUrl?: string | null;
+  image?: string | null;
+  thumbnailUrl?: string | null;
+  thumbnail?: string | null;
+  coverImageUrl?: string | null;
+  coverImage?: string | null;
+  bannerUrl?: string | null;
+  banner?: string | null;
+  videoUrl?: string | null;
+  era?: string;
+  period?: string;
+  startYear?: number;
+  endYear?: number;
+  beforeTCN?: boolean;
+  isDraft?: boolean;
+  isActive?: boolean;
+  isPublished?: boolean;
+  characterIds?: HistoricalEvent["characterIds"];
+  deletedAt?: string | null;
+};
+
+export function mapContext(raw: RawHistoricalContext): HistoricalEvent {
+  const imageUrl =
+    raw.imageUrl ??
+    raw.image ??
+    raw.thumbnailUrl ??
+    raw.thumbnail ??
+    raw.coverImageUrl ??
+    raw.coverImage ??
+    raw.bannerUrl ??
+    raw.banner ??
+    null;
+
   return {
-    id: raw.contextId,
-    title: raw.name,
-    summary: raw.description,
+    id: raw.contextId ?? raw.id ?? raw._id ?? "",
+    title: raw.name ?? raw.title ?? "",
+    summary: raw.description ?? raw.summary ?? "",
     year: raw.year ?? 0,
     yearLabel: raw.yearLabel,
     location: raw.location,
-    imageUrl: isValidUrl(raw.imageUrl) ? raw.imageUrl : null,
+    imageUrl: isValidUrl(imageUrl) ? imageUrl : null,
     videoUrl: isValidUrl(raw.videoUrl) ? raw.videoUrl : null,
     era: raw.era as EventEraBackend,
     period: raw.period,

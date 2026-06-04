@@ -15,11 +15,14 @@ export function SearchInputWithSuggestions({
 }: SearchInputWithSuggestionsProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { query, suggestions, isLoading, handleSearch, clearSearch } = useSearchSuggestions();
+  const highlightedIndex = suggestions.findIndex(
+    (suggestion) => getSuggestionKey(suggestion) === highlightedKey,
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -36,12 +39,19 @@ export function SearchInputWithSuggestions({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setHighlightedIndex((prev) =>
-        prev < suggestions.length - 1 ? prev + 1 : prev
+      const nextIndex =
+        highlightedIndex < suggestions.length - 1
+          ? highlightedIndex + 1
+          : highlightedIndex;
+      setHighlightedKey(
+        nextIndex >= 0 ? getSuggestionKey(suggestions[nextIndex]) : null,
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
+      const nextIndex = highlightedIndex > 0 ? highlightedIndex - 1 : -1;
+      setHighlightedKey(
+        nextIndex >= 0 ? getSuggestionKey(suggestions[nextIndex]) : null,
+      );
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
@@ -79,7 +89,7 @@ export function SearchInputWithSuggestions({
           onChange={(e) => {
             handleSearch(e.target.value);
             setIsOpen(true);
-            setHighlightedIndex(-1);
+            setHighlightedKey(null);
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
@@ -138,13 +148,15 @@ export function SearchInputWithSuggestions({
                   </div>
                   {suggestions
                     .filter((s) => s.type === "character")
-                    .map((suggestion, index) => (
+                    .map((suggestion) => {
+                      const suggestionKey = getSuggestionKey(suggestion);
+                      return (
                       <button
                         key={suggestion.id}
                         onClick={() => handleSelect(suggestion.url)}
-                        onMouseEnter={() => setHighlightedIndex(index)}
+                        onMouseEnter={() => setHighlightedKey(suggestionKey)}
                         className={`w-full px-3 py-2.5 flex items-center gap-3 text-left cursor-pointer transition-colors ${
-                          highlightedIndex === index ? "bg-[rgba(201,162,77,0.1)]" : ""
+                          highlightedKey === suggestionKey ? "bg-[rgba(201,162,77,0.1)]" : ""
                         }`}
                       >
                         <div
@@ -174,7 +186,8 @@ export function SearchInputWithSuggestions({
                           )}
                         </div>
                       </button>
-                    ))}
+                      );
+                    })}
                 </>
               )}
 
@@ -189,20 +202,32 @@ export function SearchInputWithSuggestions({
                   </div>
                   {suggestions
                     .filter((s) => s.type === "event")
-                    .map((suggestion, index) => (
+                    .map((suggestion) => {
+                      const suggestionKey = getSuggestionKey(suggestion);
+                      return (
                       <button
                         key={suggestion.id}
                         onClick={() => handleSelect(suggestion.url)}
-                        onMouseEnter={() => setHighlightedIndex(index)}
+                        onMouseEnter={() => setHighlightedKey(suggestionKey)}
                         className={`w-full px-3 py-2.5 flex items-center gap-3 text-left cursor-pointer transition-colors ${
-                          highlightedIndex === index ? "bg-[rgba(201,162,77,0.1)]" : ""
+                          highlightedKey === suggestionKey ? "bg-[rgba(201,162,77,0.1)]" : ""
                         }`}
                       >
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
                           style={{ background: "var(--bg-deep)" }}
                         >
-                          <CalendarIcon className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
+                          {suggestion.imageUrl ? (
+                            <Image
+                              src={suggestion.imageUrl}
+                              alt={suggestion.title}
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <CalendarIcon className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
@@ -215,7 +240,8 @@ export function SearchInputWithSuggestions({
                           )}
                         </div>
                       </button>
-                    ))}
+                      );
+                    })}
                 </>
               )}
             </>
@@ -224,4 +250,8 @@ export function SearchInputWithSuggestions({
       )}
     </div>
   );
+}
+
+function getSuggestionKey(suggestion: { type: string; id: string }) {
+  return `${suggestion.type}:${suggestion.id}`;
 }
