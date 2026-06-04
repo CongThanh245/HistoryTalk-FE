@@ -49,6 +49,11 @@ export const queryKeys = {
 
   documents: {
     all: ["documents"] as const,
+    characterAll: ["documents", "character"] as const,
+    characterDetail: (docId: string) =>
+      ["documents", "character", "detail", docId] as const,
+    characterSearch: (keyword: string) =>
+      ["documents", "character", "search", keyword] as const,
     historicalByContext: (contextId: string) =>
       ["documents", "historical", "context", contextId] as const,
     characterByCharacter: (characterId: string) =>

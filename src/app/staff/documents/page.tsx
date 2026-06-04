@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useQueries } from "@tanstack/react-query";
+import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import {
   BooksIcon,
   FileTextIcon,
@@ -10,11 +10,11 @@ import {
   UserIcon,
   ScrollIcon,
   ArrowSquareOutIcon,
-  XIcon,
   UploadSimpleIcon,
-  FilePdfIcon,
-  DownloadIcon,
   EyeIcon,
+  PencilSimpleIcon,
+  PlusIcon,
+  TrashIcon,
 } from "@phosphor-icons/react";
 import {
   Dialog,
@@ -27,6 +27,16 @@ import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { useCharacters } from "@/features/characters/hooks";
 import { useEvents } from "@/features/events/hooks";
 import {
@@ -39,6 +49,7 @@ import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import type { Character } from "@/services/character.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { queryKeys } from "@/shared/query-key";
+import { toast } from "sonner";
 
 type DocumentOwnerType = "character" | "context";
 
@@ -50,6 +61,18 @@ type StaffDocumentRow = {
   ownerName: string;
   ownerSubtitle?: string;
   linkedCharacters: Character[];
+};
+
+type CharacterDocumentForm = {
+  ownerId: string;
+  title: string;
+  content: string;
+};
+
+const EMPTY_CHARACTER_DOCUMENT_FORM: CharacterDocumentForm = {
+  ownerId: "",
+  title: "",
+  content: "",
 };
 
 const FILTERS: { value: "all" | DocumentOwnerType; label: string }[] = [
@@ -81,10 +104,17 @@ function getContextCharacters(context: HistoricalEvent, characters: Character[])
 
 export default function StaffDocumentsPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [search, setSearch] = React.useState("");
   const [filter, setFilter] = React.useState<"all" | DocumentOwnerType>("all");
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
   const [detailOpen, setDetailOpen] = React.useState(false);
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [editingRow, setEditingRow] = React.useState<StaffDocumentRow | null>(null);
+  const [documentForm, setDocumentForm] = React.useState<CharacterDocumentForm>(
+    EMPTY_CHARACTER_DOCUMENT_FORM,
+  );
+  const [deleteTarget, setDeleteTarget] = React.useState<StaffDocumentRow | null>(null);
 
   // PDF upload/download
   const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
@@ -96,6 +126,128 @@ export default function StaffDocumentsPage() {
   const [viewerOpen, setViewerOpen] = React.useState(false);
   const [viewerUrl, setViewerUrl] = React.useState<string | null>(null);
   const [viewerLoading, setViewerLoading] = React.useState(false);
+
+  const invalidateCharacterDocuments = React.useCallback(
+    (characterId?: string) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.characterAll });
+      if (characterId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.documents.characterByCharacter(characterId),
+        });
+      }
+    },
+    [queryClient],
+  );
+
+  const createCharacterDocument = useMutation({
+    mutationFn: (data: CharacterDocumentForm) =>
+      documentService.createCharacterDocument({
+        characterId: data.ownerId,
+        title: data.title,
+        content: data.content,
+        type: "TEXT",
+      }),
+    onSuccess: (_document, data) => {
+      invalidateCharacterDocuments(data.ownerId);
+      toast.success("Đã tạo tài liệu nhân vật");
+      setFormOpen(false);
+      setDocumentForm(EMPTY_CHARACTER_DOCUMENT_FORM);
+    },
+    onError: () => {
+      toast.error("Tạo tài liệu thất bại");
+    },
+  });
+
+  const updateCharacterDocument = useMutation({
+    mutationFn: ({
+      docId,
+      data,
+    }: {
+      docId: string;
+      data: CharacterDocumentForm;
+    }) =>
+      documentService.updateCharacterDocument(docId, {
+        title: data.title,
+        content: data.content,
+        type: "TEXT",
+      }),
+    onSuccess: (_document, variables) => {
+      invalidateCharacterDocuments(variables.data.ownerId);
+      toast.success("Đã cập nhật tài liệu");
+      setFormOpen(false);
+      setEditingRow(null);
+      setDocumentForm(EMPTY_CHARACTER_DOCUMENT_FORM);
+    },
+    onError: () => {
+      toast.error("Cập nhật tài liệu thất bại");
+    },
+  });
+
+  const deleteCharacterDocument = useMutation({
+    mutationFn: ({ docId }: { docId: string; characterId: string }) =>
+      documentService.deleteCharacterDocument(docId),
+    onSuccess: (_result, variables) => {
+      invalidateCharacterDocuments(variables.characterId);
+      toast.success("Đã xóa tài liệu");
+      if (selectedKey === deleteTarget?.key) {
+        setSelectedKey(null);
+        setDetailOpen(false);
+      }
+      setDeleteTarget(null);
+    },
+    onError: () => {
+      toast.error("Xóa tài liệu thất bại");
+    },
+  });
+
+  const updateHistoricalDocument = useMutation({
+    mutationFn: ({
+      docId,
+      data,
+    }: {
+      docId: string;
+      data: CharacterDocumentForm;
+    }) =>
+      documentService.updateHistoricalDocument(docId, {
+        title: data.title,
+        content: data.content,
+        type: "TEXT",
+      }),
+    onSuccess: (_document, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.documents.historicalByContext(variables.data.ownerId),
+      });
+      toast.success("Đã cập nhật tài liệu");
+      setFormOpen(false);
+      setEditingRow(null);
+      setDocumentForm(EMPTY_CHARACTER_DOCUMENT_FORM);
+    },
+    onError: () => {
+      toast.error("Cập nhật tài liệu thất bại");
+    },
+  });
+
+  const deleteHistoricalDocument = useMutation({
+    mutationFn: ({ docId }: { docId: string; contextId: string }) =>
+      documentService.deleteHistoricalDocument(docId),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.documents.historicalByContext(variables.contextId),
+      });
+      toast.success("Đã xóa tài liệu");
+      if (selectedKey === deleteTarget?.key) {
+        setSelectedKey(null);
+        setDetailOpen(false);
+      }
+      setDeleteTarget(null);
+    },
+    onError: () => {
+      toast.error("Xóa tài liệu thất bại");
+    },
+  });
 
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
     page: 1,
@@ -196,6 +348,68 @@ export default function StaffDocumentsPage() {
     isLoadingCharacters ||
     contextDocumentQueries.some((query) => query.isLoading) ||
     characterDocumentQueries.some((query) => query.isLoading);
+
+  const openCreateForm = React.useCallback(() => {
+    setEditingRow(null);
+    setDocumentForm({
+      ...EMPTY_CHARACTER_DOCUMENT_FORM,
+      ownerId: characters[0]?.id ?? "",
+    });
+    setFormOpen(true);
+  }, [characters]);
+
+  const openEditForm = React.useCallback((row: StaffDocumentRow) => {
+    setEditingRow(row);
+    setDocumentForm({
+      ownerId: row.ownerId,
+      title: row.document.title ?? "",
+      content: row.document.content ?? "",
+    });
+    setFormOpen(true);
+  }, []);
+
+  const submitDocumentForm = React.useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const title = documentForm.title.trim();
+      const content = documentForm.content.trim();
+      const ownerId = documentForm.ownerId;
+
+      if (!ownerId) {
+        toast.error("Vui lòng chọn đối tượng liên kết");
+        return;
+      }
+
+      if (!title || !content) {
+        toast.error("Vui lòng nhập tiêu đề và nội dung");
+        return;
+      }
+
+      const payload = { ownerId, title, content };
+      if (editingRow) {
+        const docId = getDocumentId(editingRow.document);
+        if (!docId) {
+          toast.error("Không tìm thấy ID tài liệu");
+          return;
+        }
+        if (editingRow.ownerType === "character") {
+          updateCharacterDocument.mutate({ docId, data: payload });
+          return;
+        }
+        updateHistoricalDocument.mutate({ docId, data: payload });
+        return;
+      }
+
+      createCharacterDocument.mutate(payload);
+    },
+    [
+      createCharacterDocument,
+      documentForm,
+      editingRow,
+      updateCharacterDocument,
+      updateHistoricalDocument,
+    ],
+  );
 
   const columns = React.useMemo<ColumnDef<StaffDocumentRow>[]>(
     () => [
@@ -303,6 +517,44 @@ export default function StaffDocumentsPage() {
                 variant="ghost"
                 size="icon-sm"
                 className="rounded-full"
+                disabled={
+                  !hasDocId ||
+                  updateCharacterDocument.isPending ||
+                  updateHistoricalDocument.isPending
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEditForm(row.original);
+                }}
+                style={{ color: "var(--accent-blue)" }}
+                title="Sửa tài liệu"
+              >
+                <PencilSimpleIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="rounded-full"
+                disabled={
+                  !hasDocId ||
+                  deleteCharacterDocument.isPending ||
+                  deleteHistoricalDocument.isPending
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteTarget(row.original);
+                }}
+                style={{ color: "#dc2626" }}
+                title="Xóa tài liệu"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="rounded-full"
                 disabled={!hasDocId || uploadPdf.isPending}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -348,7 +600,16 @@ export default function StaffDocumentsPage() {
         },
       },
     ],
-    [router, uploadPdf.isPending, getPdfUrl, uploadTargetDocId, setUploadDialogOpen, setUploadTargetDocId, setViewerOpen, setViewerUrl, setViewerLoading],
+    [
+      router,
+      uploadPdf.isPending,
+      getPdfUrl,
+      updateCharacterDocument.isPending,
+      updateHistoricalDocument.isPending,
+      deleteCharacterDocument.isPending,
+      deleteHistoricalDocument.isPending,
+      openEditForm,
+    ],
   );
 
   return (
@@ -391,6 +652,15 @@ export default function StaffDocumentsPage() {
                 className="h-10 rounded-xl pl-9"
               />
             </div>
+            <Button
+              type="button"
+              className="h-10"
+              onClick={openCreateForm}
+              disabled={!characters.length}
+            >
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Thêm tài liệu
+            </Button>
           </div>
         </div>
 
@@ -444,6 +714,149 @@ export default function StaffDocumentsPage() {
           pdfUrl={viewerUrl}
           isLoading={viewerLoading}
           title="Xem PDF"
+        />
+
+        <Dialog
+          open={formOpen}
+          onOpenChange={(open) => {
+            setFormOpen(open);
+            if (!open) {
+              setEditingRow(null);
+              setDocumentForm(EMPTY_CHARACTER_DOCUMENT_FORM);
+            }
+          }}
+        >
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[680px]">
+            <DialogHeader>
+              <DialogTitle>
+                {editingRow ? "Sửa tài liệu" : "Thêm tài liệu nhân vật"}
+              </DialogTitle>
+            </DialogHeader>
+            <form className="space-y-4" onSubmit={submitDocumentForm}>
+              {editingRow ? (
+                <div className="space-y-2">
+                  <Label>Đối tượng liên kết</Label>
+                  <div
+                    className="rounded-md border px-3 py-2 text-sm"
+                    style={{
+                      borderColor: "var(--card-light-border)",
+                      color: "var(--content-heading)",
+                    }}
+                  >
+                    {editingRow.ownerType === "character" ? "Nhân vật" : "Bối cảnh"}:{" "}
+                    {editingRow.ownerName}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="document-character">Nhân vật</Label>
+                  <Select
+                    value={documentForm.ownerId}
+                    onValueChange={(value) =>
+                      setDocumentForm((current) => ({ ...current, ownerId: value }))
+                    }
+                  >
+                    <SelectTrigger id="document-character" className="w-full">
+                      <SelectValue placeholder="Chọn nhân vật" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {characters.map((character) => (
+                        <SelectItem key={character.id} value={character.id}>
+                          {character.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="document-title">Tiêu đề</Label>
+                <Input
+                  id="document-title"
+                  value={documentForm.title}
+                  onChange={(event) =>
+                    setDocumentForm((current) => ({
+                      ...current,
+                      title: event.target.value,
+                    }))
+                  }
+                  placeholder="Nhập tiêu đề tài liệu"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="document-content">Nội dung</Label>
+                <Textarea
+                  id="document-content"
+                  value={documentForm.content}
+                  onChange={(event) =>
+                    setDocumentForm((current) => ({
+                      ...current,
+                      content: event.target.value,
+                    }))
+                  }
+                  placeholder="Nhập nội dung tài liệu"
+                  className="min-h-[240px]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setFormOpen(false)}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    createCharacterDocument.isPending ||
+                    updateCharacterDocument.isPending ||
+                    updateHistoricalDocument.isPending
+                  }
+                >
+                  {createCharacterDocument.isPending ||
+                  updateCharacterDocument.isPending ||
+                  updateHistoricalDocument.isPending
+                    ? "Đang lưu..."
+                    : editingRow
+                      ? "Lưu thay đổi"
+                      : "Tạo tài liệu"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <ConfirmDialog
+          open={!!deleteTarget}
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+          title="Xóa tài liệu?"
+          description={`Tài liệu "${deleteTarget?.document.title || "chưa đặt tên"}" sẽ bị xóa khỏi nhân vật ${deleteTarget?.ownerName || ""}.`}
+          confirmLabel="Xóa"
+          variant="danger"
+          isPending={
+            deleteCharacterDocument.isPending || deleteHistoricalDocument.isPending
+          }
+          onConfirm={() => {
+            const docId = deleteTarget ? getDocumentId(deleteTarget.document) : undefined;
+            if (!deleteTarget || !docId) return;
+            if (deleteTarget.ownerType === "character") {
+              deleteCharacterDocument.mutate({
+                docId,
+                characterId: deleteTarget.ownerId,
+              });
+              return;
+            }
+            deleteHistoricalDocument.mutate({
+              docId,
+              contextId: deleteTarget.ownerId,
+            });
+          }}
         />
 
         <div className="mt-5">

@@ -38,6 +38,31 @@ export function useCharacterDocuments(characterId?: string) {
   });
 }
 
+export function useAllCharacterDocuments() {
+  return useQuery({
+    queryKey: queryKeys.documents.characterAll,
+    queryFn: () => documentService.getAllCharacterDocuments(),
+  });
+}
+
+export function useCharacterDocument(docId?: string) {
+  return useQuery({
+    queryKey: queryKeys.documents.characterDetail(docId || ""),
+    queryFn: () => documentService.getCharacterDocumentById(docId!),
+    enabled: !!docId,
+  });
+}
+
+export function useSearchCharacterDocuments(keyword?: string) {
+  const q = keyword?.trim() ?? "";
+
+  return useQuery({
+    queryKey: queryKeys.documents.characterSearch(q),
+    queryFn: () => documentService.searchCharacterDocuments(q),
+    enabled: !!q,
+  });
+}
+
 export function useCreateHistoricalDocument() {
   const qc = useQueryClient();
 
@@ -63,6 +88,7 @@ export function useCreateCharacterDocument() {
     mutationFn: (data: CreateCharacterDocumentRequest) =>
       documentService.createCharacterDocument(data),
     onSuccess: (_doc, data) => {
+      qc.invalidateQueries({ queryKey: queryKeys.documents.characterAll });
       qc.invalidateQueries({
         queryKey: queryKeys.documents.characterByCharacter(data.characterId),
       });
@@ -101,6 +127,7 @@ export function useUpdateCharacterDocument(characterId?: string) {
     mutationFn: ({ docId, data }: { docId: string; data: DocumentPayload }) =>
       documentService.updateCharacterDocument(docId, data),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.documents.characterAll });
       if (characterId) {
         qc.invalidateQueries({
           queryKey: queryKeys.documents.characterByCharacter(characterId),
@@ -139,6 +166,7 @@ export function useDeleteCharacterDocument(characterId?: string) {
   return useMutation({
     mutationFn: (docId: string) => documentService.deleteCharacterDocument(docId),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.documents.characterAll });
       if (characterId) {
         qc.invalidateQueries({
           queryKey: queryKeys.documents.characterByCharacter(characterId),

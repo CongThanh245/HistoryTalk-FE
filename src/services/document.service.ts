@@ -5,6 +5,7 @@ export type DocumentType = "TEXT";
 export interface DocumentPayload {
   title: string;
   content: string;
+  fileUrl?: string;
   type?: DocumentType;
 }
 
@@ -22,6 +23,7 @@ export interface RagDocument {
   title: string;
   content: string;
   type: DocumentType;
+  fileUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -51,6 +53,7 @@ function normalizeDocument(raw: unknown): RagDocument {
     title: value.title ?? "",
     content: value.content ?? "",
     type: value.type ?? "TEXT",
+    fileUrl: value.fileUrl,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
   };
@@ -70,6 +73,23 @@ function normalizeDocumentList(raw: unknown): RagDocument[] {
 }
 
 export const documentService = {
+  getAllCharacterDocuments: async (): Promise<RagDocument[]> => {
+    const res = await axiosClient.get("/character-documents");
+    return normalizeDocumentList(res.data);
+  },
+
+  getCharacterDocumentById: async (docId: string): Promise<RagDocument> => {
+    const res = await axiosClient.get(`/character-documents/${docId}`);
+    return normalizeDocument(res.data.data);
+  },
+
+  searchCharacterDocuments: async (keyword: string): Promise<RagDocument[]> => {
+    const res = await axiosClient.get("/character-documents/search", {
+      params: { keyword },
+    });
+    return normalizeDocumentList(res.data);
+  },
+
   getHistoricalDocuments: async (contextId: string): Promise<RagDocument[]> => {
     const res = await axiosClient.get(`/historical-documents/context/${contextId}`);
     return normalizeDocumentList(res.data);
