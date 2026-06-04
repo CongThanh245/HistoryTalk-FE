@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { QuizSet } from "@/services/quiz.service";
+import { cn } from "@/lib/utils/cn";
 
 const ERA_LABELS: Record<QuizSet["era"], string> = {
   ALL: "Tổng hợp",
@@ -49,7 +50,7 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
     return (
       <button
         onClick={() => onStart(quiz.quizId)}
-        className="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1"
+        className="w-full cursor-pointer text-left px-4 py-3 rounded-xl transition-colors duration-200 hover:border-[rgba(201,162,77,0.45)]"
         style={
           isActive
             ? {
@@ -80,17 +81,29 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
 
   return (
     <article
-      className="group rounded-xl transition-all duration-200 hover:-translate-y-1"
+      role="button"
+      tabIndex={0}
+      onClick={() => onStart(quiz.quizId)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onStart(quiz.quizId);
+        }
+      }}
+      className={cn(
+        "group flex h-full min-h-[250px] cursor-pointer rounded-xl border transition-[border-color,box-shadow] duration-200",
+        "hover:border-[rgba(201,162,77,0.55)] hover:shadow-[0_10px_24px_rgba(201,162,77,0.12)]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
+        isActive
+          ? "border-[rgba(201,162,77,0.35)] shadow-[0_10px_24px_rgba(201,162,77,0.14)]"
+          : "border-[var(--card-light-border)] shadow-[0_8px_20px_rgba(27,38,50,0.06)]",
+      )}
       style={{
         background: "var(--card-light-bg)",
-        border: `1px solid ${isActive ? "rgba(201,162,77,0.35)" : "var(--card-light-border)"}`,
-        boxShadow: isActive
-          ? "0 10px 24px rgba(201,162,77,0.14)"
-          : "0 8px 20px rgba(27,38,50,0.06)",
       }}
     >
-      <div className="p-3.5 sm:p-5">
-        <div className="flex items-center gap-1.5 sm:gap-2 mb-3 sm:mb-4 flex-wrap">
+      <div className="flex h-full w-full flex-col p-3.5 sm:p-5">
+        <div className="mb-3 flex min-h-8 flex-wrap items-start gap-1.5 sm:mb-4 sm:gap-2">
           <span
             className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full"
             style={{
@@ -114,20 +127,18 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
         </div>
 
         <h3
-          className="text-[13px] sm:text-base font-bold leading-snug line-clamp-2 transition-colors"
+          className="min-h-[2.75rem] text-[13px] sm:text-base font-bold leading-snug line-clamp-2 transition-colors"
           style={{ color: "var(--content-heading)" }}
         >
           {quiz.title}
         </h3>
 
-        {quiz.contextTitle && (
-          <p className="text-sm line-clamp-1 mt-2" style={{ color: "var(--content-muted)" }}>
-            {quiz.contextTitle}
-          </p>
-        )}
+        <p className="mt-2 min-h-5 text-sm line-clamp-1" style={{ color: "var(--content-muted)" }}>
+          {quiz.contextTitle ?? ""}
+        </p>
 
         <div
-          className="mt-4 sm:mt-5 pt-3 sm:pt-4 flex items-center justify-between gap-2"
+          className="mt-auto pt-3 sm:pt-4 flex items-center justify-between gap-2"
           style={{ borderTop: "1px solid var(--card-light-border)" }}
         >
           <div>
@@ -139,8 +150,11 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
             </p>
           </div>
           <button
-            onClick={() => onStart(quiz.quizId)}
-            className="h-8 sm:h-10 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+            onClick={(event) => {
+              event.stopPropagation();
+              onStart(quiz.quizId);
+            }}
+            className="h-8 sm:h-10 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-200"
             style={{
               background: "var(--abyssal-blue)",
               color: "var(--text-on-dark)",
