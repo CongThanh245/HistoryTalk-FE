@@ -39,10 +39,9 @@ export function useMyQuizResults(
     queryFn: () => quizService.getMyResults(params),
     enabled,
     staleTime: 0,
+    refetchOnMount: true,
   });
 }
-
-// POST /quizzes/:id/start
 
 // POST /quizzes/:id/start
 export function useStartQuiz() {

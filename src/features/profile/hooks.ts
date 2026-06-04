@@ -33,7 +33,7 @@ export function useProfile() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return useQuery({
-    queryKey: [...queryKeys.profile.me, isAuthenticated],
+    queryKey: queryKeys.profile.me,
     queryFn: async () => {
       const profile = await userService.getProfile();
       // Đồng bộ các trường cơ bản lên store

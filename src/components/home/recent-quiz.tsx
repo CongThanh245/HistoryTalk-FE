@@ -34,8 +34,7 @@ function SkeletonCard() {
     </div>
   );
 }
-// ── Score badge ───────────────────────────────────────────
-// ── Helper ────────────────────────────────────────────────
+
 // ── Row ───────────────────────────────────────────────────
 function RecentQuizCard({ item }: { item: QuizResult }) {
   const color =
@@ -87,6 +86,7 @@ function RecentQuizCard({ item }: { item: QuizResult }) {
     </div>
   );
 }
+
 // ── Main component ────────────────────────────────────────
 export function RecentQuiz() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -95,6 +95,8 @@ export function RecentQuiz() {
     queryKey: queryKeys.quizzes.myResults,
     queryFn: () => quizService.getMyResults({ page: 0, size: 3 }),
     enabled: isAuthenticated,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const results = data?.content ?? [];
@@ -142,6 +144,3 @@ export function RecentQuiz() {
     </section>
   );
 }
-
-
-

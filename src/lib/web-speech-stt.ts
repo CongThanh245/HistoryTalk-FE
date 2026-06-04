@@ -23,7 +23,6 @@ export type STTResult = {
 };
 
 export class WebSpeechSTT {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private recognition: SpeechRecognitionType | null = null;
   private isListening = false;
   private transcript = '';
@@ -45,7 +44,7 @@ export class WebSpeechSTT {
         return;
       }
 
-      // @ts-ignore - TypeScript chưa có type cho WebkitSpeechRecognition
+      // @ts-expect-error - TypeScript chưa có type cho WebkitSpeechRecognition
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       this.recognition = new SpeechRecognition();
       
@@ -96,9 +95,9 @@ export class WebSpeechSTT {
         }
         this.interimTranscript = interimTranscript;
 
-        // Emit interim result cho UI update
-        if (options.interimResults && interimTranscript) {
-          this.onInterimResult?.(interimTranscript);
+        // Emit transcript cho UI update, gồm cả final để không mất chữ khi browser finalize giữa chừng.
+        if (options.interimResults) {
+          this.onInterimResult?.(`${this.transcript}${interimTranscript}`.trim());
         }
       };
 

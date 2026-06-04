@@ -42,13 +42,15 @@ export type UseVoiceChatWebSpeechOptions = {
   characterId: string;
   contextId: string;
   onError?: (msg: string) => void;
+  onProfileRefresh?: () => void;
+  onTokenUpdate?: (remainingTokens: number) => void;
 };
 
 export function useVoiceChatWebSpeech({
   sessionId,
-  characterId,
-  contextId,
   onError,
+  onProfileRefresh,
+  onTokenUpdate,
 }: UseVoiceChatWebSpeechOptions) {
   const [status, setStatus] = useState<WebSpeechVoiceStatus>("idle");
   const statusRef = useRef(status);
@@ -61,7 +63,12 @@ export function useVoiceChatWebSpeech({
   const sttRef = useRef<WebSpeechSTT | null>(null);
   const ttsRef = useRef<WebSpeechTTS | null>(null);
   const abortRef = useRef(false);
+  const isHoldingRef = useRef(false);
+  const shouldSendOnStopRef = useRef(false);
+  const restartListeningRef = useRef<() => void>(() => {});
+  const sendTextToChatRef = useRef<(text: string) => Promise<void>>(async () => {});
   const finalTranscriptRef = useRef(""); // Lưu transcript khi stop
+  const transcriptBaseRef = useRef("");
   
   // Simulated analyser cho lip-sync (vì Web Speech API không cung cấp audio data)
   const simulatedAnalyserRef = useRef<SimulatedAnalyserNode | null>(null);
@@ -99,7 +106,12 @@ export function useVoiceChatWebSpeech({
       return;
     }
 
-    if (isListening) return;
+    if (
+      isListening ||
+      (statusRef.current !== "idle" && statusRef.current !== "listening")
+    ) {
+      return;
+    }
 
     // Helper: Process text and send to chat
     async function processAndSend(text: string) {
@@ -112,24 +124,34 @@ export function useVoiceChatWebSpeech({
       finalTranscriptRef.current = "";
 
       // Gửi xuống BE
-      await sendTextToChat(text);
+      await sendTextToChatRef.current(text);
     }
 
     try {
+      const isFreshStart = statusRef.current === "idle";
+      isHoldingRef.current = true;
+      shouldSendOnStopRef.current = false;
       setIsListening(true);
       setStatus("listening");
       setInterimText("");
+      if (isFreshStart) {
+        finalTranscriptRef.current = "";
+        transcriptBaseRef.current = "";
+      } else {
+        transcriptBaseRef.current = finalTranscriptRef.current.trim();
+      }
       abortRef.current = false;
 
       // Callback cho interim results (hiển thị real-time)
       sttRef.current.onInterimResult = (text) => {
-        setInterimText(text);
-        finalTranscriptRef.current = text; // Lưu vào ref để dùng khi stop
+        const transcript = `${transcriptBaseRef.current} ${text}`.trim();
+        setInterimText(transcript);
+        finalTranscriptRef.current = transcript; // Lưu vào ref để dùng khi stop
       };
 
-      // Bắt đầu nhận dạng (chờ user nói xong)
+      // Bắt đầu nhận dạng. Browser có thể tự onend khi ngắt hơi, nên chỉ gửi khi user thả nút.
       const transcript = await sttRef.current.start({
-        continuous: false,
+        continuous: true,
         interimResults: true,
         lang: "vi-VN",
         maxDuration: 60000, // Max 60s
@@ -144,26 +166,62 @@ export function useVoiceChatWebSpeech({
         return;
       }
 
-      // Có transcript từ STT → xử lý
-      if (transcript.trim()) {
-        await processAndSend(transcript);
+      const finalText = transcript.trim() || finalTranscriptRef.current.trim();
+
+      if (isHoldingRef.current && !shouldSendOnStopRef.current) {
+        if (finalText) {
+          finalTranscriptRef.current = finalText;
+        }
+        setIsListening(false);
+        if (statusRef.current === "listening") {
+          window.setTimeout(() => {
+            if (isHoldingRef.current && statusRef.current === "listening") {
+              restartListeningRef.current();
+            }
+          }, 120);
+        }
+        return;
       }
-    } catch (err: any) {
+
+      // Có transcript từ STT → xử lý
+      if (finalText) {
+        await processAndSend(finalText);
+      }
+    } catch (err: unknown) {
       if (abortRef.current) return;
+      const message = err instanceof Error ? err.message : "";
       
       // Bỏ qua lỗi "no-speech" (user không nói gì)
-      if (err.message?.includes("No speech")) {
+      if (message.includes("No speech")) {
+        if (isHoldingRef.current && !shouldSendOnStopRef.current) {
+          setIsListening(false);
+          setStatus("listening");
+          window.setTimeout(() => {
+            if (isHoldingRef.current && statusRef.current === "listening") {
+              restartListeningRef.current();
+            }
+          }, 120);
+          return;
+        }
         setStatus("idle");
         return;
       }
       
-      onError?.(err.message || "Lỗi nhận dạng giọng nói");
+      onError?.(message || "Lỗi nhận dạng giọng nói");
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
     } finally {
-      setIsListening(false);
+      if (!isHoldingRef.current) {
+        setIsListening(false);
+      }
     }
-  }, [isListening, onError, sessionId]);
+  }, [isListening, onError]);
+
+  useEffect(() => {
+    restartListeningRef.current = () => {
+      void startListening();
+    };
+  }, [startListening]);
 
   /**
    * Gửi text xuống BE, nhận response, rồi TTS
@@ -224,6 +282,12 @@ export function useVoiceChatWebSpeech({
       // Response: { success, data: { assistantMessage: { content } } }
       const apiData = resData.data || resData;
       const aiResponse = apiData.assistantMessage?.content || apiData.message || apiData.content || apiData.text || "";
+      const remainingTokens = apiData.remainingTokens ?? resData.remainingTokens;
+
+      if (typeof remainingTokens === "number") {
+        onTokenUpdate?.(remainingTokens);
+      }
+      onProfileRefresh?.();
 
       if (!aiResponse) {
         throw new Error("Không nhận được phản hồi từ AI");
@@ -257,42 +321,27 @@ export function useVoiceChatWebSpeech({
       }
 
       setStatus("idle");
-    } catch (err: any) {
-      const errorMsg = err.message || "Lỗi kết nối";
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Lỗi kết nối";
       onError?.(errorMsg);
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
     }
-  }, [sessionId, onError]);
+  }, [sessionId, onError, onProfileRefresh, onTokenUpdate]);
+
+  useEffect(() => {
+    sendTextToChatRef.current = sendTextToChat;
+  }, [sendTextToChat]);
 
   /**
    * Dừng nghe và gửi transcript đã thu được
    */
   const stopListening = useCallback(async () => {
-    // Không abort ngay, để STT trả về transcript
+    isHoldingRef.current = false;
+    shouldSendOnStopRef.current = true;
+    // Không abort ngay, để STT trả về transcript và startListening gửi đúng một lần.
     sttRef.current?.stop();
-    
-    // Chờ một chút để STT hoàn thành, rồi kiểm tra ref
-    setTimeout(async () => {
-      const savedText = finalTranscriptRef.current;
-      if (savedText.trim() && statusRef.current === "listening") {
-        // Có text → gửi đi (không xóa, để hiển thị)
-        setMessages((prev) => [
-          ...prev,
-          { role: "user", text: savedText, timestamp: new Date() },
-        ]);
-        setInterimText("");
-        finalTranscriptRef.current = "";
-        setIsListening(false);
-        await sendTextToChat(savedText);
-      } else {
-        // Không có text → chỉ dừng
-        setIsListening(false);
-        setInterimText("");
-        setStatus("idle");
-      }
-    }, 300); // Chờ 300ms để STT finalize
-  }, [sendTextToChat]);
+  }, []);
 
   /**
    * Hủy toàn bộ (nghe + đang phát)
