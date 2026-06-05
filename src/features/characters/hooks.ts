@@ -148,6 +148,7 @@ export function useMapContextToCharacter() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message ?? "Liên kết bối cảnh thất bại");
+    },
   });
 }
 

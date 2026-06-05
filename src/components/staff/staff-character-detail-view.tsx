@@ -1046,22 +1046,22 @@ export function StaffCharacterDetailView({
               style={{
                 borderColor: draft.isPublished
                   ? "rgba(34,197,94,0.35)"
-                  : !isEditing || mappedContextId
+                  : !isEditing || mappedContexts.length > 0
                     ? "var(--card-light-border)"
                     : "rgba(234,179,8,0.3)",
                 background: draft.isPublished
                   ? "rgba(34,197,94,0.06)"
-                  : !isEditing || mappedContextId
+                  : !isEditing || mappedContexts.length > 0
                     ? "rgba(27,38,50,0.03)"
                     : "rgba(234,179,8,0.05)",
               }}
             >
               <div className="flex-1">
-                <p className="text-sm font-semibold" style={{ color: draft.isPublished ? "rgb(22,163,74)" : !isEditing || mappedContextId ? "var(--content-heading)" : "#92400e" }}>
+                <p className="text-sm font-semibold" style={{ color: draft.isPublished ? "rgb(22,163,74)" : !isEditing || mappedContexts.length > 0 ? "var(--content-heading)" : "#92400e" }}>
                   {draft.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                  {!mappedContextId && isEditing
+                  {mappedContexts.length === 0 && isEditing
                     ? "⚠ Cần liên kết bối cảnh lịch sử trước khi xuất bản."
                     : draft.isPublished
                       ? "Nhân vật đang hiển thị công khai cho người dùng."
@@ -1078,7 +1078,7 @@ export function StaffCharacterDetailView({
                       showValidationErrors(publishValidationErrors);
                       return;
                     }
-                    if (!mappedContextId) return;
+                    if (mappedContexts.length === 0) return;
                     setPublishDialogOpen(true);
                   } else {
                     set("isPublished")(false);
@@ -1561,7 +1561,7 @@ export function StaffCharacterDetailView({
             <ChatMain
               character={chatCharacter}
               sessionId={sessionId}
-              contextId={mappedContextId}
+              contextId={mappedContexts[0]?.contextId || ""}
               onSessionCreated={setSessionId}
             />
           ) : (
