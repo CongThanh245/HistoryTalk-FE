@@ -417,16 +417,15 @@ export function StaffCharacterDetailView({
 
   // Fetch or create session when character becomes active
   const { data: sessions, isSuccess: isSessionsSuccess } = useChatSessions(
-    mappedContexts[0]?.contextId || "",
     characterId,
-    isCreated && mappedContexts.length > 0
+    isCreated
   );
 
   const createSession = useCreateSession();
   const sessionInitialized = React.useRef(false);
 
   React.useEffect(() => {
-    if (!isCreated || mappedContexts.length === 0) return;
+    if (!isCreated) return;
     if (!isSessionsSuccess) return;
     if (sessionInitialized.current) return;
     if (sessionId) return;
@@ -437,13 +436,12 @@ export function StaffCharacterDetailView({
       setSessionId(sessions[0].id);
     } else {
       createSession.mutateAsync({
-        contextId: mappedContexts[0].contextId,
         characterId
       }).then((session) => {
         setSessionId(session.id);
       }).catch(console.error);
     }
-  }, [isCreated, mappedContexts, characterId, isSessionsSuccess, sessions, sessionId, createSession]);
+  }, [isCreated, characterId, isSessionsSuccess, sessions, sessionId, createSession]);
 
   /* Build a ChatCharacter object from the draft for the right panel */
   const chatCharacter: ChatCharacter = {

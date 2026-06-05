@@ -4,14 +4,13 @@ import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
 
 export function useChatSessions(
-  contextId: string,
   characterId: string,
   ready = true,
 ) {
   return useQuery({
-    queryKey: queryKeys.chat.sessions(contextId, characterId),
-    queryFn: () => chatService.getSessions(contextId, characterId),
-    enabled: !!contextId && !!characterId && ready,
+    queryKey: queryKeys.chat.sessions(characterId),
+    queryFn: () => chatService.getSessions(characterId),
+    enabled: !!characterId && ready,
     staleTime: 0, // ← luôn fetch lại khi mount để lấy sessions mới nhất
     refetchOnWindowFocus: false, // ← không refetch khi focus tab
     refetchOnMount: true, // ← fetch khi mount để tránh dùng cache cũ
@@ -34,15 +33,13 @@ export function useCreateSession() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
-      contextId,
       characterId,
     }: {
-      contextId: string;
       characterId: string;
-    }) => chatService.createSession(contextId, characterId),
-    onSuccess: (_, { contextId, characterId }) => {
+    }) => chatService.createSession(characterId),
+    onSuccess: (_, { characterId }) => {
       qc.invalidateQueries({
-        queryKey: queryKeys.chat.sessions(contextId, characterId),
+        queryKey: queryKeys.chat.sessions(characterId),
       });
     },
     onError: () => toast.error("Không thể tạo cuộc trò chuyện mới"),

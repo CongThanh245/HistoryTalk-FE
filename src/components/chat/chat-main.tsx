@@ -292,7 +292,6 @@ export function ChatMain({
     if (!currentSessionId) {
       try {
         const newSession = await createSession.mutateAsync({
-          contextId,
           characterId: character.id,
         });
         currentSessionId = newSession.id;

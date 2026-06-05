@@ -35,8 +35,8 @@ export const queryKeys = {
   },
 
   chat: {
-    sessions: (contextId: string, characterId: string) =>
-      ["chat", "sessions", contextId, characterId] as const,
+    sessions: (characterId: string) =>
+      ["chat", "sessions", characterId] as const,
     messages: (sessionId: string) => ["chat", "messages", sessionId] as const,
     history: ["chat", "history"] as const,
     character: (characterId: string) =>
