@@ -207,15 +207,6 @@ export function TypewriterText({ text, isHovered, speed = 8 }: TypewriterTextPro
   return <span>{displayedText}</span>;
 }
 
-function getChatCount(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const count = Math.abs(hash % 160) + 15; // range: 15K - 175K
-  return `${count.toFixed(1)}K`;
-}
-
 export function CharacterPageCard({ character, onClick }: PageCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const lifespan = formatCharacterLifespan(character);
@@ -229,27 +220,30 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(character.id)}
-      className="group relative w-full h-[260px] sm:h-[400px] flex flex-col justify-end text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5"
+      className="group relative h-[340px] w-full flex flex-col text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5 sm:h-[370px]"
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
         boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
       }}
     >
-      {/* Background Image & Gradient overlay */}
-      <div className="absolute inset-0 w-full h-full z-0">
+      {/* Image */}
+      <div className="relative z-0 h-[70%] w-full overflow-hidden bg-black">
+        <Image
+          src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
+          alt=""
+          fill
+          aria-hidden="true"
+          className="object-cover object-center scale-110 blur-xl opacity-70"
+          sizes="220px"
+        />
+        <div className="absolute inset-0 bg-black/18" />
         <Image
           src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
           alt={character.name}
           fill
-          className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, 300px"
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 55%, transparent 100%)",
-          }}
+          className="object-contain object-center scale-[1.1] transition-transform duration-500 group-hover:scale-[1.14]"
+          sizes="220px"
         />
       </div>
 
@@ -282,24 +276,23 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       </div>
 
       {/* Normal State Text Content */}
-      <div className="relative px-3 sm:px-4 pb-3.5 sm:pb-5 pt-16 sm:pt-20 z-20 text-white mt-auto pointer-events-none transition-opacity duration-300 group-hover:opacity-0">
-        <h3 className="text-sm sm:text-base font-bold leading-snug mb-1 text-white line-clamp-1 sm:line-clamp-2">
+      <div className="relative z-20 flex h-[30%] flex-col justify-center bg-black px-3 text-white pointer-events-none transition-all duration-300 group-hover:opacity-0 sm:h-[30%] sm:px-4">
+        <h3 className="text-sm sm:text-base font-bold leading-snug mb-1.5 line-clamp-1 text-white drop-shadow-sm">
           {character.name}
         </h3>
-        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-300 font-semibold mb-1.5 sm:mb-2">
+        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold min-w-0 text-white/70">
           <ChatTextIcon className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
-          <span>{getChatCount(character.id)}</span>
-          <span className="text-neutral-400 font-normal">· {character.title}</span>
+          <span className="text-neutral-400 font-normal truncate">{character.title}</span>
         </div>
         {character.description && (
-          <p className="text-[10px] sm:text-[11px] leading-relaxed text-neutral-300 line-clamp-2">
+          <p className="mt-1.5 text-[10px] sm:text-[11px] leading-snug text-white/55 line-clamp-2">
             {character.description}
           </p>
         )}
       </div>
 
       {/* Hover State Overlay */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 flex flex-col p-3 sm:p-4 bg-neutral-950/85 backdrop-blur-[4px] text-white">
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 flex flex-col p-3 sm:p-4 bg-black/92 text-white">
         {/* Avatar top left */}
         <div className="flex items-start mb-3 sm:mb-4">
           <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-white overflow-hidden shadow-md">
@@ -320,8 +313,8 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
 
         {/* Button Trò chuyện ngay */}
         <div className="mt-3 sm:mt-4">
-          <div className="flex items-center justify-center gap-1.5 w-full py-2 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-bold bg-white text-black hover:bg-neutral-200 transition-colors shadow-lg">
-            <ChatTextIcon className="w-4 h-4 fill-current text-black" />
+          <div className="flex items-center justify-center gap-1.5 w-full py-2 sm:py-2.5 rounded-full border text-[11px] sm:text-xs font-bold bg-black text-white hover:bg-black transition-colors shadow-lg border-white/18">
+            <ChatTextIcon className="w-4 h-4 fill-current text-[var(--accent-gold)]" />
             Trò chuyện ngay
           </div>
         </div>
