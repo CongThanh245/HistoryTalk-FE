@@ -432,16 +432,6 @@ export default function PricingPage() {
             ))}
           </div>
 
-          <div className="mt-12">
-            <MagneticButton
-              href="/about"
-              size="lg"
-              rounded="full"
-              className="border-[var(--border-strong)] bg-white/[0.02]"
-            >
-              Liên hệ tư vấn
-            </MagneticButton>
-          </div>
         </Container>
       </section>
     </div>

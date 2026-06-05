@@ -33,7 +33,6 @@ export function MarketingNavbar() {
     { href: "/", label: "Trang Chủ" },
     { href: "/features", label: "Tính Năng" },
     { href: "/pricing", label: "Bảng Giá" },
-    { href: "/about", label: "Về Chúng Tôi" },
   ];
 
   return (
