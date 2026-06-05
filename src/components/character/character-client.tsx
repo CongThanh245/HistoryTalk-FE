@@ -103,7 +103,7 @@ export function CharactersClient() {
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,220px))] gap-3 md:gap-4">
         {isLoading
           ? Array.from({ length: PAGE_LIMIT }).map((_, i) => (
               <CharacterPageCardSkeleton key={i} />

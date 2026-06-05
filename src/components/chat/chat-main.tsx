@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
-import { PhoneCallIcon } from "@phosphor-icons/react";
+import { PhoneCallIcon, VideoCameraIcon } from "@phosphor-icons/react";
 import type {
   ChatCharacter,
   ChatMessage,
@@ -137,7 +137,8 @@ export function ChatMain({
   const [streamingMessage, setStreamingMessage] = useState("");
   const [streamingMessageType, setStreamingMessageType] = useState<"TEXT" | "VOICE">("TEXT");
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
-  const [isVoiceOpen, setIsVoiceOpen] = useState(false);
+  const [isVoice2DOpen, setIsVoice2DOpen] = useState(false);
+  const [isVoice3DOpen, setIsVoice3DOpen] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordData | null>(null);
   const [selectedVoiceCall, setSelectedVoiceCall] = useState<VoiceCallGroup | null>(null);
   const [voiceCallDraftMessages, setVoiceCallDraftMessages] = useState<ChatMessage[]>([]);
@@ -243,13 +244,26 @@ export function ChatMain({
     [sessionId],
   );
 
-  const handleOpenVoiceCall = useCallback(() => {
+  const handleOpenVoice2DCall = useCallback(() => {
     setVoiceCallDraftMessages([]);
-    setIsVoiceOpen(true);
+    setIsVoice2DOpen(true);
   }, []);
 
-  const handleCloseVoiceCall = useCallback(() => {
-    setIsVoiceOpen(false);
+  const handleCloseVoice2DCall = useCallback(() => {
+    setIsVoice2DOpen(false);
+    qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+    if (sessionId) {
+      qc.invalidateQueries({ queryKey: queryKeys.chat.messages(sessionId) });
+    }
+  }, [qc, sessionId]);
+
+  const handleOpenVoice3DCall = useCallback(() => {
+    setVoiceCallDraftMessages([]);
+    setIsVoice3DOpen(true);
+  }, []);
+
+  const handleCloseVoice3DCall = useCallback(() => {
+    setIsVoice3DOpen(false);
     qc.invalidateQueries({ queryKey: queryKeys.profile.me });
     if (sessionId) {
       qc.invalidateQueries({ queryKey: queryKeys.chat.messages(sessionId) });
@@ -270,7 +284,7 @@ export function ChatMain({
     speechSynthesis.cancel();
     
     // If not specified, default to VOICE if the 3D avatar modal is open, else TEXT
-    const msgType = type || (isVoiceOpen ? "VOICE" : "TEXT");
+    const msgType = type || (isVoice3DOpen ? "VOICE" : "TEXT");
     setStreamingMessageType(msgType);
 
     let currentSessionId = sessionId;
@@ -499,7 +513,7 @@ export function ChatMain({
 
         {/* ── Nút Voice Call ── */}
         <button
-          onClick={handleOpenVoiceCall}
+          onClick={handleOpenVoice2DCall}
           disabled={!sessionId}
           title={
             sessionId ? `Gọi thoại với ${character.name}` : "Đang khởi tạo..."
@@ -513,6 +527,26 @@ export function ChatMain({
         >
           <PhoneIcon
             className="w-4 h-4"
+            style={{ color: "var(--accent-gold)" }}
+          />
+        </button>
+
+        <button
+          onClick={handleOpenVoice3DCall}
+          disabled={!sessionId}
+          title={
+            sessionId ? `Video call 3D với ${character.name}` : "Đang khởi tạo..."
+          }
+          className="w-8 h-8 flex items-center justify-center rounded-full transition-all
+                     hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{
+            background: "rgba(201,168,76,0.12)",
+            border: "1px solid rgba(201,168,76,0.3)",
+          }}
+        >
+          <VideoCameraIcon
+            className="w-4 h-4"
+            weight="fill"
             style={{ color: "var(--accent-gold)" }}
           />
         </button>
@@ -562,7 +596,7 @@ export function ChatMain({
                   key={item.call.id}
                   call={item.call}
                   onOpen={setSelectedVoiceCall}
-                  onCallAgain={handleOpenVoiceCall}
+                  onCallAgain={handleOpenVoice2DCall}
                 />
               ) : (
                 <MessageBubble
@@ -673,12 +707,32 @@ export function ChatMain({
       />
 
       {/* ── 3D Avatar Modal ── */}
-      {isVoiceOpen && sessionId && (
+      {isVoice2DOpen && sessionId && (
         <Avatar3DModal
+          variant="2d"
           character={character}
           sessionId={sessionId}
           contextId={contextId}
-          onClose={handleCloseVoiceCall}
+          onClose={handleCloseVoice2DCall}
+          onMessagesChange={handleVoiceMessagesChange}
+          onTokenUpdate={(remainingTokens, promptTokens, completionTokens, messageType) => {
+            setLastTokenUsage({
+              remainingTokens,
+              promptTokens: promptTokens || 0,
+              completionTokens: completionTokens || 0,
+              messageType: messageType || "VOICE"
+            });
+          }}
+        />
+      )}
+
+      {isVoice3DOpen && sessionId && (
+        <Avatar3DModal
+          variant="3d"
+          character={character}
+          sessionId={sessionId}
+          contextId={contextId}
+          onClose={handleCloseVoice3DCall}
           onMessagesChange={handleVoiceMessagesChange}
           onTokenUpdate={(remainingTokens, promptTokens, completionTokens, messageType) => {
             setLastTokenUsage({

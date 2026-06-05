@@ -200,6 +200,7 @@ type ActiveVoiceHook = {
 };
 
 interface Avatar3DModalProps {
+  variant?: "2d" | "3d";
   character: ChatCharacter;
   sessionId: string;
   contextId: string;
@@ -214,6 +215,7 @@ interface Avatar3DModalProps {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function Avatar3DModal({ 
+  variant = "3d",
   character, 
   sessionId, 
   contextId, 
@@ -381,6 +383,7 @@ export function Avatar3DModal({
 
   const isBusy = status.startsWith("processing") || status === "speaking" || status === "thinking";
   const isListeningStatus = status === "listening";
+  const is2D = variant === "2d";
 
   return (
     <>
@@ -397,6 +400,10 @@ export function Avatar3DModal({
         @keyframes micPulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(239,83,80,0.5); }
           50%       { box-shadow: 0 0 0 16px rgba(239,83,80,0); }
+        }
+        @keyframes avatar2DRipple {
+          0%   { transform: scale(0.85); opacity: 0.45; }
+          100% { transform: scale(1.25); opacity: 0; }
         }
         @keyframes thinkingBounce {
           0%, 100% { transform: translateY(0); }
@@ -480,16 +487,86 @@ export function Avatar3DModal({
           {/* ── 3D Viewport ── */}
           <div style={{
             width: "100%", flex: 1, position: "relative",
+            display: is2D ? "flex" : undefined,
+            alignItems: is2D ? "center" : undefined,
+            justifyContent: is2D ? "center" : undefined,
             background: "radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.08) 0%, transparent 60%)",
           }}>
-            <FBXCharacterViewer
-              modelUrl={character.modelUrl ?? "/models/character.glb"}
-              isSpeaking={status === "speaking"}
-              isListening={status === "listening"}
-              isRecording={status === "listening"}
-              isProcessing={status.startsWith("processing") || status === "thinking"}
-              ttsAnalyserRef={ttsAnalyserRef}
-            />
+            {is2D ? (
+              <div style={{
+                position: "relative",
+                width: "min(54vw, 320px)",
+                aspectRatio: "1",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+                {(isSpeaking || isListeningStatus || isRecording) && (
+                  <>
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          borderRadius: "50%",
+                          border: "1px solid rgba(201,168,76,0.45)",
+                          animation: "avatar2DRipple 2.4s ease-out infinite",
+                          animationDelay: `${i * 0.45}s`,
+                          opacity: 0,
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+                <div style={{
+                  position: "relative",
+                  width: "78%",
+                  height: "78%",
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  border: isSpeaking
+                    ? "3px solid rgba(201,168,76,0.85)"
+                    : "2px solid rgba(201,168,76,0.35)",
+                  boxShadow: isSpeaking
+                    ? "0 0 48px rgba(201,168,76,0.28)"
+                    : "0 20px 70px rgba(0,0,0,0.35)",
+                  transition: "border-color 0.25s, box-shadow 0.25s",
+                  background: "linear-gradient(135deg, rgba(201,168,76,0.16), rgba(255,255,255,0.04))",
+                }}>
+                  {character.imageUrl ? (
+                    <img
+                      src={character.imageUrl}
+                      alt={character.name}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#c9a84c",
+                      fontSize: 72,
+                      fontWeight: 700,
+                    }}>
+                      {character.name[0]}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <FBXCharacterViewer
+                modelUrl={character.modelUrl ?? "/models/character.glb"}
+                isSpeaking={status === "speaking"}
+                isListening={status === "listening"}
+                isRecording={status === "listening"}
+                isProcessing={status.startsWith("processing") || status === "thinking"}
+                ttsAnalyserRef={ttsAnalyserRef}
+              />
+            )}
           </div>
 
           {/* ── Transcript (below 3D, không che model) ── */}

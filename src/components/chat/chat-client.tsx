@@ -114,6 +114,21 @@ export function ChatClient({
     );
   }
 
+  if (!contextId) {
+    return (
+      <div className="flex h-full w-full items-center justify-center px-6 text-center">
+        <div className="max-w-md">
+          <h2 className="text-lg font-bold" style={{ color: "var(--content-heading)" }}>
+            Chưa thể bắt đầu chat
+          </h2>
+          <p className="mt-2 text-sm" style={{ color: "var(--content-muted)" }}>
+            Nhân vật này chưa được liên kết với bối cảnh lịch sử. Vui lòng chọn nhân vật khác hoặc đợi quản trị viên hoàn tất dữ liệu.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full w-full overflow-hidden relative">
       <ChatLeftPanel

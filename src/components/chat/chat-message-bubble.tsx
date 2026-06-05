@@ -79,14 +79,19 @@ export function MessageBubble({
       {/* Character Avatar */}
       <div
         className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 mt-auto border-2"
-        style={{ borderColor: "var(--accent-gold-soft)" }}
+        style={{
+          background: "var(--card-light-border)",
+          borderColor: "var(--accent-gold-soft)",
+        }}
       >
-        <Image
-          src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/ngo-quyen.jpg"}
-          alt={character.name}
-          fill
-          className="object-cover"
-        />
+        {isValidUrl(character.imageUrl) && (
+          <Image
+            src={character.imageUrl!}
+            alt={character.name}
+            fill
+            className="object-cover"
+          />
+        )}
       </div>
 
       <div className="max-w-[75%] flex flex-col gap-1.5">
@@ -162,14 +167,19 @@ export function TypingIndicator({ character }: { character: ChatCharacter }) {
     <div className="flex gap-2.5 px-4">
       <div
         className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border"
-        style={{ borderColor: "var(--border-default)" }}
+        style={{
+          background: "var(--card-light-border)",
+          borderColor: "var(--border-default)",
+        }}
       >
-        <Image
-          src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/ngo-quyen.jpg"}
-          alt={character.name}
-          fill
-          className="object-cover"
-        />
+        {isValidUrl(character.imageUrl) && (
+          <Image
+            src={character.imageUrl!}
+            alt={character.name}
+            fill
+            className="object-cover"
+          />
+        )}
       </div>
       <div className="flex flex-col gap-1">
         <span
