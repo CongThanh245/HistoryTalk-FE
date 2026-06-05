@@ -110,7 +110,6 @@ const groupChatDisplayItems = (messages: ChatMessage[]): ChatDisplayItem[] => {
 interface ChatMainProps {
   character: ChatCharacter;
   sessionId: string | null;
-  contextId: string;
   onSessionCreated: (sessionId: string) => void;
   toggleLeftPanel?: () => void;
   toggleRightPanel?: () => void;
@@ -121,7 +120,6 @@ interface ChatMainProps {
 export function ChatMain({
   character,
   sessionId,
-  contextId,
   onSessionCreated,
   toggleLeftPanel,
   toggleRightPanel,
@@ -711,7 +709,6 @@ export function ChatMain({
           variant="2d"
           character={character}
           sessionId={sessionId}
-          contextId={contextId}
           onClose={handleCloseVoice2DCall}
           onMessagesChange={handleVoiceMessagesChange}
           onTokenUpdate={(remainingTokens, promptTokens, completionTokens, messageType) => {
@@ -730,7 +727,6 @@ export function ChatMain({
           variant="3d"
           character={character}
           sessionId={sessionId}
-          contextId={contextId}
           onClose={handleCloseVoice3DCall}
           onMessagesChange={handleVoiceMessagesChange}
           onTokenUpdate={(remainingTokens, promptTokens, completionTokens, messageType) => {

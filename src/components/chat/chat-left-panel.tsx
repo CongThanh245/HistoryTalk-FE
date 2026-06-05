@@ -29,7 +29,6 @@ import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 
 interface ChatLeftPanelProps {
   characterId: string;
-  contextId: string;
   activeSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
   sessions: ChatSession[];
@@ -42,7 +41,6 @@ interface ChatLeftPanelProps {
 
 export function ChatLeftPanel({
   characterId,
-  contextId,
   sessions,
   isLoadingSessions,
   activeSessionId,
@@ -93,7 +91,7 @@ export function ChatLeftPanel({
 
   const handleNewSession = () => {
     createSession.mutate(
-      { contextId, characterId },
+      { characterId },
       { onSuccess: (session) => onNewSession(session.id) },
     );
   };

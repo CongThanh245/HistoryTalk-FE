@@ -40,7 +40,6 @@ export type WebSpeechMessage = {
 export type UseVoiceChatWebSpeechOptions = {
   sessionId: string;
   characterId: string;
-  contextId: string;
   onError?: (msg: string) => void;
   onProfileRefresh?: () => void;
   onTokenUpdate?: (remainingTokens: number, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE") => void;

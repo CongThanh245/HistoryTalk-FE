@@ -111,7 +111,6 @@ export function ChatClient({
     <div className="flex h-full w-full overflow-hidden relative">
       <ChatLeftPanel
         characterId={characterId}
-        contextId={contextId}
         sessions={sessions ?? []}
         isLoadingSessions={isLoadingSessions}
         activeSessionId={activeSessionId}
@@ -124,7 +123,6 @@ export function ChatClient({
       <ChatMain
         character={activeCharacter}
         sessionId={activeSessionId}
-        contextId={contextId}
         onSessionCreated={handleSessionCreated}
         toggleLeftPanel={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
         toggleRightPanel={() => setIsRightPanelOpen(!isRightPanelOpen)}

@@ -1559,7 +1559,6 @@ export function StaffCharacterDetailView({
             <ChatMain
               character={chatCharacter}
               sessionId={sessionId}
-              contextId={mappedContexts[0]?.contextId || ""}
               onSessionCreated={setSessionId}
             />
           ) : (

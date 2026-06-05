@@ -24,7 +24,6 @@ export interface VoiceRestMessage {
 interface UseVoiceChatRestOptions {
   sessionId: string;
   characterId: string;
-  contextId: string;
   onError?: (msg: string) => void;
 }
 
@@ -48,7 +47,6 @@ interface UseVoiceChatRestReturn {
 export function useVoiceChatRest({
   sessionId,
   characterId,
-  contextId,
   onError,
 }: UseVoiceChatRestOptions): UseVoiceChatRestReturn {
   const [status, setStatus] = useState<VoiceRestStatus>("idle");
@@ -194,7 +192,6 @@ export function useVoiceChatRest({
         chatFormData.append("audio", audioBlob, "recording.webm");
         chatFormData.append("sessionId", sessionId);
         chatFormData.append("characterId", characterId);
-        chatFormData.append("contextId", contextId);
 
         const endpoint = useInternal
           ? "/api/voice/chat"
@@ -271,7 +268,7 @@ export function useVoiceChatRest({
         setTimeout(() => setStatus("idle"), 2000);
       }
     },
-    [sessionId, characterId, contextId, playAudio, onError],
+    [sessionId, characterId, playAudio, onError],
   );
 
   // ── Bắt đầu ghi âm ─────────────────────────────────────────────────────────

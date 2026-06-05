@@ -25,7 +25,6 @@ export type VoiceMessage = {
 export type UseVoiceChatStreamOptions = {
   sessionId: string;
   characterId: string;
-  contextId: string;
   onError?: (msg: string) => void;
 };
 
@@ -98,7 +97,6 @@ class AudioQueue {
 export function useVoiceChatStream({
   sessionId,
   characterId,
-  contextId,
   onError,
 }: UseVoiceChatStreamOptions) {
   const [status, setStatus] = useState<VoiceStreamStatus>("idle");
@@ -158,7 +156,6 @@ export function useVoiceChatStream({
       formData.append("audio", audioBlob, "recording.webm");
       formData.append("sessionId", sessionId);
       formData.append("characterId", characterId);
-      formData.append("contextId", contextId);
 
       hasReceivedAudioRef.current = false;
       
@@ -330,7 +327,7 @@ export function useVoiceChatStream({
         clearTimeout(safetyTimeout);
       }
     },
-    [sessionId, characterId, contextId, ensureAudioCtx, onError]
+    [sessionId, characterId, ensureAudioCtx, onError]
   );
 
   // Start recording

@@ -203,7 +203,6 @@ interface Avatar3DModalProps {
   variant?: "2d" | "3d";
   character: ChatCharacter;
   sessionId: string;
-  contextId: string;
   onClose: () => void;
   onMessagesChange?: (messages: VoiceRestMessage[]) => void;
   /** @deprecated use mode instead */
@@ -218,7 +217,6 @@ export function Avatar3DModal({
   variant = "3d",
   character, 
   sessionId, 
-  contextId, 
   onClose, 
   onMessagesChange,
   mode: modeProp,
@@ -283,21 +281,18 @@ export function Avatar3DModal({
   const restHook = useVoiceChatRest({
     sessionId,
     characterId: character.id,
-    contextId,
     onError: (e) => setErrorMsg(e),
   });
 
   const streamHook = useVoiceChatStream({
     sessionId,
     characterId: character.id,
-    contextId,
     onError: (e) => setErrorMsg(e),
   });
 
   const webSpeechHook = useVoiceChatWebSpeech({
     sessionId,
     characterId: character.id,
-    contextId,
     onError: (e) => setErrorMsg(e),
     onProfileRefresh: refreshProfile,
     onTokenUpdate: syncRemainingTokens,
