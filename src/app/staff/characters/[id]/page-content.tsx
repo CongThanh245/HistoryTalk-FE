@@ -6,7 +6,8 @@ import { StaffCharacterDetailView, type CharacterDraft } from "@/components/staf
 import { 
   useCharacter, 
   useUpdateCharacter, 
-  useMapContextToCharacter 
+  useMapContextToCharacter,
+  useUnmapContextFromCharacter
 } from "@/features/characters/hooks";
 import {
   useCharacterDocuments,
@@ -42,6 +43,7 @@ export default function EditCharacterPage() {
   const uploadDocumentPdf = useUploadDocumentPdf();
   const getDocumentPdfUrl = useGetDocumentPdfUrl();
   const mapContextToCharacter = useMapContextToCharacter();
+  const unmapContextFromCharacter = useUnmapContextFromCharacter();
   
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
     page: 1,
@@ -178,7 +180,13 @@ export default function EditCharacterPage() {
         )
       }
       isMapContextPending={mapContextToCharacter.isPending}
-      initialContextId={linkedContextId}
+      onUnmapContext={(characterId, contextId, options) =>
+        unmapContextFromCharacter.mutate(
+          { characterId, contextId },
+          { onSuccess: options?.onSuccess },
+        )
+      }
+      initialContexts={character.contexts}
     />
   );
 }
