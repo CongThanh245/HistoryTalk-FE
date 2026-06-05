@@ -553,12 +553,27 @@ export function StaffCharacterDetailView({
                 />
               )}
             </div>
-            <div>
-              <h1 className="text-lg font-bold leading-tight" style={{ color: "var(--content-heading)" }}>
-                {mode === "create" && !isCreated
-                  ? "Tạo nhân vật mới"
-                  : draft.name || "Nhân vật"}
-              </h1>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h1 className="text-lg font-bold leading-tight" style={{ color: "var(--content-heading)" }}>
+                  {mode === "create" && !isCreated
+                    ? "Tạo nhân vật mới"
+                    : draft.name || "Nhân vật"}
+                </h1>
+                {isCreated && (
+                  <div
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold leading-none"
+                    style={{
+                      background: draft.isPublished ? "rgba(34,197,94,0.1)" : "rgba(234,179,8,0.1)",
+                      color: draft.isPublished ? "rgb(22,163,74)" : "rgb(161,98,7)",
+                      border: `1px solid ${draft.isPublished ? "rgba(34,197,94,0.2)" : "rgba(234,179,8,0.2)"}`,
+                    }}
+                  >
+                    <EyeIcon className="h-3.5 w-3.5" />
+                    {draft.isPublished ? "ĐÃ XUẤT BẢN" : "CHƯA XUẤT BẢN"}
+                  </div>
+                )}
+              </div>
               <p className="text-xs" style={{ color: "var(--content-muted)" }}>
                 {mode === "create" && !isCreated
                   ? "Điền thông tin bên trái, xem preview chat bên phải"
@@ -1596,21 +1611,6 @@ export function StaffCharacterDetailView({
             </div>
           )}
 
-          {isCreated && (
-            <div
-              className="absolute top-6 right-6 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
-              style={{
-                background: draft.isPublished ? "rgba(34,197,94,0.1)" : "rgba(234,179,8,0.1)",
-                color: draft.isPublished ? "rgb(22,163,74)" : "rgb(161,98,7)",
-                border: `1px solid ${draft.isPublished ? "rgba(34,197,94,0.2)" : "rgba(234,179,8,0.2)"}`,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              <EyeIcon className="h-4 w-4" />
-              {draft.isPublished ? "ĐÃ XUẤT BẢN" : "CHƯA XUẤT BẢN"}
-            </div>
-          )}
         </div>
       </div>
 
