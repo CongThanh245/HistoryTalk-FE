@@ -203,6 +203,22 @@ export function ChatMain({
     [data?.messages, voiceCallDraftMessages, optimisticMessages],
   );
   const displayItems = useMemo(() => groupChatDisplayItems(messages), [messages]);
+  const userTextMessageCount = useMemo(
+    () =>
+      messages.filter(
+        (message) =>
+          message.role === "USER" &&
+          !isVoiceMessage(message) &&
+          message.content.trim().length > 0,
+      ).length,
+    [messages],
+  );
+  const showVoiceNudge =
+    userTextMessageCount >= 2 &&
+    userTextMessageCount <= 3 &&
+    !isStreaming &&
+    !isTokenExhausted &&
+    !!sessionId;
   const sessionIdRef = useRef(sessionId);
 
   useEffect(() => {
@@ -511,9 +527,13 @@ export function ChatMain({
         {/* ── Nút Voice Call ── */}
         <button
           onClick={handleOpenVoice2DCall}
-          disabled={!sessionId}
+          disabled={!sessionId || isTokenExhausted}
           title={
-            sessionId ? `Gọi thoại với ${character.name}` : "Đang khởi tạo..."
+            isTokenExhausted
+              ? "Bạn đã hết token. Vui lòng nâng cấp để gọi thoại."
+              : sessionId
+                ? `Gọi thoại với ${character.name}`
+                : "Đang khởi tạo..."
           }
           className="w-8 h-8 flex items-center justify-center rounded-full transition-all
                      hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
@@ -530,9 +550,13 @@ export function ChatMain({
 
         <button
           onClick={handleOpenVoice3DCall}
-          disabled={!sessionId}
+          disabled={!sessionId || isTokenExhausted}
           title={
-            sessionId ? `Video call 3D với ${character.name}` : "Đang khởi tạo..."
+            isTokenExhausted
+              ? "Bạn đã hết token. Vui lòng nâng cấp để gọi 3D."
+              : sessionId
+                ? `Video call 3D với ${character.name}`
+                : "Đang khởi tạo..."
           }
           className="w-8 h-8 flex items-center justify-center rounded-full transition-all
                      hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
@@ -702,6 +726,49 @@ export function ChatMain({
         characterName={character.name}
         isTokenExhausted={isTokenExhausted}
       />
+
+      {showVoiceNudge && (
+        <button
+          type="button"
+          onClick={handleOpenVoice2DCall}
+          className="absolute right-4 bottom-[96px] z-20 flex max-w-[min(360px,calc(100%-32px))] items-center gap-3 rounded-xl border px-3 py-2 text-left shadow-lg transition-all duration-200 hover:brightness-110 active:scale-[0.98] md:right-6 md:bottom-[92px]"
+          style={{
+            background: "color-mix(in srgb, var(--bg-elevated) 92%, var(--accent-gold))",
+            borderColor: "rgba(201,168,76,0.35)",
+            color: "var(--text-primary)",
+            animation: "voiceNudgeBlink 3.2s ease-in-out 2",
+          }}
+        >
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+            style={{
+              background: "var(--accent-gold-active-bg)",
+              color: "var(--accent-gold)",
+            }}
+          >
+            <PhoneIcon className="h-4 w-4" weight="fill" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-xs font-semibold">
+              Mỏi tay rồi thì lên tiếng nhé
+            </span>
+            <span
+              className="block text-[11px] leading-snug"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Gọi với {character.name} để trò chuyện tự nhiên hơn.
+            </span>
+          </span>
+        </button>
+      )}
+
+      <style>{`
+        @keyframes voiceNudgeBlink {
+          0%, 100% { transform: translateY(0); box-shadow: 0 10px 28px rgba(0,0,0,0.22); }
+          22% { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(201,168,76,0.2); }
+          44% { transform: translateY(0); box-shadow: 0 10px 28px rgba(0,0,0,0.22); }
+        }
+      `}</style>
 
       {/* ── 3D Avatar Modal ── */}
       {isVoice2DOpen && sessionId && (

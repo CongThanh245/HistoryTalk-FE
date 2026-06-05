@@ -41,8 +41,8 @@ function ModelLoadingPlaceholder() {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  idle: "Click để nói",
-  listening: "Đang lắng nghe...",
+  idle: "Bấm mic để nói",
+  listening: "Đang nghe... bấm mic lần nữa để dừng",
   recording: " Đang ghi âm... (click để gửi)",
   processing: " Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ...",
   processing_stt: " Đang nhận dạng giọng nói...",
@@ -602,7 +602,7 @@ export function Avatar3DModal({
             <button
               onClick={handleMicClick}
               disabled={isBusy}
-              title="Bấm để nói/gửi (hoặc bấm Space)"
+              title={isRecording ? "Bấm lần nữa để dừng và gửi" : "Bấm để nói"}
               style={{
                 width: 72, height: 72, borderRadius: "50%",
                 background: isRecording
@@ -659,7 +659,7 @@ export function Avatar3DModal({
             margin: "0 0 16px", fontSize: 11,
             color: "rgba(255,255,255,0.2)", letterSpacing: "0.03em",
           }}>
-            Bấm nút mic hoặc phím Space để nói/dừng
+            Bấm mic hoặc Space để nói, bấm lần nữa để dừng
           </p>
         </div>
       </div>

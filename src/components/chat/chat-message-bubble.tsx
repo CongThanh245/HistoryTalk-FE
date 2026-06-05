@@ -25,9 +25,11 @@ export function MessageBubble({
   const isUser = message.role === "USER";
   const [isSpeaking, setIsSpeaking] = useState(false);
   const userName = useAuthStore((s) => s.user?.userName ?? "Bạn");
+  const userAvatarUrl = useAuthStore((s) => s.user?.avatarUrl);
 
   // Logic lấy chữ cái đầu
   const userInitial = userName.trim().charAt(0).toUpperCase();
+  const hasUserAvatar = isValidUrl(userAvatarUrl);
 
   if (isUser) {
     return (
@@ -58,9 +60,9 @@ export function MessageBubble({
           </span>
         </div>
 
-        {/* User Avatar - Chữ cái đầu với Glow nhẹ */}
+        {/* User Avatar */}
         <div
-          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-auto border"
+          className="relative w-9 h-9 rounded-full flex items-center justify-center overflow-hidden text-sm font-bold shrink-0 mt-auto border"
           style={{
             background: "var(--bg-elevated)",
             color: "var(--accent-gold-soft)",
@@ -68,7 +70,16 @@ export function MessageBubble({
             boxShadow: "var(--shadow-gold)",
           }}
         >
-          {userInitial}
+          {hasUserAvatar ? (
+            <Image
+              src={userAvatarUrl!}
+              alt={userName}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            userInitial
+          )}
         </div>
       </div>
     );

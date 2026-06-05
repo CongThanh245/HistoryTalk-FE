@@ -180,7 +180,7 @@ export function ChatInput({
             style={{ background: "#ef4444" }}
           />
           <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Đang nghe... ấn lần nữa để gửi
+            Đang nghe... bấm mic lần nữa để dừng và gửi
           </span>
         </div>
       )}
@@ -220,7 +220,7 @@ export function ChatInput({
           <button
             onClick={handleMicClick}
             disabled={disabled || isLoading}
-            title={isRecording ? "Click để gửi" : "Click để nói"}
+            title={isRecording ? "Bấm lần nữa để dừng và gửi" : "Bấm để nói"}
             className="w-10 h-10 flex items-center justify-center rounded-xl
                        transition-all active:scale-95 select-none
                        disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
@@ -282,7 +282,7 @@ export function ChatInput({
           style={{ color: "var(--text-secondary)", opacity: 0.5 }}
         >
           Enter để gửi · Shift+Enter xuống dòng
-          {isSupported ? " · Click 🎙 để nói/gửi" : ""}
+          {isSupported ? " · Bấm mic để nói, bấm lần nữa để dừng" : ""}
         </p>
         <div
           className="flex items-center gap-1 text-[10px]"

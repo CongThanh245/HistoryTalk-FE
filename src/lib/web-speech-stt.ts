@@ -44,8 +44,15 @@ export class WebSpeechSTT {
         return;
       }
 
-      // @ts-expect-error - TypeScript chưa có type cho WebkitSpeechRecognition
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition =
+        (window as Window & {
+          SpeechRecognition?: SpeechRecognitionType;
+          webkitSpeechRecognition?: SpeechRecognitionType;
+        }).SpeechRecognition ||
+        (window as Window & {
+          SpeechRecognition?: SpeechRecognitionType;
+          webkitSpeechRecognition?: SpeechRecognitionType;
+        }).webkitSpeechRecognition;
       this.recognition = new SpeechRecognition();
       
       const recognition = this.recognition!;
@@ -103,7 +110,9 @@ export class WebSpeechSTT {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onerror = (event: any) => {
-        console.error('[WebSpeechSTT] Error:', event.error);
+        if (event.error !== 'no-speech') {
+          console.error('[WebSpeechSTT] Error:', event.error);
+        }
         this.isListening = false;
         this.clearTimeout();
 
