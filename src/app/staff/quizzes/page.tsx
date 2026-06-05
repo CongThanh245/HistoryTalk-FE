@@ -323,7 +323,7 @@ export default function StaffQuizzesPage() {
             {r.original.questions.length} câu hỏi
           </p>
           <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-            {r.original.playCount.toLocaleString()} lượt chơi
+            {r.original.playCount.toLocaleString()} lần làm
           </p>
         </div>
       ),
@@ -668,7 +668,7 @@ export default function StaffQuizzesPage() {
           {([
             { label: "Tổng bộ quiz", value: totalItems, icon: ClipboardTextIcon, color: "var(--accent-blue)" },
             { label: "Tổng câu hỏi", value: totalQues, icon: ClipboardTextIcon, color: "var(--accent-teal)" },
-            { label: "Tổng lượt chơi", value: totalPlays.toLocaleString(), icon: GameControllerIcon, color: "var(--accent-blue)" },
+            { label: "Tổng lần làm", value: totalPlays.toLocaleString(), icon: GameControllerIcon, color: "var(--accent-blue)" },
           ] as const).map((s) => {
             const Icon = s.icon;
             return (
