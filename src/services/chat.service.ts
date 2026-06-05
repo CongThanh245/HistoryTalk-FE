@@ -67,6 +67,7 @@ export interface ChatCharacter {
   modelUrl?: string | null;
   side?: string;
   contextId?: string; // character thuộc context nào
+  contexts?: { contextId: string; name: string }[];
 }
 // ── Service ──────────────────────────────────────────────
 
@@ -252,6 +253,7 @@ export const chatService = {
       modelUrl: raw.modelUrl || null,
       side: raw.side,
       contextId,
+      contexts: raw.contexts || (raw.context ? [raw.context] : []),
     };
   },
 };

@@ -35,7 +35,12 @@ export function ChatClient({
     staleTime: 1000 * 60 * 10,
   });
 
-  const contextId = activeContextId || activeCharacter?.contextId || "";
+  const contextId =
+    activeContextId ||
+    (activeCharacter?.contexts?.length === 1
+      ? activeCharacter.contexts[0].contextId
+      : activeCharacter?.contextId || "");
+
   const characterId = activeCharacter?.id ?? "";
 
   // Fetch sessions — chỉ khi đã có character
@@ -110,6 +115,32 @@ export function ChatClient({
             borderTopColor: "transparent",
           }}
         />
+      </div>
+    );
+  }
+
+  if (activeCharacter?.contexts && activeCharacter.contexts.length > 1 && !activeContextId) {
+    return (
+      <div className="flex h-full w-full items-center justify-center px-6 text-center">
+        <div className="max-w-md">
+          <h2 className="text-xl font-bold mb-4" style={{ color: "var(--content-heading)" }}>
+            Chọn sự kiện / trận chiến
+          </h2>
+          <p className="mb-6 text-sm" style={{ color: "var(--content-muted)" }}>
+            Nhân vật {activeCharacter.name} có mặt trong nhiều sự kiện lịch sử khác nhau. Vui lòng chọn sự kiện bạn muốn trò chuyện:
+          </p>
+          <div className="flex flex-col gap-3">
+            {activeCharacter.contexts.map(ctx => (
+              <button
+                key={ctx.contextId}
+                className="px-4 py-3 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--accent-gold)] hover:bg-[var(--surface-sunken)] transition-colors text-left"
+                onClick={() => setActiveContextId(ctx.contextId)}
+              >
+                <span className="font-semibold" style={{ color: "var(--content-heading)" }}>{ctx.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
