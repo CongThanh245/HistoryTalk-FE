@@ -1,7 +1,7 @@
 ﻿﻿﻿"use client";
 
 import * as React from "react";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import Image from "next/image";
 import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon, CaretDownIcon, UploadSimpleIcon, FilePdfIcon, ImageSquareIcon } from "@phosphor-icons/react";
 import { StaffShell } from "@/components/staff/staff-shell";
@@ -99,6 +99,12 @@ const ERA_OPTIONS = [
   { value: "MODERN" as const, label: "Cận đại" },
   { value: "CONTEMPORARY" as const, label: "Hiện đại" },
 ];
+
+const publishStatusSorting: SortingFn<HistoricalEvent> = (rowA, rowB, columnId) => {
+  const a = rowA.getValue<boolean>(columnId) ? 1 : 0;
+  const b = rowB.getValue<boolean>(columnId) ? 1 : 0;
+  return a - b;
+};
 
 export default function StaffContextsPage() {
   const [search, setSearch] = React.useState("");
@@ -436,6 +442,8 @@ export default function StaffContextsPage() {
       {
         accessorKey: "isPublished",
         header: "Trạng thái",
+        sortDescFirst: false,
+        sortingFn: publishStatusSorting,
         cell: ({ row }) => {
           const isDraft = !row.original.isPublished;
           return (

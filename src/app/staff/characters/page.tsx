@@ -1,7 +1,7 @@
 ﻿﻿﻿﻿﻿﻿﻿"use client";
 
 import * as React from "react";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import { PlusIcon, PencilIcon, TrashIcon, ChatCircleDotsIcon, ArrowCounterClockwiseIcon, MagnifyingGlassIcon, UsersIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,12 @@ import {
 import type { Character } from "@/services/character.service";
 import { isValidUrl } from "@/lib/utils/url";
 import { formatCharacterLifespan } from "@/lib/utils/character-date";
+
+const publishStatusSorting: SortingFn<Character> = (rowA, rowB, columnId) => {
+  const a = rowA.getValue<boolean>(columnId) ? 1 : 0;
+  const b = rowB.getValue<boolean>(columnId) ? 1 : 0;
+  return a - b;
+};
 
 export default function StaffCharactersPage() {
   const router = useRouter();
@@ -94,6 +100,8 @@ export default function StaffCharactersPage() {
       {
         accessorKey: "isPublished",
         header: "Trạng thái",
+        sortDescFirst: false,
+        sortingFn: publishStatusSorting,
         cell: ({ row }) => {
           const isDraft = !row.original.isPublished;
           return (

@@ -31,6 +31,18 @@ export type StaffDataTableProps<TData> = {
   onRowClick?: (row: TData) => void;
 };
 
+function sortByPublishedStatus<TData>(data: TData[], desc: boolean) {
+  return data
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const aValue = (a.item as { isPublished?: boolean }).isPublished ? 1 : 0;
+      const bValue = (b.item as { isPublished?: boolean }).isPublished ? 1 : 0;
+      const statusOrder = desc ? bValue - aValue : aValue - bValue;
+      return statusOrder || a.index - b.index;
+    })
+    .map(({ item }) => item);
+}
+
 export function StaffDataTable<TData>({
   columns,
   data,
@@ -40,15 +52,22 @@ export function StaffDataTable<TData>({
   onRowClick,
 }: StaffDataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const displayData = React.useMemo(() => {
+    const currentSort = sorting[0];
+    if (currentSort?.id !== "isPublished") return data;
+
+    return sortByPublishedStatus(data, currentSort.desc);
+  }, [data, sorting]);
 
   const table = useReactTable({
-    data,
+    data: displayData,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    getSortedRowModel: sorting[0]?.id === "isPublished" ? undefined : getSortedRowModel(),
   });
+  const rowModel = table.getRowModel();
 
   return (
     <div
@@ -64,6 +83,18 @@ export function StaffDataTable<TData>({
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 const canSort = header.column.getCanSort();
+                const isPublishStatusColumn = header.column.id === "isPublished";
+                const handleSortClick = isPublishStatusColumn
+                  ? () => {
+                      const currentSort = sorting[0];
+                      const nextSorting: SortingState =
+                        currentSort?.id === "isPublished" && !currentSort.desc
+                          ? [{ id: "isPublished", desc: true }]
+                          : [{ id: "isPublished", desc: false }];
+
+                      setSorting(nextSorting);
+                    }
+                  : header.column.getToggleSortingHandler();
                 return (
                   <TableHead key={header.id} className="px-4">
                     {header.isPlaceholder ? null : canSort ? (
@@ -71,7 +102,7 @@ export function StaffDataTable<TData>({
                         type="button"
                         variant="ghost"
                         className="-ml-2 h-8 px-2 font-semibold"
-                        onClick={header.column.getToggleSortingHandler()}
+                        onClick={handleSortClick}
                         style={{ color: "var(--content-heading)" }}
                       >
                         {flexRender(
@@ -112,8 +143,8 @@ export function StaffDataTable<TData>({
                 </div>
               </TableCell>
             </TableRow>
-          ) : table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
+          ) : rowModel.rows.length ? (
+            rowModel.rows.map((row) => (
               <TableRow
                 key={row.id}
                 className={cn(

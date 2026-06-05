@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import {
   ClipboardTextIcon, PencilIcon, TrashIcon, ArrowLeftIcon,
   GameControllerIcon, EyeIcon, EyeSlashIcon, ArrowCounterClockwiseIcon,
@@ -69,6 +69,12 @@ const emptyDraft = (): QuizDraft => ({
   level: "MEDIUM",
   questions: [],
 });
+
+const publishStatusSorting: SortingFn<StaffQuizSet> = (rowA, rowB, columnId) => {
+  const a = rowA.getValue<boolean>(columnId) ? 1 : 0;
+  const b = rowB.getValue<boolean>(columnId) ? 1 : 0;
+  return a - b;
+};
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -331,6 +337,8 @@ export default function StaffQuizzesPage() {
     {
       accessorKey: "isPublished",
       header: "Hiển thị",
+      sortDescFirst: false,
+      sortingFn: publishStatusSorting,
       cell: ({ row: r }) => {
         const isPublished = r.original.isPublished === true;
         const StatusIcon = isPublished ? EyeIcon : EyeSlashIcon;
