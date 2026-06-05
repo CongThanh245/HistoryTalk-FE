@@ -16,8 +16,15 @@ const isAdminRole = (role: string | undefined) =>
 const isPathOrChild = (pathname: string, basePath: string) =>
   pathname === basePath || pathname.startsWith(`${basePath}/`);
 
+const isPublicAssetPath = (pathname: string) =>
+  /\.[a-zA-Z0-9]+$/.test(pathname);
+
 export function authMiddleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (isPublicAssetPath(pathname)) {
+    return NextResponse.next();
+  }
 
   const token = request.cookies.get("auth-token")?.value;
   const role = request.cookies.get("auth-role")?.value;

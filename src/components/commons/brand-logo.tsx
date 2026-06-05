@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "next-themes";
+import Image from "next/image";
 import { cn } from "@/lib/utils/cn";
 
 type BrandLogoProps = {
@@ -18,21 +18,17 @@ export function BrandLogo({
   forceDark = false,
   size = "default",
 }: BrandLogoProps) {
-  const { resolvedTheme } = useTheme();
-
-  const isDark = forceDark || resolvedTheme === "dark";
-
-  // When collapsed, use solo-logo.png
-  // Otherwise use theme-based logo
-  const logoSrc = isCollapsed
-    ? "/solo-logo.png"
-    : isDark
-        ? "/logo-dark-theme.png"
-        : "/logo-light-theme.png";
-
   const isLarge = size === "large";
   const width = isCollapsed ? 36 : isLarge ? 180 : 144;
   const height = isCollapsed ? 36 : isLarge ? 56 : 44;
+  const themeLogoClassName = cn(
+    "relative z-10 object-contain",
+    forceDark ? "block" : "block dark:hidden",
+  );
+  const darkLogoClassName = cn(
+    "relative z-10 object-contain",
+    forceDark ? "hidden" : "hidden dark:block",
+  );
 
   return (
     <span className={cn("brand-logo-root inline-flex items-center", className)}>
@@ -42,15 +38,38 @@ export function BrandLogo({
           isCollapsed ? "h-9 w-9" : isLarge ? "h-14 w-44" : "h-11 w-36",
         )}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={logoSrc}
-          alt="HistoryTalk logo"
-          width={width}
-          height={height}
-          fetchPriority={priority ? "high" : undefined}
-          className="relative z-10 object-contain"
-        />
+        {isCollapsed ? (
+          <Image
+            src="/solo-logo.png"
+            alt="HistoryTalk logo"
+            width={width}
+            height={height}
+            priority={priority}
+            unoptimized
+            className="relative z-10 object-contain"
+          />
+        ) : (
+          <>
+            <Image
+              src="/logo-light-theme.png"
+              alt="HistoryTalk logo"
+              width={width}
+              height={height}
+              priority={priority}
+              unoptimized
+              className={themeLogoClassName}
+            />
+            <Image
+              src="/logo-dark-theme.png"
+              alt="HistoryTalk logo"
+              width={width}
+              height={height}
+              priority={priority}
+              unoptimized
+              className={darkLogoClassName}
+            />
+          </>
+        )}
       </span>
     </span>
   );
