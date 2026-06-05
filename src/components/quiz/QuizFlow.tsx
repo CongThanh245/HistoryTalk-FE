@@ -16,33 +16,13 @@ import { useQuizSets, useStartQuiz, useSubmitQuiz } from "@/features/quiz/hooks"
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 import { queryKeys } from "@/shared/query-key";
 import { cn } from "@/lib/utils/cn";
+import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { QuizDetailPage } from "./QuizDetailPage";
 import { QuizSessionPage } from "./QuizSessionPage";
 import { QuizResultPage } from "./QuizResultPage";
 import { QuizSidebar } from "./QuizSidebar";
 
 type QuizPhase = "detail" | "session" | "result";
-
-type ApiErrorBody = {
-  message?: string;
-  errors?: Record<string, string | string[]>;
-};
-
-function getApiErrorMessage(error: unknown, fallback: string) {
-  if (!axios.isAxiosError<ApiErrorBody>(error)) return fallback;
-
-  const data = error.response?.data;
-  const fieldErrors = data?.errors
-    ? Object.entries(data.errors)
-        .map(([field, value]) => {
-          const text = Array.isArray(value) ? value.join(", ") : value;
-          return `${field}: ${text}`;
-        })
-        .join("\n")
-    : "";
-
-  return [data?.message, fieldErrors].filter(Boolean).join("\n") || fallback;
-}
 
 interface QuizFlowProps {
   quiz: QuizSet;

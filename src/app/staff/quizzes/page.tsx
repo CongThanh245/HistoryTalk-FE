@@ -39,6 +39,7 @@ import {
 } from "@/features/trash/hooks";
 import { useEvents } from "@/features/events/hooks";
 import type { StaffQuizSet } from "@/services/staff.quiz.service";
+import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -193,8 +194,8 @@ export default function StaffQuizzesPage() {
             toast.success(`Đã tạo quiz "${title}" với ${draft.questions.length} câu hỏi.`);
             setView("list");
           },
-          onError: () => {
-            toast.error("Tạo quiz thất bại. Vui lòng thử lại.");
+          onError: (error) => {
+            toast.error(getApiErrorMessage(error, "Tạo quiz thất bại. Vui lòng thử lại."));
           },
         },
       );
@@ -214,8 +215,8 @@ export default function StaffQuizzesPage() {
             toast.success(`Đã cập nhật quiz "${title}".`);
             setView("list");
           },
-          onError: () => {
-            toast.error("Cập nhật quiz thất bại. Vui lòng thử lại.");
+          onError: (error) => {
+            toast.error(getApiErrorMessage(error, "Cập nhật quiz thất bại. Vui lòng thử lại."));
           },
         },
       );
@@ -229,8 +230,8 @@ export default function StaffQuizzesPage() {
         toast.success(`Đã chuyển quiz "${deleteTarget.title}" vào thùng rác.`);
         setDeleteTarget(null);
       },
-      onError: () => {
-        toast.error("Xóa quiz thất bại. Vui lòng thử lại.");
+      onError: (error) => {
+        toast.error(getApiErrorMessage(error, "Xóa quiz thất bại. Vui lòng thử lại."));
       },
     });
   };
@@ -242,8 +243,8 @@ export default function StaffQuizzesPage() {
         toast.success(`Đã khôi phục quiz "${restoreTarget.title}".`);
         setRestoreTarget(null);
       },
-      onError: () => {
-        toast.error("Khôi phục thất bại. Vui lòng thử lại.");
+      onError: (error) => {
+        toast.error(getApiErrorMessage(error, "Khôi phục thất bại. Vui lòng thử lại."));
       },
     });
   };
@@ -255,8 +256,8 @@ export default function StaffQuizzesPage() {
         toast.success(`Đã xóa vĩnh viễn quiz "${permanentDeleteTarget.title}".`);
         setPermanentDeleteTarget(null);
       },
-      onError: () => {
-        toast.error("Xóa vĩnh viễn thất bại.");
+      onError: (error) => {
+        toast.error(getApiErrorMessage(error, "Xóa vĩnh viễn thất bại."));
       },
     });
   };
@@ -278,8 +279,8 @@ export default function StaffQuizzesPage() {
           );
           setPublishTarget(null);
         },
-        onError: () => {
-          toast.error("Cập nhật trạng thái hiển thị thất bại. Vui lòng thử lại.");
+        onError: (error) => {
+          toast.error(getApiErrorMessage(error, "Cập nhật trạng thái hiển thị thất bại. Vui lòng thử lại."));
         },
       },
     );

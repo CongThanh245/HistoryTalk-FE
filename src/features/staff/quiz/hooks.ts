@@ -10,6 +10,7 @@ import {
   type ImportQuizFromCsvResponse,
 } from "@/services/staff.quiz.service";
 import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/utils/api-error";
 
 // GET /staff/quizzes — danh sách quiz của staff
 export function useStaffQuizzes(params?: GetStaffQuizzesParams) {
@@ -152,9 +153,8 @@ export function useImportQuizzesFromCsv() {
         }
       }
     },
-    onError: (error: any) => {
-      const message = error?.response?.data?.message || "Import CSV thất bại";
-      toast.error(message);
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "Import CSV thất bại"));
     },
   });
 }
