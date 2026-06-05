@@ -85,6 +85,10 @@ function getDocumentId(document: RagDocument) {
   return document.id ?? document.documentId;
 }
 
+function hasPdf(document: RagDocument) {
+  return !!document.fileUrl?.trim();
+}
+
 function makeDocumentKey(
   document: RagDocument,
   ownerType: DocumentOwnerType,
@@ -493,6 +497,7 @@ export default function StaffDocumentsPage() {
         cell: ({ row }) => {
           const docId = getDocumentId(row.original.document);
           const hasDocId = !!docId;
+          const canViewPdf = hasDocId && hasPdf(row.original.document);
           return (
             <div className="flex justify-end gap-1">
               <Button
@@ -568,33 +573,34 @@ export default function StaffDocumentsPage() {
               >
                 <UploadSimpleIcon className="h-4 w-4" />
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full"
-                disabled={!hasDocId || getPdfUrl.isPending}
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  if (!docId) return;
-                  setViewerLoading(true);
-                  setViewerOpen(true);
-                  try {
-                    const result = await getPdfUrl.mutateAsync(docId);
-                    if (result.url) {
-                      setViewerUrl(result.url);
+              {canViewPdf && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-full"
+                  disabled={getPdfUrl.isPending}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    setViewerLoading(true);
+                    setViewerOpen(true);
+                    try {
+                      const result = await getPdfUrl.mutateAsync(docId);
+                      if (result.url) {
+                        setViewerUrl(result.url);
+                      }
+                    } catch {
+                      setViewerUrl(null);
+                    } finally {
+                      setViewerLoading(false);
                     }
-                  } catch {
-                    setViewerUrl(null);
-                  } finally {
-                    setViewerLoading(false);
-                  }
-                }}
-                style={{ color: "var(--accent-gold)" }}
-                title="Xem PDF"
-              >
-                <EyeIcon className="h-4 w-4" />
-              </Button>
+                  }}
+                  style={{ color: "var(--accent-gold)" }}
+                  title="Xem PDF"
+                >
+                  <EyeIcon className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           );
         },
@@ -939,7 +945,7 @@ export default function StaffDocumentsPage() {
                           <ArrowSquareOutIcon className="mr-1.5 h-3.5 w-3.5" />
                           Mở {selectedRow.ownerType === "character" ? "nhân vật" : "bối cảnh"}
                         </Button>
-                        {getDocumentId(selectedRow.document) && (
+                        {getDocumentId(selectedRow.document) && hasPdf(selectedRow.document) && (
                           <Button
                             type="button"
                             size="sm"
