@@ -36,7 +36,6 @@ function TierCard({
   const features: [string, string][] = [
     ["Thời hạn", `${tier.noMonth} tháng`],
     ["Token AI", tier.limitedToken.toLocaleString("vi-VN")],
-    ["Lượt chat", "Không giới hạn"],
     ["Tính năng", "Đầy đủ"],
   ];
 
