@@ -18,6 +18,14 @@ function formatCurrency(amount: number) {
   }).format(amount);
 }
 
+function getTierFeatureSummary(tier: PaymentTier): string {
+  const value = `${tier.tierId} ${tier.title}`.toLowerCase();
+
+  if (value.includes("pro")) return "Nội dung, chat, call, video call, quiz";
+  if (value.includes("plus")) return "Nội dung, chat, call, quiz";
+  return "Nội dung, chat, quiz";
+}
+
 function TierCard({
   tier,
   index,
@@ -36,7 +44,7 @@ function TierCard({
   const features: [string, string][] = [
     ["Thời hạn", `${tier.noMonth} tháng`],
     ["Token AI", tier.limitedToken.toLocaleString("vi-VN")],
-    ["Tính năng", "Đầy đủ"],
+    ["Tính năng", getTierFeatureSummary(tier)],
   ];
 
   return (

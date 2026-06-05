@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
-import { PhoneCallIcon, VideoCameraIcon } from "@phosphor-icons/react";
+import { PhoneCallIcon, VideoCameraIcon, LockIcon } from "@phosphor-icons/react";
 import type {
   ChatCharacter,
   ChatMessage,
@@ -24,6 +24,8 @@ import type { KeywordData } from "@/data/keywords";
 import { cn } from "@/lib/utils/cn";
 import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth.store";
+import { hasPlusAccess, hasProAccess } from "@/services/user.service";
 import { useSidebar } from "@/components/layouts/sidebar/sidebar-context";
 import {
   Dialog,
@@ -127,6 +129,7 @@ export function ChatMain({
   isRightOpen = false,
 }: ChatMainProps) {
   const { toggleMobileSidebar } = useSidebar();
+  const user = useAuthStore((s) => s.user);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>(
     [],
@@ -218,8 +221,15 @@ export function ChatMain({
     userTextMessageCount <= 3 &&
     !isStreaming &&
     !isTokenExhausted &&
-    !!sessionId;
+    !!sessionId &&
+    hasPlusAccess(user);
   const sessionIdRef = useRef(sessionId);
+  const canUseVoiceCall = hasPlusAccess(user);
+  const canUseVideoCall = hasProAccess(user);
+
+  const handleLockedFeatureClick = useCallback(() => {
+    setIsUpgradeOpen(true);
+  }, []);
 
   useEffect(() => {
     sessionIdRef.current = sessionId;
@@ -259,9 +269,13 @@ export function ChatMain({
   );
 
   const handleOpenVoice2DCall = useCallback(() => {
+    if (!canUseVoiceCall) {
+      handleLockedFeatureClick();
+      return;
+    }
     setVoiceCallDraftMessages([]);
     setIsVoice2DOpen(true);
-  }, []);
+  }, [canUseVoiceCall, handleLockedFeatureClick]);
 
   const handleCloseVoice2DCall = useCallback(() => {
     setIsVoice2DOpen(false);
@@ -272,9 +286,13 @@ export function ChatMain({
   }, [qc, sessionId]);
 
   const handleOpenVoice3DCall = useCallback(() => {
+    if (!canUseVideoCall) {
+      handleLockedFeatureClick();
+      return;
+    }
     setVoiceCallDraftMessages([]);
     setIsVoice3DOpen(true);
-  }, []);
+  }, [canUseVideoCall, handleLockedFeatureClick]);
 
   const handleCloseVoice3DCall = useCallback(() => {
     setIsVoice3DOpen(false);
@@ -527,9 +545,11 @@ export function ChatMain({
         {/* ── Nút Voice Call ── */}
         <button
           onClick={handleOpenVoice2DCall}
-          disabled={!sessionId || isTokenExhausted}
+          disabled={canUseVoiceCall && (!sessionId || isTokenExhausted)}
           title={
-            isTokenExhausted
+            !canUseVoiceCall
+              ? "Gọi thoại có trong gói Plus. Bấm để xem các gói nâng cấp."
+              : isTokenExhausted
               ? "Bạn đã hết token. Vui lòng nâng cấp để gọi thoại."
               : sessionId
                 ? `Gọi thoại với ${character.name}`
@@ -538,21 +558,28 @@ export function ChatMain({
           className="w-8 h-8 flex items-center justify-center rounded-full transition-all
                      hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
           style={{
-            background: "rgba(201,168,76,0.12)",
-            border: "1px solid rgba(201,168,76,0.3)",
+            background: canUseVoiceCall ? "rgba(201,168,76,0.12)" : "rgba(148,163,184,0.08)",
+            border: canUseVoiceCall ? "1px solid rgba(201,168,76,0.3)" : "1px solid rgba(148,163,184,0.22)",
+            opacity: canUseVoiceCall ? 1 : 0.56,
           }}
         >
-          <PhoneIcon
-            className="w-4 h-4"
-            style={{ color: "var(--accent-gold)" }}
-          />
+          {canUseVoiceCall ? (
+            <PhoneIcon
+              className="w-4 h-4"
+              style={{ color: "var(--accent-gold)" }}
+            />
+          ) : (
+            <LockIcon className="w-4 h-4" style={{ color: "var(--text-secondary)" }} />
+          )}
         </button>
 
         <button
           onClick={handleOpenVoice3DCall}
-          disabled={!sessionId || isTokenExhausted}
+          disabled={canUseVideoCall && (!sessionId || isTokenExhausted)}
           title={
-            isTokenExhausted
+            !canUseVideoCall
+              ? "Video call có trong gói Pro. Bấm để xem các gói nâng cấp."
+              : isTokenExhausted
               ? "Bạn đã hết token. Vui lòng nâng cấp để gọi 3D."
               : sessionId
                 ? `Video call 3D với ${character.name}`
@@ -561,15 +588,20 @@ export function ChatMain({
           className="w-8 h-8 flex items-center justify-center rounded-full transition-all
                      hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
           style={{
-            background: "rgba(201,168,76,0.12)",
-            border: "1px solid rgba(201,168,76,0.3)",
+            background: canUseVideoCall ? "rgba(201,168,76,0.12)" : "rgba(148,163,184,0.08)",
+            border: canUseVideoCall ? "1px solid rgba(201,168,76,0.3)" : "1px solid rgba(148,163,184,0.22)",
+            opacity: canUseVideoCall ? 1 : 0.56,
           }}
         >
-          <VideoCameraIcon
-            className="w-4 h-4"
-            weight="fill"
-            style={{ color: "var(--accent-gold)" }}
-          />
+          {canUseVideoCall ? (
+            <VideoCameraIcon
+              className="w-4 h-4"
+              weight="fill"
+              style={{ color: "var(--accent-gold)" }}
+            />
+          ) : (
+            <LockIcon className="w-4 h-4" style={{ color: "var(--text-secondary)" }} />
+          )}
         </button>
 
         {/* Toggle Right (Mobile/Tablet) */}

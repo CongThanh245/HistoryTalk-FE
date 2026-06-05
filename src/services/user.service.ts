@@ -41,12 +41,36 @@ export interface ChangePasswordPayload {
   confirmPassword: string;
 }
 
-/** Kiểm tra tài khoản đã là Pro (có tierId & tierTitle không phải free) */
+export type SubscriptionPlan = "free" | "plus" | "pro";
+
+export function getSubscriptionPlan(
+  profile: Pick<UserProfile, "tierId" | "tierTitle"> | null | undefined,
+): SubscriptionPlan {
+  const tierId = profile?.tierId?.toLowerCase() ?? "";
+  const tierTitle = profile?.tierTitle?.toLowerCase().trim() ?? "";
+  const value = `${tierId} ${tierTitle}`;
+
+  if (value.includes("pro")) return "pro";
+  if (value.includes("plus")) return "plus";
+  return "free";
+}
+
+export function hasPlusAccess(
+  profile: Pick<UserProfile, "tierId" | "tierTitle"> | null | undefined,
+): boolean {
+  const plan = getSubscriptionPlan(profile);
+  return plan === "plus" || plan === "pro";
+}
+
+export function hasProAccess(
+  profile: Pick<UserProfile, "tierId" | "tierTitle"> | null | undefined,
+): boolean {
+  return getSubscriptionPlan(profile) === "pro";
+}
+
+/** Kiểm tra tài khoản đã là gói trả phí (Plus hoặc Pro). */
 export function isPro(profile: UserProfile | null | undefined): boolean {
-  if (!profile) return false;
-  if (!profile.tierId) return false;
-  const title = (profile.tierTitle ?? "").toLowerCase().trim();
-  return title !== "" && title !== "free";
+  return hasPlusAccess(profile);
 }
 
 // ── Service ──────────────────────────────────────────────
