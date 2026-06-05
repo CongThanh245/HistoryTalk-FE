@@ -5,9 +5,18 @@
  * @returns true nếu hợp lệ, false nếu là "string" (vô nghĩa) hoặc rỗng hoặc định dạng sai.
  */
 export function isValidUrl(url?: string | null): boolean {
-  if (!url) return false;
+  const value = url?.trim();
+  if (!value) return false;
   // Loại bỏ các từ khóa vô nghĩa thường có trong mock data hoặc api error
-  if (url.toLowerCase() === "string") return false;
-  
-  return url.startsWith("http") || url.startsWith("/") || url.startsWith("data:image/");
+  if (value.toLowerCase() === "string") return false;
+
+  if (value.startsWith("data:image/")) return true;
+  if (value.startsWith("/") && !value.startsWith("//")) return true;
+
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
 }

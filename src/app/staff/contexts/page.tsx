@@ -46,6 +46,12 @@ import {
   EventEra,
 } from "@/services/event.service";
 import type { TrashItem } from "@/services/trash.service";
+import {
+  hasValidationErrors,
+  validateContextDraft,
+  type ContextValidationField,
+  type ValidationErrors,
+} from "@/lib/utils/content-validation";
 
 type DraftState = {
   id?: string;
@@ -78,6 +84,14 @@ const EMPTY_DRAFT: DraftState = {
   pendingPdfFile: null,
 };
 
+function ValidationErrorText({ message }: { message?: string }) {
+  return message ? (
+    <p className="text-[11px] font-medium" style={{ color: "var(--accent-danger)" }}>
+      {message}
+    </p>
+  ) : null;
+}
+
 // Constants for Select Options
 const ERA_OPTIONS = [
   { value: "ANCIENT" as const, label: "Cổ đại" },
@@ -106,6 +120,7 @@ export default function StaffContextsPage() {
   const [documentOpen, setDocumentOpen] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<"content" | "meta" | "rag">("content");
   const ragSectionRef = React.useRef<HTMLDivElement>(null);
+  const [errors, setErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
 
   const { data, isLoading, isFetching } = useEvents({
     search: search || undefined,
@@ -144,7 +159,34 @@ export default function StaffContextsPage() {
   const displayedItems = items;
 
   const set = <K extends keyof DraftState>(field: K) => (val: DraftState[K]) =>
-    setDraft((s) => ({ ...s, [field]: val }));
+    setDraft((s) => {
+      const next = { ...s, [field]: val };
+      const validatedFields: ContextValidationField[] = [
+        "name",
+        "description",
+        "era",
+        "year",
+        "location",
+        "imageUrl",
+        "videoUrl",
+      ];
+
+      if (validatedFields.includes(field as ContextValidationField)) {
+        const nextErrors = validateContextDraft(next);
+        const errorField = field as ContextValidationField;
+        setErrors((prev) => {
+          const updated = { ...prev };
+          if (nextErrors[errorField]) {
+            updated[errorField] = nextErrors[errorField];
+          } else {
+            delete updated[errorField];
+          }
+          return updated;
+        });
+      }
+
+      return next;
+    });
 
   const getDocumentId = React.useCallback(
     (document: RagDocument) => document.id ?? document.documentId,
@@ -204,11 +246,19 @@ export default function StaffContextsPage() {
   }, [dialogOpen, draft.documentContent, draft.documentId, getDocumentId, historicalDocuments.data, mode, skipAutoSelect]);
 
   const handleSave = async () => {
+    const nextErrors = validateContextDraft(draft);
+    if (hasValidationErrors(nextErrors)) {
+      setErrors(nextErrors);
+      toast.error("Vui lòng kiểm tra các trường bắt buộc và định dạng năm/URL.");
+      return;
+    }
+    setErrors({});
+
     const payload = {
       name: draft.name.trim(),
       description: draft.description.trim(),
       era: draft.era as EventEraBackend,
-      year: Number(draft.year) || 0,
+      year: Number(draft.year),
       location: draft.location.trim() || undefined,
       imageUrl: draft.imageUrl.trim() || undefined,
       videoUrl: draft.videoUrl.trim() || undefined,
@@ -653,7 +703,7 @@ export default function StaffContextsPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (!draft.name.trim() || !draft.era || isPending) return;
+              if (isPending) return;
               handleSave();
             }}
           >
@@ -691,6 +741,12 @@ export default function StaffContextsPage() {
                   aria-checked={draft.isPublished}
                   onClick={() => {
                     if (!draft.isPublished) {
+                      const nextErrors = validateContextDraft(draft);
+                      if (hasValidationErrors(nextErrors)) {
+                        setErrors(nextErrors);
+                        toast.error("Vui lòng hoàn tất bối cảnh trước khi xuất bản.");
+                        return;
+                      }
                       setPublishDialogOpen(true);
                     } else {
                       set("isPublished")(false);
@@ -761,6 +817,7 @@ export default function StaffContextsPage() {
                   onChange={(e) => set("name")(e.target.value)}
                   placeholder="VD: Trận Bạch Đằng"
                 />
+                <ValidationErrorText message={errors.name} />
               </div>
 
               {/* Description */}
@@ -771,15 +828,17 @@ export default function StaffContextsPage() {
                   onChange={(e) => set("description")(e.target.value)}
                   placeholder="Bối cảnh lịch sử..."
                 />
+                <ValidationErrorText message={errors.description} />
               </div>
 
               <div className="grid gap-1.5">
-                <StaffFormLabel>Địa điểm</StaffFormLabel>
+                <StaffFormLabel>Địa điểm *</StaffFormLabel>
                 <StaffFormInput
                   value={draft.location}
                   onChange={(e) => set("location")(e.target.value)}
                   placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
                 />
+                <ValidationErrorText message={errors.location} />
               </div>
                 </div>
               )}
@@ -799,6 +858,7 @@ export default function StaffContextsPage() {
                         placeholder="Chọn thời đại"
                         options={ERA_OPTIONS}
                       />
+                      <ValidationErrorText message={errors.era} />
                     </div>
                   </div>
 
@@ -810,6 +870,7 @@ export default function StaffContextsPage() {
                       onChange={(e) => set("year")(e.target.value)}
                       placeholder="938"
                     />
+                    <ValidationErrorText message={errors.year} />
                   </div>
 
 
@@ -825,6 +886,7 @@ export default function StaffContextsPage() {
                         onChange={(e) => set("imageUrl")(e.target.value)}
                         placeholder="https://..."
                       />
+                      <ValidationErrorText message={errors.imageUrl} />
                     </div>
                     <div className="grid gap-1.5">
                       <StaffFormLabel>URL video (YouTube)</StaffFormLabel>
@@ -833,6 +895,7 @@ export default function StaffContextsPage() {
                         onChange={(e) => set("videoUrl")(e.target.value)}
                         placeholder="https://youtube.com/watch?v=..."
                       />
+                      <ValidationErrorText message={errors.videoUrl} />
                     </div>
                   </div>
                 </div>
@@ -1135,7 +1198,7 @@ export default function StaffContextsPage() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={!draft.name.trim() || !draft.era || isPending}
+                  disabled={isPending || hasValidationErrors(validateContextDraft(draft))}
                 >
                   {isPending ? "Đang lưu..." : "Lưu bối cảnh"}
                 </Button>

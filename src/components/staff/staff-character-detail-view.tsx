@@ -54,6 +54,14 @@ import { toast } from "sonner";
 import type { RagDocument } from "@/services/document.service";
 import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
+import {
+  hasValidationErrors,
+  validateCharacterDraft,
+  validateContextDraft,
+  type CharacterValidationField,
+  type ContextValidationField,
+  type ValidationErrors,
+} from "@/lib/utils/content-validation";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -141,6 +149,46 @@ interface StaffCharacterDetailViewProps {
   isUploadPdfAfterCreatePending?: boolean;
 }
 
+function ValidationErrorText({ message }: { message?: string }) {
+  return message ? (
+    <p className="text-[11px] font-medium" style={{ color: "var(--accent-danger)" }}>
+      {message}
+    </p>
+  ) : null;
+}
+
+function getCharacterRelatedValidationFields(
+  field: keyof CharacterDraft,
+): CharacterValidationField[] {
+  if (
+    field === "bornDay" ||
+    field === "bornMonth" ||
+    field === "bornYear" ||
+    field === "isBornBc"
+  ) {
+    return ["bornDay", "bornMonth", "bornYear", "deathYear"];
+  }
+
+  if (
+    field === "deathDay" ||
+    field === "deathMonth" ||
+    field === "deathYear" ||
+    field === "isDeathBc"
+  ) {
+    return ["deathDay", "deathMonth", "deathYear"];
+  }
+
+  if (
+    ["name", "title", "background", "personality", "image", "modelUrl"].includes(
+      field,
+    )
+  ) {
+    return [field as CharacterValidationField];
+  }
+
+  return [];
+}
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
@@ -176,6 +224,8 @@ export function StaffCharacterDetailView({
   const [publishDialogOpen, setPublishDialogOpen] = React.useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = React.useState(false);
+  const [errors, setErrors] = React.useState<ValidationErrors<CharacterValidationField>>({});
+  const [quickErrors, setQuickErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
 
   /* ── PDF Dialog State ── */
   const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
@@ -211,7 +261,29 @@ export function StaffCharacterDetailView({
   /* helper to set a single field */
   const set =
     (field: keyof CharacterDraft) => (val: string | boolean) =>
-      setDraft((s) => ({ ...s, [field]: val }));
+      setDraft((s) => {
+        const next = { ...s, [field]: val };
+        const nextErrors = validateCharacterDraft(next, {
+          requirePublishReady: next.isPublished,
+        });
+        const relatedFields = getCharacterRelatedValidationFields(field);
+
+        if (relatedFields.length > 0) {
+          setErrors((prev) => {
+            const updated = { ...prev };
+            relatedFields.forEach((relatedField) => {
+              if (nextErrors[relatedField]) {
+                updated[relatedField] = nextErrors[relatedField];
+              } else {
+                delete updated[relatedField];
+              }
+            });
+            return updated;
+          });
+        }
+
+        return next;
+      });
 
   const getDocumentId = React.useCallback(
     (document: RagDocument) => document.id ?? document.documentId,
@@ -259,6 +331,25 @@ export function StaffCharacterDetailView({
     isPublished: false,
   });
   const createEvent = useCreateEvent();
+
+  const setQuickContextField =
+    <K extends keyof typeof quickCtx>(field: K) =>
+    (val: (typeof quickCtx)[K]) =>
+      setQuickCtx((s) => {
+        const next = { ...s, [field]: val };
+        const nextErrors = validateContextDraft(next);
+        setQuickErrors((prev) => {
+          const updated = { ...prev };
+          const errorField = field as ContextValidationField;
+          if (nextErrors[errorField]) {
+            updated[errorField] = nextErrors[errorField];
+          } else {
+            delete updated[errorField];
+          }
+          return updated;
+        });
+        return next;
+      });
 
   // Reset state/sync when props change (especially for edit mode)
   React.useEffect(() => {
@@ -359,11 +450,40 @@ export function StaffCharacterDetailView({
     contextId: mappedContextId || undefined,
   };
 
-  /* Determine if form can be submitted */
-  const canSave = draft.name.trim() && draft.title.trim() && !isPending;
+  const draftValidationErrors = React.useMemo(() => validateCharacterDraft(draft), [draft]);
+  const publishValidationErrors = React.useMemo(
+    () => validateCharacterDraft(draft, { requirePublishReady: true }),
+    [draft],
+  );
+  const saveValidationErrors = draft.isPublished
+    ? publishValidationErrors
+    : draftValidationErrors;
+  const hasDraftErrors = hasValidationErrors(draftValidationErrors);
+  const hasSaveErrors = hasValidationErrors(saveValidationErrors);
+  const hasPublishErrors = hasValidationErrors(publishValidationErrors);
+  const canSave = !hasSaveErrors && !isPending;
+  const canStartChat = isCreated && !!mappedContextId && !hasPublishErrors;
+
+  const showValidationErrors = (nextErrors = saveValidationErrors) => {
+    setErrors(nextErrors);
+    toast.error("Vui lòng kiểm tra các trường bắt buộc và định dạng ngày tháng.");
+  };
+
+  const handleSaveClick = () => {
+    if (hasSaveErrors) {
+      showValidationErrors();
+      return;
+    }
+    setErrors({});
+    onSave(draft);
+  };
 
   /* Handle context mapping */
   const handleMapContext = () => {
+    if (hasDraftErrors) {
+      showValidationErrors(draftValidationErrors);
+      return;
+    }
     if (!selectedContextId || !characterId) return;
     onMapContext(characterId, selectedContextId, {
       onSuccess: () => {
@@ -499,6 +619,7 @@ export function StaffCharacterDetailView({
                   placeholder="VD: Ngô Quyền"
                   disabled={!isEditing}
                 />
+                <ValidationErrorText message={errors.name} />
               </div>
               <div className="grid gap-1.5">
                 <StaffFormLabel>Chức vị *</StaffFormLabel>
@@ -508,6 +629,7 @@ export function StaffCharacterDetailView({
                   placeholder="VD: Tiết độ sứ"
                   disabled={!isEditing}
                 />
+                <ValidationErrorText message={errors.title} />
               </div>
             </div>
 
@@ -548,6 +670,7 @@ export function StaffCharacterDetailView({
                   TCN
                 </label>
               </div>
+              <ValidationErrorText message={errors.bornDay || errors.bornMonth || errors.bornYear} />
             </div>
 
             <div className="grid gap-3">
@@ -587,16 +710,18 @@ export function StaffCharacterDetailView({
                   TCN
                 </label>
               </div>
+              <ValidationErrorText message={errors.deathDay || errors.deathMonth || errors.deathYear} />
             </div>
 
             <div className="grid gap-1.5">
-              <StaffFormLabel>URL hình ảnh</StaffFormLabel>
+              <StaffFormLabel>URL hình ảnh nhân vật</StaffFormLabel>
               <StaffFormInput
                 value={draft.image}
                 onChange={(e) => set("image")(e.target.value)}
                 placeholder="https://..."
                 disabled={!isEditing}
               />
+              <ValidationErrorText message={errors.image} />
             </div>
 
             <div className="grid gap-1.5">
@@ -607,10 +732,11 @@ export function StaffCharacterDetailView({
                 placeholder="https://...model.glb"
                 disabled={!isEditing}
               />
+              <ValidationErrorText message={errors.modelUrl} />
             </div>
 
             <div className="grid gap-1.5">
-              <StaffFormLabel>Tiểu sử / Bối cảnh</StaffFormLabel>
+              <StaffFormLabel>Tiểu sử / Bối cảnh *</StaffFormLabel>
               <StaffFormTextarea
                 value={draft.background}
                 onChange={(e) => set("background")(e.target.value)}
@@ -618,10 +744,11 @@ export function StaffCharacterDetailView({
                 style={{ minHeight: "120px" }}
                 disabled={!isEditing}
               />
+              <ValidationErrorText message={errors.background} />
             </div>
 
             <div className="grid gap-1.5">
-              <StaffFormLabel>Tính cách</StaffFormLabel>
+              <StaffFormLabel>Tính cách *</StaffFormLabel>
               <StaffFormTextarea
                 value={draft.personality}
                 onChange={(e) => set("personality")(e.target.value)}
@@ -629,6 +756,7 @@ export function StaffCharacterDetailView({
                 style={{ minHeight: "90px" }}
                 disabled={!isEditing}
               />
+              <ValidationErrorText message={errors.personality} />
             </div>
 
             <div
@@ -929,6 +1057,10 @@ export function StaffCharacterDetailView({
                 aria-checked={draft.isPublished}
                 onClick={() => {
                   if (!draft.isPublished) {
+                    if (hasPublishErrors) {
+                      showValidationErrors(publishValidationErrors);
+                      return;
+                    }
                     if (!mappedContextId) return;
                     setPublishDialogOpen(true);
                   } else {
@@ -981,7 +1113,7 @@ export function StaffCharacterDetailView({
                   </Button>
                 )}
                 <Button
-                  onClick={() => onSave(draft)}
+                  onClick={handleSaveClick}
                   disabled={!canSave}
                   className={`border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-90 hover:shadow-sm cursor-pointer ${
                     isCreated ? "flex-1" : "w-full h-10 rounded-xl"
@@ -1049,6 +1181,7 @@ export function StaffCharacterDetailView({
                     onClick={handleMapContext}
                     disabled={
                       !selectedContextId ||
+                      hasDraftErrors ||
                       isMapContextPending ||
                       selectedContextId === mappedContextId
                     }
@@ -1142,10 +1275,11 @@ export function StaffCharacterDetailView({
                           <Input
                             id="qc-name"
                             value={quickCtx.name}
-                            onChange={(e) => setQuickCtx((s) => ({ ...s, name: e.target.value }))}
+                            onChange={(e) => setQuickContextField("name")(e.target.value)}
                             placeholder="VD: Chiến thắng Bạch Đằng"
                             className="h-9 text-sm"
                           />
+                          <ValidationErrorText message={quickErrors.name} />
                         </div>
 
                         <div className="grid gap-1.5">
@@ -1155,7 +1289,7 @@ export function StaffCharacterDetailView({
                           <textarea
                             id="qc-description"
                             value={quickCtx.description}
-                            onChange={(e) => setQuickCtx((s) => ({ ...s, description: e.target.value }))}
+                            onChange={(e) => setQuickContextField("description")(e.target.value)}
                             placeholder="Bối cảnh lịch sử, ý nghĩa sự kiện..."
                             rows={4}
                             className="w-full resize-none rounded-md border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-400 transition-colors"
@@ -1165,20 +1299,22 @@ export function StaffCharacterDetailView({
                               color: "var(--content-text)",
                             }}
                           />
+                          <ValidationErrorText message={quickErrors.description} />
                         </div>
 
                         <div className="grid gap-1.5">
                           <Label className="text-xs font-medium flex items-center gap-1.5" style={{ color: "var(--content-heading)" }}>
                             <MapPinIcon className="h-3.5 w-3.5" />
-                            Địa điểm
+                            Địa điểm <span style={{ color: "var(--accent-danger)" }}>*</span>
                           </Label>
                           <Input
                             id="qc-location"
                             value={quickCtx.location}
-                            onChange={(e) => setQuickCtx((s) => ({ ...s, location: e.target.value }))}
+                            onChange={(e) => setQuickContextField("location")(e.target.value)}
                             placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
                             className="h-9 text-sm"
                           />
+                          <ValidationErrorText message={quickErrors.location} />
                         </div>
                       </div>
 
@@ -1201,7 +1337,7 @@ export function StaffCharacterDetailView({
                             </Label>
                             <Select
                               value={quickCtx.era}
-                              onValueChange={(v) => setQuickCtx((s) => ({ ...s, era: v as EventEraBackend }))}
+                              onValueChange={(v) => setQuickContextField("era")(v as EventEraBackend)}
                             >
                               <SelectTrigger className="h-9 text-sm">
                                 <SelectValue placeholder="Chọn thời đại" />
@@ -1213,6 +1349,7 @@ export function StaffCharacterDetailView({
                                 <SelectItem value="CONTEMPORARY">Hiện đại</SelectItem>
                               </SelectContent>
                             </Select>
+                            <ValidationErrorText message={quickErrors.era} />
                           </div>
 
                           <div className="grid gap-1.5">
@@ -1223,10 +1360,11 @@ export function StaffCharacterDetailView({
                               id="qc-year"
                               type="number"
                               value={quickCtx.year}
-                              onChange={(e) => setQuickCtx((s) => ({ ...s, year: e.target.value }))}
+                              onChange={(e) => setQuickContextField("year")(e.target.value)}
                               placeholder="VD: 938"
                               className="h-9 text-sm"
                             />
+                            <ValidationErrorText message={quickErrors.year} />
                           </div>
                         </div>
                       </div>
@@ -1251,10 +1389,11 @@ export function StaffCharacterDetailView({
                           <Input
                             id="qc-imageUrl"
                             value={quickCtx.imageUrl}
-                            onChange={(e) => setQuickCtx((s) => ({ ...s, imageUrl: e.target.value }))}
+                            onChange={(e) => setQuickContextField("imageUrl")(e.target.value)}
                             placeholder="https://..."
                             className="h-9 text-sm"
                           />
+                          <ValidationErrorText message={quickErrors.imageUrl} />
                         </div>
 
                         <div className="grid gap-1.5">
@@ -1265,10 +1404,11 @@ export function StaffCharacterDetailView({
                           <Input
                             id="qc-videoUrl"
                             value={quickCtx.videoUrl}
-                            onChange={(e) => setQuickCtx((s) => ({ ...s, videoUrl: e.target.value }))}
+                            onChange={(e) => setQuickContextField("videoUrl")(e.target.value)}
                             placeholder="https://youtube.com/watch?v=..."
                             className="h-9 text-sm"
                           />
+                          <ValidationErrorText message={quickErrors.videoUrl} />
                         </div>
                       </div>
 
@@ -1337,10 +1477,19 @@ export function StaffCharacterDetailView({
                           !quickCtx.description.trim() ||
                           !quickCtx.era ||
                           !quickCtx.year ||
+                          !quickCtx.location.trim() ||
+                          hasValidationErrors(validateContextDraft(quickCtx)) ||
                           createEvent.isPending
                         }
                         className="border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] transition-all duration-200 hover:brightness-90 hover:shadow-sm cursor-pointer"
                         onClick={() => {
+                          const nextErrors = validateContextDraft(quickCtx);
+                          if (hasValidationErrors(nextErrors)) {
+                            setQuickErrors(nextErrors);
+                            toast.error("Vui lòng kiểm tra thông tin bối cảnh.");
+                            return;
+                          }
+                          setQuickErrors({});
                           createEvent.mutate(
                             {
                               name: quickCtx.name.trim(),
@@ -1376,7 +1525,7 @@ export function StaffCharacterDetailView({
 
         {/* ── Right Panel: Chat Preview ── */}
         <div className="flex-1 flex flex-col min-w-0 relative bg-[var(--bg-app)]">
-          {isCreated && mappedContextId ? (
+          {canStartChat ? (
             <ChatMain
               character={chatCharacter}
               sessionId={sessionId}
@@ -1407,7 +1556,9 @@ export function StaffCharacterDetailView({
                       <p className="text-sm mt-1 max-w-sm mx-auto" style={{ color: "var(--content-muted)" }}>
                         {!isCreated
                           ? "Hãy hoàn tất thông tin và 'Tạo nhân vật' để bắt đầu trải nghiệm AI."
-                          : "Bạn cần liên kết nhân vật với một 'Bối cảnh lịch sử' ở khung bên trái để AI có thể hiểu được bối cảnh trò chuyện."}
+                          : hasPublishErrors
+                            ? "Nhân vật cần đủ thông tin và URL hình ảnh hợp lệ trước khi chat."
+                            : "Bạn cần liên kết nhân vật với một 'Bối cảnh lịch sử' ở khung bên trái để AI có thể hiểu được bối cảnh trò chuyện."}
                       </p>
                     </div>
                   </div>
