@@ -2,12 +2,14 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon, CaretDownIcon, UploadSimpleIcon, FilePdfIcon } from "@phosphor-icons/react";
+import Image from "next/image";
+import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon, CaretDownIcon, UploadSimpleIcon, FilePdfIcon, ImageSquareIcon } from "@phosphor-icons/react";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { isValidUrl } from "@/lib/utils/url";
 import {
   StaffFormLabel,
   StaffFormInput,
@@ -320,6 +322,38 @@ export default function StaffContextsPage() {
 
   const columns = React.useMemo<ColumnDef<HistoricalEvent>[]>(
     () => [
+      {
+        accessorKey: "imageUrl",
+        header: "Ảnh",
+        cell: ({ row }) => (
+          <div
+            className="relative h-14 w-20 overflow-hidden rounded-lg border"
+            style={{
+              background: "var(--card-light-border)",
+              borderColor: "var(--card-light-border)",
+            }}
+          >
+            {isValidUrl(row.original.imageUrl) ? (
+              <Image
+                src={row.original.imageUrl!}
+                alt={row.original.title || "Ảnh bối cảnh lịch sử"}
+                fill
+                className="object-cover"
+                sizes="80px"
+              />
+            ) : (
+              <div
+                className="flex h-full w-full items-center justify-center"
+                style={{ color: "var(--content-subtle)" }}
+                title="Chưa có ảnh"
+              >
+                <ImageSquareIcon className="h-5 w-5" />
+              </div>
+            )}
+          </div>
+        ),
+        enableSorting: false,
+      },
       {
         accessorKey: "title",
         header: "Tiêu đề",
