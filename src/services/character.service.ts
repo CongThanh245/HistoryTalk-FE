@@ -5,6 +5,7 @@ import { ERA_CONFIG } from "./event.service";
 type RawContextRef = {
   contextId?: string;
   id?: string;
+  name?: string;
 };
 
 type RawCharacterEvent = {
@@ -63,6 +64,7 @@ export interface Character {
   isDeathBc?: boolean;
   side?: string;
   contextId?: string;
+  contexts?: { contextId: string; name: string }[];
   era?: string;
   role?: string;
   avatarUrl?: string | null;
@@ -138,6 +140,7 @@ function mapCharacter(raw: RawCharacter): Character {
     deathDay: raw.deathDay ?? null,
     isDeathBc: raw.isDeathBc ?? false,
     contextId,
+    contexts: raw.contexts?.map(c => ({ contextId: c.contextId ?? c.id ?? "", name: c.name ?? "" })) ?? [],
     role: raw.role,
     era: mapEraLabel(raw.era),
     isActive: raw.isActive ?? true,
@@ -204,6 +207,10 @@ export const characterService = {
 
   mapContext: async (characterId: string, contextId: string): Promise<void> => {
     await axiosClient.post(`/characters/${characterId}/contexts/${contextId}`);
+  },
+
+  unmapContext: async (characterId: string, contextId: string): Promise<void> => {
+    await axiosClient.delete(`/characters/${characterId}/contexts/${contextId}`);
   },
 };
 

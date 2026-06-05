@@ -129,7 +129,7 @@ export function useMapContextToCharacter() {
       qc.setQueryData(
         queryKeys.characters.detail(characterId),
         (old: Character | undefined) =>
-          old ? { ...old, contextId } : old,
+          old ? { ...old, contexts: [...(old.contexts || []), { contextId, name: "" }] } : old,
       );
       qc.setQueriesData(
         { queryKey: queryKeys.characters.all },
@@ -138,7 +138,7 @@ export function useMapContextToCharacter() {
           return {
             ...old,
             content: old.content.map((c) =>
-              c.id === characterId ? { ...c, contextId } : c,
+              c.id === characterId ? { ...c, contexts: [...(c.contexts || []), { contextId, name: "" }] } : c,
             ),
           };
         },
@@ -148,6 +148,37 @@ export function useMapContextToCharacter() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message ?? "Liên kết bối cảnh thất bại");
+  });
+}
+
+export function useUnmapContextFromCharacter() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ characterId, contextId }: { characterId: string; contextId: string }) =>
+      characterService.unmapContext(characterId, contextId),
+    onSuccess: (_result, { characterId, contextId }) => {
+      qc.setQueryData(
+        queryKeys.characters.detail(characterId),
+        (old: Character | undefined) =>
+          old ? { ...old, contexts: (old.contexts || []).filter(c => c.contextId !== contextId) } : old,
+      );
+      qc.setQueriesData(
+        { queryKey: queryKeys.characters.all },
+        (old: unknown) => {
+          if (!isCharactersResponse(old)) return old;
+          return {
+            ...old,
+            content: old.content.map((c) =>
+              c.id === characterId ? { ...c, contexts: (c.contexts || []).filter(ctx => ctx.contextId !== contextId) } : c,
+            ),
+          };
+        },
+      );
+      qc.invalidateQueries({ queryKey: queryKeys.characters.byContext(contextId) });
+      toast.success("Gỡ liên kết bối cảnh thành công");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Gỡ liên kết bối cảnh thất bại");
     },
   });
 }

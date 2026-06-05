@@ -129,9 +129,15 @@ interface StaffCharacterDetailViewProps {
     contextId: string,
     options?: { onSuccess?: () => void },
   ) => void;
+  /** Callback to unmap a context from the character */
+  onUnmapContext?: (
+    characterId: string,
+    contextId: string,
+    options?: { onSuccess?: () => void },
+  ) => void;
   isMapContextPending?: boolean;
-  /** The currently mapped contextId (from character data) */
-  initialContextId?: string;
+  /** The currently mapped contexts (from character data) */
+  initialContexts?: { contextId: string; name: string }[];
   /** If true, start in editing mode immediately (e.g. navigated from Edit button) */
   initialEditing?: boolean;
   documents?: RagDocument[];
@@ -202,8 +208,9 @@ export function StaffCharacterDetailView({
   isLoadingEvents,
   createdCharacterId,
   onMapContext,
+  onUnmapContext,
   isMapContextPending,
-  initialContextId,
+  initialContexts,
   initialEditing,
   documents = [],
   isLoadingDocuments = false,
@@ -316,7 +323,7 @@ export function StaffCharacterDetailView({
 
   /* ── Context mapping state ── */
   const [selectedContextId, setSelectedContextId] = React.useState<string>("");
-  const [mappedContextId, setMappedContextId] = React.useState<string>("");
+  const [mappedContexts, setMappedContexts] = React.useState<{ contextId: string; name: string }[]>([]);
 
   /* ── Quick-create context state ── */
   const [quickCreateOpen, setQuickCreateOpen] = React.useState(false);
@@ -378,9 +385,8 @@ export function StaffCharacterDetailView({
   }, [documents, draft.documentContent, draft.documentId, getDocumentId, mode, skipAutoSelect]);
 
   React.useEffect(() => {
-    setSelectedContextId(initialContextId ?? "");
-    setMappedContextId(initialContextId ?? "");
-  }, [initialContextId]);
+    setMappedContexts(initialContexts ?? []);
+  }, [initialContexts]);
 
   React.useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -411,16 +417,16 @@ export function StaffCharacterDetailView({
 
   // Fetch or create session when character becomes active
   const { data: sessions, isSuccess: isSessionsSuccess } = useChatSessions(
-    mappedContextId,
+    mappedContexts[0]?.contextId || "",
     characterId,
-    isCreated && !!mappedContextId
+    isCreated && mappedContexts.length > 0
   );
 
   const createSession = useCreateSession();
   const sessionInitialized = React.useRef(false);
 
   React.useEffect(() => {
-    if (!isCreated || !mappedContextId) return;
+    if (!isCreated || mappedContexts.length === 0) return;
     if (!isSessionsSuccess) return;
     if (sessionInitialized.current) return;
     if (sessionId) return;
@@ -431,13 +437,13 @@ export function StaffCharacterDetailView({
       setSessionId(sessions[0].id);
     } else {
       createSession.mutateAsync({
-        contextId: mappedContextId,
+        contextId: mappedContexts[0].contextId,
         characterId
       }).then((session) => {
         setSessionId(session.id);
       }).catch(console.error);
     }
-  }, [isCreated, mappedContextId, characterId, isSessionsSuccess, sessions, sessionId, createSession]);
+  }, [isCreated, mappedContexts, characterId, isSessionsSuccess, sessions, sessionId, createSession]);
 
   /* Build a ChatCharacter object from the draft for the right panel */
   const chatCharacter: ChatCharacter = {
@@ -447,7 +453,7 @@ export function StaffCharacterDetailView({
     description: draft.background || undefined,
     imageUrl: isValidUrl(draft.image) ? draft.image : "",
     modelUrl: isValidUrl(draft.modelUrl) ? draft.modelUrl : null,
-    contextId: mappedContextId || undefined,
+    contextId: mappedContexts[0]?.contextId || undefined,
   };
 
   const draftValidationErrors = React.useMemo(() => validateCharacterDraft(draft), [draft]);
@@ -462,7 +468,7 @@ export function StaffCharacterDetailView({
   const hasSaveErrors = hasValidationErrors(saveValidationErrors);
   const hasPublishErrors = hasValidationErrors(publishValidationErrors);
   const canSave = !hasSaveErrors && !isPending;
-  const canStartChat = isCreated && !!mappedContextId && !hasPublishErrors;
+  const canStartChat = isCreated && mappedContexts.length > 0 && !hasPublishErrors;
 
   const showValidationErrors = (nextErrors = saveValidationErrors) => {
     setErrors(nextErrors);
@@ -485,22 +491,33 @@ export function StaffCharacterDetailView({
       return;
     }
     if (!selectedContextId || !characterId) return;
+    const selectedEvent = eventOptions.find(ev => ev.id === selectedContextId);
+    
     onMapContext(characterId, selectedContextId, {
       onSuccess: () => {
-        setMappedContextId(selectedContextId);
+        if (selectedEvent) {
+          setMappedContexts(prev => {
+            if (prev.some(c => c.contextId === selectedContextId)) return prev;
+            return [...prev, { contextId: selectedContextId, name: selectedEvent.title }];
+          });
+        }
         setSessionId(null);
         sessionInitialized.current = false;
+        setSelectedContextId("");
       },
     });
   };
 
-  /* Get the name of the mapped context */
-  const mappedContextName = React.useMemo(() => {
-    if (!mappedContextId) return "";
-    const ev = eventOptions.find((e) => e.id === mappedContextId);
-    if (!ev) return "";
-    return `${ev.title} — ${ev.year < 0 ? `${Math.abs(ev.year)} TCN` : ev.year}`;
-  }, [mappedContextId, eventOptions]);
+  const handleRemoveContext = (contextIdToRemove: string) => {
+    if (!characterId || !onUnmapContext) return;
+    onUnmapContext(characterId, contextIdToRemove, {
+      onSuccess: () => {
+        setMappedContexts(prev => prev.filter(c => c.contextId !== contextIdToRemove));
+      }
+    });
+  };
+
+
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-content)]">
@@ -1141,18 +1158,33 @@ export function StaffCharacterDetailView({
                   </p>
                 </div>
 
-                {mappedContextId && (
-                  <div
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl border"
-                    style={{
-                      borderColor: "rgba(34,197,94,0.3)",
-                      background: "rgba(34,197,94,0.06)",
-                    }}
-                  >
-                    <CheckCircleIcon className="h-4 w-4 shrink-0" style={{ color: "rgb(22,163,74)" }} />
-                    <p className="text-xs font-medium flex-1 text-green-700">
-                      Đã liên kết: {mappedContextName || mappedContextId}
-                    </p>
+                {mappedContexts.length > 0 && (
+                  <div className="space-y-2">
+                    {mappedContexts.map(ctx => (
+                      <div
+                        key={ctx.contextId}
+                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl border group"
+                        style={{
+                          borderColor: "rgba(34,197,94,0.3)",
+                          background: "rgba(34,197,94,0.06)",
+                        }}
+                      >
+                        <CheckCircleIcon className="h-4 w-4 shrink-0" style={{ color: "rgb(22,163,74)" }} />
+                        <p className="text-xs font-medium flex-1 text-green-700">
+                          Đã liên kết: {ctx.name}
+                        </p>
+                        {onUnmapContext && (
+                          <button
+                            onClick={() => handleRemoveContext(ctx.contextId)}
+                            disabled={isMapContextPending}
+                            className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-100 transition-all text-red-600 disabled:opacity-50"
+                            title="Gỡ liên kết"
+                          >
+                            <TrashIcon className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -1183,10 +1215,10 @@ export function StaffCharacterDetailView({
                       !selectedContextId ||
                       hasDraftErrors ||
                       isMapContextPending ||
-                      selectedContextId === mappedContextId
+                      mappedContexts.some(c => c.contextId === selectedContextId)
                     }
                     className={`shrink-0 border-0 transition-all duration-200 ${
-                      selectedContextId && selectedContextId !== mappedContextId
+                      selectedContextId && !mappedContexts.some(c => c.contextId === selectedContextId)
                         ? "bg-[var(--accent-blue)] text-[var(--bg-deep)] hover:brightness-90 hover:shadow-sm cursor-pointer"
                         : ""
                     }`}
