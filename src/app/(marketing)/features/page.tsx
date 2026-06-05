@@ -51,7 +51,7 @@ const visualChapters = [
   {
     title: "Chọn nhân vật",
     body: "Bắt đầu từ một con người cụ thể, không phải một đoạn văn khô.",
-    image: "/ngo-quyen.jpg",
+    image: "/ngo-quyen-chan-dung.png",
     alt: "Ngô Quyền illustration",
   },
   {

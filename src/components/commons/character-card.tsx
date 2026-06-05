@@ -56,7 +56,7 @@ export function CharacterCarouselCard({
 
   const avatarSrc = isValidUrl(character.avatarUrl)
     ? character.avatarUrl!
-    : (isValidUrl(character.imageUrl) ? character.imageUrl! : "/ngo-quyen.jpg");
+    : (isValidUrl(character.imageUrl) ? character.imageUrl! : undefined);
 
   return (
     <div
@@ -123,13 +123,19 @@ export function CharacterCarouselCard({
         {/* Avatar top left */}
         <div className="flex items-start mb-4">
           <div className="relative w-12 h-12 rounded-full border-2 border-[var(--accent-gold)] overflow-hidden shadow-md shrink-0">
-            <Image
-              src={avatarSrc}
-              alt={character.name}
-              fill
-              className="object-cover"
-              sizes="48px"
-            />
+            {avatarSrc ? (
+              <Image
+                src={avatarSrc}
+                alt={character.name}
+                fill
+                className="object-cover"
+                sizes="48px"
+              />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center bg-[var(--accent-gold)] text-sm font-bold text-[var(--bg-deep)]">
+                {character.name?.charAt(0) ?? "?"}
+              </span>
+            )}
           </div>
           <div className="ml-3 min-w-0">
             <h4 className="text-sm font-bold text-white leading-tight truncate">
@@ -213,7 +219,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
 
   const avatarSrc = isValidUrl(character.avatarUrl)
     ? character.avatarUrl!
-    : (isValidUrl(character.imageUrl) ? character.imageUrl! : "/ngo-quyen.jpg");
+    : (isValidUrl(character.imageUrl) ? character.imageUrl! : undefined);
 
   return (
     <button
@@ -296,13 +302,19 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         {/* Avatar top left */}
         <div className="flex items-start mb-3 sm:mb-4">
           <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-white overflow-hidden shadow-md">
-            <Image
-              src={avatarSrc}
-              alt={character.name}
-              fill
-              className="object-cover"
-              sizes="48px"
-            />
+            {avatarSrc ? (
+              <Image
+                src={avatarSrc}
+                alt={character.name}
+                fill
+                className="object-cover"
+                sizes="48px"
+              />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center bg-[var(--accent-gold)] text-sm font-bold text-[var(--bg-deep)]">
+                {character.name?.charAt(0) ?? "?"}
+              </span>
+            )}
           </div>
         </div>
 
@@ -334,7 +346,7 @@ interface CompactCardProps {
 
 export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
   if (!character) return null;
-  const avatarSrc = isValidUrl(character.avatarUrl) ? character.avatarUrl : (isValidUrl(character.imageUrl) ? character.imageUrl : "/ngo-quyen.jpg");
+  const avatarSrc = isValidUrl(character.avatarUrl) ? character.avatarUrl : (isValidUrl(character.imageUrl) ? character.imageUrl : undefined);
 
   return (
     <button
