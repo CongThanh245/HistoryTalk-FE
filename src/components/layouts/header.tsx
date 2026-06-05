@@ -1,7 +1,5 @@
 "use client";
 
-import { Bell } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
 import { SearchInputWithSuggestions } from "@/components/commons/search-input-with-suggestions";
 import { useAuthStore } from "@/store/auth.store";
 import { GreetingSection } from "../home/greeting-section";
@@ -56,19 +54,6 @@ export default function Header() {
             /* --- TRẠNG THÁI ĐÃ ĐĂNG NHẬP --- */
             <>
               <GreetingSection />
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative rounded-full h-9 w-9 cursor-pointer"
-                style={{ color: "var(--header-text-muted)" }}
-              >
-                <Bell className="h-[18px] w-[18px]" />
-                <span
-                  className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full ring-2 ring-[--header-bg]"
-                  style={{ background: "var(--accent-danger)" }}
-                />
-              </Button>
 
               <UserProfileDropdown showDiscovery={false} />
             </>
