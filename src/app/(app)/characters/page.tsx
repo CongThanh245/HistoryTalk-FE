@@ -16,7 +16,7 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 /**
- * Server Component — prefetch danh sách nhân vật mặc định (page 1, limit 8)
+ * Server Component — prefetch danh sách nhân vật mặc định (page 1, limit 10)
  * để HTML đã có data sẵn → tốt cho SEO (public catalog) và giảm LCP.
  * React Query trên client sẽ tự pick up prefetched data, không fetch lại.
  */
@@ -24,7 +24,7 @@ export default async function CharactersPage() {
   const queryClient = getQueryClient();
 
   // Prefetch với params mặc định — khớp với CharactersClient initial state
-  const defaultParams = { page: 1, limit: 8 };
+  const defaultParams = { page: 1, limit: 10 };
   await queryClient.prefetchQuery({
     queryKey: queryKeys.characters.list(defaultParams),
     queryFn: () => characterServerService.getAll(defaultParams),

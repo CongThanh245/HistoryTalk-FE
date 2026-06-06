@@ -17,7 +17,7 @@ import {
 import { CustomPagination } from "../commons/pagination";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 
-const PAGE_LIMIT = 8;
+const PAGE_LIMIT = 10;
 
 // ── Era map: UI lowercase → Backend uppercase ─────────────
 
@@ -103,7 +103,7 @@ export function CharactersClient() {
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,220px))] gap-3 md:gap-4">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(205px,240px))] gap-3 md:gap-4">
         {isLoading
           ? Array.from({ length: PAGE_LIMIT }).map((_, i) => (
               <CharacterPageCardSkeleton key={i} />
