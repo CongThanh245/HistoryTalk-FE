@@ -60,7 +60,7 @@ export function ChatRightPanel({
     <>
       {/* Active character info */}
       <div className="shrink-0">
-        <div className="relative w-full h-52 overflow-hidden">
+        <div className="relative w-full h-72 overflow-hidden md:h-80">
           <Image
             src={isValidUrl(activeCharacter.imageUrl) ? activeCharacter.imageUrl! : "/card.jpg"}
             alt={activeCharacter.name}
