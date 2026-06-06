@@ -51,8 +51,6 @@ function TierCard({
     <section
       className={`upgrade-pro-card upgrade-pro-card-${index} ${isFeatured ? "is-featured" : ""}`}
     >
-      {isFeatured ? <div className="upgrade-pro-badge">Phổ biến nhất</div> : null}
-
       <div className="upgrade-pro-card-head">
         <CrownIcon className="size-5" />
         <div>
