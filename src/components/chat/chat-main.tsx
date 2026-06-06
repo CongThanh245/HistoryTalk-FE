@@ -555,8 +555,10 @@ export function ChatMain({
                 ? `Gọi thoại với ${character.name}`
                 : "Đang khởi tạo..."
           }
-          className="w-8 h-8 flex items-center justify-center rounded-full transition-all
-                     hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+          className={cn(
+            "w-8 h-8 flex items-center justify-center rounded-full transition-all hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
+            showVoiceNudge && "voice-call-nudge",
+          )}
           style={{
             background: canUseVoiceCall ? "rgba(201,168,76,0.12)" : "rgba(148,163,184,0.08)",
             border: canUseVoiceCall ? "1px solid rgba(201,168,76,0.3)" : "1px solid rgba(148,163,184,0.22)",
@@ -585,8 +587,10 @@ export function ChatMain({
                 ? `Video call 3D với ${character.name}`
                 : "Đang khởi tạo..."
           }
-          className="w-8 h-8 flex items-center justify-center rounded-full transition-all
-                     hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+          className={cn(
+            "w-8 h-8 flex items-center justify-center rounded-full transition-all hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
+            showVoiceNudge && "voice-call-nudge voice-call-nudge--delay",
+          )}
           style={{
             background: canUseVideoCall ? "rgba(201,168,76,0.12)" : "rgba(148,163,184,0.08)",
             border: canUseVideoCall ? "1px solid rgba(201,168,76,0.3)" : "1px solid rgba(148,163,184,0.22)",
@@ -759,46 +763,49 @@ export function ChatMain({
         isTokenExhausted={isTokenExhausted}
       />
 
-      {showVoiceNudge && (
-        <button
-          type="button"
-          onClick={handleOpenVoice2DCall}
-          className="absolute right-4 bottom-[96px] z-20 flex max-w-[min(360px,calc(100%-32px))] items-center gap-3 rounded-xl border px-3 py-2 text-left shadow-lg transition-all duration-200 hover:brightness-110 active:scale-[0.98] md:right-6 md:bottom-[92px]"
-          style={{
-            background: "color-mix(in srgb, var(--bg-elevated) 92%, var(--accent-gold))",
-            borderColor: "rgba(201,168,76,0.35)",
-            color: "var(--text-primary)",
-            animation: "voiceNudgeBlink 3.2s ease-in-out 2",
-          }}
-        >
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-            style={{
-              background: "var(--accent-gold-active-bg)",
-              color: "var(--accent-gold)",
-            }}
-          >
-            <PhoneIcon className="h-4 w-4" weight="fill" />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-xs font-semibold">
-              Mỏi tay rồi thì lên tiếng nhé
-            </span>
-            <span
-              className="block text-[11px] leading-snug"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              Gọi với {character.name} để trò chuyện tự nhiên hơn.
-            </span>
-          </span>
-        </button>
-      )}
-
       <style>{`
-        @keyframes voiceNudgeBlink {
-          0%, 100% { transform: translateY(0); box-shadow: 0 10px 28px rgba(0,0,0,0.22); }
-          22% { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(201,168,76,0.2); }
-          44% { transform: translateY(0); box-shadow: 0 10px 28px rgba(0,0,0,0.22); }
+        .voice-call-nudge {
+          animation: voiceCallNudge 1.15s ease-in-out 4;
+          box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.36);
+          transform-origin: 50% 50%;
+        }
+
+        .voice-call-nudge--delay {
+          animation-delay: 0.16s;
+        }
+
+        @keyframes voiceCallNudge {
+          0%, 100% {
+            transform: translateX(0) rotate(0deg) scale(1);
+            box-shadow: 0 0 0 0 rgba(201, 168, 76, 0);
+            filter: brightness(1);
+          }
+          12% {
+            transform: translateX(-1px) rotate(-5deg) scale(1.04);
+          }
+          24% {
+            transform: translateX(1px) rotate(5deg) scale(1.07);
+            box-shadow: 0 0 0 5px rgba(201, 168, 76, 0.16);
+            filter: brightness(1.28);
+          }
+          36% {
+            transform: translateX(-1px) rotate(-4deg) scale(1.04);
+          }
+          52% {
+            transform: translateX(1px) rotate(3deg) scale(1.06);
+            box-shadow: 0 0 0 8px rgba(201, 168, 76, 0);
+            filter: brightness(1.18);
+          }
+          68% {
+            transform: translateX(0) rotate(0deg) scale(1);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .voice-call-nudge,
+          .voice-call-nudge--delay {
+            animation: none;
+          }
         }
       `}</style>
 
