@@ -183,6 +183,54 @@ function TranscriptFeed({
   );
 }
 
+function ConversationDock({
+  character,
+  messages,
+  isThinking,
+  interimText,
+  isRecording,
+}: {
+  character: ChatCharacter;
+  messages: VoiceRestMessage[];
+  isThinking?: boolean;
+  interimText?: string;
+  isRecording?: boolean;
+}) {
+  const hasContent = messages.length > 0 || Boolean(interimText);
+
+  if (hasContent) {
+    return (
+      <TranscriptFeed
+        messages={messages}
+        isThinking={isThinking}
+        interimText={interimText}
+      />
+    );
+  }
+
+  return (
+    <div className="avatar-call-empty">
+      <div className="avatar-call-empty__orb" aria-hidden="true">
+        <span />
+      </div>
+      <div>
+        <p className="avatar-call-empty__eyebrow">
+          {isRecording ? "Đang nghe" : "Sẵn sàng trò chuyện"}
+        </p>
+        <h3>Hỏi {character.name} một câu</h3>
+        <p>
+          Một khoảng lặng trước câu chuyện. Lời thoại sẽ xuất hiện ở đây khi cuộc gọi bắt đầu.
+        </p>
+      </div>
+      <div className="avatar-call-prompts">
+        <span>Ông là ai?</span>
+        <span>Sự kiện nổi bật?</span>
+        <span>Bài học lịch sử?</span>
+      </div>
+    </div>
+  );
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 type VoiceMode = "rest" | "stream" | "web-speech";
@@ -400,6 +448,10 @@ export function Avatar3DModal({
           0%   { transform: scale(0.85); opacity: 0.45; }
           100% { transform: scale(1.25); opacity: 0; }
         }
+        @keyframes avatar3DRipple {
+          0%, 100% { transform: translate(-50%, -50%) scale(0.96); opacity: 0.2; }
+          50% { transform: translate(-50%, -50%) scale(1.02); opacity: 0.34; }
+        }
         @keyframes thinkingBounce {
           0%, 100% { transform: translateY(0); }
           50%       { transform: translateY(-4px); }
@@ -408,11 +460,227 @@ export function Avatar3DModal({
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
         }
+        @keyframes callAura {
+          0%, 100% { opacity: 0.45; transform: translateX(-50%) scaleX(0.92); }
+          50% { opacity: 0.82; transform: translateX(-50%) scaleX(1.06); }
+        }
+        .avatar-call-body {
+          width: 100%;
+          flex: 1;
+          min-height: 0;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+          gap: 28px;
+          padding: 20px 28px 0;
+        }
+        .avatar-call-viewport {
+          width: 100%;
+          min-height: 0;
+          position: relative;
+          overflow: hidden;
+          border-radius: 18px;
+          background:
+            radial-gradient(ellipse at 50% 72%, rgba(201,168,76,0.14) 0%, rgba(201,168,76,0.04) 34%, transparent 62%),
+            linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0));
+        }
+        .avatar-call-viewport::after {
+          content: "";
+          position: absolute;
+          left: 50%;
+          bottom: 10%;
+          width: min(480px, 58%);
+          height: 58px;
+          transform: translateX(-50%);
+          border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(201,168,76,0.28) 0%, rgba(201,168,76,0.1) 42%, transparent 72%);
+          filter: blur(8px);
+          animation: callAura 3.4s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .avatar-call-ripple {
+          position: absolute;
+          left: 50%;
+          top: 52%;
+          width: min(430px, 34vw);
+          aspect-ratio: 1;
+          border-radius: 50%;
+          border: 1px solid rgba(201,168,76,0.32);
+          box-shadow: inset 0 0 56px rgba(201,168,76,0.04), 0 0 28px rgba(201,168,76,0.07);
+          animation: avatar3DRipple 2.8s ease-in-out infinite;
+          pointer-events: none;
+          z-index: 1;
+        }
+        .avatar-call-ripple--listening {
+          border-color: rgba(201,168,76,0.36);
+          box-shadow: inset 0 0 56px rgba(201,168,76,0.05), 0 0 30px rgba(201,168,76,0.08);
+        }
+        .avatar-call-ripple--speaking {
+          border-color: rgba(240,200,90,0.46);
+          box-shadow: inset 0 0 56px rgba(240,200,90,0.06), 0 0 36px rgba(240,200,90,0.12);
+        }
+        .avatar-call-identity {
+          position: absolute;
+          left: 28px;
+          bottom: 22px;
+          z-index: 2;
+          max-width: min(420px, calc(100% - 56px));
+          pointer-events: none;
+        }
+        .avatar-call-identity h2 {
+          margin: 0;
+          color: #f0c85a;
+          font-size: 26px;
+          font-weight: 800;
+          letter-spacing: 0;
+          text-shadow: 0 8px 30px rgba(0,0,0,0.65);
+        }
+        .avatar-call-identity p {
+          margin: 4px 0 0;
+          color: rgba(255,255,255,0.62);
+          font-size: 14px;
+        }
+        .avatar-call-transcript {
+          width: 100%;
+          min-width: 0;
+          align-self: stretch;
+          padding: 18px;
+          overflow-y: auto;
+          border: 1px solid rgba(201,168,76,0.16);
+          border-radius: 18px;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035)),
+            rgba(11,9,5,0.76);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 24px 80px rgba(0,0,0,0.28);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+        }
+        .avatar-call-transcript > div {
+          max-height: none !important;
+          height: 100%;
+        }
+        .avatar-call-empty {
+          min-height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 18px;
+          color: rgba(255,255,255,0.68);
+        }
+        .avatar-call-empty__orb {
+          width: 54px;
+          height: 54px;
+          border-radius: 50%;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(201,168,76,0.34);
+          background: radial-gradient(circle, rgba(201,168,76,0.22), rgba(201,168,76,0.06));
+          box-shadow: 0 0 38px rgba(201,168,76,0.16);
+        }
+        .avatar-call-empty__orb span {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #c9a84c;
+          animation: pulse 1.4s ease-in-out infinite;
+        }
+        .avatar-call-empty__eyebrow {
+          margin: 0 0 8px;
+          color: #c9a84c;
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+        .avatar-call-empty h3 {
+          margin: 0;
+          color: rgba(255,255,255,0.92);
+          font-size: 22px;
+          line-height: 1.2;
+          letter-spacing: 0;
+        }
+        .avatar-call-empty p {
+          margin: 8px 0 0;
+          font-size: 14px;
+          line-height: 1.65;
+        }
+        .avatar-call-prompts {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .avatar-call-prompts span {
+          padding: 7px 10px;
+          border-radius: 999px;
+          border: 1px solid rgba(201,168,76,0.18);
+          background: rgba(201,168,76,0.08);
+          color: rgba(255,255,255,0.72);
+          font-size: 12px;
+          white-space: nowrap;
+        }
+        .avatar-call-footer {
+          width: calc(100% - 416px);
+          align-self: flex-start;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 20px;
+          padding: 14px 0 14px 28px;
+          flex-shrink: 0;
+        }
+        .avatar-call-footer-hint {
+          width: calc(100% - 416px);
+          align-self: flex-start;
+          margin: 0 0 14px;
+          padding-left: 28px;
+          color: rgba(255,255,255,0.22);
+          font-size: 11px;
+          letter-spacing: 0.03em;
+          text-align: center;
+        }
+        @media (max-width: 900px) {
+          .avatar-call-body {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 12px 16px 0;
+          }
+          .avatar-call-viewport {
+            flex: 1;
+          }
+          .avatar-call-transcript {
+            max-height: 140px;
+            padding: 12px;
+            border-left: 0;
+            border-radius: 14px;
+          }
+          .avatar-call-transcript > div {
+            height: auto;
+          }
+          .avatar-call-empty {
+            min-height: 116px;
+          }
+          .avatar-call-identity {
+            left: 18px;
+            bottom: 16px;
+          }
+          .avatar-call-identity h2 {
+            font-size: 22px;
+          }
+          .avatar-call-ripple {
+            width: min(360px, 68vw);
+          }
+          .avatar-call-footer,
+          .avatar-call-footer-hint {
+            width: 100%;
+            align-self: center;
+            padding-left: 0;
+          }
+        }
       `}</style>
 
       {/* Backdrop */}
       <div style={{
-        position: "fixed", inset: 0, zIndex: 50,
+        position: "fixed", inset: 0, zIndex: 1000,
         display: "flex", alignItems: "center", justifyContent: "center",
         background: "rgba(0,0,0,0.88)",
         backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
@@ -479,14 +747,16 @@ export function Avatar3DModal({
             </button>
           </div>
 
+          <div className="avatar-call-body">
           {/* ── 3D Viewport ── */}
-          <div style={{
-            width: "100%", flex: 1, position: "relative",
-            display: is2D ? "flex" : undefined,
-            alignItems: is2D ? "center" : undefined,
-            justifyContent: is2D ? "center" : undefined,
-            background: "radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.08) 0%, transparent 60%)",
-          }}>
+          <div
+            className="avatar-call-viewport"
+            style={{
+              display: is2D ? "flex" : undefined,
+              alignItems: is2D ? "center" : undefined,
+              justifyContent: is2D ? "center" : undefined,
+            }}
+          >
             {is2D ? (
               <div style={{
                 position: "relative",
@@ -562,42 +832,36 @@ export function Avatar3DModal({
                 ttsAnalyserRef={ttsAnalyserRef}
               />
             )}
+            {!is2D && (isSpeaking || isListeningStatus || isRecording) && (
+              <span
+                className={[
+                  "avatar-call-ripple",
+                  isListeningStatus || isRecording
+                    ? "avatar-call-ripple--listening"
+                    : "avatar-call-ripple--speaking",
+                ].join(" ")}
+              />
+            )}
+            <div className="avatar-call-identity">
+              <h2>{character.name}</h2>
+              {character.title && <p>{character.title}</p>}
+            </div>
           </div>
 
-          {/* ── Transcript (below 3D, không che model) ── */}
-          <div style={{
-            width: "100%",
-            maxWidth: 600,
-            alignSelf: "center",
-            padding: "0 16px",
-            flexShrink: 0,
-            maxHeight: 140,
-            overflowY: "auto",
-          }}>
-            <TranscriptFeed 
-              messages={messages} 
+          {/* ── Transcript (right of 3D on desktop) ── */}
+          <div className="avatar-call-transcript">
+            <ConversationDock
+              character={character}
+              messages={messages}
               isThinking={status === "processing_chat" || status === "thinking" || status === "processing"}
               interimText={isRecording ? liveTranscript : ""}
+              isRecording={isRecording}
             />
           </div>
-
-          {/* ── Character name ── */}
-          <div style={{ textAlign: "center", padding: "8px 0 0", flexShrink: 0 }}>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: "0.02em", color: "#c9a84c" }}>
-              {character.name}
-            </h2>
-            {character.title && (
-              <p style={{ margin: "2px 0 0", fontSize: 13, color: "rgba(255,255,255,0.45)" }}>
-                {character.title}
-              </p>
-            )}
           </div>
 
           {/* ── Controls ── */}
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            gap: 20, padding: "16px 0 28px", flexShrink: 0,
-          }}>
+          <div className="avatar-call-footer">
             {/* Toggle mic button */}
             <button
               onClick={handleMicClick}
@@ -655,10 +919,7 @@ export function Avatar3DModal({
           </div>
 
           {/* Hint text */}
-          <p style={{
-            margin: "0 0 16px", fontSize: 11,
-            color: "rgba(255,255,255,0.2)", letterSpacing: "0.03em",
-          }}>
+          <p className="avatar-call-footer-hint">
             Bấm mic hoặc Space để nói, bấm lần nữa để dừng
           </p>
         </div>

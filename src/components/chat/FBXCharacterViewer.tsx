@@ -589,6 +589,8 @@ export function FBXCharacterViewer({
 
         <OrbitControls
           enablePan={false}
+          autoRotate={!effectiveSpeaking && !isProcessing && !isListening && !isRecording}
+          autoRotateSpeed={0.28}
           minDistance={2}
           maxDistance={10}
           minPolarAngle={Math.PI / 8}
