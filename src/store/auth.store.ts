@@ -6,10 +6,12 @@ interface AuthState {
   user: User | null;
   tokens: AuthTokens | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
 
   setAuth: (user: User, tokens: AuthTokens) => void;
   clearAuth: () => void;
   setTokens: (tokens: AuthTokens) => void;
+  setHasHydrated: (hasHydrated: boolean) => void;
   /** Đồng bộ một phần thông tin user (avatar, tên, tier…) từ /users/me lên store */
   updateUser: (user: Partial<User>) => void;
 }
@@ -20,6 +22,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       tokens: null,
       isAuthenticated: false,
+      hasHydrated: false,
 
       setAuth: (user, tokens) => set({ user, tokens, isAuthenticated: true }),
 
@@ -27,6 +30,8 @@ export const useAuthStore = create<AuthState>()(
         set({ user: null, tokens: null, isAuthenticated: false }),
 
       setTokens: (tokens) => set((state) => ({ ...state, tokens })),
+
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
 
       updateUser: (partial) =>
         set((state) => ({
@@ -41,6 +46,9 @@ export const useAuthStore = create<AuthState>()(
         tokens: state.tokens,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );
