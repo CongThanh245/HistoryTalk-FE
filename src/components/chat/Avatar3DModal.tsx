@@ -724,6 +724,7 @@ export function Avatar3DModal({
 
             {/* Close */}
             <button
+              type="button"
               onClick={handleClose}
               style={{
                 width: 32, height: 32, borderRadius: "50%", border: "none",
@@ -864,8 +865,10 @@ export function Avatar3DModal({
           <div className="avatar-call-footer">
             {/* Toggle mic button */}
             <button
+              type="button"
               onClick={handleMicClick}
               disabled={isBusy}
+              aria-label={isRecording ? "Dừng ghi âm và gửi" : "Bắt đầu ghi âm"}
               title={isRecording ? "Bấm lần nữa để dừng và gửi" : "Bấm để nói"}
               style={{
                 width: 72, height: 72, borderRadius: "50%",
@@ -900,7 +903,9 @@ export function Avatar3DModal({
 
             {/* End / Close */}
             <button
+              type="button"
               onClick={handleClose}
+              aria-label="Kết thúc cuộc gọi"
               title="Kết thúc"
               style={{
                 width: 56, height: 56, borderRadius: "50%", border: "none",

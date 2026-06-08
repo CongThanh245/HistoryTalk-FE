@@ -44,13 +44,6 @@ export const metadata: Metadata = {
     description: "Trò chuyện với các nhân vật lịch sử",
     images: ["/historytalk-banner.png"],
   },
-  // Thêm preconnect cho external resources
-  other: {
-    preconnect: [
-      "https://fonts.googleapis.com",
-      "https://fonts.gstatic.com",
-    ],
-  },
 };
 
 // Tách viewport export theo chuẩn Next.js 16

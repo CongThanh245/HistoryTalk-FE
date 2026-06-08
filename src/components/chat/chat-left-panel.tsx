@@ -288,6 +288,7 @@ export function ChatLeftPanel({
             <button
               onClick={isOpen ? () => setIsOpen(false) : handleOpen}
               onMouseEnter={dismissHint}
+              aria-label={isOpen ? "Ẩn lịch sử trò chuyện" : "Hiện lịch sử trò chuyện"}
               className={cn(
                 "hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-6 h-10 items-center justify-center rounded-full border cursor-pointer transition-all duration-150 hover:scale-110",
               )}

@@ -135,6 +135,8 @@ export function MessageBubble({
           )}
 
           <button
+            type="button"
+            aria-label={isSpeaking ? "Tắt đọc tin nhắn" : "Đọc tin nhắn"}
             onClick={() => {
               if (isSpeaking) {
                 speechSynthesis.cancel();

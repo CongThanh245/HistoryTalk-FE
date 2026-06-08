@@ -618,6 +618,9 @@ export function ChatMain({
         <button
           onClick={handleOpenVoice2DCall}
           disabled={canUseVoiceCall && (!sessionId || isTokenExhausted)}
+          aria-label={
+            canUseVoiceCall ? `Gọi thoại với ${character.name}` : "Mở nâng cấp gói Plus"
+          }
           title={
             !canUseVoiceCall
               ? "Gọi thoại có trong gói Plus. Bấm để xem các gói nâng cấp."
@@ -650,6 +653,9 @@ export function ChatMain({
         <button
           onClick={handleOpenVoice3DCall}
           disabled={canUseVideoCall && (!sessionId || isTokenExhausted)}
+          aria-label={
+            canUseVideoCall ? `Video call 3D với ${character.name}` : "Mở nâng cấp gói Pro"
+          }
           title={
             !canUseVideoCall
               ? "Video call có trong gói Pro. Bấm để xem các gói nâng cấp."
@@ -686,6 +692,7 @@ export function ChatMain({
             onClick={toggleRightPanel}
             className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
             style={{ color: isRightOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
+            aria-label="Thông tin nhân vật"
           >
             <InfoIcon className="w-5 h-5" />
           </button>
@@ -957,6 +964,7 @@ function VoiceCallBubble({
         <button
           type="button"
           onClick={() => onOpen(call)}
+          aria-label={`Mở chi tiết cuộc gọi thoại lúc ${formatVietnamTime(call.startedAt)}`}
           className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-white/5"
         >
           <div
@@ -980,6 +988,7 @@ function VoiceCallBubble({
         <button
           type="button"
           onClick={onCallAgain}
+          aria-label="Gọi lại"
           className="w-full py-2.5 text-sm font-semibold cursor-pointer transition-colors hover:brightness-110"
           style={{
             background: "var(--accent-gold-active-bg)",

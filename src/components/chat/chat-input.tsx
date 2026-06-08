@@ -67,17 +67,15 @@ export function ChatInput({
 }: ChatInputProps) {
   const [text, setText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
+  const [isSupported] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      !!(window.SpeechRecognition ?? window.webkitSpeechRecognition),
+  );
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Kiểm tra browser support
-  useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition ?? (window as any).webkitSpeechRecognition;
-    setIsSupported(!!SpeechRecognition);
-  }, []);
-
   // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
@@ -110,7 +108,7 @@ export function ChatInput({
 
   const startRecording = useCallback(() => {
     const SpeechRecognition =
-      window.SpeechRecognition ?? (window as any).webkitSpeechRecognition;
+      window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
     const recognition = new SpeechRecognition();
@@ -218,8 +216,10 @@ export function ChatInput({
         {/* Mic button (click-to-toggle) — chỉ hiện khi browser support */}
         {isSupported && (
           <button
+            type="button"
             onClick={handleMicClick}
             disabled={disabled || isLoading}
+            aria-label={isRecording ? "Dừng ghi âm và gửi" : "Bắt đầu ghi âm"}
             title={isRecording ? "Bấm lần nữa để dừng và gửi" : "Bấm để nói"}
             className="w-10 h-10 flex items-center justify-center rounded-xl
                        transition-all active:scale-95 select-none
@@ -245,8 +245,10 @@ export function ChatInput({
 
         {/* Send button */}
         <button
+          type="button"
           onClick={handleSend}
           disabled={!text.trim() || isLoading || disabled || isOverLimit}
+          aria-label="Gửi tin nhắn"
           className="w-10 h-10 flex items-center justify-center rounded-xl
                      transition-all hover:brightness-110 active:scale-95
                      disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
@@ -279,7 +281,7 @@ export function ChatInput({
       <div className="flex items-center justify-between mt-1.5 px-1">
         <p
           className="text-[10px]"
-          style={{ color: "var(--text-secondary)", opacity: 0.5 }}
+          style={{ color: "var(--text-secondary)", opacity: 0.92 }}
         >
           Enter để gửi · Shift+Enter xuống dòng
           {isSupported ? " · Bấm mic để nói, bấm lần nữa để dừng" : ""}
@@ -292,7 +294,7 @@ export function ChatInput({
               : remainingChars <= 20
                 ? "var(--accent-gold)"
                 : "var(--text-secondary)",
-            opacity: isOverLimit ? 1 : 0.7,
+            opacity: isOverLimit ? 1 : 0.92,
           }}
         >
           {isOverLimit && <WarningIcon className="w-3 h-3" />}

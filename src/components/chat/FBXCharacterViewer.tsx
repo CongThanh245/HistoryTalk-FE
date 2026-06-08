@@ -570,10 +570,13 @@ export function FBXCharacterViewer({
 
       <Canvas
         camera={{ position: [0, 4.0, 5.0], fov: 35 }}
+        dpr={[1, 1.5]}
+        gl={{ antialias: false, powerPreference: "high-performance" }}
+        performance={{ min: 0.5 }}
         style={{ background: "transparent" }}
       >
         <ambientLight intensity={0.7} />
-        <directionalLight position={[2, 6, 4]} intensity={1.3} castShadow />
+        <directionalLight position={[2, 6, 4]} intensity={1.3} />
         <pointLight position={[-2, 3, -1]} intensity={0.5} color="#c9a84c" />
 
         <Suspense fallback={<Loader />}>
@@ -589,7 +592,7 @@ export function FBXCharacterViewer({
 
         <OrbitControls
           enablePan={false}
-          autoRotate={!effectiveSpeaking && !isProcessing && !isListening && !isRecording}
+          autoRotate={false}
           autoRotateSpeed={0.28}
           minDistance={2}
           maxDistance={10}
