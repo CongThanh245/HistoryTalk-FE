@@ -1,6 +1,7 @@
 // services/character.server.service.ts
 import { axiosServer } from "@/configs/axios.server";
 import {
+  mapEraLabel,
   type GetCharactersParams,
   type GetCharactersResponse,
 } from "@/services/character.service";
@@ -60,7 +61,7 @@ function mapCharacterServer(raw: RawServerCharacter) {
     side: raw.side ?? null,
     contextId: raw.contextId ?? raw.context?.contextId ?? null,
     role: raw.role ?? null,
-    era: raw.era ?? null,
+    era: mapEraLabel(raw.era ?? undefined),
     isDraft: raw.isDraft ?? false,
     deletedAt: raw.deletedAt ?? null,
     events: (raw.events ?? []).map((ev) => ({
