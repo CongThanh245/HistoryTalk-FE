@@ -41,9 +41,9 @@ export function HeroSection() {
       const loadCarousel = () => setShowCarousel(true);
       
       if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-        (window as Window & { requestIdleCallback: typeof requestIdleCallback }).requestIdleCallback(loadCarousel, { timeout: 1200 });
+        (window as Window & { requestIdleCallback: typeof requestIdleCallback }).requestIdleCallback(loadCarousel, { timeout: 200 });
       } else {
-        setTimeout(loadCarousel, 1200);
+        setTimeout(loadCarousel, 150);
       }
     });
 
