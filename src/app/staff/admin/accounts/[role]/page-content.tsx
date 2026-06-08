@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { useParams } from "next/navigation";
@@ -15,6 +15,7 @@ import {
 
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
+import { StaffStatCard, StaffStatsGrid } from "@/components/staff/staff-stat-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -35,9 +36,9 @@ import {
   type AdminUser,
 } from "@/features/admin/hooks";
 
-// ────────────────────────────────────────────────────────────────────────────
+
 // Types & helpers
-// ────────────────────────────────────────────────────────────────────────────
+
 
 type AdminRole = "CUSTOMER" | "CONTENT_ADMIN" | "SYSTEM_ADMIN";
 
@@ -117,9 +118,9 @@ function timeAgo(iso: string) {
   return `${Math.floor(hrs / 24)} ngày trước`;
 }
 
-// ────────────────────────────────────────────────────────────────────────────
+
 // Empty user form state
-// ────────────────────────────────────────────────────────────────────────────
+
 
 function buildEmptyUser(role: AdminRole): Partial<AdminUser> {
   return {
@@ -132,9 +133,9 @@ function buildEmptyUser(role: AdminRole): Partial<AdminUser> {
   };
 }
 
-// ────────────────────────────────────────────────────────────────────────────
+
 // Page
-// ────────────────────────────────────────────────────────────────────────────
+
 
 export default function AdminAccountsPage() {
   const { role: roleSlug } = useParams() as { role: string };
@@ -171,7 +172,7 @@ export default function AdminAccountsPage() {
     );
   }, [allUsers, search]);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+
 
   function openEdit(user: AdminUser) {
     setFormTarget(user);
@@ -205,7 +206,7 @@ export default function AdminAccountsPage() {
     );
   }
 
-  // ── Columns ───────────────────────────────────────────────────────────────
+
 
   const columns = React.useMemo<ColumnDef<AdminUser>[]>(() => {
     const base: ColumnDef<AdminUser>[] = [
@@ -331,7 +332,7 @@ export default function AdminAccountsPage() {
                 className="text-xs font-semibold"
                 style={{ color: !isDeleted ? "rgb(22,163,74)" : "var(--accent-danger)" }}
               >
-                {!isDeleted ? "Kích hoạt" : "Đã khoá"}
+                Địa chỉ
               </span>
             </div>
           );
@@ -349,7 +350,7 @@ export default function AdminAccountsPage() {
                   variant="ghost"
                   size="icon-sm"
                   className="rounded-full"
-                  title="Khoá tài khoản"
+                  title="Khoá tài khoản?"
                   onClick={() => {
                     setDeleteTarget(u);
                     setDeleteOpen(true);
@@ -382,9 +383,9 @@ export default function AdminAccountsPage() {
 
   const Icon = meta.icon;
 
-  // ────────────────────────────────────────────────────────────────────────
+
   // Render
-  // ────────────────────────────────────────────────────────────────────────
+
 
   return (
     <StaffShell
@@ -393,7 +394,39 @@ export default function AdminAccountsPage() {
       icon={Icon}
       accent={meta.accent}
     >
-      {/* ── Main table card ─────────────────────────────────────────────── */}
+      <div className="space-y-6">
+      {/* Stats summary strip */}
+      {!isLoading && (
+        <StaffStatsGrid>
+          <StaffStatCard
+            label="Tổng tài khoản"
+            value={allUsers.length}
+            icon={<UsersIcon className="h-5 w-5" />}
+            tone="blue"
+          />
+          <StaffStatCard
+            label="Đang hoạt động"
+            value={allUsers.filter((u) => !isUserDeleted(u)).length}
+            icon={<ShieldCheckIcon className="h-5 w-5" />}
+            tone="green"
+          />
+          <StaffStatCard
+            label="Đang bị khoá"
+            value={allUsers.filter((u) => isUserDeleted(u)).length}
+            icon={<LockKeyIcon className="h-5 w-5" />}
+            tone="red"
+          />
+          {meta.showToken && (
+            <StaffStatCard
+              label="Tổng token còn lại"
+              value={allUsers.reduce((s, u) => s + (u.token || 0), 0).toLocaleString()}
+              icon={<CoinsIcon className="h-5 w-5" />}
+              tone="gold"
+            />
+          )}
+        </StaffStatsGrid>
+      )}
+      {/* Main table card */}
       <section
         className="rounded-2xl border p-6 space-y-5"
         style={{
@@ -456,54 +489,9 @@ export default function AdminAccountsPage() {
         />
       </section>
 
-      {/* ── Stats summary strip ─────────────────────────────────────────── */}
-      {!isLoading && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            {
-              label: "Tổng tài khoản",
-              value: allUsers.length,
-              color: "var(--accent-blue)",
-            },
-            {
-              label: "Đang kích hoạt",
-              value: allUsers.filter((u) => !isUserDeleted(u)).length,
-              color: "rgb(22,163,74)",
-            },
-            {
-              label: "Đang bị khoá",
-              value: allUsers.filter((u) => isUserDeleted(u)).length,
-              color: "var(--accent-danger)",
-            },
-            ...(meta.showToken
-              ? [
-                  {
-                    label: "Tổng token còn lại",
-                    value: allUsers.reduce((s, u) => s + (u.token || 0), 0).toLocaleString(),
-                    color: "var(--accent-gold)",
-                  },
-                ] : []),
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-xl border p-4 flex flex-col gap-1"
-              style={{
-                background: "var(--card-light-bg)",
-                borderColor: "var(--card-light-border)",
-              }}
-            >
-              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--content-subtle)" }}>
-                {stat.label}
-              </span>
-              <span className="text-2xl font-extrabold" style={{ color: stat.color }}>
-                {stat.value}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Create / Edit dialog */}
+      </div>
 
-      {/* ── Create / Edit dialog ───────────────────────────────────────── */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent
           className="max-w-md staff-theme"
@@ -614,7 +602,7 @@ export default function AdminAccountsPage() {
               />
             </div>
 
-            {/* Tier – customer only (read only, can't change via update API) */}
+            {/* Tier - customer only (read only, cannot change via update API) */}
             {meta.showTier && formTarget?.tierTitle && (
               <div className="space-y-1.5">
                 <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>Gói dịch vụ hiện tại</Label>
@@ -652,7 +640,7 @@ export default function AdminAccountsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Soft delete confirm ────────────────────────────────────────── */}
+      {/* Soft delete confirm */}
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}

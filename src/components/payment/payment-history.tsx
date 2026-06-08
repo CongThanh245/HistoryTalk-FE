@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
@@ -22,6 +21,7 @@ import { queryKeys } from "@/shared/query-key";
 import { paymentService, type PaymentHistoryItem } from "@/services/payment.service";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
+import { StaffStatCard, StaffStatsGrid } from "@/components/staff/staff-stat-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -88,47 +88,6 @@ function StatusBadge({ status }: { status: string }) {
       {cfg.icon}
       {cfg.label}
     </span>
-  );
-}
-
-function SummaryCard({
-  label,
-  value,
-  icon,
-  tone = "gold",
-}: {
-  label: string;
-  value: string;
-  icon: ReactNode;
-  tone?: "gold" | "green" | "amber" | "blue";
-}) {
-  const toneClasses = {
-    gold: "bg-[rgba(255,146,21,0.14)] text-[var(--accent-gold)]",
-    green: "bg-emerald-500/10 text-emerald-500",
-    amber: "bg-amber-500/10 text-amber-500",
-    blue: "bg-blue-500/10 text-blue-500",
-  };
-
-  return (
-    <div
-      className="rounded-xl border p-4 shadow-sm"
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--content-subtle)]">
-            {label}
-          </p>
-          <p className="mt-1 text-xl font-bold text-[var(--content-heading)]">{value}</p>
-        </div>
-        <div className={`grid size-10 place-items-center rounded-lg ${toneClasses[tone]}`}>
-          {icon}
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -411,33 +370,33 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
         icon={ReceiptIcon}
         accent="var(--accent-gold)"
       >
-        <div className="space-y-5">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryCard
+        <div className="space-y-6">
+          <StaffStatsGrid>
+            <StaffStatCard
               label="Doanh thu đã thu"
               value={isLoading ? "--" : formatCurrency(summary.totalPaid)}
               icon={<TrendUpIcon size={20} />}
               tone="gold"
             />
-            <SummaryCard
+            <StaffStatCard
               label="Tổng giao dịch"
               value={isLoading ? "--" : summary.total.toString()}
               icon={<ReceiptIcon size={20} />}
               tone="blue"
             />
-            <SummaryCard
+            <StaffStatCard
               label="Đã thanh toán"
               value={isLoading ? "--" : summary.paid.toString()}
               icon={<CheckCircleIcon size={20} />}
               tone="green"
             />
-            <SummaryCard
+            <StaffStatCard
               label="Đang chờ"
               value={isLoading ? "--" : summary.pending.toString()}
               icon={<HourglassIcon size={20} />}
               tone="amber"
             />
-          </div>
+          </StaffStatsGrid>
 
           {isError && (
             <div className="rounded-xl border border-rose-500/25 bg-rose-500/10 p-4 text-sm font-medium text-rose-600 dark:text-rose-300">
@@ -506,11 +465,11 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
         </div>
       </section>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <SummaryCard label="Tổng đơn" value={isLoading ? "--" : summary.total.toString()} icon={<ReceiptIcon size={20} />} />
-        <SummaryCard label="Đã thanh toán" value={isLoading ? "--" : summary.paid.toString()} icon={<CheckCircleIcon size={20} />} tone="green" />
-        <SummaryCard label="Đang chờ" value={isLoading ? "--" : summary.pending.toString()} icon={<HourglassIcon size={20} />} tone="amber" />
-      </div>
+      <StaffStatsGrid className="md:grid-cols-3 xl:grid-cols-3">
+        <StaffStatCard label="Tổng đơn" value={isLoading ? "--" : summary.total.toString()} icon={<ReceiptIcon size={20} />} />
+        <StaffStatCard label="Đã thanh toán" value={isLoading ? "--" : summary.paid.toString()} icon={<CheckCircleIcon size={20} />} tone="green" />
+        <StaffStatCard label="Đang chờ" value={isLoading ? "--" : summary.pending.toString()} icon={<HourglassIcon size={20} />} tone="amber" />
+      </StaffStatsGrid>
 
       {isError && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-center text-sm font-medium text-rose-700">
