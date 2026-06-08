@@ -138,22 +138,26 @@ interface DarkCardProps {
   imageSrc: string;
   imageAlt: string;
   imageHeight?: string;
+  imageSizes?: string;
   badge?: CardBadge;
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
   priority?: boolean;
+  imageQuality?: number;
 }
 
 export function DarkCard({
   imageSrc,
   imageAlt,
   imageHeight = "65%",
+  imageSizes = "356px",
   badge,
   children,
   className,
   onClick,
   priority = false,
+  imageQuality = 65,
 }: DarkCardProps) {
   return (
     <div
@@ -193,9 +197,10 @@ export function DarkCard({
           alt={imageAlt}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-105"
-          sizes="400px"
+          sizes={imageSizes}
           priority={priority}
           fetchPriority={priority ? "high" : "auto"}
+          quality={imageQuality}
         />
         <div
           className="absolute inset-0 z-10"

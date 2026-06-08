@@ -250,7 +250,7 @@ export function Carousel3DVertical() {
           >
             <CharacterCarouselCard
               character={figure}
-              priority={index < 3}
+              priority={index === 0}
               onClick={handleSelect}
             />
           </div>

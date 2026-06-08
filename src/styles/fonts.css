@@ -31,11 +31,3 @@
   font-style: normal;
   font-display: swap;
 }
-
-@font-face {
-  font-family: 'VL Outfit';
-  src: url('./fonts/VL Outfit-ExtraBold.otf') format('opentype');
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
