@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import TypingText from "@/components/commons/TypingText";
 import TypingTextBody from "@/components/commons/TypingTextBody";
 import MaskedText from "@/components/commons/MaskedText";
 import { cn } from "@/lib/utils/cn";
 import { Container } from "../container";
+import { isValidUrl } from "@/lib/utils/url";
+import type { Character } from "@/services/character.service";
 
 // Lazy load carousel để giảm initial render load
 const Carousel3DVertical = lazy(() =>
@@ -22,7 +25,89 @@ const CarouselPlaceholder = () => (
   </div>
 );
 
-export function HeroSection() {
+function StaticCharacterPreview({
+  characters,
+}: {
+  characters: Character[];
+}) {
+  const visibleCharacters = characters.slice(0, 3);
+
+  if (visibleCharacters.length === 0) return <CarouselPlaceholder />;
+
+  return (
+    <div
+      className="relative flex h-full w-full items-center justify-center"
+      style={{ perspective: "1200px" }}
+    >
+      <div
+        className="absolute pointer-events-none h-[620px] w-[620px] rounded-full opacity-55"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(205,211,22,0.22) 0%, rgba(205,211,22,0.08) 40%, transparent 70%)",
+        }}
+      />
+      {visibleCharacters.map((character, index) => {
+        const imageSrc = isValidUrl(character.imageUrl)
+          ? character.imageUrl!
+          : "/card.jpg";
+        const transforms = [
+          "translate3d(0, 0, 80px) scale(1)",
+          "translate3d(-150px, 16px, -80px) scale(0.82)",
+          "translate3d(150px, 16px, -90px) scale(0.8)",
+        ];
+
+        return (
+          <div
+            key={character.id}
+            className="absolute h-[198px] w-[136px] overflow-hidden rounded-[var(--radius-lg)] border bg-[var(--bg-surface)] shadow-[var(--shadow-soft)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
+            style={{
+              borderColor: "var(--border-default)",
+              transform: transforms[index],
+              zIndex: 30 - index,
+            }}
+          >
+            <div className="relative h-[65%] w-full bg-[var(--bg-elevated)]">
+              <Image
+                src={imageSrc}
+                alt={character.name}
+                fill
+                priority
+                fetchPriority="high"
+                quality={65}
+                sizes="(max-width: 640px) 136px, (max-width: 768px) 190px, (max-width: 1024px) 240px, 280px"
+                className="object-cover"
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(to top, var(--bg-surface) 0%, rgba(26,36,54,0) 50%)",
+                }}
+              />
+            </div>
+            <div className="flex h-[35%] flex-col px-3 py-3 text-left sm:px-4">
+              <span className="mb-1 w-fit rounded-full border border-[var(--accent-gold)]/55 px-2 py-0.5 text-[9px] font-bold uppercase text-[var(--accent-gold-soft)]">
+                {character.era ?? ""}
+              </span>
+              <h3 className="line-clamp-1 text-sm font-bold text-[var(--text-primary)] sm:text-base">
+                {character.name}
+              </h3>
+              <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-snug text-[var(--text-secondary)] sm:text-xs">
+                {character.role ?? character.title}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function HeroSection({
+  initialCharacters = [],
+}: {
+  initialCharacters?: Character[];
+}) {
   const sectionRef = useRef<HTMLElement>(null);
   const contentWrapperRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -41,9 +126,9 @@ export function HeroSection() {
       const loadCarousel = () => setShowCarousel(true);
       
       if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-        (window as Window & { requestIdleCallback: typeof requestIdleCallback }).requestIdleCallback(loadCarousel, { timeout: 200 });
+        (window as Window & { requestIdleCallback: typeof requestIdleCallback }).requestIdleCallback(loadCarousel, { timeout: 1600 });
       } else {
-        setTimeout(loadCarousel, 150);
+        setTimeout(loadCarousel, 1200);
       }
     });
 
@@ -211,10 +296,10 @@ export function HeroSection() {
           >
             {showCarousel ? (
               <Suspense fallback={<CarouselPlaceholder />}>
-                <Carousel3DVertical />
+                <Carousel3DVertical initialCharacters={initialCharacters} />
               </Suspense>
             ) : (
-              <CarouselPlaceholder />
+              <StaticCharacterPreview characters={initialCharacters} />
             )}
           </div>
         </div>

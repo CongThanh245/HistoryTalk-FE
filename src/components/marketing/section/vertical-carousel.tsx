@@ -19,7 +19,11 @@ function getResponsiveRadius() {
   return DESKTOP_RADIUS;
 }
 
-export function Carousel3DVertical() {
+export function Carousel3DVertical({
+  initialCharacters = [],
+}: {
+  initialCharacters?: Character[];
+}) {
   const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
   const containerRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -32,7 +36,20 @@ export function Carousel3DVertical() {
   const [isHovered, setIsHovered] = useState(false);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
 
-  const { data, isLoading } = useCharacters({ page: 1, limit: 6 });
+  const { data, isLoading } = useCharacters(
+    { page: 1, limit: 6 },
+    initialCharacters.length
+      ? {
+          content: initialCharacters,
+          totalElements: initialCharacters.length,
+          totalPages: 1,
+          currentPage: 1,
+          pageSize: initialCharacters.length,
+          hasNext: false,
+          hasPrevious: false,
+        }
+      : undefined,
+  );
   const FIGURES: Character[] = data?.content ?? [];
   const cardCount = FIGURES.length;
   const angleIncrement = cardCount > 0 ? (Math.PI * 2) / cardCount : 0;

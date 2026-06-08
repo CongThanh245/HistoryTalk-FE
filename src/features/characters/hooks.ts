@@ -18,10 +18,33 @@ function isCharactersResponse(value: unknown): value is GetCharactersResponse {
   );
 }
 
-export function useCharacters(params?: GetCharactersParams) {
+function getErrorMessage(err: unknown, fallback: string) {
+  if (
+    typeof err === "object" &&
+    err !== null &&
+    "response" in err &&
+    typeof err.response === "object" &&
+    err.response !== null &&
+    "data" in err.response &&
+    typeof err.response.data === "object" &&
+    err.response.data !== null &&
+    "message" in err.response.data &&
+    typeof err.response.data.message === "string"
+  ) {
+    return err.response.data.message;
+  }
+
+  return fallback;
+}
+
+export function useCharacters(
+  params?: GetCharactersParams,
+  initialData?: GetCharactersResponse,
+) {
   return useQuery({
     queryKey: queryKeys.characters.list(params),
     queryFn: () => characterService.getAll(params),
+    initialData,
     staleTime: 1000 * 60 * 5,
     placeholderData: (prev) => prev,
   });
@@ -50,8 +73,8 @@ export function useCreateCharacter() {
       qc.setQueryData(queryKeys.characters.detail(newChar.id), newChar);
       toast.success("Tạo nhân vật thành công");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Tạo nhân vật thất bại");
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Tạo nhân vật thất bại"));
     },
   });
 }
@@ -86,8 +109,8 @@ export function useUpdateCharacter() {
       );
       toast.success("Cập nhật thành công");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Cập nhật thất bại");
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Cập nhật thất bại"));
     },
   });
 }
@@ -100,8 +123,8 @@ export function useDeleteCharacter() {
       qc.invalidateQueries({ queryKey: queryKeys.characters.all });
       toast.success("Đã chuyển vào thùng rác");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Xóa thất bại");
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Xóa thất bại"));
     },
   });
 }
@@ -114,8 +137,8 @@ export function usePermanentDeleteCharacter() {
       qc.invalidateQueries({ queryKey: queryKeys.characters.all });
       toast.success("Đã xóa vĩnh viễn nhân vật");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Xóa vĩnh viễn thất bại");
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Xóa vĩnh viễn thất bại"));
     },
   });
 }
@@ -146,8 +169,8 @@ export function useMapContextToCharacter() {
       qc.invalidateQueries({ queryKey: queryKeys.characters.byContext(contextId) });
       toast.success("Liên kết bối cảnh thành công");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Liên kết bối cảnh thất bại");
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Liên kết bối cảnh thất bại"));
     },
   });
 }
@@ -178,8 +201,8 @@ export function useUnmapContextFromCharacter() {
       qc.invalidateQueries({ queryKey: queryKeys.characters.byContext(contextId) });
       toast.success("Gỡ liên kết bối cảnh thành công");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Gỡ liên kết bối cảnh thất bại");
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Gỡ liên kết bối cảnh thất bại"));
     },
   });
 }
