@@ -62,7 +62,7 @@
             counts={undefined}
           />
           {!showSkeleton && (
-            <span className="text-xs" style={{ color: "var(--content-subtle)" }}>
+            <span className="text-xs" style={{ color: "var(--content-muted)" }}>
               {events.length} sự kiện
             </span>
           )}
@@ -95,28 +95,43 @@
 
         {!showSkeleton && events.length > 0 && (
           <div className="flex items-center gap-2">
-            <div className="flex gap-1">
-              {events.map((ev) => (
+            <div className="flex gap-1" role="group" aria-label="Chọn sự kiện theo thứ tự">
+              {events.map((ev, index) => {
+                const isActive = ev.id === resolvedActiveId;
+                const yearLabel =
+                  ev.yearLabel ??
+                  `${Math.abs(ev.year)} ${ev.year < 0 ? "TCN" : "SCN"}`;
+                return (
                 <button
                   key={ev.id}
                   onClick={() => handleSelect(ev.id)}
-                  className="transition-all duration-200 rounded-full cursor-pointer"
+                  aria-label={`Chọn sự kiện ${index + 1}: ${ev.title}, ${yearLabel}`}
+                  aria-current={isActive ? "step" : undefined}
+                  className="grid h-6 w-6 place-items-center rounded-full cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]"
                   style={{
-                    width: ev.id === resolvedActiveId ? 18 : 6,
-                    height: 6,
-                    background:
-                      ev.id === resolvedActiveId
-                        ? EVENT_ACCENT_COLOR
-                        : "var(--card-light-border)",
+                    background: "transparent",
                     border: "none",
                     padding: 0,
                   }}
-                />
-              ))}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="block rounded-full transition-all duration-200"
+                    style={{
+                      width: isActive ? 18 : 6,
+                      height: 6,
+                      background: isActive
+                        ? EVENT_ACCENT_COLOR
+                        : "var(--card-light-border)",
+                    }}
+                  />
+                </button>
+              );
+            })}
             </div>
             <span
               className="text-[11px]"
-              style={{ color: "var(--content-subtle)" }}
+              style={{ color: "var(--content-muted)" }}
             >
               {activeIdx + 1} / {events.length}
             </span>

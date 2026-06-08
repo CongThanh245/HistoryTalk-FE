@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import { MapPinIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { Card } from "@/components/commons/card";
@@ -118,7 +117,6 @@ export function TimelineStripCard({
   direction,
   onOpenDetail,
 }: StripCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const style = EVENT_CARD_STYLE;
   const yearLabel =
     event.yearLabel ??
@@ -133,12 +131,11 @@ export function TimelineStripCard({
     <div 
       className={animClass} 
       style={{ willChange: "opacity, transform" }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <button
         onClick={() => onOpenDetail(event)}
-        className="group relative w-full flex flex-col md:flex-row text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1"
+        aria-label={`Xem chi tiết sự kiện ${event.title}`}
+        className="group relative w-full flex flex-col md:flex-row text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]"
         style={{
           background: "var(--card-light-bg)",
           borderColor: "var(--card-light-border)",
@@ -172,12 +169,10 @@ export function TimelineStripCard({
           {/* Year badge with glow effect */}
           <div>
             <span
-              className="inline-block text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full tracking-wide mb-2 sm:mb-3 transition-all duration-300"
+              className="inline-block text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full tracking-wide mb-2 sm:mb-3 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_10px_var(--accent-gold-glow)] group-focus-visible:scale-105 group-focus-visible:shadow-[0_0_10px_var(--accent-gold-glow)]"
               style={{
                 background: style.bg,
                 color: style.color,
-                boxShadow: isHovered ? `0 0 10px ${style.color}60` : "none",
-                transform: isHovered ? "scale(1.05)" : "scale(1)",
               }}
             >
               {yearLabel}
@@ -185,8 +180,7 @@ export function TimelineStripCard({
           </div>
 
           <h2
-            className="text-base sm:text-2xl font-extrabold leading-snug mb-1.5 sm:mb-2.5 transition-colors duration-300"
-            style={{ color: isHovered ? style.color : "var(--content-heading)" }}
+            className="text-base sm:text-2xl font-extrabold leading-snug mb-1.5 sm:mb-2.5 transition-colors duration-300 text-[var(--content-heading)] group-hover:text-[var(--accent-gold)] group-focus-visible:text-[var(--accent-gold)]"
           >
             {event.title}
           </h2>
@@ -203,11 +197,11 @@ export function TimelineStripCard({
               <div className="flex items-center gap-1.5">
                 <MapPinIcon
                   className="w-3.5 h-3.5 shrink-0"
-                  style={{ color: "var(--content-subtle)" }}
+                  style={{ color: "var(--content-muted)" }}
                 />
                 <span
                   className="text-[11px] sm:text-xs line-clamp-1"
-                  style={{ color: "var(--content-subtle)" }}
+                  style={{ color: "var(--content-muted)" }}
                 >
                   {event.location}
                 </span>

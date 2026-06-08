@@ -74,10 +74,11 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
       <button
         onClick={handlePrev}
         disabled={activeIdx === 0}
+        aria-label="Chọn sự kiện trước"
         className={btnBase}
         style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
       >
-        <CaretLeftIcon className="w-3.5 h-3.5" />
+        <CaretLeftIcon className="w-3.5 h-3.5" aria-hidden="true" />
       </button>
 
       {/* Track outer — clipping container */}
@@ -115,7 +116,9 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
               <button
                 key={item.id}
                 onClick={() => onSelect(item.id)}
-                className="tl-item flex flex-col items-center relative cursor-pointer group w-[64px] md:w-20 h-16 md:h-[72px] bg-transparent border-0 p-0"
+                aria-label={`Chọn sự kiện năm ${item.yearLabel}`}
+                aria-current={isActive ? "step" : undefined}
+                className="tl-item flex flex-col items-center relative cursor-pointer group w-[64px] md:w-20 h-16 md:h-[72px] bg-transparent border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card-light-bg)] rounded-lg"
               >
                 {/* Year label — alternating top/bottom */}
                 <span
@@ -125,7 +128,7 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
                   )}
                   style={{
                     fontFamily: "Georgia, serif",
-                    color: isActive ? "var(--gold-on-light, #a07828)" : "var(--content-subtle)",
+                    color: isActive ? "var(--gold-on-light, #a07828)" : "var(--content-muted)",
                   }}
                 >
                   {item.yearLabel}
@@ -154,10 +157,11 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
       <button
         onClick={handleNext}
         disabled={activeIdx === items.length - 1}
+        aria-label="Chọn sự kiện tiếp theo"
         className={btnBase}
         style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
       >
-        <CaretRightIcon className="w-3.5 h-3.5" />
+        <CaretRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
       </button>
     </div>
   );
