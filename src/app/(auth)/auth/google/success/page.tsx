@@ -4,19 +4,9 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { User } from "@/features/auth/type";
+import { clearAuthCookies, persistAuthCookies } from "@/features/auth/auth-cookies";
 
 const VALID_ROLES = ["CUSTOMER", "CONTENT_ADMIN", "SYSTEM_ADMIN"] as const;
-
-function getCookieMaxAge(expiresIn: number) {
-  return expiresIn > 100000 ? expiresIn / 1000 : expiresIn;
-}
-
-function persistAuthCookies(accessToken: string, role: string, expiresIn: number) {
-  const maxAge = getCookieMaxAge(expiresIn);
-
-  document.cookie = `auth-token=${accessToken}; path=/; max-age=${maxAge}`;
-  document.cookie = `auth-role=${role}; path=/; max-age=${maxAge}`;
-}
 
 function getRedirectPath(role: User["role"]) {
   if (role === "CONTENT_ADMIN") return "/staff";
@@ -59,8 +49,7 @@ export default function GoogleOAuthSuccessPage() {
       !isValidRole(role)
     ) {
       clearAuth();
-      document.cookie = "auth-token=; path=/; max-age=0";
-      document.cookie = "auth-role=; path=/; max-age=0";
+      clearAuthCookies();
       router.replace("/login");
       return;
     }

@@ -1,5 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/auth.store";
+import { clearAuthCookies, persistAuthCookies } from "@/features/auth/auth-cookies";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const BASE_PATH = process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
@@ -20,10 +21,10 @@ export const axiosClient = axios.create({
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;
-  reject: (error: any) => void;
+  reject: (error: unknown) => void;
 }> = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -89,7 +90,7 @@ axiosClient.interceptors.response.use(
       const { data } = await axiosClient.post(
         "/auth/refresh-token",
         { refreshToken },
-        { skipAuthRefresh: true } as any,
+        { skipAuthRefresh: true } as RetryConfig,
       );
 
       if (!data.success) throw new Error("Refresh failed");
@@ -103,8 +104,9 @@ axiosClient.interceptors.response.use(
         expiresIn: data.data.expiresIn,
       });
 
-      if (typeof document !== "undefined") {
-        document.cookie = `auth-token=${newAccessToken}; path=/; max-age=${data.data.expiresIn / 1000}`;
+      const role = useAuthStore.getState().user?.role;
+      if (role) {
+        persistAuthCookies(newAccessToken, role, data.data.expiresIn);
       }
 
       // Xử lý hàng đợi thành công
@@ -117,10 +119,7 @@ axiosClient.interceptors.response.use(
       processQueue(refreshError, null);
       
       useAuthStore.getState().clearAuth();
-      if (typeof document !== "undefined") {
-        document.cookie = "auth-token=; path=/; max-age=0";
-        document.cookie = "auth-role=; path=/; max-age=0";
-      }
+      clearAuthCookies();
       
       if (typeof window !== "undefined") {
         window.location.href = "/login";

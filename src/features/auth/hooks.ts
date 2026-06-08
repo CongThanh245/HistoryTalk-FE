@@ -10,38 +10,9 @@ import {
   RegisterRequest,
   ResetPasswordRequest,
 } from "./type";
-
-function getCookieMaxAge(expiresIn: number) {
-  return expiresIn > 100000 ? expiresIn / 1000 : expiresIn;
-}
-
-function persistAuthCookies(
-  accessToken: string,
-  role: string,
-  expiresIn: number,
-) {
-  const maxAge = getCookieMaxAge(expiresIn);
-
-  document.cookie = `auth-token=${accessToken}; path=/; max-age=${maxAge}`;
-  document.cookie = `auth-role=${role}; path=/; max-age=${maxAge}`;
-}
-
-function redirectAfterLogin(role: string, router: ReturnType<typeof useRouter>) {
-  if (role === "CONTENT_ADMIN") {
-    router.push("/staff");
-    return;
-  }
-
-  if (role === "SYSTEM_ADMIN") {
-    router.push("/staff/admin");
-    return;
-  }
-
-  router.push("/home");
-}
+import { clearAuthCookies, persistAuthCookies } from "./auth-cookies";
 
 export function useLogin() {
-  const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   return useMutation({
@@ -63,7 +34,6 @@ export function useLogin() {
 }
 
 export function useGoogleLogin() {
-  const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   return useMutation({
@@ -125,8 +95,7 @@ export function useLogout() {
       // Xóa profile cache để đảm bảo token được làm mới khi login tài khoản mới
       queryClient.invalidateQueries({ queryKey: queryKeys.profile.me });
 
-      document.cookie = "auth-token=; path=/; max-age=0";
-      document.cookie = "auth-role=; path=/; max-age=0";
+      clearAuthCookies();
 
       router.push("/login");
     },

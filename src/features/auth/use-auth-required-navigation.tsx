@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
+import { syncAuthCookies } from "./auth-cookies";
 
 interface UseAuthRequiredNavigationOptions {
   title?: string;
@@ -25,30 +26,34 @@ export function useAuthRequiredNavigation({
 }: UseAuthRequiredNavigationOptions = {}) {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const tokens = useAuthStore((state) => state.tokens);
   const [open, setOpen] = useState(false);
 
   const navigateWithAuth = useCallback(
     (href: string) => {
       if (isAuthenticated) {
+        syncAuthCookies(user, tokens);
         router.push(href);
         return;
       }
 
       setOpen(true);
     },
-    [isAuthenticated, router],
+    [isAuthenticated, router, tokens, user],
   );
 
   const runWithAuth = useCallback(
     (action: () => void) => {
       if (isAuthenticated) {
+        syncAuthCookies(user, tokens);
         action();
         return;
       }
 
       setOpen(true);
     },
-    [isAuthenticated],
+    [isAuthenticated, tokens, user],
   );
 
   const authRequiredDialog = useMemo(
