@@ -126,9 +126,9 @@ export function HeroSection({
       const loadCarousel = () => setShowCarousel(true);
       
       if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-        (window as Window & { requestIdleCallback: typeof requestIdleCallback }).requestIdleCallback(loadCarousel, { timeout: 1600 });
+        (window as Window & { requestIdleCallback: typeof requestIdleCallback }).requestIdleCallback(loadCarousel, { timeout: 6500 });
       } else {
-        setTimeout(loadCarousel, 1200);
+        setTimeout(loadCarousel, 6500);
       }
     });
 
@@ -206,10 +206,13 @@ export function HeroSection({
       }, sectionRef);
     }
 
-    setupAnimations();
+    const animationTimer = window.setTimeout(() => {
+      setupAnimations();
+    }, 12000);
 
     return () => {
       isMounted = false;
+      window.clearTimeout(animationTimer);
       ctx?.revert();
     };
   }, [isReady]);
@@ -257,7 +260,7 @@ export function HeroSection({
               </span>
             </h1>
 
-            <div ref={subContentRef} className="space-y-5 opacity-0 lg:space-y-8">
+            <div ref={subContentRef} className="space-y-5 lg:space-y-8">
               <MaskedText>
                 <p className="text-sm md:text-base lg:text-lg leading-relaxed max-w-xl text-[var(--text-secondary)]">
                   Trò chuyện trực tiếp với các nhân vật lịch sử được tái hiện bằng AI. Khám phá quá khứ như một hành trình có bối cảnh, cảm xúc và lựa chọn.
@@ -293,6 +296,8 @@ export function HeroSection({
           <div
             ref={carouselRef}
             className="relative -mx-4 mt-2 flex h-[260px] w-[calc(100%+2rem)] items-center justify-center overflow-hidden will-change-transform sm:mx-0 sm:h-[340px] sm:w-full md:h-[500px] lg:mt-0 lg:h-[650px] lg:overflow-visible"
+            onPointerEnter={() => setShowCarousel(true)}
+            onFocus={() => setShowCarousel(true)}
           >
             {showCarousel ? (
               <Suspense fallback={<CarouselPlaceholder />}>

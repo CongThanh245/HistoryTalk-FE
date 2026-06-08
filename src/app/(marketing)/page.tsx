@@ -1,7 +1,6 @@
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { HeroSection } from "@/components/marketing/section/hero-section";
-import { FadeInSection } from "@/components/marketing/section/fade-in-section";
 import { characterServerService } from "@/services/character.server.service";
 
 // Lazy load sections below the fold để giảm initial bundle size
@@ -58,29 +57,19 @@ export default async function MarketingPage() {
     <div className="w-full">
       <HeroSection initialCharacters={initialCharacters} />
       <Suspense fallback={<SectionSkeleton />}>
-        <FadeInSection>
-          <ProblemSection />
-        </FadeInSection>
+        <ProblemSection />
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
-        <FadeInSection>
-          <SolutionSection />
-        </FadeInSection>
+        <SolutionSection />
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
-        <FadeInSection>
-          <FeaturesSection />
-        </FadeInSection>
+        <FeaturesSection />
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
-        <FadeInSection>
-          <ImpactSection />
-        </FadeInSection>
+        <ImpactSection />
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
-        <FadeInSection>
-          <ClosingSection />
-        </FadeInSection>
+        <ClosingSection />
       </Suspense>
     </div>
   );
