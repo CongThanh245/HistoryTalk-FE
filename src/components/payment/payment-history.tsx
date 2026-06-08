@@ -1,22 +1,29 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowClockwiseIcon,
   CalendarBlankIcon,
   CheckCircleIcon,
   ClockCountdownIcon,
   HourglassIcon,
+  MagnifyingGlassIcon,
   PackageIcon,
   ReceiptIcon,
   ShieldCheckIcon,
+  TrendUpIcon,
   UserIcon,
   XCircleIcon,
 } from "@phosphor-icons/react";
 import { queryKeys } from "@/shared/query-key";
 import { paymentService, type PaymentHistoryItem } from "@/services/payment.service";
+import { StaffShell } from "@/components/staff/staff-shell";
+import { StaffDataTable } from "@/components/staff/staff-data-table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -48,17 +55,17 @@ function getStatusConfig(status: string) {
     PAID: {
       label: "Đã thanh toán",
       icon: <CheckCircleIcon size={14} weight="fill" />,
-      classes: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      classes: "border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
     },
     CANCELLED: {
       label: "Đã hủy",
       icon: <XCircleIcon size={14} weight="fill" />,
-      classes: "border-rose-200 bg-rose-50 text-rose-700",
+      classes: "border-rose-500/25 bg-rose-500/10 text-rose-600 dark:text-rose-300",
     },
     PENDING: {
       label: "Chờ thanh toán",
       icon: <HourglassIcon size={14} weight="fill" />,
-      classes: "border-amber-200 bg-amber-50 text-amber-700",
+      classes: "border-amber-500/25 bg-amber-500/10 text-amber-600 dark:text-amber-300",
     },
   } as const;
 
@@ -66,7 +73,7 @@ function getStatusConfig(status: string) {
     map[normalized as keyof typeof map] ?? {
       label: status,
       icon: <ClockCountdownIcon size={14} weight="fill" />,
-      classes: "border-slate-200 bg-slate-50 text-slate-600",
+      classes: "border-slate-500/25 bg-slate-500/10 text-slate-600 dark:text-slate-300",
     }
   );
 }
@@ -88,21 +95,36 @@ function SummaryCard({
   label,
   value,
   icon,
+  tone = "gold",
 }: {
   label: string;
   value: string;
   icon: ReactNode;
+  tone?: "gold" | "green" | "amber" | "blue";
 }) {
+  const toneClasses = {
+    gold: "bg-[rgba(255,146,21,0.14)] text-[var(--accent-gold)]",
+    green: "bg-emerald-500/10 text-emerald-500",
+    amber: "bg-amber-500/10 text-amber-500",
+    blue: "bg-blue-500/10 text-blue-500",
+  };
+
   return (
-    <div className="rounded-lg border border-[rgba(27,38,50,0.1)] bg-white/70 p-4 shadow-[0_10px_30px_rgba(27,38,50,0.05)]">
+    <div
+      className="rounded-xl border p-4 shadow-sm"
+      style={{
+        background: "var(--card-light-bg)",
+        borderColor: "var(--card-light-border)",
+      }}
+    >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--content-subtle)]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--content-subtle)]">
             {label}
           </p>
           <p className="mt-1 text-xl font-bold text-[var(--content-heading)]">{value}</p>
         </div>
-        <div className="grid size-10 place-items-center rounded-lg bg-[rgba(255,146,21,0.12)] text-[var(--accent-gold)]">
+        <div className={`grid size-10 place-items-center rounded-lg ${toneClasses[tone]}`}>
           {icon}
         </div>
       </div>
@@ -154,7 +176,7 @@ function HistoryRow({ item, index }: { item: PaymentHistoryItem; index: number }
               <div className="inline-flex items-center gap-2 sm:col-span-2">
                 <UserIcon size={15} className="text-[var(--content-subtle)]" />
                 <span className="font-medium text-[var(--content-heading)]">{item.userName}</span>
-                {item.userEmail && <span className="text-[var(--content-subtle)]">&middot; {item.userEmail}</span>}
+                {item.userEmail && <span className="text-[var(--content-subtle)]">· {item.userEmail}</span>}
               </div>
             )}
           </div>
@@ -194,12 +216,74 @@ function SkeletonRow() {
   );
 }
 
+function AdminToolbar({
+  search,
+  onSearchChange,
+  onRefresh,
+  isFetching,
+  count,
+  total,
+}: {
+  search: string;
+  onSearchChange: (value: string) => void;
+  onRefresh: () => void;
+  isFetching: boolean;
+  count: number;
+  total: number;
+}) {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="space-y-0.5">
+        <h2 className="text-base font-semibold text-[var(--content-heading)]">
+          Danh sách giao dịch
+        </h2>
+        <p className="text-sm text-[var(--content-muted)]">
+          Hiển thị {count}/{total} giao dịch
+          {isFetching && <span className="ml-2 text-xs opacity-60">Đang cập nhật...</span>}
+        </p>
+      </div>
+
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+        <div className="relative w-full sm:w-[320px]">
+          <MagnifyingGlassIcon
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+            style={{ color: "var(--content-subtle)" }}
+          />
+          <Input
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Tìm mã đơn, email, người dùng..."
+            className="h-10 rounded-xl border pl-10"
+            style={{
+              background: "rgba(27,38,50,0.05)",
+              borderColor: "var(--card-light-border)",
+              color: "var(--content-heading)",
+            }}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onRefresh}
+          disabled={isFetching}
+          className="h-10 rounded-xl"
+          style={{ borderColor: "var(--card-light-border)" }}
+        >
+          <ArrowClockwiseIcon size={16} className={isFetching ? "animate-spin" : ""} />
+          Làm mới
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 interface PaymentHistoryProps {
   variant?: "admin" | "customer";
 }
 
 export default function PaymentHistory({ variant = "customer" }: PaymentHistoryProps) {
   const isAdmin = variant === "admin";
+  const [search, setSearch] = useState("");
 
   const adminQuery = useQuery({
     queryKey: queryKeys.payments.history,
@@ -215,11 +299,13 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
 
   const { data, isLoading, isError, refetch, isFetching } = isAdmin ? adminQuery : customerQuery;
 
-  // Admin: paginated response with content array
-  // Customer: direct array response
-  const items = isAdmin
-    ? (data as import("@/services/payment.service").PaymentHistoryPage | undefined)?.content ?? []
-    : (data as import("@/services/payment.service").PaymentHistoryItem[] | undefined) ?? [];
+  const items = useMemo(() => {
+    if (isAdmin) {
+      return (data as import("@/services/payment.service").PaymentHistoryPage | undefined)?.content ?? [];
+    }
+
+    return (data as import("@/services/payment.service").PaymentHistoryItem[] | undefined) ?? [];
+  }, [data, isAdmin]);
 
   const summary = useMemo(() => {
     const paidItems = items.filter((item) => item.status.toUpperCase() === "PAID");
@@ -236,86 +322,230 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
     };
   }, [data, items, isAdmin]);
 
+  const filteredItems = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return items;
+
+    return items.filter((item) =>
+      [
+        item.orderCode.toString(),
+        item.tierTitle,
+        item.status,
+        item.userName,
+        item.userEmail,
+      ]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(query))
+    );
+  }, [items, search]);
+
+  const adminColumns = useMemo<ColumnDef<PaymentHistoryItem>[]>(
+    () => [
+      {
+        accessorKey: "orderCode",
+        header: "Đơn hàng",
+        cell: ({ row }) => (
+          <div className="min-w-[180px]">
+            <p className="font-mono text-sm font-bold text-[var(--content-heading)]">
+              #{row.original.orderCode}
+            </p>
+            <p className="mt-1 text-xs text-[var(--content-muted)]">{row.original.tierTitle}</p>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "userEmail",
+        header: "Khách hàng",
+        cell: ({ row }) => (
+          <div className="min-w-[220px]">
+            <p className="text-sm font-semibold text-[var(--content-heading)]">
+              {row.original.userName || "Chưa có tên"}
+            </p>
+            <p className="mt-1 text-xs text-[var(--content-muted)]">
+              {row.original.userEmail || "Chưa có email"}
+            </p>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "amount",
+        header: "Giá trị",
+        cell: ({ row }) => (
+          <span className="font-semibold text-[var(--content-heading)]">
+            {formatCurrency(row.original.amount)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Trạng thái",
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Ngày tạo",
+        cell: ({ row }) => (
+          <span className="text-xs text-[var(--content-muted)]">
+            {formatDate(row.original.createdAt)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "paidAt",
+        header: "Thanh toán",
+        cell: ({ row }) => (
+          <span className="text-xs text-[var(--content-muted)]">
+            {row.original.paidAt ? formatDate(row.original.paidAt) : "Chưa thanh toán"}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  if (isAdmin) {
+    return (
+      <StaffShell
+        title="Lịch sử giao dịch"
+        description="Theo dõi doanh thu, trạng thái thanh toán và các giao dịch trong hệ thống."
+        icon={ReceiptIcon}
+        accent="var(--accent-gold)"
+      >
+        <div className="space-y-5">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <SummaryCard
+              label="Doanh thu đã thu"
+              value={isLoading ? "--" : formatCurrency(summary.totalPaid)}
+              icon={<TrendUpIcon size={20} />}
+              tone="gold"
+            />
+            <SummaryCard
+              label="Tổng giao dịch"
+              value={isLoading ? "--" : summary.total.toString()}
+              icon={<ReceiptIcon size={20} />}
+              tone="blue"
+            />
+            <SummaryCard
+              label="Đã thanh toán"
+              value={isLoading ? "--" : summary.paid.toString()}
+              icon={<CheckCircleIcon size={20} />}
+              tone="green"
+            />
+            <SummaryCard
+              label="Đang chờ"
+              value={isLoading ? "--" : summary.pending.toString()}
+              icon={<HourglassIcon size={20} />}
+              tone="amber"
+            />
+          </div>
+
+          {isError && (
+            <div className="rounded-xl border border-rose-500/25 bg-rose-500/10 p-4 text-sm font-medium text-rose-600 dark:text-rose-300">
+              Không thể tải lịch sử giao dịch. Vui lòng thử lại sau.
+            </div>
+          )}
+
+          <section
+            className="space-y-5 rounded-2xl border p-5 sm:p-6"
+            style={{
+              background: "var(--card-light-bg)",
+              borderColor: "var(--card-light-border)",
+            }}
+          >
+            <AdminToolbar
+              search={search}
+              onSearchChange={setSearch}
+              onRefresh={() => refetch()}
+              isFetching={isFetching}
+              count={filteredItems.length}
+              total={summary.total}
+            />
+            <StaffDataTable
+              columns={adminColumns}
+              data={filteredItems}
+              isLoading={isLoading}
+              emptyMessage="Không tìm thấy giao dịch phù hợp."
+            />
+          </section>
+        </div>
+      </StaffShell>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-        <section className="relative overflow-hidden rounded-lg border border-[rgba(27,38,50,0.1)] bg-white/65 p-5 shadow-[0_18px_48px_rgba(27,38,50,0.06)] sm:p-6 animate-in fade-in slide-in-from-bottom-2">
-          <div className="absolute right-0 top-0 h-28 w-56 rounded-bl-full bg-[rgba(255,146,21,0.1)] blur-2xl" />
-          <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-3">
-              <div className="grid size-11 place-items-center rounded-lg bg-[var(--abyssal-blue)] text-[var(--accent-gold-soft)] shadow-[0_12px_28px_rgba(27,38,50,0.22)]">
-                <ReceiptIcon size={22} weight="duotone" />
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--accent-gold)]">
-                  Payment
-                </p>
-                <h1 className="mt-1 text-2xl font-extrabold text-[var(--content-heading)] sm:text-3xl">
-                  {isAdmin ? "Lịch sử giao dịch" : "Lịch sử đơn hàng"}
-                </h1>
-                <p className="mt-1 max-w-2xl text-sm text-[var(--content-muted)]">
-                  {isAdmin
-                    ? "Quản lý tất cả giao dịch thanh toán trong hệ thống."
-                    : "Theo dõi các giao dịch Pro, trạng thái thanh toán và thời hạn xử lý của từng đơn."}
-                </p>
-              </div>
+      <section className="relative overflow-hidden rounded-lg border border-[rgba(27,38,50,0.1)] bg-white/65 p-5 shadow-[0_18px_48px_rgba(27,38,50,0.06)] sm:p-6 animate-in fade-in slide-in-from-bottom-2">
+        <div className="absolute right-0 top-0 h-28 w-56 rounded-bl-full bg-[rgba(255,146,21,0.1)] blur-2xl" />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="grid size-11 place-items-center rounded-lg bg-[var(--abyssal-blue)] text-[var(--accent-gold-soft)] shadow-[0_12px_28px_rgba(27,38,50,0.22)]">
+              <ReceiptIcon size={22} weight="duotone" />
             </div>
-
-            <button
-              type="button"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[rgba(27,38,50,0.12)] bg-white px-4 text-sm font-bold text-[var(--content-heading)] shadow-sm transition hover:border-[rgba(255,146,21,0.36)] hover:text-[var(--accent-gold)] disabled:cursor-wait disabled:opacity-70"
-            >
-              <ArrowClockwiseIcon size={16} className={isFetching ? "animate-spin" : ""} />
-              Làm mới
-            </button>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--accent-gold)]">
+                Payment
+              </p>
+              <h1 className="mt-1 text-2xl font-extrabold text-[var(--content-heading)] sm:text-3xl">
+                Lịch sử đơn hàng
+              </h1>
+              <p className="mt-1 max-w-2xl text-sm text-[var(--content-muted)]">
+                Theo dõi các giao dịch Pro, trạng thái thanh toán và thời hạn xử lý của từng đơn.
+              </p>
+            </div>
           </div>
-        </section>
 
-        <div className="grid gap-3 md:grid-cols-3">
-          <SummaryCard label="Tổng đơn" value={isLoading ? "--" : summary.total.toString()} icon={<ReceiptIcon size={20} />} />
-          <SummaryCard label="Đã thanh toán" value={isLoading ? "--" : summary.paid.toString()} icon={<CheckCircleIcon size={20} />} />
-          <SummaryCard label="Đang chờ" value={isLoading ? "--" : summary.pending.toString()} icon={<HourglassIcon size={20} />} />
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[rgba(27,38,50,0.12)] bg-white px-4 text-sm font-bold text-[var(--content-heading)] shadow-sm transition hover:border-[rgba(255,146,21,0.36)] hover:text-[var(--accent-gold)] disabled:cursor-wait disabled:opacity-70"
+          >
+            <ArrowClockwiseIcon size={16} className={isFetching ? "animate-spin" : ""} />
+            Làm mới
+          </button>
         </div>
+      </section>
 
-        {isError && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-center text-sm font-medium text-rose-700">
-            Không thể tải lịch sử đơn hàng. Vui lòng thử lại sau.
-          </div>
-        )}
-
-        <div className="space-y-3">
-          {isLoading
-            ? Array.from({ length: 4 }).map((_, index) => <SkeletonRow key={index} />)
-            : items.length > 0
-              ? items.map((item, index) => <HistoryRow key={item.orderId} item={item} index={index} />)
-              : !isLoading && (
-                  <div className="rounded-lg border border-dashed border-[rgba(27,38,50,0.18)] bg-white/60 p-10 text-center">
-                    <div className="mx-auto grid size-14 place-items-center rounded-lg bg-[rgba(255,146,21,0.12)] text-[var(--accent-gold)]">
-                      <ReceiptIcon size={30} weight="duotone" />
-                    </div>
-                    <h2 className="mt-4 text-lg font-bold text-[var(--content-heading)]">
-                      Chưa có giao dịch nào
-                    </h2>
-                    <p className="mt-1 text-sm text-[var(--content-muted)]">
-                      Chưa có giao dịch thanh toán nào trong hệ thống.
-                    </p>
-                  </div>
-                )}
-        </div>
-
-        {items.length > 0 && (
-          <div className="rounded-lg border border-[rgba(27,38,50,0.1)] bg-[rgba(27,38,50,0.04)] px-4 py-3 text-sm text-[var(--content-muted)]">
-            {isAdmin ? (
-              <>Hiển thị {items.length}/{summary.total} giao dịch &nbsp;&middot;&nbsp; Tổng doanh thu đã thanh toán:{" "}</>
-            ) : (
-              <>Tổng đơn hàng: {summary.total} &nbsp;&middot;&nbsp; Đã thanh toán:{" "}</>
-            )}
-            <span className="font-bold text-[var(--content-heading)]">
-              {formatCurrency(summary.totalPaid)}
-            </span>
-          </div>
-        )}
+      <div className="grid gap-3 md:grid-cols-3">
+        <SummaryCard label="Tổng đơn" value={isLoading ? "--" : summary.total.toString()} icon={<ReceiptIcon size={20} />} />
+        <SummaryCard label="Đã thanh toán" value={isLoading ? "--" : summary.paid.toString()} icon={<CheckCircleIcon size={20} />} tone="green" />
+        <SummaryCard label="Đang chờ" value={isLoading ? "--" : summary.pending.toString()} icon={<HourglassIcon size={20} />} tone="amber" />
       </div>
+
+      {isError && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-center text-sm font-medium text-rose-700">
+          Không thể tải lịch sử đơn hàng. Vui lòng thử lại sau.
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {isLoading
+          ? Array.from({ length: 4 }).map((_, index) => <SkeletonRow key={index} />)
+          : items.length > 0
+            ? items.map((item, index) => <HistoryRow key={item.orderId} item={item} index={index} />)
+            : !isLoading && (
+                <div className="rounded-lg border border-dashed border-[rgba(27,38,50,0.18)] bg-white/60 p-10 text-center">
+                  <div className="mx-auto grid size-14 place-items-center rounded-lg bg-[rgba(255,146,21,0.12)] text-[var(--accent-gold)]">
+                    <ReceiptIcon size={30} weight="duotone" />
+                  </div>
+                  <h2 className="mt-4 text-lg font-bold text-[var(--content-heading)]">
+                    Chưa có giao dịch nào
+                  </h2>
+                  <p className="mt-1 text-sm text-[var(--content-muted)]">
+                    Chưa có giao dịch thanh toán nào trong hệ thống.
+                  </p>
+                </div>
+              )}
+      </div>
+
+      {items.length > 0 && (
+        <div className="rounded-lg border border-[rgba(27,38,50,0.1)] bg-[rgba(27,38,50,0.04)] px-4 py-3 text-sm text-[var(--content-muted)]">
+          Tổng đơn hàng: {summary.total} &nbsp;·&nbsp; Đã thanh toán:{" "}
+          <span className="font-bold text-[var(--content-heading)]">
+            {formatCurrency(summary.totalPaid)}
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
