@@ -149,6 +149,7 @@ export function ChatMain({
   const [voiceCallDraftMessages, setVoiceCallDraftMessages] = useState<ChatMessage[]>([]);
   const [isTokenExhausted, setIsTokenExhausted] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+  const dismissedCallModeRef = useRef<"2d" | "3d" | null>(null);
   const [lastTokenUsage, setLastTokenUsage] = useState<{
     remainingTokens: number;
     promptTokens: number;
@@ -307,13 +308,15 @@ export function ChatMain({
       return;
     }
     setVoiceCallDraftMessages([]);
+    dismissedCallModeRef.current = null;
     setIsVoice2DOpen(true);
     replaceCallModeInUrl("2d");
   }, [canUseVoiceCall, handleLockedFeatureClick, replaceCallModeInUrl]);
 
   const handleCloseVoice2DCall = useCallback(() => {
-    setIsVoice2DOpen(false);
+    dismissedCallModeRef.current = "2d";
     replaceCallModeInUrl(null);
+    setIsVoice2DOpen(false);
     qc.invalidateQueries({ queryKey: queryKeys.profile.me });
     if (sessionId) {
       qc.invalidateQueries({ queryKey: queryKeys.chat.messages(sessionId) });
@@ -326,13 +329,15 @@ export function ChatMain({
       return;
     }
     setVoiceCallDraftMessages([]);
+    dismissedCallModeRef.current = null;
     setIsVoice3DOpen(true);
     replaceCallModeInUrl("3d");
   }, [canUseVideoCall, handleLockedFeatureClick, replaceCallModeInUrl]);
 
   const handleCloseVoice3DCall = useCallback(() => {
-    setIsVoice3DOpen(false);
+    dismissedCallModeRef.current = "3d";
     replaceCallModeInUrl(null);
+    setIsVoice3DOpen(false);
     qc.invalidateQueries({ queryKey: queryKeys.profile.me });
     if (sessionId) {
       qc.invalidateQueries({ queryKey: queryKeys.chat.messages(sessionId) });
@@ -341,6 +346,11 @@ export function ChatMain({
 
   useEffect(() => {
     if (!sessionId || isVoice2DOpen || isVoice3DOpen) return;
+    if (requestedCallMode !== "2d" && requestedCallMode !== "3d") {
+      dismissedCallModeRef.current = null;
+      return;
+    }
+    if (dismissedCallModeRef.current === requestedCallMode) return;
 
     let timeoutId: number | undefined;
 
