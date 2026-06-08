@@ -16,6 +16,7 @@ import {
 } from "@/features/chat/hooks";
 import { chatService } from "@/services/chat.service";
 import { useQueryClient } from "@tanstack/react-query";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { queryKeys } from "@/shared/query-key";
 import { Avatar3DModal } from "./Avatar3DModal";
 import type { VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
@@ -128,6 +129,9 @@ export function ChatMain({
   isLeftOpen = false,
   isRightOpen = false,
 }: ChatMainProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { toggleMobileSidebar } = useSidebar();
   const user = useAuthStore((s) => s.user);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -216,16 +220,45 @@ export function ChatMain({
       ).length,
     [messages],
   );
+  const accessUser = useMemo(
+    () =>
+      user
+        ? {
+            tierId: user.tierId ?? null,
+            tierTitle: user.tierTitle ?? null,
+          }
+        : null,
+    [user],
+  );
   const showVoiceNudge =
     userTextMessageCount >= 2 &&
     userTextMessageCount <= 3 &&
     !isStreaming &&
     !isTokenExhausted &&
     !!sessionId &&
-    hasPlusAccess(user);
+    hasPlusAccess(accessUser);
   const sessionIdRef = useRef(sessionId);
-  const canUseVoiceCall = hasPlusAccess(user);
-  const canUseVideoCall = hasProAccess(user);
+  const canUseVoiceCall = hasPlusAccess(accessUser);
+  const canUseVideoCall = hasProAccess(accessUser);
+  const requestedCallMode = searchParams.get("call");
+
+  const replaceCallModeInUrl = useCallback(
+    (mode: "2d" | "3d" | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (mode) {
+        params.set("call", mode);
+      } else {
+        params.delete("call");
+      }
+
+      const queryString = params.toString();
+      router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams],
+  );
 
   const handleLockedFeatureClick = useCallback(() => {
     setIsUpgradeOpen(true);
@@ -275,15 +308,17 @@ export function ChatMain({
     }
     setVoiceCallDraftMessages([]);
     setIsVoice2DOpen(true);
-  }, [canUseVoiceCall, handleLockedFeatureClick]);
+    replaceCallModeInUrl("2d");
+  }, [canUseVoiceCall, handleLockedFeatureClick, replaceCallModeInUrl]);
 
   const handleCloseVoice2DCall = useCallback(() => {
     setIsVoice2DOpen(false);
+    replaceCallModeInUrl(null);
     qc.invalidateQueries({ queryKey: queryKeys.profile.me });
     if (sessionId) {
       qc.invalidateQueries({ queryKey: queryKeys.chat.messages(sessionId) });
     }
-  }, [qc, sessionId]);
+  }, [qc, replaceCallModeInUrl, sessionId]);
 
   const handleOpenVoice3DCall = useCallback(() => {
     if (!canUseVideoCall) {
@@ -292,15 +327,42 @@ export function ChatMain({
     }
     setVoiceCallDraftMessages([]);
     setIsVoice3DOpen(true);
-  }, [canUseVideoCall, handleLockedFeatureClick]);
+    replaceCallModeInUrl("3d");
+  }, [canUseVideoCall, handleLockedFeatureClick, replaceCallModeInUrl]);
 
   const handleCloseVoice3DCall = useCallback(() => {
     setIsVoice3DOpen(false);
+    replaceCallModeInUrl(null);
     qc.invalidateQueries({ queryKey: queryKeys.profile.me });
     if (sessionId) {
       qc.invalidateQueries({ queryKey: queryKeys.chat.messages(sessionId) });
     }
-  }, [qc, sessionId]);
+  }, [qc, replaceCallModeInUrl, sessionId]);
+
+  useEffect(() => {
+    if (!sessionId || isVoice2DOpen || isVoice3DOpen) return;
+
+    let timeoutId: number | undefined;
+
+    if (requestedCallMode === "2d") {
+      timeoutId = window.setTimeout(handleOpenVoice2DCall, 0);
+    } else if (requestedCallMode === "3d") {
+      timeoutId = window.setTimeout(handleOpenVoice3DCall, 0);
+    }
+
+    return () => {
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [
+    handleOpenVoice2DCall,
+    handleOpenVoice3DCall,
+    isVoice2DOpen,
+    isVoice3DOpen,
+    requestedCallMode,
+    sessionId,
+  ]);
 
   const enqueueSpeech = (text: string) => {
     const voices = speechSynthesis.getVoices();
