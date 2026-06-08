@@ -13,9 +13,9 @@ interface Props {
 export default function QuizDetailRoute({ params }: Props) {
   const { quizId } = use(params);
   const router = useRouter();
-  const { data: quiz, isLoading } = useQuizDetail(quizId);
+  const { data: quiz, isLoading, isFetching } = useQuizDetail(quizId);
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <div
         className="flex-1 flex items-center justify-center"

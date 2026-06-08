@@ -114,6 +114,7 @@ export default function StaffQuizzesPage() {
   const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<{ id: string; title: string } | null>(null);
   const [restoreTarget, setRestoreTarget] = React.useState<{ id: string; title: string } | null>(null);
   const [publishTarget, setPublishTarget] = React.useState<StaffQuizSet | null>(null);
+  const [publishedOverrides, setPublishedOverrides] = React.useState<Record<string, boolean>>({});
   const [contextSearch, setContextSearch] = React.useState("");
 
   // ── CSV Import ─────────────────────────────────────────────
@@ -127,19 +128,28 @@ export default function StaffQuizzesPage() {
     size: 20,
   }), [search, page]);
 
-  const { data, isLoading, isError } = useStaffQuizzes(params);
+  const { data, isLoading, isError, refetch: refetchQuizzes } = useStaffQuizzes(params);
   const createQuiz = useCreateStaffQuiz();
   const updateQuiz = useUpdateStaffQuiz();
   const softDeleteQuiz = useSoftDeleteStaffQuiz();
 
-  const { data: trashItems = [], isLoading: isTrashLoading } = useTrashList("quizzes");
+  const { data: trashItems = [], isLoading: isTrashLoading, refetch: refetchTrash } = useTrashList("quizzes");
   const restoreQuiz = useTrashRestore("quizzes");
   const permanentDeleteQuiz = useTrashPermanentDelete("quizzes");
 
   // Load toàn bộ contexts để chọn trong dropdown
   const { data: contextsData } = useEvents({ page: 1, limit: 200 });
 
-  const allItems = data?.content ?? [];
+  const allItems = React.useMemo(
+    () =>
+      (data?.content ?? []).map((item) => {
+        const overriddenPublished = publishedOverrides[item.quizId];
+        return overriddenPublished === undefined
+          ? item
+          : { ...item, isPublished: overriddenPublished };
+      }),
+    [data?.content, publishedOverrides],
+  );
 
   // Filter theo level nếu có (active list)
   const filteredItems = filterLevel
@@ -198,6 +208,7 @@ export default function StaffQuizzesPage() {
         {
           onSuccess: () => {
             toast.success(`Đã tạo quiz "${title}" với ${draft.questions.length} câu hỏi.`);
+            refetchQuizzes();
             setView("list");
           },
           onError: (error) => {
@@ -219,6 +230,7 @@ export default function StaffQuizzesPage() {
         {
           onSuccess: () => {
             toast.success(`Đã cập nhật quiz "${title}".`);
+            refetchQuizzes();
             setView("list");
           },
           onError: (error) => {
@@ -234,6 +246,8 @@ export default function StaffQuizzesPage() {
     softDeleteQuiz.mutate(deleteTarget.quizId, {
       onSuccess: () => {
         toast.success(`Đã chuyển quiz "${deleteTarget.title}" vào thùng rác.`);
+        refetchQuizzes();
+        refetchTrash();
         setDeleteTarget(null);
       },
       onError: (error) => {
@@ -247,6 +261,8 @@ export default function StaffQuizzesPage() {
     restoreQuiz.mutate([restoreTarget.id], {
       onSuccess: () => {
         toast.success(`Đã khôi phục quiz "${restoreTarget.title}".`);
+        refetchQuizzes();
+        refetchTrash();
         setRestoreTarget(null);
       },
       onError: (error) => {
@@ -260,6 +276,7 @@ export default function StaffQuizzesPage() {
     permanentDeleteQuiz.mutate([permanentDeleteTarget.id], {
       onSuccess: () => {
         toast.success(`Đã xóa vĩnh viễn quiz "${permanentDeleteTarget.title}".`);
+        refetchTrash();
         setPermanentDeleteTarget(null);
       },
       onError: (error) => {
@@ -283,6 +300,11 @@ export default function StaffQuizzesPage() {
               ? `Đã publish quiz "${publishTarget.title}".`
               : `Đã ẩn quiz "${publishTarget.title}" khỏi người dùng.`,
           );
+          setPublishedOverrides((prev) => ({
+            ...prev,
+            [publishTarget.quizId]: nextPublished,
+          }));
+          refetchQuizzes();
           setPublishTarget(null);
         },
         onError: (error) => {
@@ -311,13 +333,17 @@ export default function StaffQuizzesPage() {
       ),
     },
     {
-      id: "meta",
-      header: "Phân loại",
+      accessorKey: "level",
+      header: "Độ khó",
       cell: ({ row: r }) => (
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <DifficultyBadge value={r.original.level as DifficultyKey} />
-          <EraBadge value={r.original.era as EraKey} />
-        </div>
+        <DifficultyBadge value={r.original.level as DifficultyKey} />
+      ),
+    },
+    {
+      accessorKey: "era",
+      header: "Thời kỳ",
+      cell: ({ row: r }) => (
+        <EraBadge value={r.original.era as EraKey} />
       ),
     },
     {
@@ -742,7 +768,11 @@ export default function StaffQuizzesPage() {
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      importCsv.mutate(file);
+                      importCsv.mutate(file, {
+                        onSuccess: () => {
+                          refetchQuizzes();
+                        },
+                      });
                     }
                     e.target.value = "";
                   }}

@@ -13,9 +13,9 @@ interface QuizPageClientProps {
 export default function QuizPageClient({ params }: QuizPageClientProps) {
   const { quizId } = use(params);
   const router = useRouter();
-  const { data: quiz, isLoading } = useQuizDetail(quizId);
+  const { data: quiz, isLoading, isFetching } = useQuizDetail(quizId);
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin" />

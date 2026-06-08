@@ -31,7 +31,7 @@ export function QuizPageClient() {
   const activeView: QuizView =
     searchParams.get("view") === "history" ? "history" : "list";
 
-  const { data: quizData } = useQuizSets();
+  const { data: quizData, isLoading: quizzesLoading } = useQuizSets();
   const allQuizzes = useMemo(() => quizData?.content ?? [], [quizData?.content]);
 
   const { data: resultsData, isLoading: resultsLoading } = useMyQuizResults(
@@ -213,7 +213,19 @@ export function QuizPageClient() {
                 </div>
               </div>
 
-              {filteredQuizzes.length === 0 ? (
+              {quizzesLoading ? (
+                <div
+                  className="rounded-xl border px-6 py-16 text-center"
+                  style={{
+                    background: "var(--card-light-bg)",
+                    borderColor: "var(--card-light-border)",
+                  }}
+                >
+                  <p className="font-semibold" style={{ color: "var(--content-heading)" }}>
+                    Đang tải...
+                  </p>
+                </div>
+              ) : filteredQuizzes.length === 0 ? (
                 <div
                   className="rounded-xl border px-6 py-16 text-center"
                   style={{
