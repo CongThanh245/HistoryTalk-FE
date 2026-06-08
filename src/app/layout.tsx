@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "../styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProviders from "@/components/context/query-client-provider";
@@ -93,6 +94,7 @@ export default function RootLayout({
             }}
           />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
