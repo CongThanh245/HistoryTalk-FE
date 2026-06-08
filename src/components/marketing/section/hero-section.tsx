@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import Link from "next/link";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TypingText from "@/components/commons/TypingText";
 import TypingTextBody from "@/components/commons/TypingTextBody";
 import MaskedText from "@/components/commons/MaskedText";
@@ -11,7 +9,11 @@ import { cn } from "@/lib/utils/cn";
 import { Container } from "../container";
 
 // Lazy load carousel để giảm initial render load
-const Carousel3DVertical = lazy(() => import("./vertical-carousel").then(m => ({ default: m.Carousel3DVertical })));
+const Carousel3DVertical = lazy(() =>
+  import("./vertical-carousel").then((m) => ({
+    default: m.Carousel3DVertical,
+  })),
+);
 
 // Simple placeholder cho carousel
 const CarouselPlaceholder = () => (
@@ -19,8 +21,6 @@ const CarouselPlaceholder = () => (
     <div className="w-32 h-32 rounded-full bg-[var(--bg-surface)] animate-pulse" />
   </div>
 );
-
-gsap.registerPlugin(ScrollTrigger);
 
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -53,7 +53,20 @@ export function HeroSection() {
   useEffect(() => {
     if (!isReady) return;
 
-    const ctx = gsap.context(() => {
+    let ctx: { revert: () => void } | undefined;
+    let isMounted = true;
+
+    async function setupAnimations() {
+      const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger"),
+      ]);
+
+      if (!isMounted || !sectionRef.current) return;
+
+      gsap.registerPlugin(ScrollTrigger);
+
+      ctx = gsap.context(() => {
       const tl = gsap.timeline({ 
         defaults: { ease: "power2.out" },
         delay: 0.1 // Nhỏ delay để đảm bảo browser đã render xong
@@ -105,9 +118,15 @@ export function HeroSection() {
           },
         },
       );
-    }, sectionRef);
+      }, sectionRef);
+    }
 
-    return () => ctx.revert();
+    setupAnimations();
+
+    return () => {
+      isMounted = false;
+      ctx?.revert();
+    };
   }, [isReady]);
 
   return (

@@ -195,6 +195,7 @@ export function DarkCard({
           className="object-cover transition-transform duration-700 group-hover:scale-105"
           sizes="400px"
           priority={priority}
+          fetchPriority={priority ? "high" : "auto"}
         />
         <div
           className="absolute inset-0 z-10"
