@@ -156,6 +156,8 @@ export function ChatMain({
     completionTokens: number;
     messageType?: "TEXT" | "VOICE";
   } | null>(null);
+  const speechAudioCtxRef = useRef<AudioContext | null>(null);
+  const speechSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
   const handleKeywordSelect = useCallback((kw: KeywordData) => {
     setSelectedKeyword(kw);
@@ -166,32 +168,107 @@ export function ChatMain({
 
   const { data, isLoading } = useChatMessages(sessionId);
   const createSession = useCreateSession();
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-
-  useEffect(() => {
-    const loadVoices = () => {
-      const v = speechSynthesis.getVoices();
-      setVoices(v);
-    };
-    loadVoices();
-    speechSynthesis.onvoiceschanged = loadVoices;
-    return () => {
-      speechSynthesis.onvoiceschanged = null;
-    };
+  const stopSpeech = useCallback(() => {
+    speechSynthesis.cancel();
+    speechSourceRef.current?.stop();
+    speechSourceRef.current = null;
   }, []);
 
-  const speak = (text: string) => {
-    if (speechSynthesis.speaking) {
-      speechSynthesis.cancel();
-      return;
-    }
+  const playAzureSpeech = useCallback(
+    async (text: string): Promise<void> => {
+      const res = await fetch("/api/voice/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, characterId: character.id }),
+      });
+
+      if (!res.ok) {
+        const message = await res.text();
+        throw new Error(message || `Azure TTS failed: ${res.status}`);
+      }
+
+      const audioBuffer = await res.arrayBuffer();
+      if (!audioBuffer.byteLength) {
+        throw new Error("Azure TTS khong tra ve audio");
+      }
+
+      if (!speechAudioCtxRef.current || speechAudioCtxRef.current.state === "closed") {
+        const AudioContextCtor = window.AudioContext || (window as typeof window & {
+          webkitAudioContext?: typeof AudioContext;
+        }).webkitAudioContext;
+
+        if (!AudioContextCtor) {
+          throw new Error("AudioContext khong kha dung");
+        }
+
+        speechAudioCtxRef.current = new AudioContextCtor();
+      }
+
+      const audioContext = speechAudioCtxRef.current;
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+
+      const decodedAudio = await audioContext.decodeAudioData(audioBuffer.slice(0));
+
+      await new Promise<void>((resolve, reject) => {
+        const source = audioContext.createBufferSource();
+        source.buffer = decodedAudio;
+        source.connect(audioContext.destination);
+        speechSourceRef.current = source;
+        source.onended = () => {
+          if (speechSourceRef.current === source) {
+            speechSourceRef.current = null;
+          }
+          resolve();
+        };
+        source.onerror = () => reject(new Error("Khong phat duoc audio Azure TTS"));
+        source.start();
+      });
+    },
+    [character.id],
+  );
+
+  const speakWebSpeech = useCallback((text: string) => {
     const voices = speechSynthesis.getVoices();
     const vietnameseVoice = voices.find((v) => v.name.includes("Vietnamese"));
     const utterance = new SpeechSynthesisUtterance(text);
     if (vietnameseVoice) utterance.voice = vietnameseVoice;
     utterance.lang = "vi-VN";
     speechSynthesis.speak(utterance);
+  }, []);
+
+  const speakWithFallback = useCallback(
+    async (text: string): Promise<void> => {
+      stopSpeech();
+      try {
+        await playAzureSpeech(text);
+        return;
+      } catch (err) {
+        console.warn("[ChatMain] Azure TTS failed, using Web Speech:", err);
+      }
+
+      speakWebSpeech(text);
+    },
+    [playAzureSpeech, speakWebSpeech, stopSpeech],
+  );
+
+  const speak = (text: string) => {
+    if (speechSynthesis.speaking || speechSourceRef.current) {
+      stopSpeech();
+      return;
+    }
+    void speakWithFallback(text);
   };
+
+  useEffect(() => {
+    return () => {
+      stopSpeech();
+      if (speechAudioCtxRef.current && speechAudioCtxRef.current.state !== "closed") {
+        speechAudioCtxRef.current.close().catch(() => {});
+      }
+    };
+  }, [stopSpeech]);
 
   const messages = useMemo(
     () => {
@@ -379,17 +456,12 @@ export function ChatMain({
   ]);
 
   const enqueueSpeech = (text: string) => {
-    const voices = speechSynthesis.getVoices();
-    const vietnameseVoice = voices.find((v) => v.name.includes("Vietnamese"));
-    const utterance = new SpeechSynthesisUtterance(text);
-    if (vietnameseVoice) utterance.voice = vietnameseVoice;
-    utterance.lang = "vi-VN";
-    speechSynthesis.speak(utterance);
+    speakWebSpeech(text);
   };
 
   const handleSend = async (content: string, type?: "TEXT" | "VOICE") => {
     // Cancel any ongoing speech when starting a new message
-    speechSynthesis.cancel();
+    stopSpeech();
     
     // If not specified, default to VOICE if the 3D avatar modal is open, else TEXT
     const msgType = type || (isVoice3DOpen ? "VOICE" : "TEXT");

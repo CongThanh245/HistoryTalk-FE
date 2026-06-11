@@ -30,15 +30,17 @@ function escapeXml(value: string): string {
 }
 
 function getAzureTtsUrl(): string {
-  if (AZURE_SPEECH_ENDPOINT) {
-    return `${AZURE_SPEECH_ENDPOINT.replace(/\/$/, "")}/cognitiveservices/v1`;
-  }
-
   if (!AZURE_SPEECH_REGION) {
     throw new Error("AZURE_SPEECH_REGION chua duoc cau hinh");
   }
 
-  return `https://${AZURE_SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
+  const region = AZURE_SPEECH_REGION.replace(/\s+/g, "").toLowerCase();
+
+  if (AZURE_SPEECH_ENDPOINT.includes(".tts.speech.microsoft.com")) {
+    return `${AZURE_SPEECH_ENDPOINT.replace(/\/$/, "")}/cognitiveservices/v1`;
+  }
+
+  return `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`;
 }
 
 export function getAzureVoiceForCharacter(characterId: string): string {
