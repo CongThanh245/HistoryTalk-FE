@@ -2,7 +2,7 @@
  * Web Speech API STT - Client-side Speech Recognition
  * Không giới hạn, miễn phí, dùng cho "Pure Web Speech Mode"
  * 
- * Lưu ý: Chất lượng nhận dạng tiếng Việt không tốt bằng Gemini API
+ * Lưu ý: Chất lượng nhận dạng tiếng Việt không tốt bằng cloud API
  * Nhưng đủ dùng cho basic conversation và miễn phí hoàn toàn
  */
 

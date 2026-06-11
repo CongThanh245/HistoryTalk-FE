@@ -1,6 +1,6 @@
 /**
  * Web Speech API TTS - Client-side fallback
- * Không giới hạn, miễn phí, nhưng chất lượng thấp hơn Gemini
+ * Không giới hạn, miễn phí, nhưng chất lượng thấp hơn Azure
  * Chỉ dùng khi: API quota hết, không có cache, hoặc user chọn "Economy mode"
  */
 
@@ -130,7 +130,7 @@ export function getWebSpeechTTS(): WebSpeechTTS {
 }
 
 /**
- * TTS wrapper: Thử Gemini API trước, fallback sang Web Speech nếu lỗi
+ * TTS wrapper: Thử cloud API trước, fallback sang Web Speech nếu lỗi
  */
 export async function speakWithFallback(
   text: string,
@@ -167,7 +167,16 @@ export async function speakWithFallback(
  */
 function playAudioBuffer(buffer: ArrayBuffer): Promise<void> {
   return new Promise((resolve, reject) => {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextCtor = window.AudioContext || (window as typeof window & {
+      webkitAudioContext?: typeof AudioContext;
+    }).webkitAudioContext;
+
+    if (!AudioContextCtor) {
+      reject(new Error("AudioContext khong kha dung"));
+      return;
+    }
+
+    const audioContext = new AudioContextCtor();
     
     audioContext.decodeAudioData(buffer.slice(0), 
       (audioBuffer) => {

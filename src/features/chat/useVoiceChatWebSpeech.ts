@@ -1,7 +1,7 @@
 /**
- * useVoiceChatWebSpeech - "Pure Web Speech Mode"
+ * useVoiceChatWebSpeech - Web Speech STT + Azure TTS mode
  * 
- * 100% client-side, không gọi Gemini API:
+ * 100% client-side, không gọi cloud API:
  * - STT: Web Speech Recognition (miễn phí, không giới hạn)
  * - Chat: Gửi text xuống BE (nhận text response)
  * - TTS: Web Speech Synthesis (miễn phí, không giới hạn)
@@ -9,7 +9,7 @@
  * Trade-offs:
  * ✅ Không lo quota/API key hết hạn
  * ✅ Không cần audio blob upload → nhanh hơn
- * ⚠️ Chất lượng giọng kém hơn Gemini
+ * ⚠️ Chất lượng giọng kém hơn Azure
  * ⚠️ STT tiếng Việt không chính xác bằng
  * ⚠️ Không streaming TTS (phải đợi full response)
  */
@@ -47,6 +47,7 @@ export type UseVoiceChatWebSpeechOptions = {
 
 export function useVoiceChatWebSpeech({
   sessionId,
+  characterId,
   onError,
   onProfileRefresh,
   onTokenUpdate,
@@ -68,6 +69,8 @@ export function useVoiceChatWebSpeech({
   const sendTextToChatRef = useRef<(text: string) => Promise<void>>(async () => {});
   const finalTranscriptRef = useRef(""); // Lưu transcript khi stop
   const transcriptBaseRef = useRef("");
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const ttsAnalyserRef = useRef<AnalyserNode | null>(null);
   
   // Simulated analyser cho lip-sync (vì Web Speech API không cung cấp audio data)
   const simulatedAnalyserRef = useRef<SimulatedAnalyserNode | null>(null);
@@ -92,8 +95,99 @@ export function useVoiceChatWebSpeech({
     return () => {
       sttRef.current?.abort();
       ttsRef.current?.cancel();
+      if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
+        audioCtxRef.current.close().catch(() => {});
+      }
     };
   }, []);
+
+  const ensureAudioContext = useCallback(() => {
+    if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
+      const AudioContextCtor = window.AudioContext || (window as typeof window & {
+        webkitAudioContext?: typeof AudioContext;
+      }).webkitAudioContext;
+
+      if (!AudioContextCtor) {
+        throw new Error("AudioContext khong kha dung");
+      }
+
+      const audioContext = new AudioContextCtor();
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.connect(audioContext.destination);
+      audioCtxRef.current = audioContext;
+      ttsAnalyserRef.current = analyser;
+    }
+
+    return audioCtxRef.current;
+  }, []);
+
+  const playAzureTts = useCallback(
+    async (text: string): Promise<void> => {
+      const res = await fetch("/api/voice/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, characterId }),
+      });
+
+      if (!res.ok) {
+        const message = await res.text();
+        throw new Error(message || `Azure TTS failed: ${res.status}`);
+      }
+
+      const audioBuffer = await res.arrayBuffer();
+      if (!audioBuffer.byteLength) {
+        throw new Error("Azure TTS khong tra ve audio");
+      }
+
+      const audioContext = ensureAudioContext();
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+
+      const decodedAudio = await audioContext.decodeAudioData(audioBuffer.slice(0));
+
+      await new Promise<void>((resolve, reject) => {
+        const source = audioContext.createBufferSource();
+        source.buffer = decodedAudio;
+        source.connect(ttsAnalyserRef.current ?? audioContext.destination);
+        source.onended = () => resolve();
+        source.onerror = () => reject(new Error("Khong phat duoc audio Azure TTS"));
+        source.start();
+      });
+    },
+    [characterId, ensureAudioContext],
+  );
+
+  const speakWithAzureFallback = useCallback(
+    async (text: string): Promise<void> => {
+      try {
+        await playAzureTts(text);
+        return;
+      } catch (err) {
+        console.warn("[VoiceChatWebSpeech] Azure TTS failed, using Web Speech:", err);
+      }
+      if (!ttsRef.current) {
+        ttsRef.current = getWebSpeechTTS();
+      }
+
+      if (!ttsRef.current?.isSupported()) {
+        throw new Error("Web Speech API khong kha dung");
+      }
+
+      simulatedAnalyserRef.current?.start(text, 4.5);
+      try {
+        await ttsRef.current.speak(text, {
+          rate: 1.0,
+          pitch: 1,
+          volume: 1,
+        });
+      } finally {
+        simulatedAnalyserRef.current?.stop();
+      }
+    },
+    [playAzureTts],
+  );
 
   /**
    * Bắt đầu nghe (STT)
@@ -302,27 +396,9 @@ export function useVoiceChatWebSpeech({
         { role: "assistant", text: aiResponse, timestamp: new Date() },
       ]);
 
-      // TTS với Web Speech
+      // TTS with Azure first, then Web Speech fallback.
       setStatus("speaking");
-      
-      if (!ttsRef.current) {
-        ttsRef.current = getWebSpeechTTS();
-      }
-
-      if (ttsRef.current?.isSupported()) {
-        // Bắt đầu lip-sync simulation trước khi nói
-        simulatedAnalyserRef.current?.start(aiResponse, 4.5);
-        
-        await ttsRef.current.speak(aiResponse, {
-          rate: 1.0,
-          pitch: 1,
-          volume: 1,
-        });
-        
-        // Dừng lip-sync khi nói xong
-        simulatedAnalyserRef.current?.stop();
-      }
-
+      await speakWithAzureFallback(aiResponse);
       setStatus("idle");
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : "Lỗi kết nối";
@@ -330,7 +406,7 @@ export function useVoiceChatWebSpeech({
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
     }
-  }, [sessionId, onError, onProfileRefresh, onTokenUpdate]);
+  }, [sessionId, onError, onProfileRefresh, onTokenUpdate, speakWithAzureFallback]);
 
   useEffect(() => {
     sendTextToChatRef.current = sendTextToChat;
