@@ -107,6 +107,8 @@ export function ChatInput({
   const transcriptRef = useRef("");
 
   const startRecording = useCallback(() => {
+    if (disabled || isLoading) return;
+
     const SpeechRecognition =
       window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
@@ -131,7 +133,7 @@ export function ChatInput({
       recognitionRef.current = null;
 
       const finalVal = transcriptRef.current.trim();
-      if (finalVal) {
+      if (finalVal && !disabled && !isLoading) {
         onSend(finalVal);
         setText("");
         if (textareaRef.current) textareaRef.current.style.height = "auto";
@@ -148,19 +150,21 @@ export function ChatInput({
     recognition.start();
     recognitionRef.current = recognition;
     setIsRecording(true);
-  }, [onSend]);
+  }, [disabled, isLoading, onSend]);
 
   const stopRecording = useCallback(() => {
     recognitionRef.current?.stop();
   }, []);
 
   const handleMicClick = useCallback(() => {
+    if (disabled || isLoading) return;
+
     if (isRecording) {
       stopRecording();
     } else {
       startRecording();
     }
-  }, [isRecording, startRecording, stopRecording]);
+  }, [disabled, isLoading, isRecording, startRecording, stopRecording]);
 
   return (
     <div

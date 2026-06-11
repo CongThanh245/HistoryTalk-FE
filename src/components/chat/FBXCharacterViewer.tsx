@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useRef } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useAnimations, useFBX, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -388,6 +388,29 @@ function Loader() {
   );
 }
 
+class ModelErrorBoundary extends React.Component<
+  {
+    children: React.ReactNode;
+    onError: (error: Error) => void;
+  },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    this.props.onError(error);
+  }
+
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Exported component
 // ─────────────────────────────────────────────────────────────────────────────
@@ -486,6 +509,10 @@ export function FBXCharacterViewer({
 }: FBXCharacterViewerProps) {
   const testVolumeRef = useRef(0);
   const diagnosticRef = useRef<DiagnosticInfo | null>(null);
+  const [modelLoadError, setModelLoadError] = useState<{
+    url: string;
+    error: Error;
+  } | null>(null);
 
   const handleDiagnostic = (d: DiagnosticInfo) => {
     diagnosticRef.current = d;
@@ -520,7 +547,7 @@ export function FBXCharacterViewer({
   const hasValidModel = isValidModelUrl(modelUrl);
 
   // Show placeholder if no valid model URL
-  if (!hasValidModel) {
+  if (!hasValidModel || modelLoadError?.url === modelUrl) {
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <NoModelPlaceholder
@@ -579,16 +606,21 @@ export function FBXCharacterViewer({
         <directionalLight position={[2, 6, 4]} intensity={1.3} />
         <pointLight position={[-2, 3, -1]} intensity={0.5} color="#c9a84c" />
 
-        <Suspense fallback={<Loader />}>
-          <AutoModel
-            url={modelUrl}
-            isSpeaking={effectiveSpeaking}
-            isProcessing={isProcessing}
-            testVolumeRef={testVolumeRef}
-            ttsAnalyserRef={ttsAnalyserRef}
-            onDiagnostic={handleDiagnostic}
-          />
-        </Suspense>
+        <ModelErrorBoundary
+          key={modelUrl}
+          onError={(error) => setModelLoadError({ url: modelUrl, error })}
+        >
+          <Suspense fallback={<Loader />}>
+            <AutoModel
+              url={modelUrl}
+              isSpeaking={effectiveSpeaking}
+              isProcessing={isProcessing}
+              testVolumeRef={testVolumeRef}
+              ttsAnalyserRef={ttsAnalyserRef}
+              onDiagnostic={handleDiagnostic}
+            />
+          </Suspense>
+        </ModelErrorBoundary>
 
         <OrbitControls
           enablePan={false}

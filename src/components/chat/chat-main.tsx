@@ -239,8 +239,10 @@ export function ChatMain({
     !!sessionId &&
     hasPlusAccess(accessUser);
   const sessionIdRef = useRef(sessionId);
-  const canUseVoiceCall = hasPlusAccess(accessUser);
-  const canUseVideoCall = hasProAccess(accessUser);
+  const isStaffOrAdmin = user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN";
+  const canUseVoiceCall = isStaffOrAdmin || hasPlusAccess(accessUser);
+  const canUseVideoCall = isStaffOrAdmin || hasProAccess(accessUser);
+  const isConversationInitializing = !sessionId;
   const requestedCallMode = searchParams.get("call");
 
   const replaceCallModeInUrl = useCallback(
@@ -303,6 +305,7 @@ export function ChatMain({
   );
 
   const handleOpenVoice2DCall = useCallback(() => {
+    if (!sessionId || isTokenExhausted) return;
     if (!canUseVoiceCall) {
       handleLockedFeatureClick();
       return;
@@ -311,7 +314,7 @@ export function ChatMain({
     dismissedCallModeRef.current = null;
     setIsVoice2DOpen(true);
     replaceCallModeInUrl("2d");
-  }, [canUseVoiceCall, handleLockedFeatureClick, replaceCallModeInUrl]);
+  }, [canUseVoiceCall, handleLockedFeatureClick, isTokenExhausted, replaceCallModeInUrl, sessionId]);
 
   const handleCloseVoice2DCall = useCallback(() => {
     dismissedCallModeRef.current = "2d";
@@ -324,6 +327,7 @@ export function ChatMain({
   }, [qc, replaceCallModeInUrl, sessionId]);
 
   const handleOpenVoice3DCall = useCallback(() => {
+    if (!sessionId || isTokenExhausted) return;
     if (!canUseVideoCall) {
       handleLockedFeatureClick();
       return;
@@ -332,7 +336,7 @@ export function ChatMain({
     dismissedCallModeRef.current = null;
     setIsVoice3DOpen(true);
     replaceCallModeInUrl("3d");
-  }, [canUseVideoCall, handleLockedFeatureClick, replaceCallModeInUrl]);
+  }, [canUseVideoCall, handleLockedFeatureClick, isTokenExhausted, replaceCallModeInUrl, sessionId]);
 
   const handleCloseVoice3DCall = useCallback(() => {
     dismissedCallModeRef.current = "3d";
@@ -617,7 +621,7 @@ export function ChatMain({
         {/* ── Nút Voice Call ── */}
         <button
           onClick={handleOpenVoice2DCall}
-          disabled={canUseVoiceCall && (!sessionId || isTokenExhausted)}
+          disabled={isConversationInitializing || (canUseVoiceCall && isTokenExhausted)}
           aria-label={
             canUseVoiceCall ? `Gọi thoại với ${character.name}` : "Mở nâng cấp gói Plus"
           }
@@ -652,7 +656,7 @@ export function ChatMain({
 
         <button
           onClick={handleOpenVoice3DCall}
-          disabled={canUseVideoCall && (!sessionId || isTokenExhausted)}
+          disabled={isConversationInitializing || (canUseVideoCall && isTokenExhausted)}
           aria-label={
             canUseVideoCall ? `Video call 3D với ${character.name}` : "Mở nâng cấp gói Pro"
           }
@@ -837,7 +841,7 @@ export function ChatMain({
       <ChatInput
         onSend={handleSend}
         isLoading={isStreaming}
-        disabled={isStreaming || isTokenExhausted}
+        disabled={isStreaming || isTokenExhausted || isConversationInitializing}
         characterName={character.name}
         isTokenExhausted={isTokenExhausted}
       />
