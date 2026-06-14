@@ -237,9 +237,8 @@ export const quizService = {
 
   // POST /quizzes/:quizId/start
   startQuiz: async (quizId: string, limitedTime?: number): Promise<StartQuizResponse> => {
-    const res = await axiosClient.post(`/quizzes/${quizId}/start`, null, {
-      params: limitedTime ? { limitedTime } : undefined,
-    });
+    const payload = limitedTime ? { limitedTime } : {};
+    const res = await axiosClient.post(`/quizzes/${quizId}/start`, payload);
     const raw = res.data.data;
     return {
       sessionId: raw.sessionId,
