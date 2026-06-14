@@ -45,12 +45,16 @@ interface CarouselCardProps {
   character: Character;
   priority?: boolean;
   onClick?: (id: string) => void;
+  interaction?: "overlay" | "flip";
+  onHoverChange?: (isHovered: boolean) => void;
 }
 
 export function CharacterCarouselCard({
   character,
   priority = false,
   onClick,
+  interaction = "overlay",
+  onHoverChange,
 }: CarouselCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -58,10 +62,46 @@ export function CharacterCarouselCard({
     ? character.avatarUrl!
     : (isValidUrl(character.imageUrl) ? character.imageUrl! : undefined);
 
+  const setHovered = (value: boolean) => {
+    setIsHovered(value);
+    onHoverChange?.(value);
+  };
+
+  if (interaction === "flip") {
+    return (
+      <button
+        type="button"
+        aria-label={`Trò chuyện với ${character.name}`}
+        onPointerEnter={() => setHovered(true)}
+        onPointerLeave={() => setHovered(false)}
+        onFocus={() => setHovered(true)}
+        onBlur={() => setHovered(false)}
+        onClick={() => onClick?.(character.id)}
+        className="relative h-full w-full cursor-pointer overflow-hidden rounded-[var(--radius-lg)] text-left"
+      >
+        <DarkCard
+          imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
+          imageAlt={character.name}
+          imageHeight="65%"
+          badge={{ label: character.era ?? "", color: "var(--accent-gold)", bg: "transparent" }}
+          priority={priority}
+          hoverEffects={false}
+        >
+          <h3 className="line-clamp-1 text-base font-bold text-[var(--text-primary)]">
+            {character.name}
+          </h3>
+          <p className="mt-0.5 text-xs font-medium text-[var(--text-secondary)]">
+            {character.role ?? character.title}
+          </p>
+        </DarkCard>
+      </button>
+    );
+  }
+
   return (
     <div
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onClick={() => onClick?.(character.id)}
       className="group relative w-full h-full rounded-[var(--radius-lg)] overflow-hidden cursor-pointer"
     >

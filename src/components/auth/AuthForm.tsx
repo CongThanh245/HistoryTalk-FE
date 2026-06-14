@@ -311,7 +311,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               kiểm tra kiến thức của bạn.
             </p>
           </div>
-          <BrandLogo forceDark size="large" />
+          <BrandLogo size="large" />
         </div>
       </div>
 

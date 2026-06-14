@@ -40,7 +40,7 @@ export function Footer() {
               href="/"
               className="inline-flex items-center gap-2 mb-6 group"
             >
-              <BrandLogo forceDark size="large" />
+              <BrandLogo forceTheme="dark" size="large" />
             </Link>
 
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-8">

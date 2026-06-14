@@ -145,6 +145,7 @@ interface DarkCardProps {
   onClick?: () => void;
   priority?: boolean;
   imageQuality?: number;
+  hoverEffects?: boolean;
 }
 
 export function DarkCard({
@@ -158,6 +159,7 @@ export function DarkCard({
   onClick,
   priority = false,
   imageQuality = 65,
+  hoverEffects = true,
 }: DarkCardProps) {
   return (
     <div
@@ -179,7 +181,10 @@ export function DarkCard({
           - pointer-events-none = không block click
       */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-300"
+        className={cn(
+          "absolute inset-0 pointer-events-none opacity-0 transition-all duration-300",
+          hoverEffects && "group-hover:opacity-100",
+        )}
         style={{
           boxShadow: "inset 0 0 0 1.5px var(--accent-gold), var(--shadow-gold)",
           borderRadius: "var(--radius-lg)",
@@ -196,7 +201,10 @@ export function DarkCard({
           src={isValidUrl(imageSrc) ? imageSrc : "/card.jpg"}
           alt={imageAlt}
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
+          className={cn(
+            "object-cover transition-transform duration-700",
+            hoverEffects && "group-hover:scale-105",
+          )}
           sizes={imageSizes}
           priority={priority}
           fetchPriority={priority ? "high" : "auto"}

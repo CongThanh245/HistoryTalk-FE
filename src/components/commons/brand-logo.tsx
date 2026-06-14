@@ -8,6 +8,7 @@ type BrandLogoProps = {
   priority?: boolean;
   isCollapsed?: boolean;
   forceDark?: boolean;
+  forceTheme?: "light" | "dark";
   size?: "default" | "large";
 };
 
@@ -16,6 +17,7 @@ export function BrandLogo({
   priority = false,
   isCollapsed = false,
   forceDark = false,
+  forceTheme,
   size = "default",
 }: BrandLogoProps) {
   const isLarge = size === "large";
@@ -23,11 +25,19 @@ export function BrandLogo({
   const height = isCollapsed ? 36 : isLarge ? 56 : 44;
   const themeLogoClassName = cn(
     "relative z-10 object-contain",
-    forceDark ? "block" : "block dark:hidden",
+    forceTheme === "dark"
+      ? "hidden"
+      : forceTheme === "light" || forceDark
+        ? "block"
+        : "block dark:hidden",
   );
   const darkLogoClassName = cn(
     "relative z-10 object-contain",
-    forceDark ? "hidden" : "hidden dark:block",
+    forceTheme === "dark"
+      ? "block"
+      : forceTheme === "light" || forceDark
+        ? "hidden"
+        : "hidden dark:block",
   );
 
   return (
