@@ -27,11 +27,13 @@ export default function CreateCharacterPage() {
   const eventOptions = eventsData?.content || [];
 
   const handleSave = async (draft: CharacterDraft) => {
+    const imageUrl = isValidUrl(draft.image.trim()) ? draft.image.trim() : undefined;
     const payload = {
       name: draft.name.trim(),
       title: draft.title.trim(),
       background: draft.background.trim() || undefined,
-      image: isValidUrl(draft.image.trim()) ? draft.image.trim() : undefined,
+      image: imageUrl,
+      imageUrl,
       modelUrl: isValidUrl(draft.modelUrl.trim()) ? draft.modelUrl.trim() : undefined,
       personality: draft.personality.trim() || undefined,
       bornYear: toNullableNumber(draft.bornYear),

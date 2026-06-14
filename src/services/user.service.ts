@@ -43,11 +43,26 @@ export interface ChangePasswordPayload {
 
 export type SubscriptionPlan = "free" | "plus" | "pro";
 
+const normalizeOptionalText = (value: unknown): string | null => {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return null;
+};
+
+const getPlanText = (value: unknown): string =>
+  normalizeOptionalText(value)?.toLowerCase().trim() ?? "";
+
+const normalizeUserProfile = (profile: UserProfile): UserProfile => ({
+  ...profile,
+  tierId: normalizeOptionalText(profile.tierId),
+  tierTitle: normalizeOptionalText(profile.tierTitle),
+});
+
 export function getSubscriptionPlan(
   profile: Pick<UserProfile, "tierId" | "tierTitle"> | null | undefined,
 ): SubscriptionPlan {
-  const tierId = profile?.tierId?.toLowerCase() ?? "";
-  const tierTitle = profile?.tierTitle?.toLowerCase().trim() ?? "";
+  const tierId = getPlanText(profile?.tierId);
+  const tierTitle = getPlanText(profile?.tierTitle);
   const value = `${tierId} ${tierTitle}`;
 
   if (value.includes("pro")) return "pro";
@@ -88,7 +103,7 @@ export const userService = {
     if (!res.data.success || !res.data.data) {
       throw new Error(res.data.message ?? "Không thể lấy thông tin người dùng");
     }
-    return res.data.data;
+    return normalizeUserProfile(res.data.data);
   },
 
   /** PATCH /users/me — Cập nhật profile người dùng */
@@ -97,7 +112,7 @@ export const userService = {
     if (!res.data.success || !res.data.data) {
       throw new Error(res.data.message ?? "Cập nhật thất bại");
     }
-    return res.data.data;
+    return normalizeUserProfile(res.data.data);
   },
 
   /** PATCH /users/me/password — Đổi mật khẩu */

@@ -97,6 +97,7 @@ export interface CreateCharacterRequest {
   title: string;
   background?: string;
   image?: string | null;
+  imageUrl?: string | null;
   modelUrl?: string | null;
   personality?: string;
   bornYear?: number | null;

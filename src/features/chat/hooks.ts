@@ -116,7 +116,7 @@ export function useSoftDeleteSession() {
         const newHistory = previousHistory
           .map((group) => ({
             ...group,
-            sessions: group.sessions.filter((s: { id: string }) => s.id !== sessionId),
+            sessions: (group.sessions ?? []).filter((s: { id: string }) => s.id !== sessionId),
           }))
           .filter((group) => group.sessions.length > 0); // Remove empty groups
         

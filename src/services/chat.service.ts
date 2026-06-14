@@ -1,5 +1,6 @@
 import { axiosClient } from "@/configs/axios.client";
 import { useAuthStore } from "@/store/auth.store";
+import { normalizeChatHistoryGroups } from "./chat-history.mapper";
 
 // ── Types theo API response ───────────────────────────────
 
@@ -58,6 +59,7 @@ export interface ChatHistoryGroup {
   contextName: string; // ← đổi từ eventTitle
   sessions: ChatHistorySession[];
 }
+
 export interface ChatCharacter {
   id: string;
   name: string;
@@ -157,8 +159,10 @@ export const chatService = {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        const error = new Error(errorData?.message || `HTTP error! status: ${response.status}`);
-        (error as any).response = {
+        const error: Error & {
+          response?: { status: number; data: unknown };
+        } = new Error(errorData?.message || `HTTP error! status: ${response.status}`);
+        error.response = {
           status: response.status,
           data: errorData,
         };
@@ -205,7 +209,7 @@ export const chatService = {
                      messageType = parsed.messageType;
                    }
                 }
-              } catch (e) {
+              } catch {
                 console.warn("Failed to parse SSE data line", line);
               }
             }
@@ -220,7 +224,7 @@ export const chatService = {
 
   getHistory: async (): Promise<ChatHistoryGroup[]> => {
     const res = await axiosClient.get("/chat/history");
-    return res.data.data;
+    return normalizeChatHistoryGroups(res.data.data);
   },
 
   deleteSession: async (sessionId: string): Promise<void> => {
