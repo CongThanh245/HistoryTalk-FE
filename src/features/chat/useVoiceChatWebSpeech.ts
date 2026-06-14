@@ -71,6 +71,8 @@ export function useVoiceChatWebSpeech({
   const transcriptBaseRef = useRef("");
   const audioCtxRef = useRef<AudioContext | null>(null);
   const ttsAnalyserRef = useRef<AnalyserNode | null>(null);
+  const activeTtsAnalyserRef = useRef<AnalyserLike | null>(null);
+  const azureSourceRef = useRef<AudioBufferSourceNode | null>(null);
   
   // Simulated analyser cho lip-sync (vì Web Speech API không cung cấp audio data)
   const simulatedAnalyserRef = useRef<SimulatedAnalyserNode | null>(null);
@@ -79,9 +81,11 @@ export function useVoiceChatWebSpeech({
   useEffect(() => {
     if (typeof window !== 'undefined') {
       simulatedAnalyserRef.current = createSimulatedAnalyser();
+      activeTtsAnalyserRef.current = simulatedAnalyserRef.current;
     }
     return () => {
       simulatedAnalyserRef.current?.stop();
+      activeTtsAnalyserRef.current = null;
     };
   }, []);
 
@@ -117,6 +121,7 @@ export function useVoiceChatWebSpeech({
       analyser.connect(audioContext.destination);
       audioCtxRef.current = audioContext;
       ttsAnalyserRef.current = analyser;
+      activeTtsAnalyserRef.current = analyser;
     }
 
     return audioCtxRef.current;
@@ -151,7 +156,14 @@ export function useVoiceChatWebSpeech({
         const source = audioContext.createBufferSource();
         source.buffer = decodedAudio;
         source.connect(ttsAnalyserRef.current ?? audioContext.destination);
-        source.onended = () => resolve();
+        azureSourceRef.current = source;
+        activeTtsAnalyserRef.current = ttsAnalyserRef.current;
+        source.onended = () => {
+          if (azureSourceRef.current === source) {
+            azureSourceRef.current = null;
+          }
+          resolve();
+        };
         source.onerror = () => reject(new Error("Khong phat duoc audio Azure TTS"));
         source.start();
       });
@@ -175,6 +187,7 @@ export function useVoiceChatWebSpeech({
         throw new Error("Web Speech API khong kha dung");
       }
 
+      activeTtsAnalyserRef.current = simulatedAnalyserRef.current;
       simulatedAnalyserRef.current?.start(text, 4.5);
       try {
         await ttsRef.current.speak(text, {
@@ -429,6 +442,8 @@ export function useVoiceChatWebSpeech({
     abortRef.current = true;
     sttRef.current?.abort();
     ttsRef.current?.cancel();
+    azureSourceRef.current?.stop();
+    azureSourceRef.current = null;
     simulatedAnalyserRef.current?.stop();
     setIsListening(false);
     setInterimText("");
@@ -446,7 +461,7 @@ export function useVoiceChatWebSpeech({
     startRecording: startListening,
     stopRecording: stopListening,
     cancel,
-    ttsAnalyserRef: simulatedAnalyserRef as React.RefObject<AnalyserLike | null>, // Simulated analyser cho lip-sync
+    ttsAnalyserRef: activeTtsAnalyserRef,
     // Check support
     isSupported: typeof window !== 'undefined' && 
       ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) &&
