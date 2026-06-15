@@ -3,9 +3,6 @@
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import TypingText from "@/components/commons/TypingText";
-import TypingTextBody from "@/components/commons/TypingTextBody";
-import MaskedText from "@/components/commons/MaskedText";
 import { cn } from "@/lib/utils/cn";
 import { Container } from "../container";
 import { isValidUrl } from "@/lib/utils/url";
@@ -153,26 +150,26 @@ export function HeroSection({
 
       ctx = gsap.context(() => {
       const tl = gsap.timeline({ 
-        defaults: { ease: "power2.out" },
+        defaults: { ease: "power3.out" },
         delay: 0.1 // Nhỏ delay để đảm bảo browser đã render xong
       });
 
       tl.fromTo(
-        ".typing-title .char",
-        { opacity: 0, x: -20 },
-        { opacity: 1, x: 0, duration: 0.05, stagger: 0.03 },
+        ".hero-reveal-title",
+        { yPercent: 115, rotate: 1.5 },
+        { yPercent: 0, rotate: 0, duration: 0.9 },
       )
         .fromTo(
-          ".typing-subtitle .char",
-          { opacity: 0, x: -20 },
-          { opacity: 1, x: 0, duration: 0.04, stagger: 0.025 },
-          "-=0.3",
+          ".hero-reveal-subtitle",
+          { yPercent: 120, opacity: 0 },
+          { yPercent: 0, opacity: 1, duration: 0.75 },
+          "-=0.58",
         )
         .fromTo(
-          subContentRef.current,
-          { y: 30, opacity: 0 },
-          { y: 0, opacity: 1, duration: 1 },
-          "-=0.5",
+          ".hero-stagger-item",
+          { y: 24, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.65, stagger: 0.11 },
+          "-=0.38",
         );
 
       gsap.to([contentWrapperRef.current, carouselRef.current], {
@@ -208,7 +205,7 @@ export function HeroSection({
 
     const animationTimer = window.setTimeout(() => {
       setupAnimations();
-    }, 12000);
+    }, 180);
 
     return () => {
       isMounted = false;
@@ -251,23 +248,24 @@ export function HeroSection({
             className="z-10 space-y-4 pb-4 pt-28 sm:pt-[7.5rem] md:space-y-5 md:pb-6 md:pt-28 lg:space-y-8 lg:pb-0 lg:pt-0"
           >
             <h1 className="text-hero text-[var(--text-primary)]">
-              <TypingText text="HISTORY TALK" className="typing-title" />
-              <span className="text-subtitle mt-2 block font-normal normal-case text-[var(--text-tertiary)]">
-                <TypingTextBody
-                  text="Khi lịch sử trở nên sống động"
-                  className="typing-subtitle"
-                />
+              <span className="block overflow-hidden pb-[0.08em]">
+                <span className="hero-reveal-title block">HISTORY TALK</span>
+              </span>
+              <span className="text-subtitle mt-2 block overflow-hidden pb-[0.08em] font-normal normal-case text-[var(--text-tertiary)]">
+                <span className="hero-reveal-subtitle block">
+                  Khi lịch sử trở nên sống động
+                </span>
               </span>
             </h1>
 
             <div ref={subContentRef} className="space-y-5 lg:space-y-8">
-              <MaskedText>
+              <div className="hero-stagger-item">
                 <p className="text-sm md:text-base lg:text-lg leading-relaxed max-w-xl text-[var(--text-secondary)]">
                   Trò chuyện trực tiếp với các nhân vật lịch sử được tái hiện bằng AI. Khám phá quá khứ như một hành trình có bối cảnh, cảm xúc và lựa chọn.
                 </p>
-              </MaskedText>
+              </div>
 
-              <div className="my-3 md:my-4 space-y-0.5 border-l-2 border-[var(--accent-gold)]/40 py-2 pl-4 md:py-3 md:pl-5 lg:pl-6">
+              <div className="hero-stagger-item my-3 md:my-4 space-y-0.5 border-l-2 border-[var(--accent-gold)]/40 py-2 pl-4 md:py-3 md:pl-5 lg:pl-6">
                 <p className="text-sm md:text-base font-light italic text-[var(--text-primary)]">
                   &quot;Học sinh chỉ chán học Lịch sử trên trường
                 </p>
@@ -276,7 +274,7 @@ export function HeroSection({
                 </p>
               </div>
 
-              <div className="pt-2 lg:pt-4">
+              <div className="hero-stagger-item pt-2 lg:pt-4">
                 <Link
                   href="/home"
                   className={cn(
