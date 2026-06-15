@@ -3,7 +3,9 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-const WELCOME_SCREEN_KEY = "historytalk-welcome-screen-seen";
+export const WELCOME_SCREEN_KEY = "historytalk-welcome-screen-seen";
+export const WELCOME_SCREEN_FINISHED_EVENT =
+  "historytalk:welcome-screen-finished";
 const WELCOME_DURATION = 2800;
 const FADE_DURATION = 500;
 
@@ -14,7 +16,10 @@ export function WelcomeScreen() {
 
   useEffect(() => {
     if (sessionStorage.getItem(WELCOME_SCREEN_KEY)) {
-      requestAnimationFrame(() => setIsVisible(false));
+      requestAnimationFrame(() => {
+        setIsVisible(false);
+        window.dispatchEvent(new Event(WELCOME_SCREEN_FINISHED_EVENT));
+      });
       return;
     }
 
@@ -46,6 +51,7 @@ export function WelcomeScreen() {
     const hideTimer = window.setTimeout(() => {
       setIsVisible(false);
       document.body.style.overflow = "";
+      window.dispatchEvent(new Event(WELCOME_SCREEN_FINISHED_EVENT));
     }, WELCOME_DURATION + FADE_DURATION);
 
     return () => {

@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils/cn";
 import { Container } from "../container";
 import { isValidUrl } from "@/lib/utils/url";
 import type { Character } from "@/services/character.service";
+import {
+  WELCOME_SCREEN_FINISHED_EVENT,
+} from "@/components/welcome-screen";
 
 // Lazy load carousel để giảm initial render load
 const Carousel3DVertical = lazy(() =>
@@ -115,21 +118,52 @@ export function HeroSection({
 
   // Defer animations để tránh chạy ngay lập tức khi mount
   useEffect(() => {
-    // Phase 1: Cho phép render content tĩnh trước
-    const rafId = requestAnimationFrame(() => {
-      setIsReady(true);
-      
-      // Phase 2: Defer carousel load để tránh lag initial render
-      const loadCarousel = () => setShowCarousel(true);
-      
-      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-        (window as Window & { requestIdleCallback: typeof requestIdleCallback }).requestIdleCallback(loadCarousel, { timeout: 6500 });
-      } else {
-        setTimeout(loadCarousel, 6500);
-      }
-    });
+    let rafId = 0;
+    let idleCallbackId: number | undefined;
+    let carouselTimer: number | undefined;
 
-    return () => cancelAnimationFrame(rafId);
+    const startHero = () => {
+      rafId = requestAnimationFrame(() => {
+        setIsReady(true);
+
+      // Phase 2: Defer carousel load để tránh lag initial render
+        const loadCarousel = () => setShowCarousel(true);
+
+        if ("requestIdleCallback" in window) {
+          idleCallbackId = (
+            window as Window & {
+              requestIdleCallback: typeof requestIdleCallback;
+            }
+          ).requestIdleCallback(loadCarousel, { timeout: 6500 });
+        } else {
+          carouselTimer = window.setTimeout(loadCarousel, 6500);
+        }
+      });
+    };
+
+    const isWelcomeScreenMounted =
+      document.querySelector(".welcome-screen") !== null;
+
+    if (isWelcomeScreenMounted) {
+      window.addEventListener(WELCOME_SCREEN_FINISHED_EVENT, startHero, {
+        once: true,
+      });
+    } else {
+      startHero();
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener(WELCOME_SCREEN_FINISHED_EVENT, startHero);
+
+      if (idleCallbackId !== undefined && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleCallbackId);
+      }
+
+      if (carouselTimer !== undefined) {
+        window.clearTimeout(carouselTimer);
+      }
+    };
   }, []);
 
   useEffect(() => {
