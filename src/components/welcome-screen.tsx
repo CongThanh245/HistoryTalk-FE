@@ -8,12 +8,13 @@ const WELCOME_DURATION = 2800;
 const FADE_DURATION = 500;
 
 export function WelcomeScreen() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (sessionStorage.getItem(WELCOME_SCREEN_KEY)) {
+      requestAnimationFrame(() => setIsVisible(false));
       return;
     }
 
@@ -24,7 +25,6 @@ export function WelcomeScreen() {
     let animationFrame = 0;
 
     const updateProgress = (now: number) => {
-      setIsVisible(true);
       const elapsed = now - startedAt;
       const ratio = Math.min(elapsed / WELCOME_DURATION, 1);
       const easedProgress = 1 - Math.pow(1 - ratio, 3);
