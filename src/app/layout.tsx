@@ -4,6 +4,7 @@ import "../styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProviders from "@/components/context/query-client-provider";
 import { ThemeProvider } from "@/components/context/theme-provider";
+import { WelcomeScreen } from "@/components/welcome-screen";
 
 // Define CSS variables for local fonts
 const titleFont = {
@@ -64,6 +65,7 @@ export default function RootLayout({
       <body
         className={`${titleFont.variable} ${bodyFont.variable} antialiased`}
       >
+        <WelcomeScreen />
         <ThemeProvider>
           <ReactQueryProviders>{children}</ReactQueryProviders>
           <Toaster
