@@ -63,6 +63,15 @@ export function WelcomeScreen() {
   return (
     <div
       className={`welcome-screen ${isLeaving ? "welcome-screen--leaving" : ""}`}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        display: "grid",
+        placeItems: "center",
+        overflow: "hidden",
+        background: "#070d18",
+      }}
       role="status"
       aria-live="polite"
       aria-label={`Đang chuẩn bị trải nghiệm HistoryTalk, ${progress}%`}
