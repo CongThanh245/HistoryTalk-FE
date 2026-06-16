@@ -138,7 +138,7 @@ function CharactersReveal({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div className="relative w-full h-full flex flex-col overflow-hidden bg-black">
+    <div className="relative w-full h-full flex flex-col overflow-hidden bg-[var(--abyssal-blue)]">
       {/* Background mờ */}
       <div className="absolute inset-0">
         <Image
@@ -149,11 +149,7 @@ function CharactersReveal({
           sizes="60vw"
         />
         <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(7,13,24,0.97) 0%, rgba(27,38,50,0.95) 100%)",
-          }}
+          className="absolute inset-0 bg-[var(--abyssal-blue)]"
         />
       </div>
 
@@ -161,29 +157,29 @@ function CharactersReveal({
       <div className="absolute top-0 left-0 right-0 h-8 bg-black z-10" />
       <div className="absolute bottom-0 left-0 right-0 h-8 bg-black z-10" />
 
-      <div className="relative z-10 flex flex-col h-full px-6 pt-12 pb-10 gap-4">
+      <div className="relative z-10 flex flex-col h-full px-6 pt-12 pb-10 gap-5">
         {/* Header */}
         <div className="shrink-0">
           <p
             className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5"
-            style={{ color: "var(--accent-gold)", opacity: 0.7 }}
+            style={{ color: "var(--accent-gold-soft)" }}
           >
             Nhân vật trong sự kiện
           </p>
           <h3
             className="text-lg font-bold leading-snug"
-            style={{ color: "var(--text-primary)" }}
+            style={{ color: "var(--text-on-dark)" }}
           >
             {event.title}
           </h3>
         </div>
 
         {/* Cards dọc — dùng CharacterCarouselCard thu nhỏ */}
-        <div className="flex-1 flex flex-row gap-4 items-center justify-center min-h-0">
+        <div className="flex-1 flex flex-row gap-5 items-center justify-center min-h-0">
           {characters.map((char, i) => (
             <div
               key={char.id}
-              className="h-full max-h-[340px] flex-1 max-w-[240px]"
+              className="h-full max-h-[408px] flex-1 max-w-[288px]"
               style={{
                 animation: `fadeSlideUp 0.4s ease ${i * 100}ms both`,
               }}
@@ -198,8 +194,8 @@ function CharactersReveal({
         </div>
 
         <p
-          className="shrink-0 text-center text-[11px]"
-          style={{ color: "var(--text-on-dark-muted)" }}
+          className="shrink-0 text-center text-[11px] font-medium"
+          style={{ color: "var(--text-on-dark)" }}
         >
           Chọn nhân vật để bắt đầu trò chuyện
         </p>
