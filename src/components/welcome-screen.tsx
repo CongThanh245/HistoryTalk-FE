@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import {
+  WELCOME_SCREEN_FINISHED_EVENT,
+  WELCOME_SCREEN_KEY,
+} from "@/constants/welcome-screen";
 
-export const WELCOME_SCREEN_KEY = "historytalk-welcome-screen-seen";
-export const WELCOME_SCREEN_FINISHED_EVENT =
-  "historytalk:welcome-screen-finished";
 const WELCOME_DURATION = 2800;
 const FADE_DURATION = 500;
+const SESSION_COOKIE = `${WELCOME_SCREEN_KEY}=true; path=/; samesite=lax`;
 
 export function WelcomeScreen() {
   const [isVisible, setIsVisible] = useState(true);
@@ -16,6 +18,9 @@ export function WelcomeScreen() {
 
   useEffect(() => {
     if (sessionStorage.getItem(WELCOME_SCREEN_KEY)) {
+      document.cookie = SESSION_COOKIE;
+      document.documentElement.dataset.welcomeScreenSeen = "true";
+
       requestAnimationFrame(() => {
         setIsVisible(false);
         window.dispatchEvent(new Event(WELCOME_SCREEN_FINISHED_EVENT));
@@ -24,6 +29,8 @@ export function WelcomeScreen() {
     }
 
     sessionStorage.setItem(WELCOME_SCREEN_KEY, "true");
+    document.cookie = SESSION_COOKIE;
+    document.documentElement.dataset.welcomeScreenSeen = "false";
     document.body.style.overflow = "hidden";
 
     const startedAt = performance.now();
@@ -51,6 +58,7 @@ export function WelcomeScreen() {
     const hideTimer = window.setTimeout(() => {
       setIsVisible(false);
       document.body.style.overflow = "";
+      document.documentElement.dataset.welcomeScreenSeen = "true";
       window.dispatchEvent(new Event(WELCOME_SCREEN_FINISHED_EVENT));
     }, WELCOME_DURATION + FADE_DURATION);
 

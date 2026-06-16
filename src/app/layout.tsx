@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProviders from "@/components/context/query-client-provider";
 import { ThemeProvider } from "@/components/context/theme-provider";
 import { WelcomeScreen } from "@/components/welcome-screen";
+import { WELCOME_SCREEN_KEY } from "@/constants/welcome-screen";
 
 // Define CSS variables for local fonts
 const titleFont = {
@@ -66,6 +67,24 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              html[data-welcome-screen-seen="true"] .welcome-screen {
+                display: none !important;
+              }
+            `,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (document.cookie.split("; ").includes("${WELCOME_SCREEN_KEY}=true")) {
+                document.documentElement.dataset.welcomeScreenSeen = "true";
+              }
+            `,
+          }}
+        />
         {googleAnalyticsId && (
           <>
             <Script

@@ -9,7 +9,7 @@ import { isValidUrl } from "@/lib/utils/url";
 import type { Character } from "@/services/character.service";
 import {
   WELCOME_SCREEN_FINISHED_EVENT,
-} from "@/components/welcome-screen";
+} from "@/constants/welcome-screen";
 
 // Lazy load carousel để giảm initial render load
 const Carousel3DVertical = lazy(() =>
