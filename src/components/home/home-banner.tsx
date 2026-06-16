@@ -97,20 +97,44 @@ export function HomeBanner() {
         </div>
       </div>
 
-      <div className="hidden md:flex items-end justify-end relative w-100 h-75 shrink-0">
+      <div className="hidden md:flex items-end justify-end relative w-[420px] h-[330px] shrink-0">
         <div
-          className="absolute z-20"
+          className="absolute left-10 top-0 z-10 overflow-hidden rounded-[28px] border"
           style={{
-            width: "280px",
-            height: "280px",
-            filter: "drop-shadow(0 14px 22px rgba(50, 45, 41, 0.26))",
-            transform: "translate(80px, 40px)",
+            width: "210px",
+            height: "270px",
+            background: "linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03))",
+            borderColor: "rgba(50, 45, 41, 0.08)",
+            boxShadow: "0 14px 24px rgba(50, 45, 41, 0.1)",
+            transform: "rotate(-7deg)",
+            backdropFilter: "blur(2px)",
+          }}
+        >
+          <Image
+            src="/le_loi.png"
+            alt="Lê Lợi"
+            fill
+            sizes="210px"
+            className="object-contain object-bottom p-1 scale-110"
+          />
+        </div>
+        <div
+          className="absolute right-0 bottom-0 z-20 overflow-hidden rounded-[28px] border"
+          style={{
+            width: "245px",
+            height: "315px",
+            background: "linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04))",
+            borderColor: "rgba(50, 45, 41, 0.08)",
+            boxShadow: "0 16px 28px rgba(50, 45, 41, 0.12)",
+            transform: "rotate(5deg)",
+            backdropFilter: "blur(2px)",
           }}
         >
           <Image
             src="/ngo_quyen.png"
-            alt="HistoryTalk banner character"
+            alt="Ngô Quyền"
             fill
+            sizes="245px"
             className="object-contain"
             priority
           />
