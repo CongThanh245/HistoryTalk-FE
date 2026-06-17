@@ -51,7 +51,7 @@
     }));
 
     return (
-      <div ref={containerRef} className="space-y-5 overflow-hidden">
+      <div ref={containerRef} className="space-y-4 md:space-y-3 overflow-hidden">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <EraFilter
             active={era}
@@ -94,7 +94,7 @@
         )}
 
         {!showSkeleton && events.length > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="-mt-1 flex items-center gap-2">
             <div className="flex gap-1" role="group" aria-label="Chọn sự kiện theo thứ tự">
               {events.map((ev, index) => {
                 const isActive = ev.id === resolvedActiveId;
@@ -107,7 +107,7 @@
                   onClick={() => handleSelect(ev.id)}
                   aria-label={`Chọn sự kiện ${index + 1}: ${ev.title}, ${yearLabel}`}
                   aria-current={isActive ? "step" : undefined}
-                  className="grid h-6 w-6 place-items-center rounded-full cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]"
+                  className="grid h-5 w-5 place-items-center rounded-full cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]"
                   style={{
                     background: "transparent",
                     border: "none",
