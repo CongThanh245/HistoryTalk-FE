@@ -62,6 +62,14 @@ const THINKING_LABELS = [
   "Đang hỏi lại các nguồn ký ức...",
 ];
 
+const UI_SOUNDS = {
+  callStart: "/sounds/call-start.mp3",
+  callEnd: "/sounds/call-end.mp3",
+  micOn: "/sounds/mic-on.mp3",
+  micOff: "/sounds/mic-off.mp3",
+  thinkingLoop: "/sounds/thinking-loop.mp3",
+} as const;
+
 const PROFILE_REFRESH_DELAYS_MS = [300, 1000, 2500, 5000];
 
 function syncProfileUser(profile: UserProfile) {
@@ -329,25 +337,70 @@ export function Avatar3DModal({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [voiceVolume, setVoiceVolume] = useState(0);
   
-  // Audio nền hùng hồn
-  const bgmRef = useRef<HTMLAudioElement | null>(null);
+  const uiSoundRefs = useRef<Record<keyof typeof UI_SOUNDS, HTMLAudioElement | null>>({
+    callStart: null,
+    callEnd: null,
+    micOn: null,
+    micOff: null,
+    thinkingLoop: null,
+  });
+
+  const playUiSound = useCallback((name: keyof typeof UI_SOUNDS, volume = 0.42) => {
+    const sound = uiSoundRefs.current[name];
+    if (!sound) return;
+
+    sound.pause();
+    sound.currentTime = 0;
+    sound.volume = volume;
+    void sound.play().catch(() => {
+      // Browser autoplay policies can block very early playback; this is non-critical.
+    });
+  }, []);
+
+  const playDetachedUiSound = useCallback((name: keyof typeof UI_SOUNDS, volume = 0.42) => {
+    const sound = new Audio(UI_SOUNDS[name]);
+    sound.volume = volume;
+    void sound.play().catch(() => {
+      // The close action should continue even if the browser blocks the cue.
+    });
+  }, []);
   
   useEffect(() => {
-    // Khởi tạo audio
-    const audio = new Audio("/epic-bgm.mp3");
-    // Nếu bạn chưa có file epic-bgm.mp3, nó sẽ dùng link dự phòng miễn phí từ Pixabay:
-    // const audio = new Audio("https://cdn.pixabay.com/audio/2022/10/25/audio_40df035728.mp3");
-    audio.loop = true;
-    audio.volume = 0.15; // Âm lượng nhỏ làm nền
-    bgmRef.current = audio;
+    const audio = new Audio(UI_SOUNDS.callStart);
+    audio.loop = false;
+    audio.volume = 0.38;
+    uiSoundRefs.current = {
+      callStart: new Audio(UI_SOUNDS.callStart),
+      callEnd: new Audio(UI_SOUNDS.callEnd),
+      micOn: new Audio(UI_SOUNDS.micOn),
+      micOff: new Audio(UI_SOUNDS.micOff),
+      thinkingLoop: new Audio(UI_SOUNDS.thinkingLoop),
+    };
 
-    // Phát nhạc ngay khi mở modal (user đã tương tác bấm nút call)
-    audio.play().catch(e => console.warn("Auto-play BGM blocked:", e));
+    Object.values(uiSoundRefs.current).forEach((sound) => {
+      if (!sound) return;
+      sound.preload = "auto";
+      sound.volume = 0.35;
+    });
+
+    const thinkingLoop = uiSoundRefs.current.thinkingLoop;
+    if (thinkingLoop) {
+      thinkingLoop.loop = true;
+      thinkingLoop.volume = 0.13;
+    }
+
+    void audio.play().catch(() => {
+      // Browser autoplay policies can block very early playback; this is non-critical.
+    });
 
     return () => {
-      // Tắt nhạc khi đóng modal
       audio.pause();
       audio.src = "";
+      Object.values(uiSoundRefs.current).forEach((sound) => {
+        if (!sound) return;
+        sound.pause();
+        sound.src = "";
+      });
     };
   }, []);
   // Internal mode state (can be toggled by user)
@@ -444,15 +497,24 @@ export function Avatar3DModal({
 
   // Hiệu ứng âm lượng BGM: Nhỏ đi khi AI đang nói, to lên khi AI đang nghĩ
   useEffect(() => {
-    if (!bgmRef.current) return;
-    if (isSpeaking) {
-      bgmRef.current.volume = 0.05; // AI nói -> Nhạc nền bé lại
-    } else if (status === "thinking" || status === "processing_chat") {
-      bgmRef.current.volume = 0.25; // AI đang nghĩ -> Nhạc nền dồn dập, to hơn
-    } else {
-      bgmRef.current.volume = 0.15; // Bình thường
+    if (!uiSoundRefs.current.thinkingLoop) return;
+    uiSoundRefs.current.thinkingLoop.volume = isThinkingStatus ? 1 : 0.15;
+  }, [isThinkingStatus]);
+
+  useEffect(() => {
+    const thinkingLoop = uiSoundRefs.current.thinkingLoop;
+    if (!thinkingLoop) return;
+
+    if (isThinkingStatus) {
+      void thinkingLoop.play().catch(() => {
+        // Browser autoplay policies can block ambience; the UI should continue silently.
+      });
+      return;
     }
-  }, [status, isSpeaking]);
+
+    thinkingLoop.pause();
+    thinkingLoop.currentTime = 0;
+  }, [isThinkingStatus]);
   
   // Lấy interim text cho hiển thị real-time (web-speech mode)
   const liveTranscript = interimText || currentSentence || "";
@@ -465,17 +527,20 @@ export function Avatar3DModal({
 
   const handleMicClick = () => {
     if (isRecording) {
+      playUiSound("micOff", 0.42);
       stopRecording();
     } else if (status === "idle") {
       setErrorMsg(null);
+      playUiSound("micOn", 0.42);
       startRecording();
     }
   };
 
   const handleClose = () => {
+    playDetachedUiSound("callEnd", 0.55);
     cancel?.();
     refreshProfile();
-    onClose();
+    window.setTimeout(onClose, 180);
   };
 
   // ── Keyboard shortcut: Space = toggle voice ───────────────────────────────
@@ -486,9 +551,11 @@ export function Avatar3DModal({
         if (e.repeat) return;
         
         if (isRecording) {
+          playUiSound("micOff", 0.42);
           stopRecording();
         } else if (status === "idle") {
           setErrorMsg(null);
+          playUiSound("micOn", 0.42);
           startRecording();
         }
       }
@@ -497,7 +564,7 @@ export function Avatar3DModal({
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [status, isRecording, startRecording, stopRecording]);
+  }, [status, isRecording, startRecording, stopRecording, playUiSound]);
 
   // ── Render ────────────────────────────────────────────────────────────────
 

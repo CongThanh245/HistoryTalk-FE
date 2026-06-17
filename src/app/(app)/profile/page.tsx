@@ -39,6 +39,8 @@ import {
   EyeIcon,
   EyeSlashIcon,
   HourglassIcon,
+  FloppyDiskIcon,
+  SparkleIcon,
 } from "@phosphor-icons/react";
 
 // ─────────────────────────────────────────────
@@ -74,10 +76,16 @@ function formatCurrency(amount: number): string {
 
 function normalizeGender(value: string | null | undefined): "MALE" | "FEMALE" | "OTHER" | "" {
   if (!value) return "";
-  const normalized = value.trim().toUpperCase();
-  if (["MALE", "NAM"].includes(normalized)) return "MALE";
-  if (["FEMALE", "NU", "NỮ"].includes(normalized)) return "FEMALE";
-  if (["OTHER", "KHAC", "KHÁC"].includes(normalized)) return "OTHER";
+  const normalized = value
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_")
+    .toUpperCase();
+
+  if (["MALE", "M", "NAM", "BOY"].includes(normalized)) return "MALE";
+  if (["FEMALE", "F", "NU", "GIRL", "WOMAN"].includes(normalized)) return "FEMALE";
+  if (["OTHER", "O", "KHAC", "NON_BINARY", "NONBINARY"].includes(normalized)) return "OTHER";
   return "";
 }
 
@@ -178,17 +186,22 @@ function PersonalProfileTab() {
     .slice(0, 2);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Avatar preview */}
-      <div className="flex items-center gap-4">
-        <div className="relative">
+    <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <aside
+        className="rounded-2xl border p-5 lg:sticky lg:top-6 lg:self-start"
+        style={{
+          background: "linear-gradient(180deg, var(--bg-main) 0%, var(--bg-elevated) 100%)",
+          borderColor: "var(--border-default)",
+        }}
+      >
+        <div className="flex flex-col items-center text-center">
           <Avatar
-            className="w-20 h-20 border-2"
+            className="w-24 h-24 border-2 shadow-sm"
             style={{ borderColor: isPro(profile ?? null) ? "var(--accent-gold)" : "var(--border-strong)" }}
           >
             <AvatarImage src={form.avatarUrl || undefined} alt={profile?.userName} />
             <AvatarFallback
-              className="text-xl font-bold"
+              className="text-2xl font-bold"
               style={{
                 background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
                 color: "var(--bg-deep)",
@@ -197,127 +210,162 @@ function PersonalProfileTab() {
               {initials}
             </AvatarFallback>
           </Avatar>
-        </div>
-        <div>
-          <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
+
+          <p className="mt-4 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
             {profile?.fullName || profile?.userName || "—"}
           </p>
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          <p className="mt-1 max-w-full truncate text-sm" style={{ color: "var(--text-muted)" }}>
             {profile?.email}
           </p>
-          {isPro(profile ?? null) && (
+
+          {isPro(profile ?? null) ? (
             <span
-              className="inline-flex items-center gap-1 text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold"
               style={{
                 background: "linear-gradient(90deg,rgba(201,162,77,0.18),rgba(163,81,57,0.12))",
                 color: "var(--accent-gold)",
                 border: "1px solid rgba(201,162,77,0.3)",
               }}
             >
-              <CrownSimpleIcon className="w-3 h-3" weight="fill" />
+              <CrownSimpleIcon className="w-3.5 h-3.5" weight="fill" />
               {profile?.tierTitle}
+            </span>
+          ) : (
+            <span
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold"
+              style={{
+                background: "var(--bg-elevated)",
+                color: "var(--text-muted)",
+                border: "1px solid var(--border-default)",
+              }}
+            >
+              <SparkleIcon className="w-3.5 h-3.5" />
+              Tài khoản cơ bản
             </span>
           )}
         </div>
-      </div>
 
-      {/* Form grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          label="Họ và tên"
-          icon={UserIcon}
-          value={form.fullName}
-          onChange={(v) => setForm({ ...form, fullName: v })}
-          placeholder="Nguyễn Văn A"
-        />
-        <FormField
-          label="Tên người dùng"
-          icon={UserIcon}
-          value={form.userName}
-          onChange={(v) => setForm({ ...form, userName: v })}
-          placeholder="nguyenvana"
-        />
-        <FormField
-          label="Email"
-          icon={EnvelopeIcon}
-          value={profile?.email ?? ""}
-          onChange={() => {}}
-          disabled
-          placeholder="email@example.com"
-        />
-        <FormField
-          label="Số điện thoại"
-          icon={PhoneIcon}
-          value={form.phoneNumber}
-          onChange={(v) => setForm({ ...form, phoneNumber: v })}
-          placeholder="0901234567"
-          type="tel"
-        />
-        <FormField
-          label="Ngày sinh"
-          icon={CalendarIcon}
-          value={form.dob}
-          onChange={(v) => setForm({ ...form, dob: v })}
-          placeholder=""
-          type="date"
-        />
-
-        {/* Gender Select */}
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium flex items-center gap-1.5" style={{ color: "var(--text-secondary)" }}>
-            <UserIcon className="w-3.5 h-3.5" />
-            Giới tính
-          </Label>
-          <Select
-            value={form.gender}
-            onValueChange={(v) => setForm({ ...form, gender: v })}
-          >
-            <SelectTrigger
-              className="h-10 border text-sm"
-              style={{
-                background: "var(--bg-elevated)",
-                borderColor: "var(--border-default)",
-                color: "var(--text-primary)",
-                borderRadius: "10px",
-              }}
-            >
-              <SelectValue placeholder="Chọn giới tính" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="MALE">Nam</SelectItem>
-              <SelectItem value="FEMALE">Nữ</SelectItem>
-              <SelectItem value="OTHER">Khác</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="mt-5 grid grid-cols-2 gap-2 text-center">
+          <ProfileMiniStat label="Token" value={(profile?.token ?? 0).toLocaleString("vi-VN")} />
+          <ProfileMiniStat label="Ngày tham gia" value={formatDate(profile?.createdAt)} />
         </div>
+      </aside>
 
-        <div className="md:col-span-2">
-          <FormField
-            label="Địa chỉ"
-            icon={MapPinIcon}
-            value={form.address}
-            onChange={(v) => setForm({ ...form, address: v })}
-            placeholder="123 Lê Lợi, Quận 1, TP.HCM"
-          />
-        </div>
+      <div className="space-y-6">
+        <section>
+          <div className="mb-4">
+            <h2 className="text-base font-bold" style={{ color: "var(--text-primary)" }}>
+              Thông tin cá nhân
+            </h2>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              Cập nhật tên hiển thị và thông tin liên hệ của bạn.
+            </p>
+          </div>
 
-        <div className="md:col-span-2">
-          <FormField
-            label="Đường dẫn Avatar (URL)"
-            icon={LinkIcon}
-            value={form.avatarUrl}
-            onChange={(v) => setForm({ ...form, avatarUrl: v })}
-            placeholder="https://example.com/avatar.jpg"
-            type="url"
-          />
-        </div>
-      </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormField
+              label="Họ và tên"
+              icon={UserIcon}
+              value={form.fullName}
+              onChange={(v) => setForm({ ...form, fullName: v })}
+              placeholder="Nguyễn Văn A"
+            />
+            <FormField
+              label="Tên người dùng"
+              icon={UserIcon}
+              value={form.userName}
+              onChange={(v) => setForm({ ...form, userName: v })}
+              placeholder="nguyenvana"
+            />
+            <FormField
+              label="Email"
+              icon={EnvelopeIcon}
+              value={profile?.email ?? ""}
+              onChange={() => {}}
+              disabled
+              placeholder="email@example.com"
+            />
+            <FormField
+              label="Số điện thoại"
+              icon={PhoneIcon}
+              value={form.phoneNumber}
+              onChange={(v) => setForm({ ...form, phoneNumber: v })}
+              placeholder="0901234567"
+              type="tel"
+            />
+            <FormField
+              label="Ngày sinh"
+              icon={CalendarIcon}
+              value={form.dob}
+              onChange={(v) => setForm({ ...form, dob: v })}
+              placeholder=""
+              type="date"
+            />
 
-      <div className="flex justify-end">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium flex items-center gap-1.5" style={{ color: "var(--text-secondary)" }}>
+                <UserIcon className="w-3.5 h-3.5" />
+                Giới tính
+              </Label>
+              <Select
+                value={form.gender}
+                onValueChange={(v) => setForm({ ...form, gender: v })}
+              >
+                <SelectTrigger
+                  className="h-10 border text-sm"
+                  style={{
+                    background: "var(--bg-elevated)",
+                    borderColor: "var(--border-default)",
+                    color: "var(--text-primary)",
+                    borderRadius: "10px",
+                  }}
+                >
+                  <SelectValue placeholder="Chọn giới tính" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MALE">Nam</SelectItem>
+                  <SelectItem value="FEMALE">Nữ</SelectItem>
+                  <SelectItem value="OTHER">Khác</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-4">
+            <h2 className="text-base font-bold" style={{ color: "var(--text-primary)" }}>
+              Hồ sơ hiển thị
+            </h2>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              Ảnh đại diện và địa chỉ giúp cá nhân hóa trải nghiệm trong HistoryTalk.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <FormField
+              label="Địa chỉ"
+              icon={MapPinIcon}
+              value={form.address}
+              onChange={(v) => setForm({ ...form, address: v })}
+              placeholder="123 Lê Lợi, Quận 1, TP.HCM"
+            />
+            <FormField
+              label="Đường dẫn Avatar (URL)"
+              icon={LinkIcon}
+              value={form.avatarUrl}
+              onChange={(v) => setForm({ ...form, avatarUrl: v })}
+              placeholder="https://example.com/avatar.jpg"
+              type="url"
+            />
+          </div>
+        </section>
+
+        <div className="flex justify-end border-t pt-5" style={{ borderColor: "var(--border-default)" }}>
         <Button
           type="submit"
           disabled={isPending}
-          className="px-6 font-semibold"
+          className="gap-2 px-6 font-semibold"
           style={{
             background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
             color: "var(--text-inverse)",
@@ -326,10 +374,31 @@ function PersonalProfileTab() {
             opacity: isPending ? 0.7 : 1,
           }}
         >
+          <FloppyDiskIcon className="w-4 h-4" weight="bold" />
           {isPending ? "Đang lưu..." : "Lưu thay đổi"}
         </Button>
+        </div>
       </div>
     </form>
+  );
+}
+
+function ProfileMiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className="min-w-0 rounded-xl border px-3 py-2"
+      style={{
+        background: "var(--bg-elevated)",
+        borderColor: "var(--border-default)",
+      }}
+    >
+      <p className="truncate text-sm font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+        {value}
+      </p>
+      <p className="mt-0.5 text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>
+        {label}
+      </p>
+    </div>
   );
 }
 

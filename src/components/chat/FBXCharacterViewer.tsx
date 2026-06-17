@@ -832,10 +832,11 @@ export function FBXCharacterViewer({
 
         <OrbitControls
           enablePan={false}
+          enableZoom
           autoRotate={false}
           autoRotateSpeed={0.28}
-          minDistance={2}
-          maxDistance={10}
+          minDistance={5.2}
+          maxDistance={7.2}
           minPolarAngle={Math.PI / 3.2}
           maxPolarAngle={Math.PI / 2}
           target={[0, 2.05, 0]}
