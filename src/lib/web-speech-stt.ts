@@ -110,7 +110,9 @@ export class WebSpeechSTT {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onerror = (event: any) => {
-        if (event.error !== 'no-speech') {
+        const isExpectedStop = event.error === 'no-speech' || event.error === 'aborted';
+
+        if (!isExpectedStop) {
           console.error('[WebSpeechSTT] Error:', event.error);
         }
         this.isListening = false;

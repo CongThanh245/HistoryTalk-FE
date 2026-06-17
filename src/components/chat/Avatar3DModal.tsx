@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import type { ChatCharacter } from "@/services/chat.service";
@@ -44,14 +44,23 @@ const STATUS_LABEL: Record<string, string> = {
   idle: "Bấm mic để nói",
   listening: "Đang nghe... bấm mic lần nữa để dừng",
   recording: " Đang ghi âm... (click để gửi)",
-  processing: " Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ...",
+  processing: "Đang lần theo dấu vết lịch sử...",
   processing_stt: " Đang nhận dạng giọng nói...",
-  processing_chat: "Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ...",
+  processing_chat: "Đang đối chiếu sử liệu...",
   processing_tts: " Đang chuẩn bị nói...",
   speaking: " Đang trả lời...",
-  thinking: " Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ...",
+  thinking: "Đang ghép lại bức tranh quá khứ...",
   error: " Lỗi — thử lại",
 };
+
+const THINKING_LABELS = [
+  "Đang lần theo dấu vết lịch sử...",
+  "Đang đối chiếu sử liệu...",
+  "Đang mở lại một trang biên niên...",
+  "Đang ghép lại bức tranh quá khứ...",
+  "Đang chọn lời kể dễ hiểu nhất...",
+  "Đang hỏi lại các nguồn ký ức...",
+];
 
 const PROFILE_REFRESH_DELAYS_MS = [300, 1000, 2500, 5000];
 
@@ -137,7 +146,14 @@ function TranscriptFeed({
       padding: "0 4px", scrollbarWidth: "none",
     }}>
       {messages.slice(-4).map((m, i) => (
-        <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+        <div
+          key={i}
+          className={[
+            "avatar-message-row",
+            m.role === "user" ? "avatar-message-row--user" : "avatar-message-row--assistant",
+          ].join(" ")}
+          style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}
+        >
           <div style={{
             maxWidth: "80%",
             borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
@@ -231,7 +247,46 @@ function ConversationDock({
   );
 }
 
+/*
+function RemovedModelDiagnosticBadge({ diagnostic }: { diagnostic: unknown }) {
+  if (process.env.NODE_ENV !== "development" || !diagnostic) return null;
+
+  const blendshapeNames = Object.keys(diagnostic.blendshapes);
+  const sampleBones = diagnostic.bones.slice(0, 6).join(", ") || "none";
+  const sampleBlendshapes = blendshapeNames.slice(0, 6).join(", ") || "none";
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 12,
+        left: 12,
+        zIndex: 5,
+        maxWidth: 360,
+        padding: "8px 10px",
+        borderRadius: 8,
+        background: "rgba(0,0,0,0.68)",
+        border: "1px solid rgba(201,168,76,0.3)",
+        color: "rgba(255,255,255,0.82)",
+        fontSize: 11,
+        lineHeight: 1.45,
+        pointerEvents: "none",
+      }}
+    >
+      <div style={{ color: "#f0c85a", fontWeight: 700 }}>removed</div>
+      <div>
+        meshes {diagnostic.meshCount} | bones {diagnostic.bones.length} | morphs{" "}
+        {blendshapeNames.length} | anims {diagnostic.animCount}
+      </div>
+      <div style={{ opacity: 0.72 }}>bones: {sampleBones}</div>
+      <div style={{ opacity: 0.72 }}>morphs: {sampleBlendshapes}</div>
+    </div>
+  );
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
+
+*/
 
 type VoiceMode = "rest" | "stream" | "web-speech";
 
@@ -272,6 +327,7 @@ export function Avatar3DModal({
 }: Avatar3DModalProps) {
   const queryClient = useQueryClient();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [voiceVolume, setVoiceVolume] = useState(0);
   
   // Audio nền hùng hồn
   const bgmRef = useRef<HTMLAudioElement | null>(null);
@@ -364,6 +420,27 @@ export function Avatar3DModal({
   } = activeHook as ActiveVoiceHook;
 
   const isSpeaking = status === "speaking";
+  const isThinkingStatus = status.startsWith("processing") || status === "thinking";
+  const [thinkingLabelIndex, setThinkingLabelIndex] = useState(0);
+
+  useEffect(() => {
+    if (!isThinkingStatus) {
+      setThinkingLabelIndex(0);
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setThinkingLabelIndex((current) => (current + 1) % THINKING_LABELS.length);
+    }, 1800);
+
+    return () => window.clearInterval(interval);
+  }, [isThinkingStatus]);
+
+  const dynamicStatusLabel =
+    errorMsg ??
+    (isThinkingStatus
+      ? THINKING_LABELS[thinkingLabelIndex]
+      : STATUS_LABEL[status] ?? STATUS_LABEL["idle"]);
 
   // Hiệu ứng âm lượng BGM: Nhỏ đi khi AI đang nói, to lên khi AI đang nghĩ
   useEffect(() => {
@@ -449,8 +526,14 @@ export function Avatar3DModal({
           100% { transform: scale(1.25); opacity: 0; }
         }
         @keyframes avatar3DRipple {
-          0%, 100% { transform: translate(-50%, -50%) scale(0.96); opacity: 0.2; }
-          50% { transform: translate(-50%, -50%) scale(1.02); opacity: 0.34; }
+          0%, 100% {
+            transform: translate(-50%, -50%) scale(calc(0.96 + var(--voice-volume, 0) * 0.08));
+            opacity: calc(0.34 + var(--voice-volume, 0) * 0.26);
+          }
+          50% {
+            transform: translate(-50%, -50%) scale(calc(1.03 + var(--voice-volume, 0) * 0.12));
+            opacity: calc(0.58 + var(--voice-volume, 0) * 0.28);
+          }
         }
         @keyframes thinkingBounce {
           0%, 100% { transform: translateY(0); }
@@ -472,6 +555,7 @@ export function Avatar3DModal({
           grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
           gap: 28px;
           padding: 20px 28px 0;
+          animation: callBodyEnter 0.52s cubic-bezier(0.2, 0.8, 0.2, 1) both;
         }
         .avatar-call-viewport {
           width: 100%;
@@ -482,6 +566,7 @@ export function Avatar3DModal({
           background:
             radial-gradient(ellipse at 50% 72%, rgba(201,168,76,0.14) 0%, rgba(201,168,76,0.04) 34%, transparent 62%),
             linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0));
+          animation: viewportConnect 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         .avatar-call-viewport::after {
           content: "";
@@ -496,27 +581,58 @@ export function Avatar3DModal({
           filter: blur(8px);
           animation: callAura 3.4s ease-in-out infinite;
           pointer-events: none;
+          z-index: 0;
+        }
+        .avatar-call-viewport__connect-core {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: min(420px, 32vw);
+          aspect-ratio: 1;
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          pointer-events: none;
+          z-index: 0;
+          background:
+            radial-gradient(circle, rgba(240,200,90,0.2) 0%, rgba(116,222,177,0.11) 32%, transparent 68%);
+          filter: blur(18px);
+          opacity: 0;
+          animation: connectCore 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
         }
         .avatar-call-ripple {
           position: absolute;
           left: 50%;
-          top: 52%;
-          width: min(430px, 34vw);
+          top: 50%;
+          width: min(390px, 30vw);
           aspect-ratio: 1;
           border-radius: 50%;
-          border: 1px solid rgba(201,168,76,0.32);
-          box-shadow: inset 0 0 56px rgba(201,168,76,0.04), 0 0 28px rgba(201,168,76,0.07);
+          border: 1px solid rgba(201,168,76,0.48);
+          box-shadow: inset 0 0 64px rgba(201,168,76,0.07), 0 0 36px rgba(201,168,76,0.14);
           animation: avatar3DRipple 2.8s ease-in-out infinite;
+          animation-name: haloConnect, avatar3DRipple;
+          animation-duration: 0.95s, 2.8s;
+          animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1), ease-in-out;
+          animation-delay: 0.08s, 0.75s;
+          animation-fill-mode: both, none;
           pointer-events: none;
-          z-index: 1;
+          z-index: 0;
+          mix-blend-mode: screen;
+          transform-origin: center;
         }
         .avatar-call-ripple--listening {
-          border-color: rgba(201,168,76,0.36);
-          box-shadow: inset 0 0 56px rgba(201,168,76,0.05), 0 0 30px rgba(201,168,76,0.08);
+          border-color: rgba(116, 222, 177, 0.7);
+          box-shadow:
+            inset 0 0 86px rgba(116, 222, 177, 0.13),
+            0 0 56px rgba(116, 222, 177, 0.3),
+            0 0 112px rgba(201,168,76,0.15);
+          animation-duration: 0.8s, 1.65s;
         }
         .avatar-call-ripple--speaking {
-          border-color: rgba(240,200,90,0.46);
-          box-shadow: inset 0 0 56px rgba(240,200,90,0.06), 0 0 36px rgba(240,200,90,0.12);
+          border-color: rgba(240,200,90,0.72);
+          box-shadow:
+            inset 0 0 calc(72px + var(--voice-volume, 0) * 44px) rgba(240,200,90,0.11),
+            0 0 calc(48px + var(--voice-volume, 0) * 64px) rgba(240,200,90,calc(0.22 + var(--voice-volume, 0) * 0.28)),
+            0 0 calc(96px + var(--voice-volume, 0) * 90px) rgba(201,168,76,calc(0.12 + var(--voice-volume, 0) * 0.18));
         }
         .avatar-call-identity {
           position: absolute;
@@ -525,6 +641,7 @@ export function Avatar3DModal({
           z-index: 2;
           max-width: min(420px, calc(100% - 56px));
           pointer-events: none;
+          animation: identityEnter 0.72s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both;
         }
         .avatar-call-identity h2 {
           margin: 0;
@@ -553,10 +670,288 @@ export function Avatar3DModal({
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 24px 80px rgba(0,0,0,0.28);
           backdrop-filter: blur(18px);
           -webkit-backdrop-filter: blur(18px);
+          animation: transcriptEnter 0.72s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
         }
         .avatar-call-transcript > div {
           max-height: none !important;
           height: 100%;
+        }
+        .avatar-message-row {
+          animation: messageIn 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        .avatar-message-row--user {
+          transform-origin: right center;
+        }
+        .avatar-message-row--assistant {
+          transform-origin: left center;
+        }
+        .avatar-call-viewport--thinking::before {
+          content: "";
+          position: absolute;
+          inset: 0 -8%;
+          z-index: 0;
+          pointer-events: none;
+          background:
+            linear-gradient(90deg, transparent 0%, rgba(255,244,196,0.34) 16%, rgba(240,200,90,0.5) 50%, rgba(255,244,196,0.26) 84%, transparent 100%) 0 16% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.28) 20%, rgba(116,222,177,0.46) 52%, rgba(116,222,177,0.18) 82%, transparent 100%) 0 25% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, rgba(240,200,90,0.22) 18%, rgba(255,244,196,0.42) 48%, rgba(240,200,90,0.2) 78%, transparent 100%) 0 37% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, rgba(201,168,76,0.24) 16%, rgba(240,200,90,0.4) 54%, rgba(201,168,76,0.2) 84%, transparent 100%) 0 52% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.18) 22%, rgba(116,222,177,0.34) 50%, rgba(116,222,177,0.14) 80%, transparent 100%) 0 66% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, rgba(255,244,196,0.18) 18%, rgba(240,200,90,0.3) 48%, rgba(255,244,196,0.12) 82%, transparent 100%) 0 80% / 100% 1px no-repeat;
+          animation: thinkingTimeBands 2.2s ease-in-out infinite;
+          opacity: 0.95;
+          mix-blend-mode: screen;
+        }
+        .avatar-call-viewport--thinking::after {
+          content: "";
+          position: absolute;
+          inset: 0 -12%;
+          z-index: 0;
+          pointer-events: none;
+          background:
+            repeating-linear-gradient(
+              180deg,
+              transparent 0,
+              transparent 28px,
+              rgba(255,244,196,0.05) 29px,
+              transparent 31px,
+              transparent 58px,
+              rgba(116,222,177,0.04) 59px,
+              transparent 61px
+            );
+          animation: thinkingScanField 3.4s linear infinite;
+          opacity: 0.85;
+          mix-blend-mode: screen;
+        }
+        .avatar-call-time-tunnel {
+          position: absolute;
+          inset: 0 -12%;
+          z-index: 0;
+          pointer-events: none;
+          background:
+            linear-gradient(90deg, transparent, rgba(255,244,196,0.22), transparent) 0 20% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent, rgba(116,222,177,0.18), transparent) 0 33% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent, rgba(240,200,90,0.2), transparent) 0 48% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent, rgba(255,244,196,0.16), transparent) 0 73% / 100% 1px no-repeat;
+          opacity: 0;
+          mix-blend-mode: screen;
+        }
+        .avatar-call-viewport--thinking .avatar-call-time-tunnel {
+          opacity: 1;
+          animation: timeTunnelRush 1.6s ease-in-out infinite;
+        }
+        .avatar-call-time-tunnel::before,
+        .avatar-call-time-tunnel::after {
+          content: "";
+          position: absolute;
+          left: -8%;
+          right: -8%;
+          top: 12%;
+          height: 1px;
+          background: linear-gradient(90deg, transparent 0%, rgba(255,244,196,0.62) 48%, transparent 100%);
+          box-shadow:
+            0 44px 0 rgba(116,222,177,0.34),
+            0 92px 0 rgba(240,200,90,0.42),
+            0 148px 0 rgba(255,244,196,0.28),
+            0 206px 0 rgba(116,222,177,0.22),
+            0 278px 0 rgba(240,200,90,0.3);
+          filter: drop-shadow(0 0 8px rgba(240,200,90,0.42));
+          animation: timeTunnelLines 1.45s ease-in-out infinite;
+        }
+        .avatar-call-time-tunnel::after {
+          top: 18%;
+          opacity: 0.72;
+          animation-delay: 0.45s;
+          transform: translateX(16%);
+        }
+        .avatar-call-viewport--listening {
+          box-shadow: inset 0 0 0 1px rgba(116,222,177,0.12), inset 0 0 80px rgba(116,222,177,0.04);
+        }
+        .avatar-call-viewport--speaking {
+          box-shadow: inset 0 0 0 1px rgba(240,200,90,0.12), inset 0 0 92px rgba(240,200,90,0.05);
+        }
+        .avatar-call-model-layer {
+          animation: none;
+        }
+        .avatar-call-viewport__time-streaks {
+          position: absolute;
+          inset: 0;
+          z-index: 3;
+          pointer-events: none;
+          background:
+            linear-gradient(90deg, transparent 0%, rgba(240,200,90,0.22) 48%, transparent 100%) 8% 18% / 46% 2px no-repeat,
+            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.18) 48%, transparent 100%) 65% 27% / 34% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, rgba(255,244,196,0.22) 48%, transparent 100%) 22% 41% / 58% 3px no-repeat,
+            linear-gradient(90deg, transparent 0%, rgba(201,168,76,0.2) 48%, transparent 100%) 72% 56% / 42% 2px no-repeat,
+            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.14) 48%, transparent 100%) 14% 69% / 38% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, rgba(240,200,90,0.16) 48%, transparent 100%) 54% 82% / 50% 2px no-repeat;
+          filter: blur(0.3px);
+          opacity: 0;
+          animation: timeStreaks 1.25s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+          mix-blend-mode: screen;
+        }
+        .avatar-call-viewport__time-streaks::before,
+        .avatar-call-viewport__time-streaks::after {
+          content: "";
+          position: absolute;
+          left: -18%;
+          right: -18%;
+          height: 1px;
+          pointer-events: none;
+          background: linear-gradient(90deg, transparent, rgba(255,244,196,0.24), transparent);
+          box-shadow:
+            0 28px 0 rgba(116,222,177,0.14),
+            0 74px 0 rgba(240,200,90,0.18),
+            0 134px 0 rgba(255,244,196,0.13),
+            0 188px 0 rgba(116,222,177,0.1);
+          transform: translateX(-18%);
+          opacity: 0;
+          animation: timeStreakDrift 1.7s ease-out 0.18s both;
+        }
+        .avatar-call-viewport__time-streaks::before {
+          top: 18%;
+        }
+        .avatar-call-viewport__time-streaks::after {
+          top: 38%;
+          animation-delay: 0.34s;
+          transform: translateX(18%);
+        }
+        .avatar-mic-wrap {
+          position: relative;
+          width: 72px;
+          height: 72px;
+          display: grid;
+          place-items: center;
+        }
+        .avatar-mic-wrap::before,
+        .avatar-mic-wrap::after {
+          content: "";
+          position: absolute;
+          inset: -8px;
+          border-radius: 50%;
+          border: 1px solid rgba(201,168,76,0.24);
+          opacity: 0;
+          pointer-events: none;
+        }
+        .avatar-mic-wrap--idle::before {
+          opacity: 0.65;
+          animation: micIdleGlow 2.6s ease-in-out infinite;
+        }
+        .avatar-mic-wrap--recording::before,
+        .avatar-mic-wrap--recording::after {
+          border-color: rgba(239,83,80,0.52);
+          animation: micWave 1.45s ease-out infinite;
+        }
+        .avatar-mic-wrap--recording::after {
+          animation-delay: 0.55s;
+        }
+        .avatar-mic-wrap--busy::before {
+          opacity: 0.7;
+          border-color: rgba(79,195,247,0.4);
+          animation: micBusySpin 1.2s linear infinite;
+          border-top-color: transparent;
+        }
+        .avatar-mic-button {
+          position: relative;
+          z-index: 1;
+        }
+        .avatar-mic-button:hover:not(:disabled) {
+          transform: translateY(-1px) scale(1.03);
+          filter: brightness(1.08);
+        }
+        .avatar-hangup-button:hover {
+          transform: translateY(-1px) scale(1.04);
+        }
+        @keyframes callBodyEnter {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes viewportConnect {
+          0% { opacity: 0; transform: scale(0.965); filter: blur(6px) saturate(0.55) brightness(0.7); }
+          55% { opacity: 1; transform: scale(1.012); filter: blur(0) saturate(1.18) brightness(1.08); }
+          100% { opacity: 1; transform: scale(1); filter: blur(0) saturate(1) brightness(1); }
+        }
+        @keyframes modelConnect {
+          0% { opacity: 0; transform: translateY(44px) scale(0.9); filter: blur(7px) saturate(0.55) brightness(0.75); }
+          58% { opacity: 1; transform: translateY(-5px) scale(1.018); filter: blur(0) saturate(1.22) brightness(1.08); }
+          100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0) saturate(1) brightness(1); }
+        }
+        @keyframes haloConnect {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.18) rotate(-22deg); filter: blur(10px); }
+          42% { opacity: 0.95; transform: translate(-50%, -50%) scale(1.2) rotate(4deg); filter: blur(0); }
+          100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1) rotate(0); filter: blur(0); }
+        }
+        @keyframes connectCore {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.24); }
+          34% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.12); }
+          100% { opacity: 0.22; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes timeStreaks {
+          0% { opacity: 0; transform: translateX(-18px) scaleX(0.82); filter: blur(2px); }
+          18% { opacity: 0.92; }
+          72% { opacity: 0.5; filter: blur(0); }
+          100% { opacity: 0; transform: translateX(28px) scaleX(1.08); filter: blur(1px); }
+        }
+        @keyframes timeStreakDrift {
+          0% { opacity: 0; transform: translateX(-20%) scaleX(0.7); filter: blur(2px); }
+          20% { opacity: 0.78; }
+          100% { opacity: 0; transform: translateX(22%) scaleX(1.15); filter: blur(0.6px); }
+        }
+        @keyframes identityEnter {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes transcriptEnter {
+          from { opacity: 0; transform: translateX(18px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes messageIn {
+          from { opacity: 0; transform: translateY(8px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes micIdleGlow {
+          0%, 100% { transform: scale(0.94); opacity: 0.25; box-shadow: 0 0 18px rgba(201,168,76,0.1); }
+          50% { transform: scale(1.08); opacity: 0.65; box-shadow: 0 0 34px rgba(201,168,76,0.2); }
+        }
+        @keyframes micWave {
+          0% { transform: scale(0.84); opacity: 0.72; }
+          100% { transform: scale(1.42); opacity: 0; }
+        }
+        @keyframes micBusySpin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes thinkingTimeBands {
+          0%, 100% {
+            transform: translateX(-24px);
+            filter: blur(0.8px);
+            opacity: 0.58;
+            background-position: -12% 16%, 10% 25%, -4% 37%, 14% 52%, -8% 66%, 8% 80%;
+          }
+          38% {
+            transform: translateX(26px);
+            filter: blur(0);
+            opacity: 1;
+            background-position: 18% 16%, -8% 25%, 24% 37%, -6% 52%, 18% 66%, -10% 80%;
+          }
+          68% {
+            transform: translateX(-8px);
+            filter: blur(0.4px);
+            opacity: 0.76;
+            background-position: 6% 16%, 4% 25%, 12% 37%, 2% 52%, 8% 66%, 0 80%;
+          }
+        }
+        @keyframes thinkingScanField {
+          from { transform: translateX(-18px) translateY(-12px); }
+          to { transform: translateX(18px) translateY(12px); }
+        }
+        @keyframes timeTunnelRush {
+          0%, 100% { transform: translateX(-18px); opacity: 0.52; filter: blur(0.9px); }
+          50% { transform: translateX(24px); opacity: 1; filter: blur(0); }
+        }
+        @keyframes timeTunnelLines {
+          0% { transform: translateX(-22%) scaleX(0.8); opacity: 0; }
+          18% { opacity: 1; }
+          100% { transform: translateX(22%) scaleX(1.08); opacity: 0; }
         }
         .avatar-call-empty {
           min-height: 100%;
@@ -716,7 +1111,7 @@ export function Avatar3DModal({
                   animation: "pulse 1s ease-in-out infinite",
                 }} />
               )}
-              {errorMsg ?? (STATUS_LABEL[status] ?? STATUS_LABEL["idle"])}
+              {dynamicStatusLabel}
             </div>
 
             {/* Mode Toggle - MVP: đã ẩn, luôn dùng web-speech (free) */}
@@ -751,13 +1146,22 @@ export function Avatar3DModal({
           <div className="avatar-call-body">
           {/* ── 3D Viewport ── */}
           <div
-            className="avatar-call-viewport"
+            className={[
+              "avatar-call-viewport",
+              isThinkingStatus ? "avatar-call-viewport--thinking" : "",
+              isSpeaking ? "avatar-call-viewport--speaking" : "",
+              isListeningStatus || isRecording ? "avatar-call-viewport--listening" : "",
+            ].filter(Boolean).join(" ")}
             style={{
+              "--voice-volume": isSpeaking ? voiceVolume.toFixed(3) : "0",
               display: is2D ? "flex" : undefined,
               alignItems: is2D ? "center" : undefined,
               justifyContent: is2D ? "center" : undefined,
-            }}
+            } as CSSProperties}
           >
+            <span className="avatar-call-viewport__connect-core" aria-hidden="true" />
+            <span className="avatar-call-viewport__time-streaks" aria-hidden="true" />
+            <span className="avatar-call-time-tunnel" aria-hidden="true" />
             {is2D ? (
               <div style={{
                 position: "relative",
@@ -824,14 +1228,18 @@ export function Avatar3DModal({
                 </div>
               </div>
             ) : (
-              <FBXCharacterViewer
-                modelUrl={character.modelUrl ?? "/models/character.glb"}
-                isSpeaking={status === "speaking"}
-                isListening={status === "listening"}
-                isRecording={status === "listening"}
-                isProcessing={status.startsWith("processing") || status === "thinking"}
-                ttsAnalyserRef={ttsAnalyserRef}
-              />
+              <div className="avatar-call-model-layer" style={{ position: "relative", zIndex: 1, width: "100%", height: "100%" }}>
+                <FBXCharacterViewer
+                  modelUrl={character.modelUrl ?? "/models/character.glb"}
+                  isSpeaking={status === "speaking"}
+                  isListening={status === "listening"}
+                  isRecording={status === "listening"}
+                  isProcessing={status.startsWith("processing") || status === "thinking"}
+                  statusText={dynamicStatusLabel}
+                  ttsAnalyserRef={ttsAnalyserRef}
+                  onVoiceVolume={setVoiceVolume}
+                />
+              </div>
             )}
             {!is2D && (isSpeaking || isListeningStatus || isRecording) && (
               <span
@@ -864,8 +1272,17 @@ export function Avatar3DModal({
           {/* ── Controls ── */}
           <div className="avatar-call-footer">
             {/* Toggle mic button */}
+            <div
+              className={[
+                "avatar-mic-wrap",
+                isRecording ? "avatar-mic-wrap--recording" : "",
+                isBusy ? "avatar-mic-wrap--busy" : "",
+                !isRecording && !isBusy ? "avatar-mic-wrap--idle" : "",
+              ].filter(Boolean).join(" ")}
+            >
             <button
               type="button"
+              className="avatar-mic-button"
               onClick={handleMicClick}
               disabled={isBusy}
               aria-label={isRecording ? "Dừng ghi âm và gửi" : "Bắt đầu ghi âm"}
@@ -888,7 +1305,7 @@ export function Avatar3DModal({
                 transition: "background 0.2s, border 0.2s",
                 userSelect: "none", WebkitUserSelect: "none",
                 touchAction: "none",
-              } as React.CSSProperties}
+              } as CSSProperties}
             >
               {/* Mic icon */}
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
@@ -900,10 +1317,12 @@ export function Avatar3DModal({
                 <line x1="8" y1="23" x2="16" y2="23" />
               </svg>
             </button>
+            </div>
 
             {/* End / Close */}
             <button
               type="button"
+              className="avatar-hangup-button"
               onClick={handleClose}
               aria-label="Kết thúc cuộc gọi"
               title="Kết thúc"

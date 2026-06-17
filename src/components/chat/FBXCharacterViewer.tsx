@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense, useEffect, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, useAnimations, useFBX, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -180,16 +180,45 @@ function useLipSyncFrame(
   isSpeaking: boolean,
   testVolumeRef: React.RefObject<number>,
 ) {
+  const timeRef = useRef(0);
+  const smoothedVolumeRef = useRef(0);
+  const mouthValueRef = useRef(0);
+
   useFrame((_, delta) => {
+    timeRef.current += delta;
+
     const liveVol = isSpeaking ? volumeRef.current : 0;
     const testVol = testVolumeRef.current ?? 0;
-    const target = Math.max(liveVol, testVol);
+    const rawVolume = Math.max(liveVol, testVol);
+    const silenceGate = rawVolume < 0.16 ? 0 : rawVolume;
+
+    smoothedVolumeRef.current = THREE.MathUtils.lerp(
+      smoothedVolumeRef.current,
+      silenceGate,
+      Math.min(delta * (silenceGate > smoothedVolumeRef.current ? 14 : 22), 1),
+    );
+
+    const voice = smoothedVolumeRef.current;
+    const t = timeRef.current;
+    const syllablePulse =
+      Math.max(0, Math.sin(t * 38)) * 0.42 +
+      Math.max(0, Math.sin(t * 23 + 0.8)) * 0.22;
+    const target =
+      voice <= 0.02
+        ? 0
+        : THREE.MathUtils.clamp(voice * 0.48 + syllablePulse * voice, 0.02, 0.72);
+
+    mouthValueRef.current = THREE.MathUtils.lerp(
+      mouthValueRef.current,
+      target,
+      Math.min(delta * (target > mouthValueRef.current ? 20 : 28), 1),
+    );
 
     const mesh = lipMeshRef.current;
     if (mesh?.morphTargetInfluences && lipMorphIdxRef.current >= 0) {
       const cur = mesh.morphTargetInfluences[lipMorphIdxRef.current] ?? 0;
       mesh.morphTargetInfluences[lipMorphIdxRef.current] = THREE.MathUtils.lerp(
-        cur, target, Math.min(delta * 12, 1),
+        cur, mouthValueRef.current, Math.min(delta * 24, 1),
       );
       return;
     }
@@ -197,9 +226,9 @@ function useLipSyncFrame(
     if (jaw && jawRestRef.current) {
       jaw.quaternion.slerp(
         jawRestRef.current.clone().multiply(
-          new THREE.Quaternion().setFromEuler(new THREE.Euler(target * 0.3, 0, 0)),
+          new THREE.Quaternion().setFromEuler(new THREE.Euler(mouthValueRef.current * 0.3, 0, 0)),
         ),
-        Math.min(delta * 10, 1),
+        Math.min(delta * 18, 1),
       );
     }
   });
@@ -212,17 +241,23 @@ function useLipSyncFrame(
 function GLBCharacterModel({
   url,
   isSpeaking,
+  isListening,
+  isRecording,
   isProcessing,
   testVolumeRef,
   ttsAnalyserRef,
   onDiagnostic,
+  onVoiceVolume,
 }: {
   url: string;
   isSpeaking: boolean;
+  isListening: boolean;
+  isRecording: boolean;
   isProcessing: boolean;
   testVolumeRef: React.RefObject<number>;
   ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
+  onVoiceVolume?: (volume: number) => void;
 }) {
   const gltf = useGLTF(url) as unknown as GLTF & { scene: THREE.Group };
 
@@ -243,6 +278,7 @@ function GLBCharacterModel({
   const { actions, names } = useAnimations(clonedAnimations, clonedScene);
   const reported = useRef(false);
   const sceneRef = useRef<THREE.Group>(clonedScene);
+  const [motionReady, setMotionReady] = useState(false);
 
   const lipMeshRef = useRef<THREE.Mesh | null>(null);
   const lipMorphIdxRef = useRef(-1);
@@ -276,14 +312,27 @@ function GLBCharacterModel({
     jawRestRef.current = jawRest;
 
     onDiagnostic({ blendshapes, bones, meshCount, animCount: names.length });
+    setMotionReady(true);
   }, [clonedScene, names, onDiagnostic]);
 
   useLipSyncFrame(lipMeshRef, lipMorphIdxRef, jawBoneRef, jawRestRef, volumeRef, isSpeaking, testVolumeRef);
 
   return (
     <>
-      <ExternalAudioLipDriver analyserRef={ttsAnalyserRef} onVolume={(v) => { volumeRef.current = v; }} />
+      <ExternalAudioLipDriver analyserRef={ttsAnalyserRef} onVolume={(v) => {
+        volumeRef.current = v;
+        onVoiceVolume?.(v);
+      }} />
       <ThinkingAnimation rootRef={sceneRef} isProcessing={isProcessing} />
+      <CinematicModelMotion
+        rootRef={sceneRef}
+        enabled={motionReady}
+        isSpeaking={isSpeaking}
+        isListening={isListening}
+        isRecording={isRecording}
+        isProcessing={isProcessing}
+        volumeRef={volumeRef}
+      />
       <primitive object={clonedScene} />
     </>
   );
@@ -296,22 +345,37 @@ function GLBCharacterModel({
 function FBXCharacterModel({
   url,
   isSpeaking,
+  isListening,
+  isRecording,
   isProcessing,
   testVolumeRef,
   ttsAnalyserRef,
   onDiagnostic,
+  onVoiceVolume,
 }: {
   url: string;
   isSpeaking: boolean;
+  isListening: boolean;
+  isRecording: boolean;
   isProcessing: boolean;
   testVolumeRef: React.RefObject<number>;
   ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
+  onVoiceVolume?: (volume: number) => void;
 }) {
   const fbx = useFBX(url);
-  const { actions, names } = useAnimations(fbx.animations, fbx);
+  const clonedFbx = React.useMemo(
+    () => SkeletonUtils.clone(fbx) as THREE.Group,
+    [fbx],
+  );
+  const clonedAnimations = React.useMemo(
+    () => fbx.animations.map((clip) => clip.clone()),
+    [fbx.animations],
+  );
+  const { actions, names } = useAnimations(clonedAnimations, clonedFbx);
   const reported = useRef(false);
-  const fbxRef = useRef<THREE.Group>(fbx);
+  const fbxRef = useRef<THREE.Group>(clonedFbx);
+  const [motionReady, setMotionReady] = useState(false);
 
   const lipMeshRef = useRef<THREE.Mesh | null>(null);
   const lipMorphIdxRef = useRef(-1);
@@ -327,17 +391,17 @@ function FBXCharacterModel({
     if (reported.current) return;
     reported.current = true;
 
-    const box = new THREE.Box3().setFromObject(fbx);
+    const box = new THREE.Box3().setFromObject(clonedFbx);
     const size = box.getSize(new THREE.Vector3());
     const s = size.y > 0 ? 4.5 / size.y : 0.012;
-    fbx.scale.setScalar(s);
-    const box2 = new THREE.Box3().setFromObject(fbx);
+    clonedFbx.scale.setScalar(s);
+    const box2 = new THREE.Box3().setFromObject(clonedFbx);
     const center2 = box2.getCenter(new THREE.Vector3());
-    fbx.position.sub(center2);
-    fbx.position.y += (box2.max.y - box2.min.y) / 2;
+    clonedFbx.position.sub(center2);
+    clonedFbx.position.y += (box2.max.y - box2.min.y) / 2;
 
     const { blendshapes, bones, meshCount, lipMesh, lipMorphIdx, jawBone, jawRest } =
-      scanForLipTargets(fbx);
+      scanForLipTargets(clonedFbx);
 
     lipMeshRef.current = lipMesh;
     lipMorphIdxRef.current = lipMorphIdx;
@@ -345,15 +409,28 @@ function FBXCharacterModel({
     jawRestRef.current = jawRest;
 
     onDiagnostic({ blendshapes, bones, meshCount, animCount: names.length });
-  }, [fbx, names, onDiagnostic]);
+    setMotionReady(true);
+  }, [clonedFbx, names, onDiagnostic]);
 
   useLipSyncFrame(lipMeshRef, lipMorphIdxRef, jawBoneRef, jawRestRef, volumeRef, isSpeaking, testVolumeRef);
 
   return (
     <>
-      <ExternalAudioLipDriver analyserRef={ttsAnalyserRef} onVolume={(v) => { volumeRef.current = v; }} />
+      <ExternalAudioLipDriver analyserRef={ttsAnalyserRef} onVolume={(v) => {
+        volumeRef.current = v;
+        onVoiceVolume?.(v);
+      }} />
       <ThinkingAnimation rootRef={fbxRef} isProcessing={isProcessing} />
-      <primitive object={fbx} />
+      <CinematicModelMotion
+        rootRef={fbxRef}
+        enabled={motionReady}
+        isSpeaking={isSpeaking}
+        isListening={isListening}
+        isRecording={isRecording}
+        isProcessing={isProcessing}
+        volumeRef={volumeRef}
+      />
+      <primitive object={clonedFbx} />
     </>
   );
 }
@@ -365,10 +442,13 @@ function FBXCharacterModel({
 function AutoModel(props: {
   url: string;
   isSpeaking: boolean;
+  isListening: boolean;
+  isRecording: boolean;
   isProcessing: boolean;
   testVolumeRef: React.RefObject<number>;
   ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
+  onVoiceVolume?: (volume: number) => void;
 }) {
   const ext = props.url.split(".").pop()?.toLowerCase();
   if (ext === "glb" || ext === "gltf") return <GLBCharacterModel {...props} />;
@@ -385,6 +465,123 @@ function Loader() {
       <sphereGeometry args={[0.2, 16, 16]} />
       <meshStandardMaterial color="#c9a84c" wireframe />
     </mesh>
+  );
+}
+
+function CameraRig() {
+  const { camera } = useThree();
+
+  useEffect(() => {
+    camera.position.set(0, 2.15, 6.2);
+    camera.lookAt(0, 2.05, 0);
+    camera.updateProjectionMatrix();
+  }, [camera]);
+
+  return null;
+}
+
+function CinematicModelMotion({
+  rootRef,
+  enabled,
+  isSpeaking,
+  isListening,
+  isRecording,
+  isProcessing,
+  volumeRef,
+}: {
+  rootRef: React.RefObject<THREE.Group | null>;
+  enabled: boolean;
+  isSpeaking: boolean;
+  isListening: boolean;
+  isRecording: boolean;
+  isProcessing: boolean;
+  volumeRef: React.RefObject<number>;
+}) {
+  const timeRef = useRef(0);
+  const restRef = useRef<{
+    position: THREE.Vector3;
+    rotation: THREE.Euler;
+    scale: THREE.Vector3;
+  } | null>(null);
+
+  useFrame((_, delta) => {
+    const root = rootRef.current;
+    if (!root) return;
+    if (!enabled) {
+      restRef.current = null;
+      return;
+    }
+    if (!restRef.current) {
+      restRef.current = {
+        position: root.position.clone(),
+        rotation: root.rotation.clone(),
+        scale: root.scale.clone(),
+      };
+    }
+    const rest = restRef.current;
+
+    timeRef.current += delta;
+    const speed = isSpeaking || isListening || isRecording || isProcessing ? 8 : 5;
+    const alpha = Math.min(delta * speed, 1);
+
+    root.scale.x = THREE.MathUtils.lerp(root.scale.x, rest.scale.x, alpha);
+    root.scale.y = THREE.MathUtils.lerp(root.scale.y, rest.scale.y, alpha);
+    root.scale.z = THREE.MathUtils.lerp(root.scale.z, rest.scale.z, alpha);
+    root.position.lerp(rest.position, alpha);
+    root.rotation.x = THREE.MathUtils.lerp(root.rotation.x, rest.rotation.x, alpha);
+    root.rotation.y = THREE.MathUtils.lerp(root.rotation.y, rest.rotation.y, alpha);
+    root.rotation.z = THREE.MathUtils.lerp(root.rotation.z, rest.rotation.z, alpha);
+  });
+
+  return null;
+}
+
+function AnimatedSceneLights({
+  isSpeaking,
+  isListening,
+  isRecording,
+  isProcessing,
+}: {
+  isSpeaking: boolean;
+  isListening: boolean;
+  isRecording: boolean;
+  isProcessing: boolean;
+}) {
+  const keyLightRef = useRef<THREE.DirectionalLight | null>(null);
+  const rimLightRef = useRef<THREE.PointLight | null>(null);
+  const timeRef = useRef(0);
+
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+    const t = timeRef.current;
+    const key = keyLightRef.current;
+    const rim = rimLightRef.current;
+    if (!key || !rim) return;
+
+    const speakingPulse = isSpeaking ? (Math.sin(t * 8) + 1) * 0.18 : 0;
+    const listeningPulse = isListening || isRecording ? (Math.sin(t * 3.5) + 1) * 0.12 : 0;
+    const processingPulse = isProcessing ? (Math.sin(t * 2.2) + 1) * 0.16 : 0;
+
+    key.intensity = THREE.MathUtils.lerp(
+      key.intensity,
+      1.15 + speakingPulse + processingPulse,
+      Math.min(delta * 4, 1),
+    );
+    rim.intensity = THREE.MathUtils.lerp(
+      rim.intensity,
+      0.42 + speakingPulse + listeningPulse + processingPulse,
+      Math.min(delta * 4, 1),
+    );
+    rim.position.x = -2 + Math.sin(t * 0.8) * 0.35;
+    rim.position.z = -1 + Math.cos(t * 0.7) * 0.35;
+  });
+
+  return (
+    <>
+      <ambientLight intensity={0.68} />
+      <directionalLight ref={keyLightRef} position={[2, 6, 4]} intensity={1.15} />
+      <pointLight ref={rimLightRef} position={[-2, 3, -1]} intensity={0.45} color="#c9a84c" />
+    </>
   );
 }
 
@@ -421,9 +618,11 @@ export type FBXCharacterViewerProps = {
   isListening?: boolean;
   isRecording?: boolean;
   isProcessing?: boolean;
+  statusText?: string;
   /** AnalyserNode hoặc SimulatedAnalyserNode phân tích audio TTS */
   ttsAnalyserRef?: React.RefObject<AnalyserLike | null>;
   onDiagnostic?: (d: DiagnosticInfo) => void;
+  onVoiceVolume?: (volume: number) => void;
 };
 
 // Fallback analyser ref (rỗng) khi không truyền từ ngoài
@@ -504,8 +703,10 @@ export function FBXCharacterViewer({
   isListening = false,
   isRecording = false,
   isProcessing = false,
+  statusText,
   ttsAnalyserRef = EMPTY_ANALYSER_REF,
   onDiagnostic,
+  onVoiceVolume,
 }: FBXCharacterViewerProps) {
   const testVolumeRef = useRef(0);
   const diagnosticRef = useRef<DiagnosticInfo | null>(null);
@@ -539,7 +740,7 @@ export function FBXCharacterViewer({
     : isListening
     ? "Đang nghe..."
     : isProcessing
-    ? " Hãy đợi tôi 1 chút, tôi đang đào lại quá khứ..."
+    ? statusText ?? "Đang lần theo dấu vết lịch sử..."
     : "Chờ...";
 
   const shouldAnimate = effectiveSpeaking || isRecording || isListening || isProcessing;
@@ -596,15 +797,19 @@ export function FBXCharacterViewer({
       </div>
 
       <Canvas
-        camera={{ position: [0, 4.0, 5.0], fov: 35 }}
+        camera={{ position: [0, 2.15, 6.2], fov: 32 }}
         dpr={[1, 1.5]}
         gl={{ antialias: false, powerPreference: "high-performance" }}
         performance={{ min: 0.5 }}
         style={{ background: "transparent" }}
       >
-        <ambientLight intensity={0.7} />
-        <directionalLight position={[2, 6, 4]} intensity={1.3} />
-        <pointLight position={[-2, 3, -1]} intensity={0.5} color="#c9a84c" />
+        <CameraRig />
+        <AnimatedSceneLights
+          isSpeaking={effectiveSpeaking}
+          isListening={isListening}
+          isRecording={isRecording}
+          isProcessing={isProcessing}
+        />
 
         <ModelErrorBoundary
           key={modelUrl}
@@ -614,10 +819,13 @@ export function FBXCharacterViewer({
             <AutoModel
               url={modelUrl}
               isSpeaking={effectiveSpeaking}
+              isListening={isListening}
+              isRecording={isRecording}
               isProcessing={isProcessing}
               testVolumeRef={testVolumeRef}
               ttsAnalyserRef={ttsAnalyserRef}
               onDiagnostic={handleDiagnostic}
+              onVoiceVolume={onVoiceVolume}
             />
           </Suspense>
         </ModelErrorBoundary>
@@ -628,9 +836,9 @@ export function FBXCharacterViewer({
           autoRotateSpeed={0.28}
           minDistance={2}
           maxDistance={10}
-          minPolarAngle={Math.PI / 8}
-          maxPolarAngle={(Math.PI * 2) / 3}
-          target={[0, 2.6, 0]}
+          minPolarAngle={Math.PI / 3.2}
+          maxPolarAngle={Math.PI / 2}
+          target={[0, 2.05, 0]}
         />
       </Canvas>
     </div>
