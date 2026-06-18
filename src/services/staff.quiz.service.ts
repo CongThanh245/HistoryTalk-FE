@@ -35,7 +35,7 @@ export interface StaffQuizSet {
   playCount: number;
   contextId: string;
   contextTitle: string;
-  createdBy: string;
+  createdBy: string | { uid?: string; userName?: string };
   createdDate: string;
   updatedDate: string;
   isPublished: boolean;
@@ -96,19 +96,25 @@ export interface ImportQuizFromCsvResponse {
   imported: StaffQuizSet[];
 }
 
+type RawStaffQuizQuestion = Partial<StaffQuizQuestion>;
+
+type RawStaffQuizSet = Partial<Omit<StaffQuizSet, "questions">> & {
+  questions?: RawStaffQuizQuestion[];
+};
+
 // ── Map functions ──────────────────────────────────────────
 
-export function mapStaffQuestion(raw: any): StaffQuizQuestion {
+export function mapStaffQuestion(raw: RawStaffQuizQuestion): StaffQuizQuestion {
   return {
-    questionId: raw.questionId,
-    content: raw.content,
+    questionId: raw.questionId ?? "",
+    content: raw.content ?? "",
     options: raw.options ?? [],
-    correctAnswer: raw.correctAnswer,
+    correctAnswer: raw.correctAnswer ?? 0,
     explanation: raw.explanation,
   };
 }
 
-export function mapStaffQuizSet(raw: any): StaffQuizSet {
+export function mapStaffQuizSet(raw: RawStaffQuizSet): StaffQuizSet {
   return {
     quizId: raw.quizId,
     title: raw.title,
@@ -244,8 +250,8 @@ function toContractQuizPayload(payload: CreateQuizPayload | UpdateQuizPayload) {
   return {
     ...(payload.title !== undefined && { title: payload.title }),
     ...(payload.contextId !== undefined && { contextId: payload.contextId }),
-    ...((payload as any).level !== undefined && { level: (payload as any).level }),
-    ...((payload as any).isPublished !== undefined && { isPublished: (payload as any).isPublished }),
+    ...(payload.level !== undefined && { level: payload.level }),
+    ...(payload.isPublished !== undefined && { isPublished: payload.isPublished }),
     ...("questions" in payload && {
       questions: payload.questions.map(toContractQuestionPayload),
     }),

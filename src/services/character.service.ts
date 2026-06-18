@@ -6,6 +6,7 @@ type RawContextRef = {
   contextId?: string;
   id?: string;
   name?: string;
+  title?: string;
 };
 
 type RawCharacterEvent = {
@@ -41,6 +42,10 @@ type RawCharacter = {
   era?: string;
   isActive?: boolean;
   isPublished?: boolean;
+  status?: string | null;
+  createdBy?: string | { uid?: string; userName?: string } | null;
+  createdDate?: string | null;
+  updatedDate?: string | null;
   deletedAt?: string | null;
   events?: RawCharacterEvent[];
 };
@@ -71,6 +76,10 @@ export interface Character {
   modelUrl?: string | null;
   isActive?: boolean;
   isPublished?: boolean;
+  status?: string | null;
+  createdBy?: string | { uid?: string; userName?: string } | null;
+  createdDate?: string | null;
+  updatedDate?: string | null;
   deletedAt?: string | null;
   events?: { id: string; title: string; year: number }[];
 }
@@ -141,11 +150,15 @@ function mapCharacter(raw: RawCharacter): Character {
     deathDay: raw.deathDay ?? null,
     isDeathBc: raw.isDeathBc ?? false,
     contextId,
-    contexts: raw.contexts?.map(c => ({ contextId: c.contextId ?? c.id ?? "", name: c.name ?? "" })) ?? [],
+    contexts: raw.contexts?.map(c => ({ contextId: c.contextId ?? c.id ?? "", name: c.name ?? c.title ?? "" })) ?? [],
     role: raw.role,
     era: mapEraLabel(raw.era),
     isActive: raw.isActive ?? true,
     isPublished: raw.isPublished ?? false,
+    status: raw.status ?? null,
+    createdBy: raw.createdBy ?? null,
+    createdDate: raw.createdDate ?? null,
+    updatedDate: raw.updatedDate ?? null,
     deletedAt: raw.deletedAt ?? null,
     events: raw.events?.map((event) => ({
       id: event.id ?? "",

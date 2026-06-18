@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { ChatMain } from "@/components/chat/chat-main";
+import { StaffCharacterMediaPreview } from "@/components/staff/staff-media-preview";
 import { useChatSessions, useCreateSession } from "@/features/chat/hooks";
 import type { ChatCharacter } from "@/services/chat.service";
 import type { HistoricalEvent, EventEraBackend } from "@/services/event.service";
@@ -632,7 +633,7 @@ export function StaffCharacterDetailView({
       <div className="flex-1 flex min-h-0">
         {/* ── Left Panel: Form ── */}
         <div
-          className="w-[480px] shrink-0 border-r overflow-y-auto"
+          className="w-[560px] shrink-0 border-r overflow-y-auto"
           style={{ borderColor: "var(--card-light-border)" }}
         >
           <div className="px-6 py-6 space-y-5">
@@ -663,84 +664,86 @@ export function StaffCharacterDetailView({
               </div>
             </div>
 
-            <div className="grid gap-3">
-              <StaffFormLabel>Ngày sinh</StaffFormLabel>
-              <div className="grid grid-cols-[1fr_1fr_1.2fr_auto] gap-2 items-end">
-                <StaffFormInput
-                  type="number"
-                  min={1}
-                  max={31}
-                  value={draft.bornDay}
-                  onChange={(e) => set("bornDay")(e.target.value)}
-                  placeholder="Ngày"
-                  disabled={!isEditing}
-                />
-                <StaffFormInput
-                  type="number"
-                  min={1}
-                  max={12}
-                  value={draft.bornMonth}
-                  onChange={(e) => set("bornMonth")(e.target.value)}
-                  placeholder="Tháng"
-                  disabled={!isEditing}
-                />
-                <StaffFormInput
-                  type="number"
-                  value={draft.bornYear}
-                  onChange={(e) => set("bornYear")(e.target.value)}
-                  placeholder="Năm"
-                  disabled={!isEditing}
-                />
-                <label className="flex h-10 items-center gap-2 rounded-md border px-3 text-xs font-medium" style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}>
-                  <Checkbox
-                    checked={draft.isBornBc}
-                    onCheckedChange={(val) => set("isBornBc")(!!val)}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-3">
+                <StaffFormLabel>Ngày sinh</StaffFormLabel>
+                <div className="grid grid-cols-[44px_54px_1fr_auto] gap-2 items-end">
+                  <StaffFormInput
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={draft.bornDay}
+                    onChange={(e) => set("bornDay")(e.target.value)}
+                    placeholder="Ngày"
                     disabled={!isEditing}
                   />
-                  TCN
-                </label>
+                  <StaffFormInput
+                    type="number"
+                    min={1}
+                    max={12}
+                    value={draft.bornMonth}
+                    onChange={(e) => set("bornMonth")(e.target.value)}
+                    placeholder="Tháng"
+                    disabled={!isEditing}
+                  />
+                  <StaffFormInput
+                    type="number"
+                    value={draft.bornYear}
+                    onChange={(e) => set("bornYear")(e.target.value)}
+                    placeholder="Năm"
+                    disabled={!isEditing}
+                  />
+                  <label className="flex h-10 items-center gap-2 rounded-md border px-2 text-xs font-medium" style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}>
+                    <Checkbox
+                      checked={draft.isBornBc}
+                      onCheckedChange={(val) => set("isBornBc")(!!val)}
+                      disabled={!isEditing}
+                    />
+                    TCN
+                  </label>
+                </div>
+                <ValidationErrorText message={errors.bornDay || errors.bornMonth || errors.bornYear} />
               </div>
-              <ValidationErrorText message={errors.bornDay || errors.bornMonth || errors.bornYear} />
-            </div>
 
-            <div className="grid gap-3">
-              <StaffFormLabel>Ngày mất</StaffFormLabel>
-              <div className="grid grid-cols-[1fr_1fr_1.2fr_auto] gap-2 items-end">
-                <StaffFormInput
-                  type="number"
-                  min={1}
-                  max={31}
-                  value={draft.deathDay}
-                  onChange={(e) => set("deathDay")(e.target.value)}
-                  placeholder="Ngày"
-                  disabled={!isEditing}
-                />
-                <StaffFormInput
-                  type="number"
-                  min={1}
-                  max={12}
-                  value={draft.deathMonth}
-                  onChange={(e) => set("deathMonth")(e.target.value)}
-                  placeholder="Tháng"
-                  disabled={!isEditing}
-                />
-                <StaffFormInput
-                  type="number"
-                  value={draft.deathYear}
-                  onChange={(e) => set("deathYear")(e.target.value)}
-                  placeholder="Năm"
-                  disabled={!isEditing}
-                />
-                <label className="flex h-10 items-center gap-2 rounded-md border px-3 text-xs font-medium" style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}>
-                  <Checkbox
-                    checked={draft.isDeathBc}
-                    onCheckedChange={(val) => set("isDeathBc")(!!val)}
+              <div className="grid gap-3">
+                <StaffFormLabel>Ngày mất</StaffFormLabel>
+                <div className="grid grid-cols-[44px_54px_1fr_auto] gap-2 items-end">
+                  <StaffFormInput
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={draft.deathDay}
+                    onChange={(e) => set("deathDay")(e.target.value)}
+                    placeholder="Ngày"
                     disabled={!isEditing}
                   />
-                  TCN
-                </label>
+                  <StaffFormInput
+                    type="number"
+                    min={1}
+                    max={12}
+                    value={draft.deathMonth}
+                    onChange={(e) => set("deathMonth")(e.target.value)}
+                    placeholder="Tháng"
+                    disabled={!isEditing}
+                  />
+                  <StaffFormInput
+                    type="number"
+                    value={draft.deathYear}
+                    onChange={(e) => set("deathYear")(e.target.value)}
+                    placeholder="Năm"
+                    disabled={!isEditing}
+                  />
+                  <label className="flex h-10 items-center gap-2 rounded-md border px-2 text-xs font-medium" style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}>
+                    <Checkbox
+                      checked={draft.isDeathBc}
+                      onCheckedChange={(val) => set("isDeathBc")(!!val)}
+                      disabled={!isEditing}
+                    />
+                    TCN
+                  </label>
+                </div>
+                <ValidationErrorText message={errors.deathDay || errors.deathMonth || errors.deathYear} />
               </div>
-              <ValidationErrorText message={errors.deathDay || errors.deathMonth || errors.deathYear} />
             </div>
 
             <div className="grid gap-1.5">
@@ -764,6 +767,12 @@ export function StaffCharacterDetailView({
               />
               <ValidationErrorText message={errors.modelUrl} />
             </div>
+
+            <StaffCharacterMediaPreview
+              imageUrl={draft.image}
+              modelUrl={draft.modelUrl}
+              alt={draft.name || "Ảnh nhân vật"}
+            />
 
             <div className="grid gap-1.5">
               <StaffFormLabel>Tiểu sử / Bối cảnh *</StaffFormLabel>

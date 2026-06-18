@@ -31,6 +31,13 @@ export interface HistoricalEvent {
   isDraft?: boolean;
   isActive?: boolean;
   isPublished?: boolean;
+  status?: string | null;
+  createdBy?: {
+    uid?: string;
+    userName?: string;
+  } | null;
+  createdDate?: string | null;
+  updatedDate?: string | null;
   characterIds?: {
     _id?: string;
     id?: string;
@@ -101,6 +108,13 @@ type RawHistoricalContext = {
   isDraft?: boolean;
   isActive?: boolean;
   isPublished?: boolean;
+  status?: string | null;
+  createdBy?: {
+    uid?: string;
+    userName?: string;
+  } | null;
+  createdDate?: string | null;
+  updatedDate?: string | null;
   characterIds?: HistoricalEvent["characterIds"];
   deletedAt?: string | null;
 };
@@ -134,6 +148,10 @@ export function mapContext(raw: RawHistoricalContext): HistoricalEvent {
     isDraft: raw.isDraft,
     isActive: raw.isActive ?? true,
     isPublished: raw.isPublished ?? false,
+    status: raw.status ?? null,
+    createdBy: raw.createdBy ?? null,
+    createdDate: raw.createdDate ?? null,
+    updatedDate: raw.updatedDate ?? null,
     characterIds: raw.characterIds ?? [],
     deletedAt: raw.deletedAt ?? null,
   };

@@ -43,6 +43,14 @@ function sortByPublishedStatus<TData>(data: TData[], desc: boolean) {
     .map(({ item }) => item);
 }
 
+function getStickyColumnClass(columnId: string) {
+  if (columnId === "title" || columnId === "name") {
+    return "sticky left-0 z-20 border-r bg-[var(--card-light-bg)] shadow-[10px_0_18px_rgba(27,38,50,0.05)]";
+  }
+
+  return "";
+}
+
 export function StaffDataTable<TData>({
   columns,
   data,
@@ -71,13 +79,13 @@ export function StaffDataTable<TData>({
 
   return (
     <div
-      className={cn("rounded-xl border overflow-hidden", className)}
+      className={cn("rounded-xl border overflow-x-auto overflow-y-hidden", className)}
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
       }}
     >
-      <Table>
+      <Table className="min-w-max">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
@@ -96,12 +104,16 @@ export function StaffDataTable<TData>({
                     }
                   : header.column.getToggleSortingHandler();
                 return (
-                  <TableHead key={header.id} className="px-4">
+                  <TableHead
+                    key={header.id}
+                    className={cn("px-4", getStickyColumnClass(header.column.id))}
+                    style={{ borderColor: "var(--card-light-border)" }}
+                  >
                     {header.isPlaceholder ? null : canSort ? (
                       <Button
                         type="button"
                         variant="ghost"
-                        className="-ml-2 h-8 px-2 font-semibold"
+                        className="-ml-2 h-8 px-2 font-semibold hover:bg-black/[0.04] hover:text-[var(--content-heading)]"
                         onClick={handleSortClick}
                         style={{ color: "var(--content-heading)" }}
                       >
@@ -148,13 +160,17 @@ export function StaffDataTable<TData>({
               <TableRow
                 key={row.id}
                 className={cn(
-                  "hover:bg-[var(--card-light-hover)]!",
+                  "hover:bg-black/[0.025]!",
                   onRowClick && "cursor-pointer"
                 )}
                 onClick={() => onRowClick?.(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="px-4">
+                  <TableCell
+                    key={cell.id}
+                    className={cn("px-4", getStickyColumnClass(cell.column.id))}
+                    style={{ borderColor: "var(--card-light-border)" }}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
