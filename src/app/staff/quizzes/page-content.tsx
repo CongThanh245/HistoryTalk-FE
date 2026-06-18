@@ -310,7 +310,7 @@ export default function StaffQuizzesPage() {
         onSuccess: () => {
           toast.success(
             nextPublished
-              ? `Đã publish quiz "${publishTarget.title}".`
+              ? `Đã xuất bản quiz "${publishTarget.title}" hiển thị cho người dùng.`
               : `Đã ẩn quiz "${publishTarget.title}" khỏi người dùng.`,
           );
           setPublishedOverrides((prev) => ({

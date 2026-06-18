@@ -585,6 +585,39 @@ export function StaffCharacterDetailView({
         </div>
 
         <div className="flex items-center gap-2">
+          {isEditing && (
+            <>
+              {isCreated && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]"
+                  onClick={() => {
+                    if (isDirty) {
+                      setCancelDialogOpen(true);
+                    } else {
+                      setIsEditing(false);
+                    }
+                  }}
+                >
+                  Hủy chỉnh sửa
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={handleSaveClick}
+                disabled={!canSave}
+                className="border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-90 hover:shadow-sm cursor-pointer"
+              >
+                <FloppyDiskIcon className="h-4 w-4 mr-1.5" />
+                {isPending
+                  ? "Đang lưu..."
+                  : isCreated
+                    ? "Lưu thay đổi"
+                    : "Tạo nhân vật"}
+              </Button>
+            </>
+          )}
           {isCreated && !isEditing && (
             <Button
               variant="outline"
@@ -1133,40 +1166,6 @@ export function StaffCharacterDetailView({
                 setPublishDialogOpen(false);
               }}
             />
-
-            {isEditing && (
-              <div className="flex gap-2 pt-2">
-                {isCreated && (
-                  <Button
-                    variant="outline"
-                    className="flex-1 bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]"
-                    onClick={() => {
-                      if (isDirty) {
-                        setCancelDialogOpen(true);
-                      } else {
-                        setIsEditing(false);
-                      }
-                    }}
-                  >
-                    Hủy chỉnh sửa
-                  </Button>
-                )}
-                <Button
-                  onClick={handleSaveClick}
-                  disabled={!canSave}
-                  className={`border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-90 hover:shadow-sm cursor-pointer ${
-                    isCreated ? "flex-1" : "w-full h-10 rounded-xl"
-                  }`}
-                >
-                  <FloppyDiskIcon className="h-4 w-4 mr-2" />
-                  {isPending
-                    ? "Đang lưu..."
-                    : isCreated
-                      ? "Lưu thay đổi"
-                      : "Tạo nhân vật ngay"}
-                </Button>
-              </div>
-            )}
 
             {isCreated && (
               <div

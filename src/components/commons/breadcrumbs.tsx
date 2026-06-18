@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CaretRight, House } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils/cn";
 import React from "react";
 import { useCharacter } from "@/features/characters/hooks";
 import { useEventDetail } from "@/features/events/hooks";
@@ -50,15 +49,16 @@ export default function Breadcrumbs() {
       aria-label="Breadcrumb" 
       className="px-3 md:px-6 py-2.5 border-b"
       style={{ 
-        borderColor: "var(--header-border)"
+        background: "var(--header-bg)",
+        borderColor: "var(--header-border)",
       }}
     >
-      <ol className="flex items-center space-x-2 text-sm" style={{ color: "var(--content-muted)" }}>
+      <ol className="flex items-center space-x-2 text-sm" style={{ color: "var(--header-text-muted)" }}>
         <li className="flex items-center">
           <Link
             href="/home"
             className="hover:text-[--accent-gold] transition-colors flex items-center gap-1.5"
-            style={{ color: "var(--content-text)" }}
+            style={{ color: "var(--header-text)" }}
           >
             <House size={16} weight="fill" />
             <span className="sr-only">Trang chủ</span>
@@ -85,7 +85,7 @@ export default function Breadcrumbs() {
                   <Link
                     href={segment === "chat" ? "/character" : href}
                     className="hover:text-[--accent-gold] transition-colors truncate max-w-[200px]"
-                    style={{ color: "var(--content-text)" }}
+                    style={{ color: "var(--header-text)" }}
                   >
                     <BreadcrumbLabel segment={segment} parentSegment={parentSegment} />
                   </Link>

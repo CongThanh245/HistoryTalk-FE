@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils/cn";
 
 // ── Label ──
-export interface StaffFormLabelProps extends React.ComponentPropsWithoutRef<typeof Label> {}
+export type StaffFormLabelProps = React.ComponentPropsWithoutRef<typeof Label>;
 
 export const StaffFormLabel = React.forwardRef<
   React.ElementRef<typeof Label>,
@@ -32,7 +32,7 @@ export const StaffFormLabel = React.forwardRef<
 StaffFormLabel.displayName = "StaffFormLabel";
 
 // ── Input ──
-export interface StaffFormInputProps extends React.ComponentPropsWithoutRef<typeof Input> {}
+export type StaffFormInputProps = React.ComponentPropsWithoutRef<typeof Input>;
 
 export const StaffFormInput = React.forwardRef<
   HTMLInputElement,
@@ -51,7 +51,7 @@ export const StaffFormInput = React.forwardRef<
 StaffFormInput.displayName = "StaffFormInput";
 
 // ── Textarea ──
-export interface StaffFormTextareaProps extends React.ComponentPropsWithoutRef<typeof Textarea> {}
+export type StaffFormTextareaProps = React.ComponentPropsWithoutRef<typeof Textarea>;
 
 export const StaffFormTextarea = React.forwardRef<
   HTMLTextAreaElement,
@@ -98,7 +98,7 @@ export function StaffFormSelect<T extends string>({
       >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent position="popper" side="bottom" align="start">
         {options.map((opt) => (
           <SelectItem key={opt.value} value={opt.value}>
             {opt.label}
