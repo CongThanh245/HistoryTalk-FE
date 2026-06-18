@@ -160,7 +160,10 @@ export default function StaffContextsPage() {
   const restoreContext = useTrashRestore("historical-contexts");
   const permanentDeleteContext = useTrashPermanentDelete("historical-contexts");
 
-  const items = data?.content ?? [];
+  const items = React.useMemo(
+    () => (data?.content ?? []).filter((item) => !item.deletedAt),
+    [data?.content],
+  );
   const activeItems = items;
   const displayedItems = items;
 

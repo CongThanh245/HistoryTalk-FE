@@ -49,8 +49,10 @@ export default function StaffCharactersPage() {
   const restoreCharacter = useTrashRestore("characters");
   const permanentDeleteCharacter = useTrashPermanentDelete("characters");
 
-  const allItems = data?.content ?? [];
-  const activeItems = allItems;
+  const activeItems = React.useMemo(
+    () => (data?.content ?? []).filter((item) => !item.deletedAt),
+    [data?.content],
+  );
 
   const items = React.useMemo(() => {
     const q = search.trim().toLowerCase();

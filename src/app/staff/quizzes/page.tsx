@@ -142,7 +142,7 @@ export default function StaffQuizzesPage() {
 
   const allItems = React.useMemo(
     () =>
-      (data?.content ?? []).map((item) => {
+      (data?.content ?? []).filter((item) => !item.deletedAt).map((item) => {
         const overriddenPublished = publishedOverrides[item.quizId];
         return overriddenPublished === undefined
           ? item

@@ -60,6 +60,11 @@ function getTone(percentage: number) {
   return { bg: "rgba(184,50,42,0.10)", fg: "var(--accent-danger)" };
 }
 
+function normalizeQuestionCount(value: number, totalQuestions: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(Math.max(Math.round(value), 0), totalQuestions);
+}
+
 function getOptionTone(question: QuizSessionQuestion, optionIndex: number) {
   const isAnswer = optionIndex === question.correctAnswer;
   const isWrongPick =
@@ -149,6 +154,7 @@ export function QuizHistoryView({
           <div className="divide-y" style={{ borderColor: "var(--card-light-border)" }}>
             {results.map((result) => {
               const tone = getTone(result.percentage);
+              const score = normalizeQuestionCount(result.score, result.totalQuestions);
               return (
                 <article
                   key={result.sessionId}
@@ -163,7 +169,7 @@ export function QuizHistoryView({
                         className="rounded-md px-2 py-1 text-xs font-bold"
                         style={{ background: tone.bg, color: tone.fg }}
                       >
-                        {result.score}/{result.totalQuestions}
+                        {score}/{result.totalQuestions}
                       </span>
                     </div>
 
@@ -262,7 +268,7 @@ export function QuizHistoryView({
                         className="rounded-md px-3 py-1.5 text-sm font-bold"
                         style={{ background: detailTone.bg, color: detailTone.fg }}
                       >
-                        {detail.score}/{detail.totalQuestions}
+                        {normalizeQuestionCount(detail.score, detail.totalQuestions)}/{detail.totalQuestions}
                       </span>
                     )}
                     <span

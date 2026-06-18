@@ -119,8 +119,20 @@ export function useDeleteCharacter() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => characterService.softDelete(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
+      qc.setQueriesData(
+        { queryKey: queryKeys.characters.all },
+        (old: unknown) => {
+          if (!isCharactersResponse(old)) return old;
+          return {
+            ...old,
+            content: old.content.filter((character) => character.id !== id),
+            totalElements: Math.max(0, old.totalElements - 1),
+          };
+        },
+      );
       qc.invalidateQueries({ queryKey: queryKeys.characters.all });
+      qc.invalidateQueries({ queryKey: queryKeys.trash.characters });
       toast.success("Đã chuyển vào thùng rác");
     },
     onError: (err: unknown) => {

@@ -31,6 +31,11 @@ function formatDuration(seconds?: number) {
   return `${minutes}m ${remainingSeconds}s`;
 }
 
+function normalizeQuestionCount(value: number, totalQuestions: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(Math.max(Math.round(value), 0), totalQuestions);
+}
+
 export function QuizResultPage({
   quiz,
   questions,
@@ -48,6 +53,14 @@ export function QuizResultPage({
     }).length;
 
   const totalQuestions = submitResult?.totalQuestions ?? questions.length;
+  const correctCount = normalizeQuestionCount(
+    submitResult?.correctAnswers.length ?? score,
+    totalQuestions,
+  );
+  const wrongCount = normalizeQuestionCount(
+    submitResult?.wrongAnswers.length ?? totalQuestions - correctCount,
+    totalQuestions,
+  );
   const durationSeconds = submitResult?.durationSeconds;
   const percentage =
     submitResult?.percentage ?? Math.round((score / Math.max(totalQuestions, 1)) * 100);
@@ -100,7 +113,7 @@ export function QuizResultPage({
                 Điểm
               </p>
               <p className="mt-2 text-5xl font-black leading-none" style={{ color: tier.color }}>
-                {score}
+                {correctCount}
                 <span className="text-2xl">/{totalQuestions}</span>
               </p>
             </div>
@@ -108,8 +121,8 @@ export function QuizResultPage({
 
           <div className="mt-6 grid gap-3 sm:grid-cols-4">
             {[
-              { label: "Đúng", value: score, color: "#047857" },
-              { label: "Sai", value: totalQuestions - score, color: "var(--accent-danger)" },
+              { label: "Đúng", value: correctCount, color: "#047857" },
+              { label: "Sai", value: wrongCount, color: "var(--accent-danger)" },
               { label: "Tổng câu", value: totalQuestions, color: "var(--content-heading)" },
               { label: "Thời gian", value: formatDuration(durationSeconds), color: "var(--gold-on-light)" },
             ].map((item) => (

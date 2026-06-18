@@ -95,9 +95,32 @@ export function useSoftDeleteStaffQuiz() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (quizId: string) => staffQuizService.softDelete(quizId),
-    onSuccess: () => {
+    onSuccess: (_, quizId) => {
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.staffQuizzes.all },
+        (old: unknown) => {
+          if (
+            typeof old !== "object" ||
+            old === null ||
+            !Array.isArray((old as { content?: unknown }).content)
+          ) {
+            return old;
+          }
+
+          const response = old as { content: { quizId: string }[]; totalElements?: number };
+          return {
+            ...response,
+            content: response.content.filter((quiz) => quiz.quizId !== quizId),
+            totalElements:
+              typeof response.totalElements === "number"
+                ? Math.max(0, response.totalElements - 1)
+                : response.totalElements,
+          };
+        },
+      );
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.trash.quizzes });
     },
   });
 }

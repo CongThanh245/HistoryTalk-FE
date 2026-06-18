@@ -11,6 +11,25 @@ import {
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
 
+function getErrorMessage(err: unknown, fallback: string) {
+  if (
+    typeof err === "object" &&
+    err !== null &&
+    "response" in err &&
+    typeof err.response === "object" &&
+    err.response !== null &&
+    "data" in err.response &&
+    typeof err.response.data === "object" &&
+    err.response.data !== null &&
+    "message" in err.response.data &&
+    typeof err.response.data.message === "string"
+  ) {
+    return err.response.data.message;
+  }
+
+  return fallback;
+}
+
 export function useEvents(params?: GetEventsParams) {
   return useQuery({
     queryKey: queryKeys.events.list(params),
@@ -42,8 +61,8 @@ export function useCreateEvent() {
         },
       );
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Tạo sự kiện thất bại");
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Tạo sự kiện thất bại"));
     },
   });
 }
@@ -67,8 +86,8 @@ export function useUpdateEvent() {
         },
       );
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Cập nhật thất bại");
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Cập nhật thất bại"));
     },
   });
 }
@@ -78,7 +97,19 @@ export function useDeleteEvent() {
   return useMutation({
     mutationFn: (id: string) => eventService.softDelete(id),
     onSuccess: (_, id) => {
+      qc.setQueriesData(
+        { queryKey: queryKeys.events.all },
+        (old: GetEventsResponse | undefined) => {
+          if (!old?.content) return old;
+          return {
+            ...old,
+            content: old.content.filter((event) => event.id !== id),
+            totalElements: Math.max(0, old.totalElements - 1),
+          };
+        },
+      );
       qc.invalidateQueries({ queryKey: queryKeys.events.all });
+      qc.invalidateQueries({ queryKey: queryKeys.trash.contexts });
       toast.success("Đã chuyển vào thùng rác");
     },
   });
@@ -112,8 +143,8 @@ export function usePermanentDeleteEvent() {
       qc.invalidateQueries({ queryKey: queryKeys.events.all });
       toast.success("Đã xóa vĩnh viễn bối cảnh");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Xóa vĩnh viễn thất bại");
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Xóa vĩnh viễn thất bại"));
     },
   });
 }
