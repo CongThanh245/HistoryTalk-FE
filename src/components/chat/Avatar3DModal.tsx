@@ -344,6 +344,7 @@ export function Avatar3DModal({
     micOff: null,
     thinkingLoop: null,
   });
+  const thinkingLoopDelayRef = useRef<number | null>(null);
 
   const playUiSound = useCallback((name: keyof typeof UI_SOUNDS, volume = 0.42) => {
     const sound = uiSoundRefs.current[name];
@@ -385,7 +386,7 @@ export function Avatar3DModal({
 
     const thinkingLoop = uiSoundRefs.current.thinkingLoop;
     if (thinkingLoop) {
-      thinkingLoop.loop = true;
+      thinkingLoop.loop = false;
       thinkingLoop.volume = 0.13;
     }
 
@@ -401,6 +402,10 @@ export function Avatar3DModal({
         sound.pause();
         sound.src = "";
       });
+      if (thinkingLoopDelayRef.current !== null) {
+        window.clearTimeout(thinkingLoopDelayRef.current);
+        thinkingLoopDelayRef.current = null;
+      }
     };
   }, []);
   // Internal mode state (can be toggled by user)
@@ -505,13 +510,43 @@ export function Avatar3DModal({
     const thinkingLoop = uiSoundRefs.current.thinkingLoop;
     if (!thinkingLoop) return;
 
+    const clearThinkingDelay = () => {
+      if (thinkingLoopDelayRef.current !== null) {
+        window.clearTimeout(thinkingLoopDelayRef.current);
+        thinkingLoopDelayRef.current = null;
+      }
+    };
+
     if (isThinkingStatus) {
+      let shouldContinue = true;
+      const replayAfterDelay = () => {
+        clearThinkingDelay();
+        if (!shouldContinue) return;
+
+        thinkingLoopDelayRef.current = window.setTimeout(() => {
+          if (!shouldContinue) return;
+          thinkingLoop.currentTime = 0;
+          void thinkingLoop.play().catch(() => {
+            // Browser autoplay policies can block ambience; the UI should continue silently.
+          });
+        }, 2500);
+      };
+
+      clearThinkingDelay();
+      thinkingLoop.loop = false;
+      thinkingLoop.addEventListener("ended", replayAfterDelay);
+      thinkingLoop.currentTime = 0;
       void thinkingLoop.play().catch(() => {
         // Browser autoplay policies can block ambience; the UI should continue silently.
       });
-      return;
+      return () => {
+        shouldContinue = false;
+        thinkingLoop.removeEventListener("ended", replayAfterDelay);
+        clearThinkingDelay();
+      };
     }
 
+    clearThinkingDelay();
     thinkingLoop.pause();
     thinkingLoop.currentTime = 0;
   }, [isThinkingStatus]);
@@ -614,6 +649,20 @@ export function Avatar3DModal({
           0%, 100% { opacity: 0.45; transform: translateX(-50%) scaleX(0.92); }
           50% { opacity: 0.82; transform: translateX(-50%) scaleX(1.06); }
         }
+        @keyframes gridScanFloor {
+          0% { background-position: 0 0, 0 0; }
+          100% { background-position: 0 42px, 42px 0; }
+        }
+        @keyframes gridScanBackfield {
+          0% { background-position: 0 0, 0 0; }
+          100% { background-position: 58px 58px, -58px 0; }
+        }
+        @keyframes gridScanBeam {
+          0%, 18% { transform: translateX(-34%) skewX(-12deg); opacity: 0; }
+          32% { opacity: 0.78; }
+          68% { opacity: 0.78; }
+          86%, 100% { transform: translateX(34%) skewX(-12deg); opacity: 0; }
+        }
         .avatar-call-body {
           width: 100%;
           flex: 1;
@@ -665,6 +714,83 @@ export function Avatar3DModal({
           filter: blur(18px);
           opacity: 0;
           animation: connectCore 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+        }
+        .avatar-call-gridscan {
+          position: absolute;
+          inset: -8%;
+          z-index: 0;
+          pointer-events: none;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 50% 44%, rgba(116,222,177,0.14), transparent 28%),
+            radial-gradient(ellipse at 50% 82%, rgba(240,200,90,0.16), transparent 42%),
+            linear-gradient(180deg, rgba(9,18,15,0.32), rgba(8,7,4,0.08) 55%, rgba(9,7,3,0.38));
+          opacity: 0.92;
+          mix-blend-mode: screen;
+        }
+        .avatar-call-gridscan::before,
+        .avatar-call-gridscan::after {
+          content: "";
+          position: absolute;
+          pointer-events: none;
+        }
+        .avatar-call-gridscan::before {
+          left: -18%;
+          right: -18%;
+          bottom: -34%;
+          height: 76%;
+          transform-origin: center bottom;
+          transform: perspective(760px) rotateX(62deg) scaleX(1.16);
+          background-image:
+            linear-gradient(rgba(116,222,177,0.18) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(240,200,90,0.16) 1px, transparent 1px);
+          background-size: 42px 42px;
+          filter: drop-shadow(0 0 10px rgba(116,222,177,0.16));
+          mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 76%, transparent 100%);
+          animation: gridScanFloor 5.6s linear infinite;
+        }
+        .avatar-call-gridscan::after {
+          inset: -4% -2% 38%;
+          background-image:
+            linear-gradient(rgba(240,200,90,0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(116,222,177,0.11) 1px, transparent 1px);
+          background-size: 58px 58px;
+          opacity: 0.55;
+          transform: perspective(900px) rotateX(10deg) scale(1.08);
+          mask-image: radial-gradient(ellipse at 50% 58%, #000 0%, #000 46%, transparent 78%);
+          animation: gridScanBackfield 8s linear infinite;
+        }
+        .avatar-call-gridscan__beam {
+          position: absolute;
+          inset: -10% -35%;
+          pointer-events: none;
+          background:
+            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.05) 42%, rgba(255,244,196,0.28) 49%, rgba(240,200,90,0.16) 53%, transparent 62%),
+            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.12) 48%, transparent 54%);
+          filter: blur(0.3px) drop-shadow(0 0 18px rgba(116,222,177,0.24));
+          opacity: 0.78;
+          transform: skewX(-12deg);
+          animation: gridScanBeam 1.55s cubic-bezier(0.45, 0, 0.2, 1) 0.25s both;
+        }
+        .avatar-call-gridscan__beam::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 52%;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(255,244,196,0.52), transparent);
+          box-shadow:
+            0 36px 0 rgba(116,222,177,0.24),
+            0 92px 0 rgba(240,200,90,0.18),
+            0 -44px 0 rgba(116,222,177,0.18);
+        }
+        .avatar-call-viewport--listening .avatar-call-gridscan,
+        .avatar-call-viewport--speaking .avatar-call-gridscan {
+          opacity: calc(0.96 + var(--voice-volume, 0) * 0.04);
+        }
+        .avatar-call-viewport--speaking .avatar-call-gridscan__beam {
+          opacity: calc(0.78 + var(--voice-volume, 0) * 0.18);
         }
         .avatar-call-ripple {
           position: absolute;
@@ -1226,6 +1352,9 @@ export function Avatar3DModal({
               justifyContent: is2D ? "center" : undefined,
             } as CSSProperties}
           >
+            <span className="avatar-call-gridscan" aria-hidden="true">
+              <span className="avatar-call-gridscan__beam" aria-hidden="true" />
+            </span>
             <span className="avatar-call-viewport__connect-core" aria-hidden="true" />
             <span className="avatar-call-viewport__time-streaks" aria-hidden="true" />
             <span className="avatar-call-time-tunnel" aria-hidden="true" />
