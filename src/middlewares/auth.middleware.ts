@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const CONTENT_ADMIN_HOME = "/staff";
 const SYSTEM_ADMIN_HOME = "/staff/admin";
-const AUTH_REQUIRED_ROUTES = ["/chat", "/chat-history"];
+const AUTH_REQUIRED_ROUTES = ["/chat", "/profile"];
 
 const isContentAdminRole = (role: string | undefined) =>
   role === "CONTENT_ADMIN";

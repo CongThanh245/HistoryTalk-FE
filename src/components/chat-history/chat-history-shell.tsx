@@ -12,6 +12,7 @@ import type { ChatHistorySession } from "@/services/chat.service";
 // ChatHistoryItem = ChatHistorySession (alias để code dễ đọc)
 type ChatHistoryItem = ChatHistorySession;
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth.store";
 
 import { ChatHistoryHeader } from "./chat-history-header";
 import { ChatHistoryFilters } from "./chat-history-filters";
@@ -21,6 +22,7 @@ import { ChatHistorySkeleton } from "./chat-history-skeleton";
 
 export function ChatHistoryShell() {
   const router = useRouter();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [era, setEra] = useState<EventEra>("all");
   const [search, setSearch] = useState("");
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
@@ -111,7 +113,9 @@ export function ChatHistoryShell() {
         />
 
         {/* ✅ Loading → Skeleton, có data → List, rỗng → EmptyState */}
-        {isLoading ? (
+        {!isAuthenticated ? (
+          <ChatHistoryEmptyState hasFilter={hasFilter} isNotAuthenticated={true} />
+        ) : isLoading ? (
           <ChatHistorySkeleton />
         ) : filtered.length === 0 ? (
           <ChatHistoryEmptyState hasFilter={hasFilter} />

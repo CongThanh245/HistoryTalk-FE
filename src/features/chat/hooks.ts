@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { chatService, type ChatHistoryGroup } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth.store";
 
 export function useChatSessions(
   characterId: string,
@@ -78,9 +79,12 @@ export function useSendMessage() {
 }
 
 export function useChatHistory() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   return useQuery({
     queryKey: queryKeys.chat.history,
     queryFn: () => chatService.getHistory(),
+    enabled: isAuthenticated,
     staleTime: 1000 * 60,
   });
 }

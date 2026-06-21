@@ -36,7 +36,7 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
       { icon: HouseIcon, label: "Trang chủ", href: "/home" },
       { icon: BankIcon, label: "Sự kiện lịch sử", href: "/events" },
       { icon: UserIcon, label: "Nhân vật", href: "/characters" },
-      { icon: ChatTextIcon, label: "Lịch sử chat", href: "/chat-history" },
+      { icon: ChatTextIcon, label: "Trò chuyện", href: "/chat-history" },
       { icon: ClipboardTextIcon, label: "Câu đố lịch sử", href: "/quiz" },
       // MVP: Ẩn Bản đồ lịch sử, Library và Đã lưu
       // { icon: MapTrifoldIcon, label: "Bản đồ lịch sử", href: "/map" },
