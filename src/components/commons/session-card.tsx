@@ -42,7 +42,7 @@ export function SessionCard({
   return (
     <div
       onClick={() => onClick(session)}
-      className="group relative w-full text-left flex items-start gap-4 px-5 py-4 rounded-xl border transition-all duration-200 cursor-pointer hover:-translate-y-0.5"
+      className="group relative w-full text-left flex items-start gap-3 rounded-xl border px-3 py-3 transition-all duration-200 cursor-pointer md:gap-4 md:px-4 md:py-3.5 md:hover:-translate-y-0.5"
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
@@ -62,7 +62,7 @@ export function SessionCard({
               if (isDeleting) return;
               setDeleteOpen(true);
             }}
-            className="absolute top-3 right-3 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70"
+            className="absolute right-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-md transition-all cursor-pointer hover:bg-red-50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70 md:h-6 md:w-6 md:opacity-0 md:group-hover:opacity-100"
             style={{ color: "var(--content-subtle)" }}
           >
             {isDeleting ? (
@@ -88,7 +88,7 @@ export function SessionCard({
       )}
       {/* Avatar */}
       <div
-        className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 border"
+        className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border md:h-11 md:w-11"
         style={{ borderColor: "var(--card-light-border)" }}
       >
         <Image
@@ -101,16 +101,16 @@ export function SessionCard({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 mb-0.5">
-          <div>
+        <div className="mb-0.5 flex items-start justify-between gap-2">
+          <div className="min-w-0 pr-7 md:pr-0">
             <p
-              className="text-sm font-bold leading-snug"
+              className="truncate text-sm font-bold leading-snug"
               style={{ color: "var(--content-heading)" }}
             >
               {session.characterName}
             </p>
             <p
-              className="text-[11px]"
+              className="truncate text-[11px]"
               style={{ color: "var(--content-muted)" }}
             >
               {session.characterTitle}
@@ -124,7 +124,7 @@ export function SessionCard({
               </p>
             )}
           </div>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="hidden shrink-0 items-center gap-1 sm:flex">
             <TimerIcon
               className="w-3 h-3"
               style={{ color: "var(--content-subtle)" }}
@@ -140,15 +140,15 @@ export function SessionCard({
 
         {/* Preview */}
         <p
-          className="text-xs leading-relaxed line-clamp-2 mt-1.5 italic"
+          className="mt-1 text-xs leading-relaxed line-clamp-1 italic md:mt-1.5 md:line-clamp-2"
           style={{ color: "var(--content-muted)" }}
         >
           &quot;{session.lastMessage}&quot;
         </p>
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-1.5">
+        <div className="mt-1.5 flex items-center justify-between md:mt-2">
+          <div className="flex min-w-0 items-center gap-1.5">
             <ChatTextIcon
               className="w-3 h-3"
               style={{ color: "var(--content-subtle)" }}
@@ -163,7 +163,7 @@ export function SessionCard({
               <>
                 <span style={{ color: "var(--content-subtle)" }}>·</span>
                 <span
-                  className="text-[11px] truncate max-w-[140px]"
+                  className="max-w-[90px] truncate text-[11px] md:max-w-[140px]"
                   style={{ color: "var(--gold-on-light)" }}
                 >
                   {session.sessionTitle}
@@ -172,7 +172,7 @@ export function SessionCard({
             )}
           </div>
           <div
-            className="flex items-center gap-1 text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity"
+            className="hidden items-center gap-1 text-[11px] font-semibold opacity-0 transition-opacity group-hover:opacity-100 md:flex"
             style={{ color: "var(--gold-on-light)" }}
           >
             Xem lại <CaretRightIcon className="w-3.5 h-3.5" />

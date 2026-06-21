@@ -70,8 +70,12 @@ export function CharactersClient() {
       {authRequiredDialog}
       <div className="space-y-4 md:space-y-5">
       {/* Filters */}
-      <div className="flex flex-col gap-3">
-        <EraFilter active={era} onChange={handleEraChange} />
+      <div className="flex min-w-0 flex-col gap-3">
+        <div className="-mx-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
+          <div className="min-w-max sm:min-w-0">
+            <EraFilter active={era} onChange={handleEraChange} />
+          </div>
+        </div>
         <SearchInput
           value={search}
           onChange={handleSearch}
@@ -103,7 +107,7 @@ export function CharactersClient() {
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(205px,240px))] gap-3 md:gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 md:gap-4">
         {isLoading
           ? Array.from({ length: PAGE_LIMIT }).map((_, i) => (
               <CharacterPageCardSkeleton key={i} />

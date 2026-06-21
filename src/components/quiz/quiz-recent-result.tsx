@@ -56,14 +56,14 @@ export function QuizRecentResults({
       }}
     >
       <div
-        className="flex items-start justify-between gap-3 px-5 py-4"
+        className="flex items-start justify-between gap-3 px-4 py-3"
         style={{ borderBottom: "1px solid var(--card-light-border)" }}
       >
         <div>
           <h3 className="text-sm font-bold" style={{ color: "var(--content-heading)" }}>
             Lịch sử làm bài
           </h3>
-          <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
+          <p className="mt-0.5 text-xs" style={{ color: "var(--content-muted)" }}>
             Các lần nộp gần đây của bạn
           </p>
         </div>
@@ -79,18 +79,18 @@ export function QuizRecentResults({
       </div>
 
       {isLoading ? (
-        <div className="p-8 text-center text-sm" style={{ color: "var(--content-muted)" }}>
+        <div className="p-6 text-center text-sm" style={{ color: "var(--content-muted)" }}>
           Đang tải...
         </div>
       ) : results.length === 0 ? (
-        <div className="p-8 text-center text-sm" style={{ color: "var(--content-muted)" }}>
+        <div className="p-6 text-center text-sm" style={{ color: "var(--content-muted)" }}>
           Chưa có lịch sử làm bài
         </div>
       ) : (
         <div className="divide-y" style={{ borderColor: "var(--card-light-border)" }}>
           {results.map((r) => (
-            <div key={r.sessionId} className="px-5 py-4 transition-colors hover:bg-black/[0.025]">
-              <div className="mb-2 flex items-start justify-between gap-3">
+            <div key={r.sessionId} className="px-4 py-3 transition-colors hover:bg-black/[0.025]">
+              <div className="mb-1.5 flex items-start justify-between gap-3">
                 <p className="min-w-0 flex-1 truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
                   {r.quizTitle}
                 </p>

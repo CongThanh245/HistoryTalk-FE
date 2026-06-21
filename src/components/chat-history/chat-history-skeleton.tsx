@@ -3,11 +3,11 @@
 
 export function ChatHistorySkeleton() {
   return (
-    <div className="space-y-10 pb-16 animate-pulse">
+    <div className="space-y-6 pb-10 animate-pulse md:space-y-8 md:pb-16">
       {[0, 1].map((groupIdx) => (
-        <div key={groupIdx} className="space-y-3">
+        <div key={groupIdx} className="space-y-2.5 md:space-y-3">
           {/* Group header */}
-          <div className="flex items-center gap-3 mb-4">
+          <div className="mb-3 flex items-center gap-3 md:mb-4">
             <div
               className="h-4 w-32 rounded-full"
               style={{ background: "rgba(201,162,77,0.12)" }}
@@ -22,7 +22,7 @@ export function ChatHistorySkeleton() {
           {[0, 1, 2].map((cardIdx) => (
             <div
               key={cardIdx}
-              className="flex items-center gap-4 p-4 rounded-xl"
+              className="flex items-center gap-3 rounded-xl p-3 md:gap-4 md:p-3.5"
               style={{
                 background: "rgba(201,162,77,0.04)",
                 border: "1px solid rgba(201,162,77,0.08)",
@@ -30,7 +30,7 @@ export function ChatHistorySkeleton() {
             >
               {/* Avatar */}
               <div
-                className="w-11 h-11 rounded-full flex-shrink-0"
+                className="h-10 w-10 flex-shrink-0 rounded-xl md:h-11 md:w-11"
                 style={{ background: "rgba(201,162,77,0.10)" }}
               />
 
@@ -41,14 +41,14 @@ export function ChatHistorySkeleton() {
                   style={{ background: "rgba(201,162,77,0.12)" }}
                 />
                 <div
-                  className="h-3 w-48 rounded-full"
+                className="h-3 w-36 rounded-full md:w-48"
                   style={{ background: "rgba(201,162,77,0.07)" }}
                 />
               </div>
 
               {/* Timestamp */}
               <div
-                className="h-3 w-14 rounded-full flex-shrink-0"
+                className="hidden h-3 w-14 flex-shrink-0 rounded-full sm:block"
                 style={{ background: "rgba(201,162,77,0.07)" }}
               />
             </div>

@@ -8,17 +8,17 @@ interface ChatHistoryHeaderProps {
 
 export function ChatHistoryHeader({ totalSessions }: ChatHistoryHeaderProps) {
   return (
-    <div className="flex items-start justify-between mb-6">
+    <div className="mb-4 flex items-start justify-between gap-3 md:mb-6">
       <div className="flex items-center gap-3">
         <div>
           <h1
-            className="text-2xl font-bold"
+            className="text-xl font-bold md:text-2xl"
             style={{ color: "var(--content-heading)" }}
           >
             Lịch sử trò chuyện
           </h1>
           <p
-            className="text-sm mt-0.5"
+            className="mt-0.5 text-xs md:text-sm"
             style={{ color: "var(--content-muted)" }}
           >
             Xem lại các cuộc trò chuyện với nhân vật lịch sử
@@ -27,7 +27,7 @@ export function ChatHistoryHeader({ totalSessions }: ChatHistoryHeaderProps) {
       </div>
 
       <div
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
+        className="shrink-0 items-center gap-2 rounded-full px-2.5 py-1.5 text-xs font-medium hidden sm:flex"
         style={{
           background: "rgba(201,162,77,0.08)",
           border: "1px solid rgba(201,162,77,0.18)",

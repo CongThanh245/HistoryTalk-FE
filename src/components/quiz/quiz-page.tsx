@@ -77,30 +77,30 @@ export function QuizPageClient() {
     <main className="min-h-screen" style={{ background: "var(--bg-content)" }}>
       <div className="mx-auto max-w-7xl">
         <section
-          className="mb-5 md:mb-6 rounded-xl border px-4 py-4 md:px-6 md:py-5"
+          className="mb-3 rounded-xl border px-4 py-3 md:mb-4 md:px-5 md:py-4"
           style={{
             background: "var(--card-light-bg)",
             borderColor: "var(--card-light-border)",
             boxShadow: "0 10px 28px rgba(27,38,50,0.06)",
           }}
         >
-          <div className="flex flex-col gap-4 md:gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="max-w-2xl">
               <p
-                className="text-[11px] md:text-xs font-semibold uppercase tracking-wide mb-1.5 md:mb-2"
+                className="mb-1 text-[10px] font-semibold uppercase tracking-wide md:text-xs"
                 style={{ color: "var(--gold-on-light)" }}
               >
                 Luyện tập theo chủ đề
               </p>
-              <h1 className="text-xl font-bold md:text-3xl" style={{ color: "var(--content-heading)" }}>
+              <h1 className="text-xl font-bold md:text-2xl" style={{ color: "var(--content-heading)" }}>
                 Câu đố lịch sử
               </h1>
-              <p className="mt-1.5 md:mt-2 text-xs md:text-sm leading-5 md:leading-6" style={{ color: "var(--content-muted)" }}>
+              <p className="mt-1 line-clamp-2 text-xs leading-5 md:text-sm" style={{ color: "var(--content-muted)" }}>
                 Chọn một bộ đề, làm nhanh theo bối cảnh lịch sử và xem lại đáp án ngay sau khi nộp bài.
               </p>
             </div>
 
-            <div className="flex w-full flex-col gap-3 lg:w-[420px]">
+            <div className="w-full md:w-[360px]">
               <div
                 className="grid grid-cols-2 rounded-lg p-1"
                 style={{
@@ -118,7 +118,7 @@ export function QuizPageClient() {
                     <button
                       key={item.value}
                       onClick={() => handleViewChange(item.value)}
-                      className="inline-flex h-9 items-center justify-center gap-2 rounded-md text-sm font-bold transition-all"
+                      className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-bold transition-all md:h-9 md:gap-2 md:text-sm"
                       style={
                         active
                           ? {
@@ -138,7 +138,7 @@ export function QuizPageClient() {
 
               {activeView === "list" && (
                 <div
-                  className="flex h-10 md:h-11 w-full items-center gap-3 rounded-lg px-3 md:px-4"
+                  className="hidden"
                   style={{
                     background: "rgba(27,38,50,0.05)",
                     border: "1px solid var(--card-light-border)",
@@ -172,9 +172,9 @@ export function QuizPageClient() {
             onRetake={handleStartQuiz}
           />
         ) : (
-          <div className="grid gap-5 md:gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="grid gap-4 md:gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
             <section className="min-w-0">
-              <div className="mb-3 md:mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mb-3 flex flex-col gap-3">
                 <div>
                   <h2 className="text-base font-bold" style={{ color: "var(--content-heading)" }}>
                     Danh sách đề
@@ -184,6 +184,24 @@ export function QuizPageClient() {
                   </p>
                 </div>
 
+                <div
+                  className="flex h-10 w-full items-center gap-2 rounded-lg px-3 sm:max-w-[340px]"
+                  style={{
+                    background: "rgba(27,38,50,0.05)",
+                    border: "1px solid var(--card-light-border)",
+                  }}
+                >
+                  <Search size={15} style={{ color: "var(--content-muted)" }} />
+                  <input
+                    type="text"
+                    placeholder="Tìm quiz..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                    style={{ color: "var(--content-heading)" }}
+                  />
+                </div>
+
                 <div className="flex flex-wrap gap-1.5 md:gap-2">
                   {ERA_FILTERS.map((f) => {
                     const active = selectedEra === f.value;
@@ -191,7 +209,7 @@ export function QuizPageClient() {
                       <button
                         key={f.value}
                         onClick={() => setSelectedEra(f.value)}
-                        className="h-8 md:h-9 rounded-lg px-2.5 md:px-3 text-xs md:text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5"
+                        className="h-7 rounded-lg px-2 text-xs font-semibold transition-all duration-200 md:h-8 md:px-2.5 md:hover:-translate-y-0.5"
                         style={
                           active
                             ? {

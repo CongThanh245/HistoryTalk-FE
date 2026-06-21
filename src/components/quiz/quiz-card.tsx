@@ -90,7 +90,7 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
         }
       }}
       className={cn(
-        "group flex h-full min-h-[250px] cursor-pointer rounded-xl border transition-[border-color,box-shadow] duration-200",
+        "group flex h-full min-h-[190px] cursor-pointer rounded-xl border transition-[border-color,box-shadow] duration-200 md:min-h-[220px]",
         "hover:border-[rgba(201,162,77,0.55)] hover:shadow-[0_10px_24px_rgba(201,162,77,0.12)]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
         isActive
@@ -101,10 +101,10 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
         background: "var(--card-light-bg)",
       }}
     >
-      <div className="flex h-full w-full flex-col p-3.5 sm:p-5">
-        <div className="mb-3 flex min-h-8 flex-wrap items-start gap-1.5 sm:mb-4 sm:gap-2">
+      <div className="flex h-full w-full flex-col p-3 md:p-4">
+        <div className="mb-2 flex min-h-7 flex-wrap items-start gap-1.5 md:mb-3 md:gap-2">
           <span
-            className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full"
+            className="rounded-full px-2 py-0.5 text-[10px] font-semibold md:text-[11px]"
             style={{
               background: "rgba(201,162,77,0.10)",
               color: "var(--gold-on-light)",
@@ -114,7 +114,7 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
             {ERA_LABELS[quiz.era] ?? quiz.era}
           </span>
           <span
-            className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full"
+            className="rounded-full px-2 py-0.5 text-[10px] font-semibold md:text-[11px]"
             style={{
               background: levelTone.bg,
               color: levelTone.fg,
@@ -126,25 +126,25 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
         </div>
 
         <h3
-          className="min-h-[2.75rem] text-[13px] sm:text-base font-bold leading-snug line-clamp-2 transition-colors"
+          className="min-h-[2.4rem] text-[13px] font-bold leading-snug line-clamp-2 transition-colors md:min-h-[2.75rem] md:text-base"
           style={{ color: "var(--content-heading)" }}
         >
           {quiz.title}
         </h3>
 
-        <p className="mt-2 min-h-5 text-sm line-clamp-1" style={{ color: "var(--content-muted)" }}>
+        <p className="mt-1.5 min-h-4 text-xs line-clamp-1 md:text-sm" style={{ color: "var(--content-muted)" }}>
           {quiz.contextTitle ?? ""}
         </p>
 
         <div
-          className="mt-auto pt-3 sm:pt-4 flex items-center justify-between gap-2"
+          className="mt-auto flex items-center justify-between gap-2 pt-2.5 md:pt-3"
           style={{ borderTop: "1px solid var(--card-light-border)" }}
         >
           <div>
-            <p className="text-[10px] sm:text-[11px] uppercase tracking-wide" style={{ color: "var(--content-subtle)" }}>
+            <p className="text-[10px] uppercase tracking-wide md:text-[11px]" style={{ color: "var(--content-subtle)" }}>
               Lượt làm
             </p>
-            <p className="text-xs sm:text-sm font-bold" style={{ color: "var(--content-heading)" }}>
+            <p className="text-xs font-bold md:text-sm" style={{ color: "var(--content-heading)" }}>
               {quiz.playCount.toLocaleString("vi-VN")}
             </p>
           </div>
@@ -153,7 +153,7 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
               event.stopPropagation();
               onStart(quiz.quizId);
             }}
-            className="h-8 sm:h-10 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-[filter,transform,box-shadow] duration-200 hover:brightness-110 hover:shadow-[0_10px_22px_rgba(27,38,50,0.22)] active:translate-y-px"
+            className="h-8 rounded-lg px-2.5 text-xs font-semibold transition-[filter,transform,box-shadow] duration-200 hover:brightness-110 hover:shadow-[0_10px_22px_rgba(27,38,50,0.22)] active:translate-y-px md:h-9 md:px-3 md:text-sm"
             style={{
               background: "var(--abyssal-blue)",
               color: "var(--text-on-dark)",

@@ -22,7 +22,7 @@ export function ChatHistoryList({
   deletingSessionId = null,
 }: ChatHistoryListProps) {
   return (
-    <div className="space-y-10 pb-16">
+    <div className="space-y-6 pb-10 md:space-y-8 md:pb-16">
       {groups.map((group) => (
         <EventGroup
           key={group.contextId}

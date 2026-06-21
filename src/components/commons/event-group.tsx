@@ -21,11 +21,11 @@ export function EventGroup({
   deletingSessionId = null,
 }: EventGroupProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5 md:space-y-3">
       {/* Group header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 md:gap-3">
         <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg md:h-8 md:w-8"
           style={{
             background:
               "linear-gradient(135deg, rgba(201,162,77,0.12) 0%, rgba(163,81,57,0.08) 100%)",
@@ -33,18 +33,18 @@ export function EventGroup({
           }}
         >
           <SwordIcon
-            className="w-3.5 h-3.5"
+            className="h-3.5 w-3.5"
             style={{ color: "var(--gold-on-light)" }}
           />
         </div>
         <div>
           <h2
-            className="text-sm font-bold"
+            className="text-xs font-bold md:text-sm"
             style={{ color: "var(--content-heading)" }}
           >
             {group.contextName}
           </h2>
-          <p className="text-[11px]" style={{ color: "var(--content-muted)" }}>
+          <p className="text-[10px] md:text-[11px]" style={{ color: "var(--content-muted)" }}>
             {group.sessions.length} cuộc trò chuyện
           </p>
         </div>
@@ -59,7 +59,7 @@ export function EventGroup({
       </div>
 
       {/* Sessions — xếp NGANG, wrap khi hết chỗ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3 md:gap-3">
         {group.sessions.map((session) => (
           <SessionCard
             key={session.id}

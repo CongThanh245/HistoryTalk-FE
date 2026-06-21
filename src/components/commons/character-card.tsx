@@ -266,7 +266,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(character.id)}
-      className="group relative h-[340px] w-full flex flex-col text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5 sm:h-[370px]"
+      className="group relative h-[250px] w-full flex flex-col text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer sm:h-[300px] md:h-[320px] md:hover:-translate-y-1"
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
@@ -274,22 +274,22 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       }}
     >
       {/* Image */}
-      <div className="relative z-0 h-[70%] w-full overflow-hidden bg-black">
+      <div className="relative z-0 h-[62%] w-full overflow-hidden bg-black sm:h-[64%]">
         <Image
           src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
           alt=""
           fill
           aria-hidden="true"
           className="object-cover object-center scale-110 blur-xl opacity-70"
-          sizes="220px"
+          sizes="(max-width: 419px) 100vw, (max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
         />
         <div className="absolute inset-0 bg-black/18" />
         <Image
           src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
           alt={character.name}
           fill
-          className="object-contain object-center scale-[1.1] transition-transform duration-500 group-hover:scale-[1.14]"
-          sizes="220px"
+          className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]"
+          sizes="(max-width: 419px) 100vw, (max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
         />
       </div>
 
@@ -308,40 +308,30 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
           </span>
         </div>
       )}
-      <div className="absolute top-2.5 sm:top-3 left-2.5 sm:left-3 z-10">
-        <span
-          className="text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-md"
-          style={{
-            background: "rgba(0,0,0,0.55)",
-            color: "#ffffff",
-            backdropFilter: "blur(4px)",
-          }}
-        >
-          {lifespan}
-        </span>
-      </div>
-
       {/* Normal State Text Content */}
-      <div className="relative z-20 flex h-[30%] flex-col justify-center bg-black px-3 text-white pointer-events-none transition-all duration-300 group-hover:opacity-0 sm:h-[30%] sm:px-4">
-        <h3 className="text-sm sm:text-base font-bold leading-snug mb-1.5 line-clamp-1 text-white drop-shadow-sm">
+      <div className="relative z-20 flex h-[38%] flex-col justify-center bg-black px-2.5 text-white pointer-events-none transition-all duration-300 md:group-hover:opacity-0 sm:h-[36%] sm:px-3.5">
+        <h3 className="text-sm font-bold leading-snug mb-1 line-clamp-1 text-white drop-shadow-sm">
           {character.name}
         </h3>
-        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold min-w-0 text-white/70">
+        <p className="mb-1 text-[9px] font-semibold leading-none text-[var(--accent-gold)] sm:text-[10px]">
+          {lifespan}
+        </p>
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold min-w-0 text-white/70">
           <ChatTextIcon className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
           <span className="text-neutral-400 font-normal truncate">{character.title}</span>
         </div>
         {character.description && (
-          <p className="mt-1.5 text-[10px] sm:text-[11px] leading-snug text-white/55 line-clamp-2">
+          <p className="mt-1 text-[10px] leading-snug text-white/55 line-clamp-2 sm:line-clamp-2">
             {character.description}
           </p>
         )}
       </div>
 
       {/* Hover State Overlay */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 flex flex-col p-3 sm:p-4 bg-black/92 text-white">
+      <div className="absolute inset-0 z-30 hidden flex-col bg-black/92 p-3 text-white opacity-0 transition-all duration-300 group-focus-visible:flex group-focus-visible:opacity-100 md:flex md:group-hover:opacity-100">
         {/* Avatar top left */}
         <div className="flex items-start mb-3 sm:mb-4">
-          <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-white overflow-hidden shadow-md">
+          <div className="relative w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-md">
             {avatarSrc ? (
               <Image
                 src={avatarSrc}
@@ -359,17 +349,22 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         </div>
 
         {/* Description text with typewriter effect */}
-        <div className="flex-1 text-[11px] sm:text-xs leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium">
+        <div className="flex-1 text-[11px] leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium">
           <TypewriterText text={character.description ?? ""} isHovered={isHovered} />
         </div>
 
         {/* Button Trò chuyện ngay */}
         <div className="mt-3 sm:mt-4">
-          <div className="flex items-center justify-center gap-1.5 w-full py-2 sm:py-2.5 rounded-full border text-[11px] sm:text-xs font-bold bg-black text-white hover:bg-black transition-colors shadow-lg border-white/18">
+          <div className="flex items-center justify-center gap-1.5 w-full py-2 rounded-full border text-[11px] font-bold bg-black text-white hover:bg-black transition-colors shadow-lg border-white/18">
             <ChatTextIcon className="w-4 h-4 fill-current text-[var(--accent-gold)]" />
             Trò chuyện ngay
           </div>
         </div>
+      </div>
+
+      <div className="absolute bottom-2 right-2 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/80 text-white shadow-lg backdrop-blur-sm sm:h-10 sm:w-10 md:hidden">
+        <ChatTextIcon className="h-[18px] w-[18px] fill-current text-[var(--accent-gold)]" />
+        <span className="sr-only">TrÃ² chuyá»‡n ngay</span>
       </div>
     </button>
   );
@@ -447,17 +442,17 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
 export function CharacterPageCardSkeleton() {
   return (
     <div
-      className="w-full rounded-xl border overflow-hidden animate-pulse"
+      className="h-[250px] w-full rounded-xl border overflow-hidden animate-pulse sm:h-[300px] md:h-[320px]"
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
       }}
     >
       <div
-        className="w-full h-40 sm:h-48"
+        className="h-[62%] w-full sm:h-[64%]"
         style={{ background: "var(--card-light-border)" }}
       />
-      <div className="px-4 pt-3 pb-4 space-y-2">
+      <div className="px-2.5 py-3 space-y-2 sm:px-4 sm:pt-3 sm:pb-4">
         <div
           className="h-4 w-2/3 rounded"
           style={{ background: "var(--card-light-border)" }}
