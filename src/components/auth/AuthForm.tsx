@@ -199,91 +199,46 @@ export default function AuthForm({ mode }: AuthFormProps) {
       style={{ background: "var(--bg-deep)" }}
     >
       {/* ── Left — Hero ── */}
-      <div
-        className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col"
-        style={{
-          background:
-            "linear-gradient(145deg, var(--bg-deep) 0%, var(--abyssal-blue) 50%, var(--blue-fantastic) 100%)",
-        }}
-      >
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col bg-[var(--palladian)] dark:bg-[var(--bg-deep)]">
         <div
           aria-hidden
-          className="absolute inset-0 opacity-[0.04] pointer-events-none"
+          className="absolute inset-0 bg-cover bg-center pointer-events-none"
+          style={{
+            backgroundImage: "url('/banner.png')",
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(239,233,225,0.96) 0%, rgba(239,233,225,0.82) 36%, rgba(239,233,225,0.38) 68%, rgba(239,233,225,0.12) 100%)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.045] pointer-events-none"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
           }}
         />
         <div
           aria-hidden
-          className="absolute pointer-events-none"
+          className="absolute inset-0 hidden pointer-events-none dark:block"
           style={{
-            top: "30%",
-            left: "-10%",
-            width: 480,
-            height: 480,
-            borderRadius: "50%",
             background:
-              "radial-gradient(circle, rgba(201,162,77,0.12) 0%, transparent 70%)",
+              "linear-gradient(90deg, rgba(7,13,24,0.94) 0%, rgba(7,13,24,0.76) 42%, rgba(7,13,24,0.28) 100%)",
           }}
         />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-105 h-105">
-          {[
-            {
-              rotate: "-18deg",
-              top: "0px",
-              left: "0px",
-              from: "var(--bg-surface)",
-              to: "var(--bg-elevated)",
-            },
-            {
-              rotate: "-7deg",
-              top: "60px",
-              left: "80px",
-              from: "var(--bg-elevated)",
-              to: "var(--blue-fantastic)",
-            },
-            {
-              rotate: "4deg",
-              top: "120px",
-              left: "160px",
-              from: "var(--blue-fantastic)",
-              to: "var(--abyssal-blue)",
-            },
-            {
-              rotate: "14deg",
-              top: "180px",
-              left: "240px",
-              from: "var(--abyssal-blue)",
-              to: "var(--bg-surface)",
-            },
-          ].map((c, i) => (
-            <div
-              key={i}
-              className="absolute w-48 h-64 rounded-2xl shadow-2xl border"
-              style={{
-                top: c.top,
-                left: c.left,
-                transform: `rotate(${c.rotate})`,
-                background: `linear-gradient(135deg, ${c.from} 0%, ${c.to} 100%)`,
-                borderColor: "var(--border-default)",
-                opacity: 0.85,
-              }}
-            >
-              <div
-                className="absolute top-4 left-4 w-6 h-1 rounded-full opacity-40"
-                style={{ background: "var(--accent-gold)" }}
-              />
-              <div
-                className="absolute top-7 left-4 w-10 h-1 rounded-full opacity-20"
-                style={{ background: "var(--text-primary)" }}
-              />
-            </div>
-          ))}
-        </div>
+        <div
+          aria-hidden
+          className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full blur-3xl pointer-events-none"
+          style={{ background: "rgba(131,57,66,0.2)" }}
+        />
         <div className="relative z-20 p-14 flex flex-col justify-between h-full">
-          <div>
+          <div className="max-w-[460px]">
             <h1
-              className="text-4xl font-bold leading-tight mb-4 font-title"
+              className="text-4xl font-bold leading-tight mb-5 font-title"
               style={{
                 color: "var(--text-primary)",
               }}
@@ -304,14 +259,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
               </span>
             </h1>
             <p
-              className="text-sm leading-relaxed max-w-xs"
+              className="text-base leading-relaxed max-w-sm"
               style={{ color: "var(--text-primary)" }}
             >
               Chat với nhân vật lịch sử, khám phá sự kiện qua dòng thời gian và
               kiểm tra kiến thức của bạn.
             </p>
           </div>
-          <BrandLogo size="large" />
+          <BrandLogo size="large" forceTheme="light" />
         </div>
       </div>
 
