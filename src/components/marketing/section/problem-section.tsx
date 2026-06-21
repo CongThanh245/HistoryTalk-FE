@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Container } from "../container";
+import { useRevealAnimation } from "@/lib/hooks/use-reveal-animation";
 
 const problems = [
   {
@@ -28,8 +29,8 @@ export function ProblemSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [isReady, setIsReady] = useState(false);
+  useRevealAnimation(sectionRef);
 
-  // Defer animation để tránh chạy ngay khi mount gây khựng
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsReady(true);
@@ -39,7 +40,7 @@ export function ProblemSection() {
 
   useEffect(() => {
     if (!isReady) return;
-    
+
     let ctx: ReturnType<typeof import("gsap").gsap.context> | null = null;
 
     const init = async () => {
@@ -48,6 +49,8 @@ export function ProblemSection() {
       gsap.registerPlugin(ScrollTrigger);
 
       ctx = gsap.context(() => {
+        const scroller = sectionRef.current?.closest("[data-marketing-scroll]");
+
         cardsRef.current.forEach((card, i) => {
           if (!card) return;
           gsap.set(card, { x: "120%", opacity: 0, rotate: problems[i].rotate });
@@ -72,6 +75,7 @@ export function ProblemSection() {
 
         ScrollTrigger.create({
           trigger: sectionRef.current,
+          scroller,
           start: "45% 80%",
           once: true,
           onEnter: () => tl.play(),
@@ -86,19 +90,30 @@ export function ProblemSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative flex h-auto min-h-[600px] items-start overflow-hidden bg-[var(--bg-deep)] md:h-svh md:items-center"
+      className="relative flex min-h-svh items-start overflow-hidden bg-[var(--bg-deep)] md:items-center"
     >
       <div className="absolute inset-x-0 top-0 h-px bg-[var(--border-default)]" />
 
-      <div className="relative z-10 w-full py-10 md:py-16 lg:py-0">
+      <div className="relative z-10 w-full py-7 md:py-16 lg:py-0">
         <Container>
           <div className="grid grid-cols-1 items-center gap-6 md:gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
             <div className="px-2 md:px-0">
-              <h2 className="text-[1.75rem] font-bold leading-tight md:text-[2.25rem] lg:text-[2.75rem] mb-3 md:mb-4 text-[var(--text-secondary)]">
-                Vấn đề học <span className="text-[var(--accent-gold)] font-title">lịch sử</span> ngày nay
+              <h2
+                data-reveal="fast"
+                className="text-[1.75rem] font-bold leading-tight md:text-[2.25rem] lg:text-[2.75rem] mb-3 md:mb-4 text-[var(--text-secondary)]"
+              >
+                Vấn đề học{" "}
+                <span className="text-[var(--accent-gold)] font-title">
+                  lịch sử
+                </span>{" "}
+                ngày nay
               </h2>
-              <p className="text-sm md:text-base max-w-[320px] text-[var(--text-secondary)]">
-                Ba rào cản lớn đang ngăn người học chạm vào chiều sâu của lịch sử: bối cảnh, cảm xúc và khả năng tự đặt câu hỏi.
+              <p
+                data-reveal="block"
+                className="text-sm md:text-base max-w-[320px] text-[var(--text-secondary)]"
+              >
+                Ba rào cản lớn đang ngăn người học chạm vào chiều sâu của lịch
+                sử: bối cảnh, cảm xúc và khả năng tự đặt câu hỏi.
               </p>
             </div>
 
@@ -110,6 +125,7 @@ export function ProblemSection() {
                     ref={(el) => {
                       cardsRef.current[i] = el;
                     }}
+                    data-motion-card
                     className="rounded-lg md:rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] px-4 py-4 md:px-6 md:py-5 shadow-[var(--shadow-strong)] transition-colors duration-200 will-change-transform hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated)]"
                   >
                     <span className="mb-1.5 md:mb-2 block text-[0.55rem] md:text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[var(--accent-gold)] opacity-80">

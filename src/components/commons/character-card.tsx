@@ -82,15 +82,15 @@ export function CharacterCarouselCard({
         <DarkCard
           imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
           imageAlt={character.name}
-          imageHeight="65%"
+          imageHeight="68%"
           badge={{ label: character.era ?? "", color: "var(--accent-gold)", bg: "transparent" }}
           priority={priority}
           hoverEffects={false}
         >
-          <h3 className="line-clamp-1 text-base font-bold text-[var(--text-primary)]">
+          <h3 className="line-clamp-1 text-sm font-bold text-[var(--text-primary)] sm:text-base">
             {character.name}
           </h3>
-          <p className="mt-0.5 text-xs font-medium text-[var(--text-secondary)]">
+          <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-[var(--text-secondary)] sm:text-xs">
             {character.role ?? character.title}
           </p>
         </DarkCard>

@@ -218,7 +218,7 @@ export function DarkCard({
         />
         {badge && (
           <div
-            className="absolute top-3 right-3 px-2 py-1 rounded-md border z-10"
+            className="absolute right-2 top-2 z-10 rounded-md border px-1.5 py-0.5 sm:right-3 sm:top-3 sm:px-2 sm:py-1"
             style={{
               background: "rgba(14,26,43,0.8)",
               backdropFilter: "blur(4px)",
@@ -226,7 +226,7 @@ export function DarkCard({
             }}
           >
             <span
-              className="text-[10px] font-bold uppercase tracking-wider"
+              className="text-[8px] font-bold uppercase tracking-wider sm:text-[10px]"
               style={{ color: "var(--accent-gold)" }}
             >
               {badge.label}
@@ -235,7 +235,7 @@ export function DarkCard({
         )}
       </div>
 
-      <div className="p-4 flex-1 flex flex-col">{children}</div>
+      <div className="flex flex-1 flex-col p-3 sm:p-4">{children}</div>
     </div>
   );
 }

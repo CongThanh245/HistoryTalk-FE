@@ -62,12 +62,14 @@ function TypingText({
   const completedRef = useRef(hasCompleted);
   const prevIsActiveRef = useRef(isActive);
 
-  // Reset ref when hasCompleted changes from true to false (restart)
-  if (!hasCompleted && completedRef.current) {
-    completedRef.current = false;
-    prevIsActiveRef.current = false;
-  }
+  useEffect(() => {
+    if (!hasCompleted && completedRef.current) {
+      completedRef.current = false;
+      prevIsActiveRef.current = false;
+    }
+  }, [hasCompleted]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     // If already completed before, show full text immediately
     if (hasCompleted || completedRef.current) {
@@ -106,6 +108,7 @@ function TypingText({
 
     prevIsActiveRef.current = isActive;
   }, [text, isActive, onComplete, hasCompleted]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   return (
     <span>
@@ -184,7 +187,6 @@ export function SolutionSection() {
   const router = useRouter();
   const [activeMessage, setActiveMessage] = useState(-1);
   const [completedMessages, setCompletedMessages] = useState<Set<number>>(new Set());
-  const [isAnimating, setIsAnimating] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   useRevealAnimation(sectionRef);
 
@@ -203,7 +205,6 @@ export function SolutionSection() {
           if (entry.isIntersecting && !hasStarted) {
             setHasStarted(true);
             setActiveMessage(0);
-            setIsAnimating(true);
           }
         });
       },
@@ -214,11 +215,6 @@ export function SolutionSection() {
     return () => observer.disconnect();
   }, [hasStarted]);
 
-  useEffect(() => {
-    if (!hasStarted || activeMessage < 0 || activeMessage >= chatMessages.length) return;
-    setIsAnimating(true);
-  }, [activeMessage, hasStarted]);
-
   const handleMessageComplete = useCallback((messageIndex: number) => {
     setCompletedMessages((prev) => new Set(prev).add(messageIndex));
     if (messageIndex < chatMessages.length - 1) {
@@ -226,20 +222,18 @@ export function SolutionSection() {
         setActiveMessage(messageIndex + 1);
       }, 800);
     } else {
-      setIsAnimating(false);
     }
   }, []);
 
   const handleRestart = useCallback(() => {
     setActiveMessage(0);
     setCompletedMessages(new Set());
-    setIsAnimating(true);
   }, []);
 
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-screen items-center overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-main)] py-12 md:py-16"
+      className="relative flex min-h-svh items-center overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-main)] py-7 md:py-16"
     >
       <div
         className="absolute inset-0 z-0 pointer-events-none"
@@ -253,11 +247,13 @@ export function SolutionSection() {
 
       <Container className="relative z-10">
         {/* Cards - Full width at top */}
-        <div data-reveal="block" className="mb-4 md:mb-6 px-2 md:px-0">
+        <div data-reveal="block" className="mb-3 px-2 md:mb-6 md:px-0">
           <div className="grid grid-cols-1 gap-2 md:gap-3 md:grid-cols-3">
             {solutions.map((item) => (
               <div
                 key={item.title}
+                data-reveal="float"
+                data-motion-card
                 className="group rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]/50 p-2.5 md:p-3 transition-all duration-300 hover:border-[var(--accent-gold)]/40 hover:bg-[var(--bg-surface)]"
               >
                 <h3 className="mb-1 text-xs md:text-sm font-bold text-[var(--text-primary)] transition-colors duration-300 group-hover:text-[var(--accent-gold)]">
@@ -286,7 +282,7 @@ export function SolutionSection() {
           <div ref={chatRef} data-reveal="block" className="relative">
             <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-[var(--accent-gold)]/10 to-[#8fb3c8]/10 opacity-50 blur-2xl" />
 
-            <div className="relative flex h-[320px] md:h-[380px] w-full flex-col overflow-hidden rounded-lg md:rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[#0d1627] shadow-2xl">
+            <div data-motion-card className="relative flex h-[300px] w-full flex-col overflow-hidden rounded-lg border border-[var(--border-default)] bg-[#0d1627] shadow-2xl md:h-[380px] md:rounded-[var(--radius-lg)]">
               {/* Chat Header */}
               <div className="flex h-10 md:h-12 shrink-0 items-center justify-between border-b border-[var(--border-default)] bg-[#111c2e] px-3 md:px-4">
                 <div className="flex items-center gap-2">

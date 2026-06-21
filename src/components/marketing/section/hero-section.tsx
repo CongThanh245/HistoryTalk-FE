@@ -183,6 +183,7 @@ export function HeroSection({
       gsap.registerPlugin(ScrollTrigger);
 
       ctx = gsap.context(() => {
+      const scroller = sectionRef.current?.closest("[data-marketing-scroll]");
       const tl = gsap.timeline({ 
         defaults: { ease: "power3.out" },
         delay: 0.1 // Nhỏ delay để đảm bảo browser đã render xong
@@ -209,6 +210,7 @@ export function HeroSection({
       gsap.to([contentWrapperRef.current, carouselRef.current], {
         scrollTrigger: {
           trigger: sectionRef.current,
+          scroller,
           start: "top top",
           end: "bottom 20%",
           scrub: true,
@@ -228,6 +230,7 @@ export function HeroSection({
           ease: "none",
           scrollTrigger: {
             trigger: sectionRef.current,
+            scroller,
             start: "top top",
             end: "bottom center",
             scrub: true,
@@ -251,7 +254,7 @@ export function HeroSection({
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-[100svh] flex-col overflow-hidden pb-8 lg:items-center lg:justify-center lg:pb-0"
+      className="relative flex h-svh min-h-svh flex-col overflow-hidden pb-0 lg:items-center lg:justify-center"
       style={{ 
         isolation: "isolate"
       }}
@@ -266,6 +269,7 @@ export function HeroSection({
           `,
         }}
       />
+      <div className="landing-ambient-beam" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden h-24 lg:block">
         <div className="absolute bottom-0 left-1/2 h-24 w-px -translate-x-1/2 overflow-hidden rounded-full bg-white/10">
           <div
@@ -276,10 +280,10 @@ export function HeroSection({
       </div>
 
       <Container className="relative w-full">
-        <div className="flex min-h-[100svh] flex-col justify-start lg:grid lg:min-h-0 lg:grid-cols-2 lg:items-center lg:gap-20 lg:py-10">
+        <div className="flex h-svh min-h-0 flex-col justify-start lg:grid lg:h-auto lg:min-h-0 lg:grid-cols-2 lg:items-center lg:gap-20 lg:py-10">
           <div
             ref={contentWrapperRef}
-            className="z-10 space-y-4 pb-4 pt-28 sm:pt-[7.5rem] md:space-y-5 md:pb-6 md:pt-28 lg:space-y-8 lg:pb-0 lg:pt-0"
+            className="z-10 shrink-0 space-y-3 pb-2 pt-[5.8rem] sm:pt-[6.5rem] md:space-y-4 md:pb-4 md:pt-28 lg:space-y-8 lg:pb-0 lg:pt-0"
           >
             <h1 className="text-hero text-[var(--text-primary)]">
               <span className="block overflow-hidden pb-[0.08em]">
@@ -292,23 +296,23 @@ export function HeroSection({
               </span>
             </h1>
 
-            <div ref={subContentRef} className="space-y-5 lg:space-y-8">
+            <div ref={subContentRef} className="space-y-3 lg:space-y-8">
               <div className="hero-stagger-item">
-                <p className="text-sm md:text-base lg:text-lg leading-relaxed max-w-xl text-[var(--text-secondary)]">
+                <p className="line-clamp-3 max-w-xl text-sm leading-relaxed text-[var(--text-secondary)] md:text-base lg:line-clamp-none lg:text-lg">
                   Trò chuyện trực tiếp với các nhân vật lịch sử được tái hiện bằng AI. Khám phá quá khứ như một hành trình có bối cảnh, cảm xúc và lựa chọn.
                 </p>
               </div>
 
-              <div className="hero-stagger-item my-3 md:my-4 space-y-0.5 border-l-2 border-[var(--accent-gold)]/40 py-2 pl-4 md:py-3 md:pl-5 lg:pl-6">
-                <p className="text-sm md:text-base font-light italic text-[var(--text-primary)]">
+              <div className="hero-stagger-item my-2 space-y-0.5 border-l-2 border-[var(--accent-gold)]/40 py-1.5 pl-4 md:my-3 md:py-2 md:pl-5 lg:my-4 lg:py-3 lg:pl-6">
+                <p className="text-xs font-light italic text-[var(--text-primary)] md:text-sm lg:text-base">
                   &quot;Học sinh chỉ chán học Lịch sử trên trường
                 </p>
-                <p className="text-sm md:text-base font-light italic text-[var(--accent-gold)]">
+                <p className="text-xs font-light italic text-[var(--accent-gold)] md:text-sm lg:text-base">
                   chứ không học sinh nào chán lịch sử dân tộc cả!&quot;
                 </p>
               </div>
 
-              <div className="hero-stagger-item pt-2 lg:pt-4">
+              <div className="hero-stagger-item pt-1 lg:pt-4">
                 <Link
                   href="/home"
                   className={cn(
@@ -327,7 +331,7 @@ export function HeroSection({
 
           <div
             ref={carouselRef}
-            className="relative -mx-4 mt-2 flex h-[260px] w-[calc(100%+2rem)] items-center justify-center overflow-hidden will-change-transform sm:mx-0 sm:h-[340px] sm:w-full md:h-[500px] lg:mt-0 lg:h-[650px] lg:overflow-visible"
+            className="relative -mx-4 mt-1 flex h-[310px] min-h-0 w-[calc(100%+2rem)] shrink-0 items-center justify-center overflow-hidden will-change-transform sm:mx-0 sm:h-[340px] sm:w-full md:h-[500px] lg:mt-0 lg:h-[650px] lg:overflow-visible"
             onPointerEnter={() => setShowCarousel(true)}
             onFocus={() => setShowCarousel(true)}
           >

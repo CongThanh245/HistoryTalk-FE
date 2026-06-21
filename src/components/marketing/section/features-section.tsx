@@ -9,6 +9,7 @@ import {
 } from "@phosphor-icons/react";
 import { Container } from "../container";
 import { cn } from "@/lib/utils/cn";
+import { useRevealAnimation } from "@/lib/hooks/use-reveal-animation";
 
 const journeySteps = [
   {
@@ -44,6 +45,7 @@ const journeySteps = [
 export function FeaturesSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
+  useRevealAnimation(sectionRef);
 
   useEffect(() => {
     let ctx: ReturnType<typeof import("gsap").gsap.context> | null = null;
@@ -56,6 +58,7 @@ export function FeaturesSection() {
       if (!sectionRef.current) return;
 
       ctx = gsap.context(() => {
+        const scroller = sectionRef.current?.closest("[data-marketing-scroll]");
         const cards = gsap.utils.toArray<HTMLElement>("[data-journey-card]");
         const progress = sectionRef.current?.querySelector("[data-journey-progress]");
 
@@ -70,6 +73,7 @@ export function FeaturesSection() {
             stagger: 0.12,
             scrollTrigger: {
               trigger: sectionRef.current,
+              scroller,
               start: "top 72%",
             },
           },
@@ -85,6 +89,7 @@ export function FeaturesSection() {
               transformOrigin: "top",
               scrollTrigger: {
                 trigger: sectionRef.current,
+                scroller,
                 start: "top 65%",
                 end: "bottom 45%",
                 scrub: true,
@@ -103,14 +108,14 @@ export function FeaturesSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-main)] py-12 md:py-20 lg:py-24"
+      className="relative min-h-svh overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-main)] py-7 md:py-20 lg:py-24"
     >
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(90deg,rgba(255,146,21,0.06)_0,transparent_28%,transparent_72%,rgba(143,179,200,0.06)_100%)]" />
 
       <Container className="relative z-10">
         <div className="grid gap-6 md:gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
           <div className="lg:sticky lg:top-28 lg:self-start px-2 md:px-0">
-            <h2 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-bold leading-tight mb-3 md:mb-4 text-[var(--text-secondary)]">
+            <h2 data-reveal="fast" className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-bold leading-tight mb-3 md:mb-4 text-[var(--text-secondary)]">
               Một dòng thời gian, <span className="text-[var(--accent-gold)] font-title">bốn lần chạm</span>
             </h2>
             <p className="text-sm md:text-base max-w-[320px] text-[var(--text-secondary)]">
@@ -134,6 +139,7 @@ export function FeaturesSection() {
                   <button
                     key={item.step}
                     data-journey-card
+                    data-motion-card
                     type="button"
                     onClick={() => setActive(index)}
                     onMouseEnter={() => setActive(index)}
@@ -143,7 +149,7 @@ export function FeaturesSection() {
                       className={cn(
                         "relative z-10 hidden h-10 w-10 items-center justify-center rounded-full border transition-all md:flex",
                         isActive
-                          ? "border-[var(--accent-gold)] bg-[var(--accent-gold)] text-[var(--bg-deep)]"
+                          ? "scale-110 border-[var(--accent-gold)] bg-[var(--accent-gold)] text-[var(--bg-deep)] shadow-[0_0_26px_var(--accent-gold-glow)]"
                           : "border-[var(--border-default)] bg-[var(--bg-main)] text-[var(--text-muted)]",
                       )}
                     >
@@ -154,7 +160,7 @@ export function FeaturesSection() {
                       className={cn(
                         "block rounded-lg md:rounded-[var(--radius-lg)] border p-3 md:p-4 transition-all duration-300",
                         isActive
-                          ? "border-[var(--accent-gold)]/40 bg-[var(--bg-surface)] shadow-[var(--shadow-soft)]"
+                          ? "translate-x-1 border-[var(--accent-gold)]/50 bg-[var(--bg-surface)] shadow-[0_18px_44px_rgba(255,146,21,0.12)]"
                           : "border-[var(--border-default)] bg-transparent hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)]/40",
                       )}
                     >

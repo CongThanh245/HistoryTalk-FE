@@ -30,16 +30,16 @@ export function ImpactSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative flex h-auto min-h-[500px] md:min-h-[600px] items-start overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-deep)] py-10 md:py-16 lg:py-0 md:h-svh md:items-center"
+      className="relative flex min-h-svh items-start overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-deep)] py-7 md:py-16 lg:py-0 md:items-center"
     >
-      <div className="relative z-10 w-full py-10 md:py-16 lg:py-0">
+      <div className="relative z-10 w-full py-7 md:py-16 lg:py-0">
         <Container>
           <div className="grid grid-cols-1 items-center gap-6 md:gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
             <div className="min-w-0 px-2 md:px-0">
-              <span className="mb-3 md:mb-4 block text-[0.65rem] md:text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-gold)]">
+              <span data-reveal="fast" className="mb-3 md:mb-4 block text-[0.65rem] md:text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-gold)]">
                 Sau hành trình
               </span>
-              <h2 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-bold leading-tight mb-3 md:mb-4 break-words text-[var(--text-secondary)]">
+              <h2 data-reveal="fast" className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-bold leading-tight mb-3 md:mb-4 break-words text-[var(--text-secondary)]">
                 Điều còn lại không phải đáp án, <span className="font-title text-[var(--accent-gold)]">mà là hiểu biết</span>
               </h2>
               <p className="max-w-[320px] text-sm leading-relaxed text-[var(--text-secondary)] lg:text-base">
@@ -54,7 +54,8 @@ export function ImpactSection() {
               return (
                 <div
                   key={impact.title}
-                  data-reveal="block"
+                  data-reveal="float"
+                  data-motion-card
                   className="rounded-lg md:rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)]/70 p-4 md:p-6"
                 >
                   <div className="mb-3 md:mb-5 flex h-9 w-9 md:h-11 md:w-11 items-center justify-center rounded-md border border-[var(--accent-gold)]/25 bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">

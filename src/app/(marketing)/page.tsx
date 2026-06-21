@@ -54,7 +54,7 @@ export default async function MarketingPage() {
     .catch(() => []);
 
   return (
-    <div className="w-full">
+    <div data-marketing-scroll className="w-full">
       <HeroSection initialCharacters={initialCharacters} />
       <Suspense fallback={<SectionSkeleton />}>
         <ProblemSection />

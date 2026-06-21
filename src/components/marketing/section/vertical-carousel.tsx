@@ -34,7 +34,7 @@ function getCardOffset(index: number, selectedIndex: number, count: number) {
 
 function getHorizontalGap() {
   if (typeof window === "undefined") return 205;
-  if (window.innerWidth < 640) return 105;
+  if (window.innerWidth < 640) return 92;
   if (window.innerWidth < 768) return 145;
   if (window.innerWidth < 1024) return 185;
   return 225;
@@ -48,7 +48,9 @@ export function Carousel3DVertical({
   const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const expandedCardRef = useRef<HTMLDivElement>(null);
+  const expandedCardInnerRef = useRef<HTMLDivElement>(null);
   const spotlightRef = useRef<HTMLSpanElement>(null);
+  const backdropRef = useRef<HTMLButtonElement>(null);
   const isClosingRef = useRef(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [gap, setGap] = useState(getHorizontalGap);
@@ -142,32 +144,58 @@ export function Carousel3DVertical({
   const closeCharacter = () => {
     if (isClosingRef.current) return;
     const card = expandedCardRef.current;
+    const innerCard = expandedCardInnerRef.current;
     if (!card || !expandedCharacter) {
       setExpandedCharacter(null);
       return;
     }
 
     isClosingRef.current = true;
-    const rect = expandedCharacter.sourceRect;
-    gsap.to(card, {
-      x: rect.left + rect.width / 2 - window.innerWidth / 2,
-      y: rect.top + rect.height / 2 - window.innerHeight / 2,
-      scale: rect.width / card.offsetWidth,
-      rotateY: -180,
-      opacity: 0,
-      duration: 0.58,
-      ease: "power3.inOut",
+    const rect =
+      cardsRef.current[activeIndex]?.getBoundingClientRect() ??
+      expandedCharacter.sourceRect;
+    const targetScale = rect.width / card.offsetWidth;
+
+    if (innerCard) {
+      gsap.to(innerCard, {
+        rotateX: 0,
+        rotateY: 0,
+        duration: 0.18,
+        ease: "power2.out",
+        overwrite: true,
+      });
+    }
+
+    gsap.timeline({
+      defaults: { ease: "power3.inOut" },
       onComplete: () => {
         setExpandedCharacter(null);
         isClosingRef.current = false;
       },
-    });
+    })
+      .to(backdropRef.current, {
+        opacity: 0,
+        duration: 0.42,
+      }, 0)
+      .to(card, {
+        x: rect.left + rect.width / 2 - window.innerWidth / 2,
+        y: rect.top + rect.height / 2 - window.innerHeight / 2,
+        scale: targetScale,
+        opacity: 0,
+        borderRadius: "var(--radius-lg)",
+        duration: 0.54,
+      }, 0)
+      .to(card, {
+        filter: "blur(2px) brightness(0.78)",
+        duration: 0.28,
+      }, 0.08);
   };
 
   const moveSpotlight = (event: React.PointerEvent<HTMLDivElement>) => {
     const card = expandedCardRef.current;
+    const innerCard = expandedCardInnerRef.current;
     const spotlight = spotlightRef.current;
-    if (!card || !spotlight) return;
+    if (!card || !innerCard || !spotlight) return;
 
     const rect = card.getBoundingClientRect();
     const x = event.clientX - rect.left;
@@ -183,7 +211,7 @@ export function Carousel3DVertical({
       ease: "power2.out",
       overwrite: true,
     });
-    gsap.to(card, {
+    gsap.to(innerCard, {
       rotateX,
       rotateY,
       duration: 0.3,
@@ -195,13 +223,13 @@ export function Carousel3DVertical({
   const resetSpotlight = () => {
     if (spotlightRef.current) {
       gsap.to(spotlightRef.current, {
-        opacity: 0.25,
+        opacity: 0,
         duration: 0.45,
         ease: "power2.out",
       });
     }
-    if (expandedCardRef.current) {
-      gsap.to(expandedCardRef.current, {
+    if (expandedCardInnerRef.current) {
+      gsap.to(expandedCardInnerRef.current, {
         rotateX: 0,
         rotateY: 0,
         duration: 0.45,
@@ -221,17 +249,17 @@ export function Carousel3DVertical({
         x: rect.left + rect.width / 2 - window.innerWidth / 2,
         y: rect.top + rect.height / 2 - window.innerHeight / 2,
         scale: rect.width / card.offsetWidth,
-        rotateY: 180,
-        opacity: 0.25,
+        opacity: 0,
+        filter: "blur(8px) brightness(0.82)",
       },
       {
         x: 0,
         y: 0,
         scale: 1,
-        rotateY: 0,
         opacity: 1,
-        duration: 0.78,
-        ease: "power3.out",
+        filter: "blur(0px) brightness(1)",
+        duration: 0.62,
+        ease: "expo.out",
       },
     );
   }, [expandedCharacter]);
@@ -246,16 +274,20 @@ export function Carousel3DVertical({
             <button
               type="button"
               aria-label="Đóng chi tiết nhân vật"
+              ref={backdropRef}
               onClick={closeCharacter}
               className="pointer-events-auto absolute inset-0 bg-black/65 backdrop-blur-[5px] [animation:character-backdrop-in_500ms_ease-out_both]"
             />
-            <div className="absolute h-[min(90vw,680px)] w-[min(90vw,680px)] rounded-full bg-[var(--accent-gold)]/15 blur-[100px] [animation:character-aura_2.8s_ease-in-out_infinite]" />
             <div
               ref={expandedCardRef}
               onPointerMove={moveSpotlight}
               onPointerLeave={resetSpotlight}
-              className="pointer-events-auto relative h-[460px] w-[320px] max-w-[84vw] overflow-hidden rounded-[30px] border border-[var(--accent-gold)]/55 bg-neutral-950 p-6 text-left text-white shadow-[0_40px_120px_rgba(0,0,0,0.8),0_0_70px_var(--accent-gold-glow)] [transform-style:preserve-3d] sm:h-[520px] sm:w-[370px]"
+              className="pointer-events-auto relative h-[460px] w-[320px] max-w-[84vw] rounded-[30px] [transform-style:preserve-3d] sm:h-[520px] sm:w-[370px]"
             >
+              <div
+                ref={expandedCardInnerRef}
+                className="relative h-full w-full overflow-hidden rounded-[30px] border border-[var(--accent-gold)]/55 bg-neutral-950 p-6 text-left text-white shadow-[0_34px_90px_rgba(0,0,0,0.58)] [backface-visibility:hidden] [transform-style:preserve-3d]"
+              >
               <button
                 type="button"
                 aria-label="Đóng"
@@ -264,18 +296,17 @@ export function Carousel3DVertical({
               >
                 <XIcon className="h-4 w-4" weight="bold" />
               </button>
-              <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_8%,rgba(235,196,91,0.26),transparent_36%)]" />
               <span
                 ref={spotlightRef}
-                className="pointer-events-none absolute left-0 top-0 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-25 blur-2xl"
+                className="pointer-events-none absolute left-0 top-0 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0 blur-2xl"
                 style={{
                   background:
                     "radial-gradient(circle, rgba(255,255,255,0.46) 0%, rgba(235,196,91,0.22) 28%, transparent 68%)",
                 }}
               />
 
-              <span className="relative flex items-center gap-4 [animation:character-detail-in_500ms_350ms_ease-out_both]">
-                <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-[var(--accent-gold)] shadow-[0_0_28px_var(--accent-gold-glow)]">
+              <span className="relative flex items-center gap-4 [animation:character-detail-in_500ms_180ms_ease-out_both]">
+                <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-[var(--accent-gold)]">
                   <Image
                     src={
                       isValidUrl(expandedCharacter.character.imageUrl)
@@ -300,7 +331,7 @@ export function Carousel3DVertical({
                 </span>
               </span>
 
-              <span className="relative mt-7 block max-h-[270px] overflow-y-auto text-sm font-medium leading-7 text-neutral-200 [animation:character-detail-in_650ms_500ms_ease-out_both]">
+              <span className="relative mt-7 block max-h-[270px] overflow-y-auto text-sm font-medium leading-7 text-neutral-200 [animation:character-detail-in_600ms_260ms_ease-out_both]">
                 {expandedCharacter.character.description ||
                   expandedCharacter.character.title}
               </span>
@@ -310,23 +341,20 @@ export function Carousel3DVertical({
                 onClick={() =>
                   navigateWithAuth(`/chat/${expandedCharacter.character.id}`)
                 }
-                className="absolute inset-x-6 bottom-6 flex items-center justify-center gap-2 rounded-full bg-[var(--accent-gold)] py-3.5 text-sm font-extrabold text-[var(--text-inverse)] shadow-[0_14px_38px_var(--accent-gold-glow)] transition-[filter,transform] hover:brightness-110 active:scale-[0.98] [animation:character-detail-in_650ms_650ms_ease-out_both]"
+                className="absolute inset-x-6 bottom-6 flex items-center justify-center gap-2 rounded-full bg-[var(--accent-gold)] py-3.5 text-sm font-extrabold text-[var(--text-inverse)] shadow-[0_14px_38px_var(--accent-gold-glow)] transition-[filter,transform] hover:brightness-110 active:scale-[0.98] [animation:character-detail-in_600ms_340ms_ease-out_both]"
               >
                 <ChatTextIcon className="h-5 w-5 fill-current" />
                 Trò chuyện ngay
               </button>
+              </div>
             </div>
             <style>{`
               @keyframes character-backdrop-in {
                 from { opacity: 0; }
                 to { opacity: 1; }
               }
-              @keyframes character-aura {
-                0%, 100% { opacity: .55; transform: scale(.92); }
-                50% { opacity: 1; transform: scale(1.08); }
-              }
               @keyframes character-detail-in {
-                from { opacity: 0; transform: translateY(18px); }
+                from { opacity: 0; transform: translateY(14px); }
                 to { opacity: 1; transform: translateY(0); }
               }
               @media (prefers-reduced-motion: reduce) {
@@ -340,7 +368,7 @@ export function Carousel3DVertical({
         className="relative flex h-[260px] w-full items-center justify-center sm:h-[340px] md:h-[500px] lg:h-[650px]"
         style={{ perspective: "1200px" }}
       >
-        <div className="pointer-events-none absolute h-[520px] w-[520px] rounded-full bg-[var(--accent-gold)]/10 blur-[70px] sm:h-[700px] sm:w-[700px]" />
+        <div className="pointer-events-none absolute h-[360px] w-[360px] rounded-full bg-[var(--accent-gold)]/8 blur-[70px] sm:h-[700px] sm:w-[700px]" />
 
         {isLoading ? (
           <div className="relative flex items-center justify-center">
@@ -362,14 +390,13 @@ export function Carousel3DVertical({
             style={{ transformStyle: "preserve-3d" }}
           >
             {figures.map((figure, index) => {
-              const isSelected = index === activeIndex;
               return (
                 <div
                   key={figure.id}
                   ref={(element) => {
                     cardsRef.current[index] = element;
                   }}
-                  className="absolute left-1/2 top-1/2 h-[198px] w-[136px] -translate-x-1/2 -translate-y-1/2 will-change-transform sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
+                  className="absolute left-1/2 top-[46%] h-[222px] w-[150px] -translate-x-1/2 -translate-y-1/2 will-change-transform sm:top-1/2 sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
                   style={{ transformStyle: "preserve-3d" }}
                 >
                   <CharacterCarouselCard
@@ -378,9 +405,6 @@ export function Carousel3DVertical({
                     interaction="flip"
                     onClick={() => handleCardClick(index)}
                   />
-                  {isSelected && (
-                    <div className="pointer-events-none absolute -inset-1.5 rounded-[calc(var(--radius-lg)+6px)] border border-[var(--accent-gold)]/35 shadow-[0_0_18px_rgba(201,162,77,0.22)]" />
-                  )}
                 </div>
               );
             })}
@@ -388,7 +412,7 @@ export function Carousel3DVertical({
         )}
 
         {!isLoading && cardCount > 1 && (
-          <div className="absolute inset-x-0 bottom-1 z-[70] flex items-center justify-center gap-4 sm:bottom-3 md:bottom-8 lg:bottom-16">
+          <div className="absolute inset-x-0 bottom-0 z-[70] flex items-center justify-center gap-20 sm:bottom-3 sm:gap-4 md:bottom-8 lg:bottom-16">
             <button
               type="button"
               aria-label="Chọn nhân vật trước"
@@ -397,7 +421,7 @@ export function Carousel3DVertical({
             >
               <CaretLeftIcon className="h-5 w-5" weight="bold" />
             </button>
-            <span className="min-w-20 text-center text-xs font-bold tracking-[0.18em] text-white/70">
+            <span className="hidden min-w-20 text-center text-xs font-bold tracking-[0.18em] text-white/70 sm:block">
               {activeIndex + 1} / {cardCount}
             </span>
             <button

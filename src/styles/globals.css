@@ -260,6 +260,71 @@ body {
   }
 }
 
+[data-motion-card] {
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+[data-motion-card]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(
+      circle 220px at var(--motion-x, 50%) var(--motion-y, 50%),
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 146, 21, 0.14) 30%,
+      transparent 68%
+    );
+  mix-blend-mode: screen;
+  transition: opacity 0.28s ease;
+}
+
+[data-motion-card]:hover::before {
+  opacity: 1;
+}
+
+[data-motion-card] > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes landingBeamDrift {
+  0%, 100% {
+    opacity: 0.28;
+    transform: translate3d(-6%, -4%, 0) rotate(-10deg);
+  }
+  50% {
+    opacity: 0.58;
+    transform: translate3d(7%, 5%, 0) rotate(-7deg);
+  }
+}
+
+.landing-ambient-beam {
+  position: absolute;
+  inset: -28% 18% auto auto;
+  width: 34rem;
+  height: 18rem;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      100deg,
+      transparent 0%,
+      rgba(255, 146, 21, 0.08) 42%,
+      rgba(226, 199, 122, 0.16) 50%,
+      rgba(143, 179, 200, 0.08) 58%,
+      transparent 100%
+    );
+  filter: blur(18px);
+  mix-blend-mode: screen;
+  animation: landingBeamDrift 8s ease-in-out infinite;
+}
+
 .upgrade-pro-overlay {
   position: fixed;
   inset: 0;

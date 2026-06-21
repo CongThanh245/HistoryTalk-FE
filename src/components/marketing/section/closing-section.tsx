@@ -11,9 +11,9 @@ export function ClosingSection() {
   useRevealAnimation(sectionRef);
 
   return (
-    <section ref={sectionRef} className="bg-[var(--bg-deep)] py-12 md:py-20">
+    <section ref={sectionRef} className="min-h-svh overflow-hidden bg-[var(--bg-deep)] py-7 md:py-20">
       <Container>
-        <div className="relative flex h-auto min-h-[320px] md:min-h-[380px] justify-center overflow-hidden rounded-lg md:rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] sm:min-h-[520px] lg:h-[600px]">
+        <div data-motion-card className="relative flex min-h-[calc(100svh-3.5rem)] justify-center overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] md:min-h-[380px] md:rounded-[var(--radius-lg)] sm:min-h-[520px] lg:h-[600px]">
           <div className="absolute left-1/2 top-0 hidden h-28 w-px -translate-x-1/2 bg-gradient-to-b from-[var(--accent-gold)] to-transparent lg:block" />
 
           <div className="absolute inset-0 z-10 hidden items-end justify-center pointer-events-none sm:flex">
