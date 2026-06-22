@@ -652,7 +652,7 @@ export default function FeaturePage() {
       {/* Full-screen Timeline Sections - wrapped for progress bar */}
       <div data-journey-wrapper className="relative">
         {/* Global Progress Bar - spans all journey sections */}
-        <div className="absolute left-1/2 top-0 z-10 h-full w-0.5 -translate-x-1/2 bg-(--border-default)">
+        <div className="absolute left-6 top-0 z-10 h-full w-0.5 bg-(--border-default) sm:left-8 lg:left-1/2 lg:-translate-x-1/2">
           <div
             data-journey-progress
             className="h-full w-0.5 origin-top bg-(--accent-gold)"
@@ -667,27 +667,27 @@ export default function FeaturePage() {
             <section
               key={item.step}
               data-journey-step
-              className="relative min-h-screen overflow-hidden border-t border-(--border-default) bg-(--bg-main)"
+              className="relative min-h-[auto] overflow-hidden border-t border-(--border-default) bg-(--bg-main) py-16 sm:py-20 lg:min-h-screen lg:py-0"
             >
               {/* Step Number Indicator - positioned within section */}
-              <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2" data-step-indicator>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-(--accent-gold) bg-(--accent-gold) text-(--bg-deep) shadow-lg">
+              <div className="absolute left-6 top-16 z-10 -translate-x-1/2 sm:left-8 sm:top-20 lg:left-1/2 lg:top-1/2 lg:-translate-y-1/2" data-step-indicator>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-(--accent-gold) bg-(--accent-gold) text-(--bg-deep) shadow-lg sm:h-12 sm:w-12">
                   <span className="text-sm font-bold">{item.step}</span>
                 </div>
               </div>
 
-              <Container className="relative z-10 flex h-screen items-center">
-                <div className={`grid w-full items-center gap-12 lg:grid-cols-2 lg:gap-20 ${isEven ? '' : 'lg:grid-flow-col-dense'}`}>
+              <Container className="relative z-10 flex min-h-0 items-center pl-16 sm:pl-20 lg:h-screen lg:pl-6">
+                <div className={`grid w-full items-center gap-8 sm:gap-10 lg:grid-cols-2 lg:gap-20 ${isEven ? '' : 'lg:grid-flow-col-dense'}`}>
                   {/* Content */}
                   <div className={`${isEven ? '' : 'lg:col-start-2'}`}>
                     <div className="max-w-lg">
                       <span className="mb-4 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-(--accent-gold)">
                         {item.eyebrow}
                       </span>
-                      <h2 className="mb-6 text-2xl font-bold uppercase leading-tight text-(--text-primary) sm:text-3xl lg:text-4xl">
+                      <h2 className="mb-4 text-2xl font-bold uppercase leading-tight text-(--text-primary) sm:mb-6 sm:text-3xl lg:text-4xl">
                         {item.title}
                       </h2>
-                      <p className="mb-8 text-lg leading-relaxed text-muted-foreground">
+                      <p className="mb-6 text-base leading-relaxed text-muted-foreground sm:mb-8 sm:text-lg">
                         {item.body}
                       </p>
                       <div className="flex items-center gap-4">
@@ -704,7 +704,7 @@ export default function FeaturePage() {
 
                   {/* Image */}
                   <div className={`${isEven ? '' : 'lg:col-start-1'}`}>
-                    <div className="relative aspect-4/3 overflow-hidden rounded-2xl border border-(--border-default) bg-(--bg-surface) shadow-2xl">
+                    <div className="relative aspect-4/3 w-full overflow-hidden rounded-xl border border-(--border-default) bg-(--bg-surface) shadow-2xl sm:rounded-2xl">
                       <Image
                         src={item.image}
                         alt={item.title}
