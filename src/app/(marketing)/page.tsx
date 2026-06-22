@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { HeroSection } from "@/components/marketing/section/hero-section";
-import { characterServerService } from "@/services/character.server.service";
+import type { Character } from "@/services/character.service";
 
 // Lazy load sections below the fold để giảm initial bundle size
 const ProblemSection = dynamic(
@@ -29,6 +29,63 @@ const ClosingSection = dynamic(
   { loading: () => <SectionSkeleton /> }
 );
 
+const fallbackCharacters: Character[] = [
+  {
+    id: "fallback-le-loi",
+    name: "Lê Lợi",
+    title: "Lê Thái Tổ",
+    era: "Trung đại",
+    description: "Người lãnh đạo khởi nghĩa Lam Sơn, sáng lập triều Hậu Lê.",
+    imageUrl: "/le_loi_2D.jpg",
+    avatarUrl: "/le_loi_2D.jpg",
+  },
+  {
+    id: "fallback-ngo-quyen",
+    name: "Ngô Quyền",
+    title: "Tiền Ngô Vương",
+    era: "Tự chủ",
+    description: "Vị tướng đại phá quân Nam Hán trên sông Bạch Đằng năm 938.",
+    imageUrl: "/ngo_quyen_2D.jpg",
+    avatarUrl: "/ngo_quyen_2D.jpg",
+  },
+  {
+    id: "fallback-nguyen-trai",
+    name: "Nguyễn Trãi",
+    title: "Danh nhân văn hóa",
+    era: "Trung đại",
+    description: "Nhà tư tưởng, nhà chính trị và tác giả Bình Ngô đại cáo.",
+    imageUrl: "/ngo-quyen-chan-dung.png",
+    avatarUrl: "/ngo-quyen-chan-dung.png",
+  },
+  {
+    id: "fallback-tran-hung-dao",
+    name: "Trần Hưng Đạo",
+    title: "Hưng Đạo Đại Vương",
+    era: "Trung đại",
+    description: "Vị thống soái gắn với ba lần kháng chiến chống Nguyên Mông.",
+    imageUrl: "/card.jpg",
+    avatarUrl: "/card.jpg",
+  },
+  {
+    id: "fallback-quang-trung",
+    name: "Quang Trung",
+    title: "Hoàng đế Tây Sơn",
+    era: "Cận đại",
+    description: "Người chỉ huy chiến thắng Ngọc Hồi - Đống Đa mùa xuân 1789.",
+    imageUrl: "/card.jpg",
+    avatarUrl: "/card.jpg",
+  },
+  {
+    id: "fallback-ba-trieu",
+    name: "Bà Triệu",
+    title: "Nữ anh hùng dân tộc",
+    era: "Bắc thuộc",
+    description: "Biểu tượng ý chí độc lập trong cuộc khởi nghĩa chống quân Ngô.",
+    imageUrl: "/card.jpg",
+    avatarUrl: "/card.jpg",
+  },
+];
+
 // Simple skeleton loader cho sections
 function SectionSkeleton() {
   return (
@@ -47,15 +104,10 @@ function SectionSkeleton() {
   );
 }
 
-export default async function MarketingPage() {
-  const initialCharacters = await characterServerService
-    .getAll({ page: 1, limit: 6 })
-    .then((data) => data.content)
-    .catch(() => []);
-
+export default function MarketingPage() {
   return (
     <div data-marketing-scroll className="w-full">
-      <HeroSection initialCharacters={initialCharacters} />
+      <HeroSection initialCharacters={fallbackCharacters} />
       <Suspense fallback={<SectionSkeleton />}>
         <ProblemSection />
       </Suspense>
