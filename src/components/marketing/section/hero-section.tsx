@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { PlayIcon, XIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils/cn";
 import { Container } from "../container";
 import { isValidUrl } from "@/lib/utils/url";
@@ -115,6 +116,7 @@ export function HeroSection({
   const lineRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
   const [showCarousel, setShowCarousel] = useState(false);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
 
   // Defer animations để tránh chạy ngay lập tức khi mount
   useEffect(() => {
@@ -312,11 +314,19 @@ export function HeroSection({
                 </p>
               </div>
 
-              <div className="hero-stagger-item pt-1 lg:pt-4">
+              <div className="hero-stagger-item flex items-center gap-3 pt-1 lg:pt-4 [&>button:last-child]:hidden">
+                <button
+                  type="button"
+                  aria-label="Xem video giới thiệu"
+                  onClick={() => setIsVideoOpen(true)}
+                  className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-full border border-white/15 bg-white/[0.04] text-white backdrop-blur-md transition-all duration-300 hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/10 hover:text-[var(--accent-gold)] active:scale-95 lg:h-[58px] lg:w-[58px]"
+                >
+                  <PlayIcon className="h-5 w-5 translate-x-0.5 fill-current lg:h-6 lg:w-6" weight="fill" />
+                </button>
                 <Link
                   href="/home"
                   className={cn(
-                    "group relative flex w-full items-center justify-center overflow-hidden border border-white/10 bg-white/[0.03] px-6 py-3.5 text-sm font-semibold tracking-wider text-white backdrop-blur-md transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08] active:scale-[0.98] lg:inline-flex lg:w-auto lg:overflow-visible lg:px-8 lg:py-4 lg:text-base",
+                    "group relative flex min-w-0 flex-1 items-center justify-center overflow-hidden border border-white/10 bg-white/[0.03] px-6 py-3.5 text-sm font-semibold tracking-wider text-white backdrop-blur-md transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08] active:scale-[0.98] lg:inline-flex lg:w-auto lg:flex-none lg:overflow-visible lg:px-8 lg:py-4 lg:text-base",
                   )}
                 >
                   <span className="absolute left-0 top-0 h-[1.5px] w-full origin-left -translate-x-[7.5%] scale-x-0 bg-[var(--text-tertiary)] transition-transform duration-700 ease-out group-hover:scale-x-[1.15]" />
@@ -325,6 +335,14 @@ export function HeroSection({
                   <span className="absolute right-0 top-0 h-full w-[1.5px] origin-top -translate-y-[15%] scale-y-0 bg-[var(--text-tertiary)] transition-transform duration-700 ease-out group-hover:scale-y-[1.3]" />
                   <span className="relative z-20">TRẢI NGHIỆM NGAY</span>
                 </Link>
+                <button
+                  type="button"
+                  aria-label="Xem video giới thiệu"
+                  onClick={() => setIsVideoOpen(true)}
+                  className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-full border border-white/15 bg-white/[0.04] text-white backdrop-blur-md transition-all duration-300 hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/10 hover:text-[var(--accent-gold)] active:scale-95 lg:h-[58px] lg:w-[58px]"
+                >
+                  <PlayIcon className="h-5 w-5 translate-x-0.5 fill-current lg:h-6 lg:w-6" weight="fill" />
+                </button>
               </div>
             </div>
           </div>
@@ -345,6 +363,36 @@ export function HeroSection({
           </div>
         </div>
       </Container>
+      {isVideoOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md">
+          <button
+            type="button"
+            aria-label="Đóng video"
+            onClick={() => setIsVideoOpen(false)}
+            className="absolute inset-0"
+          />
+          <div className="relative z-10 w-full max-w-5xl overflow-hidden rounded-lg border border-white/15 bg-black shadow-[0_30px_90px_rgba(0,0,0,0.65)]">
+            <button
+              type="button"
+              aria-label="Đóng"
+              onClick={() => setIsVideoOpen(false)}
+              className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-black/55 text-white backdrop-blur-md transition-colors hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
+            >
+              <XIcon className="h-4 w-4" weight="bold" />
+            </button>
+            <video
+              className="aspect-video w-full bg-black object-cover"
+              src="/TVC.mp4"
+              autoPlay
+              controls
+              playsInline
+              preload="none"
+            >
+              Trình duyệt của bạn không hỗ trợ video.
+            </video>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
