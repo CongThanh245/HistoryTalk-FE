@@ -24,7 +24,11 @@ export function useRevealAnimation(
 
       const root = ref.current;
       if (!root) return;
-      const scroller = root.closest("[data-marketing-scroll]");
+      const scrollRoot = root.closest<HTMLElement>("[data-marketing-scroll]");
+      const scroller =
+        scrollRoot && scrollRoot.scrollHeight > scrollRoot.clientHeight
+          ? scrollRoot
+          : undefined;
 
       const fastEls = root.querySelectorAll("[data-reveal='fast']");
       const blockEls = root.querySelectorAll("[data-reveal='block']");
@@ -117,6 +121,7 @@ export function useRevealAnimation(
         }
 
       }, ref);
+      requestAnimationFrame(() => ScrollTrigger.refresh());
 
       motionCards.forEach((card) => {
         card.style.setProperty("--motion-x", "50%");
