@@ -36,10 +36,10 @@ export function ClosingSection() {
             <div className="hidden lg:block" />
 
             <div className="flex flex-col items-start justify-center gap-4 md:gap-6 text-left lg:items-end lg:text-right">
-              <p data-reveal="block" className="max-w-[280px] text-sm md:text-base lg:text-lg text-[var(--text-secondary)]">
+              <p className="max-w-[280px] text-sm md:text-base lg:text-lg text-[var(--text-secondary)]">
                 Bước vào cuộc trò chuyện với những người đã tạo nên lịch sử. Đặt câu hỏi, khám phá bối cảnh và hiểu quá khứ qua góc nhìn của nhân vật.
               </p>
-              <div data-reveal="block">
+              <div>
                 <MagneticButton
                   href="/home"
                   size="md"
