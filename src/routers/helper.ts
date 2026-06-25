@@ -72,9 +72,8 @@ export function getNavigationByRole(role: Role): NavSection[] {
         },
       ];
 
-    case Role.ADMIN:
-    case Role.MODERATOR:
-    case Role.SELLER:
+    case Role.CONTENT_ADMIN:
+    case Role.SYSTEM_ADMIN:
       return mainNavSections;
 
     default:

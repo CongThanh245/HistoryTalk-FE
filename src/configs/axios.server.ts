@@ -1,5 +1,6 @@
 import axios from "axios";
 import { cookies } from "next/headers";
+import { AUTH_COOKIE_KEYS } from "@/constants/routes";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const BASE_PATH = process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
@@ -15,7 +16,7 @@ export const axiosServer = axios.create({
 // Instance có auth — dùng cho protected routes
 export async function getAuthAxios() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("auth-token")?.value;
+  const token = cookieStore.get(AUTH_COOKIE_KEYS.TOKEN)?.value;
 
   return axios.create({
     baseURL: BASE_URL,

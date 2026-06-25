@@ -10,13 +10,14 @@ import {
 } from "@phosphor-icons/react";
 
 import { StaffShell } from "@/components/staff/staff-shell";
+import { ROUTES } from "@/constants/routes";
 
 const MODULES = [
   {
     icon: ScrollIcon,
     title: "Quản lý bối cảnh lịch sử",
     desc: "Tạo/cập nhật bối cảnh lịch sử để dùng cho sự kiện và cuộc trò chuyện.",
-    href: "/staff/contexts",
+    href: ROUTES.STAFF.CONTEXTS,
     accent: "var(--accent-gold)",
     glow: "rgba(201,162,77,0.12)",
   },
@@ -24,7 +25,7 @@ const MODULES = [
     icon: UsersIcon,
     title: "Manage Character",
     desc: "Quản lý nhân vật: tiểu sử, vai trò, thời kỳ để dùng cho chat/quiz.",
-    href: "/staff/characters",
+    href: ROUTES.STAFF.CHARACTERS,
     accent: "var(--accent-bronze)",
     glow: "rgba(196,106,47,0.12)",
   },
@@ -32,7 +33,7 @@ const MODULES = [
     icon: ClipboardTextIcon,
     title: "Quản lý câu đố",
     desc: "Quản lý quiz theo chủ đề, độ khó và số câu hỏi.",
-    href: "/staff/quizzes",
+    href: ROUTES.STAFF.QUIZZES,
     accent: "var(--accent-blue)",
     glow: "rgba(143,179,200,0.12)",
   },

@@ -1,6 +1,6 @@
 import { axiosClient } from "@/configs/axios.client";
 import { isValidUrl } from "@/lib/utils/url";
-import { ERA_CONFIG } from "./event.service";
+import { ERA_CONFIG } from "@/constants/eras";
 
 type RawContextRef = {
   contextId?: string;

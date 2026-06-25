@@ -2,50 +2,51 @@ import { Role } from "./roles";
 
 export const PERMISSIONS = {
   // Users
-  USERS_READ: 'users.read',
-  USERS_CREATE: 'users.create',
-  USERS_UPDATE: 'users.update',
-  USERS_DELETE: 'users.delete',
+  USERS_READ: "users.read",
+  USERS_CREATE: "users.create",
+  USERS_UPDATE: "users.update",
+  USERS_DELETE: "users.delete",
 
-  // Products
-  PRODUCTS_READ: 'products.read',
-  PRODUCTS_CREATE: 'products.create',
-  PRODUCTS_UPDATE: 'products.update',
-  PRODUCTS_DELETE: 'products.delete',
+  // Contexts
+  CONTEXTS_READ: "contexts.read",
+  CONTEXTS_CREATE: "contexts.create",
+  CONTEXTS_UPDATE: "contexts.update",
+  CONTEXTS_DELETE: "contexts.delete",
 
-  // Orders
-  ORDERS_READ: 'orders.read',
-  ORDERS_UPDATE: 'orders.update',
-  ORDERS_DELETE: 'orders.delete',
+  // Characters
+  CHARACTERS_READ: "characters.read",
+  CHARACTERS_CREATE: "characters.create",
+  CHARACTERS_UPDATE: "characters.update",
+  CHARACTERS_DELETE: "characters.delete",
 
-  // Analytics
-  ANALYTICS_VIEW: 'analytics.view',
-  ANALYTICS_EXPORT: 'analytics.export',
-
-  // Settings
-  SETTINGS_UPDATE: 'settings.update',
-  SETTINGS_SYSTEM: 'settings.system',
+  // Quizzes
+  QUIZZES_READ: "quizzes.read",
+  QUIZZES_CREATE: "quizzes.create",
+  QUIZZES_UPDATE: "quizzes.update",
+  QUIZZES_DELETE: "quizzes.delete",
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  [Role.ADMIN]: Object.values(PERMISSIONS),
-  [Role.MODERATOR]: [
-    PERMISSIONS.USERS_READ,
-    PERMISSIONS.PRODUCTS_READ,
-    PERMISSIONS.PRODUCTS_UPDATE,
-    PERMISSIONS.ORDERS_READ,
-    PERMISSIONS.ORDERS_UPDATE,
-  ],
-  [Role.SELLER]: [
-    PERMISSIONS.PRODUCTS_READ,
-    PERMISSIONS.PRODUCTS_CREATE,
-    PERMISSIONS.PRODUCTS_UPDATE,
-    PERMISSIONS.ORDERS_READ,
+  [Role.SYSTEM_ADMIN]: Object.values(PERMISSIONS),
+  [Role.CONTENT_ADMIN]: [
+    PERMISSIONS.CONTEXTS_READ,
+    PERMISSIONS.CONTEXTS_CREATE,
+    PERMISSIONS.CONTEXTS_UPDATE,
+    PERMISSIONS.CONTEXTS_DELETE,
+    PERMISSIONS.CHARACTERS_READ,
+    PERMISSIONS.CHARACTERS_CREATE,
+    PERMISSIONS.CHARACTERS_UPDATE,
+    PERMISSIONS.CHARACTERS_DELETE,
+    PERMISSIONS.QUIZZES_READ,
+    PERMISSIONS.QUIZZES_CREATE,
+    PERMISSIONS.QUIZZES_UPDATE,
+    PERMISSIONS.QUIZZES_DELETE,
   ],
   [Role.CUSTOMER]: [
-    PERMISSIONS.PRODUCTS_READ,
-    PERMISSIONS.ORDERS_READ,
+    PERMISSIONS.CONTEXTS_READ,
+    PERMISSIONS.CHARACTERS_READ,
+    PERMISSIONS.QUIZZES_READ,
   ],
 };

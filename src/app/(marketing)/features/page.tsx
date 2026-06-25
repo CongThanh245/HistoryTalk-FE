@@ -218,9 +218,8 @@ function ChatBubble({
 
   return (
     <div
-      className={`flex gap-3 ${isCharacter ? "flex-row" : "flex-row-reverse"} ${
-        isActive ? "opacity-100" : "opacity-0"
-      } transition-all duration-500`}
+      className={`flex gap-3 ${isCharacter ? "flex-row" : "flex-row-reverse"} ${isActive ? "opacity-100" : "opacity-0"
+        } transition-all duration-500`}
     >
       {/* Avatar */}
       <div className="shrink-0">
@@ -245,11 +244,10 @@ function ChatBubble({
       <div className={`max-w-[75%] ${isCharacter ? "text-left" : "text-right"}`}>
         <div className="mb-0.5 text-xs font-medium text-(--text-muted)">{message.name}</div>
         <div
-          className={`rounded-2xl px-3 py-2 text-xs leading-relaxed ${
-            isCharacter
+          className={`rounded-2xl px-3 py-2 text-xs leading-relaxed ${isCharacter
               ? "rounded-tl-none bg-(--bg-surface) text-muted-foreground"
               : "rounded-tr-none bg-(--accent-gold)/10 text-(--accent-gold) border border-(--accent-gold)/20"
-          }`}
+            }`}
         >
           <TypingText
             text={message.text}
@@ -557,14 +555,6 @@ export default function FeaturePage() {
               <p data-hero-copy className="mt-6 max-w-2xl text-base leading-8 text-muted-foreground lg:text-lg">
                 History Talk kết hợp nhân vật AI, bối cảnh sự kiện và quiz ôn tập để biến mỗi chủ đề thành một hành trình học có mạch.
               </p>
-
-              <div data-hero-copy className="mt-8 flex flex-wrap gap-3">
-                {["AI hội thoại", "Dòng thời gian", "Quiz theo chủ đề"].map((item) => (
-                  <span key={item} className="rounded-full border border-(--border-default) bg-white/3 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    {item}
-                  </span>
-                ))}
-              </div>
             </div>
 
             <div ref={heroVisualRef} className="relative min-h-107.5">

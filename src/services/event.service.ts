@@ -1,18 +1,14 @@
 import { axiosClient } from "@/configs/axios.client";
 import { isValidUrl } from "@/lib/utils/url";
+import {
+  type EventEra,
+  type EventEraBackend,
+  ERA_CONFIG,
+  getEraFromYear,
+} from "@/constants/eras";
 
-export type EventEra =
-  | "all"
-  | "ancient"
-  | "medieval"
-  | "modern"
-  | "contemporary";
-
-export type EventEraBackend =
-  | "ANCIENT"
-  | "MEDIEVAL"
-  | "MODERN"
-  | "CONTEMPORARY";
+export type { EventEra, EventEraBackend };
+export { ERA_CONFIG, getEraFromYear };
 
 export interface HistoricalEvent {
   id: string;
@@ -215,22 +211,4 @@ function toContractEventPayload(data: UpdateEventRequest) {
     ...(data.isActive !== undefined && { isActive: data.isActive }),
     ...(data.isPublished !== undefined && { isPublished: data.isPublished }),
   };
-}
-
-export const ERA_CONFIG: Record<
-  EventEra,
-  { label: string; range: [number, number] }
-> = {
-  all: { label: "Tất cả", range: [-Infinity, Infinity] },
-  ancient: { label: "Cổ đại", range: [-Infinity, 937] },
-  medieval: { label: "Trung đại", range: [938, 1857] },
-  modern: { label: "Cận đại", range: [1858, 1944] },
-  contemporary: { label: "Hiện đại", range: [1945, Infinity] },
-};
-
-export function getEraFromYear(year: number): Exclude<EventEra, "all"> {
-  if (year <= 937) return "ancient";
-  if (year <= 1857) return "medieval";
-  if (year <= 1944) return "modern";
-  return "contemporary";
 }
