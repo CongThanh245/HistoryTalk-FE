@@ -17,7 +17,11 @@ export function WelcomeScreen() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (sessionStorage.getItem(WELCOME_SCREEN_KEY)) {
+    const isSeenInCookie = document.documentElement.dataset.welcomeScreenSeen === "true";
+    if (sessionStorage.getItem(WELCOME_SCREEN_KEY) || isSeenInCookie) {
+      if (isSeenInCookie && !sessionStorage.getItem(WELCOME_SCREEN_KEY)) {
+        sessionStorage.setItem(WELCOME_SCREEN_KEY, "true");
+      }
       document.cookie = SESSION_COOKIE;
       document.documentElement.dataset.welcomeScreenSeen = "true";
 

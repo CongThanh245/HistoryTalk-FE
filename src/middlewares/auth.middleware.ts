@@ -6,6 +6,9 @@ const CONTENT_ADMIN_HOME = ROUTES.STAFF.HOME;
 const SYSTEM_ADMIN_HOME = ROUTES.STAFF.ADMIN.HOME;
 const AUTH_REQUIRED_ROUTES = [ROUTES.CHAT(""), ROUTES.PROFILE]; // matches "/chat" and "/profile" prefix
 
+// Routes chỉ dành cho user chưa đăng nhập
+const AUTH_ONLY_ROUTES = [ROUTES.LOGIN, ROUTES.REGISTER, ROUTES.FORGOT_PASSWORD];
+
 const isPathOrChild = (pathname: string, basePath: string) => {
   // Normalize base path for dynamic route placeholders if needed, or check prefix
   const cleanBase = basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
@@ -30,9 +33,27 @@ export function authMiddleware(request: NextRequest) {
   const isAuthRequiredRoute = AUTH_REQUIRED_ROUTES.some((route) =>
     isPathOrChild(pathname, route),
   );
+  const isAuthOnlyRoute = AUTH_ONLY_ROUTES.some((route) =>
+    isPathOrChild(pathname, route),
+  );
+  const isLandingPage = pathname === "/";
 
+  // Chưa đăng nhập → redirect về login nếu vào trang protected
   if (!token && (isStaffRoute || isAuthRequiredRoute)) {
     return NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
+  }
+
+  // Đã đăng nhập → không cho vào trang login/register
+  if (token && isAuthOnlyRoute) {
+    const home = isAdminRole(role)
+      ? isSystemAdmin(role) ? SYSTEM_ADMIN_HOME : CONTENT_ADMIN_HOME
+      : ROUTES.HOME;
+    return NextResponse.redirect(new URL(home, request.url));
+  }
+
+  // Đã đăng nhập là customer → không cho vào landing page (tránh flash landing trước splash)
+  if (token && !isAdminRole(role) && isLandingPage) {
+    return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
   }
 
   // Staff roles are restricted to staff-only pages, not marketing/customer pages.
@@ -57,3 +78,4 @@ export function authMiddleware(request: NextRequest) {
 
   return NextResponse.next();
 }
+

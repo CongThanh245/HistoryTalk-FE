@@ -70,6 +70,15 @@ export default function RootLayout({
         <style
           dangerouslySetInnerHTML={{
             __html: `
+              .welcome-screen {
+                position: fixed;
+                inset: 0;
+                z-index: 9999;
+                display: grid;
+                place-items: center;
+                overflow: hidden;
+                background: #070d18;
+              }
               html[data-welcome-screen-seen="true"] .welcome-screen {
                 display: none !important;
               }
@@ -81,6 +90,39 @@ export default function RootLayout({
             __html: `
               if (document.cookie.split("; ").includes("${WELCOME_SCREEN_KEY}=true")) {
                 document.documentElement.dataset.welcomeScreenSeen = "true";
+              }
+              try {
+                var auth = localStorage.getItem("auth-storage");
+                if (auth) {
+                  var parsed = JSON.parse(auth);
+                  if (parsed && parsed.state && parsed.state.user && parsed.state.tokens) {
+                    var user = parsed.state.user;
+                    var tokens = parsed.state.tokens;
+                    var role = user.role;
+                    var accessToken = tokens.accessToken;
+                    var expiresIn = tokens.expiresIn || 3600;
+                    var maxAge = expiresIn > 100000 ? Math.floor(expiresIn / 1000) : expiresIn;
+
+                    // Set cookies synchronously so they are sent with the redirected page request
+                    document.cookie = "auth-token=" + accessToken + "; path=/; max-age=" + maxAge + "; sameSite=lax";
+                    document.cookie = "auth-role=" + role + "; path=/; max-age=" + maxAge + "; sameSite=lax";
+
+                    var pathname = window.location.pathname;
+                    var isLanding = pathname === "/";
+                    var isAuthOnly = ["/login", "/register", "/forgot-password"].includes(pathname);
+                    var isAdmin = role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN";
+                    var isStaffRoute = pathname === "/staff" || pathname.startsWith("/staff/");
+                    
+                    if (isLanding || isAuthOnly || (isAdmin && !isStaffRoute)) {
+                      var home = "/home";
+                      if (role === "CONTENT_ADMIN") home = "/staff";
+                      else if (role === "SYSTEM_ADMIN") home = "/staff/admin";
+                      window.location.replace(home);
+                    }
+                  }
+                }
+              } catch (e) {
+                console.error(e);
               }
             `,
           }}

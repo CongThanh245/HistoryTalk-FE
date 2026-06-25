@@ -139,7 +139,6 @@ export function FeaturesSection() {
                   <button
                     key={item.step}
                     data-journey-card
-                    data-motion-card
                     type="button"
                     onClick={() => setActive(index)}
                     onMouseEnter={() => setActive(index)}
@@ -158,23 +157,31 @@ export function FeaturesSection() {
 
                     <span
                       className={cn(
-                        "block rounded-lg md:rounded-[var(--radius-lg)] border p-3 md:p-4 transition-all duration-300",
-                        isActive
-                          ? "translate-x-1 border-[var(--accent-gold)]/50 bg-[var(--bg-surface)] shadow-[0_18px_44px_rgba(255,146,21,0.12)]"
-                          : "border-[var(--border-default)] bg-transparent hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)]/40",
+                        "block transition-transform duration-300 w-full",
+                        isActive ? "translate-x-1" : "translate-x-0"
                       )}
                     >
-                      <span className="mb-1.5 md:mb-2 flex items-center justify-between gap-4">
-                        <span className="text-[0.6rem] md:text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[var(--accent-gold)]">
-                          {item.eyebrow}
+                      <span
+                        data-motion-card
+                        className={cn(
+                          "block rounded-lg md:rounded-[var(--radius-lg)] border p-3 md:p-4 transition-[background-color,border-color,box-shadow] duration-300",
+                          isActive
+                            ? "border-[var(--accent-gold)]/50 bg-[var(--bg-surface)] shadow-[0_18px_44px_rgba(255,146,21,0.12)]"
+                            : "border-[var(--border-default)] bg-transparent hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)]/40",
+                        )}
+                      >
+                        <span className="mb-1.5 md:mb-2 flex items-center justify-between gap-4">
+                          <span className="text-[0.6rem] md:text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[var(--accent-gold)]">
+                            {item.eyebrow}
+                          </span>
+                          <span className="text-[0.7rem] md:text-xs font-bold text-[var(--text-muted)]">{item.step}</span>
                         </span>
-                        <span className="text-[0.7rem] md:text-xs font-bold text-[var(--text-muted)]">{item.step}</span>
-                      </span>
-                      <span className="block text-sm md:text-base font-bold uppercase leading-snug text-[var(--text-primary)]">
-                        {item.title}
-                      </span>
-                      <span className="mt-1.5 md:mt-2 block text-xs md:text-sm text-[var(--text-secondary)]">
-                        {item.body}
+                        <span className="block text-sm md:text-base font-bold uppercase leading-snug text-[var(--text-primary)]">
+                          {item.title}
+                        </span>
+                        <span className="mt-1.5 md:mt-2 block text-xs md:text-sm text-[var(--text-secondary)]">
+                          {item.body}
+                        </span>
                       </span>
                     </span>
                   </button>
