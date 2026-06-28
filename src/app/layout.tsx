@@ -113,7 +113,7 @@ export default function RootLayout({
                     var isAdmin = role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN";
                     var isStaffRoute = pathname === "/staff" || pathname.startsWith("/staff/");
                     
-                    if (isLanding || isAuthOnly || (isAdmin && !isStaffRoute)) {
+                    if (isAuthOnly || (isAdmin && !isStaffRoute)) {
                       var home = "/home";
                       if (role === "CONTENT_ADMIN") home = "/staff";
                       else if (role === "SYSTEM_ADMIN") home = "/staff/admin";

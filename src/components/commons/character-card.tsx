@@ -280,7 +280,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
           alt=""
           fill
           aria-hidden="true"
-          className="object-cover object-center scale-110 blur-xl opacity-70"
+          className="object-cover object-top scale-110 blur-xl opacity-70"
           sizes="(max-width: 419px) 100vw, (max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
         />
         <div className="absolute inset-0 bg-black/18" />
@@ -288,7 +288,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
           src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
           alt={character.name}
           fill
-          className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]"
+          className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.04]"
           sizes="(max-width: 419px) 100vw, (max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
         />
       </div>

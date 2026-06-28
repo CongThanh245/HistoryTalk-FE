@@ -36,8 +36,6 @@ export function authMiddleware(request: NextRequest) {
   const isAuthOnlyRoute = AUTH_ONLY_ROUTES.some((route) =>
     isPathOrChild(pathname, route),
   );
-  const isLandingPage = pathname === "/";
-
   // Chưa đăng nhập → redirect về login nếu vào trang protected
   if (!token && (isStaffRoute || isAuthRequiredRoute)) {
     return NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
@@ -49,11 +47,6 @@ export function authMiddleware(request: NextRequest) {
       ? isSystemAdmin(role) ? SYSTEM_ADMIN_HOME : CONTENT_ADMIN_HOME
       : ROUTES.HOME;
     return NextResponse.redirect(new URL(home, request.url));
-  }
-
-  // Đã đăng nhập là customer → không cho vào landing page (tránh flash landing trước splash)
-  if (token && !isAdminRole(role) && isLandingPage) {
-    return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
   }
 
   // Staff roles are restricted to staff-only pages, not marketing/customer pages.

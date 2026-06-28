@@ -53,23 +53,25 @@ function FakeVideoPlayer({
   return (
     <div className="relative w-full h-full flex flex-col bg-black overflow-hidden">
       <div className="relative flex-1 overflow-hidden">
-        {/* YouTube iframe thay thế Image */}
+        {/* YouTube iframe với controls=1 để người dùng tua được */}
         <iframe
           ref={iframeRef}
           className="absolute inset-0 w-full h-full"
-          src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&autoplay=0&controls=0&modestbranding=1&rel=0`}
+          src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&autoplay=0&controls=1&modestbranding=1&rel=0`}
           allow="autoplay; encrypted-media"
           allowFullScreen
         />
 
-        {/* Overlay giữ nguyên */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.75) 100%)",
-          }}
-        />
+        {/* Overlay gradient — chỉ hiện khi chưa play để không chặn controls YouTube */}
+        {!playing && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.75) 100%)",
+            }}
+          />
+        )}
 
         {/* Letterbox */}
         <div className="absolute top-0 left-0 right-0 h-8 bg-black" />
