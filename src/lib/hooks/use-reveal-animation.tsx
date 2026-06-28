@@ -25,10 +25,10 @@ export function useRevealAnimation(
       const root = ref.current;
       if (!root) return;
       const scrollRoot = root.closest<HTMLElement>("[data-marketing-scroll]");
-      const scroller =
-        scrollRoot && scrollRoot.scrollHeight > scrollRoot.clientHeight
-          ? scrollRoot
-          : undefined;
+      const isScrollContainer = scrollRoot
+        ? ["scroll", "auto"].includes(getComputedStyle(scrollRoot).overflowY)
+        : false;
+      const scroller = isScrollContainer ? scrollRoot : undefined;
 
       const fastEls = root.querySelectorAll("[data-reveal='fast']");
       const blockEls = root.querySelectorAll("[data-reveal='block']");

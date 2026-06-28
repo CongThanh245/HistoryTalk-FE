@@ -19,10 +19,10 @@ const FeaturesSection = dynamic(
   { loading: () => <SectionSkeleton /> }
 );
 
-const ImpactSection = dynamic(
-  () => import("@/components/marketing/section/impact-section").then((m) => m.ImpactSection),
-  { loading: () => <SectionSkeleton /> }
-);
+// const ImpactSection = dynamic(
+//   () => import("@/components/marketing/section/impact-section").then((m) => m.ImpactSection),
+//   { loading: () => <SectionSkeleton /> }
+// );
 
 const ClosingSection = dynamic(
   () => import("@/components/marketing/section/closing-section").then((m) => m.ClosingSection),
@@ -118,7 +118,7 @@ export default function MarketingPage() {
         <FeaturesSection />
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
-        <ImpactSection />
+        {/* <ImpactSection /> */}
       </Suspense>
       <Suspense fallback={<SectionSkeleton />}>
         <ClosingSection />

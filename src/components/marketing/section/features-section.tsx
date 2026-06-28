@@ -1,15 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import {
-  ChatTextIcon,
-  MapTrifoldIcon,
-  QuestionIcon,
-  VideoCameraIcon,
-} from "@phosphor-icons/react";
+import { useEffect, useRef } from "react";
 import { Container } from "../container";
-import { cn } from "@/lib/utils/cn";
-import { useRevealAnimation } from "@/lib/hooks/use-reveal-animation";
 
 const journeySteps = [
   {
@@ -17,180 +9,159 @@ const journeySteps = [
     eyebrow: "Chọn bối cảnh",
     title: "Bắt đầu từ một thời kỳ lịch sử",
     body: "Người học chọn bối cảnh lịch sử để bước vào thế giới của nhân vật, sự kiện và không khí thời đại đó.",
-    icon: MapTrifoldIcon,
   },
   {
     step: "02",
     eyebrow: "Xem video",
     title: "Đắm mình trong không khí lịch sử",
     body: "Video mô tả bối cảnh, địa điểm và diễn biến giúp người học hình dung rõ nét thời khắc lịch sử trước khi bắt đầu cuộc trò chuyện.",
-    icon: VideoCameraIcon,
   },
   {
     step: "03",
     eyebrow: "Trò chuyện",
     title: "Đối thoại cùng nhân vật lịch sử",
     body: "Người học trò chuyện với nhân vật trong bối cảnh đó để đào sâu nguyên nhân, niềm tin và những quyết định lịch sử.",
-    icon: ChatTextIcon,
   },
   {
     step: "04",
     eyebrow: "Kiểm tra",
     title: "Chốt kiến thức bằng quiz sau hành trình",
     body: "Sau khi trò chuyện, người học kiểm tra lại những gì đã hiểu bằng câu hỏi ngắn gắn liền với bối cảnh vừa trải nghiệm.",
-    icon: QuestionIcon,
   },
 ];
 
+const CARD_THRESHOLDS = [0.05, 0.3, 0.55, 0.8];
+
 export function FeaturesSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [active, setActive] = useState(0);
-  useRevealAnimation(sectionRef);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    let ctx: ReturnType<typeof import("gsap").gsap.context> | null = null;
+    const section = sectionRef.current;
+    if (!section) return;
 
-    const init = async () => {
-      const { gsap } = await import("gsap");
-      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
-      gsap.registerPlugin(ScrollTrigger);
+    let rafId = 0;
 
-      if (!sectionRef.current) return;
-
-      ctx = gsap.context(() => {
-        const scroller = sectionRef.current?.closest("[data-marketing-scroll]");
-        const cards = gsap.utils.toArray<HTMLElement>("[data-journey-card]");
-        const progress = sectionRef.current?.querySelector("[data-journey-progress]");
-
-        gsap.fromTo(
-          cards,
-          { y: 44, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.7,
-            ease: "power3.out",
-            stagger: 0.12,
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              scroller,
-              start: "top 72%",
-            },
-          },
-        );
-
-        if (progress) {
-          gsap.fromTo(
-            progress,
-            { scaleY: 0 },
-            {
-              scaleY: 1,
-              ease: "none",
-              transformOrigin: "top",
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                scroller,
-                start: "top 65%",
-                end: "bottom 45%",
-                scrub: true,
-              },
-            },
-          );
-        }
-      }, sectionRef);
+    const applyProgress = (progress: number) => {
+      cardRefs.current.forEach((card, i) => {
+        if (!card) return;
+        const visible = progress >= CARD_THRESHOLDS[i];
+        card.style.opacity = visible ? "1" : "0";
+        card.style.transform = visible ? "translateY(0px)" : "translateY(36px)";
+      });
     };
 
-    init();
-    return () => ctx?.revert();
-  }, []);
+    const onScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        if (!section) return;
+        const rect = section.getBoundingClientRect();
+        const viewH = window.innerHeight;
+        const scrollable = rect.height - viewH;
+        if (scrollable <= 0) return;
+        const progress = Math.min(1, Math.max(0, -rect.top / scrollable));
+        applyProgress(progress);
+      });
+    };
 
+    // Hide all cards instantly before transitions are active
+    cardRefs.current.forEach((card) => {
+      if (!card) return;
+      card.style.transition = "none";
+      card.style.opacity = "0";
+      card.style.transform = "translateY(36px)";
+    });
+
+    const rect = section.getBoundingClientRect();
+    if (rect.bottom < 0) {
+      cardRefs.current.forEach((card) => {
+        if (!card) return;
+        card.style.opacity = "1";
+        card.style.transform = "translateY(0px)";
+      });
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      cardRefs.current.forEach((card) => {
+        if (!card) return;
+        card.style.transition = "opacity 0.4s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)";
+      });
+      onScroll();
+    });
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-svh overflow-hidden border-t border-[var(--border-default)] bg-[var(--bg-main)] py-7 md:py-20 lg:py-24"
+      className="relative border-t border-(--border-default)"
+      style={{ height: "480vh" }}
     >
-      <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(90deg,rgba(255,146,21,0.06)_0,transparent_28%,transparent_72%,rgba(143,179,200,0.06)_100%)]" />
+      <div className="sticky top-0 h-svh overflow-hidden bg-(--bg-main)">
+        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(90deg,rgba(255,146,21,0.06)_0,transparent_28%,transparent_72%,rgba(143,179,200,0.06)_100%)]" />
 
-      <Container className="relative z-10">
-        <div className="grid gap-6 md:gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
-          <div className="lg:sticky lg:top-28 lg:self-start px-2 md:px-0">
-            <h2 data-reveal="fast" className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-bold leading-tight mb-3 md:mb-4 text-[var(--text-secondary)]">
-              Một dòng thời gian, <span className="text-[var(--accent-gold)] font-title">bốn lần chạm</span>
+        <Container className="relative z-10 flex h-full flex-col justify-center py-16 md:py-24 lg:py-32">
+          {/* Header */}
+          <div className="mb-10 grid gap-4 lg:mb-14 lg:grid-cols-2 lg:gap-16 lg:items-end">
+            <h2 className="text-subtitle font-bold leading-tight text-muted-foreground md:text-title lg:text-[2.5rem]">
+              Một dòng thời gian,{" "}
+              <span className="font-title text-(--accent-gold)">bốn lần chạm</span>
             </h2>
-            <p className="text-sm md:text-base max-w-[320px] text-[var(--text-secondary)]">
+            <p className="text-sm text-muted-foreground md:text-base lg:max-w-sm">
               Mỗi bước đều dẫn dắt người học từ sự tò mò đến những cuộc đối thoại sâu sắc, và khép lại bằng các bài ôn tập đầy ý nghĩa.
             </p>
           </div>
 
-          <div className="relative">
-            <div className="absolute left-[19px] top-0 hidden h-full w-px bg-[var(--border-default)] md:block" />
-            <div
-              data-journey-progress
-              className="absolute left-[19px] top-0 hidden h-full w-px origin-top bg-[var(--accent-gold)] md:block"
-            />
+          {/* Cards */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {journeySteps.map((item, index) => (
+              <div
+                key={item.step}
+                ref={(el) => { cardRefs.current[index] = el; }}
+                className="relative overflow-hidden rounded-2xl border border-(--border-default) bg-(--bg-surface) p-6"
+              >
+                {/* Watermark number */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -right-2 -top-4 select-none font-black leading-none text-(--accent-gold)"
+                  style={{ fontSize: "6rem", opacity: 0.05 }}
+                >
+                  {item.step}
+                </span>
 
-            <div className="space-y-3">
-              {journeySteps.map((item, index) => {
-                const Icon = item.icon;
-                const isActive = active === index;
+                {/* Step badge + eyebrow */}
+                <div className="mb-5 flex items-center gap-2.5">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-(--accent-gold)/40 text-[0.55rem] font-bold text-(--accent-gold)">
+                    {item.step}
+                  </span>
+                  <span className="text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-(--accent-gold)/60">
+                    {item.eyebrow}
+                  </span>
+                </div>
 
-                return (
-                  <button
-                    key={item.step}
-                    data-journey-card
-                    type="button"
-                    onClick={() => setActive(index)}
-                    onMouseEnter={() => setActive(index)}
-                    className="group grid w-full grid-cols-1 gap-4 text-left md:grid-cols-[40px_1fr]"
-                  >
-                    <span
-                      className={cn(
-                        "relative z-10 hidden h-10 w-10 items-center justify-center rounded-full border transition-all md:flex",
-                        isActive
-                          ? "scale-110 border-[var(--accent-gold)] bg-[var(--accent-gold)] text-[var(--bg-deep)] shadow-[0_0_26px_var(--accent-gold-glow)]"
-                          : "border-[var(--border-default)] bg-[var(--bg-main)] text-[var(--text-muted)]",
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </span>
+                {/* Title */}
+                <h3 className="mb-3 text-[0.95rem] font-bold leading-snug text-white lg:text-[1.05rem]">
+                  {item.title}
+                </h3>
 
-                    <span
-                      className={cn(
-                        "block transition-transform duration-300 w-full",
-                        isActive ? "translate-x-1" : "translate-x-0"
-                      )}
-                    >
-                      <span
-                        data-motion-card
-                        className={cn(
-                          "block rounded-lg md:rounded-[var(--radius-lg)] border p-3 md:p-4 transition-[background-color,border-color,box-shadow] duration-300",
-                          isActive
-                            ? "border-[var(--accent-gold)]/50 bg-[var(--bg-surface)] shadow-[0_18px_44px_rgba(255,146,21,0.12)]"
-                            : "border-[var(--border-default)] bg-transparent hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)]/40",
-                        )}
-                      >
-                        <span className="mb-1.5 md:mb-2 flex items-center justify-between gap-4">
-                          <span className="text-[0.6rem] md:text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[var(--accent-gold)]">
-                            {item.eyebrow}
-                          </span>
-                          <span className="text-[0.7rem] md:text-xs font-bold text-[var(--text-muted)]">{item.step}</span>
-                        </span>
-                        <span className="block text-sm md:text-base font-bold uppercase leading-snug text-[var(--text-primary)]">
-                          {item.title}
-                        </span>
-                        <span className="mt-1.5 md:mt-2 block text-xs md:text-sm text-[var(--text-secondary)]">
-                          {item.body}
-                        </span>
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                {/* Divider */}
+                <div className="mb-3 h-px w-7 bg-(--accent-gold)/35" />
+
+                {/* Body */}
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {item.body}
+                </p>
+              </div>
+            ))}
           </div>
-        </div>
-      </Container>
+        </Container>
+      </div>
     </section>
   );
 }

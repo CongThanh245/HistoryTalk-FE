@@ -49,7 +49,11 @@ export function ProblemSection() {
       gsap.registerPlugin(ScrollTrigger);
 
       ctx = gsap.context(() => {
-        const scroller = sectionRef.current?.closest("[data-marketing-scroll]");
+        const scrollRoot = sectionRef.current?.closest<HTMLElement>("[data-marketing-scroll]");
+        const scroller =
+          scrollRoot && ["scroll", "auto"].includes(getComputedStyle(scrollRoot).overflowY)
+            ? scrollRoot
+            : undefined;
 
         cardsRef.current.forEach((card, i) => {
           if (!card) return;

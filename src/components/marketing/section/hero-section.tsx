@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { PlayIcon, XIcon } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils/cn";
 import { Container } from "../container";
+import { MarketingButton } from "@/components/commons/marketing-button";
 import { isValidUrl } from "@/lib/utils/url";
 import type { Character } from "@/services/character.service";
 import {
@@ -271,7 +270,7 @@ export function HeroSection({
           `,
         }}
       />
-      <div className="landing-ambient-beam" aria-hidden="true" />
+      <div className="landing-ambient-beam hidden" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden h-24 lg:block">
         <div className="absolute bottom-0 left-1/2 h-24 w-px -translate-x-1/2 overflow-hidden rounded-full bg-white/10">
           <div
@@ -323,18 +322,12 @@ export function HeroSection({
                 >
                   <PlayIcon className="h-5 w-5 translate-x-0.5 fill-current lg:h-6 lg:w-6" weight="fill" />
                 </button>
-                <Link
+                <MarketingButton
                   href="/home"
-                  className={cn(
-                    "group relative flex min-w-0 flex-1 items-center justify-center overflow-hidden border border-white/10 bg-white/[0.03] px-6 py-3.5 text-sm font-semibold tracking-wider text-white backdrop-blur-md transition-all duration-300 hover:border-white/20 hover:bg-white/[0.08] active:scale-[0.98] lg:inline-flex lg:w-auto lg:flex-none lg:overflow-visible lg:px-8 lg:py-4 lg:text-base",
-                  )}
+                  className="flex min-w-0 flex-1 lg:inline-flex lg:w-auto lg:flex-none lg:overflow-visible"
                 >
-                  <span className="absolute left-0 top-0 h-[1.5px] w-full origin-left -translate-x-[7.5%] scale-x-0 bg-[var(--text-tertiary)] transition-transform duration-700 ease-out group-hover:scale-x-[1.15]" />
-                  <span className="absolute bottom-0 left-0 h-[1.5px] w-full origin-right translate-x-[7.5%] scale-x-0 bg-[var(--text-tertiary)] transition-transform duration-700 ease-out group-hover:scale-x-[1.15]" />
-                  <span className="absolute left-0 top-0 h-full w-[1.5px] origin-bottom translate-y-[15%] scale-y-0 bg-[var(--text-tertiary)] transition-transform duration-700 ease-out group-hover:scale-y-[1.3]" />
-                  <span className="absolute right-0 top-0 h-full w-[1.5px] origin-top -translate-y-[15%] scale-y-0 bg-[var(--text-tertiary)] transition-transform duration-700 ease-out group-hover:scale-y-[1.3]" />
-                  <span className="relative z-20">TRẢI NGHIỆM NGAY</span>
-                </Link>
+                  TRẢI NGHIỆM NGAY
+                </MarketingButton>
                 <button
                   type="button"
                   aria-label="Xem video giới thiệu"

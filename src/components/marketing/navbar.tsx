@@ -201,7 +201,7 @@ export function MarketingNavbar() {
                   <MagneticButton
                     href="/login"
                     magnetic={false}
-                    className="!border-0 rounded-none"
+                    className="border-0! rounded-none"
                   >
                     Đăng nhập
                   </MagneticButton>
@@ -209,8 +209,8 @@ export function MarketingNavbar() {
                   <div className="cta-wrapper">
                     <MagneticButton
                       href="/home"
-                      className="!border-0"
                       magnetic={false}
+                      className="border-0!"
                     >
                       Khám phá ngay
                     </MagneticButton>
