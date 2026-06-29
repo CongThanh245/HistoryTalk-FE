@@ -3,11 +3,22 @@ import { isValidUrl } from "@/lib/utils/url";
 import { ERA_CONFIG } from "@/constants/eras";
 
 type RawContextRef = {
-  contextId?: string;
+  contextId?: string | Record<string, unknown>;
   id?: string;
   name?: string;
   title?: string;
 };
+
+// Handles both string ID and populated object (e.g. Mongoose populate returns full doc)
+function resolveRefId(val: unknown): string | undefined {
+  if (typeof val === "string") return val || undefined;
+  if (val && typeof val === "object") {
+    const o = val as Record<string, unknown>;
+    const id = o.id ?? o._id ?? o.contextId;
+    return typeof id === "string" ? id : undefined;
+  }
+  return undefined;
+}
 
 type RawCharacterEvent = {
   id?: string;
@@ -123,13 +134,13 @@ export interface CreateCharacterRequest {
 
 export type UpdateCharacterRequest = Partial<CreateCharacterRequest>;
 
-function mapCharacter(raw: RawCharacter): Character {
+export function mapCharacter(raw: RawCharacter): Character {
   const contextId =
-    raw.context?.contextId ??
+    resolveRefId(raw.context?.contextId) ??
     raw.context?.id ??
-    raw.contextId ??
-    raw.contextIds?.[0]?.contextId ??
-    raw.contexts?.[0]?.contextId;
+    resolveRefId(raw.contextId) ??
+    resolveRefId(raw.contextIds?.[0]?.contextId) ??
+    resolveRefId(raw.contexts?.[0]?.contextId);
   return {
     backendId: raw._id,
     id: raw.characterId ?? raw.id ?? `char-${Math.random().toString(36).slice(2)}`,
@@ -187,7 +198,7 @@ export const characterService = {
         ...raw,
         characterId: raw.characterId ?? raw.id,
         image: raw.image ?? raw.imageUrl,
-        contextId: raw.context?.contextId ?? raw.contextId ?? contextId,
+        contextId: resolveRefId(raw.context?.contextId) ?? resolveRefId(raw.contextId) ?? contextId,
       };
       return mapCharacter(normalized);
     });

@@ -237,13 +237,22 @@ export const chatService = {
   getCharacter: async (characterId: string): Promise<ChatCharacter> => {
     const res = await axiosClient.get(`/characters/${characterId}`);
     const raw = res.data.data;
-    // Handle multiple API response formats for contextId
+    // Handle multiple API response formats for contextId (including populated objects from Mongoose)
+    const resolveId = (val: unknown): string | undefined => {
+      if (typeof val === "string") return val || undefined;
+      if (val && typeof val === "object") {
+        const o = val as Record<string, unknown>;
+        const id = o.id ?? o._id ?? o.contextId;
+        return typeof id === "string" ? id : undefined;
+      }
+      return undefined;
+    };
     const contextId =
-      raw.context?.contextId ??
+      resolveId(raw.context?.contextId) ??
       raw.context?.id ??
-      raw.contextId ??
-      raw.contextIds?.[0]?.contextId ??
-      raw.contexts?.[0]?.contextId ??
+      resolveId(raw.contextId) ??
+      resolveId(raw.contextIds?.[0]?.contextId) ??
+      resolveId(raw.contexts?.[0]?.contextId) ??
       null;
     return {
       id: raw.characterId,
