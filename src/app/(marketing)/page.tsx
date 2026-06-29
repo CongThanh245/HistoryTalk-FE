@@ -2,6 +2,8 @@ import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { HeroSection } from "@/components/marketing/section/hero-section";
 import type { Character } from "@/services/character.service";
+import { mapCharacter } from "@/services/character.service";
+import { axiosServer } from "@/configs/axios.server";
 
 // Lazy load sections below the fold để giảm initial bundle size
 const ProblemSection = dynamic(
@@ -104,10 +106,27 @@ function SectionSkeleton() {
   );
 }
 
-export default function MarketingPage() {
+async function fetchHeroCharacters(): Promise<Character[]> {
+  try {
+    const res = await axiosServer.get("/characters", {
+      params: { limit: 6, isPublished: true },
+    });
+    const content = res.data?.data?.content;
+    if (Array.isArray(content) && content.length > 0) {
+      return content.map(mapCharacter);
+    }
+    return fallbackCharacters;
+  } catch {
+    return fallbackCharacters;
+  }
+}
+
+export default async function MarketingPage() {
+  const heroCharacters = await fetchHeroCharacters();
+
   return (
     <div data-marketing-scroll className="w-full">
-      <HeroSection initialCharacters={fallbackCharacters} />
+      <HeroSection initialCharacters={heroCharacters} />
       <Suspense fallback={<SectionSkeleton />}>
         <ProblemSection />
       </Suspense>
