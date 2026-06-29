@@ -313,15 +313,15 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         <h3 className="text-sm font-bold leading-snug mb-1 line-clamp-1 text-white drop-shadow-sm">
           {character.name}
         </h3>
-        <p className="mb-1 text-[9px] font-semibold leading-none text-[var(--accent-gold)] sm:text-[10px]">
+        <p className="mb-1 text-[9px] font-semibold leading-none text-amber-400 sm:text-[10px]">
           {lifespan}
         </p>
         <div className="flex items-center gap-1.5 text-[11px] font-semibold min-w-0 text-white/70">
-          <ChatTextIcon className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
-          <span className="text-neutral-400 font-normal truncate">{character.title}</span>
+          <ChatTextIcon className="w-3.5 h-3.5 text-amber-400" />
+          <span className="text-neutral-200 font-normal truncate">{character.title}</span>
         </div>
         {character.description && (
-          <p className="mt-1 text-[10px] leading-snug text-white/55 line-clamp-2 sm:line-clamp-2">
+          <p className="mt-1 text-[10px] leading-snug text-white/80 line-clamp-2 sm:line-clamp-2">
             {character.description}
           </p>
         )}
