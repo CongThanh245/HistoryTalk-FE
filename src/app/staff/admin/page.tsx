@@ -533,13 +533,13 @@ export default function AdminDashboardPage() {
   const paidOrdersList = (revenue?.trend ?? []).map((p) => p.paidOrders);
 
   const orderStatusRows = [
-    { status: "paid", count: payments?.summary.paidOrders ?? 0 },
-    { status: "pending", count: payments?.summary.pendingOrders ?? 0 },
-    { status: "failed", count: payments?.summary.failedOrders ?? 0 },
-    { status: "cancelled", count: payments?.summary.cancelledOrders ?? 0 },
-    { status: "expired", count: payments?.summary.expiredOrders ?? 0 },
+    { status: "paid", count: payments?.summary?.paidOrders ?? 0 },
+    { status: "pending", count: payments?.summary?.pendingOrders ?? 0 },
+    { status: "failed", count: payments?.summary?.failedOrders ?? 0 },
+    { status: "cancelled", count: payments?.summary?.cancelledOrders ?? 0 },
+    { status: "expired", count: payments?.summary?.expiredOrders ?? 0 },
   ];
-  const totalOrders = payments?.summary.totalOrders ?? 0;
+  const totalOrders = payments?.summary?.totalOrders ?? 0;
   const orderStatusMax = Math.max(...orderStatusRows.map((row) => row.count), 1);
 
   return (
@@ -933,8 +933,8 @@ export default function AdminDashboardPage() {
               )}
               <div className="pt-2 border-t border-dashed border-[var(--card-light-border)]">
                 <StatRow label="Tổng đơn hàng" value={totalOrders} highlight />
-                <StatRow label="Giao dịch thành công" value={payments?.summary.successfulTransactions ?? 0} />
-                <StatRow label="Giao dịch thất bại" value={payments?.summary.failedTransactions ?? 0} />
+                <StatRow label="Giao dịch thành công" value={payments?.summary?.successfulTransactions ?? 0} />
+                <StatRow label="Giao dịch thất bại" value={payments?.summary?.failedTransactions ?? 0} />
               </div>
             </CardContent>
           </Card>
