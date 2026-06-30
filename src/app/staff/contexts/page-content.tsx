@@ -131,6 +131,16 @@ function extractYoutubeId(url?: string | null) {
   return match?.[1] ?? null;
 }
 
+function isDirectVideoUrl(url?: string | null) {
+  if (!url) return false;
+  try {
+    const pathname = new URL(url).pathname.toLowerCase();
+    return /\.(mp4|webm|ogg|mov|avi|mkv)$/.test(pathname);
+  } catch {
+    return false;
+  }
+}
+
 export default function StaffContextsPage() {
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | "published" | "draft">("all");
@@ -981,11 +991,11 @@ export default function StaffContextsPage() {
                       <ValidationErrorText message={errors.imageUrl} />
                     </div>
                     <div className="grid gap-1.5">
-                      <StaffFormLabel>URL video (YouTube)</StaffFormLabel>
+                      <StaffFormLabel>URL video (YouTube hoặc file .mp4)</StaffFormLabel>
                       <StaffFormInput
                         value={draft.videoUrl}
                         onChange={(e) => set("videoUrl")(e.target.value)}
-                        placeholder="https://youtube.com/watch?v=..."
+                        placeholder="https://youtube.com/watch?v=... hoặc https://.../video.mp4"
                       />
                       <ValidationErrorText message={errors.videoUrl} />
                     </div>
@@ -1035,9 +1045,16 @@ export default function StaffContextsPage() {
                               allowFullScreen
                               style={{ border: "none" }}
                             />
+                          ) : isDirectVideoUrl(draft.videoUrl) ? (
+                            <video
+                              src={draft.videoUrl}
+                              controls
+                              className="h-full w-full object-cover"
+                              style={{ background: "#000" }}
+                            />
                           ) : (
                             <div className="flex h-full items-center justify-center px-4 text-center text-xs" style={{ color: "var(--content-muted)" }}>
-                              Dán URL YouTube hợp lệ để xem trước
+                              Dán URL YouTube hoặc file video (.mp4) để xem trước
                             </div>
                           )}
                         </div>
