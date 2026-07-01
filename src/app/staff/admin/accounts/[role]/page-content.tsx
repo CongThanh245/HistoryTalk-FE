@@ -90,15 +90,15 @@ const ROLE_ENUM: Record<string, AdminRole> = {
 };
 
 const TIER_LABELS: Record<string, string> = {
-  tier_free: "Free",
-  tier_plus: "Plus",
-  tier_pro: "Pro",
+  free: "Free",
+  plus: "Plus",
+  pro: "Pro",
 };
 
 const TIER_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  tier_free: { bg: "rgba(100,116,139,0.10)", text: "rgb(71,85,105)", border: "rgba(100,116,139,0.25)" },
-  tier_plus: { bg: "rgba(59,130,246,0.10)", text: "rgb(37,99,235)", border: "rgba(59,130,246,0.25)" },
-  tier_pro: { bg: "rgba(168,85,247,0.10)", text: "rgb(126,34,206)", border: "rgba(168,85,247,0.25)" },
+  free: { bg: "rgba(100,116,139,0.10)", text: "rgb(71,85,105)", border: "rgba(100,116,139,0.25)" },
+  plus: { bg: "rgba(59,130,246,0.10)", text: "rgb(37,99,235)", border: "rgba(59,130,246,0.25)" },
+  pro: { bg: "rgba(168,85,247,0.10)", text: "rgb(126,34,206)", border: "rgba(168,85,247,0.25)" },
 };
 
 function formatDate(iso: string) {
@@ -227,7 +227,8 @@ export default function AdminAccountsPage() {
             "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981",
             "#06b6d4", "#ef4444", "#6366f1",
           ];
-          const bgColor = colors[u.uid.charCodeAt(u.uid.length - 1) % colors.length];
+          const uidKey = u.uid || displayName;
+          const bgColor = colors[uidKey.charCodeAt(uidKey.length - 1) % colors.length];
           return (
             <div className="flex items-center gap-3 min-w-[200px]">
               <div
@@ -261,8 +262,8 @@ export default function AdminAccountsPage() {
         accessorKey: "tierId",
         header: "Gói",
         cell: ({ row }) => {
-          const tier = row.original.tierId || "tier_free";
-          const c = TIER_COLORS[tier] ?? TIER_COLORS["tier_free"];
+          const tier = row.original.tierTitle || "free";
+          const c = TIER_COLORS[tier] ?? TIER_COLORS["free"];
           return (
             <span
               className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold"
