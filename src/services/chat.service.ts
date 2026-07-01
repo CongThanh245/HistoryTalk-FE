@@ -76,9 +76,10 @@ export interface ChatCharacter {
 export const chatService = {
   getSessions: async (
     characterId: string,
+    contextId: string,
   ): Promise<ChatSession[]> => {
     const res = await axiosClient.get("/chat/sessions", {
-      params: { characterId },
+      params: { characterId, contextId },
       timeout: 90000, 
     });
     return res.data.data;
@@ -86,11 +87,13 @@ export const chatService = {
 
   createSession: async (
     characterId: string,
+    contextId: string,
   ): Promise<ChatSession> => {
     const res = await axiosClient.post(
       "/chat/sessions",
       {
         characterId,
+        contextId,
       },
       {
         timeout: 90000,
@@ -255,7 +258,7 @@ export const chatService = {
       resolveId(raw.contexts?.[0]?.contextId) ??
       null;
     return {
-      id: raw.characterId,
+      id: raw.characterId ?? raw.id ?? characterId,
       name: raw.name,
       title: raw.title,
       description: raw.background,

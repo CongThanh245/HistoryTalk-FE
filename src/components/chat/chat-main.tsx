@@ -112,6 +112,7 @@ const groupChatDisplayItems = (messages: ChatMessage[]): ChatDisplayItem[] => {
 
 interface ChatMainProps {
   character: ChatCharacter;
+  contextId: string;
   sessionId: string | null;
   onSessionCreated: (sessionId: string) => void;
   toggleLeftPanel?: () => void;
@@ -122,6 +123,7 @@ interface ChatMainProps {
 
 export function ChatMain({
   character,
+  contextId,
   sessionId,
   onSessionCreated,
   toggleLeftPanel,
@@ -470,9 +472,11 @@ export function ChatMain({
     let currentSessionId = sessionId;
 
     if (!currentSessionId) {
+      if (!contextId) return;
       try {
         const newSession = await createSession.mutateAsync({
           characterId: character.id,
+          contextId,
         });
         currentSessionId = newSession.id;
         onSessionCreated?.(currentSessionId);

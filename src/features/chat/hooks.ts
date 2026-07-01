@@ -6,12 +6,13 @@ import { useAuthStore } from "@/store/auth.store";
 
 export function useChatSessions(
   characterId: string,
+  contextId: string,
   ready = true,
 ) {
   return useQuery({
-    queryKey: queryKeys.chat.sessions(characterId),
-    queryFn: () => chatService.getSessions(characterId),
-    enabled: !!characterId && ready,
+    queryKey: queryKeys.chat.sessions(characterId, contextId),
+    queryFn: () => chatService.getSessions(characterId, contextId),
+    enabled: !!characterId && !!contextId && ready,
     staleTime: 0, // ← luôn fetch lại khi mount để lấy sessions mới nhất
     refetchOnWindowFocus: false, // ← không refetch khi focus tab
     refetchOnMount: true, // ← fetch khi mount để tránh dùng cache cũ
@@ -35,12 +36,14 @@ export function useCreateSession() {
   return useMutation({
     mutationFn: ({
       characterId,
+      contextId,
     }: {
       characterId: string;
-    }) => chatService.createSession(characterId),
-    onSuccess: (_, { characterId }) => {
+      contextId: string;
+    }) => chatService.createSession(characterId, contextId),
+    onSuccess: (_, { characterId, contextId }) => {
       qc.invalidateQueries({
-        queryKey: queryKeys.chat.sessions(characterId),
+        queryKey: queryKeys.chat.sessions(characterId, contextId),
       });
     },
     onError: () => toast.error("Không thể tạo cuộc trò chuyện mới"),

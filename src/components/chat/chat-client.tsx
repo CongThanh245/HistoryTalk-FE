@@ -18,10 +18,14 @@ interface ChatClientProps {
 
 export function ChatClient({
   initialCharacterId,
+  initialContextId,
+  initialSessionId,
 }: ChatClientProps) {
   const [activeCharacterId, setActiveCharacterId] =
     useState<string | null>(initialCharacterId || null);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(
+    initialSessionId || null,
+  );
   const sessionInitialized = useRef(false); // ← tránh gọi nhiều lần
 
   const { data: activeCharacter, isLoading: isLoadingCharacter } = useQuery({
@@ -32,6 +36,13 @@ export function ChatClient({
   });
 
   const characterId = activeCharacter?.id ?? "";
+  const routeContextId =
+    activeCharacterId === initialCharacterId ? initialContextId : undefined;
+  const contextId =
+    routeContextId ??
+    activeCharacter?.contextId ??
+    activeCharacter?.contexts?.[0]?.contextId ??
+    "";
 
   // Fetch sessions — chỉ khi đã có character
   const {
@@ -40,6 +51,7 @@ export function ChatClient({
     isSuccess: isSessionsSuccess, // ← thêm
   } = useChatSessions(
     characterId,
+    contextId,
     !!activeCharacter, // ← thêm param enabled
   );
 
@@ -48,11 +60,12 @@ export function ChatClient({
   // Reset ref khi character thay đổi (bao gồm lần mount đầu tiên)
   useEffect(() => {
     sessionInitialized.current = false;
-  }, [characterId]);
+  }, [characterId, contextId]);
 
   // Init session: dùng session gần nhất nếu có, không thì tạo mới
   useEffect(() => {
     if (!characterId) return;
+    if (!contextId) return;
     if (!isSessionsSuccess) return; // chờ fetch xong
     if (sessionInitialized.current) return; // đã init rồi
     if (activeSessionId) return; // đã có session rồi
@@ -63,11 +76,11 @@ export function ChatClient({
       setActiveSessionId(sessions[0].id); // dùng session gần nhất
     } else {
       // Chưa có session nào → tạo mới
-      createSession.mutateAsync({ characterId }).then((session) => {
+      createSession.mutateAsync({ characterId, contextId }).then((session) => {
         setActiveSessionId(session.id);
       });
     }
-  }, [characterId, isSessionsSuccess, sessions, activeSessionId, createSession]);
+  }, [characterId, contextId, isSessionsSuccess, sessions, activeSessionId, createSession]);
   // Reset khi đổi nhân vật
   const handleSelectCharacter = useCallback((char: ChatCharacter) => {
     setActiveCharacterId(char.id);
@@ -111,6 +124,7 @@ export function ChatClient({
     <div className="flex h-full w-full overflow-hidden relative">
       <ChatLeftPanel
         characterId={characterId}
+        contextId={contextId}
         sessions={sessions ?? []}
         isLoadingSessions={isLoadingSessions}
         activeSessionId={activeSessionId}
@@ -122,6 +136,7 @@ export function ChatClient({
       />
       <ChatMain
         character={activeCharacter}
+        contextId={contextId}
         sessionId={activeSessionId}
         onSessionCreated={handleSessionCreated}
         toggleLeftPanel={() => setIsLeftPanelOpen(!isLeftPanelOpen)}

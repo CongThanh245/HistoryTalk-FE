@@ -415,10 +415,12 @@ export function StaffCharacterDetailView({
   /* Whether the character has been persisted (has an id) */
   const isCreated = !!(createdCharacterId || draft.id);
   const characterId = createdCharacterId || draft.id || "";
+  const chatContextId = mappedContexts[0]?.contextId || "";
 
   // Fetch or create session when character becomes active
   const { data: sessions, isSuccess: isSessionsSuccess } = useChatSessions(
     characterId,
+    chatContextId,
     isCreated
   );
 
@@ -427,6 +429,7 @@ export function StaffCharacterDetailView({
 
   React.useEffect(() => {
     if (!isCreated) return;
+    if (!chatContextId) return;
     if (!isSessionsSuccess) return;
     if (sessionInitialized.current) return;
     if (sessionId) return;
@@ -437,12 +440,13 @@ export function StaffCharacterDetailView({
       setSessionId(sessions[0].id);
     } else {
       createSession.mutateAsync({
-        characterId
+        characterId,
+        contextId: chatContextId,
       }).then((session) => {
         setSessionId(session.id);
       }).catch(console.error);
     }
-  }, [isCreated, characterId, isSessionsSuccess, sessions, sessionId, createSession]);
+  }, [isCreated, characterId, chatContextId, isSessionsSuccess, sessions, sessionId, createSession]);
 
   /* Build a ChatCharacter object from the draft for the right panel */
   const chatCharacter: ChatCharacter = {
@@ -1581,6 +1585,7 @@ export function StaffCharacterDetailView({
           {canStartChat ? (
             <ChatMain
               character={chatCharacter}
+              contextId={chatContextId}
               sessionId={sessionId}
               onSessionCreated={setSessionId}
             />
