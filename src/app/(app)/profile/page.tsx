@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,7 +14,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
   useProfile,
@@ -22,7 +21,7 @@ import {
   useChangePassword,
   useMyPaymentHistory,
 } from "@/features/profile/hooks";
-import { isPro } from "@/services/user.service";
+import { isPro, type UserProfile } from "@/services/user.service";
 import {
   UserIcon,
   CrownSimpleIcon,
@@ -89,6 +88,12 @@ function normalizeGender(value: string | null | undefined): "MALE" | "FEMALE" | 
   return "";
 }
 
+const GENDER_LABELS: Record<"MALE" | "FEMALE" | "OTHER", string> = {
+  MALE: "Nam",
+  FEMALE: "N\u1eef",
+  OTHER: "Kh\u00e1c",
+};
+
 function statusBadge(status: string) {
   const map: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
     PAID: { label: "Thành công", color: "#22c55e", icon: CheckCircleIcon },
@@ -136,32 +141,25 @@ function ProfileSkeleton() {
 // ── Tab 1: Hồ sơ cá nhân ────────────────────
 function PersonalProfileTab() {
   const { data: profile, isLoading } = useProfile();
+
+  if (isLoading || !profile) return <ProfileSkeleton />;
+
+  // key remounts the form (fresh initial state) whenever the loaded account changes
+  return <PersonalProfileForm key={profile.uid} profile={profile} />;
+}
+
+function PersonalProfileForm({ profile }: { profile: UserProfile }) {
   const { mutate: updateProfile, isPending } = useUpdateProfile();
 
   const [form, setForm] = useState({
-    fullName: "",
-    userName: "",
-    phoneNumber: "",
-    address: "",
-    dob: "",
-    gender: "",
-    avatarUrl: "",
+    fullName: profile.fullName ?? "",
+    userName: profile.userName ?? "",
+    phoneNumber: profile.phoneNumber ?? "",
+    address: profile.address ?? "",
+    dob: profile.dob ? profile.dob.slice(0, 10) : "",
+    gender: normalizeGender(profile.gender),
+    avatarUrl: profile.avatarUrl ?? "",
   });
-
-  useEffect(() => {
-    if (profile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setForm({
-        fullName: profile.fullName ?? "",
-        userName: profile.userName ?? "",
-        phoneNumber: profile.phoneNumber ?? "",
-        address: profile.address ?? "",
-        dob: profile.dob ? profile.dob.slice(0, 10) : "",
-        gender: normalizeGender(profile.gender),
-        avatarUrl: profile.avatarUrl ?? "",
-      });
-    }
-  }, [profile]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,9 +174,7 @@ function PersonalProfileTab() {
     });
   };
 
-  if (isLoading) return <ProfileSkeleton />;
-
-  const initials = (profile?.userName ?? "?")
+  const initials = (profile.userName ?? "?")
     .split(" ")
     .map((w: string) => w[0])
     .join("")
@@ -309,7 +305,7 @@ function PersonalProfileTab() {
               </Label>
               <Select
                 value={form.gender}
-                onValueChange={(v) => setForm({ ...form, gender: v })}
+                onValueChange={(v) => setForm({ ...form, gender: normalizeGender(v) })}
               >
                 <SelectTrigger
                   className="h-10 border text-sm"
@@ -320,9 +316,15 @@ function PersonalProfileTab() {
                     borderRadius: "10px",
                   }}
                 >
-                  <SelectValue placeholder="Chọn giới tính" />
+                  <span data-slot="select-value" className="line-clamp-1">
+                    {form.gender ? (
+                      GENDER_LABELS[form.gender as "MALE" | "FEMALE" | "OTHER"]
+                    ) : (
+                      <span style={{ color: "var(--text-muted)" }}>Chọn giới tính</span>
+                    )}
+                  </span>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" side="bottom" align="start">
                   <SelectItem value="MALE">Nam</SelectItem>
                   <SelectItem value="FEMALE">Nữ</SelectItem>
                   <SelectItem value="OTHER">Khác</SelectItem>
@@ -374,7 +376,6 @@ function PersonalProfileTab() {
             opacity: isPending ? 0.7 : 1,
           }}
         >
-          <FloppyDiskIcon className="w-4 h-4" weight="bold" />
           {isPending ? "Đang lưu..." : "Lưu thay đổi"}
         </Button>
         </div>

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils/cn";
 import { UpgradeProDialog } from "./upgrade-pro-dialog";
 import { useProfile } from "@/features/profile/hooks";
 import { isPro } from "@/services/user.service";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 
 interface SidebarFooterProps {
@@ -13,10 +14,19 @@ interface SidebarFooterProps {
 }
 
 export default function SidebarFooter({ isExpanded, showUpgrade = true }: SidebarFooterProps) {
-  const { data: profile } = useProfile();
+  const { data: profile, isLoading } = useProfile();
   const proUser = isPro(profile ?? null);
 
   if (!showUpgrade) return null;
+
+  /* ── Loading: avoid flashing the wrong tier before profile arrives ── */
+  if (isLoading) {
+    return (
+      <div className="relative z-10 shrink-0 px-2 py-3 border-t" style={{ borderColor: "var(--border-default)" }}>
+        <Skeleton className="w-full rounded-xl" style={{ height: 72 }} />
+      </div>
+    );
+  }
 
   /* ── PRO Member Card ─────────────────────────────────── */
   if (proUser && profile) {
