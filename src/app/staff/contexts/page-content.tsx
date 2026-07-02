@@ -23,6 +23,7 @@ import {
   StaffFormTextarea,
   StaffFormSelect,
 } from "@/components/staff/staff-form";
+import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { isValidUrl } from "@/lib/utils/url";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import {
@@ -161,7 +162,6 @@ export default function StaffContextsPage() {
   const [restoreOpen, setRestoreOpen] = React.useState(false);
   const [tablePublishTarget, setTablePublishTarget] =
     React.useState<HistoricalEvent | null>(null);
-  const [publishDialogOpen, setPublishDialogOpen] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<"content" | "rag">("content");
   const ragSectionRef = React.useRef<HTMLDivElement>(null);
   const [errors, setErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
@@ -826,52 +826,20 @@ export default function StaffContextsPage() {
               </div>
 
               <div className="flex flex-wrap items-center justify-end gap-2">
-                <div
-                  className="flex items-center gap-3 py-2 px-3 rounded-xl border transition-colors"
-                  style={{
-                    borderColor: draft.isPublished ? "rgba(34,197,94,0.35)" : "rgba(234,179,8,0.35)",
-                    background: draft.isPublished ? "rgba(34,197,94,0.06)" : "rgba(254,243,199,0.25)",
+                <StaffPublishToggle
+                  isPublished={draft.isPublished}
+                  canPublish={!hasValidationErrors(validateContextDraft(draft))}
+                  entityLabel="bối cảnh"
+                  className="py-2"
+                  onPublish={() => set("isPublished")(true)}
+                  onUnpublish={() => set("isPublished")(false)}
+                  onBlockedAttempt={() => {
+                    const nextErrors = validateContextDraft(draft);
+                    setErrors(nextErrors);
+                    setActiveTab("content");
+                    toast.error("Vui lòng hoàn tất bối cảnh trước khi xuất bản.");
                   }}
-                >
-                  <div className="text-right">
-                    <p className="text-sm font-semibold" style={{ color: draft.isPublished ? "rgb(22,163,74)" : "#92400e" }}>
-                      {draft.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
-                    </p>
-                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                      {draft.isPublished ? "Đang hiển thị cho người dùng" : "Bật để xuất bản"}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={draft.isPublished}
-                    onClick={() => {
-                      if (!draft.isPublished) {
-                        const nextErrors = validateContextDraft(draft);
-                        if (hasValidationErrors(nextErrors)) {
-                          setErrors(nextErrors);
-                          toast.error("Vui lòng hoàn tất bối cảnh trước khi xuất bản.");
-                          return;
-                        }
-                        setPublishDialogOpen(true);
-                      } else {
-                        set("isPublished")(false);
-                      }
-                    }}
-                    className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                    style={{
-                      background: draft.isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)",
-                    }}
-                  >
-                    <span
-                      className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
-                      style={{
-                        background: "#fff",
-                        transform: draft.isPublished ? "translateX(20px)" : "translateX(0)",
-                      }}
-                    />
-                  </button>
-                </div>
+                />
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Đóng form
                 </Button>
@@ -1443,19 +1411,6 @@ export default function StaffContextsPage() {
         </form>
       </section>
       )}
-
-      <ConfirmDialog
-        open={publishDialogOpen}
-        onOpenChange={setPublishDialogOpen}
-        title="Xác nhận xuất bản bối cảnh?"
-        description='Khi chuyển sang "Đã xuất bản", bối cảnh này sẽ được hiển thị công khai cho người dùng. Bạn có chắc chắn muốn thực hiện không?'
-        confirmLabel="Đồng ý, xuất bản"
-        variant="warning"
-        onConfirm={() => {
-          set("isPublished")(true);
-          setPublishDialogOpen(false);
-        }}
-      />
 
       <ConfirmDialog
         open={!!tablePublishTarget}

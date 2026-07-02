@@ -41,7 +41,7 @@ export const StaffFormInput = React.forwardRef<
   <Input
     ref={ref}
     className={cn(
-      "bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10",
+      "bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10 disabled:pointer-events-auto disabled:cursor-not-allowed",
       className
     )}
     style={{ color: "var(--content-heading)", ...style }}

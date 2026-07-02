@@ -44,9 +44,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { ChatMain } from "@/components/chat/chat-main";
 import { StaffCharacterMediaPreview } from "@/components/staff/staff-media-preview";
+import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { useChatSessions, useCreateSession } from "@/features/chat/hooks";
 import type { ChatCharacter } from "@/services/chat.service";
 import type { HistoricalEvent, EventEraBackend } from "@/services/event.service";
@@ -196,6 +198,24 @@ function getCharacterRelatedValidationFields(
   return [];
 }
 
+type FormTabKey = "basic" | "media" | "content" | "rag" | "context";
+
+const FORM_TABS: { key: FormTabKey; label: string }[] = [
+  { key: "basic", label: "Cơ bản" },
+  { key: "media", label: "Media" },
+  { key: "content", label: "Nội dung" },
+  { key: "rag", label: "Tài liệu" },
+  { key: "context", label: "Liên kết bối cảnh" },
+];
+
+const TAB_ERROR_FIELDS: Record<FormTabKey, CharacterValidationField[]> = {
+  basic: ["name", "title", "bornDay", "bornMonth", "bornYear", "deathDay", "deathMonth", "deathYear"],
+  media: ["image", "modelUrl"],
+  content: ["background", "personality"],
+  rag: [],
+  context: [],
+};
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
@@ -229,11 +249,16 @@ export function StaffCharacterDetailView({
   /* ── State ── */
   const [draft, setDraft] = React.useState<CharacterDraft>(initialDraft || EMPTY_CHARACTER_DRAFT);
   const [isEditing, setIsEditing] = React.useState(mode === "create" || !!initialEditing);
-  const [publishDialogOpen, setPublishDialogOpen] = React.useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = React.useState(false);
   const [errors, setErrors] = React.useState<ValidationErrors<CharacterValidationField>>({});
   const [quickErrors, setQuickErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
+  const [activeTab, setActiveTab] = React.useState<FormTabKey>("basic");
+
+  const tabHasError = React.useCallback(
+    (tab: FormTabKey) => TAB_ERROR_FIELDS[tab].some((field) => !!errors[field]),
+    [errors],
+  );
 
   /* ── PDF Dialog State ── */
   const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
@@ -400,18 +425,6 @@ export function StaffCharacterDetailView({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty, isEditing]);
 
-  // Auto-exit editing mode after save completes successfully
-  const prevPendingRef = React.useRef(false);
-  React.useEffect(() => {
-    if (prevPendingRef.current && !isPending) {
-      const nowCreated = !!(createdCharacterId || draft.id);
-      if (nowCreated) {
-        setIsEditing(false);
-      }
-    }
-    prevPendingRef.current = isPending;
-  }, [isPending, createdCharacterId, draft.id]);
-
   /* Whether the character has been persisted (has an id) */
   const isCreated = !!(createdCharacterId || draft.id);
   const characterId = createdCharacterId || draft.id || "";
@@ -448,6 +461,36 @@ export function StaffCharacterDetailView({
     }
   }, [isCreated, characterId, chatContextId, isSessionsSuccess, sessions, sessionId, createSession]);
 
+  // Auto-exit editing mode after save completes successfully. If the
+  // character already existed (i.e. this was an edit, not the initial
+  // creation), start a brand-new chat session so the right-panel preview
+  // always reflects the just-saved character data instead of stale history.
+  const prevPendingRef = React.useRef(false);
+  const characterExistedBeforeSaveRef = React.useRef(false);
+  React.useEffect(() => {
+    if (isPending && !prevPendingRef.current) {
+      characterExistedBeforeSaveRef.current = isCreated;
+    }
+    if (prevPendingRef.current && !isPending) {
+      const nowCreated = !!(createdCharacterId || draft.id);
+      if (nowCreated) {
+        setIsEditing(false);
+        if (characterExistedBeforeSaveRef.current && chatContextId) {
+          createSession.mutate(
+            { characterId, contextId: chatContextId },
+            {
+              onSuccess: (session) => {
+                setSessionId(session.id);
+                toast.success("Đã tạo phiên trò chuyện mới để test thay đổi.");
+              },
+            },
+          );
+        }
+      }
+    }
+    prevPendingRef.current = isPending;
+  }, [isPending, createdCharacterId, draft.id, isCreated, chatContextId, characterId, createSession]);
+
   /* Build a ChatCharacter object from the draft for the right panel */
   const chatCharacter: ChatCharacter = {
     id: characterId,
@@ -472,9 +515,18 @@ export function StaffCharacterDetailView({
   const hasPublishErrors = hasValidationErrors(publishValidationErrors);
   const canSave = !hasSaveErrors && !isPending;
   const canStartChat = isCreated && mappedContexts.length > 0 && !hasPublishErrors;
+  const canPublishCharacter = !isEditing || (!hasPublishErrors && mappedContexts.length > 0);
+  const publishBlockedMessage =
+    mappedContexts.length === 0
+      ? "⚠ Cần liên kết bối cảnh lịch sử trước khi xuất bản."
+      : "⚠ Cần hoàn tất các trường bắt buộc trước khi xuất bản.";
 
   const showValidationErrors = (nextErrors = saveValidationErrors) => {
     setErrors(nextErrors);
+    const firstInvalidTab = FORM_TABS.find((tab) =>
+      TAB_ERROR_FIELDS[tab.key].some((field) => !!nextErrors[field]),
+    );
+    if (firstInvalidTab) setActiveTab(firstInvalidTab.key);
     toast.error("Vui lòng kiểm tra các trường bắt buộc và định dạng ngày tháng.");
   };
 
@@ -671,13 +723,65 @@ export function StaffCharacterDetailView({
       <div className="flex-1 flex min-h-0">
         {/* ── Left Panel: Form ── */}
         <div
-          className="w-[560px] shrink-0 border-r overflow-y-auto"
+          className="w-[600px] shrink-0 border-r overflow-hidden flex flex-col"
           style={{ borderColor: "var(--card-light-border)" }}
         >
-          <div className="px-6 py-6 space-y-5">
-            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-              Thông tin nhân vật
-            </p>
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as FormTabKey)}
+            className="flex flex-col h-full min-h-0 gap-0"
+          >
+            <div
+              className="px-6 pt-6 pb-4 shrink-0 border-b"
+              style={{ borderColor: "var(--card-light-border)" }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--content-heading)" }}>
+                Thông tin nhân vật
+              </p>
+
+              <StaffPublishToggle
+                isPublished={draft.isPublished}
+                disabled={!isEditing}
+                canPublish={canPublishCharacter}
+                blockedMessage={publishBlockedMessage}
+                entityLabel="nhân vật"
+                onPublish={() => set("isPublished")(true)}
+                onUnpublish={() => set("isPublished")(false)}
+                onBlockedAttempt={() => {
+                  if (hasPublishErrors) {
+                    showValidationErrors(publishValidationErrors);
+                  } else if (mappedContexts.length === 0) {
+                    setActiveTab("context");
+                    toast.error("Vui lòng liên kết bối cảnh lịch sử trước khi xuất bản.");
+                  }
+                }}
+                className="mb-3"
+              />
+
+              <TabsList
+                className="w-full grid grid-cols-5 h-auto p-1 gap-1"
+                style={{ background: "rgba(27,38,50,0.04)" }}
+              >
+                {FORM_TABS.map((tab) => (
+                  <TabsTrigger
+                    key={tab.key}
+                    value={tab.key}
+                    className="relative text-[11px] px-1 py-2 leading-tight whitespace-normal text-center data-[state=active]:shadow-sm"
+                  >
+                    {tab.label}
+                    {tabHasError(tab.key) && (
+                      <span
+                        className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full"
+                        style={{ background: "var(--accent-danger)" }}
+                      />
+                    )}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+            <TabsContent value="basic" className="space-y-5 mt-0">
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
@@ -783,7 +887,9 @@ export function StaffCharacterDetailView({
                 <ValidationErrorText message={errors.deathDay || errors.deathMonth || errors.deathYear} />
               </div>
             </div>
+            </TabsContent>
 
+            <TabsContent value="media" className="space-y-5 mt-0">
             <div className="grid gap-1.5">
               <StaffFormLabel>URL hình ảnh nhân vật</StaffFormLabel>
               <StaffFormInput
@@ -811,7 +917,9 @@ export function StaffCharacterDetailView({
               modelUrl={draft.modelUrl}
               alt={draft.name || "Ảnh nhân vật"}
             />
+            </TabsContent>
 
+            <TabsContent value="content" className="space-y-5 mt-0">
             <div className="grid gap-1.5">
               <StaffFormLabel>Tiểu sử / Bối cảnh *</StaffFormLabel>
               <StaffFormTextarea
@@ -835,11 +943,10 @@ export function StaffCharacterDetailView({
               />
               <ValidationErrorText message={errors.personality} />
             </div>
+            </TabsContent>
 
-            <div
-              className="pt-5 mt-2 border-t space-y-3"
-              style={{ borderColor: "var(--card-light-border)" }}
-            >
+            <TabsContent value="rag" className="space-y-3 mt-0">
+            <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <ScrollIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
                   <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
@@ -1100,83 +1207,11 @@ export function StaffCharacterDetailView({
                   />
                 </div>
             </div>
+            </TabsContent>
 
-            <div
-              className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors"
-              style={{
-                borderColor: draft.isPublished
-                  ? "rgba(34,197,94,0.35)"
-                  : !isEditing || mappedContexts.length > 0
-                    ? "var(--card-light-border)"
-                    : "rgba(234,179,8,0.3)",
-                background: draft.isPublished
-                  ? "rgba(34,197,94,0.06)"
-                  : !isEditing || mappedContexts.length > 0
-                    ? "rgba(27,38,50,0.03)"
-                    : "rgba(234,179,8,0.05)",
-              }}
-            >
-              <div className="flex-1">
-                <p className="text-sm font-semibold" style={{ color: draft.isPublished ? "rgb(22,163,74)" : !isEditing || mappedContexts.length > 0 ? "var(--content-heading)" : "#92400e" }}>
-                  {draft.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
-                </p>
-                <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                  {mappedContexts.length === 0 && isEditing
-                    ? "⚠ Cần liên kết bối cảnh lịch sử trước khi xuất bản."
-                    : draft.isPublished
-                      ? "Nhân vật đang hiển thị công khai cho người dùng."
-                      : "Bật để hiển thị nhân vật cho người dùng."}
-                </p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={draft.isPublished}
-                onClick={() => {
-                  if (!draft.isPublished) {
-                    if (hasPublishErrors) {
-                      showValidationErrors(publishValidationErrors);
-                      return;
-                    }
-                    if (mappedContexts.length === 0) return;
-                    setPublishDialogOpen(true);
-                  } else {
-                    set("isPublished")(false);
-                  }
-                }}
-                disabled={!isEditing}
-                className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{
-                  background: draft.isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)",
-                }}
-              >
-                <span
-                  className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
-                  style={{
-                    background: "#fff",
-                    transform: draft.isPublished ? "translateX(20px)" : "translateX(0)",
-                  }}
-                />
-              </button>
-            </div>
-
-            <ConfirmDialog
-              open={publishDialogOpen}
-              onOpenChange={setPublishDialogOpen}
-              title="Xác nhận xuất bản nhân vật?"
-              description="Khi xuất bản, nhân vật này sẽ được hiển thị công khai cho người dùng."
-              confirmLabel="Đồng ý, xuất bản"
-              onConfirm={() => {
-                set("isPublished")(true);
-                setPublishDialogOpen(false);
-              }}
-            />
-
-            {isCreated && (
-              <div
-                className="mt-8 pt-6 border-t space-y-4"
-                style={{ borderColor: "var(--card-light-border)" }}
-              >
+            <TabsContent value="context" className="space-y-5 mt-0">
+            {isCreated ? (
+              <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <LinkIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
                   <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
@@ -1577,8 +1612,20 @@ export function StaffCharacterDetailView({
                   </SheetContent>
                 </Sheet>
               </div>
+            ) : (
+              <div
+                className="rounded-xl border border-dashed px-4 py-8 text-center"
+                style={{ borderColor: "var(--card-light-border)" }}
+              >
+                <LinkIcon className="h-5 w-5 mx-auto mb-2" style={{ color: "var(--content-muted)" }} />
+                <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+                  Tạo nhân vật trước để liên kết với bối cảnh lịch sử.
+                </p>
+              </div>
             )}
-          </div>
+            </TabsContent>
+            </div>
+          </Tabs>
         </div>
 
         {/* ── Right Panel: Chat Preview ── */}
