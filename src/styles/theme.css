@@ -51,6 +51,20 @@
   --accent-danger: #9A3F43; /* Cảnh báo / nguy hiểm */
 
   /* ─────────────────────────────
+      Status (toast, payment result…)
+   ───────────────────────────── */
+  --status-success: #4A8C62;
+  --status-success-bg: rgba(74, 140, 98, 0.1);
+  --status-success-border: rgba(74, 140, 98, 0.26);
+  --status-warning: #B88C3C;
+  --status-warning-bg: rgba(184, 140, 60, 0.1);
+  --status-warning-border: rgba(184, 140, 60, 0.26);
+  --status-danger-bg: rgba(154, 63, 67, 0.1);
+  --status-danger-border: rgba(154, 63, 67, 0.26);
+  --status-neutral-bg: rgba(50, 45, 41, 0.05);
+  --status-neutral-border: rgba(50, 45, 41, 0.16);
+
+  /* ─────────────────────────────
       Palette từ ảnh màu
    ───────────────────────────── */
   --palladian: #EFE9E1; /* Nền sáng ấm / header bg */
@@ -174,6 +188,17 @@
   --accent-bronze: #c46a2f;
   --accent-blood: #5a2323;
   --accent-danger: #b8322a;
+
+  --status-success: #5dcc78;
+  --status-success-bg: rgba(93, 204, 120, 0.12);
+  --status-success-border: rgba(93, 204, 120, 0.26);
+  --status-warning: #ffc070;
+  --status-warning-bg: rgba(255, 192, 112, 0.12);
+  --status-warning-border: rgba(255, 192, 112, 0.26);
+  --status-danger-bg: rgba(184, 50, 42, 0.14);
+  --status-danger-border: rgba(184, 50, 42, 0.28);
+  --status-neutral-bg: rgba(231, 221, 200, 0.06);
+  --status-neutral-border: rgba(231, 221, 200, 0.16);
   --burning-flame: #FAB95B;
   --truffle: #a35139;
   --blue-fantastic: #2c3b4d;

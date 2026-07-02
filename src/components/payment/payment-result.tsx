@@ -48,41 +48,46 @@ const CONFIG: Record<
     eyebrow: string;
     title: string;
     desc: string;
-    panelClass: string;
-    iconClass: string;
+    accent: string;
+    bg: string;
+    border: string;
   }
 > = {
   success: {
-    icon: <CheckCircleIcon size={42} weight="fill" />,
+    icon: <CheckCircleIcon size={26} weight="duotone" />,
     eyebrow: "Hoàn tất",
     title: "Thanh toán thành công",
     desc: "Gói Pro đã được kích hoạt. Bạn có thể quay lại HistoryTalk và dùng toàn bộ tính năng ngay.",
-    panelClass: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    iconClass: "bg-emerald-100 text-emerald-600",
+    accent: "var(--status-success)",
+    bg: "var(--status-success-bg)",
+    border: "var(--status-success-border)",
   },
   cancelled: {
-    icon: <XCircleIcon size={42} weight="fill" />,
+    icon: <XCircleIcon size={26} weight="duotone" />,
     eyebrow: "Đã hủy",
     title: "Giao dịch đã bị hủy",
     desc: "Không có khoản thanh toán nào được ghi nhận. Bạn có thể mở lại gói Pro và thanh toán khi sẵn sàng.",
-    panelClass: "border-rose-200 bg-rose-50 text-rose-700",
-    iconClass: "bg-rose-100 text-rose-600",
+    accent: "var(--accent-danger)",
+    bg: "var(--status-danger-bg)",
+    border: "var(--status-danger-border)",
   },
   pending: {
-    icon: <HourglassIcon size={42} weight="fill" />,
+    icon: <HourglassIcon size={26} weight="duotone" />,
     eyebrow: "Đang xử lý",
     title: "Đang xác nhận thanh toán",
     desc: "PayOS đang xử lý giao dịch. Nếu bạn đã chuyển khoản, trạng thái sẽ được cập nhật sau ít phút.",
-    panelClass: "border-amber-200 bg-amber-50 text-amber-700",
-    iconClass: "bg-amber-100 text-amber-600",
+    accent: "var(--status-warning)",
+    bg: "var(--status-warning-bg)",
+    border: "var(--status-warning-border)",
   },
   unknown: {
-    icon: <ClockCountdownIcon size={42} weight="fill" />,
+    icon: <ClockCountdownIcon size={26} weight="duotone" />,
     eyebrow: "Cần kiểm tra",
     title: "Chưa xác định trạng thái",
     desc: "HistoryTalk chưa nhận được trạng thái cuối cùng từ cổng thanh toán. Hãy kiểm tra lại trong lịch sử đơn hàng.",
-    panelClass: "border-slate-200 bg-slate-50 text-slate-700",
-    iconClass: "bg-slate-100 text-slate-600",
+    accent: "var(--content-muted)",
+    bg: "var(--status-neutral-bg)",
+    border: "var(--status-neutral-border)",
   },
 };
 
@@ -94,7 +99,6 @@ export default function PaymentResult() {
 
   const orderCode = params.get("orderCode");
   const amount = params.get("amount");
-  const isSuccess = status === "success";
 
   useEffect(() => {
     const code = params.get("code") ?? "";
@@ -144,19 +148,25 @@ export default function PaymentResult() {
           </aside>
 
           <div className="p-6 sm:p-8">
-            <div className={`rounded-lg border p-5 ${cfg.panelClass}`}>
-              <div className="flex items-start gap-4">
-                <div className={`grid size-14 shrink-0 place-items-center rounded-lg ${cfg.iconClass}`}>
+            <div
+              className="rounded-lg border p-5"
+              style={{ borderColor: cfg.border, background: cfg.bg }}
+            >
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 shrink-0" style={{ color: cfg.accent }}>
                   {cfg.icon}
-                </div>
+                </span>
                 <div>
-                  <p className="text-xs font-extrabold uppercase tracking-[0.12em]">
+                  <p
+                    className="text-xs font-extrabold uppercase tracking-[0.12em]"
+                    style={{ color: cfg.accent }}
+                  >
                     {cfg.eyebrow}
                   </p>
                   <h2 className="mt-1 text-2xl font-extrabold text-[var(--content-heading)]">
                     {cfg.title}
                   </h2>
-                  <p className="mt-2 text-sm leading-6">{cfg.desc}</p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--content-muted)]">{cfg.desc}</p>
                 </div>
               </div>
             </div>
