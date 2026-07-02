@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   ArrowLeftIcon,
   PencilIcon,
-  FloppyDiskIcon,
   ChatCircleDotsIcon,
   EyeIcon,
   LinkIcon,
@@ -49,6 +48,7 @@ import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { ChatMain } from "@/components/chat/chat-main";
 import { StaffCharacterMediaPreview } from "@/components/staff/staff-media-preview";
 import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
+import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
 import { useChatSessions, useCreateSession } from "@/features/chat/hooks";
 import type { ChatCharacter } from "@/services/chat.service";
 import type { HistoricalEvent, EventEraBackend } from "@/services/event.service";
@@ -254,6 +254,7 @@ export function StaffCharacterDetailView({
   const [errors, setErrors] = React.useState<ValidationErrors<CharacterValidationField>>({});
   const [quickErrors, setQuickErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
   const [activeTab, setActiveTab] = React.useState<FormTabKey>("basic");
+  const [documentDetailOpen, setDocumentDetailOpen] = React.useState(false);
 
   const tabHasError = React.useCallback(
     (tab: FormTabKey) => TAB_ERROR_FIELDS[tab].some((field) => !!errors[field]),
@@ -586,6 +587,7 @@ export function StaffCharacterDetailView({
           <Button
             variant="ghost"
             size="icon"
+            className="hover:bg-black/[0.08] dark:hover:bg-black/[0.08]"
             onClick={() => {
               if (isDirty && isEditing) {
                 setLeaveDialogOpen(true);
@@ -619,17 +621,24 @@ export function StaffCharacterDetailView({
                     : draft.name || "Nhân vật"}
                 </h1>
                 {isCreated && (
-                  <div
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold leading-none"
-                    style={{
-                      background: draft.isPublished ? "rgba(34,197,94,0.1)" : "rgba(234,179,8,0.1)",
-                      color: draft.isPublished ? "rgb(22,163,74)" : "rgb(161,98,7)",
-                      border: `1px solid ${draft.isPublished ? "rgba(34,197,94,0.2)" : "rgba(234,179,8,0.2)"}`,
+                  <StaffPublishToggle
+                    isPublished={draft.isPublished}
+                    disabled={!isEditing}
+                    canPublish={canPublishCharacter}
+                    blockedMessage={publishBlockedMessage}
+                    entityLabel="nhân vật"
+                    compact
+                    onPublish={() => set("isPublished")(true)}
+                    onUnpublish={() => set("isPublished")(false)}
+                    onBlockedAttempt={() => {
+                      if (hasPublishErrors) {
+                        showValidationErrors(publishValidationErrors);
+                      } else if (mappedContexts.length === 0) {
+                        setActiveTab("context");
+                        toast.error("Vui lòng liên kết bối cảnh lịch sử trước khi xuất bản.");
+                      }
                     }}
-                  >
-                    <EyeIcon className="h-3.5 w-3.5" />
-                    {draft.isPublished ? "ĐÃ XUẤT BẢN" : "CHƯA XUẤT BẢN"}
-                  </div>
+                  />
                 )}
               </div>
               <p className="text-xs" style={{ color: "var(--content-muted)" }}>
@@ -648,7 +657,7 @@ export function StaffCharacterDetailView({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]"
+                  className="bg-transparent border-[var(--card-light-border)] hover:bg-black/[0.08] hover:border-[var(--content-muted)] text-[var(--content-heading)] transition-colors"
                   onClick={() => {
                     if (isDirty) {
                       setCancelDialogOpen(true);
@@ -664,9 +673,8 @@ export function StaffCharacterDetailView({
                 size="sm"
                 onClick={handleSaveClick}
                 disabled={!canSave}
-                className="border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-90 hover:shadow-sm cursor-pointer"
+                className="border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-[0.85] hover:shadow-md cursor-pointer"
               >
-                <FloppyDiskIcon className="h-4 w-4 mr-1.5" />
                 {isPending
                   ? "Đang lưu..."
                   : isCreated
@@ -679,7 +687,7 @@ export function StaffCharacterDetailView({
             <Button
               variant="outline"
               size="sm"
-              className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5 text-[var(--content-heading)]"
+              className="bg-transparent border-[var(--card-light-border)] hover:bg-black/[0.08] hover:border-[var(--content-muted)] text-[var(--content-heading)] hover:text-[var(--content-heading)] dark:hover:bg-black/[0.08] dark:hover:text-[var(--content-heading)] transition-colors"
               onClick={() => setIsEditing(true)}
             >
               <PencilIcon className="h-4 w-4 mr-1.5" />
@@ -738,25 +746,6 @@ export function StaffCharacterDetailView({
               <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--content-heading)" }}>
                 Thông tin nhân vật
               </p>
-
-              <StaffPublishToggle
-                isPublished={draft.isPublished}
-                disabled={!isEditing}
-                canPublish={canPublishCharacter}
-                blockedMessage={publishBlockedMessage}
-                entityLabel="nhân vật"
-                onPublish={() => set("isPublished")(true)}
-                onUnpublish={() => set("isPublished")(false)}
-                onBlockedAttempt={() => {
-                  if (hasPublishErrors) {
-                    showValidationErrors(publishValidationErrors);
-                  } else if (mappedContexts.length === 0) {
-                    setActiveTab("context");
-                    toast.error("Vui lòng liên kết bối cảnh lịch sử trước khi xuất bản.");
-                  }
-                }}
-                className="mb-3"
-              />
 
               <TabsList
                 className="w-full grid grid-cols-5 h-auto p-1 gap-1"
@@ -1005,7 +994,7 @@ export function StaffCharacterDetailView({
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    className="shrink-0 rounded-full hover:bg-(--accent-gold)/15"
                                     disabled={isGetDocumentPdfUrlPending}
                                     onClick={async () => {
                                       if (!documentId) return;
@@ -1033,7 +1022,7 @@ export function StaffCharacterDetailView({
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    className="shrink-0 rounded-full hover:bg-(--accent-blue)/15"
                                     disabled={isUploadDocumentPdfPending}
                                     onClick={() => {
                                       if (documentId) {
@@ -1052,7 +1041,7 @@ export function StaffCharacterDetailView({
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    className="shrink-0 rounded-full hover:bg-(--accent-danger)/15"
                                     disabled={!isEditing || isDeleteDocumentPending}
                                     onClick={() => {
                                       if (!documentId) return;
@@ -1187,25 +1176,41 @@ export function StaffCharacterDetailView({
                   </div>
                 )}
 
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
-                  <StaffFormInput
-                    value={draft.documentTitle}
-                    onChange={(e) => set("documentTitle")(e.target.value)}
-                    placeholder="Để trống sẽ dùng tên nhân vật"
-                    disabled={!isEditing}
-                  />
+                <div
+                  className="flex items-center justify-between gap-3 rounded-lg border p-3"
+                  style={{ borderColor: "var(--card-light-border)" }}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                      {draft.documentTitle || "Chưa có tiêu đề tài liệu"}
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                      {draft.documentContent.length.toLocaleString("vi-VN")} ký tự
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0"
+                    onClick={() => setDocumentDetailOpen(true)}
+                  >
+                    <EyeIcon className="mr-1.5 h-3.5 w-3.5" />
+                    Xem chi tiết
+                  </Button>
                 </div>
-                <div className="grid gap-1.5">
-                  <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
-                  <StaffFormTextarea
-                    value={draft.documentContent}
-                    onChange={(e) => set("documentContent")(e.target.value)}
-                    placeholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
-                    style={{ minHeight: "140px" }}
-                    disabled={!isEditing}
-                  />
-                </div>
+
+                <StaffDocumentDetailDialog
+                  open={documentDetailOpen}
+                  onOpenChange={setDocumentDetailOpen}
+                  title={draft.documentTitle}
+                  content={draft.documentContent}
+                  editable
+                  onTitleChange={isEditing ? set("documentTitle") : undefined}
+                  onContentChange={isEditing ? set("documentContent") : undefined}
+                  titlePlaceholder="Để trống sẽ dùng tên nhân vật"
+                  contentPlaceholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
+                />
             </div>
             </TabsContent>
 
@@ -1555,7 +1560,7 @@ export function StaffCharacterDetailView({
                     >
                       <Button
                         variant="outline"
-                        className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5"
+                        className="bg-transparent border-[var(--card-light-border)] hover:bg-black/[0.08] hover:border-[var(--content-muted)] transition-colors"
                         style={{ color: "var(--content-heading)" }}
                         onClick={() => {
                           setQuickCreateOpen(false);

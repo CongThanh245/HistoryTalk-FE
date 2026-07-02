@@ -5,7 +5,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import {
   BooksIcon,
-  FileTextIcon,
   MagnifyingGlassIcon,
   UserIcon,
   ScrollIcon,
@@ -46,6 +45,7 @@ import {
 import { documentService, type RagDocument } from "@/services/document.service";
 import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
+import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
 import type { Character } from "@/services/character.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { queryKeys } from "@/shared/query-key";
@@ -879,156 +879,121 @@ export default function StaffDocumentsPage() {
         </div>
 
         {/* Document Detail Dialog */}
-        <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-          <DialogContent className="!w-[95vw] !max-w-none max-h-[90vh] overflow-hidden p-0">
-            {selectedRow ? (
-              <>
-                <DialogHeader className="px-6 pt-6 pb-4 border-b" style={{ borderColor: "var(--card-light-border)" }}>
-                  <div className="flex items-center gap-2">
-                    <FileTextIcon className="h-5 w-5" style={{ color: "var(--accent-blue)" }} />
-                    <DialogTitle className="text-base font-semibold" style={{ color: "var(--content-heading)" }}>
-                      Chi tiết tài liệu
-                    </DialogTitle>
-                  </div>
-                </DialogHeader>
-
-                <div className="px-6 py-5 overflow-y-auto max-h-[calc(90vh-140px)] space-y-5">
-                  {/* Title & Type */}
-                  <div>
-                    <p className="text-lg font-semibold" style={{ color: "var(--content-heading)" }}>
-                      {selectedRow.document.title || "Tài liệu chưa đặt tên"}
+        {selectedRow && (
+          <StaffDocumentDetailDialog
+            open={detailOpen}
+            onOpenChange={setDetailOpen}
+            title={selectedRow.document.title}
+            content={selectedRow.document.content}
+            emptyContentMessage="Chưa có nội dung."
+            titleBadge={
+              <span
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                style={{
+                  background: selectedRow.ownerType === "character" ? "rgba(59,130,246,0.12)" : "rgba(201,168,76,0.12)",
+                  color: selectedRow.ownerType === "character" ? "rgb(37,99,235)" : "rgb(146,64,14)",
+                  border: `1px solid ${selectedRow.ownerType === "character" ? "rgba(59,130,246,0.25)" : "rgba(201,168,76,0.3)"}`,
+                }}
+              >
+                {selectedRow.ownerType === "character" ? <UserIcon className="h-3 w-3" /> : <ScrollIcon className="h-3 w-3" />}
+                {selectedRow.ownerType === "character" ? "Nhân vật" : "Bối cảnh"}
+              </span>
+            }
+            meta={
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Owner Info */}
+                <div className="rounded-xl border p-4" style={{ borderColor: "var(--card-light-border)", background: "var(--card-light-bg)" }}>
+                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                    Đối tượng liên kết
+                  </p>
+                  <p className="mt-2 text-sm font-medium" style={{ color: "var(--content-heading)" }}>
+                    {selectedRow.ownerName}
+                  </p>
+                  {selectedRow.ownerSubtitle && (
+                    <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                      {selectedRow.ownerSubtitle}
                     </p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
-                        style={{
-                          background: selectedRow.ownerType === "character" ? "rgba(59,130,246,0.12)" : "rgba(201,168,76,0.12)",
-                          color: selectedRow.ownerType === "character" ? "rgb(37,99,235)" : "rgb(146,64,14)",
-                          border: `1px solid ${selectedRow.ownerType === "character" ? "rgba(59,130,246,0.25)" : "rgba(201,168,76,0.3)"}`,
-                        }}
-                      >
-                        {selectedRow.ownerType === "character" ? <UserIcon className="h-3 w-3" /> : <ScrollIcon className="h-3 w-3" />}
-                        {selectedRow.ownerType === "character" ? "Nhân vật" : "Bối cảnh"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Two column layout for meta info */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Owner Info */}
-                    <div className="rounded-xl border p-4" style={{ borderColor: "var(--card-light-border)", background: "var(--card-light-bg)" }}>
-                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                        Đối tượng liên kết
-                      </p>
-                      <p className="mt-2 text-sm font-medium" style={{ color: "var(--content-heading)" }}>
-                        {selectedRow.ownerName}
-                      </p>
-                      {selectedRow.ownerSubtitle && (
-                        <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                          {selectedRow.ownerSubtitle}
-                        </p>
-                      )}
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setDetailOpen(false);
-                            router.push(
-                              selectedRow.ownerType === "character"
-                                ? `/staff/characters/${selectedRow.ownerId}`
-                                : `/staff/contexts`,
-                            );
-                          }}
-                        >
-                          <ArrowSquareOutIcon className="mr-1.5 h-3.5 w-3.5" />
-                          Mở {selectedRow.ownerType === "character" ? "nhân vật" : "bối cảnh"}
-                        </Button>
-                        {getDocumentId(selectedRow.document) && hasPdf(selectedRow.document) && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={getPdfUrl.isPending}
-                            onClick={async () => {
-                              const docId = getDocumentId(selectedRow.document);
-                              if (!docId) return;
-                              setViewerLoading(true);
-                              setViewerOpen(true);
-                              try {
-                                const result = await getPdfUrl.mutateAsync(docId);
-                                if (result.url) {
-                                  setViewerUrl(result.url);
-                                }
-                              } catch {
-                                setViewerUrl(null);
-                              } finally {
-                                setViewerLoading(false);
-                              }
-                            }}
-                            style={{ color: "var(--accent-gold)", borderColor: "rgba(201,168,76,0.3)" }}
-                          >
-                            <EyeIcon className="mr-1.5 h-3.5 w-3.5" />
-                            {getPdfUrl.isPending ? "Đang tải..." : "Xem PDF"}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Linked Characters */}
-                    <div className="rounded-xl border p-4" style={{ borderColor: "var(--card-light-border)", background: "var(--card-light-bg)" }}>
-                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                        Nhân vật sử dụng
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {selectedRow.linkedCharacters.length ? (
-                          selectedRow.linkedCharacters.map((character) => (
-                            <span
-                              key={character.id}
-                              className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
-                              style={{
-                                borderColor: "rgba(59,130,246,0.25)",
-                                background: "rgba(59,130,246,0.08)",
-                                color: "rgb(37,99,235)",
-                              }}
-                            >
-                              <UserIcon className="h-3 w-3" />
-                              {character.name}
-                            </span>
-                          ))
-                        ) : (
-                          <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                            Chưa có nhân vật liên quan.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--content-heading)" }}>
-                      Nội dung tài liệu
-                    </p>
-                    <div
-                      className="whitespace-pre-wrap rounded-xl border p-5 text-sm leading-7"
-                      style={{
-                        borderColor: "var(--card-light-border)",
-                        background: "var(--card-light-bg)",
-                        color: "var(--content-muted)",
-                        maxHeight: "50vh",
-                        overflowY: "auto",
+                  )}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setDetailOpen(false);
+                        router.push(
+                          selectedRow.ownerType === "character"
+                            ? `/staff/characters/${selectedRow.ownerId}`
+                            : `/staff/contexts`,
+                        );
                       }}
                     >
-                      {selectedRow.document.content || "Chưa có nội dung."}
-                    </div>
+                      <ArrowSquareOutIcon className="mr-1.5 h-3.5 w-3.5" />
+                      Mở {selectedRow.ownerType === "character" ? "nhân vật" : "bối cảnh"}
+                    </Button>
+                    {getDocumentId(selectedRow.document) && hasPdf(selectedRow.document) && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={getPdfUrl.isPending}
+                        onClick={async () => {
+                          const docId = getDocumentId(selectedRow.document);
+                          if (!docId) return;
+                          setViewerLoading(true);
+                          setViewerOpen(true);
+                          try {
+                            const result = await getPdfUrl.mutateAsync(docId);
+                            if (result.url) {
+                              setViewerUrl(result.url);
+                            }
+                          } catch {
+                            setViewerUrl(null);
+                          } finally {
+                            setViewerLoading(false);
+                          }
+                        }}
+                        style={{ color: "var(--accent-gold)", borderColor: "rgba(201,168,76,0.3)" }}
+                      >
+                        <EyeIcon className="mr-1.5 h-3.5 w-3.5" />
+                        {getPdfUrl.isPending ? "Đang tải..." : "Xem PDF"}
+                      </Button>
+                    )}
                   </div>
                 </div>
-              </>
-            ) : null}
-          </DialogContent>
-        </Dialog>
+
+                {/* Linked Characters */}
+                <div className="rounded-xl border p-4" style={{ borderColor: "var(--card-light-border)", background: "var(--card-light-bg)" }}>
+                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                    Nhân vật sử dụng
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedRow.linkedCharacters.length ? (
+                      selectedRow.linkedCharacters.map((character) => (
+                        <span
+                          key={character.id}
+                          className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
+                          style={{
+                            borderColor: "rgba(59,130,246,0.25)",
+                            background: "rgba(59,130,246,0.08)",
+                            color: "rgb(37,99,235)",
+                          }}
+                        >
+                          <UserIcon className="h-3 w-3" />
+                          {character.name}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                        Chưa có nhân vật liên quan.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            }
+          />
+        )}
       </section>
     </StaffShell>
   );

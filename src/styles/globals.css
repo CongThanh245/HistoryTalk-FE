@@ -196,7 +196,7 @@ body {
   --foreground: #1b2632;
   --popover: #ffffff;
   --popover-foreground: #1b2632;
-  --accent: rgba(27, 38, 50, 0.06);
+  --accent: rgba(27, 38, 50, 0.1);
   --accent-foreground: #1b2632;
   --border: rgba(27, 38, 50, 0.14);
   --input: rgba(27, 38, 50, 0.14);
@@ -670,7 +670,7 @@ body {
   --foreground: #1b2632;
   --popover: #ffffff;
   --popover-foreground: #1b2632;
-  --accent: rgba(27, 38, 50, 0.06);
+  --accent: rgba(27, 38, 50, 0.1);
   --accent-foreground: #1b2632;
   --border: rgba(27, 38, 50, 0.14);
   --input: rgba(27, 38, 50, 0.14);

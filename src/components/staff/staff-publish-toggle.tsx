@@ -18,6 +18,8 @@ interface StaffPublishToggleProps {
   onUnpublish: () => void;
   /** Fired when the user tries to publish while canPublish is false */
   onBlockedAttempt?: () => void;
+  /** Smaller variant with no description text, for embedding in a page header */
+  compact?: boolean;
   className?: string;
 }
 
@@ -36,6 +38,7 @@ export function StaffPublishToggle({
   onPublish,
   onUnpublish,
   onBlockedAttempt,
+  compact = false,
   className,
 }: StaffPublishToggleProps) {
   const [pendingAction, setPendingAction] = React.useState<"publish" | "unpublish" | null>(null);
@@ -52,7 +55,8 @@ export function StaffPublishToggle({
     <>
       <div
         className={cn(
-          "flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors",
+          "flex items-center gap-3 rounded-xl border transition-colors",
+          compact ? "py-1.5 px-3" : "justify-between py-3 px-4",
           className,
         )}
         style={{
@@ -68,22 +72,24 @@ export function StaffPublishToggle({
               : "rgba(27,38,50,0.03)",
         }}
       >
-        <div className="flex-1">
+        <div className={compact ? undefined : "flex-1"}>
           <p
-            className="text-sm font-semibold"
+            className={cn("font-semibold", compact ? "text-xs" : "text-sm")}
             style={{
               color: isPublished ? "rgb(22,163,74)" : showBlocked ? "#92400e" : "var(--content-heading)",
             }}
           >
             {isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
           </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-            {showBlocked
-              ? (blockedMessage ?? "⚠ Cần hoàn tất thông tin bắt buộc trước khi xuất bản.")
-              : isPublished
-                ? `${entityLabel} đang hiển thị công khai cho người dùng.`
-                : `Bật để hiển thị ${entityLabel} cho người dùng.`}
-          </p>
+          {!compact && (
+            <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+              {showBlocked
+                ? (blockedMessage ?? "⚠ Cần hoàn tất thông tin bắt buộc trước khi xuất bản.")
+                : isPublished
+                  ? `${entityLabel} đang hiển thị công khai cho người dùng.`
+                  : `Bật để hiển thị ${entityLabel} cho người dùng.`}
+            </p>
+          )}
         </div>
         <button
           type="button"
