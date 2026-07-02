@@ -177,7 +177,7 @@ export default function EditCharacterPage() {
       isLoadingEvents={isLoadingEvents}
       onMapContext={(characterId, contextId, options) =>
         mapContextToCharacter.mutate(
-          { characterId, contextId },
+          { characterId, contextId, contextName: options?.contextName },
           { onSuccess: options?.onSuccess },
         )
       }

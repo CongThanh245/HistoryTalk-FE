@@ -158,13 +158,20 @@ export function usePermanentDeleteCharacter() {
 export function useMapContextToCharacter() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ characterId, contextId }: { characterId: string; contextId: string }) =>
-      characterService.mapContext(characterId, contextId),
-    onSuccess: (_result, { characterId, contextId }) => {
+    mutationFn: ({
+      characterId,
+      contextId,
+    }: {
+      characterId: string;
+      contextId: string;
+      contextName?: string;
+    }) => characterService.mapContext(characterId, contextId),
+    onSuccess: (_result, { characterId, contextId, contextName }) => {
+      const name = contextName ?? "";
       qc.setQueryData(
         queryKeys.characters.detail(characterId),
         (old: Character | undefined) =>
-          old ? { ...old, contexts: [...(old.contexts || []), { contextId, name: "" }] } : old,
+          old ? { ...old, contexts: [...(old.contexts || []), { contextId, name }] } : old,
       );
       qc.setQueriesData(
         { queryKey: queryKeys.characters.all },
@@ -173,7 +180,7 @@ export function useMapContextToCharacter() {
           return {
             ...old,
             content: old.content.map((c) =>
-              c.id === characterId ? { ...c, contexts: [...(c.contexts || []), { contextId, name: "" }] } : c,
+              c.id === characterId ? { ...c, contexts: [...(c.contexts || []), { contextId, name }] } : c,
             ),
           };
         },

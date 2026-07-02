@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
@@ -868,18 +868,24 @@ export function ChatMain({
         {/* Token usage display */}
         {lastTokenUsage && !isStreaming && (
           <div className="px-4 flex items-center justify-end gap-3 text-[10px]" style={{ color: "var(--text-muted)" }}>
-            <div className="flex items-center gap-1.5">
-              <CoinsIcon className="w-3 h-3" style={{ color: "var(--accent-gold)" }} />
-              <span>Còn: <strong className="tabular-nums" style={{ color: "var(--text-secondary)" }}>{lastTokenUsage.remainingTokens.toLocaleString()}</strong></span>
-            </div>
-            <span className="w-px h-3 bg-[var(--border-default)]" />
-            {lastTokenUsage.messageType === "VOICE" ? (
-              <span className="tabular-nums">Tổng dùng: {lastTokenUsage.promptTokens + lastTokenUsage.completionTokens}</span>
+            {isStaffOrAdmin ? (
+              lastTokenUsage.messageType === "VOICE" ? (
+                <span className="tabular-nums">Đã dùng: {lastTokenUsage.promptTokens + lastTokenUsage.completionTokens}</span>
+              ) : (
+                <>
+                  <span className="tabular-nums">Prompt: {lastTokenUsage.promptTokens}</span>
+                  <span className="tabular-nums">Response: {lastTokenUsage.completionTokens}</span>
+                  <span className="tabular-nums">Tổng: {lastTokenUsage.promptTokens + lastTokenUsage.completionTokens}</span>
+                </>
+              )
             ) : (
               <>
-                <span className="tabular-nums">Prompt: {lastTokenUsage.promptTokens}</span>
-                <span className="tabular-nums">Response: {lastTokenUsage.completionTokens}</span>
-                <span className="tabular-nums">Tổng: {lastTokenUsage.promptTokens + lastTokenUsage.completionTokens}</span>
+                <div className="flex items-center gap-1.5">
+                  <CoinsIcon className="w-3 h-3" style={{ color: "var(--accent-gold)" }} />
+                  <span>Còn lại: <strong className="tabular-nums" style={{ color: "var(--text-secondary)" }}>{lastTokenUsage.remainingTokens.toLocaleString()}</strong></span>
+                </div>
+                <span className="w-px h-3 bg-(--border-default)" />
+                <span className="tabular-nums">Đã dùng: {(lastTokenUsage.promptTokens + lastTokenUsage.completionTokens).toLocaleString()}</span>
               </>
             )}
           </div>

@@ -128,7 +128,7 @@ interface StaffCharacterDetailViewProps {
   onMapContext: (
     characterId: string,
     contextId: string,
-    options?: { onSuccess?: () => void },
+    options?: { contextName?: string; onSuccess?: () => void },
   ) => void;
   /** Callback to unmap a context from the character */
   onUnmapContext?: (
@@ -497,6 +497,7 @@ export function StaffCharacterDetailView({
     const selectedEvent = eventOptions.find(ev => ev.id === selectedContextId);
     
     onMapContext(characterId, selectedContextId, {
+      contextName: selectedEvent?.title,
       onSuccess: () => {
         if (selectedEvent) {
           setMappedContexts(prev => {
