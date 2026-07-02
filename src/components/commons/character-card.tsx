@@ -266,7 +266,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(character.id)}
-      className="group relative h-[250px] w-full flex flex-col text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer sm:h-[300px] md:h-[320px] md:hover:-translate-y-1"
+      className="group relative w-full flex flex-col text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer md:hover:-translate-y-1"
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
@@ -274,7 +274,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       }}
     >
       {/* Image */}
-      <div className="relative z-0 h-[62%] w-full overflow-hidden bg-black sm:h-[64%]">
+      <div className="relative z-0 aspect-3/4 w-full shrink-0 overflow-hidden bg-black">
         <Image
           src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
           alt=""
@@ -309,7 +309,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         </div>
       )}
       {/* Normal State Text Content */}
-      <div className="relative z-20 flex h-[38%] flex-col justify-center bg-black px-2.5 text-white pointer-events-none transition-all duration-300 md:group-hover:opacity-0 sm:h-[36%] sm:px-3.5">
+      <div className="relative z-20 flex flex-col justify-center bg-black px-2.5 py-2.5 text-white pointer-events-none transition-all duration-300 md:group-hover:opacity-0 sm:px-3.5 sm:py-3">
         <h3 className="text-sm font-bold leading-snug mb-1 line-clamp-1 text-white drop-shadow-sm">
           {character.name}
         </h3>
@@ -321,42 +321,57 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
           <span className="text-neutral-200 font-normal truncate">{character.title}</span>
         </div>
         {character.description && (
-          <p className="mt-1 text-[10px] leading-snug text-white/80 line-clamp-2 sm:line-clamp-2">
+          <p className="mt-1 text-[10px] leading-snug text-white/80 line-clamp-3 sm:line-clamp-3">
             {character.description}
           </p>
         )}
       </div>
 
       {/* Hover State Overlay */}
-      <div className="absolute inset-0 z-30 hidden flex-col bg-black/92 p-3 text-white opacity-0 transition-all duration-300 group-focus-visible:flex group-focus-visible:opacity-100 md:flex md:group-hover:opacity-100">
-        {/* Avatar top left */}
-        <div className="flex items-start mb-3 sm:mb-4">
-          <div className="relative w-10 h-10 rounded-full border-2 border-white overflow-hidden shadow-md">
+      <div className="absolute inset-0 z-30 hidden flex-col bg-black/92 p-4 text-white opacity-0 transition-all duration-300 group-focus-visible:flex group-focus-visible:opacity-100 md:flex md:group-hover:opacity-100 sm:p-5">
+        {/* Avatar + name top left */}
+        <div className="flex items-center gap-3 mb-4 sm:mb-5">
+          <div className="relative w-14 h-14 shrink-0 rounded-full border-2 border-white overflow-hidden shadow-md sm:w-16 sm:h-16">
             {avatarSrc ? (
               <Image
                 src={avatarSrc}
                 alt={character.name}
                 fill
                 className="object-cover"
-                sizes="48px"
+                sizes="64px"
               />
             ) : (
-              <span className="flex h-full w-full items-center justify-center bg-[var(--accent-gold)] text-sm font-bold text-[var(--bg-deep)]">
+              <span className="flex h-full w-full items-center justify-center bg-[var(--accent-gold)] text-xl font-bold text-[var(--bg-deep)]">
                 {character.name?.charAt(0) ?? "?"}
               </span>
             )}
           </div>
+          <div className="min-w-0">
+            <h4 className="text-base font-bold text-white leading-tight truncate sm:text-lg">
+              {character.name}
+            </h4>
+            <p className="text-xs text-white/60 truncate sm:text-sm">
+              {character.role ?? character.title}
+            </p>
+          </div>
         </div>
 
         {/* Description text with typewriter effect */}
-        <div className="flex-1 text-[11px] leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium">
+        <div className="flex-1 text-sm leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium sm:text-base">
           <TypewriterText text={character.description ?? ""} isHovered={isHovered} />
         </div>
 
         {/* Button Trò chuyện ngay */}
-        <div className="mt-3 sm:mt-4">
-          <div className="flex items-center justify-center gap-1.5 w-full py-2 rounded-full border text-[11px] font-bold bg-black text-white hover:bg-black transition-colors shadow-lg border-white/18">
-            <ChatTextIcon className="w-4 h-4 fill-current text-[var(--accent-gold)]" />
+        <div className="mt-4 sm:mt-5">
+          <div
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-sm font-extrabold transition-all shadow-lg hover:brightness-110 sm:py-3 sm:text-base"
+            style={{
+              background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-soft) 100%)",
+              color: "var(--text-inverse)",
+              boxShadow: "0 8px 20px var(--accent-gold-glow)",
+            }}
+          >
+            <ChatTextIcon className="w-5 h-5 fill-current" />
             Trò chuyện ngay
           </div>
         </div>
@@ -442,14 +457,14 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
 export function CharacterPageCardSkeleton() {
   return (
     <div
-      className="h-[250px] w-full rounded-xl border overflow-hidden animate-pulse sm:h-[300px] md:h-[320px]"
+      className="w-full rounded-xl border overflow-hidden animate-pulse"
       style={{
         background: "var(--card-light-bg)",
         borderColor: "var(--card-light-border)",
       }}
     >
       <div
-        className="h-[62%] w-full sm:h-[64%]"
+        className="aspect-3/4 w-full"
         style={{ background: "var(--card-light-border)" }}
       />
       <div className="px-2.5 py-3 space-y-2 sm:px-4 sm:pt-3 sm:pb-4">
