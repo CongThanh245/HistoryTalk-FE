@@ -154,26 +154,22 @@ export default function PaymentResult() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,146,21,0.28),transparent_22rem)]" />
             <div className="relative flex h-full min-h-64 flex-col justify-between gap-8">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs font-bold text-[var(--accent-gold-soft)]">
-                  <ShieldCheckIcon size={15} weight="fill" />
-                  PayOS secure checkout
-                </div>
-                <h1 className="mt-5 text-3xl font-extrabold leading-tight">
+                <h1 className="text-3xl font-extrabold leading-tight text-white">
                   HistoryTalk Pro
                 </h1>
-                <p className="mt-3 text-sm leading-6 text-white/68">
+                <p className="mt-3 text-sm leading-6 text-[var(--text-inverse)]/80">
                   Thanh toán được đồng bộ tự động với tài khoản của bạn. Trạng thái đơn hàng có thể xem lại bất cứ lúc nào.
                 </p>
               </div>
 
               <div className="grid gap-3 text-sm">
                 <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/7 p-3">
-                  <CreditCardIcon size={18} className="text-[var(--accent-gold-soft)]" />
-                  <span className="text-white/78">Chuyển khoản ngân hàng và QR</span>
+                  <CreditCardIcon size={18} className="text-[var(--text-inverse)]" />
+                  <span className="text-[var(--text-inverse)] font-medium">Chuyển khoản ngân hàng và QR</span>
                 </div>
                 <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/7 p-3">
-                  <ReceiptIcon size={18} className="text-[var(--accent-gold-soft)]" />
-                  <span className="text-white/78">Lưu lịch sử giao dịch rõ ràng</span>
+                  <ReceiptIcon size={18} className="text-[var(--text-inverse)]" />
+                  <span className="text-[var(--text-inverse)] font-medium">Lưu lịch sử giao dịch rõ ràng</span>
                 </div>
               </div>
             </div>
