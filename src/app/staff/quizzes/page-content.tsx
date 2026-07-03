@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
@@ -32,6 +32,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/shared/query-key";
 import {
   useStaffQuizzes,
   useCreateStaffQuiz,
@@ -45,7 +47,7 @@ import {
   useTrashPermanentDelete,
 } from "@/features/trash/hooks";
 import { useEvents } from "@/features/events/hooks";
-import type { StaffQuizSet } from "@/services/staff.quiz.service";
+import { staffQuizService, type StaffQuizSet } from "@/services/staff.quiz.service";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 
@@ -113,6 +115,8 @@ function getCreatorName(value: StaffQuizSet["createdBy"]) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StaffQuizzesPage() {
+  const queryClient = useQueryClient();
+
   // ── Filter state ──────────────────────────────────────────
   const [search, setSearch] = React.useState("");
   const [filterLevel, setFilterLevel] = React.useState<"" | "EASY" | "MEDIUM" | "HARD">("");
@@ -122,6 +126,8 @@ export default function StaffQuizzesPage() {
   const [view, setView] = React.useState<"list" | "editor">("list");
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
   const [draft, setDraft] = React.useState<QuizDraft>(emptyDraft());
+  const [originalQuiz, setOriginalQuiz] = React.useState<StaffQuizSet | null>(null);
+  const [isSaving, setIsSaving] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<StaffQuizSet | null>(null);
   const [showTrash, setShowTrash] = React.useState(false);
   const [permanentDeleteTarget, setPermanentDeleteTarget] = React.useState<{ id: string; title: string } | null>(null);
@@ -173,12 +179,14 @@ export default function StaffQuizzesPage() {
 
   // ── Handlers ──────────────────────────────────────────────
   const openCreate = () => {
+    setOriginalQuiz(null);
     setDraft(emptyDraft());
     setEditorMode("create");
     setView("editor");
   };
 
   const openEdit = (q: StaffQuizSet) => {
+    setOriginalQuiz(q);
     setDraft({
       quizId: q.quizId,
       title: q.title,
@@ -201,7 +209,7 @@ export default function StaffQuizzesPage() {
     setView("editor");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const title = draft.title.trim();
     if (!title) return;
 
@@ -230,27 +238,91 @@ export default function StaffQuizzesPage() {
         },
       );
     } else {
-      if (!draft.quizId) return;
-      updateQuiz.mutate(
-        {
-          quizId: draft.quizId,
-          payload: {
-            title,
-            contextId: draft.contextId,
-            level: draft.level,
-          },
-        },
-        {
-          onSuccess: () => {
-            toast.success(`Đã cập nhật quiz "${title}".`);
-            refetchQuizzes();
-            setView("list");
-          },
-          onError: (error) => {
-            toast.error(getApiErrorMessage(error, "Cập nhật quiz thất bại. Vui lòng thử lại."));
-          },
-        },
-      );
+      if (!draft.quizId || !originalQuiz) return;
+      setIsSaving(true);
+      try {
+        const quizId = draft.quizId;
+        const promises: Promise<any>[] = [];
+
+        // 1. Kiểm tra & Update metadata quiz
+        const isMetadataChanged =
+          title !== originalQuiz.title ||
+          draft.contextId !== originalQuiz.contextId ||
+          draft.level !== originalQuiz.level;
+
+        if (isMetadataChanged) {
+          promises.push(
+            staffQuizService.updateQuiz(quizId, {
+              title,
+              contextId: draft.contextId,
+              level: draft.level,
+            })
+          );
+        }
+
+        // 2. Xử lý các câu hỏi
+        const originalQuestions = originalQuiz.questions;
+        const formQuestions = draft.questions;
+
+        // a. Các câu hỏi bị xóa (có trong original nhưng không có trong draft)
+        const deletedQuestions = originalQuestions.filter(
+          (oq) => !formQuestions.some((fq) => fq.questionId === oq.questionId)
+        );
+        deletedQuestions.forEach((q) => {
+          promises.push(staffQuizService.deleteQuestion(quizId, q.questionId));
+        });
+
+        // b. Các câu hỏi thêm mới hoặc cập nhật
+        formQuestions.forEach((q) => {
+          const isNew = !originalQuestions.some((oq) => oq.questionId === q.questionId);
+
+          if (isNew) {
+            promises.push(
+              staffQuizService.addQuestion(quizId, {
+                content: q.content,
+                options: q.options,
+                correctAnswer: q.correctAnswer,
+                explanation: q.explanation,
+              })
+            );
+          } else {
+            // Câu cũ: xem có thay đổi gì không
+            const originalQ = originalQuestions.find((oq) => oq.questionId === q.questionId);
+            if (originalQ) {
+              const hasChanged =
+                originalQ.content !== q.content ||
+                originalQ.correctAnswer !== q.correctAnswer ||
+                originalQ.explanation !== q.explanation ||
+                originalQ.options.length !== q.options.length ||
+                originalQ.options.some((opt, idx) => opt !== q.options[idx]);
+
+              if (hasChanged) {
+                promises.push(
+                  staffQuizService.updateQuestion(quizId, q.questionId, {
+                    content: q.content,
+                    options: q.options,
+                    correctAnswer: q.correctAnswer,
+                    explanation: q.explanation,
+                  })
+                );
+              }
+            }
+          }
+        });
+
+        if (promises.length > 0) {
+          await Promise.all(promises);
+        }
+        toast.success(`Đã cập nhật quiz "${title}" thành công.`);
+        queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.detail(quizId) });
+        refetchQuizzes();
+        setView("list");
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, "Cập nhật quiz thất bại. Vui lòng thử lại."));
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -541,7 +613,8 @@ export default function StaffQuizzesPage() {
     const canSave =
       !!(draft.title.trim()) &&
       !createQuiz.isPending &&
-      !updateQuiz.isPending;
+      !updateQuiz.isPending &&
+      !isSaving;
 
     return (
       <StaffShell
@@ -657,7 +730,7 @@ export default function StaffQuizzesPage() {
                       className="flex-1 h-9 rounded-lg border text-sm font-semibold transition-all"
                       style={
                         isActive
-                          ? { background: c.activeBg, borderColor: c.activeBorder, color: c.active }
+                           ? { background: c.activeBg, borderColor: c.activeBorder, color: c.active }
                           : { background: "transparent", borderColor: "var(--card-light-border)", color: "var(--content-muted)" }
                       }
                     >
@@ -676,7 +749,7 @@ export default function StaffQuizzesPage() {
                 onClick={handleSave}
                 style={{ background: "var(--accent-blue)", color: "#fff" }}
               >
-                {createQuiz.isPending || updateQuiz.isPending
+                {createQuiz.isPending || updateQuiz.isPending || isSaving
                   ? "Đang lưu..."
                   : editorMode === "create" ? "Tạo Quiz" : "Lưu thay đổi"}
               </Button>

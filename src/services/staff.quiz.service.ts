@@ -116,8 +116,8 @@ export function mapStaffQuestion(raw: RawStaffQuizQuestion): StaffQuizQuestion {
 
 export function mapStaffQuizSet(raw: RawStaffQuizSet): StaffQuizSet {
   return {
-    quizId: raw.quizId,
-    title: raw.title,
+    quizId: raw.quizId ?? "",
+    title: raw.title ?? "",
     era: raw.era as StaffQuizEra,
     level: (raw.level as StaffQuizLevel) ?? "MEDIUM",
     playCount: raw.playCount ?? 0,
