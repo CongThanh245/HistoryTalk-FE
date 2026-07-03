@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ChatTextIcon } from "@phosphor-icons/react";
+import { ChatTextIcon, BankIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react";
 import { DarkCard } from "@/components/commons/card";
 import { isValidUrl } from "@/lib/utils/url";
 import { formatCharacterLifespan } from "@/lib/utils/character-date";
+import { HistoricalContextHoverCard } from "@/components/commons/historical-context-hover-card";
 
 // ── Type dùng chung cho TẤT CẢ nơi dùng Character ────────
 // Thay thế cả character-card.tsx lẫn character.service.ts
@@ -35,6 +36,7 @@ export interface Character {
   avatarUrl?: string | null;
   imageUrl?: string | null;
   events?: CharacterEvent[];
+  contexts?: { contextId: string; name: string }[]; // bối cảnh lịch sử nhân vật thuộc về
 }
 
 // ─────────────────────────────────────────────────────────
@@ -256,6 +258,10 @@ export function TypewriterText({ text, isHovered, speed = 8 }: TypewriterTextPro
 export function CharacterPageCard({ character, onClick }: PageCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const lifespan = formatCharacterLifespan(character);
+  const contextLabel = character.contexts
+    ?.map((c) => c.name)
+    .filter(Boolean)
+    .join(" • ");
 
   const avatarSrc = isValidUrl(character.avatarUrl)
     ? character.avatarUrl!
@@ -320,6 +326,12 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
           <ChatTextIcon className="w-3.5 h-3.5 text-amber-400" />
           <span className="text-neutral-200 font-normal truncate">{character.title}</span>
         </div>
+        {contextLabel && (
+          <div className="mt-1 flex items-center gap-1.5 text-[10px] font-medium min-w-0 text-white/60">
+            <BankIcon className="w-3 h-3 text-amber-400 shrink-0" />
+            <span className="truncate">{contextLabel}</span>
+          </div>
+        )}
         {character.description && (
           <p className="mt-1 text-[10px] leading-snug text-white/80 line-clamp-3 sm:line-clamp-3">
             {character.description}
@@ -330,7 +342,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       {/* Hover State Overlay */}
       <div className="absolute inset-0 z-30 hidden flex-col bg-black/92 p-4 text-white opacity-0 transition-all duration-300 group-focus-visible:flex group-focus-visible:opacity-100 md:flex md:group-hover:opacity-100 sm:p-5">
         {/* Avatar + name top left */}
-        <div className="flex items-center gap-3 mb-4 sm:mb-5">
+        <div className="flex items-center gap-3 mb-3 sm:mb-4">
           <div className="relative w-14 h-14 shrink-0 rounded-full border-2 border-white overflow-hidden shadow-md sm:w-16 sm:h-16">
             {avatarSrc ? (
               <Image
@@ -355,6 +367,35 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
             </p>
           </div>
         </div>
+
+        {/* Detail chips: thời gian sống, phe phái, bối cảnh lịch sử */}
+        {(lifespan || character.side || contextLabel) && (
+          <div className="flex flex-wrap items-center gap-1.5 mb-3 sm:mb-4">
+            {lifespan && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-amber-300 sm:text-[11px]">
+                <ClockCounterClockwiseIcon className="w-3 h-3 shrink-0" />
+                {lifespan}
+              </span>
+            )}
+            {character.side && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-white/80 sm:text-[11px]">
+                {character.side}
+              </span>
+            )}
+            {character.contexts?.map((ctx) => (
+              <HistoricalContextHoverCard
+                key={ctx.contextId}
+                contextId={ctx.contextId}
+                fallbackLabel={ctx.name}
+              >
+                <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-white/80 transition-colors hover:bg-white/20 hover:text-amber-300 sm:text-[11px]">
+                  <BankIcon className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{ctx.name}</span>
+                </span>
+              </HistoricalContextHoverCard>
+            ))}
+          </div>
+        )}
 
         {/* Description text with typewriter effect */}
         <div className="flex-1 text-sm leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium sm:text-base">

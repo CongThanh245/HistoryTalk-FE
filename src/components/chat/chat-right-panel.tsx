@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { ChatTextIcon } from "@phosphor-icons/react";
+import { ChatTextIcon, BankIcon } from "@phosphor-icons/react";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ChatCharacter } from "@/services/chat.service";
 import { characterService } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
+import { HistoricalContextHoverCard } from "@/components/commons/historical-context-hover-card";
 import {
   Sheet,
   SheetContent,
@@ -102,11 +103,36 @@ export function ChatRightPanel({
             {activeCharacter.name}
           </h3>
           <p
-            className="text-[11px] mt-0.5 mb-3"
+            className="text-[11px] mt-0.5 mb-2"
             style={{ color: "var(--accent-gold-soft)" }}
           >
             {activeCharacter.title}
           </p>
+          {activeCharacter.contexts && activeCharacter.contexts.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mb-3">
+              {activeCharacter.contexts.map((ctx) => (
+                <HistoricalContextHoverCard
+                  key={ctx.contextId}
+                  contextId={ctx.contextId}
+                  fallbackLabel={ctx.name}
+                >
+                  <span
+                    className="inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer"
+                    style={{
+                      background: "var(--card-light-hover)",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    <BankIcon
+                      className="w-3.5 h-3.5 shrink-0"
+                      style={{ color: "var(--accent-gold)" }}
+                    />
+                    <span className="truncate">{ctx.name}</span>
+                  </span>
+                </HistoricalContextHoverCard>
+              ))}
+            </div>
+          )}
           <p
             className="text-[12px] leading-relaxed line-clamp-4"
             style={{ color: "var(--text-secondary)" }}
