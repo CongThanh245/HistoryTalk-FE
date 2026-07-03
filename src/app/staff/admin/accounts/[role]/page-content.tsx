@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { useParams } from "next/navigation";
@@ -11,6 +11,7 @@ import {
   ShieldCheckIcon,
   CoinsIcon,
   LockKeyIcon,
+  LockKeyOpenIcon,
 } from "@phosphor-icons/react";
 
 import { StaffShell } from "@/components/staff/staff-shell";
@@ -18,7 +19,6 @@ import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { StaffStatCard, StaffStatsGrid } from "@/components/staff/staff-stat-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -33,8 +33,10 @@ import {
   useAdminUsers,
   useAdminUpdateUser,
   useAdminDeleteUser,
+  useAdminRestoreUser,
   type AdminUser,
 } from "@/features/admin/hooks";
+
 
 
 // Types & helpers
@@ -148,6 +150,8 @@ export default function AdminAccountsPage() {
   const allUsers = React.useMemo(() => usersResponse?.content ?? [], [usersResponse?.content]);
   const updateUser = useAdminUpdateUser();
   const deleteUser = useAdminDeleteUser();
+  const restoreUser = useAdminRestoreUser();
+
 
   // UI state
   const [search, setSearch] = React.useState("");
@@ -159,6 +163,9 @@ export default function AdminAccountsPage() {
 
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<AdminUser | null>(null);
+
+  const [restoreOpen, setRestoreOpen] = React.useState(false);
+  const [restoreTarget, setRestoreTarget] = React.useState<AdminUser | null>(null);
 
   // Derived
   const filtered = React.useMemo(() => {
@@ -316,26 +323,30 @@ export default function AdminAccountsPage() {
         cell: ({ row }) => {
           const u = row.original;
           const isDeleted = isUserDeleted(u);
-          return (
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={!isDeleted}
-                onCheckedChange={(checked) => {
-                  if (!checked) {
-                    setDeleteTarget(u);
-                    setDeleteOpen(true);
-                  }
-                }}
-                disabled={isDeleted || deleteUser.isPending}
-                className="data-[state=checked]:!bg-emerald-500"
-              />
-              <span
-                className="text-xs font-semibold"
-                style={{ color: !isDeleted ? "rgb(22,163,74)" : "var(--accent-danger)" }}
-              >
-                Địa chỉ
-              </span>
-            </div>
+          return isDeleted ? (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+              style={{
+                background: "rgba(239,68,68,0.12)",
+                color: "#ef4444",
+                border: "1px solid rgba(239,68,68,0.25)",
+              }}
+            >
+              <LockKeyIcon className="h-3 w-3" />
+              Đã khóa
+            </span>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+              style={{
+                background: "rgba(16,185,129,0.12)",
+                color: "#10b981",
+                border: "1px solid rgba(16,185,129,0.25)",
+              }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              Hoạt động
+            </span>
           );
         },
       },
@@ -344,14 +355,30 @@ export default function AdminAccountsPage() {
         header: () => <div className="text-right pr-2">Thao tác</div>,
         cell: ({ row }) => {
           const u = row.original;
+          const isDeleted = isUserDeleted(u);
           return (
             <div className="flex items-center justify-end gap-1">
-              {!isUserDeleted(u) && (
+              {isDeleted ? (
                 <Button
                   variant="ghost"
                   size="icon-sm"
                   className="rounded-full"
-                  title="Khoá tài khoản?"
+                  title="Mở khóa tài khoản"
+                  onClick={() => {
+                    setRestoreTarget(u);
+                    setRestoreOpen(true);
+                  }}
+                  disabled={restoreUser.isPending}
+                  style={{ color: "#10b981" }}
+                >
+                  <LockKeyOpenIcon className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-full"
+                  title="Khóa tài khoản"
                   onClick={() => {
                     setDeleteTarget(u);
                     setDeleteOpen(true);
@@ -379,7 +406,7 @@ export default function AdminAccountsPage() {
     );
 
     return base;
-  }, [meta, deleteUser.isPending]);
+  }, [meta, deleteUser.isPending, restoreUser.isPending]);
 
 
   const Icon = meta.icon;
@@ -641,13 +668,13 @@ export default function AdminAccountsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Soft delete confirm */}
+      {/* Deactivate confirm */}
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title="Khoá tài khoản?"
-        description={`Tài khoản "${deleteTarget?.fullName || deleteTarget?.userName}" sẽ bị vô hiệu hoá. Hiện backend chưa có API mở khoá.`}
-        confirmLabel={deleteUser.isPending ? "Đang khoá..." : "Khoá tài khoản"}
+        title="Khóa tài khoản?"
+        description={`Tài khoản "${deleteTarget?.fullName || deleteTarget?.userName}" sẽ bị vô hiệu hóa. Bạn có thể mở khóa lại bất kỳ lúc nào.`}
+        confirmLabel={deleteUser.isPending ? "Đang khóa..." : "Khóa tài khoản"}
         variant="danger"
         isPending={deleteUser.isPending}
         onConfirm={() => {
@@ -658,6 +685,29 @@ export default function AdminAccountsPage() {
               onSuccess: () => {
                 setDeleteOpen(false);
                 setDeleteTarget(null);
+              },
+            }
+          );
+        }}
+      />
+
+      {/* Restore confirm */}
+      <ConfirmDialog
+        open={restoreOpen}
+        onOpenChange={setRestoreOpen}
+        title="Mở khóa tài khoản?"
+        description={`Tài khoản "${restoreTarget?.fullName || restoreTarget?.userName}" sẽ được kích hoạt trở lại.`}
+        confirmLabel={restoreUser.isPending ? "Đang mở khóa..." : "Mở khóa"}
+        variant="primary"
+        isPending={restoreUser.isPending}
+        onConfirm={() => {
+          if (!restoreTarget) return;
+          restoreUser.mutate(
+            { uid: restoreTarget.uid, role: restoreTarget.role },
+            {
+              onSuccess: () => {
+                setRestoreOpen(false);
+                setRestoreTarget(null);
               },
             }
           );

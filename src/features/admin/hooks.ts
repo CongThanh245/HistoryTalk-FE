@@ -167,20 +167,17 @@ export function useAdminDeleteUser() {
 }
 
 export function useAdminRestoreUser() {
-  // TODO: Implement reactivate user API when available
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ uid, role }: { uid: string; role?: UserRole }) => {
-      // For now, this is a placeholder - backend needs to support user reactivation
-      console.warn("User reactivation not yet implemented in backend");
-      return { uid, role };
+    mutationFn: async ({ uid }: { uid: string; role?: UserRole }) => {
+      return adminUserService.restoreUser(uid);
     },
-    onSuccess: (result) => {
-      if (result.role) {
-        qc.invalidateQueries({ queryKey: ADMIN_KEYS.users(result.role) });
-      }
+    onSuccess: (restoredUser) => {
+      qc.invalidateQueries({ queryKey: ADMIN_KEYS.users(restoredUser.role) });
+      qc.invalidateQueries({ queryKey: ADMIN_KEYS.users() });
+      qc.invalidateQueries({ queryKey: ADMIN_KEYS.userById(restoredUser.uid) });
       qc.invalidateQueries({ queryKey: ADMIN_KEYS.stats });
-      toast.success("Khôi phục tài khoản thành công");
+      toast.success("Đã khôi phục tài khoản thành công");
     },
     onError: (err: any) => {
       toast.error(err?.message ?? "Khôi phục tài khoản thất bại");

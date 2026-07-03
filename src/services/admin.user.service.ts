@@ -145,6 +145,12 @@ export const adminUserService = {
     await axiosClient.patch(`${BASE}/${userId}/deactivate`);
   },
 
+  /** Restore a deactivated user account */
+  restoreUser: async (userId: string): Promise<AdminUser> => {
+    const res = await axiosClient.patch(`${BASE}/${userId}/restore`);
+    return res.data.data as AdminUser;
+  },
+
   // ─── Token Analytics ────────────────────────────────────────────────────
 
   /** Get token usage analytics for admin dashboard */
