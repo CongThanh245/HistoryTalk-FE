@@ -856,13 +856,13 @@ export default function AdminDashboardPage() {
                   <div className="space-y-3">
                     {(tiers?.usersByTier ?? []).map((t) => {
                       const totalUsers = (overview?.users.total ?? 1);
-                      const pct = totalUsers > 0 ? Math.round((t.users / totalUsers) * 100) : 0;
+                      const pct = totalUsers > 0 ? Math.round(((t.users ?? 0) / totalUsers) * 100) : 0;
                       return (
                         <div key={t.tierId}>
                           <div className="flex justify-between text-xs font-semibold mb-1">
                             <span className="text-[var(--content-muted)]">{t.tierTitle}</span>
                             <span className="text-[var(--content-heading)]">
-                              {t.users.toLocaleString()}{" "}
+                              {(t.users ?? 0).toLocaleString()}{" "}
                               <span className="text-[var(--content-muted)] font-normal text-[10px]">
                                 ({pct}%)
                               </span>
