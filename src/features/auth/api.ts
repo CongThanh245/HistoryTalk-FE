@@ -36,6 +36,7 @@ type RawLoginData = {
   refreshToken: string;
   tokenType: string;
   expiresIn: number;
+  isNewUser?: boolean;
 };
 
 function unwrapMessageResponse(
@@ -63,6 +64,7 @@ function toLoginResponse(raw: RawLoginData): LoginResponse {
       tokenType: raw.tokenType,
       expiresIn: raw.expiresIn,
     },
+    isNewUser: raw.isNewUser,
   };
 }
 

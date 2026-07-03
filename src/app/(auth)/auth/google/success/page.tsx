@@ -54,15 +54,18 @@ export default function GoogleOAuthSuccessPage() {
     );
     persistAuthCookies(accessToken, role, expiresIn);
 
+    const isNewUser = params.get("isNewUser") === "true";
+
     // Force full page reload to trigger middleware with fresh cookies.
-    // For CUSTOMER, append ?notify=google_welcome so the home page shows the
-    // temp-password email reminder toast.
+    // For CUSTOMER, append ?notify=google_welcome ONLY if it is a new user
     const redirectPath =
       role === "CONTENT_ADMIN"
         ? "/staff"
         : role === "SYSTEM_ADMIN"
           ? "/staff/admin"
-          : "/home?notify=google_welcome";
+          : isNewUser
+            ? "/home?notify=google_welcome"
+            : "/home";
 
     window.location.href = redirectPath;
   }, [clearAuth, router, setAuth]);

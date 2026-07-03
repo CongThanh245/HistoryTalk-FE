@@ -38,7 +38,7 @@ export function useGoogleLogin() {
 
   return useMutation({
     mutationFn: (data: GoogleLoginRequest) => authApi.googleLogin(data),
-    onSuccess: ({ user, tokens }) => {
+    onSuccess: ({ user, tokens, isNewUser }) => {
       setAuth(user, tokens);
       persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
 
@@ -51,7 +51,9 @@ export function useGoogleLogin() {
       } else if (user.role === "SYSTEM_ADMIN") {
         window.location.href = "/staff/admin";
       } else {
-        window.location.href = "/home?notify=google_welcome";
+        window.location.href = isNewUser
+          ? "/home?notify=google_welcome"
+          : "/home";
       }
     },
   });

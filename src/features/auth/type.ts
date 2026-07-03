@@ -30,7 +30,6 @@ export interface User {
   email: string;
   role: "CUSTOMER" | "CONTENT_ADMIN" | "SYSTEM_ADMIN";
   avatarUrl?: string;
-  // Extended fields synced from /users/me
   fullName?: string | null;
   tierId?: string | null;
   tierTitle?: string | null;
@@ -47,6 +46,7 @@ export interface AuthTokens {
 export interface LoginResponse {
   user: User;
   tokens: AuthTokens;
+  isNewUser?: boolean;
 }
 
 export interface RegisterResponse {
