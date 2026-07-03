@@ -20,7 +20,7 @@ export function useLogin() {
     onSuccess: ({ user, tokens }) => {
       setAuth(user, tokens);
       persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
-      
+
       // Force full page reload to trigger middleware with fresh cookies
       if (user.role === "CONTENT_ADMIN") {
         window.location.href = "/staff";
@@ -41,14 +41,17 @@ export function useGoogleLogin() {
     onSuccess: ({ user, tokens }) => {
       setAuth(user, tokens);
       persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
-      
-      // Force full page reload to trigger middleware with fresh cookies
+
+      // Force full page reload to trigger middleware with fresh cookies.
+      // For CUSTOMER accounts we append ?notify=google_welcome so the home page
+      // can show a toast reminding the user to check their email for the
+      // temporary application password sent by the backend.
       if (user.role === "CONTENT_ADMIN") {
         window.location.href = "/staff";
       } else if (user.role === "SYSTEM_ADMIN") {
         window.location.href = "/staff/admin";
       } else {
-        window.location.href = "/home";
+        window.location.href = "/home?notify=google_welcome";
       }
     },
   });

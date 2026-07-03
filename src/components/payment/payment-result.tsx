@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { paymentService } from "@/services/payment.service";
 import {
   ArrowLeftIcon,
@@ -13,6 +14,7 @@ import {
   HourglassIcon,
   ReceiptIcon,
   ShieldCheckIcon,
+  SparkleIcon,
   XCircleIcon,
 } from "@phosphor-icons/react";
 
@@ -112,6 +114,36 @@ export default function PaymentResult() {
     paymentService
       .notifyReturn({ code, id, cancel, status: payosStatus, orderCode: orderCodeNum })
       .catch(() => {});
+  }, []);
+
+  // Show a toast once when payment is confirmed successful
+  useEffect(() => {
+    if (status !== "success") return;
+
+    const tid = setTimeout(() => {
+      toast(
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2 font-bold text-[var(--content-heading)]">
+            <SparkleIcon weight="duotone" className="size-4 shrink-0 text-[var(--accent-gold)]" />
+            Gói Pro đã được kích hoạt!
+          </div>
+          <p className="text-xs leading-5 text-[var(--content-muted)]">
+            Cảm ơn bạn đã nâng cấp. Email xác nhận đã được gửi đến hộp thư của bạn.
+          </p>
+        </div>,
+        {
+          duration: 8_000,
+          icon: null,
+          classNames: {
+            toast: "ht-toast ht-toast--success",
+          },
+        },
+      );
+    }, 800);
+
+    return () => clearTimeout(tid);
+  // Run only once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

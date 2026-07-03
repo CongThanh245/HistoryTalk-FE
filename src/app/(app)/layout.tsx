@@ -1,11 +1,11 @@
 import Header from "@/components/layouts/header";
 import ReactQueryProviders from "@/components/context/query-client-provider";
-import React from "react";
+import React, { Suspense } from "react";
 import CustomerSidebar from "@/components/layouts/sidebar/customer-sidebar";
 import { SidebarProvider } from "@/components/layouts/sidebar/sidebar-context";
 import { CustomerRouteGuard } from "@/components/context/customer-route-guard";
-
 import Breadcrumbs from "@/components/commons/breadcrumbs";
+import { GoogleWelcomeNotifier } from "@/components/commons/google-welcome-notifier";
 
 function layout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,6 +29,10 @@ function layout({ children }: { children: React.ReactNode }) {
           </div>
         </SidebarProvider>
       </CustomerRouteGuard>
+      {/* Fires a toast if the URL contains ?notify=google_welcome */}
+      <Suspense>
+        <GoogleWelcomeNotifier />
+      </Suspense>
     </ReactQueryProviders>
   );
 }

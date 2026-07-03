@@ -8,12 +8,6 @@ import { clearAuthCookies, persistAuthCookies } from "@/features/auth/auth-cooki
 
 const VALID_ROLES = ["CUSTOMER", "CONTENT_ADMIN", "SYSTEM_ADMIN"] as const;
 
-function getRedirectPath(role: User["role"]) {
-  if (role === "CONTENT_ADMIN") return "/staff";
-  if (role === "SYSTEM_ADMIN") return "/staff/admin";
-  return "/home";
-}
-
 function isValidRole(role: string | null): role is User["role"] {
   return VALID_ROLES.includes(role as User["role"]);
 }
@@ -59,8 +53,18 @@ export default function GoogleOAuthSuccessPage() {
       { accessToken, refreshToken, tokenType, expiresIn },
     );
     persistAuthCookies(accessToken, role, expiresIn);
-    // Force full page reload to trigger middleware with fresh cookies
-    window.location.href = getRedirectPath(role);
+
+    // Force full page reload to trigger middleware with fresh cookies.
+    // For CUSTOMER, append ?notify=google_welcome so the home page shows the
+    // temp-password email reminder toast.
+    const redirectPath =
+      role === "CONTENT_ADMIN"
+        ? "/staff"
+        : role === "SYSTEM_ADMIN"
+          ? "/staff/admin"
+          : "/home?notify=google_welcome";
+
+    window.location.href = redirectPath;
   }, [clearAuth, router, setAuth]);
 
   return (
