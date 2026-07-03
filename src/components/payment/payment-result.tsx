@@ -116,7 +116,7 @@ export default function PaymentResult() {
 
   return (
     <div className="flex min-h-full items-center justify-center px-4 py-8 md:py-12">
-      <section className="w-full max-w-4xl overflow-hidden rounded-lg border border-[rgba(27,38,50,0.1)] bg-white/75 shadow-[0_24px_70px_rgba(27,38,50,0.1)] animate-in fade-in zoom-in-95 duration-500">
+      <section className="w-full max-w-4xl overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]/75 backdrop-blur-md shadow-[var(--shadow-strong)] animate-in fade-in zoom-in-95 duration-500">
         <div className="grid md:grid-cols-[0.9fr_1.1fr]">
           <aside className="relative overflow-hidden bg-[var(--abyssal-blue)] p-6 text-white md:p-8">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,146,21,0.28),transparent_22rem)]" />
@@ -172,7 +172,7 @@ export default function PaymentResult() {
             </div>
 
             {(orderCode || amount) && (
-              <div className="mt-5 rounded-lg border border-[rgba(27,38,50,0.1)] bg-[var(--bg-content)] p-4">
+              <div className="mt-5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
                 <div className="mb-3 flex items-center gap-2 text-sm font-bold text-[var(--content-heading)]">
                   <ReceiptIcon size={17} weight="duotone" className="text-[var(--accent-gold)]" />
                   Chi tiết giao dịch
@@ -211,7 +211,7 @@ export default function PaymentResult() {
               <button
                 type="button"
                 onClick={() => router.push("/home")}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[rgba(27,38,50,0.12)] bg-white px-4 text-sm font-bold text-[var(--content-heading)] transition hover:-translate-y-0.5 hover:border-[rgba(255,146,21,0.36)] hover:text-[var(--accent-gold)]"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 text-sm font-bold text-[var(--content-heading)] transition hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:text-[var(--accent-gold)]"
               >
                 <ArrowLeftIcon size={16} />
                 Quay lại
