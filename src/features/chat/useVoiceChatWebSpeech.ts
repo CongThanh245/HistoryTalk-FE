@@ -155,6 +155,7 @@ export function useVoiceChatWebSpeech({
       await new Promise<void>((resolve, reject) => {
         const source = audioContext.createBufferSource();
         source.buffer = decodedAudio;
+        source.playbackRate.value = 1.25;
         source.connect(ttsAnalyserRef.current ?? audioContext.destination);
         azureSourceRef.current = source;
         activeTtsAnalyserRef.current = ttsAnalyserRef.current;
@@ -191,7 +192,7 @@ export function useVoiceChatWebSpeech({
       simulatedAnalyserRef.current?.start(text, 4.5);
       try {
         await ttsRef.current.speak(text, {
-          rate: 1.0,
+          rate: 1.25,
           pitch: 1,
           volume: 1,
         });
