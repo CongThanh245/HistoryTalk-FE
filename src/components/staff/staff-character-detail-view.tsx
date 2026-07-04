@@ -1177,27 +1177,33 @@ export function StaffCharacterDetailView({
                 )}
 
                 <div
-                  className="flex items-center justify-between gap-3 rounded-lg border p-3"
+                  className="rounded-lg border p-3"
                   style={{ borderColor: "var(--card-light-border)" }}
                 >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
-                      {draft.documentTitle || "Chưa có tiêu đề tài liệu"}
-                    </p>
-                    <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                      {draft.documentContent.length.toLocaleString("vi-VN")} ký tự
-                    </p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                    Nội dung văn bản (nhập tay)
+                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                        {draft.documentTitle || "Chưa có tiêu đề tài liệu"}
+                      </p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                        {draft.documentContent.length.toLocaleString("vi-VN")} ký tự
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() => setDocumentDetailOpen(true)}
+                      disabled={!isEditing}
+                    >
+                      <PencilIcon className="mr-1.5 h-3.5 w-3.5" />
+                      {draft.documentContent ? "Sửa nội dung" : "Nhập nội dung"}
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="shrink-0"
-                    onClick={() => setDocumentDetailOpen(true)}
-                  >
-                    <EyeIcon className="mr-1.5 h-3.5 w-3.5" />
-                    Xem chi tiết
-                  </Button>
                 </div>
 
                 <StaffDocumentDetailDialog

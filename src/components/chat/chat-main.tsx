@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
-import { PhoneCallIcon, VideoCameraIcon, LockIcon } from "@phosphor-icons/react";
+import { PhoneCallIcon, VideoCameraIcon, LockIcon, WarningCircleIcon, XIcon } from "@phosphor-icons/react";
 import type {
   ChatCharacter,
   ChatMessage,
@@ -151,6 +151,8 @@ export function ChatMain({
   const [voiceCallDraftMessages, setVoiceCallDraftMessages] = useState<ChatMessage[]>([]);
   const [isTokenExhausted, setIsTokenExhausted] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+  const [aiWarningVisible, setAiWarningVisible] = useState(false);
+  const [aiWarningLeaving, setAiWarningLeaving] = useState(false);
   const dismissedCallModeRef = useRef<"2d" | "3d" | null>(null);
   const [lastTokenUsage, setLastTokenUsage] = useState<{
     remainingTokens: number;
@@ -353,6 +355,26 @@ export function ChatMain({
   useEffect(() => {
     setOptimisticMessages([]);
     setSuggestedQuestions(data?.suggestedQuestions ?? []);
+  }, [sessionId]);
+
+  const dismissAiWarning = useCallback(() => {
+    setAiWarningLeaving(true);
+    window.setTimeout(() => setAiWarningVisible(false), 300);
+  }, []);
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    setAiWarningVisible(true);
+    setAiWarningLeaving(false);
+
+    const leaveTimer = window.setTimeout(() => setAiWarningLeaving(true), 5000);
+    const hideTimer = window.setTimeout(() => setAiWarningVisible(false), 5300);
+
+    return () => {
+      window.clearTimeout(leaveTimer);
+      window.clearTimeout(hideTimer);
+    };
   }, [sessionId]);
 
   useEffect(() => {
@@ -778,6 +800,36 @@ export function ChatMain({
           </button>
         )}
       </div>
+
+      {/* AI accuracy warning */}
+      {aiWarningVisible && sessionId && (
+        <div
+          className={cn(
+            "mx-4 mt-3 px-3 py-2 rounded-lg border flex items-center gap-2 text-xs shrink-0 transition-all duration-300",
+            aiWarningLeaving ? "opacity-0 -translate-y-1" : "opacity-100 translate-y-0",
+          )}
+          style={{
+            borderColor: "var(--border-default)",
+            background: "var(--bg-elevated)",
+            color: "var(--text-secondary)",
+          }}
+        >
+          <WarningCircleIcon
+            className="w-4 h-4 shrink-0"
+            style={{ color: "var(--accent-gold)" }}
+          />
+          <span className="flex-1">
+            AI có thể đưa ra thông tin không chính xác. Hãy kiểm chứng lại các thông tin quan trọng.
+          </span>
+          <button
+            onClick={dismissAiWarning}
+            aria-label="Đóng cảnh báo"
+            className="shrink-0 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+          >
+            <XIcon className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-5 pb-28 md:pb-6 space-y-4">
