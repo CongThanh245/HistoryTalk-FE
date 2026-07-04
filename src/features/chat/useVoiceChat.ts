@@ -141,6 +141,7 @@ export function useVoiceChat({
       const decoded = await ctx.decodeAudioData(buffer.slice(0));
       const source = ctx.createBufferSource();
       source.buffer = decoded;
+      source.playbackRate.value = 1.25;
 
       // source → ttsAnalyser → destination
       // Analyser đã được connect tới destination ở trên rồi

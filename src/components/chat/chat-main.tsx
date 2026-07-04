@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
@@ -222,6 +222,7 @@ export function ChatMain({
       await new Promise<void>((resolve, reject) => {
         const source = audioContext.createBufferSource();
         source.buffer = decodedAudio;
+        source.playbackRate.value = 1.25;
         source.connect(audioContext.destination);
         speechSourceRef.current = source;
         source.onended = () => {
@@ -243,6 +244,7 @@ export function ChatMain({
     const utterance = new SpeechSynthesisUtterance(text);
     if (vietnameseVoice) utterance.voice = vietnameseVoice;
     utterance.lang = "vi-VN";
+    utterance.rate = 1.25;
     speechSynthesis.speak(utterance);
   }, []);
 
@@ -548,7 +550,7 @@ export function ChatMain({
           localQueue = localQueue.substring(charsToTake);
           setStreamingMessage((prev) => prev + textToAdd);
         }
-      }, 90); // 90ms delay for a slower, more deliberate typing effect
+      }, 72); // 72ms delay for 1.25x faster typing effect
     };
 
     chatService.sendMessageStream(
