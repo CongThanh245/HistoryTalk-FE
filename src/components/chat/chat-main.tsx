@@ -34,6 +34,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+const AI_FEEDBACK_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSeRil6ykImcwwFkgnV0lzFHWo8NLgOrOKNjTHNqq8Tt0-XMEQ/viewform?usp=dialog";
 
 const isVoiceMessage = (message: ChatMessage) =>
   message.messageType?.toUpperCase() === "VOICE";
@@ -704,13 +708,53 @@ export function ChatMain({
           )}
         </div>
         {/* Character info */}
-        <div className="flex-1">
-          <h2
-            className="text-sm font-bold"
-            style={{ color: "var(--text-primary)" }}
-          >
-            {character.name}
-          </h2>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h2
+              className="text-sm font-bold truncate"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {character.name}
+            </h2>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Lưu ý về độ chính xác của AI"
+                  className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 cursor-help"
+                  style={{
+                    background: "var(--accent-gold-active-bg)",
+                    color: "var(--accent-gold)",
+                  }}
+                >
+                  <span className="text-[10px] font-bold leading-none">!</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                align="start"
+                className="max-w-[260px] whitespace-normal"
+                style={{
+                  background: "var(--bg-elevated)",
+                  border: "1px solid var(--border-default)",
+                  color: "var(--text-primary)",
+                }}
+              >
+                <p className="text-xs leading-relaxed">
+                  AI có thể đưa ra thông tin không chính xác. Hãy kiểm chứng lại các thông tin quan trọng.
+                </p>
+                <a
+                  href={AI_FEEDBACK_FORM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block text-xs font-semibold underline"
+                  style={{ color: "var(--accent-gold)" }}
+                >
+                  Báo lỗi qua form
+                </a>
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
             {character.title}
           </p>
