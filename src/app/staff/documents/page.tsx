@@ -21,6 +21,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
@@ -115,6 +121,9 @@ export default function StaffDocumentsPage() {
   const [detailOpen, setDetailOpen] = React.useState(false);
   const [formOpen, setFormOpen] = React.useState(false);
   const [editingRow, setEditingRow] = React.useState<StaffDocumentRow | null>(null);
+  const [createOwnerType, setCreateOwnerType] = React.useState<DocumentOwnerType>(
+    "character",
+  );
   const [documentForm, setDocumentForm] = React.useState<CharacterDocumentForm>(
     EMPTY_CHARACTER_DOCUMENT_FORM,
   );
@@ -202,6 +211,28 @@ export default function StaffDocumentsPage() {
     },
     onError: () => {
       toast.error("Xóa tài liệu thất bại");
+    },
+  });
+
+  const createHistoricalDocument = useMutation({
+    mutationFn: (data: CharacterDocumentForm) =>
+      documentService.createHistoricalDocument({
+        contextId: data.ownerId,
+        title: data.title,
+        content: data.content,
+        type: "TEXT",
+      }),
+    onSuccess: (_document, data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.documents.historicalByContext(data.ownerId),
+      });
+      toast.success("Đã tạo tài liệu bối cảnh");
+      setFormOpen(false);
+      setDocumentForm(EMPTY_CHARACTER_DOCUMENT_FORM);
+    },
+    onError: () => {
+      toast.error("Tạo tài liệu thất bại");
     },
   });
 
@@ -353,14 +384,21 @@ export default function StaffDocumentsPage() {
     contextDocumentQueries.some((query) => query.isLoading) ||
     characterDocumentQueries.some((query) => query.isLoading);
 
-  const openCreateForm = React.useCallback(() => {
-    setEditingRow(null);
-    setDocumentForm({
-      ...EMPTY_CHARACTER_DOCUMENT_FORM,
-      ownerId: characters[0]?.id ?? "",
-    });
-    setFormOpen(true);
-  }, [characters]);
+  const openCreateForm = React.useCallback(
+    (ownerType: DocumentOwnerType) => {
+      setEditingRow(null);
+      setCreateOwnerType(ownerType);
+      setDocumentForm({
+        ...EMPTY_CHARACTER_DOCUMENT_FORM,
+        ownerId:
+          ownerType === "character"
+            ? characters[0]?.id ?? ""
+            : contexts[0]?.id ?? "",
+      });
+      setFormOpen(true);
+    },
+    [characters, contexts],
+  );
 
   const openEditForm = React.useCallback((row: StaffDocumentRow) => {
     setEditingRow(row);
@@ -404,10 +442,16 @@ export default function StaffDocumentsPage() {
         return;
       }
 
-      createCharacterDocument.mutate(payload);
+      if (createOwnerType === "character") {
+        createCharacterDocument.mutate(payload);
+      } else {
+        createHistoricalDocument.mutate(payload);
+      }
     },
     [
       createCharacterDocument,
+      createHistoricalDocument,
+      createOwnerType,
       documentForm,
       editingRow,
       updateCharacterDocument,
@@ -658,15 +702,34 @@ export default function StaffDocumentsPage() {
                 className="h-10 rounded-xl pl-9"
               />
             </div>
-            <Button
-              type="button"
-              className="h-10"
-              onClick={openCreateForm}
-              disabled={!characters.length}
-            >
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Thêm tài liệu
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  className="h-10"
+                  disabled={!characters.length && !contexts.length}
+                >
+                  <PlusIcon className="mr-2 h-4 w-4" />
+                  Thêm tài liệu
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  disabled={!characters.length}
+                  onClick={() => openCreateForm("character")}
+                >
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  Thêm tài liệu nhân vật
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!contexts.length}
+                  onClick={() => openCreateForm("context")}
+                >
+                  <ScrollIcon className="mr-2 h-4 w-4" />
+                  Thêm tài liệu bối cảnh
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -735,7 +798,11 @@ export default function StaffDocumentsPage() {
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[680px]">
             <DialogHeader>
               <DialogTitle>
-                {editingRow ? "Sửa tài liệu" : "Thêm tài liệu nhân vật"}
+                {editingRow
+                  ? "Sửa tài liệu"
+                  : createOwnerType === "character"
+                    ? "Thêm tài liệu nhân vật"
+                    : "Thêm tài liệu bối cảnh"}
               </DialogTitle>
             </DialogHeader>
             <form className="space-y-4" onSubmit={submitDocumentForm}>
@@ -753,7 +820,7 @@ export default function StaffDocumentsPage() {
                     {editingRow.ownerName}
                   </div>
                 </div>
-              ) : (
+              ) : createOwnerType === "character" ? (
                 <div className="space-y-2">
                   <Label htmlFor="document-character">Nhân vật</Label>
                   <Select
@@ -769,6 +836,27 @@ export default function StaffDocumentsPage() {
                       {characters.map((character) => (
                         <SelectItem key={character.id} value={character.id}>
                           {character.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="document-context">Bối cảnh</Label>
+                  <Select
+                    value={documentForm.ownerId}
+                    onValueChange={(value) =>
+                      setDocumentForm((current) => ({ ...current, ownerId: value }))
+                    }
+                  >
+                    <SelectTrigger id="document-context" className="w-full">
+                      <SelectValue placeholder="Chọn bối cảnh" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contexts.map((context) => (
+                        <SelectItem key={context.id} value={context.id}>
+                          {context.title}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -819,11 +907,13 @@ export default function StaffDocumentsPage() {
                   type="submit"
                   disabled={
                     createCharacterDocument.isPending ||
+                    createHistoricalDocument.isPending ||
                     updateCharacterDocument.isPending ||
                     updateHistoricalDocument.isPending
                   }
                 >
                   {createCharacterDocument.isPending ||
+                  createHistoricalDocument.isPending ||
                   updateCharacterDocument.isPending ||
                   updateHistoricalDocument.isPending
                     ? "Đang lưu..."
