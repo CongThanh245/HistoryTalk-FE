@@ -38,7 +38,7 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
       { icon: HouseIcon, label: "Trang chủ", href: ROUTES.HOME },
       { icon: BankIcon, label: "Sự kiện lịch sử", href: ROUTES.EVENTS },
       { icon: UserIcon, label: "Nhân vật", href: ROUTES.CHARACTERS },
-      { icon: ChatTextIcon, label: "Trò chuyện", href: ROUTES.CHAT_HISTORY },
+      { icon: ChatTextIcon, label: "Lịch sử trò chuyện", href: ROUTES.CHAT_HISTORY },
       { icon: ClipboardTextIcon, label: "Câu đố lịch sử", href: ROUTES.QUIZ },
       // MVP: Ẩn Bản đồ lịch sử, Library và Đã lưu
       // { icon: MapTrifoldIcon, label: "Bản đồ lịch sử", href: "/map" },

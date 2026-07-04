@@ -74,8 +74,12 @@ function FakeVideoPlayer({
         )}
 
         {/* Letterbox */}
-        <div className="absolute top-0 left-0 right-0 h-8 bg-black" />
-        <div className="absolute bottom-12 left-0 right-0 h-8 bg-black" />
+        {!playing && (
+          <>
+            <div className="absolute top-0 left-0 right-0 h-8 bg-black pointer-events-none" />
+            <div className="absolute bottom-12 left-0 right-0 h-8 bg-black pointer-events-none" />
+          </>
+        )}
 
         {/* PlayIcon button — chỉ hiện khi chưa play */}
         {!playing && (
@@ -113,14 +117,16 @@ function FakeVideoPlayer({
           </button>
         )}
 
-        <div className="absolute bottom-8 left-0 right-0 px-6 pointer-events-none">
-          <p className="text-white/50 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">
-            Video giới thiệu
-          </p>
-          <p className="text-white text-xl font-bold leading-snug drop-shadow-lg">
-            {event.title}
-          </p>
-        </div>
+        {!playing && (
+          <div className="absolute bottom-8 left-0 right-0 px-6 pointer-events-none">
+            <p className="text-white/50 text-micro font-bold uppercase tracking-[0.2em] mb-1">
+              Video giới thiệu
+            </p>
+            <p className="text-white text-xl font-bold leading-snug drop-shadow-lg">
+              {event.title}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Progress bar bỏ đi vì dùng YouTube player thật */}
