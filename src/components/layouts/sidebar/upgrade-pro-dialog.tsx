@@ -9,6 +9,7 @@ import { paymentService, type PaymentTier } from "@/services/payment.service";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "next/navigation";
+import { useProfile } from "@/features/profile/hooks";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -31,15 +32,18 @@ function TierCard({
   index,
   onCheckout,
   loadingId,
+  currentTierId,
 }: {
   tier: PaymentTier;
   index: number;
   onCheckout: (tierId: string) => void;
   loadingId: string | null;
+  currentTierId: string | null;
 }) {
   const isFeatured = index === 0;
   const isLoading = loadingId === tier.tierId;
   const isFree = tier.amount === 0;
+  const isCurrent = isFree || tier.tierId === currentTierId;
 
   const features: [string, string][] = [
     ["Thời hạn", `${tier.noMonth} tháng`],
@@ -64,7 +68,7 @@ function TierCard({
         {!isFree && <small>/{tier.noMonth} tháng</small>}
       </div>
 
-      {isFree ? (
+      {isCurrent ? (
         <div
           className={`upgrade-pro-action is-current ${isFeatured ? "is-featured" : ""}`}
           style={{ cursor: "default", pointerEvents: "none" }}
@@ -135,6 +139,7 @@ export function UpgradeProDialog({
   const setOpen = controlledOnOpenChange !== undefined ? controlledOnOpenChange : setLocalOpen;
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const router = useRouter();
+  const { data: profile } = useProfile();
 
   const { data: tiers, isLoading } = useQuery({
     queryKey: queryKeys.payments.tiers,
@@ -204,6 +209,7 @@ export function UpgradeProDialog({
                     index={index}
                     onCheckout={handleCheckout}
                     loadingId={loadingId}
+                    currentTierId={profile?.tierId ?? null}
                   />
                 ))}
           </div>

@@ -22,6 +22,7 @@ import {
   useMyPaymentHistory,
 } from "@/features/profile/hooks";
 import { isPro, type UserProfile } from "@/services/user.service";
+import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
 import {
   UserIcon,
   CrownSimpleIcon,
@@ -63,6 +64,19 @@ function formatDate(iso: string | null | undefined): string {
     month: "2-digit",
     year: "numeric",
   }).format(new Date(iso));
+}
+
+function formatRemainingTime(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const diffMs = new Date(iso).getTime() - Date.now();
+  if (diffMs <= 0) return "Đã hết hạn";
+
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays < 30) return `Còn ${diffDays} ngày`;
+
+  const months = Math.floor(diffDays / 30);
+  const days = diffDays % 30;
+  return days > 0 ? `Còn ${months} tháng ${days} ngày` : `Còn ${months} tháng`;
 }
 
 function formatCurrency(amount: number): string {
@@ -500,21 +514,36 @@ function BillingTab() {
               </p>
             </div>
           </div>
-          {proUser ? (
-            <Badge
-              className="font-bold text-[10px] px-2 py-1 border-0 shrink-0"
-              style={{ background: "rgba(201,162,77,0.15)", color: "var(--accent-gold)" }}
-            >
-              ✦ PRO
-            </Badge>
-          ) : (
-            <Badge
-              className="font-bold text-[10px] px-2 py-1 border-0 shrink-0"
-              style={{ background: "var(--bg-main)", color: "var(--text-muted)", border: "1px solid var(--border-default)" }}
-            >
-              Free
-            </Badge>
-          )}
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            {proUser ? (
+              <Badge
+                className="font-bold text-[10px] px-2 py-1 border-0"
+                style={{ background: "rgba(201,162,77,0.15)", color: "var(--accent-gold)" }}
+              >
+                ✦ PRO
+              </Badge>
+            ) : (
+              <Badge
+                className="font-bold text-[10px] px-2 py-1 border-0"
+                style={{ background: "var(--bg-main)", color: "var(--text-muted)", border: "1px solid var(--border-default)" }}
+              >
+                Free
+              </Badge>
+            )}
+            <UpgradeProDialog>
+              <button
+                type="button"
+                className="text-xs font-semibold whitespace-nowrap px-3 py-1.5 rounded-lg cursor-pointer transition-opacity hover:opacity-90"
+                style={{
+                  background: "linear-gradient(135deg,var(--accent-gold) 0%,var(--truffle) 100%)",
+                  color: "var(--text-inverse)",
+                  boxShadow: "0 2px 8px rgba(201,162,77,0.35)",
+                }}
+              >
+                {proUser ? "Đổi gói" : "Nâng cấp ngay"}
+              </button>
+            </UpgradeProDialog>
+          </div>
         </div>
 
         {/* Token display */}
@@ -565,9 +594,22 @@ function BillingTab() {
               style={{ color: proUser ? "var(--accent-gold)" : "var(--text-muted)" }}
             />
             <div>
-              <p className="text-base font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
-                {formatDate(profile.subscriptionEndTime)}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-base font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                  {formatDate(profile.subscriptionEndTime)}
+                </p>
+                {formatRemainingTime(profile.subscriptionEndTime) && (
+                  <span
+                    className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full"
+                    style={{
+                      background: proUser ? "rgba(201,162,77,0.15)" : "var(--bg-elevated)",
+                      color: proUser ? "var(--accent-gold)" : "var(--text-muted)",
+                    }}
+                  >
+                    {formatRemainingTime(profile.subscriptionEndTime)}
+                  </span>
+                )}
+              </div>
               <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
                 Ngày hết hạn gói
               </p>

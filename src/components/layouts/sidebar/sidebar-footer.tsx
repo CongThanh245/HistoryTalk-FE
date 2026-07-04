@@ -1,6 +1,6 @@
 "use client";
 
-import { LightningIcon, CrownSimpleIcon, CoinsIcon } from "@phosphor-icons/react";
+import { LightningIcon, CrownSimpleIcon, CoinsIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils/cn";
 import { UpgradeProDialog } from "./upgrade-pro-dialog";
 import { useProfile } from "@/features/profile/hooks";
@@ -35,16 +35,16 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
         className="relative z-10 shrink-0 px-2 py-3 border-t"
         style={{ borderColor: "rgba(201,162,77,0.25)" }}
       >
-        <Link
-          href="/profile?tab=billing"
-          className="block rounded-xl overflow-hidden relative group transition-all duration-250 w-full"
+        <UpgradeProDialog>
+        <button
+          type="button"
+          className="block rounded-xl overflow-hidden relative group transition-all duration-250 w-full text-left cursor-pointer"
           style={{
             height: 72,
             background:
               "linear-gradient(135deg, rgba(201,162,77,0.18) 0%, rgba(163,81,57,0.13) 50%, rgba(201,162,77,0.08) 100%)",
             border: "1px solid rgba(201,162,77,0.40)",
             boxShadow: "0 2px 12px rgba(201,162,77,0.12), inset 0 1px 0 rgba(255,255,255,0.06)",
-            textDecoration: "none",
           }}
         >
           {/* shimmer effect */}
@@ -101,8 +101,17 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
                 </span>
               </div>
             </div>
+
+            <CaretRightIcon
+              className={cn(
+                "w-3.5 h-3.5 shrink-0 transition-opacity duration-250",
+                isExpanded ? "opacity-40 group-hover:opacity-80" : "opacity-0 w-0"
+              )}
+              style={{ color: "var(--accent-gold)" }}
+            />
           </div>
-        </Link>
+        </button>
+        </UpgradeProDialog>
       </div>
     );
   }
