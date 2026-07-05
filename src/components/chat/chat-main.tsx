@@ -123,6 +123,8 @@ interface ChatMainProps {
   toggleRightPanel?: () => void;
   isLeftOpen?: boolean;
   isRightOpen?: boolean;
+  /** Overrides the "initializing conversation" message shown while sessionId is null. */
+  initializingLabel?: string;
 }
 
 export function ChatMain({
@@ -134,6 +136,7 @@ export function ChatMain({
   toggleRightPanel,
   isLeftOpen = false,
   isRightOpen = false,
+  initializingLabel,
 }: ChatMainProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -635,9 +638,7 @@ export function ChatMain({
         
         // Check for token exhaustion - broader matching
         const isTokenExhausted = 
-          serverMessage.toLowerCase().includes("hết token") ||
-          serverMessage.toLowerCase().includes("nạp thêm") ||
-          serverMessage.toLowerCase().includes("token") ||
+          serverMessage.toLowerCase().includes(" Bạn đã hết token.") ||
           errorCode === 400 ||
           errorCode === "400";
         
@@ -901,7 +902,7 @@ export function ChatMain({
               }}
             />
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              Đang khởi tạo cuộc trò chuyện...
+              {initializingLabel ?? "Đang khởi tạo cuộc trò chuyện..."}
             </p>
           </div>
         ) : (

@@ -49,114 +49,16 @@ import { ChatMain } from "@/components/chat/chat-main";
 import { StaffCharacterMediaPreview } from "@/components/staff/staff-media-preview";
 import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
-import { useChatSessions, useCreateSession } from "@/features/chat/hooks";
-import type { ChatCharacter } from "@/services/chat.service";
-import type { HistoricalEvent, EventEraBackend } from "@/services/event.service";
-import { useCreateEvent } from "@/features/events/hooks";
+import type { EventEraBackend } from "@/services/event.service";
 import { toast } from "sonner";
-import type { RagDocument } from "@/services/document.service";
 import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
-import {
-  hasValidationErrors,
-  validateCharacterDraft,
-  validateContextDraft,
-  type CharacterValidationField,
-  type ContextValidationField,
-  type ValidationErrors,
-} from "@/lib/utils/content-validation";
+import { hasValidationErrors, validateContextDraft } from "@/lib/utils/content-validation";
+import { FORM_TABS, type StaffCharacterDetailViewProps } from "./staff-character-detail-view.types";
+import { useStaffCharacterDetailView } from "./use-staff-character-detail-view";
 
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
-
-export type CharacterDraft = {
-  id?: string;
-  name: string;
-  title: string;
-  background: string;
-  image: string;
-  modelUrl: string;
-  personality: string;
-  bornYear: string;
-  bornMonth: string;
-  bornDay: string;
-  isBornBc: boolean;
-  deathYear: string;
-  deathMonth: string;
-  deathDay: string;
-  isDeathBc: boolean;
-  isActive: boolean;
-  isPublished: boolean;
-  documentId?: string;
-  documentTitle: string;
-  documentContent: string;
-  pendingPdfFile?: File | null;
-};
-
-export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
-  name: "",
-  title: "",
-  background: "",
-  image: "",
-  modelUrl: "",
-  personality: "",
-  bornYear: "",
-  bornMonth: "",
-  bornDay: "",
-  isBornBc: false,
-  deathYear: "",
-  deathMonth: "",
-  deathDay: "",
-  isDeathBc: false,
-  isActive: true,
-  isPublished: false,
-  documentId: undefined,
-  documentTitle: "",
-  documentContent: "",
-  pendingPdfFile: null,
-};
-
-interface StaffCharacterDetailViewProps {
-  mode: "create" | "edit";
-  initialDraft?: CharacterDraft;
-  onSave: (draft: CharacterDraft) => void;
-  isPending: boolean;
-  eventOptions: HistoricalEvent[];
-  isLoadingEvents: boolean;
-  /** After a character is created/exists, this is the created character id */
-  createdCharacterId?: string | null;
-  /** Callback to map a context to the character */
-  onMapContext: (
-    characterId: string,
-    contextId: string,
-    options?: { contextName?: string; onSuccess?: () => void },
-  ) => void;
-  /** Callback to unmap a context from the character */
-  onUnmapContext?: (
-    characterId: string,
-    contextId: string,
-    options?: { onSuccess?: () => void },
-  ) => void;
-  isMapContextPending?: boolean;
-  /** The currently mapped contexts (from character data) */
-  initialContexts?: { contextId: string; name: string }[];
-  /** If true, start in editing mode immediately (e.g. navigated from Edit button) */
-  initialEditing?: boolean;
-  documents?: RagDocument[];
-  isLoadingDocuments?: boolean;
-  onDeleteDocument?: (docId: string) => void;
-  isDeleteDocumentPending?: boolean;
-  /** Callback to upload PDF to a document */
-  onUploadDocumentPdf?: (docId: string, file: File) => Promise<void>;
-  isUploadDocumentPdfPending?: boolean;
-  /** Callback to get PDF URL for viewing */
-  onGetDocumentPdfUrl?: (docId: string) => Promise<{ url: string; expiresIn: number }>;
-  isGetDocumentPdfUrlPending?: boolean;
-  /** Callback after create success to upload PDF (only for create mode) */
-  onUploadPdfAfterCreate?: (docId: string, file: File) => Promise<void>;
-  isUploadPdfAfterCreatePending?: boolean;
-}
+export type { CharacterDraft } from "./staff-character-detail-view.types";
+export { EMPTY_CHARACTER_DRAFT } from "./staff-character-detail-view.types";
 
 function ValidationErrorText({ message }: { message?: string }) {
   return message ? (
@@ -166,415 +68,92 @@ function ValidationErrorText({ message }: { message?: string }) {
   ) : null;
 }
 
-function getCharacterRelatedValidationFields(
-  field: keyof CharacterDraft,
-): CharacterValidationField[] {
-  if (
-    field === "bornDay" ||
-    field === "bornMonth" ||
-    field === "bornYear" ||
-    field === "isBornBc"
-  ) {
-    return ["bornDay", "bornMonth", "bornYear", "deathYear"];
-  }
-
-  if (
-    field === "deathDay" ||
-    field === "deathMonth" ||
-    field === "deathYear" ||
-    field === "isDeathBc"
-  ) {
-    return ["deathDay", "deathMonth", "deathYear"];
-  }
-
-  if (
-    ["name", "title", "background", "personality", "image", "modelUrl"].includes(
-      field,
-    )
-  ) {
-    return [field as CharacterValidationField];
-  }
-
-  return [];
-}
-
-type FormTabKey = "basic" | "media" | "content" | "rag" | "context";
-
-const FORM_TABS: { key: FormTabKey; label: string }[] = [
-  { key: "basic", label: "Cơ bản" },
-  { key: "media", label: "Media" },
-  { key: "content", label: "Nội dung" },
-  { key: "rag", label: "Tài liệu" },
-  { key: "context", label: "Liên kết bối cảnh" },
-];
-
-const TAB_ERROR_FIELDS: Record<FormTabKey, CharacterValidationField[]> = {
-  basic: ["name", "title", "bornDay", "bornMonth", "bornYear", "deathDay", "deathMonth", "deathYear"],
-  media: ["image", "modelUrl"],
-  content: ["background", "personality"],
-  rag: [],
-  context: [],
-};
-
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export function StaffCharacterDetailView({
-  mode,
-  initialDraft,
-  onSave,
-  isPending,
-  eventOptions,
-  isLoadingEvents,
-  createdCharacterId,
-  onMapContext,
-  onUnmapContext,
-  isMapContextPending,
-  initialContexts,
-  initialEditing,
-  documents = [],
-  isLoadingDocuments = false,
-  onDeleteDocument,
-  isDeleteDocumentPending = false,
-  onUploadDocumentPdf,
-  isUploadDocumentPdfPending = false,
-  onGetDocumentPdfUrl,
-  isGetDocumentPdfUrlPending = false,
-  onUploadPdfAfterCreate,
-  isUploadPdfAfterCreatePending = false,
-}: StaffCharacterDetailViewProps) {
+export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
+  const {
+    mode,
+    eventOptions,
+    isLoadingEvents,
+    documents = [],
+    isLoadingDocuments = false,
+    onDeleteDocument,
+    isDeleteDocumentPending = false,
+    onUploadDocumentPdf,
+    isUploadDocumentPdfPending = false,
+    onGetDocumentPdfUrl,
+    isGetDocumentPdfUrlPending = false,
+    onUnmapContext,
+    isMapContextPending,
+    isPending,
+  } = props;
+
   const router = useRouter();
-
-  /* ── State ── */
-  const [draft, setDraft] = React.useState<CharacterDraft>(initialDraft || EMPTY_CHARACTER_DRAFT);
-  const [isEditing, setIsEditing] = React.useState(mode === "create" || !!initialEditing);
-  const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
-  const [leaveDialogOpen, setLeaveDialogOpen] = React.useState(false);
-  const [errors, setErrors] = React.useState<ValidationErrors<CharacterValidationField>>({});
-  const [quickErrors, setQuickErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
-  const [activeTab, setActiveTab] = React.useState<FormTabKey>("basic");
-  const [documentDetailOpen, setDocumentDetailOpen] = React.useState(false);
-
-  const tabHasError = React.useCallback(
-    (tab: FormTabKey) => TAB_ERROR_FIELDS[tab].some((field) => !!errors[field]),
-    [errors],
-  );
-
-  /* ── PDF Dialog State ── */
-  const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
-  const [uploadTargetDocId, setUploadTargetDocId] = React.useState<string | null>(null);
-  const [viewerOpen, setViewerOpen] = React.useState(false);
-  const [viewerUrl, setViewerUrl] = React.useState<string | null>(null);
-  const [viewerLoading, setViewerLoading] = React.useState(false);
-
-  /* ── PDF File for Create Mode ── */
-  const [pendingPdfFile, setPendingPdfFile] = React.useState<File | null>(null);
-  const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  /* Detect if form is dirty */
-  const isDirty = React.useMemo(() => {
-    if (!initialDraft) return draft.name !== "" || draft.title !== "";
-    
-    // Deep comparison of relevant fields
-    const keys: (keyof CharacterDraft)[] = [
-      "name", "title", "background", "image", "modelUrl", "personality",
-      "bornYear", "bornMonth", "bornDay", "isBornBc",
-      "deathYear", "deathMonth", "deathDay", "isDeathBc",
-      "isActive", "isPublished", "documentId", "documentTitle", "documentContent"
-    ];
-    
-    return keys.some(key => {
-      const v1 = draft[key] ?? "";
-      const v2 = initialDraft[key] ?? "";
-      return v1 !== v2;
-    });
-  }, [draft, initialDraft]);
-
-  /* helper to set a single field */
-  const set =
-    (field: keyof CharacterDraft) => (val: string | boolean) =>
-      setDraft((s) => {
-        const next = { ...s, [field]: val };
-        const nextErrors = validateCharacterDraft(next, {
-          requirePublishReady: next.isPublished,
-        });
-        const relatedFields = getCharacterRelatedValidationFields(field);
-
-        if (relatedFields.length > 0) {
-          setErrors((prev) => {
-            const updated = { ...prev };
-            relatedFields.forEach((relatedField) => {
-              if (nextErrors[relatedField]) {
-                updated[relatedField] = nextErrors[relatedField];
-              } else {
-                delete updated[relatedField];
-              }
-            });
-            return updated;
-          });
-        }
-
-        return next;
-      });
-
-  const getDocumentId = React.useCallback(
-    (document: RagDocument) => document.id ?? document.documentId,
-    [],
-  );
-
-  const selectDocument = (document: RagDocument) => {
-    setDraft((s) => ({
-      ...s,
-      documentId: getDocumentId(document),
-      documentTitle: document.title ?? "",
-      documentContent: document.content ?? "",
-    }));
-  };
-
-  const [skipAutoSelect, setSkipAutoSelect] = React.useState(false);
-
-  const clearDocumentDraft = () => {
-    setSkipAutoSelect(true);
-    setDraft((s) => ({
-      ...s,
-      documentId: undefined,
-      documentTitle: "",
-      documentContent: "",
-    }));
-  };
-
-  /* ── Chat state ── */
-  const [sessionId, setSessionId] = React.useState<string | null>(null);
-
-  /* ── Context mapping state ── */
-  const [selectedContextId, setSelectedContextId] = React.useState<string>("");
-  const [mappedContexts, setMappedContexts] = React.useState<{ contextId: string; name: string }[]>([]);
-
-  /* ── Quick-create context state ── */
-  const [quickCreateOpen, setQuickCreateOpen] = React.useState(false);
-  const [quickCtx, setQuickCtx] = React.useState({
-    name: "",
-    description: "",
-    era: "" as EventEraBackend | "",
-    year: "",
-    location: "",
-    imageUrl: "",
-    videoUrl: "",
-    isPublished: false,
-  });
-  const createEvent = useCreateEvent();
-
-  const setQuickContextField =
-    <K extends keyof typeof quickCtx>(field: K) =>
-    (val: (typeof quickCtx)[K]) =>
-      setQuickCtx((s) => {
-        const next = { ...s, [field]: val };
-        const nextErrors = validateContextDraft(next);
-        setQuickErrors((prev) => {
-          const updated = { ...prev };
-          const errorField = field as ContextValidationField;
-          if (nextErrors[errorField]) {
-            updated[errorField] = nextErrors[errorField];
-          } else {
-            delete updated[errorField];
-          }
-          return updated;
-        });
-        return next;
-      });
-
-  // Reset state/sync when props change (especially for edit mode)
-  React.useEffect(() => {
-    if (initialDraft) {
-      setDraft(initialDraft);
-    }
-  }, [initialDraft]);
-
-  // Reset skipAutoSelect when initialDraft changes (different character loaded)
-  React.useEffect(() => {
-    if (skipAutoSelect) {
-      setSkipAutoSelect(false);
-    }
-  }, [initialDraft?.id]);
-
-  React.useEffect(() => {
-    if (mode !== "edit" || draft.documentId || draft.documentContent || skipAutoSelect) return;
-    const firstDocument = documents[0];
-    if (!firstDocument) return;
-    setDraft((s) => ({
-      ...s,
-      documentId: getDocumentId(firstDocument),
-      documentTitle: firstDocument.title ?? "",
-      documentContent: firstDocument.content ?? "",
-    }));
-  }, [documents, draft.documentContent, draft.documentId, getDocumentId, mode, skipAutoSelect]);
-
-  React.useEffect(() => {
-    setMappedContexts(initialContexts ?? []);
-  }, [initialContexts]);
-
-  React.useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty && isEditing) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isDirty, isEditing]);
-
-  /* Whether the character has been persisted (has an id) */
-  const isCreated = !!(createdCharacterId || draft.id);
-  const characterId = createdCharacterId || draft.id || "";
-  const chatContextId = mappedContexts[0]?.contextId || "";
-
-  // Fetch or create session when character becomes active
-  const { data: sessions, isSuccess: isSessionsSuccess } = useChatSessions(
-    characterId,
-    chatContextId,
-    isCreated
-  );
-
-  const createSession = useCreateSession();
-  const sessionInitialized = React.useRef(false);
-
-  React.useEffect(() => {
-    if (!isCreated) return;
-    if (!chatContextId) return;
-    if (!isSessionsSuccess) return;
-    if (sessionInitialized.current) return;
-    if (sessionId) return;
-
-    sessionInitialized.current = true;
-
-    if (sessions && sessions.length > 0) {
-      setSessionId(sessions[0].id);
-    } else {
-      createSession.mutateAsync({
-        characterId,
-        contextId: chatContextId,
-      }).then((session) => {
-        setSessionId(session.id);
-      }).catch(console.error);
-    }
-  }, [isCreated, characterId, chatContextId, isSessionsSuccess, sessions, sessionId, createSession]);
-
-  // Auto-exit editing mode after save completes successfully. If the
-  // character already existed (i.e. this was an edit, not the initial
-  // creation), start a brand-new chat session so the right-panel preview
-  // always reflects the just-saved character data instead of stale history.
-  const prevPendingRef = React.useRef(false);
-  const characterExistedBeforeSaveRef = React.useRef(false);
-  React.useEffect(() => {
-    if (isPending && !prevPendingRef.current) {
-      characterExistedBeforeSaveRef.current = isCreated;
-    }
-    if (prevPendingRef.current && !isPending) {
-      const nowCreated = !!(createdCharacterId || draft.id);
-      if (nowCreated) {
-        setIsEditing(false);
-        if (characterExistedBeforeSaveRef.current && chatContextId) {
-          createSession.mutate(
-            { characterId, contextId: chatContextId },
-            {
-              onSuccess: (session) => {
-                setSessionId(session.id);
-                toast.success("Đã tạo phiên trò chuyện mới để test thay đổi.");
-              },
-            },
-          );
-        }
-      }
-    }
-    prevPendingRef.current = isPending;
-  }, [isPending, createdCharacterId, draft.id, isCreated, chatContextId, characterId, createSession]);
-
-  /* Build a ChatCharacter object from the draft for the right panel */
-  const chatCharacter: ChatCharacter = {
-    id: characterId,
-    name: draft.name || "Nhân vật mới",
-    title: draft.title || "Chức vị",
-    description: draft.background || undefined,
-    imageUrl: isValidUrl(draft.image) ? draft.image : "",
-    modelUrl: isValidUrl(draft.modelUrl) ? draft.modelUrl : null,
-    contextId: mappedContexts[0]?.contextId || undefined,
-  };
-
-  const draftValidationErrors = React.useMemo(() => validateCharacterDraft(draft), [draft]);
-  const publishValidationErrors = React.useMemo(
-    () => validateCharacterDraft(draft, { requirePublishReady: true }),
-    [draft],
-  );
-  const saveValidationErrors = draft.isPublished
-    ? publishValidationErrors
-    : draftValidationErrors;
-  const hasDraftErrors = hasValidationErrors(draftValidationErrors);
-  const hasSaveErrors = hasValidationErrors(saveValidationErrors);
-  const hasPublishErrors = hasValidationErrors(publishValidationErrors);
-  const canSave = !hasSaveErrors && !isPending;
-  const canStartChat = isCreated && mappedContexts.length > 0 && !hasPublishErrors;
-  const canPublishCharacter = !isEditing || (!hasPublishErrors && mappedContexts.length > 0);
-  const publishBlockedMessage =
-    mappedContexts.length === 0
-      ? "⚠ Cần liên kết bối cảnh lịch sử trước khi xuất bản."
-      : "⚠ Cần hoàn tất các trường bắt buộc trước khi xuất bản.";
-
-  const showValidationErrors = (nextErrors = saveValidationErrors) => {
-    setErrors(nextErrors);
-    const firstInvalidTab = FORM_TABS.find((tab) =>
-      TAB_ERROR_FIELDS[tab.key].some((field) => !!nextErrors[field]),
-    );
-    if (firstInvalidTab) setActiveTab(firstInvalidTab.key);
-    toast.error("Vui lòng kiểm tra các trường bắt buộc và định dạng ngày tháng.");
-  };
-
-  const handleSaveClick = () => {
-    if (hasSaveErrors) {
-      showValidationErrors();
-      return;
-    }
-    setErrors({});
-    onSave(draft);
-  };
-
-  /* Handle context mapping */
-  const handleMapContext = () => {
-    if (hasDraftErrors) {
-      showValidationErrors(draftValidationErrors);
-      return;
-    }
-    if (!selectedContextId || !characterId) return;
-    const selectedEvent = eventOptions.find(ev => ev.id === selectedContextId);
-    
-    onMapContext(characterId, selectedContextId, {
-      contextName: selectedEvent?.title,
-      onSuccess: () => {
-        if (selectedEvent) {
-          setMappedContexts(prev => {
-            if (prev.some(c => c.contextId === selectedContextId)) return prev;
-            return [...prev, { contextId: selectedContextId, name: selectedEvent.title }];
-          });
-        }
-        setSessionId(null);
-        sessionInitialized.current = false;
-        setSelectedContextId("");
-      },
-    });
-  };
-
-  const handleRemoveContext = (contextIdToRemove: string) => {
-    if (!characterId || !onUnmapContext) return;
-    onUnmapContext(characterId, contextIdToRemove, {
-      onSuccess: () => {
-        setMappedContexts(prev => prev.filter(c => c.contextId !== contextIdToRemove));
-      }
-    });
-  };
-
-
+  const {
+    draft,
+    isEditing,
+    setIsEditing,
+    isDirty,
+    set,
+    cancelEditing,
+    cancelDialogOpen,
+    setCancelDialogOpen,
+    leaveDialogOpen,
+    setLeaveDialogOpen,
+    errors,
+    tabHasError,
+    activeTab,
+    setActiveTab,
+    hasDraftErrors,
+    hasPublishErrors,
+    canSave,
+    canPublishCharacter,
+    publishBlockedMessage,
+    showValidationErrors,
+    publishValidationErrors,
+    handleSaveClick,
+    documentDetailOpen,
+    setDocumentDetailOpen,
+    getDocumentId,
+    selectDocument,
+    clearDocumentDraft,
+    uploadDialogOpen,
+    setUploadDialogOpen,
+    uploadTargetDocId,
+    setUploadTargetDocId,
+    viewerOpen,
+    setViewerOpen,
+    viewerUrl,
+    setViewerUrl,
+    viewerLoading,
+    setViewerLoading,
+    pendingPdfFile,
+    setPendingPdfFile,
+    pdfPreviewUrl,
+    setPdfPreviewUrl,
+    fileInputRef,
+    isCreated,
+    sessionId,
+    setSessionId,
+    activeChatContextId,
+    chatCharacter,
+    chatInitializingLabel,
+    canStartChat,
+    selectedContextId,
+    setSelectedContextId,
+    mappedContexts,
+    handleMapContext,
+    handleRemoveContext,
+    quickCreateOpen,
+    setQuickCreateOpen,
+    quickCtx,
+    setQuickContextField,
+    quickErrors,
+    resetQuickCtx,
+    createEvent,
+  } = useStaffCharacterDetailView(props);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-content)]">
@@ -706,8 +285,7 @@ export function StaffCharacterDetailView({
         cancelLabel="Tiếp tục chỉnh sửa"
         variant="danger"
         onConfirm={() => {
-          if (initialDraft) setDraft(initialDraft);
-          setIsEditing(false);
+          cancelEditing();
           setCancelDialogOpen(false);
         }}
       />
@@ -736,7 +314,7 @@ export function StaffCharacterDetailView({
         >
           <Tabs
             value={activeTab}
-            onValueChange={(v) => setActiveTab(v as FormTabKey)}
+            onValueChange={(v) => setActiveTab(v as typeof activeTab)}
             className="flex flex-col h-full min-h-0 gap-0"
           >
             <div
@@ -977,9 +555,12 @@ export function StaffCharacterDetailView({
                             >
                               <button
                                 type="button"
-                                className="min-w-0 flex-1 text-left"
-                                onClick={() => selectDocument(document)}
-                                disabled={!isEditing}
+                                className="min-w-0 flex-1 text-left cursor-pointer"
+                                onClick={() => {
+                                  selectDocument(document);
+                                  setDocumentDetailOpen(true);
+                                }}
+                                title="Xem nội dung tài liệu này"
                               >
                                 <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
                                   {document.title || "Tài liệu chưa đặt tên"}
@@ -1198,10 +779,18 @@ export function StaffCharacterDetailView({
                       variant="outline"
                       className="shrink-0"
                       onClick={() => setDocumentDetailOpen(true)}
-                      disabled={!isEditing}
                     >
-                      <PencilIcon className="mr-1.5 h-3.5 w-3.5" />
-                      {draft.documentContent ? "Sửa nội dung" : "Nhập nội dung"}
+                      {isEditing ? (
+                        <>
+                          <PencilIcon className="mr-1.5 h-3.5 w-3.5" />
+                          {draft.documentContent ? "Sửa nội dung" : "Nhập nội dung"}
+                        </>
+                      ) : (
+                        <>
+                          <EyeIcon className="mr-1.5 h-3.5 w-3.5" />
+                          Xem nội dung
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -1544,7 +1133,7 @@ export function StaffCharacterDetailView({
                           type="button"
                           role="switch"
                           aria-checked={quickCtx.isPublished}
-                          onClick={() => setQuickCtx((s) => ({ ...s, isPublished: !s.isPublished }))}
+                          onClick={() => setQuickContextField("isPublished")(!quickCtx.isPublished)}
                           className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none"
                           style={{ background: quickCtx.isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)" }}
                         >
@@ -1570,7 +1159,7 @@ export function StaffCharacterDetailView({
                         style={{ color: "var(--content-heading)" }}
                         onClick={() => {
                           setQuickCreateOpen(false);
-                          setQuickCtx({ name: "", description: "", era: "", year: "", location: "", imageUrl: "", videoUrl: "", isPublished: false });
+                          resetQuickCtx();
                         }}
                       >
                         Huỷ
@@ -1589,11 +1178,9 @@ export function StaffCharacterDetailView({
                         onClick={() => {
                           const nextErrors = validateContextDraft(quickCtx);
                           if (hasValidationErrors(nextErrors)) {
-                            setQuickErrors(nextErrors);
                             toast.error("Vui lòng kiểm tra thông tin bối cảnh.");
                             return;
                           }
-                          setQuickErrors({});
                           createEvent.mutate(
                             {
                               name: quickCtx.name.trim(),
@@ -1609,7 +1196,7 @@ export function StaffCharacterDetailView({
                               onSuccess: (newCtx) => {
                                 setSelectedContextId(newCtx.id);
                                 setQuickCreateOpen(false);
-                                setQuickCtx({ name: "", description: "", era: "", year: "", location: "", imageUrl: "", videoUrl: "", isPublished: false });
+                                resetQuickCtx();
                                 toast.success("Tạo bối cảnh thành công!");
                               },
                             },
@@ -1644,9 +1231,10 @@ export function StaffCharacterDetailView({
           {canStartChat ? (
             <ChatMain
               character={chatCharacter}
-              contextId={chatContextId}
+              contextId={activeChatContextId}
               sessionId={sessionId}
               onSessionCreated={setSessionId}
+              initializingLabel={chatInitializingLabel}
             />
           ) : (
             <div className="flex-1 flex flex-col relative items-center justify-center p-12">
