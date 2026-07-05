@@ -3,7 +3,8 @@
 import * as React from "react";
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import Image from "next/image";
-import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon, UploadSimpleIcon, FilePdfIcon, ImageSquareIcon } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
+import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon, UploadSimpleIcon, FilePdfIcon, ImageSquareIcon, UsersIcon, LinkBreakIcon } from "@phosphor-icons/react";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { StaffImageHoverPreview } from "@/components/staff/staff-media-preview";
@@ -45,6 +46,12 @@ import {
   useUploadDocumentPdf,
   useGetDocumentPdfUrl,
 } from "@/features/documents/hooks";
+import {
+  useCharacters,
+  useCharactersByContext,
+  useMapContextToCharacter,
+  useUnmapContextFromCharacter,
+} from "@/features/characters/hooks";
 import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import type { RagDocument } from "@/services/document.service";
@@ -162,9 +169,13 @@ export default function StaffContextsPage() {
   const [restoreOpen, setRestoreOpen] = React.useState(false);
   const [tablePublishTarget, setTablePublishTarget] =
     React.useState<HistoricalEvent | null>(null);
-  const [activeTab, setActiveTab] = React.useState<"content" | "rag">("content");
+  const [activeTab, setActiveTab] = React.useState<"content" | "rag" | "characters">("content");
   const ragSectionRef = React.useRef<HTMLDivElement>(null);
   const [errors, setErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
+  const router = useRouter();
+  const [characterSearch, setCharacterSearch] = React.useState("");
+  const [unmapTarget, setUnmapTarget] =
+    React.useState<{ characterId: string; name: string } | null>(null);
 
   const { data, isLoading, isFetching } = useEvents({
     search: search || undefined,
@@ -181,6 +192,26 @@ export default function StaffContextsPage() {
   const uploadDocumentPdf = useUploadDocumentPdf();
   const getDocumentPdfUrl = useGetDocumentPdfUrl();
   const deleteEvent = useDeleteEvent();
+
+  const charactersInContext = useCharactersByContext(editContextId);
+  const linkedCharacterIds = React.useMemo(
+    () => new Set((charactersInContext.data ?? []).map((c) => c.id)),
+    [charactersInContext.data],
+  );
+  const characterSearchResults = useCharacters(
+    { search: characterSearch || undefined, page: 1, limit: 8 },
+    undefined,
+    { enabled: mode === "edit" && dialogOpen && activeTab === "characters" },
+  );
+  const availableCharacters = React.useMemo(
+    () =>
+      (characterSearchResults.data?.content ?? []).filter(
+        (c) => !linkedCharacterIds.has(c.id),
+      ),
+    [characterSearchResults.data, linkedCharacterIds],
+  );
+  const mapContextToCharacter = useMapContextToCharacter();
+  const unmapContextFromCharacter = useUnmapContextFromCharacter();
 
   // PDF Dialog State
   const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
@@ -857,6 +888,17 @@ export default function StaffContextsPage() {
               {[
                 { id: "content", label: "Thông tin bối cảnh" },
                 { id: "rag", label: "Tài liệu RAG", icon: "📚", badge: draft.documentContent.trim() ? "1" : null },
+                ...(mode === "edit"
+                  ? [
+                      {
+                        id: "characters",
+                        label: "Nhân vật",
+                        badge: charactersInContext.data?.length
+                          ? String(charactersInContext.data.length)
+                          : null,
+                      },
+                    ]
+                  : []),
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1322,6 +1364,144 @@ export default function StaffContextsPage() {
                 </div>
               )}
 
+              {activeTab === "characters" && mode === "edit" && (
+                <div className="space-y-5">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                      Nhân vật đã gắn với bối cảnh này
+                    </p>
+                    <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
+                      Đây là các nhân vật mà người dùng có thể trò chuyện khi khám phá bối cảnh &quot;{draft.name || "..."}&quot;.
+                    </p>
+                  </div>
+
+                  {charactersInContext.isLoading ? (
+                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tải nhân vật...</p>
+                  ) : charactersInContext.data?.length ? (
+                    <div className="space-y-2">
+                      {charactersInContext.data.map((character) => (
+                        <div
+                          key={character.id}
+                          className="flex items-center gap-3 rounded-lg border p-2.5"
+                          style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
+                        >
+                          <StaffImageHoverPreview
+                            src={character.avatarUrl}
+                            alt={character.name}
+                            thumbClassName="h-10 w-10 shrink-0 rounded-full border"
+                            previewClassName="h-40 w-40"
+                            sizes="40px"
+                            previewSizes="160px"
+                            fallback={<UsersIcon className="h-4 w-4" />}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                              {character.name}
+                            </p>
+                            <p className="truncate text-xs" style={{ color: "var(--content-muted)" }}>
+                              {character.title || character.role || "—"}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-8 rounded-md px-2.5 text-xs font-semibold"
+                              style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
+                              onClick={() => router.push(`/staff/characters/${character.id}`)}
+                            >
+                              Xem chi tiết
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              className="rounded-full"
+                              title="Gỡ liên kết khỏi bối cảnh"
+                              style={{ color: "var(--accent-danger)" }}
+                              onClick={() =>
+                                setUnmapTarget({ characterId: character.id, name: character.name })
+                              }
+                            >
+                              <LinkBreakIcon className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                      Chưa có nhân vật nào được gắn với bối cảnh này.
+                    </p>
+                  )}
+
+                  <div className="space-y-2 border-t pt-4" style={{ borderColor: "var(--card-light-border)" }}>
+                    <StaffFormLabel>Thêm nhân vật vào bối cảnh này</StaffFormLabel>
+                    <div className="relative">
+                      <MagnifyingGlassIcon
+                        className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                        style={{ color: "var(--content-subtle)" }}
+                      />
+                      <StaffFormInput
+                        value={characterSearch}
+                        onChange={(e) => setCharacterSearch(e.target.value)}
+                        placeholder="Tìm nhân vật theo tên..."
+                        className="pl-9"
+                      />
+                    </div>
+
+                    {characterSearchResults.isLoading ? (
+                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tìm kiếm...</p>
+                    ) : availableCharacters.length > 0 ? (
+                      <div className="max-h-[220px] space-y-1.5 overflow-y-auto pr-1">
+                        {availableCharacters.map((character) => (
+                          <div
+                            key={character.id}
+                            className="flex items-center gap-3 rounded-lg border p-2"
+                            style={{ borderColor: "var(--card-light-border)" }}
+                          >
+                            <StaffImageHoverPreview
+                              src={character.avatarUrl}
+                              alt={character.name}
+                              thumbClassName="h-8 w-8 shrink-0 rounded-full border"
+                              previewClassName="h-32 w-32"
+                              sizes="32px"
+                              previewSizes="128px"
+                              fallback={<UsersIcon className="h-3.5 w-3.5" />}
+                            />
+                            <p className="min-w-0 flex-1 truncate text-sm" style={{ color: "var(--content-heading)" }}>
+                              {character.name}
+                            </p>
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="h-7 shrink-0 rounded-md px-2.5 text-xs font-semibold"
+                              disabled={mapContextToCharacter.isPending}
+                              onClick={() =>
+                                mapContextToCharacter.mutate({
+                                  characterId: character.id,
+                                  contextId: editContextId!,
+                                  contextName: draft.name,
+                                })
+                              }
+                            >
+                              Liên kết
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                        {characterSearch
+                          ? "Không tìm thấy nhân vật phù hợp."
+                          : "Nhập tên để tìm nhân vật cần liên kết."}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
 
@@ -1434,6 +1614,24 @@ export default function StaffContextsPage() {
             {
               onSuccess: () => setTablePublishTarget(null),
             },
+          );
+        }}
+      />
+
+      {/* Unmap character confirm */}
+      <ConfirmDialog
+        open={!!unmapTarget}
+        onOpenChange={(open) => !open && setUnmapTarget(null)}
+        title="Gỡ liên kết nhân vật?"
+        description={`Nhân vật "${unmapTarget?.name}" sẽ không còn xuất hiện trong bối cảnh này nữa. Nhân vật vẫn được giữ lại trong hệ thống.`}
+        confirmLabel={unmapContextFromCharacter.isPending ? "Đang gỡ..." : "Gỡ liên kết"}
+        variant="danger"
+        isPending={unmapContextFromCharacter.isPending}
+        onConfirm={() => {
+          if (!unmapTarget || !editContextId) return;
+          unmapContextFromCharacter.mutate(
+            { characterId: unmapTarget.characterId, contextId: editContextId },
+            { onSuccess: () => setUnmapTarget(null) },
           );
         }}
       />

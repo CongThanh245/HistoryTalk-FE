@@ -40,6 +40,7 @@ function getErrorMessage(err: unknown, fallback: string) {
 export function useCharacters(
   params?: GetCharactersParams,
   initialData?: GetCharactersResponse,
+  options?: { enabled?: boolean },
 ) {
   return useQuery({
     queryKey: queryKeys.characters.list(params),
@@ -47,6 +48,7 @@ export function useCharacters(
     initialData,
     staleTime: 1000 * 60 * 5,
     placeholderData: (prev) => prev,
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -55,6 +57,14 @@ export function useCharacter(id?: string) {
     queryKey: queryKeys.characters.detail(id || ""),
     queryFn: () => characterService.getById(id!),
     enabled: !!id,
+  });
+}
+
+export function useCharactersByContext(contextId?: string) {
+  return useQuery({
+    queryKey: queryKeys.characters.byContext(contextId || ""),
+    queryFn: () => characterService.getByContext(contextId!),
+    enabled: !!contextId,
   });
 }
 
