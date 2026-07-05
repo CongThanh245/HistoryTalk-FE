@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowClockwiseIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
   CalendarBlankIcon,
   CheckCircleIcon,
   ClockCountdownIcon,
@@ -19,11 +21,14 @@ import {
 } from "@phosphor-icons/react";
 import { queryKeys } from "@/shared/query-key";
 import { paymentService, type PaymentHistoryItem } from "@/services/payment.service";
+import { adminDashboardService } from "@/services/admin.dashboard.service";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { StaffStatCard, StaffStatsGrid } from "@/components/staff/staff-stat-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+const PAGE_SIZE = 20;
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -197,7 +202,7 @@ function AdminToolbar({
           Danh sách giao dịch
         </h2>
         <p className="text-sm text-[var(--content-muted)]">
-          Hiển thị {count}/{total} giao dịch
+          Hiển thị {count} giao dịch trên trang này · Tổng {total} giao dịch
           {isFetching && <span className="ml-2 text-xs opacity-60">Đang cập nhật...</span>}
         </p>
       </div>
@@ -236,6 +241,58 @@ function AdminToolbar({
   );
 }
 
+function PaginationBar({
+  page,
+  totalPages,
+  hasPrevious,
+  hasNext,
+  isFetching,
+  onPrevious,
+  onNext,
+}: {
+  page: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+  isFetching: boolean;
+  onPrevious: () => void;
+  onNext: () => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-between gap-4 border-t border-[rgba(27,38,50,0.08)] pt-4">
+      <p className="text-xs text-[var(--content-muted)]">
+        Trang {page + 1}/{totalPages}
+      </p>
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onPrevious}
+          disabled={!hasPrevious || isFetching}
+          className="h-9 rounded-lg px-3"
+          style={{ borderColor: "var(--card-light-border)" }}
+        >
+          <ArrowLeftIcon size={14} />
+          Trước
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onNext}
+          disabled={!hasNext || isFetching}
+          className="h-9 rounded-lg px-3"
+          style={{ borderColor: "var(--card-light-border)" }}
+        >
+          Sau
+          <ArrowRightIcon size={14} />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 interface PaymentHistoryProps {
   variant?: "admin" | "customer";
 }
@@ -243,11 +300,13 @@ interface PaymentHistoryProps {
 export default function PaymentHistory({ variant = "customer" }: PaymentHistoryProps) {
   const isAdmin = variant === "admin";
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
 
   const adminQuery = useQuery({
-    queryKey: queryKeys.payments.history,
-    queryFn: () => paymentService.getHistory(),
+    queryKey: queryKeys.payments.history({ page, size: PAGE_SIZE }),
+    queryFn: () => paymentService.getHistory({ page, size: PAGE_SIZE }),
     enabled: isAdmin,
+    placeholderData: keepPreviousData,
   });
 
   const customerQuery = useQuery({
@@ -256,30 +315,65 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
     enabled: !isAdmin,
   });
 
+  // Aggregate stats must come from the backend, not the current page of results —
+  // the table only ever holds one page, so totals computed from it would be wrong.
+  const revenueQuery = useQuery({
+    queryKey: ["admin", "dashboard", "revenue", undefined],
+    queryFn: () => adminDashboardService.getRevenueAnalytics(),
+    enabled: isAdmin,
+  });
+
+  const paymentAnalyticsQuery = useQuery({
+    queryKey: ["admin", "dashboard", "payments", undefined],
+    queryFn: () => adminDashboardService.getPaymentAnalytics(),
+    enabled: isAdmin,
+  });
+
   const { data, isLoading, isError, refetch, isFetching } = isAdmin ? adminQuery : customerQuery;
+
+  const adminPage = data as import("@/services/payment.service").PaymentHistoryPage | undefined;
+
+  // Derived from totalElements + the page/size we requested rather than the
+  // backend's hasNext/hasPrevious/totalPages flags, which have been observed
+  // to report stale/incorrect values (e.g. hasNext=false with more rows left).
+  const adminTotalElements = adminPage?.totalElements ?? 0;
+  const adminTotalPages = adminTotalElements > 0 ? Math.ceil(adminTotalElements / PAGE_SIZE) : 0;
+  const adminHasPrevious = page > 0;
+  const adminHasNext = (page + 1) * PAGE_SIZE < adminTotalElements;
 
   const items = useMemo(() => {
     if (isAdmin) {
-      return (data as import("@/services/payment.service").PaymentHistoryPage | undefined)?.content ?? [];
+      return adminPage?.content ?? [];
     }
 
     return (data as import("@/services/payment.service").PaymentHistoryItem[] | undefined) ?? [];
-  }, [data, isAdmin]);
+  }, [data, adminPage, isAdmin]);
 
   const summary = useMemo(() => {
+    if (isAdmin) {
+      return {
+        total: paymentAnalyticsQuery.data?.summary.totalOrders ?? adminPage?.totalElements ?? 0,
+        paid: paymentAnalyticsQuery.data?.summary.paidOrders ?? 0,
+        pending: paymentAnalyticsQuery.data?.summary.pendingOrders ?? 0,
+        totalPaid: revenueQuery.data?.summary.totalRevenue ?? 0,
+      };
+    }
+
     const paidItems = items.filter((item) => item.status.toUpperCase() === "PAID");
     const pendingItems = items.filter((item) => item.status.toUpperCase() === "PENDING");
     const totalPaid = paidItems.reduce((sum, item) => sum + item.amount, 0);
 
     return {
-      total: isAdmin
-        ? ((data as import("@/services/payment.service").PaymentHistoryPage | undefined)?.totalElements ?? items.length)
-        : items.length,
+      total: items.length,
       paid: paidItems.length,
       pending: pendingItems.length,
       totalPaid,
     };
-  }, [data, items, isAdmin]);
+  }, [items, isAdmin, adminPage, paymentAnalyticsQuery.data, revenueQuery.data]);
+
+  const statsLoading = isAdmin
+    ? paymentAnalyticsQuery.isLoading || revenueQuery.isLoading
+    : isLoading;
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -374,25 +468,25 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
           <StaffStatsGrid>
             <StaffStatCard
               label="Doanh thu đã thu"
-              value={isLoading ? "--" : formatCurrency(summary.totalPaid)}
+              value={statsLoading ? "--" : formatCurrency(summary.totalPaid)}
               icon={<TrendUpIcon size={20} />}
               tone="gold"
             />
             <StaffStatCard
               label="Tổng giao dịch"
-              value={isLoading ? "--" : summary.total.toString()}
+              value={statsLoading ? "--" : summary.total.toString()}
               icon={<ReceiptIcon size={20} />}
               tone="blue"
             />
             <StaffStatCard
               label="Đã thanh toán"
-              value={isLoading ? "--" : summary.paid.toString()}
+              value={statsLoading ? "--" : summary.paid.toString()}
               icon={<CheckCircleIcon size={20} />}
               tone="green"
             />
             <StaffStatCard
               label="Đang chờ"
-              value={isLoading ? "--" : summary.pending.toString()}
+              value={statsLoading ? "--" : summary.pending.toString()}
               icon={<HourglassIcon size={20} />}
               tone="amber"
             />
@@ -414,7 +508,13 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
             <AdminToolbar
               search={search}
               onSearchChange={setSearch}
-              onRefresh={() => refetch()}
+              onRefresh={() => {
+                refetch();
+                if (isAdmin) {
+                  revenueQuery.refetch();
+                  paymentAnalyticsQuery.refetch();
+                }
+              }}
               isFetching={isFetching}
               count={filteredItems.length}
               total={summary.total}
@@ -424,6 +524,15 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
               data={filteredItems}
               isLoading={isLoading}
               emptyMessage="Không tìm thấy giao dịch phù hợp."
+            />
+            <PaginationBar
+              page={page}
+              totalPages={adminTotalPages}
+              hasPrevious={adminHasPrevious}
+              hasNext={adminHasNext}
+              isFetching={isFetching}
+              onPrevious={() => setPage((p) => Math.max(0, p - 1))}
+              onNext={() => setPage((p) => p + 1)}
             />
           </section>
         </div>

@@ -85,7 +85,8 @@ export const queryKeys = {
 
   payments: {
     tiers: ["payments", "tiers"] as const,
-    history: ["payments", "history"] as const,
+    history: (params?: { page?: number; size?: number }) =>
+      ["payments", "history", params ?? {}] as const,
     myHistory: ["payments", "me"] as const,
   },
 
