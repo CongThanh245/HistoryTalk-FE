@@ -893,18 +893,17 @@ export function ChatMain({
             />
           </div>
         ) : !sessionId ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3 py-20">
-            <div
-              className="w-5 h-5 rounded-full border-2 animate-spin"
-              style={{
-                borderColor: "var(--accent-gold)",
-                borderTopColor: "transparent",
-              }}
-            />
-            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              {initializingLabel ?? "Đang khởi tạo cuộc trò chuyện..."}
-            </p>
-          </div>
+          <>
+            {initializingLabel && (
+              <p
+                className="px-4 pb-2 text-xs text-center"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {initializingLabel}
+              </p>
+            )}
+            <TypingIndicator character={character} />
+          </>
         ) : (
           <>
             {displayItems.map((item) =>

@@ -91,6 +91,14 @@ export function ChatClient({
   const handleNewSession = useCallback((sessionId: string) => {
     setActiveSessionId(sessionId);
   }, []);
+
+  // Fires the instant a "new conversation" is requested, before the create-session
+  // API call resolves, so the UI switches away from the old conversation right away
+  // instead of waiting on the response (sessionInitialized stays true, so the
+  // auto-init effect won't try to create yet another session in the meantime).
+  const handleSessionCreating = useCallback(() => {
+    setActiveSessionId(null);
+  }, []);
   const handleSessionCreated = useCallback((sessionId: string) => {
     setActiveSessionId(sessionId);
     // invalidate để left panel cập nhật list
@@ -130,6 +138,7 @@ export function ChatClient({
         activeSessionId={activeSessionId}
         onSelectSession={setActiveSessionId}
         onNewSession={handleNewSession}
+        onSessionCreating={handleSessionCreating}
         onDeleteSession={handleDeleteSession}
         isOpen={isLeftPanelOpen}
         setIsOpen={setIsLeftPanelOpen}

@@ -58,10 +58,10 @@ export function ChatRightPanel({
 
   // Content for both desktop and mobile
   const renderContent = () => (
-    <>
+    <div className="flex-1 min-h-0 overflow-y-auto">
       {/* Active character info */}
-      <div className="shrink-0">
-        <div className="relative w-full h-72 overflow-hidden md:h-80">
+      <div>
+        <div className="relative w-full h-56 overflow-hidden md:h-80">
           <Image
             src={isValidUrl(activeCharacter.imageUrl) ? activeCharacter.imageUrl! : "/card.jpg"}
             alt={activeCharacter.name}
@@ -143,7 +143,7 @@ export function ChatRightPanel({
       </div>
 
       {/* Other characters */}
-      <div className="flex-1 overflow-y-auto px-3 py-3">
+      <div className="px-3 py-3">
         <p
           className="text-[10px] font-bold uppercase tracking-widest px-1 mb-2"
           style={{ color: "var(--text-secondary)" }}
@@ -222,7 +222,7 @@ export function ChatRightPanel({
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 
   return (

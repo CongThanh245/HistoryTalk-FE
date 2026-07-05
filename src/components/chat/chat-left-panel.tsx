@@ -35,6 +35,7 @@ interface ChatLeftPanelProps {
   sessions: ChatSession[];
   isLoadingSessions: boolean;
   onNewSession: (sessionId: string) => void;
+  onSessionCreating?: () => void;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   onDeleteSession?: (sessionId: string) => void;
@@ -48,6 +49,7 @@ export function ChatLeftPanel({
   activeSessionId,
   onSelectSession,
   onNewSession,
+  onSessionCreating,
   isOpen,
   setIsOpen,
   onDeleteSession,
@@ -93,6 +95,7 @@ export function ChatLeftPanel({
 
   const handleNewSession = () => {
     if (!characterId || !contextId) return;
+    onSessionCreating?.();
     createSession.mutate(
       { characterId, contextId },
       { onSuccess: (session) => onNewSession(session.id) },
