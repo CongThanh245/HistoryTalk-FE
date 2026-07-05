@@ -13,6 +13,13 @@ type RawServerEvent = {
   year?: number;
 };
 
+type RawServerContextRef = {
+  contextId?: string;
+  id?: string;
+  name?: string;
+  title?: string;
+};
+
 type RawServerCharacter = {
   characterId?: string;
   id?: string;
@@ -33,6 +40,7 @@ type RawServerCharacter = {
   side?: string | null;
   contextId?: string | null;
   context?: { contextId?: string | null };
+  contexts?: RawServerContextRef[];
   role?: string | null;
   era?: string | null;
   isDraft?: boolean;
@@ -60,6 +68,10 @@ function mapCharacterServer(raw: RawServerCharacter) {
     isDeathBc: raw.isDeathBc ?? false,
     side: raw.side ?? null,
     contextId: raw.contextId ?? raw.context?.contextId ?? null,
+    contexts: (raw.contexts ?? []).map((c) => ({
+      contextId: c.contextId ?? c.id ?? "",
+      name: c.name ?? c.title ?? "",
+    })),
     role: raw.role ?? null,
     era: mapEraLabel(raw.era ?? undefined),
     isDraft: raw.isDraft ?? false,
