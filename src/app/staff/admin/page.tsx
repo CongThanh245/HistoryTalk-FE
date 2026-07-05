@@ -294,6 +294,15 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
                   className="transition-all duration-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)]"
                 />
               )}
+              {sp.points.length === 1 && (
+                <circle
+                  cx={sp.points[0].x}
+                  cy={sp.points[0].y}
+                  r="4.5"
+                  fill={sp.color}
+                  className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)]"
+                />
+              )}
             </g>
           ))}
 
@@ -301,9 +310,9 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
           {hoveredIdx !== null && (
             <g>
               <line
-                x1={(hoveredIdx / (N - 1)) * svgWidth}
+                x1={N > 1 ? (hoveredIdx / (N - 1)) * svgWidth : svgWidth / 2}
                 y1={topPadding}
-                x2={(hoveredIdx / (N - 1)) * svgWidth}
+                x2={N > 1 ? (hoveredIdx / (N - 1)) * svgWidth : svgWidth / 2}
                 y2={svgHeight - bottomPadding}
                 stroke="var(--accent-gold)"
                 strokeDasharray="3 3"
@@ -364,8 +373,8 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
           <div
             className="absolute top-1/2 -translate-y-1/2 z-30 transition-all duration-150 pointer-events-none"
             style={{
-              left: `${(hoveredIdx / (N - 1)) * 100}%`,
-              transform: `translate(${(hoveredIdx / (N - 1)) > 0.7 ? "-105%" : "12px"}, -50%)`,
+              left: `${(N > 1 ? hoveredIdx / (N - 1) : 0.5) * 100}%`,
+              transform: `translate(${(N > 1 ? hoveredIdx / (N - 1) : 0.5) > 0.7 ? "-105%" : "12px"}, -50%)`,
             }}
           >
             <div className="bg-[var(--bg-surface,#1a2436)] border border-[var(--card-light-border)] rounded-xl py-2 px-3.5 shadow-2xl text-[10px] min-w-[155px]">
@@ -497,7 +506,7 @@ export default function AdminDashboardPage() {
   // Date range state
   const [from, setFrom] = React.useState(daysAgoISO(13));
   const [to, setTo] = React.useState(todayISO());
-  const [granularity, setGranularity] = React.useState<"day" | "week" | "month">("day");
+  const [granularity, setGranularity] = React.useState<"day" | "week" | "month" | "year">("day");
 
   const { data: overview, isLoading: ovLoading } = useAdminOverview();
   const { data: users, isLoading: usersLoading } = useAdminUserAnalytics({ from, to, granularity });
@@ -648,7 +657,7 @@ export default function AdminDashboardPage() {
             />
           </div>
           <div className="flex items-center gap-1 ml-2">
-            {(["day", "week", "month"] as const).map((g) => (
+            {(["day", "week", "month", "year"] as const).map((g) => (
               <button
                 key={g}
                 onClick={() => setGranularity(g)}
@@ -659,7 +668,7 @@ export default function AdminDashboardPage() {
                     : { background: "transparent", color: "var(--content-muted)" }
                 }
               >
-                {g === "day" ? "Ngày" : g === "week" ? "Tuần" : "Tháng"}
+                {g === "day" ? "Ngày" : g === "week" ? "Tuần" : g === "month" ? "Tháng" : "Năm"}
               </button>
             ))}
           </div>
@@ -679,7 +688,7 @@ export default function AdminDashboardPage() {
                   Xu hướng người dùng
                 </CardTitle>
               </div>
-              <CardDescription className="text-xs">Người dùng mới & đang hoạt động theo {granularity === "day" ? "ngày" : granularity === "week" ? "tuần" : "tháng"}</CardDescription>
+              <CardDescription className="text-xs">Người dùng mới & đang hoạt động theo {granularity === "day" ? "ngày" : granularity === "week" ? "tuần" : granularity === "month" ? "tháng" : "năm"}</CardDescription>
             </CardHeader>
             <CardContent className="pt-2 px-5 pb-4 border-t border-dashed border-[var(--card-light-border)]">
               {usersLoading ? (
@@ -730,7 +739,7 @@ export default function AdminDashboardPage() {
                   Xu hướng Doanh thu & Đơn hàng
                 </CardTitle>
               </div>
-              <CardDescription className="text-xs">Doanh thu và lượng đơn thanh toán thành công theo {granularity === "day" ? "ngày" : granularity === "week" ? "tuần" : "tháng"}</CardDescription>
+              <CardDescription className="text-xs">Doanh thu và lượng đơn thanh toán thành công theo {granularity === "day" ? "ngày" : granularity === "week" ? "tuần" : granularity === "month" ? "tháng" : "năm"}</CardDescription>
             </CardHeader>
             <CardContent className="pt-2 px-5 pb-4 border-t border-dashed border-[var(--card-light-border)]">
               {revenueLoading ? (

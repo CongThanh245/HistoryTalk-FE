@@ -58,7 +58,7 @@ export interface UserAnalyticsData {
 export interface UserAnalyticsParams {
   from?: string;       // YYYY-MM-DD
   to?: string;         // YYYY-MM-DD
-  granularity?: "day" | "week" | "month";
+  granularity?: "day" | "week" | "month" | "year";
 }
 
 // ─── Content ─────────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ export interface ChatActivityData {
 export interface ChatActivityParams {
   from?: string;
   to?: string;
-  granularity?: "day" | "week" | "month";
+  granularity?: "day" | "week" | "month" | "year";
 }
 
 export interface PaymentTransactionTrendPoint {
@@ -119,7 +119,7 @@ export interface PaymentAnalyticsData {
 export interface PaymentAnalyticsParams {
   from?: string;
   to?: string;
-  granularity?: "day" | "week" | "month";
+  granularity?: "day" | "week" | "month" | "year";
 }
 
 // ─── System Health ────────────────────────────────────────────────────────────
