@@ -2,6 +2,7 @@ import { RecentQuiz } from "@/components/home/recent-quiz";
 import { SuggestedQuiz } from "@/components/home/suggested-quiz";
 import { HomeBanner } from "@/components/home/home-banner";
 import { HistoricalContexts } from "@/components/home/historical-contexts";
+import { LearningDashboard } from "@/components/home/learning-dashboard";
 
 export const metadata = {
   title: "Trang chủ | HistoryTalk",
@@ -14,6 +15,9 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto space-y-5 md:space-y-8 pb-8 md:pb-10">
         {/* Hero Banner with Quick Navigation */}
         <HomeBanner />
+
+        {/* Hoạt động của bạn — chỉ hiển thị khi đã đăng nhập */}
+        <LearningDashboard />
 
         {/* Khám phá bối cảnh lịch sử */}
         <HistoricalContexts />

@@ -1,11 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { TimerIcon, ArrowRight, Trophy } from "@phosphor-icons/react";
-import { quizService, type QuizResult } from "@/services/quiz.service";
-import { queryKeys } from "@/shared/query-key";
+import type { DashboardRecentQuiz } from "@/services/dashboard.service";
+import { useMyDashboard } from "@/features/dashboard/hooks";
 import { useAuthStore } from "@/store/auth.store";
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
 
 // ── Skeleton ──────────────────────────────────────────────
 function SkeletonCard() {
@@ -36,7 +43,7 @@ function SkeletonCard() {
 }
 
 // ── Row ───────────────────────────────────────────────────
-function RecentQuizCard({ item }: { item: QuizResult }) {
+function RecentQuizCard({ item }: { item: DashboardRecentQuiz }) {
   const color =
     item.percentage >= 85
       ? "var(--accent-teal)"
@@ -80,7 +87,7 @@ function RecentQuizCard({ item }: { item: QuizResult }) {
           {item.quizTitle}
         </p>
         <p className="text-[11px] sm:text-xs mt-1" style={{ color: "var(--content-muted)" }}>
-          {item.score}/{item.totalQuestions} câu
+          {formatDate(item.completedAt)}
         </p>
       </div>
     </div>
@@ -91,15 +98,12 @@ function RecentQuizCard({ item }: { item: QuizResult }) {
 export function RecentQuiz() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  const { data, isLoading } = useQuery({
-    queryKey: queryKeys.quizzes.myResults,
-    queryFn: () => quizService.getMyResults({ page: 0, size: 3 }),
-    enabled: isAuthenticated,
-    staleTime: 0,
-    refetchOnMount: true,
-  });
+  const { data, isLoading } = useMyDashboard();
 
-  const results = data?.content ?? [];
+  const results = data?.learning.recentQuizzes.slice(0, 4) ?? [];
+  const { totalQuizzesAttempted, averageScorePercentage } = data?.learning ?? {};
+
+  if (!isLoading && results.length === 0) return null;
 
   return (
     <section>
@@ -109,12 +113,19 @@ export function RecentQuiz() {
             className="w-4 h-4"
             style={{ color: "var(--gold-on-light)" }}
           />
-          <h2
-            className="text-base font-semibold"
-            style={{ color: "var(--content-heading)" }}
-          >
-            Lần thi gần đây
-          </h2>
+          <div>
+            <h2
+              className="text-base font-semibold"
+              style={{ color: "var(--content-heading)" }}
+            >
+              Lần thi gần đây
+            </h2>
+            {!!totalQuizzesAttempted && (
+              <p className="text-[11px]" style={{ color: "var(--content-muted)" }}>
+                Bạn đã làm {totalQuizzesAttempted} bài, điểm TB {averageScorePercentage}%
+              </p>
+            )}
+          </div>
         </div>
         <Link
           href="/quiz"
@@ -126,20 +137,9 @@ export function RecentQuiz() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {isAuthenticated && isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-        ) : results.length === 0 ? (
-          <p
-            className="col-span-full text-sm text-center py-4"
-            style={{ color: "var(--content-muted)" }}
-          >
-            Chưa có lịch sử làm bài
-          </p>
-        ) : (
-          results.map((item) => (
-            <RecentQuizCard key={item.sessionId} item={item} />
-          ))
-        )}
+        {isAuthenticated && isLoading
+          ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
+          : results.map((item) => <RecentQuizCard key={item.sessionId} item={item} />)}
       </div>
     </section>
   );

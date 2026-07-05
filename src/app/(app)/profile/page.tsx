@@ -21,6 +21,7 @@ import {
   useChangePassword,
   useMyPaymentHistory,
 } from "@/features/profile/hooks";
+import { useMyDashboard } from "@/features/dashboard/hooks";
 import { isPro, type UserProfile } from "@/services/user.service";
 import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
 import {
@@ -466,7 +467,9 @@ function FormField({
 function BillingTab() {
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: payments, isLoading: paymentsLoading } = useMyPaymentHistory();
+  const { data: dashboard, isLoading: dashboardLoading } = useMyDashboard();
   const proUser = isPro(profile ?? null);
+  const aiUsage = dashboard?.aiUsage;
 
   return (
     <div className="space-y-6">
@@ -508,9 +511,6 @@ function BillingTab() {
             <div>
               <p className="font-bold text-base" style={{ color: "var(--text-primary)" }}>
                 {profile?.tierTitle ?? "Gói miễn phí"}
-              </p>
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                {proUser ? "Tài khoản Premium đang hoạt động" : "Nâng cấp để mở khóa toàn bộ tính năng"}
               </p>
             </div>
           </div>
@@ -613,6 +613,83 @@ function BillingTab() {
               <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
                 Ngày hết hạn gói
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Token usage breakdown */}
+        {dashboardLoading ? (
+          <Skeleton className="h-20 w-full mt-3 rounded-xl" />
+        ) : aiUsage && aiUsage.totalTokensUsed > 0 && (
+          <div
+            className="mt-3 rounded-xl p-4"
+            style={{ background: "var(--bg-main)", border: "1px solid var(--border-default)" }}
+          >
+            <p className="text-xs font-semibold mb-3" style={{ color: "var(--text-secondary)" }}>
+              Chi tiết sử dụng token
+            </p>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-base font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                  {aiUsage.totalTokensUsed.toLocaleString("vi-VN")}
+                </p>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  Tổng đã dùng
+                </p>
+              </div>
+              <div>
+                <p className="text-base font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                  {aiUsage.promptTokens.toLocaleString("vi-VN")}
+                </p>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  Prompt (đầu vào)
+                </p>
+              </div>
+              <div>
+                <p className="text-base font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                  {aiUsage.completionTokens.toLocaleString("vi-VN")}
+                </p>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  Completion (đầu ra)
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Top characters mini card */}
+        {!dashboardLoading && aiUsage && aiUsage.topCharacters.length > 0 && (
+          <div
+            className="mt-3 rounded-xl p-4"
+            style={{ background: "var(--bg-main)", border: "1px solid var(--border-default)" }}
+          >
+            <p className="text-xs font-semibold mb-3" style={{ color: "var(--text-secondary)" }}>
+              Nhân vật tương tác nhiều nhất
+            </p>
+            <div className="space-y-2.5">
+              {aiUsage.topCharacters.slice(0, 3).map((character) => (
+                <div key={character.characterId} className="flex items-center gap-3">
+                  <Avatar className="w-8 h-8 shrink-0">
+                    <AvatarFallback
+                      className="text-xs font-bold"
+                      style={{ background: "var(--bg-elevated)", color: "var(--text-muted)" }}
+                    >
+                      {character.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                      {character.name}
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                      {character.messageCount} tin nhắn
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold shrink-0" style={{ color: "var(--text-muted)" }}>
+                    {character.tokenUsed.toLocaleString("vi-VN")} token
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -94,6 +94,10 @@ export const queryKeys = {
     me: ["profile", "me"] as const,
   },
 
+  dashboard: {
+    me: ["dashboard", "me"] as const,
+  },
+
   trash: {
     quizzes: ["trash", "quizzes"] as const,
     contexts: ["trash", "historical-contexts"] as const,
