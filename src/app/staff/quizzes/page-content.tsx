@@ -741,6 +741,27 @@ export default function StaffQuizzesPage() {
               </div>
             </Field>
 
+            {editorMode === "edit" && originalQuiz && (() => {
+              const currentPublished = publishedOverrides[originalQuiz.quizId] ?? originalQuiz.isPublished;
+              const StatusIcon = currentPublished ? EyeSlashIcon : EyeIcon;
+              return (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full font-semibold gap-1.5"
+                  onClick={() => setPublishTarget({ ...originalQuiz, isPublished: currentPublished })}
+                  style={
+                    currentPublished
+                      ? { borderColor: "var(--accent-danger)", background: "transparent", color: "var(--accent-danger)" }
+                      : { borderColor: "var(--accent-teal)", background: "transparent", color: "var(--accent-teal)" }
+                  }
+                >
+                  <StatusIcon className="h-4 w-4" />
+                  {currentPublished ? "Ngừng xuất bản" : "Xuất bản"}
+                </Button>
+              );
+            })()}
+
             <div className="flex gap-2 pt-1">
               <Button
                 type="button"
