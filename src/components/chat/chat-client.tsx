@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { ChatCharacter } from "@/services/chat.service";
 import { chatService } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
-import { ChatLeftPanel } from "./chat-left-panel";
 import { ChatMain } from "./chat-main";
 import { ChatRightPanel } from "./chat-right-panel";
 import { useCreateSession, useChatSessions } from "@/features/chat/hooks";
@@ -103,7 +102,6 @@ export function ChatClient({
     }
   }, [activeSessionId]);
 
-  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(false);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
 
   if (isLoadingCharacter || !activeCharacter) {
@@ -122,7 +120,19 @@ export function ChatClient({
 
   return (
     <div className="flex h-full w-full overflow-hidden relative">
-      <ChatLeftPanel
+      <ChatMain
+        character={activeCharacter}
+        contextId={contextId}
+        sessionId={activeSessionId}
+        onSessionCreated={handleSessionCreated}
+        toggleRightPanel={() => setIsRightPanelOpen(!isRightPanelOpen)}
+        isRightOpen={isRightPanelOpen}
+      />
+      <ChatRightPanel
+        activeCharacter={activeCharacter}
+        onSelectCharacter={handleSelectCharacter}
+        isOpen={isRightPanelOpen}
+        setIsOpen={setIsRightPanelOpen}
         characterId={characterId}
         contextId={contextId}
         sessions={sessions ?? []}
@@ -131,24 +141,6 @@ export function ChatClient({
         onSelectSession={setActiveSessionId}
         onNewSession={handleNewSession}
         onDeleteSession={handleDeleteSession}
-        isOpen={isLeftPanelOpen}
-        setIsOpen={setIsLeftPanelOpen}
-      />
-      <ChatMain
-        character={activeCharacter}
-        contextId={contextId}
-        sessionId={activeSessionId}
-        onSessionCreated={handleSessionCreated}
-        toggleLeftPanel={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
-        toggleRightPanel={() => setIsRightPanelOpen(!isRightPanelOpen)}
-        isLeftOpen={isLeftPanelOpen}
-        isRightOpen={isRightPanelOpen}
-      />
-      <ChatRightPanel
-        activeCharacter={activeCharacter}
-        onSelectCharacter={handleSelectCharacter}
-        isOpen={isRightPanelOpen}
-        setIsOpen={setIsRightPanelOpen}
       />
     </div>
   );
