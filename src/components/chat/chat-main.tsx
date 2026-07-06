@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react"; // ← thêm ListIcon, InfoIcon
+import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon } from "@phosphor-icons/react";
 import { PhoneCallIcon, VideoCameraIcon, LockIcon, WarningCircleIcon, XIcon } from "@phosphor-icons/react";
 import type {
   ChatCharacter,
@@ -119,9 +119,7 @@ interface ChatMainProps {
   contextId: string;
   sessionId: string | null;
   onSessionCreated: (sessionId: string) => void;
-  toggleLeftPanel?: () => void;
   toggleRightPanel?: () => void;
-  isLeftOpen?: boolean;
   isRightOpen?: boolean;
   /** Overrides the "initializing conversation" message shown while sessionId is null. */
   initializingLabel?: string;
@@ -132,9 +130,7 @@ export function ChatMain({
   contextId,
   sessionId,
   onSessionCreated,
-  toggleLeftPanel,
   toggleRightPanel,
-  isLeftOpen = false,
   isRightOpen = false,
   initializingLabel,
 }: ChatMainProps) {
@@ -680,18 +676,6 @@ export function ChatMain({
           <ListIcon className="w-5 h-5" />
         </button>
 
-        {/* Toggle Chat History (Mobile/Tablet) */}
-        {toggleLeftPanel && (
-          <button
-            onClick={toggleLeftPanel}
-            className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
-            style={{ color: isLeftOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
-            aria-label="Lịch sử trò chuyện"
-          >
-            <ClockCounterClockwiseIcon className="w-5 h-5" />
-          </button>
-        )}
-
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
           style={{
@@ -864,13 +848,13 @@ export function ChatMain({
           )}
         </button>
 
-        {/* Toggle Right (Mobile/Tablet) */}
+        {/* Toggle Right Panel: character info, history, other characters, quiz, contexts (Mobile/Tablet) */}
         {toggleRightPanel && (
           <button
             onClick={toggleRightPanel}
             className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
             style={{ color: isRightOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
-            aria-label="Thông tin nhân vật"
+            aria-label="Mở bảng điều khiển"
           >
             <InfoIcon className="w-5 h-5" />
           </button>

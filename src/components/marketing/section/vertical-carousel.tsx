@@ -19,6 +19,7 @@ import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-nav
 import { isValidUrl } from "@/lib/utils/url";
 
 const SKELETON_COUNT = 5;
+const CARD_TRANSITION_MS = 700;
 
 type ExpandedCharacter = {
   character: Character;
@@ -52,6 +53,7 @@ export function Carousel3DVertical({
   const spotlightRef = useRef<HTMLSpanElement>(null);
   const backdropRef = useRef<HTMLButtonElement>(null);
   const isClosingRef = useRef(false);
+  const isTransitioningRef = useRef(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [gap, setGap] = useState(getHorizontalGap);
   const [expandedCharacter, setExpandedCharacter] =
@@ -107,14 +109,23 @@ export function Carousel3DVertical({
     });
   }, [activeIndex, cardCount, gap]);
 
+  const lockTransition = () => {
+    isTransitioningRef.current = true;
+    window.setTimeout(() => {
+      isTransitioningRef.current = false;
+    }, CARD_TRANSITION_MS);
+  };
+
   const selectPrevious = () => {
-    if (cardCount > 0) {
+    if (cardCount > 0 && !isTransitioningRef.current) {
+      lockTransition();
       setSelectedIndex((current) => (current - 1 + cardCount) % cardCount);
     }
   };
 
   const selectNext = () => {
-    if (cardCount > 0) {
+    if (cardCount > 0 && !isTransitioningRef.current) {
+      lockTransition();
       setSelectedIndex((current) => (current + 1) % cardCount);
     }
   };

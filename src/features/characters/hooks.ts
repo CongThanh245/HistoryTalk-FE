@@ -53,10 +53,26 @@ export function useCharacters(
 }
 
 export function useCharacter(id?: string) {
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.characters.detail(id || ""),
     queryFn: () => characterService.getById(id!),
     enabled: !!id,
+    // The character list page (limit 100) already has this exact record in
+    // cache by the time the user clicks "Chỉnh sửa" — reuse it so the detail
+    // page renders instantly instead of showing a skeleton for the ~2-3s
+    // round trip, then silently revalidate in the background (staleTime 0).
+    initialData: () => {
+      if (!id) return undefined;
+      const cachedLists = qc.getQueriesData<GetCharactersResponse>({
+        queryKey: ["characters", "list"],
+      });
+      for (const [, data] of cachedLists) {
+        const found = data?.content?.find((c) => c.id === id);
+        if (found) return found;
+      }
+      return undefined;
+    },
   });
 }
 

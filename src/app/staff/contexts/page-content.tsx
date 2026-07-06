@@ -1,10 +1,9 @@
-﻿﻿﻿"use client";
+﻿﻿"use client";
 
 import * as React from "react";
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon, UploadSimpleIcon, FilePdfIcon, ImageSquareIcon, UsersIcon, LinkBreakIcon } from "@phosphor-icons/react";
+import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon, ImageSquareIcon } from "@phosphor-icons/react";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { StaffImageHoverPreview } from "@/components/staff/staff-media-preview";
@@ -17,44 +16,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
-import {
-  StaffFormLabel,
-  StaffFormInput,
-  StaffFormTextarea,
-  StaffFormSelect,
-} from "@/components/staff/staff-form";
-import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
-import { isValidUrl } from "@/lib/utils/url";
+import { StaffFormSelect } from "@/components/staff/staff-form";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
-import {
-  useEvents,
-  useCreateEvent,
-  useUpdateEvent,
-  useDeleteEvent,
-} from "@/features/events/hooks";
+import { useEvents, useUpdateEvent, useDeleteEvent } from "@/features/events/hooks";
 import {
   useTrashList,
   useTrashRestore,
   useTrashPermanentDelete,
 } from "@/features/trash/hooks";
-import {
-  useCreateHistoricalDocument,
-  useDeleteHistoricalDocument,
-  useHistoricalDocuments,
-  useUpdateHistoricalDocument,
-  useUploadDocumentPdf,
-  useGetDocumentPdfUrl,
-} from "@/features/documents/hooks";
-import {
-  useCharacters,
-  useCharactersByContext,
-  useMapContextToCharacter,
-  useUnmapContextFromCharacter,
-} from "@/features/characters/hooks";
-import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
-import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
-import type { RagDocument } from "@/services/document.service";
 import {
   type HistoricalEvent,
   type EventEraBackend,
@@ -62,51 +31,6 @@ import {
   EventEra,
 } from "@/services/event.service";
 import type { TrashItem } from "@/services/trash.service";
-import {
-  hasValidationErrors,
-  validateContextDraft,
-  type ContextValidationField,
-  type ValidationErrors,
-} from "@/lib/utils/content-validation";
-
-type DraftState = {
-  id?: string;
-  name: string;
-  description: string;
-  era: EventEraBackend | "";
-  year: string;
-  location: string;
-  imageUrl: string;
-  videoUrl: string;
-  isPublished: boolean;
-  documentId?: string;
-  documentTitle: string;
-  documentContent: string;
-  pendingPdfFile?: File | null;
-};
-
-const EMPTY_DRAFT: DraftState = {
-  name: "",
-  description: "",
-  era: "",
-  year: "",
-  location: "",
-  imageUrl: "",
-  videoUrl: "",
-  isPublished: false,
-  documentId: undefined,
-  documentTitle: "",
-  documentContent: "",
-  pendingPdfFile: null,
-};
-
-function ValidationErrorText({ message }: { message?: string }) {
-  return message ? (
-    <p className="text-[11px] font-medium" style={{ color: "var(--accent-danger)" }}>
-      {message}
-    </p>
-  ) : null;
-}
 
 // Constants for Select Options
 const ERA_OPTIONS = [
@@ -133,30 +57,11 @@ function getCreatorName(value: HistoricalEvent["createdBy"]) {
   return value.userName ?? value.uid ?? "—";
 }
 
-function extractYoutubeId(url?: string | null) {
-  if (!url) return null;
-  const match = url.match(/(?:v=|youtu\.be\/|embed\/)([^&\n?#]+)/);
-  return match?.[1] ?? null;
-}
-
-function isDirectVideoUrl(url?: string | null) {
-  if (!url) return false;
-  try {
-    const pathname = new URL(url).pathname.toLowerCase();
-    return /\.(mp4|webm|ogg|mov|avi|mkv)$/.test(pathname);
-  } catch {
-    return false;
-  }
-}
-
 export default function StaffContextsPage() {
+  const router = useRouter();
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | "published" | "draft">("all");
   const [eraFilter, setEraFilter] = React.useState<"all" | EventEraBackend>("all");
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [mode, setMode] = React.useState<"create" | "edit">("create");
-  const [draft, setDraft] = React.useState<DraftState>(EMPTY_DRAFT);
-  const editorRef = React.useRef<HTMLElement>(null);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] =
     React.useState<HistoricalEvent | null>(null);
@@ -169,61 +74,14 @@ export default function StaffContextsPage() {
   const [restoreOpen, setRestoreOpen] = React.useState(false);
   const [tablePublishTarget, setTablePublishTarget] =
     React.useState<HistoricalEvent | null>(null);
-  const [activeTab, setActiveTab] = React.useState<"content" | "rag" | "characters">("content");
-  const ragSectionRef = React.useRef<HTMLDivElement>(null);
-  const [errors, setErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
-  const router = useRouter();
-  const [characterSearch, setCharacterSearch] = React.useState("");
-  const [unmapTarget, setUnmapTarget] =
-    React.useState<{ characterId: string; name: string } | null>(null);
 
   const { data, isLoading, isFetching } = useEvents({
     search: search || undefined,
     page: 1,
     limit: 100,
   });
-  const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
-  const createHistoricalDocument = useCreateHistoricalDocument();
-  const editContextId = mode === "edit" ? draft.id : undefined;
-  const historicalDocuments = useHistoricalDocuments(editContextId);
-  const updateHistoricalDocument = useUpdateHistoricalDocument(editContextId);
-  const deleteHistoricalDocument = useDeleteHistoricalDocument(editContextId);
-  const uploadDocumentPdf = useUploadDocumentPdf();
-  const getDocumentPdfUrl = useGetDocumentPdfUrl();
   const deleteEvent = useDeleteEvent();
-
-  const charactersInContext = useCharactersByContext(editContextId);
-  const linkedCharacterIds = React.useMemo(
-    () => new Set((charactersInContext.data ?? []).map((c) => c.id)),
-    [charactersInContext.data],
-  );
-  const characterSearchResults = useCharacters(
-    { search: characterSearch || undefined, page: 1, limit: 8 },
-    undefined,
-    { enabled: mode === "edit" && dialogOpen && activeTab === "characters" },
-  );
-  const availableCharacters = React.useMemo(
-    () =>
-      (characterSearchResults.data?.content ?? []).filter(
-        (c) => !linkedCharacterIds.has(c.id),
-      ),
-    [characterSearchResults.data, linkedCharacterIds],
-  );
-  const mapContextToCharacter = useMapContextToCharacter();
-  const unmapContextFromCharacter = useUnmapContextFromCharacter();
-
-  // PDF Dialog State
-  const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
-  const [uploadTargetDocId, setUploadTargetDocId] = React.useState<string | null>(null);
-  const [viewerOpen, setViewerOpen] = React.useState(false);
-  const [viewerUrl, setViewerUrl] = React.useState<string | null>(null);
-  const [viewerLoading, setViewerLoading] = React.useState(false);
-
-  // PDF File for Create Mode
-  const [pendingPdfFile, setPendingPdfFile] = React.useState<File | null>(null);
-  const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const { data: trashItems = [], isLoading: isTrashLoading } = useTrashList("historical-contexts");
   const restoreContext = useTrashRestore("historical-contexts");
@@ -233,7 +91,6 @@ export default function StaffContextsPage() {
     () => (data?.content ?? []).filter((item) => !item.deletedAt),
     [data?.content],
   );
-  const activeItems = items;
   const displayedItems = React.useMemo(
     () =>
       items.filter((item) => {
@@ -245,217 +102,6 @@ export default function StaffContextsPage() {
       }),
     [eraFilter, items, statusFilter],
   );
-
-  const set = <K extends keyof DraftState>(field: K) => (val: DraftState[K]) =>
-    setDraft((s) => {
-      const next = { ...s, [field]: val };
-      const validatedFields: ContextValidationField[] = [
-        "name",
-        "description",
-        "era",
-        "year",
-        "location",
-        "imageUrl",
-        "videoUrl",
-      ];
-
-      if (validatedFields.includes(field as ContextValidationField)) {
-        const nextErrors = validateContextDraft(next);
-        const errorField = field as ContextValidationField;
-        setErrors((prev) => {
-          const updated = { ...prev };
-          if (nextErrors[errorField]) {
-            updated[errorField] = nextErrors[errorField];
-          } else {
-            delete updated[errorField];
-          }
-          return updated;
-        });
-      }
-
-      return next;
-    });
-
-  const getDocumentId = React.useCallback(
-    (document: RagDocument) => document.id ?? document.documentId,
-    [],
-  );
-
-  const selectDocument = (document: RagDocument) => {
-    setDraft((s) => ({
-      ...s,
-      documentId: getDocumentId(document),
-      documentTitle: document.title ?? "",
-      documentContent: document.content ?? "",
-    }));
-  };
-
-  const [skipAutoSelect, setSkipAutoSelect] = React.useState(false);
-
-  const clearDocumentDraft = () => {
-    setSkipAutoSelect(true);
-    setDraft((s) => ({
-      ...s,
-      documentId: undefined,
-      documentTitle: "",
-      documentContent: "",
-    }));
-    setActiveTab("rag");
-    setTimeout(() => {
-      ragSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 50);
-  };
-
-  React.useEffect(() => {
-    if (!dialogOpen) return;
-    editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [dialogOpen, mode]);
-
-  // Reset skipAutoSelect when dialog closes so auto-select works for other contexts
-  React.useEffect(() => {
-    if (!dialogOpen && skipAutoSelect) {
-      queueMicrotask(() => setSkipAutoSelect(false));
-    }
-  }, [dialogOpen, skipAutoSelect]);
-
-  React.useEffect(() => {
-    if (mode !== "edit" || !dialogOpen || draft.documentId || draft.documentContent || skipAutoSelect) return;
-    const firstDocument = historicalDocuments.data?.[0];
-    if (!firstDocument) return;
-    queueMicrotask(() => {
-      setDraft((s) => ({
-        ...s,
-        documentId: getDocumentId(firstDocument),
-        documentTitle: firstDocument.title ?? "",
-        documentContent: firstDocument.content ?? "",
-      }));
-    });
-  }, [dialogOpen, draft.documentContent, draft.documentId, getDocumentId, historicalDocuments.data, mode, skipAutoSelect]);
-
-  const handleSave = async () => {
-    const nextErrors = validateContextDraft(draft);
-    if (hasValidationErrors(nextErrors)) {
-      setErrors(nextErrors);
-      toast.error("Vui lòng kiểm tra các trường bắt buộc và định dạng năm/URL.");
-      return;
-    }
-    setErrors({});
-
-    const payload = {
-      name: draft.name.trim(),
-      description: draft.description.trim(),
-      era: draft.era as EventEraBackend,
-      year: Number(draft.year),
-      location: draft.location.trim() || undefined,
-      imageUrl: draft.imageUrl.trim() || undefined,
-      videoUrl: draft.videoUrl.trim() || undefined,
-      isPublished: draft.isPublished,
-    };
-
-    const name = payload.name;
-    if (mode === "create") {
-      createEvent.mutate(payload, {
-        onSuccess: async (newContext) => {
-          const documentContent = draft.documentContent.trim();
-
-          // Create document if has content or PDF file
-          if (documentContent || pendingPdfFile) {
-            try {
-              const newDoc = await createHistoricalDocument.mutateAsync({
-                contextId: newContext.id,
-                title: draft.documentTitle.trim() || name,
-                content: documentContent || "PDF Document",
-                type: "TEXT",
-              });
-
-              // Upload PDF if file was selected
-              if (pendingPdfFile && newDoc.id) {
-                try {
-                  await uploadDocumentPdf.mutateAsync({
-                    docId: newDoc.id,
-                    file: pendingPdfFile,
-                  });
-                  toast.success("Đã upload PDF thành công");
-                } catch {
-                  toast.warning("Tài liệu đã tạo nhưng upload PDF thất bại");
-                }
-              }
-            } catch {
-              toast.warning("Bối cảnh đã tạo, nhưng import tài liệu chưa thành công");
-            }
-          }
-
-          // Reset pending PDF
-          setPendingPdfFile(null);
-          if (pdfPreviewUrl) {
-            URL.revokeObjectURL(pdfPreviewUrl);
-            setPdfPreviewUrl(null);
-          }
-
-          setDialogOpen(false);
-          if (!payload.isPublished) {
-            toast("Đã lưu bản nháp", {
-              description: `"${name}" được lưu dạng bản nháp.`,
-              duration: 4000,
-              style: { background: "#fef3c7", color: "#92400e", border: "1px solid #fbbf24" },
-            });
-          } else {
-            toast.success("Xuất bản thành công", {
-              description: `"${name}" đã được công bố.`,
-              duration: 4000,
-            });
-          }
-        },
-      });
-    } else {
-      updateEvent.mutate(
-        { id: draft.id!, data: payload },
-        {
-          onSuccess: async () => {
-            const documentContent = draft.documentContent.trim();
-
-            if (documentContent) {
-              try {
-                if (draft.documentId) {
-                  await updateHistoricalDocument.mutateAsync({
-                    docId: draft.documentId,
-                    data: {
-                      title: draft.documentTitle.trim() || name,
-                      content: documentContent,
-                      type: "TEXT",
-                    },
-                  });
-                } else {
-                  await createHistoricalDocument.mutateAsync({
-                    contextId: draft.id!,
-                    title: draft.documentTitle.trim() || name,
-                    content: documentContent,
-                    type: "TEXT",
-                  });
-                }
-              } catch {
-                toast.warning("Bối cảnh đã cập nhật, nhưng import tài liệu chưa thành công");
-              }
-            }
-
-            setDialogOpen(false);
-            if (!payload.isPublished) {
-              toast("Đã lưu bản nháp", {
-                description: `"${name}" được lưu dạng bản nháp.`,
-                duration: 4000,
-                style: { background: "#fef3c7", color: "#92400e", border: "1px solid #fbbf24" },
-              });
-            } else {
-              toast.success("Xuất bản thành công", {
-                description: `"${name}" đã được công bố.`,
-                duration: 4000,
-              });
-            }
-          },
-        },
-      );
-    }
-  };
 
   const columns = React.useMemo<ColumnDef<HistoricalEvent>[]>(
     () => [
@@ -493,7 +139,6 @@ export default function StaffContextsPage() {
                 {row.original.title}
               </p>
               <p
-                /* QUAN TRỌNG: Thêm 'overflow-hidden' và 'text-ellipsis' */
                 className="text-xs mt-0.5 line-clamp-1 truncate max-w-[400px] block"
                 style={{ color: "var(--content-muted)" }}
                 title={summary}
@@ -534,25 +179,7 @@ export default function StaffContextsPage() {
             <Button
               variant="outline"
               className="h-8 rounded-md px-3 text-xs font-semibold hover:bg-black/[0.04] hover:text-[var(--content-heading)]"
-              onClick={() => {
-                const e = row.original;
-                setMode("edit");
-                setDraft({
-                  id: e.id,
-                  name: e.title,
-                  description: e.summary,
-                  era: (e.era ?? "") as EventEraBackend | "",
-                  year: String(e.year ?? ""),
-                  location: e.location ?? "",
-                  imageUrl: e.imageUrl ?? "",
-                  videoUrl: e.videoUrl ?? "",
-                  isPublished: e.isPublished ?? false,
-                  documentId: undefined,
-                  documentTitle: "",
-                  documentContent: "",
-                });
-                setDialogOpen(true);
-              }}
+              onClick={() => router.push(`/staff/contexts/${row.original.id}`)}
               style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
             >
               Chỉnh sửa
@@ -645,7 +272,7 @@ export default function StaffContextsPage() {
         ),
       },
     ],
-    [],
+    [router],
   );
 
   // Trash view columns
@@ -669,7 +296,7 @@ export default function StaffContextsPage() {
           const date = new Date(row.original.deletedAt);
           return (
             <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
-              {!isNaN(date.getTime()) ? date.toLocaleString("vi-VN") : "\u2014"}
+              {!isNaN(date.getTime()) ? date.toLocaleString("vi-VN") : "—"}
             </span>
           );
         },
@@ -698,12 +325,6 @@ export default function StaffContextsPage() {
     [],
   );
 
-  const isPending =
-    createEvent.isPending ||
-    updateEvent.isPending ||
-    createHistoricalDocument.isPending ||
-    updateHistoricalDocument.isPending;
-
   return (
     <StaffShell
       title="Quản lý bối cảnh lịch sử"
@@ -711,7 +332,6 @@ export default function StaffContextsPage() {
       icon={ScrollIcon}
       accent="var(--accent-gold)"
     >
-      {!dialogOpen && (
       <section
         className="rounded-2xl border p-6 space-y-5"
         style={{
@@ -800,11 +420,7 @@ export default function StaffContextsPage() {
             {!showTrash && (
               <Button
                 className="h-10 rounded-xl px-4 font-semibold border-0 bg-[var(--accent-gold)] text-[var(--bg-deep)] shadow-[0_0_14px_var(--accent-gold-glow)] transition-all duration-200 hover:brightness-90 hover:shadow-[0_0_18px_var(--accent-gold-glow)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
-                onClick={() => {
-                  setMode("create");
-                  setDraft(EMPTY_DRAFT);
-                  setDialogOpen(true);
-                }}
+                onClick={() => router.push("/staff/contexts/create")}
               >
                 <PlusIcon className="h-4 w-4 mr-1.5" /> Tạo bối cảnh
               </Button>
@@ -818,779 +434,6 @@ export default function StaffContextsPage() {
           <StaffDataTable columns={columns} data={displayedItems} emptyMessage="Không tìm thấy bối cảnh phù hợp." isLoading={isLoading} />
         )}
       </section>
-      )}
-
-      {/* Context editor workspace */}
-      {dialogOpen && (
-        <section
-          ref={editorRef}
-          className="min-h-[calc(100vh-220px)] overflow-hidden rounded-2xl border shadow-[0_18px_50px_rgba(27,38,50,0.08)]"
-          style={{
-            background: "var(--bg-content)",
-            borderColor: "var(--card-light-border)",
-            color: "var(--content-heading)",
-          }}
-        >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (isPending) return;
-              handleSave();
-            }}
-          >
-          {/* Header with primary actions */}
-          <div
-            className="sticky top-0 z-20 border-b px-6 pb-0 pt-5"
-            style={{
-              borderColor: "var(--card-light-border)",
-              background: "var(--card-light-bg)",
-            }}
-          >
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div>
-                <h2 className="text-lg font-bold" style={{ color: "var(--content-heading)" }}>
-                  {mode === "create" ? "Tạo bối cảnh lịch sử" : "Chỉnh sửa bối cảnh"}
-                </h2>
-                <p className="text-sm mt-0.5" style={{ color: "var(--content-muted)" }}>
-                  Thông tin bối cảnh lịch sử hiển thị cho người dùng.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <StaffPublishToggle
-                  isPublished={draft.isPublished}
-                  canPublish={!hasValidationErrors(validateContextDraft(draft))}
-                  entityLabel="bối cảnh"
-                  className="py-2"
-                  onPublish={() => set("isPublished")(true)}
-                  onUnpublish={() => set("isPublished")(false)}
-                  onBlockedAttempt={() => {
-                    const nextErrors = validateContextDraft(draft);
-                    setErrors(nextErrors);
-                    setActiveTab("content");
-                    toast.error("Vui lòng hoàn tất bối cảnh trước khi xuất bản.");
-                  }}
-                />
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                  Đóng form
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isPending || hasValidationErrors(validateContextDraft(draft))}
-                >
-                  {isPending ? "Đang lưu..." : "Lưu bối cảnh"}
-                </Button>
-              </div>
-            </div>
-
-            {/* Tab Navigation */}
-            <div className="flex gap-1">
-              {[
-                { id: "content", label: "Thông tin bối cảnh" },
-                { id: "rag", label: "Tài liệu RAG", icon: "📚", badge: draft.documentContent.trim() ? "1" : null },
-                ...(mode === "edit"
-                  ? [
-                      {
-                        id: "characters",
-                        label: "Nhân vật",
-                        badge: charactersInContext.data?.length
-                          ? String(charactersInContext.data.length)
-                          : null,
-                      },
-                    ]
-                  : []),
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`relative px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
-                    activeTab === tab.id
-                      ? "border-b-2 border-[var(--accent-gold)] text-[var(--content-heading)]"
-                      : "text-[var(--content-muted)] hover:text-[var(--content-heading)] hover:bg-black/5"
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    {tab.label}
-                    {tab.badge && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/15 text-[var(--accent-gold)]">
-                        {tab.badge}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div>
-            {/* Tab Content */}
-            <div className="px-6 py-5">
-              {activeTab === "content" && (
-                <div className="space-y-4">
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                    Thông tin chính
-                  </p>
-
-                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_180px_140px]">
-                    <div className="grid gap-1.5">
-                      <StaffFormLabel>Tên sự kiện *</StaffFormLabel>
-                      <StaffFormInput
-                        value={draft.name}
-                        onChange={(e) => set("name")(e.target.value)}
-                        placeholder="VD: Trận Bạch Đằng"
-                      />
-                      <ValidationErrorText message={errors.name} />
-                    </div>
-
-                    <div className="grid gap-1.5">
-                      <StaffFormLabel>Thời đại *</StaffFormLabel>
-                      <StaffFormSelect
-                        value={draft.era}
-                        onValueChange={set("era")}
-                        placeholder="Chọn thời đại"
-                        options={ERA_OPTIONS}
-                      />
-                      <ValidationErrorText message={errors.era} />
-                    </div>
-
-                    <div className="grid gap-1.5">
-                      <StaffFormLabel>Năm *</StaffFormLabel>
-                      <StaffFormInput
-                        type="number"
-                        value={draft.year}
-                        onChange={(e) => set("year")(e.target.value)}
-                        placeholder="938"
-                      />
-                      <ValidationErrorText message={errors.year} />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-1.5">
-                    <StaffFormLabel>Mô tả *</StaffFormLabel>
-                    <StaffFormTextarea
-                      value={draft.description}
-                      onChange={(e) => set("description")(e.target.value)}
-                      placeholder="Bối cảnh lịch sử..."
-                    />
-                    <ValidationErrorText message={errors.description} />
-                  </div>
-
-                  <div className="grid gap-1.5">
-                    <StaffFormLabel>Địa điểm *</StaffFormLabel>
-                    <StaffFormInput
-                      value={draft.location}
-                      onChange={(e) => set("location")(e.target.value)}
-                      placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
-                    />
-                    <ValidationErrorText message={errors.location} />
-                  </div>
-
-                  <div className="space-y-3 pt-2">
-                    <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                      Media hiển thị
-                    </p>
-                    <div className="grid gap-1.5">
-                      <StaffFormLabel>URL hình ảnh</StaffFormLabel>
-                      <StaffFormInput
-                        value={draft.imageUrl}
-                        onChange={(e) => set("imageUrl")(e.target.value)}
-                        placeholder="https://..."
-                      />
-                      <ValidationErrorText message={errors.imageUrl} />
-                    </div>
-                    <div className="grid gap-1.5">
-                      <StaffFormLabel>URL video (YouTube hoặc file .mp4)</StaffFormLabel>
-                      <StaffFormInput
-                        value={draft.videoUrl}
-                        onChange={(e) => set("videoUrl")(e.target.value)}
-                        placeholder="https://youtube.com/watch?v=... hoặc https://.../video.mp4"
-                      />
-                      <ValidationErrorText message={errors.videoUrl} />
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div
-                        className="overflow-hidden rounded-xl border"
-                        style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
-                      >
-                        <div className="border-b px-3 py-2" style={{ borderColor: "var(--card-light-border)" }}>
-                          <p className="text-xs font-semibold" style={{ color: "var(--content-heading)" }}>
-                            Xem trước ảnh
-                          </p>
-                        </div>
-                        <div className="relative aspect-video">
-                          {isValidUrl(draft.imageUrl) ? (
-                            <Image
-                              src={draft.imageUrl}
-                              alt={draft.name || "Ảnh bối cảnh"}
-                              fill
-                              className="object-cover"
-                              sizes="320px"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center text-xs" style={{ color: "var(--content-muted)" }}>
-                              Dán URL ảnh hợp lệ để xem trước
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div
-                        className="overflow-hidden rounded-xl border"
-                        style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
-                      >
-                        <div className="border-b px-3 py-2" style={{ borderColor: "var(--card-light-border)" }}>
-                          <p className="text-xs font-semibold" style={{ color: "var(--content-heading)" }}>
-                            Xem trước video
-                          </p>
-                        </div>
-                        <div className="aspect-video">
-                          {extractYoutubeId(draft.videoUrl) ? (
-                            <iframe
-                              src={`https://www.youtube.com/embed/${extractYoutubeId(draft.videoUrl)}?rel=0&modestbranding=1`}
-                              title="Xem trước video bối cảnh"
-                              className="h-full w-full"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                              style={{ border: "none" }}
-                            />
-                          ) : isDirectVideoUrl(draft.videoUrl) ? (
-                            <video
-                              src={draft.videoUrl}
-                              controls
-                              className="h-full w-full object-cover"
-                              style={{ background: "#000" }}
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center px-4 text-center text-xs" style={{ color: "var(--content-muted)" }}>
-                              Dán URL YouTube hoặc file video (.mp4) để xem trước
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "rag" && (
-                <div ref={ragSectionRef} className="space-y-4">
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                    Tài liệu RAG kèm theo
-                  </p>
-
-                  {mode === "edit" && (
-                        <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-                          <div className="mb-2 flex items-center justify-between gap-3">
-                            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                              Tài liệu đã import
-                              {historicalDocuments.data && historicalDocuments.data.length > 0 && (
-                                <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
-                                  {historicalDocuments.data.length}
-                                </span>
-                              )}
-                            </p>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                clearDocumentDraft();
-                              }}
-                              className="shrink-0"
-                            >
-                              <PlusIcon className="mr-1.5 h-3.5 w-3.5" />
-                              Tài liệu mới
-                            </Button>
-                          </div>
-
-                          {historicalDocuments.isLoading ? (
-                            <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tải tài liệu...</p>
-                          ) : historicalDocuments.data?.length ? (
-                            <div
-                              className="space-y-2 max-h-[180px] overflow-y-auto pr-1 thin-scroll"
-                              style={{ scrollbarWidth: "thin" }}
-                            >
-                              {historicalDocuments.data.map((document, index) => {
-                                const documentId = getDocumentId(document);
-                                const selected = !!documentId && draft.documentId === documentId;
-
-                                return (
-                                  <div
-                                    key={documentId ?? `historical-document-${index}`}
-                                    className="flex items-start gap-2 rounded-md border p-2"
-                                    style={{
-                                      borderColor: selected
-                                        ? "rgba(59,130,246,0.45)"
-                                        : "var(--card-light-border)",
-                                      background: selected
-                                        ? "rgba(59,130,246,0.08)"
-                                        : "rgba(255,255,255,0.35)",
-                                    }}
-                                  >
-                                    <button
-                                      type="button"
-                                      className="min-w-0 flex-1 text-left"
-                                      onClick={() => selectDocument(document)}
-                                    >
-                                      <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
-                                        {document.title || "Tài liệu chưa đặt tên"}
-                                      </p>
-                                      <p className="mt-0.5 line-clamp-2 text-xs" style={{ color: "var(--content-muted)" }}>
-                                        {document.content || "Chưa có nội dung"}
-                                      </p>
-                                    </button>
-                                    <div className="flex items-center gap-1">
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        className="shrink-0 rounded-full"
-                                        disabled={getDocumentPdfUrl.isPending}
-                                        onClick={async () => {
-                                          if (!documentId) return;
-                                          setViewerLoading(true);
-                                          setViewerOpen(true);
-                                          try {
-                                            const result = await getDocumentPdfUrl.mutateAsync(documentId);
-                                            if (result.url) {
-                                              setViewerUrl(result.url);
-                                            }
-                                          } catch {
-                                            setViewerUrl(null);
-                                          } finally {
-                                            setViewerLoading(false);
-                                          }
-                                        }}
-                                        style={{ color: "var(--accent-gold)" }}
-                                        title="Xem PDF"
-                                      >
-                                        <EyeIcon className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        className="shrink-0 rounded-full"
-                                        disabled={uploadDocumentPdf.isPending}
-                                        onClick={() => {
-                                          if (documentId) {
-                                            setUploadTargetDocId(documentId);
-                                            setUploadDialogOpen(true);
-                                          }
-                                        }}
-                                        style={{ color: "var(--accent-blue)" }}
-                                        title="Upload PDF"
-                                      >
-                                        <UploadSimpleIcon className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        className="shrink-0 rounded-full"
-                                        onClick={() => {
-                                          if (!documentId) return;
-                                          deleteHistoricalDocument.mutate(documentId, {
-                                            onSuccess: () => {
-                                              if (draft.documentId === documentId) {
-                                                clearDocumentDraft();
-                                              }
-                                            },
-                                          });
-                                        }}
-                                        style={{ color: "var(--accent-danger)" }}
-                                      >
-                                        <TrashIcon className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <p className="text-xs" style={{ color: "var(--content-muted)" }}>Chưa có tài liệu nào.</p>
-                          )}
-                        </div>
-                      )}
-
-                      {/* PDF Upload for Create Mode */}
-                      {mode === "create" && (
-                        <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-                          <div className="mb-2 flex items-center justify-between gap-3">
-                            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                              File PDF đính kèm
-                              {pendingPdfFile && (
-                                <span className="ml-1.5 text-micro px-1.5 py-0.5 rounded-full bg-(--accent-gold)/10 text-(--accent-gold)">
-                                  Đã chọn
-                                </span>
-                              )}
-                            </p>
-                            {pendingPdfFile && (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setPendingPdfFile(null);
-                                  if (pdfPreviewUrl) {
-                                    URL.revokeObjectURL(pdfPreviewUrl);
-                                    setPdfPreviewUrl(null);
-                                  }
-                                }}
-                              >
-                                <TrashIcon className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                          </div>
-
-                          {!pendingPdfFile ? (
-                            <div
-                              onClick={() => fileInputRef.current?.click()}
-                              className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors hover:border-(--accent-gold)/50 hover:bg-(--accent-gold)/5"
-                              style={{ borderColor: "var(--card-light-border)" }}
-                            >
-                              <FilePdfIcon className="h-8 w-8 mx-auto mb-2" style={{ color: "var(--content-muted)" }} />
-                              <p className="text-sm font-medium" style={{ color: "var(--content-heading)" }}>
-                                Click để chọn file PDF
-                              </p>
-                              <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
-                                Hoặc kéo thả file vào đây
-                              </p>
-                              <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".pdf"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file && file.type === "application/pdf") {
-                                    setPendingPdfFile(file);
-                                    setPdfPreviewUrl(URL.createObjectURL(file));
-                                  } else if (file) {
-                                    toast.error("Vui lòng chọn file PDF");
-                                  }
-                                  e.target.value = "";
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <div className="space-y-3">
-                              <div
-                                className="flex items-center gap-3 p-3 rounded-lg border"
-                                style={{ borderColor: "rgba(234,179,8,0.3)", background: "rgba(234,179,8,0.05)" }}
-                              >
-                                <div
-                                  className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                                  style={{ background: "rgba(234,179,8,0.1)" }}
-                                >
-                                  <FilePdfIcon className="h-5 w-5" style={{ color: "var(--accent-gold)" }} />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium truncate" style={{ color: "var(--content-heading)" }}>
-                                    {pendingPdfFile.name}
-                                  </p>
-                                  <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                                    {(pendingPdfFile.size / 1024 / 1024).toFixed(2)} MB
-                                  </p>
-                                </div>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setUploadDialogOpen(true)}
-                                  style={{ color: "var(--accent-gold)", borderColor: "rgba(234,179,8,0.3)" }}
-                                >
-                                  <EyeIcon className="h-4 w-4 mr-1.5" />
-                                  Xem trước
-                                </Button>
-                              </div>
-
-                              {pdfPreviewUrl && (
-                                <div
-                                  className="border rounded-lg overflow-hidden"
-                                  style={{ borderColor: "var(--card-light-border)", height: "200px" }}
-                                >
-                                  <iframe
-                                    src={pdfPreviewUrl}
-                                    className="w-full h-full"
-                                    title="PDF Preview"
-                                    style={{ border: "none" }}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="grid gap-1.5">
-                        <div className="flex items-center justify-between">
-                          <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
-                          {draft.documentId && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                              Đang sửa: {historicalDocuments.data?.find(d => getDocumentId(d) === draft.documentId)?.title?.slice(0, 20) || 'Tài liệu'}
-                              {historicalDocuments.data?.find(d => getDocumentId(d) === draft.documentId)?.title && (historicalDocuments.data?.find(d => getDocumentId(d) === draft.documentId)?.title?.length || 0) > 20 ? '...' : ''}
-                            </span>
-                          )}
-                          {!draft.documentId && draft.documentContent.trim() && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
-                              Tài liệu mới
-                            </span>
-                          )}
-                        </div>
-                        <StaffFormInput
-                          value={draft.documentTitle}
-                          onChange={(e) => set("documentTitle")(e.target.value)}
-                          placeholder="Để trống sẽ dùng tên bối cảnh"
-                        />
-                      </div>
-                      <div className="grid gap-1.5">
-                        <div className="flex items-center justify-between">
-                          <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
-                          <span className="text-[10px]" style={{ color: "var(--content-muted)" }}>
-                            {draft.documentContent.length.toLocaleString()} ký tự
-                          </span>
-                        </div>
-                        <StaffFormTextarea
-                          value={draft.documentContent}
-                          onChange={(e) => set("documentContent")(e.target.value)}
-                          placeholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
-                          style={{ minHeight: "100px", maxHeight: "200px" }}
-                          className="resize-y"
-                        />
-                      </div>
-                </div>
-              )}
-
-              {activeTab === "characters" && mode === "edit" && (
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                      Nhân vật đã gắn với bối cảnh này
-                    </p>
-                    <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
-                      Đây là các nhân vật mà người dùng có thể trò chuyện khi khám phá bối cảnh &quot;{draft.name || "..."}&quot;.
-                    </p>
-                  </div>
-
-                  {charactersInContext.isLoading ? (
-                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tải nhân vật...</p>
-                  ) : charactersInContext.data?.length ? (
-                    <div className="space-y-2">
-                      {charactersInContext.data.map((character) => (
-                        <div
-                          key={character.id}
-                          className="flex items-center gap-3 rounded-lg border p-2.5"
-                          style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
-                        >
-                          <StaffImageHoverPreview
-                            src={character.avatarUrl}
-                            alt={character.name}
-                            thumbClassName="h-10 w-10 shrink-0 rounded-full border"
-                            previewClassName="h-40 w-40"
-                            sizes="40px"
-                            previewSizes="160px"
-                            fallback={<UsersIcon className="h-4 w-4" />}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
-                              {character.name}
-                            </p>
-                            <p className="truncate text-xs" style={{ color: "var(--content-muted)" }}>
-                              {character.title || character.role || "—"}
-                            </p>
-                          </div>
-                          <div className="flex shrink-0 items-center gap-1">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-8 rounded-md px-2.5 text-xs font-semibold"
-                              style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
-                              onClick={() => router.push(`/staff/characters/${character.id}`)}
-                            >
-                              Xem chi tiết
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              className="rounded-full"
-                              title="Gỡ liên kết khỏi bối cảnh"
-                              style={{ color: "var(--accent-danger)" }}
-                              onClick={() =>
-                                setUnmapTarget({ characterId: character.id, name: character.name })
-                              }
-                            >
-                              <LinkBreakIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                      Chưa có nhân vật nào được gắn với bối cảnh này.
-                    </p>
-                  )}
-
-                  <div className="space-y-2 border-t pt-4" style={{ borderColor: "var(--card-light-border)" }}>
-                    <StaffFormLabel>Thêm nhân vật vào bối cảnh này</StaffFormLabel>
-                    <div className="relative">
-                      <MagnifyingGlassIcon
-                        className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
-                        style={{ color: "var(--content-subtle)" }}
-                      />
-                      <StaffFormInput
-                        value={characterSearch}
-                        onChange={(e) => setCharacterSearch(e.target.value)}
-                        placeholder="Tìm nhân vật theo tên..."
-                        className="pl-9"
-                      />
-                    </div>
-
-                    {characterSearchResults.isLoading ? (
-                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tìm kiếm...</p>
-                    ) : availableCharacters.length > 0 ? (
-                      <div className="max-h-[220px] space-y-1.5 overflow-y-auto pr-1">
-                        {availableCharacters.map((character) => (
-                          <div
-                            key={character.id}
-                            className="flex items-center gap-3 rounded-lg border p-2"
-                            style={{ borderColor: "var(--card-light-border)" }}
-                          >
-                            <StaffImageHoverPreview
-                              src={character.avatarUrl}
-                              alt={character.name}
-                              thumbClassName="h-8 w-8 shrink-0 rounded-full border"
-                              previewClassName="h-32 w-32"
-                              sizes="32px"
-                              previewSizes="128px"
-                              fallback={<UsersIcon className="h-3.5 w-3.5" />}
-                            />
-                            <p className="min-w-0 flex-1 truncate text-sm" style={{ color: "var(--content-heading)" }}>
-                              {character.name}
-                            </p>
-                            <Button
-                              type="button"
-                              size="sm"
-                              className="h-7 shrink-0 rounded-md px-2.5 text-xs font-semibold"
-                              disabled={mapContextToCharacter.isPending}
-                              onClick={() =>
-                                mapContextToCharacter.mutate({
-                                  characterId: character.id,
-                                  contextId: editContextId!,
-                                  contextName: draft.name,
-                                })
-                              }
-                            >
-                              Liên kết
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                        {characterSearch
-                          ? "Không tìm thấy nhân vật phù hợp."
-                          : "Nhập tên để tìm nhân vật cần liên kết."}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-            </div>
-          </div>
-
-          <aside
-            className="border-t px-5 py-6 xl:border-l xl:border-t-0"
-            style={{
-              borderColor: "var(--card-light-border)",
-              background: "rgba(27,38,50,0.035)",
-            }}
-          >
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                    Bối cảnh đã có
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
-                    {activeItems.length} bản ghi
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="bg-transparent border-[var(--card-light-border)] text-[var(--content-heading)]"
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Danh sách
-                </Button>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                {activeItems.length === 0 ? (
-                  <p className="text-sm" style={{ color: "var(--content-muted)" }}>
-                    Chưa có bối cảnh nào.
-                  </p>
-                ) : (
-                  activeItems.map((event) => (
-                    <button
-                      key={event.id}
-                      type="button"
-                      onClick={() => {
-                        setMode("edit");
-                        setDraft({
-                          id: event.id,
-                          name: event.title,
-                          description: event.summary,
-                          era: (event.era ?? "") as EventEraBackend | "",
-                          year: String(event.year ?? ""),
-                          location: event.location ?? "",
-                          imageUrl: event.imageUrl ?? "",
-                          videoUrl: event.videoUrl ?? "",
-                          isPublished: event.isPublished ?? false,
-                          documentId: undefined,
-                          documentTitle: "",
-                          documentContent: "",
-                        });
-                      }}
-                      className="w-full rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-black/[0.03]"
-                      style={{
-                        borderColor:
-                          draft.id === event.id
-                            ? "rgba(201,168,76,0.5)"
-                            : "var(--card-light-border)",
-                        background:
-                          draft.id === event.id
-                            ? "rgba(201,168,76,0.08)"
-                            : "rgba(255,255,255,0.35)",
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="text-sm font-semibold line-clamp-1" style={{ color: "var(--content-heading)" }}>
-                          {event.title}
-                        </p>
-                        <span className="shrink-0 text-[11px]" style={{ color: "var(--content-muted)" }}>
-                          {event.year < 0 ? `${Math.abs(event.year)} TCN` : event.year}
-                        </span>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-xs" style={{ color: "var(--content-muted)" }}>
-                        {event.summary || "Chưa có mô tả"}
-                      </p>
-                    </button>
-                  ))
-                )}
-              </div>
-            </aside>
-          </div>
-        </form>
-      </section>
-      )}
 
       <ConfirmDialog
         open={!!tablePublishTarget}
@@ -1614,24 +457,6 @@ export default function StaffContextsPage() {
             {
               onSuccess: () => setTablePublishTarget(null),
             },
-          );
-        }}
-      />
-
-      {/* Unmap character confirm */}
-      <ConfirmDialog
-        open={!!unmapTarget}
-        onOpenChange={(open) => !open && setUnmapTarget(null)}
-        title="Gỡ liên kết nhân vật?"
-        description={`Nhân vật "${unmapTarget?.name}" sẽ không còn xuất hiện trong bối cảnh này nữa. Nhân vật vẫn được giữ lại trong hệ thống.`}
-        confirmLabel={unmapContextFromCharacter.isPending ? "Đang gỡ..." : "Gỡ liên kết"}
-        variant="danger"
-        isPending={unmapContextFromCharacter.isPending}
-        onConfirm={() => {
-          if (!unmapTarget || !editContextId) return;
-          unmapContextFromCharacter.mutate(
-            { characterId: unmapTarget.characterId, contextId: editContextId },
-            { onSuccess: () => setUnmapTarget(null) },
           );
         }}
       />
@@ -1694,34 +519,6 @@ export default function StaffContextsPage() {
           });
         }}
         isPending={permanentDeleteContext.isPending}
-      />
-
-      {/* PDF Upload Dialog */}
-      <PdfUploadDialog
-        open={uploadDialogOpen}
-        onOpenChange={(open) => {
-          setUploadDialogOpen(open);
-          if (!open) setUploadTargetDocId(null);
-        }}
-        onUpload={async (file) => {
-          if (uploadTargetDocId) {
-            await uploadDocumentPdf.mutateAsync({ docId: uploadTargetDocId, file });
-            setUploadDialogOpen(false);
-            setUploadTargetDocId(null);
-          }
-        }}
-        isUploading={uploadDocumentPdf.isPending}
-        title="Upload PDF"
-        description="Chọn file PDF để upload cho tài liệu này. Bạn có thể xem preview trước khi xác nhận."
-      />
-
-      {/* PDF Viewer Dialog */}
-      <PdfViewerDialog
-        open={viewerOpen}
-        onOpenChange={setViewerOpen}
-        pdfUrl={viewerUrl}
-        isLoading={viewerLoading}
-        title="Xem PDF"
       />
     </StaffShell>
   );
