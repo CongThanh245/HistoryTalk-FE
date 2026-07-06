@@ -9,6 +9,7 @@ import { characterService } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
 import { HistoricalContextHoverCard } from "@/components/commons/historical-context-hover-card";
+import { ChatQuizSuggestion } from "@/components/chat/chat-quiz-suggestion";
 import {
   Sheet,
   SheetContent,
@@ -141,6 +142,8 @@ export function ChatRightPanel({
           </p>
         </div>
       </div>
+
+      <ChatQuizSuggestion contextId={activeCharacter.contextId} />
 
       {/* Other characters */}
       <div className="px-3 py-3">
