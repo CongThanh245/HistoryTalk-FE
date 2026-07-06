@@ -23,6 +23,8 @@ export interface ChatMessage {
   content: string;
   messageType: MessageType;
   createdAt: string;
+  /** Đoạn trích nguồn AI dựa vào để trả lời. Chỉ có ở message tạo qua /messages/stream. */
+  quotes?: string[];
 }
 
 export interface SendMessageResponse {
@@ -136,7 +138,7 @@ export const chatService = {
     sessionId: string,
     content: string,
     onData: (chunk: string) => void,
-    onDone: (data: { remainingTokens?: number, suggestedQuestions?: string[], fullContent: string, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE" }) => void,
+    onDone: (data: { remainingTokens?: number, suggestedQuestions?: string[], fullContent: string, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE", quotesUsed?: string[] }) => void,
     onError: (error: unknown) => void,
     messageTypeParam: "TEXT" | "VOICE" = "TEXT"
   ) => {
@@ -183,6 +185,7 @@ export const chatService = {
       let suggestedQuestions: string[] | undefined;
       let promptTokens: number | undefined;
       let completionTokens: number | undefined;
+      let quotesUsed: string[] | undefined;
 
       let fullContent = "";
 
@@ -206,6 +209,7 @@ export const chatService = {
                    suggestedQuestions = parsed.data?.suggestedQuestions;
                    promptTokens = parsed.data?.promptTokens;
                    completionTokens = parsed.data?.completionTokens;
+                   quotesUsed = parsed.data?.quotes_used;
                 } else if (parsed.type === "done") {
                    remainingTokens = parsed.remainingTokens;
                    if (parsed.messageType) {
@@ -219,7 +223,7 @@ export const chatService = {
           }
         }
       }
-      onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens, messageType });
+      onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens, messageType, quotesUsed });
     } catch (err) {
       onError(err);
     }

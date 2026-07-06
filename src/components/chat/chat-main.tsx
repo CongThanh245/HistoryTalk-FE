@@ -602,6 +602,7 @@ export function ChatMain({
           content: resData.fullContent,
           messageType: toMessageType(resData.messageType),
           createdAt: new Date().toISOString(),
+          quotes: resData.quotesUsed,
         };
 
         qc.setQueryData(

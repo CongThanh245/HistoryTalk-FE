@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { isValidUrl } from "@/lib/utils/url";
 import type { ChatMessage, ChatCharacter } from "@/services/chat.service";
-import { SpeakerHighIcon, SpeakerXIcon, MicrophoneIcon } from "@phosphor-icons/react";
+import { SpeakerHighIcon, SpeakerXIcon, MicrophoneIcon, QuotesIcon, CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { HighlightedText } from "./HighlightedText";
@@ -158,6 +158,11 @@ export function MessageBubble({
             )}
           </button>
         </div>
+
+        {message.quotes && message.quotes.length > 0 && (
+          <MessageQuotes quotes={message.quotes} />
+        )}
+
         <span
           className="text-[10px] px-1 opacity-60"
           style={{ color: "var(--text-primary)" }}
@@ -169,6 +174,54 @@ export function MessageBubble({
           })}
         </span>
       </div>
+    </div>
+  );
+}
+
+// ── Nguồn trích dẫn AI đã dùng để trả lời ─────────────────
+
+function MessageQuotes({ quotes }: { quotes: string[] }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="self-start">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border transition-colors cursor-pointer"
+        style={{
+          background: "var(--bg-elevated)",
+          borderColor: "var(--border-default)",
+          color: "var(--text-secondary)",
+        }}
+      >
+        <QuotesIcon size={12} weight="fill" />
+        {quotes.length} nguồn trích dẫn
+        {isOpen ? <CaretUpIcon size={12} /> : <CaretDownIcon size={12} />}
+      </button>
+
+      {isOpen && (
+        <div
+          className="mt-1.5 flex flex-col gap-1.5 rounded-xl border px-3 py-2"
+          style={{
+            background: "var(--bg-elevated)",
+            borderColor: "var(--border-default)",
+          }}
+        >
+          {quotes.map((quote, i) => (
+            <blockquote
+              key={i}
+              className="text-xs leading-relaxed pl-2 border-l-2"
+              style={{
+                borderColor: "var(--accent-gold-soft)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              {quote}
+            </blockquote>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
