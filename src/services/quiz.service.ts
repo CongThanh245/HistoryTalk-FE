@@ -33,6 +33,7 @@ export interface QuizSet {
   era: QuizEra;
   playCount: number;
   contextTitle?: string;
+  contextId?: string;
 }
 
 // ── QuizResult ─────────────────────────────────────────────
@@ -65,6 +66,7 @@ export interface QuizSessionDetail {
 
 export interface GetQuizSetsParams {
   search?: string;
+  contextId?: string;
 }
 
 export interface GetQuizSetsResponse {
@@ -148,6 +150,7 @@ export function mapQuizSet(rawValue: unknown): QuizSet {
     era: (raw.era as QuizEra) ?? "ALL",
     playCount: asNumber(raw.playCount),
     contextTitle: asOptionalString(raw.contextTitle),
+    contextId: asOptionalString(raw.contextId),
   };
 }
 
@@ -211,13 +214,17 @@ export function mapQuizSessionDetail(rawValue: unknown): QuizSessionDetail {
 // ── Service Methods ────────────────────────────────────────
 
 export const quizService = {
-  // GET /quizzes?search=...
+  // GET /quizzes?search=...&contextId=...
   getAll: async (params?: GetQuizSetsParams): Promise<GetQuizSetsResponse> => {
     const res = await axiosClient.get("/quizzes", {
-      params: { search: params?.search },
+      params: { search: params?.search, contextId: params?.contextId },
     });
     const raw = res.data.data as unknown[];
-    const content = raw.map(mapQuizSet);
+    let content = raw.map(mapQuizSet);
+    // Defensive client-side filter in case the BE doesn't filter by contextId yet.
+    if (params?.contextId) {
+      content = content.filter((quiz) => quiz.contextId === params.contextId);
+    }
     return {
       content,
       totalElements: content.length,

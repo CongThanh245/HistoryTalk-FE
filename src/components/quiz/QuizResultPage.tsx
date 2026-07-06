@@ -1,8 +1,14 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
+import { characterService } from "@/services/character.service";
+import { queryKeys } from "@/shared/query-key";
+import { isValidUrl } from "@/lib/utils/url";
+import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
 
@@ -44,6 +50,10 @@ export function QuizResultPage({
   onRetry,
 }: QuizResultPageProps) {
   const router = useRouter();
+  const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation({
+    title: "Bạn cần đăng nhập để chat",
+    description: "Đăng nhập để trò chuyện và ôn lại kiến thức với nhân vật lịch sử.",
+  });
 
   const score =
     submitResult?.score ??
@@ -65,6 +75,15 @@ export function QuizResultPage({
   const percentage =
     submitResult?.percentage ?? Math.round((score / Math.max(totalQuestions, 1)) * 100);
 
+  const showReviewSection = wrongCount > 0 && !!quiz.contextId;
+  const { data: reviewCharacters = [] } = useQuery({
+    queryKey: queryKeys.characters.byContext(quiz.contextId ?? ""),
+    queryFn: () => characterService.getByContext(quiz.contextId!),
+    enabled: showReviewSection,
+    staleTime: 1000 * 60 * 5,
+    select: (data) => data.slice(0, 3),
+  });
+
   const tier =
     percentage >= 90
       ? { label: "Xuất sắc", color: "var(--gold-on-light)", bg: "rgba(201,162,77,0.14)" }
@@ -83,6 +102,7 @@ export function QuizResultPage({
 
   return (
     <main className="min-h-full px-5 py-7 md:px-8" style={{ background: "var(--bg-content)" }}>
+      {authRequiredDialog}
       <div className="mx-auto max-w-4xl">
         <section
           className="mb-6 rounded-xl border p-6 md:p-7"
@@ -141,6 +161,58 @@ export function QuizResultPage({
             ))}
           </div>
         </section>
+
+        {showReviewSection && reviewCharacters.length > 0 && (
+          <section
+            className="mb-6 rounded-xl border p-5"
+            style={{
+              background: "var(--card-light-bg)",
+              borderColor: "var(--card-light-border)",
+            }}
+          >
+            <h2 className="mb-1 text-base font-bold" style={{ color: "var(--content-heading)" }}>
+              Ôn lại cùng nhân vật
+            </h2>
+            <p className="mb-4 text-sm" style={{ color: "var(--content-muted)" }}>
+              Bạn còn {wrongCount} câu chưa đúng — trò chuyện lại với các nhân vật liên quan để nắm chắc kiến thức hơn.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {reviewCharacters.map((character) => (
+                <button
+                  key={character.id}
+                  onClick={() =>
+                    navigateWithAuth(`/chat/${character.id}?contextId=${quiz.contextId}`)
+                  }
+                  className="group flex items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:border-[rgba(201,162,77,0.45)]"
+                  style={{ borderColor: "var(--card-light-border)" }}
+                >
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
+                    <Image
+                      src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
+                      alt={character.name}
+                      fill
+                      className="object-cover object-top"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p
+                      className="truncate text-sm font-semibold"
+                      style={{ color: "var(--content-heading)" }}
+                    >
+                      {character.name}
+                    </p>
+                    <p
+                      className="truncate text-xs"
+                      style={{ color: "var(--gold-on-light)" }}
+                    >
+                      {character.title}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section>
           <h2 className="mb-3 text-base font-bold" style={{ color: "var(--content-heading)" }}>
