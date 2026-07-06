@@ -174,7 +174,7 @@ export function QuizResultPage({
               Ôn lại cùng nhân vật
             </h2>
             <p className="mb-4 text-sm" style={{ color: "var(--content-muted)" }}>
-              Bạn còn {wrongCount} câu chưa đúng — trò chuyện lại với các nhân vật liên quan để nắm chắc kiến thức hơn.
+              Có vẻ bạn đã trả lời chưa đúng <b>{wrongCount}</b> câu — hãy thử hỏi lại các nhân vật lịch sử để ôn lại kiến thức nhé!
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
               {reviewCharacters.map((character) => (
