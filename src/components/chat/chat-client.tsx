@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { ChatCharacter } from "@/services/chat.service";
 import { chatService } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
-import { ChatLeftPanel } from "./chat-left-panel";
 import { ChatMain } from "./chat-main";
 import { ChatRightPanel } from "./chat-right-panel";
 import { useCreateSession, useChatSessions } from "@/features/chat/hooks";
@@ -92,13 +91,6 @@ export function ChatClient({
     setActiveSessionId(sessionId);
   }, []);
 
-  // Fires the instant a "new conversation" is requested, before the create-session
-  // API call resolves, so the UI switches away from the old conversation right away
-  // instead of waiting on the response (sessionInitialized stays true, so the
-  // auto-init effect won't try to create yet another session in the meantime).
-  const handleSessionCreating = useCallback(() => {
-    setActiveSessionId(null);
-  }, []);
   const handleSessionCreated = useCallback((sessionId: string) => {
     setActiveSessionId(sessionId);
     // invalidate để left panel cập nhật list
@@ -111,7 +103,6 @@ export function ChatClient({
     }
   }, [activeSessionId]);
 
-  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(false);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
 
   if (isLoadingCharacter || !activeCharacter) {
@@ -130,27 +121,12 @@ export function ChatClient({
 
   return (
     <div className="flex h-full w-full overflow-hidden relative">
-      <ChatLeftPanel
-        characterId={characterId}
-        contextId={contextId}
-        sessions={sessions ?? []}
-        isLoadingSessions={isLoadingSessions}
-        activeSessionId={activeSessionId}
-        onSelectSession={setActiveSessionId}
-        onNewSession={handleNewSession}
-        onSessionCreating={handleSessionCreating}
-        onDeleteSession={handleDeleteSession}
-        isOpen={isLeftPanelOpen}
-        setIsOpen={setIsLeftPanelOpen}
-      />
       <ChatMain
         character={activeCharacter}
         contextId={contextId}
         sessionId={activeSessionId}
         onSessionCreated={handleSessionCreated}
-        toggleLeftPanel={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
         toggleRightPanel={() => setIsRightPanelOpen(!isRightPanelOpen)}
-        isLeftOpen={isLeftPanelOpen}
         isRightOpen={isRightPanelOpen}
       />
       <ChatRightPanel
@@ -158,6 +134,14 @@ export function ChatClient({
         onSelectCharacter={handleSelectCharacter}
         isOpen={isRightPanelOpen}
         setIsOpen={setIsRightPanelOpen}
+        characterId={characterId}
+        contextId={contextId}
+        sessions={sessions ?? []}
+        isLoadingSessions={isLoadingSessions}
+        activeSessionId={activeSessionId}
+        onSelectSession={setActiveSessionId}
+        onNewSession={handleNewSession}
+        onDeleteSession={handleDeleteSession}
       />
     </div>
   );
