@@ -725,7 +725,7 @@ export function ChatMain({
                   <button
                     type="button"
                     aria-label="Lưu ý về độ chính xác của AI"
-                    className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 cursor-help"
+                    className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
                     style={{
                       background: "var(--accent-gold-active-bg)",
                       color: "var(--accent-gold)",
@@ -735,9 +735,10 @@ export function ChatMain({
                   </button>
                 </TooltipTrigger>
                 <TooltipContent
-                  side="bottom"
+                  side="top"
                   align="start"
-                  className="max-w-[260px] whitespace-normal"
+                  sideOffset={10}
+                  className="max-w-[min(380px,90vw)] whitespace-normal"
                   style={{
                     background: "var(--bg-elevated)",
                     border: "1px solid var(--border-default)",
@@ -760,9 +761,34 @@ export function ChatMain({
               </Tooltip>
             </TooltipProvider>
           </div>
-          <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-            {character.title}
-          </p>
+          {aiWarningVisible && sessionId ? (
+            <div
+              className={cn(
+                "flex items-center gap-1 h-3.5 text-[11px] transition-opacity duration-300",
+                aiWarningLeaving ? "opacity-0" : "opacity-100",
+              )}
+              style={{ color: "var(--text-secondary)" }}
+            >
+              <WarningCircleIcon
+                className="w-3 h-3 shrink-0"
+                style={{ color: "var(--accent-gold)" }}
+              />
+              <span className="flex-1 min-w-0 truncate">
+                AI có thể đưa ra thông tin không chính xác. Hãy kiểm chứng lại các thông tin quan trọng.
+              </span>
+              <button
+                onClick={dismissAiWarning}
+                aria-label="Đóng cảnh báo"
+                className="shrink-0 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <XIcon className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <p className="text-[11px] truncate" style={{ color: "var(--text-secondary)" }}>
+              {character.title}
+            </p>
+          )}
         </div>
 
         {/* ── Nút Voice Call ── */}
@@ -849,36 +875,6 @@ export function ChatMain({
           </button>
         )}
       </div>
-
-      {/* AI accuracy warning */}
-      {aiWarningVisible && sessionId && (
-        <div
-          className={cn(
-            "mx-4 mt-3 px-3 py-2 rounded-lg border flex items-center gap-2 text-xs shrink-0 transition-all duration-300",
-            aiWarningLeaving ? "opacity-0 -translate-y-1" : "opacity-100 translate-y-0",
-          )}
-          style={{
-            borderColor: "var(--border-default)",
-            background: "var(--bg-elevated)",
-            color: "var(--text-secondary)",
-          }}
-        >
-          <WarningCircleIcon
-            className="w-4 h-4 shrink-0"
-            style={{ color: "var(--accent-gold)" }}
-          />
-          <span className="flex-1">
-            AI có thể đưa ra thông tin không chính xác. Hãy kiểm chứng lại các thông tin quan trọng.
-          </span>
-          <button
-            onClick={dismissAiWarning}
-            aria-label="Đóng cảnh báo"
-            className="shrink-0 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-          >
-            <XIcon className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-5 pb-28 md:pb-6 space-y-4">
