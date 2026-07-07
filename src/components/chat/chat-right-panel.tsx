@@ -16,6 +16,7 @@ import {
   TimerIcon,
   TrashIcon,
   CircleNotchIcon,
+  FileTextIcon,
 } from "@phosphor-icons/react";
 import type { ChatCharacter, ChatSession } from "@/services/chat.service";
 import { characterService } from "@/services/character.service";
@@ -23,6 +24,10 @@ import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
 import { useQuizSets } from "@/features/quiz/hooks";
 import { useEventDetail } from "@/features/events/hooks";
+import {
+  usePublicCharacterDocuments,
+  usePublicContextDocuments,
+} from "@/features/documents/hooks";
 import { QuizCard } from "@/components/quiz/quiz-card";
 import { useCreateSession, useSoftDeleteSession } from "@/features/chat/hooks";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -40,7 +45,7 @@ import {
 
 import { cn } from "@/lib/utils/cn";
 
-type PanelSection = "menu" | "history" | "characters" | "quiz" | "contexts";
+type PanelSection = "menu" | "history" | "characters" | "quiz" | "contexts" | "documents";
 type DetailSection = Exclude<PanelSection, "menu">;
 
 interface ChatRightPanelProps {
@@ -56,6 +61,7 @@ interface ChatRightPanelProps {
   onSelectSession: (sessionId: string) => void;
   onNewSession: (sessionId: string) => void;
   onDeleteSession?: (sessionId: string) => void;
+  onOpenDocument?: (documentId: string) => void;
 }
 
 const sectionTitles: Record<DetailSection, string> = {
@@ -63,6 +69,7 @@ const sectionTitles: Record<DetailSection, string> = {
   characters: "Nhân vật khác",
   quiz: "Kiểm tra kiến thức",
   contexts: "Bối cảnh liên quan",
+  documents: "Tài liệu tham khảo",
 };
 
 function MenuRow({
@@ -222,6 +229,7 @@ export function ChatRightPanel({
   onSelectSession,
   onNewSession,
   onDeleteSession,
+  onOpenDocument,
 }: ChatRightPanelProps) {
   const [section, setSection] = useState<PanelSection>("menu");
   const [lastDetailSection, setLastDetailSection] = useState<DetailSection>("history");
@@ -276,6 +284,13 @@ export function ChatRightPanel({
     contextId ? { contextId } : undefined,
   );
   const quizzes = quizData?.content ?? [];
+
+  const { data: characterDocuments = [], isLoading: isLoadingCharacterDocuments } =
+    usePublicCharacterDocuments(characterId);
+  const { data: contextDocuments = [], isLoading: isLoadingContextDocuments } =
+    usePublicContextDocuments(contextId);
+  const documents = [...characterDocuments, ...contextDocuments];
+  const isLoadingDocuments = isLoadingCharacterDocuments || isLoadingContextDocuments;
 
   const createSession = useCreateSession();
   const softDeleteSession = useSoftDeleteSession();
@@ -411,6 +426,12 @@ export function ChatRightPanel({
             onClick={() => setSection("contexts")}
           />
         )}
+        <MenuRow
+          icon={<FileTextIcon className="w-4 h-4" />}
+          label="Tài liệu tham khảo"
+          value={documents.length ? `${documents.length}` : undefined}
+          onClick={() => setSection("documents")}
+        />
       </div>
     </>
   );
@@ -677,6 +698,63 @@ export function ChatRightPanel({
     </>
   );
 
+  const renderDocuments = () => (
+    <>
+      <SectionHeader title={sectionTitles.documents} onBack={() => setSection("menu")} />
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+        {isLoadingDocuments ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-14 rounded-xl animate-pulse"
+                style={{ background: "var(--card-light-hover)" }}
+              />
+            ))}
+          </div>
+        ) : documents.length === 0 ? (
+          <p
+            className="text-[11px] text-center py-4"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Chưa có tài liệu tham khảo nào
+          </p>
+        ) : (
+          documents.map((doc) => (
+            <button
+              key={doc.id}
+              onClick={() => doc.id && onOpenDocument?.(doc.id)}
+              className="w-full flex items-start gap-2.5 p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-150 hover:-translate-y-0.5"
+              style={{
+                background: "var(--bg-elevated)",
+                borderColor: "var(--border-default)",
+              }}
+            >
+              <FileTextIcon
+                className="w-4 h-4 mt-0.5 shrink-0"
+                style={{ color: "var(--accent-gold)" }}
+              />
+              <div className="flex-1 min-w-0">
+                <p
+                  className="text-xs font-semibold truncate"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  {doc.title}
+                </p>
+                <p
+                  className="text-[10px] mt-0.5 line-clamp-2"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {doc.content}
+                </p>
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </>
+  );
+
   const renderDetail = () => {
     switch (lastDetailSection) {
       case "history":
@@ -687,6 +765,8 @@ export function ChatRightPanel({
         return renderQuiz();
       case "contexts":
         return renderContexts();
+      case "documents":
+        return renderDocuments();
     }
   };
 

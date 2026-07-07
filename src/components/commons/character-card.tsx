@@ -340,29 +340,29 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       </div>
 
       {/* Hover State Overlay */}
-      <div className="absolute inset-0 z-30 hidden flex-col bg-black/92 p-4 text-white opacity-0 transition-all duration-300 group-focus-visible:flex group-focus-visible:opacity-100 md:flex md:group-hover:opacity-100 sm:p-5">
+      <div className="absolute inset-0 z-30 hidden flex-col bg-black/92 p-3 text-white opacity-0 transition-all duration-300 group-focus-visible:flex group-focus-visible:opacity-100 md:flex md:group-hover:opacity-100 sm:p-4">
         {/* Avatar + name top left */}
-        <div className="flex items-center gap-3 mb-3 sm:mb-4">
-          <div className="relative w-14 h-14 shrink-0 rounded-full border-2 border-white overflow-hidden shadow-md sm:w-16 sm:h-16">
+        <div className="flex items-center gap-2.5 mb-2.5 sm:mb-3">
+          <div className="relative w-11 h-11 shrink-0 rounded-full border-2 border-white overflow-hidden shadow-md sm:w-12 sm:h-12">
             {avatarSrc ? (
               <Image
                 src={avatarSrc}
                 alt={character.name}
                 fill
                 className="object-cover"
-                sizes="64px"
+                sizes="48px"
               />
             ) : (
-              <span className="flex h-full w-full items-center justify-center bg-[var(--accent-gold)] text-xl font-bold text-[var(--bg-deep)]">
+              <span className="flex h-full w-full items-center justify-center bg-[var(--accent-gold)] text-base font-bold text-[var(--bg-deep)]">
                 {character.name?.charAt(0) ?? "?"}
               </span>
             )}
           </div>
           <div className="min-w-0">
-            <h4 className="text-base font-bold text-white leading-tight truncate sm:text-lg">
+            <h4 className="text-sm font-bold text-white leading-tight truncate sm:text-base">
               {character.name}
             </h4>
-            <p className="text-xs text-white/60 truncate sm:text-sm">
+            <p className="text-[11px] text-white/60 truncate sm:text-xs">
               {character.role ?? character.title}
             </p>
           </div>
@@ -370,15 +370,15 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
 
         {/* Detail chips: thời gian sống, phe phái, bối cảnh lịch sử */}
         {(lifespan || character.side || contextLabel) && (
-          <div className="flex flex-wrap items-center gap-1.5 mb-3 sm:mb-4">
+          <div className="flex flex-wrap items-center gap-1 mb-2.5 sm:mb-3">
             {lifespan && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-amber-300 sm:text-[11px]">
-                <ClockCounterClockwiseIcon className="w-3 h-3 shrink-0" />
+              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-white/10 text-amber-300 sm:text-[10px]">
+                <ClockCounterClockwiseIcon className="w-2.5 h-2.5 shrink-0" />
                 {lifespan}
               </span>
             )}
             {character.side && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-white/80 sm:text-[11px]">
+              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-white/10 text-white/80 sm:text-[10px]">
                 {character.side}
               </span>
             )}
@@ -388,8 +388,8 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
                 contextId={ctx.contextId}
                 fallbackLabel={ctx.name}
               >
-                <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-white/80 transition-colors hover:bg-white/20 hover:text-amber-300 sm:text-[11px]">
-                  <BankIcon className="w-3 h-3 shrink-0" />
+                <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold text-white/80 transition-colors hover:bg-white/20 hover:text-amber-300 sm:text-[10px]">
+                  <BankIcon className="w-2.5 h-2.5 shrink-0" />
                   <span className="truncate">{ctx.name}</span>
                 </span>
               </HistoricalContextHoverCard>
@@ -398,21 +398,21 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         )}
 
         {/* Description text with typewriter effect */}
-        <div className="flex-1 text-sm leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium sm:text-base">
+        <div className="flex-1 text-xs leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium sm:text-sm">
           <TypewriterText text={character.description ?? ""} isHovered={isHovered} />
         </div>
 
         {/* Button Trò chuyện ngay */}
-        <div className="mt-4 sm:mt-5">
+        <div className="mt-3 sm:mt-4">
           <div
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-sm font-extrabold transition-all shadow-lg hover:brightness-110 sm:py-3 sm:text-base"
+            className="flex items-center justify-center gap-1.5 w-full py-2 rounded-full text-xs font-extrabold transition-all shadow-lg hover:brightness-110 sm:py-2.5 sm:text-sm"
             style={{
               background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-soft) 100%)",
               color: "var(--text-inverse)",
               boxShadow: "0 8px 20px var(--accent-gold-glow)",
             }}
           >
-            <ChatTextIcon className="w-5 h-5 fill-current" />
+            <ChatTextIcon className="w-4 h-4 fill-current" />
             Trò chuyện ngay
           </div>
         </div>

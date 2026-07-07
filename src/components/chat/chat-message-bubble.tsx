@@ -14,6 +14,7 @@ interface MessageBubbleProps {
   character: ChatCharacter;
   speak?: (text: string) => void;
   onKeywordSelect?: (kw: KeywordData) => void;
+  onViewQuote?: (quote: string) => void;
 }
 
 export function MessageBubble({
@@ -21,6 +22,7 @@ export function MessageBubble({
   character,
   speak,
   onKeywordSelect,
+  onViewQuote,
 }: MessageBubbleProps) {
   const isUser = message.role === "USER";
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -160,7 +162,7 @@ export function MessageBubble({
         </div>
 
         {message.quotes && message.quotes.length > 0 && (
-          <MessageQuotes quotes={message.quotes} />
+          <MessageQuotes quotes={message.quotes} onViewQuote={onViewQuote} />
         )}
 
         <span
@@ -180,7 +182,13 @@ export function MessageBubble({
 
 // ── Nguồn trích dẫn AI đã dùng để trả lời ─────────────────
 
-function MessageQuotes({ quotes }: { quotes: string[] }) {
+function MessageQuotes({
+  quotes,
+  onViewQuote,
+}: {
+  quotes: string[];
+  onViewQuote?: (quote: string) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -209,16 +217,27 @@ function MessageQuotes({ quotes }: { quotes: string[] }) {
           }}
         >
           {quotes.map((quote, i) => (
-            <blockquote
-              key={i}
-              className="text-xs leading-relaxed pl-2 border-l-2"
-              style={{
-                borderColor: "var(--accent-gold-soft)",
-                color: "var(--text-secondary)",
-              }}
-            >
-              {quote}
-            </blockquote>
+            <div key={i} className="flex flex-col gap-1">
+              <blockquote
+                className="text-xs leading-relaxed pl-2 border-l-2"
+                style={{
+                  borderColor: "var(--accent-gold-soft)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                {quote}
+              </blockquote>
+              {onViewQuote && (
+                <button
+                  type="button"
+                  onClick={() => onViewQuote(quote)}
+                  className="self-start text-[11px] font-medium pl-2 hover:underline cursor-pointer"
+                  style={{ color: "var(--accent-gold)" }}
+                >
+                  Xem trong tài liệu
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}

@@ -58,6 +58,10 @@ export const queryKeys = {
       ["documents", "historical", "context", contextId] as const,
     characterByCharacter: (characterId: string) =>
       ["documents", "character", "character", characterId] as const,
+    publicByCharacter: (characterId: string) =>
+      ["documents", "public", "character", characterId] as const,
+    publicByContext: (contextId: string) =>
+      ["documents", "public", "context", contextId] as const,
   },
 
   quizzes: {

@@ -123,6 +123,7 @@ interface ChatMainProps {
   isRightOpen?: boolean;
   /** Overrides the "initializing conversation" message shown while sessionId is null. */
   initializingLabel?: string;
+  onOpenCitation?: (quote: string) => void;
 }
 
 export function ChatMain({
@@ -133,6 +134,7 @@ export function ChatMain({
   toggleRightPanel,
   isRightOpen = false,
   initializingLabel,
+  onOpenCitation,
 }: ChatMainProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -904,6 +906,9 @@ export function ChatMain({
                   onKeywordSelect={
                     item.message.role === "ASSISTANT" ? handleKeywordSelect : undefined
                   }
+                  onViewQuote={
+                    item.message.role === "ASSISTANT" ? onOpenCitation : undefined
+                  }
                 />
               ),
             )}
@@ -1097,6 +1102,7 @@ export function ChatMain({
         keyword={selectedKeyword}
         onClose={handleKeywordClose}
       />
+
 
       {/* ── Upgrade Pro Dialog ── */}
       <VoiceCallTranscriptDialog

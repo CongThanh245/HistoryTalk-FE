@@ -38,6 +38,25 @@ export function useCharacterDocuments(characterId?: string) {
   });
 }
 
+// Public listing (auth optional) — dùng để hiển thị nguồn tài liệu trong chat
+export function usePublicCharacterDocuments(characterId?: string) {
+  return useQuery({
+    queryKey: queryKeys.documents.publicByCharacter(characterId || ""),
+    queryFn: () => documentService.getPublicCharacterDocuments(characterId!),
+    enabled: !!characterId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function usePublicContextDocuments(contextId?: string) {
+  return useQuery({
+    queryKey: queryKeys.documents.publicByContext(contextId || ""),
+    queryFn: () => documentService.getPublicContextDocuments(contextId!),
+    enabled: !!contextId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
 export function useAllCharacterDocuments() {
   return useQuery({
     queryKey: queryKeys.documents.characterAll,
