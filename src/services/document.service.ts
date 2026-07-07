@@ -26,6 +26,13 @@ export interface RagDocument {
   fileUrl?: string;
   createdAt?: string;
   updatedAt?: string;
+  /** Chủ sở hữu tài liệu (từ API /characters/{id}/documents, /historical-contexts/{id}/documents). */
+  uploadedByUid?: string;
+  uploadedByName?: string;
+  /** Chỉ 1 trong 2 field này có giá trị, tuỳ tài liệu gắn với nhân vật hay bối cảnh. */
+  characterId?: string;
+  contextId?: string;
+  deletedAt?: string | null;
 }
 
 type RawDocument = Partial<RagDocument> & {
@@ -35,6 +42,10 @@ type RawDocument = Partial<RagDocument> & {
   documentId?: string;
   historicalDocumentId?: string;
   characterDocumentId?: string;
+  uid?: string;
+  userName?: string;
+  uploadDate?: string;
+  updatedDate?: string;
 };
 
 function normalizeDocument(raw: unknown): RagDocument {
@@ -54,8 +65,13 @@ function normalizeDocument(raw: unknown): RagDocument {
     content: value.content ?? "",
     type: value.type ?? "TEXT",
     fileUrl: value.fileUrl,
-    createdAt: value.createdAt,
-    updatedAt: value.updatedAt,
+    createdAt: value.createdAt ?? value.uploadDate,
+    updatedAt: value.updatedAt ?? value.updatedDate,
+    uploadedByUid: value.uid,
+    uploadedByName: value.userName,
+    characterId: value.characterId,
+    contextId: value.contextId,
+    deletedAt: value.deletedAt ?? null,
   };
 }
 
@@ -97,6 +113,18 @@ export const documentService = {
 
   getCharacterDocuments: async (characterId: string): Promise<RagDocument[]> => {
     const res = await axiosClient.get(`/character-documents/character/${characterId}`);
+    return normalizeDocumentList(res.data);
+  },
+
+  // GET /characters/{id}/documents - public listing (auth optional), dùng cho chat citation
+  getPublicCharacterDocuments: async (characterId: string): Promise<RagDocument[]> => {
+    const res = await axiosClient.get(`/characters/${characterId}/documents`);
+    return normalizeDocumentList(res.data);
+  },
+
+  // GET /historical-contexts/{id}/documents - public listing (auth optional), dùng cho chat citation
+  getPublicContextDocuments: async (contextId: string): Promise<RagDocument[]> => {
+    const res = await axiosClient.get(`/historical-contexts/${contextId}/documents`);
     return normalizeDocumentList(res.data);
   },
 

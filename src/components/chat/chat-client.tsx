@@ -7,6 +7,7 @@ import { chatService } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
 import { ChatMain } from "./chat-main";
 import { ChatRightPanel } from "./chat-right-panel";
+import { DocumentCitationDialog } from "./document-citation-dialog";
 import { useCreateSession, useChatSessions } from "@/features/chat/hooks";
 
 interface ChatClientProps {
@@ -104,6 +105,9 @@ export function ChatClient({
   }, [activeSessionId]);
 
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
+  const [citationRequest, setCitationRequest] = useState<
+    { quote?: string; documentId?: string } | null
+  >(null);
 
   if (isLoadingCharacter || !activeCharacter) {
     return (
@@ -128,6 +132,7 @@ export function ChatClient({
         onSessionCreated={handleSessionCreated}
         toggleRightPanel={() => setIsRightPanelOpen(!isRightPanelOpen)}
         isRightOpen={isRightPanelOpen}
+        onOpenCitation={(quote) => setCitationRequest({ quote })}
       />
       <ChatRightPanel
         activeCharacter={activeCharacter}
@@ -142,7 +147,17 @@ export function ChatClient({
         onSelectSession={setActiveSessionId}
         onNewSession={handleNewSession}
         onDeleteSession={handleDeleteSession}
+        onOpenDocument={(documentId) => setCitationRequest({ documentId })}
       />
+      {citationRequest && (
+        <DocumentCitationDialog
+          quote={citationRequest.quote}
+          initialDocumentId={citationRequest.documentId}
+          characterId={characterId}
+          contextId={contextId}
+          onClose={() => setCitationRequest(null)}
+        />
+      )}
     </div>
   );
 }
