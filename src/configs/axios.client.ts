@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/auth.store";
-import { clearAuthCookies, persistAuthCookies } from "@/features/auth/auth-cookies";
+import { useSessionStore } from "@/store/session.store";
+import { persistAuthCookies } from "@/features/auth/auth-cookies";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const BASE_PATH = process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
@@ -36,6 +37,59 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
+// Refresh access token dùng chung cho axios interceptor lẫn các request fetch() thô (vd: SSE stream)
+// không đi qua axiosClient nên không tự động được interceptor bên dưới xử lý 401.
+export const refreshAccessToken = async (): Promise<string> => {
+  if (isRefreshing) {
+    return new Promise<string>((resolve, reject) => {
+      failedQueue.push({ resolve, reject });
+    });
+  }
+
+  isRefreshing = true;
+
+  try {
+    const refreshToken = useAuthStore.getState().tokens?.refreshToken;
+    if (!refreshToken) throw new Error("No refresh token");
+
+    const { data } = await axiosClient.post(
+      "/auth/refresh-token",
+      { refreshToken },
+      { skipAuthRefresh: true } as RetryConfig,
+    );
+
+    if (!data.success) throw new Error("Refresh failed");
+
+    const newAccessToken = data.data.accessToken;
+
+    useAuthStore.getState().setTokens({
+      accessToken: newAccessToken,
+      refreshToken: data.data.refreshToken,
+      tokenType: data.data.tokenType,
+      expiresIn: data.data.expiresIn,
+    });
+
+    const role = useAuthStore.getState().user?.role;
+    if (role) {
+      persistAuthCookies(newAccessToken, role, data.data.expiresIn);
+    }
+
+    processQueue(null, newAccessToken);
+    return newAccessToken;
+  } catch (refreshError) {
+    processQueue(refreshError, null);
+
+    // Không logout/redirect ngay — chỉ báo cho người dùng biết phiên đã hết hạn,
+    // việc clear auth + chuyển trang login được thực hiện khi người dùng bấm xác nhận
+    // ở SessionExpiredDialog (xem src/components/session-expired-dialog.tsx).
+    useSessionStore.getState().showExpired();
+
+    throw refreshError;
+  } finally {
+    isRefreshing = false;
+  }
+};
+
 // Gắn token vào mỗi request
 axiosClient.interceptors.request.use(
   (config) => {
@@ -66,67 +120,14 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (isRefreshing) {
-      // Đưa vào hàng đợi nếu đang refresh token
-      return new Promise(function (resolve, reject) {
-        failedQueue.push({ resolve, reject });
-      })
-        .then((token) => {
-          original.headers.Authorization = `Bearer ${token}`;
-          return axiosClient(original);
-        })
-        .catch((err) => {
-          return Promise.reject(err);
-        });
-    }
-
     original._retried = true;
-    isRefreshing = true;
 
     try {
-      const refreshToken = useAuthStore.getState().tokens?.refreshToken;
-      if (!refreshToken) throw new Error("No refresh token");
-
-      const { data } = await axiosClient.post(
-        "/auth/refresh-token",
-        { refreshToken },
-        { skipAuthRefresh: true } as RetryConfig,
-      );
-
-      if (!data.success) throw new Error("Refresh failed");
-
-      const newAccessToken = data.data.accessToken;
-
-      useAuthStore.getState().setTokens({
-        accessToken: newAccessToken,
-        refreshToken: data.data.refreshToken,
-        tokenType: data.data.tokenType,
-        expiresIn: data.data.expiresIn,
-      });
-
-      const role = useAuthStore.getState().user?.role;
-      if (role) {
-        persistAuthCookies(newAccessToken, role, data.data.expiresIn);
-      }
-
-      // Xử lý hàng đợi thành công
-      processQueue(null, newAccessToken);
-
+      const newAccessToken = await refreshAccessToken();
       original.headers.Authorization = `Bearer ${newAccessToken}`;
       return axiosClient(original);
-    } catch (refreshError) {
-      // Báo lỗi cho hàng đợi
-      processQueue(refreshError, null);
-      
-      useAuthStore.getState().clearAuth();
-      clearAuthCookies();
-      
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+    } catch {
       return Promise.reject(error);
-    } finally {
-      isRefreshing = false;
     }
   },
 );
