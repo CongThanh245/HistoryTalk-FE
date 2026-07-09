@@ -17,6 +17,17 @@ interface MessageBubbleProps {
   onViewQuote?: (quote: string) => void;
 }
 
+// AI đôi khi trả lời kèm 1 câu hỏi gợi mở, ngăn cách bởi "---".
+// Tách thành các đoạn riêng để hiển thị như 2 tin nhắn liên tiếp thay vì dồn chung 1 bubble.
+const ASSISTANT_SPLIT_PATTERN = /\s*-{3,}\s*/;
+
+function splitAssistantContent(content: string): string[] {
+  return content
+    .split(ASSISTANT_SPLIT_PATTERN)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+}
+
 export function MessageBubble({
   message,
   character,
@@ -32,6 +43,8 @@ export function MessageBubble({
   // Logic lấy chữ cái đầu
   const userInitial = userName.trim().charAt(0).toUpperCase();
   const hasUserAvatar = isValidUrl(userAvatarUrl);
+  const assistantParts = isUser ? [] : splitAssistantContent(message.content);
+  const displayParts = assistantParts.length > 0 ? assistantParts : [message.content];
 
   if (isUser) {
     return (
@@ -119,46 +132,59 @@ export function MessageBubble({
             <MicrophoneIcon size={12} weight="fill" style={{ color: "var(--accent-gold)" }} />
           )}
         </div>
-        <div
-          className="relative px-4 py-3 pr-9 rounded-2xl rounded-tl-sm text-sm leading-relaxed border"
-          style={{
-            background: "var(--bg-surface)",
-            color: "var(--text-primary)",
-            borderColor: "var(--border-strong)",
-          }}
-        >
-          {onKeywordSelect ? (
-            <HighlightedText
-              text={message.content}
-              onKeywordSelect={onKeywordSelect}
-            />
-          ) : (
-            message.content
-          )}
+        <div className="flex flex-col gap-2">
+          {displayParts.map((part, index) => {
+            const isLastPart = index === displayParts.length - 1;
 
-          <button
-            type="button"
-            aria-label={isSpeaking ? "Tắt đọc tin nhắn" : "Đọc tin nhắn"}
-            onClick={() => {
-              if (isSpeaking) {
-                speechSynthesis.cancel();
-                setIsSpeaking(false);
-              } else {
-                speak?.(message.content);
-                setIsSpeaking(true);
-              }
-            }}
-            className="absolute bottom-2 right-2 transition-all duration-200 hover:scale-110"
-            style={{
-              color: isSpeaking ? "var(--accent-gold)" : "var(--text-muted)",
-            }}
-          >
-            {isSpeaking ? (
-              <SpeakerHighIcon size={18} weight="fill" />
-            ) : (
-              <SpeakerXIcon size={18} />
-            )}
-          </button>
+            return (
+              <div
+                key={index}
+                className={`relative px-4 py-3 rounded-2xl rounded-tl-sm text-sm leading-relaxed border ${
+                  isLastPart ? "pr-9" : ""
+                }`}
+                style={{
+                  background: "var(--bg-surface)",
+                  color: "var(--text-primary)",
+                  borderColor: "var(--border-strong)",
+                }}
+              >
+                {onKeywordSelect ? (
+                  <HighlightedText
+                    text={part}
+                    onKeywordSelect={onKeywordSelect}
+                  />
+                ) : (
+                  part
+                )}
+
+                {isLastPart && (
+                  <button
+                    type="button"
+                    aria-label={isSpeaking ? "Tắt đọc tin nhắn" : "Đọc tin nhắn"}
+                    onClick={() => {
+                      if (isSpeaking) {
+                        speechSynthesis.cancel();
+                        setIsSpeaking(false);
+                      } else {
+                        speak?.(message.content);
+                        setIsSpeaking(true);
+                      }
+                    }}
+                    className="absolute bottom-2 right-2 transition-all duration-200 hover:scale-110"
+                    style={{
+                      color: isSpeaking ? "var(--accent-gold)" : "var(--text-muted)",
+                    }}
+                  >
+                    {isSpeaking ? (
+                      <SpeakerHighIcon size={18} weight="fill" />
+                    ) : (
+                      <SpeakerXIcon size={18} />
+                    )}
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {message.quotes && message.quotes.length > 0 && (
