@@ -1,4 +1,4 @@
-import { axiosClient } from "@/configs/axios.client";
+import { axiosClient, refreshAccessToken } from "@/configs/axios.client";
 import { useAuthStore } from "@/store/auth.store";
 import { normalizeChatHistoryGroups } from "./chat-history.mapper";
 
@@ -144,23 +144,29 @@ export const chatService = {
   ) => {
     try {
       let messageType = messageTypeParam;
-      const token = useAuthStore.getState().tokens?.accessToken;
-      
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
 
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
       const basePath = process.env.NEXT_PUBLIC_API_BASE_PATH || '/Historical-tell/api/v1';
-      
-      const response = await fetch(`${baseUrl}${basePath}/chat/messages/stream`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ sessionId, content, messageType }),
-      });
+      const url = `${baseUrl}${basePath}/chat/messages/stream`;
+      const body = JSON.stringify({ sessionId, content, messageType });
+
+      const doFetch = (accessToken?: string) => {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (accessToken) {
+          headers["Authorization"] = `Bearer ${accessToken}`;
+        }
+        return fetch(url, { method: "POST", headers, body });
+      };
+
+      let response = await doFetch(useAuthStore.getState().tokens?.accessToken);
+
+      // Request fetch() thô không đi qua axios interceptor nên phải tự xử lý refresh token khi 401
+      if (response.status === 401) {
+        const newAccessToken = await refreshAccessToken();
+        response = await doFetch(newAccessToken);
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
