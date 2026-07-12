@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { XIcon, PlayIcon, SkipForwardIcon, TimerIcon, MapPinIcon } from "@phosphor-icons/react";
+import { XIcon, PlayIcon, SkipForwardIcon, TimerIcon, MapPinIcon, FileTextIcon, CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react";
 import type { HistoricalEvent } from "@/services/event.service";
 import {
   CharacterCarouselCard,
@@ -12,6 +12,7 @@ import { characterService, type Character } from "@/services/character.service";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
+import { usePublicContextDocuments } from "@/features/documents/hooks";
 
 // ── Mock ──────────────────────────────────────────────────
 // TODO: fetch từ API /events/:id/characters
@@ -219,6 +220,46 @@ function CharactersReveal({
   );
 }
 
+// ── Document Row — click để mở rộng xem nội dung ──────────
+
+function DocumentRow({ title, content }: { title: string; content: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div
+      className="rounded-lg border overflow-hidden"
+      style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
+    >
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full flex items-center gap-2.5 px-3 py-2 text-left cursor-pointer"
+      >
+        <FileTextIcon className="w-4 h-4 shrink-0" style={{ color: "var(--content-subtle)" }} />
+        <span
+          className="flex-1 text-sm font-medium truncate"
+          style={{ color: "var(--content-text)" }}
+        >
+          {title}
+        </span>
+        {isOpen ? (
+          <CaretUpIcon className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--content-subtle)" }} />
+        ) : (
+          <CaretDownIcon className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--content-subtle)" }} />
+        )}
+      </button>
+      {isOpen && (
+        <p
+          className="px-3 pb-3 text-xs leading-relaxed whitespace-pre-wrap"
+          style={{ color: "var(--content-subtle)" }}
+        >
+          {content}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ── Main Modal ────────────────────────────────────────────
 
 interface EventDetailModalProps {
@@ -230,11 +271,14 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
   const [finishedEventId, setFinishedEventId] = useState<string | null>(null);
 
-  const { data: characters = [] } = useQuery({
+  const { data: characters = [], isLoading: isLoadingCharacters } = useQuery({
     queryKey: queryKeys.characters.byContext(event?.id ?? ""),
     queryFn: () => characterService.getByContext(event!.id),
     enabled: !!event?.id, // chỉ fetch khi có event
   });
+
+  // Tài liệu tham khảo của bối cảnh — không phải context nào cũng có, nên chỉ hiện khi có dữ liệu
+  const { data: documents = [] } = usePublicContextDocuments(event?.id);
 
   if (!event) return null;
 
@@ -382,7 +426,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                   Nhân vật liên quan
                 </h4>
                 <div className="space-y-2">
-                  {characters.length === 0 ? (
+                  {isLoadingCharacters ? (
                     // Skeleton khi đang loading
                     <>
                       {[1, 2, 3].map((i) => (
@@ -411,6 +455,13 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                         </div>
                       ))}
                     </>
+                  ) : characters.length === 0 ? (
+                    <p
+                      className="text-center text-xs py-4"
+                      style={{ color: "var(--content-subtle)" }}
+                    >
+                      Chưa có nhân vật nào
+                    </p>
                   ) : (
                     characters.map((char) => (
                       <CharacterCompactCard
@@ -422,6 +473,27 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                   )}
                 </div>
               </div>
+
+              {documents.length > 0 && (
+                <>
+                  <div
+                    style={{ height: 1, background: "var(--card-light-border)" }}
+                  />
+                  <div>
+                    <h4
+                      className="text-[11px] font-bold uppercase tracking-widest mb-3"
+                      style={{ color: "var(--content-subtle)" }}
+                    >
+                      Tài liệu tham khảo
+                    </h4>
+                    <div className="space-y-2">
+                      {documents.map((doc) => (
+                        <DocumentRow key={doc.id} title={doc.title} content={doc.content} />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
