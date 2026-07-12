@@ -20,8 +20,8 @@ const bodyFont = {
 const googleAnalyticsId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
 
 export const metadata: Metadata = {
-  title: "HistoryTalk - Trò chuyện với nhân vật lịch sử Việt Nam bằng AI",
-  description: "Trò chuyện, chat trực tiếp với các nhân vật lịch sử Việt Nam bằng AI. Trải nghiệm học lịch sử tương tác thú vị, sinh động cùng HistoryTalk.",
+  title: "HistoryTalk - Trò chuyện với nhân vật lịch sử",
+  description: "Trò chuyện, chat trực tiếp với các nhân vật lịch sử. Trải nghiệm học lịch sử tương tác thú vị, sinh động cùng HistoryTalk.",
   icons: {
     icon: [
       { url: "/solo-logo.png?v=2", type: "image/png", sizes: "32x32" },
@@ -31,8 +31,8 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL("https://historytalk.online"),
   openGraph: {
-    title: "HistoryTalk - Trò chuyện với nhân vật lịch sử Việt Nam bằng AI",
-    description: "Trò chuyện, chat trực tiếp với các nhân vật lịch sử Việt Nam bằng AI. Trải nghiệm học lịch sử tương tác thú vị, sinh động cùng HistoryTalk.",
+    title: "HistoryTalk - Trò chuyện với nhân vật lịch sử qua các cuộc hội thoại",
+    description: "Trò chuyện, chat trực tiếp với các nhân vật lịch sử. Trải nghiệm học lịch sử tương tác thú vị, sinh động cùng HistoryTalk.",
     images: [
       {
         url: "/historytalk-banner.png",
@@ -45,8 +45,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "HistoryTalk - Trò chuyện với nhân vật lịch sử Việt Nam bằng AI",
-    description: "Trò chuyện, chat trực tiếp với các nhân vật lịch sử Việt Nam bằng AI. Trải nghiệm học lịch sử tương tác thú vị, sinh động cùng HistoryTalk.",
+    title: "HistoryTalk - Trò chuyện với nhân vật lịch sử",
+    description: "Trò chuyện, chat trực tiếp với các nhân vật lịch sử. Trải nghiệm học lịch sử tương tác thú vị, sinh động cùng HistoryTalk.",
     images: ["/historytalk-banner.png"],
   },
 };
