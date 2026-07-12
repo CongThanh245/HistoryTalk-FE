@@ -46,12 +46,16 @@ export const refreshAccessToken = async (): Promise<string> => {
     });
   }
 
+  const refreshToken = useAuthStore.getState().tokens?.refreshToken;
+  if (!refreshToken) {
+    // Không có refresh token nghĩa là user chưa đăng nhập hoặc vừa logout —
+    // đây không phải trường hợp "phiên hết hạn" nên không hiện SessionExpiredDialog.
+    throw new Error("No refresh token");
+  }
+
   isRefreshing = true;
 
   try {
-    const refreshToken = useAuthStore.getState().tokens?.refreshToken;
-    if (!refreshToken) throw new Error("No refresh token");
-
     const { data } = await axiosClient.post(
       "/auth/refresh-token",
       { refreshToken },
