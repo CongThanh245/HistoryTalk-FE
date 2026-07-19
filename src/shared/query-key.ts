@@ -102,6 +102,10 @@ export const queryKeys = {
     me: ["dashboard", "me"] as const,
   },
 
+  gamification: {
+    today: ["gamification", "today"] as const,
+  },
+
   trash: {
     quizzes: ["trash", "quizzes"] as const,
     contexts: ["trash", "historical-contexts"] as const,
