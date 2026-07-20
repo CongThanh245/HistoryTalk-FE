@@ -130,6 +130,14 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
     setPhase("detail");
   }, []);
 
+  // "Làm lại" ở màn kết quả: vào thẳng phiên làm bài mới của cùng quiz (giữ
+  // nguyên giới hạn thời gian đã chọn), không bắt quay lại trang chi tiết.
+  const retrySameQuiz = useCallback(() => {
+    setAnswers({});
+    setSubmitResult(null);
+    void startQuiz(limitedTime);
+  }, [startQuiz, limitedTime]);
+
   const handleSwitchQuiz = useCallback(
     (quizId: string) => {
       if (quizId === currentQuiz.quizId) return;
@@ -229,7 +237,8 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
               questions={questions}
               answers={answers}
               submitResult={submitResult}
-              onRetry={resetSession}
+              onRetry={retrySameQuiz}
+              sessionId={sessionId}
             />
           )}
         </div>

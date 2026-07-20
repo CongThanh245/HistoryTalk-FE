@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { CalendarDays, CheckCircle2, Clock3, Eye, RotateCcw, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock3, Eye, Minus, RotateCcw, TrendingDown, TrendingUp, XCircle } from "lucide-react";
 import { useQuizSessionDetail } from "@/features/quiz/hooks";
 import type { QuizResult, QuizSessionQuestion } from "@/services/quiz.service";
 import {
@@ -91,12 +91,32 @@ function getOptionTone(question: QuizSessionQuestion, optionIndex: number) {
   };
 }
 
+// So sanh % lan nay voi lan gan nhat truoc do cua cung quiz.
+function ComparisonBadge({ percentage, previous }: { percentage: number; previous: { percentage: number } }) {
+  const delta = percentage - previous.percentage;
+  const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
+  const color = delta > 0 ? "#047857" : delta < 0 ? "var(--accent-danger)" : "var(--content-muted)";
+  const bg = delta > 0 ? "rgba(16,185,129,0.10)" : delta < 0 ? "rgba(184,50,42,0.08)" : "rgba(27,38,50,0.05)";
+  const text =
+    delta === 0
+      ? `Bằng lần trước (${previous.percentage}%)`
+      : `${delta > 0 ? "+" : ""}${delta}% so với lần trước (${previous.percentage}%)`;
+
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: bg, color }}>
+      <Icon size={13} strokeWidth={2.25} />
+      {text}
+    </span>
+  );
+}
+
 export function QuizHistoryView({
   results,
   isLoading,
   onRetake,
 }: QuizHistoryViewProps) {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [reviewFilter, setReviewFilter] = useState<"all" | "wrong">("all");
   const { data: detail, isLoading: detailLoading } =
     useQuizSessionDetail(selectedSessionId);
   const selectedResult = useMemo(
@@ -187,7 +207,10 @@ export function QuizHistoryView({
 
                   <div className="flex flex-wrap gap-2 md:justify-end">
                     <button
-                      onClick={() => setSelectedSessionId(result.sessionId)}
+                      onClick={() => {
+                        setReviewFilter("all");
+                        setSelectedSessionId(result.sessionId);
+                      }}
                       className="inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition-colors"
                       style={{
                         background: "var(--card-light-bg)",
@@ -283,11 +306,46 @@ export function QuizHistoryView({
                     >
                       Tổng thời gian {formatDuration(getDurationFromRange(detail.startedAt, detail.completedAt))}
                     </span>
+                    {detail.previousAttempt && (
+                      <ComparisonBadge percentage={detail.percentage} previous={detail.previousAttempt} />
+                    )}
                   </div>
                 </div>
 
+                {(() => {
+                  const wrongCount = detail.questions.filter((q) => !q.correct).length;
+                  return wrongCount > 0 ? (
+                    <div className="mb-4 flex gap-2">
+                      <button
+                        onClick={() => setReviewFilter("all")}
+                        className="rounded-full px-3 py-1.5 text-xs font-bold transition-colors"
+                        style={
+                          reviewFilter === "all"
+                            ? { background: "var(--accent-gold-active-bg)", color: "var(--gold-on-light)", border: "1px solid rgba(201,162,77,0.35)" }
+                            : { background: "var(--card-light-bg)", color: "var(--content-muted)", border: "1px solid var(--card-light-border)" }
+                        }
+                      >
+                        Tất cả ({detail.questions.length})
+                      </button>
+                      <button
+                        onClick={() => setReviewFilter("wrong")}
+                        className="rounded-full px-3 py-1.5 text-xs font-bold transition-colors"
+                        style={
+                          reviewFilter === "wrong"
+                            ? { background: "rgba(184,50,42,0.10)", color: "var(--accent-danger)", border: "1px solid rgba(184,50,42,0.35)" }
+                            : { background: "var(--card-light-bg)", color: "var(--content-muted)", border: "1px solid var(--card-light-border)" }
+                        }
+                      >
+                        Câu sai ({wrongCount})
+                      </button>
+                    </div>
+                  ) : null;
+                })()}
+
                 <div className="space-y-3">
-                  {detail.questions.map((question, index) => (
+                  {detail.questions.map((question, index) => {
+                    if (reviewFilter === "wrong" && question.correct) return null;
+                    return (
                     <article
                       key={question.questionId}
                       className="rounded-xl border p-4"
@@ -367,7 +425,8 @@ export function QuizHistoryView({
                         </p>
                       )}
                     </article>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             ) : selectedResult ? (
