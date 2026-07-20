@@ -1,14 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
 import { characterService } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
+import { useQuizSessionDetail } from "@/features/quiz/hooks";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
 
@@ -27,6 +29,8 @@ interface QuizResultPageProps {
   answers: Record<string, number>;
   submitResult: SubmitResult | null;
   onRetry: () => void;
+  /** Session vua nop — dung de lay previousAttempt (so voi lan truoc). */
+  sessionId?: string | null;
 }
 
 function formatDuration(seconds?: number) {
@@ -42,18 +46,51 @@ function normalizeQuestionCount(value: number, totalQuestions: number) {
   return Math.min(Math.max(Math.round(value), 0), totalQuestions);
 }
 
+// So sanh % lan nay voi lan gan nhat truoc do cua cung quiz.
+function ComparisonBadge({
+  percentage,
+  previous,
+}: {
+  percentage: number;
+  previous: { percentage: number };
+}) {
+  const delta = percentage - previous.percentage;
+  const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
+  const color = delta > 0 ? "#047857" : delta < 0 ? "var(--accent-danger)" : "var(--content-muted)";
+  const bg = delta > 0 ? "rgba(16,185,129,0.10)" : delta < 0 ? "rgba(184,50,42,0.08)" : "rgba(27,38,50,0.05)";
+  const text =
+    delta === 0
+      ? `Bằng lần trước (${previous.percentage}%)`
+      : `${delta > 0 ? "+" : ""}${delta}% so với lần trước (${previous.percentage}%)`;
+
+  return (
+    <div
+      className="mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold"
+      style={{ background: bg, color }}
+    >
+      <Icon size={13} strokeWidth={2.25} />
+      {text}
+    </div>
+  );
+}
+
 export function QuizResultPage({
   quiz,
   questions,
   answers,
   submitResult,
   onRetry,
+  sessionId,
 }: QuizResultPageProps) {
   const router = useRouter();
   const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation({
     title: "Bạn cần đăng nhập để chat",
     description: "Đăng nhập để trò chuyện và ôn lại kiến thức với nhân vật lịch sử.",
   });
+  const [reviewFilter, setReviewFilter] = useState<"all" | "wrong">("all");
+  // Chi can previousAttempt tu day — cac so lieu khac da co san tu submitResult.
+  const { data: sessionDetail } = useQuizSessionDetail(sessionId ?? null);
+  const previousAttempt = sessionDetail?.previousAttempt;
 
   const score =
     submitResult?.score ??
@@ -160,6 +197,10 @@ export function QuizResultPage({
               </div>
             ))}
           </div>
+
+          {previousAttempt && (
+            <ComparisonBadge percentage={percentage} previous={previousAttempt} />
+          )}
         </section>
 
         {showReviewSection && reviewCharacters.length > 0 && (
@@ -215,15 +256,45 @@ export function QuizResultPage({
         )}
 
         <section>
-          <h2 className="mb-3 text-base font-bold" style={{ color: "var(--content-heading)" }}>
-            Xem lại đáp án
-          </h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-bold" style={{ color: "var(--content-heading)" }}>
+              Xem lại đáp án
+            </h2>
+            {wrongCount > 0 && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setReviewFilter("all")}
+                  className="rounded-full px-3 py-1.5 text-xs font-bold transition-colors"
+                  style={
+                    reviewFilter === "all"
+                      ? { background: "var(--accent-gold-active-bg)", color: "var(--gold-on-light)", border: "1px solid rgba(201,162,77,0.35)" }
+                      : { background: "var(--card-light-bg)", color: "var(--content-muted)", border: "1px solid var(--card-light-border)" }
+                  }
+                >
+                  Tất cả ({questions.length})
+                </button>
+                <button
+                  onClick={() => setReviewFilter("wrong")}
+                  className="rounded-full px-3 py-1.5 text-xs font-bold transition-colors"
+                  style={
+                    reviewFilter === "wrong"
+                      ? { background: "rgba(184,50,42,0.10)", color: "var(--accent-danger)", border: "1px solid rgba(184,50,42,0.35)" }
+                      : { background: "var(--card-light-bg)", color: "var(--content-muted)", border: "1px solid var(--card-light-border)" }
+                  }
+                >
+                  Câu sai ({wrongCount})
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="space-y-3">
             {questions.map((q, idx) => {
               const selected = answers[q.questionId];
               const correct = isCorrect(q, idx);
               const notAnswered = selected === undefined;
+
+              if (reviewFilter === "wrong" && correct) return null;
 
               return (
                 <article

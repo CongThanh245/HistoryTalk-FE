@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Star } from "lucide-react";
 import type { QuizSet } from "@/services/quiz.service";
 
 const ERA_LABELS: Record<QuizSet["era"], string> = {
@@ -96,12 +97,42 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                   {quiz.contextTitle}
                 </p>
               )}
+              {(quiz.grade || quiz.chapterTitle) && (
+                <p className="mt-1 text-sm" style={{ color: "var(--content-muted)" }}>
+                  {quiz.grade ? `Lớp ${quiz.grade}` : ""}
+                  {quiz.grade && quiz.chapterTitle ? " · " : ""}
+                  {quiz.chapterNumber ? `Chương ${quiz.chapterNumber}: ` : ""}
+                  {quiz.chapterTitle ?? ""}
+                </p>
+              )}
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              {quiz.rating ? (
+                <div className="mt-4 flex items-center gap-2">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star
+                        key={i}
+                        size={16}
+                        color="var(--gold-on-light)"
+                        fill={i <= Math.round(quiz.rating!) ? "var(--gold-on-light)" : "transparent"}
+                        strokeWidth={1.5}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: "var(--content-muted)" }}>
+                    {quiz.rating.toFixed(1)}/5
+                  </span>
+                </div>
+              ) : null}
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   { label: "Lượt làm", value: quiz.playCount.toLocaleString("vi-VN") },
                   { label: "Cấp độ", value: LEVEL_LABELS[quiz.level] ?? quiz.level },
                   { label: "Câu hỏi", value: "Tải khi bắt đầu" },
+                  ...(quiz.userPlayCount
+                    ? [{ label: "Bạn đã làm", value: `${quiz.userPlayCount} lần` }]
+                    : []),
                 ].map((item) => (
                   <div
                     key={item.label}
@@ -134,6 +165,9 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
               </p>
               <p className="mt-2 text-sm leading-6" style={{ color: "var(--content-muted)" }}>
                 Chọn giới hạn thời gian nếu muốn làm bài theo đồng hồ đếm ngược.
+                {quiz.durationSeconds ? (
+                  <> Gợi ý: <b>{Math.round(quiz.durationSeconds / 60)} phút</b>.</>
+                ) : null}
               </p>
 
               <div className="mt-4 grid grid-cols-2 gap-2">

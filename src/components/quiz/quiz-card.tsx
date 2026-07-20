@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Star } from "lucide-react";
 import type { QuizSet } from "@/services/quiz.service";
 import { cn } from "@/lib/utils/cn";
 
@@ -140,13 +141,23 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
           className="mt-auto flex items-center justify-between gap-2 pt-2.5 md:pt-3"
           style={{ borderTop: "1px solid var(--card-light-border)" }}
         >
-          <div>
-            <p className="text-[10px] uppercase tracking-wide md:text-[11px]" style={{ color: "var(--content-subtle)" }}>
-              Lượt làm
-            </p>
-            <p className="text-xs font-bold md:text-sm" style={{ color: "var(--content-heading)" }}>
-              {quiz.playCount.toLocaleString("vi-VN")}
-            </p>
+          <div className="flex items-center gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide md:text-[11px]" style={{ color: "var(--content-subtle)" }}>
+                Lượt làm
+              </p>
+              <p className="text-xs font-bold md:text-sm" style={{ color: "var(--content-heading)" }}>
+                {quiz.playCount.toLocaleString("vi-VN")}
+              </p>
+            </div>
+            {quiz.rating ? (
+              <div className="flex items-center gap-1">
+                <Star size={12} fill="var(--gold-on-light)" color="var(--gold-on-light)" strokeWidth={0} />
+                <span className="text-xs font-bold md:text-sm" style={{ color: "var(--content-heading)" }}>
+                  {quiz.rating.toFixed(1)}
+                </span>
+              </div>
+            ) : null}
           </div>
           <button
             onClick={(event) => {
