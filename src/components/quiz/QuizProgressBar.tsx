@@ -11,6 +11,8 @@ interface QuizProgressBarProps {
   questionIds: string[];
   elapsedSeconds: number;
   limitedTime?: number;
+  flagged?: Set<string>;
+  practiceMode?: boolean;
   onBack: () => void;
   onGoHome: () => void;
   onRetry: () => void;
@@ -32,6 +34,8 @@ export function QuizProgressBar({
   questionIds,
   elapsedSeconds,
   limitedTime,
+  flagged,
+  practiceMode,
   onBack,
   onGoHome,
   onRetry,
@@ -78,12 +82,26 @@ export function QuizProgressBar({
         </button>
 
         <div className="flex-1 min-w-0">
-          <p
-            className="text-xs font-medium truncate"
-            style={{ color: "var(--content-muted)" }}
-          >
-            {quizTitle}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p
+              className="text-xs font-medium truncate"
+              style={{ color: "var(--content-muted)" }}
+            >
+              {quizTitle}
+            </p>
+            {practiceMode && (
+              <span
+                className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                style={{
+                  background: "var(--accent-gold-active-bg)",
+                  color: "var(--gold-on-light)",
+                  border: "1px solid rgba(201,162,77,0.35)",
+                }}
+              >
+                Luyện tập
+              </span>
+            )}
+          </div>
           <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
             {answeredCount}/{totalQuestions} câu đã trả lời
           </p>
@@ -199,6 +217,15 @@ export function QuizProgressBar({
                 />
                 Chưa làm ({totalQuestions - answeredCount})
               </span>
+              {!!flagged?.size && (
+                <span className="flex items-center gap-1">
+                  <span
+                    className="w-2.5 h-2.5 rounded-sm inline-block"
+                    style={{ background: "var(--accent-danger)" }}
+                  />
+                  Đã đánh dấu ({flagged.size})
+                </span>
+              )}
             </div>
             <button
               onClick={() => setPanelOpen(false)}
@@ -211,11 +238,12 @@ export function QuizProgressBar({
           <div className="flex flex-wrap gap-1.5">
             {questionIds.map((qId, idx) => {
               const answered = answers[qId] !== undefined;
+              const isFlagged = flagged?.has(qId);
               return (
                 <button
                   key={qId}
                   onClick={() => scrollToQuestion(idx)}
-                  className="w-8 h-8 rounded-lg text-xs font-bold transition-colors"
+                  className="relative w-8 h-8 rounded-lg text-xs font-bold transition-colors"
                   style={
                     answered
                       ? { background: "var(--accent-gold)", color: "var(--bg-deep)" }
@@ -227,6 +255,12 @@ export function QuizProgressBar({
                   }
                 >
                   {idx + 1}
+                  {isFlagged && (
+                    <span
+                      className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full"
+                      style={{ background: "var(--accent-danger)", border: "1.5px solid var(--palladian)" }}
+                    />
+                  )}
                 </button>
               );
             })}

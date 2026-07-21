@@ -17,6 +17,12 @@ import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-nav
 import { queryKeys } from "@/shared/query-key";
 import { cn } from "@/lib/utils/cn";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
+import {
+  clearQuizProgress,
+  loadQuizProgress,
+  type SavedQuizProgress,
+} from "@/features/quiz/progress-storage";
+import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { QuizDetailPage } from "./QuizDetailPage";
 import { QuizSessionPage } from "./QuizSessionPage";
 import { QuizResultPage } from "./QuizResultPage";
@@ -46,6 +52,14 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
   const [limitedTime, setLimitedTime] = useState<number | undefined>();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [submitResult, setSubmitResult] = useState<SubmitQuizResponse | null>(null);
+  const [initialAnswers, setInitialAnswers] = useState<Record<string, number>>({});
+  const [initialFlagged, setInitialFlagged] = useState<string[]>([]);
+  const [practiceMode, setPracticeMode] = useState(false);
+  const [resumeState, setResumeState] = useState<{
+    saved: SavedQuizProgress;
+    limitedTime?: number;
+    practiceMode?: boolean;
+  } | null>(null);
 
   const startQuizMutation = useStartQuiz();
   const submitQuizMutation = useSubmitQuiz();
@@ -57,8 +71,12 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
   }, [router]);
 
   const startQuiz = useCallback(
-    async (nextLimitedTime?: number) => {
+    async (nextLimitedTime?: number, nextPracticeMode?: boolean) => {
       try {
+        clearQuizProgress(currentQuiz.quizId);
+        setInitialAnswers({});
+        setInitialFlagged([]);
+        setPracticeMode(nextPracticeMode ?? false);
         const session = await startQuizMutation.mutateAsync({
           quizId: currentQuiz.quizId,
           limitedTime: nextLimitedTime,
@@ -75,14 +93,35 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
     [currentQuiz.quizId, startQuizMutation],
   );
 
+  // Neu co tien trinh da luu (localStorage) cho cung quiz nay, hoi nguoi dung
+  // muon tiep tuc hay lam lai tu dau thay vi vao thang phien moi.
   const handleStart = useCallback(
-    (nextLimitedTime?: number) => {
+    (nextLimitedTime?: number, nextPracticeMode?: boolean) => {
       runWithAuth(() => {
-        void startQuiz(nextLimitedTime);
+        const saved = loadQuizProgress(currentQuiz.quizId);
+        if (saved) {
+          setResumeState({ saved, limitedTime: nextLimitedTime, practiceMode: nextPracticeMode });
+          return;
+        }
+        void startQuiz(nextLimitedTime, nextPracticeMode);
       });
     },
-    [runWithAuth, startQuiz],
+    [runWithAuth, startQuiz, currentQuiz.quizId],
   );
+
+  const resumeSaved = useCallback(() => {
+    if (!resumeState) return;
+    const { saved } = resumeState;
+    setSessionId(saved.sessionId);
+    setQuestions(saved.questions);
+    setInitialAnswers(saved.answers);
+    setInitialFlagged(saved.flagged);
+    setStartTime(Date.now() - saved.elapsedSeconds * 1000);
+    setLimitedTime(saved.limitedTime);
+    setPracticeMode(saved.practiceMode ?? false);
+    setPhase("session");
+    setResumeState(null);
+  }, [resumeState]);
 
   const handleSubmit = useCallback(
     async (finalAnswers: Record<string, number>, elapsedSeconds: number) => {
@@ -99,6 +138,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
         };
         const result = await submitQuizMutation.mutateAsync(payload);
         setSubmitResult({ ...result, durationSeconds: elapsedSeconds });
+        clearQuizProgress(currentQuiz.quizId);
 
         await queryClient.invalidateQueries({
           queryKey: queryKeys.quizzes.myResults,
@@ -118,7 +158,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
         return false;
       }
     },
-    [sessionId, submitQuizMutation, queryClient],
+    [sessionId, submitQuizMutation, queryClient, currentQuiz.quizId],
   );
 
   const resetSession = useCallback(() => {
@@ -131,12 +171,12 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
   }, []);
 
   // "Làm lại" ở màn kết quả: vào thẳng phiên làm bài mới của cùng quiz (giữ
-  // nguyên giới hạn thời gian đã chọn), không bắt quay lại trang chi tiết.
+  // nguyên giới hạn thời gian và chế độ đã chọn), không bắt quay lại trang chi tiết.
   const retrySameQuiz = useCallback(() => {
     setAnswers({});
     setSubmitResult(null);
-    void startQuiz(limitedTime);
-  }, [startQuiz, limitedTime]);
+    void startQuiz(limitedTime, practiceMode);
+  }, [startQuiz, limitedTime, practiceMode]);
 
   const handleSwitchQuiz = useCallback(
     (quizId: string) => {
@@ -158,6 +198,25 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
       style={{ background: "var(--bg-content)" }}
     >
       {authRequiredDialog}
+
+      <ConfirmDialog
+        open={!!resumeState}
+        onOpenChange={(open) => {
+          if (!open) setResumeState(null);
+        }}
+        title="Tiếp tục bài làm dở?"
+        description="Bạn có một bài đang làm dở cho quiz này. Tiếp tục từ chỗ đã dừng hay làm lại từ đầu?"
+        cancelLabel="Làm lại từ đầu"
+        confirmLabel="Tiếp tục"
+        onConfirm={resumeSaved}
+        onCancel={() => {
+          const limitedTimeToUse = resumeState?.limitedTime;
+          const practiceModeToUse = resumeState?.practiceMode;
+          setResumeState(null);
+          void startQuiz(limitedTimeToUse, practiceModeToUse);
+        }}
+      />
+
       <>
         <div
           className={cn(
@@ -224,12 +283,16 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
             <QuizSessionPage
               quiz={currentQuiz}
               questions={questions}
+              sessionId={sessionId}
               onSubmit={handleSubmit}
               onBack={resetSession}
               onGoHome={handleGoHome}
               onRetry={resetSession}
               startTime={startTime}
               limitedTime={limitedTime}
+              initialAnswers={initialAnswers}
+              initialFlagged={initialFlagged}
+              practiceMode={practiceMode}
             />
           ) : (
             <QuizResultPage

@@ -4,13 +4,18 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Minus, TrendingDown, TrendingUp } from "lucide-react";
+import { Flag, Minus, Star, TrendingDown, TrendingUp } from "lucide-react";
 import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
 import { characterService } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
-import { useQuizSessionDetail } from "@/features/quiz/hooks";
+import {
+  useMyQuizRating,
+  useQuizSessionDetail,
+  useRateQuiz,
+  useReportQuestion,
+} from "@/features/quiz/hooks";
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
 
@@ -74,6 +79,56 @@ function ComparisonBadge({
   );
 }
 
+// Cho phep nguoi dung danh gia quiz (1-5 sao) ngay sau khi xem ket qua, de
+// tinh nang rating trung binh (QuizSet.rating) co du lieu thuc.
+function RateQuizCard({ quizId }: { quizId: string }) {
+  const { data: myRatingData } = useMyQuizRating(quizId);
+  const { mutate: rate, isPending } = useRateQuiz(quizId);
+  const [localValue, setLocalValue] = useState<number | null>(null);
+  const [justRated, setJustRated] = useState(false);
+
+  const value = localValue ?? myRatingData?.myRating ?? 0;
+
+  function handleClick(star: number) {
+    setLocalValue(star);
+    setJustRated(false);
+    rate(star, { onSuccess: () => setJustRated(true) });
+  }
+
+  return (
+    <section
+      className="mb-6 flex flex-col items-center rounded-xl border p-5"
+      style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
+    >
+      <h2 className="text-base font-bold" style={{ color: "var(--content-heading)" }}>
+        Bạn thấy quiz này thế nào?
+      </h2>
+      <div className="mt-3 flex gap-1.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            onClick={() => handleClick(star)}
+            disabled={isPending}
+            className="transition-transform hover:scale-110 disabled:opacity-60"
+          >
+            <Star
+              size={28}
+              color={star <= value ? "var(--gold-on-light)" : "var(--card-light-border)"}
+              fill={star <= value ? "var(--gold-on-light)" : "none"}
+              strokeWidth={1.5}
+            />
+          </button>
+        ))}
+      </div>
+      {justRated && (
+        <p className="mt-2 text-xs font-semibold" style={{ color: "#047857" }}>
+          Cảm ơn bạn đã đánh giá!
+        </p>
+      )}
+    </section>
+  );
+}
+
 export function QuizResultPage({
   quiz,
   questions,
@@ -91,6 +146,25 @@ export function QuizResultPage({
   // Chi can previousAttempt tu day — cac so lieu khac da co san tu submitResult.
   const { data: sessionDetail } = useQuizSessionDetail(sessionId ?? null);
   const previousAttempt = sessionDetail?.previousAttempt;
+
+  const { mutate: reportQuestion } = useReportQuestion();
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
+
+  function handleReport(questionId: string) {
+    if (reportedIds.has(questionId)) return;
+    setReportedIds((prev) => new Set(prev).add(questionId));
+    reportQuestion(
+      { questionId },
+      {
+        onError: () =>
+          setReportedIds((prev) => {
+            const next = new Set(prev);
+            next.delete(questionId);
+            return next;
+          }),
+      },
+    );
+  }
 
   const score =
     submitResult?.score ??
@@ -202,6 +276,8 @@ export function QuizResultPage({
             <ComparisonBadge percentage={percentage} previous={previousAttempt} />
           )}
         </section>
+
+        {quiz.quizId && <RateQuizCard quizId={quiz.quizId} />}
 
         {showReviewSection && reviewCharacters.length > 0 && (
           <section
@@ -371,6 +447,18 @@ export function QuizResultPage({
                       {q.explanation}
                     </p>
                   )}
+
+                  <button
+                    onClick={() => handleReport(q.questionId)}
+                    disabled={reportedIds.has(q.questionId)}
+                    className="mt-3 flex items-center gap-1.5 text-xs font-semibold transition-colors disabled:cursor-default"
+                    style={{
+                      color: reportedIds.has(q.questionId) ? "#047857" : "var(--content-subtle)",
+                    }}
+                  >
+                    <Flag size={12} />
+                    {reportedIds.has(q.questionId) ? "Đã gửi báo cáo, cảm ơn bạn!" : "Câu này có vấn đề?"}
+                  </button>
                 </article>
               );
             })}

@@ -21,6 +21,8 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   confirmLabel?: string;
   onConfirm: () => void;
+  /** Chay them logic tuy chinh khi bam Huy (vi du: bat dau lai tu dau thay vi chi dong dialog). */
+  onCancel?: () => void;
   isPending?: boolean;
   variant?: "danger" | "primary" | "warning";
 }
@@ -33,6 +35,7 @@ export function ConfirmDialog({
   cancelLabel = "Hủy",
   confirmLabel = "Xác nhận",
   onConfirm,
+  onCancel,
   isPending = false,
   variant = "primary",
 }: ConfirmDialogProps) {
@@ -81,6 +84,7 @@ export function ConfirmDialog({
         <AlertDialogFooter className="mt-6 gap-2 sm:gap-0">
           <AlertDialogCancel
             disabled={isPending}
+            onClick={onCancel}
             className="flex-1 rounded-xl h-11 border transition-all hover:bg-black/[0.03] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
             style={{
               background: "transparent",
