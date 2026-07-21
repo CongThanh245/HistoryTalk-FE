@@ -70,6 +70,7 @@ export const queryKeys = {
       ["quizzes", "list", params ?? {}] as const,
     detail: (id: string) => ["quizzes", "detail", id] as const,
     myResults: ["quizzes", "results", "me"] as const,
+    myRating: (id: string) => ["quizzes", "rating", "me", id] as const,
   },
   landmarks: {
     all: ["landmarks"] as const,

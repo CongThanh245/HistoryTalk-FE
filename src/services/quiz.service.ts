@@ -330,4 +330,24 @@ export const quizService = {
   softDeleteSession: async (sessionId: string): Promise<void> => {
     await axiosClient.patch(`/quizzes/sessions/${sessionId}/soft-delete`);
   },
+
+  // POST /quizzes/:quizId/rating
+  rateQuiz: async (
+    quizId: string,
+    value: number,
+  ): Promise<{ rating: number; ratingCount: number; myRating: number }> => {
+    const res = await axiosClient.post(`/quizzes/${quizId}/rating`, { value });
+    return res.data.data;
+  },
+
+  // GET /quizzes/:quizId/rating/me
+  getMyRating: async (quizId: string): Promise<{ myRating: number | null }> => {
+    const res = await axiosClient.get(`/quizzes/${quizId}/rating/me`);
+    return res.data.data;
+  },
+
+  // POST /quizzes/questions/:questionId/report
+  reportQuestion: async (questionId: string, reason?: string): Promise<void> => {
+    await axiosClient.post(`/quizzes/questions/${questionId}/report`, { reason });
+  },
 };

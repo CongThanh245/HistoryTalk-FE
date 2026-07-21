@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Star } from "lucide-react";
+import { BookOpen, Star, Timer } from "lucide-react";
 import type { QuizSet } from "@/services/quiz.service";
 
 const ERA_LABELS: Record<QuizSet["era"], string> = {
@@ -29,13 +29,15 @@ const TIME_PRESETS = [
 
 interface QuizDetailPageProps {
   quiz: QuizSet;
-  onStart: (limitedTime?: number) => void;
+  onStart: (limitedTime?: number, practiceMode?: boolean) => void;
 }
 
 export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
   const router = useRouter();
   const [selectedTime, setSelectedTime] = useState<number | undefined>();
   const [customMinutes, setCustomMinutes] = useState("");
+  // Che do luyen tap: hien dung/sai ngay sau moi cau, chay song song che do thi hien tai.
+  const [mode, setMode] = useState<"exam" | "practice">("exam");
 
   const resolvedLimitedTime = useMemo(() => {
     const minutes = Number(customMinutes);
@@ -170,6 +172,41 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                 ) : null}
               </p>
 
+              <p className="mt-4 text-xs font-semibold" style={{ color: "var(--content-subtle)" }}>
+                Chế độ làm bài
+              </p>
+              <div className="mt-1.5 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setMode("exam")}
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-colors"
+                  style={
+                    mode === "exam"
+                      ? { background: "var(--abyssal-blue)", color: "var(--text-on-dark)", border: "1px solid var(--abyssal-blue)" }
+                      : { background: "var(--card-light-bg)", color: "var(--content-muted)", border: "1px solid var(--card-light-border)" }
+                  }
+                >
+                  <Timer size={13} />
+                  Chế độ thi
+                </button>
+                <button
+                  onClick={() => setMode("practice")}
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-colors"
+                  style={
+                    mode === "practice"
+                      ? { background: "var(--abyssal-blue)", color: "var(--text-on-dark)", border: "1px solid var(--abyssal-blue)" }
+                      : { background: "var(--card-light-bg)", color: "var(--content-muted)", border: "1px solid var(--card-light-border)" }
+                  }
+                >
+                  <BookOpen size={13} />
+                  Luyện tập
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs leading-5" style={{ color: "var(--content-subtle)" }}>
+                {mode === "exam"
+                  ? "Làm hết bài rồi mới biết đáp án đúng/sai, giống thi thật."
+                  : "Biết ngay đúng/sai sau mỗi câu, phù hợp để ôn bài."}
+              </p>
+
               <div className="mt-4 grid grid-cols-2 gap-2">
                 {TIME_PRESETS.map((preset) => {
                   const active = selectedTime === preset.seconds && customMinutes.trim() === "";
@@ -220,7 +257,7 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
               </label>
 
               <button
-                onClick={() => onStart(resolvedLimitedTime)}
+                onClick={() => onStart(resolvedLimitedTime, mode === "practice")}
                 className="mt-5 h-12 w-full rounded-lg text-sm font-bold transition-colors duration-200"
                 style={{
                   background: "var(--abyssal-blue)",
