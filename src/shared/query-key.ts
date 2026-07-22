@@ -1,7 +1,7 @@
 import type { GetEventsParams } from "@/services/event.service";
 import { GetLandmarksParams } from "@/services/landmark.service";
 import { GetQuizSetsParams } from "@/services/quiz.service";
-import { GetStaffQuizzesParams } from "@/services/staff.quiz.service";
+import { GetStaffQuizzesParams, GetQuestionReportsParams } from "@/services/staff.quiz.service";
 
 export const queryKeys = {
   auth: {
@@ -86,6 +86,8 @@ export const queryKeys = {
     list: (params?: GetStaffQuizzesParams) =>
       ["staff", "quizzes", "list", params ?? {}] as const,
     detail: (id: string) => ["staff", "quizzes", "detail", id] as const,
+    questionReports: (params?: GetQuestionReportsParams) =>
+      ["staff", "quizzes", "reports", params ?? {}] as const,
   },
 
   payments: {

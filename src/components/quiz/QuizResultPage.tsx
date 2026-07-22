@@ -11,6 +11,15 @@ import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import {
   useMyQuizRating,
   useQuizSessionDetail,
   useRateQuiz,
@@ -76,6 +85,60 @@ function ComparisonBadge({
       <Icon size={13} strokeWidth={2.25} />
       {text}
     </div>
+  );
+}
+
+// Cho phep nguoi dung mo ta ngan gon van de gap phai truoc khi gui report —
+// giup staff hieu ro hon la chi biet "co report" ma khong ro ly do.
+function ReportQuestionDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (reason: string) => void;
+}) {
+  const [text, setText] = useState("");
+
+  function submit() {
+    onSubmit(text.trim());
+    setText("");
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Câu này có vấn đề?</DialogTitle>
+          <DialogDescription>
+            Mô tả ngắn gọn vấn đề bạn gặp phải để đội ngũ hỗ trợ xem lại chính xác hơn (không bắt buộc).
+          </DialogDescription>
+        </DialogHeader>
+        <Textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Ví dụ: đáp án đúng đang bị sai, câu hỏi khó hiểu..."
+          rows={4}
+        />
+        <DialogFooter>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="h-10 rounded-lg px-4 text-sm font-semibold transition-colors"
+            style={{ background: "var(--card-light-bg)", color: "var(--content-muted)", border: "1px solid var(--card-light-border)" }}
+          >
+            Huỷ
+          </button>
+          <button
+            onClick={submit}
+            className="h-10 rounded-lg px-4 text-sm font-bold text-white transition-colors"
+            style={{ background: "var(--abyssal-blue)" }}
+          >
+            Gửi báo cáo
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -149,12 +212,20 @@ export function QuizResultPage({
 
   const { mutate: reportQuestion } = useReportQuestion();
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
+  const [reportTarget, setReportTarget] = useState<string | null>(null);
 
-  function handleReport(questionId: string) {
+  function handleReportPress(questionId: string) {
     if (reportedIds.has(questionId)) return;
+    setReportTarget(questionId);
+  }
+
+  function submitReport(reason: string) {
+    const questionId = reportTarget;
+    if (!questionId) return;
+    setReportTarget(null);
     setReportedIds((prev) => new Set(prev).add(questionId));
     reportQuestion(
-      { questionId },
+      { questionId, reason: reason || undefined },
       {
         onError: () =>
           setReportedIds((prev) => {
@@ -449,7 +520,7 @@ export function QuizResultPage({
                   )}
 
                   <button
-                    onClick={() => handleReport(q.questionId)}
+                    onClick={() => handleReportPress(q.questionId)}
                     disabled={reportedIds.has(q.questionId)}
                     className="mt-3 flex items-center gap-1.5 text-xs font-semibold transition-colors disabled:cursor-default"
                     style={{
@@ -501,6 +572,14 @@ export function QuizResultPage({
           </button>
         </div>
       </div>
+
+      <ReportQuestionDialog
+        open={!!reportTarget}
+        onOpenChange={(open) => {
+          if (!open) setReportTarget(null);
+        }}
+        onSubmit={submitReport}
+      />
     </main>
   );
 }

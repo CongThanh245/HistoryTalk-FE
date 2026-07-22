@@ -5,7 +5,7 @@ import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import {
   ClipboardTextIcon, TrashIcon, ArrowLeftIcon,
   GameControllerIcon, EyeIcon, EyeSlashIcon, ArrowCounterClockwiseIcon,
-  CaretLeftIcon, CaretRightIcon, UploadSimpleIcon,
+  CaretLeftIcon, CaretRightIcon, UploadSimpleIcon, FlagIcon, CheckCircleIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
@@ -40,6 +40,8 @@ import {
   useUpdateStaffQuiz,
   useSoftDeleteStaffQuiz,
   useImportQuizzesFromCsv,
+  useQuestionReports,
+  useResolveQuestionReport,
 } from "@/features/staff/quiz/hooks";
 import {
   useTrashList,
@@ -47,7 +49,7 @@ import {
   useTrashPermanentDelete,
 } from "@/features/trash/hooks";
 import { useEvents } from "@/features/events/hooks";
-import { staffQuizService, type StaffQuizSet } from "@/services/staff.quiz.service";
+import { staffQuizService, type StaffQuizSet, type QuestionReport } from "@/services/staff.quiz.service";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 
@@ -123,7 +125,9 @@ export default function StaffQuizzesPage() {
   const [page, setPage] = React.useState(0);
 
   // ── View / editor state ───────────────────────────────────
-  const [view, setView] = React.useState<"list" | "editor">("list");
+  const [view, setView] = React.useState<"list" | "editor" | "reports">("list");
+  const [reportStatusFilter, setReportStatusFilter] = React.useState<"OPEN" | "RESOLVED" | "">("OPEN");
+  const [reportPage, setReportPage] = React.useState(0);
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
   const [draft, setDraft] = React.useState<QuizDraft>(emptyDraft());
   const [originalQuiz, setOriginalQuiz] = React.useState<StaffQuizSet | null>(null);
@@ -158,6 +162,32 @@ export default function StaffQuizzesPage() {
 
   // Load toàn bộ contexts để chọn trong dropdown
   const { data: contextsData } = useEvents({ page: 1, limit: 200 });
+
+  // ── Question reports ("Câu này có vấn đề?") ────────────────
+  const reportParams = React.useMemo(() => ({
+    ...(reportStatusFilter && { status: reportStatusFilter }),
+    page: reportPage,
+    size: 20,
+  }), [reportStatusFilter, reportPage]);
+  const { data: reportsData, isLoading: isReportsLoading, refetch: refetchReports } = useQuestionReports(reportParams);
+  // Badge đếm số báo cáo chưa xử lý — luôn tải nhẹ (size:1) bất kể đang xem view nào.
+  const { data: openReportsCount } = useQuestionReports({ status: "OPEN", page: 0, size: 1 });
+  const resolveReport = useResolveQuestionReport();
+  const [resolveTarget, setResolveTarget] = React.useState<QuestionReport | null>(null);
+
+  const handleResolveReport = () => {
+    if (!resolveTarget) return;
+    resolveReport.mutate(resolveTarget.reportId, {
+      onSuccess: () => {
+        toast.success("Đã đánh dấu báo cáo là đã xử lý.");
+        refetchReports();
+        setResolveTarget(null);
+      },
+      onError: (error) => {
+        toast.error(getApiErrorMessage(error, "Cập nhật thất bại. Vui lòng thử lại."));
+      },
+    });
+  };
 
   const allItems = React.useMemo(
     () =>
@@ -807,6 +837,177 @@ export default function StaffQuizzesPage() {
     );
   }
 
+  // ═══ REPORTS VIEW ════════════════════════════════════════════════════════
+  if (view === "reports") {
+    const reportItems = reportsData?.content ?? [];
+    const reportTotalPages = reportsData?.totalPages ?? 1;
+    const reportTotalItems = reportsData?.totalElements ?? 0;
+
+    const reportColumns: ColumnDef<QuestionReport>[] = [
+      {
+        accessorKey: "questionContent",
+        header: "Câu hỏi",
+        cell: ({ row: r }) => (
+          <div className="min-w-[280px]">
+            <p className="text-sm font-semibold line-clamp-2" style={{ color: "var(--content-heading)" }}>
+              {r.original.questionContent || "(Câu hỏi đã bị xóa)"}
+            </p>
+            <p className="text-xs mt-0.5 truncate max-w-[280px]" style={{ color: "var(--content-muted)" }}>
+              {r.original.quizTitle}
+            </p>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "reason",
+        header: "Mô tả vấn đề",
+        cell: ({ row: r }) => (
+          <p className="text-sm max-w-[260px]" style={{ color: r.original.reason ? "var(--content-text)" : "var(--content-subtle)" }}>
+            {r.original.reason || "(Không có mô tả)"}
+          </p>
+        ),
+      },
+      {
+        accessorKey: "reportedBy",
+        header: "Người báo cáo",
+        cell: ({ row: r }) => (
+          <span className="text-xs" style={{ color: "var(--content-muted)" }}>
+            {r.original.reportedBy || "—"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Thời gian",
+        cell: ({ row: r }) => <FormattedDate date={r.original.createdAt} />,
+      },
+      {
+        accessorKey: "status",
+        header: "Trạng thái",
+        cell: ({ row: r }) => {
+          const isOpen = r.original.status === "OPEN";
+          return (
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+              style={{
+                background: isOpen ? "rgba(234,179,8,0.1)" : "rgba(34,197,94,0.1)",
+                color: isOpen ? "rgb(161,98,7)" : "rgb(22,163,74)",
+                border: `1px solid ${isOpen ? "rgba(234,179,8,0.2)" : "rgba(34,197,94,0.2)"}`,
+              }}
+            >
+              {isOpen ? "Chưa xử lý" : "Đã xử lý"}
+            </span>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "Thao tác",
+        cell: ({ row: r }) =>
+          r.original.status === "OPEN" ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 rounded-md px-3 text-xs font-semibold gap-1.5"
+              onClick={() => setResolveTarget(r.original)}
+              style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
+            >
+              <CheckCircleIcon className="h-3.5 w-3.5" />
+              Đánh dấu đã xử lý
+            </Button>
+          ) : null,
+      },
+    ];
+
+    return (
+      <StaffShell
+        title="Báo cáo câu hỏi"
+        description={'Danh sách câu hỏi bị người dùng báo cáo có vấn đề ("Câu này có vấn đề?").'}
+        icon={FlagIcon}
+        accent="var(--accent-danger)"
+      >
+        <button
+          type="button"
+          onClick={() => setView("list")}
+          className="flex items-center gap-1.5 text-sm mb-6 hover:opacity-70 transition-opacity"
+          style={{ color: "var(--content-muted)" }}
+        >
+          <ArrowLeftIcon className="h-4 w-4" /> Quay lại danh sách quiz
+        </button>
+
+        <section
+          className="rounded-2xl border p-6 space-y-5"
+          style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
+        >
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {([
+              { value: "OPEN", label: "Chưa xử lý" },
+              { value: "RESOLVED", label: "Đã xử lý" },
+              { value: "", label: "Tất cả" },
+            ] as const).map((opt) => (
+              <button
+                key={opt.value || "all"}
+                type="button"
+                onClick={() => { setReportStatusFilter(opt.value); setReportPage(0); }}
+                className="px-3 h-8 rounded-lg text-xs font-semibold border transition-all"
+                style={
+                  reportStatusFilter === opt.value
+                    ? { background: "var(--accent-gold-active-bg)", borderColor: "var(--accent-gold)", color: "var(--content-heading)" }
+                    : { background: "transparent", borderColor: "var(--card-light-border)", color: "var(--content-muted)" }
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          <StaffDataTable
+            columns={reportColumns}
+            data={reportItems}
+            emptyMessage="Không có báo cáo nào."
+            isLoading={isReportsLoading}
+          />
+
+          {reportTotalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
+                Trang {reportPage + 1} / {reportTotalPages} · {reportTotalItems} báo cáo
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost" size="icon-sm" className="rounded-lg"
+                  disabled={reportPage === 0}
+                  onClick={() => setReportPage((p) => Math.max(0, p - 1))}
+                >
+                  <CaretLeftIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost" size="icon-sm" className="rounded-lg"
+                  disabled={reportPage + 1 >= reportTotalPages}
+                  onClick={() => setReportPage((p) => p + 1)}
+                >
+                  <CaretRightIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <ConfirmDialog
+          open={!!resolveTarget}
+          onOpenChange={(o) => !o && setResolveTarget(null)}
+          title="Đánh dấu báo cáo đã xử lý?"
+          description="Báo cáo này sẽ được chuyển sang trạng thái Đã xử lý."
+          isPending={resolveReport.isPending}
+          confirmLabel="Đánh dấu đã xử lý"
+          variant="warning"
+          onConfirm={handleResolveReport}
+        />
+      </StaffShell>
+    );
+  }
+
   // ═══ LIST VIEW ═══════════════════════════════════════════════════════════
   const totalItems = data?.totalElements ?? 0;
   const totalPlays = allItems.reduce((a, x) => a + x.playCount, 0);
@@ -882,6 +1083,17 @@ export default function StaffQuizzesPage() {
                 <><TrashIcon className="h-3.5 w-3.5 mr-1.5" /> Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}</>
               )}
             </Button>
+            {!showTrash && (
+              <Button
+                variant="outline"
+                className="h-9 rounded-xl px-4 font-semibold"
+                onClick={() => setView("reports")}
+                style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
+              >
+                <FlagIcon className="h-3.5 w-3.5 mr-1.5" />
+                Báo cáo câu hỏi {!!openReportsCount?.totalElements && `(${openReportsCount.totalElements})`}
+              </Button>
+            )}
             {!showTrash && (
               <>
                 {/* Hidden file input for CSV import */}
