@@ -10,6 +10,8 @@ import {
 } from "@/services/event.service";
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
+import { removeContextFromCharacterCaches } from "@/features/characters/context-cache";
+import { contextMediaService, type MediaType } from "@/services/media.service";
 
 function getErrorMessage(err: unknown, fallback: string) {
   if (
@@ -110,6 +112,7 @@ export function useDeleteEvent() {
       );
       qc.invalidateQueries({ queryKey: queryKeys.events.all });
       qc.invalidateQueries({ queryKey: queryKeys.trash.contexts });
+      removeContextFromCharacterCaches(qc, id);
       toast.success("Đã chuyển vào thùng rác");
     },
   });
@@ -135,12 +138,54 @@ export function useTimelineEvents(era: EventEra) {
   };
 }
 
+// POST /historical-contexts/{id}/media/upload-direct — upload image/video
+export function useUploadContextMedia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      contextId,
+      file,
+      mediaType,
+    }: {
+      contextId: string;
+      file: File;
+      mediaType: MediaType;
+    }) => contextMediaService.upload(contextId, file, mediaType),
+    onSuccess: (_result, { contextId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.events.detail(contextId) });
+      qc.invalidateQueries({ queryKey: queryKeys.events.all });
+      toast.success("Đã tải lên media thành công");
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Tải lên media thất bại"));
+    },
+  });
+}
+
+// DELETE /historical-contexts/{id}/media — mediaType omitted clears every slot
+export function useDeleteContextMedia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ contextId, mediaType }: { contextId: string; mediaType?: MediaType }) =>
+      contextMediaService.delete(contextId, mediaType),
+    onSuccess: (_result, { contextId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.events.detail(contextId) });
+      qc.invalidateQueries({ queryKey: queryKeys.events.all });
+      toast.success("Đã xóa media");
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Xóa media thất bại"));
+    },
+  });
+}
+
 export function usePermanentDeleteEvent() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => eventService.delete(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: queryKeys.events.all });
+      removeContextFromCharacterCaches(qc, id);
       toast.success("Đã xóa vĩnh viễn bối cảnh");
     },
     onError: (err: unknown) => {

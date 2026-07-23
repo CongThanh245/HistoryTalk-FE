@@ -1,5 +1,4 @@
 import { axiosClient } from "@/configs/axios.client";
-import { isValidUrl } from "@/lib/utils/url";
 import { ERA_CONFIG } from "@/constants/eras";
 
 type RawContextRef = {
@@ -36,6 +35,7 @@ type RawCharacter = {
   image?: string | null;
   imageUrl?: string | null;
   modelUrl?: string | null;
+  videoUrl?: string | null;
   personality?: string;
   bornYear?: number | null;
   bornMonth?: number | null;
@@ -85,6 +85,7 @@ export interface Character {
   role?: string;
   avatarUrl?: string | null;
   modelUrl?: string | null;
+  videoUrl?: string | null;
   isActive?: boolean;
   isPublished?: boolean;
   status?: string | null;
@@ -148,9 +149,13 @@ export function mapCharacter(raw: RawCharacter): Character {
     title: raw.title ?? "",
     background: raw.background,
     description: raw.background, // map background → description cho UI
-    imageUrl: isValidUrl(raw.image ?? raw.imageUrl) ? (raw.image ?? raw.imageUrl) : null,
-    avatarUrl: isValidUrl(raw.image ?? raw.imageUrl) ? (raw.image ?? raw.imageUrl) : null,
-    modelUrl: isValidUrl(raw.modelUrl) ? raw.modelUrl : null,
+    // Backend always resolves these to a directly renderable URL (legacy
+    // pasted http(s) link, or a freshly signed URL for private-storage
+    // uploads) or null — no client-side URL validation needed here.
+    imageUrl: raw.image ?? raw.imageUrl ?? null,
+    avatarUrl: raw.image ?? raw.imageUrl ?? null,
+    modelUrl: raw.modelUrl ?? null,
+    videoUrl: raw.videoUrl ?? null,
     personality: raw.personality,
     bornYear: raw.bornYear ?? null,
     bornMonth: raw.bornMonth ?? null,
