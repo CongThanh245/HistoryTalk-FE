@@ -20,10 +20,14 @@ export type CharacterDraft = {
   isDeathBc: boolean;
   isActive: boolean;
   isPublished: boolean;
+  videoUrl: string;
   documentId?: string;
   documentTitle: string;
   documentContent: string;
   pendingPdfFile?: File | null;
+  pendingImageFile?: File | null;
+  pendingModelFile?: File | null;
+  pendingVideoFile?: File | null;
 };
 
 export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
@@ -32,6 +36,7 @@ export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
   background: "",
   image: "",
   modelUrl: "",
+  videoUrl: "",
   personality: "",
   bornYear: "",
   bornMonth: "",
@@ -47,6 +52,9 @@ export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
   documentTitle: "",
   documentContent: "",
   pendingPdfFile: null,
+  pendingImageFile: null,
+  pendingModelFile: null,
+  pendingVideoFile: null,
 };
 
 export interface StaffCharacterDetailViewProps {
@@ -88,6 +96,18 @@ export interface StaffCharacterDetailViewProps {
   /** Callback after create success to upload PDF (only for create mode) */
   onUploadPdfAfterCreate?: (docId: string, file: File) => Promise<void>;
   isUploadPdfAfterCreatePending?: boolean;
+  /** Upload image/3D model/video for an existing character (edit mode only) */
+  onUploadMedia?: (characterId: string, file: File, mediaType: "IMAGE_2D" | "MODEL_3D" | "VIDEO") => Promise<void>;
+  isUploadMediaPending?: boolean;
+  /** Clear one media slot for an existing character (edit mode only) */
+  onDeleteMedia?: (characterId: string, mediaType: "IMAGE_2D" | "MODEL_3D" | "VIDEO") => Promise<void>;
+  isDeleteMediaPending?: boolean;
+  /** Create a brand-new text document, independent of the entity's Save button (edit mode only) */
+  onCreateTextDocument?: (data: { title: string; content: string }) => Promise<void>;
+  isCreateTextDocumentPending?: boolean;
+  /** Create a brand-new PDF document (creates the doc, then uploads the file), independent of Save (edit mode only) */
+  onCreatePdfDocument?: (data: { title: string; file: File }) => Promise<void>;
+  isCreatePdfDocumentPending?: boolean;
 }
 
 export type FormTabKey = "basic" | "media" | "content" | "rag" | "context";

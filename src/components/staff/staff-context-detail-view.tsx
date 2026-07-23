@@ -7,7 +7,6 @@ import {
   ArrowLeftIcon,
   PencilIcon,
   EyeIcon,
-  PlusIcon,
   TrashIcon,
   ImageIcon,
   VideoIcon,
@@ -31,6 +30,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { StaffImageHoverPreview } from "@/components/staff/staff-media-preview";
+import { MediaSlotField } from "@/components/staff/media-slot-field";
+import { NewDocumentPanel } from "@/components/staff/new-document-panel";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
@@ -127,6 +128,14 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     isUploadDocumentPdfPending = false,
     onGetDocumentPdfUrl,
     isGetDocumentPdfUrlPending = false,
+    onUploadMedia,
+    isUploadMediaPending = false,
+    onDeleteMedia,
+    isDeleteMediaPending = false,
+    onCreateTextDocument,
+    isCreateTextDocumentPending = false,
+    onCreatePdfDocument,
+    isCreatePdfDocumentPending = false,
     charactersInContext = [],
     isLoadingCharactersInContext = false,
     characterSearch = "",
@@ -177,8 +186,68 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     pdfPreviewUrl,
     setPdfPreviewUrl,
     fileInputRef,
+    pendingImageFile,
+    setPendingImageFile,
+    pendingVideoFile,
+    setPendingVideoFile,
+    pendingImagePreviewUrl,
+    setPendingImagePreviewUrl,
+    pendingVideoPreviewUrl,
+    setPendingVideoPreviewUrl,
     isCreated,
   } = useStaffContextDetailView(props);
+
+  type MediaKind = "IMAGE_2D" | "VIDEO";
+
+  // In edit mode the context already exists, so a picked file uploads
+  // immediately; in create mode there's no contextId yet, so the file is
+  // held as "pending" and actually uploaded by the page's onSave handler
+  // right after the context is created (mirrors the PDF pendingPdfFile flow).
+  const handleMediaPick = async (
+    file: File,
+    mediaType: MediaKind,
+    setPendingFile: (file: File | null) => void,
+    setPendingPreviewUrl: (url: string | null) => void,
+  ) => {
+    if (isCreated && draft.id && onUploadMedia) {
+      try {
+        await onUploadMedia(draft.id, file, mediaType);
+      } catch {
+        // onUploadMedia's hook already shows an error toast
+      }
+      return;
+    }
+    setPendingFile(file);
+    setPendingPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleMediaClear = async (
+    mediaType: MediaKind,
+    pendingFile: File | null,
+    setPendingFile: (file: File | null) => void,
+    pendingPreviewUrl: string | null,
+    setPendingPreviewUrl: (url: string | null) => void,
+  ) => {
+    if (pendingFile) {
+      if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
+      setPendingPreviewUrl(null);
+      setPendingFile(null);
+      return;
+    }
+    if (isCreated && draft.id && onDeleteMedia) {
+      try {
+        await onDeleteMedia(draft.id, mediaType);
+      } catch {
+        // onDeleteMedia's hook already shows an error toast
+      }
+    }
+  };
+
+  // A PDF document's "content" is just an internal placeholder (PDF text
+  // isn't extracted/editable) — the manual text editor and "attach PDF"
+  // action only make sense for a document that doesn't already have a file.
+  const selectedDocument = documents.find((document) => getDocumentId(document) === draft.documentId);
+  const selectedDocumentHasPdf = !!selectedDocument?.fileUrl;
 
   const [unmapTarget, setUnmapTarget] = React.useState<{ characterId: string; name: string } | null>(null);
   const [imageLightboxOpen, setImageLightboxOpen] = React.useState(false);
@@ -432,32 +501,90 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
               </TabsContent>
 
               <TabsContent value="media" className="space-y-4 mt-0">
-                <div className="grid gap-1.5">
-                  <StaffFormLabel className="flex items-center gap-1.5">
-                    <ImageIcon className="h-3.5 w-3.5" />
-                    URL hình ảnh
-                  </StaffFormLabel>
-                  <StaffFormInput
-                    value={draft.imageUrl}
-                    onChange={(e) => set("imageUrl")(e.target.value)}
-                    placeholder="https://..."
-                    disabled={!isEditing}
-                  />
-                  <ValidationErrorText message={errors.imageUrl} />
-                </div>
+                <MediaSlotField
+                  label="Ảnh bối cảnh"
+                  icon={<ImageIcon className="h-3.5 w-3.5" />}
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  disabled={!isEditing}
+                  isBusy={isUploadMediaPending || isDeleteMediaPending}
+                  hasValue={!!draft.imageUrl || !!pendingImageFile}
+                  caption={
+                    pendingImageFile
+                      ? `Đã chọn: ${pendingImageFile.name} (sẽ tải lên sau khi lưu)`
+                      : draft.imageUrl
+                        ? "Đã có ảnh"
+                        : "Chưa có ảnh"
+                  }
+                  onPick={(file) => handleMediaPick(file, "IMAGE_2D", setPendingImageFile, setPendingImagePreviewUrl)}
+                  onClear={() =>
+                    handleMediaClear(
+                      "IMAGE_2D",
+                      pendingImageFile,
+                      setPendingImageFile,
+                      pendingImagePreviewUrl,
+                      setPendingImagePreviewUrl,
+                    )
+                  }
+                  errorMessage={errors.imageUrl}
+                >
+                  {pendingImagePreviewUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element -- local blob preview, not an optimizable remote asset
+                    <img
+                      src={pendingImagePreviewUrl}
+                      alt="Xem trước ảnh"
+                      className="mt-1 h-32 w-32 rounded-lg border object-cover"
+                      style={{ borderColor: "var(--card-light-border)" }}
+                    />
+                  )}
+                </MediaSlotField>
+
                 <div className="grid gap-1.5">
                   <StaffFormLabel className="flex items-center gap-1.5">
                     <VideoIcon className="h-3.5 w-3.5" />
-                    URL video (YouTube hoặc file .mp4)
+                    URL video YouTube
                   </StaffFormLabel>
                   <StaffFormInput
                     value={draft.videoUrl}
                     onChange={(e) => set("videoUrl")(e.target.value)}
-                    placeholder="https://youtube.com/watch?v=... hoặc https://.../video.mp4"
+                    placeholder="https://youtube.com/watch?v=..."
                     disabled={!isEditing}
                   />
                   <ValidationErrorText message={errors.videoUrl} />
                 </div>
+
+                <MediaSlotField
+                  label="Hoặc tải lên file video trực tiếp"
+                  icon={<VideoIcon className="h-3.5 w-3.5" />}
+                  accept="video/mp4,video/webm,video/quicktime"
+                  disabled={!isEditing}
+                  isBusy={isUploadMediaPending || isDeleteMediaPending}
+                  hasValue={!!pendingVideoFile}
+                  caption={
+                    pendingVideoFile
+                      ? `Đã chọn: ${pendingVideoFile.name} (sẽ tải lên sau khi lưu)`
+                      : "Ghi đè URL YouTube ở trên nếu bạn upload file video trực tiếp"
+                  }
+                  onPick={(file) => handleMediaPick(file, "VIDEO", setPendingVideoFile, setPendingVideoPreviewUrl)}
+                  onClear={() =>
+                    handleMediaClear(
+                      "VIDEO",
+                      pendingVideoFile,
+                      setPendingVideoFile,
+                      pendingVideoPreviewUrl,
+                      setPendingVideoPreviewUrl,
+                    )
+                  }
+                >
+                  {pendingVideoPreviewUrl && (
+                    <video
+                      src={pendingVideoPreviewUrl}
+                      controls
+                      className="mt-1 h-32 w-full max-w-xs rounded-lg border object-cover"
+                      style={{ borderColor: "var(--card-light-border)" }}
+                    />
+                  )}
+                </MediaSlotField>
+
                 <p className="text-xs" style={{ color: "var(--content-muted)" }}>
                   Xem preview trực tiếp ở khung bên phải.
                 </p>
@@ -482,10 +609,20 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           </span>
                         )}
                       </p>
-                      <Button type="button" size="sm" variant="outline" onClick={clearDocumentDraft} disabled={!isEditing}>
-                        <PlusIcon className="mr-1.5 h-3.5 w-3.5" />
-                        Tài liệu mới
-                      </Button>
+                    </div>
+
+                    <div className="mb-3">
+                      <NewDocumentPanel
+                        disabled={!isEditing}
+                        onCreateText={async (data) => {
+                          if (onCreateTextDocument) await onCreateTextDocument(data);
+                        }}
+                        isCreateTextPending={isCreateTextDocumentPending}
+                        onCreatePdf={async (data) => {
+                          if (onCreatePdfDocument) await onCreatePdfDocument(data);
+                        }}
+                        isCreatePdfPending={isCreatePdfDocumentPending}
+                      />
                     </div>
 
                     {isLoadingDocuments ? (
@@ -518,7 +655,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                 </p>
                               </button>
                               <div className="flex items-center gap-1">
-                                {onGetDocumentPdfUrl && (
+                                {onGetDocumentPdfUrl && !!document.fileUrl && (
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -544,7 +681,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                     <EyeIcon className="h-4 w-4" />
                                   </Button>
                                 )}
-                                {onUploadDocumentPdf && (
+                                {onUploadDocumentPdf && !document.fileUrl && (
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -695,42 +832,46 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   </div>
                 )}
 
-                <div className="grid gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
-                    {draft.documentId && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                        Đang sửa
-                      </span>
-                    )}
-                    {!draft.documentId && draft.documentContent.trim() && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
-                        Tài liệu mới
-                      </span>
-                    )}
-                  </div>
-                  <StaffFormInput
-                    value={draft.documentTitle}
-                    onChange={(e) => set("documentTitle")(e.target.value)}
-                    placeholder="Để trống sẽ dùng tên bối cảnh"
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
-                    <span className="text-[10px]" style={{ color: "var(--content-muted)" }}>
-                      {draft.documentContent.length.toLocaleString("vi-VN")} ký tự
-                    </span>
-                  </div>
-                  <StaffFormTextarea
-                    value={draft.documentContent}
-                    onChange={(e) => set("documentContent")(e.target.value)}
-                    placeholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
-                    style={{ minHeight: "160px" }}
-                    disabled={!isEditing}
-                  />
-                </div>
+                {!selectedDocumentHasPdf && (
+                  <>
+                    <div className="grid gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
+                        {draft.documentId && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                            Đang sửa
+                          </span>
+                        )}
+                        {!draft.documentId && draft.documentContent.trim() && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+                            Tài liệu mới
+                          </span>
+                        )}
+                      </div>
+                      <StaffFormInput
+                        value={draft.documentTitle}
+                        onChange={(e) => set("documentTitle")(e.target.value)}
+                        placeholder="Để trống sẽ dùng tên bối cảnh"
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
+                        <span className="text-[10px]" style={{ color: "var(--content-muted)" }}>
+                          {draft.documentContent.length.toLocaleString("vi-VN")} ký tự
+                        </span>
+                      </div>
+                      <StaffFormTextarea
+                        value={draft.documentContent}
+                        onChange={(e) => set("documentContent")(e.target.value)}
+                        placeholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
+                        style={{ minHeight: "160px" }}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </>
+                )}
               </TabsContent>
 
               <TabsContent value="characters" className="space-y-4 mt-0">

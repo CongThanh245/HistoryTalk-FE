@@ -14,6 +14,7 @@ import {
   MapPinIcon,
   ImageIcon,
   VideoIcon,
+  CubeIcon,
   UploadSimpleIcon,
   FilePdfIcon,
 } from "@phosphor-icons/react";
@@ -47,6 +48,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { ChatMain } from "@/components/chat/chat-main";
 import { StaffCharacterMediaPreview } from "@/components/staff/staff-media-preview";
+import { MediaSlotField } from "@/components/staff/media-slot-field";
+import { NewDocumentPanel } from "@/components/staff/new-document-panel";
 import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
 import type { EventEraBackend } from "@/services/event.service";
@@ -88,6 +91,14 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     onUnmapContext,
     isMapContextPending,
     isPending,
+    onUploadMedia,
+    isUploadMediaPending = false,
+    onDeleteMedia,
+    isDeleteMediaPending = false,
+    onCreateTextDocument,
+    isCreateTextDocumentPending = false,
+    onCreatePdfDocument,
+    isCreatePdfDocumentPending = false,
   } = props;
 
   const router = useRouter();
@@ -134,7 +145,18 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     pdfPreviewUrl,
     setPdfPreviewUrl,
     fileInputRef,
+    pendingImageFile,
+    setPendingImageFile,
+    pendingModelFile,
+    setPendingModelFile,
+    pendingVideoFile,
+    setPendingVideoFile,
+    pendingImagePreviewUrl,
+    setPendingImagePreviewUrl,
+    pendingVideoPreviewUrl,
+    setPendingVideoPreviewUrl,
     isCreated,
+    characterId,
     sessionId,
     setSessionId,
     activeChatContextId,
@@ -154,6 +176,60 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     resetQuickCtx,
     createEvent,
   } = useStaffCharacterDetailView(props);
+
+  type MediaKind = "IMAGE_2D" | "MODEL_3D" | "VIDEO";
+
+  // In edit mode the character already exists, so a picked file uploads
+  // immediately; in create mode there's no characterId yet, so the file is
+  // held as "pending" and actually uploaded by the page's onSave handler
+  // right after the character is created (mirrors the PDF pendingPdfFile flow).
+  const handleMediaPick = async (
+    file: File,
+    mediaType: MediaKind,
+    setPendingFile: (file: File | null) => void,
+    setPendingPreviewUrl?: (url: string | null) => void,
+  ) => {
+    if (isCreated && onUploadMedia) {
+      try {
+        await onUploadMedia(characterId, file, mediaType);
+      } catch {
+        // onUploadMedia's hook already shows an error toast
+      }
+      return;
+    }
+    setPendingFile(file);
+    setPendingPreviewUrl?.(URL.createObjectURL(file));
+  };
+
+  const handleMediaClear = async (
+    mediaType: MediaKind,
+    pendingFile: File | null,
+    setPendingFile: (file: File | null) => void,
+    pendingPreviewUrl?: string | null,
+    setPendingPreviewUrl?: (url: string | null) => void,
+  ) => {
+    if (pendingFile) {
+      if (pendingPreviewUrl && setPendingPreviewUrl) {
+        URL.revokeObjectURL(pendingPreviewUrl);
+        setPendingPreviewUrl(null);
+      }
+      setPendingFile(null);
+      return;
+    }
+    if (isCreated && onDeleteMedia) {
+      try {
+        await onDeleteMedia(characterId, mediaType);
+      } catch {
+        // onDeleteMedia's hook already shows an error toast
+      }
+    }
+  };
+
+  // A PDF document's "content" is just an internal placeholder (PDF text
+  // isn't extracted/editable) — the manual text editor and "attach PDF"
+  // action only make sense for a document that doesn't already have a file.
+  const selectedDocument = documents.find((document) => getDocumentId(document) === draft.documentId);
+  const selectedDocumentHasPdf = !!selectedDocument?.fileUrl;
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-content)]">
@@ -457,27 +533,95 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             </TabsContent>
 
             <TabsContent value="media" className="space-y-5 mt-0">
-            <div className="grid gap-1.5">
-              <StaffFormLabel>URL hình ảnh nhân vật</StaffFormLabel>
-              <StaffFormInput
-                value={draft.image}
-                onChange={(e) => set("image")(e.target.value)}
-                placeholder="https://..."
-                disabled={!isEditing}
-              />
-              <ValidationErrorText message={errors.image} />
-            </div>
+            <MediaSlotField
+              label="Ảnh nhân vật"
+              icon={<ImageIcon className="h-3.5 w-3.5" />}
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              disabled={!isEditing}
+              isBusy={isUploadMediaPending || isDeleteMediaPending}
+              hasValue={!!draft.image || !!pendingImageFile}
+              caption={
+                pendingImageFile
+                  ? `Đã chọn: ${pendingImageFile.name} (sẽ tải lên sau khi lưu)`
+                  : draft.image
+                    ? "Đã có ảnh"
+                    : "Chưa có ảnh"
+              }
+              onPick={(file) => handleMediaPick(file, "IMAGE_2D", setPendingImageFile, setPendingImagePreviewUrl)}
+              onClear={() =>
+                handleMediaClear(
+                  "IMAGE_2D",
+                  pendingImageFile,
+                  setPendingImageFile,
+                  pendingImagePreviewUrl,
+                  setPendingImagePreviewUrl,
+                )
+              }
+              errorMessage={errors.image}
+            >
+              {pendingImagePreviewUrl && (
+                // eslint-disable-next-line @next/next/no-img-element -- local blob preview, not an optimizable remote asset
+                <img
+                  src={pendingImagePreviewUrl}
+                  alt="Xem trước ảnh"
+                  className="mt-1 h-32 w-32 rounded-lg border object-cover"
+                  style={{ borderColor: "var(--card-light-border)" }}
+                />
+              )}
+            </MediaSlotField>
 
-            <div className="grid gap-1.5">
-              <StaffFormLabel>URL mô hình 3D (.glb / .fbx)</StaffFormLabel>
-              <StaffFormInput
-                value={draft.modelUrl}
-                onChange={(e) => set("modelUrl")(e.target.value)}
-                placeholder="https://...model.glb"
-                disabled={!isEditing}
-              />
-              <ValidationErrorText message={errors.modelUrl} />
-            </div>
+            <MediaSlotField
+              label="Mô hình 3D (.glb)"
+              icon={<CubeIcon className="h-3.5 w-3.5" />}
+              accept=".glb,.fbx,model/gltf-binary"
+              disabled={!isEditing}
+              isBusy={isUploadMediaPending || isDeleteMediaPending}
+              hasValue={!!draft.modelUrl || !!pendingModelFile}
+              caption={
+                pendingModelFile
+                  ? `Đã chọn: ${pendingModelFile.name} (sẽ tải lên sau khi lưu)`
+                  : draft.modelUrl
+                    ? "Đã có mô hình 3D"
+                    : "Chưa có mô hình 3D"
+              }
+              onPick={(file) => handleMediaPick(file, "MODEL_3D", setPendingModelFile)}
+              onClear={() => handleMediaClear("MODEL_3D", pendingModelFile, setPendingModelFile)}
+            />
+
+            <MediaSlotField
+              label="Video nhân vật"
+              icon={<VideoIcon className="h-3.5 w-3.5" />}
+              accept="video/mp4,video/webm,video/quicktime"
+              disabled={!isEditing}
+              isBusy={isUploadMediaPending || isDeleteMediaPending}
+              hasValue={!!draft.videoUrl || !!pendingVideoFile}
+              caption={
+                pendingVideoFile
+                  ? `Đã chọn: ${pendingVideoFile.name} (sẽ tải lên sau khi lưu)`
+                  : draft.videoUrl
+                    ? "Đã có video"
+                    : "Chưa có video"
+              }
+              onPick={(file) => handleMediaPick(file, "VIDEO", setPendingVideoFile, setPendingVideoPreviewUrl)}
+              onClear={() =>
+                handleMediaClear(
+                  "VIDEO",
+                  pendingVideoFile,
+                  setPendingVideoFile,
+                  pendingVideoPreviewUrl,
+                  setPendingVideoPreviewUrl,
+                )
+              }
+            >
+              {(pendingVideoPreviewUrl || draft.videoUrl) && (
+                <video
+                  src={pendingVideoPreviewUrl || draft.videoUrl}
+                  controls
+                  className="mt-1 h-32 w-full max-w-xs rounded-lg border object-cover"
+                  style={{ borderColor: "var(--card-light-border)" }}
+                />
+              )}
+            </MediaSlotField>
 
             <StaffCharacterMediaPreview
               imageUrl={draft.image}
@@ -526,10 +670,20 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                       <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
                         Tài liệu đã import
                       </p>
-                      <Button type="button" size="sm" variant="outline" onClick={clearDocumentDraft} disabled={!isEditing}>
-                        <PlusIcon className="mr-1.5 h-3.5 w-3.5" />
-                        Tài liệu mới
-                      </Button>
+                    </div>
+
+                    <div className="mb-3">
+                      <NewDocumentPanel
+                        disabled={!isEditing}
+                        onCreateText={async (data) => {
+                          if (onCreateTextDocument) await onCreateTextDocument(data);
+                        }}
+                        isCreateTextPending={isCreateTextDocumentPending}
+                        onCreatePdf={async (data) => {
+                          if (onCreatePdfDocument) await onCreatePdfDocument(data);
+                        }}
+                        isCreatePdfPending={isCreatePdfDocumentPending}
+                      />
                     </div>
 
                     {isLoadingDocuments ? (
@@ -570,7 +724,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                 </p>
                               </button>
                               <div className="flex items-center gap-1">
-                                {onGetDocumentPdfUrl && (
+                                {onGetDocumentPdfUrl && !!document.fileUrl && (
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -598,7 +752,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                     <EyeIcon className="h-4 w-4" />
                                   </Button>
                                 )}
-                                {onUploadDocumentPdf && (
+                                {onUploadDocumentPdf && !document.fileUrl && (
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -757,55 +911,59 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   </div>
                 )}
 
-                <div
-                  className="rounded-lg border p-3"
-                  style={{ borderColor: "var(--card-light-border)" }}
-                >
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                    Nội dung văn bản (nhập tay)
-                  </p>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
-                        {draft.documentTitle || "Chưa có tiêu đề tài liệu"}
-                      </p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
-                        {draft.documentContent.length.toLocaleString("vi-VN")} ký tự
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="shrink-0"
-                      onClick={() => setDocumentDetailOpen(true)}
+                {!selectedDocumentHasPdf && (
+                  <>
+                    <div
+                      className="rounded-lg border p-3"
+                      style={{ borderColor: "var(--card-light-border)" }}
                     >
-                      {isEditing ? (
-                        <>
-                          <PencilIcon className="mr-1.5 h-3.5 w-3.5" />
-                          {draft.documentContent ? "Sửa nội dung" : "Nhập nội dung"}
-                        </>
-                      ) : (
-                        <>
-                          <EyeIcon className="mr-1.5 h-3.5 w-3.5" />
-                          Xem nội dung
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                        Nội dung văn bản (nhập tay)
+                      </p>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                            {draft.documentTitle || "Chưa có tiêu đề tài liệu"}
+                          </p>
+                          <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                            {draft.documentContent.length.toLocaleString("vi-VN")} ký tự
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0"
+                          onClick={() => setDocumentDetailOpen(true)}
+                        >
+                          {isEditing ? (
+                            <>
+                              <PencilIcon className="mr-1.5 h-3.5 w-3.5" />
+                              {draft.documentContent ? "Sửa nội dung" : "Nhập nội dung"}
+                            </>
+                          ) : (
+                            <>
+                              <EyeIcon className="mr-1.5 h-3.5 w-3.5" />
+                              Xem nội dung
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
 
-                <StaffDocumentDetailDialog
-                  open={documentDetailOpen}
-                  onOpenChange={setDocumentDetailOpen}
-                  title={draft.documentTitle}
-                  content={draft.documentContent}
-                  editable
-                  onTitleChange={isEditing ? set("documentTitle") : undefined}
-                  onContentChange={isEditing ? set("documentContent") : undefined}
-                  titlePlaceholder="Để trống sẽ dùng tên nhân vật"
-                  contentPlaceholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
-                />
+                    <StaffDocumentDetailDialog
+                      open={documentDetailOpen}
+                      onOpenChange={setDocumentDetailOpen}
+                      title={draft.documentTitle}
+                      content={draft.documentContent}
+                      editable
+                      onTitleChange={isEditing ? set("documentTitle") : undefined}
+                      onContentChange={isEditing ? set("documentContent") : undefined}
+                      titlePlaceholder="Để trống sẽ dùng tên nhân vật"
+                      contentPlaceholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
+                    />
+                  </>
+                )}
             </div>
             </TabsContent>
 
