@@ -52,6 +52,7 @@ import { documentService, type RagDocument } from "@/services/document.service";
 import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
+import { NewDocumentPanel } from "@/components/staff/new-document-panel";
 import type { Character } from "@/services/character.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { queryKeys } from "@/shared/query-key";
@@ -599,24 +600,26 @@ export default function StaffDocumentsPage() {
               >
                 <TrashIcon className="h-4 w-4" />
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full"
-                disabled={!hasDocId || uploadPdf.isPending}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (docId) {
-                    setUploadTargetDocId(docId);
-                    setUploadDialogOpen(true);
-                  }
-                }}
-                style={{ color: "var(--accent-blue)" }}
-                title="Upload PDF"
-              >
-                <UploadSimpleIcon className="h-4 w-4" />
-              </Button>
+              {!canViewPdf && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-full"
+                  disabled={!hasDocId || uploadPdf.isPending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (docId) {
+                      setUploadTargetDocId(docId);
+                      setUploadDialogOpen(true);
+                    }
+                  }}
+                  style={{ color: "var(--accent-blue)" }}
+                  title="Upload PDF"
+                >
+                  <UploadSimpleIcon className="h-4 w-4" />
+                </Button>
+              )}
               {canViewPdf && (
                 <Button
                   type="button"
@@ -805,8 +808,8 @@ export default function StaffDocumentsPage() {
                     : "Thêm tài liệu bối cảnh"}
               </DialogTitle>
             </DialogHeader>
-            <form className="space-y-4" onSubmit={submitDocumentForm}>
-              {editingRow ? (
+            {editingRow ? (
+              <form className="space-y-4" onSubmit={submitDocumentForm}>
                 <div className="space-y-2">
                   <Label>Đối tượng liên kết</Label>
                   <div
@@ -820,109 +823,164 @@ export default function StaffDocumentsPage() {
                     {editingRow.ownerName}
                   </div>
                 </div>
-              ) : createOwnerType === "character" ? (
+
                 <div className="space-y-2">
-                  <Label htmlFor="document-character">Nhân vật</Label>
-                  <Select
-                    value={documentForm.ownerId}
-                    onValueChange={(value) =>
-                      setDocumentForm((current) => ({ ...current, ownerId: value }))
+                  <Label htmlFor="document-title">Tiêu đề</Label>
+                  <Input
+                    id="document-title"
+                    value={documentForm.title}
+                    onChange={(event) =>
+                      setDocumentForm((current) => ({
+                        ...current,
+                        title: event.target.value,
+                      }))
                     }
-                  >
-                    <SelectTrigger id="document-character" className="w-full">
-                      <SelectValue placeholder="Chọn nhân vật" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {characters.map((character) => (
-                        <SelectItem key={character.id} value={character.id}>
-                          {character.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Nhập tiêu đề tài liệu"
+                  />
                 </div>
-              ) : (
+
                 <div className="space-y-2">
-                  <Label htmlFor="document-context">Bối cảnh</Label>
-                  <Select
-                    value={documentForm.ownerId}
-                    onValueChange={(value) =>
-                      setDocumentForm((current) => ({ ...current, ownerId: value }))
+                  <Label htmlFor="document-content">Nội dung</Label>
+                  <Textarea
+                    id="document-content"
+                    value={documentForm.content}
+                    onChange={(event) =>
+                      setDocumentForm((current) => ({
+                        ...current,
+                        content: event.target.value,
+                      }))
                     }
-                  >
-                    <SelectTrigger id="document-context" className="w-full">
-                      <SelectValue placeholder="Chọn bối cảnh" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {contexts.map((context) => (
-                        <SelectItem key={context.id} value={context.id}>
-                          {context.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Nhập nội dung tài liệu"
+                    className="min-h-[240px]"
+                  />
                 </div>
-              )}
 
-              <div className="space-y-2">
-                <Label htmlFor="document-title">Tiêu đề</Label>
-                <Input
-                  id="document-title"
-                  value={documentForm.title}
-                  onChange={(event) =>
-                    setDocumentForm((current) => ({
-                      ...current,
-                      title: event.target.value,
-                    }))
-                  }
-                  placeholder="Nhập tiêu đề tài liệu"
-                />
-              </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setFormOpen(false)}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={updateCharacterDocument.isPending || updateHistoricalDocument.isPending}
+                  >
+                    {updateCharacterDocument.isPending || updateHistoricalDocument.isPending
+                      ? "Đang lưu..."
+                      : "Lưu thay đổi"}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                {createOwnerType === "character" ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="document-character">Nhân vật</Label>
+                    <Select
+                      value={documentForm.ownerId}
+                      onValueChange={(value) =>
+                        setDocumentForm((current) => ({ ...current, ownerId: value }))
+                      }
+                    >
+                      <SelectTrigger id="document-character" className="w-full">
+                        <SelectValue placeholder="Chọn nhân vật" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {characters.map((character) => (
+                          <SelectItem key={character.id} value={character.id}>
+                            {character.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="document-context">Bối cảnh</Label>
+                    <Select
+                      value={documentForm.ownerId}
+                      onValueChange={(value) =>
+                        setDocumentForm((current) => ({ ...current, ownerId: value }))
+                      }
+                    >
+                      <SelectTrigger id="document-context" className="w-full">
+                        <SelectValue placeholder="Chọn bối cảnh" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contexts.map((context) => (
+                          <SelectItem key={context.id} value={context.id}>
+                            {context.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
-              <div className="space-y-2">
-                <Label htmlFor="document-content">Nội dung</Label>
-                <Textarea
-                  id="document-content"
-                  value={documentForm.content}
-                  onChange={(event) =>
-                    setDocumentForm((current) => ({
-                      ...current,
-                      content: event.target.value,
-                    }))
-                  }
-                  placeholder="Nhập nội dung tài liệu"
-                  className="min-h-[240px]"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setFormOpen(false)}
-                >
-                  Hủy
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={
+                <NewDocumentPanel
+                  disabled={!documentForm.ownerId}
+                  onCreateText={async ({ title, content }) => {
+                    if (!documentForm.ownerId) {
+                      toast.error("Vui lòng chọn đối tượng liên kết");
+                      return;
+                    }
+                    if (createOwnerType === "character") {
+                      await createCharacterDocument.mutateAsync({
+                        ownerId: documentForm.ownerId,
+                        title,
+                        content,
+                      });
+                    } else {
+                      await createHistoricalDocument.mutateAsync({
+                        ownerId: documentForm.ownerId,
+                        title,
+                        content,
+                      });
+                    }
+                  }}
+                  isCreateTextPending={createCharacterDocument.isPending || createHistoricalDocument.isPending}
+                  onCreatePdf={async ({ title, file }) => {
+                    if (!documentForm.ownerId) {
+                      toast.error("Vui lòng chọn đối tượng liên kết");
+                      return;
+                    }
+                    // BE currently requires non-empty content on creation — this
+                    // placeholder is never shown to staff, it just satisfies that
+                    // constraint so a PDF document can be created without typing
+                    // text content first.
+                    const newDoc =
+                      createOwnerType === "character"
+                        ? await createCharacterDocument.mutateAsync({
+                            ownerId: documentForm.ownerId,
+                            title,
+                            content: "PDF Document",
+                          })
+                        : await createHistoricalDocument.mutateAsync({
+                            ownerId: documentForm.ownerId,
+                            title,
+                            content: "PDF Document",
+                          });
+                    const newDocId = newDoc.id ?? newDoc.documentId;
+                    if (newDocId) {
+                      await uploadPdf.mutateAsync({ docId: newDocId, file });
+                    }
+                  }}
+                  isCreatePdfPending={
                     createCharacterDocument.isPending ||
                     createHistoricalDocument.isPending ||
-                    updateCharacterDocument.isPending ||
-                    updateHistoricalDocument.isPending
+                    uploadPdf.isPending
                   }
-                >
-                  {createCharacterDocument.isPending ||
-                  createHistoricalDocument.isPending ||
-                  updateCharacterDocument.isPending ||
-                  updateHistoricalDocument.isPending
-                    ? "Đang lưu..."
-                    : editingRow
-                      ? "Lưu thay đổi"
-                      : "Tạo tài liệu"}
-                </Button>
+                />
+
+                <div className="flex justify-end pt-2">
+                  <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>
+                    Hủy
+                  </Button>
+                </div>
               </div>
-            </form>
+            )}
           </DialogContent>
         </Dialog>
 
