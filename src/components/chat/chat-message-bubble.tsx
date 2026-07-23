@@ -6,7 +6,7 @@ import type { ChatMessage, ChatCharacter } from "@/services/chat.service";
 import { SpeakerHighIcon, SpeakerXIcon, MicrophoneIcon, QuotesIcon, CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
-import { HighlightedText } from "./HighlightedText";
+import { MarkdownMessage } from "./MarkdownMessage";
 import type { KeywordData } from "@/data/keywords";
 
 interface MessageBubbleProps {
@@ -148,14 +148,7 @@ export function MessageBubble({
                   borderColor: "var(--border-strong)",
                 }}
               >
-                {onKeywordSelect ? (
-                  <HighlightedText
-                    text={part}
-                    onKeywordSelect={onKeywordSelect}
-                  />
-                ) : (
-                  part
-                )}
+                <MarkdownMessage text={part} onKeywordSelect={onKeywordSelect} />
 
                 {isLastPart && (
                   <button
