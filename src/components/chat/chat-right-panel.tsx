@@ -29,7 +29,7 @@ import {
   usePublicContextDocuments,
 } from "@/features/documents/hooks";
 import { QuizCard } from "@/components/quiz/quiz-card";
-import { useCreateSession, useSoftDeleteSession } from "@/features/chat/hooks";
+import { useSoftDeleteSession } from "@/features/chat/hooks";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { HistoricalContextHoverCard } from "@/components/commons/historical-context-hover-card";
 import {
@@ -59,7 +59,7 @@ interface ChatRightPanelProps {
   isLoadingSessions: boolean;
   activeSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
-  onNewSession: (sessionId: string) => void;
+  onNewSession: () => void;
   onDeleteSession?: (sessionId: string) => void;
   onOpenDocument?: (documentId: string) => void;
 }
@@ -292,20 +292,12 @@ export function ChatRightPanel({
   const documents = [...characterDocuments, ...contextDocuments];
   const isLoadingDocuments = isLoadingCharacterDocuments || isLoadingContextDocuments;
 
-  const createSession = useCreateSession();
   const softDeleteSession = useSoftDeleteSession();
 
   const handleNewSession = () => {
     if (!characterId || !contextId) return;
-    createSession.mutate(
-      { characterId, contextId },
-      {
-        onSuccess: (created) => {
-          onNewSession(created.id);
-          setIsOpen(false);
-        },
-      },
-    );
+    onNewSession();
+    setIsOpen(false);
   };
 
   const formatDate = (iso: string) =>
@@ -382,18 +374,13 @@ export function ChatRightPanel({
       <div className="flex-1 overflow-y-auto px-2 py-2">
         <button
           onClick={handleNewSession}
-          disabled={createSession.isPending}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors hover:bg-white/5 text-left disabled:opacity-60"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors hover:bg-white/5 text-left"
         >
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
             style={{ background: "var(--accent-gold-active-bg)", color: "var(--accent-gold)" }}
           >
-            {createSession.isPending ? (
-              <CircleNotchIcon className="w-4 h-4 animate-spin" />
-            ) : (
-              <PlusIcon className="w-4 h-4" />
-            )}
+            <PlusIcon className="w-4 h-4" />
           </div>
           <span className="flex-1 text-sm font-semibold" style={{ color: "var(--accent-gold-soft)" }}>
             Cuộc trò chuyện mới
@@ -547,7 +534,6 @@ export function ChatRightPanel({
       >
         <button
           onClick={handleNewSession}
-          disabled={createSession.isPending}
           className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150"
           style={{
             background: "var(--accent-gold-active-bg)",
@@ -556,7 +542,7 @@ export function ChatRightPanel({
           }}
         >
           <PlusIcon className="w-3.5 h-3.5" />
-          {createSession.isPending ? "Đang tạo..." : "Cuộc trò chuyện mới"}
+          Cuộc trò chuyện mới
         </button>
       </div>
     </>

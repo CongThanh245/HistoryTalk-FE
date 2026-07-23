@@ -88,10 +88,6 @@ export function ChatClient({
     sessionInitialized.current = false; // ← reset để init lại cho nhân vật mới
   }, []);
 
-  const handleNewSession = useCallback((sessionId: string) => {
-    setActiveSessionId(sessionId);
-  }, []);
-
   const handleSessionCreated = useCallback((sessionId: string) => {
     setActiveSessionId(sessionId);
     // invalidate để left panel cập nhật list
@@ -108,6 +104,23 @@ export function ChatClient({
   const [citationRequest, setCitationRequest] = useState<
     { quote?: string; documentId?: string } | null
   >(null);
+
+  // Nhảy sang khung chat mới ngay lập tức (activeSessionId = null → ChatMain tự hiện
+  // TypingIndicator), tạo session ở background thay vì loading trên nút bấm.
+  const handleStartNewSession = useCallback(() => {
+    if (!characterId || !contextId) return;
+    sessionInitialized.current = true; // chặn effect auto-init chọn nhầm session cũ
+    setActiveSessionId(null);
+    setIsRightPanelOpen(false);
+    createSession
+      .mutateAsync({ characterId, contextId })
+      .then((session) => {
+        setActiveSessionId(session.id);
+      })
+      .catch(() => {
+        sessionInitialized.current = false;
+      });
+  }, [characterId, contextId, createSession]);
 
   if (isLoadingCharacter || !activeCharacter) {
     return (
@@ -145,7 +158,7 @@ export function ChatClient({
         isLoadingSessions={isLoadingSessions}
         activeSessionId={activeSessionId}
         onSelectSession={setActiveSessionId}
-        onNewSession={handleNewSession}
+        onNewSession={handleStartNewSession}
         onDeleteSession={handleDeleteSession}
         onOpenDocument={(documentId) => setCitationRequest({ documentId })}
       />
