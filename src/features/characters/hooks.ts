@@ -7,6 +7,7 @@ import {
   type UpdateCharacterRequest,
   type GetCharactersResponse,
 } from "@/services/character.service";
+import { characterMediaService, type MediaType } from "@/services/media.service";
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
 
@@ -61,7 +62,7 @@ export function useCharacter(id?: string) {
     // The character list page (limit 100) already has this exact record in
     // cache by the time the user clicks "Chỉnh sửa" — reuse it so the detail
     // page renders instantly instead of showing a skeleton for the ~2-3s
-    // round trip, then silently revalidate in the background (staleTime 0).
+    // round trip, then silently revalidate in the background.
     initialData: () => {
       if (!id) return undefined;
       const cachedLists = qc.getQueriesData<GetCharactersResponse>({
@@ -73,6 +74,12 @@ export function useCharacter(id?: string) {
       }
       return undefined;
     },
+    // The reused list record carries signed image/model URLs that expire
+    // after 1h server-side — staleTime 0 forces an immediate background
+    // refetch so the detail page swaps in freshly signed URLs right away
+    // instead of trusting a possibly-already-expired cached one for up to
+    // the global 5-minute default staleTime.
+    staleTime: 0,
   });
 }
 
@@ -216,6 +223,47 @@ export function useMapContextToCharacter() {
     },
     onError: (err: unknown) => {
       toast.error(getErrorMessage(err, "Liên kết bối cảnh thất bại"));
+    },
+  });
+}
+
+// POST /characters/{id}/media/upload-direct — upload image/video/3D model
+export function useUploadCharacterMedia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      characterId,
+      file,
+      mediaType,
+    }: {
+      characterId: string;
+      file: File;
+      mediaType: MediaType;
+    }) => characterMediaService.upload(characterId, file, mediaType),
+    onSuccess: (_result, { characterId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
+      qc.invalidateQueries({ queryKey: queryKeys.characters.all });
+      toast.success("Đã tải lên media thành công");
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Tải lên media thất bại"));
+    },
+  });
+}
+
+// DELETE /characters/{id}/media — mediaType omitted clears every slot
+export function useDeleteCharacterMedia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ characterId, mediaType }: { characterId: string; mediaType?: MediaType }) =>
+      characterMediaService.delete(characterId, mediaType),
+    onSuccess: (_result, { characterId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
+      qc.invalidateQueries({ queryKey: queryKeys.characters.all });
+      toast.success("Đã xóa media");
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Xóa media thất bại"));
     },
   });
 }

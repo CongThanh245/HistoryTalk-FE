@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,8 @@ import {
   useUpdateProfile,
   useChangePassword,
   useMyPaymentHistory,
+  useUploadAvatar,
+  useDeleteAvatar,
 } from "@/features/profile/hooks";
 import { useMyDashboard } from "@/features/dashboard/hooks";
 import { isPro, type UserProfile } from "@/services/user.service";
@@ -33,7 +36,6 @@ import {
   PhoneIcon,
   MapPinIcon,
   EnvelopeIcon,
-  LinkIcon,
   CheckCircleIcon,
   ClockIcon,
   XCircleIcon,
@@ -42,6 +44,8 @@ import {
   HourglassIcon,
   FloppyDiskIcon,
   SparkleIcon,
+  CameraIcon,
+  TrashIcon,
 } from "@phosphor-icons/react";
 
 // ─────────────────────────────────────────────
@@ -165,6 +169,9 @@ function PersonalProfileTab() {
 
 function PersonalProfileForm({ profile }: { profile: UserProfile }) {
   const { mutate: updateProfile, isPending } = useUpdateProfile();
+  const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useUploadAvatar();
+  const { mutate: deleteAvatar, isPending: isDeletingAvatar } = useDeleteAvatar();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     fullName: profile.fullName ?? "",
@@ -173,7 +180,6 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
     address: profile.address ?? "",
     dob: profile.dob ? profile.dob.slice(0, 10) : "",
     gender: normalizeGender(profile.gender),
-    avatarUrl: profile.avatarUrl ?? "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -185,9 +191,21 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
       address: form.address || undefined,
       dob: form.dob || undefined,
       gender: normalizeGender(form.gender) || undefined,
-      avatarUrl: form.avatarUrl || undefined,
     });
   };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Vui lòng chọn file ảnh (JPEG, PNG, WEBP, GIF)");
+      return;
+    }
+    uploadAvatar({ userId: profile.uid, file });
+  };
+
+  const isAvatarBusy = isUploadingAvatar || isDeletingAvatar;
 
   const initials = (profile.userName ?? "?")
     .split(" ")
@@ -206,21 +224,58 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
         }}
       >
         <div className="flex flex-col items-center text-center">
-          <Avatar
-            className="w-24 h-24 border-2 shadow-sm"
-            style={{ borderColor: isPro(profile ?? null) ? "var(--accent-gold)" : "var(--border-strong)" }}
-          >
-            <AvatarImage src={form.avatarUrl || undefined} alt={profile?.userName} />
-            <AvatarFallback
-              className="text-2xl font-bold"
+          <div className="relative">
+            <Avatar
+              className="w-24 h-24 border-2 shadow-sm"
+              style={{ borderColor: isPro(profile ?? null) ? "var(--accent-gold)" : "var(--border-strong)" }}
+            >
+              <AvatarImage src={profile?.avatarUrl || undefined} alt={profile?.userName} />
+              <AvatarFallback
+                className="text-2xl font-bold"
+                style={{
+                  background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
+                  color: "var(--bg-deep)",
+                }}
+              >
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={isAvatarBusy}
+              title="Đổi ảnh đại diện"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
               style={{
                 background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-                color: "var(--bg-deep)",
+                borderColor: "var(--bg-elevated)",
               }}
             >
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+              <CameraIcon className="h-4 w-4" style={{ color: "var(--text-inverse)" }} />
+            </button>
+
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </div>
+
+          {profile?.avatarUrl && (
+            <button
+              type="button"
+              onClick={() => deleteAvatar(profile.uid)}
+              disabled={isAvatarBusy}
+              className="mt-2 flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-80 disabled:opacity-60"
+              style={{ color: "var(--accent-danger, #ef4444)" }}
+            >
+              <TrashIcon className="h-3 w-3" />
+              Xóa ảnh đại diện
+            </button>
+          )}
 
           <p className="mt-4 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
             {profile?.fullName || profile?.userName || "—"}
@@ -355,7 +410,7 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
               Hồ sơ hiển thị
             </h2>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              Ảnh đại diện và địa chỉ giúp cá nhân hóa trải nghiệm trong HistoryTalk.
+              Địa chỉ giúp cá nhân hóa trải nghiệm trong HistoryTalk. Đổi ảnh đại diện bằng nút máy ảnh cạnh avatar.
             </p>
           </div>
 
@@ -366,14 +421,6 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
               value={form.address}
               onChange={(v) => setForm({ ...form, address: v })}
               placeholder="123 Lê Lợi, Quận 1, TP.HCM"
-            />
-            <FormField
-              label="Đường dẫn Avatar (URL)"
-              icon={LinkIcon}
-              value={form.avatarUrl}
-              onChange={(v) => setForm({ ...form, avatarUrl: v })}
-              placeholder="https://example.com/avatar.jpg"
-              type="url"
             />
           </div>
         </section>
