@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
@@ -70,6 +71,9 @@ export function StaffImageHoverPreview({
                 fill
                 className="object-cover"
                 sizes={sizes}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             ) : (
               <div
@@ -95,6 +99,9 @@ export function StaffImageHoverPreview({
                 fill
                 className="object-cover"
                 sizes={previewSizes}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             </div>
           </TooltipContent>
@@ -115,6 +122,12 @@ export function StaffCharacterMediaPreview({
   modelUrl,
   alt,
 }: StaffCharacterMediaPreviewProps) {
+  const [imageBroken, setImageBroken] = useState(false);
+
+  useEffect(() => {
+    setImageBroken(false);
+  }, [imageUrl]);
+
   return (
     <div
       className="grid grid-cols-[160px_1fr] gap-3 rounded-xl border p-3"
@@ -130,13 +143,14 @@ export function StaffCharacterMediaPreview({
           background: "var(--card-light-border)",
         }}
       >
-        {isValidUrl(imageUrl) ? (
+        {isValidUrl(imageUrl) && !imageBroken ? (
           <Image
             src={imageUrl!}
             alt={alt}
             fill
             className="object-cover"
             sizes="160px"
+            onError={() => setImageBroken(true)}
           />
         ) : (
           <div className="flex h-full items-center justify-center">

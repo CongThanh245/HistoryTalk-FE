@@ -23,6 +23,7 @@ import type { VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
 import { KeywordDetailPanel } from "./KeywordDetailPanel";
 import type { KeywordData } from "@/data/keywords";
 import { cn } from "@/lib/utils/cn";
+import { isValidUrl } from "@/lib/utils/url";
 import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
@@ -167,6 +168,11 @@ export function ChatMain({
   } | null>(null);
   const speechAudioCtxRef = useRef<AudioContext | null>(null);
   const speechSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const [headerAvatarBroken, setHeaderAvatarBroken] = useState(false);
+
+  useEffect(() => {
+    setHeaderAvatarBroken(false);
+  }, [character.imageUrl]);
 
   const handleKeywordSelect = useCallback((kw: KeywordData) => {
     setSelectedKeyword(kw);
@@ -679,20 +685,21 @@ export function ChatMain({
         </button>
 
         <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
+          className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
           style={{
             background: "var(--bg-elevated)",
           }}
         >
-          {character.imageUrl ? (
+          {!headerAvatarBroken && isValidUrl(character.imageUrl) ? (
             <img
-              src={character.imageUrl}
+              src={character.imageUrl!}
               alt={character.name}
               className="w-full h-full object-cover"
+              onError={() => setHeaderAvatarBroken(true)}
             />
           ) : (
             <ScrollIcon
-              className="w-4 h-4"
+              className="w-6 h-6"
               style={{ color: "var(--bg-deep)" }}
             />
           )}
