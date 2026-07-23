@@ -450,7 +450,11 @@ function AutoModel(props: {
   onDiagnostic: (d: DiagnosticInfo) => void;
   onVoiceVolume?: (volume: number) => void;
 }) {
-  const ext = props.url.split(".").pop()?.toLowerCase();
+  // Signed Supabase URLs append `?token=<jwt>` and JWTs are dot-separated
+  // (header.payload.signature), so splitting the raw URL on "." picks up the
+  // signature instead of the real file extension — strip query/hash first.
+  const pathOnly = props.url.split(/[?#]/)[0];
+  const ext = pathOnly.split(".").pop()?.toLowerCase();
   if (ext === "glb" || ext === "gltf") return <GLBCharacterModel {...props} />;
   return <FBXCharacterModel {...props} />;
 }
