@@ -172,6 +172,9 @@ export function CharacterCarouselCard({
                 fill
                 className="object-cover"
                 sizes="48px"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             ) : (
               <span className="flex h-full w-full items-center justify-center bg-[var(--accent-gold)] text-sm font-bold text-[var(--bg-deep)]">
@@ -257,6 +260,7 @@ export function TypewriterText({ text, isHovered, speed = 8 }: TypewriterTextPro
 
 export function CharacterPageCard({ character, onClick }: PageCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [imageBroken, setImageBroken] = useState(false);
   const lifespan = formatCharacterLifespan(character);
   const contextLabel = character.contexts
     ?.map((c) => c.name)
@@ -266,6 +270,8 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
   const avatarSrc = isValidUrl(character.avatarUrl)
     ? character.avatarUrl!
     : (isValidUrl(character.imageUrl) ? character.imageUrl! : undefined);
+  const cardImageSrc =
+    !imageBroken && isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg";
 
   return (
     <button
@@ -282,7 +288,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       {/* Image */}
       <div className="relative z-0 aspect-3/4 w-full shrink-0 overflow-hidden bg-black">
         <Image
-          src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
+          src={cardImageSrc}
           alt=""
           fill
           aria-hidden="true"
@@ -291,11 +297,12 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         />
         <div className="absolute inset-0 bg-black/18" />
         <Image
-          src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
+          src={cardImageSrc}
           alt={character.name}
           fill
           className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.04]"
           sizes="(max-width: 419px) 100vw, (max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
+          onError={() => setImageBroken(true)}
         />
       </div>
 
@@ -351,6 +358,9 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
                 fill
                 className="object-cover"
                 sizes="48px"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             ) : (
               <span className="flex h-full w-full items-center justify-center bg-[var(--accent-gold)] text-base font-bold text-[var(--bg-deep)]">

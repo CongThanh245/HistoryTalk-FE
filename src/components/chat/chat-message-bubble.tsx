@@ -91,6 +91,9 @@ export function MessageBubble({
               alt={userName}
               fill
               className="object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
             />
           ) : (
             userInitial
@@ -116,6 +119,9 @@ export function MessageBubble({
             alt={character.name}
             fill
             className="object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
           />
         )}
       </div>
@@ -282,6 +288,9 @@ export function TypingIndicator({ character }: { character: ChatCharacter }) {
             alt={character.name}
             fill
             className="object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
           />
         )}
       </div>

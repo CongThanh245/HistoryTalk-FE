@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils/cn";
 import { isValidUrl } from "@/lib/utils/url";
@@ -42,6 +43,8 @@ export function Card({
   imageWidth = 280,
 }: CardProps) {
   const isHorizontal = layout === "horizontal";
+  const [imageBroken, setImageBroken] = useState(false);
+  const resolvedImageSrc = !imageBroken && isValidUrl(imageSrc) ? imageSrc : "/card.jpg";
 
   return (
     <div
@@ -90,11 +93,12 @@ export function Card({
           )}
         >
           <Image
-            src={isValidUrl(imageSrc) ? imageSrc : "/card.jpg"}
+            src={resolvedImageSrc}
             alt={imageAlt}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes={imageSizes}
+            onError={() => setImageBroken(true)}
           />
           <div
             className={cn(
@@ -161,6 +165,9 @@ export function DarkCard({
   imageQuality = 65,
   hoverEffects = true,
 }: DarkCardProps) {
+  const [imageBroken, setImageBroken] = useState(false);
+  const resolvedImageSrc = !imageBroken && isValidUrl(imageSrc) ? imageSrc : "/card.jpg";
+
   return (
     <div
       className={cn(
@@ -198,7 +205,7 @@ export function DarkCard({
         style={{ height: imageHeight, background: "var(--bg-elevated)" }}
       >
         <Image
-          src={isValidUrl(imageSrc) ? imageSrc : "/card.jpg"}
+          src={resolvedImageSrc}
           alt={imageAlt}
           fill
           className={cn(
@@ -209,6 +216,7 @@ export function DarkCard({
           priority={priority}
           fetchPriority={priority ? "high" : "auto"}
           quality={imageQuality}
+          onError={() => setImageBroken(true)}
         />
         <div
           className="absolute inset-0 z-10"
