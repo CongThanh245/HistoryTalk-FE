@@ -58,6 +58,12 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
   const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  /* ── Media files (image/video) for create mode ── */
+  const [pendingImageFile, setPendingImageFile] = React.useState<File | null>(null);
+  const [pendingVideoFile, setPendingVideoFile] = React.useState<File | null>(null);
+  const [pendingImagePreviewUrl, setPendingImagePreviewUrl] = React.useState<string | null>(null);
+  const [pendingVideoPreviewUrl, setPendingVideoPreviewUrl] = React.useState<string | null>(null);
+
   const isDirty = React.useMemo(() => {
     if (!initialDraft) return draft.name !== "" || draft.description !== "";
 
@@ -184,7 +190,11 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
       return;
     }
     setErrors({});
-    onSave(draft);
+    // pendingPdfFile/pendingImageFile/pendingVideoFile live in local hook
+    // state (not in `draft`) so their pickers can reset independently of
+    // form fields — they have to be merged back in here or the selected
+    // files never reach onSave.
+    onSave({ ...draft, pendingPdfFile, pendingImageFile, pendingVideoFile });
   };
 
   return {
@@ -230,6 +240,15 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     pdfPreviewUrl,
     setPdfPreviewUrl,
     fileInputRef,
+
+    pendingImageFile,
+    setPendingImageFile,
+    pendingVideoFile,
+    setPendingVideoFile,
+    pendingImagePreviewUrl,
+    setPendingImagePreviewUrl,
+    pendingVideoPreviewUrl,
+    setPendingVideoPreviewUrl,
 
     isCreated,
   };

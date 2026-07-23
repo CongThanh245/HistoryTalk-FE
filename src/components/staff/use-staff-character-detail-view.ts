@@ -125,6 +125,13 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  /* ── Media files (image/3D model/video) for Create Mode ── */
+  const [pendingImageFile, setPendingImageFile] = React.useState<File | null>(null);
+  const [pendingModelFile, setPendingModelFile] = React.useState<File | null>(null);
+  const [pendingVideoFile, setPendingVideoFile] = React.useState<File | null>(null);
+  const [pendingImagePreviewUrl, setPendingImagePreviewUrl] = React.useState<string | null>(null);
+  const [pendingVideoPreviewUrl, setPendingVideoPreviewUrl] = React.useState<string | null>(null);
+
   /* Detect if form is dirty */
   const isDirty = React.useMemo(() => {
     if (!initialDraft) return draft.name !== "" || draft.title !== "";
@@ -501,7 +508,11 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
       ? CHAT_RELEVANT_FIELDS.some((key) => (draft[key] ?? "") !== (initialDraft[key] ?? ""))
       : true;
     setErrors({});
-    onSave(draft);
+    // pendingPdfFile/pendingImageFile/pendingModelFile/pendingVideoFile live
+    // in local hook state (not in `draft`) so their pickers can reset
+    // independently of form fields — they have to be merged back in here or
+    // the selected files never reach onSave.
+    onSave({ ...draft, pendingPdfFile, pendingImageFile, pendingModelFile, pendingVideoFile });
   };
 
   /* Handle context mapping */
@@ -591,6 +602,18 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     pdfPreviewUrl,
     setPdfPreviewUrl,
     fileInputRef,
+
+    // media (image/3D model/video) pending files — create mode only
+    pendingImageFile,
+    setPendingImageFile,
+    pendingModelFile,
+    setPendingModelFile,
+    pendingVideoFile,
+    setPendingVideoFile,
+    pendingImagePreviewUrl,
+    setPendingImagePreviewUrl,
+    pendingVideoPreviewUrl,
+    setPendingVideoPreviewUrl,
 
     // identity / chat
     isCreated,

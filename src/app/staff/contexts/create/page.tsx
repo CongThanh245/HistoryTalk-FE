@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { StaffContextDetailView, type ContextDraft } from "@/components/staff/staff-context-detail-view";
-import { useCreateEvent } from "@/features/events/hooks";
+import { useCreateEvent, useUploadContextMedia } from "@/features/events/hooks";
 import { useCreateHistoricalDocument, useUploadDocumentPdf } from "@/features/documents/hooks";
 import type { EventEraBackend } from "@/services/event.service";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ export default function CreateContextPage() {
   const createEvent = useCreateEvent();
   const createHistoricalDocument = useCreateHistoricalDocument();
   const uploadDocumentPdf = useUploadDocumentPdf();
+  const uploadContextMedia = useUploadContextMedia();
 
   const handleSave = async (draft: ContextDraft) => {
     const payload = {
@@ -28,6 +29,20 @@ export default function CreateContextPage() {
 
     try {
       const newContext = await createEvent.mutateAsync(payload);
+
+      // Upload any media picked before the context existed
+      const pendingMedia: { file: File; mediaType: "IMAGE_2D" | "VIDEO" }[] = [
+        ...(draft.pendingImageFile ? [{ file: draft.pendingImageFile, mediaType: "IMAGE_2D" as const }] : []),
+        ...(draft.pendingVideoFile ? [{ file: draft.pendingVideoFile, mediaType: "VIDEO" as const }] : []),
+      ];
+      for (const { file, mediaType } of pendingMedia) {
+        try {
+          await uploadContextMedia.mutateAsync({ contextId: newContext.id, file, mediaType });
+        } catch {
+          toast.warning("Bối cảnh đã tạo, nhưng tải lên media chưa thành công");
+        }
+      }
+
       const documentContent = draft.documentContent.trim();
       const pendingPdfFile = draft.pendingPdfFile;
 
@@ -63,7 +78,7 @@ export default function CreateContextPage() {
     <StaffContextDetailView
       mode="create"
       onSave={handleSave}
-      isPending={createEvent.isPending || createHistoricalDocument.isPending}
+      isPending={createEvent.isPending || createHistoricalDocument.isPending || uploadContextMedia.isPending}
     />
   );
 }
