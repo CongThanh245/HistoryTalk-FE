@@ -75,6 +75,7 @@ export function useUpdateEvent() {
     mutationFn: ({ id, data }: { id: string; data: UpdateEventRequest }) =>
       eventService.update(id, data),
     onSuccess: (updatedEvent) => {
+      qc.setQueryData(queryKeys.events.detail(updatedEvent.id), updatedEvent);
       qc.setQueryData(
         queryKeys.events.list({ page: 1, limit: 100 }),
         (old: GetEventsResponse | undefined) => {
