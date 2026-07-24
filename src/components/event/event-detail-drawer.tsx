@@ -20,13 +20,6 @@ import { usePublicContextDocuments } from "@/features/documents/hooks";
 const EVENT_ACCENT_COLOR = "var(--accent-gold)";
 
 // ── Fake Video Player ─────────────────────────────────────
-// Thay thế toàn bộ FakeVideoPlayer component
-function extractYoutubeId(url?: string | null): string {
-  if (!url) return "RS9qAwnDa2k"; // fallback
-  const match = url.match(/(?:v=|youtu\.be\/)([^&\n?#]+)/);
-  return match?.[1] ?? "RS9qAwnDa2k";
-}
-
 function FakeVideoPlayer({
   event,
   onFinish,
@@ -34,17 +27,17 @@ function FakeVideoPlayer({
   event: HistoricalEvent;
   onFinish: () => void;
 }) {
-  const youtubeId = extractYoutubeId(event.videoUrl);
+  const hasVideo = !!event.videoUrl;
   const [playing, setPlaying] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const start = () => {
+    if (!hasVideo) {
+      onFinish();
+      return;
+    }
     setPlaying(true);
-    // Gửi lệnh play tới YouTube iframe
-    iframeRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ event: "command", func: "playVideo" }),
-      "*",
-    );
+    videoRef.current?.play();
   };
 
   const skip = () => {
@@ -54,16 +47,17 @@ function FakeVideoPlayer({
   return (
     <div className="relative w-full h-full flex flex-col bg-black overflow-hidden">
       <div className="relative flex-1 overflow-hidden">
-        {/* YouTube iframe với controls=1 để người dùng tua được */}
-        <iframe
-          ref={iframeRef}
-          className="absolute inset-0 w-full h-full"
-          src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&autoplay=0&controls=1&modestbranding=1&rel=0`}
-          allow="autoplay; encrypted-media"
-          allowFullScreen
-        />
+        {hasVideo && (
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full object-cover"
+            src={event.videoUrl ?? undefined}
+            controls={playing}
+            onEnded={onFinish}
+          />
+        )}
 
-        {/* Overlay gradient — chỉ hiện khi chưa play để không chặn controls YouTube */}
+        {/* Overlay gradient — chỉ hiện khi chưa play để không chặn controls video */}
         {!playing && (
           <div
             className="absolute inset-0 pointer-events-none"
@@ -97,7 +91,7 @@ function FakeVideoPlayer({
               <PlayIcon className="w-8 h-8 text-white ml-1.5" fill="white" />
             </button>
             <p className="text-white/70 text-sm font-medium tracking-wide">
-              Xem video giới thiệu
+              {hasVideo ? "Xem video giới thiệu" : "Chưa có video giới thiệu"}
             </p>
           </div>
         )}
@@ -130,7 +124,7 @@ function FakeVideoPlayer({
         )}
       </div>
 
-      {/* Progress bar bỏ đi vì dùng YouTube player thật */}
+      {/* Progress bar bỏ đi vì dùng video player thật */}
     </div>
   );
 }

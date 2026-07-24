@@ -12,7 +12,6 @@ import {
   VideoIcon,
   UploadSimpleIcon,
   FilePdfIcon,
-  PlayIcon,
   ArrowsOutIcon,
   UsersIcon,
   LinkBreakIcon,
@@ -56,64 +55,6 @@ function ValidationErrorText({ message }: { message?: string }) {
       {message}
     </p>
   ) : null;
-}
-
-function extractYoutubeId(url?: string | null) {
-  if (!url) return null;
-  const match = url.match(/(?:v=|youtu\.be\/|embed\/)([^&\n?#]+)/);
-  return match?.[1] ?? null;
-}
-
-function isDirectVideoUrl(url?: string | null) {
-  if (!url) return false;
-  try {
-    const pathname = new URL(url).pathname.toLowerCase();
-    return /\.(mp4|webm|ogg|mov|avi|mkv)$/.test(pathname);
-  } catch {
-    return false;
-  }
-}
-
-// Shows YouTube's own static thumbnail (always correctly framed, unlike the
-// iframe player which can crop non-16:9 videos to fill the box) and only
-// swaps to the live embed once clicked, so the preview panel never shows a
-// misleadingly cropped frame before the user asks to actually play it.
-function YoutubePreview({ youtubeId }: { youtubeId: string }) {
-  const [playing, setPlaying] = React.useState(false);
-
-  if (playing) {
-    return (
-      <iframe
-        src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&autoplay=1`}
-        title="Xem trước video bối cảnh"
-        className="h-full w-full"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        style={{ border: "none" }}
-      />
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => setPlaying(true)}
-      className="group relative h-full w-full"
-      style={{ background: "#000" }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element -- external YouTube CDN thumbnail, not a local/optimized asset */}
-      <img
-        src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
-        alt="Xem trước video bối cảnh"
-        className="h-full w-full object-contain"
-      />
-      <span className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors group-hover:bg-black/35">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
-          <PlayIcon className="h-5 w-5 translate-x-px" weight="fill" style={{ color: "#1b2632" }} />
-        </span>
-      </span>
-    </button>
-  );
 }
 
 export function StaffContextDetailView(props: StaffContextDetailViewProps) {
@@ -252,8 +193,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
   const [unmapTarget, setUnmapTarget] = React.useState<{ characterId: string; name: string } | null>(null);
   const [imageLightboxOpen, setImageLightboxOpen] = React.useState(false);
   const [videoLightboxOpen, setVideoLightboxOpen] = React.useState(false);
-  const youtubeId = extractYoutubeId(draft.videoUrl);
-  const hasVideo = !!youtubeId || isDirectVideoUrl(draft.videoUrl);
+  const hasVideo = !!draft.videoUrl;
 
   const visibleTabs = FORM_TABS.filter((tab) => tab.key !== "characters" || mode === "edit");
 
@@ -538,32 +478,21 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   )}
                 </MediaSlotField>
 
-                <div className="grid gap-1.5">
-                  <StaffFormLabel className="flex items-center gap-1.5">
-                    <VideoIcon className="h-3.5 w-3.5" />
-                    URL video YouTube
-                  </StaffFormLabel>
-                  <StaffFormInput
-                    value={draft.videoUrl}
-                    onChange={(e) => set("videoUrl")(e.target.value)}
-                    placeholder="https://youtube.com/watch?v=..."
-                    disabled={!isEditing}
-                  />
-                  <ValidationErrorText message={errors.videoUrl} />
-                </div>
-
                 <MediaSlotField
-                  label="Hoặc tải lên file video trực tiếp"
+                  label="Video bối cảnh"
                   icon={<VideoIcon className="h-3.5 w-3.5" />}
                   accept="video/mp4,video/webm,video/quicktime"
                   disabled={!isEditing}
                   isBusy={isUploadMediaPending || isDeleteMediaPending}
-                  hasValue={!!pendingVideoFile}
+                  hasValue={!!draft.videoUrl || !!pendingVideoFile}
                   caption={
                     pendingVideoFile
                       ? `Đã chọn: ${pendingVideoFile.name} (sẽ tải lên sau khi lưu)`
-                      : "Ghi đè URL YouTube ở trên nếu bạn upload file video trực tiếp"
+                      : draft.videoUrl
+                        ? "Đã có video"
+                        : "Chưa có video"
                   }
+                  errorMessage={errors.videoUrl}
                   onPick={(file) => handleMediaPick(file, "VIDEO", setPendingVideoFile, setPendingVideoPreviewUrl)}
                   onClear={() =>
                     handleMediaClear(
@@ -811,7 +740,10 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                             type="button"
                             size="sm"
                             variant="outline"
-                            onClick={() => setUploadDialogOpen(true)}
+                            onClick={() => {
+                              setViewerUrl(pdfPreviewUrl);
+                              setViewerOpen(true);
+                            }}
                             style={{ color: "var(--accent-gold)", borderColor: "rgba(234,179,8,0.3)" }}
                           >
                             <EyeIcon className="h-4 w-4 mr-1.5" />
@@ -1009,65 +941,65 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
 
         {/* ── Right Panel: Media preview ── */}
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto p-6 gap-4 bg-[var(--bg-app)]">
-          <div
-            className="overflow-hidden rounded-xl border"
-            style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
-          >
-            <div className="border-b px-3 py-2" style={{ borderColor: "var(--card-light-border)" }}>
-              <p className="text-xs font-semibold" style={{ color: "var(--content-heading)" }}>
-                Xem trước ảnh
-              </p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div
+              className="flex-1 min-w-0 overflow-hidden rounded-xl border"
+              style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
+            >
+              <div className="border-b px-3 py-2" style={{ borderColor: "var(--card-light-border)" }}>
+                <p className="text-xs font-semibold" style={{ color: "var(--content-heading)" }}>
+                  Xem trước ảnh
+                </p>
+              </div>
+              <div className="group relative aspect-video max-h-48" style={{ background: "#0b0f14" }}>
+                {isValidUrl(draft.imageUrl) ? (
+                  <>
+                    <Image src={draft.imageUrl} alt={draft.name || "Ảnh bối cảnh"} fill className="object-contain" sizes="300px" />
+                    <button
+                      type="button"
+                      onClick={() => setImageLightboxOpen(true)}
+                      className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+                      title="Xem đầy đủ ảnh"
+                    >
+                      <ArrowsOutIcon className="h-4 w-4" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-xs text-center px-4" style={{ color: "var(--content-muted)" }}>
+                    Dán URL ảnh hợp lệ ở tab Media để xem trước
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="group relative aspect-video" style={{ background: "#0b0f14" }}>
-              {isValidUrl(draft.imageUrl) ? (
-                <>
-                  <Image src={draft.imageUrl} alt={draft.name || "Ảnh bối cảnh"} fill className="object-contain" sizes="600px" />
+
+            <div
+              className="flex-1 min-w-0 overflow-hidden rounded-xl border"
+              style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
+            >
+              <div className="border-b px-3 py-2" style={{ borderColor: "var(--card-light-border)" }}>
+                <p className="text-xs font-semibold" style={{ color: "var(--content-heading)" }}>
+                  Xem trước video
+                </p>
+              </div>
+              <div className="group relative aspect-video max-h-48">
+                {hasVideo && (
                   <button
                     type="button"
-                    onClick={() => setImageLightboxOpen(true)}
+                    onClick={() => setVideoLightboxOpen(true)}
                     className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
-                    title="Xem đầy đủ ảnh"
+                    title="Xem đầy đủ video"
                   >
                     <ArrowsOutIcon className="h-4 w-4" />
                   </button>
-                </>
-              ) : (
-                <div className="flex h-full items-center justify-center text-xs text-center px-4" style={{ color: "var(--content-muted)" }}>
-                  Dán URL ảnh hợp lệ ở tab Media để xem trước
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div
-            className="overflow-hidden rounded-xl border"
-            style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
-          >
-            <div className="border-b px-3 py-2" style={{ borderColor: "var(--card-light-border)" }}>
-              <p className="text-xs font-semibold" style={{ color: "var(--content-heading)" }}>
-                Xem trước video
-              </p>
-            </div>
-            <div className="group relative aspect-video">
-              {hasVideo && (
-                <button
-                  type="button"
-                  onClick={() => setVideoLightboxOpen(true)}
-                  className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
-                  title="Xem đầy đủ video"
-                >
-                  <ArrowsOutIcon className="h-4 w-4" />
-                </button>
-              )}
-              {youtubeId ? (
-                <YoutubePreview key={youtubeId} youtubeId={youtubeId} />
-              ) : isDirectVideoUrl(draft.videoUrl) ? (
-                <video src={draft.videoUrl} controls className="h-full w-full object-contain" style={{ background: "#000" }} />
-              ) : (
-                <div className="flex h-full items-center justify-center px-4 text-center text-xs" style={{ color: "var(--content-muted)" }}>
-                  Dán URL YouTube hoặc file video (.mp4) ở tab Media để xem trước
-                </div>
-              )}
+                )}
+                {draft.videoUrl ? (
+                  <video src={draft.videoUrl} controls className="h-full w-full object-contain" style={{ background: "#000" }} />
+                ) : (
+                  <div className="flex h-full items-center justify-center px-4 text-center text-xs" style={{ color: "var(--content-muted)" }}>
+                    Tải lên file video (.mp4) ở tab Media để xem trước
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1090,18 +1022,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         <DialogContent className="max-w-5xl! w-[92vw] max-h-[90vh] overflow-hidden border-none bg-black p-0">
           <DialogTitle className="sr-only">Xem đầy đủ video bối cảnh</DialogTitle>
           <div className="aspect-video w-full">
-            {videoLightboxOpen && youtubeId ? (
-              <iframe
-                src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&autoplay=1`}
-                title="Xem đầy đủ video bối cảnh"
-                className="h-full w-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                style={{ border: "none" }}
-              />
-            ) : videoLightboxOpen && isDirectVideoUrl(draft.videoUrl) ? (
+            {videoLightboxOpen && draft.videoUrl && (
               <video src={draft.videoUrl} controls autoPlay className="h-full w-full object-contain" style={{ background: "#000" }} />
-            ) : null}
+            )}
           </div>
         </DialogContent>
       </Dialog>

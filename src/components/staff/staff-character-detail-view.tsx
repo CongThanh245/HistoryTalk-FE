@@ -885,7 +885,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             type="button"
                             size="sm"
                             variant="outline"
-                            onClick={() => setUploadDialogOpen(true)}
+                            onClick={() => {
+                              setViewerUrl(pdfPreviewUrl);
+                              setViewerOpen(true);
+                            }}
                             style={{ color: "var(--accent-gold)", borderColor: "rgba(234,179,8,0.3)" }}
                           >
                             <EyeIcon className="h-4 w-4 mr-1.5" />
@@ -1250,13 +1253,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         <div className="grid gap-1.5">
                           <Label className="text-xs font-medium flex items-center gap-1.5" style={{ color: "var(--content-heading)" }}>
                             <VideoIcon className="h-3.5 w-3.5" />
-                            URL video (YouTube)
+                            URL video (tuỳ chọn — có thể tải file video lên sau khi tạo)
                           </Label>
                           <Input
                             id="qc-videoUrl"
                             value={quickCtx.videoUrl}
                             onChange={(e) => setQuickContextField("videoUrl")(e.target.value)}
-                            placeholder="https://youtube.com/watch?v=..."
+                            placeholder="https://.../video.mp4"
                             className="h-9 text-sm"
                           />
                           <ValidationErrorText message={quickErrors.videoUrl} />

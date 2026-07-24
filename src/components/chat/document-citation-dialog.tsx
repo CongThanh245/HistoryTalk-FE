@@ -26,22 +26,6 @@ interface DocumentCitationDialogProps {
   initialDocumentId?: string | null;
 }
 
-function extractYoutubeId(url?: string | null): string | null {
-  if (!url) return null;
-  const match = url.match(/(?:v=|youtu\.be\/|embed\/)([^&\n?#]+)/);
-  return match?.[1] ?? null;
-}
-
-function isDirectVideoUrl(url?: string | null): boolean {
-  if (!url) return false;
-  try {
-    const pathname = new URL(url).pathname.toLowerCase();
-    return /\.(mp4|webm|ogg|mov|avi|mkv)$/.test(pathname);
-  } catch {
-    return false;
-  }
-}
-
 function DocumentContent({ content, quote }: { content: string; quote?: string | null }) {
   const markRef = useRef<HTMLElement>(null);
   const parts = useMemo(
@@ -144,27 +128,16 @@ export function DocumentCitationDialog({
     return null;
   }, [quote, initialDocumentId, documents]);
 
-  const youtubeId = extractYoutubeId(event?.videoUrl);
-  const isDirectVideo = !youtubeId && isDirectVideoUrl(event?.videoUrl);
-  const hasVideo = !!youtubeId || isDirectVideo;
+  const hasVideo = !!event?.videoUrl;
   const title = matchedDocument?.title || "Nguồn tham khảo";
 
   const renderVideo = () => (
     <div className="relative w-full aspect-video bg-black shrink-0">
-      {youtubeId ? (
-        <iframe
-          className="absolute inset-0 w-full h-full"
-          src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&modestbranding=1&rel=0`}
-          allow="autoplay; encrypted-media"
-          allowFullScreen
-        />
-      ) : (
-        <video
-          src={event?.videoUrl ?? undefined}
-          controls
-          className="absolute inset-0 w-full h-full object-contain"
-        />
-      )}
+      <video
+        src={event?.videoUrl ?? undefined}
+        controls
+        className="absolute inset-0 w-full h-full object-contain"
+      />
     </div>
   );
 
