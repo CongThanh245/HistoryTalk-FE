@@ -69,11 +69,11 @@ export function createCharacterColumns({
             sizes="36px"
             previewSizes="160px"
           />
-          <div>
-            <p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+          <div className="min-w-0 max-w-[180px]">
+            <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }} title={row.original.name}>
               {row.original.name}
             </p>
-            <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+            <p className="truncate text-xs" style={{ color: "var(--content-muted)" }} title={row.original.title}>
               {row.original.title}
             </p>
           </div>
@@ -147,22 +147,22 @@ export function createCharacterColumns({
           return <span className="text-xs" style={{ color: "var(--content-muted)" }}>—</span>;
         }
         return (
-          <div className="flex max-w-[260px] flex-wrap gap-1">
-            {contexts.slice(0, 2).map((context) => (
+          <div className="flex max-w-[180px] flex-wrap items-center gap-1">
+            {contexts.slice(0, 1).map((context) => (
               <button
                 key={context.contextId}
                 type="button"
-                className="rounded-full border px-2 py-0.5 text-[11px] font-medium hover:bg-black/[0.04]"
+                className="max-w-[140px] truncate rounded-full border px-2 py-0.5 text-[11px] font-medium hover:bg-black/[0.04]"
                 style={{ borderColor: "var(--card-light-border)", color: "var(--content-text)" }}
                 onClick={() => onOpenContext(context.contextId)}
-                title="Xem chi tiết bối cảnh"
+                title={context.name || "Bối cảnh"}
               >
                 {context.name || "Bối cảnh"}
               </button>
             ))}
-            {contexts.length > 2 && (
-              <span className="text-[11px]" style={{ color: "var(--content-muted)" }}>
-                +{contexts.length - 2}
+            {contexts.length > 1 && (
+              <span className="shrink-0 text-[11px]" style={{ color: "var(--content-muted)" }} title={contexts.slice(1).map((c) => c.name).join(", ")}>
+                +{contexts.length - 1}
               </span>
             )}
           </div>
