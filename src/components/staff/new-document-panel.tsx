@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { FileTextIcon, FilePdfIcon, PlusIcon, XIcon, UploadSimpleIcon } from "@phosphor-icons/react";
+import { FileTextIcon, FilePdfIcon, PlusIcon, XIcon, UploadSimpleIcon, EyeIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { StaffFormLabel, StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
+import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 
 interface NewDocumentPanelProps {
   disabled?: boolean;
@@ -32,15 +33,25 @@ export function NewDocumentPanel({
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
   const [file, setFile] = React.useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const isBusy = !!isCreateTextPending || !!isCreatePdfPending;
+
+  const clearFile = () => {
+    setFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+  };
 
   const reset = () => {
     setStep("closed");
     setTitle("");
     setContent("");
-    setFile(null);
+    clearFile();
   };
 
   if (step === "closed") {
@@ -140,25 +151,45 @@ export function NewDocumentPanel({
                   e.target.value = "";
                   if (picked && picked.type === "application/pdf") {
                     setFile(picked);
+                    setPreviewUrl(URL.createObjectURL(picked));
                   }
                 }}
               />
             </div>
           ) : (
-            <div
-              className="flex items-center justify-between gap-2 rounded-lg border p-2 text-xs"
-              style={{ borderColor: "var(--card-light-border)" }}
-            >
-              <span className="truncate" style={{ color: "var(--content-heading)" }}>
-                {file.name}
-              </span>
-              <Button type="button" size="icon-sm" variant="ghost" onClick={() => setFile(null)} disabled={isBusy}>
-                <XIcon className="h-3.5 w-3.5" />
-              </Button>
+            <div className="space-y-2">
+              <div
+                className="flex items-center justify-between gap-2 rounded-lg border p-2 text-xs"
+                style={{ borderColor: "var(--card-light-border)" }}
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium" style={{ color: "var(--content-heading)" }}>
+                    {file.name}
+                  </p>
+                  <p style={{ color: "var(--content-muted)" }}>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPreviewOpen(true)}
+                    style={{ color: "var(--accent-gold)", borderColor: "rgba(234,179,8,0.3)" }}
+                  >
+                    <EyeIcon className="h-3.5 w-3.5 mr-1" />
+                    Xem trước
+                  </Button>
+                  <Button type="button" size="icon-sm" variant="ghost" onClick={clearFile} disabled={isBusy}>
+                    <XIcon className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </div>
       )}
+
+      <PdfViewerDialog open={previewOpen} onOpenChange={setPreviewOpen} pdfUrl={previewUrl} title={file?.name ?? "Xem trước PDF"} />
 
       <div className="flex justify-end gap-2 pt-1">
         <Button type="button" size="sm" variant="ghost" onClick={reset} disabled={isBusy}>

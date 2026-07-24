@@ -252,12 +252,15 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   const resetQuickCtx = () =>
     setQuickCtx({ name: "", description: "", era: "", year: "", location: "", imageUrl: "", videoUrl: "", isPublished: false });
 
-  // Reset state/sync when props change (especially for edit mode)
+  // Reset state/sync when props change (especially for edit mode). Skipped
+  // while actively editing so an unrelated parent re-render (background
+  // refetch, sibling query update, ...) can't stomp unsaved local edits —
+  // e.g. a just-toggled publish switch reverting before the user hits Save.
   React.useEffect(() => {
-    if (initialDraft) {
+    if (initialDraft && !isEditing) {
       setDraft(initialDraft);
     }
-  }, [initialDraft]);
+  }, [initialDraft, isEditing]);
 
   // Reset skipAutoSelect when initialDraft changes (different character loaded)
   React.useEffect(() => {

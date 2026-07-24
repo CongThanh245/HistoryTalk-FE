@@ -127,9 +127,13 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     setIsEditing(false);
   };
 
+  // Skipped while actively editing so an unrelated parent re-render
+  // (background refetch, sibling query update, ...) can't stomp unsaved
+  // local edits — e.g. a just-toggled publish switch reverting before the
+  // user hits Save.
   React.useEffect(() => {
-    if (initialDraft) setDraft(initialDraft);
-  }, [initialDraft]);
+    if (initialDraft && !isEditing) setDraft(initialDraft);
+  }, [initialDraft, isEditing]);
 
   React.useEffect(() => {
     if (skipAutoSelect) setSkipAutoSelect(false);
