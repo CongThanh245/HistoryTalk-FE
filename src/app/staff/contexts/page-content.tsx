@@ -126,20 +126,21 @@ export default function StaffContextsPage() {
         header: "Tiêu đề",
         cell: ({ row }) => {
           const summary = row.original.summary || "";
-          // Giới hạn 100 ký tự ở tầng dữ liệu
+          // Giới hạn 60 ký tự ở tầng dữ liệu để bảng không bị tràn ngang
           const truncatedSummary =
-            summary.length > 100 ? summary.slice(0, 100) + "..." : summary;
+            summary.length > 60 ? summary.slice(0, 60) + "..." : summary;
 
           return (
-            <div className="min-w-[260px]">
+            <div className="w-[220px]">
               <p
-                className="text-sm font-semibold"
+                className="truncate text-sm font-semibold"
                 style={{ color: "var(--content-heading)" }}
+                title={row.original.title}
               >
                 {row.original.title}
               </p>
               <p
-                className="text-xs mt-0.5 line-clamp-1 truncate max-w-[400px] block"
+                className="text-xs mt-0.5 truncate"
                 style={{ color: "var(--content-muted)" }}
                 title={summary}
               >
@@ -247,7 +248,7 @@ export default function StaffContextsPage() {
         accessorKey: "location",
         header: "Địa điểm",
         cell: ({ row }) => (
-          <span className="block max-w-[180px] truncate text-xs" style={{ color: "var(--content-muted)" }}>
+          <span className="block max-w-[140px] truncate text-xs" style={{ color: "var(--content-muted)" }}>
             {row.original.location || "—"}
           </span>
         ),

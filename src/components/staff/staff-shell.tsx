@@ -23,12 +23,12 @@ export function StaffShell({
     // THÊM: px-6 (cho mobile) và lg:px-10 (cho màn hình lớn)
     // để tạo khoảng cách với sidebar và mép phải.
     <div
-      className="space-y-10 pb-10 px-6 lg:px-10 max-w-[1600px]"
+      className="space-y-6 pb-6 px-6 lg:px-10 max-w-[1600px]"
       style={{ color: "var(--content-text)" }}
     >
-      <div className="space-y-1 pt-6">
+      <div className="space-y-1 pt-4">
         {" "}
-        {/* Tăng pt-2 lên pt-6 cho thoáng phía trên */}
+        {/* Padding vừa phải để trang fit trong 1 màn hình, không cần cuộn thêm */}
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center border"
