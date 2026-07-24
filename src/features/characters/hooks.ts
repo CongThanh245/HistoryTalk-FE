@@ -240,7 +240,39 @@ export function useUploadCharacterMedia() {
       file: File;
       mediaType: MediaType;
     }) => characterMediaService.upload(characterId, file, mediaType),
-    onSuccess: (_result, { characterId }) => {
+    onSuccess: (result, { characterId }) => {
+      // Write the freshly returned viewUrl straight into cache instead of
+      // relying solely on invalidateQueries: at this point (e.g. right
+      // after character creation) nothing may be observing these queries
+      // yet, so invalidate-only leaves stale (image-less) data in place
+      // until an unrelated refetch happens — which is why the image used
+      // to only show up after a manual F5.
+      const applyUrl = (c: Character): Character => {
+        if (result.mediaType === "IMAGE_2D") {
+          return { ...c, imageUrl: result.viewUrl, avatarUrl: result.viewUrl };
+        }
+        if (result.mediaType === "VIDEO") {
+          return { ...c, videoUrl: result.viewUrl };
+        }
+        if (result.mediaType === "MODEL_3D") {
+          return { ...c, modelUrl: result.viewUrl };
+        }
+        return c;
+      };
+      qc.setQueryData(
+        queryKeys.characters.detail(characterId),
+        (old: Character | undefined) => (old ? applyUrl(old) : old),
+      );
+      qc.setQueriesData(
+        { queryKey: queryKeys.characters.all },
+        (old: unknown) => {
+          if (!isCharactersResponse(old)) return old;
+          return {
+            ...old,
+            content: old.content.map((c) => (c.id === characterId ? applyUrl(c) : c)),
+          };
+        },
+      );
       qc.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
       qc.invalidateQueries({ queryKey: queryKeys.characters.all });
       toast.success("Đã tải lên media thành công");
