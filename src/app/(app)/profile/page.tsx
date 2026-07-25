@@ -405,16 +405,8 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
         </section>
 
         <section>
-          <div className="mb-4">
-            <h2 className="text-base font-bold" style={{ color: "var(--text-primary)" }}>
-              Hồ sơ hiển thị
-            </h2>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              Địa chỉ giúp cá nhân hóa trải nghiệm trong HistoryTalk. Đổi ảnh đại diện bằng nút máy ảnh cạnh avatar.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1">
             <FormField
               label="Địa chỉ"
               icon={MapPinIcon}
