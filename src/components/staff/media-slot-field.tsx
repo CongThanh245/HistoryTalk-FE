@@ -11,10 +11,14 @@ interface MediaSlotFieldProps {
   accept: string;
   disabled?: boolean;
   isBusy?: boolean;
+  /** Upload progress 0-100 while a direct upload is in flight; renders a progress bar instead of the plain "busy" state */
+  progress?: number | null;
   /** Whether a value (uploaded or pending) currently occupies this slot */
   hasValue: boolean;
   /** Small caption under the controls, e.g. selected file name or "Đã có ảnh" */
   caption?: string;
+  /** Always-visible constraint hint (format/size limit), shown regardless of state so it's known before picking a file */
+  hint?: string;
   onPick: (file: File) => void;
   onClear?: () => void;
   errorMessage?: string;
@@ -32,14 +36,17 @@ export function MediaSlotField({
   accept,
   disabled,
   isBusy,
+  progress,
   hasValue,
   caption,
+  hint,
   onPick,
   onClear,
   errorMessage,
   children,
 }: MediaSlotFieldProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const showProgressBar = isBusy && typeof progress === "number";
 
   return (
     <div className="grid gap-1.5">
@@ -85,6 +92,27 @@ export function MediaSlotField({
           }}
         />
       </div>
+      {showProgressBar && (
+        <div className="flex items-center gap-2">
+          <div
+            className="h-1.5 flex-1 overflow-hidden rounded-full"
+            style={{ background: "var(--card-light-border)" }}
+          >
+            <div
+              className="h-full rounded-full transition-[width] duration-200 ease-out"
+              style={{ width: `${progress}%`, background: "var(--accent-blue)" }}
+            />
+          </div>
+          <span className="text-[11px] tabular-nums" style={{ color: "var(--content-muted)" }}>
+            {progress}%
+          </span>
+        </div>
+      )}
+      {hint && (
+        <p className="text-[11px]" style={{ color: "var(--content-subtle)" }}>
+          {hint}
+        </p>
+      )}
       {caption && (
         <p className="text-xs" style={{ color: "var(--content-muted)" }}>
           {caption}

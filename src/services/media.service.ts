@@ -21,7 +21,12 @@ type ApiEnvelope<T> = {
  */
 function buildMediaService(basePath: "characters" | "historical-contexts") {
   return {
-    upload: async (entityId: string, file: File, mediaType: MediaType): Promise<MediaUploadResult> => {
+    upload: async (
+      entityId: string,
+      file: File,
+      mediaType: MediaType,
+      onProgress?: (percent: number) => void,
+    ): Promise<MediaUploadResult> => {
       const formData = new FormData();
       formData.append("file", file);
       const res = await axiosClient.post<ApiEnvelope<MediaUploadResult>>(
@@ -30,6 +35,10 @@ function buildMediaService(basePath: "characters" | "historical-contexts") {
         {
           params: { mediaType },
           headers: { "Content-Type": "multipart/form-data" },
+          onUploadProgress: (event) => {
+            if (!onProgress || !event.total) return;
+            onProgress(Math.round((event.loaded / event.total) * 100));
+          },
         },
       );
       if (!res.data.success || !res.data.data) {

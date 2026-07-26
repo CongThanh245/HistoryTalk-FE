@@ -26,6 +26,7 @@ const routeLabels: Record<string, string> = {
   about: "Giới thiệu",
   features: "Tính năng",
   pricing: "Bảng giá",
+  create: "Tạo mới",
 };
 
 export default function Breadcrumbs() {
@@ -100,24 +101,28 @@ export default function Breadcrumbs() {
 }
 
 function BreadcrumbLabel({ segment, parentSegment }: { segment: string; parentSegment?: string }) {
-  if (parentSegment === "characters" || parentSegment === "chat") {
-    return <CharacterName id={segment} />;
-  }
-  if (parentSegment === "contexts") {
-    return <ContextName id={segment} />;
-  }
-  if (parentSegment === "quizzes") {
-    return <QuizName id={segment} />;
-  }
-
   const isId = /^[0-9a-fA-F-]{24,36}$/.test(segment);
-  
-  if (!isId) {
-    const label = routeLabels[segment] || segment;
-    return <>{label.charAt(0).toUpperCase() + label.slice(1)}</>;
+
+  // Static action routes like "create" live alongside dynamic [id] routes
+  // (e.g. /staff/contexts/create vs /staff/contexts/:id) — only treat the
+  // segment as a lookup id when it actually looks like one, otherwise this
+  // fires a GET /historical-contexts/create (or characters/quizzes) and 400s.
+  if (isId) {
+    if (parentSegment === "characters" || parentSegment === "chat") {
+      return <CharacterName id={segment} />;
+    }
+    if (parentSegment === "contexts") {
+      return <ContextName id={segment} />;
+    }
+    if (parentSegment === "quizzes") {
+      return <QuizName id={segment} />;
+    }
+
+    return <>{segment.slice(0, 8)}...</>;
   }
 
-  return <>{segment.slice(0, 8)}...</>;
+  const label = routeLabels[segment] || segment;
+  return <>{label.charAt(0).toUpperCase() + label.slice(1)}</>;
 }
 
 function CharacterName({ id }: { id: string }) {

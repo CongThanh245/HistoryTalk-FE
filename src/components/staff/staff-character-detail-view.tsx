@@ -63,6 +63,16 @@ import { useStaffCharacterDetailView } from "./use-staff-character-detail-view";
 export type { CharacterDraft } from "./staff-character-detail-view.types";
 export { EMPTY_CHARACTER_DRAFT } from "./staff-character-detail-view.types";
 
+// Mirrors config.storage.mediaMaxUploadMb on the backend — Supabase's
+// project-wide storage upload limit (Project Settings → Storage), not
+// per-type. Checked client-side too so an oversized file gets rejected the
+// moment it's picked instead of after filling out the whole form and
+// waiting for the request to fail. Keep this in sync manually if that
+// Supabase setting ever changes.
+const MEDIA_MAX_UPLOAD_MB = 50;
+const MEDIA_MAX_UPLOAD_BYTES = MEDIA_MAX_UPLOAD_MB * 1024 * 1024;
+const MEDIA_SIZE_HINT = `Tối đa ${MEDIA_MAX_UPLOAD_MB}MB`;
+
 function ValidationErrorText({ message }: { message?: string }) {
   return message ? (
     <p className="text-[11px] font-medium" style={{ color: "var(--accent-danger)" }}>
@@ -189,6 +199,11 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     setPendingFile: (file: File | null) => void,
     setPendingPreviewUrl?: (url: string | null) => void,
   ) => {
+    if (file.size > MEDIA_MAX_UPLOAD_BYTES) {
+      toast.error(`${MEDIA_SIZE_HINT}. File đã chọn nặng ${(file.size / 1024 / 1024).toFixed(1)}MB.`);
+      return;
+    }
+
     if (isCreated && onUploadMedia) {
       try {
         await onUploadMedia(characterId, file, mediaType);
@@ -540,6 +555,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               disabled={!isEditing}
               isBusy={isUploadMediaPending || isDeleteMediaPending}
               hasValue={!!draft.image || !!pendingImageFile}
+              hint={`JPEG, PNG, WEBP, GIF · ${MEDIA_SIZE_HINT}`}
               caption={
                 pendingImageFile
                   ? `Đã chọn: ${pendingImageFile.name} (sẽ tải lên sau khi lưu)`
@@ -577,6 +593,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               disabled={!isEditing}
               isBusy={isUploadMediaPending || isDeleteMediaPending}
               hasValue={!!draft.modelUrl || !!pendingModelFile}
+              hint={`GLB, FBX · ${MEDIA_SIZE_HINT}`}
               caption={
                 pendingModelFile
                   ? `Đã chọn: ${pendingModelFile.name} (sẽ tải lên sau khi lưu)`
@@ -595,6 +612,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               disabled={!isEditing}
               isBusy={isUploadMediaPending || isDeleteMediaPending}
               hasValue={!!draft.videoUrl || !!pendingVideoFile}
+              hint={`MP4, WEBM, MOV · ${MEDIA_SIZE_HINT}`}
               caption={
                 pendingVideoFile
                   ? `Đã chọn: ${pendingVideoFile.name} (sẽ tải lên sau khi lưu)`

@@ -43,6 +43,8 @@ export interface StaffContextDetailViewProps {
   initialDraft?: ContextDraft;
   onSave: (draft: ContextDraft) => void;
   isPending: boolean;
+  /** Overrides the default "Đang lưu..." save-button label while isPending, e.g. "Đang tải video lên... 42%" */
+  pendingLabel?: string | null;
   /** If true, start in editing mode immediately (e.g. navigated from Edit button) */
   initialEditing?: boolean;
 
@@ -56,7 +58,12 @@ export interface StaffContextDetailViewProps {
   isGetDocumentPdfUrlPending?: boolean;
 
   /** Upload image/video for an existing context (edit mode only) */
-  onUploadMedia?: (contextId: string, file: File, mediaType: "IMAGE_2D" | "VIDEO") => Promise<void>;
+  onUploadMedia?: (
+    contextId: string,
+    file: File,
+    mediaType: "IMAGE_2D" | "VIDEO",
+    onProgress?: (percent: number) => void,
+  ) => Promise<{ viewUrl: string } | void>;
   isUploadMediaPending?: boolean;
   /** Clear one media slot for an existing context (edit mode only) */
   onDeleteMedia?: (contextId: string, mediaType: "IMAGE_2D" | "VIDEO") => Promise<void>;
