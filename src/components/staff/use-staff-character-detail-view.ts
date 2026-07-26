@@ -94,6 +94,7 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     initialContexts,
     initialEditing,
     documents = [],
+    isExtractPdfDocumentPending = false,
   } = props;
 
   /* ── State ── */
@@ -122,6 +123,8 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
 
   /* ── PDF File for Create Mode ── */
   const [pendingPdfFile, setPendingPdfFile] = React.useState<File | null>(null);
+  const [pendingPdfFileUrl, setPendingPdfFileUrl] = React.useState<string | null>(null);
+  const [pendingPdfPageCount, setPendingPdfPageCount] = React.useState<number | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -482,7 +485,10 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   const hasDraftErrors = hasValidationErrors(draftValidationErrors);
   const hasSaveErrors = hasValidationErrors(saveValidationErrors);
   const hasPublishErrors = hasValidationErrors(publishValidationErrors);
-  const canSave = !hasSaveErrors && !isPending;
+  // Blocked while a PDF pick is still being extracted so Save can't fire
+  // before pendingPdfFileUrl/documentContent are actually populated — the
+  // pending file would otherwise silently get dropped from the create call.
+  const canSave = !hasSaveErrors && !isPending && !isExtractPdfDocumentPending;
   const canStartChat = isCreated && mappedContexts.length > 0 && !hasPublishErrors;
   const canPublishCharacter = !isEditing || (!hasPublishErrors && mappedContexts.length > 0);
   const publishBlockedMessage =
@@ -515,7 +521,14 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     // in local hook state (not in `draft`) so their pickers can reset
     // independently of form fields — they have to be merged back in here or
     // the selected files never reach onSave.
-    onSave({ ...draft, pendingPdfFile, pendingImageFile, pendingModelFile, pendingVideoFile });
+    onSave({
+      ...draft,
+      pendingPdfFile,
+      pendingPdfFileUrl,
+      pendingImageFile,
+      pendingModelFile,
+      pendingVideoFile,
+    });
   };
 
   /* Handle context mapping */
@@ -602,6 +615,10 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     setViewerLoading,
     pendingPdfFile,
     setPendingPdfFile,
+    pendingPdfFileUrl,
+    setPendingPdfFileUrl,
+    pendingPdfPageCount,
+    setPendingPdfPageCount,
     pdfPreviewUrl,
     setPdfPreviewUrl,
     fileInputRef,

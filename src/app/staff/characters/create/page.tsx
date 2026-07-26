@@ -7,7 +7,7 @@ import {
   useMapContextToCharacter,
   useUploadCharacterMedia,
 } from "@/features/characters/hooks";
-import { useCreateCharacterDocument, useUploadDocumentPdf, useGetDocumentPdfUrl } from "@/features/documents/hooks";
+import { useCreateCharacterDocument, useUploadAndExtractPdf } from "@/features/documents/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { isValidUrl } from "@/lib/utils/url";
 import { toast } from "sonner";
@@ -22,7 +22,7 @@ export default function CreateCharacterPage() {
 
   const createCharacter = useCreateCharacter();
   const createCharacterDocument = useCreateCharacterDocument();
-  const uploadDocumentPdf = useUploadDocumentPdf();
+  const extractPdf = useUploadAndExtractPdf();
   const uploadCharacterMedia = useUploadCharacterMedia();
   const mapContextToCharacter = useMapContextToCharacter();
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
@@ -71,30 +71,19 @@ export default function CreateCharacterPage() {
       }
 
       const documentContent = draft.documentContent.trim();
-      const pendingPdfFile = draft.pendingPdfFile;
 
-      // Create document if has content or PDF file
-      if (documentContent || pendingPdfFile) {
+      // documentContent already carries extracted PDF text when a file was
+      // picked (see handlePdfFilePick in StaffCharacterDetailView) — the
+      // fileUrl from that extraction rides along in pendingPdfFileUrl, so
+      // the document is created in one call, content + file together.
+      if (documentContent) {
         try {
-          const newDoc = await createCharacterDocument.mutateAsync({
+          await createCharacterDocument.mutateAsync({
             characterId: newChar.id,
             title: draft.documentTitle.trim() || draft.name.trim(),
-            content: documentContent || "PDF Document",
-            type: "TEXT",
+            content: documentContent,
+            fileUrl: draft.pendingPdfFileUrl || undefined,
           });
-
-          // Upload PDF if file was selected
-          if (pendingPdfFile && newDoc.id) {
-            try {
-              await uploadDocumentPdf.mutateAsync({
-                docId: newDoc.id,
-                file: pendingPdfFile,
-              });
-              toast.success("Đã upload PDF thành công");
-            } catch {
-              toast.warning("Tài liệu đã tạo nhưng upload PDF thất bại");
-            }
-          }
         } catch {
           toast.warning("Nhân vật đã tạo, nhưng import tài liệu chưa thành công");
         }
@@ -114,6 +103,8 @@ export default function CreateCharacterPage() {
       isPending={createCharacter.isPending || createCharacterDocument.isPending || uploadCharacterMedia.isPending}
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
+      onExtractPdfDocument={async (file) => extractPdf.mutateAsync({ file, entityType: "character" })}
+      isExtractPdfDocumentPending={extractPdf.isPending}
       onMapContext={(characterId, contextId, options) =>
         mapContextToCharacter.mutate(
           { characterId, contextId, contextName: options?.contextName },

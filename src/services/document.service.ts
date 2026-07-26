@@ -1,6 +1,15 @@
 import { axiosClient } from "@/configs/axios.client";
 
-export type DocumentType = "TEXT";
+export type DocumentType = "TEXT" | "PDF";
+
+export type DocumentEntityType = "context" | "character";
+
+export interface ExtractedPdf {
+  /** Supabase storage path (not a signed/public URL) — pass straight through to the create-document call. */
+  fileUrl: string;
+  rawText: string;
+  pageCount: number;
+}
 
 export interface DocumentPayload {
   title: string;
@@ -197,5 +206,26 @@ export const documentService = {
       url: res.data.data.url,
       expiresIn: res.data.data.expiresIn,
     };
+  },
+
+  // POST /documents/pdf/upload-and-extract - Upload a PDF and extract its text
+  // before the document record exists (1-step: file in, {fileUrl, rawText,
+  // pageCount} out). The caller pre-fills a content editor with rawText, lets
+  // staff review/edit it, then creates the document with that content + fileUrl.
+  uploadAndExtractPdf: async (
+    file: File,
+    entityType?: DocumentEntityType,
+    entityId?: string,
+  ): Promise<ExtractedPdf> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (entityType) formData.append("entityType", entityType);
+    if (entityId) formData.append("entityId", entityId);
+    const res = await axiosClient.post("/documents/pdf/upload-and-extract", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return res.data.data;
   },
 };

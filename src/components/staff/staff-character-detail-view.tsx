@@ -107,6 +107,8 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     isDeleteMediaPending = false,
     onCreateTextDocument,
     isCreateTextDocumentPending = false,
+    onExtractPdfDocument,
+    isExtractPdfDocumentPending = false,
     onCreatePdfDocument,
     isCreatePdfDocumentPending = false,
   } = props;
@@ -152,6 +154,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     setViewerLoading,
     pendingPdfFile,
     setPendingPdfFile,
+    pendingPdfFileUrl,
+    setPendingPdfFileUrl,
+    pendingPdfPageCount,
+    setPendingPdfPageCount,
     pdfPreviewUrl,
     setPdfPreviewUrl,
     fileInputRef,
@@ -240,9 +246,47 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     }
   };
 
-  // A PDF document's "content" is just an internal placeholder (PDF text
-  // isn't extracted/editable) — the manual text editor and "attach PDF"
-  // action only make sense for a document that doesn't already have a file.
+  // Picking a PDF before the character exists immediately uploads + extracts
+  // its text (matches the BE's 1-step upload-and-extract endpoint), then
+  // pre-fills the manual content editor below so staff can review/edit it —
+  // the fileUrl travels alongside in pendingPdfFileUrl and is sent together
+  // with that content in a single create call once the character is saved.
+  const handlePdfFilePick = async (file: File) => {
+    const localPreviewUrl = URL.createObjectURL(file);
+    setPendingPdfFile(file);
+    setPdfPreviewUrl(localPreviewUrl);
+    setPendingPdfFileUrl(null);
+    setPendingPdfPageCount(null);
+    if (!onExtractPdfDocument) return;
+    try {
+      const result = await onExtractPdfDocument(file);
+      setPendingPdfFileUrl(result.fileUrl);
+      setPendingPdfPageCount(result.pageCount);
+      set("documentContent")(result.rawText);
+      if (!draft.documentTitle.trim()) {
+        set("documentTitle")(file.name.replace(/\.pdf$/i, ""));
+      }
+    } catch {
+      // onExtractPdfDocument's hook already shows an error toast
+      setPendingPdfFile(null);
+      URL.revokeObjectURL(localPreviewUrl);
+      setPdfPreviewUrl(null);
+    }
+  };
+
+  const clearPendingPdf = () => {
+    setPendingPdfFile(null);
+    setPendingPdfFileUrl(null);
+    setPendingPdfPageCount(null);
+    if (pdfPreviewUrl) {
+      URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfPreviewUrl(null);
+    }
+  };
+
+  // Once an existing document already has a PDF attached, editing its
+  // content through this manual editor + main Save button isn't supported —
+  // that only applies to documents still being drafted (no fileUrl yet).
   const selectedDocument = documents.find((document) => getDocumentId(document) === draft.documentId);
   const selectedDocumentHasPdf = !!selectedDocument?.fileUrl;
 
@@ -267,11 +311,11 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             }}
             style={{ color: "var(--content-muted)" }}
           >
-            <ArrowLeftIcon className="h-5 w-5" />
+            <ArrowLeftIcon className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-lg overflow-hidden relative shrink-0"
+              className="relative w-10 h-10 overflow-hidden rounded-lg shrink-0"
               style={{ background: "var(--card-light-border)" }}
             >
               {isValidUrl(draft.image) && (
@@ -397,7 +441,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
       />
 
       {/* ═══════ Body — two columns ═══════ */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex flex-1 min-h-0">
         {/* ── Left Panel: Form ── */}
         <div
           className="w-[600px] shrink-0 border-r overflow-hidden flex flex-col"
@@ -409,15 +453,15 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             className="flex flex-col h-full min-h-0 gap-0"
           >
             <div
-              className="px-6 pt-6 pb-4 shrink-0 border-b"
+              className="px-6 pt-6 pb-4 border-b shrink-0"
               style={{ borderColor: "var(--card-light-border)" }}
             >
-              <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--content-heading)" }}>
+              <p className="mb-3 text-xs font-semibold tracking-widest uppercase" style={{ color: "var(--content-heading)" }}>
                 Thông tin nhân vật
               </p>
 
               <TabsList
-                className="w-full grid grid-cols-5 h-auto p-1 gap-1"
+                className="grid w-full h-auto grid-cols-5 gap-1 p-1"
                 style={{ background: "rgba(27,38,50,0.04)" }}
               >
                 {FORM_TABS.map((tab) => (
@@ -438,8 +482,8 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               </TabsList>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
-            <TabsContent value="basic" className="space-y-5 mt-0">
+            <div className="flex-1 px-6 py-6 space-y-5 overflow-y-auto">
+            <TabsContent value="basic" className="mt-0 space-y-5">
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
@@ -493,7 +537,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     placeholder="Năm"
                     disabled={!isEditing}
                   />
-                  <label className="flex h-10 items-center gap-2 rounded-md border px-2 text-xs font-medium" style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}>
+                  <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-md" style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}>
                     <Checkbox
                       checked={draft.isBornBc}
                       onCheckedChange={(val) => set("isBornBc")(!!val)}
@@ -533,7 +577,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     placeholder="Năm"
                     disabled={!isEditing}
                   />
-                  <label className="flex h-10 items-center gap-2 rounded-md border px-2 text-xs font-medium" style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}>
+                  <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-md" style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}>
                     <Checkbox
                       checked={draft.isDeathBc}
                       onCheckedChange={(val) => set("isDeathBc")(!!val)}
@@ -547,7 +591,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             </div>
             </TabsContent>
 
-            <TabsContent value="media" className="space-y-5 mt-0">
+            <TabsContent value="media" className="mt-0 space-y-5">
             <MediaSlotField
               label="Ảnh nhân vật"
               icon={<ImageIcon className="h-3.5 w-3.5" />}
@@ -580,7 +624,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 <img
                   src={pendingImagePreviewUrl}
                   alt="Xem trước ảnh"
-                  className="mt-1 h-32 w-32 rounded-lg border object-cover"
+                  className="object-cover w-32 h-32 mt-1 border rounded-lg"
                   style={{ borderColor: "var(--card-light-border)" }}
                 />
               )}
@@ -605,42 +649,6 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               onClear={() => handleMediaClear("MODEL_3D", pendingModelFile, setPendingModelFile)}
             />
 
-            <MediaSlotField
-              label="Video nhân vật"
-              icon={<VideoIcon className="h-3.5 w-3.5" />}
-              accept="video/mp4,video/webm,video/quicktime"
-              disabled={!isEditing}
-              isBusy={isUploadMediaPending || isDeleteMediaPending}
-              hasValue={!!draft.videoUrl || !!pendingVideoFile}
-              hint={`MP4, WEBM, MOV · ${MEDIA_SIZE_HINT}`}
-              caption={
-                pendingVideoFile
-                  ? `Đã chọn: ${pendingVideoFile.name} (sẽ tải lên sau khi lưu)`
-                  : draft.videoUrl
-                    ? "Đã có video"
-                    : "Chưa có video"
-              }
-              onPick={(file) => handleMediaPick(file, "VIDEO", setPendingVideoFile, setPendingVideoPreviewUrl)}
-              onClear={() =>
-                handleMediaClear(
-                  "VIDEO",
-                  pendingVideoFile,
-                  setPendingVideoFile,
-                  pendingVideoPreviewUrl,
-                  setPendingVideoPreviewUrl,
-                )
-              }
-            >
-              {(pendingVideoPreviewUrl || draft.videoUrl) && (
-                <video
-                  src={pendingVideoPreviewUrl || draft.videoUrl}
-                  controls
-                  className="mt-1 h-32 w-full max-w-xs rounded-lg border object-cover"
-                  style={{ borderColor: "var(--card-light-border)" }}
-                />
-              )}
-            </MediaSlotField>
-
             <StaffCharacterMediaPreview
               imageUrl={draft.image}
               modelUrl={draft.modelUrl}
@@ -648,7 +656,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             />
             </TabsContent>
 
-            <TabsContent value="content" className="space-y-5 mt-0">
+            <TabsContent value="content" className="mt-0 space-y-5">
             <div className="grid gap-1.5">
               <StaffFormLabel>Tiểu sử / Bối cảnh *</StaffFormLabel>
               <StaffFormTextarea
@@ -674,18 +682,18 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             </div>
             </TabsContent>
 
-            <TabsContent value="rag" className="space-y-3 mt-0">
+            <TabsContent value="rag" className="mt-0 space-y-3">
             <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <ScrollIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                  <ScrollIcon className="w-4 h-4" style={{ color: "var(--accent-blue)" }} />
+                  <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "var(--content-heading)" }}>
                     Tài liệu RAG kèm theo
                   </p>
                 </div>
                 {mode === "edit" && (
-                  <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                  <div className="p-3 border rounded-lg" style={{ borderColor: "var(--card-light-border)" }}>
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "var(--content-heading)" }}>
                         Tài liệu đã import
                       </p>
                     </div>
@@ -697,6 +705,11 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           if (onCreateTextDocument) await onCreateTextDocument(data);
                         }}
                         isCreateTextPending={isCreateTextDocumentPending}
+                        onExtractPdf={async (file) => {
+                          if (!onExtractPdfDocument) throw new Error("onExtractPdfDocument not provided");
+                          return onExtractPdfDocument(file);
+                        }}
+                        isExtractPdfPending={isExtractPdfDocumentPending}
                         onCreatePdf={async (data) => {
                           if (onCreatePdfDocument) await onCreatePdfDocument(data);
                         }}
@@ -715,7 +728,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           return (
                             <div
                               key={documentId ?? `character-document-${index}`}
-                              className="flex items-start gap-2 rounded-md border p-2"
+                              className="flex items-start gap-2 p-2 border rounded-md"
                               style={{
                                 borderColor: selected
                                   ? "rgba(59,130,246,0.45)"
@@ -727,14 +740,14 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             >
                               <button
                                 type="button"
-                                className="min-w-0 flex-1 text-left cursor-pointer"
+                                className="flex-1 min-w-0 text-left cursor-pointer"
                                 onClick={() => {
                                   selectDocument(document);
                                   setDocumentDetailOpen(true);
                                 }}
                                 title="Xem nội dung tài liệu này"
                               >
-                                <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                                <p className="text-sm font-semibold truncate" style={{ color: "var(--content-heading)" }}>
                                   {document.title || "Tài liệu chưa đặt tên"}
                                 </p>
                                 <p className="mt-0.5 line-clamp-2 text-xs" style={{ color: "var(--content-muted)" }}>
@@ -767,7 +780,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                     style={{ color: "var(--accent-gold)" }}
                                     title="Xem PDF"
                                   >
-                                    <EyeIcon className="h-4 w-4" />
+                                    <EyeIcon className="w-4 h-4" />
                                   </Button>
                                 )}
                                 {onUploadDocumentPdf && !document.fileUrl && (
@@ -786,7 +799,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                     style={{ color: "var(--accent-blue)" }}
                                     title="Upload PDF"
                                   >
-                                    <UploadSimpleIcon className="h-4 w-4" />
+                                    <UploadSimpleIcon className="w-4 h-4" />
                                   </Button>
                                 )}
                                 {onDeleteDocument && (
@@ -805,7 +818,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                     }}
                                     style={{ color: "var(--accent-danger)" }}
                                   >
-                                    <TrashIcon className="h-4 w-4" />
+                                    <TrashIcon className="w-4 h-4" />
                                   </Button>
                                 )}
                               </div>
@@ -821,13 +834,23 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                 {/* PDF Upload for Create Mode */}
                 {mode === "create" && (
-                  <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                        File PDF đính kèm
+                  <div className="p-3 border rounded-lg" style={{ borderColor: "var(--card-light-border)" }}>
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "var(--content-heading)" }}>
+                        Nhập từ file PDF
                         {pendingPdfFile && (
-                          <span className="ml-1.5 text-micro px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
-                            Đã chọn
+                          <span
+                            className="ml-1.5 text-micro px-1.5 py-0.5 rounded-full"
+                            style={{
+                              background: isExtractPdfDocumentPending ? "rgba(59,130,246,0.1)" : "rgba(234,179,8,0.1)",
+                              color: isExtractPdfDocumentPending ? "var(--accent-blue)" : "var(--accent-gold)",
+                            }}
+                          >
+                            {isExtractPdfDocumentPending
+                              ? "Đang trích xuất..."
+                              : pendingPdfFileUrl
+                                ? `Đã trích xuất${pendingPdfPageCount ? ` · ${pendingPdfPageCount} trang` : ""}`
+                                : "Đã chọn"}
                           </span>
                         )}
                       </p>
@@ -836,13 +859,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           type="button"
                           size="sm"
                           variant="ghost"
-                          onClick={() => {
-                            setPendingPdfFile(null);
-                            if (pdfPreviewUrl) {
-                              URL.revokeObjectURL(pdfPreviewUrl);
-                              setPdfPreviewUrl(null);
-                            }
-                          }}
+                          disabled={isExtractPdfDocumentPending}
+                          onClick={clearPendingPdf}
+                          title="Gỡ file PDF"
                         >
                           <TrashIcon className="h-3.5 w-3.5" />
                         </Button>
@@ -855,12 +874,12 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors hover:border-[var(--accent-gold)]/50 hover:bg-[var(--accent-gold)]/5"
                         style={{ borderColor: "var(--card-light-border)" }}
                       >
-                        <FilePdfIcon className="h-8 w-8 mx-auto mb-2" style={{ color: "var(--content-muted)" }} />
+                        <FilePdfIcon className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--content-muted)" }} />
                         <p className="text-sm font-medium" style={{ color: "var(--content-heading)" }}>
                           Click để chọn file PDF
                         </p>
-                        <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
-                          Hoặc kéo thả file vào đây
+                        <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
+                          Nội dung sẽ được tự động trích xuất vào ô bên dưới
                         </p>
                         <input
                           ref={fileInputRef}
@@ -869,29 +888,32 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           className="hidden"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
+                            e.target.value = "";
                             if (file && file.type === "application/pdf") {
-                              setPendingPdfFile(file);
-                              setPdfPreviewUrl(URL.createObjectURL(file));
+                              void handlePdfFilePick(file);
                             } else if (file) {
                               toast.error("Vui lòng chọn file PDF");
                             }
-                            e.target.value = "";
                           }}
                         />
                       </div>
                     ) : (
                       <div className="space-y-3">
                         <div
-                          className="flex items-center gap-3 p-3 rounded-lg border"
+                          className="flex items-center gap-3 p-3 border rounded-lg"
                           style={{ borderColor: "rgba(234,179,8,0.3)", background: "rgba(234,179,8,0.05)" }}
                         >
                           <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                            className="flex items-center justify-center w-10 h-10 rounded-lg shrink-0"
                             style={{ background: "rgba(234,179,8,0.1)" }}
                           >
-                            <FilePdfIcon className="h-5 w-5" style={{ color: "var(--accent-gold)" }} />
+                            {isExtractPdfDocumentPending ? (
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" style={{ color: "var(--accent-gold)" }} />
+                            ) : (
+                              <FilePdfIcon className="w-5 h-5" style={{ color: "var(--accent-gold)" }} />
+                            )}
                           </div>
-                          <div className="min-w-0 flex-1">
+                          <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate" style={{ color: "var(--content-heading)" }}>
                               {pendingPdfFile.name}
                             </p>
@@ -914,18 +936,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           </Button>
                         </div>
 
-                        {pdfPreviewUrl && (
-                          <div
-                            className="border rounded-lg overflow-hidden"
-                            style={{ borderColor: "var(--card-light-border)", height: "200px" }}
-                          >
-                            <iframe
-                              src={pdfPreviewUrl}
-                              className="w-full h-full"
-                              title="PDF Preview"
-                              style={{ border: "none" }}
-                            />
-                          </div>
+                        {pendingPdfFileUrl && (
+                          <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                            Nội dung trích xuất đã được điền vào ô &quot;Nội dung văn bản&quot; bên dưới — hãy kiểm tra và chỉnh sửa trước khi lưu.
+                          </p>
                         )}
                       </div>
                     )}
@@ -935,15 +949,15 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 {!selectedDocumentHasPdf && (
                   <>
                     <div
-                      className="rounded-lg border p-3"
+                      className="p-3 border rounded-lg"
                       style={{ borderColor: "var(--card-light-border)" }}
                     >
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                        Nội dung văn bản (nhập tay)
+                      <p className="mb-2 text-xs font-semibold tracking-widest uppercase" style={{ color: "var(--content-heading)" }}>
+                        Nội dung văn bản{mode === "create" ? " (nhập tay hoặc trích xuất từ PDF)" : " (nhập tay)"}
                       </p>
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                          <p className="text-sm font-semibold truncate" style={{ color: "var(--content-heading)" }}>
                             {draft.documentTitle || "Chưa có tiêu đề tài liệu"}
                           </p>
                           <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
@@ -988,12 +1002,12 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             </div>
             </TabsContent>
 
-            <TabsContent value="context" className="space-y-5 mt-0">
+            <TabsContent value="context" className="mt-0 space-y-5">
             {isCreated ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <LinkIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                  <LinkIcon className="w-4 h-4" style={{ color: "var(--accent-blue)" }} />
+                  <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "var(--content-heading)" }}>
                     Liên kết bối cảnh lịch sử
                   </p>
                 </div>
@@ -1009,15 +1023,15 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           background: "rgba(34,197,94,0.06)",
                         }}
                       >
-                        <CheckCircleIcon className="h-4 w-4 shrink-0" style={{ color: "rgb(22,163,74)" }} />
-                        <p className="text-xs font-medium flex-1 text-green-700">
+                        <CheckCircleIcon className="w-4 h-4 shrink-0" style={{ color: "rgb(22,163,74)" }} />
+                        <p className="flex-1 text-xs font-medium text-green-700">
                           Đã liên kết: {ctx.name}
                         </p>
                         {onUnmapContext && (
                           <button
                             onClick={() => handleRemoveContext(ctx.contextId)}
                             disabled={isMapContextPending}
-                            className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-100 transition-all text-red-600 disabled:opacity-50"
+                            className="p-1 text-red-600 transition-all rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-100 disabled:opacity-50"
                             title="Gỡ liên kết"
                           >
                             <TrashIcon className="h-3.5 w-3.5" />
@@ -1106,10 +1120,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     >
                       <div className="flex items-center gap-2.5">
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                          className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0"
                           style={{ background: "rgba(59,130,246,0.1)" }}
                         >
-                          <ScrollIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
+                          <ScrollIcon className="w-4 h-4" style={{ color: "var(--accent-blue)" }} />
                         </div>
                         <div>
                           <SheetTitle
@@ -1129,7 +1143,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     </SheetHeader>
 
                     {/* Sheet Body — scrollable */}
-                    <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+                    <div className="flex-1 px-6 py-5 space-y-6 overflow-y-auto">
 
                       {/* Section: Nội dung */}
                       <div className="space-y-4">
@@ -1149,7 +1163,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             value={quickCtx.name}
                             onChange={(e) => setQuickContextField("name")(e.target.value)}
                             placeholder="VD: Chiến thắng Bạch Đằng"
-                            className="h-9 text-sm"
+                            className="text-sm h-9"
                           />
                           <ValidationErrorText message={quickErrors.name} />
                         </div>
@@ -1164,7 +1178,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             onChange={(e) => setQuickContextField("description")(e.target.value)}
                             placeholder="Bối cảnh lịch sử, ý nghĩa sự kiện..."
                             rows={4}
-                            className="w-full resize-none rounded-md border px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-400 transition-colors"
+                            className="w-full px-3 py-2 text-sm transition-colors border rounded-md outline-none resize-none focus:ring-1 focus:ring-blue-400"
                             style={{
                               borderColor: "var(--card-light-border)",
                               background: "var(--bg-content)",
@@ -1184,7 +1198,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             value={quickCtx.location}
                             onChange={(e) => setQuickContextField("location")(e.target.value)}
                             placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
-                            className="h-9 text-sm"
+                            className="text-sm h-9"
                           />
                           <ValidationErrorText message={quickErrors.location} />
                         </div>
@@ -1211,7 +1225,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                               value={quickCtx.era}
                               onValueChange={(v) => setQuickContextField("era")(v as EventEraBackend)}
                             >
-                              <SelectTrigger className="h-9 text-sm">
+                              <SelectTrigger className="text-sm h-9">
                                 <SelectValue placeholder="Chọn thời đại" />
                               </SelectTrigger>
                               <SelectContent>
@@ -1234,7 +1248,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                               value={quickCtx.year}
                               onChange={(e) => setQuickContextField("year")(e.target.value)}
                               placeholder="VD: 938"
-                              className="h-9 text-sm"
+                              className="text-sm h-9"
                             />
                             <ValidationErrorText message={quickErrors.year} />
                           </div>
@@ -1263,7 +1277,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             value={quickCtx.imageUrl}
                             onChange={(e) => setQuickContextField("imageUrl")(e.target.value)}
                             placeholder="https://..."
-                            className="h-9 text-sm"
+                            className="text-sm h-9"
                           />
                           <ValidationErrorText message={quickErrors.imageUrl} />
                         </div>
@@ -1278,7 +1292,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             value={quickCtx.videoUrl}
                             onChange={(e) => setQuickContextField("videoUrl")(e.target.value)}
                             placeholder="https://.../video.mp4"
-                            className="h-9 text-sm"
+                            className="text-sm h-9"
                           />
                           <ValidationErrorText message={quickErrors.videoUrl} />
                         </div>
@@ -1289,7 +1303,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                       {/* Section: Trạng thái */}
                       <div
-                        className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl border transition-colors"
+                        className="flex items-center justify-between gap-3 px-4 py-3 transition-colors border rounded-xl"
                         style={{
                           borderColor: quickCtx.isPublished ? "rgba(34,197,94,0.35)" : "rgba(234,179,8,0.35)",
                           background: quickCtx.isPublished ? "rgba(34,197,94,0.06)" : "rgba(254,243,199,0.25)",
@@ -1313,11 +1327,11 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           role="switch"
                           aria-checked={quickCtx.isPublished}
                           onClick={() => setQuickContextField("isPublished")(!quickCtx.isPublished)}
-                          className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none"
+                          className="relative inline-flex h-6 transition-colors border-2 border-transparent rounded-full cursor-pointer w-11 shrink-0 focus-visible:outline-none"
                           style={{ background: quickCtx.isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)" }}
                         >
                           <span
-                            className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
+                            className="block w-5 h-5 transition-transform rounded-full shadow-lg pointer-events-none"
                             style={{
                               background: "#fff",
                               transform: quickCtx.isPublished ? "translateX(20px)" : "translateX(0)",
@@ -1329,7 +1343,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                     {/* Sheet Footer */}
                     <div
-                      className="px-6 py-4 border-t shrink-0 flex items-center justify-end gap-2"
+                      className="flex items-center justify-end gap-2 px-6 py-4 border-t shrink-0"
                       style={{ borderColor: "var(--card-light-border)" }}
                     >
                       <Button
@@ -1391,10 +1405,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               </div>
             ) : (
               <div
-                className="rounded-xl border border-dashed px-4 py-8 text-center"
+                className="px-4 py-8 text-center border border-dashed rounded-xl"
                 style={{ borderColor: "var(--card-light-border)" }}
               >
-                <LinkIcon className="h-5 w-5 mx-auto mb-2" style={{ color: "var(--content-muted)" }} />
+                <LinkIcon className="w-5 h-5 mx-auto mb-2" style={{ color: "var(--content-muted)" }} />
                 <p className="text-sm" style={{ color: "var(--content-muted)" }}>
                   Tạo nhân vật trước để liên kết với bối cảnh lịch sử.
                 </p>
@@ -1416,27 +1430,27 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               initializingLabel={chatInitializingLabel}
             />
           ) : (
-            <div className="flex-1 flex flex-col relative items-center justify-center p-12">
+            <div className="relative flex flex-col items-center justify-center flex-1 p-12">
               <div className="w-full max-w-2xl aspect-[4/3] relative rounded-3xl overflow-hidden shadow-2xl border border-[var(--card-light-border)]">
                 {/* Blurred mock-up */}
                 <div className="absolute inset-0 bg-white" style={{ filter: "blur(40px)", opacity: 0.6 }} />
                 <div className="absolute inset-0 flex flex-col p-8 space-y-6 opacity-20 bg-gray-50">
-                  <div className="h-12 w-48 bg-gray-300 rounded-full" />
-                  <div className="h-24 w-2/3 bg-gray-200 rounded-2xl" />
-                  <div className="h-24 w-1/2 ml-auto bg-blue-200 rounded-2xl" />
-                  <div className="h-24 w-3/4 bg-gray-200 rounded-2xl" />
+                  <div className="w-48 h-12 bg-gray-300 rounded-full" />
+                  <div className="w-2/3 h-24 bg-gray-200 rounded-2xl" />
+                  <div className="w-1/2 h-24 ml-auto bg-blue-200 rounded-2xl" />
+                  <div className="w-3/4 h-24 bg-gray-200 rounded-2xl" />
                 </div>
 
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center space-y-4 px-6">
+                  <div className="px-6 space-y-4 text-center">
                     <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto shadow-xl border border-[var(--card-light-border)]">
-                      <ChatCircleDotsIcon className="h-10 w-10" style={{ color: "var(--accent-blue)" }} />
+                      <ChatCircleDotsIcon className="w-10 h-10" style={{ color: "var(--accent-blue)" }} />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold" style={{ color: "var(--content-heading)" }}>
                         Hệ thống đối thoại chưa khởi tạo
                       </h3>
-                      <p className="text-sm mt-1 max-w-sm mx-auto" style={{ color: "var(--content-muted)" }}>
+                      <p className="max-w-sm mx-auto mt-1 text-sm" style={{ color: "var(--content-muted)" }}>
                         {!isCreated
                           ? "Hãy hoàn tất thông tin và 'Tạo nhân vật' để bắt đầu trải nghiệm AI."
                           : hasPublishErrors

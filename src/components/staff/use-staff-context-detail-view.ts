@@ -32,7 +32,15 @@ const VALIDATED_FIELDS: ContextValidationField[] = [
  * has to worry about rendering.
  */
 export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
-  const { mode, initialDraft, onSave, isPending, initialEditing, documents = [] } = props;
+  const {
+    mode,
+    initialDraft,
+    onSave,
+    isPending,
+    initialEditing,
+    documents = [],
+    isExtractPdfDocumentPending = false,
+  } = props;
 
   const [draft, setDraft] = React.useState<ContextDraft>(initialDraft || EMPTY_CONTEXT_DRAFT);
   const [isEditing, setIsEditing] = React.useState(mode === "create" || !!initialEditing);
@@ -55,6 +63,8 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
 
   /* ── PDF file for create mode ── */
   const [pendingPdfFile, setPendingPdfFile] = React.useState<File | null>(null);
+  const [pendingPdfFileUrl, setPendingPdfFileUrl] = React.useState<string | null>(null);
+  const [pendingPdfPageCount, setPendingPdfPageCount] = React.useState<number | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -166,7 +176,10 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
 
   const draftValidationErrors = React.useMemo(() => validateContextDraft(draft), [draft]);
   const hasDraftErrors = hasValidationErrors(draftValidationErrors);
-  const canSave = !hasDraftErrors && !isPending;
+  // Blocked while a PDF pick is still being extracted so Save can't fire
+  // before pendingPdfFileUrl/documentContent are actually populated — the
+  // pending file would otherwise silently get dropped from the create call.
+  const canSave = !hasDraftErrors && !isPending && !isExtractPdfDocumentPending;
   const canPublish = !isEditing || !hasDraftErrors;
   const publishBlockedMessage = "⚠ Cần hoàn tất các trường bắt buộc trước khi xuất bản.";
 
@@ -198,7 +211,7 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     // state (not in `draft`) so their pickers can reset independently of
     // form fields — they have to be merged back in here or the selected
     // files never reach onSave.
-    onSave({ ...draft, pendingPdfFile, pendingImageFile, pendingVideoFile });
+    onSave({ ...draft, pendingPdfFile, pendingPdfFileUrl, pendingImageFile, pendingVideoFile });
   };
 
   return {
@@ -241,6 +254,10 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     setViewerLoading,
     pendingPdfFile,
     setPendingPdfFile,
+    pendingPdfFileUrl,
+    setPendingPdfFileUrl,
+    pendingPdfPageCount,
+    setPendingPdfPageCount,
     pdfPreviewUrl,
     setPdfPreviewUrl,
     fileInputRef,

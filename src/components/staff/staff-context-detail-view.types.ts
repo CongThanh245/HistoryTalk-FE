@@ -16,7 +16,11 @@ export type ContextDraft = {
   documentId?: string;
   documentTitle: string;
   documentContent: string;
+  /** Picked PDF file for create mode — display only (name/size/local preview). */
   pendingPdfFile?: File | null;
+  /** Supabase storage path returned by upload-and-extract once pendingPdfFile has been extracted. */
+  pendingPdfFileUrl?: string | null;
+  pendingPdfPageCount?: number | null;
   pendingImageFile?: File | null;
   pendingVideoFile?: File | null;
 };
@@ -34,6 +38,8 @@ export const EMPTY_CONTEXT_DRAFT: ContextDraft = {
   documentTitle: "",
   documentContent: "",
   pendingPdfFile: null,
+  pendingPdfFileUrl: null,
+  pendingPdfPageCount: null,
   pendingImageFile: null,
   pendingVideoFile: null,
 };
@@ -72,8 +78,11 @@ export interface StaffContextDetailViewProps {
   /** Create a brand-new text document, independent of the entity's Save button (edit mode only) */
   onCreateTextDocument?: (data: { title: string; content: string }) => Promise<void>;
   isCreateTextDocumentPending?: boolean;
-  /** Create a brand-new PDF document (creates the doc, then uploads the file), independent of Save (edit mode only) */
-  onCreatePdfDocument?: (data: { title: string; file: File }) => Promise<void>;
+  /** Upload a PDF and extract its text before the document exists — used by both the create-mode PDF picker and the edit-mode "new document" panel. */
+  onExtractPdfDocument?: (file: File) => Promise<{ fileUrl: string; rawText: string; pageCount: number }>;
+  isExtractPdfDocumentPending?: boolean;
+  /** Create a brand-new PDF document in one call, using content + fileUrl already produced by onExtractPdfDocument (edit mode only) */
+  onCreatePdfDocument?: (data: { title: string; content: string; fileUrl: string }) => Promise<void>;
   isCreatePdfDocumentPending?: boolean;
 
   /** Characters already linked to this context (edit mode only) */
