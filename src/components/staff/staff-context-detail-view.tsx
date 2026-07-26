@@ -86,6 +86,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     isDeleteMediaPending = false,
     onCreateTextDocument,
     isCreateTextDocumentPending = false,
+    onExtractPdfDocument,
+    isExtractPdfDocumentPending = false,
     onCreatePdfDocument,
     isCreatePdfDocumentPending = false,
     charactersInContext = [],
@@ -135,6 +137,10 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     setViewerLoading,
     pendingPdfFile,
     setPendingPdfFile,
+    pendingPdfFileUrl,
+    setPendingPdfFileUrl,
+    pendingPdfPageCount,
+    setPendingPdfPageCount,
     pdfPreviewUrl,
     setPdfPreviewUrl,
     fileInputRef,
@@ -214,9 +220,47 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     }
   };
 
-  // A PDF document's "content" is just an internal placeholder (PDF text
-  // isn't extracted/editable) — the manual text editor and "attach PDF"
-  // action only make sense for a document that doesn't already have a file.
+  // Picking a PDF before the context exists immediately uploads + extracts
+  // its text (matches the BE's 1-step upload-and-extract endpoint), then
+  // pre-fills the manual content editor below so staff can review/edit it —
+  // the fileUrl travels alongside in pendingPdfFileUrl and is sent together
+  // with that content in a single create call once the context is saved.
+  const handlePdfFilePick = async (file: File) => {
+    const localPreviewUrl = URL.createObjectURL(file);
+    setPendingPdfFile(file);
+    setPdfPreviewUrl(localPreviewUrl);
+    setPendingPdfFileUrl(null);
+    setPendingPdfPageCount(null);
+    if (!onExtractPdfDocument) return;
+    try {
+      const result = await onExtractPdfDocument(file);
+      setPendingPdfFileUrl(result.fileUrl);
+      setPendingPdfPageCount(result.pageCount);
+      set("documentContent")(result.rawText);
+      if (!draft.documentTitle.trim()) {
+        set("documentTitle")(file.name.replace(/\.pdf$/i, ""));
+      }
+    } catch {
+      // onExtractPdfDocument's hook already shows an error toast
+      setPendingPdfFile(null);
+      URL.revokeObjectURL(localPreviewUrl);
+      setPdfPreviewUrl(null);
+    }
+  };
+
+  const clearPendingPdf = () => {
+    setPendingPdfFile(null);
+    setPendingPdfFileUrl(null);
+    setPendingPdfPageCount(null);
+    if (pdfPreviewUrl) {
+      URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfPreviewUrl(null);
+    }
+  };
+
+  // Once an existing document already has a PDF attached, editing its
+  // content through this manual editor + main Save button isn't supported —
+  // that only applies to documents still being drafted (no fileUrl yet).
   const selectedDocument = documents.find((document) => getDocumentId(document) === draft.documentId);
   const selectedDocumentHasPdf = !!selectedDocument?.fileUrl;
 
@@ -587,6 +631,11 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           if (onCreateTextDocument) await onCreateTextDocument(data);
                         }}
                         isCreateTextPending={isCreateTextDocumentPending}
+                        onExtractPdf={async (file) => {
+                          if (!onExtractPdfDocument) throw new Error("onExtractPdfDocument not provided");
+                          return onExtractPdfDocument(file);
+                        }}
+                        isExtractPdfPending={isExtractPdfDocumentPending}
                         onCreatePdf={async (data) => {
                           if (onCreatePdfDocument) await onCreatePdfDocument(data);
                         }}
@@ -701,10 +750,20 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                        File PDF đính kèm
+                        Nhập từ file PDF
                         {pendingPdfFile && (
-                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
-                            Đã chọn
+                          <span
+                            className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full"
+                            style={{
+                              background: isExtractPdfDocumentPending ? "rgba(59,130,246,0.1)" : "rgba(234,179,8,0.1)",
+                              color: isExtractPdfDocumentPending ? "var(--accent-blue)" : "var(--accent-gold)",
+                            }}
+                          >
+                            {isExtractPdfDocumentPending
+                              ? "Đang trích xuất..."
+                              : pendingPdfFileUrl
+                                ? `Đã trích xuất${pendingPdfPageCount ? ` · ${pendingPdfPageCount} trang` : ""}`
+                                : "Đã chọn"}
                           </span>
                         )}
                       </p>
@@ -713,13 +772,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           type="button"
                           size="sm"
                           variant="ghost"
-                          onClick={() => {
-                            setPendingPdfFile(null);
-                            if (pdfPreviewUrl) {
-                              URL.revokeObjectURL(pdfPreviewUrl);
-                              setPdfPreviewUrl(null);
-                            }
-                          }}
+                          disabled={isExtractPdfDocumentPending}
+                          onClick={clearPendingPdf}
+                          title="Gỡ file PDF"
                         >
                           <TrashIcon className="h-3.5 w-3.5" />
                         </Button>
@@ -737,7 +792,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           Click để chọn file PDF
                         </p>
                         <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
-                          Hoặc kéo thả file vào đây
+                          Nội dung sẽ được tự động trích xuất vào ô bên dưới
                         </p>
                         <input
                           ref={fileInputRef}
@@ -746,13 +801,12 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           className="hidden"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
+                            e.target.value = "";
                             if (file && file.type === "application/pdf") {
-                              setPendingPdfFile(file);
-                              setPdfPreviewUrl(URL.createObjectURL(file));
+                              void handlePdfFilePick(file);
                             } else if (file) {
                               toast.error("Vui lòng chọn file PDF");
                             }
-                            e.target.value = "";
                           }}
                         />
                       </div>
@@ -766,7 +820,11 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                             className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
                             style={{ background: "rgba(234,179,8,0.1)" }}
                           >
-                            <FilePdfIcon className="h-5 w-5" style={{ color: "var(--accent-gold)" }} />
+                            {isExtractPdfDocumentPending ? (
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" style={{ color: "var(--accent-gold)" }} />
+                            ) : (
+                              <FilePdfIcon className="h-5 w-5" style={{ color: "var(--accent-gold)" }} />
+                            )}
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium truncate" style={{ color: "var(--content-heading)" }}>
@@ -791,13 +849,10 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           </Button>
                         </div>
 
-                        {pdfPreviewUrl && (
-                          <div
-                            className="border rounded-lg overflow-hidden"
-                            style={{ borderColor: "var(--card-light-border)", height: "200px" }}
-                          >
-                            <iframe src={pdfPreviewUrl} className="w-full h-full" title="PDF Preview" style={{ border: "none" }} />
-                          </div>
+                        {pendingPdfFileUrl && (
+                          <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                            Nội dung trích xuất đã được điền vào ô &quot;Nội dung tài liệu&quot; bên dưới — hãy kiểm tra và chỉnh sửa trước khi lưu.
+                          </p>
                         )}
                       </div>
                     )}
@@ -813,7 +868,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                       <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
                         {mode === "edit"
                           ? <>Nội dung dưới đây lưu <strong>cùng bối cảnh</strong> khi bạn bấm &quot;Lưu thay đổi&quot; ở trên cùng — chọn một tài liệu đã import ở trên để sửa nó, hoặc gõ nội dung mới để tạo tài liệu khác. Muốn tạo và lưu ngay lập tức (không cần bấm Lưu thay đổi), dùng nút &quot;+ Tài liệu mới&quot; phía trên.</>
-                          : "Tài liệu này sẽ được tạo cùng lúc khi bạn tạo bối cảnh."}
+                          : "Gõ nội dung trực tiếp, hoặc chọn file PDF ở trên để tự động điền — tài liệu này sẽ được tạo cùng lúc khi bạn tạo bối cảnh."}
                       </p>
                     </div>
                     <div className="grid gap-1.5">

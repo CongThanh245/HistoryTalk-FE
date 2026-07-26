@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { StaffContextDetailView, type ContextDraft } from "@/components/staff/staff-context-detail-view";
 import { useCreateEvent, useUploadContextMedia } from "@/features/events/hooks";
-import { useCreateHistoricalDocument, useUploadDocumentPdf } from "@/features/documents/hooks";
+import { useCreateHistoricalDocument, useUploadAndExtractPdf } from "@/features/documents/hooks";
 import type { EventEraBackend } from "@/services/event.service";
 import { toast } from "sonner";
 
@@ -13,7 +13,7 @@ export default function CreateContextPage() {
 
   const createEvent = useCreateEvent();
   const createHistoricalDocument = useCreateHistoricalDocument();
-  const uploadDocumentPdf = useUploadDocumentPdf();
+  const extractPdf = useUploadAndExtractPdf();
   const uploadContextMedia = useUploadContextMedia();
 
   // Drives the save button's label so multi-step submits (create context →
@@ -57,27 +57,20 @@ export default function CreateContextPage() {
       }
 
       const documentContent = draft.documentContent.trim();
-      const pendingPdfFile = draft.pendingPdfFile;
 
-      if (documentContent || pendingPdfFile) {
+      // documentContent already carries extracted PDF text when a file was
+      // picked (see handlePdfFilePick in StaffContextDetailView) — the
+      // fileUrl from that extraction rides along in pendingPdfFileUrl, so
+      // the document is created in one call, content + file together.
+      if (documentContent) {
         try {
           setSaveStep("Đang lưu tài liệu...");
-          const newDoc = await createHistoricalDocument.mutateAsync({
+          await createHistoricalDocument.mutateAsync({
             contextId: newContext.id,
             title: draft.documentTitle.trim() || payload.name,
-            content: documentContent || "PDF Document",
-            type: "TEXT",
+            content: documentContent,
+            fileUrl: draft.pendingPdfFileUrl || undefined,
           });
-
-          if (pendingPdfFile && newDoc.id) {
-            try {
-              setSaveStep("Đang tải PDF lên...");
-              await uploadDocumentPdf.mutateAsync({ docId: newDoc.id, file: pendingPdfFile });
-              toast.success("Đã upload PDF thành công");
-            } catch {
-              toast.warning("Tài liệu đã tạo nhưng upload PDF thất bại");
-            }
-          }
         } catch {
           toast.warning("Bối cảnh đã tạo, nhưng import tài liệu chưa thành công");
         }
@@ -97,6 +90,8 @@ export default function CreateContextPage() {
       onSave={handleSave}
       isPending={createEvent.isPending || createHistoricalDocument.isPending || uploadContextMedia.isPending}
       pendingLabel={saveStep}
+      onExtractPdfDocument={async (file) => extractPdf.mutateAsync({ file, entityType: "context" })}
+      isExtractPdfDocumentPending={extractPdf.isPending}
     />
   );
 }
