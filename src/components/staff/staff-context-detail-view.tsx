@@ -49,6 +49,16 @@ const ERA_OPTIONS = [
   { value: "CONTEMPORARY" as const, label: "Hiện đại" },
 ];
 
+// Mirrors config.storage.mediaMaxUploadMb on the backend — Supabase's
+// project-wide storage upload limit (Project Settings → Storage), not
+// per-type. Checked client-side too so an oversized file gets rejected the
+// moment it's picked instead of after filling out the whole form and
+// waiting for the request to fail. Keep this in sync manually if that
+// Supabase setting ever changes.
+const MEDIA_MAX_UPLOAD_MB = 50;
+const MEDIA_MAX_UPLOAD_BYTES = MEDIA_MAX_UPLOAD_MB * 1024 * 1024;
+const MEDIA_SIZE_HINT = `Tối đa ${MEDIA_MAX_UPLOAD_MB}MB`;
+
 function ValidationErrorText({ message }: { message?: string }) {
   return message ? (
     <p className="text-[11px] font-medium" style={{ color: "var(--accent-danger)" }}>
@@ -61,6 +71,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
   const {
     mode,
     isPending,
+    pendingLabel,
     documents = [],
     isLoadingDocuments = false,
     onDeleteDocument,
@@ -140,6 +151,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
 
   type MediaKind = "IMAGE_2D" | "VIDEO";
 
+  const [imageUploadProgress, setImageUploadProgress] = React.useState<number | null>(null);
+  const [videoUploadProgress, setVideoUploadProgress] = React.useState<number | null>(null);
+
   // In edit mode the context already exists, so a picked file uploads
   // immediately; in create mode there's no contextId yet, so the file is
   // held as "pending" and actually uploaded by the page's onSave handler
@@ -149,12 +163,27 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     mediaType: MediaKind,
     setPendingFile: (file: File | null) => void,
     setPendingPreviewUrl: (url: string | null) => void,
+    setUploadProgress: (percent: number | null) => void,
   ) => {
+    if (file.size > MEDIA_MAX_UPLOAD_BYTES) {
+      toast.error(`${MEDIA_SIZE_HINT}. File đã chọn nặng ${(file.size / 1024 / 1024).toFixed(1)}MB.`);
+      return;
+    }
+
     if (isCreated && draft.id && onUploadMedia) {
+      setUploadProgress(0);
       try {
-        await onUploadMedia(draft.id, file, mediaType);
+        const result = await onUploadMedia(draft.id, file, mediaType, setUploadProgress);
+        // Reflect the new URL in the form right away — the background
+        // query invalidation would otherwise only apply once isEditing
+        // turns false, leaving the preview stuck on "no media" until F5.
+        if (result?.viewUrl) {
+          set(mediaType === "IMAGE_2D" ? "imageUrl" : "videoUrl")(result.viewUrl);
+        }
       } catch {
         // onUploadMedia's hook already shows an error toast
+      } finally {
+        setUploadProgress(null);
       }
       return;
     }
@@ -178,6 +207,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     if (isCreated && draft.id && onDeleteMedia) {
       try {
         await onDeleteMedia(draft.id, mediaType);
+        set(mediaType === "IMAGE_2D" ? "imageUrl" : "videoUrl")("");
       } catch {
         // onDeleteMedia's hook already shows an error toast
       }
@@ -290,7 +320,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                 disabled={!canSave}
                 className="border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-[0.85] hover:shadow-md cursor-pointer"
               >
-                {isPending ? "Đang lưu..." : isCreated ? "Lưu thay đổi" : "Tạo bối cảnh"}
+                {isPending ? pendingLabel || "Đang lưu..." : isCreated ? "Lưu thay đổi" : "Tạo bối cảnh"}
               </Button>
             </>
           )}
@@ -381,7 +411,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
               <TabsContent value="basic" className="space-y-4 mt-0">
                 <div className="grid gap-1.5">
-                  <StaffFormLabel>Tên sự kiện *</StaffFormLabel>
+                  <StaffFormLabel>Tên bối cảnh *</StaffFormLabel>
                   <StaffFormInput
                     value={draft.name}
                     onChange={(e) => set("name")(e.target.value)}
@@ -447,7 +477,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   disabled={!isEditing}
                   isBusy={isUploadMediaPending || isDeleteMediaPending}
+                  progress={imageUploadProgress}
                   hasValue={!!draft.imageUrl || !!pendingImageFile}
+                  hint={`JPEG, PNG, WEBP, GIF · ${MEDIA_SIZE_HINT}`}
                   caption={
                     pendingImageFile
                       ? `Đã chọn: ${pendingImageFile.name} (sẽ tải lên sau khi lưu)`
@@ -455,7 +487,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                         ? "Đã có ảnh"
                         : "Chưa có ảnh"
                   }
-                  onPick={(file) => handleMediaPick(file, "IMAGE_2D", setPendingImageFile, setPendingImagePreviewUrl)}
+                  onPick={(file) =>
+                    handleMediaPick(file, "IMAGE_2D", setPendingImageFile, setPendingImagePreviewUrl, setImageUploadProgress)
+                  }
                   onClear={() =>
                     handleMediaClear(
                       "IMAGE_2D",
@@ -484,16 +518,22 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   accept="video/mp4,video/webm,video/quicktime"
                   disabled={!isEditing}
                   isBusy={isUploadMediaPending || isDeleteMediaPending}
+                  progress={videoUploadProgress}
                   hasValue={!!draft.videoUrl || !!pendingVideoFile}
+                  hint={`MP4, WEBM, MOV · ${MEDIA_SIZE_HINT}`}
                   caption={
                     pendingVideoFile
                       ? `Đã chọn: ${pendingVideoFile.name} (sẽ tải lên sau khi lưu)`
                       : draft.videoUrl
                         ? "Đã có video"
-                        : "Chưa có video"
+                        : videoUploadProgress != null
+                          ? `Đang tải video lên... ${videoUploadProgress}%`
+                          : "Chưa có video"
                   }
                   errorMessage={errors.videoUrl}
-                  onPick={(file) => handleMediaPick(file, "VIDEO", setPendingVideoFile, setPendingVideoPreviewUrl)}
+                  onPick={(file) =>
+                    handleMediaPick(file, "VIDEO", setPendingVideoFile, setPendingVideoPreviewUrl, setVideoUploadProgress)
+                  }
                   onClear={() =>
                     handleMediaClear(
                       "VIDEO",

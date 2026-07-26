@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useRouter } from "next/navigation";
 import { StaffContextDetailView, type ContextDraft } from "@/components/staff/staff-context-detail-view";
 import { useCreateEvent, useUploadContextMedia } from "@/features/events/hooks";
@@ -15,6 +16,11 @@ export default function CreateContextPage() {
   const uploadDocumentPdf = useUploadDocumentPdf();
   const uploadContextMedia = useUploadContextMedia();
 
+  // Drives the save button's label so multi-step submits (create context →
+  // upload media → create doc → upload PDF) show what's actually happening
+  // instead of a flat "Đang lưu..." for the whole duration.
+  const [saveStep, setSaveStep] = React.useState<string | null>(null);
+
   const handleSave = async (draft: ContextDraft) => {
     const payload = {
       name: draft.name.trim(),
@@ -28,16 +34,23 @@ export default function CreateContextPage() {
     };
 
     try {
+      setSaveStep("Đang tạo bối cảnh...");
       const newContext = await createEvent.mutateAsync(payload);
 
       // Upload any media picked before the context existed
-      const pendingMedia: { file: File; mediaType: "IMAGE_2D" | "VIDEO" }[] = [
-        ...(draft.pendingImageFile ? [{ file: draft.pendingImageFile, mediaType: "IMAGE_2D" as const }] : []),
-        ...(draft.pendingVideoFile ? [{ file: draft.pendingVideoFile, mediaType: "VIDEO" as const }] : []),
+      const pendingMedia: { file: File; mediaType: "IMAGE_2D" | "VIDEO"; label: string }[] = [
+        ...(draft.pendingImageFile ? [{ file: draft.pendingImageFile, mediaType: "IMAGE_2D" as const, label: "ảnh" }] : []),
+        ...(draft.pendingVideoFile ? [{ file: draft.pendingVideoFile, mediaType: "VIDEO" as const, label: "video" }] : []),
       ];
-      for (const { file, mediaType } of pendingMedia) {
+      for (const { file, mediaType, label } of pendingMedia) {
         try {
-          await uploadContextMedia.mutateAsync({ contextId: newContext.id, file, mediaType });
+          setSaveStep(`Đang tải ${label} lên... 0%`);
+          await uploadContextMedia.mutateAsync({
+            contextId: newContext.id,
+            file,
+            mediaType,
+            onProgress: (percent) => setSaveStep(`Đang tải ${label} lên... ${percent}%`),
+          });
         } catch {
           toast.warning("Bối cảnh đã tạo, nhưng tải lên media chưa thành công");
         }
@@ -48,6 +61,7 @@ export default function CreateContextPage() {
 
       if (documentContent || pendingPdfFile) {
         try {
+          setSaveStep("Đang lưu tài liệu...");
           const newDoc = await createHistoricalDocument.mutateAsync({
             contextId: newContext.id,
             title: draft.documentTitle.trim() || payload.name,
@@ -57,6 +71,7 @@ export default function CreateContextPage() {
 
           if (pendingPdfFile && newDoc.id) {
             try {
+              setSaveStep("Đang tải PDF lên...");
               await uploadDocumentPdf.mutateAsync({ docId: newDoc.id, file: pendingPdfFile });
               toast.success("Đã upload PDF thành công");
             } catch {
@@ -71,6 +86,8 @@ export default function CreateContextPage() {
       router.push(`/staff/contexts/${newContext.id}`);
     } catch {
       // useCreateEvent already shows the API error toast.
+    } finally {
+      setSaveStep(null);
     }
   };
 
@@ -79,6 +96,7 @@ export default function CreateContextPage() {
       mode="create"
       onSave={handleSave}
       isPending={createEvent.isPending || createHistoricalDocument.isPending || uploadContextMedia.isPending}
+      pendingLabel={saveStep}
     />
   );
 }

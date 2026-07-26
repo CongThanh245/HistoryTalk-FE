@@ -141,9 +141,9 @@ export default function EditContextPage() {
       isUploadDocumentPdfPending={uploadDocumentPdf.isPending}
       onGetDocumentPdfUrl={async (docId) => getDocumentPdfUrl.mutateAsync(docId)}
       isGetDocumentPdfUrlPending={getDocumentPdfUrl.isPending}
-      onUploadMedia={async (contextId, file, mediaType) => {
-        await uploadContextMedia.mutateAsync({ contextId, file, mediaType });
-      }}
+      onUploadMedia={(contextId, file, mediaType, onProgress) =>
+        uploadContextMedia.mutateAsync({ contextId, file, mediaType, onProgress })
+      }
       isUploadMediaPending={uploadContextMedia.isPending}
       onDeleteMedia={async (contextId, mediaType) => {
         await deleteContextMedia.mutateAsync({ contextId, mediaType });
