@@ -458,7 +458,7 @@ export default function StaffQuizzesPage() {
       id: "actions",
       header: "Thao tác",
       cell: ({ row: r }) => (
-        <div className="flex min-w-[210px] items-center gap-2">
+        <div className="flex min-w-[140px] items-center gap-2">
           <Button
             type="button"
             variant="outline"

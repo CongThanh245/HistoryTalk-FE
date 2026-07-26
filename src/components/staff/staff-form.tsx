@@ -37,14 +37,19 @@ export type StaffFormInputProps = React.ComponentPropsWithoutRef<typeof Input>;
 export const StaffFormInput = React.forwardRef<
   HTMLInputElement,
   StaffFormInputProps
->(({ className, style, ...props }, ref) => (
+>(({ className, style, disabled, ...props }, ref) => (
   <Input
     ref={ref}
+    disabled={disabled}
     className={cn(
-      "bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10 disabled:pointer-events-auto disabled:cursor-not-allowed",
+      "border-[var(--card-light-border)] transition-all h-10 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-100",
+      // Read-only (view mode) needs to look visibly locked, not just a
+      // slightly-faded version of the editable state — same bg/border as
+      // enabled made it easy to click in and wonder why nothing happens.
+      disabled ? "bg-black/[0.05] border-dashed" : "bg-black/[0.02] focus:bg-white",
       className
     )}
-    style={{ color: "var(--content-heading)", ...style }}
+    style={{ color: disabled ? "var(--content-muted)" : "var(--content-heading)", ...style }}
     {...props}
   />
 ));
@@ -56,14 +61,16 @@ export type StaffFormTextareaProps = React.ComponentPropsWithoutRef<typeof Texta
 export const StaffFormTextarea = React.forwardRef<
   HTMLTextAreaElement,
   StaffFormTextareaProps
->(({ className, style, ...props }, ref) => (
+>(({ className, style, disabled, ...props }, ref) => (
   <Textarea
     ref={ref}
+    disabled={disabled}
     className={cn(
-      "bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all min-h-[140px] resize-none",
+      "border-[var(--card-light-border)] transition-all min-h-[140px] resize-none disabled:opacity-100 disabled:cursor-not-allowed",
+      disabled ? "bg-black/[0.05] border-dashed" : "bg-black/[0.02] focus:bg-white",
       className
     )}
-    style={{ color: "var(--content-heading)", ...style }}
+    style={{ color: disabled ? "var(--content-muted)" : "var(--content-heading)", ...style }}
     {...props}
   />
 ));
@@ -91,10 +98,11 @@ export function StaffFormSelect<T extends string>({
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger
         className={cn(
-          "bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10",
+          "border-[var(--card-light-border)] transition-all h-10 disabled:opacity-100 disabled:cursor-not-allowed",
+          disabled ? "bg-black/[0.05] border-dashed" : "bg-black/[0.02] focus:bg-white",
           className
         )}
-        style={{ color: "var(--content-heading)" }}
+        style={{ color: disabled ? "var(--content-muted)" : "var(--content-heading)" }}
       >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>

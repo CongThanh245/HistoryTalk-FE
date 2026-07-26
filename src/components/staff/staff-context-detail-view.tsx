@@ -805,7 +805,17 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                 )}
 
                 {!selectedDocumentHasPdf && (
-                  <>
+                  <div className="space-y-3 border-t pt-4" style={{ borderColor: "var(--card-light-border)" }}>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                        Soạn tài liệu
+                      </p>
+                      <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
+                        {mode === "edit"
+                          ? <>Nội dung dưới đây lưu <strong>cùng bối cảnh</strong> khi bạn bấm &quot;Lưu thay đổi&quot; ở trên cùng — chọn một tài liệu đã import ở trên để sửa nó, hoặc gõ nội dung mới để tạo tài liệu khác. Muốn tạo và lưu ngay lập tức (không cần bấm Lưu thay đổi), dùng nút &quot;+ Tài liệu mới&quot; phía trên.</>
+                          : "Tài liệu này sẽ được tạo cùng lúc khi bạn tạo bối cảnh."}
+                      </p>
+                    </div>
                     <div className="grid gap-1.5">
                       <div className="flex items-center justify-between">
                         <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
@@ -842,7 +852,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                         disabled={!isEditing}
                       />
                     </div>
-                  </>
+                  </div>
                 )}
               </TabsContent>
 
