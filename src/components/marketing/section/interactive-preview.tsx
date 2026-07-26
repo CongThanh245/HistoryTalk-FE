@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { 
-  UserIcon, CheckIcon, TrophyIcon, FlameIcon, PlayIcon, ChatTextIcon, MapPinIcon, SparkleIcon, 
-  QuestionIcon, CaretRightIcon, WarningIcon, HeartIcon, LightningIcon, 
-  ClockCounterClockwiseIcon, ArrowClockwiseIcon 
-} from "@phosphor-icons/react";
+  User, Check, Trophy, Flame, Play, MessageCircle, MapPin, Sparkles, 
+  HelpCircle, ChevronRight, AlertTriangle, Heart, Zap, 
+  History, RefreshCw 
+} from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 interface InteractivePreviewProps {
@@ -91,7 +91,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
           <div className="space-y-5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] tracking-widest text-[var(--accent-gold)] font-bold uppercase bg-[var(--accent-gold)]/10 px-2.5 py-1 rounded">Hồ Sơ Sử Học</span>
-              <span className="text-sm text-zinc-300 flex items-center gap-1.5"><SparkleIcon className="w-4 h-4 text-[var(--accent-gold)]" /> Hoàn thành 90%</span>
+              <span className="text-sm text-zinc-300 flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-[var(--accent-gold)]" /> Hoàn thành 90%</span>
             </div>
 
             <div className="space-y-2">
@@ -103,7 +103,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                   onChange={(e) => setProfileName(e.target.value)}
                   className="w-full bg-[#16223a] border border-[var(--border-default)] rounded-md px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-gold)] transition-colors"
                 />
-                <UserIcon className="absolute right-3 top-3 w-4 h-4 text-zinc-500" />
+                <User className="absolute right-3 top-3 w-4 h-4 text-zinc-500" />
               </div>
             </div>
 
@@ -136,7 +136,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
 
           <button className="w-full mt-5 bg-gradient-to-r from-[var(--accent-gold)] to-[#e2c77a] hover:from-[#e2c77a] hover:to-[var(--accent-gold)] text-[var(--bg-deep)] font-extrabold text-xs uppercase tracking-widest py-3.5 rounded-md shadow-lg hover:shadow-[var(--accent-gold-glow)] transition-all flex items-center justify-center gap-2">
             <span>Khai mở vận mệnh học tập</span>
-            <CaretRightIcon className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       );
@@ -156,7 +156,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
 
           <div className="relative z-10 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ClockCounterClockwiseIcon className="w-4 h-4 text-[var(--accent-gold)] animate-spin-slow" />
+              <History className="w-4 h-4 text-[var(--accent-gold)] animate-spin-slow" />
               <span className="text-xs font-bold tracking-wider uppercase text-zinc-200">Bản Đồ Chiến Tích Lịch Sử</span>
             </div>
             <span className="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-[var(--accent-gold)] font-mono border border-zinc-700">VIET NAM - 3D</span>
@@ -182,7 +182,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                       "relative inline-flex rounded-full h-4.5 w-4.5 border-2 border-[#111c2e] items-center justify-center",
                       selectedBattle === bt.id ? "bg-[var(--accent-gold)]" : "bg-sky-500"
                     )}>
-                      <MapPinIcon className="w-2.5 h-2.5 text-white" />
+                      <MapPin className="w-2.5 h-2.5 text-white" />
                     </span>
                   </span>
                   <span className="absolute left-6 -top-1 px-2 py-0.5 rounded bg-[#16223a]/95 text-[9px] font-extrabold border border-zinc-700 whitespace-nowrap opacity-70 group-hover:opacity-100 transition-opacity">
@@ -208,7 +208,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
             </button>
             <button className="flex-1 bg-[var(--accent-gold)] hover:bg-[#e2c77a] text-[var(--bg-deep)] font-extrabold text-xs py-2.5 rounded transition-colors flex items-center justify-center gap-1 shadow-md hover:shadow-[var(--accent-gold-glow)]">
               <span>Trò chuyện Ngay</span>
-              <CaretRightIcon className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -239,7 +239,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                 title="Tải lại đoạn chat"
                 className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"
               >
-                <ArrowClockwiseIcon className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4" />
               </button>
               <span className="text-[9px] bg-[#1a2436] px-2 py-0.5 rounded text-[var(--accent-gold)] border border-yellow-500/20 font-bold flex items-center">MÔ PHỎNG AI</span>
             </div>
@@ -267,9 +267,9 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
 
             {isTyping && (
               <div className="bg-[#1a2436] border border-yellow-500/10 text-zinc-300 rounded-lg rounded-tl-none p-3 self-start max-w-[80%] flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:0ms]"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:150ms]"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:300ms]"></span>
               </div>
             )}
           </div>
@@ -282,12 +282,12 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                 disabled={isTyping}
                 className="w-full bg-[#1a2436] hover:bg-[#202e47] border border-[var(--accent-gold)]/40 hover:border-[var(--accent-gold)] text-xs text-[var(--accent-gold)] font-extrabold py-2.5 px-3.5 rounded flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(201,162,77,0.05)] active:scale-95"
               >
-                <ChatTextIcon className="w-4 h-4" />
+                <MessageCircle className="w-4 h-4" />
                 <span>Bấm vào đây để đối thoại với Ngô Quyền!</span>
               </button>
             ) : (
               <div className="flex items-center gap-2 text-[11px] text-zinc-400 justify-center py-1.5">
-                <SparkleIcon className="w-4 h-4 text-[var(--accent-gold)] animate-pulse" />
+                <Sparkles className="w-4 h-4 text-[var(--accent-gold)] animate-pulse" />
                 <span>Lịch sử đã mở rộng! Bạn vừa hoàn thành bài đối thoại.</span>
               </div>
             )}
@@ -331,7 +331,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
           <div>
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5 mb-4">
               <span className="text-[11px] font-bold text-[var(--accent-gold)] flex items-center gap-1.5 uppercase">
-                <QuestionIcon className="w-4 h-4" /> Thử Thách Quiz Chớp Nhoáng
+                <HelpCircle className="w-4 h-4" /> Thử Thách Quiz Chớp Nhoáng
               </span>
               <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 font-extrabold">+15 XP</span>
             </div>
@@ -348,10 +348,10 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                 if (isQuizSubmitted) {
                   if (idx === quizQuestion.correct) {
                     btnStyle = "bg-emerald-950/80 border-emerald-500/60 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]";
-                    iconEl = <CheckIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" />;
+                    iconEl = <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />;
                   } else if (idx === selectedQuizOption) {
                     btnStyle = "bg-rose-950/80 border-rose-500/60 text-rose-300";
-                    iconEl = <WarningIcon className="w-3.5 h-3.5 text-rose-400 shrink-0" />;
+                    iconEl = <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />;
                   } else {
                     btnStyle = "bg-[#16223a]/40 border-zinc-900/50 text-zinc-500 opacity-60";
                   }
@@ -424,7 +424,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
 
               <div className="space-y-1">
                 <h4 className="text-xs font-bold text-zinc-100 flex items-center gap-1.5">
-                  Trận Bạch Đằng (938) <TrophyIcon className="w-4 h-4 text-[var(--accent-gold)] animate-bounce" />
+                  Trận Bạch Đằng (938) <Trophy className="w-4 h-4 text-[var(--accent-gold)] animate-bounce" />
                 </h4>
                 <p className="text-xs text-zinc-300">Nhận: <span className="text-[var(--accent-gold)] font-bold">+150 XP</span> & <span className="text-yellow-500 font-bold">+20 Sử Ngọc</span></p>
                 <div className="flex items-center gap-1.5 pt-1.5">
@@ -441,7 +441,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                   <div key={num} className="bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 rounded p-1.5 text-center font-bold text-xs flex flex-col items-center justify-center gap-0.5">
                     <span>Q{num}</span>
-                    <CheckIcon className="w-3 h-3 text-emerald-400" />
+                    <Check className="w-3 h-3 text-emerald-400" />
                   </div>
                 ))}
               </div>
@@ -454,7 +454,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
             </button>
             <button className="flex-1 bg-gradient-to-r from-[var(--accent-gold)] to-[#e2c77a] text-[var(--bg-deep)] font-extrabold text-xs py-2.5 rounded transition-colors flex items-center justify-center gap-1 shadow-md hover:shadow-[var(--accent-gold-glow)]">
               <span>Đại Lộ Sự Tích</span>
-              <CaretRightIcon className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -486,7 +486,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
               )} style={{
                 background: "radial-gradient(circle, rgba(255,146,21,0.2) 0%, rgba(255,146,21,0.03) 70%)"
               }}>
-                <FlameIcon className="w-12 h-12 text-[var(--accent-gold)] filter drop-shadow-[0_0_15px_rgba(255,146,21,0.6)]" />
+                <Flame className="w-12 h-12 text-[var(--accent-gold)] filter drop-shadow-[0_0_15px_rgba(255,146,21,0.6)]" />
                 <span className="absolute -bottom-1 bg-gradient-to-r from-[var(--accent-gold)] to-[#e2c77a] text-[var(--bg-deep)] text-[10px] font-extrabold px-3 py-0.5 rounded-full shadow border-2 border-[#0a1122]">
                   7 NGÀY
                 </span>
@@ -515,9 +515,9 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                   <span className="text-[9px] font-bold block">{day.name}</span>
                   <div className="w-5.5 h-5.5 rounded-full bg-zinc-950/40 flex items-center justify-center text-[10px]">
                     {day.status === "completed" ? (
-                      <CheckIcon className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
+                      <Check className="w-3.5 h-3.5 text-[var(--accent-gold)]" />
                     ) : day.status === "active" ? (
-                      <FlameIcon className="w-3.5 h-3.5 text-amber-500" />
+                      <Flame className="w-3.5 h-3.5 text-amber-500" />
                     ) : (
                       <span className="w-1.5 h-1.5 rounded-full bg-zinc-700"></span>
                     )}
@@ -539,7 +539,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                   : "bg-gradient-to-r from-amber-500 to-[var(--accent-gold)] text-[var(--bg-deep)] hover:brightness-110 hover:shadow-[var(--accent-gold-glow)]"
               )}
             >
-              <LightningIcon className={cn("w-4 h-4", !streakClaimed && "animate-bounce")} />
+              <Zap className={cn("w-4 h-4", !streakClaimed && "animate-bounce")} />
               <span>{streakClaimed ? "Đã nhận quà điểm danh!" : "Nhận Quà Điểm Danh Hàng Ngày"}</span>
             </button>
           </div>

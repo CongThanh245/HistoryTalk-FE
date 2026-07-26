@@ -58,23 +58,17 @@ function ResultBanner({
   const [showExp, setShowExp] = useState(false);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+    <div className="flex flex-col gap-2 mt-1">
       {/* Status */}
       <div
-        style={{
-          borderRadius: 10,
-          padding: "10px 14px",
-          background: correct ? "rgba(16,40,24,0.08)" : "rgba(90,35,35,0.08)",
-          border: `1px solid ${correct ? "rgba(74,178,98,0.4)" : "rgba(184,50,42,0.4)"}`,
-        }}
+        className={`rounded-[10px] px-3.5 py-2.5 border ${
+          correct
+            ? "bg-[rgba(16,40,24,0.08)] border-[rgba(74,178,98,0.4)]"
+            : "bg-[rgba(90,35,35,0.08)] border-[rgba(184,50,42,0.4)]"
+        }`}
       >
         <p
-          style={{
-            margin: 0,
-            fontSize: 13,
-            fontWeight: 700,
-            color: correct ? "#1f5c34" : "#9b2222",
-          }}
+          className={`m-0 text-[13px] font-bold ${correct ? "text-[#1f5c34]" : "text-[#9b2222]"}`}
         >
           {correct ? "Chính xác!" : "Chưa đúng rồi!"}
         </p>
@@ -84,30 +78,13 @@ function ResultBanner({
       {!showExp ? (
         <button
           onClick={() => setShowExp(true)}
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "#7a5a1e",
-            background: "rgba(201,162,77,0.07)",
-            border: "1px solid rgba(201,162,77,0.2)",
-            borderRadius: 8,
-            cursor: "pointer",
-            padding: "7px 12px",
-            textAlign: "left",
-          }}
+          className="text-xs font-semibold text-[#7a5a1e] bg-accent-gold/[0.07] border border-accent-gold/20 rounded-lg cursor-pointer px-3 py-[7px] text-left"
         >
           Xem giải thích →
         </button>
       ) : (
-        <div
-          style={{
-            background: "rgba(201,162,77,0.05)",
-            border: "1px solid rgba(201,162,77,0.18)",
-            borderRadius: 8,
-            padding: "10px 13px",
-          }}
-        >
-          <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.7, color: "#2d3d4f" }}>
+        <div className="bg-accent-gold/[0.05] border border-accent-gold/[0.18] rounded-lg px-[13px] py-2.5">
+          <p className="m-0 text-[12.5px] leading-[1.7] text-[#2d3d4f]">
             {explanation}
           </p>
         </div>
@@ -116,17 +93,7 @@ function ResultBanner({
       {/* Next button */}
       <button
         onClick={onNext}
-        style={{
-          fontSize: 13,
-          fontWeight: 700,
-          cursor: "pointer",
-          padding: "10px 0",
-          borderRadius: 9,
-          background: "#e8d5a8",
-          border: "1px solid #b8922a",
-          color: "#5c3d0e",
-          width: "100%",
-        }}
+        className="text-[13px] font-bold cursor-pointer py-2.5 rounded-[9px] bg-[#e8d5a8] border border-[#b8922a] text-[#5c3d0e] w-full"
       >
         Câu tiếp theo
       </button>
@@ -179,20 +146,13 @@ function OptionBtn({
   return (
     <button
       onClick={onClick}
+      className={`rounded-[9px] px-3 py-[9px] text-[13px] text-left flex items-center gap-2.5 w-full transition-[background,border-color] duration-[120ms] ${
+        answered ? "cursor-default" : "cursor-pointer"
+      }`}
       style={{
         background: bg,
         border: `1px solid ${border}`,
         color,
-        borderRadius: 9,
-        padding: "9px 12px",
-        fontSize: 13,
-        cursor: answered ? "default" : "pointer",
-        textAlign: "left",
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        width: "100%",
-        transition: "background 0.12s, border-color 0.12s",
       }}
       onMouseEnter={(e) => {
         if (!answered)
@@ -203,23 +163,12 @@ function OptionBtn({
       }}
     >
       <span
-        style={{
-          fontSize: 10,
-          fontWeight: 800,
-          minWidth: 20,
-          height: 20,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: 4,
-          flexShrink: 0,
-          background: "rgba(201,162,77,0.1)",
-          color: letterColor,
-        }}
+        className="text-[10px] font-extrabold min-w-5 h-5 flex items-center justify-center rounded shrink-0 bg-accent-gold/10"
+        style={{ color: letterColor }}
       >
         {letters[index]}
       </span>
-      <span style={{ flex: 1, fontWeight: 500 }}>{label}</span>
+      <span className="flex-1 font-medium">{label}</span>
     </button>
   );
 }
@@ -246,40 +195,16 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+    <div className="flex flex-col gap-[11px]">
       {/* Hint card */}
-      <div
-        style={{
-          background: "rgba(201,162,77,0.04)",
-          border: "1px solid rgba(201,162,77,0.15)",
-          borderRadius: 12,
-          padding: "14px 16px",
-        }}
-      >
-        <p
-          style={{
-            margin: "0 0 10px",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "var(--gold-on-light, #a07828)",
-          }}
-        >
+      <div className="bg-accent-gold/[0.04] border border-accent-gold/15 rounded-xl px-4 py-3.5">
+        <p className="m-0 mb-2.5 text-[11px] font-bold tracking-[0.1em] uppercase text-gold-on-light">
           Đây là ai?
         </p>
 
-        <ul
-          style={{
-            margin: 0,
-            padding: "0 0 0 16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 6,
-          }}
-        >
+        <ul className="m-0 pl-4 flex flex-col gap-1.5">
           {q.hints.slice(0, hintsRevealed).map((h, i) => (
-            <li key={i} style={{ fontSize: 13.5, color: "var(--content-text)", lineHeight: 1.5 }}>
+            <li key={i} className="text-[13.5px] text-content-text leading-[1.5]">
               {h}
             </li>
           ))}
@@ -288,17 +213,7 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
         {!answered && hintsRevealed < q.hints.length && (
           <button
             onClick={() => setHintsRevealed((n) => n + 1)}
-            style={{
-              marginTop: 10,
-              fontSize: 11,
-              fontWeight: 600,
-              color: "var(--gold-on-light, #a07828)",
-              background: "rgba(201,162,77,0.1)",
-              border: "1px solid rgba(201,162,77,0.22)",
-              borderRadius: 6,
-              padding: "3px 10px",
-              cursor: "pointer",
-            }}
+            className="mt-2.5 text-[11px] font-semibold text-gold-on-light bg-accent-gold/10 border border-accent-gold/[0.22] rounded-md px-2.5 py-[3px] cursor-pointer"
           >
             + Gợi ý thêm ({q.hints.length - hintsRevealed} còn lại)
           </button>
@@ -306,7 +221,7 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
       </div>
 
       {/* Options 2×2 */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+      <div className="grid grid-cols-2 gap-[7px]">
         {q.options.map((opt, i) => (
           <OptionBtn
             key={opt}
@@ -352,55 +267,22 @@ function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+    <div className="flex flex-col gap-[11px]">
       {/* Year showcase */}
-      <div
-        style={{
-          background: "var(--accent-earth, rgba(196,106,47,0.06))",
-          border: "1px solid rgba(196,106,47,0.2)",
-          borderRadius: 14,
-          padding: "18px 16px",
-          textAlign: "center",
-        }}
-      >
-        <p
-          style={{
-            margin: "0 0 4px",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-            color: "var(--accent-bronze, #c46a2f)",
-          }}
-        >
+      <div className="bg-[var(--accent-earth,rgba(196,106,47,0.06))] border border-[rgba(196,106,47,0.2)] rounded-[14px] px-4 py-[18px] text-center">
+        <p className="m-0 mb-1 text-[11px] font-bold tracking-[0.15em] uppercase text-[var(--accent-bronze,#c46a2f)]">
           Năm xảy ra sự kiện
         </p>
 
-        <p
-          style={{
-            margin: "0 0 12px",
-            fontSize: 52,
-            fontWeight: 900,
-            lineHeight: 1,
-            letterSpacing: "-2px",
-            color: "var(--burning-flame, #e08040)",
-          }}
-        >
+        <p className="m-0 mb-3 text-[52px] font-black leading-none tracking-[-2px] text-[var(--burning-flame,#e08040)]">
           {q.year}
         </p>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
+        <div className="flex flex-wrap gap-1.5 justify-center">
           {q.clues.map((c, i) => (
             <span
               key={i}
-              style={{
-                fontSize: 11,
-                padding: "3px 10px",
-                borderRadius: 20,
-                background: "rgba(196,106,47,0.08)",
-                border: "1px solid rgba(196,106,47,0.18)",
-                color: "var(--burning-flame, #c46a2f)",
-              }}
+              className="text-[11px] px-2.5 py-[3px] rounded-[20px] bg-[rgba(196,106,47,0.08)] border border-[rgba(196,106,47,0.18)] text-[var(--burning-flame,#c46a2f)]"
             >
               {c}
             </span>
@@ -409,7 +291,7 @@ function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
       </div>
 
       {/* Options */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+      <div className="flex flex-col gap-[7px]">
         {q.options.map((opt, i) => (
           <OptionBtn
             key={opt}
@@ -480,15 +362,15 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="flex flex-col gap-2.5">
       {/* Instruction */}
-      <p style={{ margin: 0, fontSize: 12, color: "var(--content-muted)" }}>
+      <p className="m-0 text-xs text-content-muted">
         Kéo thả sắp xếp{" "}
-        <strong style={{ color: "var(--content-text)" }}>từ sớm đến muộn nhất</strong>
+        <strong className="text-content-text">từ sớm đến muộn nhất</strong>
       </p>
 
       {/* Draggable list */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div className="flex flex-col gap-1.5">
         {items.map((item, i) => {
           const correctPos = correctOrder.findIndex((c) => c.id === item.id);
           const placedOk = submitted && correctPos === i;
@@ -510,6 +392,9 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               }}
               onDragEnd={handleDrop}
               onDragOver={(e) => e.preventDefault()}
+              className={`rounded-[10px] px-[13px] py-2.5 flex items-center gap-2.5 transition-all duration-[120ms] select-none ${
+                submitted ? "cursor-default" : "cursor-grab"
+              } ${isDraggingThis ? "opacity-35" : "opacity-100"}`}
               style={{
                 background: placedOk
                   ? "rgba(16,40,24,0.08)"
@@ -527,24 +412,12 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
                     ? "rgba(201,162,77,0.4)"
                     : "var(--card-light-border)"
                 }`,
-                borderRadius: 10,
-                padding: "10px 13px",
-                cursor: submitted ? "default" : "grab",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                transition: "all 0.12s",
-                opacity: isDraggingThis ? 0.35 : 1,
-                userSelect: "none",
               }}
             >
               {/* Handle / result dot */}
               <span
+                className="w-1.5 h-1.5 rounded-full shrink-0"
                 style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  flexShrink: 0,
                   background: submitted
                     ? placedOk
                       ? "#5dcc78"
@@ -553,11 +426,11 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
                 }}
               />
 
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--content-text)" }}>
+              <div className="flex-1">
+                <p className="m-0 text-[13px] font-semibold text-content-text">
                   {item.label}
                 </p>
-                <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--content-muted)" }}>
+                <p className="m-0 mt-0.5 text-[11px] text-content-muted">
                   {item.description}
                 </p>
               </div>
@@ -565,36 +438,18 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               {/* Year badge (post-submit) */}
               {submitted && (
                 <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 800,
-                    color: placedOk ? "#1f5c34" : "#9b2222",
-                    background: placedOk ? "rgba(74,178,98,0.12)" : "rgba(184,50,42,0.12)",
-                    border: `1px solid ${placedOk ? "rgba(74,178,98,0.3)" : "rgba(184,50,42,0.3)"}`,
-                    borderRadius: 5,
-                    padding: "1px 7px",
-                  }}
+                  className={`text-[11px] font-extrabold rounded-[5px] px-[7px] py-px border ${
+                    placedOk
+                      ? "text-[#1f5c34] bg-[rgba(74,178,98,0.12)] border-[rgba(74,178,98,0.3)]"
+                      : "text-[#9b2222] bg-[rgba(184,50,42,0.12)] border-[rgba(184,50,42,0.3)]"
+                  }`}
                 >
                   {item.yearDisplay}
                 </span>
               )}
 
               {/* Position number */}
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  minWidth: 20,
-                  height: 20,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 5,
-                  background: "rgba(201,162,77,0.1)",
-                  color: "var(--gold-on-light, #a07828)",
-                  flexShrink: 0,
-                }}
-              >
+              <span className="text-[10px] font-bold min-w-5 h-5 flex items-center justify-center rounded-[5px] bg-accent-gold/10 text-gold-on-light shrink-0">
                 {i + 1}
               </span>
             </div>
@@ -605,17 +460,7 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
       {!submitted ? (
         <button
           onClick={handleSubmit}
-          style={{
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer",
-            padding: "10px 0",
-            borderRadius: 9,
-            background: "#e8d5a8",
-            border: "1px solid #b8922a",
-            color: "#5c3d0e",
-            width: "100%",
-          }}
+          className="text-[13px] font-bold cursor-pointer py-2.5 rounded-[9px] bg-[#e8d5a8] border border-[#b8922a] text-[#5c3d0e] w-full"
         >
           Kiểm tra thứ tự
         </button>
@@ -672,38 +517,15 @@ export function HistoryMiniGame() {
   };
 
   return (
-    <div
-      style={{
-        background: "var(--card-light-bg)",
-        border: "1px solid var(--card-light-border)",
-        borderRadius: 14,
-        overflow: "hidden",
-        boxShadow: "0 2px 12px rgba(27,38,50,0.07)",
-      }}
-    >
+    <div className="bg-card-light-bg border border-card-light-border rounded-[14px] overflow-hidden shadow-[0_2px_12px_rgba(27,38,50,0.07)]">
       {/* Header — chỉ text, không icon */}
-      <div
-        style={{
-          padding: "14px 18px 12px",
-          borderBottom: "1px solid var(--card-light-border)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
+      <div className="px-[18px] pt-3.5 pb-3 border-b border-card-light-border flex items-center justify-between">
         <div>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 13,
-              fontWeight: 700,
-              color: "var(--content-heading)",
-            }}
-          >
+          <p className="m-0 text-[13px] font-bold text-content-heading">
             {MODE_LABELS[mode]}
           </p>
           {score.total > 0 && (
-            <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--content-muted)" }}>
+            <p className="m-0 mt-0.5 text-[11px] text-content-muted">
               {score.correct}/{score.total} câu đúng
             </p>
           )}
@@ -711,32 +533,14 @@ export function HistoryMiniGame() {
 
         <button
           onClick={handleSwitchGame}
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            cursor: "pointer",
-            padding: "5px 11px",
-            borderRadius: 7,
-            background: "transparent",
-            border: "1px solid var(--card-light-border)",
-            color: "var(--content-muted)",
-            transition: "all 0.12s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(201,162,77,0.4)";
-            e.currentTarget.style.color = "var(--gold-on-light, #a07828)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "var(--card-light-border)";
-            e.currentTarget.style.color = "var(--content-muted)";
-          }}
+          className="text-[11px] font-semibold cursor-pointer px-[11px] py-[5px] rounded-[7px] bg-transparent border border-card-light-border text-content-muted transition-all duration-[120ms] hover:border-accent-gold/40 hover:text-gold-on-light"
         >
           Game khác
         </button>
       </div>
 
       {/* Game area */}
-      <div style={{ padding: "16px 18px 18px" }}>
+      <div className="px-[18px] pt-4 pb-[18px]">
         {mode === "character" && (
           <GameGuessCharacter key={`char-${key}`} onScore={handleScore} />
         )}

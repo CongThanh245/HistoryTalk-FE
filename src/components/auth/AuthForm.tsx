@@ -6,10 +6,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EyeIcon, EyeClosedIcon, XIcon } from "@phosphor-icons/react";
+import { Eye, EyeOff, X } from "lucide-react";
 import { toast } from "sonner";
 import { useGoogleLogin, useLogin, useRegister } from "@/features/auth/hooks";
 import { BrandLogo } from "@/components/commons/brand-logo";
+import { cn } from "@/lib/utils/cn";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -194,10 +195,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   }
 
   return (
-    <div
-      className="fixed inset-0 flex overflow-hidden"
-      style={{ background: "var(--bg-deep)" }}
-    >
+    <div className="fixed inset-0 flex overflow-hidden bg-bg-deep">
       {/* ── Left — Hero ── */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col bg-[var(--palladian)] dark:bg-[var(--bg-deep)]">
         <div
@@ -212,7 +210,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "linear-gradient(90deg, rgba(239,233,225,0.96) 0%, rgba(239,233,225,0.82) 36%, rgba(239,233,225,0.38) 68%, rgba(239,233,225,0.12) 100%)",
+              "linear-gradient(90deg, rgba(255,251,245,0.96) 0%, rgba(255,251,245,0.82) 36%, rgba(255,251,245,0.38) 68%, rgba(255,251,245,0.12) 100%)",
           }}
         />
         <div
@@ -227,41 +225,25 @@ export default function AuthForm({ mode }: AuthFormProps) {
           className="absolute inset-0 hidden pointer-events-none dark:block"
           style={{
             background:
-              "linear-gradient(90deg, rgba(7,13,24,0.94) 0%, rgba(7,13,24,0.76) 42%, rgba(7,13,24,0.28) 100%)",
+              "linear-gradient(90deg, rgba(15,23,42,0.94) 0%, rgba(15,23,42,0.76) 42%, rgba(15,23,42,0.28) 100%)",
           }}
         />
         <div
           aria-hidden
-          className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full blur-3xl pointer-events-none"
-          style={{ background: "rgba(131,57,66,0.2)" }}
+          className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full blur-3xl pointer-events-none bg-[rgba(245,158,11,0.15)]"
         />
         <div className="relative z-20 p-14 flex flex-col justify-between h-full">
           <div className="max-w-[460px]">
-            <h1
-              className="text-4xl font-bold leading-tight mb-5 font-title"
-              style={{
-                color: "var(--text-primary)",
-              }}
-            >
+            <h1 className="text-4xl font-bold leading-tight mb-5 font-title text-content-heading">
               KHÁM PHÁ LỊCH SỬ
               <br />
               THEO CÁCH
               <br />
-              <span
-                style={{
-                  background:
-                    "linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-gold-soft) 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
+              <span className="bg-gradient-to-r from-accent-gold to-accent-gold-soft bg-clip-text text-transparent">
                 HOÀN TOÀN MỚI.
               </span>
             </h1>
-            <p
-              className="text-base leading-relaxed max-w-sm"
-              style={{ color: "var(--text-primary)" }}
-            >
+            <p className="text-base leading-relaxed max-w-sm text-content-heading">
               Chat với nhân vật lịch sử, khám phá sự kiện qua dòng thời gian và
               kiểm tra kiến thức của bạn.
             </p>
@@ -271,17 +253,13 @@ export default function AuthForm({ mode }: AuthFormProps) {
       </div>
 
       {/* ── Right — Form ── */}
-      <div
-        className="w-full lg:w-1/2 flex items-center justify-center p-5 sm:p-8 relative overflow-y-auto"
-        style={{ background: "var(--palladian)" }}
-      >
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-5 sm:p-8 relative overflow-y-auto bg-[var(--palladian)]">
         <button
           onClick={() => router.push("/")}
           tabIndex={-1}
-          className="absolute top-6 right-6 rounded-lg p-1.5 transition-colors cursor-pointer hover:bg-black/5"
-          style={{ color: "var(--content-muted)" }}
+          className="absolute top-6 right-6 rounded-lg p-1.5 transition-colors cursor-pointer hover:bg-black/5 text-content-muted"
         >
-          <XIcon className="w-5 h-5" />
+          <X className="w-5 h-5" />
         </button>
 
         <div className="w-full max-w-md sm:max-w-xl lg:max-w-md space-y-7">
@@ -289,29 +267,23 @@ export default function AuthForm({ mode }: AuthFormProps) {
           <div className="flex justify-center gap-8 text-base font-semibold">
             <Link
               href="/register"
-              className="pb-2 transition-colors border-b-2"
-              style={{
-                color: isRegister
-                  ? "var(--content-heading)"
-                  : "var(--content-muted)",
-                borderBottomColor: isRegister
-                  ? "var(--gold-on-light)"
-                  : "transparent",
-              }}
+              className={cn(
+                "pb-2 transition-colors border-b-2",
+                isRegister
+                  ? "text-content-heading border-gold-on-light"
+                  : "text-content-muted border-transparent",
+              )}
             >
               Đăng ký
             </Link>
             <Link
               href="/login"
-              className="pb-2 transition-all border-b-2 hover:brightness-95"
-              style={{
-                color: !isRegister
-                  ? "var(--content-heading)"
-                  : "var(--content-muted)",
-                borderBottomColor: !isRegister
-                  ? "var(--gold-on-light)"
-                  : "transparent",
-              }}
+              className={cn(
+                "pb-2 transition-all border-b-2 hover:brightness-95",
+                !isRegister
+                  ? "text-content-heading border-gold-on-light"
+                  : "text-content-muted border-transparent",
+              )}
             >
               Đăng nhập
             </Link>
@@ -328,13 +300,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   type="button"
                   onClick={handleGoogleRedirect}
                   disabled={loading}
-                  className="h-12 w-full rounded-xl border text-sm font-semibold"
+                  className="h-12 w-full rounded-xl border text-sm font-semibold bg-card-light-bg border-card-light-border text-content-text"
                   variant="outline"
-                  style={{
-                    background: "var(--card-light-bg)",
-                    borderColor: "var(--card-light-border)",
-                    color: "var(--content-text)",
-                  }}
                 >
                   Continue with Google
                 </Button>
@@ -344,12 +311,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 <button
                   type="button"
                   disabled
-                  className="h-12 w-full rounded-xl border text-sm font-medium opacity-60"
-                  style={{
-                    background: "var(--card-light-bg)",
-                    borderColor: "var(--card-light-border)",
-                    color: "var(--content-text)",
-                  }}
+                  className="h-12 w-full rounded-xl border text-sm font-medium opacity-60 bg-card-light-bg border-card-light-border text-content-text"
                 >
                   Thiếu NEXT_PUBLIC_GOOGLE_CLIENT_ID
                 </button>
@@ -359,19 +321,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
             {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div
-                  className="w-full border-t"
-                  style={{ borderColor: "var(--card-light-border)" }}
-                />
+                <div className="w-full border-t border-card-light-border" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span
-                  className="px-3 font-medium"
-                  style={{
-                    background: "var(--palladian)",
-                    color: "var(--content-subtle)",
-                  }}
-                >
+                <span className="px-3 font-medium bg-[var(--palladian)] text-content-subtle">
                   hoặc email
                 </span>
               </div>
@@ -384,8 +337,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="userName"
-                    className="text-sm font-medium"
-                    style={{ color: "var(--content-text)" }}
+                    className="text-sm font-medium text-content-text"
                   >
                     Tên người dùng
                   </Label>
@@ -396,12 +348,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     value={userName}
                     autoFocus={isRegister}
                     onChange={(e) => setUserName(e.target.value)}
-                    className="h-11 text-sm rounded-xl focus-visible:ring-1"
-                    style={{
-                      background: "var(--card-light-bg)",
-                      borderColor: "var(--card-light-border)",
-                      color: "var(--content-text)",
-                    }}
+                    className="h-11 text-sm rounded-xl focus-visible:ring-1 bg-card-light-bg border-card-light-border text-content-text"
                   />
                 </div>
               )}
@@ -410,8 +357,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               <div className="space-y-1.5">
                 <Label
                   htmlFor="email"
-                  className="text-sm font-medium"
-                  style={{ color: "var(--content-text)" }}
+                  className="text-sm font-medium text-content-text"
                 >
                   Email
                 </Label>
@@ -422,12 +368,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   value={email}
                   autoFocus={!isRegister}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 text-sm rounded-xl focus-visible:ring-1"
-                  style={{
-                    background: "var(--card-light-bg)",
-                    borderColor: "var(--card-light-border)",
-                    color: "var(--content-text)",
-                  }}
+                  className="h-11 text-sm rounded-xl focus-visible:ring-1 bg-card-light-bg border-card-light-border text-content-text"
                 />
               </div>
 
@@ -436,8 +377,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 <div className="flex justify-between items-center">
                   <Label
                     htmlFor="password"
-                    className="text-sm font-medium"
-                    style={{ color: "var(--content-text)" }}
+                    className="text-sm font-medium text-content-text"
                   >
                     Mật khẩu
                   </Label>
@@ -445,8 +385,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     <Link
                       href="/forgot-password"
                       tabIndex={-1}
-                      className="text-xs hover:underline"
-                      style={{ color: "var(--content-text)" }}
+                      className="text-xs hover:underline text-content-text"
                     >
                       Quên mật khẩu?
                     </Link>
@@ -459,32 +398,23 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     placeholder="Nhập mật khẩu của bạn"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-11 text-sm rounded-xl pr-10 focus-visible:ring-1"
-                    style={{
-                      background: "var(--card-light-bg)",
-                      borderColor: "var(--card-light-border)",
-                      color: "var(--content-text)",
-                    }}
+                    className="h-11 text-sm rounded-xl pr-10 focus-visible:ring-1 bg-card-light-bg border-card-light-border text-content-text"
                   />
                   <button
                     type="button"
                     tabIndex={-1}
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                    style={{ color: "var(--content-muted)" }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-content-muted"
                   >
                     {showPassword ? (
-                      <EyeClosedIcon className="w-4 h-4" />
+                      <EyeOff className="w-4 h-4" />
                     ) : (
-                      <EyeIcon className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                     )}
                   </button>
                 </div>
                 {isRegister && (
-                  <p
-                    className="text-xs"
-                    style={{ color: "var(--content-subtle)" }}
-                  >
+                  <p className="text-xs text-content-subtle">
                     Tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường và số
                   </p>
                 )}
@@ -495,8 +425,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="confirmPassword"
-                    className="text-sm font-medium"
-                    style={{ color: "var(--content-text)" }}
+                    className="text-sm font-medium text-content-text"
                   >
                     Xác nhận mật khẩu
                   </Label>
@@ -507,12 +436,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                       placeholder="Nhập lại mật khẩu của bạn"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="h-11 text-sm rounded-xl pr-10 focus-visible:ring-1"
-                      style={{
-                        background: "var(--card-light-bg)",
-                        borderColor: "var(--card-light-border)",
-                        color: "var(--content-text)",
-                      }}
+                      className="h-11 text-sm rounded-xl pr-10 focus-visible:ring-1 bg-card-light-bg border-card-light-border text-content-text"
                     />
                     <button
                       type="button"
@@ -520,18 +444,17 @@ export default function AuthForm({ mode }: AuthFormProps) {
                       onClick={() =>
                         setShowConfirmPassword(!showConfirmPassword)
                       }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                      style={{ color: "var(--content-muted)" }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-content-muted"
                     >
                       {showConfirmPassword ? (
-                        <EyeClosedIcon className="w-4 h-4" />
+                        <EyeOff className="w-4 h-4" />
                       ) : (
-                        <EyeIcon className="w-4 h-4" />
+                        <Eye className="w-4 h-4" />
                       )}
                     </button>
                   </div>
                   {confirmPassword && password !== confirmPassword && (
-                    <p className="text-xs" style={{ color: "#ef4444" }}>
+                    <p className="text-xs text-red-500">
                       Mật khẩu không khớp
                     </p>
                   )}
@@ -541,14 +464,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
               {/* Submit */}
               <Button
                 type="submit"
-                className="w-full h-11 font-semibold rounded-xl border-0 cursor-pointer mt-2"
+                className="w-full h-11 font-semibold rounded-xl border-0 cursor-pointer mt-2 bg-gradient-to-br from-accent-gold to-[var(--truffle)] text-bg-deep shadow-[0_4px_16px_var(--accent-gold-glow)]"
                 disabled={loading}
-                style={{
-                  background:
-                    "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-                  color: "var(--bg-deep)",
-                  boxShadow: "0 4px 16px var(--accent-gold-glow)",
-                }}
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -582,24 +499,19 @@ export default function AuthForm({ mode }: AuthFormProps) {
             </form>
 
             {/* Terms */}
-            <p
-              className="text-xs text-center"
-              style={{ color: "var(--content-subtle)" }}
-            >
+            <p className="text-xs text-center text-content-subtle">
               Bằng cách nhấp {isRegister ? "Đăng ký" : "Đăng nhập"}, bạn chấp
               nhận{" "}
               <Link
                 href="/terms"
-                className="hover:underline"
-                style={{ color: "var(--gold-on-light)" }}
+                className="hover:underline text-gold-on-light"
               >
                 Điều khoản dịch vụ
               </Link>{" "}
               và{" "}
               <Link
                 href="/privacy"
-                className="hover:underline"
-                style={{ color: "var(--gold-on-light)" }}
+                className="hover:underline text-gold-on-light"
               >
                 Chính sách quyền riêng tư
               </Link>{" "}

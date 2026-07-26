@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
+import { Inter, Playfair_Display } from "next/font/google";
 import "../styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProviders from "@/components/context/query-client-provider";
@@ -9,14 +10,18 @@ import { WelcomeScreen } from "@/components/welcome-screen";
 import { WELCOME_SCREEN_KEY } from "@/constants/welcome-screen";
 import { SessionExpiredDialog } from "@/components/session-expired-dialog";
 
-// Define CSS variables for local fonts
-const titleFont = {
-  variable: "--font-title",
-};
-
-const bodyFont = {
+const inter = Inter({
+  subsets: ["latin", "vietnamese"],
   variable: "--font-body",
-};
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-title",
+  display: "swap",
+  weight: ["700", "800", "900"],
+});
 
 const googleAnalyticsId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
 
@@ -146,7 +151,7 @@ export default function RootLayout({
         )}
       </head>
       <body
-        className={`${titleFont.variable} ${bodyFont.variable} antialiased`}
+        className={`${inter.variable} ${playfair.variable} antialiased`}
       >
         <WelcomeScreen />
         <ThemeProvider>

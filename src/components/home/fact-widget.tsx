@@ -78,53 +78,20 @@ export function FactWidget() {
 
   return (
     <div
-      style={{
-        width: "100%",
-        aspectRatio: "2 / 3",
-        maxHeight: 420,
-        perspective: "1000px",
-        cursor: flipped ? "default" : "pointer",
-        userSelect: "none",
-      }}
+      className={`w-full aspect-[2/3] max-h-[420px] [perspective:1000px] select-none ${flipped ? "cursor-default" : "cursor-pointer"}`}
       onClick={handleFlip}
     >
       {/* Card wrapper — GSAP animates this */}
       <div
         ref={wrapperRef}
-        style={{
-          width: "100%",
-          height: "100%",
-          position: "relative",
-          transformStyle: "preserve-3d",
-          // No CSS transition — GSAP owns the transform
-        }}
+        className="w-full h-full relative [transform-style:preserve-3d]"
       >
         {/* ── MẶT TRƯỚC (hiện khi chưa lật) ── */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-            borderRadius: 18,
-            overflow: "hidden",
-            boxShadow:
-              "0 8px 32px rgba(27,38,50,0.18), 0 2px 8px rgba(27,38,50,0.1)",
-            background:
-              "linear-gradient(145deg, #1a1209 0%, #2d1f08 40%, #1a1209 100%)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 18,
-          }}
-        >
+        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] rounded-[18px] overflow-hidden shadow-[0_8px_32px_rgba(27,38,50,0.18),0_2px_8px_rgba(27,38,50,0.1)] bg-gradient-to-br from-[#1a1209] via-[#2d1f08] to-[#1a1209] flex flex-col items-center justify-center gap-[18px]">
           {/* Họa tiết nền */}
           <div
+            className="absolute inset-0 pointer-events-none"
             style={{
-              position: "absolute",
-              inset: 0,
-              pointerEvents: "none",
               backgroundImage: `
                 repeating-linear-gradient(45deg, rgba(201,162,77,0.04) 0px, rgba(201,162,77,0.04) 1px, transparent 1px, transparent 28px),
                 repeating-linear-gradient(-45deg, rgba(201,162,77,0.04) 0px, rgba(201,162,77,0.04) 1px, transparent 1px, transparent 28px)
@@ -132,42 +99,28 @@ export function FactWidget() {
             }}
           />
           {/* Viền vàng */}
-          <div style={{ position: "absolute", inset: 12, borderRadius: 12, border: "1px solid rgba(201,162,77,0.25)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", inset: 18, borderRadius: 8, border: "1px solid rgba(201,162,77,0.1)", pointerEvents: "none" }} />
+          <div className="absolute inset-3 rounded-xl border border-accent-gold/25 pointer-events-none" />
+          <div className="absolute inset-[18px] rounded-lg border border-accent-gold/10 pointer-events-none" />
 
           {/* Emblem */}
-          <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
-            <div
-              style={{
-                width: 64, height: 64, borderRadius: "50%",
-                background: "radial-gradient(circle, rgba(201,162,77,0.18) 0%, transparent 70%)",
-                border: "1.5px solid rgba(201,162,77,0.35)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                margin: "0 auto 12px", fontSize: 28,
-              }}
-            >
+          <div className="relative z-[1] text-center">
+            <div className="w-16 h-16 rounded-full bg-[radial-gradient(circle,rgba(201,162,77,0.18)_0%,transparent_70%)] border-[1.5px] border-accent-gold/35 flex items-center justify-center mx-auto mb-3 text-[28px]">
               📜
             </div>
-            <p
-              style={{
-                margin: 0, fontSize: 11, fontWeight: 800,
-                letterSpacing: "0.22em", textTransform: "uppercase",
-                color: "rgba(201,162,77,0.7)",
-              }}
-            >
+            <p className="m-0 text-[11px] font-extrabold tracking-[0.22em] uppercase text-accent-gold/70">
               Sự kiện hôm nay
             </p>
           </div>
 
           {/* Hint */}
-          <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
-            <p style={{ margin: 0, fontSize: 12, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em" }}>
+          <div className="relative z-[1] text-center">
+            <p className="m-0 text-xs text-white/30 tracking-[0.08em]">
               Chạm để khám phá
             </p>
-            <div style={{ marginTop: 10, display: "flex", justifyContent: "center" }}>
+            <div className="mt-2.5 flex justify-center">
               <svg
                 width="16" height="24" viewBox="0 0 16 24" fill="none"
-                style={{ animation: "bounce-hint 1.6s ease-in-out infinite" }}
+                className="animate-[bounce-hint_1.6s_ease-in-out_infinite]"
               >
                 <path
                   d="M8 0 L8 16 M2 10 L8 16 L14 10"
@@ -187,43 +140,22 @@ export function FactWidget() {
         </div>
 
         {/* ── MẶT SAU (hiện sau khi lật) ── */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-            borderRadius: 18,
-            overflow: "hidden",
-            boxShadow: "0 8px 32px rgba(27,38,50,0.18), 0 2px 8px rgba(27,38,50,0.1)",
-            background: "var(--card-light-bg, #fffdf8)",
-            border: "1px solid var(--card-light-border, rgba(201,162,77,0.2))",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
+        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[18px] overflow-hidden shadow-[0_8px_32px_rgba(27,38,50,0.18),0_2px_8px_rgba(27,38,50,0.1)] bg-card-light-bg border border-card-light-border flex flex-col">
           {/* Header */}
-          <div
-            style={{
-              padding: "16px 18px 14px",
-              borderBottom: "1px solid rgba(201,162,77,0.15)",
-              background: "linear-gradient(135deg, rgba(201,162,77,0.08) 0%, transparent 100%)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.15em", textTransform: "uppercase", color: "#7a5a1e" }}>
+          <div className="px-[18px] pt-4 pb-3.5 border-b border-accent-gold/15 bg-gradient-to-br from-accent-gold/[0.08] to-transparent">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-extrabold tracking-[0.15em] uppercase text-[#7a5a1e]">
                 📅 Sự kiện hôm nay
               </span>
               {fact.year && (
-                <span style={{ fontSize: 10, fontWeight: 800, color: "#8a4a1a", background: "rgba(196,106,47,0.1)", border: "1px solid rgba(196,106,47,0.22)", borderRadius: 5, padding: "2px 8px" }}>
+                <span className="text-[10px] font-extrabold text-[#8a4a1a] bg-[rgba(196,106,47,0.1)] border border-[rgba(196,106,47,0.22)] rounded-[5px] px-2 py-0.5">
                   {fact.year}
                 </span>
               )}
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            <div className="flex flex-wrap gap-[5px]">
               {fact.tags.map((tag) => (
-                <span key={tag} style={{ fontSize: 10, padding: "2px 8px", borderRadius: 20, background: "rgba(201,162,77,0.08)", border: "1px solid rgba(201,162,77,0.2)", color: "#7a5a1e", fontWeight: 600 }}>
+                <span key={tag} className="text-[10px] px-2 py-0.5 rounded-[20px] bg-accent-gold/[0.08] border border-accent-gold/20 text-[#7a5a1e] font-semibold">
                   {tag}
                 </span>
               ))}
@@ -231,15 +163,15 @@ export function FactWidget() {
           </div>
 
           {/* Body */}
-          <div style={{ flex: 1, padding: "20px 18px", display: "flex", alignItems: "center" }}>
-            <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.75, color: "var(--content-text, #2d3d4f)" }}>
+          <div className="flex-1 px-[18px] py-5 flex items-center">
+            <p className="m-0 text-[14.5px] leading-[1.75] text-content-text">
               {fact.content}
             </p>
           </div>
 
           {/* Footer */}
-          <div style={{ padding: "12px 18px", borderTop: "1px solid rgba(201,162,77,0.1)", display: "flex", justifyContent: "center" }}>
-            <span style={{ fontSize: 10, color: "rgba(201,162,77,0.5)", letterSpacing: "0.1em", fontWeight: 600, textTransform: "uppercase" }}>
+          <div className="px-[18px] py-3 border-t border-accent-gold/10 flex justify-center">
+            <span className="text-[10px] text-accent-gold/50 tracking-[0.1em] font-semibold uppercase">
               Quay lại vào ngày mai để xem thêm
             </span>
           </div>

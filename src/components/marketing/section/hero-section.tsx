@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import Image from "next/image";
-import { PlayIcon, XIcon } from "@phosphor-icons/react";
+import { Play, X } from "lucide-react";
 import { Container } from "../container";
 import { MarketingButton } from "@/components/commons/marketing-button";
 import { isValidUrl } from "@/lib/utils/url";
@@ -35,17 +35,8 @@ function StaticCharacterPreview({
   if (visibleCharacters.length === 0) return <CarouselPlaceholder />;
 
   return (
-    <div
-      className="relative flex h-full w-full items-center justify-center"
-      style={{ perspective: "1200px" }}
-    >
-      <div
-        className="absolute pointer-events-none h-[620px] w-[620px] rounded-full opacity-55"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, rgba(205,211,22,0.22) 0%, rgba(205,211,22,0.08) 40%, transparent 70%)",
-        }}
-      />
+    <div className="relative flex h-full w-full items-center justify-center [perspective:1200px]">
+      <div className="absolute pointer-events-none h-[620px] w-[620px] rounded-full opacity-55 bg-[radial-gradient(ellipse_at_center,rgba(205,211,22,0.22)_0%,rgba(205,211,22,0.08)_40%,transparent_70%)]" />
       {visibleCharacters.map((character, index) => {
         const imageSrc = isValidUrl(character.imageUrl)
           ? character.imageUrl!
@@ -59,9 +50,8 @@ function StaticCharacterPreview({
         return (
           <div
             key={character.id}
-            className="absolute h-[198px] w-[136px] overflow-hidden rounded-[var(--radius-lg)] border bg-[var(--bg-surface)] shadow-[var(--shadow-soft)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
+            className="absolute h-[198px] w-[136px] overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-[var(--bg-surface)] shadow-[var(--shadow-soft)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
             style={{
-              borderColor: "var(--border-default)",
               transform: transforms[index],
               zIndex: 30 - index,
             }}
@@ -77,13 +67,7 @@ function StaticCharacterPreview({
                 sizes="(max-width: 640px) 136px, (max-width: 768px) 190px, (max-width: 1024px) 240px, 280px"
                 className="object-cover"
               />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(to top, var(--bg-surface) 0%, rgba(26,36,54,0) 50%)",
-                }}
-              />
+              <div className="absolute inset-0 bg-[linear-gradient(to_top,var(--bg-surface)_0%,rgba(26,36,54,0)_50%)]" />
             </div>
             <div className="flex h-[35%] flex-col px-3 py-3 text-left sm:px-4">
               <span className="mb-1 w-fit rounded-full border border-[var(--accent-gold)]/55 px-2 py-0.5 text-[9px] font-bold uppercase text-[var(--accent-gold-soft)]">
@@ -130,12 +114,8 @@ export function HeroSection({
       // Phase 2: Defer carousel load để tránh lag initial render
         const loadCarousel = () => setShowCarousel(true);
 
-        if ("requestIdleCallback" in window) {
-          idleCallbackId = (
-            window as Window & {
-              requestIdleCallback: typeof requestIdleCallback;
-            }
-          ).requestIdleCallback(loadCarousel, { timeout: 6500 });
+        if (typeof window.requestIdleCallback === "function") {
+          idleCallbackId = window.requestIdleCallback(loadCarousel, { timeout: 6500 });
         } else {
           carouselTimer = window.setTimeout(loadCarousel, 6500);
         }
@@ -255,15 +235,11 @@ export function HeroSection({
   return (
     <section
       ref={sectionRef}
-      className="relative flex h-svh min-h-svh flex-col overflow-hidden pb-0 lg:items-center lg:justify-center"
-      style={{ 
-        isolation: "isolate"
-      }}
+      className="relative flex h-svh min-h-svh flex-col overflow-hidden pb-0 lg:items-center lg:justify-center isolate"
     >
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none z-0"
         style={{
-          zIndex: 0,
           background: `
             radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
             radial-gradient(ellipse 100% 80% at 50% 120%, #2a1f0d 0%, rgba(10, 12, 16, 0) 70%)
@@ -320,7 +296,7 @@ export function HeroSection({
                   onClick={() => setIsVideoOpen(true)}
                   className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-full border border-white/15 bg-white/[0.04] text-white backdrop-blur-md transition-all duration-300 hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/10 hover:text-[var(--accent-gold)] active:scale-95 lg:h-[58px] lg:w-[58px]"
                 >
-                  <PlayIcon className="h-5 w-5 translate-x-0.5 fill-current lg:h-6 lg:w-6" weight="fill" />
+                  <Play className="h-5 w-5 translate-x-0.5 fill-current lg:h-6 lg:w-6" />
                 </button>
                 <MarketingButton
                   href="/home"
@@ -334,7 +310,7 @@ export function HeroSection({
                   onClick={() => setIsVideoOpen(true)}
                   className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-full border border-white/15 bg-white/[0.04] text-white backdrop-blur-md transition-all duration-300 hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/10 hover:text-[var(--accent-gold)] active:scale-95 lg:h-[58px] lg:w-[58px]"
                 >
-                  <PlayIcon className="h-5 w-5 translate-x-0.5 fill-current lg:h-6 lg:w-6" weight="fill" />
+                  <Play className="h-5 w-5 translate-x-0.5 fill-current lg:h-6 lg:w-6" />
                 </button>
               </div>
             </div>
@@ -371,7 +347,7 @@ export function HeroSection({
               onClick={() => setIsVideoOpen(false)}
               className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-black/55 text-white backdrop-blur-md transition-colors hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
             >
-              <XIcon className="h-4 w-4" weight="bold" />
+              <X className="h-4 w-4" />
             </button>
             <video
               className="aspect-video w-full bg-black object-cover"

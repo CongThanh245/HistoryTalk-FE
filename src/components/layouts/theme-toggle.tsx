@@ -1,6 +1,6 @@
 "use client";
 
-import { MoonIcon, SunIcon } from "@phosphor-icons/react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,18 +24,13 @@ export function ThemeToggle() {
       type="button"
       variant="ghost"
       size="icon"
-      className="h-9 w-9 rounded-full cursor-pointer"
-      aria-label={isDark ? "Chuyá»ƒn sang giao diá»‡n sÃ¡ng" : "Chuyá»ƒn sang giao diá»‡n tá»‘i"}
-      title={isDark ? "Giao diá»‡n sÃ¡ng" : "Giao diá»‡n tá»‘i"}
+      className="h-9 w-9 rounded-full cursor-pointer text-header-text-muted bg-[var(--header-input-bg)] border border-card-border"
+      aria-label={isDark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
+      title={isDark ? "Giao diện sáng" : "Giao diện tối"}
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      style={{
-        color: "var(--header-text-muted)",
-        background: "var(--header-input-bg)",
-        border: "1px solid var(--card-light-border)",
-      }}
       suppressHydrationWarning
     >
-      {isDark ? <SunIcon className="h-[18px] w-[18px]" /> : <MoonIcon className="h-[18px] w-[18px]" />}
+      {isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
     </Button>
   );
 }

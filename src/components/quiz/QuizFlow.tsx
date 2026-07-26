@@ -193,10 +193,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
   const sidebarWidth = 260;
 
   return (
-    <div
-      className="flex h-full overflow-hidden"
-      style={{ background: "var(--bg-content)" }}
-    >
+    <div className="flex h-full overflow-hidden bg-[var(--bg-content)]">
       {authRequiredDialog}
 
       <ConfirmDialog
@@ -247,12 +244,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <button
           onClick={() => setSidebarOpen((v) => !v)}
-          className="absolute top-3 left-3 z-30 p-1.5 rounded-lg transition-all hover:bg-black/5"
-          style={{
-            color: "var(--content-muted)",
-            background: "var(--card-light-bg)",
-            border: "1px solid var(--card-light-border)",
-          }}
+          className="absolute top-3 left-3 z-30 p-1.5 rounded-lg transition-all hover:bg-black/5 text-content-muted bg-card-light-bg border border-card-light-border"
           title={sidebarOpen ? "Ẩn danh sách" : "Hiện danh sách"}
         >
           {sidebarOpen ? (
@@ -264,16 +256,12 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
 
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div
-              className="flex flex-col items-center justify-center gap-3 h-full"
-              style={{ background: "var(--bg-content)" }}
-            >
+            <div className="flex flex-col items-center justify-center gap-3 h-full bg-[var(--bg-content)]">
               <Loader2
                 size={28}
-                className="animate-spin"
-                style={{ color: "var(--accent-gold)" }}
+                className="animate-spin text-accent-gold"
               />
-              <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+              <p className="text-sm text-content-muted">
                 Đang chuẩn bị câu hỏi...
               </p>
             </div>

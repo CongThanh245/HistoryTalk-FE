@@ -126,11 +126,7 @@ export function ChatClient({
     return (
       <div className="flex h-full w-full items-center justify-center">
         <div
-          className="w-6 h-6 rounded-full border-2 animate-spin"
-          style={{
-            borderColor: "var(--accent-gold)",
-            borderTopColor: "transparent",
-          }}
+          className="w-6 h-6 rounded-full border-2 border-accent-gold border-t-transparent animate-spin"
         />
       </div>
     );

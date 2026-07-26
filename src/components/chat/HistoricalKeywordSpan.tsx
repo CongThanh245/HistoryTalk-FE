@@ -21,12 +21,9 @@ export function HistoricalKeywordSpan({ keyword, displayText, onSelect }: Props)
     <span
       onClick={() => onSelect(keyword)}
       title={keyword.shortDesc}
+      className="text-inherit cursor-pointer pb-px transition-[background,color] duration-150 ease-in-out"
       style={{
         borderBottom: `1.5px dashed ${underlineColor}`,
-        color: "inherit",
-        cursor: "pointer",
-        paddingBottom: "1px",
-        transition: "background 150ms ease, color 150ms ease",
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.background = `${underlineColor.replace("0.85)", "0.15)")}`;

@@ -2,25 +2,19 @@
 
 import Link from "next/link";
 import { useEvents } from "@/features/events/hooks";
-import { BankIcon, ArrowRight } from "@phosphor-icons/react";
+import { Landmark, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { isValidUrl } from "@/lib/utils/url";
 
 // Skeleton for loading state
 function SkeletonCard() {
   return (
-    <div
-      className="w-full h-[230px] sm:h-[320px] rounded-xl sm:rounded-2xl border animate-pulse flex flex-col overflow-hidden"
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
-    >
-      <div className="h-[118px] sm:h-[180px] w-full" style={{ background: "var(--card-light-border)", opacity: 0.5 }} />
+    <div className="w-full h-[230px] sm:h-[320px] rounded-xl sm:rounded-2xl border animate-pulse flex flex-col overflow-hidden bg-card-light-bg border-card-light-border">
+      <div className="h-[118px] sm:h-[180px] w-full bg-card-light-border opacity-50" />
       <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-        <div className="h-3 w-1/3 rounded" style={{ background: "var(--card-light-border)" }} />
-        <div className="h-4 w-4/5 rounded" style={{ background: "var(--card-light-border)" }} />
-        <div className="h-3 w-full rounded" style={{ background: "var(--card-light-border)" }} />
+        <div className="h-3 w-1/3 rounded bg-card-light-border" />
+        <div className="h-4 w-4/5 rounded bg-card-light-border" />
+        <div className="h-3 w-full rounded bg-card-light-border" />
       </div>
     </div>
   );
@@ -31,13 +25,30 @@ export function HistoricalContexts() {
   const events = data?.content ?? [];
 
   return (
-    <section className="mb-6 md:mb-8">
+    <section className="mb-8 md:mb-12">
       {/* Title Header */}
-      <div className="flex items-center gap-2 mb-3 md:mb-5">
-        <BankIcon className="w-4 h-4 md:w-5 md:h-5" style={{ color: "var(--accent-gold)" }} />
-        <h2 className="text-lg md:text-xl font-bold" style={{ color: "var(--content-heading)" }}>
-          Khám phá bối cảnh lịch sử
-        </h2>
+      <div className="flex items-center justify-between mb-5 md:mb-7">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-accent-gold/10 border border-accent-gold/20">
+            <Landmark className="w-4.5 h-4.5 text-accent-gold" />
+          </div>
+          <div>
+            <h2 className="font-title text-xl md:text-2xl font-bold text-content-heading leading-tight">
+              Khám phá bối cảnh lịch sử
+            </h2>
+            <p className="text-xs text-content-muted mt-0.5 hidden sm:block">
+              Bước vào không gian của từng thời đại
+            </p>
+          </div>
+        </div>
+        {!isLoading && events.length > 0 && (
+          <Link
+            href="/events"
+            className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200 text-accent-gold border-accent-gold/30 hover:bg-accent-gold/10 hover:border-accent-gold/50"
+          >
+            Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        )}
       </div>
 
       {/* Cards Grid */}
@@ -48,53 +59,34 @@ export function HistoricalContexts() {
             <Link
               key={event.id}
               href={`/events?event=${event.id}`}
-              className="w-full group block outline-none ring-0"
-              style={{ textDecoration: "none" }}
+              className="w-full group block outline-none ring-0 no-underline"
             >
-              <div
-                className="h-[230px] sm:h-[320px] rounded-xl sm:rounded-2xl border flex flex-col overflow-hidden relative"
-                style={{
-                  background: "var(--card-light-bg)",
-                  borderColor: "var(--card-light-border)",
-                  transition: "border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-gold)";
-                  (e.currentTarget as HTMLElement).style.transform = "translateY(-4px)";
-                  (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-soft)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = "var(--card-light-border)";
-                  (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-                  (e.currentTarget as HTMLElement).style.boxShadow = "none";
-                }}
-              >
-                {/* Background Image / Placeholder */}
-                <div className="h-[118px] sm:h-[180px] relative w-full border-b" style={{ borderColor: "var(--card-light-border)", background: "var(--bg-deep)" }}>
+              <div className="h-[240px] sm:h-[320px] rounded-2xl border flex flex-col overflow-hidden relative bg-card-light-bg border-card-light-border transition-all duration-300 hover:border-accent-gold/40 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)]">
+                {/* Background Image */}
+                <div className="h-[130px] sm:h-[190px] relative w-full overflow-hidden bg-bg-deep">
                   {isValidUrl(event.imageUrl) ? (
                     <Image
                       src={event.imageUrl!}
                       alt={event.title}
                       fill
-                      className="object-cover opacity-[0.85] transition-transform duration-300 group-hover:scale-105"
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center opacity-20">
-                      <BankIcon className="w-8 h-8" />
+                      <Landmark className="w-10 h-10" />
                     </div>
                   )}
-                  {/* Gradient overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-[var(--card-light-bg)] to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--card-light-bg)] via-transparent to-transparent opacity-80" />
                 </div>
 
-                <div className="p-3 sm:p-4 flex-1 flex flex-col relative z-10 -mt-2 bg-[var(--card-light-bg)]">
-                  <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1 sm:mb-1.5 drop-shadow-sm" style={{ color: "var(--accent-gold)" }}>
+                <div className="p-3.5 sm:p-4 flex-1 flex flex-col relative z-10 -mt-4">
+                  <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-accent-gold">
                     {event.year > 0 ? `Năm ${event.year}` : `Năm ${Math.abs(event.year)} TCN`}
                   </p>
-                  <h3 className="text-[13px] sm:text-base font-bold line-clamp-2 sm:line-clamp-1 mb-1 sm:mb-1.5 leading-snug group-hover:text-[var(--accent-gold)] transition-colors" style={{ color: "var(--content-heading)" }}>
+                  <h3 className="text-[13px] sm:text-[15px] font-bold line-clamp-2 sm:line-clamp-1 mb-1.5 leading-snug group-hover:text-accent-gold transition-colors duration-200 text-content-heading">
                     {event.title}
                   </h3>
-                  <p className="text-[11px] sm:text-xs line-clamp-2" style={{ color: "var(--content-muted)", lineHeight: 1.45 }}>
+                  <p className="text-[11px] sm:text-xs line-clamp-2 text-content-muted leading-relaxed">
                     {event.summary || "Khám phá câu chuyện chi tiết về bối cảnh lịch sử này ngay."}
                   </p>
                 </div>
@@ -105,34 +97,18 @@ export function HistoricalContexts() {
 
         {/* Placeholder if no events */}
         {!isLoading && events.length === 0 && (
-          <div
-            className="col-span-full text-center py-10 rounded-2xl border border-dashed"
-            style={{ borderColor: "var(--card-light-border)", color: "var(--content-muted)" }}
-          >
+          <div className="col-span-full text-center py-12 rounded-2xl border border-dashed border-card-light-border text-content-muted">
             <p className="text-sm">Chưa có sự kiện nào.</p>
           </div>
         )}
       </div>
 
-      {/* View all button at bottom */}
+      {/* Mobile view all */}
       {!isLoading && events.length > 0 && (
-        <div className="flex justify-center mt-4 md:mt-6">
+        <div className="flex justify-center mt-5 sm:hidden">
           <Link
             href="/events"
-            className="flex items-center gap-1.5 px-4 md:px-6 py-2 md:py-2.5 rounded-xl border text-[13px] md:text-sm font-semibold transition-all duration-200"
-            style={{
-              color: "var(--accent-gold)",
-              borderColor: "var(--accent-gold)",
-              background: "transparent",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--accent-gold-active-bg)";
-              e.currentTarget.style.boxShadow = "var(--shadow-gold)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.boxShadow = "none";
-            }}
+            className="flex items-center gap-1.5 px-5 py-2.5 rounded-full border text-sm font-medium text-accent-gold border-accent-gold/30"
           >
             Xem tất cả bối cảnh <ArrowRight className="w-4 h-4" />
           </Link>

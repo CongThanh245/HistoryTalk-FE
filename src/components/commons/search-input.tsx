@@ -1,6 +1,6 @@
 "use client";
 
-import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { Search } from "lucide-react";
 
 interface SearchInputProps {
   value: string;
@@ -11,23 +11,20 @@ interface SearchInputProps {
 export function SearchInput({ value, onChange, placeholder = "Tìm kiếm..." }: SearchInputProps) {
   return (
     <div
-      className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all duration-150 focus-within:border-[rgba(201,162,77,0.4)]"
-      style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
+      className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all duration-150 focus-within:border-[rgba(201,162,77,0.4)] bg-card-bg border-card-border"
     >
-      <MagnifyingGlassIcon className="w-4 h-4 shrink-0" style={{ color: "var(--content-subtle)" }} />
+      <Search className="w-4 h-4 shrink-0 text-content-subtle" />
       <input
         type="text"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 bg-transparent text-sm outline-none"
-        style={{ color: "var(--content-text)" }}
+        className="flex-1 bg-transparent text-sm outline-none text-content-text"
       />
       {value && (
         <button
           onClick={() => onChange("")}
-          className="text-xs cursor-pointer transition-opacity hover:opacity-70"
-          style={{ color: "var(--content-subtle)" }}
+          className="text-xs cursor-pointer transition-opacity hover:opacity-70 text-content-subtle"
         >
           ✕
         </button>

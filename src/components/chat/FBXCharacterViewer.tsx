@@ -647,50 +647,20 @@ function NoModelPlaceholder({ statusLabel, dotColor, shouldAnimate }: {
   shouldAnimate: boolean;
 }) {
   return (
-    <div style={{
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "rgba(201,168,76,0.6)",
-    }}>
+    <div className="flex h-full w-full flex-col items-center justify-center text-[rgba(201,168,76,0.6)]">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
         <circle cx="12" cy="7" r="4" />
       </svg>
-      <p style={{ marginTop: 12, fontSize: 13, opacity: 0.7 }}>
+      <p className="mt-3 text-[13px] opacity-70">
         Hiện tại nhân vật này chưa có mô hình 3D. Chúng tôi đang bổ sung...
       </p>
 
       {/* Status dot - same styling as in main component */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 12,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 10,
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "4px 14px",
-          borderRadius: 20,
-          background: "rgba(0,0,0,0.6)",
-          border: "1px solid rgba(201,168,76,0.3)",
-          color: "#c9a84c",
-          fontSize: 12,
-          pointerEvents: "none",
-          whiteSpace: "nowrap",
-        }}
-      >
+      <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-[20px] border border-[rgba(201,168,76,0.3)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[#c9a84c]">
         <span
+          className="h-2 w-2 shrink-0 rounded-full"
           style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            flexShrink: 0,
             background: dotColor,
             animation: shouldAnimate ? "pulse 1s ease-in-out infinite" : "none",
           }}
@@ -754,7 +724,7 @@ export function FBXCharacterViewer({
   // Show placeholder if no valid model URL
   if (!hasValidModel || modelLoadError?.url === modelUrl) {
     return (
-      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <div className="relative h-full w-full">
         <NoModelPlaceholder
           statusLabel={statusLabel}
           dotColor={dotColor}
@@ -765,34 +735,12 @@ export function FBXCharacterViewer({
   }
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+    <div className="relative h-full w-full">
       {/* Status dot */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 12,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 10,
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "4px 14px",
-          borderRadius: 20,
-          background: "rgba(0,0,0,0.6)",
-          border: "1px solid rgba(201,168,76,0.3)",
-          color: "#c9a84c",
-          fontSize: 12,
-          pointerEvents: "none",
-          whiteSpace: "nowrap",
-        }}
-      >
+      <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-[20px] border border-[rgba(201,168,76,0.3)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[#c9a84c]">
         <span
+          className="h-2 w-2 shrink-0 rounded-full"
           style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            flexShrink: 0,
             background: dotColor,
             animation: shouldAnimate ? "pulse 1s ease-in-out infinite" : "none",
           }}
@@ -805,7 +753,7 @@ export function FBXCharacterViewer({
         dpr={[1, 1.5]}
         gl={{ antialias: false, powerPreference: "high-performance" }}
         performance={{ min: 0.5 }}
-        style={{ background: "transparent" }}
+        className="bg-transparent"
       >
         <CameraRig />
         <AnimatedSceneLights

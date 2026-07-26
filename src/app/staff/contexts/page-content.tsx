@@ -1,9 +1,9 @@
-﻿﻿"use client";
+"use client";
 
 import * as React from "react";
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
-import { ScrollIcon, MagnifyingGlassIcon, PlusIcon, TrashIcon, ArrowCounterClockwiseIcon, EyeIcon, ImageSquareIcon } from "@phosphor-icons/react";
+import { Scroll, Search, Plus, Trash2, RotateCcw, Eye, Image } from "lucide-react";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { StaffImageHoverPreview } from "@/components/staff/staff-media-preview";
@@ -31,6 +31,7 @@ import {
   EventEra,
 } from "@/services/event.service";
 import type { TrashItem } from "@/services/trash.service";
+import { cn } from "@/lib/utils/cn";
 
 // Constants for Select Options
 const ERA_OPTIONS = [
@@ -116,7 +117,7 @@ export default function StaffContextsPage() {
             previewClassName="h-48 w-72"
             sizes="80px"
             previewSizes="288px"
-            fallback={<ImageSquareIcon className="h-5 w-5" />}
+            fallback={<Image className="h-5 w-5" />}
           />
         ),
         enableSorting: false,
@@ -126,22 +127,19 @@ export default function StaffContextsPage() {
         header: "Tiêu đề",
         cell: ({ row }) => {
           const summary = row.original.summary || "";
-          // Giới hạn 60 ký tự ở tầng dữ liệu để bảng không bị tràn ngang
           const truncatedSummary =
             summary.length > 60 ? summary.slice(0, 60) + "..." : summary;
 
           return (
             <div className="w-[220px]">
               <p
-                className="truncate text-sm font-semibold"
-                style={{ color: "var(--content-heading)" }}
+                className="truncate text-sm font-semibold text-content-heading"
                 title={row.original.title}
               >
                 {row.original.title}
               </p>
               <p
-                className="text-xs mt-0.5 truncate"
-                style={{ color: "var(--content-muted)" }}
+                className="text-xs mt-0.5 truncate text-content-muted"
                 title={summary}
               >
                 {truncatedSummary}
@@ -159,14 +157,14 @@ export default function StaffContextsPage() {
           const isDraft = !row.original.isPublished;
           return (
             <div
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
-              style={{
-                background: isDraft ? "rgba(234,179,8,0.1)" : "rgba(34,197,94,0.1)",
-                color: isDraft ? "rgb(161,98,7)" : "rgb(22,163,74)",
-                border: `1px solid ${isDraft ? "rgba(234,179,8,0.2)" : "rgba(34,197,94,0.2)"}`,
-              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                isDraft
+                  ? "bg-[rgba(234,179,8,0.1)] text-[rgb(161,98,7)] border-[rgba(234,179,8,0.2)]"
+                  : "bg-[rgba(34,197,94,0.1)] text-[rgb(22,163,74)] border-[rgba(34,197,94,0.2)]"
+              )}
             >
-              <EyeIcon className="h-3 w-3" />
+              <Eye className="h-3 w-3" />
               {isDraft ? "Chưa xuất bản" : "Đã xuất bản"}
             </div>
           );
@@ -179,9 +177,8 @@ export default function StaffContextsPage() {
           <div className="flex min-w-[210px] items-center gap-2">
             <Button
               variant="outline"
-              className="h-8 rounded-md px-3 text-xs font-semibold hover:bg-black/[0.04] hover:text-[var(--content-heading)]"
+              className="h-8 rounded-md px-3 text-xs font-semibold hover:bg-black/[0.04] hover:text-content-heading border-card-light-border text-content-heading"
               onClick={() => router.push(`/staff/contexts/${row.original.id}`)}
-              style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
             >
               Chỉnh sửa
             </Button>
@@ -189,8 +186,7 @@ export default function StaffContextsPage() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="h-8 rounded-md px-3 text-sm font-bold hover:bg-black/[0.04] hover:text-[var(--content-heading)]"
-                  style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
+                  className="h-8 rounded-md px-3 text-sm font-bold hover:bg-black/[0.04] hover:text-content-heading border-card-light-border text-content-heading"
                 >
                   ...
                 </Button>
@@ -207,7 +203,7 @@ export default function StaffContextsPage() {
                     setDeleteOpen(true);
                   }}
                 >
-                  <TrashIcon className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                   Chuyển vào thùng rác
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -224,10 +220,7 @@ export default function StaffContextsPage() {
           const label =
             era && era in ERA_CONFIG ? ERA_CONFIG[era]?.label : undefined;
           return (
-            <span
-              className="text-xs font-medium"
-              style={{ color: "var(--content-text)" }}
-            >
+            <span className="text-xs font-medium text-content-text">
               {label ?? "—"}
             </span>
           );
@@ -237,7 +230,7 @@ export default function StaffContextsPage() {
         accessorKey: "year",
         header: "Năm",
         cell: ({ row }) => (
-          <span className="text-xs" style={{ color: "var(--content-muted)" }}>
+          <span className="text-xs text-content-muted">
             {row.original.year < 0
               ? `${Math.abs(row.original.year)} TCN`
               : row.original.year}
@@ -248,7 +241,7 @@ export default function StaffContextsPage() {
         accessorKey: "location",
         header: "Địa điểm",
         cell: ({ row }) => (
-          <span className="block max-w-[140px] truncate text-xs" style={{ color: "var(--content-muted)" }}>
+          <span className="block max-w-[140px] truncate text-xs text-content-muted">
             {row.original.location || "—"}
           </span>
         ),
@@ -257,7 +250,7 @@ export default function StaffContextsPage() {
         accessorKey: "updatedDate",
         header: "Cập nhật",
         cell: ({ row }) => (
-          <div className="text-xs" style={{ color: "var(--content-muted)" }}>
+          <div className="text-xs text-content-muted">
             <p>{formatDate(row.original.updatedDate)}</p>
             <p className="mt-0.5 opacity-70">Tạo: {formatDate(row.original.createdDate)}</p>
           </div>
@@ -267,7 +260,7 @@ export default function StaffContextsPage() {
         accessorKey: "createdBy",
         header: "Người tạo",
         cell: ({ row }) => (
-          <span className="text-xs" style={{ color: "var(--content-muted)" }}>
+          <span className="text-xs text-content-muted">
             {getCreatorName(row.original.createdBy)}
           </span>
         ),
@@ -284,7 +277,7 @@ export default function StaffContextsPage() {
         header: "Tiêu đề",
         cell: ({ row }) => (
           <div className="min-w-[260px]">
-            <p className="text-sm font-semibold" style={{ color: "var(--content-heading)", opacity: 0.6 }}>
+            <p className="text-sm font-semibold text-content-heading opacity-60">
               {row.original.title}
             </p>
           </div>
@@ -296,7 +289,7 @@ export default function StaffContextsPage() {
         cell: ({ row }) => {
           const date = new Date(row.original.deletedAt);
           return (
-            <span className="text-xs" style={{ color: "var(--accent-danger)" }}>
+            <span className="text-xs text-accent-danger">
               {!isNaN(date.getTime()) ? date.toLocaleString("vi-VN") : "—"}
             </span>
           );
@@ -307,17 +300,15 @@ export default function StaffContextsPage() {
         header: () => <div className="text-right pr-4">Thao tác</div>,
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1">
-            <Button variant="ghost" size="icon-sm" className="rounded-full" title="Khôi phục"
+            <Button variant="ghost" size="icon-sm" className="rounded-full text-accent-blue" title="Khôi phục"
               onClick={() => { setRestoreTarget({ id: row.original.id, title: row.original.title }); setRestoreOpen(true); }}
-              style={{ color: "var(--accent-blue)" }}
             >
-              <ArrowCounterClockwiseIcon className="h-4 w-4" />
+              <RotateCcw className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon-sm" className="rounded-full" title="Xoa vinh vien"
+            <Button variant="ghost" size="icon-sm" className="rounded-full text-accent-danger" title="Xoa vinh vien"
               onClick={() => { setPermanentDeleteTarget({ id: row.original.id, title: row.original.title }); setPermanentDeleteOpen(true); }}
-              style={{ color: "var(--accent-danger)" }}
             >
-              <TrashIcon className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         ),
@@ -330,27 +321,16 @@ export default function StaffContextsPage() {
     <StaffShell
       title="Quản lý bối cảnh lịch sử"
       description="Tạo, cập nhật và kiểm soát bối cảnh lịch sử."
-      icon={ScrollIcon}
+      icon={Scroll}
       accent="var(--accent-gold)"
     >
-      <section
-        className="rounded-2xl border p-6 space-y-5"
-        style={{
-          background: "var(--card-light-bg)",
-          borderColor: "var(--card-light-border)",
-        }}
-      >
+      <section className="rounded-2xl border p-6 space-y-5 bg-card-light-bg border-card-light-border">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <h2
-              className="text-base font-semibold"
-              style={{
-                color: "var(--content-heading)",
-              }}
-            >
+            <h2 className="text-base font-semibold text-content-heading">
               {showTrash ? "Thùng rác" : "Danh sách bối cảnh"}
             </h2>
-            <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+            <p className="text-sm text-content-muted">
               {isLoading ? (
                 "Đang tải..."
               ) : (
@@ -368,19 +348,12 @@ export default function StaffContextsPage() {
 
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
             <div className="relative w-full sm:w-[340px]">
-              <MagnifyingGlassIcon
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
-                style={{ color: "var(--content-subtle)" }}
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-content-subtle" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm theo tiêu đề..."
-                className="pl-10 h-10 rounded-xl border"
-                style={{
-                  background: "rgba(27,38,50,0.05)",
-                  borderColor: "var(--card-light-border)",
-                }}
+                className="pl-10 h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border"
               />
             </div>
             <StaffFormSelect
@@ -404,18 +377,18 @@ export default function StaffContextsPage() {
             />
             <Button
               variant="outline"
-              className="h-10 rounded-xl px-4 font-semibold"
+              className={cn(
+                "h-10 rounded-xl px-4 font-semibold",
+                showTrash
+                  ? "border-accent-danger text-accent-danger bg-[rgba(239,68,68,0.08)]"
+                  : "border-card-light-border text-content-heading bg-transparent"
+              )}
               onClick={() => setShowTrash(!showTrash)}
-              style={{
-                borderColor: showTrash ? "var(--accent-danger)" : "var(--card-light-border)",
-                color: showTrash ? "var(--accent-danger)" : "var(--content-heading)",
-                background: showTrash ? "rgba(239,68,68,0.08)" : "transparent",
-              }}
             >
               {showTrash ? (
-                <><ArrowCounterClockwiseIcon className="h-4 w-4 mr-1.5" /> Danh sách</>
+                <><RotateCcw className="h-4 w-4 mr-1.5" /> Danh sách</>
               ) : (
-                <><TrashIcon className="h-4 w-4 mr-1.5" /> Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}</>
+                <><Trash2 className="h-4 w-4 mr-1.5" /> Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}</>
               )}
             </Button>
             {!showTrash && (
@@ -423,7 +396,7 @@ export default function StaffContextsPage() {
                 className="h-10 rounded-xl px-4 font-semibold border-0 bg-[var(--accent-gold)] text-[var(--bg-deep)] shadow-[0_0_14px_var(--accent-gold-glow)] transition-all duration-200 hover:brightness-90 hover:shadow-[0_0_18px_var(--accent-gold-glow)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                 onClick={() => router.push("/staff/contexts/create")}
               >
-                <PlusIcon className="h-4 w-4 mr-1.5" /> Tạo bối cảnh
+                <Plus className="h-4 w-4 mr-1.5" /> Tạo bối cảnh
               </Button>
             )}
           </div>

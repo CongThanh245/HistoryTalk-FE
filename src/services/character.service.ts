@@ -166,7 +166,7 @@ export function mapCharacter(raw: RawCharacter): Character {
     deathDay: raw.deathDay ?? null,
     isDeathBc: raw.isDeathBc ?? false,
     contextId,
-    contexts: raw.contexts?.map(c => ({ contextId: c.contextId ?? c.id ?? "", name: c.name ?? c.title ?? "" })) ?? [],
+    contexts: raw.contexts?.map(c => ({ contextId: resolveRefId(c.contextId) ?? resolveRefId(c.id) ?? "", name: c.name ?? c.title ?? "" })) ?? [],
     role: raw.role,
     era: mapEraLabel(raw.era),
     isActive: raw.isActive ?? true,
