@@ -51,13 +51,10 @@ export function Card({
       className={cn(
         "group relative rounded-xl border overflow-hidden transition-all duration-200 cursor-pointer",
         "hover:shadow-[0_4px_24px_rgba(0,0,0,0.10)] hover:-translate-y-0.5",
+        "bg-card-bg border-card-border",
         isHorizontal ? "flex flex-col md:flex-row" : "flex flex-col",
         className,
       )}
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
       onClick={onClick}
     >
       {/* Hover border glow */}
@@ -104,8 +101,8 @@ export function Card({
             className={cn(
               "absolute inset-0 z-10",
               isHorizontal
-                ? "bg-gradient-to-t from-[var(--card-light-bg)] via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-[var(--card-light-bg)]"
-                : "bg-gradient-to-t from-[var(--card-light-bg)] via-transparent to-transparent",
+                ? "bg-gradient-to-t from-card-bg via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-card-bg"
+                : "bg-gradient-to-t from-card-bg via-transparent to-transparent",
             )}
           />
         </div>
@@ -173,12 +170,9 @@ export function DarkCard({
       className={cn(
         // "relative" bắt buộc phải có để overlay absolute bám đúng chỗ
         "group relative w-full h-full rounded-[var(--radius-lg)] overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col",
+        "bg-bg-surface border-border-default",
         className,
       )}
-      style={{
-        background: "var(--bg-surface)",
-        borderColor: "var(--border-default)",
-      }}
       onClick={onClick}
     >
       {/* ── Hover border overlay ──
@@ -189,20 +183,15 @@ export function DarkCard({
       */}
       <div
         className={cn(
-          "absolute inset-0 pointer-events-none opacity-0 transition-all duration-300",
+          "absolute inset-0 pointer-events-none opacity-0 transition-all duration-300 z-50 rounded-[var(--radius-lg)] shadow-[inset_0_0_0_1.5px_var(--accent-gold),var(--shadow-gold)]",
           hoverEffects && "group-hover:opacity-100",
         )}
-        style={{
-          boxShadow: "inset 0 0 0 1.5px var(--accent-gold), var(--shadow-gold)",
-          borderRadius: "var(--radius-lg)",
-          zIndex: 50,
-        }}
       />
 
       {/* Ảnh */}
       <div
-        className="relative w-full overflow-hidden shrink-0"
-        style={{ height: imageHeight, background: "var(--bg-elevated)" }}
+        className="relative w-full overflow-hidden shrink-0 bg-bg-elevated"
+        style={{ height: imageHeight }}
       >
         <Image
           src={resolvedImageSrc}
@@ -219,23 +208,14 @@ export function DarkCard({
           onError={() => setImageBroken(true)}
         />
         <div
-          className="absolute inset-0 z-10"
-          style={{
-            background: "linear-gradient(to top, var(--bg-surface) 0%, rgba(26,36,54,0) 50%)",
-          }}
+          className="absolute inset-0 z-10 bg-gradient-to-t from-bg-surface to-transparent"
         />
         {badge && (
           <div
-            className="absolute right-2 top-2 z-10 rounded-md border px-1.5 py-0.5 sm:right-3 sm:top-3 sm:px-2 sm:py-1"
-            style={{
-              background: "rgba(14,26,43,0.8)",
-              backdropFilter: "blur(4px)",
-              borderColor: "var(--border-default)",
-            }}
+            className="absolute right-2 top-2 z-10 rounded-md border px-1.5 py-0.5 sm:right-3 sm:top-3 sm:px-2 sm:py-1 bg-[rgba(14,26,43,0.8)] backdrop-blur-[4px] border-border-default"
           >
             <span
-              className="text-[8px] font-bold uppercase tracking-wider sm:text-[10px]"
-              style={{ color: "var(--accent-gold)" }}
+              className="text-[8px] font-bold uppercase tracking-wider sm:text-[10px] text-accent-gold"
             >
               {badge.label}
             </span>

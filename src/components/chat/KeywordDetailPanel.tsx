@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { XIcon, MapPinIcon, UserIcon, SwordIcon } from "@phosphor-icons/react";
+import { X, MapPin, User, Sword } from "lucide-react";
 import type { KeywordData, KeywordType } from "@/data/keywords";
 
 interface Props {
@@ -15,17 +15,17 @@ const TYPE_CONFIG: Record<
   { icon: React.ReactNode; label: string; accent: string }
 > = {
   person: {
-    icon: <UserIcon size={13} weight="fill" />,
+    icon: <User size={13} className="fill-current" />,
     label: "Nhân vật",
     accent: "rgba(201, 162, 77, 1)",
   },
   location: {
-    icon: <MapPinIcon size={13} weight="fill" />,
+    icon: <MapPin size={13} className="fill-current" />,
     label: "Địa danh",
     accent: "rgba(100, 200, 180, 1)",
   },
   event: {
-    icon: <SwordIcon size={13} weight="fill" />,
+    icon: <Sword size={13} className="fill-current" />,
     label: "Sự kiện",
     accent: "rgba(220, 120, 80, 1)",
   },
@@ -61,11 +61,10 @@ export function KeywordDetailPanel({ keyword, onClose }: Props) {
     <>
       {/* Backdrop */}
       <div
-        className="absolute inset-0 z-30 transition-opacity duration-300"
+        className="absolute inset-0 z-30 transition-opacity duration-300 bg-black/35"
         style={{
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? "auto" : "none",
-          background: "rgba(0,0,0,0.35)",
           backdropFilter: isOpen ? "blur(2px)" : "none",
         }}
         onClick={handleBackdropClick}
@@ -74,14 +73,11 @@ export function KeywordDetailPanel({ keyword, onClose }: Props) {
       {/* Sliding Panel */}
       <div
         ref={panelRef}
-        className="absolute top-0 right-0 bottom-0 z-40 flex flex-col overflow-hidden"
+        className="absolute top-0 right-0 bottom-0 z-40 flex flex-col overflow-hidden w-[min(320px,90%)] bg-bg-main transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{
-          width: "min(320px, 90%)",
-          background: "var(--bg-main)",
           borderLeft: `1px solid ${accentBorder}`,
           boxShadow: isOpen ? "-8px 0 32px rgba(0,0,0,0.4)" : "none",
           transform: isOpen ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 300ms cubic-bezier(0.4, 0, 0.2, 1)",
         }}
       >
         {keyword && config && (
@@ -111,14 +107,12 @@ export function KeywordDetailPanel({ keyword, onClose }: Props) {
                   {config.label}
                 </span>
                 <h3
-                  className="text-base font-bold leading-snug"
-                  style={{ color: "var(--text-primary)" }}
+                  className="text-base font-bold leading-snug text-content-heading"
                 >
                   {keyword.keyword}
                 </h3>
                 <p
-                  className="text-[11px] mt-0.5 leading-relaxed"
-                  style={{ color: "var(--text-secondary)" }}
+                  className="text-[11px] mt-0.5 leading-relaxed text-content-text"
                 >
                   {keyword.shortDesc}
                 </p>
@@ -127,14 +121,9 @@ export function KeywordDetailPanel({ keyword, onClose }: Props) {
               {/* Close button */}
               <button
                 onClick={onClose}
-                className="w-7 h-7 flex items-center justify-center rounded-full shrink-0 transition-all hover:scale-110 active:scale-95 cursor-pointer"
-                style={{
-                  background: "var(--bg-elevated)",
-                  border: "1px solid var(--border-default)",
-                  color: "var(--text-secondary)",
-                }}
+                className="w-7 h-7 flex items-center justify-center rounded-full shrink-0 transition-all hover:scale-110 active:scale-95 cursor-pointer bg-bg-elevated border border-border-default text-content-text"
               >
-                <XIcon size={13} weight="bold" />
+                <X size={13} strokeWidth={3} />
               </button>
             </div>
 
@@ -148,11 +137,7 @@ export function KeywordDetailPanel({ keyword, onClose }: Props) {
                   className="object-cover"
                 />
                 <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, transparent 50%, var(--bg-main) 100%)",
-                  }}
+                  className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-bg-main"
                 />
               </div>
             )}
@@ -173,8 +158,7 @@ export function KeywordDetailPanel({ keyword, onClose }: Props) {
               </div>
 
               <p
-                className="text-sm leading-relaxed"
-                style={{ color: "var(--text-primary)", opacity: 0.85 }}
+                className="text-sm leading-relaxed text-content-heading/85"
               >
                 {keyword.description}
               </p>

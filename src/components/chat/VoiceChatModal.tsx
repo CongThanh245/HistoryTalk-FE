@@ -248,18 +248,12 @@ export function VoiceChatModal({
 
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center"
-        style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)" }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-[12px]"
       >
         {/* Card */}
         <div
-          className="relative flex flex-col items-center gap-6 rounded-3xl p-8 w-[360px] max-w-[94vw]"
+          className="relative flex flex-col items-center gap-6 rounded-3xl p-8 w-[360px] max-w-[94vw] bg-gradient-to-b from-[rgba(30,25,15,0.98)] to-[rgba(15,12,8,0.98)] border border-[rgba(201,168,76,0.25)] shadow-[0_0_60px_rgba(201,168,76,0.08),0_24px_80px_rgba(0,0,0,0.7)]"
           style={{
-            background:
-              "linear-gradient(160deg, rgba(30,25,15,0.98) 0%, rgba(15,12,8,0.98) 100%)",
-            border: "1px solid rgba(201,168,76,0.25)",
-            boxShadow:
-              "0 0 60px rgba(201,168,76,0.08), 0 24px 80px rgba(0,0,0,0.7)",
             animation: "fadeSlideUp 0.35s ease both",
           }}
         >
@@ -281,18 +275,12 @@ export function VoiceChatModal({
 
           {/* Status badge */}
           <div
-            className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide"
-            style={{
-              background: "rgba(201,168,76,0.1)",
-              border: "1px solid rgba(201,168,76,0.2)",
-              color: "var(--accent-gold, #c9a84c)",
-            }}
+            className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide bg-[rgba(201,168,76,0.1)] border border-[rgba(201,168,76,0.2)] text-accent-gold"
           >
             {isActive && (
               <span
-                className="w-1.5 h-1.5 rounded-full"
+                className="w-1.5 h-1.5 rounded-full bg-accent-gold"
                 style={{
-                  background: "var(--accent-gold, #c9a84c)",
                   animation: "pulse 1s ease-in-out infinite",
                 }}
               />
@@ -323,11 +311,7 @@ export function VoiceChatModal({
                 />
               ) : (
                 <div
-                  className="w-full h-full flex items-center justify-center text-3xl font-bold"
-                  style={{
-                    background: "linear-gradient(135deg, #2a2010, #1a1508)",
-                    color: "var(--accent-gold, #c9a84c)",
-                  }}
+                  className="w-full h-full flex items-center justify-center text-3xl font-bold bg-gradient-to-br from-[#2a2010] to-[#1a1508] text-accent-gold"
                 >
                   {character.name[0]}
                 </div>
@@ -338,8 +322,7 @@ export function VoiceChatModal({
           {/* Character info */}
           <div className="text-center space-y-0.5">
             <h2
-              className="text-xl font-semibold tracking-wide"
-              style={{ color: "var(--accent-gold, #c9a84c)" }}
+              className="text-xl font-semibold tracking-wide text-accent-gold"
             >
               {character.name}
             </h2>
@@ -431,11 +414,7 @@ export function VoiceChatModal({
               className="flex flex-col items-center gap-1"
             >
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-95 hover:brightness-110"
-                style={{
-                  background: "linear-gradient(135deg, #c0392b, #e74c3c)",
-                  boxShadow: "0 4px 20px rgba(231,76,60,0.4)",
-                }}
+                className="w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-95 hover:brightness-110 bg-gradient-to-br from-[#c0392b] to-[#e74c3c] shadow-[0_4px_20px_rgba(231,76,60,0.4)]"
               >
                 {/* Phone hang up */}
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
@@ -448,11 +427,7 @@ export function VoiceChatModal({
             {/* Speaker (placeholder for future speaker toggle) */}
             <button className="flex flex-col items-center gap-1 opacity-40 cursor-default">
               <div
-                className="w-12 h-12 rounded-full flex items-center justify-center"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}
+                className="w-12 h-12 rounded-full flex items-center justify-center bg-white/8 border border-white/10"
               >
                 <svg
                   width="20"
@@ -484,12 +459,7 @@ export function VoiceChatModal({
                   setErrorMsg(null);
                   startCall();
                 }}
-                className="px-4 py-1.5 rounded-full text-sm transition-all hover:brightness-110"
-                style={{
-                  background: "rgba(201,168,76,0.15)",
-                  border: "1px solid rgba(201,168,76,0.3)",
-                  color: "var(--accent-gold, #c9a84c)",
-                }}
+                className="px-4 py-1.5 rounded-full text-sm transition-all hover:brightness-110 bg-[rgba(201,168,76,0.15)] border border-[rgba(201,168,76,0.3)] text-accent-gold"
               >
                 Thử lại
               </button>

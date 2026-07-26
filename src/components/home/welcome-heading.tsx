@@ -72,22 +72,11 @@ export function WelcomeHeading() {
   }, []);
 
   return (
-    <h2
-      className="text-lg font-bold uppercase"
-      style={{ color: "var(--content-heading)", letterSpacing: "0.06em" }}
-    >
+    <h2 className="text-lg font-bold uppercase text-content-heading tracking-[0.06em]">
       <span ref={textRef} />
       <span
         ref={cursorRef}
-        style={{
-          display: "inline-block",
-          width: "2px",
-          height: "1em",
-          background: "var(--accent-gold, #c9a24d)",
-          marginLeft: "2px",
-          verticalAlign: "middle",
-          borderRadius: "1px",
-        }}
+        className="inline-block w-[2px] h-[1em] bg-accent-gold ml-[2px] align-middle rounded-[1px]"
       />
     </h2>
   );

@@ -27,12 +27,13 @@ import {
   PercentIcon,
   TrophyIcon,
   HelpCircleIcon,
+  Gauge,
 } from "lucide-react";
-import { GaugeIcon } from "@phosphor-icons/react";
 
 import { StaffShell } from "@/components/staff/staff-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { cn } from "@/lib/utils/cn";
 import {
   useAdminOverview,
   useAdminUserAnalytics,
@@ -434,8 +435,7 @@ function KpiCard({
 }) {
   return (
     <Card
-      className="relative overflow-hidden border transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-      style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
+      className="relative overflow-hidden border transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 bg-card-light-bg border-card-light-border"
     >
       <div className="absolute top-0 left-0 h-[3px] w-full" style={{ background: color }} />
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 pt-5">
@@ -555,7 +555,7 @@ export default function AdminDashboardPage() {
     <StaffShell
       title="Tổng quan hệ thống"
       description="Trung tâm điều khiển và giám sát chỉ số tài chính, nội dung và tăng trưởng HistoryTalk."
-      icon={GaugeIcon}
+      icon={Gauge}
       accent="var(--accent-gold)"
     >
       <div className="space-y-6">
@@ -661,12 +661,12 @@ export default function AdminDashboardPage() {
               <button
                 key={g}
                 onClick={() => setGranularity(g)}
-                className="rounded-lg px-3 py-1 text-[11px] font-bold transition-all duration-200"
-                style={
+                className={cn(
+                  "rounded-lg px-3 py-1 text-[11px] font-bold transition-all duration-200",
                   granularity === g
-                    ? { background: "var(--accent-gold)", color: "#fff" }
-                    : { background: "transparent", color: "var(--content-muted)" }
-                }
+                    ? "bg-accent-gold text-white"
+                    : "bg-transparent text-[var(--content-muted)]"
+                )}
               >
                 {g === "day" ? "Ngày" : g === "week" ? "Tuần" : g === "month" ? "Tháng" : "Năm"}
               </button>
@@ -680,7 +680,7 @@ export default function AdminDashboardPage() {
         {/* ── Row 3: Trend charts ── */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* User trend */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <BarChart3Icon className="h-4 w-4 text-blue-500" />
@@ -731,7 +731,7 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Revenue trend */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <TrendingUpIcon className="h-4 w-4 text-amber-500" />
@@ -786,7 +786,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           
           {/* Revenue by Tier Progress */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CrownIcon className="h-4 w-4 text-amber-500" />
@@ -848,7 +848,7 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Tier Subscriptions usage */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <UsersIcon className="h-4 w-4 text-blue-500" />
@@ -907,7 +907,7 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Orders status & Details */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CreditCardIcon className="h-4 w-4 text-purple-500" />
@@ -954,7 +954,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
           {/* Quiz Performance Analytics */}
-          <Card className="lg:col-span-2" style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="lg:col-span-2 bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <TrophyIcon className="h-4 w-4 text-yellow-500" />
@@ -1029,7 +1029,7 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Content summary */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <BookOpenIcon className="h-4 w-4 text-blue-500" />
@@ -1044,7 +1044,7 @@ export default function AdminDashboardPage() {
               ) : (
                 <>
                   {/* Historical Contexts */}
-                  <div className="rounded-xl p-3 border border-amber-500/10" style={{ background: "rgba(245,158,11,0.05)" }}>
+                  <div className="rounded-xl p-3 border border-amber-500/10 bg-[rgba(245,158,11,0.05)]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">Bối cảnh lịch sử</span>
                       <span className="text-lg font-extrabold text-[var(--content-heading)]">{(content?.historicalContexts.total ?? 0).toLocaleString()}</span>
@@ -1056,7 +1056,7 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {/* Characters */}
-                  <div className="rounded-xl p-3 border border-purple-500/10" style={{ background: "rgba(139,92,246,0.05)" }}>
+                  <div className="rounded-xl p-3 border border-purple-500/10 bg-[rgba(139,92,246,0.05)]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[11px] font-bold text-purple-500 uppercase tracking-wider">Nhân vật</span>
                       <span className="text-lg font-extrabold text-[var(--content-heading)]">{(content?.characters.total ?? 0).toLocaleString()}</span>
@@ -1068,7 +1068,7 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {/* Documents */}
-                  <div className="rounded-xl p-3 border border-blue-500/10" style={{ background: "rgba(59,130,246,0.05)" }}>
+                  <div className="rounded-xl p-3 border border-blue-500/10 bg-[rgba(59,130,246,0.05)]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Tài liệu</span>
                       <span className="text-lg font-extrabold text-[var(--content-heading)]">{(content?.documents.total ?? 0).toLocaleString()}</span>
@@ -1087,7 +1087,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
           {/* Detailed User analytics */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <UsersIcon className="h-4 w-4 text-emerald-500" />
@@ -1140,7 +1140,7 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Chat activity details */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <MessagesSquareIcon className="h-4 w-4 text-purple-500" />
@@ -1167,7 +1167,7 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Quick nav redirects */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <ActivityIcon className="h-4 w-4 text-[var(--accent-gold)]" />

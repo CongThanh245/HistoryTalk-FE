@@ -30,7 +30,7 @@ export function MarkdownMessage({ text, onKeywordSelect }: Props) {
       <p className="mb-2 last:mb-0">{withKeywordHighlight(children, onKeywordSelect)}</p>
     ),
     strong: ({ children }) => (
-      <strong className="font-semibold" style={{ color: "var(--accent-gold)" }}>
+      <strong className="font-semibold text-accent-gold">
         {withKeywordHighlight(children, onKeywordSelect)}
       </strong>
     ),
@@ -45,32 +45,28 @@ export function MarkdownMessage({ text, onKeywordSelect }: Props) {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="underline"
-        style={{ color: "var(--accent-gold)" }}
+        className="underline text-accent-gold"
       >
         {children}
       </a>
     ),
     code: ({ children }) => (
       <code
-        className="px-1 py-0.5 rounded text-xs"
-        style={{ background: "var(--bg-elevated)" }}
+        className="px-1 py-0.5 rounded text-xs bg-bg-elevated"
       >
         {children}
       </code>
     ),
     pre: ({ children }) => (
       <pre
-        className="p-2 rounded-lg overflow-x-auto text-xs mb-2 last:mb-0"
-        style={{ background: "var(--bg-elevated)" }}
+        className="p-2 rounded-lg overflow-x-auto text-xs mb-2 last:mb-0 bg-bg-elevated"
       >
         {children}
       </pre>
     ),
     blockquote: ({ children }) => (
       <blockquote
-        className="pl-2 border-l-2 mb-2 last:mb-0"
-        style={{ borderColor: "var(--accent-gold-soft)" }}
+        className="pl-2 border-l-2 border-accent-gold-soft mb-2 last:mb-0"
       >
         {children}
       </blockquote>

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FileTextIcon, FilePdfIcon, PlusIcon, XIcon, UploadSimpleIcon, EyeIcon } from "@phosphor-icons/react";
+import { FileText, File, Plus, X, Upload, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StaffFormLabel, StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
@@ -57,7 +57,7 @@ export function NewDocumentPanel({
   if (step === "closed") {
     return (
       <Button type="button" size="sm" variant="outline" onClick={() => setStep("choose")} disabled={disabled}>
-        <PlusIcon className="mr-1.5 h-3.5 w-3.5" />
+        <Plus className="mr-1.5 h-3.5 w-3.5" />
         Tài liệu mới
       </Button>
     );
@@ -67,15 +67,15 @@ export function NewDocumentPanel({
     return (
       <div className="flex items-center gap-1.5">
         <Button type="button" size="sm" variant="outline" onClick={() => setStep("text")}>
-          <FileTextIcon className="mr-1.5 h-3.5 w-3.5" />
+          <FileText className="mr-1.5 h-3.5 w-3.5" />
           Văn bản
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={() => setStep("pdf")}>
-          <FilePdfIcon className="mr-1.5 h-3.5 w-3.5" />
+          <File className="mr-1.5 h-3.5 w-3.5" />
           PDF
         </Button>
         <Button type="button" size="icon-sm" variant="ghost" onClick={reset} title="Hủy">
-          <XIcon className="h-3.5 w-3.5" />
+          <X className="h-3.5 w-3.5" />
         </Button>
       </div>
     );
@@ -85,28 +85,26 @@ export function NewDocumentPanel({
 
   return (
     <div
-      className="w-full rounded-lg border p-3 space-y-2.5"
-      style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.5)" }}
+      className="w-full rounded-lg border border-card-light-border bg-white/50 p-3 space-y-2.5"
     >
       <div className="flex items-center justify-between gap-2">
         <p
-          className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest"
-          style={{ color: "var(--content-heading)" }}
+          className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-content-heading"
         >
           {step === "text" ? (
             <>
-              <FileTextIcon className="h-3.5 w-3.5" />
+              <FileText className="h-3.5 w-3.5" />
               Tài liệu văn bản mới
             </>
           ) : (
             <>
-              <FilePdfIcon className="h-3.5 w-3.5" />
+              <File className="h-3.5 w-3.5" />
               Tài liệu PDF mới
             </>
           )}
         </p>
         <Button type="button" size="icon-sm" variant="ghost" onClick={reset} disabled={isBusy} title="Hủy">
-          <XIcon className="h-3.5 w-3.5" />
+          <X className="h-3.5 w-3.5" />
         </Button>
       </div>
 
@@ -127,7 +125,6 @@ export function NewDocumentPanel({
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Nhập nội dung tài liệu..."
-            style={{ minHeight: "140px" }}
             disabled={isBusy}
           />
         </div>
@@ -137,8 +134,7 @@ export function NewDocumentPanel({
           {!file ? (
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="cursor-pointer rounded-lg border-2 border-dashed p-3 text-center text-xs transition-colors hover:border-[var(--accent-gold)]/50 hover:bg-[var(--accent-gold)]/5"
-              style={{ borderColor: "var(--card-light-border)", color: "var(--content-muted)" }}
+              className="cursor-pointer rounded-lg border-2 border-dashed border-card-light-border p-3 text-center text-xs text-content-muted transition-colors hover:border-[var(--accent-gold)]/50 hover:bg-[var(--accent-gold)]/5"
             >
               Click để chọn file PDF
               <input
@@ -159,14 +155,13 @@ export function NewDocumentPanel({
           ) : (
             <div className="space-y-2">
               <div
-                className="flex items-center justify-between gap-2 rounded-lg border p-2 text-xs"
-                style={{ borderColor: "var(--card-light-border)" }}
+                className="flex items-center justify-between gap-2 rounded-lg border border-card-light-border p-2 text-xs"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-medium" style={{ color: "var(--content-heading)" }}>
+                  <p className="truncate font-medium text-content-heading">
                     {file.name}
                   </p>
-                  <p style={{ color: "var(--content-muted)" }}>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <p className="text-content-muted">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <Button
@@ -174,13 +169,13 @@ export function NewDocumentPanel({
                     size="sm"
                     variant="outline"
                     onClick={() => setPreviewOpen(true)}
-                    style={{ color: "var(--accent-gold)", borderColor: "rgba(234,179,8,0.3)" }}
+                    className="text-accent-gold border-[rgba(234,179,8,0.3)]"
                   >
-                    <EyeIcon className="h-3.5 w-3.5 mr-1" />
+                    <Eye className="h-3.5 w-3.5 mr-1" />
                     Xem trước
                   </Button>
                   <Button type="button" size="icon-sm" variant="ghost" onClick={clearFile} disabled={isBusy}>
-                    <XIcon className="h-3.5 w-3.5" />
+                    <X className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
@@ -212,7 +207,7 @@ export function NewDocumentPanel({
             }
           }}
         >
-          <UploadSimpleIcon className="mr-1.5 h-3.5 w-3.5" />
+          <Upload className="mr-1.5 h-3.5 w-3.5" />
           {isBusy ? "Đang tạo..." : step === "text" ? "Tạo tài liệu" : "Tạo tài liệu PDF"}
         </Button>
       </div>

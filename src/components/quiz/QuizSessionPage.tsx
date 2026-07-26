@@ -9,6 +9,7 @@ import React, {
 import { CheckCircle2 } from "lucide-react";
 import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
 import { saveQuizProgress } from "@/features/quiz/progress-storage";
+import { cn } from "@/lib/utils/cn";
 import { QuizProgressBar } from "./QuizProgressBar";
 import { QuizQuestionCard } from "./QuizQuestionCard";
 
@@ -167,10 +168,7 @@ export function QuizSessionPage({
   };
 
   return (
-    <div
-      className="flex flex-col h-full"
-      style={{ background: "var(--bg-content)" }}
-    >
+    <div className="flex flex-col h-full bg-[var(--bg-content)]">
       <QuizProgressBar
         quizTitle={quiz.title}
         totalQuestions={questions.length}
@@ -190,14 +188,7 @@ export function QuizSessionPage({
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
           {hasTimeLimit && (
-            <div
-              className="rounded-xl border px-4 py-3 text-sm"
-              style={{
-                background: "rgba(201,162,77,0.08)",
-                borderColor: "rgba(201,162,77,0.24)",
-                color: "var(--content-muted)",
-              }}
-            >
+            <div className="rounded-xl border px-4 py-3 text-sm bg-accent-gold/[0.08] border-accent-gold/24 text-content-muted">
               Hết thời gian hệ thống sẽ tự động nộp bài với các câu đã chọn.
             </div>
           )}
@@ -222,38 +213,26 @@ export function QuizSessionPage({
           ))}
 
           <div
-            className="rounded-xl border p-5 text-center"
-            style={{
-              background: allAnswered
-                ? "rgba(16,185,129,0.06)"
-                : "var(--card-light-bg)",
-              borderColor: allAnswered
-                ? "rgba(16,185,129,0.25)"
-                : "var(--card-light-border)",
-            }}
+            className={cn(
+              "rounded-xl border p-5 text-center",
+              allAnswered
+                ? "bg-emerald-500/[0.06] border-emerald-500/25"
+                : "bg-card-light-bg border-card-light-border",
+            )}
           >
             {allAnswered ? (
               <div className="flex items-center justify-center gap-2 mb-3">
                 <CheckCircle2 size={18} color="#10b981" />
-                <p
-                  className="text-sm font-semibold"
-                  style={{ color: "#10b981" }}
-                >
+                <p className="text-sm font-semibold text-[#10b981]">
                   Bạn đã trả lời tất cả {questions.length} câu!
                 </p>
               </div>
             ) : (
               <div className="mb-3">
-                <p
-                  className="text-sm"
-                  style={{ color: "var(--content-muted)" }}
-                >
+                <p className="text-sm text-content-muted">
                   Còn {questions.length - answeredCount} câu chưa trả lời
                 </p>
-                <p
-                  className="text-xs mt-1"
-                  style={{ color: "var(--content-subtle)" }}
-                >
+                <p className="text-xs mt-1 text-content-subtle">
                   Bạn vẫn có thể nộp bài ngay nếu muốn
                 </p>
               </div>
@@ -262,14 +241,12 @@ export function QuizSessionPage({
             <button
               onClick={handleSubmit}
               disabled={isSubmitted}
-              className="mx-auto h-11 rounded-lg px-8 text-sm font-bold transition-colors duration-200 disabled:opacity-60"
-              style={{
-                background: allAnswered ? "#047857" : "var(--abyssal-blue)",
-                color: "var(--text-on-dark)",
-                boxShadow: allAnswered
-                  ? "0 8px 18px rgba(4,120,87,0.18)"
-                  : "0 8px 18px rgba(27,38,50,0.18)",
-              }}
+              className={cn(
+                "mx-auto h-11 rounded-lg px-8 text-sm font-bold transition-colors duration-200 disabled:opacity-60 text-[var(--text-on-dark)]",
+                allAnswered
+                  ? "bg-[#047857] shadow-[0_8px_18px_rgba(4,120,87,0.18)]"
+                  : "bg-[var(--abyssal-blue)] shadow-[0_8px_18px_rgba(27,38,50,0.18)]",
+              )}
             >
               Nộp bài
             </button>

@@ -24,10 +24,9 @@ export function MapTriggerButton({
       <>
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-[var(--accent-gold-active-bg)]"
-          style={{ color: "var(--sidebar-nav-text)" }}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-[var(--accent-gold-active-bg)] text-[var(--sidebar-nav-text)]"
         >
-          <Map size={18} style={{ color: "var(--sidebar-nav-icon)" }} />
+          <Map size={18} className="text-[var(--sidebar-nav-icon)]" />
           {label}
         </button>
         <HistoricalMapModal isOpen={open} onClose={() => setOpen(false)} />
@@ -39,12 +38,7 @@ export function MapTriggerButton({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
-        style={{
-          background: "var(--accent-gold)",
-          color: "var(--text-inverse)",
-          boxShadow: "0 4px 14px var(--accent-gold-glow)",
-        }}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-95 bg-accent-gold text-[var(--text-inverse)] shadow-[0_4px_14px_var(--accent-gold-glow)]"
       >
         <Map size={16} />
         {label}

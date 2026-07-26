@@ -10,7 +10,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { useLogout } from "@/features/auth/hooks";
 import { useAuthStore } from "@/store/auth.store";
 import { useProfile } from "@/features/profile/hooks";
@@ -66,31 +65,22 @@ export function UserProfileDropdown({
           {/* PRO: vòng sáng vàng bao quanh avatar */}
           {proUser && (
             <span
-              className="absolute inset-0 rounded-full pointer-events-none z-10"
-              style={{
-                boxShadow: "0 0 0 2px var(--accent-gold), 0 0 10px 2px var(--accent-gold-glow, rgba(201,162,77,0.5))",
-                borderRadius: "50%",
-              }}
+              className="absolute inset-0 rounded-full pointer-events-none z-10 shadow-[0_0_0_2px_var(--accent-gold),0_0_10px_2px_var(--accent-gold-glow,rgba(201,162,77,0.5))]"
             />
           )}
           <Avatar
             className={cn(
               "h-9 w-9 transition-transform duration-200",
-              showBorder ? "border" : "border-0"
+              showBorder ? "border" : "border-0",
+              proUser ? "border-accent-gold" : "border-header-border"
             )}
-            style={{ borderColor: proUser ? "var(--accent-gold)" : "var(--header-border)" }}
           >
             <AvatarImage
               src={user?.avatarUrl ?? undefined}
               alt={user?.userName}
             />
             <AvatarFallback
-              className="text-xs font-bold"
-              style={{
-                background:
-                  "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-                color: "var(--bg-deep)",
-              }}
+              className="text-xs font-bold bg-linear-[135deg] from-accent-gold to-[var(--truffle)] text-bg-deep"
             >
               {initials}
             </AvatarFallback>
@@ -101,16 +91,12 @@ export function UserProfileDropdown({
       <DropdownMenuContent
         align={align}
         side={side}
-        className="w-56 border p-1"
-        style={{
-          background: "var(--bg-elevated)",
-          borderColor: proUser ? "rgba(201,162,77,0.35)" : "var(--border-strong)",
-          color: "var(--text-primary)",
-          borderRadius: "14px",
-          boxShadow: proUser
-            ? "0 10px 40px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,162,77,0.1)"
-            : "0 10px 40px -10px rgba(0,0,0,0.5)",
-        }}
+        className={cn(
+          "w-56 border p-1 bg-bg-elevated text-text-primary rounded-[14px]",
+          proUser
+            ? "border-accent-gold/35 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5),0_0_0_1px_rgba(201,162,77,0.1)]"
+            : "border-border-strong shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)]"
+        )}
       >
         <DropdownMenuLabel className="font-normal px-2.5 py-3">
           <div className="flex flex-col space-y-1">
@@ -118,29 +104,22 @@ export function UserProfileDropdown({
             <div className="flex items-center gap-1.5">
               {proUser && (
                 <CrownIcon
-                  className="w-3.5 h-3.5 shrink-0"
-                  style={{ color: "var(--accent-gold)" }}
+                  className="w-3.5 h-3.5 shrink-0 text-accent-gold"
                 />
               )}
-              <p className="text-sm font-semibold leading-none truncate" style={{ color: "var(--text-primary)" }}>
+              <p className="text-sm font-semibold leading-none truncate text-text-primary">
                 {user?.userName ?? "—"}
               </p>
             </div>
             <p
-              className="text-[11px] leading-none"
-              style={{ color: "var(--text-muted)" }}
+              className="text-[11px] leading-none text-text-muted"
             >
               {user?.email ?? "—"}
             </p>
             {/* PRO tier label */}
             {proUser && profile?.tierTitle && (
               <span
-                className="inline-flex items-center gap-1 text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded-md w-fit"
-                style={{
-                  background: "linear-gradient(90deg, rgba(201,162,77,0.18) 0%, rgba(163,81,57,0.12) 100%)",
-                  color: "var(--accent-gold)",
-                  border: "1px solid rgba(201,162,77,0.25)",
-                }}
+                className="inline-flex items-center gap-1 text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded-md w-fit text-accent-gold bg-linear-to-r from-accent-gold/18 to-[rgba(163,81,57,0.12)] border border-accent-gold/25"
               >
                 ✦ {profile.tierTitle}
               </span>
@@ -148,14 +127,13 @@ export function UserProfileDropdown({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator
-          className="-mx-1"
-          style={{ background: "rgba(255,255,255,0.08)" }}
+          className="-mx-1 bg-white/[0.08]"
         />
 
         <div>
           {showDiscovery && (
             <DropdownMenuItem 
-              className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium focus:bg-[var(--accent-blue)] focus:text-[var(--bg-main)] transition-colors" 
+              className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium focus:bg-accent-blue focus:text-bg-main transition-colors" 
               asChild
             >
               <Link href="/home" className="flex items-center w-full">
@@ -165,7 +143,7 @@ export function UserProfileDropdown({
           )}
           
           <DropdownMenuItem 
-            className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium focus:bg-[var(--accent-blue)] focus:text-[var(--bg-main)] transition-colors" 
+            className="cursor-pointer mx-1 rounded-lg px-2 py-2 text-sm font-medium focus:bg-accent-blue focus:text-bg-main transition-colors" 
             asChild
           >
             <Link href="/profile" className="flex items-center w-full">
@@ -181,13 +159,11 @@ export function UserProfileDropdown({
         </div>
         
         <DropdownMenuSeparator
-          className="-mx-1 my-1"
-          style={{ background: "rgba(255,255,255,0.08)" }}
+          className="-mx-1 my-1 bg-white/[0.08]"
         />
         
         <DropdownMenuItem
-          className="cursor-pointer mx-1 my-1 rounded-lg px-2 py-2 text-sm font-semibold focus:bg-[var(--accent-danger)] focus:!text-white transition-colors"
-          style={{ color: "var(--accent-danger)" }}
+          className="cursor-pointer mx-1 my-1 rounded-lg px-2 py-2 text-sm font-semibold focus:bg-accent-danger focus:!text-white transition-colors text-accent-danger"
           disabled={isPending}
           onClick={() => logout()}
         >

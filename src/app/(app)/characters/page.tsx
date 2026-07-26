@@ -31,28 +31,20 @@ export default async function CharactersPage() {
   });
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="px-3 py-4 md:px-6 md:py-8">
-        <div className="flex items-center gap-3 mb-5 md:mb-8">
-          <div>
-            <h1
-              className="text-xl md:text-2xl font-bold"
-              style={{ color: "var(--content-heading)" }}
-            >
-              Nhân vật lịch sử
-            </h1>
-            <p
-              className="text-xs md:text-sm mt-0.5"
-              style={{ color: "var(--content-muted)" }}
-            >
-              Trò chuyện với những nhân vật đã làm nên lịch sử Việt Nam
-            </p>
-          </div>
+    <div className="space-y-6 lg:space-y-8 py-6 lg:py-8">
+      <div className="flex items-center gap-3">
+        <div>
+          <h1 className="font-title text-xl md:text-2xl font-bold text-content-heading">
+            Nhân vật lịch sử
+          </h1>
+          <p className="text-xs md:text-sm mt-0.5 text-content-muted">
+            Trò chuyện với những nhân vật đã làm nên lịch sử Việt Nam
+          </p>
         </div>
-        <HydrationBoundary state={dehydrate(queryClient)}>
-          <CharactersClient />
-        </HydrationBoundary>
       </div>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <CharactersClient />
+      </HydrationBoundary>
     </div>
   );
 }

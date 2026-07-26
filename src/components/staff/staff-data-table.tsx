@@ -79,11 +79,7 @@ export function StaffDataTable<TData>({
 
   return (
     <div
-      className={cn("rounded-xl border overflow-x-auto overflow-y-hidden", className)}
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
+      className={cn("rounded-xl border overflow-x-auto overflow-y-hidden bg-card-light-bg border-card-light-border", className)}
     >
       <Table className="min-w-max">
         <TableHeader>
@@ -106,16 +102,14 @@ export function StaffDataTable<TData>({
                 return (
                   <TableHead
                     key={header.id}
-                    className={cn("px-4", getStickyColumnClass(header.column.id))}
-                    style={{ borderColor: "var(--card-light-border)" }}
+                    className={cn("px-4 border-card-light-border", getStickyColumnClass(header.column.id))}
                   >
                     {header.isPlaceholder ? null : canSort ? (
                       <Button
                         type="button"
                         variant="ghost"
-                        className="-ml-2 h-8 px-2 font-semibold hover:bg-black/[0.04] hover:text-[var(--content-heading)]"
+                        className="-ml-2 h-8 px-2 font-semibold text-content-heading hover:bg-black/[0.04] hover:text-[var(--content-heading)]"
                         onClick={handleSortClick}
-                        style={{ color: "var(--content-heading)" }}
                       >
                         {flexRender(
                           header.column.columnDef.header,
@@ -125,8 +119,7 @@ export function StaffDataTable<TData>({
                       </Button>
                     ) : (
                       <span
-                        className="text-xs font-semibold tracking-wide uppercase"
-                        style={{ color: "var(--content-subtle)" }}
+                        className="text-xs font-semibold tracking-wide uppercase text-content-subtle"
                       >
                         {flexRender(
                           header.column.columnDef.header,
@@ -146,8 +139,7 @@ export function StaffDataTable<TData>({
             <TableRow>
               <TableCell
                 colSpan={table.getAllColumns().length}
-                className="h-28"
-                style={{ color: "var(--content-muted)" }}
+                className="h-28 text-content-muted"
               >
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-gold)]" />
@@ -168,8 +160,7 @@ export function StaffDataTable<TData>({
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className={cn("px-4", getStickyColumnClass(cell.column.id))}
-                    style={{ borderColor: "var(--card-light-border)" }}
+                    className={cn("px-4 border-card-light-border", getStickyColumnClass(cell.column.id))}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
@@ -180,8 +171,7 @@ export function StaffDataTable<TData>({
             <TableRow>
               <TableCell
                 colSpan={table.getAllColumns().length}
-                className="h-28 text-center"
-                style={{ color: "var(--content-muted)" }}
+                className="h-28 text-center text-content-muted"
               >
                 {emptyMessage}
               </TableCell>
@@ -192,4 +182,3 @@ export function StaffDataTable<TData>({
     </div>
   );
 }
-
