@@ -31,7 +31,7 @@ function NavItem({
     <Link
       href={item.href}
       className={cn(
-        "relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 outline-none",
+        "relative flex group items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 outline-none",
         isExpanded ? "px-3 py-2" : "w-10 h-10 justify-center mx-auto",
         !isActive &&
           "hover:bg-[var(--sidebar-hover-bg,rgba(255,255,255,0.05))] hover:text-[var(--sidebar-active-text)] text-[var(--sidebar-nav-text)]",
@@ -51,7 +51,7 @@ function NavItem({
       <Icon
         className={cn(
           "shrink-0 w-[17px] h-[17px]",
-          isActive ? "text-[var(--sidebar-active-text)]" : "text-[var(--sidebar-nav-icon)]"
+          isActive ? "text-[var(--sidebar-active-text)]" : "text-[var(--sidebar-nav-icon)] group-hover:text-[var(--sidebar-active-text)]"
         )}
       />
       {isExpanded && (
