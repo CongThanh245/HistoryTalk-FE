@@ -66,7 +66,7 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "bg-background fixed z-50 flex flex-col gap-4 shadow-lg",
+          "bg-bg-elevated text-foreground fixed z-50 flex flex-col gap-4 shadow-[var(--shadow-strong)]",
           !disableAnimation &&
             "data-[state=open]:animate-in data-[state=closed]:animate-out transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
           disableAnimation && "data-[state=open]:animate-none data-[state=closed]:animate-none",

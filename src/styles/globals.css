@@ -220,31 +220,31 @@ body {
   color-scheme: dark;
 
   /* Toast - Dark Theme */
-  --toast-success-bg: rgba(16, 40, 24, 0.96);
+  --toast-success-bg: #102818;
   --toast-success-border: rgba(74, 178, 98, 0.7);
   --toast-success-icon: #5dcc78;
   --toast-success-glow: rgba(74, 178, 98, 0.25);
   --toast-success-inner: rgba(74, 178, 98, 0.07);
 
-  --toast-error-bg: rgba(44, 12, 12, 0.96);
+  --toast-error-bg: #2c0c0c;
   --toast-error-border: rgba(224, 85, 80, 0.7);
   --toast-error-icon: #f07070;
   --toast-error-glow: rgba(224, 85, 80, 0.25);
   --toast-error-inner: rgba(224, 85, 80, 0.07);
 
-  --toast-warning-bg: rgba(40, 26, 6, 0.96);
+  --toast-warning-bg: #281a06;
   --toast-warning-border: rgba(255, 177, 98, 0.7);
   --toast-warning-icon: #ffc070;
   --toast-warning-glow: rgba(255, 177, 98, 0.25);
   --toast-warning-inner: rgba(255, 177, 98, 0.07);
 
-  --toast-info-bg: rgba(10, 22, 38, 0.96);
+  --toast-info-bg: #0a1626;
   --toast-info-border: rgba(143, 179, 200, 0.65);
   --toast-info-icon: #a8ccde;
   --toast-info-glow: rgba(143, 179, 200, 0.22);
   --toast-info-inner: rgba(143, 179, 200, 0.06);
 
-  --toast-default-bg: rgba(26, 36, 54, 0.96);
+  --toast-default-bg: #1a2436;
   --toast-default-border: rgba(201, 162, 77, 0.55);
   --toast-default-icon: #e2c77a;
   --toast-default-glow: rgba(201, 162, 77, 0.2);
@@ -972,14 +972,7 @@ body {
   background: var(--toast-default-bg) !important;
   border: 1px solid var(--toast-default-border) !important;
 
-  /* Glow ra ngoài */
-  box-shadow:
-    0 0 0 1px rgba(201, 162, 77, 0.08),
-    0 0 18px var(--toast-default-glow),
-    0 8px 32px rgba(0, 0, 0, 0.55) !important;
-
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24) !important;
 }
 
 /* ─────────────────────────────────────────
@@ -1005,7 +998,7 @@ body {
 ───────────────────────────────────────── */
 [data-sonner-toaster] [data-sonner-toast] [data-icon] {
   color: var(--toast-default-icon) !important;
-  filter: drop-shadow(0 0 5px var(--toast-default-glow)) !important;
+  filter: none !important;
 }
 
 /* ─────────────────────────────────────────
@@ -1031,7 +1024,7 @@ body {
 [data-sonner-toaster] [data-sonner-toast] [data-progress] {
   background: var(--toast-default-border) !important;
   opacity: 0.6 !important;
-  box-shadow: 0 0 6px var(--toast-default-glow) !important;
+  box-shadow: none !important;
 }
 
 /* ─────────────────────────────────────────
@@ -1040,18 +1033,15 @@ body {
 [data-sonner-toaster] [data-sonner-toast][data-type="success"] {
   background: var(--toast-success-bg) !important;
   border-color: var(--toast-success-border) !important;
-  box-shadow:
-    0 0 0 1px rgba(74, 178, 98, 0.1),
-    0 0 20px var(--toast-success-glow),
-    0 8px 32px rgba(0, 0, 0, 0.55) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24) !important;
 }
 [data-sonner-toaster] [data-sonner-toast][data-type="success"] [data-icon] {
   color: var(--toast-success-icon) !important;
-  filter: drop-shadow(0 0 6px var(--toast-success-glow)) !important;
+  filter: none !important;
 }
 [data-sonner-toaster] [data-sonner-toast][data-type="success"] [data-progress] {
   background: var(--toast-success-icon) !important;
-  box-shadow: 0 0 8px var(--toast-success-glow) !important;
+  box-shadow: none !important;
 }
 
 /* ─────────────────────────────────────────
@@ -1060,18 +1050,15 @@ body {
 [data-sonner-toaster] [data-sonner-toast][data-type="error"] {
   background: var(--toast-error-bg) !important;
   border-color: var(--toast-error-border) !important;
-  box-shadow:
-    0 0 0 1px rgba(224, 85, 80, 0.1),
-    0 0 20px var(--toast-error-glow),
-    0 8px 32px rgba(0, 0, 0, 0.55) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24) !important;
 }
 [data-sonner-toaster] [data-sonner-toast][data-type="error"] [data-icon] {
   color: var(--toast-error-icon) !important;
-  filter: drop-shadow(0 0 6px var(--toast-error-glow)) !important;
+  filter: none !important;
 }
 [data-sonner-toaster] [data-sonner-toast][data-type="error"] [data-progress] {
   background: var(--toast-error-icon) !important;
-  box-shadow: 0 0 8px var(--toast-error-glow) !important;
+  box-shadow: none !important;
 }
 
 /* ─────────────────────────────────────────
@@ -1080,18 +1067,15 @@ body {
 [data-sonner-toaster] [data-sonner-toast][data-type="warning"] {
   background: var(--toast-warning-bg) !important;
   border-color: var(--toast-warning-border) !important;
-  box-shadow:
-    0 0 0 1px rgba(255, 177, 98, 0.1),
-    0 0 20px var(--toast-warning-glow),
-    0 8px 32px rgba(0, 0, 0, 0.55) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24) !important;
 }
 [data-sonner-toaster] [data-sonner-toast][data-type="warning"] [data-icon] {
   color: var(--toast-warning-icon) !important;
-  filter: drop-shadow(0 0 6px var(--toast-warning-glow)) !important;
+  filter: none !important;
 }
 [data-sonner-toaster] [data-sonner-toast][data-type="warning"] [data-progress] {
   background: var(--toast-warning-icon) !important;
-  box-shadow: 0 0 8px var(--toast-warning-glow) !important;
+  box-shadow: none !important;
 }
 
 /* ─────────────────────────────────────────
@@ -1100,18 +1084,15 @@ body {
 [data-sonner-toaster] [data-sonner-toast][data-type="info"] {
   background: var(--toast-info-bg) !important;
   border-color: var(--toast-info-border) !important;
-  box-shadow:
-    0 0 0 1px rgba(143, 179, 200, 0.08),
-    0 0 20px var(--toast-info-glow),
-    0 8px 32px rgba(0, 0, 0, 0.55) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24) !important;
 }
 [data-sonner-toaster] [data-sonner-toast][data-type="info"] [data-icon] {
   color: var(--toast-info-icon) !important;
-  filter: drop-shadow(0 0 6px var(--toast-info-glow)) !important;
+  filter: none !important;
 }
 [data-sonner-toaster] [data-sonner-toast][data-type="info"] [data-progress] {
   background: var(--toast-info-icon) !important;
-  box-shadow: 0 0 8px var(--toast-info-glow) !important;
+  box-shadow: none !important;
 }
 
 /* ─────────────────────────────────────────
