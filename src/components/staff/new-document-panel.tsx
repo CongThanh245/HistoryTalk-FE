@@ -63,7 +63,11 @@ export function NewDocumentPanel({
     setPdfPhase("pick");
     setOcrProgress(null);
     if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+      // Defer past this tick — PdfViewerDialog may still be mid-fetch from
+      // this blob URL (e.g. the preview dialog was left open when the file
+      // was cleared/swapped).
+      const urlToRevoke = previewUrl;
+      window.setTimeout(() => URL.revokeObjectURL(urlToRevoke), 0);
       setPreviewUrl(null);
     }
   };
