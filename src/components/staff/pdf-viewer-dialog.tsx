@@ -32,7 +32,16 @@ export function PdfViewerDialog({
 
   // Fetch PDF and create blob URL when pdfUrl changes
   React.useEffect(() => {
-    if (!pdfUrl || !open) {
+    // Don't tear down the iframe/blobUrl just because the dialog is
+    // closing — Radix's Presence keeps DialogContent mounted for the
+    // ~200ms close animation, and clearing blobUrl here would remove the
+    // <iframe> (still showing a live PDF via Chrome's native viewer) out
+    // from under that still-animating, still-mounted parent. That race is
+    // what throws "Failed to execute 'removeChild': the node to be removed
+    // is not a child of this node". Only reset when actually opening.
+    if (!open) return;
+
+    if (!pdfUrl) {
       setBlobUrl(null);
       setError(null);
       return;
@@ -40,8 +49,13 @@ export function PdfViewerDialog({
 
     let isMounted = true;
     const controller = new AbortController();
+    // Track the blob URL via a local closure var (not state) so cleanup can
+    // reliably revoke exactly the one this run created, instead of a stale
+    // `blobUrl` state value captured before `setBlobUrl` resolved.
+    let createdUrl: string | null = null;
 
     async function fetchPdf() {
+      setBlobUrl(null);
       setInternalLoading(true);
       setError(null);
       if (!pdfUrl) return;
@@ -60,6 +74,7 @@ export function PdfViewerDialog({
 
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
+        createdUrl = url;
 
         if (isMounted) {
           setBlobUrl(url);
@@ -83,8 +98,10 @@ export function PdfViewerDialog({
     return () => {
       isMounted = false;
       controller.abort();
-      if (blobUrl) {
-        URL.revokeObjectURL(blobUrl);
+      if (createdUrl) {
+        // Defer past this tick — see comment above the iframe render.
+        const urlToRevoke = createdUrl;
+        window.setTimeout(() => URL.revokeObjectURL(urlToRevoke), 0);
       }
     };
   }, [pdfUrl, open]);
@@ -189,6 +206,7 @@ export function PdfViewerDialog({
             </div>
           ) : blobUrl ? (
             <iframe
+              key={blobUrl}
               src={blobUrl}
               className="w-full h-full"
               title="PDF Viewer"

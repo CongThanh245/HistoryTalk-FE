@@ -126,6 +126,7 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   const [pendingPdfFileUrl, setPendingPdfFileUrl] = React.useState<string | null>(null);
   const [pendingPdfPageCount, setPendingPdfPageCount] = React.useState<number | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
+  const [pdfOcrProgress, setPdfOcrProgress] = React.useState<{ page: number; total: number } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   /* ── Media files (image/3D model/video) for Create Mode ── */
@@ -621,6 +622,8 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     setPendingPdfPageCount,
     pdfPreviewUrl,
     setPdfPreviewUrl,
+    pdfOcrProgress,
+    setPdfOcrProgress,
     fileInputRef,
 
     // media (image/3D model/video) pending files — create mode only
