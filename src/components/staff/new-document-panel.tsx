@@ -211,7 +211,7 @@ export function NewDocumentPanel({
                 </div>
               ) : null}
               <Button type="button" size="sm" variant="outline" onClick={cancelExtraction}>
-                <XIcon className="mr-1.5 h-3.5 w-3.5" />
+                <X className="mr-1.5 h-3.5 w-3.5" />
                 Hủy
               </Button>
             </div>
