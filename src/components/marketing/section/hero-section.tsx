@@ -111,7 +111,7 @@ export function HeroSection({
       rafId = requestAnimationFrame(() => {
         setIsReady(true);
 
-      // Phase 2: Defer carousel load để tránh lag initial render
+        // Phase 2: Defer carousel load để tránh lag initial render
         const loadCarousel = () => setShowCarousel(true);
 
         if (typeof window.requestIdleCallback === "function") {
@@ -164,60 +164,60 @@ export function HeroSection({
       gsap.registerPlugin(ScrollTrigger);
 
       ctx = gsap.context(() => {
-      const scroller = sectionRef.current?.closest("[data-marketing-scroll]");
-      const tl = gsap.timeline({ 
-        defaults: { ease: "power3.out" },
-        delay: 0.1 // Nhỏ delay để đảm bảo browser đã render xong
-      });
+        const scroller = sectionRef.current?.closest("[data-marketing-scroll]");
+        const tl = gsap.timeline({
+          defaults: { ease: "power3.out" },
+          delay: 0.1 // Nhỏ delay để đảm bảo browser đã render xong
+        });
 
-      tl.fromTo(
-        ".hero-reveal-title",
-        { yPercent: 115, rotate: 1.5 },
-        { yPercent: 0, rotate: 0, duration: 0.9 },
-      )
-        .fromTo(
-          ".hero-reveal-subtitle",
-          { yPercent: 120, opacity: 0 },
-          { yPercent: 0, opacity: 1, duration: 0.75 },
-          "-=0.58",
+        tl.fromTo(
+          ".hero-reveal-title",
+          { yPercent: 115, rotate: 1.5 },
+          { yPercent: 0, rotate: 0, duration: 0.9 },
         )
-        .fromTo(
-          ".hero-stagger-item",
-          { y: 24, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.65, stagger: 0.11 },
-          "-=0.38",
-        );
+          .fromTo(
+            ".hero-reveal-subtitle",
+            { yPercent: 120, opacity: 0 },
+            { yPercent: 0, opacity: 1, duration: 0.75 },
+            "-=0.58",
+          )
+          .fromTo(
+            ".hero-stagger-item",
+            { y: 24, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.65, stagger: 0.11 },
+            "-=0.38",
+          );
 
-      gsap.to([contentWrapperRef.current, carouselRef.current], {
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          scroller,
-          start: "top top",
-          end: "bottom 20%",
-          scrub: true,
-        },
-        opacity: 0,
-        y: -100,
-        ease: "none",
-      });
-
-      gsap.fromTo(
-        lineRef.current,
-        { scaleY: 0.35, opacity: 0.45 },
-        {
-          scaleY: 1,
-          opacity: 1,
-          transformOrigin: "bottom",
-          ease: "none",
+        gsap.to([contentWrapperRef.current, carouselRef.current], {
           scrollTrigger: {
             trigger: sectionRef.current,
             scroller,
             start: "top top",
-            end: "bottom center",
+            end: "bottom 20%",
             scrub: true,
           },
-        },
-      );
+          opacity: 0,
+          y: -100,
+          ease: "none",
+        });
+
+        gsap.fromTo(
+          lineRef.current,
+          { scaleY: 0.35, opacity: 0.45 },
+          {
+            scaleY: 1,
+            opacity: 1,
+            transformOrigin: "bottom",
+            ease: "none",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              scroller,
+              start: "top top",
+              end: "bottom center",
+              scrub: true,
+            },
+          },
+        );
       }, sectionRef);
     }
 
@@ -263,6 +263,7 @@ export function HeroSection({
             className="z-10 shrink-0 space-y-3 pb-2 pt-[5.8rem] sm:pt-[6.5rem] md:space-y-4 md:pb-4 md:pt-28 lg:space-y-8 lg:pb-0 lg:pt-0"
           >
             <h1 className="text-hero text-[var(--text-primary)]">
+              <span className="sr-only">HistoryTalk - Trò chuyện với nhân vật lịch sử- Học lịch sử tương tác</span>
               <span className="block overflow-hidden pb-[0.08em]">
                 <span className="hero-reveal-title block">HISTORY TALK</span>
               </span>
