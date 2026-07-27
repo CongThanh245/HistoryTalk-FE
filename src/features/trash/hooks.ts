@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { trashService, type TrashItemType } from "@/services/trash.service";
 import { queryKeys } from "@/shared/query-key";
+import { removeContextFromCharacterCaches } from "@/features/characters/context-cache";
 
 function trashQueryKey(type: TrashItemType) {
   if (type === "quizzes") return queryKeys.trash.quizzes;
@@ -40,6 +41,11 @@ export function useTrashPermanentDelete(type: TrashItemType) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (ids: string[]) => trashService.permanentDelete(type, ids),
-    onSuccess: () => invalidateRelated(qc, type),
+    onSuccess: (_, ids) => {
+      invalidateRelated(qc, type);
+      if (type === "historical-contexts") {
+        ids.forEach((id) => removeContextFromCharacterCaches(qc, id));
+      }
+    },
   });
 }

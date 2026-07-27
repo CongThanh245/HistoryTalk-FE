@@ -7,6 +7,7 @@ import { chatService } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
 import { ChatMain } from "./chat-main";
 import { ChatRightPanel } from "./chat-right-panel";
+import { DocumentCitationDialog } from "./document-citation-dialog";
 import { useCreateSession, useChatSessions } from "@/features/chat/hooks";
 
 interface ChatClientProps {
@@ -87,9 +88,6 @@ export function ChatClient({
     sessionInitialized.current = false; // ← reset để init lại cho nhân vật mới
   }, []);
 
-  const handleNewSession = useCallback((sessionId: string) => {
-    setActiveSessionId(sessionId);
-  }, []);
   const handleSessionCreated = useCallback((sessionId: string) => {
     setActiveSessionId(sessionId);
     // invalidate để left panel cập nhật list
@@ -103,16 +101,32 @@ export function ChatClient({
   }, [activeSessionId]);
 
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
+  const [citationRequest, setCitationRequest] = useState<
+    { quote?: string; documentId?: string } | null
+  >(null);
+
+  // Nhảy sang khung chat mới ngay lập tức (activeSessionId = null → ChatMain tự hiện
+  // TypingIndicator), tạo session ở background thay vì loading trên nút bấm.
+  const handleStartNewSession = useCallback(() => {
+    if (!characterId || !contextId) return;
+    sessionInitialized.current = true; // chặn effect auto-init chọn nhầm session cũ
+    setActiveSessionId(null);
+    setIsRightPanelOpen(false);
+    createSession
+      .mutateAsync({ characterId, contextId })
+      .then((session) => {
+        setActiveSessionId(session.id);
+      })
+      .catch(() => {
+        sessionInitialized.current = false;
+      });
+  }, [characterId, contextId, createSession]);
 
   if (isLoadingCharacter || !activeCharacter) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <div
-          className="w-6 h-6 rounded-full border-2 animate-spin"
-          style={{
-            borderColor: "var(--accent-gold)",
-            borderTopColor: "transparent",
-          }}
+          className="w-6 h-6 rounded-full border-2 border-accent-gold border-t-transparent animate-spin"
         />
       </div>
     );
@@ -127,6 +141,7 @@ export function ChatClient({
         onSessionCreated={handleSessionCreated}
         toggleRightPanel={() => setIsRightPanelOpen(!isRightPanelOpen)}
         isRightOpen={isRightPanelOpen}
+        onOpenCitation={(quote) => setCitationRequest({ quote })}
       />
       <ChatRightPanel
         activeCharacter={activeCharacter}
@@ -139,9 +154,19 @@ export function ChatClient({
         isLoadingSessions={isLoadingSessions}
         activeSessionId={activeSessionId}
         onSelectSession={setActiveSessionId}
-        onNewSession={handleNewSession}
+        onNewSession={handleStartNewSession}
         onDeleteSession={handleDeleteSession}
+        onOpenDocument={(documentId) => setCitationRequest({ documentId })}
       />
+      {citationRequest && (
+        <DocumentCitationDialog
+          quote={citationRequest.quote}
+          initialDocumentId={citationRequest.documentId}
+          characterId={characterId}
+          contextId={contextId}
+          onClose={() => setCitationRequest(null)}
+        />
+      )}
     </div>
   );
 }

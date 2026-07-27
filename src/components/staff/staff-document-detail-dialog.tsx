@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FileTextIcon } from "@phosphor-icons/react";
+import { FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StaffFormLabel, StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
 
@@ -52,11 +52,10 @@ export function StaffDocumentDetailDialog({
         className="inset-0 translate-x-0 translate-y-0 w-full max-w-none sm:max-w-none rounded-none border-0 p-0 gap-0 shadow-none flex flex-col overflow-hidden"
       >
         <DialogHeader
-          className="flex-row items-center gap-2.5 space-y-0 px-6 py-4 border-b shrink-0"
-          style={{ borderColor: "var(--card-light-border)" }}
+          className="flex-row items-center gap-2.5 space-y-0 px-6 py-4 border-b border-card-light-border shrink-0"
         >
-          <FileTextIcon className="h-5 w-5" style={{ color: "var(--accent-blue)" }} />
-          <DialogTitle className="text-base font-semibold" style={{ color: "var(--content-heading)" }}>
+          <FileText className="h-5 w-5 text-accent-blue" />
+          <DialogTitle className="text-base font-semibold text-content-heading">
             Chi tiết tài liệu
           </DialogTitle>
         </DialogHeader>
@@ -77,7 +76,7 @@ export function StaffDocumentDetailDialog({
                 </>
               ) : (
                 <div>
-                  <p className="text-xl font-semibold" style={{ color: "var(--content-heading)" }}>
+                  <p className="text-xl font-semibold text-content-heading">
                     {title || "Tài liệu chưa đặt tên"}
                   </p>
                   {titleBadge && <div className="mt-2">{titleBadge}</div>}
@@ -90,7 +89,7 @@ export function StaffDocumentDetailDialog({
             <div className="grid gap-1.5">
               <div className="flex items-center justify-between">
                 <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
-                <span className="text-[11px]" style={{ color: "var(--content-muted)" }}>
+                <span className="text-[11px] text-content-muted">
                   {content.length.toLocaleString("vi-VN")} ký tự
                 </span>
               </div>
@@ -104,12 +103,7 @@ export function StaffDocumentDetailDialog({
                 />
               ) : (
                 <div
-                  className="whitespace-pre-wrap rounded-xl border p-5 text-sm leading-7"
-                  style={{
-                    borderColor: "var(--card-light-border)",
-                    background: "var(--card-light-bg)",
-                    color: "var(--content-muted)",
-                  }}
+                  className="whitespace-pre-wrap rounded-xl border border-card-light-border bg-card-light-bg p-5 text-sm leading-7 text-content-muted"
                 >
                   {content || emptyContentMessage}
                 </div>

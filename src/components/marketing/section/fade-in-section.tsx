@@ -16,14 +16,9 @@ export function FadeInSection({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`transition-opacity duration-500 ease-out ${
+      className={`transition-opacity duration-500 ease-out will-change-opacity min-h-[100px] ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
-      style={{ 
-        willChange: "opacity",
-        // Tránh layout shift bằng cách luôn có content
-        minHeight: "100px" 
-      }}
     >
       {children}
     </div>

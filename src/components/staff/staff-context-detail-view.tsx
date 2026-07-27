@@ -4,22 +4,20 @@ import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeftIcon,
-  PencilIcon,
-  EyeIcon,
-  PlusIcon,
-  TrashIcon,
-  ImageIcon,
-  VideoIcon,
-  UploadSimpleIcon,
-  FilePdfIcon,
-  PlayIcon,
-  ArrowsOutIcon,
-  UsersIcon,
-  LinkBreakIcon,
-  MagnifyingGlassIcon,
-  ScrollIcon,
-} from "@phosphor-icons/react";
+  ArrowLeft,
+  Pencil,
+  Eye,
+  Trash2,
+  Image as ImageIcon,
+  Video,
+  Upload,
+  File,
+  Maximize2,
+  Users,
+  Unlink,
+  Search,
+  ScrollText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   StaffFormLabel,
@@ -31,6 +29,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { StaffImageHoverPreview } from "@/components/staff/staff-media-preview";
+import { MediaSlotField } from "@/components/staff/media-slot-field";
+import { NewDocumentPanel } from "@/components/staff/new-document-panel";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
@@ -51,68 +51,10 @@ const ERA_OPTIONS = [
 
 function ValidationErrorText({ message }: { message?: string }) {
   return message ? (
-    <p className="text-[11px] font-medium" style={{ color: "var(--accent-danger)" }}>
+    <p className="text-[11px] font-medium text-accent-danger">
       {message}
     </p>
   ) : null;
-}
-
-function extractYoutubeId(url?: string | null) {
-  if (!url) return null;
-  const match = url.match(/(?:v=|youtu\.be\/|embed\/)([^&\n?#]+)/);
-  return match?.[1] ?? null;
-}
-
-function isDirectVideoUrl(url?: string | null) {
-  if (!url) return false;
-  try {
-    const pathname = new URL(url).pathname.toLowerCase();
-    return /\.(mp4|webm|ogg|mov|avi|mkv)$/.test(pathname);
-  } catch {
-    return false;
-  }
-}
-
-// Shows YouTube's own static thumbnail (always correctly framed, unlike the
-// iframe player which can crop non-16:9 videos to fill the box) and only
-// swaps to the live embed once clicked, so the preview panel never shows a
-// misleadingly cropped frame before the user asks to actually play it.
-function YoutubePreview({ youtubeId }: { youtubeId: string }) {
-  const [playing, setPlaying] = React.useState(false);
-
-  if (playing) {
-    return (
-      <iframe
-        src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&autoplay=1`}
-        title="Xem trước video bối cảnh"
-        className="h-full w-full"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        style={{ border: "none" }}
-      />
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => setPlaying(true)}
-      className="group relative h-full w-full"
-      style={{ background: "#000" }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element -- external YouTube CDN thumbnail, not a local/optimized asset */}
-      <img
-        src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
-        alt="Xem trước video bối cảnh"
-        className="h-full w-full object-contain"
-      />
-      <span className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors group-hover:bg-black/35">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
-          <PlayIcon className="h-5 w-5 translate-x-px" weight="fill" style={{ color: "#1b2632" }} />
-        </span>
-      </span>
-    </button>
-  );
 }
 
 export function StaffContextDetailView(props: StaffContextDetailViewProps) {
@@ -127,6 +69,14 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     isUploadDocumentPdfPending = false,
     onGetDocumentPdfUrl,
     isGetDocumentPdfUrlPending = false,
+    onUploadMedia,
+    isUploadMediaPending = false,
+    onDeleteMedia,
+    isDeleteMediaPending = false,
+    onCreateTextDocument,
+    isCreateTextDocumentPending = false,
+    onCreatePdfDocument,
+    isCreatePdfDocumentPending = false,
     charactersInContext = [],
     isLoadingCharactersInContext = false,
     characterSearch = "",
@@ -177,14 +127,73 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     pdfPreviewUrl,
     setPdfPreviewUrl,
     fileInputRef,
+    pendingImageFile,
+    setPendingImageFile,
+    pendingVideoFile,
+    setPendingVideoFile,
+    pendingImagePreviewUrl,
+    setPendingImagePreviewUrl,
+    pendingVideoPreviewUrl,
+    setPendingVideoPreviewUrl,
     isCreated,
   } = useStaffContextDetailView(props);
+
+  type MediaKind = "IMAGE_2D" | "VIDEO";
+
+  // In edit mode the context already exists, so a picked file uploads
+  // immediately; in create mode there's no contextId yet, so the file is
+  // held as "pending" and actually uploaded by the page's onSave handler
+  // right after the context is created (mirrors the PDF pendingPdfFile flow).
+  const handleMediaPick = async (
+    file: File,
+    mediaType: MediaKind,
+    setPendingFile: (file: File | null) => void,
+    setPendingPreviewUrl: (url: string | null) => void,
+  ) => {
+    if (isCreated && draft.id && onUploadMedia) {
+      try {
+        await onUploadMedia(draft.id, file, mediaType);
+      } catch {
+        // onUploadMedia's hook already shows an error toast
+      }
+      return;
+    }
+    setPendingFile(file);
+    setPendingPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleMediaClear = async (
+    mediaType: MediaKind,
+    pendingFile: File | null,
+    setPendingFile: (file: File | null) => void,
+    pendingPreviewUrl: string | null,
+    setPendingPreviewUrl: (url: string | null) => void,
+  ) => {
+    if (pendingFile) {
+      if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
+      setPendingPreviewUrl(null);
+      setPendingFile(null);
+      return;
+    }
+    if (isCreated && draft.id && onDeleteMedia) {
+      try {
+        await onDeleteMedia(draft.id, mediaType);
+      } catch {
+        // onDeleteMedia's hook already shows an error toast
+      }
+    }
+  };
+
+  // A PDF document's "content" is just an internal placeholder (PDF text
+  // isn't extracted/editable) — the manual text editor and "attach PDF"
+  // action only make sense for a document that doesn't already have a file.
+  const selectedDocument = documents.find((document) => getDocumentId(document) === draft.documentId);
+  const selectedDocumentHasPdf = !!selectedDocument?.fileUrl;
 
   const [unmapTarget, setUnmapTarget] = React.useState<{ characterId: string; name: string } | null>(null);
   const [imageLightboxOpen, setImageLightboxOpen] = React.useState(false);
   const [videoLightboxOpen, setVideoLightboxOpen] = React.useState(false);
-  const youtubeId = extractYoutubeId(draft.videoUrl);
-  const hasVideo = !!youtubeId || isDirectVideoUrl(draft.videoUrl);
+  const hasVideo = !!draft.videoUrl;
 
   const visibleTabs = FORM_TABS.filter((tab) => tab.key !== "characters" || mode === "edit");
 
@@ -192,14 +201,13 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-content)]">
       {/* ═══════ Header ═══════ */}
       <div
-        className="flex items-center justify-between px-6 py-4 border-b shrink-0"
-        style={{ borderColor: "var(--card-light-border)" }}
+        className="flex items-center justify-between px-6 py-4 border-b border-card-light-border shrink-0"
       >
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
-            className="hover:bg-black/[0.08] dark:hover:bg-black/[0.08]"
+            className="text-content-muted hover:bg-black/[0.08] dark:hover:bg-black/[0.08]"
             onClick={() => {
               if (isDirty && isEditing) {
                 setLeaveDialogOpen(true);
@@ -207,14 +215,12 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                 router.push("/staff/contexts");
               }
             }}
-            style={{ color: "var(--content-muted)" }}
           >
-            <ArrowLeftIcon className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-lg overflow-hidden relative shrink-0"
-              style={{ background: "var(--card-light-border)" }}
+              className="w-10 h-10 rounded-lg overflow-hidden relative shrink-0 bg-card-light-border"
             >
               {isValidUrl(draft.imageUrl) && (
                 <Image
@@ -227,7 +233,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <h1 className="text-lg font-bold leading-tight" style={{ color: "var(--content-heading)" }}>
+                <h1 className="text-lg font-bold leading-tight text-content-heading">
                   {mode === "create" && !isCreated ? "Tạo bối cảnh lịch sử" : draft.name || "Bối cảnh"}
                 </h1>
                 {isCreated && (
@@ -247,7 +253,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   />
                 )}
               </div>
-              <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+              <p className="text-xs text-content-muted">
                 {mode === "create" && !isCreated
                   ? "Điền thông tin bên trái, xem preview ảnh/video bên phải"
                   : draft.location || "—"}
@@ -292,7 +298,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
               className="bg-transparent border-[var(--card-light-border)] hover:bg-black/[0.08] hover:border-[var(--content-muted)] text-[var(--content-heading)] hover:text-[var(--content-heading)] dark:hover:bg-black/[0.08] dark:hover:text-[var(--content-heading)] transition-colors"
               onClick={() => setIsEditing(true)}
             >
-              <PencilIcon className="h-4 w-4 mr-1.5" />
+              <Pencil className="h-4 w-4 mr-1.5" />
               Chỉnh sửa
             </Button>
           )}
@@ -331,8 +337,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
       <div className="flex-1 flex min-h-0">
         {/* ── Left Panel: Form ── */}
         <div
-          className="w-[600px] shrink-0 border-r overflow-hidden flex flex-col"
-          style={{ borderColor: "var(--card-light-border)" }}
+          className="w-[600px] shrink-0 border-r border-card-light-border overflow-hidden flex flex-col"
         >
           <Tabs
             value={activeTab}
@@ -340,16 +345,15 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             className="flex flex-col h-full min-h-0 gap-0"
           >
             <div
-              className="px-6 pt-6 pb-4 shrink-0 border-b"
-              style={{ borderColor: "var(--card-light-border)" }}
+              className="px-6 pt-6 pb-4 shrink-0 border-b border-card-light-border"
             >
-              <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--content-heading)" }}>
+              <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-content-heading">
                 Thông tin bối cảnh
               </p>
 
               <TabsList
-                className="w-full grid h-auto p-1 gap-1"
-                style={{ background: "rgba(27,38,50,0.04)", gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))` }}
+                className="w-full grid h-auto p-1 gap-1 bg-[rgba(27,38,50,0.04)]"
+                style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))` }}
               >
                 {visibleTabs.map((tab) => (
                   <TabsTrigger
@@ -360,8 +364,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     {tab.label}
                     {tabHasError(tab.key) && (
                       <span
-                        className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full"
-                        style={{ background: "var(--accent-danger)" }}
+                        className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full bg-accent-danger"
                       />
                     )}
                   </TabsTrigger>
@@ -413,7 +416,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     value={draft.description}
                     onChange={(e) => set("description")(e.target.value)}
                     placeholder="Bối cảnh lịch sử..."
-                    style={{ minHeight: "120px" }}
+                    className="min-h-[120px]"
                     disabled={!isEditing}
                   />
                   <ValidationErrorText message={errors.description} />
@@ -432,49 +435,94 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
               </TabsContent>
 
               <TabsContent value="media" className="space-y-4 mt-0">
-                <div className="grid gap-1.5">
-                  <StaffFormLabel className="flex items-center gap-1.5">
-                    <ImageIcon className="h-3.5 w-3.5" />
-                    URL hình ảnh
-                  </StaffFormLabel>
-                  <StaffFormInput
-                    value={draft.imageUrl}
-                    onChange={(e) => set("imageUrl")(e.target.value)}
-                    placeholder="https://..."
-                    disabled={!isEditing}
-                  />
-                  <ValidationErrorText message={errors.imageUrl} />
-                </div>
-                <div className="grid gap-1.5">
-                  <StaffFormLabel className="flex items-center gap-1.5">
-                    <VideoIcon className="h-3.5 w-3.5" />
-                    URL video (YouTube hoặc file .mp4)
-                  </StaffFormLabel>
-                  <StaffFormInput
-                    value={draft.videoUrl}
-                    onChange={(e) => set("videoUrl")(e.target.value)}
-                    placeholder="https://youtube.com/watch?v=... hoặc https://.../video.mp4"
-                    disabled={!isEditing}
-                  />
-                  <ValidationErrorText message={errors.videoUrl} />
-                </div>
-                <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                <MediaSlotField
+                  label="Ảnh bối cảnh"
+                  icon={<ImageIcon className="h-3.5 w-3.5" />}
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  disabled={!isEditing}
+                  isBusy={isUploadMediaPending || isDeleteMediaPending}
+                  hasValue={!!draft.imageUrl || !!pendingImageFile}
+                  caption={
+                    pendingImageFile
+                      ? `Đã chọn: ${pendingImageFile.name} (sẽ tải lên sau khi lưu)`
+                      : draft.imageUrl
+                        ? "Đã có ảnh"
+                        : "Chưa có ảnh"
+                  }
+                  onPick={(file) => handleMediaPick(file, "IMAGE_2D", setPendingImageFile, setPendingImagePreviewUrl)}
+                  onClear={() =>
+                    handleMediaClear(
+                      "IMAGE_2D",
+                      pendingImageFile,
+                      setPendingImageFile,
+                      pendingImagePreviewUrl,
+                      setPendingImagePreviewUrl,
+                    )
+                  }
+                  errorMessage={errors.imageUrl}
+                >
+                  {pendingImagePreviewUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element -- local blob preview, not an optimizable remote asset
+                    <img
+                      src={pendingImagePreviewUrl}
+                      alt="Xem trước ảnh"
+                      className="mt-1 h-32 w-32 rounded-lg border border-card-light-border object-cover"
+                    />
+                  )}
+                </MediaSlotField>
+
+                <MediaSlotField
+                  label="Video bối cảnh"
+                  icon={<Video className="h-3.5 w-3.5" />}
+                  accept="video/mp4,video/webm,video/quicktime"
+                  disabled={!isEditing}
+                  isBusy={isUploadMediaPending || isDeleteMediaPending}
+                  hasValue={!!draft.videoUrl || !!pendingVideoFile}
+                  caption={
+                    pendingVideoFile
+                      ? `Đã chọn: ${pendingVideoFile.name} (sẽ tải lên sau khi lưu)`
+                      : draft.videoUrl
+                        ? "Đã có video"
+                        : "Chưa có video"
+                  }
+                  errorMessage={errors.videoUrl}
+                  onPick={(file) => handleMediaPick(file, "VIDEO", setPendingVideoFile, setPendingVideoPreviewUrl)}
+                  onClear={() =>
+                    handleMediaClear(
+                      "VIDEO",
+                      pendingVideoFile,
+                      setPendingVideoFile,
+                      pendingVideoPreviewUrl,
+                      setPendingVideoPreviewUrl,
+                    )
+                  }
+                >
+                  {pendingVideoPreviewUrl && (
+                    <video
+                      src={pendingVideoPreviewUrl}
+                      controls
+                      className="mt-1 h-32 w-full max-w-xs rounded-lg border border-card-light-border object-cover"
+                    />
+                  )}
+                </MediaSlotField>
+
+                <p className="text-xs text-content-muted">
                   Xem preview trực tiếp ở khung bên phải.
                 </p>
               </TabsContent>
 
               <TabsContent value="rag" className="space-y-3 mt-0">
                 <div className="flex items-center gap-2">
-                  <ScrollIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                  <ScrollText className="h-4 w-4 text-accent-blue" />
+                  <p className="text-xs font-semibold uppercase tracking-widest text-content-heading">
                     Tài liệu RAG kèm theo
                   </p>
                 </div>
 
                 {mode === "edit" && (
-                  <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+                  <div className="rounded-lg border border-card-light-border p-3">
                     <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-content-heading">
                         Tài liệu đã import
                         {documents.length > 0 && (
                           <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
@@ -482,14 +530,24 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           </span>
                         )}
                       </p>
-                      <Button type="button" size="sm" variant="outline" onClick={clearDocumentDraft} disabled={!isEditing}>
-                        <PlusIcon className="mr-1.5 h-3.5 w-3.5" />
-                        Tài liệu mới
-                      </Button>
+                    </div>
+
+                    <div className="mb-3">
+                      <NewDocumentPanel
+                        disabled={!isEditing}
+                        onCreateText={async (data) => {
+                          if (onCreateTextDocument) await onCreateTextDocument(data);
+                        }}
+                        isCreateTextPending={isCreateTextDocumentPending}
+                        onCreatePdf={async (data) => {
+                          if (onCreatePdfDocument) await onCreatePdfDocument(data);
+                        }}
+                        isCreatePdfPending={isCreatePdfDocumentPending}
+                      />
                     </div>
 
                     {isLoadingDocuments ? (
-                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tải tài liệu...</p>
+                      <p className="text-xs text-content-muted">Đang tải tài liệu...</p>
                     ) : documents.length ? (
                       <div className="space-y-2">
                         {documents.map((document, index) => {
@@ -499,31 +557,31 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           return (
                             <div
                               key={documentId ?? `historical-document-${index}`}
-                              className="flex items-start gap-2 rounded-md border p-2"
-                              style={{
-                                borderColor: selected ? "rgba(59,130,246,0.45)" : "var(--card-light-border)",
-                                background: selected ? "rgba(59,130,246,0.08)" : "rgba(255,255,255,0.35)",
-                              }}
+                              className={`flex items-start gap-2 rounded-md border p-2 ${
+                                selected
+                                  ? "border-[rgba(59,130,246,0.45)] bg-[rgba(59,130,246,0.08)]"
+                                  : "border-card-light-border bg-white/35"
+                              }`}
                             >
                               <button
                                 type="button"
                                 className="min-w-0 flex-1 text-left"
                                 onClick={() => selectDocument(document)}
                               >
-                                <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                                <p className="truncate text-sm font-semibold text-content-heading">
                                   {document.title || "Tài liệu chưa đặt tên"}
                                 </p>
-                                <p className="mt-0.5 line-clamp-2 text-xs" style={{ color: "var(--content-muted)" }}>
+                                <p className="mt-0.5 line-clamp-2 text-xs text-content-muted">
                                   {document.content || "Chưa có nội dung"}
                                 </p>
                               </button>
                               <div className="flex items-center gap-1">
-                                {onGetDocumentPdfUrl && (
+                                {onGetDocumentPdfUrl && !!document.fileUrl && (
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    className="shrink-0 rounded-full text-accent-gold"
                                     disabled={isGetDocumentPdfUrlPending}
                                     onClick={async () => {
                                       if (!documentId) return;
@@ -538,18 +596,17 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                         setViewerLoading(false);
                                       }
                                     }}
-                                    style={{ color: "var(--accent-gold)" }}
                                     title="Xem PDF"
                                   >
-                                    <EyeIcon className="h-4 w-4" />
+                                    <Eye className="h-4 w-4" />
                                   </Button>
                                 )}
-                                {onUploadDocumentPdf && (
+                                {onUploadDocumentPdf && !document.fileUrl && (
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    className="shrink-0 rounded-full text-accent-blue"
                                     disabled={isUploadDocumentPdfPending || !isEditing}
                                     onClick={() => {
                                       if (documentId) {
@@ -557,10 +614,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                         setUploadDialogOpen(true);
                                       }
                                     }}
-                                    style={{ color: "var(--accent-blue)" }}
                                     title="Upload PDF"
                                   >
-                                    <UploadSimpleIcon className="h-4 w-4" />
+                                    <Upload className="h-4 w-4" />
                                   </Button>
                                 )}
                                 {onDeleteDocument && (
@@ -568,16 +624,15 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    className="shrink-0 rounded-full text-accent-danger"
                                     disabled={!isEditing || isDeleteDocumentPending}
                                     onClick={() => {
                                       if (!documentId) return;
                                       onDeleteDocument(documentId);
                                       if (draft.documentId === documentId) clearDocumentDraft();
                                     }}
-                                    style={{ color: "var(--accent-danger)" }}
                                   >
-                                    <TrashIcon className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
                                 )}
                               </div>
@@ -586,15 +641,15 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                         })}
                       </div>
                     ) : (
-                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>Chưa có tài liệu nào.</p>
+                      <p className="text-xs text-content-muted">Chưa có tài liệu nào.</p>
                     )}
                   </div>
                 )}
 
                 {mode === "create" && (
-                  <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+                  <div className="rounded-lg border border-card-light-border p-3">
                     <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-content-heading">
                         File PDF đính kèm
                         {pendingPdfFile && (
                           <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
@@ -615,7 +670,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                             }
                           }}
                         >
-                          <TrashIcon className="h-3.5 w-3.5" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
@@ -623,14 +678,13 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     {!pendingPdfFile ? (
                       <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors hover:border-[var(--accent-gold)]/50 hover:bg-[var(--accent-gold)]/5"
-                        style={{ borderColor: "var(--card-light-border)" }}
+                        className="border-2 border-dashed border-card-light-border rounded-lg p-4 text-center cursor-pointer transition-colors hover:border-[var(--accent-gold)]/50 hover:bg-[var(--accent-gold)]/5"
                       >
-                        <FilePdfIcon className="h-8 w-8 mx-auto mb-2" style={{ color: "var(--content-muted)" }} />
-                        <p className="text-sm font-medium" style={{ color: "var(--content-heading)" }}>
+                        <File className="h-8 w-8 mx-auto mb-2 text-content-muted" />
+                        <p className="text-sm font-medium text-content-heading">
                           Click để chọn file PDF
                         </p>
-                        <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
+                        <p className="text-xs mt-1 text-content-muted">
                           Hoặc kéo thả file vào đây
                         </p>
                         <input
@@ -653,20 +707,18 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     ) : (
                       <div className="space-y-3">
                         <div
-                          className="flex items-center gap-3 p-3 rounded-lg border"
-                          style={{ borderColor: "rgba(234,179,8,0.3)", background: "rgba(234,179,8,0.05)" }}
+                          className="flex items-center gap-3 p-3 rounded-lg border border-[rgba(234,179,8,0.3)] bg-[rgba(234,179,8,0.05)]"
                         >
                           <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                            style={{ background: "rgba(234,179,8,0.1)" }}
+                            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-[rgba(234,179,8,0.1)]"
                           >
-                            <FilePdfIcon className="h-5 w-5" style={{ color: "var(--accent-gold)" }} />
+                            <File className="h-5 w-5 text-accent-gold" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium truncate" style={{ color: "var(--content-heading)" }}>
+                            <p className="text-sm font-medium truncate text-content-heading">
                               {pendingPdfFile.name}
                             </p>
-                            <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                            <p className="text-xs text-content-muted">
                               {(pendingPdfFile.size / 1024 / 1024).toFixed(2)} MB
                             </p>
                           </div>
@@ -674,20 +726,22 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                             type="button"
                             size="sm"
                             variant="outline"
-                            onClick={() => setUploadDialogOpen(true)}
-                            style={{ color: "var(--accent-gold)", borderColor: "rgba(234,179,8,0.3)" }}
+                            onClick={() => {
+                              setViewerUrl(pdfPreviewUrl);
+                              setViewerOpen(true);
+                            }}
+                            className="text-accent-gold border-[rgba(234,179,8,0.3)]"
                           >
-                            <EyeIcon className="h-4 w-4 mr-1.5" />
+                            <Eye className="h-4 w-4 mr-1.5" />
                             Xem trước
                           </Button>
                         </div>
 
                         {pdfPreviewUrl && (
                           <div
-                            className="border rounded-lg overflow-hidden"
-                            style={{ borderColor: "var(--card-light-border)", height: "200px" }}
+                            className="border border-card-light-border rounded-lg overflow-hidden h-[200px]"
                           >
-                            <iframe src={pdfPreviewUrl} className="w-full h-full" title="PDF Preview" style={{ border: "none" }} />
+                            <iframe src={pdfPreviewUrl} className="w-full h-full border-none" title="PDF Preview" />
                           </div>
                         )}
                       </div>
@@ -695,63 +749,66 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   </div>
                 )}
 
-                <div className="grid gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
-                    {draft.documentId && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                        Đang sửa
-                      </span>
-                    )}
-                    {!draft.documentId && draft.documentContent.trim() && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
-                        Tài liệu mới
-                      </span>
-                    )}
-                  </div>
-                  <StaffFormInput
-                    value={draft.documentTitle}
-                    onChange={(e) => set("documentTitle")(e.target.value)}
-                    placeholder="Để trống sẽ dùng tên bối cảnh"
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
-                    <span className="text-[10px]" style={{ color: "var(--content-muted)" }}>
-                      {draft.documentContent.length.toLocaleString("vi-VN")} ký tự
-                    </span>
-                  </div>
-                  <StaffFormTextarea
-                    value={draft.documentContent}
-                    onChange={(e) => set("documentContent")(e.target.value)}
-                    placeholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
-                    style={{ minHeight: "160px" }}
-                    disabled={!isEditing}
-                  />
-                </div>
+                {!selectedDocumentHasPdf && (
+                  <>
+                    <div className="grid gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
+                        {draft.documentId && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                            Đang sửa
+                          </span>
+                        )}
+                        {!draft.documentId && draft.documentContent.trim() && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+                            Tài liệu mới
+                          </span>
+                        )}
+                      </div>
+                      <StaffFormInput
+                        value={draft.documentTitle}
+                        onChange={(e) => set("documentTitle")(e.target.value)}
+                        placeholder="Để trống sẽ dùng tên bối cảnh"
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
+                        <span className="text-[10px] text-content-muted">
+                          {draft.documentContent.length.toLocaleString("vi-VN")} ký tự
+                        </span>
+                      </div>
+                      <StaffFormTextarea
+                        value={draft.documentContent}
+                        onChange={(e) => set("documentContent")(e.target.value)}
+                        placeholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
+                        className="min-h-[160px]"
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </>
+                )}
               </TabsContent>
 
               <TabsContent value="characters" className="space-y-4 mt-0">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-content-heading">
                     Nhân vật đã gắn với bối cảnh này
                   </p>
-                  <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
+                  <p className="mt-1 text-xs text-content-muted">
                     Đây là các nhân vật mà người dùng có thể trò chuyện khi khám phá bối cảnh &quot;{draft.name || "..."}&quot;.
                   </p>
                 </div>
 
                 {isLoadingCharactersInContext ? (
-                  <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tải nhân vật...</p>
+                  <p className="text-xs text-content-muted">Đang tải nhân vật...</p>
                 ) : charactersInContext.length ? (
                   <div className="space-y-2">
                     {charactersInContext.map((character) => (
                       <div
                         key={character.id}
-                        className="flex items-center gap-3 rounded-lg border p-2.5"
-                        style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
+                        className="flex items-center gap-3 rounded-lg border border-card-light-border bg-white/35 p-2.5"
                       >
                         <StaffImageHoverPreview
                           src={character.avatarUrl}
@@ -760,13 +817,13 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           previewClassName="h-40 w-40"
                           sizes="40px"
                           previewSizes="160px"
-                          fallback={<UsersIcon className="h-4 w-4" />}
+                          fallback={<Users className="h-4 w-4" />}
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                          <p className="truncate text-sm font-semibold text-content-heading">
                             {character.name}
                           </p>
-                          <p className="truncate text-xs" style={{ color: "var(--content-muted)" }}>
+                          <p className="truncate text-xs text-content-muted">
                             {character.title || character.role || "—"}
                           </p>
                         </div>
@@ -775,8 +832,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-8 rounded-md px-2.5 text-xs font-semibold"
-                            style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
+                            className="h-8 rounded-md px-2.5 text-xs font-semibold border-card-light-border text-content-heading"
                             onClick={() => router.push(`/staff/characters/${character.id}`)}
                           >
                             Xem chi tiết
@@ -786,13 +842,12 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                               type="button"
                               variant="ghost"
                               size="icon-sm"
-                              className="rounded-full"
+                              className="rounded-full text-accent-danger"
                               title="Gỡ liên kết khỏi bối cảnh"
                               disabled={!isEditing}
-                              style={{ color: "var(--accent-danger)" }}
                               onClick={() => setUnmapTarget({ characterId: character.id, name: character.name })}
                             >
-                              <LinkBreakIcon className="h-4 w-4" />
+                              <Unlink className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
@@ -800,17 +855,16 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                  <p className="text-xs text-content-muted">
                     Chưa có nhân vật nào được gắn với bối cảnh này.
                   </p>
                 )}
 
-                <div className="space-y-2 border-t pt-4" style={{ borderColor: "var(--card-light-border)" }}>
+                <div className="space-y-2 border-t border-card-light-border pt-4">
                   <StaffFormLabel>Thêm nhân vật vào bối cảnh này</StaffFormLabel>
                   <div className="relative">
-                    <MagnifyingGlassIcon
-                      className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
-                      style={{ color: "var(--content-subtle)" }}
+                    <Search
+                      className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle"
                     />
                     <StaffFormInput
                       value={characterSearch}
@@ -822,14 +876,13 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   </div>
 
                   {isLoadingCharacterSearch ? (
-                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tìm kiếm...</p>
+                    <p className="text-xs text-content-muted">Đang tìm kiếm...</p>
                   ) : availableCharacters.length > 0 ? (
                     <div className="space-y-1.5">
                       {availableCharacters.map((character) => (
                         <div
                           key={character.id}
-                          className="flex items-center gap-3 rounded-lg border p-2"
-                          style={{ borderColor: "var(--card-light-border)" }}
+                          className="flex items-center gap-3 rounded-lg border border-card-light-border p-2"
                         >
                           <StaffImageHoverPreview
                             src={character.avatarUrl}
@@ -838,9 +891,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                             previewClassName="h-32 w-32"
                             sizes="32px"
                             previewSizes="128px"
-                            fallback={<UsersIcon className="h-3.5 w-3.5" />}
+                            fallback={<Users className="h-3.5 w-3.5" />}
                           />
-                          <p className="min-w-0 flex-1 truncate text-sm" style={{ color: "var(--content-heading)" }}>
+                          <p className="min-w-0 flex-1 truncate text-sm text-content-heading">
                             {character.name}
                           </p>
                           <Button
@@ -856,7 +909,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                    <p className="text-xs text-content-muted">
                       {characterSearch ? "Không tìm thấy nhân vật phù hợp." : "Nhập tên để tìm nhân vật cần liên kết."}
                     </p>
                   )}
@@ -868,65 +921,63 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
 
         {/* ── Right Panel: Media preview ── */}
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto p-6 gap-4 bg-[var(--bg-app)]">
-          <div
-            className="overflow-hidden rounded-xl border"
-            style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
-          >
-            <div className="border-b px-3 py-2" style={{ borderColor: "var(--card-light-border)" }}>
-              <p className="text-xs font-semibold" style={{ color: "var(--content-heading)" }}>
-                Xem trước ảnh
-              </p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div
+              className="flex-1 min-w-0 overflow-hidden rounded-xl border border-card-light-border bg-white/35"
+            >
+              <div className="border-b border-card-light-border px-3 py-2">
+                <p className="text-xs font-semibold text-content-heading">
+                  Xem trước ảnh
+                </p>
+              </div>
+              <div className="group relative aspect-video max-h-48 bg-[#0b0f14]">
+                {isValidUrl(draft.imageUrl) ? (
+                  <>
+                    <Image src={draft.imageUrl} alt={draft.name || "Ảnh bối cảnh"} fill className="object-contain" sizes="300px" />
+                    <button
+                      type="button"
+                      onClick={() => setImageLightboxOpen(true)}
+                      className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+                      title="Xem đầy đủ ảnh"
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-xs text-center px-4 text-content-muted">
+                    Dán URL ảnh hợp lệ ở tab Media để xem trước
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="group relative aspect-video" style={{ background: "#0b0f14" }}>
-              {isValidUrl(draft.imageUrl) ? (
-                <>
-                  <Image src={draft.imageUrl} alt={draft.name || "Ảnh bối cảnh"} fill className="object-contain" sizes="600px" />
+
+            <div
+              className="flex-1 min-w-0 overflow-hidden rounded-xl border border-card-light-border bg-white/35"
+            >
+              <div className="border-b border-card-light-border px-3 py-2">
+                <p className="text-xs font-semibold text-content-heading">
+                  Xem trước video
+                </p>
+              </div>
+              <div className="group relative aspect-video max-h-48">
+                {hasVideo && (
                   <button
                     type="button"
-                    onClick={() => setImageLightboxOpen(true)}
+                    onClick={() => setVideoLightboxOpen(true)}
                     className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
-                    title="Xem đầy đủ ảnh"
+                    title="Xem đầy đủ video"
                   >
-                    <ArrowsOutIcon className="h-4 w-4" />
+                    <Maximize2 className="h-4 w-4" />
                   </button>
-                </>
-              ) : (
-                <div className="flex h-full items-center justify-center text-xs text-center px-4" style={{ color: "var(--content-muted)" }}>
-                  Dán URL ảnh hợp lệ ở tab Media để xem trước
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div
-            className="overflow-hidden rounded-xl border"
-            style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
-          >
-            <div className="border-b px-3 py-2" style={{ borderColor: "var(--card-light-border)" }}>
-              <p className="text-xs font-semibold" style={{ color: "var(--content-heading)" }}>
-                Xem trước video
-              </p>
-            </div>
-            <div className="group relative aspect-video">
-              {hasVideo && (
-                <button
-                  type="button"
-                  onClick={() => setVideoLightboxOpen(true)}
-                  className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
-                  title="Xem đầy đủ video"
-                >
-                  <ArrowsOutIcon className="h-4 w-4" />
-                </button>
-              )}
-              {youtubeId ? (
-                <YoutubePreview key={youtubeId} youtubeId={youtubeId} />
-              ) : isDirectVideoUrl(draft.videoUrl) ? (
-                <video src={draft.videoUrl} controls className="h-full w-full object-contain" style={{ background: "#000" }} />
-              ) : (
-                <div className="flex h-full items-center justify-center px-4 text-center text-xs" style={{ color: "var(--content-muted)" }}>
-                  Dán URL YouTube hoặc file video (.mp4) ở tab Media để xem trước
-                </div>
-              )}
+                )}
+                {draft.videoUrl ? (
+                  <video src={draft.videoUrl} controls className="h-full w-full object-contain bg-black" />
+                ) : (
+                  <div className="flex h-full items-center justify-center px-4 text-center text-xs text-content-muted">
+                    Tải lên file video (.mp4) ở tab Media để xem trước
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -949,18 +1000,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         <DialogContent className="max-w-5xl! w-[92vw] max-h-[90vh] overflow-hidden border-none bg-black p-0">
           <DialogTitle className="sr-only">Xem đầy đủ video bối cảnh</DialogTitle>
           <div className="aspect-video w-full">
-            {videoLightboxOpen && youtubeId ? (
-              <iframe
-                src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&autoplay=1`}
-                title="Xem đầy đủ video bối cảnh"
-                className="h-full w-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                style={{ border: "none" }}
-              />
-            ) : videoLightboxOpen && isDirectVideoUrl(draft.videoUrl) ? (
-              <video src={draft.videoUrl} controls autoPlay className="h-full w-full object-contain" style={{ background: "#000" }} />
-            ) : null}
+            {videoLightboxOpen && draft.videoUrl && (
+              <video src={draft.videoUrl} controls autoPlay className="h-full w-full object-contain bg-black" />
+            )}
           </div>
         </DialogContent>
       </Dialog>

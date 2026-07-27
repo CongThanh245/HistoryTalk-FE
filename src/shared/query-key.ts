@@ -1,7 +1,7 @@
 import type { GetEventsParams } from "@/services/event.service";
 import { GetLandmarksParams } from "@/services/landmark.service";
 import { GetQuizSetsParams } from "@/services/quiz.service";
-import { GetStaffQuizzesParams } from "@/services/staff.quiz.service";
+import { GetStaffQuizzesParams, GetQuestionReportsParams } from "@/services/staff.quiz.service";
 
 export const queryKeys = {
   auth: {
@@ -58,6 +58,10 @@ export const queryKeys = {
       ["documents", "historical", "context", contextId] as const,
     characterByCharacter: (characterId: string) =>
       ["documents", "character", "character", characterId] as const,
+    publicByCharacter: (characterId: string) =>
+      ["documents", "public", "character", characterId] as const,
+    publicByContext: (contextId: string) =>
+      ["documents", "public", "context", contextId] as const,
   },
 
   quizzes: {
@@ -66,6 +70,7 @@ export const queryKeys = {
       ["quizzes", "list", params ?? {}] as const,
     detail: (id: string) => ["quizzes", "detail", id] as const,
     myResults: ["quizzes", "results", "me"] as const,
+    myRating: (id: string) => ["quizzes", "rating", "me", id] as const,
   },
   landmarks: {
     all: ["landmarks"] as const,
@@ -81,6 +86,8 @@ export const queryKeys = {
     list: (params?: GetStaffQuizzesParams) =>
       ["staff", "quizzes", "list", params ?? {}] as const,
     detail: (id: string) => ["staff", "quizzes", "detail", id] as const,
+    questionReports: (params?: GetQuestionReportsParams) =>
+      ["staff", "quizzes", "reports", params ?? {}] as const,
   },
 
   payments: {
@@ -92,6 +99,14 @@ export const queryKeys = {
 
   profile: {
     me: ["profile", "me"] as const,
+  },
+
+  dashboard: {
+    me: ["dashboard", "me"] as const,
+  },
+
+  gamification: {
+    today: ["gamification", "today"] as const,
   },
 
   trash: {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CaretRight, House } from "@phosphor-icons/react";
+import { ChevronRight, House } from "lucide-react";
 import React from "react";
 import { useCharacter } from "@/features/characters/hooks";
 import { useEventDetail } from "@/features/events/hooks";
@@ -47,20 +47,15 @@ export default function Breadcrumbs() {
   return (
     <nav 
       aria-label="Breadcrumb" 
-      className="px-3 md:px-6 py-2.5 border-b"
-      style={{ 
-        background: "var(--header-bg)",
-        borderColor: "var(--header-border)",
-      }}
+      className="px-3 md:px-6 py-2.5 border-b bg-header-bg border-header-border"
     >
-      <ol className="flex items-center space-x-2 text-sm" style={{ color: "var(--header-text-muted)" }}>
+      <ol className="flex items-center space-x-2 text-sm text-header-text-muted">
         <li className="flex items-center">
           <Link
             href="/home"
-            className="hover:text-[--accent-gold] transition-colors flex items-center gap-1.5"
-            style={{ color: "var(--header-text)" }}
+            className="hover:text-[--accent-gold] transition-colors flex items-center gap-1.5 text-header-text"
           >
-            <House size={16} weight="fill" />
+            <House size={16} fill="currentColor" />
             <span className="sr-only">Trang chủ</span>
           </Link>
         </li>
@@ -73,19 +68,17 @@ export default function Breadcrumbs() {
           return (
             <React.Fragment key={href}>
               <li className="flex items-center">
-                <CaretRight size={12} className="mx-1 opacity-40" />
+                <ChevronRight size={12} className="mx-1 opacity-40" />
                 {isLast ? (
                   <span 
-                    className="font-semibold truncate max-w-[250px]"
-                    style={{ color: "var(--accent-gold)" }}
+                    className="font-semibold truncate max-w-[250px] text-accent-gold"
                   >
                     <BreadcrumbLabel segment={segment} parentSegment={parentSegment} />
                   </span>
                 ) : (
                   <Link
                     href={segment === "chat" ? "/character" : href}
-                    className="hover:text-[--accent-gold] transition-colors truncate max-w-[200px]"
-                    style={{ color: "var(--header-text)" }}
+                    className="hover:text-[--accent-gold] transition-colors truncate max-w-[200px] text-header-text"
                   >
                     <BreadcrumbLabel segment={segment} parentSegment={parentSegment} />
                   </Link>

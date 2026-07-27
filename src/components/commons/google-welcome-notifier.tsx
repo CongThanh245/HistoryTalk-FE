@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { EnvelopeSimpleIcon, KeyIcon, ArrowRightIcon } from "@phosphor-icons/react";
+import { Mail, KeyRound, ArrowRight } from "lucide-react";
 
 /**
  * Mount this once inside the authenticated app layout.
@@ -28,29 +28,25 @@ export function GoogleWelcomeNotifier() {
     const tid = setTimeout(() => {
       toast(
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 font-bold text-[var(--content-heading)]">
-            <KeyIcon weight="duotone" className="size-4 shrink-0 text-[var(--accent-gold)]" />
+          <div className="flex items-center gap-2 font-bold text-content-heading">
+            <KeyRound className="size-4 shrink-0 text-accent-gold" />
             Mật khẩu tạm thời đã được gửi
           </div>
-          <p className="text-xs leading-5 text-[var(--content-muted)]">
+          <p className="text-xs leading-5 text-content-muted">
             HistoryTalk đã gửi mật khẩu tạm vào email của bạn.
             Hãy đổi ngay để bảo vệ tài khoản.
           </p>
-          <div className="flex items-center gap-1.5 text-xs text-[var(--content-muted)]">
-            <EnvelopeSimpleIcon weight="duotone" className="size-3.5 shrink-0" />
+          <div className="flex items-center gap-1.5 text-xs text-content-muted">
+            <Mail className="size-3.5 shrink-0" />
             Kiểm tra hộp thư đến (hoặc thư mục spam)
           </div>
           <button
             type="button"
             onClick={() => router.push("/profile?tab=security")}
-            className="mt-1 inline-flex items-center gap-1.5 self-start rounded-md px-3 py-1.5 text-xs font-bold transition hover:opacity-80"
-            style={{
-              background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle, #8b5e3c) 100%)",
-              color: "var(--bg-deep, #070d18)",
-            }}
+            className="mt-1 inline-flex items-center gap-1.5 self-start rounded-md px-3 py-1.5 text-xs font-bold transition hover:opacity-80 bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle,#8b5e3c)_100%)] text-bg-deep"
           >
             Đổi mật khẩu ngay
-            <ArrowRightIcon weight="bold" className="size-3" />
+            <ArrowRight className="size-3" />
           </button>
         </div>,
         {

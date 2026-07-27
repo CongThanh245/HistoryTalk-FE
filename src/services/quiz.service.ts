@@ -34,6 +34,13 @@ export interface QuizSet {
   playCount: number;
   contextTitle?: string;
   contextId?: string;
+  rating?: number;
+  grade?: number;
+  chapterNumber?: number;
+  chapterTitle?: string;
+  durationSeconds?: number;
+  /** So lan chinh nguoi dung hien tai da hoan thanh quiz nay (chi co o GET /quizzes/:id). */
+  userPlayCount?: number;
 }
 
 // ── QuizResult ─────────────────────────────────────────────
@@ -49,6 +56,12 @@ export interface QuizResult {
   durationSeconds?: number; // fallback compatibility
 }
 
+export interface PreviousAttempt {
+  score: number;
+  percentage: number;
+  completedAt: string;
+}
+
 export interface QuizSessionDetail {
   sessionId: string;
   quizId: string;
@@ -59,6 +72,7 @@ export interface QuizSessionDetail {
   limitedTime?: number;
   startedAt: string;
   completedAt: string;
+  previousAttempt?: PreviousAttempt | null;
   questions: QuizSessionQuestion[];
 }
 
@@ -137,6 +151,10 @@ function asNumber(value: unknown, fallback = 0) {
   return typeof value === "number" ? value : fallback;
 }
 
+function asOptionalNumber(value: unknown) {
+  return typeof value === "number" ? value : undefined;
+}
+
 function asStringArray(value: unknown) {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
@@ -151,6 +169,12 @@ export function mapQuizSet(rawValue: unknown): QuizSet {
     playCount: asNumber(raw.playCount),
     contextTitle: asOptionalString(raw.contextTitle),
     contextId: asOptionalString(raw.contextId),
+    rating: asOptionalNumber(raw.rating),
+    grade: asOptionalNumber(raw.grade),
+    chapterNumber: asOptionalNumber(raw.chapterNumber),
+    chapterTitle: asOptionalString(raw.chapterTitle),
+    durationSeconds: asOptionalNumber(raw.durationSeconds),
+    userPlayCount: asOptionalNumber(raw.userPlayCount),
   };
 }
 
@@ -191,6 +215,16 @@ export function mapQuizSessionDetail(rawValue: unknown): QuizSessionDetail {
     limitedTime: typeof raw.limitedTime === "number" ? raw.limitedTime : undefined,
     startedAt: asString(raw.startedAt),
     completedAt: asString(raw.completedAt),
+    previousAttempt: (() => {
+      const prev = raw.previousAttempt;
+      if (!prev || typeof prev !== "object") return null;
+      const prevRecord = asRecord(prev);
+      return {
+        score: asNumber(prevRecord.score),
+        percentage: asNumber(prevRecord.percentage),
+        completedAt: asString(prevRecord.completedAt),
+      };
+    })(),
     questions: Array.isArray(raw.questions)
       ? raw.questions.map((questionValue) => {
           const question = asRecord(questionValue);
@@ -295,5 +329,25 @@ export const quizService = {
   // PATCH /quizzes/sessions/:sessionId/soft-delete
   softDeleteSession: async (sessionId: string): Promise<void> => {
     await axiosClient.patch(`/quizzes/sessions/${sessionId}/soft-delete`);
+  },
+
+  // POST /quizzes/:quizId/rating
+  rateQuiz: async (
+    quizId: string,
+    value: number,
+  ): Promise<{ rating: number; ratingCount: number; myRating: number }> => {
+    const res = await axiosClient.post(`/quizzes/${quizId}/rating`, { value });
+    return res.data.data;
+  },
+
+  // GET /quizzes/:quizId/rating/me
+  getMyRating: async (quizId: string): Promise<{ myRating: number | null }> => {
+    const res = await axiosClient.get(`/quizzes/${quizId}/rating/me`);
+    return res.data.data;
+  },
+
+  // POST /quizzes/questions/:questionId/report
+  reportQuestion: async (questionId: string, reason?: string): Promise<void> => {
+    await axiosClient.post(`/quizzes/questions/${questionId}/report`, { reason });
   },
 };

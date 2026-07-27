@@ -3,7 +3,12 @@
 import * as React from "react";
 import { useParams } from "next/navigation";
 import { StaffContextDetailView, type ContextDraft } from "@/components/staff/staff-context-detail-view";
-import { useEventDetail, useUpdateEvent } from "@/features/events/hooks";
+import {
+  useEventDetail,
+  useUpdateEvent,
+  useUploadContextMedia,
+  useDeleteContextMedia,
+} from "@/features/events/hooks";
 import {
   useHistoricalDocuments,
   useCreateHistoricalDocument,
@@ -32,6 +37,8 @@ export default function EditContextPage() {
   const deleteHistoricalDocument = useDeleteHistoricalDocument(id);
   const uploadDocumentPdf = useUploadDocumentPdf();
   const getDocumentPdfUrl = useGetDocumentPdfUrl();
+  const uploadContextMedia = useUploadContextMedia();
+  const deleteContextMedia = useDeleteContextMedia();
 
   const charactersInContext = useCharactersByContext(id);
   const linkedCharacterIds = React.useMemo(
@@ -134,6 +141,33 @@ export default function EditContextPage() {
       isUploadDocumentPdfPending={uploadDocumentPdf.isPending}
       onGetDocumentPdfUrl={async (docId) => getDocumentPdfUrl.mutateAsync(docId)}
       isGetDocumentPdfUrlPending={getDocumentPdfUrl.isPending}
+      onUploadMedia={async (contextId, file, mediaType) => {
+        await uploadContextMedia.mutateAsync({ contextId, file, mediaType });
+      }}
+      isUploadMediaPending={uploadContextMedia.isPending}
+      onDeleteMedia={async (contextId, mediaType) => {
+        await deleteContextMedia.mutateAsync({ contextId, mediaType });
+      }}
+      isDeleteMediaPending={deleteContextMedia.isPending}
+      onCreateTextDocument={async ({ title, content }) => {
+        await createHistoricalDocument.mutateAsync({ contextId: id, title, content, type: "TEXT" });
+      }}
+      isCreateTextDocumentPending={createHistoricalDocument.isPending}
+      onCreatePdfDocument={async ({ title, file }) => {
+        // BE currently requires non-empty content on creation — this placeholder
+        // is never shown to staff, it just satisfies that constraint so a PDF
+        // document can be created without typing text content first.
+        const newDoc = await createHistoricalDocument.mutateAsync({
+          contextId: id,
+          title,
+          content: "PDF Document",
+          type: "TEXT",
+        });
+        if (newDoc.id) {
+          await uploadDocumentPdf.mutateAsync({ docId: newDoc.id, file });
+        }
+      }}
+      isCreatePdfDocumentPending={createHistoricalDocument.isPending || uploadDocumentPdf.isPending}
       charactersInContext={charactersInContext.data ?? []}
       isLoadingCharactersInContext={charactersInContext.isLoading}
       characterSearch={characterSearch}

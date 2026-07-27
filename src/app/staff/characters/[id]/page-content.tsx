@@ -3,11 +3,13 @@
 import * as React from "react";
 import { useParams } from "next/navigation";
 import { StaffCharacterDetailView, type CharacterDraft } from "@/components/staff/staff-character-detail-view";
-import { 
-  useCharacter, 
-  useUpdateCharacter, 
+import {
+  useCharacter,
+  useUpdateCharacter,
   useMapContextToCharacter,
-  useUnmapContextFromCharacter
+  useUnmapContextFromCharacter,
+  useUploadCharacterMedia,
+  useDeleteCharacterMedia,
 } from "@/features/characters/hooks";
 import {
   useCharacterDocuments,
@@ -44,6 +46,8 @@ export default function EditCharacterPage() {
   const getDocumentPdfUrl = useGetDocumentPdfUrl();
   const mapContextToCharacter = useMapContextToCharacter();
   const unmapContextFromCharacter = useUnmapContextFromCharacter();
+  const uploadCharacterMedia = useUploadCharacterMedia();
+  const deleteCharacterMedia = useDeleteCharacterMedia();
   
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
     page: 1,
@@ -139,6 +143,7 @@ export default function EditCharacterPage() {
     background: character.background || "",
     image: character.imageUrl || "",
     modelUrl: character.modelUrl || "",
+    videoUrl: character.videoUrl || "",
     personality: character.personality || "",
     bornYear: toInputValue(character.bornYear),
     bornMonth: toInputValue(character.bornMonth),
@@ -173,6 +178,33 @@ export default function EditCharacterPage() {
         return await getDocumentPdfUrl.mutateAsync(docId);
       }}
       isGetDocumentPdfUrlPending={getDocumentPdfUrl.isPending}
+      onUploadMedia={async (characterId, file, mediaType) => {
+        await uploadCharacterMedia.mutateAsync({ characterId, file, mediaType });
+      }}
+      isUploadMediaPending={uploadCharacterMedia.isPending}
+      onDeleteMedia={async (characterId, mediaType) => {
+        await deleteCharacterMedia.mutateAsync({ characterId, mediaType });
+      }}
+      isDeleteMediaPending={deleteCharacterMedia.isPending}
+      onCreateTextDocument={async ({ title, content }) => {
+        await createCharacterDocument.mutateAsync({ characterId: id, title, content, type: "TEXT" });
+      }}
+      isCreateTextDocumentPending={createCharacterDocument.isPending}
+      onCreatePdfDocument={async ({ title, file }) => {
+        // BE currently requires non-empty content on creation — this placeholder
+        // is never shown to staff, it just satisfies that constraint so a PDF
+        // document can be created without typing text content first.
+        const newDoc = await createCharacterDocument.mutateAsync({
+          characterId: id,
+          title,
+          content: "PDF Document",
+          type: "TEXT",
+        });
+        if (newDoc.id) {
+          await uploadDocumentPdf.mutateAsync({ docId: newDoc.id, file });
+        }
+      }}
+      isCreatePdfDocumentPending={createCharacterDocument.isPending || uploadDocumentPdf.isPending}
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
       onMapContext={(characterId, contextId, options) =>

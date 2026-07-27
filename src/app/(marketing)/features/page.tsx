@@ -4,16 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  BookOpenTextIcon,
-  BrainIcon,
-  ChatTextIcon,
-  CheckCircleIcon,
-  CompassIcon,
-  MapTrifoldIcon,
-  ShieldCheckIcon,
-  UserCircleIcon,
-  VideoCameraIcon,
-} from "@phosphor-icons/react";
+  BookOpenText,
+  Brain,
+  MessageCircle,
+  CheckCircle2,
+  Compass,
+  Map,
+  ShieldCheck,
+  CircleUser,
+  Video,
+} from "lucide-react";
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
 
@@ -22,7 +22,7 @@ const featureGroups = [
     label: "Đối thoại AI",
     title: "Trò chuyện với nhân vật lịch sử",
     body: "Đặt câu hỏi tự nhiên, nhận phản hồi theo bối cảnh và đào sâu động cơ phía sau từng quyết định.",
-    icon: ChatTextIcon,
+    icon: MessageCircle,
     accent: "text-amber-300",
     glow: "from-amber-500/20",
     bullets: ["Ngữ cảnh nhân vật", "Câu hỏi mở", "Phản hồi theo mạch hội thoại"],
@@ -31,7 +31,7 @@ const featureGroups = [
     label: "Bối cảnh",
     title: "Khám phá sự kiện như một dòng thời gian",
     body: "Mỗi sự kiện được đặt trong chuỗi nguyên nhân, diễn biến và hệ quả để người học không bị rơi vào học thuộc rời rạc.",
-    icon: MapTrifoldIcon,
+    icon: Map,
     accent: "text-sky-300",
     glow: "from-sky-500/20",
     bullets: ["Mốc thời gian", "Bối cảnh địa lý", "Liên kết nhân vật"],
@@ -40,7 +40,7 @@ const featureGroups = [
     label: "Ôn tập",
     title: "Quiz ngắn sau mỗi hành trình",
     body: "Kiểm tra lại điều vừa hiểu bằng câu hỏi có giải thích, giúp kiến thức được neo lại đúng lúc.",
-    icon: BrainIcon,
+    icon: Brain,
     accent: "text-emerald-300",
     glow: "from-emerald-500/20",
     bullets: ["Câu hỏi theo chủ đề", "Giải thích đáp án", "Theo dõi tiến độ"],
@@ -72,17 +72,17 @@ const capabilityRows = [
   {
     title: "Lưu lại cuộc trò chuyện quan trọng",
     body: "Các đoạn học có giá trị được giữ lại để người học quay về ôn tập sau.",
-    icon: BookOpenTextIcon,
+    icon: BookOpenText,
   },
   {
     title: "Gợi ý hướng khám phá tiếp theo",
     body: "Sau mỗi chủ đề, hệ thống đề xuất nhân vật, sự kiện hoặc câu hỏi liên quan.",
-    icon: CompassIcon,
+    icon: Compass,
   },
   {
     title: "Ưu tiên độ tin cậy và bối cảnh",
     body: "Thiết kế trải nghiệm theo hướng giải thích rõ, hạn chế cảm giác trả lời rời rạc.",
-    icon: ShieldCheckIcon,
+    icon: ShieldCheck,
   },
 ];
 
@@ -98,7 +98,7 @@ const chatMessages = [
     id: 2,
     sender: "user",
     name: "Người học",
-    icon: UserCircleIcon,
+    icon: CircleUser,
     text: "Tại sao lại chọn sông Bạch Đằng ạ?",
   },
   {
@@ -116,7 +116,7 @@ const journeySteps = [
     eyebrow: "Chọn bối cảnh",
     title: "Bắt đầu từ một thời kỳ lịch sử",
     body: "Người học chọn bối cảnh lịch sử để bước vào thế giới của nhân vật, sự kiện và không khí thời đại đó.",
-    icon: MapTrifoldIcon,
+    icon: Map,
     image: "/feature-pic1.png",
   },
   {
@@ -124,7 +124,7 @@ const journeySteps = [
     eyebrow: "Xem video",
     title: "Đắm mình trong không khí lịch sử",
     body: "Video mô tả bối cảnh, địa điểm và diễn biến giúp người học hình dung rõ nét thời khắc lịch sử trước khi bắt đầu cuộc trò chuyện.",
-    icon: VideoCameraIcon,
+    icon: Video,
     image: "/feature-pic2.png",
   },
   {
@@ -132,7 +132,7 @@ const journeySteps = [
     eyebrow: "Trò chuyện",
     title: "Đối thoại cùng nhân vật lịch sử",
     body: "Người học trò chuyện với nhân vật trong bối cảnh đó để đào sâu nguyên nhân, niềm tin và những quyết định lịch sử.",
-    icon: ChatTextIcon,
+    icon: MessageCircle,
     image: "/feature-pic3.png",
   },
   {
@@ -140,7 +140,7 @@ const journeySteps = [
     eyebrow: "Ôn tập",
     title: "Chốt kiến thức bằng quiz sau hành trình",
     body: "Sau khi trò chuyện, người học kiểm tra lại những gì đã hiểu bằng câu hỏi ngắn gắn liền với bối cảnh vừa trải nghiệm.",
-    icon: BrainIcon,
+    icon: Brain,
     image: "/feature-pic4.png",
   },
 ];

@@ -62,29 +62,16 @@
             counts={undefined}
           />
           {!showSkeleton && (
-            <span className="text-xs" style={{ color: "var(--content-muted)" }}>
+            <span className="text-xs text-content-muted">
               {events.length} sự kiện
             </span>
           )}
         </div>
 
         {showSkeleton ? (
-          <div
-            className="h-[72px] rounded-lg animate-pulse"
-            style={{
-              background: "var(--card-light-bg)",
-              border: "1px solid var(--card-light-border)",
-            }}
-          />
+          <div className="h-[72px] rounded-lg animate-pulse bg-card-light-bg border border-card-light-border" />
         ) : (
-          <div
-            className="rounded-xl px-2 py-1"
-            style={{
-              background: "var(--card-light-bg)",
-              border: "1px solid var(--card-light-border)",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-            }}
-          >
+          <div className="rounded-xl px-2 py-1 bg-card-light-bg border border-card-light-border shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
             <TimelineStrip
               items={timelineItems}
               activeId={resolvedActiveId}
@@ -107,32 +94,21 @@
                   onClick={() => handleSelect(ev.id)}
                   aria-label={`Chọn sự kiện ${index + 1}: ${ev.title}, ${yearLabel}`}
                   aria-current={isActive ? "step" : undefined}
-                  className="grid h-5 w-5 place-items-center rounded-full cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]"
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    padding: 0,
-                  }}
+                  className="grid h-5 w-5 place-items-center rounded-full cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)] bg-transparent border-none p-0"
                 >
                   <span
                     aria-hidden="true"
-                    className="block rounded-full transition-all duration-200"
-                    style={{
-                      width: isActive ? 18 : 6,
-                      height: 6,
-                      background: isActive
-                        ? EVENT_ACCENT_COLOR
-                        : "var(--card-light-border)",
-                    }}
+                    className={`block rounded-full transition-all duration-200 h-1.5 ${
+                      isActive
+                        ? "w-[18px] bg-accent-gold"
+                        : "w-1.5 bg-card-light-border"
+                    }`}
                   />
                 </button>
               );
             })}
             </div>
-            <span
-              className="text-[11px]"
-              style={{ color: "var(--content-muted)" }}
-            >
+            <span className="text-[11px] text-content-muted">
               {activeIdx + 1} / {events.length}
             </span>
           </div>
@@ -150,7 +126,7 @@
             />
           ) : (
             <div className="py-16 text-center">
-              <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+              <p className="text-sm text-content-muted">
                 Không có sự kiện nào trong thời đại này.
               </p>
             </div>

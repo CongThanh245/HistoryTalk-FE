@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-import { ImageIcon } from "@phosphor-icons/react";
+import { Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { isValidUrl } from "@/lib/utils/url";
 import {
@@ -22,8 +23,7 @@ const FBXCharacterViewer = dynamic(
     ssr: false,
     loading: () => (
       <div
-        className="flex h-full items-center justify-center text-xs"
-        style={{ color: "var(--content-muted)" }}
+        className="flex h-full items-center justify-center text-xs text-content-muted"
       >
         Đang tải preview 3D...
       </div>
@@ -57,11 +57,7 @@ export function StaffImageHoverPreview({
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className={cn("relative shrink-0 overflow-hidden", thumbClassName)}
-            style={{
-              background: "var(--card-light-border)",
-              borderColor: "var(--card-light-border)",
-            }}
+            className={cn("relative shrink-0 overflow-hidden bg-card-light-border border-card-light-border", thumbClassName)}
           >
             {hasImage ? (
               <Image
@@ -70,11 +66,13 @@ export function StaffImageHoverPreview({
                 fill
                 className="object-cover"
                 sizes={sizes}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             ) : (
               <div
-                className="flex h-full w-full items-center justify-center"
-                style={{ color: "var(--content-subtle)" }}
+                className="flex h-full w-full items-center justify-center text-content-subtle"
                 title="Chưa có ảnh"
               >
                 {fallback ?? <ImageIcon className="h-5 w-5" />}
@@ -95,6 +93,9 @@ export function StaffImageHoverPreview({
                 fill
                 className="object-cover"
                 sizes={previewSizes}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             </div>
           </TooltipContent>
@@ -115,42 +116,37 @@ export function StaffCharacterMediaPreview({
   modelUrl,
   alt,
 }: StaffCharacterMediaPreviewProps) {
+  const [imageBroken, setImageBroken] = useState(false);
+
+  useEffect(() => {
+    setImageBroken(false);
+  }, [imageUrl]);
+
   return (
     <div
-      className="grid grid-cols-[160px_1fr] gap-3 rounded-xl border p-3"
-      style={{
-        borderColor: "var(--card-light-border)",
-        background: "rgba(255,255,255,0.35)",
-      }}
+      className="grid grid-cols-[160px_1fr] gap-3 rounded-xl border border-card-light-border bg-white/35 p-3"
     >
       <div
-        className="relative h-44 overflow-hidden rounded-lg border"
-        style={{
-          borderColor: "var(--card-light-border)",
-          background: "var(--card-light-border)",
-        }}
+        className="relative h-44 overflow-hidden rounded-lg border border-card-light-border bg-card-light-border"
       >
-        {isValidUrl(imageUrl) ? (
+        {isValidUrl(imageUrl) && !imageBroken ? (
           <Image
             src={imageUrl!}
             alt={alt}
             fill
             className="object-cover"
             sizes="160px"
+            onError={() => setImageBroken(true)}
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <ImageIcon className="h-8 w-8" style={{ color: "var(--content-subtle)" }} />
+            <ImageIcon className="h-8 w-8 text-content-subtle" />
           </div>
         )}
       </div>
 
       <div
-        className="relative h-44 overflow-hidden rounded-lg border"
-        style={{
-          borderColor: "var(--card-light-border)",
-          background: "linear-gradient(135deg, rgba(255,255,255,0.65), rgba(0,0,0,0.04))",
-        }}
+        className="relative h-44 overflow-hidden rounded-lg border border-card-light-border bg-gradient-to-br from-white/65 to-black/[0.04]"
       >
         <FBXCharacterViewer
           modelUrl={isValidUrl(modelUrl) ? modelUrl! : undefined}

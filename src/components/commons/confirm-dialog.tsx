@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils/cn";
-import { CircleNotchIcon } from "@phosphor-icons/react";
+import { Loader2 } from "lucide-react";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -21,6 +21,8 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   confirmLabel?: string;
   onConfirm: () => void;
+  /** Chay them logic tuy chinh khi bam Huy (vi du: bat dau lai tu dau thay vi chi dong dialog). */
+  onCancel?: () => void;
   isPending?: boolean;
   variant?: "danger" | "primary" | "warning";
 }
@@ -33,6 +35,7 @@ export function ConfirmDialog({
   cancelLabel = "Hủy",
   confirmLabel = "Xác nhận",
   onConfirm,
+  onCancel,
   isPending = false,
   variant = "primary",
 }: ConfirmDialogProps) {
@@ -56,23 +59,17 @@ export function ConfirmDialog({
       }}
     >
       <AlertDialogContent
-        className="max-w-[400px] rounded-2xl border"
-        style={{
-          background: "var(--card-light-bg)",
-          borderColor: "var(--card-light-border)",
-        }}
+        className="max-w-[400px] rounded-2xl border bg-card-bg border-card-border"
       >
         <AlertDialogHeader className="space-y-3">
           <AlertDialogTitle
-            className="text-xl font-bold"
-            style={{ color: "var(--content-heading)" }}
+            className="text-xl font-bold text-content-heading"
           >
             {title}
           </AlertDialogTitle>
           {description && (
             <AlertDialogDescription
-              className="text-sm leading-relaxed"
-              style={{ color: "var(--content-muted)" }}
+              className="text-sm leading-relaxed text-content-muted"
             >
               {description}
             </AlertDialogDescription>
@@ -81,12 +78,8 @@ export function ConfirmDialog({
         <AlertDialogFooter className="mt-6 gap-2 sm:gap-0">
           <AlertDialogCancel
             disabled={isPending}
-            className="flex-1 rounded-xl h-11 border transition-all hover:bg-black/[0.03] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
-            style={{
-              background: "transparent",
-              borderColor: "var(--card-light-border)",
-              color: "var(--content-heading)",
-            }}
+            onClick={onCancel}
+            className="flex-1 rounded-xl h-11 border transition-all hover:bg-black/[0.03] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60 bg-transparent border-card-border text-content-heading"
           >
             {cancelLabel}
           </AlertDialogCancel>
@@ -104,7 +97,7 @@ export function ConfirmDialog({
           >
             {isPending ? (
               <span className="inline-flex items-center justify-center gap-2">
-                <CircleNotchIcon className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Đang xử lý...
               </span>
             ) : (

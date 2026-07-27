@@ -17,6 +17,8 @@ export type ContextDraft = {
   documentTitle: string;
   documentContent: string;
   pendingPdfFile?: File | null;
+  pendingImageFile?: File | null;
+  pendingVideoFile?: File | null;
 };
 
 export const EMPTY_CONTEXT_DRAFT: ContextDraft = {
@@ -32,6 +34,8 @@ export const EMPTY_CONTEXT_DRAFT: ContextDraft = {
   documentTitle: "",
   documentContent: "",
   pendingPdfFile: null,
+  pendingImageFile: null,
+  pendingVideoFile: null,
 };
 
 export interface StaffContextDetailViewProps {
@@ -50,6 +54,20 @@ export interface StaffContextDetailViewProps {
   isUploadDocumentPdfPending?: boolean;
   onGetDocumentPdfUrl?: (docId: string) => Promise<{ url: string; expiresIn: number }>;
   isGetDocumentPdfUrlPending?: boolean;
+
+  /** Upload image/video for an existing context (edit mode only) */
+  onUploadMedia?: (contextId: string, file: File, mediaType: "IMAGE_2D" | "VIDEO") => Promise<void>;
+  isUploadMediaPending?: boolean;
+  /** Clear one media slot for an existing context (edit mode only) */
+  onDeleteMedia?: (contextId: string, mediaType: "IMAGE_2D" | "VIDEO") => Promise<void>;
+  isDeleteMediaPending?: boolean;
+
+  /** Create a brand-new text document, independent of the entity's Save button (edit mode only) */
+  onCreateTextDocument?: (data: { title: string; content: string }) => Promise<void>;
+  isCreateTextDocumentPending?: boolean;
+  /** Create a brand-new PDF document (creates the doc, then uploads the file), independent of Save (edit mode only) */
+  onCreatePdfDocument?: (data: { title: string; file: File }) => Promise<void>;
+  isCreatePdfDocumentPending?: boolean;
 
   /** Characters already linked to this context (edit mode only) */
   charactersInContext?: Character[];

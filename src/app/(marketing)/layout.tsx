@@ -46,7 +46,7 @@ export default function MarketingLayout({
       style={marketingTheme}
     >
       {/* Background pattern */}
-      <div 
+      <div
         className="fixed inset-0 pointer-events-none -z-10 opacity-[0.03]"
         style={{
           backgroundImage: `

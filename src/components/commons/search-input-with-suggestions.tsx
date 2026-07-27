@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MagnifyingGlassIcon, UserIcon, CalendarIcon, XIcon } from "@phosphor-icons/react";
+import { Search, User, Calendar, X } from "lucide-react";
 import { useSearchSuggestions } from "@/features/search/hooks";
 import Image from "next/image";
 
@@ -77,10 +77,9 @@ export function SearchInputWithSuggestions({
   return (
     <div ref={containerRef} className="relative w-full">
       <div
-        className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all duration-150 focus-within:border-[rgba(201,162,77,0.4)]"
-        style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
+        className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-card-border bg-card-bg transition-all duration-150 focus-within:border-accent-gold/40"
       >
-        <MagnifyingGlassIcon className="w-4 h-4 shrink-0" style={{ color: "var(--content-subtle)" }} />
+        <Search className="w-4 h-4 shrink-0 text-content-subtle" />
         <input
           ref={inputRef}
           type="text"
@@ -93,8 +92,7 @@ export function SearchInputWithSuggestions({
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          className="flex-1 bg-transparent text-sm outline-none"
-          style={{ color: "var(--content-text)" }}
+          className="flex-1 bg-transparent text-sm outline-none text-content-text"
         />
         {query && (
           <button
@@ -103,10 +101,9 @@ export function SearchInputWithSuggestions({
               setIsOpen(false);
               inputRef.current?.focus();
             }}
-            className="p-0.5 rounded-full cursor-pointer transition-opacity hover:opacity-70"
-            style={{ color: "var(--content-subtle)" }}
+            className="p-0.5 rounded-full cursor-pointer text-content-subtle transition-opacity hover:opacity-70"
           >
-            <XIcon className="w-4 h-4" />
+            <X className="w-4 h-4" />
           </button>
         )}
       </div>
@@ -114,23 +111,18 @@ export function SearchInputWithSuggestions({
       {/* Suggestions Dropdown */}
       {showDropdown && (
         <div
-          className="absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border shadow-lg z-50 max-h-[320px] overflow-y-auto"
-          style={{
-            background: "var(--bg-elevated)",
-            borderColor: "var(--border-default)",
-          }}
+          className="absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border border-border-default bg-bg-elevated shadow-lg z-50 max-h-[320px] overflow-y-auto"
         >
           {isLoading && (
             <div className="flex items-center justify-center py-4">
               <div
-                className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: "var(--accent-gold)", borderTopColor: "transparent" }}
+                className="w-5 h-5 rounded-full border-2 border-accent-gold border-t-transparent animate-spin"
               />
             </div>
           )}
 
           {!isLoading && !hasSuggestions && query.length >= 2 && (
-            <div className="px-4 py-3 text-sm" style={{ color: "var(--text-muted)" }}>
+            <div className="px-4 py-3 text-sm text-text-muted">
               Không tìm thấy kết quả
             </div>
           )}
@@ -141,8 +133,7 @@ export function SearchInputWithSuggestions({
               {suggestions.some((s) => s.type === "character") && (
                 <>
                   <div
-                    className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider"
-                    style={{ color: "var(--accent-gold)" }}
+                    className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-accent-gold"
                   >
                     Nhân vật
                   </div>
@@ -156,12 +147,11 @@ export function SearchInputWithSuggestions({
                         onClick={() => handleSelect(suggestion.url)}
                         onMouseEnter={() => setHighlightedKey(suggestionKey)}
                         className={`w-full px-3 py-2.5 flex items-center gap-3 text-left cursor-pointer transition-colors ${
-                          highlightedKey === suggestionKey ? "bg-[rgba(201,162,77,0.1)]" : ""
+                          highlightedKey === suggestionKey ? "bg-accent-gold/10" : ""
                         }`}
                       >
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
-                          style={{ background: "var(--bg-deep)" }}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-bg-deep"
                         >
                           {suggestion.imageUrl ? (
                             <Image
@@ -172,15 +162,15 @@ export function SearchInputWithSuggestions({
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <UserIcon className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
+                            <User className="w-4 h-4 text-text-muted" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                          <div className="text-sm font-medium truncate text-text-primary">
                             {suggestion.title}
                           </div>
                           {suggestion.subtitle && (
-                            <div className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
+                            <div className="text-xs truncate text-text-muted">
                               {suggestion.subtitle}
                             </div>
                           )}
@@ -195,8 +185,7 @@ export function SearchInputWithSuggestions({
               {suggestions.some((s) => s.type === "event") && (
                 <>
                   <div
-                    className="px-3 py-1.5 mt-1 text-[10px] font-semibold uppercase tracking-wider border-t"
-                    style={{ color: "var(--accent-gold)", borderColor: "var(--border-default)" }}
+                    className="px-3 py-1.5 mt-1 text-[10px] font-semibold uppercase tracking-wider border-t border-border-default text-accent-gold"
                   >
                     Sự kiện
                   </div>
@@ -210,12 +199,11 @@ export function SearchInputWithSuggestions({
                         onClick={() => handleSelect(suggestion.url)}
                         onMouseEnter={() => setHighlightedKey(suggestionKey)}
                         className={`w-full px-3 py-2.5 flex items-center gap-3 text-left cursor-pointer transition-colors ${
-                          highlightedKey === suggestionKey ? "bg-[rgba(201,162,77,0.1)]" : ""
+                          highlightedKey === suggestionKey ? "bg-accent-gold/10" : ""
                         }`}
                       >
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
-                          style={{ background: "var(--bg-deep)" }}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-bg-deep"
                         >
                           {suggestion.imageUrl ? (
                             <Image
@@ -226,15 +214,15 @@ export function SearchInputWithSuggestions({
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <CalendarIcon className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
+                            <Calendar className="w-4 h-4 text-text-muted" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                          <div className="text-sm font-medium truncate text-text-primary">
                             {suggestion.title}
                           </div>
                           {suggestion.subtitle && (
-                            <div className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
+                            <div className="text-xs truncate text-text-muted">
                               {suggestion.subtitle}
                             </div>
                           )}

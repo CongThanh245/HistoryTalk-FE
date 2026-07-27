@@ -3,10 +3,11 @@
 import Image from "next/image";
 import { isValidUrl } from "@/lib/utils/url";
 import type { ChatMessage, ChatCharacter } from "@/services/chat.service";
-import { SpeakerHighIcon, SpeakerXIcon, MicrophoneIcon } from "@phosphor-icons/react";
+import { Volume2, VolumeX, Mic, Quote, ChevronDown, ChevronUp } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
-import { HighlightedText } from "./HighlightedText";
+import { MarkdownMessage } from "./MarkdownMessage";
 import type { KeywordData } from "@/data/keywords";
 
 interface MessageBubbleProps {
@@ -14,6 +15,18 @@ interface MessageBubbleProps {
   character: ChatCharacter;
   speak?: (text: string) => void;
   onKeywordSelect?: (kw: KeywordData) => void;
+  onViewQuote?: (quote: string) => void;
+}
+
+// AI đôi khi trả lời kèm 1 câu hỏi gợi mở, ngăn cách bởi "---".
+// Tách thành các đoạn riêng để hiển thị như 2 tin nhắn liên tiếp thay vì dồn chung 1 bubble.
+const ASSISTANT_SPLIT_PATTERN = /\s*-{3,}\s*/;
+
+function splitAssistantContent(content: string): string[] {
+  return content
+    .split(ASSISTANT_SPLIT_PATTERN)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
 }
 
 export function MessageBubble({
@@ -21,6 +34,7 @@ export function MessageBubble({
   character,
   speak,
   onKeywordSelect,
+  onViewQuote,
 }: MessageBubbleProps) {
   const isUser = message.role === "USER";
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -30,27 +44,23 @@ export function MessageBubble({
   // Logic lấy chữ cái đầu
   const userInitial = userName.trim().charAt(0).toUpperCase();
   const hasUserAvatar = isValidUrl(userAvatarUrl);
+  const assistantParts = isUser ? [] : splitAssistantContent(message.content);
+  const displayParts = assistantParts.length > 0 ? assistantParts : [message.content];
 
   if (isUser) {
     return (
       <div className="flex justify-end gap-3 px-4 mb-4">
         <div className="max-w-[70%] flex flex-col items-end gap-1.5">
           <div
-            className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-lg flex items-center gap-2"
-            style={{
-              // Phối màu Gradient Bronze -> Truffle (Cổ điển & Sang trọng)
-              background: "var(--accent-bronze)",
-              color: "white",
-            }}
+            className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-lg flex items-center gap-2 bg-(--accent-bronze) text-white"
           >
             {message.content}
             {message.messageType === "VOICE" && (
-              <MicrophoneIcon size={12} weight="fill" className="opacity-70" />
+              <Mic size={12} className="opacity-70 fill-current" />
             )}
           </div>
           <span
-            className="text-[10px] opacity-60"
-            style={{ color: "var(--text-primary)" }}
+            className="text-[10px] opacity-60 text-content-heading"
           >
             {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
               hour: "2-digit",
@@ -62,13 +72,7 @@ export function MessageBubble({
 
         {/* User Avatar */}
         <div
-          className="relative w-9 h-9 rounded-full flex items-center justify-center overflow-hidden text-sm font-bold shrink-0 mt-auto border"
-          style={{
-            background: "var(--bg-elevated)",
-            color: "var(--accent-gold-soft)",
-            borderColor: "var(--accent-gold-glow)",
-            boxShadow: "var(--shadow-gold)",
-          }}
+          className="relative w-9 h-9 rounded-full flex items-center justify-center overflow-hidden text-sm font-bold shrink-0 mt-auto border bg-bg-elevated text-accent-gold-soft border-(--accent-gold-glow) shadow-(--shadow-gold)"
         >
           {hasUserAvatar ? (
             <Image
@@ -76,6 +80,9 @@ export function MessageBubble({
               alt={userName}
               fill
               className="object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
             />
           ) : (
             userInitial
@@ -89,11 +96,7 @@ export function MessageBubble({
     <div className="flex gap-3 px-4 mb-4">
       {/* Character Avatar */}
       <div
-        className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 mt-auto border-2"
-        style={{
-          background: "var(--card-light-border)",
-          borderColor: "var(--accent-gold-soft)",
-        }}
+        className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 mt-auto border-2 bg-(--card-light-border) border-accent-gold-soft"
       >
         {isValidUrl(character.imageUrl) && (
           <Image
@@ -101,6 +104,9 @@ export function MessageBubble({
             alt={character.name}
             fill
             className="object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
           />
         )}
       </div>
@@ -108,59 +114,64 @@ export function MessageBubble({
       <div className="max-w-[75%] flex flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
           <span
-            className="text-[11px] font-bold px-1 tracking-wide"
-            style={{ color: "var(--accent-gold)" }}
+            className="text-[11px] font-bold px-1 tracking-wide text-accent-gold"
           >
             {character.name.toUpperCase()}
           </span>
           {message.messageType === "VOICE" && (
-            <MicrophoneIcon size={12} weight="fill" style={{ color: "var(--accent-gold)" }} />
+            <Mic size={12} className="fill-current text-accent-gold" />
           )}
         </div>
-        <div
-          className="relative px-4 py-3 pr-9 rounded-2xl rounded-tl-sm text-sm leading-relaxed border"
-          style={{
-            background: "var(--bg-surface)",
-            color: "var(--text-primary)",
-            borderColor: "var(--border-strong)",
-          }}
-        >
-          {onKeywordSelect ? (
-            <HighlightedText
-              text={message.content}
-              onKeywordSelect={onKeywordSelect}
-            />
-          ) : (
-            message.content
-          )}
+        <div className="flex flex-col gap-2">
+          {displayParts.map((part, index) => {
+            const isLastPart = index === displayParts.length - 1;
 
-          <button
-            type="button"
-            aria-label={isSpeaking ? "Tắt đọc tin nhắn" : "Đọc tin nhắn"}
-            onClick={() => {
-              if (isSpeaking) {
-                speechSynthesis.cancel();
-                setIsSpeaking(false);
-              } else {
-                speak?.(message.content);
-                setIsSpeaking(true);
-              }
-            }}
-            className="absolute bottom-2 right-2 transition-all duration-200 hover:scale-110"
-            style={{
-              color: isSpeaking ? "var(--accent-gold)" : "var(--text-muted)",
-            }}
-          >
-            {isSpeaking ? (
-              <SpeakerHighIcon size={18} weight="fill" />
-            ) : (
-              <SpeakerXIcon size={18} />
-            )}
-          </button>
+            return (
+              <div
+                key={index}
+                className={cn(
+                  "relative px-4 py-3 rounded-2xl rounded-tl-sm text-sm leading-relaxed border bg-bg-surface text-content-heading border-(--border-strong)",
+                  isLastPart && "pr-9",
+                )}
+              >
+                <MarkdownMessage text={part} onKeywordSelect={onKeywordSelect} />
+
+                {isLastPart && (
+                  <button
+                    type="button"
+                    aria-label={isSpeaking ? "Tắt đọc tin nhắn" : "Đọc tin nhắn"}
+                    onClick={() => {
+                      if (isSpeaking) {
+                        speechSynthesis.cancel();
+                        setIsSpeaking(false);
+                      } else {
+                        speak?.(message.content);
+                        setIsSpeaking(true);
+                      }
+                    }}
+                    className={cn(
+                      "absolute bottom-2 right-2 transition-all duration-200 hover:scale-110",
+                      isSpeaking ? "text-accent-gold" : "text-content-muted",
+                    )}
+                  >
+                    {isSpeaking ? (
+                      <Volume2 size={18} className="fill-current" />
+                    ) : (
+                      <VolumeX size={18} />
+                    )}
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
+
+        {message.quotes && message.quotes.length > 0 && (
+          <MessageQuotes quotes={message.quotes} onViewQuote={onViewQuote} />
+        )}
+
         <span
-          className="text-[10px] px-1 opacity-60"
-          style={{ color: "var(--text-primary)" }}
+          className="text-[10px] px-1 opacity-60 text-content-heading"
         >
           {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
             hour: "2-digit",
@@ -173,17 +184,64 @@ export function MessageBubble({
   );
 }
 
+// ── Nguồn trích dẫn AI đã dùng để trả lời ─────────────────
+
+function MessageQuotes({
+  quotes,
+  onViewQuote,
+}: {
+  quotes: string[];
+  onViewQuote?: (quote: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="self-start">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border transition-colors cursor-pointer bg-bg-elevated border-border-default text-content-text"
+      >
+        <Quote size={12} className="fill-current" />
+        {quotes.length} nguồn trích dẫn
+        {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+      </button>
+
+      {isOpen && (
+        <div
+          className="mt-1.5 flex flex-col gap-1.5 rounded-xl border px-3 py-2 bg-bg-elevated border-border-default"
+        >
+          {quotes.map((quote, i) => (
+            <div key={i} className="flex flex-col gap-1">
+              <blockquote
+                className="text-xs leading-relaxed pl-2 border-l-2 border-accent-gold-soft text-content-text"
+              >
+                {quote}
+              </blockquote>
+              {onViewQuote && (
+                <button
+                  type="button"
+                  onClick={() => onViewQuote(quote)}
+                  className="self-start text-[11px] font-medium pl-2 hover:underline cursor-pointer text-accent-gold"
+                >
+                  Xem trong tài liệu
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Typing indicator ──────────────────────────────────────
 
 export function TypingIndicator({ character }: { character: ChatCharacter }) {
   return (
     <div className="flex gap-2.5 px-4">
       <div
-        className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border"
-        style={{
-          background: "var(--card-light-border)",
-          borderColor: "var(--border-default)",
-        }}
+        className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border bg-(--card-light-border) border-border-default"
       >
         {isValidUrl(character.imageUrl) && (
           <Image
@@ -191,29 +249,26 @@ export function TypingIndicator({ character }: { character: ChatCharacter }) {
             alt={character.name}
             fill
             className="object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
           />
         )}
       </div>
       <div className="flex flex-col gap-1">
         <span
-          className="text-[10px] font-semibold px-1"
-          style={{ color: "var(--accent-gold-soft)" }}
+          className="text-[10px] font-semibold px-1 text-accent-gold-soft"
         >
           {character.name}
         </span>
         <div
-          className="px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1"
-          style={{
-            background: "var(--bg-elevated)",
-            border: "1px solid var(--border-default)",
-          }}
+          className="px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1 bg-bg-elevated border border-border-default"
         >
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="w-1.5 h-1.5 rounded-full"
+              className="w-1.5 h-1.5 rounded-full bg-content-text"
               style={{
-                background: "var(--text-secondary)",
                 animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
               }}
             />

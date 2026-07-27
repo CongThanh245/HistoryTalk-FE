@@ -14,16 +14,15 @@ function layout({ children }: { children: React.ReactNode }) {
         <SidebarProvider>
           {/* On mobile: sidebar is a fixed overlay, main takes full width.   */}
           {/* On md+:    sidebar sits in the flex row beside the main content. */}
-          <div className="flex h-[100dvh]" style={{ background: "var(--bg-content)" }}>
+          <div className="flex h-[100dvh] bg-[var(--bg-content)]">
             <CustomerSidebar />
             <div className="flex-1 flex flex-col min-w-0">
               <Header />
               <Breadcrumbs />
-              <main
-                className="flex-1 overflow-y-auto"
-                style={{ background: "var(--bg-content)" }}
-              >
-                {children}
+              <main className="flex-1 min-h-0 overflow-y-auto bg-[var(--bg-content)]">
+                <div className="mx-auto h-full max-w-7xl px-4 sm:px-6 lg:px-8">
+                  {children}
+                </div>
               </main>
             </div>
           </div>

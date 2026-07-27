@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { BankIcon, CaretRightIcon } from "@phosphor-icons/react";
+import { Landmark, ChevronRight } from "lucide-react";
 import { useEventDetail } from "@/features/events/hooks";
 import { isValidUrl } from "@/lib/utils/url";
 import {
@@ -53,50 +53,43 @@ export function HistoricalContextHoverCard({
             />
           ) : (
             <div
-              className="flex h-full w-full items-center justify-center"
-              style={{ background: "var(--card-light-border)" }}
+              className="flex h-full w-full items-center justify-center bg-card-border"
             >
-              <BankIcon
-                className="h-8 w-8 opacity-40"
-                style={{ color: "var(--text-secondary)" }}
+              <Landmark
+                className="h-8 w-8 opacity-40 text-content-text"
               />
             </div>
           )}
         </div>
         <div className="p-3">
           <h4
-            className="line-clamp-1 text-sm font-bold"
-            style={{ color: "var(--text-primary)" }}
+            className="line-clamp-1 text-sm font-bold text-content-heading"
           >
             {event?.title ?? fallbackLabel}
           </h4>
           {isLoading ? (
             <div className="mt-2 space-y-1.5">
               <div
-                className="h-2.5 w-full animate-pulse rounded"
-                style={{ background: "var(--card-light-border)" }}
+                className="h-2.5 w-full animate-pulse rounded bg-card-border"
               />
               <div
-                className="h-2.5 w-4/5 animate-pulse rounded"
-                style={{ background: "var(--card-light-border)" }}
+                className="h-2.5 w-4/5 animate-pulse rounded bg-card-border"
               />
             </div>
           ) : (
             event?.summary && (
               <p
-                className="mt-1 line-clamp-2 text-xs leading-relaxed"
-                style={{ color: "var(--text-secondary)" }}
+                className="mt-1 line-clamp-2 text-xs leading-relaxed text-content-text"
               >
                 {event.summary}
               </p>
             )
           )}
           <div
-            className="mt-2.5 flex items-center gap-1 text-xs font-semibold"
-            style={{ color: "var(--accent-gold)" }}
+            className="mt-2.5 flex items-center gap-1 text-xs font-semibold text-accent-gold"
           >
             Xem thêm
-            <CaretRightIcon className="h-3 w-3" />
+            <ChevronRight className="h-3 w-3" />
           </div>
         </div>
       </HoverCardContent>

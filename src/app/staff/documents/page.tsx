@@ -4,17 +4,17 @@ import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import {
-  BooksIcon,
-  MagnifyingGlassIcon,
-  UserIcon,
-  ScrollIcon,
-  ArrowSquareOutIcon,
-  UploadSimpleIcon,
-  EyeIcon,
-  PencilSimpleIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@phosphor-icons/react";
+  BookOpen,
+  Search,
+  User,
+  Scroll,
+  ExternalLink,
+  Upload,
+  Eye,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -52,10 +52,12 @@ import { documentService, type RagDocument } from "@/services/document.service";
 import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
+import { NewDocumentPanel } from "@/components/staff/new-document-panel";
 import type { Character } from "@/services/character.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils/cn";
 
 type DocumentOwnerType = "character" | "context";
 
@@ -470,10 +472,10 @@ export default function StaffDocumentsPage() {
             className="min-w-[260px] text-left"
             onClick={() => setSelectedKey(row.original.key)}
           >
-            <p className="text-sm font-semibold line-clamp-1" style={{ color: "var(--content-heading)" }}>
+            <p className="text-sm font-semibold line-clamp-1 text-content-heading">
               {row.original.document.title || "Tài liệu chưa đặt tên"}
             </p>
-            <p className="mt-0.5 max-w-[420px] truncate text-xs" style={{ color: "var(--content-muted)" }}>
+            <p className="mt-0.5 max-w-[420px] truncate text-xs text-content-muted">
               {row.original.document.content || "Chưa có nội dung"}
             </p>
           </button>
@@ -486,14 +488,14 @@ export default function StaffDocumentsPage() {
           const isCharacter = row.original.ownerType === "character";
           return (
             <span
-              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
-              style={{
-                borderColor: isCharacter ? "rgba(59,130,246,0.3)" : "rgba(201,168,76,0.35)",
-                background: isCharacter ? "rgba(59,130,246,0.08)" : "rgba(201,168,76,0.1)",
-                color: isCharacter ? "rgb(37,99,235)" : "rgb(146,64,14)",
-              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
+                isCharacter
+                  ? "border-[rgba(59,130,246,0.3)] bg-[rgba(59,130,246,0.08)] text-[rgb(37,99,235)]"
+                  : "border-[rgba(201,168,76,0.35)] bg-[rgba(201,168,76,0.1)] text-[rgb(146,64,14)]"
+              )}
             >
-              {isCharacter ? <UserIcon className="h-3.5 w-3.5" /> : <ScrollIcon className="h-3.5 w-3.5" />}
+              {isCharacter ? <User className="h-3.5 w-3.5" /> : <Scroll className="h-3.5 w-3.5" />}
               {isCharacter ? "Nhân vật" : "Bối cảnh"}
             </span>
           );
@@ -504,11 +506,11 @@ export default function StaffDocumentsPage() {
         header: "Đang gắn với",
         cell: ({ row }) => (
           <div className="min-w-[180px]">
-            <p className="text-sm font-medium" style={{ color: "var(--content-heading)" }}>
+            <p className="text-sm font-medium text-content-heading">
               {row.original.ownerName}
             </p>
             {row.original.ownerSubtitle && (
-              <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+              <p className="text-xs text-content-muted">
                 {row.original.ownerSubtitle}
               </p>
             )}
@@ -523,11 +525,11 @@ export default function StaffDocumentsPage() {
           return (
             <div className="min-w-[220px]">
               {linkedCharacters.length ? (
-                <p className="text-xs line-clamp-2" style={{ color: "var(--content-muted)" }}>
+                <p className="text-xs line-clamp-2 text-content-muted">
                   {linkedCharacters.map((character) => character.name).join(", ")}
                 </p>
               ) : (
-                <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                <p className="text-xs text-content-muted">
                   Chưa có nhân vật liên quan
                 </p>
               )}
@@ -548,7 +550,7 @@ export default function StaffDocumentsPage() {
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="rounded-full"
+                className="rounded-full text-[var(--header-text-muted)]"
                 onClick={(e) => {
                   e.stopPropagation();
                   router.push(
@@ -557,15 +559,14 @@ export default function StaffDocumentsPage() {
                       : `/staff/contexts`,
                   );
                 }}
-                style={{ color: "var(--header-text-muted)" }}
               >
-                <ArrowSquareOutIcon className="h-4 w-4" />
+                <ExternalLink className="h-4 w-4" />
               </Button>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="rounded-full"
+                className="rounded-full text-accent-blue"
                 disabled={
                   !hasDocId ||
                   updateCharacterDocument.isPending ||
@@ -575,16 +576,15 @@ export default function StaffDocumentsPage() {
                   e.stopPropagation();
                   openEditForm(row.original);
                 }}
-                style={{ color: "var(--accent-blue)" }}
                 title="Sửa tài liệu"
               >
-                <PencilSimpleIcon className="h-4 w-4" />
+                <Pencil className="h-4 w-4" />
               </Button>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="rounded-full"
+                className="rounded-full text-[#dc2626]"
                 disabled={
                   !hasDocId ||
                   deleteCharacterDocument.isPending ||
@@ -594,35 +594,35 @@ export default function StaffDocumentsPage() {
                   e.stopPropagation();
                   setDeleteTarget(row.original);
                 }}
-                style={{ color: "#dc2626" }}
                 title="Xóa tài liệu"
               >
-                <TrashIcon className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full"
-                disabled={!hasDocId || uploadPdf.isPending}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (docId) {
-                    setUploadTargetDocId(docId);
-                    setUploadDialogOpen(true);
-                  }
-                }}
-                style={{ color: "var(--accent-blue)" }}
-                title="Upload PDF"
-              >
-                <UploadSimpleIcon className="h-4 w-4" />
-              </Button>
+              {!canViewPdf && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-full text-accent-blue"
+                  disabled={!hasDocId || uploadPdf.isPending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (docId) {
+                      setUploadTargetDocId(docId);
+                      setUploadDialogOpen(true);
+                    }
+                  }}
+                  title="Upload PDF"
+                >
+                  <Upload className="h-4 w-4" />
+                </Button>
+              )}
               {canViewPdf && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full"
+                  className="rounded-full text-accent-gold"
                   disabled={getPdfUrl.isPending}
                   onClick={async (e) => {
                     e.stopPropagation();
@@ -639,10 +639,9 @@ export default function StaffDocumentsPage() {
                       setViewerLoading(false);
                     }
                   }}
-                  style={{ color: "var(--accent-gold)" }}
                   title="Xem PDF"
                 >
-                  <EyeIcon className="h-4 w-4" />
+                  <Eye className="h-4 w-4" />
                 </Button>
               )}
             </div>
@@ -666,16 +665,10 @@ export default function StaffDocumentsPage() {
     <StaffShell
       title="Quản lý tài liệu"
       description="Xem toàn bộ tài liệu RAG và đối tượng đang sử dụng tài liệu."
-      icon={BooksIcon}
+      icon={BookOpen}
       accent="var(--accent-blue)"
     >
-      <section
-        className="rounded-2xl border p-6"
-        style={{
-          background: "var(--bg-content)",
-          borderColor: "var(--card-light-border)",
-        }}
-      >
+      <section className="rounded-2xl border p-6 bg-[var(--bg-content)] border-card-light-border">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="grid gap-3 sm:grid-cols-3">
             <SummaryCard label="Tổng tài liệu" value={rows.length} />
@@ -691,10 +684,7 @@ export default function StaffDocumentsPage() {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative w-full sm:w-[320px]">
-              <MagnifyingGlassIcon
-                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
-                style={{ color: "var(--content-muted)" }}
-              />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-muted" />
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -709,7 +699,7 @@ export default function StaffDocumentsPage() {
                   className="h-10"
                   disabled={!characters.length && !contexts.length}
                 >
-                  <PlusIcon className="mr-2 h-4 w-4" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Thêm tài liệu
                 </Button>
               </DropdownMenuTrigger>
@@ -718,14 +708,14 @@ export default function StaffDocumentsPage() {
                   disabled={!characters.length}
                   onClick={() => openCreateForm("character")}
                 >
-                  <UserIcon className="mr-2 h-4 w-4" />
+                  <User className="mr-2 h-4 w-4" />
                   Thêm tài liệu nhân vật
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!contexts.length}
                   onClick={() => openCreateForm("context")}
                 >
-                  <ScrollIcon className="mr-2 h-4 w-4" />
+                  <Scroll className="mr-2 h-4 w-4" />
                   Thêm tài liệu bối cảnh
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -805,124 +795,169 @@ export default function StaffDocumentsPage() {
                     : "Thêm tài liệu bối cảnh"}
               </DialogTitle>
             </DialogHeader>
-            <form className="space-y-4" onSubmit={submitDocumentForm}>
-              {editingRow ? (
+            {editingRow ? (
+              <form className="space-y-4" onSubmit={submitDocumentForm}>
                 <div className="space-y-2">
                   <Label>Đối tượng liên kết</Label>
-                  <div
-                    className="rounded-md border px-3 py-2 text-sm"
-                    style={{
-                      borderColor: "var(--card-light-border)",
-                      color: "var(--content-heading)",
-                    }}
-                  >
+                  <div className="rounded-md border px-3 py-2 text-sm border-card-light-border text-content-heading">
                     {editingRow.ownerType === "character" ? "Nhân vật" : "Bối cảnh"}:{" "}
                     {editingRow.ownerName}
                   </div>
                 </div>
-              ) : createOwnerType === "character" ? (
+
                 <div className="space-y-2">
-                  <Label htmlFor="document-character">Nhân vật</Label>
-                  <Select
-                    value={documentForm.ownerId}
-                    onValueChange={(value) =>
-                      setDocumentForm((current) => ({ ...current, ownerId: value }))
+                  <Label htmlFor="document-title">Tiêu đề</Label>
+                  <Input
+                    id="document-title"
+                    value={documentForm.title}
+                    onChange={(event) =>
+                      setDocumentForm((current) => ({
+                        ...current,
+                        title: event.target.value,
+                      }))
                     }
-                  >
-                    <SelectTrigger id="document-character" className="w-full">
-                      <SelectValue placeholder="Chọn nhân vật" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {characters.map((character) => (
-                        <SelectItem key={character.id} value={character.id}>
-                          {character.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Nhập tiêu đề tài liệu"
+                  />
                 </div>
-              ) : (
+
                 <div className="space-y-2">
-                  <Label htmlFor="document-context">Bối cảnh</Label>
-                  <Select
-                    value={documentForm.ownerId}
-                    onValueChange={(value) =>
-                      setDocumentForm((current) => ({ ...current, ownerId: value }))
+                  <Label htmlFor="document-content">Nội dung</Label>
+                  <Textarea
+                    id="document-content"
+                    value={documentForm.content}
+                    onChange={(event) =>
+                      setDocumentForm((current) => ({
+                        ...current,
+                        content: event.target.value,
+                      }))
                     }
-                  >
-                    <SelectTrigger id="document-context" className="w-full">
-                      <SelectValue placeholder="Chọn bối cảnh" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {contexts.map((context) => (
-                        <SelectItem key={context.id} value={context.id}>
-                          {context.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Nhập nội dung tài liệu"
+                    className="min-h-[240px]"
+                  />
                 </div>
-              )}
 
-              <div className="space-y-2">
-                <Label htmlFor="document-title">Tiêu đề</Label>
-                <Input
-                  id="document-title"
-                  value={documentForm.title}
-                  onChange={(event) =>
-                    setDocumentForm((current) => ({
-                      ...current,
-                      title: event.target.value,
-                    }))
-                  }
-                  placeholder="Nhập tiêu đề tài liệu"
-                />
-              </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setFormOpen(false)}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={updateCharacterDocument.isPending || updateHistoricalDocument.isPending}
+                  >
+                    {updateCharacterDocument.isPending || updateHistoricalDocument.isPending
+                      ? "Đang lưu..."
+                      : "Lưu thay đổi"}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                {createOwnerType === "character" ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="document-character">Nhân vật</Label>
+                    <Select
+                      value={documentForm.ownerId}
+                      onValueChange={(value) =>
+                        setDocumentForm((current) => ({ ...current, ownerId: value }))
+                      }
+                    >
+                      <SelectTrigger id="document-character" className="w-full">
+                        <SelectValue placeholder="Chọn nhân vật" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {characters.map((character) => (
+                          <SelectItem key={character.id} value={character.id}>
+                            {character.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="document-context">Bối cảnh</Label>
+                    <Select
+                      value={documentForm.ownerId}
+                      onValueChange={(value) =>
+                        setDocumentForm((current) => ({ ...current, ownerId: value }))
+                      }
+                    >
+                      <SelectTrigger id="document-context" className="w-full">
+                        <SelectValue placeholder="Chọn bối cảnh" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contexts.map((context) => (
+                          <SelectItem key={context.id} value={context.id}>
+                            {context.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
-              <div className="space-y-2">
-                <Label htmlFor="document-content">Nội dung</Label>
-                <Textarea
-                  id="document-content"
-                  value={documentForm.content}
-                  onChange={(event) =>
-                    setDocumentForm((current) => ({
-                      ...current,
-                      content: event.target.value,
-                    }))
-                  }
-                  placeholder="Nhập nội dung tài liệu"
-                  className="min-h-[240px]"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setFormOpen(false)}
-                >
-                  Hủy
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={
+                <NewDocumentPanel
+                  disabled={!documentForm.ownerId}
+                  onCreateText={async ({ title, content }) => {
+                    if (!documentForm.ownerId) {
+                      toast.error("Vui lòng chọn đối tượng liên kết");
+                      return;
+                    }
+                    if (createOwnerType === "character") {
+                      await createCharacterDocument.mutateAsync({
+                        ownerId: documentForm.ownerId,
+                        title,
+                        content,
+                      });
+                    } else {
+                      await createHistoricalDocument.mutateAsync({
+                        ownerId: documentForm.ownerId,
+                        title,
+                        content,
+                      });
+                    }
+                  }}
+                  isCreateTextPending={createCharacterDocument.isPending || createHistoricalDocument.isPending}
+                  onCreatePdf={async ({ title, file }) => {
+                    if (!documentForm.ownerId) {
+                      toast.error("Vui lòng chọn đối tượng liên kết");
+                      return;
+                    }
+                    const newDoc =
+                      createOwnerType === "character"
+                        ? await createCharacterDocument.mutateAsync({
+                            ownerId: documentForm.ownerId,
+                            title,
+                            content: "PDF Document",
+                          })
+                        : await createHistoricalDocument.mutateAsync({
+                            ownerId: documentForm.ownerId,
+                            title,
+                            content: "PDF Document",
+                          });
+                    const newDocId = newDoc.id ?? newDoc.documentId;
+                    if (newDocId) {
+                      await uploadPdf.mutateAsync({ docId: newDocId, file });
+                    }
+                  }}
+                  isCreatePdfPending={
                     createCharacterDocument.isPending ||
                     createHistoricalDocument.isPending ||
-                    updateCharacterDocument.isPending ||
-                    updateHistoricalDocument.isPending
+                    uploadPdf.isPending
                   }
-                >
-                  {createCharacterDocument.isPending ||
-                  createHistoricalDocument.isPending ||
-                  updateCharacterDocument.isPending ||
-                  updateHistoricalDocument.isPending
-                    ? "Đang lưu..."
-                    : editingRow
-                      ? "Lưu thay đổi"
-                      : "Tạo tài liệu"}
-                </Button>
+                />
+
+                <div className="flex justify-end pt-2">
+                  <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>
+                    Hủy
+                  </Button>
+                </div>
               </div>
-            </form>
+            )}
           </DialogContent>
         </Dialog>
 
@@ -978,29 +1013,29 @@ export default function StaffDocumentsPage() {
             emptyContentMessage="Chưa có nội dung."
             titleBadge={
               <span
-                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
-                style={{
-                  background: selectedRow.ownerType === "character" ? "rgba(59,130,246,0.12)" : "rgba(201,168,76,0.12)",
-                  color: selectedRow.ownerType === "character" ? "rgb(37,99,235)" : "rgb(146,64,14)",
-                  border: `1px solid ${selectedRow.ownerType === "character" ? "rgba(59,130,246,0.25)" : "rgba(201,168,76,0.3)"}`,
-                }}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border",
+                  selectedRow.ownerType === "character"
+                    ? "bg-[rgba(59,130,246,0.12)] text-[rgb(37,99,235)] border-[rgba(59,130,246,0.25)]"
+                    : "bg-[rgba(201,168,76,0.12)] text-[rgb(146,64,14)] border-[rgba(201,168,76,0.3)]"
+                )}
               >
-                {selectedRow.ownerType === "character" ? <UserIcon className="h-3 w-3" /> : <ScrollIcon className="h-3 w-3" />}
+                {selectedRow.ownerType === "character" ? <User className="h-3 w-3" /> : <Scroll className="h-3 w-3" />}
                 {selectedRow.ownerType === "character" ? "Nhân vật" : "Bối cảnh"}
               </span>
             }
             meta={
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Owner Info */}
-                <div className="rounded-xl border p-4" style={{ borderColor: "var(--card-light-border)", background: "var(--card-light-bg)" }}>
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                <div className="rounded-xl border p-4 border-card-light-border bg-card-light-bg">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-content-heading">
                     Đối tượng liên kết
                   </p>
-                  <p className="mt-2 text-sm font-medium" style={{ color: "var(--content-heading)" }}>
+                  <p className="mt-2 text-sm font-medium text-content-heading">
                     {selectedRow.ownerName}
                   </p>
                   {selectedRow.ownerSubtitle && (
-                    <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                    <p className="text-xs mt-0.5 text-content-muted">
                       {selectedRow.ownerSubtitle}
                     </p>
                   )}
@@ -1018,7 +1053,7 @@ export default function StaffDocumentsPage() {
                         );
                       }}
                     >
-                      <ArrowSquareOutIcon className="mr-1.5 h-3.5 w-3.5" />
+                      <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
                       Mở {selectedRow.ownerType === "character" ? "nhân vật" : "bối cảnh"}
                     </Button>
                     {getDocumentId(selectedRow.document) && hasPdf(selectedRow.document) && (
@@ -1043,9 +1078,9 @@ export default function StaffDocumentsPage() {
                             setViewerLoading(false);
                           }
                         }}
-                        style={{ color: "var(--accent-gold)", borderColor: "rgba(201,168,76,0.3)" }}
+                        className="text-accent-gold border-[rgba(201,168,76,0.3)]"
                       >
-                        <EyeIcon className="mr-1.5 h-3.5 w-3.5" />
+                        <Eye className="mr-1.5 h-3.5 w-3.5" />
                         {getPdfUrl.isPending ? "Đang tải..." : "Xem PDF"}
                       </Button>
                     )}
@@ -1053,8 +1088,8 @@ export default function StaffDocumentsPage() {
                 </div>
 
                 {/* Linked Characters */}
-                <div className="rounded-xl border p-4" style={{ borderColor: "var(--card-light-border)", background: "var(--card-light-bg)" }}>
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                <div className="rounded-xl border p-4 border-card-light-border bg-card-light-bg">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-content-heading">
                     Nhân vật sử dụng
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -1062,19 +1097,14 @@ export default function StaffDocumentsPage() {
                       selectedRow.linkedCharacters.map((character) => (
                         <span
                           key={character.id}
-                          className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
-                          style={{
-                            borderColor: "rgba(59,130,246,0.25)",
-                            background: "rgba(59,130,246,0.08)",
-                            color: "rgb(37,99,235)",
-                          }}
+                          className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium border-[rgba(59,130,246,0.25)] bg-[rgba(59,130,246,0.08)] text-[rgb(37,99,235)]"
                         >
-                          <UserIcon className="h-3 w-3" />
+                          <User className="h-3 w-3" />
                           {character.name}
                         </span>
                       ))
                     ) : (
-                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                      <p className="text-xs text-content-muted">
                         Chưa có nhân vật liên quan.
                       </p>
                     )}
@@ -1091,17 +1121,11 @@ export default function StaffDocumentsPage() {
 
 function SummaryCard({ label, value }: { label: string; value: number }) {
   return (
-    <div
-      className="rounded-xl border px-4 py-3"
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
-    >
-      <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+    <div className="rounded-xl border px-4 py-3 bg-card-light-bg border-card-light-border">
+      <p className="text-xs text-content-muted">
         {label}
       </p>
-      <p className="mt-1 text-xl font-bold" style={{ color: "var(--content-heading)" }}>
+      <p className="mt-1 text-xl font-bold text-content-heading">
         {value.toLocaleString("vi-VN")}
       </p>
     </div>
