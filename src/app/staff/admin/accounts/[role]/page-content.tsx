@@ -239,7 +239,7 @@ export default function AdminAccountsPage() {
           return (
             <div className="flex items-center gap-3 min-w-[200px]">
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 font-bold text-sm text-white select-none"
+                className="flex items-center justify-center text-sm font-bold text-white rounded-full select-none w-9 h-9 shrink-0"
                 style={{ background: bgColor }}
               >
                 {initials}
@@ -325,7 +325,7 @@ export default function AdminAccountsPage() {
           const isDeleted = isUserDeleted(u);
           return isDeleted ? (
             <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold bg-[rgba(239,68,68,0.12)] text-[#ef4444] border border-[rgba(239,68,68,0.25)]">
-              <LockKeyhole className="h-3 w-3" />
+              <LockKeyhole className="w-3 h-3" />
               Đã khóa
             </span>
           ) : (
@@ -338,7 +338,7 @@ export default function AdminAccountsPage() {
       },
       {
         id: "actions",
-        header: () => <div className="text-right pr-2">Thao tác</div>,
+        header: () => <div className="pr-2 text-right">Thao tác</div>,
         cell: ({ row }) => {
           const u = row.original;
           const isDeleted = isUserDeleted(u);
@@ -356,7 +356,7 @@ export default function AdminAccountsPage() {
                   }}
                   disabled={restoreUser.isPending}
                 >
-                  <LockKeyholeOpen className="h-4 w-4" />
+                  <LockKeyholeOpen className="w-4 h-4" />
                 </Button>
               ) : (
                 <Button
@@ -370,7 +370,7 @@ export default function AdminAccountsPage() {
                   }}
                   disabled={deleteUser.isPending}
                 >
-                  <LockKeyhole className="h-4 w-4" />
+                  <LockKeyhole className="w-4 h-4" />
                 </Button>
               )}
               <Button
@@ -380,7 +380,7 @@ export default function AdminAccountsPage() {
                 title="Chỉnh sửa"
                 onClick={() => openEdit(u)}
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className="w-4 h-4" />
               </Button>
             </div>
           );
@@ -412,33 +412,33 @@ export default function AdminAccountsPage() {
           <StaffStatCard
             label="Tổng tài khoản"
             value={allUsers.length}
-            icon={<Users className="h-5 w-5" />}
+            icon={<Users className="w-5 h-5" />}
             tone="blue"
           />
           <StaffStatCard
             label="Đang hoạt động"
             value={allUsers.filter((u) => !isUserDeleted(u)).length}
-            icon={<ShieldCheck className="h-5 w-5" />}
+            icon={<ShieldCheck className="w-5 h-5" />}
             tone="green"
           />
           <StaffStatCard
             label="Đang bị khoá"
             value={allUsers.filter((u) => isUserDeleted(u)).length}
-            icon={<LockKeyhole className="h-5 w-5" />}
+            icon={<LockKeyhole className="w-5 h-5" />}
             tone="red"
           />
           {meta.showToken && (
             <StaffStatCard
               label="Tổng token còn lại"
               value={allUsers.reduce((s, u) => s + (u.token || 0), 0).toLocaleString()}
-              icon={<Coins className="h-5 w-5" />}
+              icon={<Coins className="w-5 h-5" />}
               tone="gold"
             />
           )}
         </StaffStatsGrid>
       )}
       {/* Main table card */}
-      <section className="rounded-2xl border p-6 space-y-5 bg-card-light-bg border-card-light-border">
+      <section className="p-6 space-y-5 border rounded-2xl bg-card-light-bg border-card-light-border">
         {/* Header row */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           {/* Count info */}
@@ -461,10 +461,10 @@ export default function AdminAccountsPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
+          <div className="flex flex-col w-full gap-2 sm:flex-row sm:items-center sm:w-auto">
             {/* Search */}
             <div className="relative w-full sm:w-[280px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-content-subtle" />
+              <Search className="absolute w-4 h-4 -translate-y-1/2 left-3 top-1/2 text-content-subtle" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -498,7 +498,7 @@ export default function AdminAccountsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-1">
+          <div className="py-1 space-y-4">
             {/* Username */}
             <div className="space-y-1.5">
               <Label className="text-content-heading text-[13px]">
@@ -587,7 +587,7 @@ export default function AdminAccountsPage() {
             <Button
               onClick={handleFormSave}
               disabled={updateUser.isPending}
-              className="rounded-xl border-0 text-white"
+              className="text-white border-0 rounded-xl"
               style={{ background: meta.accent }}
             >
               {updateUser.isPending ? "Đang lưu..." : "Lưu thay đổi"}
