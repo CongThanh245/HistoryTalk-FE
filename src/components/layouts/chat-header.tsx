@@ -12,25 +12,20 @@ export default function ChatHeader() {
 
   return (
     <header
-      className="h-14 w-full border-b flex items-center justify-between px-3 shrink-0"
-      style={{
-        background: "var(--header-bg)",
-        borderColor: "var(--header-border)",
-      }}
+      className="h-14 w-full border-b flex items-center justify-between px-3 shrink-0 bg-header-bg border-header-border"
     >
       <div className="flex items-center gap-3">
         {/* Back button */}
         <button
           onClick={() => router.push("/home")}
-          className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors hover:bg-white/5 active:scale-95"
-          style={{ color: "var(--header-text)" }}
+          className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors hover:bg-white/5 active:scale-95 text-header-text"
           aria-label="Quay lại trang chủ"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         {/* Page title */}
-        <span className="font-semibold text-sm" style={{ color: "var(--header-text)" }}>
+        <span className="font-semibold text-sm text-header-text">
           Chat
         </span>
       </div>
@@ -42,11 +37,7 @@ export default function ChatHeader() {
         ) : (
           <button
             onClick={() => router.push("/login")}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors active:scale-95"
-            style={{
-              color: "var(--header-text)",
-              borderColor: "var(--header-border)",
-            }}
+            className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors active:scale-95 text-header-text border-header-border"
           >
             Đăng nhập
           </button>

@@ -6,17 +6,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { paymentService } from "@/services/payment.service";
 import {
-  ArrowLeftIcon,
-  CheckCircleIcon,
-  ClockCountdownIcon,
-  CreditCardIcon,
-  HouseIcon,
-  HourglassIcon,
-  ReceiptIcon,
-  ShieldCheckIcon,
-  SparkleIcon,
-  XCircleIcon,
-} from "@phosphor-icons/react";
+  ArrowLeft,
+  CheckCircle2,
+  Timer,
+  CreditCard,
+  Home,
+  Hourglass,
+  Receipt,
+  ShieldCheck,
+  Sparkles,
+  XCircle,
+} from "lucide-react";
 
 type PaymentStatus = "success" | "cancelled" | "pending" | "unknown";
 
@@ -56,7 +56,7 @@ const CONFIG: Record<
   }
 > = {
   success: {
-    icon: <CheckCircleIcon size={26} weight="duotone" />,
+    icon: <CheckCircle2 size={26} />,
     eyebrow: "Hoàn tất",
     title: "Thanh toán thành công",
     desc: "Gói Pro đã được kích hoạt. Bạn có thể quay lại HistoryTalk và dùng toàn bộ tính năng ngay.",
@@ -65,7 +65,7 @@ const CONFIG: Record<
     border: "var(--status-success-border)",
   },
   cancelled: {
-    icon: <XCircleIcon size={26} weight="duotone" />,
+    icon: <XCircle size={26} />,
     eyebrow: "Đã hủy",
     title: "Giao dịch đã bị hủy",
     desc: "Không có khoản thanh toán nào được ghi nhận. Bạn có thể mở lại gói Pro và thanh toán khi sẵn sàng.",
@@ -74,7 +74,7 @@ const CONFIG: Record<
     border: "var(--status-danger-border)",
   },
   pending: {
-    icon: <HourglassIcon size={26} weight="duotone" />,
+    icon: <Hourglass size={26} />,
     eyebrow: "Đang xử lý",
     title: "Đang xác nhận thanh toán",
     desc: "PayOS đang xử lý giao dịch. Nếu bạn đã chuyển khoản, trạng thái sẽ được cập nhật sau ít phút.",
@@ -83,7 +83,7 @@ const CONFIG: Record<
     border: "var(--status-warning-border)",
   },
   unknown: {
-    icon: <ClockCountdownIcon size={26} weight="duotone" />,
+    icon: <Timer size={26} />,
     eyebrow: "Cần kiểm tra",
     title: "Chưa xác định trạng thái",
     desc: "HistoryTalk chưa nhận được trạng thái cuối cùng từ cổng thanh toán. Hãy kiểm tra lại trong lịch sử đơn hàng.",
@@ -124,7 +124,7 @@ export default function PaymentResult() {
       toast(
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2 font-bold text-[var(--content-heading)]">
-            <SparkleIcon weight="duotone" className="size-4 shrink-0 text-[var(--accent-gold)]" />
+            <Sparkles className="size-4 shrink-0 text-[var(--accent-gold)]" />
             Gói Pro đã được kích hoạt!
           </div>
           <p className="text-xs leading-5 text-[var(--content-muted)]">
@@ -164,11 +164,11 @@ export default function PaymentResult() {
 
               <div className="grid gap-3 text-sm">
                 <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/7 p-3">
-                  <CreditCardIcon size={18} className="text-[var(--text-inverse)]" />
+                  <CreditCard size={18} className="text-[var(--text-inverse)]" />
                   <span className="text-[var(--text-inverse)] font-medium">Chuyển khoản ngân hàng và QR</span>
                 </div>
                 <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/7 p-3">
-                  <ReceiptIcon size={18} className="text-[var(--text-inverse)]" />
+                  <Receipt size={18} className="text-[var(--text-inverse)]" />
                   <span className="text-[var(--text-inverse)] font-medium">Lưu lịch sử giao dịch rõ ràng</span>
                 </div>
               </div>
@@ -202,7 +202,7 @@ export default function PaymentResult() {
             {(orderCode || amount) && (
               <div className="mt-5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4">
                 <div className="mb-3 flex items-center gap-2 text-sm font-bold text-[var(--content-heading)]">
-                  <ReceiptIcon size={17} weight="duotone" className="text-[var(--accent-gold)]" />
+                  <Receipt size={17} className="text-[var(--accent-gold)]" />
                   Chi tiết giao dịch
                 </div>
                 <div className="grid gap-3">
@@ -232,7 +232,7 @@ export default function PaymentResult() {
                 onClick={() => router.push("/home")}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--abyssal-blue)] px-4 text-sm font-bold text-white shadow-[0_12px_28px_rgba(27,38,50,0.2)] transition hover:-translate-y-0.5 hover:bg-[var(--blue-fantastic)]"
               >
-                <HouseIcon size={17} />
+                <Home size={17} />
                 Về trang chủ
               </button>
 
@@ -241,7 +241,7 @@ export default function PaymentResult() {
                 onClick={() => router.push("/home")}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] px-4 text-sm font-bold text-[var(--content-heading)] transition hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:text-[var(--accent-gold)]"
               >
-                <ArrowLeftIcon size={16} />
+                <ArrowLeft size={16} />
                 Quay lại
               </button>
             </div>

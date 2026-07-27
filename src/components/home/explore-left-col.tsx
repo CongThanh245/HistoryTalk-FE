@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
-  BankIcon,
-  UserIcon,
-  ChatTextIcon,
-  ClipboardTextIcon,
-  BookmarkIcon,
-  CaretRightIcon,
-  SparkleIcon,
-  ArrowCounterClockwiseIcon,
-  TagIcon,
-} from "@phosphor-icons/react";
+  Landmark,
+  User,
+  MessageSquareText,
+  ClipboardList,
+  Bookmark,
+  ChevronRight,
+  Sparkles,
+  RefreshCcw,
+  Tag,
+} from "lucide-react";
 import { facts } from "@/store/fact";
 
 // ─────────────────────────────────────────
@@ -21,7 +21,7 @@ import { facts } from "@/store/fact";
 
 const FEATURE_CARDS = [
   {
-    icon: BankIcon,
+    icon: Landmark,
     title: "Sự kiện lịch sử",
     desc: "Dòng thời gian tương tác",
     href: "/events",
@@ -29,7 +29,7 @@ const FEATURE_CARDS = [
     glow: "rgba(201,162,77,0.1)",
   },
   {
-    icon: UserIcon,
+    icon: User,
     title: "Nhân vật",
     desc: "Những người làm thay đổi lịch sử",
     href: "/characters",
@@ -37,7 +37,7 @@ const FEATURE_CARDS = [
     glow: "rgba(196,106,47,0.1)",
   },
   {
-    icon: ChatTextIcon,
+    icon: MessageSquareText,
     title: "Chat với lịch sử",
     desc: "AI đóng vai nhân vật lịch sử",
     href: "/chat-history",
@@ -45,7 +45,7 @@ const FEATURE_CARDS = [
     glow: "rgba(143,179,200,0.1)",
   },
   {
-    icon: ClipboardTextIcon,
+    icon: ClipboardList,
     title: "Câu đố lịch sử",
     desc: "Hàng nghìn câu hỏi theo chủ đề",
     href: "/quiz",
@@ -53,7 +53,7 @@ const FEATURE_CARDS = [
     glow: "rgba(255,177,98,0.1)",
   },
   {
-    icon: BankIcon,
+    icon: Landmark,
     title: "Thư viện",
     desc: "Tư liệu & hình ảnh lịch sử",
     href: "/library",
@@ -61,7 +61,7 @@ const FEATURE_CARDS = [
     glow: "rgba(47,111,115,0.1)",
   },
   {
-    icon: BookmarkIcon,
+    icon: Bookmark,
     title: "Đã lưu",
     desc: "Nội dung bạn đã đánh dấu",
     href: "/saved",
@@ -129,94 +129,34 @@ function InlineFactCard() {
   }, [fading]);
 
   return (
-    <div
-      style={{
-        background: "var(--card-light-bg)",
-        border: "1px solid var(--card-light-border)",
-        borderRadius: 14,
-        overflow: "hidden",
-        boxShadow: "0 1px 8px rgba(27,38,50,0.06)",
-      }}
-    >
+    <div className="bg-card-light-bg border border-card-light-border rounded-[14px] overflow-hidden shadow-[0_1px_8px_rgba(27,38,50,0.06)]">
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "11px 14px 10px",
-          borderBottom: "1px solid var(--card-light-border)",
-          background:
-            "linear-gradient(to right, rgba(201,162,77,0.06), transparent)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <SparkleIcon
-            size={13}
-            weight="fill"
-            style={{ color: "var(--accent-gold)" }}
-          />
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "#7a5a1e",
-            }}
-          >
+      <div className="flex items-center justify-between px-3.5 pt-[11px] pb-2.5 border-b border-card-light-border bg-gradient-to-r from-accent-gold/[0.06] to-transparent">
+        <div className="flex items-center gap-1.5">
+          <Sparkles className="w-[13px] h-[13px] text-accent-gold" fill="currentColor" />
+          <span className="text-[10px] font-extrabold tracking-[0.12em] uppercase text-[#7a5a1e]">
             Bạn có biết?
           </span>
         </div>
         {fact.year && (
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 800,
-              color: "#8a4a1a",
-              background: "rgba(196,106,47,0.1)",
-              border: "1px solid rgba(196,106,47,0.22)",
-              borderRadius: 5,
-              padding: "1px 7px",
-            }}
-          >
+          <span className="text-[10px] font-extrabold text-[#8a4a1a] bg-[rgba(196,106,47,0.1)] border border-[rgba(196,106,47,0.22)] rounded-[5px] px-[7px] py-px">
             {fact.year}
           </span>
         )}
       </div>
 
       {/* Body */}
-      <div ref={bodyRef} style={{ padding: "12px 14px 10px" }}>
-        <p
-          style={{
-            fontSize: 12.5,
-            lineHeight: 1.75,
-            color: "var(--content-text)",
-            margin: 0,
-          }}
-        >
+      <div ref={bodyRef} className="px-3.5 pt-3 pb-2.5">
+        <p className="text-[12.5px] leading-[1.75] text-content-text m-0">
           {fact.content}
         </p>
-        <div
-          style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 10 }}
-        >
+        <div className="flex flex-wrap gap-[5px] mt-2.5">
           {fact.tags.map((tag) => (
             <span
               key={tag}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 3,
-                fontSize: 10,
-                padding: "2px 8px",
-                borderRadius: 20,
-                background: "rgba(201,162,77,0.08)",
-                border: "1px solid rgba(201,162,77,0.2)",
-                color: "#7a5a1e",
-                fontWeight: 500,
-              }}
+              className="inline-flex items-center gap-[3px] text-[10px] px-2 py-0.5 rounded-[20px] bg-accent-gold/[0.08] border border-accent-gold/20 text-[#7a5a1e] font-medium"
             >
-              <TagIcon size={9} weight="bold" />
+              <Tag className="w-[9px] h-[9px]" strokeWidth={2.5} />
               {tag}
             </span>
           ))}
@@ -224,37 +164,12 @@ function InlineFactCard() {
       </div>
 
       {/* Footer */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          padding: "0 14px 12px",
-        }}
-      >
+      <div className="flex justify-end px-3.5 pb-3">
         <button
           onClick={next}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            fontSize: 11,
-            fontWeight: 700,
-            cursor: "pointer",
-            padding: "5px 11px",
-            borderRadius: 7,
-            background: "#e8d5a8",
-            border: "1px solid #b8922a",
-            color: "#5c3d0e",
-            transition: "background 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#dcc88e";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#e8d5a8";
-          }}
+          className="inline-flex items-center gap-[5px] text-[11px] font-bold cursor-pointer px-[11px] py-[5px] rounded-[7px] bg-[#e8d5a8] border border-[#b8922a] text-[#5c3d0e] transition-colors duration-150 hover:bg-[#dcc88e]"
         >
-          <ArrowCounterClockwiseIcon size={11} weight="bold" />
+          <RefreshCcw className="w-[11px] h-[11px]" strokeWidth={2.5} />
           Sự kiện khác
         </button>
       </div>
@@ -275,17 +190,9 @@ function FeatureRow({
   glow,
 }: (typeof FEATURE_CARDS)[0]) {
   return (
-    <Link href={href} className="group" style={{ textDecoration: "none" }}>
+    <Link href={href} className="group no-underline">
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 11,
-          padding: "9px 12px",
-          borderRadius: 11,
-          border: "1px solid transparent",
-          transition: "all 0.15s",
-        }}
+        className="flex items-center gap-[11px] px-3 py-[9px] rounded-[11px] border border-transparent transition-all duration-150"
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLElement;
           el.style.background = glow;
@@ -299,14 +206,8 @@ function FeatureRow({
       >
         {/* Icon bubble */}
         <div
+          className="w-[34px] h-[34px] rounded-[9px] shrink-0 flex items-center justify-center"
           style={{
-            width: 34,
-            height: 34,
-            borderRadius: 9,
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
             background: glow,
             border: `1px solid ${accentHex}25`,
           }}
@@ -315,40 +216,21 @@ function FeatureRow({
         </div>
 
         {/* Text */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--content-heading)",
-            }}
-          >
+        <div className="flex-1 min-w-0">
+          <p className="m-0 text-[13px] font-semibold text-content-heading">
             {title}
           </p>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 11,
-              color: "var(--content-muted)",
-              marginTop: 1,
-            }}
-          >
+          <p className="m-0 text-[11px] text-content-muted mt-px">
             {desc}
           </p>
         </div>
 
         {/* Arrow */}
-        <CaretRightIcon
+        <ChevronRight
           size={13}
-          weight="bold"
-          style={{
-            color: accentHex,
-            flexShrink: 0,
-            opacity: 0,
-            transition: "opacity 0.15s",
-          }}
-          className="group-hover:opacity-100"
+          strokeWidth={2.5}
+          className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+          style={{ color: accentHex }}
         />
       </div>
     </Link>
@@ -362,44 +244,18 @@ function FeatureRow({
 
 export function ExploreLeftCol() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div className="flex flex-col gap-3">
       {/* Fact card */}
       <InlineFactCard />
 
       {/* Feature list */}
-      <div
-        style={{
-          background: "var(--card-light-bg)",
-          border: "1px solid var(--card-light-border)",
-          borderRadius: 14,
-          overflow: "hidden",
-          boxShadow: "0 1px 8px rgba(27,38,50,0.06)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "11px 14px 10px",
-            borderBottom: "1px solid var(--card-light-border)",
-            background:
-              "linear-gradient(to right, rgba(201,162,77,0.04), transparent)",
-          }}
-        >
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "#7a5a1e",
-            }}
-          >
+      <div className="bg-card-light-bg border border-card-light-border rounded-[14px] overflow-hidden shadow-[0_1px_8px_rgba(27,38,50,0.06)]">
+        <div className="flex items-center gap-1.5 px-3.5 pt-[11px] pb-2.5 border-b border-card-light-border bg-gradient-to-r from-accent-gold/[0.04] to-transparent">
+          <span className="text-[10px] font-extrabold tracking-[0.12em] uppercase text-[#7a5a1e]">
             Khám phá
           </span>
         </div>
-        <div style={{ padding: "6px 4px" }}>
+        <div className="py-1.5 px-1">
           {FEATURE_CARDS.map((card) => (
             <FeatureRow key={card.href} {...card} />
           ))}

@@ -17,17 +17,10 @@ export default function QuizDetailRoute({ params }: Props) {
 
   if (isLoading || isFetching) {
     return (
-      <div
-        className="flex-1 flex items-center justify-center"
-        style={{ background: "var(--bg-content)" }}
-      >
+      <div className="flex-1 flex items-center justify-center bg-[var(--bg-content)]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2
-            size={28}
-            className="animate-spin"
-            style={{ color: "var(--accent-gold)" }}
-          />
-          <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+          <Loader2 size={28} className="animate-spin text-accent-gold" />
+          <p className="text-sm text-content-muted">
             Đang tải...
           </p>
         </div>
@@ -37,17 +30,13 @@ export default function QuizDetailRoute({ params }: Props) {
 
   if (!quiz) {
     return (
-      <div
-        className="flex-1 flex flex-col items-center justify-center gap-4"
-        style={{ background: "var(--bg-content)" }}
-      >
-        <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 bg-[var(--bg-content)]">
+        <p className="text-sm text-content-muted">
           Không tìm thấy bộ câu hỏi
         </p>
         <button
           onClick={() => router.push("/trac-nghiem")}
-          className="px-4 py-2 rounded-xl text-sm font-medium"
-          style={{ background: "var(--accent-gold)", color: "white" }}
+          className="px-4 py-2 rounded-xl text-sm font-medium bg-accent-gold text-white"
         >
           Quay lại
         </button>

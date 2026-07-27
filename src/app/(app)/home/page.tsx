@@ -12,25 +12,23 @@ export const metadata = {
 
 export default function HomePage() {
   return (
-    <div className="px-3 py-4 md:px-6 md:py-8">
-      <div className="max-w-7xl mx-auto space-y-5 md:space-y-8 pb-8 md:pb-10">
-        {/* Hero Banner with Quick Navigation */}
-        <HomeBanner />
+    <div className="space-y-8 lg:space-y-12 py-6 lg:py-10 pb-10 md:pb-14">
+      {/* Hero Banner with Quick Navigation */}
+      <HomeBanner />
 
-        {/* Nhiệm vụ hằng ngày + streak — chỉ hiển thị khi đã đăng nhập */}
-        <DailyQuestsCard />
+      {/* Nhiệm vụ hằng ngày + streak — chỉ hiển thị khi đã đăng nhập */}
+      <DailyQuestsCard />
 
-        {/* Hoạt động của bạn — chỉ hiển thị khi đã đăng nhập */}
-        <LearningDashboard />
+      {/* Hoạt động của bạn — chỉ hiển thị khi đã đăng nhập */}
+      <LearningDashboard />
 
-        {/* Khám phá bối cảnh lịch sử */}
-        <HistoricalContexts />
+      {/* Khám phá bối cảnh lịch sử */}
+      <HistoricalContexts />
 
-        {/* Quizzes Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-8 items-start">
-          <RecentQuiz />
-          <SuggestedQuiz />
-        </div>
+      {/* Quizzes Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-8 items-start">
+        <RecentQuiz />
+        <SuggestedQuiz />
       </div>
     </div>
   );

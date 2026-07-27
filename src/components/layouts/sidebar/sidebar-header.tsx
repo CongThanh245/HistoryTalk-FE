@@ -1,6 +1,6 @@
 "use client";
 
-import { PushPinIcon, PushPinSlashIcon, XIcon } from "@phosphor-icons/react";
+import { Pin, PinOff, X } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -29,10 +29,9 @@ export default function SidebarHeader({
   return (
     <div
       className={cn(
-        "relative z-10 h-16 flex items-center shrink-0 border-b overflow-hidden",
+        "relative z-10 h-16 flex items-center shrink-0 border-b overflow-hidden border-border-default",
         isExpanded ? "px-4 gap-3" : "justify-center",
       )}
-      style={{ borderColor: "var(--border-default)" }}
     >
       {/* Logo + Brand name */}
       <Link
@@ -53,10 +52,9 @@ export default function SidebarHeader({
         <button
           onClick={onClose}
           aria-label="Đóng menu"
-          className="w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 cursor-pointer shrink-0"
-          style={{ color: "var(--sidebar-pin-inactive)" }}
+          className="w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 cursor-pointer shrink-0 text-[var(--sidebar-pin-inactive)]"
         >
-          <XIcon className="w-4 h-4" />
+          <X className="w-4 h-4" />
         </button>
       )}
 
@@ -67,23 +65,19 @@ export default function SidebarHeader({
             <button
               onClick={onTogglePin}
               aria-label={isPinned ? "Bỏ ghim sidebar" : "Ghim sidebar"}
-              className="w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 cursor-pointer shrink-0"
-              style={{
-                color: isPinned ? "var(--sidebar-pin-active)" : "var(--sidebar-pin-inactive)",
-                background: isPinned ? "var(--accent-gold-active-bg)" : "transparent",
-              }}
+              className={cn(
+                "w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 cursor-pointer shrink-0",
+                isPinned
+                  ? "text-[var(--sidebar-pin-active)] bg-accent-gold-active"
+                  : "text-[var(--sidebar-pin-inactive)] bg-transparent"
+              )}
             >
-              {isPinned ? <PushPinIcon className="w-3.5 h-3.5" /> : <PushPinSlashIcon className="w-3.5 h-3.5" />}
+              {isPinned ? <Pin className="w-3.5 h-3.5" /> : <PinOff className="w-3.5 h-3.5" />}
             </button>
           </TooltipTrigger>
           <TooltipContent
             side="bottom"
-            style={{
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border-default)",
-              color: "var(--text-primary)",
-              fontSize: 12,
-            }}
+            className="bg-bg-elevated border border-border-default text-text-primary text-xs"
           >
             {isPinned ? "Bỏ ghim sidebar" : "Ghim sidebar"}
           </TooltipContent>

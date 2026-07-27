@@ -129,7 +129,7 @@ export class SimulatedAnalyserNode {
     
     // Thêm nhiễu ngẫu nhiên - tần số cao hơn để có nhiều chu kỳ đóng mở
     const noise = (Math.sin(elapsed * 25) + Math.sin(elapsed * 35)) * 0.08;
-    let targetVolume = Math.max(0, Math.min(1, baseVolume + noise));
+    const targetVolume = Math.max(0, Math.min(1, baseVolume + noise));
     
     // Smoothing
     this.lastVolume = this.lastVolume * this.smoothingTimeConstant + 
