@@ -786,13 +786,12 @@ export function ChatMain({
               : "bg-[rgba(148,163,184,0.08)] border border-[rgba(148,163,184,0.22)] opacity-56",
           )}
         >
-          {canUseVoiceCall ? (
-            <Phone
-              className="w-4 h-4 text-accent-gold"
-            />
-          ) : (
-            <Lock className="w-4 h-4 text-content-text" />
-          )}
+          <Phone
+            className={cn(
+              "w-4 h-4",
+              canUseVoiceCall ? "text-accent-gold" : "text-content-text"
+            )}
+          />
         </button>
 
         <button
@@ -818,13 +817,12 @@ export function ChatMain({
               : "bg-[rgba(148,163,184,0.08)] border border-[rgba(148,163,184,0.22)] opacity-56",
           )}
         >
-          {canUseVideoCall ? (
-            <Video
-              className="w-4 h-4 fill-current text-accent-gold"
-            />
-          ) : (
-            <Lock className="w-4 h-4 text-content-text" />
-          )}
+          <Video
+            className={cn(
+              "w-4 h-4",
+              canUseVideoCall ? "fill-current text-accent-gold" : "text-content-text"
+            )}
+          />
         </button>
 
         {/* Toggle Right Panel: character info, history, other characters, quiz, contexts (Mobile/Tablet) */}
