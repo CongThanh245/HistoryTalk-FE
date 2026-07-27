@@ -1063,14 +1063,7 @@ export function ChatMain({
           sessionId={sessionId}
           onClose={handleCloseVoice2DCall}
           onMessagesChange={handleVoiceMessagesChange}
-          onOpenCitation={
-            onOpenCitation &&
-            ((quote) => {
-              // Đóng overlay cuộc gọi trước vì panel trích dẫn có z-index thấp hơn.
-              handleCloseVoice2DCall();
-              onOpenCitation(quote);
-            })
-          }
+          contextId={contextId}
           onTokenUpdate={(remainingTokens, promptTokens, completionTokens, messageType) => {
             setLastTokenUsage({
               remainingTokens,
@@ -1089,14 +1082,7 @@ export function ChatMain({
           sessionId={sessionId}
           onClose={handleCloseVoice3DCall}
           onMessagesChange={handleVoiceMessagesChange}
-          onOpenCitation={
-            onOpenCitation &&
-            ((quote) => {
-              // Đóng overlay cuộc gọi trước vì panel trích dẫn có z-index thấp hơn.
-              handleCloseVoice3DCall();
-              onOpenCitation(quote);
-            })
-          }
+          contextId={contextId}
           onTokenUpdate={(remainingTokens, promptTokens, completionTokens, messageType) => {
             setLastTokenUsage({
               remainingTokens,

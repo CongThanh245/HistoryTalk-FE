@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { XIcon, FileTextIcon, WarningCircleIcon, ArrowSquareOutIcon, CircleNotchIcon } from "@phosphor-icons/react";
 
 import type { ChatCharacter } from "@/services/chat.service";
 import { useVoiceChatRest, type VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
@@ -11,6 +12,11 @@ import { useVoiceChatWebSpeech } from "@/features/chat/useVoiceChatWebSpeech";
 import { queryKeys } from "@/shared/query-key";
 import { useAuthStore } from "@/store/auth.store";
 import { userService, type UserProfile } from "@/services/user.service";
+import {
+  usePublicCharacterDocuments,
+  usePublicContextDocuments,
+} from "@/features/documents/hooks";
+import { findDocumentForQuote, splitContentByQuote } from "@/lib/utils/quote-match";
 import type { AnalyserLike } from "./FBXCharacterViewer";
 
 // Dynamically import 3D viewer (no SSR)
@@ -281,6 +287,216 @@ function ConversationDock({
   );
 }
 
+// ── Citation panel (riêng cho cuộc gọi 2D/3D, không đóng call) ────────────────
+
+function CallCitationPanel({
+  quote,
+  characterId,
+  contextId,
+  onClose,
+}: {
+  quote: string;
+  characterId: string;
+  contextId?: string;
+  onClose: () => void;
+}) {
+  const { data: characterDocs, isLoading: isLoadingCharacterDocs } =
+    usePublicCharacterDocuments(characterId);
+  const { data: contextDocs, isLoading: isLoadingContextDocs } =
+    usePublicContextDocuments(contextId);
+
+  const isLoading = isLoadingCharacterDocs || isLoadingContextDocs;
+  const documents = useMemo(
+    () => [...(characterDocs ?? []), ...(contextDocs ?? [])],
+    [characterDocs, contextDocs],
+  );
+  const matchedDocument = useMemo(
+    () => findDocumentForQuote(quote, documents),
+    [quote, documents],
+  );
+  const parts = useMemo(
+    () => splitContentByQuote(matchedDocument?.content ?? "", quote),
+    [matchedDocument, quote],
+  );
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        zIndex: 30,
+        display: "flex",
+        justifyContent: "flex-end",
+        background: "rgba(0,0,0,0.45)",
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "min(380px, 100%)",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          background: "rgba(20,16,10,0.97)",
+          borderLeft: "1px solid rgba(201,168,76,0.25)",
+          boxShadow: "-8px 0 32px rgba(0,0,0,0.4)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            padding: "16px 18px",
+            borderBottom: "1px solid rgba(201,168,76,0.2)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+            <FileTextIcon size={18} weight="fill" style={{ color: "#e0b84a", flexShrink: 0 }} />
+            <h3
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "rgba(255,255,255,0.9)",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {matchedDocument?.title || "Nguồn tham khảo"}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Đóng"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              color: "rgba(255,255,255,0.7)",
+              cursor: "pointer",
+            }}
+          >
+            <XIcon size={13} weight="bold" />
+          </button>
+        </div>
+
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 18px" }}>
+          {isLoading ? (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 13,
+                color: "rgba(255,255,255,0.6)",
+              }}
+            >
+              <CircleNotchIcon size={16} className="animate-spin" />
+              Đang tải tài liệu...
+            </div>
+          ) : matchedDocument ? (
+            <>
+              <p
+                style={{
+                  whiteSpace: "pre-wrap",
+                  fontSize: 13,
+                  lineHeight: 1.7,
+                  color: "rgba(255,255,255,0.85)",
+                }}
+              >
+                {parts.map((part, i) =>
+                  part.matched ? (
+                    <mark
+                      key={i}
+                      style={{
+                        background: "rgba(201,168,76,0.35)",
+                        color: "inherit",
+                        borderRadius: 3,
+                        padding: "0 2px",
+                      }}
+                    >
+                      {part.text}
+                    </mark>
+                  ) : (
+                    <span key={i}>{part.text}</span>
+                  ),
+                )}
+              </p>
+              {matchedDocument.fileUrl && (
+                <a
+                  href={matchedDocument.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    marginTop: 16,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "#e0b84a",
+                  }}
+                >
+                  <ArrowSquareOutIcon size={14} />
+                  Xem file gốc
+                </a>
+              )}
+            </>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 8,
+                  fontSize: 13,
+                  padding: 12,
+                  borderRadius: 8,
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  color: "rgba(255,255,255,0.6)",
+                }}
+              >
+                <WarningCircleIcon size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>Không tìm thấy vị trí chính xác trong tài liệu. Đây là nội dung AI đã trích dẫn:</span>
+              </div>
+              <blockquote
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.7,
+                  paddingLeft: 12,
+                  borderLeft: "2px solid rgba(201,168,76,0.4)",
+                  color: "rgba(255,255,255,0.7)",
+                }}
+              >
+                {quote}
+              </blockquote>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /*
 function RemovedModelDiagnosticBadge({ diagnostic }: { diagnostic: unknown }) {
   if (process.env.NODE_ENV !== "development" || !diagnostic) return null;
@@ -346,24 +562,25 @@ interface Avatar3DModalProps {
   useStream?: boolean; // true = streaming mode, false = REST mode
   mode?: VoiceMode; // "rest" | "stream" | "web-speech" (miễn phí, không API key)
   onTokenUpdate?: (remainingTokens: number, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE") => void;
-  onOpenCitation?: (quote: string) => void;
+  contextId?: string;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function Avatar3DModal({ 
+export function Avatar3DModal({
   variant = "3d",
-  character, 
-  sessionId, 
-  onClose, 
+  character,
+  sessionId,
+  onClose,
   onMessagesChange,
   mode: modeProp,
   onTokenUpdate,
-  onOpenCitation,
+  contextId,
 }: Avatar3DModalProps) {
   const queryClient = useQueryClient();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [voiceVolume, setVoiceVolume] = useState(0);
+  const [citationQuote, setCitationQuote] = useState<string | null>(null);
   
   const uiSoundRefs = useRef<Record<keyof typeof UI_SOUNDS, HTMLAudioElement | null>>({
     callStart: null,
@@ -1489,10 +1706,19 @@ export function Avatar3DModal({
               isThinking={status === "processing_chat" || status === "thinking" || status === "processing"}
               interimText={isRecording ? liveTranscript : ""}
               isRecording={isRecording}
-              onOpenCitation={onOpenCitation}
+              onOpenCitation={setCitationQuote}
             />
           </div>
           </div>
+
+          {citationQuote && (
+            <CallCitationPanel
+              quote={citationQuote}
+              characterId={character.id}
+              contextId={contextId}
+              onClose={() => setCitationQuote(null)}
+            />
+          )}
 
           {/* ── Controls ── */}
           <div className="avatar-call-footer">
