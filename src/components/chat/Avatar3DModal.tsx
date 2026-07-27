@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { XIcon, FileTextIcon, WarningCircleIcon, ArrowSquareOutIcon, CircleNotchIcon, CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react";
+import { X, FileText, AlertCircle, ExternalLink, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 
 import type { ChatCharacter } from "@/services/chat.service";
 import { useVoiceChatRest, type VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
@@ -168,7 +168,7 @@ function TranscriptFeed({
                 }}
               >
                 {m.quotes.length} nguồn trích dẫn
-                {expandedQuotesFor === i ? <CaretUpIcon size={11} /> : <CaretDownIcon size={11} />}
+                {expandedQuotesFor === i ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
               </button>
 
               {expandedQuotesFor === i && (
@@ -358,7 +358,7 @@ function CallCitationPanel({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-            <FileTextIcon size={18} weight="fill" style={{ color: "#e0b84a", flexShrink: 0 }} />
+            <FileText size={18} style={{ color: "#e0b84a", flexShrink: 0 }} />
             <h3
               style={{
                 fontSize: 13,
@@ -390,7 +390,7 @@ function CallCitationPanel({
               cursor: "pointer",
             }}
           >
-            <XIcon size={13} weight="bold" />
+            <X size={13} strokeWidth={2.5} />
           </button>
         </div>
 
@@ -405,7 +405,7 @@ function CallCitationPanel({
                 color: "rgba(255,255,255,0.6)",
               }}
             >
-              <CircleNotchIcon size={16} className="animate-spin" />
+              <Loader2 size={16} className="animate-spin" />
               Đang tải tài liệu...
             </div>
           ) : matchedDocument ? (
@@ -451,7 +451,7 @@ function CallCitationPanel({
                     color: "#e0b84a",
                   }}
                 >
-                  <ArrowSquareOutIcon size={14} />
+                  <ExternalLink size={14} />
                   Xem file gốc
                 </a>
               )}
@@ -470,7 +470,7 @@ function CallCitationPanel({
                   color: "rgba(255,255,255,0.6)",
                 }}
               >
-                <WarningCircleIcon size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+                <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
                 <span>Không tìm thấy vị trí chính xác trong tài liệu. Đây là nội dung AI đã trích dẫn:</span>
               </div>
               <blockquote
