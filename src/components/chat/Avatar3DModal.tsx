@@ -630,7 +630,8 @@ export function Avatar3DModal({
     if (isRecording) {
       playUiSound("micOff", 0.42);
       stopRecording();
-    } else if (status === "idle") {
+    } else if (status === "idle" || status === "speaking") {
+      // status === "speaking": ngắt lời nhân vật để hỏi câu tiếp theo (barge-in).
       setErrorMsg(null);
       playUiSound("micOn", 0.42);
       startRecording();
@@ -654,7 +655,7 @@ export function Avatar3DModal({
         if (isRecording) {
           playUiSound("micOff", 0.42);
           stopRecording();
-        } else if (status === "idle") {
+        } else if (status === "idle" || status === "speaking") {
           setErrorMsg(null);
           playUiSound("micOn", 0.42);
           startRecording();
@@ -670,6 +671,9 @@ export function Avatar3DModal({
   // ── Render ────────────────────────────────────────────────────────────────
 
   const isBusy = status.startsWith("processing") || status === "speaking" || status === "thinking";
+  // Mic vẫn bấm được lúc đang nói để ngắt lời (barge-in); chỉ khóa khi thực sự
+  // đang xử lý mạng (processing/thinking) — lúc đó chưa có gì để ngắt.
+  const micDisabled = isBusy && status !== "speaking";
   const isListeningStatus = status === "listening";
   const is2D = variant === "2d";
 
@@ -1486,23 +1490,35 @@ export function Avatar3DModal({
               className={cn(
                 "avatar-mic-wrap",
                 isRecording && "avatar-mic-wrap--recording",
-                isBusy && "avatar-mic-wrap--busy",
-                !isRecording && !isBusy && "avatar-mic-wrap--idle",
+                micDisabled && "avatar-mic-wrap--busy",
+                !isRecording && !micDisabled && "avatar-mic-wrap--idle",
               )}
             >
             <button
               type="button"
               className={cn(
                 "avatar-mic-button flex h-18 w-18 select-none touch-none items-center justify-center rounded-full border-2 bg-gradient-to-br transition-[background,border] duration-200 disabled:cursor-not-allowed disabled:opacity-40",
-                !isBusy && "cursor-pointer",
+                !micDisabled && "cursor-pointer",
                 isRecording
                   ? "animate-[micPulse_1s_ease-in-out_infinite] border-[#ef5350] from-[#c62828] to-[#ef5350] shadow-[0_0_0_0_rgba(239,83,80,0.5)]"
                   : "border-[rgba(201,168,76,0.4)] from-[rgba(201,168,76,0.3)] to-[rgba(201,168,76,0.15)] shadow-[0_4px_24px_rgba(201,168,76,0.2)]",
               )}
               onClick={handleMicClick}
-              disabled={isBusy}
-              aria-label={isRecording ? "Dừng ghi âm và gửi" : "Bắt đầu ghi âm"}
-              title={isRecording ? "Bấm lần nữa để dừng và gửi" : "Bấm để nói"}
+              disabled={micDisabled}
+              aria-label={
+                isRecording
+                  ? "Dừng ghi âm và gửi"
+                  : status === "speaking"
+                    ? "Ngắt lời và hỏi câu khác"
+                    : "Bắt đầu ghi âm"
+              }
+              title={
+                isRecording
+                  ? "Bấm lần nữa để dừng và gửi"
+                  : status === "speaking"
+                    ? "Bấm để ngắt lời và hỏi câu khác"
+                    : "Bấm để nói"
+              }
             >
               {/* Mic icon */}
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
@@ -1532,7 +1548,9 @@ export function Avatar3DModal({
 
           {/* Hint text */}
           <p className="avatar-call-footer-hint">
-            Bấm mic hoặc Space để nói, bấm lần nữa để dừng
+            {status === "speaking"
+              ? "Bấm mic hoặc Space để ngắt lời và hỏi câu khác"
+              : "Bấm mic hoặc Space để nói, bấm lần nữa để dừng"}
           </p>
         </div>
       </div>
