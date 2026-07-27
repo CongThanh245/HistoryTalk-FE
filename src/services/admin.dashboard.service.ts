@@ -29,6 +29,15 @@ export interface DashboardOverviewData {
     messages: number;
     messagesToday: number;
   };
+  topCharacters?: {
+    characterId: string;
+    name: string;
+    title?: string;
+    imageUrl?: string;
+    totalMessages: number;
+    userMessages: number;
+    aiMessages: number;
+  }[];
   systemHealth: {
     status: string;
     lastCheckedAt: string;
