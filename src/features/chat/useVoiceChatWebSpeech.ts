@@ -35,6 +35,7 @@ export type WebSpeechMessage = {
   role: "user" | "assistant";
   text: string;
   timestamp: Date;
+  quotes?: string[];
 };
 
 export type UseVoiceChatWebSpeechOptions = {
@@ -390,6 +391,7 @@ export function useVoiceChatWebSpeech({
       // Response: { success, data: { assistantMessage: { content } } }
       const apiData = resData.data || resData;
       const aiResponse = apiData.assistantMessage?.content || apiData.message || apiData.content || apiData.text || "";
+      const quotes: string[] = apiData.assistantMessage?.quotes || [];
       const remainingTokens = apiData.remainingTokens ?? resData.remainingTokens;
       const promptTokens = apiData.promptTokens ?? resData.promptTokens;
       const completionTokens = apiData.completionTokens ?? resData.completionTokens;
@@ -406,7 +408,7 @@ export function useVoiceChatWebSpeech({
       // Hiển thị AI message
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: aiResponse, timestamp: new Date() },
+        { role: "assistant", text: aiResponse, timestamp: new Date(), quotes },
       ]);
 
       // TTS with Azure first, then Web Speech fallback.

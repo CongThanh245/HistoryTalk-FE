@@ -7,7 +7,7 @@ import type {
   ChatMessage,
   GetMessagesResponse,
 } from "@/services/chat.service";
-import { MessageBubble, TypingIndicator } from "./chat-message-bubble";
+import { MessageBubble, MessageQuotes, TypingIndicator } from "./chat-message-bubble";
 import { ChatInput } from "./chat-input";
 import {
   useChatMessages,
@@ -19,8 +19,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { queryKeys } from "@/shared/query-key";
 import { Avatar3DModal } from "./Avatar3DModal";
 import type { VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
-import { KeywordDetailPanel } from "./KeywordDetailPanel";
-import type { KeywordData } from "@/data/keywords";
 import { cn } from "@/lib/utils/cn";
 import { isValidUrl } from "@/lib/utils/url";
 import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
@@ -151,7 +149,6 @@ export function ChatMain({
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [isVoice2DOpen, setIsVoice2DOpen] = useState(false);
   const [isVoice3DOpen, setIsVoice3DOpen] = useState(false);
-  const [selectedKeyword, setSelectedKeyword] = useState<KeywordData | null>(null);
   const [selectedVoiceCall, setSelectedVoiceCall] = useState<VoiceCallGroup | null>(null);
   const [voiceCallDraftMessages, setVoiceCallDraftMessages] = useState<ChatMessage[]>([]);
   const [isTokenExhausted, setIsTokenExhausted] = useState(false);
@@ -172,13 +169,6 @@ export function ChatMain({
   useEffect(() => {
     setHeaderAvatarBroken(false);
   }, [character.imageUrl]);
-
-  const handleKeywordSelect = useCallback((kw: KeywordData) => {
-    setSelectedKeyword(kw);
-  }, []);
-  const handleKeywordClose = useCallback(() => {
-    setSelectedKeyword(null);
-  }, []);
 
   const { data, isLoading } = useChatMessages(sessionId);
   const createSession = useCreateSession();
@@ -411,6 +401,7 @@ export function ChatMain({
           content: message.text,
           messageType: "VOICE",
           createdAt: message.timestamp.toISOString(),
+          quotes: message.quotes,
         })),
       );
     },
@@ -875,9 +866,6 @@ export function ChatMain({
                   message={item.message}
                   character={character}
                   speak={speak}
-                  onKeywordSelect={
-                    item.message.role === "ASSISTANT" ? handleKeywordSelect : undefined
-                  }
                   onViewQuote={
                     item.message.role === "ASSISTANT" ? onOpenCitation : undefined
                   }
@@ -1057,18 +1045,12 @@ export function ChatMain({
         />
       )}
 
-      {/* ── Historical Keyword Panel ── */}
-      <KeywordDetailPanel
-        keyword={selectedKeyword}
-        onClose={handleKeywordClose}
-      />
-
-
       {/* ── Upgrade Pro Dialog ── */}
       <VoiceCallTranscriptDialog
         call={selectedVoiceCall}
         character={character}
         onOpenChange={(open) => !open && setSelectedVoiceCall(null)}
+        onOpenCitation={onOpenCitation}
       />
 
       <UpgradeProDialog open={isUpgradeOpen} onOpenChange={setIsUpgradeOpen} />
@@ -1127,10 +1109,12 @@ function VoiceCallTranscriptDialog({
   call,
   character,
   onOpenChange,
+  onOpenCitation,
 }: {
   call: VoiceCallGroup | null;
   character: ChatCharacter;
   onOpenChange: (open: boolean) => void;
+  onOpenCitation?: (quote: string) => void;
 }) {
   return (
     <Dialog open={!!call} onOpenChange={onOpenChange}>
@@ -1150,7 +1134,7 @@ function VoiceCallTranscriptDialog({
             return (
               <div
                 key={message.id}
-                className={cn("flex", isUser ? "justify-end" : "justify-start")}
+                className={cn("flex flex-col gap-1.5", isUser ? "items-end" : "items-start")}
               >
                 <div
                   className={cn(
@@ -1165,6 +1149,9 @@ function VoiceCallTranscriptDialog({
                   </p>
                   <p>{message.content}</p>
                 </div>
+                {!isUser && message.quotes && message.quotes.length > 0 && (
+                  <MessageQuotes quotes={message.quotes} onViewQuote={onOpenCitation} />
+                )}
               </div>
             );
           })}

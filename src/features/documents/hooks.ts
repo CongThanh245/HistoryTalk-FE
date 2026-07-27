@@ -237,14 +237,19 @@ export function useUploadAndExtractPdf() {
       entityType,
       entityId,
       onProgress,
+      signal,
     }: {
       file: File;
       entityType?: DocumentEntityType;
       entityId?: string;
       /** Bao tien do sau moi trang xu ly xong (page/total) thay vi im lang cho toi khi xong. */
       onProgress?: (page: number, total: number) => void;
-    }) => documentService.uploadAndExtractPdfStream(file, entityType, entityId, onProgress),
+      /** Lets a "Hủy" button cancel a long-running OCR extraction. */
+      signal?: AbortSignal;
+    }) => documentService.uploadAndExtractPdfStream(file, entityType, entityId, onProgress, signal),
     onError: (err: unknown) => {
+      // A user-initiated cancel (AbortController.abort()) isn't a failure — skip the toast.
+      if (err instanceof DOMException && err.name === "AbortError") return;
       toast.error(getErrorMessage(err, "Không thể trích xuất nội dung từ PDF"));
     },
   });

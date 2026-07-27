@@ -70,27 +70,6 @@ export default function EditContextPage() {
 
     try {
       await updateEvent.mutateAsync({ id, data: payload });
-
-      const documentContent = draft.documentContent.trim();
-      if (documentContent) {
-        try {
-          if (draft.documentId) {
-            await updateHistoricalDocument.mutateAsync({
-              docId: draft.documentId,
-              data: { title: draft.documentTitle.trim() || payload.name, content: documentContent, type: "TEXT" },
-            });
-          } else {
-            await createHistoricalDocument.mutateAsync({
-              contextId: id,
-              title: draft.documentTitle.trim() || payload.name,
-              content: documentContent,
-              type: "TEXT",
-            });
-          }
-        } catch {
-          // toast already shown by the document mutation hooks
-        }
-      }
     } catch {
       // useUpdateEvent already shows the API error toast.
     }
@@ -132,7 +111,7 @@ export default function EditContextPage() {
       mode="edit"
       initialDraft={initialDraft}
       onSave={handleSave}
-      isPending={updateEvent.isPending || createHistoricalDocument.isPending || updateHistoricalDocument.isPending}
+      isPending={updateEvent.isPending}
       documents={historicalDocuments.data ?? []}
       isLoadingDocuments={historicalDocuments.isLoading}
       onDeleteDocument={(docId) => deleteHistoricalDocument.mutate(docId)}
@@ -155,12 +134,18 @@ export default function EditContextPage() {
         await createHistoricalDocument.mutateAsync({ contextId: id, title, content, type: "TEXT" });
       }}
       isCreateTextDocumentPending={createHistoricalDocument.isPending}
-      onExtractPdfDocument={async (file, onProgress) => extractPdf.mutateAsync({ file, entityType: "context", entityId: id, onProgress })}
+      onExtractPdfDocument={async (file, onProgress, signal) =>
+        extractPdf.mutateAsync({ file, entityType: "context", entityId: id, onProgress, signal })
+      }
       isExtractPdfDocumentPending={extractPdf.isPending}
       onCreatePdfDocument={async ({ title, content, fileUrl }) => {
         await createHistoricalDocument.mutateAsync({ contextId: id, title, content, fileUrl });
       }}
       isCreatePdfDocumentPending={createHistoricalDocument.isPending}
+      onUpdateDocument={async (docId, data) => {
+        await updateHistoricalDocument.mutateAsync({ docId, data: { ...data, type: "TEXT" } });
+      }}
+      isUpdateDocumentPending={updateHistoricalDocument.isPending}
       charactersInContext={charactersInContext.data ?? []}
       isLoadingCharactersInContext={charactersInContext.isLoading}
       characterSearch={characterSearch}
