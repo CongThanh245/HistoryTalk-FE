@@ -58,14 +58,16 @@ export function usePublicContextDocuments(contextId?: string) {
   });
 }
 
-// Nhân vật có thể xuất hiện ở nhiều bối cảnh — gộp tài liệu của TẤT CẢ bối cảnh
-// lại (thay vì chỉ bối cảnh của session chat hiện tại) để khớp trích dẫn AI đúng.
+// Một nhân vật có thể liên kết nhiều bối cảnh lịch sử, mỗi bối cảnh có tài liệu
+// riêng — khi đối chiếu trích dẫn của AI phải gộp tài liệu của TẤT CẢ bối cảnh
+// đó lại, không chỉ bối cảnh đang active của phiên chat hiện tại.
 export function usePublicContextsDocuments(contextIds: string[]) {
+  const uniqueIds = Array.from(new Set(contextIds.filter(Boolean)));
+
   const results = useQueries({
-    queries: contextIds.map((contextId) => ({
+    queries: uniqueIds.map((contextId) => ({
       queryKey: queryKeys.documents.publicByContext(contextId),
       queryFn: () => documentService.getPublicContextDocuments(contextId),
-      enabled: !!contextId,
       staleTime: 1000 * 60 * 5,
     })),
   });
