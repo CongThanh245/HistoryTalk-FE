@@ -133,10 +133,12 @@ function TranscriptFeed({
   messages,
   isThinking,
   interimText,
+  onOpenCitation,
 }: {
   messages: VoiceRestMessage[];
   isThinking?: boolean;
   interimText?: string; // Text đang nói (real-time)
+  onOpenCitation?: (quote: string) => void;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -173,6 +175,27 @@ function TranscriptFeed({
             color: m.role === "user" ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.9)",
           }}>
             {m.text}
+            {m.role === "assistant" && m.quotes && m.quotes.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onOpenCitation?.(m.quotes![0])}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  marginTop: 6,
+                  padding: "2px 8px",
+                  borderRadius: 999,
+                  border: "1px solid rgba(201,168,76,0.35)",
+                  background: "rgba(201,168,76,0.1)",
+                  color: "rgba(240,200,90,0.9)",
+                  fontSize: 11,
+                  cursor: "pointer",
+                }}
+              >
+                {m.quotes.length} nguồn trích dẫn
+              </button>
+            )}
           </div>
         </div>
       ))}
@@ -213,12 +236,14 @@ function ConversationDock({
   isThinking,
   interimText,
   isRecording,
+  onOpenCitation,
 }: {
   character: ChatCharacter;
   messages: VoiceRestMessage[];
   isThinking?: boolean;
   interimText?: string;
   isRecording?: boolean;
+  onOpenCitation?: (quote: string) => void;
 }) {
   const hasContent = messages.length > 0 || Boolean(interimText);
 
@@ -228,6 +253,7 @@ function ConversationDock({
         messages={messages}
         isThinking={isThinking}
         interimText={interimText}
+        onOpenCitation={onOpenCitation}
       />
     );
   }
@@ -320,6 +346,7 @@ interface Avatar3DModalProps {
   useStream?: boolean; // true = streaming mode, false = REST mode
   mode?: VoiceMode; // "rest" | "stream" | "web-speech" (miễn phí, không API key)
   onTokenUpdate?: (remainingTokens: number, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE") => void;
+  onOpenCitation?: (quote: string) => void;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -331,7 +358,8 @@ export function Avatar3DModal({
   onClose, 
   onMessagesChange,
   mode: modeProp,
-  onTokenUpdate
+  onTokenUpdate,
+  onOpenCitation,
 }: Avatar3DModalProps) {
   const queryClient = useQueryClient();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -1461,6 +1489,7 @@ export function Avatar3DModal({
               isThinking={status === "processing_chat" || status === "thinking" || status === "processing"}
               interimText={isRecording ? liveTranscript : ""}
               isRecording={isRecording}
+              onOpenCitation={onOpenCitation}
             />
           </div>
           </div>
