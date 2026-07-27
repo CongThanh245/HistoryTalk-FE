@@ -64,29 +64,16 @@ export function RoomBackground({ room, children }: RoomBackgroundProps) {
       />
 
       {/* Bottom ground shadow (makes sprites feel grounded) */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-32"
-        style={{
-          background:
-            "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 100%)",
-        }}
-      />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/45 to-transparent" />
 
       {/* Top bar shadow */}
-      <div
-        className="absolute top-0 left-0 right-0 h-20"
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 100%)",
-        }}
-      />
+      <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/30 to-transparent" />
 
       {/* Film grain texture (CSS noise) */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none opacity-40"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E")`,
-          opacity: 0.4,
         }}
       />
 
@@ -95,13 +82,7 @@ export function RoomBackground({ room, children }: RoomBackgroundProps) {
         className="absolute bottom-5 left-5 max-w-xs z-10 pointer-events-none"
         style={{ animation: "fade-in-up 0.8s ease-out 0.3s both" }}
       >
-        <p
-          className="text-xs italic leading-relaxed"
-          style={{
-            color: "rgba(255,245,220,0.7)",
-            textShadow: "0 1px 4px rgba(0,0,0,0.8)",
-          }}
-        >
+        <p className="text-xs italic leading-relaxed text-[rgba(255,245,220,0.7)] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
           {room.ambientDescription}
         </p>
       </div>

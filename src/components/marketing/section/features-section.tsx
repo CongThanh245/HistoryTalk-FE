@@ -100,8 +100,7 @@ export function FeaturesSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative border-t border-(--border-default)"
-      style={{ height: "480vh" }}
+      className="relative border-t border-(--border-default) h-[480vh]"
     >
       <div className="sticky top-0 h-svh overflow-hidden bg-(--bg-main)">
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(90deg,rgba(255,146,21,0.06)_0,transparent_28%,transparent_72%,rgba(143,179,200,0.06)_100%)]" />
@@ -129,8 +128,7 @@ export function FeaturesSection() {
                 {/* Watermark number */}
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute -right-2 -top-4 select-none font-black leading-none text-(--accent-gold)"
-                  style={{ fontSize: "6rem", opacity: 0.05 }}
+                  className="pointer-events-none absolute -right-2 -top-4 select-none font-black leading-none text-(--accent-gold) text-[6rem] opacity-5"
                 >
                   {item.step}
                 </span>

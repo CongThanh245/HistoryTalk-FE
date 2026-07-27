@@ -30,13 +30,10 @@ export function SessionExpiredDialog() {
     <AlertDialog open={isExpired}>
       <AlertDialogContent
         onEscapeKeyDown={(e) => e.preventDefault()}
-        style={{
-          background: "var(--bg-surface)",
-          borderColor: "var(--border-default)",
-        }}
+        className="bg-bg-surface border-border-default"
       >
         <AlertDialogHeader>
-          <AlertDialogTitle style={{ color: "var(--text-primary)" }}>
+          <AlertDialogTitle className="text-content-heading">
             Phiên đăng nhập đã hết hạn
           </AlertDialogTitle>
           <AlertDialogDescription>

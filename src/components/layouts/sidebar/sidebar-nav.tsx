@@ -31,48 +31,28 @@ function NavItem({
     <Link
       href={item.href}
       className={cn(
-        "relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 outline-none",
+        "relative flex group items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 outline-none",
         isExpanded ? "px-3 py-2" : "w-10 h-10 justify-center mx-auto",
         !isActive &&
-          "hover:bg-[var(--sidebar-hover-bg,rgba(255,255,255,0.05))] hover:text-[var(--sidebar-active-text)]",
+          "hover:bg-[var(--sidebar-hover-bg,rgba(255,255,255,0.05))] hover:text-[var(--sidebar-active-text)] text-[var(--sidebar-nav-text)]",
+        isActive && "bg-accent-gold-active text-[var(--sidebar-active-text)]",
       )}
-      style={
-        isActive
-          ? {
-              background: "var(--accent-gold-active-bg)",
-              color: "var(--sidebar-active-text)",
-            }
-          : { color: "var(--sidebar-nav-text)" }
-      }
     >
       {isActive && isExpanded && (
         <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[22px] rounded-r-full"
-          style={{
-            background:
-              "linear-gradient(180deg, var(--accent-gold-soft) 0%, var(--truffle) 100%)",
-            boxShadow: "0 0 8px var(--accent-gold-glow)",
-          }}
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[22px] rounded-r-full bg-linear-to-b from-accent-gold-soft to-[var(--truffle)] shadow-[0_0_8px_var(--accent-gold-glow)]"
         />
       )}
       {isActive && !isExpanded && (
         <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[18px] rounded-r-full"
-          style={{
-            background:
-              "linear-gradient(180deg, var(--accent-gold-soft) 0%, var(--truffle) 100%)",
-          }}
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[18px] rounded-r-full bg-linear-to-b from-accent-gold-soft to-[var(--truffle)]"
         />
       )}
       <Icon
-        className="shrink-0"
-        style={{
-          width: 17,
-          height: 17,
-          color: isActive
-            ? "var(--sidebar-active-text)"
-            : "var(--sidebar-nav-icon)",
-        }}
+        className={cn(
+          "shrink-0 w-[17px] h-[17px]",
+          isActive ? "text-[var(--sidebar-active-text)]" : "text-[var(--sidebar-nav-icon)] group-hover:text-[var(--sidebar-active-text)]"
+        )}
       />
       {isExpanded && (
         <span className="truncate leading-normal whitespace-nowrap">
@@ -88,12 +68,7 @@ function NavItem({
         <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
         <TooltipContent
           side="right"
-          style={{
-            background: "var(--bg-elevated)",
-            border: "1px solid var(--border-default)",
-            color: "var(--text-primary)",
-            fontSize: 12,
-          }}
+          className="bg-bg-elevated border border-border-default text-text-primary text-xs"
         >
           {item.label}
         </TooltipContent>
@@ -116,15 +91,13 @@ export default function SidebarNav({
         <div key={section.title} className={cn(isExpanded ? "px-3" : "px-2")}>
           {isExpanded ? (
             <p
-              className="mb-1.5 px-2 text-[10px] font-semibold tracking-[0.14em] uppercase"
-              style={{ color: "var(--sidebar-section-label)" }}
+              className="mb-1.5 px-2 text-[10px] font-semibold tracking-[0.14em] uppercase text-[var(--sidebar-section-label)]"
             >
               {section.title}
             </p>
           ) : (
             <div
-              className="mb-2 mx-auto h-px w-6"
-              style={{ background: "var(--border-default)" }}
+              className="mb-2 mx-auto h-px w-6 bg-border-default"
             />
           )}
           <div className="space-y-2">

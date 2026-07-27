@@ -4,11 +4,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
-  CaretLeftIcon,
-  CaretRightIcon,
-  ChatTextIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+  ChevronLeft,
+  ChevronRight,
+  MessageCircle,
+  X,
+} from "lucide-react";
 import gsap from "gsap";
 import {
   CharacterCarouselCard,
@@ -305,7 +305,7 @@ export function Carousel3DVertical({
                 onClick={closeCharacter}
                 className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/45 text-white/75 backdrop-blur-md transition-colors hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
               >
-                <XIcon className="h-4 w-4" weight="bold" />
+                <X className="h-4 w-4" />
               </button>
               <span
                 ref={spotlightRef}
@@ -354,7 +354,7 @@ export function Carousel3DVertical({
                 }
                 className="absolute inset-x-6 bottom-6 flex items-center justify-center gap-2 rounded-full bg-[var(--accent-gold)] py-3.5 text-sm font-extrabold text-[var(--text-inverse)] shadow-[0_14px_38px_var(--accent-gold-glow)] transition-[filter,transform] hover:brightness-110 active:scale-[0.98] [animation:character-detail-in_600ms_340ms_ease-out_both]"
               >
-                <ChatTextIcon className="h-5 w-5 fill-current" />
+                <MessageCircle className="h-5 w-5 fill-current" />
                 Trò chuyện ngay
               </button>
               </div>
@@ -375,10 +375,7 @@ export function Carousel3DVertical({
           </div>,
           document.body,
         )}
-      <div
-        className="relative flex h-[260px] w-full items-center justify-center sm:h-[340px] md:h-[500px] lg:h-[650px]"
-        style={{ perspective: "1200px" }}
-      >
+      <div className="relative flex h-[260px] w-full items-center justify-center sm:h-[340px] md:h-[500px] lg:h-[650px] [perspective:1200px]">
         <div className="pointer-events-none absolute h-[360px] w-[360px] rounded-full bg-[var(--accent-gold)]/8 blur-[70px] sm:h-[700px] sm:w-[700px]" />
 
         {isLoading ? (
@@ -386,9 +383,8 @@ export function Carousel3DVertical({
             {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
               <div
                 key={index}
-                className="absolute h-[198px] w-[136px] animate-pulse overflow-hidden rounded-[var(--radius-lg)] border bg-[var(--bg-surface)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
+                className="absolute h-[198px] w-[136px] animate-pulse overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-[var(--bg-surface)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
                 style={{
-                  borderColor: "var(--border-default)",
                   transform: `translateX(${(index - 2) * 120}px) scale(${index === 2 ? 1 : 0.7})`,
                   opacity: index === 2 ? 1 : 0.35,
                 }}
@@ -396,10 +392,7 @@ export function Carousel3DVertical({
             ))}
           </div>
         ) : (
-          <div
-            className="relative h-full w-full"
-            style={{ transformStyle: "preserve-3d" }}
-          >
+          <div className="relative h-full w-full [transform-style:preserve-3d]">
             {figures.map((figure, index) => {
               return (
                 <div
@@ -407,8 +400,7 @@ export function Carousel3DVertical({
                   ref={(element) => {
                     cardsRef.current[index] = element;
                   }}
-                  className="absolute left-1/2 top-[46%] h-[222px] w-[150px] -translate-x-1/2 -translate-y-1/2 will-change-transform sm:top-1/2 sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
-                  style={{ transformStyle: "preserve-3d" }}
+                  className="absolute left-1/2 top-[46%] h-[222px] w-[150px] -translate-x-1/2 -translate-y-1/2 will-change-transform sm:top-1/2 sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px] [transform-style:preserve-3d]"
                 >
                   <CharacterCarouselCard
                     character={figure}
@@ -430,7 +422,7 @@ export function Carousel3DVertical({
               onClick={selectPrevious}
               className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white shadow-lg backdrop-blur-md transition-colors hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
             >
-              <CaretLeftIcon className="h-5 w-5" weight="bold" />
+              <ChevronLeft className="h-5 w-5" />
             </button>
             <span className="hidden min-w-20 text-center text-xs font-bold tracking-[0.18em] text-white/70 sm:block">
               {activeIndex + 1} / {cardCount}
@@ -441,7 +433,7 @@ export function Carousel3DVertical({
               onClick={selectNext}
               className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white shadow-lg backdrop-blur-md transition-colors hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
             >
-              <CaretRightIcon className="h-5 w-5" weight="bold" />
+              <ChevronRight className="h-5 w-5" />
             </button>
           </div>
         )}

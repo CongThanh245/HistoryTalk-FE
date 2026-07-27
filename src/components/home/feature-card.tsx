@@ -3,18 +3,18 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
-  BankIcon,
-  UserIcon,
-  ChatTextIcon,
-  ClipboardTextIcon,
-  BookmarkIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
-} from "@phosphor-icons/react";
+  Landmark,
+  User,
+  MessageSquareText,
+  ClipboardList,
+  Bookmark,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 const ALL_CARDS = [
   {
-    icon: BankIcon,
+    icon: Landmark,
     title: "Sự kiện lịch sử",
     desc: "Dòng thời gian tương tác",
     href: "/events",
@@ -22,7 +22,7 @@ const ALL_CARDS = [
     glow: "rgba(201,162,77,0.1)",
   },
   {
-    icon: UserIcon,
+    icon: User,
     title: "Nhân vật",
     desc: "Những người làm thay đổi lịch sử",
     href: "/characters",
@@ -30,7 +30,7 @@ const ALL_CARDS = [
     glow: "rgba(196,106,47,0.1)",
   },
   {
-    icon: ChatTextIcon,
+    icon: MessageSquareText,
     title: "Chat với lịch sử",
     desc: "AI đóng vai nhân vật lịch sử",
     href: "/chat-history",
@@ -38,7 +38,7 @@ const ALL_CARDS = [
     glow: "rgba(143,179,200,0.1)",
   },
   {
-    icon: ClipboardTextIcon,
+    icon: ClipboardList,
     title: "Câu đố lịch sử",
     desc: "Hàng nghìn câu hỏi theo chủ đề",
     href: "/quiz",
@@ -46,7 +46,7 @@ const ALL_CARDS = [
     glow: "rgba(255,177,98,0.1)",
   },
   {
-    icon: BankIcon,
+    icon: Landmark,
     title: "Thư viện",
     desc: "Tư liệu & hình ảnh lịch sử",
     href: "/library",
@@ -54,7 +54,7 @@ const ALL_CARDS = [
     glow: "rgba(47,111,115,0.1)",
   },
   {
-    icon: BookmarkIcon,
+    icon: Bookmark,
     title: "Đã lưu",
     desc: "Nội dung bạn đã đánh dấu",
     href: "/saved",
@@ -75,80 +75,36 @@ export function FeatureCards() {
   );
 
   return (
-    <div
-      style={{
-        background: "var(--card-light-bg)",
-        border: "1px solid var(--card-light-border)",
-        borderRadius: 14,
-        overflow: "hidden",
-        boxShadow: "0 1px 6px rgba(27,38,50,0.06)",
-        display: "flex",
-        flexDirection: "column",
-        paddingBottom: "20px",
-      }}
-    >
+    <div className="bg-card-light-bg border border-card-light-border rounded-[14px] overflow-hidden shadow-[0_1px_6px_rgba(27,38,50,0.06)] flex flex-col pb-5">
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "11px 11px",
-        }}
-      >
+      <div className="flex items-center justify-between p-[11px]">
         {/* Pagination arrows */}
         {totalPages > 1 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 6,
-                border: "1px solid var(--card-light-border)",
-                background: page === 0 ? "transparent" : "var(--card-light-bg)",
-                color: page === 0 ? "var(--content-subtle)" : "#7a5a1e",
-                cursor: page === 0 ? "default" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.15s",
-              }}
+              className={`w-6 h-6 rounded-md border border-card-light-border flex items-center justify-center transition-all duration-150 ${
+                page === 0
+                  ? "bg-transparent text-content-subtle cursor-default"
+                  : "bg-card-light-bg text-[#7a5a1e] cursor-pointer"
+              }`}
             >
-              <CaretLeftIcon size={11} weight="bold" />
+              <ChevronLeft size={11} strokeWidth={2.5} />
             </button>
-            <span
-              style={{
-                fontSize: 10,
-                color: "var(--content-muted)",
-                fontWeight: 600,
-              }}
-            >
+            <span className="text-[10px] text-content-muted font-semibold">
               {page + 1}/{totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 6,
-                border: "1px solid var(--card-light-border)",
-                background:
-                  page === totalPages - 1
-                    ? "transparent"
-                    : "var(--card-light-bg)",
-                color:
-                  page === totalPages - 1 ? "var(--content-subtle)" : "#7a5a1e",
-                cursor: page === totalPages - 1 ? "default" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.15s",
-              }}
+              className={`w-6 h-6 rounded-md border border-card-light-border flex items-center justify-center transition-all duration-150 ${
+                page === totalPages - 1
+                  ? "bg-transparent text-content-subtle cursor-default"
+                  : "bg-card-light-bg text-[#7a5a1e] cursor-pointer"
+              }`}
             >
-              <CaretRightIcon size={11} weight="bold" />
+              <ChevronRight size={11} strokeWidth={2.5} />
             </button>
           </div>
         )}
@@ -160,21 +116,10 @@ export function FeatureCards() {
           <Link
             key={card.href}
             href={card.href}
-            className="group"
-            style={{ textDecoration: "none" }}
+            className="group no-underline"
           >
             <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-                padding: "12px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--card-light-border)",
-                background: "var(--card-light-bg)",
-                transition: "all 0.15s",
-                cursor: "pointer",
-              }}
+              className="flex flex-col gap-2.5 p-3 rounded-[10px] border border-card-light-border bg-card-light-bg transition-all duration-150 cursor-pointer"
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLElement;
                 el.style.background = card.glow;
@@ -192,13 +137,8 @@ export function FeatureCards() {
             >
               {/* Icon */}
               <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                   background: card.glow,
                   border: `1px solid ${card.accentHex}28`,
                 }}
@@ -208,42 +148,19 @@ export function FeatureCards() {
 
               {/* Text */}
               <div>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: "var(--content-heading)",
-                    lineHeight: 1.3,
-                  }}
-                >
+                <p className="m-0 text-base font-bold text-content-heading leading-[1.3]">
                   {card.title}
                 </p>
-                <p
-                  style={{
-                    margin: "3px 0 0",
-                    fontSize: 14,
-                    color: "var(--content-muted)",
-                    lineHeight: 1.4,
-                  }}
-                >
+                <p className="m-0 mt-[3px] text-sm text-content-muted leading-[1.4]">
                   {card.desc}
                 </p>
               </div>
 
               <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 3,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: card.accentHex,
-                  opacity: 0.6,
-                }}
-                className="group-hover:opacity-100 transition-opacity mt-1"
+                className="flex items-center gap-[3px] text-[11px] font-semibold opacity-60 group-hover:opacity-100 transition-opacity mt-1"
+                style={{ color: card.accentHex }}
               >
-                Khám phá ngay <CaretRightIcon size={10} weight="bold" />
+                Khám phá ngay <ChevronRight size={10} strokeWidth={2.5} />
               </div>
             </div>
           </Link>

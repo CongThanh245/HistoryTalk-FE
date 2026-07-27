@@ -57,32 +57,26 @@ export function StaffPublishToggle({
         className={cn(
           "flex items-center gap-3 rounded-xl border transition-colors",
           compact ? "py-1.5 px-3" : "justify-between py-3 px-4",
+          isPublished
+            ? "border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.06)]"
+            : showBlocked
+              ? "border-[rgba(234,179,8,0.3)] bg-[rgba(234,179,8,0.05)]"
+              : "border-card-light-border bg-[rgba(27,38,50,0.03)]",
           className,
         )}
-        style={{
-          borderColor: isPublished
-            ? "rgba(34,197,94,0.35)"
-            : showBlocked
-              ? "rgba(234,179,8,0.3)"
-              : "var(--card-light-border)",
-          background: isPublished
-            ? "rgba(34,197,94,0.06)"
-            : showBlocked
-              ? "rgba(234,179,8,0.05)"
-              : "rgba(27,38,50,0.03)",
-        }}
       >
         <div className={compact ? undefined : "flex-1"}>
           <p
-            className={cn("font-semibold", compact ? "text-xs" : "text-sm")}
-            style={{
-              color: isPublished ? "rgb(22,163,74)" : showBlocked ? "#92400e" : "var(--content-heading)",
-            }}
+            className={cn(
+              "font-semibold",
+              compact ? "text-xs" : "text-sm",
+              isPublished ? "text-[rgb(22,163,74)]" : showBlocked ? "text-[#92400e]" : "text-content-heading",
+            )}
           >
             {isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
           </p>
           {!compact && (
-            <p className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+            <p className="text-xs mt-0.5 text-content-muted">
               {showBlocked
                 ? (blockedMessage ?? "⚠ Cần hoàn tất thông tin bắt buộc trước khi xuất bản.")
                 : isPublished
@@ -108,13 +102,14 @@ export function StaffPublishToggle({
             }
           }}
           disabled={disabled}
-          className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: isPublished ? "rgb(34,197,94)" : "rgba(234,179,8,0.4)" }}
+          className={cn(
+            "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
+            isPublished ? "bg-[rgb(34,197,94)]" : "bg-[rgba(234,179,8,0.4)]",
+          )}
         >
           <span
-            className="pointer-events-none block h-5 w-5 rounded-full shadow-lg transition-transform"
+            className="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg transition-transform"
             style={{
-              background: "#fff",
               transform: isPublished ? "translateX(20px)" : "translateX(0)",
             }}
           />

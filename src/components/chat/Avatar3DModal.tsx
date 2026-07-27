@@ -12,6 +12,7 @@ import { queryKeys } from "@/shared/query-key";
 import { useAuthStore } from "@/store/auth.store";
 import { userService, type UserProfile } from "@/services/user.service";
 import type { AnalyserLike } from "./FBXCharacterViewer";
+import { cn } from "@/lib/utils/cn";
 
 // Dynamically import 3D viewer (no SSR)
 const FBXCharacterViewer = dynamic(
@@ -23,18 +24,12 @@ const FBXCharacterViewer = dynamic(
 
 function ModelLoadingPlaceholder() {
   return (
-    <div style={{
-      width: "100%", height: "100%", display: "flex",
-      flexDirection: "column", alignItems: "center", justifyContent: "center",
-      gap: 12, color: "rgba(201,168,76,0.7)",
-    }}>
-      <div style={{
-        width: 40, height: 40, borderRadius: "50%",
-        border: "3px solid rgba(201,168,76,0.3)",
-        borderTopColor: "#c9a84c",
-        animation: "spin 1s linear infinite",
-      }} />
-      <p style={{ fontSize: 13, opacity: 0.7, margin: 0 }}>Đang tải mô hình 3D...</p>
+    <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-[rgba(201,168,76,0.7)]">
+      <div
+        className="h-10 w-10 rounded-full border-[3px] border-[rgba(201,168,76,0.3)] border-t-[#c9a84c]"
+        style={{ animation: "spin 1s linear infinite" }}
+      />
+      <p className="m-0 text-[13px] opacity-70">Đang tải mô hình 3D...</p>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -87,41 +82,20 @@ function syncProfileUser(profile: UserProfile) {
 
 function ThinkingIndicator() {
   return (
-    <div style={{
-      display: "flex",
-      justifyContent: "flex-start",
-      padding: "4px 0",
-    }}>
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-        padding: "8px 16px",
-        borderRadius: "16px 16px 16px 4px",
-        background: "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05))",
-        border: "1px solid rgba(201,168,76,0.2)",
-      }}>
-        <span style={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          background: "#c9a84c",
-          animation: "thinkingBounce 0.6s ease-in-out infinite",
-        }} />
-        <span style={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          background: "#c9a84c",
-          animation: "thinkingBounce 0.6s ease-in-out infinite 0.15s",
-        }} />
-        <span style={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          background: "#c9a84c",
-          animation: "thinkingBounce 0.6s ease-in-out infinite 0.3s",
-        }} />
+    <div className="flex justify-start py-1">
+      <div className="flex items-center gap-1 rounded-[16px_16px_16px_4px] border border-[rgba(201,168,76,0.2)] bg-gradient-to-br from-[rgba(201,168,76,0.15)] to-[rgba(201,168,76,0.05)] px-4 py-2">
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-[#c9a84c]"
+          style={{ animation: "thinkingBounce 0.6s ease-in-out infinite" }}
+        />
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-[#c9a84c]"
+          style={{ animation: "thinkingBounce 0.6s ease-in-out infinite 0.15s" }}
+        />
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-[#c9a84c]"
+          style={{ animation: "thinkingBounce 0.6s ease-in-out infinite 0.3s" }}
+        />
       </div>
     </div>
   );
@@ -148,30 +122,21 @@ function TranscriptFeed({
   if (!hasContent) return null;
 
   return (
-    <div style={{
-      width: "100%", maxHeight: 140, overflowY: "auto",
-      display: "flex", flexDirection: "column", gap: 6,
-      padding: "0 4px", scrollbarWidth: "none",
-    }}>
+    <div className="flex w-full max-h-[140px] flex-col gap-1.5 overflow-y-auto px-1 [scrollbar-width:none]">
       {messages.slice(-4).map((m, i) => (
         <div
           key={i}
-          className={[
-            "avatar-message-row",
-            m.role === "user" ? "avatar-message-row--user" : "avatar-message-row--assistant",
-          ].join(" ")}
-          style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}
+          className={cn(
+            "avatar-message-row flex",
+            m.role === "user" ? "avatar-message-row--user justify-end" : "avatar-message-row--assistant justify-start",
+          )}
         >
-          <div style={{
-            maxWidth: "80%",
-            borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-            padding: "6px 12px", fontSize: 13, lineHeight: 1.5,
-            background: m.role === "user"
-              ? "rgba(255,255,255,0.08)"
-              : "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05))",
-            border: m.role === "assistant" ? "1px solid rgba(201,168,76,0.2)" : "none",
-            color: m.role === "user" ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.9)",
-          }}>
+          <div className={cn(
+            "max-w-[80%] px-3 py-1.5 text-[13px] leading-normal",
+            m.role === "user"
+              ? "rounded-[16px_16px_4px_16px] bg-white/[0.08] text-white/75"
+              : "rounded-[16px_16px_16px_4px] border border-[rgba(201,168,76,0.2)] bg-gradient-to-br from-[rgba(201,168,76,0.15)] to-[rgba(201,168,76,0.05)] text-white/90",
+          )}>
             {m.text}
           </div>
         </div>
@@ -179,24 +144,13 @@ function TranscriptFeed({
       
       {/* Hiển thị text đang nói (real-time) với style italic */}
       {interimText && (
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <div style={{
-            maxWidth: "80%",
-            borderRadius: "16px 16px 4px 16px",
-            padding: "6px 12px", fontSize: 13, lineHeight: 1.5,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px dashed rgba(255,255,255,0.2)",
-            color: "rgba(255,255,255,0.5)",
-            fontStyle: "italic",
-          }}>
+        <div className="flex justify-end">
+          <div className="max-w-[80%] rounded-[16px_16px_4px_16px] border border-dashed border-white/20 bg-white/[0.04] px-3 py-1.5 text-[13px] italic leading-normal text-white/50">
             {interimText}
-            <span style={{
-              display: "inline-block",
-              width: 2, height: 14,
-              background: "rgba(255,255,255,0.5)",
-              marginLeft: 4,
-              animation: "pulse 0.8s ease-in-out infinite",
-            }} />
+            <span
+              className="ml-1 inline-block h-3.5 w-0.5 bg-white/50"
+              style={{ animation: "pulse 0.8s ease-in-out infinite" }}
+            />
           </div>
         </div>
       )}
@@ -1267,42 +1221,27 @@ export function Avatar3DModal({
       `}</style>
 
       {/* Backdrop */}
-      <div style={{
-        position: "fixed", inset: 0, zIndex: 1000,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(0,0,0,0.88)",
-        backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-      }}>
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(0,0,0,0.88)] backdrop-blur-[16px]">
         {/* Card */}
-        <div style={{
-          position: "relative", display: "flex", flexDirection: "column",
-          alignItems: "center", width: "100vw", height: "100vh",
-          background: "linear-gradient(180deg, rgba(20,16,10,1) 0%, rgba(10,8,4,1) 100%)",
-          animation: "fadeSlideUp 0.4s ease both", overflow: "hidden",
-        }}>
+        <div
+          className="relative flex h-screen w-screen flex-col items-center overflow-hidden bg-gradient-to-b from-[rgba(20,16,10,1)] to-[rgba(10,8,4,1)]"
+          style={{ animation: "fadeSlideUp 0.4s ease both" }}
+        >
 
           {/* ── Header ── */}
-          <div style={{
-            width: "100%", display: "flex", alignItems: "center",
-            justifyContent: "space-between", padding: "14px 20px",
-            borderBottom: "1px solid rgba(201,168,76,0.12)", flexShrink: 0,
-          }}>
+          <div className="flex w-full shrink-0 items-center justify-between border-b border-[rgba(201,168,76,0.12)] px-5 py-3.5">
             {/* Status badge */}
-            <div style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "4px 12px", borderRadius: 20,
-              background: "rgba(201,168,76,0.08)",
-              border: "1px solid rgba(201,168,76,0.2)",
-              color: "#c9a84c", fontSize: 12,
-            }}>
+            <div className="flex items-center gap-1.5 rounded-[20px] border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.08)] px-3 py-1 text-xs text-[#c9a84c]">
               {(isRecording || isBusy || isListeningStatus) && (
-                <span style={{
-                  width: 7, height: 7, borderRadius: "50%",
-                  background: isRecording ? "#ef5350" 
-                    : (isBusy && !status.includes("speaking")) ? "#4fc3f7" 
-                    : "#c9a84c",
-                  animation: "pulse 1s ease-in-out infinite",
-                }} />
+                <span
+                  className="h-[7px] w-[7px] rounded-full"
+                  style={{
+                    background: isRecording ? "#ef5350" 
+                      : (isBusy && !status.includes("speaking")) ? "#4fc3f7" 
+                      : "#c9a84c",
+                    animation: "pulse 1s ease-in-out infinite",
+                  }}
+                />
               )}
               {dynamicStatusLabel}
             </div>
@@ -1314,20 +1253,7 @@ export function Avatar3DModal({
             <button
               type="button"
               onClick={handleClose}
-              style={{
-                width: 32, height: 32, borderRadius: "50%", border: "none",
-                background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)",
-                cursor: "pointer", display: "flex", alignItems: "center",
-                justifyContent: "center", transition: "background 0.2s, color 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.12)";
-                (e.currentTarget as HTMLButtonElement).style.color = "#fff";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.5)";
-              }}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-none bg-white/[0.06] text-white/50 transition-[background,color] duration-200 hover:bg-white/[0.12] hover:text-white"
               aria-label="Đóng"
             >
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
@@ -1339,17 +1265,15 @@ export function Avatar3DModal({
           <div className="avatar-call-body">
           {/* ── 3D Viewport ── */}
           <div
-            className={[
+            className={cn(
               "avatar-call-viewport",
-              isThinkingStatus ? "avatar-call-viewport--thinking" : "",
-              isSpeaking ? "avatar-call-viewport--speaking" : "",
-              isListeningStatus || isRecording ? "avatar-call-viewport--listening" : "",
-            ].filter(Boolean).join(" ")}
+              isThinkingStatus && "avatar-call-viewport--thinking",
+              isSpeaking && "avatar-call-viewport--speaking",
+              (isListeningStatus || isRecording) && "avatar-call-viewport--listening",
+              is2D && "flex items-center justify-center",
+            )}
             style={{
               "--voice-volume": isSpeaking ? voiceVolume.toFixed(3) : "0",
-              display: is2D ? "flex" : undefined,
-              alignItems: is2D ? "center" : undefined,
-              justifyContent: is2D ? "center" : undefined,
             } as CSSProperties}
           >
             <span className="avatar-call-gridscan" aria-hidden="true">
@@ -1359,72 +1283,42 @@ export function Avatar3DModal({
             <span className="avatar-call-viewport__time-streaks" aria-hidden="true" />
             <span className="avatar-call-time-tunnel" aria-hidden="true" />
             {is2D ? (
-              <div style={{
-                position: "relative",
-                width: "min(54vw, 320px)",
-                aspectRatio: "1",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
+              <div className="relative flex aspect-square w-[min(54vw,320px)] items-center justify-center rounded-full">
                 {(isSpeaking || isListeningStatus || isRecording) && (
                   <>
                     {[0, 1, 2].map((i) => (
                       <span
                         key={i}
+                        className="absolute inset-0 rounded-full border border-[rgba(201,168,76,0.45)] opacity-0"
                         style={{
-                          position: "absolute",
-                          inset: 0,
-                          borderRadius: "50%",
-                          border: "1px solid rgba(201,168,76,0.45)",
                           animation: "avatar2DRipple 2.4s ease-out infinite",
                           animationDelay: `${i * 0.45}s`,
-                          opacity: 0,
                         }}
                       />
                     ))}
                   </>
                 )}
-                <div style={{
-                  position: "relative",
-                  width: "78%",
-                  height: "78%",
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  border: isSpeaking
-                    ? "3px solid rgba(201,168,76,0.85)"
-                    : "2px solid rgba(201,168,76,0.35)",
-                  boxShadow: isSpeaking
-                    ? "0 0 48px rgba(201,168,76,0.28)"
-                    : "0 20px 70px rgba(0,0,0,0.35)",
-                  transition: "border-color 0.25s, box-shadow 0.25s",
-                  background: "linear-gradient(135deg, rgba(201,168,76,0.16), rgba(255,255,255,0.04))",
-                }}>
+                <div className={cn(
+                  "relative h-[78%] w-[78%] overflow-hidden rounded-full bg-gradient-to-br from-[rgba(201,168,76,0.16)] to-white/[0.04] transition-[border-color,box-shadow] duration-[250ms]",
+                  isSpeaking
+                    ? "border-[3px] border-[rgba(201,168,76,0.85)] shadow-[0_0_48px_rgba(201,168,76,0.28)]"
+                    : "border-2 border-[rgba(201,168,76,0.35)] shadow-[0_20px_70px_rgba(0,0,0,0.35)]",
+                )}>
                   {character.imageUrl ? (
                     <img
                       src={character.imageUrl}
                       alt={character.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div style={{
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#c9a84c",
-                      fontSize: 72,
-                      fontWeight: 700,
-                    }}>
+                    <div className="flex h-full w-full items-center justify-center text-[72px] font-bold text-[#c9a84c]">
                       {character.name[0]}
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="avatar-call-model-layer" style={{ position: "relative", zIndex: 1, width: "100%", height: "100%" }}>
+              <div className="avatar-call-model-layer relative z-[1] h-full w-full">
                 <FBXCharacterViewer
                   modelUrl={character.modelUrl ?? "/models/character.glb"}
                   isSpeaking={status === "speaking"}
@@ -1439,12 +1333,12 @@ export function Avatar3DModal({
             )}
             {!is2D && (isSpeaking || isListeningStatus || isRecording) && (
               <span
-                className={[
+                className={cn(
                   "avatar-call-ripple",
-                  isListeningStatus || isRecording
+                  (isListeningStatus || isRecording)
                     ? "avatar-call-ripple--listening"
                     : "avatar-call-ripple--speaking",
-                ].join(" ")}
+                )}
               />
             )}
             <div className="avatar-call-identity">
@@ -1469,12 +1363,12 @@ export function Avatar3DModal({
           <div className="avatar-call-footer">
             {/* Toggle mic button */}
             <div
-              className={[
+              className={cn(
                 "avatar-mic-wrap",
-                isRecording ? "avatar-mic-wrap--recording" : "",
-                isBusy ? "avatar-mic-wrap--busy" : "",
-                !isRecording && !isBusy ? "avatar-mic-wrap--idle" : "",
-              ].filter(Boolean).join(" ")}
+                isRecording && "avatar-mic-wrap--recording",
+                isBusy && "avatar-mic-wrap--busy",
+                !isRecording && !isBusy && "avatar-mic-wrap--idle",
+              )}
             >
             <button
               type="button"
@@ -1518,19 +1412,10 @@ export function Avatar3DModal({
             {/* End / Close */}
             <button
               type="button"
-              className="avatar-hangup-button"
+              className="avatar-hangup-button flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-none bg-gradient-to-br from-[#c0392b] to-[#e74c3c] shadow-[0_4px_24px_rgba(231,76,60,0.45)] transition-[filter] duration-150 hover:brightness-[1.15]"
               onClick={handleClose}
               aria-label="Kết thúc cuộc gọi"
               title="Kết thúc"
-              style={{
-                width: 56, height: 56, borderRadius: "50%", border: "none",
-                background: "linear-gradient(135deg, #c0392b, #e74c3c)",
-                boxShadow: "0 4px 24px rgba(231,76,60,0.45)",
-                cursor: "pointer", display: "flex", alignItems: "center",
-                justifyContent: "center", transition: "filter 0.15s",
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.15)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1)"; }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
                 <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />

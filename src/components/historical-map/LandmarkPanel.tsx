@@ -10,6 +10,7 @@ import { LANDMARK_TYPE_CONFIG, ERA_CONFIG_MAP } from "./landmark-config";
 import { useLandmarkEvents } from "@/features/landmark/hooks";
 import { useRouter } from "next/navigation";
 import { MOCK_ROOMS } from "@/services/room.service";
+import { cn } from "@/lib/utils/cn";
 
 interface LandmarkPanelProps {
   landmark: Landmark;
@@ -47,15 +48,9 @@ export function LandmarkPanel({
   const router = useRouter();
   const room = MOCK_ROOMS.find((r) => r.landmarkId === landmark.landmarkId);
   return (
-    <div
-      className="flex flex-col h-full"
-      style={{ background: "var(--bg-content)" }}
-    >
+    <div className="flex flex-col h-full bg-[var(--bg-content)]">
       {/* Header */}
-      <div
-        className="relative overflow-hidden flex-shrink-0"
-        style={{ borderBottom: "1px solid var(--card-light-border)" }}
-      >
+      <div className="relative overflow-hidden flex-shrink-0 border-b border-card-light-border">
         {/* Thumbnail */}
         {landmark.imageUrl && (
           <div className="relative h-44 overflow-hidden">
@@ -83,18 +78,14 @@ export function LandmarkPanel({
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 p-1.5 rounded-full backdrop-blur-sm transition-colors hover:bg-black/20"
-          style={{ background: "rgba(255,255,255,0.8)", color: "#374151" }}
+          className="absolute top-3 right-3 p-1.5 rounded-full backdrop-blur-sm transition-colors hover:bg-black/20 bg-white/80 text-[#374151]"
         >
           <X size={16} />
         </button>
 
         {/* Info */}
         <div className="p-4 pb-3">
-          <h2
-            className="text-lg font-bold mb-1"
-            style={{ color: "var(--content-heading)" }}
-          >
+          <h2 className="text-lg font-bold mb-1 text-content-heading">
             {landmark.name}
           </h2>
           <div className="flex items-center gap-3 mb-2">
@@ -107,30 +98,18 @@ export function LandmarkPanel({
             >
               {eraConfig?.label}
             </span>
-            <span
-              className="flex items-center gap-1 text-xs"
-              style={{ color: "var(--content-muted)" }}
-            >
+            <span className="flex items-center gap-1 text-xs text-content-muted">
               <MapPin size={11} />
               {landmark.province}
             </span>
           </div>
-          <p
-            className="text-sm leading-relaxed"
-            style={{ color: "var(--content-text)" }}
-          >
+          <p className="text-sm leading-relaxed text-content-text">
             {landmark.description}
           </p>
           {room && (
             <button
               onClick={() => router.push(`/map/room/${room.roomId}`)}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{
-                background:
-                  "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-                color: "white",
-                boxShadow: "0 4px 14px rgba(201,162,77,0.35)",
-              }}
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.98] bg-gradient-to-br from-accent-gold to-[var(--truffle)] text-white shadow-[0_4px_14px_rgba(201,162,77,0.35)]"
             >
               <DoorOpen size={16} />
               Bước vào không gian lịch sử
@@ -141,24 +120,12 @@ export function LandmarkPanel({
 
       {/* Events list */}
       <div className="flex-1 overflow-y-auto">
-        <div
-          className="px-4 py-3 flex items-center gap-2"
-          style={{ borderBottom: "1px solid var(--card-light-border)" }}
-        >
-          <Calendar size={14} style={{ color: "var(--accent-gold)" }} />
-          <span
-            className="text-sm font-semibold"
-            style={{ color: "var(--content-heading)" }}
-          >
+        <div className="px-4 py-3 flex items-center gap-2 border-b border-card-light-border">
+          <Calendar size={14} className="text-accent-gold" />
+          <span className="text-sm font-semibold text-content-heading">
             Sự kiện lịch sử tại đây
           </span>
-          <span
-            className="ml-auto text-xs px-1.5 py-0.5 rounded-full font-medium"
-            style={{
-              background: "var(--accent-gold-active-bg)",
-              color: "var(--accent-gold)",
-            }}
-          >
+          <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full font-medium bg-[var(--accent-gold-active-bg)] text-accent-gold">
             {events.length}
           </span>
         </div>
@@ -168,17 +135,10 @@ export function LandmarkPanel({
             {[1, 2].map((i) => (
               <div
                 key={i}
-                className="animate-pulse space-y-2 p-3 rounded-xl"
-                style={{ background: "var(--card-light-bg)" }}
+                className="animate-pulse space-y-2 p-3 rounded-xl bg-card-light-bg"
               >
-                <div
-                  className="h-4 rounded"
-                  style={{ background: "var(--bg-surface)", width: "75%" }}
-                />
-                <div
-                  className="h-3 rounded"
-                  style={{ background: "var(--bg-surface)", width: "40%" }}
-                />
+                <div className="h-4 rounded bg-bg-surface w-[75%]" />
+                <div className="h-3 rounded bg-bg-surface w-[40%]" />
               </div>
             ))}
           </div>
@@ -188,36 +148,26 @@ export function LandmarkPanel({
               <button
                 key={event.contextId}
                 onClick={() => onSelectEvent(event.contextId)}
-                className="w-full text-left p-3 rounded-xl transition-all duration-200 group"
-                style={
+                className={cn(
+                  "w-full text-left p-3 rounded-xl transition-all duration-200 group",
                   selectedContextId === event.contextId
-                    ? {
-                        background: "var(--accent-gold-active-bg)",
-                        border: "1px solid var(--accent-gold-glow)",
-                      }
-                    : {
-                        background: "var(--card-light-bg)",
-                        border: "1px solid var(--card-light-border)",
-                      }
-                }
+                    ? "bg-[var(--accent-gold-active-bg)] border border-[var(--accent-gold-glow)]"
+                    : "bg-card-light-bg border border-card-light-border"
+                )}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <p
-                      className="text-sm font-semibold mb-0.5 leading-snug"
-                      style={{
-                        color:
-                          selectedContextId === event.contextId
-                            ? "var(--accent-gold)"
-                            : "var(--content-heading)",
-                      }}
+                      className={cn(
+                        "text-sm font-semibold mb-0.5 leading-snug",
+                        selectedContextId === event.contextId
+                          ? "text-accent-gold"
+                          : "text-content-heading"
+                      )}
                     >
                       {event.name}
                     </p>
-                    <p
-                      className="text-xs"
-                      style={{ color: "var(--content-muted)" }}
-                    >
+                    <p className="text-xs text-content-muted">
                       Năm{" "}
                       {event.year < 0
                         ? `${Math.abs(event.year)} TCN`
@@ -226,14 +176,10 @@ export function LandmarkPanel({
                   </div>
                   <ChevronRight
                     size={14}
-                    className="flex-shrink-0 mt-0.5 transition-transform group-hover:translate-x-0.5"
-                    style={{ color: "var(--content-muted)" }}
+                    className="flex-shrink-0 mt-0.5 transition-transform group-hover:translate-x-0.5 text-content-muted"
                   />
                 </div>
-                <p
-                  className="text-xs mt-1.5 line-clamp-2 leading-relaxed"
-                  style={{ color: "var(--content-muted)" }}
-                >
+                <p className="text-xs mt-1.5 line-clamp-2 leading-relaxed text-content-muted">
                   {event.description}
                 </p>
               </button>

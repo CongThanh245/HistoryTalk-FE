@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Play, Pause, ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 
 interface TimelineSliderProps {
   currentYear: number;
@@ -79,23 +80,14 @@ export function TimelineSlider({
 
   return (
     <div
-      className="shrink-0 flex items-center gap-3 px-4 py-2 z-10"
-      style={{
-        background: "var(--palladian)",
-        borderTop: "1px solid var(--oatmeal)",
-        boxShadow: "0 -2px 8px rgba(27,38,50,0.06)",
-        minHeight: 52,
-      }}
+      className="shrink-0 flex items-center gap-3 px-4 py-2 z-10 min-h-[52px] bg-[var(--palladian)] border-t border-[var(--oatmeal)] shadow-[0_-2px_8px_rgba(27,38,50,0.06)]"
     >
       {/* Year + counter */}
       <div className="shrink-0 flex items-baseline gap-2">
-        <span
-          className="text-xl font-black tabular-nums leading-none"
-          style={{ color: "var(--accent-gold)" }}
-        >
+        <span className="text-xl font-black tabular-nums leading-none text-accent-gold">
           {formatYear(currentYear)}
         </span>
-        <span className="text-[11px]" style={{ color: "var(--content-muted)" }}>
+        <span className="text-[11px] text-content-muted">
           {safeIdx + 1}/{years.length}
         </span>
       </div>
@@ -104,8 +96,7 @@ export function TimelineSlider({
       <button
         onClick={goPrev}
         disabled={safeIdx === 0}
-        className="shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors disabled:opacity-30"
-        style={{ color: "var(--content-heading)" }}
+        className="shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors disabled:opacity-30 text-content-heading"
         aria-label="Trận trước"
       >
         <ChevronLeft size={16} />
@@ -114,17 +105,11 @@ export function TimelineSlider({
       {/* Draggable dot track */}
       <div className="flex-1 relative h-10 flex items-center">
           {/* Track line */}
-          <div
-            className="absolute left-0 right-0 h-1 rounded-full pointer-events-none"
-            style={{ background: "var(--oatmeal)" }}
-          />
+          <div className="absolute left-0 right-0 h-1 rounded-full pointer-events-none bg-[var(--oatmeal)]" />
           {/* Progress fill */}
           <div
-            className="absolute left-0 h-1 rounded-full pointer-events-none transition-[width] duration-150"
-            style={{
-              width: `${progressPct}%`,
-              background: "var(--accent-gold)",
-            }}
+            className="absolute left-0 h-1 rounded-full pointer-events-none transition-[width] duration-150 bg-accent-gold"
+            style={{ width: `${progressPct}%` }}
           />
           {/* Dots (clickable, visual only — range input handles dragging) */}
           {years.map((y, i) => {
@@ -145,19 +130,17 @@ export function TimelineSlider({
                 }}
               >
                 <div
-                  className="rounded-full transition-all duration-150"
+                  className={cn(
+                    "rounded-full transition-all duration-150",
+                    isPast ? "bg-accent-gold opacity-100" : "bg-content-muted opacity-45",
+                  )}
                   style={{
                     width: isActive ? 16 : 8,
                     height: isActive ? 16 : 8,
-                    background: isPast ? "var(--accent-gold)" : "var(--content-muted)",
-                    opacity: isPast ? 1 : 0.45,
                     boxShadow: isActive ? "0 0 0 4px rgba(201,162,77,0.25)" : "none",
                   }}
                 />
-                <span
-                  className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none px-1.5 py-0.5 rounded"
-                  style={{ background: "var(--content-heading)", color: "white" }}
-                >
+                <span className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none px-1.5 py-0.5 rounded bg-content-heading text-white">
                   {formatYear(y)}
                 </span>
               </button>
@@ -171,8 +154,7 @@ export function TimelineSlider({
             step={1}
             value={safeIdx}
             onChange={(e) => onChange(years[Number(e.target.value)])}
-            className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full opacity-0 cursor-pointer"
-            style={{ height: 40, zIndex: 10 }}
+            className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full opacity-0 cursor-pointer h-10 z-10"
           />
       </div>
 
@@ -180,8 +162,7 @@ export function TimelineSlider({
       <button
         onClick={goNext}
         disabled={safeIdx >= years.length - 1}
-        className="shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors disabled:opacity-30"
-        style={{ color: "var(--content-heading)" }}
+        className="shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors disabled:opacity-30 text-content-heading"
         aria-label="Trận tiếp theo"
       >
         <ChevronRight size={16} />
@@ -191,10 +172,10 @@ export function TimelineSlider({
       <button
         onClick={() => setIsPlaying((v) => !v)}
         disabled={years.length <= 1}
-        className="shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors disabled:opacity-30"
-        style={{
-          color: isPlaying ? "var(--accent-gold)" : "var(--content-heading)",
-        }}
+        className={cn(
+          "shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors disabled:opacity-30",
+          isPlaying ? "text-accent-gold" : "text-content-heading"
+        )}
         aria-label={isPlaying ? "Tạm dừng" : "Tự động chạy"}
       >
         {isPlaying ? <Pause size={16} /> : <Play size={16} />}

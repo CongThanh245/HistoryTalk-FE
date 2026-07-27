@@ -8,49 +8,27 @@ export function ChatHistorySkeleton() {
         <div key={groupIdx} className="space-y-2.5 md:space-y-3">
           {/* Group header */}
           <div className="mb-3 flex items-center gap-3 md:mb-4">
-            <div
-              className="h-4 w-32 rounded-full"
-              style={{ background: "rgba(201,162,77,0.12)" }}
-            />
-            <div
-              className="h-px flex-1"
-              style={{ background: "rgba(201,162,77,0.08)" }}
-            />
+            <div className="h-4 w-32 rounded-full bg-accent-gold/[0.12]" />
+            <div className="h-px flex-1 bg-accent-gold/[0.08]" />
           </div>
 
           {/* Session cards */}
           {[0, 1, 2].map((cardIdx) => (
             <div
               key={cardIdx}
-              className="flex items-center gap-3 rounded-xl p-3 md:gap-4 md:p-3.5"
-              style={{
-                background: "rgba(201,162,77,0.04)",
-                border: "1px solid rgba(201,162,77,0.08)",
-              }}
+              className="flex items-center gap-3 rounded-xl p-3 md:gap-4 md:p-3.5 bg-accent-gold/[0.04] border border-accent-gold/[0.08]"
             >
               {/* Avatar */}
-              <div
-                className="h-10 w-10 flex-shrink-0 rounded-xl md:h-11 md:w-11"
-                style={{ background: "rgba(201,162,77,0.10)" }}
-              />
+              <div className="h-10 w-10 flex-shrink-0 rounded-xl md:h-11 md:w-11 bg-accent-gold/10" />
 
               {/* Content */}
               <div className="flex-1 space-y-2 min-w-0">
-                <div
-                  className="h-3.5 w-28 rounded-full"
-                  style={{ background: "rgba(201,162,77,0.12)" }}
-                />
-                <div
-                className="h-3 w-36 rounded-full md:w-48"
-                  style={{ background: "rgba(201,162,77,0.07)" }}
-                />
+                <div className="h-3.5 w-28 rounded-full bg-accent-gold/[0.12]" />
+                <div className="h-3 w-36 rounded-full md:w-48 bg-accent-gold/[0.07]" />
               </div>
 
               {/* Timestamp */}
-              <div
-                className="hidden h-3 w-14 flex-shrink-0 rounded-full sm:block"
-                style={{ background: "rgba(201,162,77,0.07)" }}
-              />
+              <div className="hidden h-3 w-14 flex-shrink-0 rounded-full sm:block bg-accent-gold/[0.07]" />
             </div>
           ))}
         </div>

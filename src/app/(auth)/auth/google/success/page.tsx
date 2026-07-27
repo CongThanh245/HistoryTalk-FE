@@ -71,10 +71,7 @@ export default function GoogleOAuthSuccessPage() {
   }, [clearAuth, router, setAuth]);
 
   return (
-    <div
-      className="flex min-h-screen items-center justify-center px-6"
-      style={{ background: "var(--palladian)", color: "var(--content-text)" }}
-    >
+    <div className="flex min-h-screen items-center justify-center px-6 bg-[var(--palladian)] text-content-text">
       <div className="text-center">
         <p className="text-sm font-semibold">Completing Google sign in...</p>
       </div>

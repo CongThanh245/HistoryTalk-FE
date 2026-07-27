@@ -166,7 +166,6 @@ export function useVoiceChatWebSpeech({
           }
           resolve();
         };
-        source.onerror = () => reject(new Error("Khong phat duoc audio Azure TTS"));
         source.start();
       });
     },
