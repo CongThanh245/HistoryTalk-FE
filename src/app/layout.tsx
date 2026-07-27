@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 const outfit = Outfit({
-  subsets: ["latin", "vietnamese"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-title",
   display: "swap",
   weight: ["400", "500", "600", "700", "800"],
