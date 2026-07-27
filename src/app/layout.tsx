@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
-import { Inter, Outfit } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "../styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProviders from "@/components/context/query-client-provider";
@@ -16,8 +16,8 @@ const inter = Inter({
   display: "swap",
 });
 
-const outfit = Outfit({
-  subsets: ["latin", "latin-ext"],
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin", "vietnamese"],
   variable: "--font-title",
   display: "swap",
   weight: ["400", "500", "600", "700", "800"],
@@ -151,7 +151,7 @@ export default function RootLayout({
         )}
       </head>
       <body
-        className={`${inter.variable} ${outfit.variable} antialiased`}
+        className={`${inter.variable} ${jakarta.variable} antialiased`}
       >
         <WelcomeScreen />
         <ThemeProvider>

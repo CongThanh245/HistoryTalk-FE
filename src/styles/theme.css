@@ -51,9 +51,9 @@
   /* ─────────────────────────────
       Status
    ───────────────────────────── */
-  --status-success: #10B981;
-  --status-success-bg: rgba(16, 185, 129, 0.1);
-  --status-success-border: rgba(16, 185, 129, 0.2);
+  --status-success: #D97706; /* Changed from green to gold for luxury feel */
+  --status-success-bg: rgba(217, 119, 6, 0.1);
+  --status-success-border: rgba(217, 119, 6, 0.2);
   --status-warning: #F59E0B;
   --status-warning-bg: rgba(245, 158, 11, 0.1);
   --status-warning-border: rgba(245, 158, 11, 0.2);
@@ -172,15 +172,16 @@
 .dark {
   color-scheme: dark;
 
-  --bg-main: #09090B;
-  --bg-deep: #18181B;
-  --bg-content: linear-gradient(180deg, #09090B 0%, #18181B 100%);
-  --bg-surface: #18181B;
-  --bg-elevated: #27272A;
+  /* Softer dark backgrounds for a premium, less heavy look */
+  --bg-main: #141416;
+  --bg-deep: #0D0D10;
+  --bg-content: linear-gradient(180deg, #141416 0%, #0D0D10 100%);
+  --bg-surface: #1E1E22;
+  --bg-elevated: #29292F;
   
   --bg-content-decorated: 
-    radial-gradient(circle 800px at 100% 0%, rgba(245, 158, 11, 0.08), transparent),
-    radial-gradient(circle 600px at 0% 100%, rgba(59, 130, 246, 0.05), transparent),
+    radial-gradient(circle 800px at 100% 0%, rgba(245, 158, 11, 0.05), transparent),
+    radial-gradient(circle 600px at 0% 100%, rgba(255, 255, 255, 0.02), transparent),
     var(--bg-main);
 
   --text-primary: #FAFAFA;
@@ -204,9 +205,9 @@
   --accent-blood: #F87171;
   --accent-danger: #EF4444;
 
-  --status-success: #34D399;
-  --status-success-bg: rgba(52, 211, 153, 0.1);
-  --status-success-border: rgba(52, 211, 153, 0.2);
+  --status-success: #F59E0B; /* Changed from green to gold */
+  --status-success-bg: rgba(245, 158, 11, 0.1);
+  --status-success-border: rgba(245, 158, 11, 0.2);
   --status-warning: #FBBF24;
   --status-warning-bg: rgba(251, 191, 36, 0.1);
   --status-warning-border: rgba(251, 191, 36, 0.2);
@@ -222,7 +223,7 @@
 
   --palladian: #09090B;
   --oatmeal: rgba(255, 255, 255, 0.05);
-  --header-bg: rgba(9, 9, 11, 0.8);
+  --header-bg: rgba(20, 20, 22, 0.85);
   --header-border: rgba(255, 255, 255, 0.08);
   --header-text: #FAFAFA;
   --header-text-muted: #A1A1AA;
@@ -231,11 +232,11 @@
   --content-text: #E4E4E7;
   --content-muted: #A1A1AA;
   --content-subtle: #71717A;
-  --card-light-bg: #18181B;
+  --card-light-bg: #1E1E22;
   --card-light-border: rgba(255, 255, 255, 0.08);
   --card-light-hover: rgba(255, 255, 255, 0.03);
 
-  --sidebar-bg: #09090B;
+  --sidebar-bg: #141416;
   --sidebar-border: rgba(255, 255, 255, 0.08);
   --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
   --sidebar-nav-text: #D4D4D8;
@@ -252,7 +253,7 @@
   --shadow-strong: 0 10px 40px -4px rgba(0, 0, 0, 0.7);
   --shadow-gold: 0 8px 30px -4px rgba(245, 158, 11, 0.15);
 
-  --home-banner-bg: linear-gradient(135deg, #18181B 0%, #09090B 100%);
+  --home-banner-bg: linear-gradient(135deg, #1E1E22 0%, #141416 100%);
   --home-banner-border: rgba(255, 255, 255, 0.05);
   --home-banner-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
   --home-banner-title: #FAFAFA;
@@ -262,14 +263,14 @@
   --home-banner-button-border: #FAFAFA;
   --home-banner-button-hover-border: #E4E4E7;
   --home-banner-button-text: #09090B;
-  --home-banner-card-bg: #18181B;
+  --home-banner-card-bg: #1E1E22;
   --home-banner-card-border: rgba(255, 255, 255, 0.08);
-  --home-banner-card-footer: #09090B;
-  --home-banner-card-fade: #18181B;
+  --home-banner-card-footer: #141416;
+  --home-banner-card-fade: #1E1E22;
 
   --era-filter-active-bg: #FAFAFA;
   --era-filter-active-text: #09090B;
-  --era-filter-bg: #18181B;
+  --era-filter-bg: #1E1E22;
   --era-filter-text: #D4D4D8;
   --era-filter-border: rgba(255, 255, 255, 0.08);
   --era-filter-count-bg: rgba(255, 255, 255, 0.05);
