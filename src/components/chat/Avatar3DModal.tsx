@@ -31,12 +31,8 @@ const FBXCharacterViewer = dynamic(
 function ModelLoadingPlaceholder() {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-[rgba(201,168,76,0.7)]">
-      <div
-        className="h-10 w-10 rounded-full border-[3px] border-[rgba(201,168,76,0.3)] border-t-[#c9a84c]"
-        style={{ animation: "spin 1s linear infinite" }}
-      />
+      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[rgba(201,168,76,0.3)] border-t-[#c9a84c]" />
       <p className="m-0 text-[13px] opacity-70">Đang tải mô hình 3D...</p>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -90,18 +86,9 @@ function ThinkingIndicator() {
   return (
     <div className="flex justify-start py-1">
       <div className="flex items-center gap-1 rounded-[16px_16px_16px_4px] border border-[rgba(201,168,76,0.2)] bg-gradient-to-br from-[rgba(201,168,76,0.15)] to-[rgba(201,168,76,0.05)] px-4 py-2">
-        <span
-          className="h-1.5 w-1.5 rounded-full bg-[#c9a84c]"
-          style={{ animation: "thinkingBounce 0.6s ease-in-out infinite" }}
-        />
-        <span
-          className="h-1.5 w-1.5 rounded-full bg-[#c9a84c]"
-          style={{ animation: "thinkingBounce 0.6s ease-in-out infinite 0.15s" }}
-        />
-        <span
-          className="h-1.5 w-1.5 rounded-full bg-[#c9a84c]"
-          style={{ animation: "thinkingBounce 0.6s ease-in-out infinite 0.3s" }}
-        />
+        <span className="h-1.5 w-1.5 rounded-full bg-[#c9a84c] animate-[thinkingBounce_0.6s_ease-in-out_infinite]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-[#c9a84c] animate-[thinkingBounce_0.6s_ease-in-out_infinite] [animation-delay:0.15s]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-[#c9a84c] animate-[thinkingBounce_0.6s_ease-in-out_infinite] [animation-delay:0.3s]" />
       </div>
     </div>
   );
@@ -149,57 +136,27 @@ function TranscriptFeed({
             {m.text}
           </div>
           {m.role === "assistant" && m.quotes && m.quotes.length > 0 && (
-            <div style={{ maxWidth: "80%", display: "flex", flexDirection: "column", gap: 6 }}>
+            <div className="flex max-w-[80%] flex-col gap-1.5">
               <button
                 type="button"
                 onClick={() => setExpandedQuotesFor(expandedQuotesFor === i ? null : i)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  alignSelf: "flex-start",
-                  padding: "2px 8px",
-                  borderRadius: 999,
-                  border: "1px solid rgba(201,168,76,0.35)",
-                  background: "rgba(201,168,76,0.1)",
-                  color: "rgba(240,200,90,0.9)",
-                  fontSize: 11,
-                  cursor: "pointer",
-                }}
+                className="flex items-center gap-1 self-start rounded-full border border-[rgba(201,168,76,0.35)] bg-[rgba(201,168,76,0.1)] px-2 py-0.5 text-[11px] text-[rgba(240,200,90,0.9)]"
               >
                 {m.quotes.length} nguồn trích dẫn
                 {expandedQuotesFor === i ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
               </button>
 
               {expandedQuotesFor === i && (
-                <div style={{
-                  display: "flex", flexDirection: "column", gap: 8,
-                  padding: "8px 10px", borderRadius: 10,
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}>
+                <div className="flex flex-col gap-2 rounded-[10px] border border-white/10 bg-white/[0.04] px-2.5 py-2">
                   {m.quotes.map((quote, qi) => (
-                    <div key={qi} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <blockquote style={{
-                        margin: 0, fontSize: 11.5, lineHeight: 1.5,
-                        paddingLeft: 8, borderLeft: "2px solid rgba(201,168,76,0.4)",
-                        color: "rgba(255,255,255,0.65)",
-                      }}>
+                    <div key={qi} className="flex flex-col gap-1">
+                      <blockquote className="m-0 border-l-2 border-[rgba(201,168,76,0.4)] pl-2 text-[11.5px] leading-[1.5] text-white/65">
                         {quote}
                       </blockquote>
                       <button
                         type="button"
                         onClick={() => onOpenCitation?.(quote)}
-                        style={{
-                          alignSelf: "flex-start",
-                          paddingLeft: 8,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "#e0b84a",
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                        }}
+                        className="self-start border-none bg-none pl-2 text-[11px] font-semibold text-[#e0b84a]"
                       >
                         Xem trong tài liệu
                       </button>
@@ -217,10 +174,7 @@ function TranscriptFeed({
         <div className="flex justify-end">
           <div className="max-w-[80%] rounded-[16px_16px_4px_16px] border border-dashed border-white/20 bg-white/[0.04] px-3 py-1.5 text-[13px] italic leading-normal text-white/50">
             {interimText}
-            <span
-              className="ml-1 inline-block h-3.5 w-0.5 bg-white/50"
-              style={{ animation: "pulse 0.8s ease-in-out infinite" }}
-            />
+            <span className="ml-1 inline-block h-3.5 w-0.5 animate-[pulse_0.8s_ease-in-out_infinite] bg-white/50" />
           </div>
         </div>
       )}
@@ -313,6 +267,11 @@ function CallCitationPanel({
     () => splitContentByQuote(matchedDocument?.content ?? "", quote),
     [matchedDocument, quote],
   );
+  const markRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    markRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [parts]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -324,51 +283,17 @@ function CallCitationPanel({
 
   return (
     <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        zIndex: 30,
-        display: "flex",
-        justifyContent: "flex-end",
-        background: "rgba(0,0,0,0.45)",
-      }}
+      className="absolute inset-0 z-30 flex justify-end bg-[rgba(0,0,0,0.45)]"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "min(380px, 100%)",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          background: "rgba(20,16,10,0.97)",
-          borderLeft: "1px solid rgba(201,168,76,0.25)",
-          boxShadow: "-8px 0 32px rgba(0,0,0,0.4)",
-        }}
+        className="flex h-full w-[min(380px,100%)] flex-col overflow-hidden border-l border-[rgba(201,168,76,0.25)] bg-[rgba(20,16,10,0.97)] shadow-[-8px_0_32px_rgba(0,0,0,0.4)]"
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            padding: "16px 18px",
-            borderBottom: "1px solid rgba(201,168,76,0.2)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-            <FileText size={18} style={{ color: "#e0b84a", flexShrink: 0 }} />
-            <h3
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: "rgba(255,255,255,0.9)",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
+        <div className="flex items-center justify-between gap-3 border-b border-[rgba(201,168,76,0.2)] px-[18px] py-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <FileText size={18} className="shrink-0 text-[#e0b84a]" />
+            <h3 className="truncate text-[13px] font-bold text-white/90">
               {matchedDocument?.title || "Nguồn tham khảo"}
             </h3>
           </div>
@@ -376,58 +301,27 @@ function CallCitationPanel({
             type="button"
             onClick={onClose}
             aria-label="Đóng"
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 999,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              color: "rgba(255,255,255,0.7)",
-              cursor: "pointer",
-            }}
+            className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.06] text-white/70"
           >
             <X size={13} strokeWidth={2.5} />
           </button>
         </div>
 
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 18px" }}>
+        <div className="min-h-0 flex-1 overflow-y-auto px-[18px] py-4">
           {isLoading ? (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontSize: 13,
-                color: "rgba(255,255,255,0.6)",
-              }}
-            >
+            <div className="flex items-center gap-2 text-[13px] text-white/60">
               <Loader2 size={16} className="animate-spin" />
               Đang tải tài liệu...
             </div>
           ) : matchedDocument ? (
             <>
-              <p
-                style={{
-                  whiteSpace: "pre-wrap",
-                  fontSize: 13,
-                  lineHeight: 1.7,
-                  color: "rgba(255,255,255,0.85)",
-                }}
-              >
+              <p className="text-[13px] leading-[1.7] whitespace-pre-wrap text-white/85">
                 {parts.map((part, i) =>
                   part.matched ? (
                     <mark
                       key={i}
-                      style={{
-                        background: "rgba(201,168,76,0.35)",
-                        color: "inherit",
-                        borderRadius: 3,
-                        padding: "0 2px",
-                      }}
+                      ref={markRef}
+                      className="rounded-[3px] bg-[rgba(201,168,76,0.35)] px-0.5 text-inherit"
                     >
                       {part.text}
                     </mark>
@@ -441,15 +335,7 @@ function CallCitationPanel({
                   href={matchedDocument.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{
-                    marginTop: 16,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "#e0b84a",
-                  }}
+                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#e0b84a]"
                 >
                   <ExternalLink size={14} />
                   Xem file gốc
@@ -457,31 +343,12 @@ function CallCitationPanel({
               )}
             </>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 8,
-                  fontSize: 13,
-                  padding: 12,
-                  borderRadius: 8,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: "rgba(255,255,255,0.6)",
-                }}
-              >
-                <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start gap-2 rounded-lg border border-white/[0.12] p-3 text-[13px] text-white/60">
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
                 <span>Không tìm thấy vị trí chính xác trong tài liệu. Đây là nội dung AI đã trích dẫn:</span>
               </div>
-              <blockquote
-                style={{
-                  fontSize: 13,
-                  lineHeight: 1.7,
-                  paddingLeft: 12,
-                  borderLeft: "2px solid rgba(201,168,76,0.4)",
-                  color: "rgba(255,255,255,0.7)",
-                }}
-              >
+              <blockquote className="border-l-2 border-[rgba(201,168,76,0.4)] pl-3 text-[13px] leading-[1.7] text-white/70">
                 {quote}
               </blockquote>
             </div>
@@ -491,47 +358,6 @@ function CallCitationPanel({
     </div>
   );
 }
-
-/*
-function RemovedModelDiagnosticBadge({ diagnostic }: { diagnostic: unknown }) {
-  if (process.env.NODE_ENV !== "development" || !diagnostic) return null;
-
-  const blendshapeNames = Object.keys(diagnostic.blendshapes);
-  const sampleBones = diagnostic.bones.slice(0, 6).join(", ") || "none";
-  const sampleBlendshapes = blendshapeNames.slice(0, 6).join(", ") || "none";
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top: 12,
-        left: 12,
-        zIndex: 5,
-        maxWidth: 360,
-        padding: "8px 10px",
-        borderRadius: 8,
-        background: "rgba(0,0,0,0.68)",
-        border: "1px solid rgba(201,168,76,0.3)",
-        color: "rgba(255,255,255,0.82)",
-        fontSize: 11,
-        lineHeight: 1.45,
-        pointerEvents: "none",
-      }}
-    >
-      <div style={{ color: "#f0c85a", fontWeight: 700 }}>removed</div>
-      <div>
-        meshes {diagnostic.meshCount} | bones {diagnostic.bones.length} | morphs{" "}
-        {blendshapeNames.length} | anims {diagnostic.animCount}
-      </div>
-      <div style={{ opacity: 0.72 }}>bones: {sampleBones}</div>
-      <div style={{ opacity: 0.72 }}>morphs: {sampleBlendshapes}</div>
-    </div>
-  );
-}
-
-// ── Props ─────────────────────────────────────────────────────────────────────
-
-*/
 
 type VoiceMode = "rest" | "stream" | "web-speech";
 
@@ -1509,10 +1335,7 @@ export function Avatar3DModal({
       {/* Backdrop */}
       <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(0,0,0,0.88)] backdrop-blur-[16px]">
         {/* Card */}
-        <div
-          className="relative flex h-screen w-screen flex-col items-center overflow-hidden bg-gradient-to-b from-[rgba(20,16,10,1)] to-[rgba(10,8,4,1)]"
-          style={{ animation: "fadeSlideUp 0.4s ease both" }}
-        >
+        <div className="relative flex h-screen w-screen flex-col items-center overflow-hidden bg-gradient-to-b from-[rgba(20,16,10,1)] to-[rgba(10,8,4,1)] animate-[fadeSlideUp_0.4s_ease_both]">
 
           {/* ── Header ── */}
           <div className="flex w-full shrink-0 items-center justify-between border-b border-[rgba(201,168,76,0.12)] px-5 py-3.5">
@@ -1520,13 +1343,14 @@ export function Avatar3DModal({
             <div className="flex items-center gap-1.5 rounded-[20px] border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.08)] px-3 py-1 text-xs text-[#c9a84c]">
               {(isRecording || isBusy || isListeningStatus) && (
                 <span
-                  className="h-[7px] w-[7px] rounded-full"
-                  style={{
-                    background: isRecording ? "#ef5350" 
-                      : (isBusy && !status.includes("speaking")) ? "#4fc3f7" 
-                      : "#c9a84c",
-                    animation: "pulse 1s ease-in-out infinite",
-                  }}
+                  className={cn(
+                    "h-1.75 w-1.75 animate-[pulse_1s_ease-in-out_infinite] rounded-full",
+                    isRecording
+                      ? "bg-[#ef5350]"
+                      : isBusy && !status.includes("speaking")
+                        ? "bg-[#4fc3f7]"
+                        : "bg-[#c9a84c]",
+                  )}
                 />
               )}
               {dynamicStatusLabel}
@@ -1668,30 +1492,17 @@ export function Avatar3DModal({
             >
             <button
               type="button"
-              className="avatar-mic-button"
+              className={cn(
+                "avatar-mic-button flex h-18 w-18 select-none touch-none items-center justify-center rounded-full border-2 bg-gradient-to-br transition-[background,border] duration-200 disabled:cursor-not-allowed disabled:opacity-40",
+                !isBusy && "cursor-pointer",
+                isRecording
+                  ? "animate-[micPulse_1s_ease-in-out_infinite] border-[#ef5350] from-[#c62828] to-[#ef5350] shadow-[0_0_0_0_rgba(239,83,80,0.5)]"
+                  : "border-[rgba(201,168,76,0.4)] from-[rgba(201,168,76,0.3)] to-[rgba(201,168,76,0.15)] shadow-[0_4px_24px_rgba(201,168,76,0.2)]",
+              )}
               onClick={handleMicClick}
               disabled={isBusy}
               aria-label={isRecording ? "Dừng ghi âm và gửi" : "Bắt đầu ghi âm"}
               title={isRecording ? "Bấm lần nữa để dừng và gửi" : "Bấm để nói"}
-              style={{
-                width: 72, height: 72, borderRadius: "50%",
-                background: isRecording
-                  ? "linear-gradient(135deg, #c62828, #ef5350)"
-                  : "linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.15))",
-                border: isRecording
-                  ? "2px solid #ef5350"
-                  : "2px solid rgba(201,168,76,0.4)",
-                boxShadow: isRecording
-                  ? "0 0 0 0 rgba(239,83,80,0.5)"
-                  : "0 4px 24px rgba(201,168,76,0.2)",
-                animation: isRecording ? "micPulse 1s ease-in-out infinite" : "none",
-                cursor: isBusy ? "not-allowed" : "pointer",
-                opacity: isBusy ? 0.4 : 1,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "background 0.2s, border 0.2s",
-                userSelect: "none", WebkitUserSelect: "none",
-                touchAction: "none",
-              } as CSSProperties}
             >
               {/* Mic icon */}
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none"

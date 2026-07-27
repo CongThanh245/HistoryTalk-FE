@@ -64,6 +64,7 @@ export function useVoiceChatWebSpeech({
   const sttRef = useRef<WebSpeechSTT | null>(null);
   const ttsRef = useRef<WebSpeechTTS | null>(null);
   const abortRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const isHoldingRef = useRef(false);
   const shouldSendOnStopRef = useRef(false);
   const restartListeningRef = useRef<() => void>(() => {});
@@ -129,11 +130,12 @@ export function useVoiceChatWebSpeech({
   }, []);
 
   const playAzureTts = useCallback(
-    async (text: string): Promise<void> => {
+    async (text: string, signal?: AbortSignal): Promise<void> => {
       const res = await fetch("/api/voice/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, characterId }),
+        signal,
       });
 
       if (!res.ok) {
@@ -146,12 +148,17 @@ export function useVoiceChatWebSpeech({
         throw new Error("Azure TTS khong tra ve audio");
       }
 
+      // Cuộc gọi đã bị hủy trong lúc tải/giải mã audio — đừng phát nữa.
+      if (abortRef.current) return;
+
       const audioContext = ensureAudioContext();
       if (audioContext.state === "suspended") {
         await audioContext.resume();
       }
 
       const decodedAudio = await audioContext.decodeAudioData(audioBuffer.slice(0));
+
+      if (abortRef.current) return;
 
       await new Promise<void>((resolve, reject) => {
         const source = audioContext.createBufferSource();
@@ -173,13 +180,17 @@ export function useVoiceChatWebSpeech({
   );
 
   const speakWithAzureFallback = useCallback(
-    async (text: string): Promise<void> => {
+    async (text: string, signal?: AbortSignal): Promise<void> => {
       try {
-        await playAzureTts(text);
+        await playAzureTts(text, signal);
         return;
       } catch (err) {
+        if (abortRef.current) return;
         console.warn("[VoiceChatWebSpeech] Azure TTS failed, using Web Speech:", err);
       }
+
+      if (abortRef.current) return;
+
       if (!ttsRef.current) {
         ttsRef.current = getWebSpeechTTS();
       }
@@ -337,10 +348,13 @@ export function useVoiceChatWebSpeech({
    */
   const sendTextToChat = useCallback(async (text: string) => {
     setStatus("processing");
-    
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       const token = useAuthStore.getState().tokens?.accessToken;
-      
+
       // BE chỉ cần sessionId và content
       const endpoint = `${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}${process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1"}/chat/messages`;
 
@@ -355,7 +369,12 @@ export function useVoiceChatWebSpeech({
           content: text,
           messageType: "VOICE",
         }),
+        signal: controller.signal,
       });
+
+      // Cuộc gọi đã bị hủy (hangup) trong lúc chờ mạng — bỏ luôn phản hồi trễ này,
+      // không hiện tin nhắn/không phát TTS cho một cuộc gọi đã đóng.
+      if (abortRef.current) return;
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -387,6 +406,8 @@ export function useVoiceChatWebSpeech({
         throw new Error(userFriendlyError);
       }
 
+      if (abortRef.current) return;
+
       const resData = await res.json();
       // Response: { success, data: { assistantMessage: { content } } }
       const apiData = resData.data || resData;
@@ -405,21 +426,34 @@ export function useVoiceChatWebSpeech({
         throw new Error("Không nhận được phản hồi từ AI");
       }
 
+      if (abortRef.current) return;
+
       // Hiển thị AI message
       setMessages((prev) => [
         ...prev,
         { role: "assistant", text: aiResponse, timestamp: new Date(), quotes },
       ]);
 
+      if (abortRef.current) return;
+
       // TTS with Azure first, then Web Speech fallback.
       setStatus("speaking");
-      await speakWithAzureFallback(aiResponse);
+      await speakWithAzureFallback(aiResponse, controller.signal);
+      if (abortRef.current) return;
       setStatus("idle");
     } catch (err: unknown) {
+      // Hủy có chủ đích (hangup) — không phải lỗi thật, đừng hiện toast lỗi.
+      if (abortRef.current || (err instanceof DOMException && err.name === "AbortError")) {
+        return;
+      }
       const errorMsg = err instanceof Error ? err.message : "Lỗi kết nối";
       onError?.(errorMsg);
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
+    } finally {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
     }
   }, [sessionId, onError, onProfileRefresh, onTokenUpdate, speakWithAzureFallback]);
 
@@ -442,6 +476,7 @@ export function useVoiceChatWebSpeech({
    */
   const cancel = useCallback(() => {
     abortRef.current = true;
+    abortControllerRef.current?.abort();
     sttRef.current?.abort();
     ttsRef.current?.cancel();
     azureSourceRef.current?.stop();
