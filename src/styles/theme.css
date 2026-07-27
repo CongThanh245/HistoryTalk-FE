@@ -240,7 +240,7 @@
   --card-light-border: rgba(255, 255, 255, 0.08);
   --card-light-hover: rgba(255, 255, 255, 0.03);
 
-  --sidebar-bg: #000000;
+  --sidebar-bg: rgba(0, 0, 0, 0.85);
   --sidebar-border: rgba(255, 255, 255, 0.08);
   --sidebar-hover-bg: rgba(245, 158, 11, 0.08);
   --sidebar-nav-text: #A1A1AA;
