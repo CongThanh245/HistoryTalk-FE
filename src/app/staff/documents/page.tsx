@@ -9,8 +9,8 @@ import {
   User,
   Scroll,
   ExternalLink,
-  Upload,
   Eye,
+  FileText,
   Pencil,
   Plus,
   Trash2,
@@ -45,12 +45,10 @@ import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { useCharacters } from "@/features/characters/hooks";
 import { useEvents } from "@/features/events/hooks";
 import {
-  useUploadDocumentPdf,
   useGetDocumentPdfUrl,
   useUploadAndExtractPdf,
 } from "@/features/documents/hooks";
 import { documentService, type RagDocument } from "@/services/document.service";
-import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
 import { NewDocumentPanel } from "@/components/staff/new-document-panel";
@@ -134,9 +132,6 @@ export default function StaffDocumentsPage() {
   const [deleteTarget, setDeleteTarget] = React.useState<StaffDocumentRow | null>(null);
 
   // PDF upload/download
-  const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
-  const [uploadTargetDocId, setUploadTargetDocId] = React.useState<string | null>(null);
-  const uploadPdf = useUploadDocumentPdf();
   const getPdfUrl = useGetDocumentPdfUrl();
   const extractPdf = useUploadAndExtractPdf();
 
@@ -607,17 +602,14 @@ export default function StaffDocumentsPage() {
                   variant="ghost"
                   size="icon-sm"
                   className="rounded-full text-accent-blue"
-                  disabled={!hasDocId || uploadPdf.isPending}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (docId) {
-                      setUploadTargetDocId(docId);
-                      setUploadDialogOpen(true);
-                    }
+                    setSelectedKey(row.original.key);
+                    setDetailOpen(true);
                   }}
-                  title="Upload PDF"
+                  title="Xem chi tiết"
                 >
-                  <Upload className="h-4 w-4" />
+                  <FileText className="h-4 w-4" />
                 </Button>
               )}
               {canViewPdf && (
@@ -654,7 +646,6 @@ export default function StaffDocumentsPage() {
     ],
     [
       router,
-      uploadPdf.isPending,
       getPdfUrl,
       updateCharacterDocument.isPending,
       updateHistoricalDocument.isPending,
@@ -743,31 +734,6 @@ export default function StaffDocumentsPage() {
             );
           })}
         </div>
-
-        {/* PDF Upload Dialog */}
-        <PdfUploadDialog
-          open={uploadDialogOpen}
-          onOpenChange={(open) => {
-            setUploadDialogOpen(open);
-            if (!open) setUploadTargetDocId(null);
-          }}
-          onUpload={(file) => {
-            if (uploadTargetDocId) {
-              uploadPdf.mutate(
-                { docId: uploadTargetDocId, file },
-                {
-                  onSuccess: () => {
-                    setUploadDialogOpen(false);
-                    setUploadTargetDocId(null);
-                  },
-                }
-              );
-            }
-          }}
-          isUploading={uploadPdf.isPending}
-          title="Upload PDF"
-          description="Chọn file PDF để upload cho tài liệu này. Bạn có thể xem preview trước khi xác nhận."
-        />
 
         {/* PDF Viewer Dialog */}
         <PdfViewerDialog
