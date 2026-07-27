@@ -16,7 +16,7 @@ function layout({ children }: { children: React.ReactNode }) {
             <Header />
             <Breadcrumbs />
             <main
-              className="flex-1 overflow-y-auto staff-theme"
+              className="flex-1 min-h-0 overflow-y-auto staff-theme"
               style={{ background: "var(--bg-content-decorated)" }}
             >
               {children}
