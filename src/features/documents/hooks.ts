@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   documentService,
   type CreateCharacterDocumentRequest,
@@ -56,6 +56,26 @@ export function usePublicContextDocuments(contextId?: string) {
     enabled: !!contextId,
     staleTime: 1000 * 60 * 5,
   });
+}
+
+// Một nhân vật có thể liên kết nhiều bối cảnh lịch sử, mỗi bối cảnh có tài liệu
+// riêng — khi đối chiếu trích dẫn của AI phải gộp tài liệu của TẤT CẢ bối cảnh
+// đó lại, không chỉ bối cảnh đang active của phiên chat hiện tại.
+export function usePublicContextsDocuments(contextIds: string[]) {
+  const uniqueIds = Array.from(new Set(contextIds.filter(Boolean)));
+
+  const results = useQueries({
+    queries: uniqueIds.map((contextId) => ({
+      queryKey: queryKeys.documents.publicByContext(contextId),
+      queryFn: () => documentService.getPublicContextDocuments(contextId),
+      staleTime: 1000 * 60 * 5,
+    })),
+  });
+
+  return {
+    data: results.flatMap((r) => r.data ?? []),
+    isLoading: results.some((r) => r.isLoading),
+  };
 }
 
 export function useAllCharacterDocuments() {
