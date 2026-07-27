@@ -2,10 +2,11 @@
 
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, useAnimations, useFBX, useGLTF } from "@react-three/drei";
+import { OrbitControls, useAnimations, useFBX, useGLTF, useProgress } from "@react-three/drei";
 import * as THREE from "three";
 import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
+import { cn } from "@/lib/utils/cn";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -463,12 +464,33 @@ function AutoModel(props: {
 // Canvas loader
 // ─────────────────────────────────────────────────────────────────────────────
 
-function Loader() {
+/** Placeholder bắt buộc cho React-Three Suspense (phải là element hợp lệ trong scene). */
+function SceneSuspenseFallback() {
   return (
     <mesh>
       <sphereGeometry args={[0.2, 16, 16]} />
       <meshStandardMaterial color="#c9a84c" wireframe />
     </mesh>
+  );
+}
+
+/**
+ * Overlay HTML hiển thị khi model 3D đang tải (useGLTF/useFBX qua Suspense).
+ * Render bên ngoài <Canvas> để không "biến mất" mà không có phản hồi gì với người dùng
+ * trong lúc file model còn đang tải/giải nén.
+ */
+function ModelLoadOverlay() {
+  const { active, progress } = useProgress();
+
+  if (!active) return null;
+
+  return (
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[rgba(10,8,4,0.72)] text-[rgba(201,168,76,0.9)]">
+      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[rgba(201,168,76,0.3)] border-t-[#c9a84c]" />
+      <p className="m-0 text-[13px] opacity-80">
+        Đang tải mô hình 3D... {Math.round(progress)}%
+      </p>
+    </div>
   );
 }
 
@@ -641,9 +663,9 @@ function isValidModelUrl(url?: string | null): boolean {
 }
 
 // Placeholder when no 3D model is available
-function NoModelPlaceholder({ statusLabel, dotColor, shouldAnimate }: {
+function NoModelPlaceholder({ statusLabel, dotColorClass, shouldAnimate }: {
   statusLabel: string;
-  dotColor: string;
+  dotColorClass: string;
   shouldAnimate: boolean;
 }) {
   return (
@@ -659,11 +681,11 @@ function NoModelPlaceholder({ statusLabel, dotColor, shouldAnimate }: {
       {/* Status dot - same styling as in main component */}
       <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-[20px] border border-[rgba(201,168,76,0.3)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[#c9a84c]">
         <span
-          className="h-2 w-2 shrink-0 rounded-full"
-          style={{
-            background: dotColor,
-            animation: shouldAnimate ? "pulse 1s ease-in-out infinite" : "none",
-          }}
+          className={cn(
+            "h-2 w-2 shrink-0 rounded-full",
+            shouldAnimate && "animate-[pulse_1s_ease-in-out_infinite]",
+            dotColorClass,
+          )}
         />
         {statusLabel}
       </div>
@@ -697,15 +719,15 @@ export function FBXCharacterViewer({
   const effectiveSpeaking = isSpeaking;
 
   // Status label + dot color
-  const dotColor = effectiveSpeaking
-    ? "#c9a84c"
+  const dotColorClass = effectiveSpeaking
+    ? "bg-[#c9a84c]"
     : isRecording
-    ? "#ef5350"
+    ? "bg-[#ef5350]"
     : isListening
-    ? "#4caf50"
+    ? "bg-[#4caf50]"
     : isProcessing
-    ? "#2196f3"
-    : "#555";
+    ? "bg-[#2196f3]"
+    : "bg-[#555]";
 
   const statusLabel = effectiveSpeaking
     ? "Đang nói..."
@@ -727,7 +749,7 @@ export function FBXCharacterViewer({
       <div className="relative h-full w-full">
         <NoModelPlaceholder
           statusLabel={statusLabel}
-          dotColor={dotColor}
+          dotColorClass={dotColorClass}
           shouldAnimate={shouldAnimate}
         />
       </div>
@@ -739,14 +761,16 @@ export function FBXCharacterViewer({
       {/* Status dot */}
       <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-[20px] border border-[rgba(201,168,76,0.3)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[#c9a84c]">
         <span
-          className="h-2 w-2 shrink-0 rounded-full"
-          style={{
-            background: dotColor,
-            animation: shouldAnimate ? "pulse 1s ease-in-out infinite" : "none",
-          }}
+          className={cn(
+            "h-2 w-2 shrink-0 rounded-full",
+            shouldAnimate && "animate-[pulse_1s_ease-in-out_infinite]",
+            dotColorClass,
+          )}
         />
         {statusLabel}
       </div>
+
+      <ModelLoadOverlay />
 
       <Canvas
         camera={{ position: [0, 2.15, 6.2], fov: 32 }}
@@ -767,7 +791,7 @@ export function FBXCharacterViewer({
           key={modelUrl}
           onError={(error) => setModelLoadError({ url: modelUrl, error })}
         >
-          <Suspense fallback={<Loader />}>
+          <Suspense fallback={<SceneSuspenseFallback />}>
             <AutoModel
               url={modelUrl}
               isSpeaking={effectiveSpeaking}
