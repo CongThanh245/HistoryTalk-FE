@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import {
   usePublicCharacterDocuments,
-  usePublicContextDocuments,
+  usePublicContextsDocuments,
 } from "@/features/documents/hooks";
 import { useEventDetail } from "@/features/events/hooks";
 import type { RagDocument } from "@/services/document.service";
@@ -19,7 +19,14 @@ import {
 interface DocumentCitationDialogProps {
   onClose: () => void;
   characterId: string;
+  /** Bối cảnh của session chat hiện tại — dùng làm fallback hiển thị video khi tài liệu khớp không xác định được bối cảnh riêng. */
   contextId?: string;
+  /**
+   * Tất cả bối cảnh mà nhân vật tham gia (một nhân vật có thể có nhiều bối cảnh).
+   * AI có thể trích dẫn tài liệu từ bất kỳ bối cảnh nào trong số này, không chỉ
+   * bối cảnh của session hiện tại, nên phải tìm khớp trên toàn bộ tập hợp này.
+   */
+  contextIds?: string[];
   /** Đoạn trích cần highlight + dùng để tìm tài liệu tương ứng. */
   quote?: string | null;
   /** Mở thẳng 1 tài liệu cụ thể (vào từ danh sách "Tài liệu tham khảo", không có quote). */
@@ -90,6 +97,7 @@ export function DocumentCitationDialog({
   onClose,
   characterId,
   contextId,
+  contextIds,
   quote,
   initialDocumentId,
 }: DocumentCitationDialogProps) {
@@ -101,11 +109,15 @@ export function DocumentCitationDialog({
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
+  // Nhân vật có thể có nhiều bối cảnh — quét tài liệu của tất cả bối cảnh đó
+  // (không chỉ bối cảnh của session hiện tại) vì AI có thể trích dẫn từ bất kỳ đâu.
+  const effectiveContextIds =
+    contextIds && contextIds.length > 0 ? contextIds : contextId ? [contextId] : [];
+
   const { data: characterDocs, isLoading: isLoadingCharacterDocs } =
     usePublicCharacterDocuments(characterId);
   const { data: contextDocs, isLoading: isLoadingContextDocs } =
-    usePublicContextDocuments(contextId);
-  const { data: event } = useEventDetail(contextId);
+    usePublicContextsDocuments(effectiveContextIds);
 
   const documents = useMemo<RagDocument[]>(
     () => [...(characterDocs ?? []), ...(contextDocs ?? [])],
@@ -120,6 +132,10 @@ export function DocumentCitationDialog({
       return documents.find((doc) => doc.id === initialDocumentId) ?? null;
     return null;
   }, [quote, initialDocumentId, documents]);
+
+  // Video minh hoạ phải theo đúng bối cảnh của tài liệu vừa khớp được, không phải
+  // luôn luôn bối cảnh của session hiện tại — nếu không sẽ hiện nhầm video.
+  const { data: event } = useEventDetail(matchedDocument?.contextId ?? contextId);
 
   const hasVideo = !!event?.videoUrl;
   const title = matchedDocument?.title || "Nguồn tham khảo";

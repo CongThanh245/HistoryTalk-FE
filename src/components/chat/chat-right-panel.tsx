@@ -26,7 +26,7 @@ import { useQuizSets } from "@/features/quiz/hooks";
 import { useEventDetail } from "@/features/events/hooks";
 import {
   usePublicCharacterDocuments,
-  usePublicContextDocuments,
+  usePublicContextsDocuments,
 } from "@/features/documents/hooks";
 import { QuizCard } from "@/components/quiz/quiz-card";
 import { useSoftDeleteSession } from "@/features/chat/hooks";
@@ -267,6 +267,9 @@ export function ChatRightPanel({
 
   const otherCharacters = characters.filter((c) => c.id !== activeCharacter.id);
   const contexts = activeCharacter.contexts ?? [];
+  // Nhân vật có thể có nhiều bối cảnh — liệt kê tài liệu tham khảo của TẤT CẢ
+  // bối cảnh đó, không chỉ bối cảnh của session chat hiện tại.
+  const contextIds = contexts.length > 0 ? contexts.map((c) => c.contextId) : contextId ? [contextId] : [];
 
   const router = useRouter();
   const { data: quizData, isLoading: isLoadingQuiz } = useQuizSets(
@@ -277,7 +280,7 @@ export function ChatRightPanel({
   const { data: characterDocuments = [], isLoading: isLoadingCharacterDocuments } =
     usePublicCharacterDocuments(characterId);
   const { data: contextDocuments = [], isLoading: isLoadingContextDocuments } =
-    usePublicContextDocuments(contextId);
+    usePublicContextsDocuments(contextIds);
   const documents = [...characterDocuments, ...contextDocuments];
   const isLoadingDocuments = isLoadingCharacterDocuments || isLoadingContextDocuments;
 
