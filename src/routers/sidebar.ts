@@ -63,10 +63,11 @@ export const STAFF_SIDEBAR: SidebarSection[] = [
       { icon: ClipboardList, label: "Câu đố lịch sử", href: ROUTES.STAFF.QUIZZES },
     ],
   },
-  {
-    title: "Account",
-    items: [{ icon: User, label: "Hồ sơ", href: ROUTES.PROFILE }],
-  },
+  // MVP: Ẩn mục Hồ sơ trong sidebar Content Admin
+  // {
+  //   title: "Account",
+  //   items: [{ icon: User, label: "Hồ sơ", href: ROUTES.PROFILE }],
+  // },
 ];
 
 export const SYSTEM_ADMIN_SIDEBAR: SidebarSection[] = [
@@ -90,8 +91,9 @@ export const SYSTEM_ADMIN_SIDEBAR: SidebarSection[] = [
       { icon: Receipt, label: "Lịch sử giao dịch", href: ROUTES.STAFF.ADMIN.PAYMENT_HISTORY },
     ],
   },
-  {
-    title: "Account",
-    items: [{ icon: User, label: "Hồ sơ", href: ROUTES.PROFILE }],
-  },
+  // MVP: Ẩn mục Hồ sơ trong sidebar System Admin
+  // {
+  //   title: "Account",
+  //   items: [{ icon: User, label: "Hồ sơ", href: ROUTES.PROFILE }],
+  // },
 ];
