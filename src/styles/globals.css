@@ -101,7 +101,7 @@
 
   /* ─── Font families ─── */
   --font-body: "Inter", system-ui, sans-serif;
-  --font-title: "Playfair Display", Georgia, serif;
+  --font-title: "Outfit", system-ui, sans-serif;
 
   /* ─── Typography Scale ─── */
   --text-hero: 3rem;
@@ -144,8 +144,9 @@ body {
 }
 
 .font-title {
-  font-family: var(--font-title), Georgia, serif;
-  text-transform: uppercase;
+  font-family: var(--font-title), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 /* Ghi đè các biến CSS của Shadcn bằng các biến Cinematic */
 :root {
