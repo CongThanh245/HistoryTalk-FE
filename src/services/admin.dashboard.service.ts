@@ -222,6 +222,7 @@ export interface QuizAnalyticsData {
   }[];
   topWrongQuestions: {
     questionId: string;
+    questionContent?: string;
     quizId: string;
     quizTitle: string;
     wrongAnswers: number;
