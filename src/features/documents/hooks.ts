@@ -3,6 +3,7 @@ import {
   documentService,
   type CreateCharacterDocumentRequest,
   type CreateHistoricalDocumentRequest,
+  type DocumentEntityType,
   type DocumentPayload,
 } from "@/services/document.service";
 import { toast } from "sonner";
@@ -222,6 +223,29 @@ export function useGetDocumentPdfUrl() {
     mutationFn: (docId: string) => documentService.getPdfUrl(docId),
     onError: (err: unknown) => {
       toast.error(getErrorMessage(err, "Không thể lấy link tải PDF"));
+    },
+  });
+}
+
+// POST /documents/pdf/upload-and-extract - Upload PDF + extract text before the
+// document exists. No success toast: this is an intermediate step, the actual
+// "document created" toast fires from the create-document mutation that follows.
+export function useUploadAndExtractPdf() {
+  return useMutation({
+    mutationFn: ({
+      file,
+      entityType,
+      entityId,
+      onProgress,
+    }: {
+      file: File;
+      entityType?: DocumentEntityType;
+      entityId?: string;
+      /** Bao tien do sau moi trang xu ly xong (page/total) thay vi im lang cho toi khi xong. */
+      onProgress?: (page: number, total: number) => void;
+    }) => documentService.uploadAndExtractPdfStream(file, entityType, entityId, onProgress),
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Không thể trích xuất nội dung từ PDF"));
     },
   });
 }

@@ -62,9 +62,10 @@ export function useCreateEvent() {
           return { ...old, content: [newEvent, ...old.content] };
         },
       );
+      toast.success("Đã tạo bối cảnh thành công");
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, "Tạo sự kiện thất bại"));
+      toast.error(getErrorMessage(err, "Tạo bối cảnh thất bại"));
     },
   });
 }
@@ -147,11 +148,13 @@ export function useUploadContextMedia() {
       contextId,
       file,
       mediaType,
+      onProgress,
     }: {
       contextId: string;
       file: File;
       mediaType: MediaType;
-    }) => contextMediaService.upload(contextId, file, mediaType),
+      onProgress?: (percent: number) => void;
+    }) => contextMediaService.upload(contextId, file, mediaType, onProgress),
     onSuccess: (_result, { contextId }) => {
       qc.invalidateQueries({ queryKey: queryKeys.events.detail(contextId) });
       qc.invalidateQueries({ queryKey: queryKeys.events.all });

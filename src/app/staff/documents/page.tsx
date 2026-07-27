@@ -47,6 +47,7 @@ import { useEvents } from "@/features/events/hooks";
 import {
   useUploadDocumentPdf,
   useGetDocumentPdfUrl,
+  useUploadAndExtractPdf,
 } from "@/features/documents/hooks";
 import { documentService, type RagDocument } from "@/services/document.service";
 import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
@@ -75,6 +76,7 @@ type CharacterDocumentForm = {
   ownerId: string;
   title: string;
   content: string;
+  fileUrl?: string;
 };
 
 const EMPTY_CHARACTER_DOCUMENT_FORM: CharacterDocumentForm = {
@@ -136,6 +138,7 @@ export default function StaffDocumentsPage() {
   const [uploadTargetDocId, setUploadTargetDocId] = React.useState<string | null>(null);
   const uploadPdf = useUploadDocumentPdf();
   const getPdfUrl = useGetDocumentPdfUrl();
+  const extractPdf = useUploadAndExtractPdf();
 
   // PDF viewer
   const [viewerOpen, setViewerOpen] = React.useState(false);
@@ -161,7 +164,7 @@ export default function StaffDocumentsPage() {
         characterId: data.ownerId,
         title: data.title,
         content: data.content,
-        type: "TEXT",
+        fileUrl: data.fileUrl,
       }),
     onSuccess: (_document, data) => {
       invalidateCharacterDocuments(data.ownerId);
@@ -222,7 +225,7 @@ export default function StaffDocumentsPage() {
         contextId: data.ownerId,
         title: data.title,
         content: data.content,
-        type: "TEXT",
+        fileUrl: data.fileUrl,
       }),
     onSuccess: (_document, data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
@@ -922,33 +925,42 @@ export default function StaffDocumentsPage() {
                     }
                   }}
                   isCreateTextPending={createCharacterDocument.isPending || createHistoricalDocument.isPending}
-                  onCreatePdf={async ({ title, file }) => {
+                  onExtractPdf={async (file, onProgress) => {
+                    if (!documentForm.ownerId) {
+                      toast.error("Vui lòng chọn đối tượng liên kết");
+                      throw new Error("Missing owner");
+                    }
+                    return extractPdf.mutateAsync({
+                      file,
+                      entityType: createOwnerType,
+                      entityId: documentForm.ownerId,
+                      onProgress,
+                    });
+                  }}
+                  isExtractPdfPending={extractPdf.isPending}
+                  onCreatePdf={async ({ title, content, fileUrl }) => {
                     if (!documentForm.ownerId) {
                       toast.error("Vui lòng chọn đối tượng liên kết");
                       return;
                     }
-                    const newDoc =
-                      createOwnerType === "character"
-                        ? await createCharacterDocument.mutateAsync({
-                            ownerId: documentForm.ownerId,
-                            title,
-                            content: "PDF Document",
-                          })
-                        : await createHistoricalDocument.mutateAsync({
-                            ownerId: documentForm.ownerId,
-                            title,
-                            content: "PDF Document",
-                          });
-                    const newDocId = newDoc.id ?? newDoc.documentId;
-                    if (newDocId) {
-                      await uploadPdf.mutateAsync({ docId: newDocId, file });
+                    if (createOwnerType === "character") {
+                      await createCharacterDocument.mutateAsync({
+                        ownerId: documentForm.ownerId,
+                        title,
+                        content,
+                        fileUrl,
+                      });
+                    } else {
+                      await createHistoricalDocument.mutateAsync({
+                        ownerId: documentForm.ownerId,
+                        title,
+                        content,
+                        fileUrl,
+                      });
+                    }
                     }
                   }}
-                  isCreatePdfPending={
-                    createCharacterDocument.isPending ||
-                    createHistoricalDocument.isPending ||
-                    uploadPdf.isPending
-                  }
+                  isCreatePdfPending={createCharacterDocument.isPending || createHistoricalDocument.isPending}
                 />
 
                 <div className="flex justify-end pt-2">

@@ -10,6 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { PdfFrame } from "@/components/staff/pdf-frame";
 import { cn } from "@/lib/utils/cn";
 
 interface PdfUploadDialogProps {
@@ -33,11 +34,20 @@ export function PdfUploadDialog({
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Revoking a blob URL while Chrome's native PDF viewer is still reading it
+  // can abort that in-flight render. Deferring to the next tick lets it
+  // finish first. (The related "removeChild: not a child of this node" crash
+  // from that same PDF viewer mutating the iframe's document is handled by
+  // PdfFrame, which keeps the <iframe> out of React's reconciliation.)
+  const revokeLater = (url: string) => {
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
+
   // Cleanup preview URL when dialog closes or file changes
   React.useEffect(() => {
     return () => {
       if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
+        revokeLater(previewUrl);
       }
     };
   }, [previewUrl]);
@@ -47,7 +57,7 @@ export function PdfUploadDialog({
     if (open) {
       setSelectedFile(null);
       if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
+        revokeLater(previewUrl);
         setPreviewUrl(null);
       }
     }
@@ -81,7 +91,7 @@ export function PdfUploadDialog({
   const handleRemoveFile = () => {
     setSelectedFile(null);
     if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+      revokeLater(previewUrl);
       setPreviewUrl(null);
     }
   };
@@ -199,10 +209,11 @@ export function PdfUploadDialog({
                   <div
                     className="rounded-lg border border-card-light-border overflow-hidden"
                   >
-                    <iframe
+                    <PdfFrame
+                      key={previewUrl}
                       src={previewUrl}
-                      className="w-full h-[400px]"
                       title="PDF Preview"
+                      className="w-full h-[400px] block"
                     />
                   </div>
                   <p className="text-xs text-center text-content-muted">
