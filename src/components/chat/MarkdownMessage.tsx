@@ -1,45 +1,25 @@
 "use client";
 
-import React from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
-import { highlightKeywords } from "@/features/chat/useKeywordHighlight";
-import type { KeywordData } from "@/data/keywords";
 
 interface Props {
   text: string;
-  onKeywordSelect?: (kw: KeywordData) => void;
 }
 
-// Áp highlight từ khóa lên các text node con trực tiếp (bỏ qua node đã là element,
-// vd <em> lồng trong <strong> — trường hợp hiếm gặp trong output của AI).
-function withKeywordHighlight(
-  children: React.ReactNode,
-  onSelect?: (kw: KeywordData) => void,
-): React.ReactNode {
-  if (!onSelect) return children;
-  return React.Children.map(children, (child) =>
-    typeof child === "string" ? highlightKeywords(child, onSelect) : child,
-  );
-}
-
-export function MarkdownMessage({ text, onKeywordSelect }: Props) {
+export function MarkdownMessage({ text }: Props) {
   const components: Components = {
-    p: ({ children }) => (
-      <p className="mb-2 last:mb-0">{withKeywordHighlight(children, onKeywordSelect)}</p>
-    ),
+    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
     strong: ({ children }) => (
       <strong className="font-semibold" style={{ color: "var(--accent-gold)" }}>
-        {withKeywordHighlight(children, onKeywordSelect)}
+        {children}
       </strong>
     ),
-    em: ({ children }) => (
-      <em className="italic">{withKeywordHighlight(children, onKeywordSelect)}</em>
-    ),
+    em: ({ children }) => <em className="italic">{children}</em>,
     ul: ({ children }) => <ul className="list-disc pl-5 mb-2 last:mb-0 space-y-1">{children}</ul>,
     ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 last:mb-0 space-y-1">{children}</ol>,
-    li: ({ children }) => <li>{withKeywordHighlight(children, onKeywordSelect)}</li>,
+    li: ({ children }) => <li>{children}</li>,
     a: ({ children, href }) => (
       <a
         href={href}
