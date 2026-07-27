@@ -3,16 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  BookOpenIcon,
-  CaretRightIcon,
-  ChatCircleIcon,
-  CheckIcon,
-  CheckCircleIcon,
-  CoinsIcon,
-  FlameIcon,
-  SpinnerIcon,
-  TrophyIcon,
-} from "@phosphor-icons/react";
+  BookOpen,
+  ChevronRight,
+  MessageCircle,
+  Check,
+  CheckCircle2,
+  Coins,
+  Flame,
+  Loader2,
+  Trophy,
+} from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { useClaimQuest, useGamificationToday } from "@/features/gamification/hooks";
 import type { DailyQuest, QuestType } from "@/services/gamification.service";
@@ -27,11 +27,11 @@ import type { DailyQuest, QuestType } from "@/services/gamification.service";
 
 const QUEST_META: Record<
   QuestType,
-  { icon: typeof ChatCircleIcon; color: string; bg: string; route: string }
+  { icon: typeof MessageCircle; color: string; bg: string; route: string }
 > = {
-  CHAT: { icon: ChatCircleIcon, color: "#B45309", bg: "rgba(180,83,9,0.12)", route: "/characters" },
-  QUIZ: { icon: TrophyIcon, color: "#6D28D9", bg: "rgba(109,40,217,0.10)", route: "/quiz" },
-  READ_CONTEXT: { icon: BookOpenIcon, color: "#0F766E", bg: "rgba(15,118,110,0.10)", route: "/events" },
+  CHAT: { icon: MessageCircle, color: "var(--quest-chat)", bg: "var(--quest-chat-bg)", route: "/characters" },
+  QUIZ: { icon: Trophy, color: "var(--quest-quiz)", bg: "var(--quest-quiz-bg)", route: "/quiz" },
+  READ_CONTEXT: { icon: BookOpen, color: "var(--quest-read)", bg: "var(--quest-read-bg)", route: "/events" },
 };
 
 const WEEKDAY_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
@@ -39,19 +39,16 @@ const STREAK_GREEN = "#16A34A";
 
 function DailyQuestsSkeleton() {
   return (
-    <div
-      className="rounded-2xl border p-4 animate-pulse"
-      style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
-    >
-      <div className="h-5 w-40 rounded mb-4" style={{ background: "var(--card-light-border)" }} />
+    <div className="rounded-2xl border p-4 animate-pulse bg-card-light-bg border-card-light-border">
+      <div className="h-5 w-40 rounded mb-4 bg-card-light-border" />
       <div className="flex justify-between mb-4">
         {Array.from({ length: 7 }).map((_, i) => (
-          <div key={i} className="w-7 h-7 rounded-full" style={{ background: "var(--card-light-border)" }} />
+          <div key={i} className="w-7 h-7 rounded-full bg-card-light-border" />
         ))}
       </div>
-      <div className="h-16 rounded-xl mb-2" style={{ background: "var(--card-light-border)" }} />
-      <div className="h-16 rounded-xl mb-2" style={{ background: "var(--card-light-border)" }} />
-      <div className="h-16 rounded-xl" style={{ background: "var(--card-light-border)" }} />
+      <div className="h-16 rounded-xl mb-2 bg-card-light-border" />
+      <div className="h-16 rounded-xl mb-2 bg-card-light-border" />
+      <div className="h-16 rounded-xl bg-card-light-border" />
     </div>
   );
 }
@@ -90,27 +87,24 @@ export function DailyQuestsCard() {
   const doneCount = data.quests.filter((q) => q.completed).length;
 
   return (
-    <section
-      className="rounded-2xl border p-4 md:p-5"
-      style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
-    >
+    <section className="rounded-3xl border p-5 md:p-6 bg-card-light-bg border-card-light-border shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
       {/* ── Khối streak ── */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
-          <FlameIcon
+          <Flame
             className="w-4 h-4"
-            weight={data.studiedToday ? "fill" : "regular"}
+            fill={data.studiedToday ? "currentColor" : "none"}
             style={{ color: "var(--streak-text)" }}
           />
-          <h3 className="text-sm font-bold" style={{ color: "var(--content-heading)" }}>
+          <h3 className="text-sm font-bold text-content-heading">
             Chuỗi ngày học
           </h3>
         </div>
         <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-black" style={{ color: "var(--content-heading)" }}>
+          <span className="text-2xl font-black text-content-heading">
             {data.streakCount}
           </span>
-          <span className="text-xs font-semibold" style={{ color: "var(--content-muted)" }}>
+          <span className="text-xs font-semibold text-content-muted">
             ngày
           </span>
         </div>
@@ -121,27 +115,24 @@ export function DailyQuestsCard() {
         {data.week.map((d, i) => (
           <div key={d.date} className="flex flex-col items-center gap-1">
             <div
-              className="w-7 h-7 rounded-full flex items-center justify-center"
-              style={{
-                background: d.studied
-                  ? STREAK_GREEN
+              className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                d.studied
+                  ? "bg-[#16A34A]"
                   : d.isToday
-                    ? "var(--streak-bg)"
-                    : "var(--card-light-border)",
-                border: d.isToday && !d.studied ? `1.5px solid var(--streak-border)` : undefined,
-              }}
+                    ? "bg-[var(--streak-bg)] border-[1.5px] border-[var(--streak-border)]"
+                    : "bg-card-light-border"
+              }`}
             >
-              {d.studied ? <CheckIcon className="w-3.5 h-3.5" weight="bold" style={{ color: "#fff" }} /> : null}
+              {d.studied ? <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} /> : null}
             </div>
             <span
-              className="text-[10px] font-semibold"
-              style={{
-                color: d.studied
-                  ? STREAK_GREEN
+              className={`text-[10px] font-semibold ${
+                d.studied
+                  ? "text-[#16A34A]"
                   : d.isToday
-                    ? "var(--streak-text)"
-                    : "var(--content-muted)",
-              }}
+                    ? "text-[var(--streak-text)]"
+                    : "text-content-muted"
+              }`}
             >
               {WEEKDAY_LABELS[i]}
             </span>
@@ -152,31 +143,31 @@ export function DailyQuestsCard() {
       {/* Kỷ lục + tổng ngày học */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <p className="text-[11px]" style={{ color: "var(--content-muted)" }}>
+          <p className="text-[11px] text-content-muted">
             Chuỗi dài nhất
           </p>
-          <p className="text-sm font-bold mt-0.5" style={{ color: "var(--content-heading)" }}>
+          <p className="text-sm font-bold mt-0.5 text-content-heading">
             {data.longestStreak} ngày
           </p>
         </div>
         <div className="flex-1 text-right">
-          <p className="text-[11px]" style={{ color: "var(--content-muted)" }}>
+          <p className="text-[11px] text-content-muted">
             Tổng ngày học
           </p>
-          <p className="text-sm font-bold mt-0.5" style={{ color: "var(--content-heading)" }}>
+          <p className="text-sm font-bold mt-0.5 text-content-heading">
             {data.totalStudyDays}
           </p>
         </div>
       </div>
 
-      <div className="h-px my-3.5" style={{ background: "var(--card-light-border)" }} />
+      <div className="h-px my-3.5 bg-card-light-border" />
 
       {/* ── Nhiệm vụ hôm nay ── */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold" style={{ color: "var(--content-heading)" }}>
+        <h3 className="text-sm font-bold text-content-heading">
           Nhiệm vụ hôm nay
         </h3>
-        <span className="text-[11px]" style={{ color: "var(--content-muted)" }}>
+        <span className="text-[11px] text-content-muted">
           {doneCount}/{data.quests.length} hoàn thành
         </span>
       </div>
@@ -205,13 +196,9 @@ export function DailyQuestsCard() {
                     }
                   : undefined
               }
-              className="w-full flex items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left transition-opacity"
-              style={{
-                background: "var(--bg-surface)",
-                borderColor: "var(--card-light-border)",
-                cursor: tappable ? "pointer" : "default",
-                opacity: q.claimed ? 0.75 : 1,
-              }}
+              className={`w-full flex items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left transition-opacity bg-bg-surface border-card-light-border ${
+                tappable ? "cursor-pointer" : "cursor-default"
+              } ${q.claimed ? "opacity-75" : "opacity-100"}`}
             >
               {/* Icon màu theo loại nhiệm vụ */}
               <div
@@ -219,24 +206,22 @@ export function DailyQuestsCard() {
                 style={{ background: meta.bg }}
               >
                 {q.completed ? (
-                  <CheckCircleIcon className="w-[18px] h-[18px]" weight="fill" style={{ color: STREAK_GREEN }} />
+                  <CheckCircle2 className="w-[18px] h-[18px] text-[#16A34A]" fill="currentColor" stroke="white" />
                 ) : (
-                  <Icon className="w-4 h-4" weight="bold" style={{ color: meta.color }} />
+                  <Icon className="w-4 h-4" style={{ color: meta.color }} strokeWidth={2.5} />
                 )}
               </div>
 
               {/* Tên + progress bar */}
               <div className="flex-1 min-w-0 space-y-1">
                 <p
-                  className="text-[13px] font-semibold truncate"
-                  style={{
-                    color: q.claimed ? "var(--content-muted)" : "var(--content-text)",
-                    textDecoration: q.claimed ? "line-through" : undefined,
-                  }}
+                  className={`text-[13px] font-semibold truncate ${
+                    q.claimed ? "text-content-muted line-through" : "text-content-text"
+                  }`}
                 >
                   {q.title}
                 </p>
-                <div className="h-[5px] rounded-full overflow-hidden" style={{ background: "var(--card-light-border)" }}>
+                <div className="h-[5px] rounded-full overflow-hidden bg-card-light-border">
                   <div
                     className="h-full rounded-full transition-[width]"
                     style={{
@@ -250,14 +235,11 @@ export function DailyQuestsCard() {
               {/* Bên phải: thưởng / nút nhận / đã nhận / mũi tên */}
               {q.claimed ? (
                 celebrated ? (
-                  <span
-                    className="text-[11px] font-bold px-2 py-1 rounded-full shrink-0"
-                    style={{ background: "rgba(34,197,94,0.12)", color: STREAK_GREEN }}
-                  >
+                  <span className="text-[11px] font-bold px-2 py-1 rounded-full shrink-0 bg-[rgba(34,197,94,0.12)] text-[#16A34A]">
                     +{q.rewardTokens} 🎉
                   </span>
                 ) : (
-                  <span className="text-[11px] font-bold shrink-0" style={{ color: STREAK_GREEN }}>
+                  <span className="text-[11px] font-bold shrink-0 text-[#16A34A]">
                     Đã nhận
                   </span>
                 )
@@ -276,15 +258,14 @@ export function DailyQuestsCard() {
                       void handleClaim(q);
                     }
                   }}
-                  className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 shrink-0 min-w-[64px] justify-center cursor-pointer"
-                  style={{ background: "var(--streak-text)" }}
+                  className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 shrink-0 min-w-[64px] justify-center cursor-pointer bg-[var(--streak-text)]"
                 >
                   {busy ? (
-                    <SpinnerIcon className="w-3.5 h-3.5 animate-spin" style={{ color: "#fff" }} />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
                   ) : (
                     <>
-                      <CoinsIcon className="w-3 h-3" weight="fill" style={{ color: "#fff" }} />
-                      <span className="text-[12px] font-extrabold" style={{ color: "#fff" }}>
+                      <Coins className="w-3 h-3 text-white" fill="currentColor" />
+                      <span className="text-[12px] font-extrabold text-white">
                         +{q.rewardTokens}
                       </span>
                     </>
@@ -293,12 +274,12 @@ export function DailyQuestsCard() {
               ) : (
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="flex items-center gap-0.5">
-                    <CoinsIcon className="w-3 h-3" style={{ color: "var(--content-muted)" }} />
-                    <span className="text-[11px] font-bold" style={{ color: "var(--content-muted)" }}>
+                    <Coins className="w-3 h-3 text-content-muted" />
+                    <span className="text-[11px] font-bold text-content-muted">
                       {q.rewardTokens}
                     </span>
                   </span>
-                  <CaretRightIcon className="w-3.5 h-3.5" style={{ color: "var(--content-muted)" }} />
+                  <ChevronRight className="w-3.5 h-3.5 text-content-muted" />
                 </div>
               )}
             </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MicrophoneIcon, PaperPlaneRightIcon, WarningIcon } from "@phosphor-icons/react";
+import { Mic, Send, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 
 // ── Web Speech API types (chưa có trong lib dom mặc định) ──
 declare global {
@@ -168,20 +169,15 @@ export function ChatInput({
 
   return (
     <div
-      className="sticky bottom-0 z-10 px-4 py-3 border-t shrink-0 pb-[calc(env(safe-area-inset-bottom)+12px)]"
-      style={{
-        borderColor: "var(--border-default)",
-        background: "var(--bg-main)",
-      }}
+      className="sticky bottom-0 z-10 px-4 py-3 border-t border-border-default shrink-0 pb-[calc(env(safe-area-inset-bottom)+12px)] bg-bg-main"
     >
       {/* Recording indicator */}
       {isRecording && (
         <div className="flex items-center gap-2 mb-2 px-1">
           <span
-            className="w-2 h-2 rounded-full animate-pulse"
-            style={{ background: "#ef4444" }}
+            className="w-2 h-2 rounded-full animate-pulse bg-red-500"
           />
-          <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+          <span className="text-xs text-content-text">
             Đang nghe... bấm mic lần nữa để dừng và gửi
           </span>
         </div>
@@ -204,17 +200,12 @@ export function ChatInput({
           disabled={disabled || isRecording}
           maxLength={MAX_LENGTH + 20}
           rows={1}
-          className="flex-1 resize-none rounded-xl px-4 py-2.5 text-sm outline-none
-                     transition-all placeholder:text-[var(--text-secondary)]
-                     disabled:opacity-60 overflow-hidden"
-          style={{
-            background: "var(--bg-elevated)",
-            border: `1px solid ${isRecording ? "rgba(239,68,68,0.4)" : "var(--border-default)"}`,
-            color: "var(--text-primary)",
-            lineHeight: "1.5",
-            minHeight: "48px",
-            maxHeight: "160px",
-          }}
+          className={cn(
+            "flex-1 resize-none rounded-xl px-4 py-2.5 text-sm outline-none leading-normal min-h-12 max-h-40",
+            "transition-all placeholder:text-content-text",
+            "disabled:opacity-60 overflow-hidden bg-bg-elevated text-content-heading",
+            isRecording ? "border border-red-500/40" : "border border-border-default",
+          )}
         />
 
         {/* Mic button (click-to-toggle) — chỉ hiện khi browser support */}
@@ -225,24 +216,20 @@ export function ChatInput({
             disabled={disabled || isLoading}
             aria-label={isRecording ? "Dừng ghi âm và gửi" : "Bắt đầu ghi âm"}
             title={isRecording ? "Bấm lần nữa để dừng và gửi" : "Bấm để nói"}
-            className="w-10 h-10 flex items-center justify-center rounded-xl
-                       transition-all active:scale-95 select-none
-                       disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-            style={{
-              background: isRecording
-                ? "rgba(239,68,68,0.15)"
-                : "var(--bg-elevated)",
-              border: `1px solid ${isRecording ? "rgba(239,68,68,0.5)" : "var(--border-default)"}`,
-              boxShadow: isRecording ? "0 0 12px rgba(239,68,68,0.2)" : "none",
-              WebkitUserSelect: "none",
-              userSelect: "none",
-            }}
+            className={cn(
+              "w-10 h-10 flex items-center justify-center rounded-xl",
+              "transition-all active:scale-95 select-none",
+              "disabled:opacity-30 disabled:cursor-not-allowed shrink-0",
+              isRecording
+                ? "bg-red-500/15 border border-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.2)]"
+                : "bg-bg-elevated border border-border-default",
+            )}
           >
-            <MicrophoneIcon
-              className="w-4 h-4 transition-colors"
-              style={{
-                color: isRecording ? "#ef4444" : "var(--text-secondary)",
-              }}
+            <Mic
+              className={cn(
+                "w-4 h-4 transition-colors",
+                isRecording ? "text-red-500" : "text-content-text",
+              )}
             />
           </button>
         )}
@@ -253,30 +240,26 @@ export function ChatInput({
           onClick={handleSend}
           disabled={!text.trim() || isLoading || disabled || isOverLimit}
           aria-label="Gửi tin nhắn"
-          className="w-10 h-10 flex items-center justify-center rounded-xl
-                     transition-all hover:brightness-110 active:scale-95
-                     disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-          style={{
-            background: text.trim()
-              ? "linear-gradient(135deg, var(--accent-gold), var(--truffle))"
-              : "var(--bg-elevated)",
-            border: "1px solid var(--border-default)",
-          }}
+          className={cn(
+            "w-10 h-10 flex items-center justify-center rounded-xl",
+            "transition-all hover:brightness-110 active:scale-95",
+            "disabled:opacity-30 disabled:cursor-not-allowed shrink-0",
+            "border border-border-default",
+            text.trim()
+              ? "bg-gradient-to-br from-accent-gold to-(--truffle)"
+              : "bg-bg-elevated",
+          )}
         >
           {isLoading ? (
             <div
-              className="w-4 h-4 rounded-full border-2 animate-spin"
-              style={{
-                borderColor: "var(--accent-gold)",
-                borderTopColor: "transparent",
-              }}
+              className="w-4 h-4 rounded-full border-2 border-accent-gold border-t-transparent animate-spin"
             />
           ) : (
-            <PaperPlaneRightIcon
-              className="w-4 h-4"
-              style={{
-                color: text.trim() ? "var(--bg-deep)" : "var(--text-secondary)",
-              }}
+            <Send
+              className={cn(
+                "w-4 h-4",
+                text.trim() ? "text-bg-deep" : "text-content-text",
+              )}
             />
           )}
         </button>
@@ -284,24 +267,22 @@ export function ChatInput({
 
       <div className="flex items-center justify-between mt-1.5 px-1">
         <p
-          className="text-[10px]"
-          style={{ color: "var(--text-secondary)", opacity: 0.92 }}
+          className="text-[10px] text-content-text/92"
         >
           Enter để gửi · Shift+Enter xuống dòng
           {isSupported ? " · Bấm mic để nói, bấm lần nữa để dừng" : ""}
         </p>
         <div
-          className="flex items-center gap-1 text-[10px]"
-          style={{
-            color: isOverLimit
-              ? "var(--accent-danger, #ef4444)"
+          className={cn(
+            "flex items-center gap-1 text-[10px]",
+            isOverLimit
+              ? "text-accent-danger"
               : remainingChars <= 20
-                ? "var(--accent-gold)"
-                : "var(--text-secondary)",
-            opacity: isOverLimit ? 1 : 0.92,
-          }}
+                ? "text-accent-gold"
+                : "text-content-text/92",
+          )}
         >
-          {isOverLimit && <WarningIcon className="w-3 h-3" />}
+          {isOverLimit && <AlertTriangle className="w-3 h-3" />}
           <span>
             {isOverLimit
               ? `Vượt quá ${text.length - MAX_LENGTH} ký tự`

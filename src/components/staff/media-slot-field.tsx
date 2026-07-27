@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { UploadSimpleIcon, TrashIcon } from "@phosphor-icons/react";
+import { Upload, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StaffFormLabel } from "@/components/staff/staff-form";
 
@@ -63,7 +63,7 @@ export function MediaSlotField({
             disabled={disabled || isBusy}
             onClick={() => inputRef.current?.click()}
           >
-            <UploadSimpleIcon className="mr-1.5 h-3.5 w-3.5" />
+            <Upload className="mr-1.5 h-3.5 w-3.5" />
             {hasValue ? "Thay đổi" : "Tải lên"}
           </Button>
           {hasValue && onClear && (
@@ -73,9 +73,9 @@ export function MediaSlotField({
               variant="ghost"
               disabled={disabled || isBusy}
               onClick={onClear}
-              style={{ color: "var(--accent-danger)" }}
+              className="text-accent-danger"
             >
-              <TrashIcon className="mr-1 h-3.5 w-3.5" />
+              <Trash2 className="mr-1 h-3.5 w-3.5" />
               Xóa
             </Button>
           )}
@@ -114,12 +114,12 @@ export function MediaSlotField({
         </p>
       )}
       {caption && (
-        <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+        <p className="text-xs text-content-muted">
           {caption}
         </p>
       )}
       {errorMessage && (
-        <p className="text-[11px] font-medium" style={{ color: "var(--accent-danger)" }}>
+        <p className="text-[11px] font-medium text-accent-danger">
           {errorMessage}
         </p>
       )}

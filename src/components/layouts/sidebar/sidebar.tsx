@@ -12,8 +12,10 @@ import { useSidebar } from "./sidebar-context";
 export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }: { sections: SidebarSection[]; showUpgrade?: boolean; logoHref?: string }) {
   const [isPinned, setIsPinned] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isDesktopExpanded = isPinned || isHovered;
+  // On tablet (md–lg) force icon-only; on desktop respect pin/hover
+  const isDesktopExpanded = isTablet ? false : (isPinned || isHovered);
 
   // Mobile drawer state from context
   const { isMobileOpen, closeMobileSidebar } = useSidebar();
@@ -29,11 +31,14 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
     return () => window.clearTimeout(timeoutId);
   }, []);
 
-  // Close mobile drawer on route change / resize past md
+  // Close mobile drawer on route change / resize past md; track tablet range
   useEffect(() => {
     const onResize = () => {
-      if (window.innerWidth >= 768) closeMobileSidebar();
+      const w = window.innerWidth;
+      if (w >= 768) closeMobileSidebar();
+      setIsTablet(w >= 768 && w < 1024);
     };
+    onResize();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [closeMobileSidebar]);
@@ -64,13 +69,9 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
   const sidebarContent = (isExpanded: boolean) => (
     <aside
       className={cn(
-        "relative h-screen flex flex-col transition-all duration-250 ease-in-out select-none shrink-0 border-r z-40",
-        isExpanded ? "w-[220px]" : "w-[68px]",
+        "relative h-screen flex flex-col transition-all duration-250 ease-in-out select-none shrink-0 border-r z-40 bg-sidebar-bg border-sidebar-border",
+        isExpanded ? "w-64" : "w-16",
       )}
-      style={{
-        background: "var(--sidebar-bg)",
-        borderColor: "var(--sidebar-border)",
-      }}
     >
       {/* Grain texture */}
       <div

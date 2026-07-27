@@ -12,7 +12,7 @@ export function MarkdownMessage({ text }: Props) {
   const components: Components = {
     p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
     strong: ({ children }) => (
-      <strong className="font-semibold" style={{ color: "var(--accent-gold)" }}>
+      <strong className="font-semibold text-accent-gold">
         {children}
       </strong>
     ),

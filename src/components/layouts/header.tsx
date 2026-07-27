@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils/cn";
 import { SearchInputWithSuggestions } from "@/components/commons/search-input-with-suggestions";
 import { useAuthStore } from "@/store/auth.store";
 import { GreetingSection } from "../home/greeting-section";
@@ -11,26 +13,32 @@ import { ThemeToggle } from "./theme-toggle";
 export default function Header() {
   const user = useAuthStore((s) => s.user);
   const { toggleMobileSidebar } = useSidebar();
+  const [isCompact, setIsCompact] = useState(false);
+
+  useEffect(() => {
+    // The scroll container is the <main> element with overflow-y-auto
+    const scrollEl = document.querySelector("main");
+    if (!scrollEl) return;
+    const onScroll = () => {
+      setIsCompact(scrollEl.scrollTop > 10);
+    };
+    scrollEl.addEventListener("scroll", onScroll, { passive: true });
+    return () => scrollEl.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <header
-      className="sticky top-0 z-50 h-16 w-full border-b"
-      style={{
-        background: "var(--header-bg)",
-        borderColor: "var(--header-border)",
-      }}
+      className={cn(
+        "sticky top-0 z-50 w-full border-b border-header-border backdrop-blur-md bg-header-bg/80 transition-[height] duration-200 ease-in-out",
+        isCompact ? "h-12" : "h-16",
+      )}
     >
-      <div className="flex h-full items-center justify-between px-3 md:px-6 gap-4">
+      <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
         {/* Mobile hamburger — opens sidebar drawer */}
         <button
           onClick={toggleMobileSidebar}
           aria-label="Open menu"
-          className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg border transition-colors shrink-0"
-          style={{
-            color: "var(--header-text-muted)",
-            borderColor: "var(--header-border)",
-            background: "transparent",
-          }}
+          className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg border transition-colors shrink-0 text-header-text-muted border-header-border bg-transparent"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor">
             <path d="M2 4.5h14M2 9h14M2 13.5h14" strokeWidth="2" strokeLinecap="round" />

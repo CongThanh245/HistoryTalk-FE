@@ -70,8 +70,7 @@ function TierCard({
 
       {isCurrent ? (
         <div
-          className={`upgrade-pro-action is-current ${isFeatured ? "is-featured" : ""}`}
-          style={{ cursor: "default", pointerEvents: "none" }}
+          className={`upgrade-pro-action is-current cursor-default pointer-events-none ${isFeatured ? "is-featured" : ""}`}
         >
           Gói hiện tại
         </div>
@@ -80,8 +79,7 @@ function TierCard({
           type="button"
           disabled={isLoading}
           onClick={() => onCheckout(tier.tierId)}
-          className={`upgrade-pro-action ${isFeatured ? "is-featured" : ""}`}
-          style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? "wait" : "pointer" }}
+          className={`upgrade-pro-action ${isFeatured ? "is-featured" : ""} ${isLoading ? "opacity-70 cursor-wait" : "opacity-100 cursor-pointer"}`}
         >
           {isLoading ? "Đang xử lý..." : "Đăng ký ngay"}
         </button>
@@ -108,16 +106,16 @@ function TierCard({
 
 function SkeletonCard({ index }: { index: number }) {
   return (
-    <section className={`upgrade-pro-card upgrade-pro-card-${index}`} style={{ opacity: 0.6 }}>
+    <section className={`upgrade-pro-card upgrade-pro-card-${index} opacity-60`}>
       <div className="upgrade-pro-card-head">
-        <CrownIcon className="size-5" style={{ color: "rgba(255,255,255,0.2)" }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ height: 18, width: "60%", background: "rgba(255,255,255,0.1)", borderRadius: 6, marginBottom: 8 }} />
-          <div style={{ height: 14, width: "80%", background: "rgba(255,255,255,0.07)", borderRadius: 6 }} />
+        <CrownIcon className="size-5 text-white/20" />
+        <div className="flex-1">
+          <div className="h-[18px] w-[60%] bg-white/10 rounded-md mb-2" />
+          <div className="h-3.5 w-[80%] bg-white/[0.07] rounded-md" />
         </div>
       </div>
-      <div style={{ height: 40, width: "50%", background: "rgba(255,255,255,0.1)", borderRadius: 8, marginTop: 28 }} />
-      <div style={{ height: 44, background: "rgba(255,255,255,0.08)", borderRadius: 8, marginTop: 22 }} />
+      <div className="h-10 w-1/2 bg-white/10 rounded-lg mt-7" />
+      <div className="h-11 bg-white/[0.08] rounded-lg mt-[22px]" />
     </section>
   );
 }
@@ -181,7 +179,7 @@ export function UpgradeProDialog({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
       {children && (
-        <div onClick={handleTriggerClick} style={{ display: "contents" }}>
+        <div onClick={handleTriggerClick} className="contents">
           {children}
         </div>
       )}
@@ -199,7 +197,7 @@ export function UpgradeProDialog({
             <XIcon className="size-5" />
           </DialogPrimitive.Close>
 
-          <div className="upgrade-pro-grid" style={{ marginTop: 60 }}>
+          <div className="upgrade-pro-grid mt-[60px]">
             {isLoading
               ? [0, 1, 2].map((i) => <SkeletonCard key={i} index={i} />)
               : activeTiers.map((tier, index) => (

@@ -24,28 +24,20 @@ export default async function EventsPage() {
   });
 
   return (
-    <div className="px-3 py-4 md:px-6 md:py-6">
-      <div className="space-y-5 md:space-y-5">
-        <div className="flex items-center gap-3">
-          <div>
-            <h1
-              className="text-xl md:text-2xl font-bold"
-              style={{ color: "var(--content-heading)" }}
-            >
-              Sự kiện lịch sử
-            </h1>
-            <p
-              className="text-xs md:text-sm mt-0.5"
-              style={{ color: "var(--content-muted)" }}
-            >
-              Hành trình qua các mốc lịch sử quan trọng của dân tộc
-            </p>
-          </div>
+    <div className="space-y-6 lg:space-y-8 py-6 lg:py-8">
+      <div className="flex items-center gap-3">
+        <div>
+          <h1 className="font-title text-xl md:text-2xl font-bold text-content-heading">
+            Sự kiện lịch sử
+          </h1>
+          <p className="text-xs md:text-sm mt-0.5 text-content-muted">
+            Hành trình qua các mốc lịch sử quan trọng của dân tộc
+          </p>
         </div>
-        <HydrationBoundary state={dehydrate(queryClient)}>
-          <EventsClient />
-        </HydrationBoundary>
       </div>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <EventsClient />
+      </HydrationBoundary>
     </div>
   );
 }

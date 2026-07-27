@@ -33,19 +33,15 @@ export function StaffStatCard({
 }: StaffStatCardProps) {
   return (
     <div
-      className={cn("rounded-xl border p-4 shadow-sm", className)}
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
+      className={cn("rounded-xl border border-card-border bg-card-bg p-4 shadow-sm", className)}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--content-subtle)]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-content-subtle">
             {label}
           </p>
           <p
-            className="mt-1 truncate text-2xl font-extrabold text-[var(--content-heading)]"
+            className="mt-1 truncate text-2xl font-extrabold text-content-heading"
             style={valueColor ? { color: valueColor } : undefined}
           >
             {value}

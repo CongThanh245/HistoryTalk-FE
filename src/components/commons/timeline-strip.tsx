@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useCallback } from "react";
 import { gsap } from "gsap";
-import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 export interface TimelineItem {
@@ -66,7 +66,8 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
 
   const btnBase =
     "w-7 h-7 md:w-8 md:h-8 shrink-0 rounded-full border flex items-center justify-center transition-all duration-150 " +
-    "hover:border-[var(--accent-gold)] hover:text-[var(--gold-on-light)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer";
+    "bg-card-bg border-card-border text-content-heading " +
+    "hover:border-accent-gold hover:text-[var(--gold-on-light)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer";
 
   return (
     <div className="flex items-center gap-1 md:gap-2">
@@ -76,38 +77,27 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
         disabled={activeIdx === 0}
         aria-label="Chọn sự kiện trước"
         className={btnBase}
-        style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
       >
-        <CaretLeftIcon className="w-3.5 h-3.5" aria-hidden="true" />
+        <ChevronLeft className="w-3.5 h-3.5" aria-hidden="true" />
       </button>
 
       {/* Track outer — clipping container */}
       <div className="flex-1 overflow-hidden relative h-16 md:h-[72px]">
         {/* Axis line */}
         <div
-          className="absolute left-0 right-0 pointer-events-none"
-          style={{
-            top: "50%", transform: "translateY(-50%)", height: 2,
-            background: "linear-gradient(to right, transparent 0%, var(--card-light-border) 3%, var(--card-light-border) 97%, transparent 100%)",
-          }}
+          className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 pointer-events-none bg-[linear-gradient(to_right,transparent_0%,var(--card-light-border)_3%,var(--card-light-border)_97%,transparent_100%)]"
         />
 
         {/* Progress fill */}
         <div
           ref={progressRef}
-          className="absolute pointer-events-none"
-          style={{
-            top: "50%", transform: "translateY(-50%)", left: 0, height: 2, width: 0,
-            background: "linear-gradient(to right, var(--gold-soft, #c9a24d), var(--accent-gold, #a07828))",
-            borderRadius: 1, transition: "width 0.38s ease",
-          }}
+          className="absolute top-1/2 -translate-y-1/2 left-0 h-0.5 w-0 pointer-events-none rounded-[1px] bg-[linear-gradient(to_right,var(--gold-soft,#c9a24d),var(--accent-gold,#a07828))] transition-[width] duration-[380ms] ease-[ease]"
         />
 
         {/* Scrollable items — khoảng cách đều nhau */}
         <div
           ref={trackRef}
-          className="absolute top-0 flex items-center h-16 md:h-[72px]"
-          style={{ willChange: "transform", paddingLeft: 16, paddingRight: 16 }}
+          className="absolute top-0 flex items-center h-16 md:h-[72px] will-change-transform px-4"
         >
           {items.map((item, i) => {
             const isActive = item.id === activeId;
@@ -118,28 +108,23 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
                 onClick={() => onSelect(item.id)}
                 aria-label={`Chọn sự kiện năm ${item.yearLabel}`}
                 aria-current={isActive ? "step" : undefined}
-                className="tl-item flex flex-col items-center relative cursor-pointer group w-[64px] md:w-20 h-16 md:h-[72px] bg-transparent border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--card-light-bg)] rounded-lg"
+                className="tl-item flex flex-col items-center relative cursor-pointer group w-[64px] md:w-20 h-16 md:h-[72px] bg-transparent border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-card-bg rounded-lg"
               >
                 {/* Year label — alternating top/bottom */}
                 <span
                   className={cn(
-                    "absolute text-[9px] md:text-[10px] font-bold tracking-wide transition-colors duration-150 whitespace-nowrap",
-                    i % 2 === 0 ? "bottom-1.5 md:bottom-2.5" : "top-1.5 md:top-2.5"
+                    "absolute text-[9px] md:text-[10px] font-bold tracking-wide transition-colors duration-150 whitespace-nowrap font-[Georgia,serif]",
+                    i % 2 === 0 ? "bottom-1.5 md:bottom-2.5" : "top-1.5 md:top-2.5",
+                    isActive ? "text-[var(--gold-on-light,#a07828)]" : "text-content-muted",
                   )}
-                  style={{
-                    fontFamily: "Georgia, serif",
-                    color: isActive ? "var(--gold-on-light, #a07828)" : "var(--content-muted)",
-                  }}
                 >
                   {item.yearLabel}
                 </span>
 
-                {/* Dot */}
+                {/* Dot — dynamic size/color driven by runtime props */}
                 <div
-                  className="tl-dot absolute rounded-full transition-all duration-200"
+                  className="tl-dot absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-200"
                   style={{
-                    top: "50%", left: "50%",
-                    transform: "translate(-50%, -50%)",
                     width: isActive ? 14 : 10,
                     height: isActive ? 14 : 10,
                     background: isActive ? dotColor : "var(--card-light-bg)",
@@ -159,9 +144,8 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
         disabled={activeIdx === items.length - 1}
         aria-label="Chọn sự kiện tiếp theo"
         className={btnBase}
-        style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
       >
-        <CaretRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
+        <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
       </button>
     </div>
   );
