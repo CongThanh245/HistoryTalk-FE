@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { BookOpen, Star, Timer } from "lucide-react";
 import type { QuizSet } from "@/services/quiz.service";
 import { cn } from "@/lib/utils/cn";
+import { useAuthStore } from "@/store/auth.store";
+import { useMyQuizResults } from "@/features/quiz/hooks";
+import { QuizHistoryView } from "./quiz-history-view";
 
 const ERA_LABELS: Record<QuizSet["era"], string> = {
   ALL: "Tổng hợp",
@@ -39,6 +42,17 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
   const [customMinutes, setCustomMinutes] = useState("");
   // Che do luyen tap: hien dung/sai ngay sau moi cau, chay song song che do thi hien tai.
   const [mode, setMode] = useState<"exam" | "practice">("exam");
+
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  // Lich su lam bai rieng cho quiz nay (BE loc theo quizId).
+  const { data: historyData, isLoading: historyLoading } = useMyQuizResults(
+    { quizId: quiz.quizId, size: 20 },
+    isAuthenticated,
+  );
+  const quizHistory = useMemo(
+    () => historyData?.content ?? [],
+    [historyData?.content],
+  );
 
   const resolvedLimitedTime = useMemo(() => {
     const minutes = Number(customMinutes);
@@ -110,7 +124,6 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                 {[
                   { label: "Lượt làm", value: quiz.playCount.toLocaleString("vi-VN") },
                   { label: "Cấp độ", value: LEVEL_LABELS[quiz.level] ?? quiz.level },
-                  { label: "Câu hỏi", value: "Tải khi bắt đầu" },
                   ...(quiz.userPlayCount
                     ? [{ label: "Bạn đã làm", value: `${quiz.userPlayCount} lần` }]
                     : []),
@@ -128,6 +141,16 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                   </div>
                 ))}
               </div>
+
+              {isAuthenticated && (
+                <div className="mt-8">
+                  <QuizHistoryView
+                    results={quizHistory}
+                    isLoading={historyLoading}
+                    onRetake={() => onStart(resolvedLimitedTime, mode === "practice")}
+                  />
+                </div>
+              )}
             </div>
 
             <aside className="rounded-xl border border-accent-gold/24 bg-accent-gold/[0.08] p-5">

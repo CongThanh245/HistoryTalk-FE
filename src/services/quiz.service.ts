@@ -96,6 +96,8 @@ export interface GetQuizSetsResponse {
 export interface GetQuizResultsParams {
   page?: number; // default 0
   size?: number; // default 10
+  /** Loc lich su theo 1 quiz cu the (BE: GET /quizzes/results/me?quizId=...). */
+  quizId?: string;
 }
 
 export interface GetQuizResultsResponse {
@@ -311,7 +313,11 @@ export const quizService = {
     params?: GetQuizResultsParams,
   ): Promise<GetQuizResultsResponse> => {
     const res = await axiosClient.get("/quizzes/results/me", {
-      params: { page: params?.page ?? 0, size: params?.size ?? 10 },
+      params: {
+        page: params?.page ?? 0,
+        size: params?.size ?? 10,
+        quizId: params?.quizId,
+      },
     });
     const raw = res.data.data;
     return {
