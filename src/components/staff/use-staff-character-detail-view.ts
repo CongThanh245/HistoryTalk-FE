@@ -93,8 +93,8 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     onUnmapContext,
     initialContexts,
     initialEditing,
-    documents = [],
     isExtractPdfDocumentPending = false,
+    onUpdateDocument,
   } = props;
 
   /* ── State ── */
@@ -105,7 +105,15 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   const [errors, setErrors] = React.useState<ValidationErrors<CharacterValidationField>>({});
   const [quickErrors, setQuickErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
   const [activeTab, setActiveTab] = React.useState<FormTabKey>("basic");
-  const [documentDetailOpen, setDocumentDetailOpen] = React.useState(false);
+
+  /* ── Document view/edit/delete (edit mode) ── */
+  const [viewingDocument, setViewingDocument] = React.useState<RagDocument | null>(null);
+  const [editingDocument, setEditingDocument] = React.useState<RagDocument | null>(null);
+  const [editDraftTitle, setEditDraftTitle] = React.useState("");
+  const [editDraftContent, setEditDraftContent] = React.useState("");
+  const [isSavingDocumentEdit, setIsSavingDocumentEdit] = React.useState(false);
+  const [deleteDocumentTarget, setDeleteDocumentTarget] = React.useState<RagDocument | null>(null);
+
   const [isRecreatingSession, setIsRecreatingSession] = React.useState(false);
   const [isSwitchingContext, setIsSwitchingContext] = React.useState(false);
 
@@ -145,7 +153,7 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
       "name", "title", "background", "image", "modelUrl", "personality",
       "bornYear", "bornMonth", "bornDay", "isBornBc",
       "deathYear", "deathMonth", "deathDay", "isDeathBc",
-      "isActive", "isPublished", "documentId", "documentTitle", "documentContent"
+      "isActive", "isPublished"
     ];
 
     return keys.some(key => {
@@ -187,25 +195,29 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     [],
   );
 
-  const selectDocument = (document: RagDocument) => {
-    setDraft((s) => ({
-      ...s,
-      documentId: getDocumentId(document),
-      documentTitle: document.title ?? "",
-      documentContent: document.content ?? "",
-    }));
+  const openDocumentEdit = (document: RagDocument) => {
+    setEditingDocument(document);
+    setEditDraftTitle(document.title ?? "");
+    setEditDraftContent(document.content ?? "");
   };
 
-  const [skipAutoSelect, setSkipAutoSelect] = React.useState(false);
+  const closeDocumentEdit = () => {
+    setEditingDocument(null);
+  };
 
-  const clearDocumentDraft = () => {
-    setSkipAutoSelect(true);
-    setDraft((s) => ({
-      ...s,
-      documentId: undefined,
-      documentTitle: "",
-      documentContent: "",
-    }));
+  const handleSaveDocumentEdit = async () => {
+    if (!editingDocument || !onUpdateDocument) return;
+    const docId = getDocumentId(editingDocument);
+    if (!docId) return;
+    setIsSavingDocumentEdit(true);
+    try {
+      await onUpdateDocument(docId, { title: editDraftTitle.trim(), content: editDraftContent.trim() });
+      closeDocumentEdit();
+    } catch {
+      // onUpdateDocument's hook already shows an error toast
+    } finally {
+      setIsSavingDocumentEdit(false);
+    }
   };
 
   const cancelEditing = () => {
@@ -265,25 +277,6 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
       setDraft(initialDraft);
     }
   }, [initialDraft, isEditing]);
-
-  // Reset skipAutoSelect when initialDraft changes (different character loaded)
-  React.useEffect(() => {
-    if (skipAutoSelect) {
-      setSkipAutoSelect(false);
-    }
-  }, [initialDraft?.id]);
-
-  React.useEffect(() => {
-    if (mode !== "edit" || draft.documentId || draft.documentContent || skipAutoSelect) return;
-    const firstDocument = documents[0];
-    if (!firstDocument) return;
-    setDraft((s) => ({
-      ...s,
-      documentId: getDocumentId(firstDocument),
-      documentTitle: firstDocument.title ?? "",
-      documentContent: firstDocument.content ?? "",
-    }));
-  }, [documents, draft.documentContent, draft.documentId, getDocumentId, mode, skipAutoSelect]);
 
   React.useEffect(() => {
     setMappedContexts(initialContexts ?? []);
@@ -597,11 +590,20 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     handleSaveClick,
 
     // documents / RAG
-    documentDetailOpen,
-    setDocumentDetailOpen,
     getDocumentId,
-    selectDocument,
-    clearDocumentDraft,
+    viewingDocument,
+    setViewingDocument,
+    editingDocument,
+    editDraftTitle,
+    setEditDraftTitle,
+    editDraftContent,
+    setEditDraftContent,
+    openDocumentEdit,
+    closeDocumentEdit,
+    handleSaveDocumentEdit,
+    isSavingDocumentEdit,
+    deleteDocumentTarget,
+    setDeleteDocumentTarget,
 
     // PDF dialogs
     uploadDialogOpen,

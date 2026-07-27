@@ -38,8 +38,8 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     onSave,
     isPending,
     initialEditing,
-    documents = [],
     isExtractPdfDocumentPending = false,
+    onUpdateDocument,
   } = props;
 
   const [draft, setDraft] = React.useState<ContextDraft>(initialDraft || EMPTY_CONTEXT_DRAFT);
@@ -48,6 +48,14 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
   const [leaveDialogOpen, setLeaveDialogOpen] = React.useState(false);
   const [errors, setErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
   const [activeTab, setActiveTab] = React.useState<FormTabKey>("basic");
+
+  /* ── Document view/edit/delete (edit mode) ── */
+  const [viewingDocument, setViewingDocument] = React.useState<RagDocument | null>(null);
+  const [editingDocument, setEditingDocument] = React.useState<RagDocument | null>(null);
+  const [editDraftTitle, setEditDraftTitle] = React.useState("");
+  const [editDraftContent, setEditDraftContent] = React.useState("");
+  const [isSavingDocumentEdit, setIsSavingDocumentEdit] = React.useState(false);
+  const [deleteDocumentTarget, setDeleteDocumentTarget] = React.useState<RagDocument | null>(null);
 
   const tabHasError = React.useCallback(
     (tab: FormTabKey) => TAB_ERROR_FIELDS[tab].some((field) => !!errors[field]),
@@ -80,7 +88,7 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
 
     const keys: (keyof ContextDraft)[] = [
       "name", "description", "era", "year", "location", "imageUrl", "videoUrl",
-      "isPublished", "documentId", "documentTitle", "documentContent",
+      "isPublished",
     ];
 
     return keys.some((key) => (draft[key] ?? "") !== (initialDraft[key] ?? ""));
@@ -112,25 +120,29 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     [],
   );
 
-  const selectDocument = (document: RagDocument) => {
-    setDraft((s) => ({
-      ...s,
-      documentId: getDocumentId(document),
-      documentTitle: document.title ?? "",
-      documentContent: document.content ?? "",
-    }));
+  const openDocumentEdit = (document: RagDocument) => {
+    setEditingDocument(document);
+    setEditDraftTitle(document.title ?? "");
+    setEditDraftContent(document.content ?? "");
   };
 
-  const [skipAutoSelect, setSkipAutoSelect] = React.useState(false);
+  const closeDocumentEdit = () => {
+    setEditingDocument(null);
+  };
 
-  const clearDocumentDraft = () => {
-    setSkipAutoSelect(true);
-    setDraft((s) => ({
-      ...s,
-      documentId: undefined,
-      documentTitle: "",
-      documentContent: "",
-    }));
+  const handleSaveDocumentEdit = async () => {
+    if (!editingDocument || !onUpdateDocument) return;
+    const docId = getDocumentId(editingDocument);
+    if (!docId) return;
+    setIsSavingDocumentEdit(true);
+    try {
+      await onUpdateDocument(docId, { title: editDraftTitle.trim(), content: editDraftContent.trim() });
+      closeDocumentEdit();
+    } catch {
+      // onUpdateDocument's hook already shows an error toast
+    } finally {
+      setIsSavingDocumentEdit(false);
+    }
   };
 
   const cancelEditing = () => {
@@ -145,22 +157,6 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
   React.useEffect(() => {
     if (initialDraft && !isEditing) setDraft(initialDraft);
   }, [initialDraft, isEditing]);
-
-  React.useEffect(() => {
-    if (skipAutoSelect) setSkipAutoSelect(false);
-  }, [initialDraft?.id]);
-
-  React.useEffect(() => {
-    if (mode !== "edit" || draft.documentId || draft.documentContent || skipAutoSelect) return;
-    const firstDocument = documents[0];
-    if (!firstDocument) return;
-    setDraft((s) => ({
-      ...s,
-      documentId: getDocumentId(firstDocument),
-      documentTitle: firstDocument.title ?? "",
-      documentContent: firstDocument.content ?? "",
-    }));
-  }, [documents, draft.documentContent, draft.documentId, getDocumentId, mode, skipAutoSelect]);
 
   React.useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -240,8 +236,19 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     handleSaveClick,
 
     getDocumentId,
-    selectDocument,
-    clearDocumentDraft,
+    viewingDocument,
+    setViewingDocument,
+    editingDocument,
+    editDraftTitle,
+    setEditDraftTitle,
+    editDraftContent,
+    setEditDraftContent,
+    openDocumentEdit,
+    closeDocumentEdit,
+    handleSaveDocumentEdit,
+    isSavingDocumentEdit,
+    deleteDocumentTarget,
+    setDeleteDocumentTarget,
 
     uploadDialogOpen,
     setUploadDialogOpen,
