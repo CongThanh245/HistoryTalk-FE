@@ -10,6 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { PdfFrame } from "@/components/staff/pdf-frame";
 
 interface PdfViewerDialogProps {
   open: boolean;
@@ -205,13 +206,7 @@ export function PdfViewerDialog({
               </div>
             </div>
           ) : blobUrl ? (
-            <iframe
-              key={blobUrl}
-              src={blobUrl}
-              className="w-full h-full"
-              title="PDF Viewer"
-              style={{ border: "none" }}
-            />
+            <PdfFrame key={blobUrl} src={blobUrl} title="PDF Viewer" className="w-full h-full" />
           ) : (
             <div className="h-full flex items-center justify-center">
               <div className="text-center space-y-3">

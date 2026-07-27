@@ -21,7 +21,7 @@ function layout({ children }: { children: React.ReactNode }) {
               <Breadcrumbs />
               <main
                 className="flex-1 min-h-0 overflow-y-auto"
-                style={{ background: "var(--bg-content)" }}
+                style={{ background: "var(--bg-content-decorated)" }}
               >
                 {children}
               </main>

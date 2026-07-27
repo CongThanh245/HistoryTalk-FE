@@ -14,6 +14,17 @@
     linear-gradient(180deg, #F4EEE7 0%, #EFE9E1 56%, #D1C7BD 100%);
   --bg-surface: #F7F1EA; /* Card / panel */
   --bg-elevated: #FBF7F2; /* Modal / hover surface */
+  /* --bg-content + a centered, faded Đông Sơn drum-pattern watermark plus a
+     couple of soft filled glow blobs, for the main content pane of app/staff
+     layouts (not the sidebar). Redeclared identically under .dark below —
+     inheriting this :root value across the .dark boundary would freeze its
+     var(--accent-gold)/var(--bg-main) refs at their light-theme colors. */
+  --bg-content-decorated:
+    radial-gradient(circle 200px at 88% 85%, color-mix(in srgb, var(--accent-gold) 16%, transparent), transparent 100%),
+    radial-gradient(circle 260px at 5% 15%, color-mix(in srgb, var(--accent-blue) 14%, transparent), transparent 100%),
+    linear-gradient(color-mix(in srgb, var(--bg-main) 95%, transparent), color-mix(in srgb, var(--bg-main) 95%, transparent)),
+    url('/copper_drum_pattern.webp') no-repeat center / 520px,
+    var(--bg-content);
 
   /* ─────────────────────────────
       Text – Dark backgrounds
@@ -168,6 +179,16 @@
     linear-gradient(180deg, #0e1a2b 0%, #16223a 56%, #070d18 100%);
   --bg-surface: #1a2436;
   --bg-elevated: #24314a;
+  /* Redeclared (not just inherited from :root) so its var(--accent-gold)/
+     var(--accent-blue)/var(--bg-main) refs resolve against dark's own
+     values — inheriting the :root computed value across the .dark boundary
+     would freeze those refs at their light-theme colors instead. */
+  --bg-content-decorated:
+    radial-gradient(circle 200px at 88% 85%, color-mix(in srgb, var(--accent-gold) 16%, transparent), transparent 100%),
+    radial-gradient(circle 260px at 5% 15%, color-mix(in srgb, var(--accent-blue) 14%, transparent), transparent 100%),
+    linear-gradient(color-mix(in srgb, var(--bg-main) 95%, transparent), color-mix(in srgb, var(--bg-main) 95%, transparent)),
+    url('/copper_drum_pattern.webp') no-repeat center / 520px,
+    var(--bg-content);
 
   --text-primary: #f7f1e8;
   --text-secondary: #dfdab5;
