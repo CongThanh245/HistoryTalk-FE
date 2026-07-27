@@ -119,8 +119,7 @@ export function DocumentCitationDialog({
   const { data: characterDocs, isLoading: isLoadingCharacterDocs } =
     usePublicCharacterDocuments(characterId);
   const { data: contextDocs, isLoading: isLoadingContextDocs } =
-    usePublicContextsDocuments(contextIds && contextIds.length > 0 ? contextIds : contextId ? [contextId] : []);
-  const { data: event } = useEventDetail(contextId);
+    usePublicContextsDocuments(effectiveContextIds);
 
   const documents = useMemo<RagDocument[]>(
     () => [...(characterDocs ?? []), ...(contextDocs ?? [])],
