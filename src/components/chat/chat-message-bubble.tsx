@@ -8,23 +8,13 @@ import { cn } from "@/lib/utils/cn";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { MarkdownMessage } from "./MarkdownMessage";
+import { splitAssistantContent } from "@/lib/utils/helpers";
 
 interface MessageBubbleProps {
   message: ChatMessage;
   character: ChatCharacter;
   speak?: (text: string) => void;
   onViewQuote?: (quote: string) => void;
-}
-
-// AI đôi khi trả lời kèm 1 câu hỏi gợi mở, ngăn cách bởi "---".
-// Tách thành các đoạn riêng để hiển thị như 2 tin nhắn liên tiếp thay vì dồn chung 1 bubble.
-const ASSISTANT_SPLIT_PATTERN = /\s*-{3,}\s*/;
-
-function splitAssistantContent(content: string): string[] {
-  return content
-    .split(ASSISTANT_SPLIT_PATTERN)
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
 }
 
 export function MessageBubble({
