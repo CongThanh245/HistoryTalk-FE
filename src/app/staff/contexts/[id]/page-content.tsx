@@ -155,7 +155,7 @@ export default function EditContextPage() {
         await createHistoricalDocument.mutateAsync({ contextId: id, title, content, type: "TEXT" });
       }}
       isCreateTextDocumentPending={createHistoricalDocument.isPending}
-      onExtractPdfDocument={async (file) => extractPdf.mutateAsync({ file, entityType: "context", entityId: id })}
+      onExtractPdfDocument={async (file, onProgress) => extractPdf.mutateAsync({ file, entityType: "context", entityId: id, onProgress })}
       isExtractPdfDocumentPending={extractPdf.isPending}
       onCreatePdfDocument={async ({ title, content, fileUrl }) => {
         await createHistoricalDocument.mutateAsync({ contextId: id, title, content, fileUrl });

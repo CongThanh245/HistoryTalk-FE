@@ -160,6 +160,8 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     setPendingPdfPageCount,
     pdfPreviewUrl,
     setPdfPreviewUrl,
+    pdfOcrProgress,
+    setPdfOcrProgress,
     fileInputRef,
     pendingImageFile,
     setPendingImageFile,
@@ -257,9 +259,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     setPdfPreviewUrl(localPreviewUrl);
     setPendingPdfFileUrl(null);
     setPendingPdfPageCount(null);
+    setPdfOcrProgress(null);
     if (!onExtractPdfDocument) return;
     try {
-      const result = await onExtractPdfDocument(file);
+      const result = await onExtractPdfDocument(file, (page, total) => setPdfOcrProgress({ page, total }));
       setPendingPdfFileUrl(result.fileUrl);
       setPendingPdfPageCount(result.pageCount);
       set("documentContent")(result.rawText);
@@ -278,6 +281,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     setPendingPdfFile(null);
     setPendingPdfFileUrl(null);
     setPendingPdfPageCount(null);
+    setPdfOcrProgress(null);
     if (pdfPreviewUrl) {
       URL.revokeObjectURL(pdfPreviewUrl);
       setPdfPreviewUrl(null);
@@ -705,9 +709,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           if (onCreateTextDocument) await onCreateTextDocument(data);
                         }}
                         isCreateTextPending={isCreateTextDocumentPending}
-                        onExtractPdf={async (file) => {
+                        onExtractPdf={async (file, onProgress) => {
                           if (!onExtractPdfDocument) throw new Error("onExtractPdfDocument not provided");
-                          return onExtractPdfDocument(file);
+                          return onExtractPdfDocument(file, onProgress);
                         }}
                         isExtractPdfPending={isExtractPdfDocumentPending}
                         onCreatePdf={async (data) => {
@@ -847,7 +851,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             }}
                           >
                             {isExtractPdfDocumentPending
-                              ? "Đang trích xuất..."
+                              ? pdfOcrProgress
+                                ? `Đã xử lý trang ${pdfOcrProgress.page}/${pdfOcrProgress.total} (${Math.round((pdfOcrProgress.page / pdfOcrProgress.total) * 100)}%)`
+                                : "Đang trích xuất..."
                               : pendingPdfFileUrl
                                 ? `Đã trích xuất${pendingPdfPageCount ? ` · ${pendingPdfPageCount} trang` : ""}`
                                 : "Đã chọn"}

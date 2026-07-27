@@ -66,6 +66,7 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
   const [pendingPdfFileUrl, setPendingPdfFileUrl] = React.useState<string | null>(null);
   const [pendingPdfPageCount, setPendingPdfPageCount] = React.useState<number | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
+  const [pdfOcrProgress, setPdfOcrProgress] = React.useState<{ page: number; total: number } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   /* ── Media files (image/video) for create mode ── */
@@ -260,6 +261,8 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     setPendingPdfPageCount,
     pdfPreviewUrl,
     setPdfPreviewUrl,
+    pdfOcrProgress,
+    setPdfOcrProgress,
     fileInputRef,
 
     pendingImageFile,

@@ -143,6 +143,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     setPendingPdfPageCount,
     pdfPreviewUrl,
     setPdfPreviewUrl,
+    pdfOcrProgress,
+    setPdfOcrProgress,
     fileInputRef,
     pendingImageFile,
     setPendingImageFile,
@@ -231,9 +233,10 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     setPdfPreviewUrl(localPreviewUrl);
     setPendingPdfFileUrl(null);
     setPendingPdfPageCount(null);
+    setPdfOcrProgress(null);
     if (!onExtractPdfDocument) return;
     try {
-      const result = await onExtractPdfDocument(file);
+      const result = await onExtractPdfDocument(file, (page, total) => setPdfOcrProgress({ page, total }));
       setPendingPdfFileUrl(result.fileUrl);
       setPendingPdfPageCount(result.pageCount);
       set("documentContent")(result.rawText);
@@ -252,6 +255,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     setPendingPdfFile(null);
     setPendingPdfFileUrl(null);
     setPendingPdfPageCount(null);
+    setPdfOcrProgress(null);
     if (pdfPreviewUrl) {
       URL.revokeObjectURL(pdfPreviewUrl);
       setPdfPreviewUrl(null);
@@ -631,9 +635,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           if (onCreateTextDocument) await onCreateTextDocument(data);
                         }}
                         isCreateTextPending={isCreateTextDocumentPending}
-                        onExtractPdf={async (file) => {
+                        onExtractPdf={async (file, onProgress) => {
                           if (!onExtractPdfDocument) throw new Error("onExtractPdfDocument not provided");
-                          return onExtractPdfDocument(file);
+                          return onExtractPdfDocument(file, onProgress);
                         }}
                         isExtractPdfPending={isExtractPdfDocumentPending}
                         onCreatePdf={async (data) => {
@@ -760,7 +764,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                             }}
                           >
                             {isExtractPdfDocumentPending
-                              ? "Đang trích xuất..."
+                              ? pdfOcrProgress
+                                ? `Đã xử lý trang ${pdfOcrProgress.page}/${pdfOcrProgress.total} (${Math.round((pdfOcrProgress.page / pdfOcrProgress.total) * 100)}%)`
+                                : "Đang trích xuất..."
                               : pendingPdfFileUrl
                                 ? `Đã trích xuất${pendingPdfPageCount ? ` · ${pendingPdfPageCount} trang` : ""}`
                                 : "Đã chọn"}

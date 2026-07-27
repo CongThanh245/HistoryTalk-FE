@@ -39,11 +39,21 @@ export function PdfUploadDialog({
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Revoking a blob URL while the <iframe> below is still displaying it (via
+  // Chrome's native PDF viewer) in the same tick React removes that node
+  // throws "Failed to execute 'removeChild': the node to be removed is not a
+  // child of this node" — the PDF plugin mutates the iframe's internal
+  // document asynchronously and races with React's reconciliation. Deferring
+  // the revoke to the next tick lets that teardown finish first.
+  const revokeLater = (url: string) => {
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
+
   // Cleanup preview URL when dialog closes or file changes
   React.useEffect(() => {
     return () => {
       if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
+        revokeLater(previewUrl);
       }
     };
   }, [previewUrl]);
@@ -53,7 +63,7 @@ export function PdfUploadDialog({
     if (open) {
       setSelectedFile(null);
       if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
+        revokeLater(previewUrl);
         setPreviewUrl(null);
       }
     }
@@ -87,7 +97,7 @@ export function PdfUploadDialog({
   const handleRemoveFile = () => {
     setSelectedFile(null);
     if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+      revokeLater(previewUrl);
       setPreviewUrl(null);
     }
   };
@@ -213,6 +223,7 @@ export function PdfUploadDialog({
                     style={{ borderColor: "var(--card-light-border)" }}
                   >
                     <iframe
+                      key={previewUrl}
                       src={previewUrl}
                       className="w-full h-[400px]"
                       title="PDF Preview"

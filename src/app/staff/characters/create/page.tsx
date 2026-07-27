@@ -103,7 +103,7 @@ export default function CreateCharacterPage() {
       isPending={createCharacter.isPending || createCharacterDocument.isPending || uploadCharacterMedia.isPending}
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
-      onExtractPdfDocument={async (file) => extractPdf.mutateAsync({ file, entityType: "character" })}
+      onExtractPdfDocument={async (file, onProgress) => extractPdf.mutateAsync({ file, entityType: "character", onProgress })}
       isExtractPdfDocumentPending={extractPdf.isPending}
       onMapContext={(characterId, contextId, options) =>
         mapContextToCharacter.mutate(

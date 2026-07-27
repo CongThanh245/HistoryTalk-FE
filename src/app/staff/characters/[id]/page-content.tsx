@@ -192,7 +192,7 @@ export default function EditCharacterPage() {
         await createCharacterDocument.mutateAsync({ characterId: id, title, content, type: "TEXT" });
       }}
       isCreateTextDocumentPending={createCharacterDocument.isPending}
-      onExtractPdfDocument={async (file) => extractPdf.mutateAsync({ file, entityType: "character", entityId: id })}
+      onExtractPdfDocument={async (file, onProgress) => extractPdf.mutateAsync({ file, entityType: "character", entityId: id, onProgress })}
       isExtractPdfDocumentPending={extractPdf.isPending}
       onCreatePdfDocument={async ({ title, content, fileUrl }) => {
         await createCharacterDocument.mutateAsync({ characterId: id, title, content, fileUrl });

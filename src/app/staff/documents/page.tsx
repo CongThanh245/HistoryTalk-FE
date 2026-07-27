@@ -944,7 +944,7 @@ export default function StaffDocumentsPage() {
                     }
                   }}
                   isCreateTextPending={createCharacterDocument.isPending || createHistoricalDocument.isPending}
-                  onExtractPdf={async (file) => {
+                  onExtractPdf={async (file, onProgress) => {
                     if (!documentForm.ownerId) {
                       toast.error("Vui lòng chọn đối tượng liên kết");
                       throw new Error("Missing owner");
@@ -953,6 +953,7 @@ export default function StaffDocumentsPage() {
                       file,
                       entityType: createOwnerType,
                       entityId: documentForm.ownerId,
+                      onProgress,
                     });
                   }}
                   isExtractPdfPending={extractPdf.isPending}

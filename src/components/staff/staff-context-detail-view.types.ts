@@ -78,8 +78,11 @@ export interface StaffContextDetailViewProps {
   /** Create a brand-new text document, independent of the entity's Save button (edit mode only) */
   onCreateTextDocument?: (data: { title: string; content: string }) => Promise<void>;
   isCreateTextDocumentPending?: boolean;
-  /** Upload a PDF and extract its text before the document exists — used by both the create-mode PDF picker and the edit-mode "new document" panel. */
-  onExtractPdfDocument?: (file: File) => Promise<{ fileUrl: string; rawText: string; pageCount: number }>;
+  /** Upload a PDF and extract its text before the document exists — used by both the create-mode PDF picker and the edit-mode "new document" panel. onProgress reports OCR page X/Y for scanned PDFs. */
+  onExtractPdfDocument?: (
+    file: File,
+    onProgress?: (page: number, total: number) => void
+  ) => Promise<{ fileUrl: string; rawText: string; pageCount: number }>;
   isExtractPdfDocumentPending?: boolean;
   /** Create a brand-new PDF document in one call, using content + fileUrl already produced by onExtractPdfDocument (edit mode only) */
   onCreatePdfDocument?: (data: { title: string; content: string; fileUrl: string }) => Promise<void>;

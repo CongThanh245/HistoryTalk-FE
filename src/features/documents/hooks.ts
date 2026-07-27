@@ -236,11 +236,14 @@ export function useUploadAndExtractPdf() {
       file,
       entityType,
       entityId,
+      onProgress,
     }: {
       file: File;
       entityType?: DocumentEntityType;
       entityId?: string;
-    }) => documentService.uploadAndExtractPdf(file, entityType, entityId),
+      /** Bao tien do sau moi trang xu ly xong (page/total) thay vi im lang cho toi khi xong. */
+      onProgress?: (page: number, total: number) => void;
+    }) => documentService.uploadAndExtractPdfStream(file, entityType, entityId, onProgress),
     onError: (err: unknown) => {
       toast.error(getErrorMessage(err, "Không thể trích xuất nội dung từ PDF"));
     },

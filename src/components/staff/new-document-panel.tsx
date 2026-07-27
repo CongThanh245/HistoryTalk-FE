@@ -16,8 +16,8 @@ interface NewDocumentPanelProps {
   disabled?: boolean;
   onCreateText: (data: { title: string; content: string }) => Promise<void>;
   isCreateTextPending?: boolean;
-  /** Upload the PDF and extract its text — called immediately once a file is picked. */
-  onExtractPdf: (file: File) => Promise<ExtractedPdf>;
+  /** Upload the PDF and extract its text — called immediately once a file is picked. onProgress reports page X/Y as each page finishes processing. */
+  onExtractPdf: (file: File, onProgress?: (page: number, total: number) => void) => Promise<ExtractedPdf>;
   isExtractPdfPending?: boolean;
   /** Create the document using the (possibly edited) extracted text + the fileUrl from onExtractPdf. */
   onCreatePdf: (data: { title: string; content: string; fileUrl: string }) => Promise<void>;
@@ -52,6 +52,7 @@ export function NewDocumentPanel({
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [extracted, setExtracted] = React.useState<ExtractedPdf | null>(null);
+  const [ocrProgress, setOcrProgress] = React.useState<{ page: number; total: number } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const isBusy = !!isCreateTextPending || !!isCreatePdfPending || pdfPhase === "extracting" || !!isExtractPdfPending;
@@ -60,6 +61,7 @@ export function NewDocumentPanel({
     setFile(null);
     setExtracted(null);
     setPdfPhase("pick");
+    setOcrProgress(null);
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
@@ -77,8 +79,9 @@ export function NewDocumentPanel({
     setFile(picked);
     setPreviewUrl(URL.createObjectURL(picked));
     setPdfPhase("extracting");
+    setOcrProgress(null);
     try {
-      const result = await onExtractPdf(picked);
+      const result = await onExtractPdf(picked, (page, total) => setOcrProgress({ page, total }));
       setExtracted(result);
       setContent(result.rawText);
       setTitle((current) => current.trim() || picked.name.replace(/\.pdf$/i, ""));
@@ -164,11 +167,26 @@ export function NewDocumentPanel({
           <StaffFormLabel>File PDF</StaffFormLabel>
           {pdfPhase === "extracting" ? (
             <div
-              className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-center text-xs"
+              className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-center text-xs"
               style={{ borderColor: "var(--card-light-border)", color: "var(--content-muted)" }}
             >
-              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Đang trích xuất nội dung từ PDF...
+              <div className="flex items-center gap-2">
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                {ocrProgress
+                  ? `Đã xử lý trang ${ocrProgress.page}/${ocrProgress.total} (${Math.round((ocrProgress.page / ocrProgress.total) * 100)}%)`
+                  : "Đang trích xuất nội dung từ PDF..."}
+              </div>
+              {ocrProgress ? (
+                <div className="h-1 w-full max-w-52 overflow-hidden rounded-full" style={{ background: "var(--card-light-border)" }}>
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.round((ocrProgress.page / ocrProgress.total) * 100)}%`,
+                      background: "var(--accent-gold)",
+                    }}
+                  />
+                </div>
+              ) : null}
             </div>
           ) : (
             <div
