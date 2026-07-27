@@ -19,12 +19,14 @@ import {
 interface DocumentCitationDialogProps {
   onClose: () => void;
   characterId: string;
-  /** Bối cảnh của session chat hiện tại — dùng làm fallback hiển thị video khi tài liệu khớp không xác định được bối cảnh riêng. */
+  /** Bối cảnh đang active của phiên chat — dùng để hiển thị video minh họa. */
   contextId?: string;
   /**
-   * Tất cả bối cảnh mà nhân vật tham gia (một nhân vật có thể có nhiều bối cảnh).
-   * AI có thể trích dẫn tài liệu từ bất kỳ bối cảnh nào trong số này, không chỉ
-   * bối cảnh của session hiện tại, nên phải tìm khớp trên toàn bộ tập hợp này.
+   * Tất cả bối cảnh nhân vật này liên kết (1 nhân vật có thể gắn nhiều hơn 1
+   * bối cảnh/file). Khi đối chiếu quote phải quét tài liệu của TẤT CẢ các
+   * bối cảnh này, không chỉ riêng `contextId` đang active — nếu không sẽ có
+   * trường hợp AI trích dẫn đúng nhưng dialog báo "không tìm thấy" chỉ vì tài
+   * liệu nguồn thuộc một bối cảnh khác của cùng nhân vật.
    */
   contextIds?: string[];
   /** Đoạn trích cần highlight + dùng để tìm tài liệu tương ứng. */
@@ -45,7 +47,7 @@ function DocumentContent({ content, quote }: { content: string; quote?: string |
   }, [parts]);
 
   return (
-    <p className="whitespace-pre-wrap text-sm leading-7 text-content-heading">
+    <p className="text-sm leading-7 whitespace-pre-wrap text-content-heading">
       {parts.map((part, i) =>
         part.matched ? (
           <mark
@@ -68,8 +70,8 @@ function PanelHeader({ title, onClose }: { title: string; onClose: () => void })
     <div
       className="flex items-start justify-between gap-3 px-5 pt-4 pb-3 border-b border-border-default shrink-0"
     >
-      <div className="flex items-center gap-2 min-w-0">
-        <FileText size={18} className="shrink-0 fill-current text-accent-gold" />
+      <div className="flex items-center min-w-0 gap-2">
+        <FileText size={18} className="fill-current shrink-0 text-accent-gold" />
         <h3 className="text-sm font-bold truncate text-content-heading">
           {title}
         </h3>
@@ -77,7 +79,7 @@ function PanelHeader({ title, onClose }: { title: string; onClose: () => void })
       <button
         onClick={onClose}
         aria-label="Đóng"
-        className="w-7 h-7 flex items-center justify-center rounded-full shrink-0 transition-all hover:scale-110 active:scale-95 cursor-pointer bg-bg-elevated border border-border-default text-content-text"
+        className="flex items-center justify-center transition-all border rounded-full cursor-pointer w-7 h-7 shrink-0 hover:scale-110 active:scale-95 bg-bg-elevated border-border-default text-content-text"
       >
         <X size={13} strokeWidth={3} />
       </button>
@@ -117,7 +119,8 @@ export function DocumentCitationDialog({
   const { data: characterDocs, isLoading: isLoadingCharacterDocs } =
     usePublicCharacterDocuments(characterId);
   const { data: contextDocs, isLoading: isLoadingContextDocs } =
-    usePublicContextsDocuments(effectiveContextIds);
+    usePublicContextsDocuments(contextIds && contextIds.length > 0 ? contextIds : contextId ? [contextId] : []);
+  const { data: event } = useEventDetail(contextId);
 
   const documents = useMemo<RagDocument[]>(
     () => [...(characterDocs ?? []), ...(contextDocs ?? [])],
@@ -141,11 +144,11 @@ export function DocumentCitationDialog({
   const title = matchedDocument?.title || "Nguồn tham khảo";
 
   const renderVideo = () => (
-    <div className="relative w-full aspect-video bg-black shrink-0">
+    <div className="relative w-full bg-black aspect-video shrink-0">
       <video
         src={event?.videoUrl ?? undefined}
         controls
-        className="absolute inset-0 w-full h-full object-contain"
+        className="absolute inset-0 object-contain w-full h-full"
       />
     </div>
   );
@@ -153,7 +156,7 @@ export function DocumentCitationDialog({
   const renderBody = () => {
     if (isLoading) {
       return (
-        <div className="flex items-center gap-2 text-sm px-5 py-4 text-content-text">
+        <div className="flex items-center gap-2 px-5 py-4 text-sm text-content-text">
           <Loader2 size={16} className="animate-spin" />
           Đang tải tài liệu...
         </div>
@@ -182,7 +185,7 @@ export function DocumentCitationDialog({
     return (
       <div className="flex flex-col gap-3 px-5 py-4">
         <div
-          className="flex items-start gap-2 text-sm rounded-lg border p-3 border-border-default text-content-text"
+          className="flex items-start gap-2 p-3 text-sm border rounded-lg border-border-default text-content-text"
         >
           <AlertTriangle size={16} className="shrink-0 mt-0.5" />
           <span>
@@ -191,7 +194,7 @@ export function DocumentCitationDialog({
         </div>
         {quote && (
           <blockquote
-            className="text-sm leading-relaxed pl-3 border-l-2 border-accent-gold-soft text-content-text"
+            className="pl-3 text-sm leading-relaxed border-l-2 border-accent-gold-soft text-content-text"
           >
             {quote}
           </blockquote>
@@ -212,7 +215,7 @@ export function DocumentCitationDialog({
     <>
       {/* Desktop: sidebar thật trong layout, không overlay — vẫn thao tác được với chat */}
       <div
-        className="hidden md:flex shrink-0 h-full w-105 flex-col border-l border-border-default overflow-hidden bg-bg-surface"
+        className="flex-col hidden h-full overflow-hidden border-l md:flex shrink-0 w-105 border-border-default bg-bg-surface"
       >
         {panelBody}
       </div>
