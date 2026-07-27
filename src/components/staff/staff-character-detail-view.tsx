@@ -2,21 +2,20 @@
 
 import * as React from "react";
 import {
-  ArrowLeftIcon,
-  PencilIcon,
-  ChatCircleDotsIcon,
-  EyeIcon,
-  LinkIcon,
-  CheckCircleIcon,
-  PlusIcon,
-  ScrollIcon,
-  TrashIcon,
-  MapPinIcon,
-  ImageIcon,
-  VideoIcon,
-  CubeIcon,
-  UploadSimpleIcon,
-} from "@phosphor-icons/react";
+  ArrowLeft as ArrowLeftIcon,
+  Pencil as PencilIcon,
+  MessageCircleMore as ChatCircleDotsIcon,
+  Eye as EyeIcon,
+  Link as LinkIcon,
+  CheckCircle as CheckCircleIcon,
+  Plus as PlusIcon,
+  ScrollText as ScrollIcon,
+  Trash2 as TrashIcon,
+  MapPin as MapPinIcon,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  Box as CubeIcon,
+} from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -54,7 +53,6 @@ import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
 import type { EventEraBackend } from "@/services/event.service";
 import { toast } from "sonner";
-import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import { hasValidationErrors, validateContextDraft } from "@/lib/utils/content-validation";
 import { FORM_TABS, type StaffCharacterDetailViewProps } from "./staff-character-detail-view.types";
@@ -97,8 +95,6 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     isLoadingDocuments = false,
     onDeleteDocument,
     isDeleteDocumentPending = false,
-    onUploadDocumentPdf,
-    isUploadDocumentPdfPending = false,
     onGetDocumentPdfUrl,
     isGetDocumentPdfUrlPending = false,
     onUnmapContext,
@@ -156,10 +152,6 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     isSavingDocumentEdit,
     deleteDocumentTarget,
     setDeleteDocumentTarget,
-    uploadDialogOpen,
-    setUploadDialogOpen,
-    uploadTargetDocId,
-    setUploadTargetDocId,
     viewerOpen,
     setViewerOpen,
     viewerUrl,
@@ -263,7 +255,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="hover:bg-black/[0.08] dark:hover:bg-black/[0.08]"
+            className="text-content-muted hover:bg-black/8 dark:hover:bg-black/8"
             onClick={() => {
               if (isDirty && isEditing) {
                 setLeaveDialogOpen(true);
@@ -271,7 +263,6 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 router.push("/staff/characters");
               }
             }}
-            style={{ color: "var(--content-muted)" }}
           >
             <ArrowLeftIcon className="w-5 h-5" />
           </Button>
@@ -420,7 +411,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               </p>
 
               <TabsList
-                className="grid w-full h-auto grid-cols-5 gap-1 p-1" style={{ background: "rgba(27, 38, 50, 0.04)" }}
+                className="grid w-full h-auto grid-cols-5 gap-1 p-1 bg-[rgba(27,38,50,0.04)]"
               >
                 {FORM_TABS.map((tab) => (
                   <TabsTrigger
@@ -619,7 +610,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 value={draft.background}
                 onChange={(e) => set("background")(e.target.value)}
                 placeholder="Mô tả cuộc đời, vai trò lịch sử..."
-                style={{ minHeight: "120px" }}
+                className="min-h-30"
                 disabled={!isEditing}
               />
               <ValidationErrorText message={errors.background} />
@@ -631,7 +622,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 value={draft.personality}
                 onChange={(e) => set("personality")(e.target.value)}
                 placeholder="Đặc điểm tính cách, phong cách nói chuyện..."
-                style={{ minHeight: "90px" }}
+                className="min-h-22.5"
                 disabled={!isEditing}
               />
               <ValidationErrorText message={errors.personality} />
@@ -694,7 +685,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           return (
                             <div
                               key={documentId ?? `character-document-${index}`}
-                              className="flex items-start gap-2 p-2 border rounded-md border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
+                              className="flex items-start gap-2 p-2 border rounded-md border-[var(--card-light-border)] bg-[rgba(255,255,255,0.35)]"
                             >
                               <button
                                 type="button"
@@ -715,7 +706,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full hover:bg-(--accent-gold)/15"
+                                    className="shrink-0 rounded-full text-accent-gold hover:bg-(--accent-gold)/15"
                                     disabled={isGetDocumentPdfUrlPending}
                                     onClick={async () => {
                                       if (!documentId) return;
@@ -732,29 +723,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                         setViewerLoading(false);
                                       }
                                     }}
-                                    style={{ color: "var(--accent-gold)" }}
                                     title="Xem PDF gốc"
                                   >
                                     <EyeIcon className="w-4 h-4" />
-                                  </Button>
-                                )}
-                                {onUploadDocumentPdf && !document.fileUrl && isEditing && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="shrink-0 rounded-full hover:bg-(--accent-blue)/15"
-                                    disabled={isUploadDocumentPdfPending}
-                                    onClick={() => {
-                                      if (documentId) {
-                                        setUploadTargetDocId(documentId);
-                                        setUploadDialogOpen(true);
-                                      }
-                                    }}
-                                    style={{ color: "var(--accent-blue)" }}
-                                    title="Đính kèm PDF gốc"
-                                  >
-                                    <UploadSimpleIcon className="w-4 h-4" />
                                   </Button>
                                 )}
                                 {isEditing && onUpdateDocument && (
@@ -762,9 +733,8 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    className="rounded-full shrink-0 text-content-heading"
                                     onClick={() => openDocumentEdit(document)}
-                                    style={{ color: "var(--content-heading)" }}
                                     title="Sửa nội dung"
                                   >
                                     <PencilIcon className="w-4 h-4" />
@@ -775,10 +745,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full hover:bg-(--accent-danger)/15"
+                                    className="shrink-0 rounded-full text-accent-danger hover:bg-(--accent-danger)/15"
                                     disabled={isDeleteDocumentPending}
                                     onClick={() => setDeleteDocumentTarget(document)}
-                                    style={{ color: "var(--accent-danger)" }}
                                     title="Xóa tài liệu"
                                   >
                                     <TrashIcon className="w-4 h-4" />
@@ -808,7 +777,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         };
                         return (
                           <div
-                            className="flex items-start gap-2 p-2 border rounded-md border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
+                            className="flex items-start gap-2 p-2 border rounded-md border-[var(--card-light-border)] bg-[rgba(255,255,255,0.35)]"
                           >
                             <button
                               type="button"
@@ -828,9 +797,8 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                 type="button"
                                 variant="ghost"
                                 size="icon-sm"
-                                className="shrink-0 rounded-full"
+                                className="rounded-full shrink-0 text-content-heading"
                                 onClick={() => openDocumentEdit(pendingDocument)}
-                                style={{ color: "var(--content-heading)" }}
                                 title="Sửa nội dung"
                               >
                                 <PencilIcon className="w-4 h-4" />
@@ -839,9 +807,8 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                 type="button"
                                 variant="ghost"
                                 size="icon-sm"
-                                className="shrink-0 rounded-full hover:bg-(--accent-danger)/15"
+                                className="shrink-0 rounded-full text-accent-danger hover:bg-(--accent-danger)/15"
                                 onClick={() => setDeleteDocumentTarget(pendingDocument)}
-                                style={{ color: "var(--accent-danger)" }}
                                 title="Xóa tài liệu"
                               >
                                 <TrashIcon className="w-4 h-4" />
@@ -875,9 +842,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     {mappedContexts.map(ctx => (
                       <div
                         key={ctx.contextId}
-                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl border group" style={{ borderColor: "rgba(34, 197, 94, 0.3)", background: "rgba(34, 197, 94, 0.06)" }}
+                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl border group border-[rgba(34,197,94,0.3)] bg-[rgba(34,197,94,0.06)]"
                       >
-                        <CheckCircleIcon className="w-4 h-4 shrink-0" style={{ color: "rgb(22, 163, 74)" }} />
+                        <CheckCircleIcon className="w-4 h-4 shrink-0 text-[rgb(22,163,74)]" />
                         <p className="flex-1 text-xs font-medium text-green-700">
                           Đã liên kết: {ctx.name}
                         </p>
@@ -939,13 +906,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 {/* ── Quick-create context — Sheet trigger ── */}
                 <button
                   type="button"
-                  className="w-full mt-2 flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all hover:bg-black/[0.04] border text-[var(--accent-blue)] border-[var(--card-light-border)]" style={{ background: "transparent" }}
+                  className="w-full mt-2 flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all hover:bg-black/[0.04] border text-[var(--accent-blue)] border-[var(--card-light-border)] bg-transparent"
                   onClick={() => setQuickCreateOpen(true)}
                 >
                   <PlusIcon className="h-3.5 w-3.5 shrink-0" />
                   Tạo nhanh bối cảnh mới
                   <span
-                    className="ml-auto text-[10px] font-normal px-1.5 py-0.5 rounded text-[var(--accent-blue)]" style={{ background: "rgba(59, 130, 246, 0.1)" }}
+                    className="ml-auto text-[10px] font-normal px-1.5 py-0.5 rounded text-[var(--accent-blue)] bg-[rgba(59,130,246,0.1)]"
                   >
                     Mới
                   </span>
@@ -963,7 +930,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     >
                       <div className="flex items-center gap-2.5">
                         <div
-                          className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ background: "rgba(59, 130, 246, 0.1)" }}
+                          className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0 bg-[rgba(59,130,246,0.1)]"
                         >
                           <ScrollIcon className="w-4 h-4 text-[var(--accent-blue)]" />
                         </div>
@@ -995,7 +962,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                         <div className="grid gap-1.5">
                           <Label className="text-xs font-medium text-[var(--content-heading)]">
-                            Tên bối cảnh <span style={{ color: "var(--accent-danger)" }}>*</span>
+                            Tên bối cảnh <span className="text-accent-danger">*</span>
                           </Label>
                           <Input
                             id="qc-name"
@@ -1009,7 +976,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                         <div className="grid gap-1.5">
                           <Label className="text-xs font-medium text-[var(--content-heading)]">
-                            Mô tả <span style={{ color: "var(--accent-danger)" }}>*</span>
+                            Mô tả <span className="text-accent-danger">*</span>
                           </Label>
                           <textarea
                             id="qc-description"
@@ -1025,7 +992,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         <div className="grid gap-1.5">
                           <Label className="text-xs font-medium flex items-center gap-1.5 text-[var(--content-heading)]">
                             <MapPinIcon className="h-3.5 w-3.5" />
-                            Địa điểm <span style={{ color: "var(--accent-danger)" }}>*</span>
+                            Địa điểm <span className="text-accent-danger">*</span>
                           </Label>
                           <Input
                             id="qc-location"
@@ -1052,7 +1019,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         <div className="grid grid-cols-2 gap-3">
                           <div className="grid gap-1.5">
                             <Label className="text-xs font-medium text-[var(--content-heading)]">
-                              Thời đại <span style={{ color: "var(--accent-danger)" }}>*</span>
+                              Thời đại <span className="text-accent-danger">*</span>
                             </Label>
                             <Select
                               value={quickCtx.era}
@@ -1073,7 +1040,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                           <div className="grid gap-1.5">
                             <Label className="text-xs font-medium text-[var(--content-heading)]">
-                              Năm <span style={{ color: "var(--accent-danger)" }}>*</span>
+                              Năm <span className="text-accent-danger">*</span>
                             </Label>
                             <Input
                               id="qc-year"
@@ -1135,11 +1102,11 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                       {/* Section: Trạng thái */}
                       <div
-                        className="flex items-center justify-between gap-3 px-4 py-3 transition-colors border rounded-xl" style={{ borderColor: quickCtx.isPublished ? "rgba(34, 197, 94, 0.35)" : "rgba(234, 179, 8, 0.35)", background: quickCtx.isPublished ? "rgba(34, 197, 94, 0.06)" : "rgba(254, 243, 199, 0.25)" }}
+                        className={`flex items-center justify-between gap-3 px-4 py-3 transition-colors border rounded-xl ${quickCtx.isPublished ? "border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.06)]" : "border-[rgba(234,179,8,0.35)] bg-[rgba(254,243,199,0.25)]"}`}
                       >
                         <div className="flex-1">
                           <p
-                            className="text-sm font-semibold" style={{ color: quickCtx.isPublished ? "rgb(22, 163, 74)" : "#92400e" }}
+                            className={`text-sm font-semibold ${quickCtx.isPublished ? "text-[rgb(22,163,74)]" : "text-[#92400e]"}`}
                           >
                             {quickCtx.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
                           </p>
@@ -1154,10 +1121,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           role="switch"
                           aria-checked={quickCtx.isPublished}
                           onClick={() => setQuickContextField("isPublished")(!quickCtx.isPublished)}
-                          className="relative inline-flex h-6 transition-colors border-2 border-transparent rounded-full cursor-pointer w-11 shrink-0 focus-visible:outline-none" style={{ background: quickCtx.isPublished ? "rgb(34, 197, 94)" : "rgba(234, 179, 8, 0.4)" }}
+                          className={`relative inline-flex h-6 transition-colors border-2 border-transparent rounded-full cursor-pointer w-11 shrink-0 focus-visible:outline-none ${quickCtx.isPublished ? "bg-[rgb(34,197,94)]" : "bg-[rgba(234,179,8,0.4)]"}`}
                         >
                           <span
-                            className="block w-5 h-5 transition-transform rounded-full shadow-lg pointer-events-none" style={{ background: "#fff", transform: quickCtx.isPublished ? "translateX(20px)" : "translateX(0)" }}
+                            className={`block w-5 h-5 transition-transform rounded-full shadow-lg pointer-events-none bg-white ${quickCtx.isPublished ? "translate-x-5" : "translate-x-0"}`}
                           />
                         </button>
                       </div>
@@ -1252,7 +1219,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             <div className="relative flex flex-col items-center justify-center flex-1 p-12">
               <div className="w-full max-w-2xl aspect-[4/3] relative rounded-3xl overflow-hidden shadow-2xl border border-[var(--card-light-border)]">
                 {/* Blurred mock-up */}
-                <div className="absolute inset-0 bg-white" style={{ filter: "blur(40px)", opacity: 0.6 }} />
+                <div className="absolute inset-0 bg-white blur-2xl opacity-60" />
                 <div className="absolute inset-0 flex flex-col p-8 space-y-6 opacity-20 bg-gray-50">
                   <div className="w-48 h-12 bg-gray-300 rounded-full" />
                   <div className="w-2/3 h-24 bg-gray-200 rounded-2xl" />
@@ -1286,25 +1253,6 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
         </div>
       </div>
 
-      {/* PDF Upload Dialog */}
-      <PdfUploadDialog
-        open={uploadDialogOpen}
-        onOpenChange={(open) => {
-          setUploadDialogOpen(open);
-          if (!open) setUploadTargetDocId(null);
-        }}
-        onUpload={async (file) => {
-          if (uploadTargetDocId && onUploadDocumentPdf) {
-            await onUploadDocumentPdf(uploadTargetDocId, file);
-            setUploadDialogOpen(false);
-            setUploadTargetDocId(null);
-          }
-        }}
-        isUploading={isUploadDocumentPdfPending}
-        title="Upload PDF"
-        description="Chọn file PDF để upload cho tài liệu này. Bạn có thể xem preview trước khi xác nhận."
-      />
-
       {/* PDF Viewer Dialog */}
       <PdfViewerDialog
         open={viewerOpen}
@@ -1323,7 +1271,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
         titleBadge={
           viewingDocument?.fileUrl ? (
             <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" style={{ background: "rgba(234, 179, 8, 0.12)", color: "rgb(146, 64, 14)" }}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[rgba(234,179,8,0.12)] text-[rgb(146,64,14)]"
             >
               Có PDF gốc
             </span>
@@ -1338,7 +1286,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
           <DialogHeader className="shrink-0 border-b px-6 py-4 border-[var(--card-light-border)]">
             <DialogTitle>Sửa tài liệu</DialogTitle>
           </DialogHeader>
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
+          <div className="flex-1 min-h-0 px-6 py-4 space-y-4 overflow-y-auto">
             <div className="grid gap-1.5">
               <StaffFormLabel>Tiêu đề</StaffFormLabel>
               <StaffFormInput
@@ -1359,7 +1307,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 value={editDraftContent}
                 onChange={(e) => setEditDraftContent(e.target.value)}
                 placeholder="Nội dung tài liệu"
-                style={{ minHeight: "260px" }}
+                className="min-h-65"
                 disabled={isSavingDocumentEdit}
               />
             </div>

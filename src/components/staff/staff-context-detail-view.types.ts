@@ -58,8 +58,6 @@ export interface StaffContextDetailViewProps {
   isLoadingDocuments?: boolean;
   onDeleteDocument?: (docId: string) => void;
   isDeleteDocumentPending?: boolean;
-  onUploadDocumentPdf?: (docId: string, file: File) => Promise<void>;
-  isUploadDocumentPdfPending?: boolean;
   onGetDocumentPdfUrl?: (docId: string) => Promise<{ url: string; expiresIn: number }>;
   isGetDocumentPdfUrlPending?: boolean;
 

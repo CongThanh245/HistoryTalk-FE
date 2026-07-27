@@ -4,19 +4,18 @@ import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeftIcon,
-  PencilIcon,
-  EyeIcon,
-  TrashIcon,
-  ImageIcon,
-  VideoIcon,
-  UploadSimpleIcon,
-  ArrowsOutIcon,
-  UsersIcon,
-  LinkBreakIcon,
-  MagnifyingGlassIcon,
-  ScrollIcon,
-} from "@phosphor-icons/react";
+  ArrowLeft as ArrowLeftIcon,
+  Pencil as PencilIcon,
+  Eye as EyeIcon,
+  Trash2 as TrashIcon,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  Expand as ArrowsOutIcon,
+  Users as UsersIcon,
+  Unlink as LinkBreakIcon,
+  Search as MagnifyingGlassIcon,
+  ScrollText as ScrollIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   StaffFormLabel,
@@ -32,7 +31,6 @@ import { MediaSlotField } from "@/components/staff/media-slot-field";
 import { NewDocumentPanel } from "@/components/staff/new-document-panel";
 import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
-import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import { isValidUrl } from "@/lib/utils/url";
 import { toast } from "sonner";
@@ -79,8 +77,6 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     isLoadingDocuments = false,
     onDeleteDocument,
     isDeleteDocumentPending = false,
-    onUploadDocumentPdf,
-    isUploadDocumentPdfPending = false,
     onGetDocumentPdfUrl,
     isGetDocumentPdfUrlPending = false,
     onUploadMedia,
@@ -141,10 +137,6 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     isSavingDocumentEdit,
     deleteDocumentTarget,
     setDeleteDocumentTarget,
-    uploadDialogOpen,
-    setUploadDialogOpen,
-    uploadTargetDocId,
-    setUploadTargetDocId,
     viewerOpen,
     setViewerOpen,
     viewerUrl,
@@ -246,7 +238,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="hover:bg-black/[0.08] dark:hover:bg-black/[0.08]"
+            className="text-content-muted hover:bg-black/8 dark:hover:bg-black/8"
             onClick={() => {
               if (isDirty && isEditing) {
                 setLeaveDialogOpen(true);
@@ -254,7 +246,6 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                 router.push("/staff/contexts");
               }
             }}
-            style={{ color: "var(--content-muted)" }}
           >
             <ArrowLeftIcon className="h-5 w-5" />
           </Button>
@@ -392,8 +383,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
               </p>
 
               <TabsList
-                className="w-full grid h-auto p-1 gap-1"
-                style={{ background: "rgba(27,38,50,0.04)", gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))` }}
+                className={`w-full grid h-auto p-1 gap-1 bg-[rgba(27,38,50,0.04)] ${visibleTabs.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}
               >
                 {visibleTabs.map((tab) => (
                   <TabsTrigger
@@ -456,7 +446,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     value={draft.description}
                     onChange={(e) => set("description")(e.target.value)}
                     placeholder="Bối cảnh lịch sử..."
-                    style={{ minHeight: "120px" }}
+                    className="min-h-30"
                     disabled={!isEditing}
                   />
                   <ValidationErrorText message={errors.description} />
@@ -622,7 +612,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           return (
                             <div
                               key={documentId ?? `historical-document-${index}`}
-                              className="flex items-start gap-2 rounded-md border p-2 border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
+                              className="flex items-start gap-2 rounded-md border p-2 border-[var(--card-light-border)] bg-[rgba(255,255,255,0.35)]"
                             >
                               <button
                                 type="button"
@@ -643,7 +633,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    className="shrink-0 rounded-full text-accent-gold"
                                     disabled={isGetDocumentPdfUrlPending}
                                     onClick={async () => {
                                       if (!documentId) return;
@@ -658,29 +648,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                         setViewerLoading(false);
                                       }
                                     }}
-                                    style={{ color: "var(--accent-gold)" }}
                                     title="Xem PDF gốc"
                                   >
                                     <EyeIcon className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                {onUploadDocumentPdf && !document.fileUrl && isEditing && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="shrink-0 rounded-full"
-                                    disabled={isUploadDocumentPdfPending}
-                                    onClick={() => {
-                                      if (documentId) {
-                                        setUploadTargetDocId(documentId);
-                                        setUploadDialogOpen(true);
-                                      }
-                                    }}
-                                    style={{ color: "var(--accent-blue)" }}
-                                    title="Đính kèm PDF gốc"
-                                  >
-                                    <UploadSimpleIcon className="h-4 w-4" />
                                   </Button>
                                 )}
                                 {isEditing && onUpdateDocument && (
@@ -688,9 +658,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    className="shrink-0 rounded-full text-content-heading"
                                     onClick={() => openDocumentEdit(document)}
-                                    style={{ color: "var(--content-heading)" }}
                                     title="Sửa nội dung"
                                   >
                                     <PencilIcon className="h-4 w-4" />
@@ -701,10 +670,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    className="shrink-0 rounded-full text-accent-danger"
                                     disabled={isDeleteDocumentPending}
                                     onClick={() => setDeleteDocumentTarget(document)}
-                                    style={{ color: "var(--accent-danger)" }}
                                     title="Xóa tài liệu"
                                   >
                                     <TrashIcon className="h-4 w-4" />
@@ -734,7 +702,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                         };
                         return (
                           <div
-                            className="flex items-start gap-2 rounded-md border p-2 border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
+                            className="flex items-start gap-2 rounded-md border p-2 border-[var(--card-light-border)] bg-[rgba(255,255,255,0.35)]"
                           >
                             <button
                               type="button"
@@ -754,9 +722,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                 type="button"
                                 variant="ghost"
                                 size="icon-sm"
-                                className="shrink-0 rounded-full"
+                                className="shrink-0 rounded-full text-content-heading"
                                 onClick={() => openDocumentEdit(pendingDocument)}
-                                style={{ color: "var(--content-heading)" }}
                                 title="Sửa nội dung"
                               >
                                 <PencilIcon className="h-4 w-4" />
@@ -765,9 +732,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                 type="button"
                                 variant="ghost"
                                 size="icon-sm"
-                                className="shrink-0 rounded-full"
+                                className="shrink-0 rounded-full text-accent-danger"
                                 onClick={() => setDeleteDocumentTarget(pendingDocument)}
-                                style={{ color: "var(--accent-danger)" }}
                                 title="Xóa tài liệu"
                               >
                                 <TrashIcon className="h-4 w-4" />
@@ -802,7 +768,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     {charactersInContext.map((character) => (
                       <div
                         key={character.id}
-                        className="flex items-center gap-3 rounded-lg border p-2.5 border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
+                        className="flex items-center gap-3 rounded-lg border p-2.5 border-[var(--card-light-border)] bg-[rgba(255,255,255,0.35)]"
                       >
                         <StaffImageHoverPreview
                           src={character.avatarUrl}
@@ -836,10 +802,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                               type="button"
                               variant="ghost"
                               size="icon-sm"
-                              className="rounded-full"
+                              className="rounded-full text-accent-danger"
                               title="Gỡ liên kết khỏi bối cảnh"
                               disabled={!isEditing}
-                              style={{ color: "var(--accent-danger)" }}
                               onClick={() => setUnmapTarget({ characterId: character.id, name: character.name })}
                             >
                               <LinkBreakIcon className="h-4 w-4" />
@@ -918,14 +883,14 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto p-6 gap-4 bg-[var(--bg-app)]">
           <div className="flex flex-col sm:flex-row gap-4">
             <div
-              className="flex-1 min-w-0 overflow-hidden rounded-xl border border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
+              className="flex-1 min-w-0 overflow-hidden rounded-xl border border-[var(--card-light-border)] bg-[rgba(255,255,255,0.35)]"
             >
               <div className="border-b px-3 py-2 border-[var(--card-light-border)]">
                 <p className="text-xs font-semibold text-[var(--content-heading)]">
                   Xem trước ảnh
                 </p>
               </div>
-              <div className="group relative aspect-video max-h-48" style={{ background: "#0b0f14" }}>
+              <div className="group relative aspect-video max-h-48 bg-[#0b0f14]">
                 {isValidUrl(draft.imageUrl) ? (
                   <>
                     <Image src={draft.imageUrl} alt={draft.name || "Ảnh bối cảnh"} fill className="object-contain" sizes="300px" />
@@ -947,7 +912,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             </div>
 
             <div
-              className="flex-1 min-w-0 overflow-hidden rounded-xl border border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
+              className="flex-1 min-w-0 overflow-hidden rounded-xl border border-[var(--card-light-border)] bg-[rgba(255,255,255,0.35)]"
             >
               <div className="border-b px-3 py-2 border-[var(--card-light-border)]">
                 <p className="text-xs font-semibold text-[var(--content-heading)]">
@@ -966,7 +931,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   </button>
                 )}
                 {draft.videoUrl ? (
-                  <video src={draft.videoUrl} controls className="h-full w-full object-contain" style={{ background: "#000" }} />
+                  <video src={draft.videoUrl} controls className="h-full w-full object-contain bg-black" />
                 ) : (
                   <div className="flex h-full items-center justify-center px-4 text-center text-xs text-[var(--content-muted)]">
                     Tải lên file video (.mp4) ở tab Media để xem trước
@@ -996,7 +961,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
           <DialogTitle className="sr-only">Xem đầy đủ video bối cảnh</DialogTitle>
           <div className="aspect-video w-full">
             {videoLightboxOpen && draft.videoUrl && (
-              <video src={draft.videoUrl} controls autoPlay className="h-full w-full object-contain" style={{ background: "#000" }} />
+              <video src={draft.videoUrl} controls autoPlay className="h-full w-full object-contain bg-black" />
             )}
           </div>
         </DialogContent>
@@ -1018,25 +983,6 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         }}
       />
 
-      {/* PDF Upload Dialog */}
-      <PdfUploadDialog
-        open={uploadDialogOpen}
-        onOpenChange={(open) => {
-          setUploadDialogOpen(open);
-          if (!open) setUploadTargetDocId(null);
-        }}
-        onUpload={async (file) => {
-          if (uploadTargetDocId && onUploadDocumentPdf) {
-            await onUploadDocumentPdf(uploadTargetDocId, file);
-            setUploadDialogOpen(false);
-            setUploadTargetDocId(null);
-          }
-        }}
-        isUploading={isUploadDocumentPdfPending}
-        title="Upload PDF"
-        description="Chọn file PDF để upload cho tài liệu này. Bạn có thể xem preview trước khi xác nhận."
-      />
-
       {/* PDF Viewer Dialog */}
       <PdfViewerDialog
         open={viewerOpen}
@@ -1055,7 +1001,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         titleBadge={
           viewingDocument?.fileUrl ? (
             <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" style={{ background: "rgba(234, 179, 8, 0.12)", color: "rgb(146, 64, 14)" }}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[rgba(234,179,8,0.12)] text-[rgb(146,64,14)]"
             >
               Có PDF gốc
             </span>
@@ -1091,7 +1037,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                 value={editDraftContent}
                 onChange={(e) => setEditDraftContent(e.target.value)}
                 placeholder="Nội dung tài liệu"
-                style={{ minHeight: "260px" }}
+                className="min-h-65"
                 disabled={isSavingDocumentEdit}
               />
             </div>

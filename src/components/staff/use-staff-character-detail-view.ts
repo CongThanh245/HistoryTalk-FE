@@ -123,8 +123,6 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   );
 
   /* ── PDF Dialog State ── */
-  const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
-  const [uploadTargetDocId, setUploadTargetDocId] = React.useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = React.useState(false);
   const [viewerUrl, setViewerUrl] = React.useState<string | null>(null);
   const [viewerLoading, setViewerLoading] = React.useState(false);
@@ -606,10 +604,6 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     setDeleteDocumentTarget,
 
     // PDF dialogs
-    uploadDialogOpen,
-    setUploadDialogOpen,
-    uploadTargetDocId,
-    setUploadTargetDocId,
     viewerOpen,
     setViewerOpen,
     viewerUrl,

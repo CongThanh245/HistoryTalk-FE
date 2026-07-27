@@ -14,7 +14,6 @@ import {
   useCreateHistoricalDocument,
   useUpdateHistoricalDocument,
   useDeleteHistoricalDocument,
-  useUploadDocumentPdf,
   useGetDocumentPdfUrl,
   useUploadAndExtractPdf,
 } from "@/features/documents/hooks";
@@ -36,7 +35,6 @@ export default function EditContextPage() {
   const createHistoricalDocument = useCreateHistoricalDocument();
   const updateHistoricalDocument = useUpdateHistoricalDocument(id);
   const deleteHistoricalDocument = useDeleteHistoricalDocument(id);
-  const uploadDocumentPdf = useUploadDocumentPdf();
   const getDocumentPdfUrl = useGetDocumentPdfUrl();
   const extractPdf = useUploadAndExtractPdf();
   const uploadContextMedia = useUploadContextMedia();
@@ -116,10 +114,6 @@ export default function EditContextPage() {
       isLoadingDocuments={historicalDocuments.isLoading}
       onDeleteDocument={(docId) => deleteHistoricalDocument.mutate(docId)}
       isDeleteDocumentPending={deleteHistoricalDocument.isPending}
-      onUploadDocumentPdf={async (docId, file) => {
-        await uploadDocumentPdf.mutateAsync({ docId, file });
-      }}
-      isUploadDocumentPdfPending={uploadDocumentPdf.isPending}
       onGetDocumentPdfUrl={async (docId) => getDocumentPdfUrl.mutateAsync(docId)}
       isGetDocumentPdfUrlPending={getDocumentPdfUrl.isPending}
       onUploadMedia={(contextId, file, mediaType, onProgress) =>
