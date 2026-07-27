@@ -106,7 +106,7 @@ export function createCharacterColumns({
       id: "actions",
       header: "Thao tác",
       cell: ({ row }) => (
-        <div className="flex min-w-[230px] items-center gap-2">
+        <div className="flex min-w-[140px] items-center gap-2">
           <Button
             variant="outline"
             className="h-8 rounded-md px-3 text-xs font-semibold border-card-light-border text-content-heading hover:bg-black/[0.04] hover:text-[var(--content-heading)]"

@@ -17,7 +17,7 @@ function layout({ children }: { children: React.ReactNode }) {
             <Breadcrumbs />
             <main
               className="flex-1 overflow-y-auto staff-theme"
-              style={{ background: "var(--bg-content)" }}
+              style={{ background: "var(--bg-content-decorated)" }}
             >
               {children}
             </main>

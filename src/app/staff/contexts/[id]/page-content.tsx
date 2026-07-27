@@ -16,6 +16,7 @@ import {
   useDeleteHistoricalDocument,
   useUploadDocumentPdf,
   useGetDocumentPdfUrl,
+  useUploadAndExtractPdf,
 } from "@/features/documents/hooks";
 import {
   useCharacters,
@@ -37,6 +38,7 @@ export default function EditContextPage() {
   const deleteHistoricalDocument = useDeleteHistoricalDocument(id);
   const uploadDocumentPdf = useUploadDocumentPdf();
   const getDocumentPdfUrl = useGetDocumentPdfUrl();
+  const extractPdf = useUploadAndExtractPdf();
   const uploadContextMedia = useUploadContextMedia();
   const deleteContextMedia = useDeleteContextMedia();
 
@@ -141,9 +143,9 @@ export default function EditContextPage() {
       isUploadDocumentPdfPending={uploadDocumentPdf.isPending}
       onGetDocumentPdfUrl={async (docId) => getDocumentPdfUrl.mutateAsync(docId)}
       isGetDocumentPdfUrlPending={getDocumentPdfUrl.isPending}
-      onUploadMedia={async (contextId, file, mediaType) => {
-        await uploadContextMedia.mutateAsync({ contextId, file, mediaType });
-      }}
+      onUploadMedia={(contextId, file, mediaType, onProgress) =>
+        uploadContextMedia.mutateAsync({ contextId, file, mediaType, onProgress })
+      }
       isUploadMediaPending={uploadContextMedia.isPending}
       onDeleteMedia={async (contextId, mediaType) => {
         await deleteContextMedia.mutateAsync({ contextId, mediaType });
@@ -153,21 +155,12 @@ export default function EditContextPage() {
         await createHistoricalDocument.mutateAsync({ contextId: id, title, content, type: "TEXT" });
       }}
       isCreateTextDocumentPending={createHistoricalDocument.isPending}
-      onCreatePdfDocument={async ({ title, file }) => {
-        // BE currently requires non-empty content on creation — this placeholder
-        // is never shown to staff, it just satisfies that constraint so a PDF
-        // document can be created without typing text content first.
-        const newDoc = await createHistoricalDocument.mutateAsync({
-          contextId: id,
-          title,
-          content: "PDF Document",
-          type: "TEXT",
-        });
-        if (newDoc.id) {
-          await uploadDocumentPdf.mutateAsync({ docId: newDoc.id, file });
-        }
+      onExtractPdfDocument={async (file, onProgress) => extractPdf.mutateAsync({ file, entityType: "context", entityId: id, onProgress })}
+      isExtractPdfDocumentPending={extractPdf.isPending}
+      onCreatePdfDocument={async ({ title, content, fileUrl }) => {
+        await createHistoricalDocument.mutateAsync({ contextId: id, title, content, fileUrl });
       }}
-      isCreatePdfDocumentPending={createHistoricalDocument.isPending || uploadDocumentPdf.isPending}
+      isCreatePdfDocumentPending={createHistoricalDocument.isPending}
       charactersInContext={charactersInContext.data ?? []}
       isLoadingCharactersInContext={charactersInContext.isLoading}
       characterSearch={characterSearch}

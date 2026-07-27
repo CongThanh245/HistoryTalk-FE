@@ -18,6 +18,7 @@ import {
   useUpdateCharacterDocument,
   useUploadDocumentPdf,
   useGetDocumentPdfUrl,
+  useUploadAndExtractPdf,
 } from "@/features/documents/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -44,6 +45,7 @@ export default function EditCharacterPage() {
   const deleteCharacterDocument = useDeleteCharacterDocument(id);
   const uploadDocumentPdf = useUploadDocumentPdf();
   const getDocumentPdfUrl = useGetDocumentPdfUrl();
+  const extractPdf = useUploadAndExtractPdf();
   const mapContextToCharacter = useMapContextToCharacter();
   const unmapContextFromCharacter = useUnmapContextFromCharacter();
   const uploadCharacterMedia = useUploadCharacterMedia();
@@ -190,21 +192,12 @@ export default function EditCharacterPage() {
         await createCharacterDocument.mutateAsync({ characterId: id, title, content, type: "TEXT" });
       }}
       isCreateTextDocumentPending={createCharacterDocument.isPending}
-      onCreatePdfDocument={async ({ title, file }) => {
-        // BE currently requires non-empty content on creation — this placeholder
-        // is never shown to staff, it just satisfies that constraint so a PDF
-        // document can be created without typing text content first.
-        const newDoc = await createCharacterDocument.mutateAsync({
-          characterId: id,
-          title,
-          content: "PDF Document",
-          type: "TEXT",
-        });
-        if (newDoc.id) {
-          await uploadDocumentPdf.mutateAsync({ docId: newDoc.id, file });
-        }
+      onExtractPdfDocument={async (file, onProgress) => extractPdf.mutateAsync({ file, entityType: "character", entityId: id, onProgress })}
+      isExtractPdfDocumentPending={extractPdf.isPending}
+      onCreatePdfDocument={async ({ title, content, fileUrl }) => {
+        await createCharacterDocument.mutateAsync({ characterId: id, title, content, fileUrl });
       }}
-      isCreatePdfDocumentPending={createCharacterDocument.isPending || uploadDocumentPdf.isPending}
+      isCreatePdfDocumentPending={createCharacterDocument.isPending}
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
       onMapContext={(characterId, contextId, options) =>

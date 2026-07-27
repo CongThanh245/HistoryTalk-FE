@@ -15,6 +15,12 @@
     linear-gradient(180deg, oklch(98.5% 0.008 85) 0%, oklch(97% 0.012 85) 50%, oklch(94.5% 0.015 80) 100%);
   --bg-surface: oklch(99% 0.006 85);
   --bg-elevated: oklch(99.8% 0.003 85);
+  --bg-content-decorated:
+    radial-gradient(circle 200px at 88% 85%, color-mix(in srgb, var(--accent-gold) 16%, transparent), transparent 100%),
+    radial-gradient(circle 260px at 5% 15%, color-mix(in srgb, var(--accent-blue) 14%, transparent), transparent 100%),
+    linear-gradient(color-mix(in srgb, var(--bg-main) 95%, transparent), color-mix(in srgb, var(--bg-main) 95%, transparent)),
+    url('/copper_drum_pattern.webp') no-repeat center / 520px,
+    var(--bg-content);
 
   /* ─────────────────────────────
       Text
@@ -183,6 +189,12 @@
     linear-gradient(180deg, oklch(14% 0.02 250) 0%, oklch(18% 0.025 250) 56%, oklch(10% 0.015 250) 100%);
   --bg-surface: oklch(20% 0.025 250);
   --bg-elevated: oklch(26% 0.03 250);
+  --bg-content-decorated:
+    radial-gradient(circle 200px at 88% 85%, color-mix(in srgb, var(--accent-gold) 16%, transparent), transparent 100%),
+    radial-gradient(circle 260px at 5% 15%, color-mix(in srgb, var(--accent-blue) 14%, transparent), transparent 100%),
+    linear-gradient(color-mix(in srgb, var(--bg-main) 95%, transparent), color-mix(in srgb, var(--bg-main) 95%, transparent)),
+    url('/copper_drum_pattern.webp') no-repeat center / 520px,
+    var(--bg-content);
 
   --text-primary: oklch(96% 0.008 85);
   --text-secondary: oklch(88% 0.02 85);
