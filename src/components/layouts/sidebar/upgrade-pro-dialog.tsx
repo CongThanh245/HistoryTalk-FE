@@ -43,7 +43,7 @@ function TierCard({
   const isFeatured = index === 0;
   const isLoading = loadingId === tier.tierId;
   const isFree = tier.amount === 0;
-  const isCurrent = isFree || tier.tierId === currentTierId;
+  const isCurrent = currentTierId ? tier.tierId === currentTierId : isFree;
 
   const features: [string, string][] = [
     ["Thời hạn", `${tier.noMonth} tháng`],
