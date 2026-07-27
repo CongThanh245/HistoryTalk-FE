@@ -4,21 +4,21 @@ import { useMemo, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-  ArrowClockwiseIcon,
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  CalendarBlankIcon,
-  CheckCircleIcon,
-  ClockCountdownIcon,
-  HourglassIcon,
-  MagnifyingGlassIcon,
-  PackageIcon,
-  ReceiptIcon,
-  ShieldCheckIcon,
-  TrendUpIcon,
-  UserIcon,
-  XCircleIcon,
-} from "@phosphor-icons/react";
+  RefreshCw,
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  CheckCircle2,
+  Timer,
+  Hourglass,
+  Search,
+  Package,
+  Receipt,
+  ShieldCheck,
+  TrendingUp,
+  User,
+  XCircle,
+} from "lucide-react";
 import { queryKeys } from "@/shared/query-key";
 import { paymentService, type PaymentHistoryItem } from "@/services/payment.service";
 import { adminDashboardService } from "@/services/admin.dashboard.service";
@@ -59,17 +59,17 @@ function getStatusConfig(status: string) {
   const map = {
     PAID: {
       label: "Đã thanh toán",
-      icon: <CheckCircleIcon size={14} weight="fill" />,
+      icon: <CheckCircle2 size={14} />,
       classes: "border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
     },
     CANCELLED: {
       label: "Đã hủy",
-      icon: <XCircleIcon size={14} weight="fill" />,
+      icon: <XCircle size={14} />,
       classes: "border-rose-500/25 bg-rose-500/10 text-rose-600 dark:text-rose-300",
     },
     PENDING: {
       label: "Chờ thanh toán",
-      icon: <HourglassIcon size={14} weight="fill" />,
+      icon: <Hourglass size={14} />,
       classes: "border-amber-500/25 bg-amber-500/10 text-amber-600 dark:text-amber-300",
     },
   } as const;
@@ -77,7 +77,7 @@ function getStatusConfig(status: string) {
   return (
     map[normalized as keyof typeof map] ?? {
       label: status,
-      icon: <ClockCountdownIcon size={14} weight="fill" />,
+      icon: <Timer size={14} />,
       classes: "border-slate-500/25 bg-slate-500/10 text-slate-600 dark:text-slate-300",
     }
   );
@@ -111,7 +111,7 @@ function HistoryRow({ item, index }: { item: PaymentHistoryItem; index: number }
         <div className="min-w-0 flex-1 pl-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="grid size-9 place-items-center rounded-lg bg-[var(--bg-content)] text-[var(--accent-gold)]">
-              <PackageIcon size={18} weight="duotone" />
+              <Package size={18} />
             </span>
             <div className="min-w-0">
               <h2 className="truncate text-base font-bold text-[var(--content-heading)]">
@@ -126,11 +126,11 @@ function HistoryRow({ item, index }: { item: PaymentHistoryItem; index: number }
 
           <div className="mt-4 grid gap-2 text-xs text-[var(--content-muted)] sm:grid-cols-2">
             <div className="inline-flex items-center gap-2">
-              <CalendarBlankIcon size={15} className="text-[var(--content-subtle)]" />
+              <CalendarDays size={15} className="text-[var(--content-subtle)]" />
               Tạo lúc {formatDate(item.createdAt)}
             </div>
             <div className="inline-flex items-center gap-2">
-              <ShieldCheckIcon
+              <ShieldCheck
                 size={15}
                 className={paid ? "text-emerald-600" : "text-[var(--content-subtle)]"}
               />
@@ -138,7 +138,7 @@ function HistoryRow({ item, index }: { item: PaymentHistoryItem; index: number }
             </div>
             {item.userName && (
               <div className="inline-flex items-center gap-2 sm:col-span-2">
-                <UserIcon size={15} className="text-[var(--content-subtle)]" />
+                <User size={15} className="text-[var(--content-subtle)]" />
                 <span className="font-medium text-[var(--content-heading)]">{item.userName}</span>
                 {item.userEmail && <span className="text-[var(--content-subtle)]">· {item.userEmail}</span>}
               </div>
@@ -209,20 +209,12 @@ function AdminToolbar({
 
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
         <div className="relative w-full sm:w-[320px]">
-          <MagnifyingGlassIcon
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
-            style={{ color: "var(--content-subtle)" }}
-          />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle" />
           <Input
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Tìm mã đơn, email, người dùng..."
-            className="h-10 rounded-xl border pl-10"
-            style={{
-              background: "rgba(27,38,50,0.05)",
-              borderColor: "var(--card-light-border)",
-              color: "var(--content-heading)",
-            }}
+            className="h-10 rounded-xl border pl-10 bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
           />
         </div>
         <Button
@@ -230,10 +222,9 @@ function AdminToolbar({
           variant="outline"
           onClick={onRefresh}
           disabled={isFetching}
-          className="h-10 rounded-xl"
-          style={{ borderColor: "var(--card-light-border)" }}
+          className="h-10 rounded-xl border-card-light-border"
         >
-          <ArrowClockwiseIcon size={16} className={isFetching ? "animate-spin" : ""} />
+          <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} />
           Làm mới
         </Button>
       </div>
@@ -271,10 +262,9 @@ function PaginationBar({
           variant="outline"
           onClick={onPrevious}
           disabled={!hasPrevious || isFetching}
-          className="h-9 rounded-lg px-3"
-          style={{ borderColor: "var(--card-light-border)" }}
+          className="h-9 rounded-lg px-3 border-card-light-border"
         >
-          <ArrowLeftIcon size={14} />
+          <ArrowLeft size={14} />
           Trước
         </Button>
         <Button
@@ -282,11 +272,10 @@ function PaginationBar({
           variant="outline"
           onClick={onNext}
           disabled={!hasNext || isFetching}
-          className="h-9 rounded-lg px-3"
-          style={{ borderColor: "var(--card-light-border)" }}
+          className="h-9 rounded-lg px-3 border-card-light-border"
         >
           Sau
-          <ArrowRightIcon size={14} />
+          <ArrowRight size={14} />
         </Button>
       </div>
     </div>
@@ -461,7 +450,7 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
       <StaffShell
         title="Lịch sử giao dịch"
         description="Theo dõi doanh thu, trạng thái thanh toán và các giao dịch trong hệ thống."
-        icon={ReceiptIcon}
+        icon={Receipt}
         accent="var(--accent-gold)"
       >
         <div className="space-y-6">
@@ -469,25 +458,25 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
             <StaffStatCard
               label="Doanh thu đã thu"
               value={statsLoading ? "--" : formatCurrency(summary.totalPaid)}
-              icon={<TrendUpIcon size={20} />}
+              icon={<TrendingUp size={20} />}
               tone="gold"
             />
             <StaffStatCard
               label="Tổng giao dịch"
               value={statsLoading ? "--" : summary.total.toString()}
-              icon={<ReceiptIcon size={20} />}
+              icon={<Receipt size={20} />}
               tone="blue"
             />
             <StaffStatCard
               label="Đã thanh toán"
               value={statsLoading ? "--" : summary.paid.toString()}
-              icon={<CheckCircleIcon size={20} />}
+              icon={<CheckCircle2 size={20} />}
               tone="green"
             />
             <StaffStatCard
               label="Đang chờ"
               value={statsLoading ? "--" : summary.pending.toString()}
-              icon={<HourglassIcon size={20} />}
+              icon={<Hourglass size={20} />}
               tone="amber"
             />
           </StaffStatsGrid>
@@ -498,13 +487,7 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
             </div>
           )}
 
-          <section
-            className="space-y-5 rounded-2xl border p-5 sm:p-6"
-            style={{
-              background: "var(--card-light-bg)",
-              borderColor: "var(--card-light-border)",
-            }}
-          >
+          <section className="space-y-5 rounded-2xl border p-5 sm:p-6 bg-card-light-bg border-card-light-border">
             <AdminToolbar
               search={search}
               onSearchChange={setSearch}
@@ -547,7 +530,7 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
         <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-start gap-3">
             <div className="grid size-11 place-items-center rounded-lg bg-[var(--abyssal-blue)] text-[var(--accent-gold-soft)] shadow-[0_12px_28px_rgba(27,38,50,0.22)]">
-              <ReceiptIcon size={22} weight="duotone" />
+              <Receipt size={22} />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--accent-gold)]">
@@ -568,16 +551,16 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
             disabled={isFetching}
             className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[rgba(27,38,50,0.12)] bg-white px-4 text-sm font-bold text-[var(--content-heading)] shadow-sm transition hover:border-[rgba(255,146,21,0.36)] hover:text-[var(--accent-gold)] disabled:cursor-wait disabled:opacity-70"
           >
-            <ArrowClockwiseIcon size={16} className={isFetching ? "animate-spin" : ""} />
+            <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} />
             Làm mới
           </button>
         </div>
       </section>
 
       <StaffStatsGrid className="md:grid-cols-3 xl:grid-cols-3">
-        <StaffStatCard label="Tổng đơn" value={isLoading ? "--" : summary.total.toString()} icon={<ReceiptIcon size={20} />} />
-        <StaffStatCard label="Đã thanh toán" value={isLoading ? "--" : summary.paid.toString()} icon={<CheckCircleIcon size={20} />} tone="green" />
-        <StaffStatCard label="Đang chờ" value={isLoading ? "--" : summary.pending.toString()} icon={<HourglassIcon size={20} />} tone="amber" />
+        <StaffStatCard label="Tổng đơn" value={isLoading ? "--" : summary.total.toString()} icon={<Receipt size={20} />} />
+        <StaffStatCard label="Đã thanh toán" value={isLoading ? "--" : summary.paid.toString()} icon={<CheckCircle2 size={20} />} tone="green" />
+        <StaffStatCard label="Đang chờ" value={isLoading ? "--" : summary.pending.toString()} icon={<Hourglass size={20} />} tone="amber" />
       </StaffStatsGrid>
 
       {isError && (
@@ -594,7 +577,7 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
             : !isLoading && (
                 <div className="rounded-lg border border-dashed border-[rgba(27,38,50,0.18)] bg-white/60 p-10 text-center">
                   <div className="mx-auto grid size-14 place-items-center rounded-lg bg-[rgba(255,146,21,0.12)] text-[var(--accent-gold)]">
-                    <ReceiptIcon size={30} weight="duotone" />
+                    <Receipt size={30} />
                   </div>
                   <h2 className="mt-4 text-lg font-bold text-[var(--content-heading)]">
                     Chưa có giao dịch nào

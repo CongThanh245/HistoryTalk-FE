@@ -64,7 +64,7 @@ const PENDING_DOCUMENT_ID = "pending";
 
 function ValidationErrorText({ message }: { message?: string }) {
   return message ? (
-    <p className="text-[11px] font-medium" style={{ color: "var(--accent-danger)" }}>
+    <p className="text-[11px] font-medium text-[var(--accent-danger)]">
       {message}
     </p>
   ) : null;
@@ -240,8 +240,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-content)]">
       {/* ═══════ Header ═══════ */}
       <div
-        className="flex items-center justify-between px-6 py-4 border-b shrink-0"
-        style={{ borderColor: "var(--card-light-border)" }}
+        className="flex items-center justify-between px-6 py-4 border-b shrink-0 border-[var(--card-light-border)]"
       >
         <div className="flex items-center gap-4">
           <Button
@@ -261,8 +260,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
           </Button>
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-lg overflow-hidden relative shrink-0"
-              style={{ background: "var(--card-light-border)" }}
+              className="w-10 h-10 rounded-lg overflow-hidden relative shrink-0 bg-[var(--card-light-border)]"
             >
               {isValidUrl(draft.imageUrl) && (
                 <Image
@@ -275,7 +273,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <h1 className="text-lg font-bold leading-tight" style={{ color: "var(--content-heading)" }}>
+                <h1 className="text-lg font-bold leading-tight text-[var(--content-heading)]">
                   {mode === "create" && !isCreated ? "Tạo bối cảnh lịch sử" : draft.name || "Bối cảnh"}
                 </h1>
                 {isCreated && (
@@ -295,7 +293,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   />
                 )}
               </div>
-              <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+              <p className="text-xs text-[var(--content-muted)]">
                 {mode === "create" && !isCreated
                   ? "Điền thông tin bên trái, xem preview ảnh/video bên phải"
                   : draft.location || "—"}
@@ -379,8 +377,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
       <div className="flex-1 flex min-h-0">
         {/* ── Left Panel: Form ── */}
         <div
-          className="w-[600px] shrink-0 border-r overflow-hidden flex flex-col"
-          style={{ borderColor: "var(--card-light-border)" }}
+          className="w-[600px] shrink-0 border-r overflow-hidden flex flex-col border-[var(--card-light-border)]"
         >
           <Tabs
             value={activeTab}
@@ -388,10 +385,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             className="flex flex-col h-full min-h-0 gap-0"
           >
             <div
-              className="px-6 pt-6 pb-4 shrink-0 border-b"
-              style={{ borderColor: "var(--card-light-border)" }}
+              className="px-6 pt-6 pb-4 shrink-0 border-b border-[var(--card-light-border)]"
             >
-              <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--content-heading)" }}>
+              <p className="text-xs font-semibold uppercase tracking-widest mb-3 text-[var(--content-heading)]">
                 Thông tin bối cảnh
               </p>
 
@@ -408,8 +404,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     {tab.label}
                     {tabHasError(tab.key) && (
                       <span
-                        className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full"
-                        style={{ background: "var(--accent-danger)" }}
+                        className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full bg-[var(--accent-danger)]"
                       />
                     )}
                   </TabsTrigger>
@@ -515,8 +510,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     <img
                       src={pendingImagePreviewUrl}
                       alt="Xem trước ảnh"
-                      className="mt-1 h-32 w-32 rounded-lg border object-cover"
-                      style={{ borderColor: "var(--card-light-border)" }}
+                      className="mt-1 h-32 w-32 rounded-lg border object-cover border-[var(--card-light-border)]"
                     />
                   )}
                 </MediaSlotField>
@@ -557,28 +551,27 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     <video
                       src={pendingVideoPreviewUrl}
                       controls
-                      className="mt-1 h-32 w-full max-w-xs rounded-lg border object-cover"
-                      style={{ borderColor: "var(--card-light-border)" }}
+                      className="mt-1 h-32 w-full max-w-xs rounded-lg border object-cover border-[var(--card-light-border)]"
                     />
                   )}
                 </MediaSlotField>
 
-                <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                <p className="text-xs text-[var(--content-muted)]">
                   Xem preview trực tiếp ở khung bên phải.
                 </p>
               </TabsContent>
 
               <TabsContent value="rag" className="space-y-3 mt-0">
                 <div className="flex items-center gap-2">
-                  <ScrollIcon className="h-4 w-4" style={{ color: "var(--accent-blue)" }} />
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                  <ScrollIcon className="h-4 w-4 text-[var(--accent-blue)]" />
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--content-heading)]">
                     Tài liệu RAG kèm theo
                   </p>
                 </div>
 
-                <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+                <div className="rounded-lg border p-3 border-[var(--card-light-border)]">
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--content-heading)]">
                       {mode === "edit" ? "Tài liệu đã import" : "Tài liệu"}
                       {mode === "edit" && documents.length > 0 && (
                         <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
@@ -620,7 +613,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
 
                   {mode === "edit" ? (
                     isLoadingDocuments ? (
-                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tải tài liệu...</p>
+                      <p className="text-xs text-[var(--content-muted)]">Đang tải tài liệu...</p>
                     ) : documents.length ? (
                       <div className="space-y-2">
                         {documents.map((document, index) => {
@@ -629,8 +622,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           return (
                             <div
                               key={documentId ?? `historical-document-${index}`}
-                              className="flex items-start gap-2 rounded-md border p-2"
-                              style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
+                              className="flex items-start gap-2 rounded-md border p-2 border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
                             >
                               <button
                                 type="button"
@@ -638,10 +630,10 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                 onClick={() => setViewingDocument(document)}
                                 title="Xem chi tiết tài liệu này"
                               >
-                                <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                                <p className="truncate text-sm font-semibold text-[var(--content-heading)]">
                                   {document.title || "Tài liệu chưa đặt tên"}
                                 </p>
-                                <p className="mt-0.5 line-clamp-2 text-xs" style={{ color: "var(--content-muted)" }}>
+                                <p className="mt-0.5 line-clamp-2 text-xs text-[var(--content-muted)]">
                                   {document.content || "Chưa có nội dung"}
                                 </p>
                               </button>
@@ -724,7 +716,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                         })}
                       </div>
                     ) : (
-                      <p className="text-xs" style={{ color: "var(--content-muted)" }}>Chưa có tài liệu nào.</p>
+                      <p className="text-xs text-[var(--content-muted)]">Chưa có tài liệu nào.</p>
                     )
                   ) : draft.documentContent.trim() ? (
                     // The not-yet-created document lives entirely in the draft
@@ -742,8 +734,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                         };
                         return (
                           <div
-                            className="flex items-start gap-2 rounded-md border p-2"
-                            style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
+                            className="flex items-start gap-2 rounded-md border p-2 border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
                           >
                             <button
                               type="button"
@@ -751,10 +742,10 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                               onClick={() => setViewingDocument(pendingDocument)}
                               title="Xem chi tiết tài liệu này"
                             >
-                              <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                              <p className="truncate text-sm font-semibold text-[var(--content-heading)]">
                                 {pendingDocument.title || "Tài liệu chưa đặt tên"}
                               </p>
-                              <p className="mt-0.5 line-clamp-2 text-xs" style={{ color: "var(--content-muted)" }}>
+                              <p className="mt-0.5 line-clamp-2 text-xs text-[var(--content-muted)]">
                                 {pendingDocument.content || "Chưa có nội dung"}
                               </p>
                             </button>
@@ -787,7 +778,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                       })()}
                     </div>
                   ) : (
-                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                    <p className="text-xs text-[var(--content-muted)]">
                       Chưa có tài liệu nào. Tài liệu sẽ được tạo cùng lúc khi bạn tạo bối cảnh.
                     </p>
                   )}
@@ -796,23 +787,22 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
 
               <TabsContent value="characters" className="space-y-4 mt-0">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--content-heading)]">
                     Nhân vật đã gắn với bối cảnh này
                   </p>
-                  <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
+                  <p className="mt-1 text-xs text-[var(--content-muted)]">
                     Đây là các nhân vật mà người dùng có thể trò chuyện khi khám phá bối cảnh &quot;{draft.name || "..."}&quot;.
                   </p>
                 </div>
 
                 {isLoadingCharactersInContext ? (
-                  <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tải nhân vật...</p>
+                  <p className="text-xs text-[var(--content-muted)]">Đang tải nhân vật...</p>
                 ) : charactersInContext.length ? (
                   <div className="space-y-2">
                     {charactersInContext.map((character) => (
                       <div
                         key={character.id}
-                        className="flex items-center gap-3 rounded-lg border p-2.5"
-                        style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
+                        className="flex items-center gap-3 rounded-lg border p-2.5 border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
                       >
                         <StaffImageHoverPreview
                           src={character.avatarUrl}
@@ -824,10 +814,10 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           fallback={<UsersIcon className="h-4 w-4" />}
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                          <p className="truncate text-sm font-semibold text-[var(--content-heading)]">
                             {character.name}
                           </p>
-                          <p className="truncate text-xs" style={{ color: "var(--content-muted)" }}>
+                          <p className="truncate text-xs text-[var(--content-muted)]">
                             {character.title || character.role || "—"}
                           </p>
                         </div>
@@ -836,8 +826,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-8 rounded-md px-2.5 text-xs font-semibold"
-                            style={{ borderColor: "var(--card-light-border)", color: "var(--content-heading)" }}
+                            className="h-8 rounded-md px-2.5 text-xs font-semibold border-[var(--card-light-border)] text-[var(--content-heading)]"
                             onClick={() => router.push(`/staff/characters/${character.id}`)}
                           >
                             Xem chi tiết
@@ -861,17 +850,16 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                  <p className="text-xs text-[var(--content-muted)]">
                     Chưa có nhân vật nào được gắn với bối cảnh này.
                   </p>
                 )}
 
-                <div className="space-y-2 border-t pt-4" style={{ borderColor: "var(--card-light-border)" }}>
+                <div className="space-y-2 border-t pt-4 border-[var(--card-light-border)]">
                   <StaffFormLabel>Thêm nhân vật vào bối cảnh này</StaffFormLabel>
                   <div className="relative">
                     <MagnifyingGlassIcon
-                      className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
-                      style={{ color: "var(--content-subtle)" }}
+                      className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--content-subtle)]"
                     />
                     <StaffFormInput
                       value={characterSearch}
@@ -883,14 +871,13 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   </div>
 
                   {isLoadingCharacterSearch ? (
-                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tìm kiếm...</p>
+                    <p className="text-xs text-[var(--content-muted)]">Đang tìm kiếm...</p>
                   ) : availableCharacters.length > 0 ? (
                     <div className="space-y-1.5">
                       {availableCharacters.map((character) => (
                         <div
                           key={character.id}
-                          className="flex items-center gap-3 rounded-lg border p-2"
-                          style={{ borderColor: "var(--card-light-border)" }}
+                          className="flex items-center gap-3 rounded-lg border p-2 border-[var(--card-light-border)]"
                         >
                           <StaffImageHoverPreview
                             src={character.avatarUrl}
@@ -901,7 +888,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                             previewSizes="128px"
                             fallback={<UsersIcon className="h-3.5 w-3.5" />}
                           />
-                          <p className="min-w-0 flex-1 truncate text-sm" style={{ color: "var(--content-heading)" }}>
+                          <p className="min-w-0 flex-1 truncate text-sm text-[var(--content-heading)]">
                             {character.name}
                           </p>
                           <Button
@@ -917,7 +904,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                    <p className="text-xs text-[var(--content-muted)]">
                       {characterSearch ? "Không tìm thấy nhân vật phù hợp." : "Nhập tên để tìm nhân vật cần liên kết."}
                     </p>
                   )}
@@ -931,11 +918,10 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto p-6 gap-4 bg-[var(--bg-app)]">
           <div className="flex flex-col sm:flex-row gap-4">
             <div
-              className="flex-1 min-w-0 overflow-hidden rounded-xl border"
-              style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
+              className="flex-1 min-w-0 overflow-hidden rounded-xl border border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
             >
-              <div className="border-b px-3 py-2" style={{ borderColor: "var(--card-light-border)" }}>
-                <p className="text-xs font-semibold" style={{ color: "var(--content-heading)" }}>
+              <div className="border-b px-3 py-2 border-[var(--card-light-border)]">
+                <p className="text-xs font-semibold text-[var(--content-heading)]">
                   Xem trước ảnh
                 </p>
               </div>
@@ -953,7 +939,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     </button>
                   </>
                 ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-center px-4" style={{ color: "var(--content-muted)" }}>
+                  <div className="flex h-full items-center justify-center text-xs text-center px-4 text-[var(--content-muted)]">
                     Dán URL ảnh hợp lệ ở tab Media để xem trước
                   </div>
                 )}
@@ -961,11 +947,10 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             </div>
 
             <div
-              className="flex-1 min-w-0 overflow-hidden rounded-xl border"
-              style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
+              className="flex-1 min-w-0 overflow-hidden rounded-xl border border-[var(--card-light-border)]" style={{ background: "rgba(255, 255, 255, 0.35)" }}
             >
-              <div className="border-b px-3 py-2" style={{ borderColor: "var(--card-light-border)" }}>
-                <p className="text-xs font-semibold" style={{ color: "var(--content-heading)" }}>
+              <div className="border-b px-3 py-2 border-[var(--card-light-border)]">
+                <p className="text-xs font-semibold text-[var(--content-heading)]">
                   Xem trước video
                 </p>
               </div>
@@ -983,7 +968,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                 {draft.videoUrl ? (
                   <video src={draft.videoUrl} controls className="h-full w-full object-contain" style={{ background: "#000" }} />
                 ) : (
-                  <div className="flex h-full items-center justify-center px-4 text-center text-xs" style={{ color: "var(--content-muted)" }}>
+                  <div className="flex h-full items-center justify-center px-4 text-center text-xs text-[var(--content-muted)]">
                     Tải lên file video (.mp4) ở tab Media để xem trước
                   </div>
                 )}
@@ -1070,8 +1055,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         titleBadge={
           viewingDocument?.fileUrl ? (
             <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
-              style={{ background: "rgba(234,179,8,0.12)", color: "rgb(146,64,14)" }}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase" style={{ background: "rgba(234, 179, 8, 0.12)", color: "rgb(146, 64, 14)" }}
             >
               Có PDF gốc
             </span>
@@ -1083,7 +1067,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
           so "Lưu thay đổi" never needs a scroll-to-find on long content. */}
       <Dialog open={!!editingDocument} onOpenChange={(open) => !open && closeDocumentEdit()}>
         <DialogContent className="flex max-h-[85vh] w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-[680px]">
-          <DialogHeader className="shrink-0 border-b px-6 py-4" style={{ borderColor: "var(--card-light-border)" }}>
+          <DialogHeader className="shrink-0 border-b px-6 py-4 border-[var(--card-light-border)]">
             <DialogTitle>Sửa tài liệu</DialogTitle>
           </DialogHeader>
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
@@ -1099,7 +1083,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             <div className="grid gap-1.5">
               <div className="flex items-center justify-between">
                 <StaffFormLabel>Nội dung</StaffFormLabel>
-                <span className="text-[10px]" style={{ color: "var(--content-muted)" }}>
+                <span className="text-[10px] text-[var(--content-muted)]">
                   {editDraftContent.length.toLocaleString("vi-VN")} ký tự
                 </span>
               </div>
@@ -1112,7 +1096,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
               />
             </div>
           </div>
-          <div className="flex shrink-0 justify-end gap-2 border-t px-6 py-4" style={{ borderColor: "var(--card-light-border)" }}>
+          <div className="flex shrink-0 justify-end gap-2 border-t px-6 py-4 border-[var(--card-light-border)]">
             <Button type="button" variant="outline" onClick={closeDocumentEdit} disabled={isSavingDocumentEdit}>
               Hủy
             </Button>

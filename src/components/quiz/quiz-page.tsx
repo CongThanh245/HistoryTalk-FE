@@ -6,6 +6,7 @@ import { History, ListChecks, Search } from "lucide-react";
 import { useQuizSets, useMyQuizResults } from "@/features/quiz/hooks";
 import { useAuthStore } from "@/store/auth.store";
 import { type QuizEra, type QuizResult } from "@/services/quiz.service";
+import { cn } from "@/lib/utils/cn";
 import { QuizStatsBar } from "./quiz-stats-bar";
 import { QuizRecentResults } from "./quiz-recent-result";
 import { QuizHistoryView } from "./quiz-history-view";
@@ -74,40 +75,24 @@ export function QuizPageClient() {
   };
 
   return (
-    <main className="min-h-screen" style={{ background: "var(--bg-content)" }}>
+    <main className="min-h-screen bg-[var(--bg-content)]">
       <div className="mx-auto max-w-7xl">
-        <section
-          className="mb-3 rounded-xl border px-4 py-3 md:mb-4 md:px-5 md:py-4"
-          style={{
-            background: "var(--card-light-bg)",
-            borderColor: "var(--card-light-border)",
-            boxShadow: "0 10px 28px rgba(27,38,50,0.06)",
-          }}
-        >
+        <section className="mb-3 rounded-xl border border-card-light-border bg-card-light-bg px-4 py-3 md:mb-4 md:px-5 md:py-4 shadow-[0_10px_28px_rgba(27,38,50,0.06)]">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="max-w-2xl">
-              <p
-                className="mb-1 text-[10px] font-semibold uppercase tracking-wide md:text-xs"
-                style={{ color: "var(--gold-on-light)" }}
-              >
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide md:text-xs text-gold-on-light">
                 Luyện tập theo chủ đề
               </p>
-              <h1 className="text-xl font-bold md:text-2xl" style={{ color: "var(--content-heading)" }}>
+              <h1 className="text-xl font-bold md:text-2xl text-content-heading">
                 Câu đố lịch sử
               </h1>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 md:text-sm" style={{ color: "var(--content-muted)" }}>
+              <p className="mt-1 line-clamp-2 text-xs leading-5 md:text-sm text-content-muted">
                 Chọn một bộ đề, làm nhanh theo bối cảnh lịch sử và xem lại đáp án ngay sau khi nộp bài.
               </p>
             </div>
 
             <div className="w-full md:w-[360px]">
-              <div
-                className="grid grid-cols-2 rounded-lg p-1"
-                style={{
-                  background: "rgba(27,38,50,0.05)",
-                  border: "1px solid var(--card-light-border)",
-                }}
-              >
+              <div className="grid grid-cols-2 rounded-lg p-1 bg-[rgba(27,38,50,0.05)] border border-card-light-border">
                 {[
                   { label: "Danh sách đề", value: "list" as const, icon: ListChecks },
                   { label: "Lịch sử", value: "history" as const, icon: History },
@@ -118,16 +103,12 @@ export function QuizPageClient() {
                     <button
                       key={item.value}
                       onClick={() => handleViewChange(item.value)}
-                      className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-bold transition-all md:h-9 md:gap-2 md:text-sm"
-                      style={
+                      className={cn(
+                        "inline-flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-bold transition-all md:h-9 md:gap-2 md:text-sm",
                         active
-                          ? {
-                              background: "var(--card-light-bg)",
-                              color: "var(--content-heading)",
-                              boxShadow: "0 4px 12px rgba(27,38,50,0.08)",
-                            }
-                          : { color: "var(--content-muted)" }
-                      }
+                          ? "bg-card-light-bg text-content-heading shadow-[0_4px_12px_rgba(27,38,50,0.08)]"
+                          : "text-content-muted",
+                      )}
                     >
                       <Icon size={16} />
                       {item.label}
@@ -137,21 +118,14 @@ export function QuizPageClient() {
               </div>
 
               {activeView === "list" && (
-                <div
-                  className="hidden"
-                  style={{
-                    background: "rgba(27,38,50,0.05)",
-                    border: "1px solid var(--card-light-border)",
-                  }}
-                >
-                  <Search size={16} style={{ color: "var(--content-muted)" }} />
+                <div className="hidden bg-[rgba(27,38,50,0.05)] border border-card-light-border">
+                  <Search size={16} className="text-content-muted" />
                   <input
                     type="text"
                     placeholder="Tìm quiz hoặc bối cảnh..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-                    style={{ color: "var(--content-heading)" }}
+                    className="min-w-0 flex-1 bg-transparent text-sm outline-none text-content-heading"
                   />
                 </div>
               )}
@@ -176,29 +150,22 @@ export function QuizPageClient() {
             <section className="min-w-0">
               <div className="mb-3 flex flex-col gap-3">
                 <div>
-                  <h2 className="text-base font-bold" style={{ color: "var(--content-heading)" }}>
+                  <h2 className="text-base font-bold text-content-heading">
                     Danh sách đề
                   </h2>
-                  <p className="text-xs md:text-sm" style={{ color: "var(--content-muted)" }}>
+                  <p className="text-xs md:text-sm text-content-muted">
                     {filteredQuizzes.length} đề phù hợp
                   </p>
                 </div>
 
-                <div
-                  className="flex h-10 w-full items-center gap-2 rounded-lg px-3 sm:max-w-[340px]"
-                  style={{
-                    background: "rgba(27,38,50,0.05)",
-                    border: "1px solid var(--card-light-border)",
-                  }}
-                >
-                  <Search size={15} style={{ color: "var(--content-muted)" }} />
+                <div className="flex h-10 w-full items-center gap-2 rounded-lg px-3 sm:max-w-[340px] bg-[rgba(27,38,50,0.05)] border border-card-light-border">
+                  <Search size={15} className="text-content-muted" />
                   <input
                     type="text"
                     placeholder="Tìm quiz..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-                    style={{ color: "var(--content-heading)" }}
+                    className="min-w-0 flex-1 bg-transparent text-sm outline-none text-content-heading"
                   />
                 </div>
 
@@ -209,20 +176,12 @@ export function QuizPageClient() {
                       <button
                         key={f.value}
                         onClick={() => setSelectedEra(f.value)}
-                        className="h-7 rounded-lg px-2 text-xs font-semibold transition-all duration-200 md:h-8 md:px-2.5 md:hover:-translate-y-0.5"
-                        style={
+                        className={cn(
+                          "h-7 rounded-lg px-2 text-xs font-semibold transition-all duration-200 md:h-8 md:px-2.5 md:hover:-translate-y-0.5 border",
                           active
-                            ? {
-                                background: "var(--abyssal-blue)",
-                                color: "var(--text-on-dark)",
-                                border: "1px solid var(--abyssal-blue)",
-                              }
-                            : {
-                                background: "var(--card-light-bg)",
-                                color: "var(--content-muted)",
-                                border: "1px solid var(--card-light-border)",
-                              }
-                        }
+                            ? "bg-[var(--abyssal-blue)] text-[var(--text-on-dark)] border-[var(--abyssal-blue)]"
+                            : "bg-card-light-bg text-content-muted border-card-light-border",
+                        )}
                       >
                         {f.label}
                       </button>
@@ -232,29 +191,17 @@ export function QuizPageClient() {
               </div>
 
               {quizzesLoading ? (
-                <div
-                  className="rounded-xl border px-6 py-16 text-center"
-                  style={{
-                    background: "var(--card-light-bg)",
-                    borderColor: "var(--card-light-border)",
-                  }}
-                >
-                  <p className="font-semibold" style={{ color: "var(--content-heading)" }}>
+                <div className="rounded-xl border border-card-light-border bg-card-light-bg px-6 py-16 text-center">
+                  <p className="font-semibold text-content-heading">
                     Đang tải...
                   </p>
                 </div>
               ) : filteredQuizzes.length === 0 ? (
-                <div
-                  className="rounded-xl border px-6 py-16 text-center"
-                  style={{
-                    background: "var(--card-light-bg)",
-                    borderColor: "var(--card-light-border)",
-                  }}
-                >
-                  <p className="font-semibold" style={{ color: "var(--content-heading)" }}>
+                <div className="rounded-xl border border-card-light-border bg-card-light-bg px-6 py-16 text-center">
+                  <p className="font-semibold text-content-heading">
                     Không tìm thấy bộ câu hỏi
                   </p>
-                  <p className="mt-1 text-sm" style={{ color: "var(--content-muted)" }}>
+                  <p className="mt-1 text-sm text-content-muted">
                     Thử đổi bộ lọc hoặc từ khóa tìm kiếm.
                   </p>
                 </div>

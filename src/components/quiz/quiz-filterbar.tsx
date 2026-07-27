@@ -6,6 +6,7 @@
 import React from "react";
 import { Search } from "lucide-react";
 import type { QuizEra } from "@/services/quiz.service";
+import { cn } from "@/lib/utils/cn";
 
 const ERA_FILTERS: { label: string; value: QuizEra }[] = [
   { label: "Tất cả", value: "ALL" },
@@ -31,21 +32,14 @@ export function QuizFilterBar({
   return (
     <div className="flex flex-col gap-3 mb-6">
       {/* Search */}
-      <div
-        className="flex items-center gap-2 px-4 py-2.5 rounded-xl"
-        style={{
-          background: "var(--card-light-bg)",
-          border: "1px solid var(--border-default)",
-        }}
-      >
-        <Search size={16} style={{ color: "var(--content-muted)" }} />
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card-light-bg border border-border-default">
+        <Search size={16} className="text-content-muted" />
         <input
           type="text"
           placeholder="Tìm kiếm bộ câu hỏi..."
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="flex-1 bg-transparent text-sm outline-none"
-          style={{ color: "var(--content-heading)" }}
+          className="flex-1 bg-transparent text-sm outline-none text-content-heading"
         />
       </div>
 
@@ -55,20 +49,12 @@ export function QuizFilterBar({
           <button
             key={f.value}
             onClick={() => onEraChange(f.value)}
-            className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
-            style={
+            className={cn(
+              "px-4 py-1.5 rounded-full text-sm font-medium transition-all border",
               selectedEra === f.value
-                ? {
-                    background: "var(--era-filter-active-bg, var(--accent-gold))",
-                    color: "var(--era-filter-active-text, var(--text-inverse))",
-                    border: "1px solid var(--era-filter-active-bg, var(--accent-gold))",
-                  }
-                : {
-                    background: "var(--era-filter-bg, var(--card-light-bg))",
-                    color: "var(--era-filter-text, var(--content-text))",
-                    border: "1px solid var(--era-filter-border, var(--border-default))",
-                  }
-            }
+                ? "bg-[var(--era-filter-active-bg,var(--accent-gold))] text-[var(--era-filter-active-text,var(--text-inverse))] border-[var(--era-filter-active-bg,var(--accent-gold))]"
+                : "bg-[var(--era-filter-bg,var(--card-light-bg))] text-[var(--era-filter-text,var(--content-text))] border-[var(--era-filter-border,var(--border-default))]",
+            )}
           >
             {f.label}
           </button>

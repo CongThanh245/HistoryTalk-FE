@@ -10,6 +10,7 @@ import { characterService } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
+import { cn } from "@/lib/utils/cn";
 import {
   Dialog,
   DialogContent,
@@ -70,8 +71,6 @@ function ComparisonBadge({
 }) {
   const delta = percentage - previous.percentage;
   const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
-  const color = delta > 0 ? "#047857" : delta < 0 ? "var(--accent-danger)" : "var(--content-muted)";
-  const bg = delta > 0 ? "rgba(16,185,129,0.10)" : delta < 0 ? "rgba(184,50,42,0.08)" : "rgba(27,38,50,0.05)";
   const text =
     delta === 0
       ? `Bằng lần trước (${previous.percentage}%)`
@@ -79,8 +78,14 @@ function ComparisonBadge({
 
   return (
     <div
-      className="mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold"
-      style={{ background: bg, color }}
+      className={cn(
+        "mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold",
+        delta > 0
+          ? "bg-emerald-500/10 text-[#047857]"
+          : delta < 0
+            ? "bg-accent-danger/[0.08] text-accent-danger"
+            : "bg-[rgba(27,38,50,0.05)] text-content-muted",
+      )}
     >
       <Icon size={13} strokeWidth={2.25} />
       {text}
@@ -124,15 +129,13 @@ function ReportQuestionDialog({
         <DialogFooter>
           <button
             onClick={() => onOpenChange(false)}
-            className="h-10 rounded-lg px-4 text-sm font-semibold transition-colors"
-            style={{ background: "var(--card-light-bg)", color: "var(--content-muted)", border: "1px solid var(--card-light-border)" }}
+            className="h-10 rounded-lg px-4 text-sm font-semibold transition-colors bg-card-light-bg text-content-muted border border-card-light-border"
           >
             Huỷ
           </button>
           <button
             onClick={submit}
-            className="h-10 rounded-lg px-4 text-sm font-bold text-white transition-colors"
-            style={{ background: "var(--abyssal-blue)" }}
+            className="h-10 rounded-lg px-4 text-sm font-bold text-white transition-colors bg-[var(--abyssal-blue)]"
           >
             Gửi báo cáo
           </button>
@@ -159,11 +162,8 @@ function RateQuizCard({ quizId }: { quizId: string }) {
   }
 
   return (
-    <section
-      className="mb-6 flex flex-col items-center rounded-xl border p-5"
-      style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
-    >
-      <h2 className="text-base font-bold" style={{ color: "var(--content-heading)" }}>
+    <section className="mb-6 flex flex-col items-center rounded-xl border border-card-light-border bg-card-light-bg p-5">
+      <h2 className="text-base font-bold text-content-heading">
         Bạn thấy quiz này thế nào?
       </h2>
       <div className="mt-3 flex gap-1.5">
@@ -184,7 +184,7 @@ function RateQuizCard({ quizId }: { quizId: string }) {
         ))}
       </div>
       {justRated && (
-        <p className="mt-2 text-xs font-semibold" style={{ color: "#047857" }}>
+        <p className="mt-2 text-xs font-semibold text-[#047857]">
           Cảm ơn bạn đã đánh giá!
         </p>
       )}
@@ -268,12 +268,12 @@ export function QuizResultPage({
 
   const tier =
     percentage >= 90
-      ? { label: "Xuất sắc", color: "var(--gold-on-light)", bg: "rgba(201,162,77,0.14)" }
+      ? { label: "Xuất sắc", colorClass: "text-gold-on-light", bgClass: "bg-accent-gold/14" }
       : percentage >= 70
-        ? { label: "Khá tốt", color: "#047857", bg: "rgba(16,185,129,0.10)" }
+        ? { label: "Khá tốt", colorClass: "text-[#047857]", bgClass: "bg-emerald-500/10" }
         : percentage >= 50
-          ? { label: "Ổn định", color: "var(--accent-blue)", bg: "rgba(59,130,246,0.10)" }
-          : { label: "Cần ôn lại", color: "var(--accent-danger)", bg: "rgba(184,50,42,0.10)" };
+          ? { label: "Ổn định", colorClass: "text-accent-blue", bgClass: "bg-accent-blue/10" }
+          : { label: "Cần ôn lại", colorClass: "text-accent-danger", bgClass: "bg-accent-danger/10" };
 
   function isCorrect(q: QuizQuestion, idx: number): boolean {
     if (submitResult) {
@@ -283,38 +283,34 @@ export function QuizResultPage({
   }
 
   return (
-    <main className="min-h-full px-5 py-7 md:px-8" style={{ background: "var(--bg-content)" }}>
+    <main className="min-h-full px-5 py-7 md:px-8 bg-[var(--bg-content)]">
       {authRequiredDialog}
       <div className="mx-auto max-w-4xl">
-        <section
-          className="mb-6 rounded-xl border p-6 md:p-7"
-          style={{
-            background: "var(--card-light-bg)",
-            borderColor: "var(--card-light-border)",
-            boxShadow: "0 16px 36px rgba(27,38,50,0.08)",
-          }}
-        >
+        <section className="mb-6 rounded-xl border border-card-light-border bg-card-light-bg p-6 md:p-7 shadow-[0_16px_36px_rgba(27,38,50,0.08)]">
           <div className="grid gap-6 md:grid-cols-[1fr_220px] md:items-center">
             <div>
-              <p className="text-sm font-semibold" style={{ color: "var(--content-muted)" }}>
+              <p className="text-sm font-semibold text-content-muted">
                 Kết quả bài làm
               </p>
-              <h1 className="mt-2 text-2xl font-bold leading-tight" style={{ color: "var(--content-heading)" }}>
+              <h1 className="mt-2 text-2xl font-bold leading-tight text-content-heading">
                 {quiz.title}
               </h1>
               <span
-                className="mt-4 inline-flex rounded-full px-3 py-1 text-xs font-bold"
-                style={{ background: tier.bg, color: tier.color, border: "1px solid var(--card-light-border)" }}
+                className={cn(
+                  "mt-4 inline-flex rounded-full px-3 py-1 text-xs font-bold border border-card-light-border",
+                  tier.bgClass,
+                  tier.colorClass,
+                )}
               >
                 {tier.label}
               </span>
             </div>
 
-            <div className="rounded-xl border p-5 text-center" style={{ borderColor: "var(--card-light-border)" }}>
-              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--content-subtle)" }}>
+            <div className="rounded-xl border border-card-light-border p-5 text-center">
+              <p className="text-xs font-semibold uppercase tracking-wide text-content-subtle">
                 Điểm
               </p>
-              <p className="mt-2 text-5xl font-black leading-none" style={{ color: tier.color }}>
+              <p className={cn("mt-2 text-5xl font-black leading-none", tier.colorClass)}>
                 {correctCount}
                 <span className="text-2xl">/{totalQuestions}</span>
               </p>
@@ -323,20 +319,19 @@ export function QuizResultPage({
 
           <div className="mt-6 grid gap-3 sm:grid-cols-4">
             {[
-              { label: "Đúng", value: correctCount, color: "#047857" },
-              { label: "Sai", value: wrongCount, color: "var(--accent-danger)" },
-              { label: "Tổng câu", value: totalQuestions, color: "var(--content-heading)" },
-              { label: "Thời gian", value: formatDuration(durationSeconds), color: "var(--gold-on-light)" },
+              { label: "Đúng", value: correctCount, colorClass: "text-[#047857]" },
+              { label: "Sai", value: wrongCount, colorClass: "text-accent-danger" },
+              { label: "Tổng câu", value: totalQuestions, colorClass: "text-content-heading" },
+              { label: "Thời gian", value: formatDuration(durationSeconds), colorClass: "text-gold-on-light" },
             ].map((item) => (
               <div
                 key={item.label}
-                className="rounded-lg border px-4 py-3"
-                style={{ background: "rgba(27,38,50,0.035)", borderColor: "var(--card-light-border)" }}
+                className="rounded-lg border border-card-light-border bg-[rgba(27,38,50,0.035)] px-4 py-3"
               >
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--content-subtle)" }}>
+                <p className="text-xs font-semibold uppercase tracking-wide text-content-subtle">
                   {item.label}
                 </p>
-                <p className="mt-1 text-xl font-bold" style={{ color: item.color }}>
+                <p className={cn("mt-1 text-xl font-bold", item.colorClass)}>
                   {item.value}
                 </p>
               </div>
@@ -351,17 +346,11 @@ export function QuizResultPage({
         {quiz.quizId && <RateQuizCard quizId={quiz.quizId} />}
 
         {showReviewSection && reviewCharacters.length > 0 && (
-          <section
-            className="mb-6 rounded-xl border p-5"
-            style={{
-              background: "var(--card-light-bg)",
-              borderColor: "var(--card-light-border)",
-            }}
-          >
-            <h2 className="mb-1 text-base font-bold" style={{ color: "var(--content-heading)" }}>
+          <section className="mb-6 rounded-xl border border-card-light-border bg-card-light-bg p-5">
+            <h2 className="mb-1 text-base font-bold text-content-heading">
               Ôn lại cùng nhân vật
             </h2>
-            <p className="mb-4 text-sm" style={{ color: "var(--content-muted)" }}>
+            <p className="mb-4 text-sm text-content-muted">
               Có vẻ bạn đã trả lời chưa đúng <b>{wrongCount}</b> câu — hãy thử hỏi lại các nhân vật lịch sử để ôn lại kiến thức nhé!
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
@@ -371,8 +360,7 @@ export function QuizResultPage({
                   onClick={() =>
                     navigateWithAuth(`/chat/${character.id}?contextId=${quiz.contextId}`)
                   }
-                  className="group flex items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:border-[rgba(201,162,77,0.45)]"
-                  style={{ borderColor: "var(--card-light-border)" }}
+                  className="group flex items-center gap-3 rounded-lg border border-card-light-border p-3 text-left transition-colors hover:border-[rgba(201,162,77,0.45)]"
                 >
                   <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
                     <Image
@@ -383,16 +371,10 @@ export function QuizResultPage({
                     />
                   </div>
                   <div className="min-w-0">
-                    <p
-                      className="truncate text-sm font-semibold"
-                      style={{ color: "var(--content-heading)" }}
-                    >
+                    <p className="truncate text-sm font-semibold text-content-heading">
                       {character.name}
                     </p>
-                    <p
-                      className="truncate text-xs"
-                      style={{ color: "var(--gold-on-light)" }}
-                    >
+                    <p className="truncate text-xs text-gold-on-light">
                       {character.title}
                     </p>
                   </div>
@@ -404,30 +386,30 @@ export function QuizResultPage({
 
         <section>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-base font-bold" style={{ color: "var(--content-heading)" }}>
+            <h2 className="text-base font-bold text-content-heading">
               Xem lại đáp án
             </h2>
             {wrongCount > 0 && (
               <div className="flex gap-2">
                 <button
                   onClick={() => setReviewFilter("all")}
-                  className="rounded-full px-3 py-1.5 text-xs font-bold transition-colors"
-                  style={
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-xs font-bold transition-colors border",
                     reviewFilter === "all"
-                      ? { background: "var(--accent-gold-active-bg)", color: "var(--gold-on-light)", border: "1px solid rgba(201,162,77,0.35)" }
-                      : { background: "var(--card-light-bg)", color: "var(--content-muted)", border: "1px solid var(--card-light-border)" }
-                  }
+                      ? "bg-accent-gold-active text-gold-on-light border-accent-gold/35"
+                      : "bg-card-light-bg text-content-muted border-card-light-border",
+                  )}
                 >
                   Tất cả ({questions.length})
                 </button>
                 <button
                   onClick={() => setReviewFilter("wrong")}
-                  className="rounded-full px-3 py-1.5 text-xs font-bold transition-colors"
-                  style={
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-xs font-bold transition-colors border",
                     reviewFilter === "wrong"
-                      ? { background: "rgba(184,50,42,0.10)", color: "var(--accent-danger)", border: "1px solid rgba(184,50,42,0.35)" }
-                      : { background: "var(--card-light-bg)", color: "var(--content-muted)", border: "1px solid var(--card-light-border)" }
-                  }
+                      ? "bg-accent-danger/10 text-accent-danger border-accent-danger/35"
+                      : "bg-card-light-bg text-content-muted border-card-light-border",
+                  )}
                 >
                   Câu sai ({wrongCount})
                 </button>
@@ -446,27 +428,27 @@ export function QuizResultPage({
               return (
                 <article
                   key={q.questionId}
-                  className="rounded-xl border p-4"
-                  style={{
-                    background: "var(--card-light-bg)",
-                    borderColor: notAnswered
-                      ? "var(--card-light-border)"
+                  className={cn(
+                    "rounded-xl border p-4 bg-card-light-bg",
+                    notAnswered
+                      ? "border-card-light-border"
                       : correct
-                        ? "rgba(16,185,129,0.28)"
-                        : "rgba(184,50,42,0.24)",
-                  }}
+                        ? "border-emerald-500/28"
+                        : "border-accent-danger/24",
+                  )}
                 >
                   <div className="mb-3 flex items-start gap-3">
                     <span
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                      style={{
-                        background: correct ? "rgba(16,185,129,0.12)" : "rgba(27,38,50,0.06)",
-                        color: correct ? "#047857" : "var(--content-heading)",
-                      }}
+                      className={cn(
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                        correct
+                          ? "bg-emerald-500/12 text-[#047857]"
+                          : "bg-[rgba(27,38,50,0.06)] text-content-heading",
+                      )}
                     >
                       {idx + 1}
                     </span>
-                    <p className="flex-1 text-sm font-semibold leading-6" style={{ color: "var(--content-heading)" }}>
+                    <p className="flex-1 text-sm font-semibold leading-6 text-content-heading">
                       {q.content}
                     </p>
                   </div>
@@ -478,32 +460,24 @@ export function QuizResultPage({
                       return (
                         <div
                           key={i}
-                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
-                          style={{
-                            background: isAnswer
-                              ? "rgba(16,185,129,0.10)"
+                          className={cn(
+                            "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
+                            isAnswer
+                              ? "bg-emerald-500/10 text-[#065f46] font-bold"
                               : isWrongPick
-                                ? "rgba(184,50,42,0.08)"
-                                : "rgba(27,38,50,0.025)",
-                            color: isAnswer
-                              ? "#065f46"
-                              : isWrongPick
-                                ? "var(--accent-danger)"
-                                : "var(--content-muted)",
-                            fontWeight: isAnswer || isWrongPick ? 700 : 500,
-                          }}
+                                ? "bg-accent-danger/[0.08] text-accent-danger font-bold"
+                                : "bg-[rgba(27,38,50,0.025)] text-content-muted font-medium",
+                          )}
                         >
                           <span
-                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-                            style={{
-                              background: isAnswer
-                                ? "#047857"
+                            className={cn(
+                              "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                              isAnswer
+                                ? "bg-[#047857] text-white"
                                 : isWrongPick
-                                  ? "var(--accent-danger)"
-                                  : "var(--card-light-bg)",
-                              color: isAnswer || isWrongPick ? "#fff" : "var(--content-muted)",
-                              border: isAnswer || isWrongPick ? "none" : "1px solid var(--card-light-border)",
-                            }}
+                                  ? "bg-accent-danger text-white"
+                                  : "bg-card-light-bg text-content-muted border border-card-light-border",
+                            )}
                           >
                             {OPTION_LABELS[i]}
                           </span>
@@ -514,7 +488,7 @@ export function QuizResultPage({
                   </div>
 
                   {q.explanation && (
-                    <p className="mt-3 text-sm leading-6" style={{ color: "var(--content-muted)" }}>
+                    <p className="mt-3 text-sm leading-6 text-content-muted">
                       {q.explanation}
                     </p>
                   )}
@@ -522,10 +496,10 @@ export function QuizResultPage({
                   <button
                     onClick={() => handleReportPress(q.questionId)}
                     disabled={reportedIds.has(q.questionId)}
-                    className="mt-3 flex items-center gap-1.5 text-xs font-semibold transition-colors disabled:cursor-default"
-                    style={{
-                      color: reportedIds.has(q.questionId) ? "#047857" : "var(--content-subtle)",
-                    }}
+                    className={cn(
+                      "mt-3 flex items-center gap-1.5 text-xs font-semibold transition-colors disabled:cursor-default",
+                      reportedIds.has(q.questionId) ? "text-[#047857]" : "text-content-subtle",
+                    )}
                   >
                     <Flag size={12} />
                     {reportedIds.has(q.questionId) ? "Đã gửi báo cáo, cảm ơn bạn!" : "Câu này có vấn đề?"}
@@ -539,34 +513,19 @@ export function QuizResultPage({
         <div className="flex gap-3 pb-6 pt-6">
           <button
             onClick={() => router.push("/quiz")}
-            className="h-12 flex-1 rounded-lg text-sm font-bold transition-colors"
-            style={{
-              background: "var(--card-light-bg)",
-              color: "var(--content-heading)",
-              border: "1px solid var(--card-light-border)",
-            }}
+            className="h-12 flex-1 rounded-lg text-sm font-bold transition-colors bg-card-light-bg text-content-heading border border-card-light-border"
           >
             Về trang quiz
           </button>
           <button
             onClick={() => router.push("/quiz?view=history")}
-            className="h-12 flex-1 rounded-lg text-sm font-bold transition-colors"
-            style={{
-              background: "var(--accent-gold-active-bg)",
-              color: "var(--gold-on-light)",
-              border: "1px solid rgba(201,162,77,0.35)",
-            }}
+            className="h-12 flex-1 rounded-lg text-sm font-bold transition-colors bg-accent-gold-active text-gold-on-light border border-accent-gold/35"
           >
             Xem lịch sử
           </button>
           <button
             onClick={onRetry}
-            className="h-12 flex-1 rounded-lg text-sm font-bold transition-colors"
-            style={{
-              background: "var(--abyssal-blue)",
-              color: "var(--text-on-dark)",
-              boxShadow: "0 8px 18px rgba(27,38,50,0.18)",
-            }}
+            className="h-12 flex-1 rounded-lg text-sm font-bold transition-colors bg-[var(--abyssal-blue)] text-[var(--text-on-dark)] shadow-[0_8px_18px_rgba(27,38,50,0.18)]"
           >
             Làm lại
           </button>

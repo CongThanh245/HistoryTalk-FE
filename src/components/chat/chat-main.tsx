@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PhoneIcon, ScrollIcon, ListIcon, InfoIcon, CoinsIcon } from "@phosphor-icons/react";
-import { PhoneCallIcon, VideoCameraIcon, LockIcon, WarningCircleIcon, XIcon } from "@phosphor-icons/react";
+import { Phone, ScrollText, Menu, Info, Coins, PhoneCall, Video, Lock, AlertTriangle, X } from "lucide-react";
 import type {
   ChatCharacter,
   ChatMessage,
@@ -659,27 +658,19 @@ export function ChatMain({
     <div className="relative flex-1 flex flex-col min-w-0 h-full overflow-hidden">
       {/* Header */}
       <div
-        className="px-4 md:px-6 py-4 border-b flex items-center gap-3 shrink-0"
-        style={{
-          borderColor: "var(--border-default)",
-          background: "var(--bg-main)",
-        }}
+        className="px-4 md:px-6 py-4 border-b border-border-default flex items-center gap-3 shrink-0 bg-bg-main"
       >
         {/* Mobile hamburger: open website sidebar */}
         <button
           onClick={toggleMobileSidebar}
-          className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
-          style={{ color: "var(--text-secondary)" }}
+          className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95 text-content-text"
           aria-label="Mở menu"
         >
-          <ListIcon className="w-5 h-5" />
+          <Menu className="w-5 h-5" />
         </button>
 
         <div
-          className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
-          style={{
-            background: "var(--bg-elevated)",
-          }}
+          className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-bg-elevated"
         >
           {!headerAvatarBroken && isValidUrl(character.imageUrl) ? (
             <img
@@ -689,9 +680,8 @@ export function ChatMain({
               onError={() => setHeaderAvatarBroken(true)}
             />
           ) : (
-            <ScrollIcon
-              className="w-6 h-6"
-              style={{ color: "var(--bg-deep)" }}
+            <ScrollText
+              className="w-6 h-6 text-bg-deep"
             />
           )}
         </div>
@@ -699,8 +689,7 @@ export function ChatMain({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 min-w-0">
             <h2
-              className="text-sm font-bold truncate"
-              style={{ color: "var(--text-primary)" }}
+              className="text-sm font-bold truncate text-content-heading"
             >
               {character.name}
             </h2>
@@ -710,11 +699,7 @@ export function ChatMain({
                   <button
                     type="button"
                     aria-label="Lưu ý về độ chính xác của AI"
-                    className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
-                    style={{
-                      background: "var(--accent-gold-active-bg)",
-                      color: "var(--accent-gold)",
-                    }}
+                    className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 bg-(--accent-gold-active-bg) text-accent-gold"
                   >
                     <span className="text-[10px] font-bold leading-none">!</span>
                   </button>
@@ -723,12 +708,7 @@ export function ChatMain({
                   side="top"
                   align="start"
                   sideOffset={10}
-                  className="max-w-[min(380px,90vw)] whitespace-normal"
-                  style={{
-                    background: "var(--bg-elevated)",
-                    border: "1px solid var(--border-default)",
-                    color: "var(--text-primary)",
-                  }}
+                  className="max-w-[min(380px,90vw)] whitespace-normal bg-bg-elevated border border-border-default text-content-heading"
                 >
                   <p className="text-xs leading-relaxed">
                     AI có thể đưa ra thông tin không chính xác. Hãy kiểm chứng lại các thông tin quan trọng.
@@ -737,8 +717,7 @@ export function ChatMain({
                     href={AI_FEEDBACK_FORM_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-1 inline-block text-xs font-semibold underline"
-                    style={{ color: "var(--accent-gold)" }}
+                    className="mt-1 inline-block text-xs font-semibold underline text-accent-gold"
                   >
                     Báo lỗi qua form
                   </a>
@@ -749,14 +728,12 @@ export function ChatMain({
           {aiWarningVisible && sessionId ? (
             <div
               className={cn(
-                "flex items-center gap-1 h-3.5 text-[11px] transition-opacity duration-300",
+                "flex items-center gap-1 h-3.5 text-[11px] transition-opacity duration-300 text-content-text",
                 aiWarningLeaving ? "opacity-0" : "opacity-100",
               )}
-              style={{ color: "var(--text-secondary)" }}
             >
-              <WarningCircleIcon
-                className="w-3 h-3 shrink-0"
-                style={{ color: "var(--accent-gold)" }}
+              <AlertTriangle
+                className="w-3 h-3 shrink-0 text-accent-gold"
               />
               <span className="flex-1 min-w-0 truncate">
                 AI có thể đưa ra thông tin không chính xác. Hãy kiểm chứng lại các thông tin quan trọng.
@@ -766,11 +743,11 @@ export function ChatMain({
                 aria-label="Đóng cảnh báo"
                 className="shrink-0 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
               >
-                <XIcon className="w-3 h-3" />
+                <X className="w-3 h-3" />
               </button>
             </div>
           ) : (
-            <p className="text-[11px] truncate" style={{ color: "var(--text-secondary)" }}>
+            <p className="text-[11px] truncate text-content-text">
               {character.title}
             </p>
           )}
@@ -795,21 +772,17 @@ export function ChatMain({
           className={cn(
             "w-8 h-8 flex items-center justify-center rounded-full transition-all hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
             showVoiceNudge && "voice-call-nudge",
+            canUseVoiceCall
+              ? "bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.3)]"
+              : "bg-[rgba(148,163,184,0.08)] border border-[rgba(148,163,184,0.22)] opacity-56",
           )}
-          style={{
-            background: canUseVoiceCall ? "rgba(201,168,76,0.12)" : "rgba(148,163,184,0.08)",
-            border: canUseVoiceCall ? "1px solid rgba(201,168,76,0.3)" : "1px solid rgba(148,163,184,0.22)",
-            opacity: canUseVoiceCall ? 1 : 0.56,
-          }}
         >
-          {canUseVoiceCall ? (
-            <PhoneIcon
-              className="w-4 h-4"
-              style={{ color: "var(--accent-gold)" }}
-            />
-          ) : (
-            <LockIcon className="w-4 h-4" style={{ color: "var(--text-secondary)" }} />
-          )}
+          <Phone
+            className={cn(
+              "w-4 h-4",
+              canUseVoiceCall ? "text-accent-gold" : "text-content-text"
+            )}
+          />
         </button>
 
         <button
@@ -830,33 +803,30 @@ export function ChatMain({
           className={cn(
             "w-8 h-8 flex items-center justify-center rounded-full transition-all hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
             showVoiceNudge && "voice-call-nudge voice-call-nudge--delay",
+            canUseVideoCall
+              ? "bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.3)]"
+              : "bg-[rgba(148,163,184,0.08)] border border-[rgba(148,163,184,0.22)] opacity-56",
           )}
-          style={{
-            background: canUseVideoCall ? "rgba(201,168,76,0.12)" : "rgba(148,163,184,0.08)",
-            border: canUseVideoCall ? "1px solid rgba(201,168,76,0.3)" : "1px solid rgba(148,163,184,0.22)",
-            opacity: canUseVideoCall ? 1 : 0.56,
-          }}
         >
-          {canUseVideoCall ? (
-            <VideoCameraIcon
-              className="w-4 h-4"
-              weight="fill"
-              style={{ color: "var(--accent-gold)" }}
-            />
-          ) : (
-            <LockIcon className="w-4 h-4" style={{ color: "var(--text-secondary)" }} />
-          )}
+          <Video
+            className={cn(
+              "w-4 h-4",
+              canUseVideoCall ? "fill-current text-accent-gold" : "text-content-text"
+            )}
+          />
         </button>
 
         {/* Toggle Right Panel: character info, history, other characters, quiz, contexts (Mobile/Tablet) */}
         {toggleRightPanel && (
           <button
             onClick={toggleRightPanel}
-            className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95"
-            style={{ color: isRightOpen ? "var(--accent-gold)" : "var(--text-secondary)" }}
+            className={cn(
+              "md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95",
+              isRightOpen ? "text-accent-gold" : "text-content-text",
+            )}
             aria-label="Mở bảng điều khiển"
           >
-            <InfoIcon className="w-5 h-5" />
+            <Info className="w-5 h-5" />
           </button>
         )}
       </div>
@@ -866,19 +836,14 @@ export function ChatMain({
         {isLoading ? (
           <div className="flex justify-center py-10">
             <div
-              className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
-              style={{
-                borderColor: "var(--accent-gold)",
-                borderTopColor: "transparent",
-              }}
+              className="w-5 h-5 rounded-full border-2 border-accent-gold border-t-transparent animate-spin"
             />
           </div>
         ) : !sessionId ? (
           <>
             {initializingLabel && (
               <p
-                className="px-4 pb-2 text-xs text-center"
-                style={{ color: "var(--text-secondary)" }}
+                className="px-4 pb-2 text-xs text-center text-content-text"
               >
                 {initializingLabel}
               </p>
@@ -933,12 +898,7 @@ export function ChatMain({
               <button
                 key={i}
                 onClick={() => handleSend(q)}
-                className="text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all hover:border-[var(--accent-gold)]"
-                style={{
-                  background: "var(--bg-elevated)",
-                  borderColor: "var(--border-default)",
-                  color: "var(--text-secondary)",
-                }}
+                className="text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all hover:border-accent-gold bg-bg-elevated border-border-default text-content-text"
               >
                 {q}
               </button>
@@ -948,7 +908,7 @@ export function ChatMain({
 
         {/* Token usage display */}
         {lastTokenUsage && !isStreaming && (
-          <div className="px-4 flex items-center justify-end gap-3 text-[10px]" style={{ color: "var(--text-muted)" }}>
+          <div className="px-4 flex items-center justify-end gap-3 text-[10px] text-content-muted">
             {isStaffOrAdmin ? (
               lastTokenUsage.messageType === "VOICE" ? (
                 <span className="tabular-nums">Đã dùng: {lastTokenUsage.promptTokens + lastTokenUsage.completionTokens}</span>
@@ -962,8 +922,8 @@ export function ChatMain({
             ) : (
               <>
                 <div className="flex items-center gap-1.5">
-                  <CoinsIcon className="w-3 h-3" style={{ color: "var(--accent-gold)" }} />
-                  <span>Còn lại: <strong className="tabular-nums" style={{ color: "var(--text-secondary)" }}>{lastTokenUsage.remainingTokens.toLocaleString()}</strong></span>
+                  <Coins className="w-3 h-3 text-accent-gold" />
+                  <span>Còn lại: <strong className="tabular-nums text-content-text">{lastTokenUsage.remainingTokens.toLocaleString()}</strong></span>
                 </div>
                 <span className="w-px h-3 bg-(--border-default)" />
                 <span className="tabular-nums">Đã dùng: {(lastTokenUsage.promptTokens + lastTokenUsage.completionTokens).toLocaleString()}</span>
@@ -977,24 +937,17 @@ export function ChatMain({
 
       {isTokenExhausted && (
         <div 
-          className="px-4 py-2.5 border-t border-b flex items-center justify-between gap-3 text-xs shrink-0 backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
-          style={{
-            borderColor: "rgba(212, 175, 55, 0.25)",
-            background: "rgba(212, 175, 55, 0.08)",
-          }}
+          className="px-4 py-2.5 border-t border-b border-[rgba(212,175,55,0.25)] flex items-center justify-between gap-3 text-xs shrink-0 backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 bg-[rgba(212,175,55,0.08)]"
         >
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[var(--accent-gold)] animate-pulse shrink-0" />
-            <span style={{ color: "var(--text-secondary)" }}>
+            <span className="text-content-text">
               Bạn đã dùng hết số token giới hạn. Vui lòng nâng cấp gói để tiếp tục cuộc trò chuyện.
             </span>
           </div>
           <button
             onClick={() => setIsUpgradeOpen(true)}
-            className="px-3 py-1.5 rounded-lg text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-110 active:scale-95 shrink-0 cursor-pointer"
-            style={{
-              background: "linear-gradient(135deg, var(--accent-gold), var(--truffle))",
-            }}
+            className="px-3 py-1.5 rounded-lg text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-110 active:scale-95 shrink-0 cursor-pointer bg-gradient-to-br from-accent-gold to-(--truffle)"
           >
             Nâng cấp ngay
           </button>
@@ -1119,11 +1072,7 @@ function VoiceCallBubble({
   return (
     <div className="flex justify-end px-4 mb-4">
       <div
-        className="w-[240px] overflow-hidden rounded-2xl border shadow-lg"
-        style={{
-          background: "var(--bg-elevated)",
-          borderColor: "var(--border-strong)",
-        }}
+        className="w-[240px] overflow-hidden rounded-2xl border shadow-lg bg-bg-elevated border-(--border-strong)"
       >
         <button
           type="button"
@@ -1132,19 +1081,15 @@ function VoiceCallBubble({
           className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-white/5"
         >
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-            style={{
-              background: "var(--accent-gold-active-bg)",
-              color: "var(--accent-gold)",
-            }}
+            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-(--accent-gold-active-bg) text-accent-gold"
           >
-            <PhoneCallIcon className="w-5 h-5" weight="fill" />
+            <PhoneCall className="w-5 h-5 fill-current" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+            <p className="text-sm font-bold text-content-heading">
               Cuộc gọi thoại
             </p>
-            <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+            <p className="text-xs text-content-text">
               {formatVietnamTime(call.startedAt)}
             </p>
           </div>
@@ -1153,11 +1098,7 @@ function VoiceCallBubble({
           type="button"
           onClick={onCallAgain}
           aria-label="Gọi lại"
-          className="w-full py-2.5 text-sm font-semibold cursor-pointer transition-colors hover:brightness-110"
-          style={{
-            background: "var(--accent-gold-active-bg)",
-            color: "var(--accent-gold-soft)",
-          }}
+          className="w-full py-2.5 text-sm font-semibold cursor-pointer transition-colors hover:brightness-110 bg-(--accent-gold-active-bg) text-accent-gold-soft"
         >
           Gọi lại
         </button>
@@ -1180,14 +1121,10 @@ function VoiceCallTranscriptDialog({
   return (
     <Dialog open={!!call} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-h-[80vh] overflow-hidden border"
-        style={{
-          background: "var(--bg-surface)",
-          borderColor: "var(--border-default)",
-        }}
+        className="max-h-[80vh] overflow-hidden border border-border-default bg-bg-surface"
       >
         <DialogHeader>
-          <DialogTitle style={{ color: "var(--text-primary)" }}>
+          <DialogTitle className="text-content-heading">
             Cuộc gọi thoại - {call ? formatVietnamTime(call.startedAt) : ""}
           </DialogTitle>
         </DialogHeader>
@@ -1202,12 +1139,12 @@ function VoiceCallTranscriptDialog({
                 className={cn("flex flex-col gap-1.5", isUser ? "items-end" : "items-start")}
               >
                 <div
-                  className="max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
-                  style={{
-                    background: isUser ? "var(--accent-bronze)" : "var(--bg-elevated)",
-                    color: isUser ? "white" : "var(--text-primary)",
-                    border: isUser ? "none" : "1px solid var(--border-default)",
-                  }}
+                  className={cn(
+                    "max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+                    isUser
+                      ? "bg-(--accent-bronze) text-white"
+                      : "bg-bg-elevated text-content-heading border border-border-default",
+                  )}
                 >
                   <p className="mb-1 text-[10px] font-semibold opacity-70">
                     {isUser ? "Bạn" : character.name} - {formatVietnamTime(message.createdAt)}

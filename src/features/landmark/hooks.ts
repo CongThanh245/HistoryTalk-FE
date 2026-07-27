@@ -34,7 +34,6 @@ export function useLandmark(landmarkId: string | null) {
     enabled: !!landmarkId,
   });
 }
-type ContextEvent = (typeof MOCK_CONTEXT_EVENTS)[string];
 
 // GET events linked to a landmark (by contextIds)
 export function useLandmarkEvents(contextIds: string[]) {
