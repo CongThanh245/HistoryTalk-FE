@@ -27,12 +27,15 @@ import {
   PercentIcon,
   TrophyIcon,
   HelpCircleIcon,
+  FlameIcon,
 } from "lucide-react";
 import { GaugeIcon } from "@phosphor-icons/react";
+import Image from "next/image";
 
 import { StaffShell } from "@/components/staff/staff-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { isValidUrl } from "@/lib/utils/url";
 import {
   useAdminOverview,
   useAdminUserAnalytics,
@@ -1217,6 +1220,92 @@ export default function AdminDashboardPage() {
           </Card>
 
         </div>
+
+        {/* ── Row 7: Top nhân vật hot (được trò chuyện nhiều nhất) ── */}
+        <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <FlameIcon className="h-4 w-4 text-orange-500" />
+              <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                Nhân vật Hot nhất
+              </CardTitle>
+            </div>
+            <CardDescription className="text-xs">Xếp hạng nhân vật được trò chuyện nhiều nhất trong hệ thống</CardDescription>
+          </CardHeader>
+          <CardContent className="border-t border-dashed border-[var(--card-light-border)] pt-4">
+            {ovLoading ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-24 w-full rounded-xl" />
+                ))}
+              </div>
+            ) : (overview?.topCharacters ?? []).length > 0 ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                {(overview?.topCharacters ?? []).map((c, idx) => {
+                  const rank = idx + 1;
+                  const rankColor =
+                    rank === 1 ? "#f59e0b" : rank === 2 ? "#94a3b8" : rank === 3 ? "#b45309" : "var(--content-muted)";
+                  const total = c.totalMessages || 1;
+                  const userPct = Math.round((c.userMessages / total) * 100);
+                  return (
+                    <div
+                      key={c.characterId}
+                      className="relative flex items-center gap-3 rounded-xl border p-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+                      style={{ borderColor: "var(--card-light-border)" }}
+                    >
+                      <span
+                        className="absolute -top-2 -left-2 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-extrabold text-white shadow"
+                        style={{ background: rankColor }}
+                      >
+                        {rank}
+                      </span>
+                      <div
+                        className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border"
+                        style={{ borderColor: "var(--card-light-border)", background: "var(--card-light-border)" }}
+                      >
+                        {isValidUrl(c.imageUrl) ? (
+                          <Image src={c.imageUrl!} alt={c.name} fill className="object-cover" sizes="48px" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-sm font-bold" style={{ color: "var(--content-subtle)" }}>
+                            {c.name?.charAt(0) ?? "?"}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-xs font-bold text-[var(--content-heading)]" title={c.name}>
+                          {c.name}
+                        </div>
+                        {c.title && (
+                          <div className="truncate text-[10px] text-[var(--content-muted)]" title={c.title}>
+                            {c.title}
+                          </div>
+                        )}
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <MessageSquareIcon className="h-3 w-3 text-orange-500" />
+                          <span className="text-xs font-extrabold text-[var(--content-heading)]">
+                            {c.totalMessages.toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-[var(--content-muted)]">tin nhắn</span>
+                        </div>
+                        <div className="mt-1 h-1 rounded-full bg-[var(--card-light-border)] overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-blue-500"
+                            style={{ width: `${userPct}%` }}
+                            title={`Người dùng: ${c.userMessages} | AI: ${c.aiMessages}`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex h-[80px] items-center justify-center text-xs text-[var(--content-muted)]">
+                Chưa có dữ liệu trò chuyện
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </StaffShell>
   );
