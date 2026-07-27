@@ -249,6 +249,8 @@ export const documentService = {
     entityType?: DocumentEntityType,
     entityId?: string,
     onProgress?: (page: number, total: number) => void,
+    /** Lets the caller cancel a long OCR run (e.g. a "Hủy" button) — aborting also rejects the in-flight reader.read() loop below with an AbortError. */
+    signal?: AbortSignal,
   ): Promise<ExtractedPdf> => {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
     const basePath = process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
@@ -266,7 +268,7 @@ export const documentService = {
       const headers: Record<string, string> = {};
       if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
       // FormData tu set Content-Type (kem boundary) — khong tu set thu cong.
-      return fetch(url, { method: "POST", headers, body: buildFormData() });
+      return fetch(url, { method: "POST", headers, body: buildFormData(), signal });
     };
 
     let response = await doFetch(useAuthStore.getState().tokens?.accessToken);

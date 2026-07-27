@@ -11,7 +11,6 @@ import {
   ImageIcon,
   VideoIcon,
   UploadSimpleIcon,
-  FilePdfIcon,
   ArrowsOutIcon,
   UsersIcon,
   LinkBreakIcon,
@@ -26,11 +25,12 @@ import {
   StaffFormSelect,
 } from "@/components/staff/staff-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { StaffImageHoverPreview } from "@/components/staff/staff-media-preview";
 import { MediaSlotField } from "@/components/staff/media-slot-field";
 import { NewDocumentPanel } from "@/components/staff/new-document-panel";
+import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { PdfUploadDialog } from "@/components/staff/pdf-upload-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
@@ -58,6 +58,9 @@ const ERA_OPTIONS = [
 const MEDIA_MAX_UPLOAD_MB = 50;
 const MEDIA_MAX_UPLOAD_BYTES = MEDIA_MAX_UPLOAD_MB * 1024 * 1024;
 const MEDIA_SIZE_HINT = `Tối đa ${MEDIA_MAX_UPLOAD_MB}MB`;
+
+/** Sentinel id for the not-yet-created document being composed in create mode — it reuses the same view/edit/delete dialogs as a real, already-imported RagDocument. */
+const PENDING_DOCUMENT_ID = "pending";
 
 function ValidationErrorText({ message }: { message?: string }) {
   return message ? (
@@ -90,6 +93,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     isExtractPdfDocumentPending = false,
     onCreatePdfDocument,
     isCreatePdfDocumentPending = false,
+    onUpdateDocument,
+    isUpdateDocumentPending = false,
     charactersInContext = [],
     isLoadingCharactersInContext = false,
     characterSearch = "",
@@ -123,8 +128,19 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     publishBlockedMessage,
     handleSaveClick,
     getDocumentId,
-    selectDocument,
-    clearDocumentDraft,
+    viewingDocument,
+    setViewingDocument,
+    editingDocument,
+    editDraftTitle,
+    setEditDraftTitle,
+    editDraftContent,
+    setEditDraftContent,
+    openDocumentEdit,
+    closeDocumentEdit,
+    handleSaveDocumentEdit,
+    isSavingDocumentEdit,
+    deleteDocumentTarget,
+    setDeleteDocumentTarget,
     uploadDialogOpen,
     setUploadDialogOpen,
     uploadTargetDocId,
@@ -135,17 +151,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     setViewerUrl,
     viewerLoading,
     setViewerLoading,
-    pendingPdfFile,
-    setPendingPdfFile,
     pendingPdfFileUrl,
     setPendingPdfFileUrl,
-    pendingPdfPageCount,
-    setPendingPdfPageCount,
-    pdfPreviewUrl,
-    setPdfPreviewUrl,
-    pdfOcrProgress,
-    setPdfOcrProgress,
-    fileInputRef,
     pendingImageFile,
     setPendingImageFile,
     pendingVideoFile,
@@ -221,52 +228,6 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
       }
     }
   };
-
-  // Picking a PDF before the context exists immediately uploads + extracts
-  // its text (matches the BE's 1-step upload-and-extract endpoint), then
-  // pre-fills the manual content editor below so staff can review/edit it —
-  // the fileUrl travels alongside in pendingPdfFileUrl and is sent together
-  // with that content in a single create call once the context is saved.
-  const handlePdfFilePick = async (file: File) => {
-    const localPreviewUrl = URL.createObjectURL(file);
-    setPendingPdfFile(file);
-    setPdfPreviewUrl(localPreviewUrl);
-    setPendingPdfFileUrl(null);
-    setPendingPdfPageCount(null);
-    setPdfOcrProgress(null);
-    if (!onExtractPdfDocument) return;
-    try {
-      const result = await onExtractPdfDocument(file, (page, total) => setPdfOcrProgress({ page, total }));
-      setPendingPdfFileUrl(result.fileUrl);
-      setPendingPdfPageCount(result.pageCount);
-      set("documentContent")(result.rawText);
-      if (!draft.documentTitle.trim()) {
-        set("documentTitle")(file.name.replace(/\.pdf$/i, ""));
-      }
-    } catch {
-      // onExtractPdfDocument's hook already shows an error toast
-      setPendingPdfFile(null);
-      URL.revokeObjectURL(localPreviewUrl);
-      setPdfPreviewUrl(null);
-    }
-  };
-
-  const clearPendingPdf = () => {
-    setPendingPdfFile(null);
-    setPendingPdfFileUrl(null);
-    setPendingPdfPageCount(null);
-    setPdfOcrProgress(null);
-    if (pdfPreviewUrl) {
-      URL.revokeObjectURL(pdfPreviewUrl);
-      setPdfPreviewUrl(null);
-    }
-  };
-
-  // Once an existing document already has a PDF attached, editing its
-  // content through this manual editor + main Save button isn't supported —
-  // that only applies to documents still being drafted (no fileUrl yet).
-  const selectedDocument = documents.find((document) => getDocumentId(document) === draft.documentId);
-  const selectedDocumentHasPdf = !!selectedDocument?.fileUrl;
 
   const [unmapTarget, setUnmapTarget] = React.useState<{ characterId: string; name: string } | null>(null);
   const [imageLightboxOpen, setImageLightboxOpen] = React.useState(false);
@@ -615,59 +576,67 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   </p>
                 </div>
 
-                {mode === "edit" && (
-                  <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                        Tài liệu đã import
-                        {documents.length > 0 && (
-                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
-                            {documents.length}
-                          </span>
-                        )}
-                      </p>
-                    </div>
+                <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
+                      {mode === "edit" ? "Tài liệu đã import" : "Tài liệu"}
+                      {mode === "edit" && documents.length > 0 && (
+                        <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
+                          {documents.length}
+                        </span>
+                      )}
+                    </p>
+                  </div>
 
-                    <div className="mb-3">
-                      <NewDocumentPanel
-                        disabled={!isEditing}
-                        onCreateText={async (data) => {
+                  <div className="mb-3">
+                    <NewDocumentPanel
+                      disabled={!isEditing}
+                      onCreateText={async (data) => {
+                        if (mode === "edit") {
                           if (onCreateTextDocument) await onCreateTextDocument(data);
-                        }}
-                        isCreateTextPending={isCreateTextDocumentPending}
-                        onExtractPdf={async (file, onProgress) => {
-                          if (!onExtractPdfDocument) throw new Error("onExtractPdfDocument not provided");
-                          return onExtractPdfDocument(file, onProgress);
-                        }}
-                        isExtractPdfPending={isExtractPdfDocumentPending}
-                        onCreatePdf={async (data) => {
+                        } else {
+                          set("documentTitle")(data.title);
+                          set("documentContent")(data.content);
+                        }
+                      }}
+                      isCreateTextPending={isCreateTextDocumentPending}
+                      onExtractPdf={async (file, onProgress, signal) => {
+                        if (!onExtractPdfDocument) throw new Error("onExtractPdfDocument not provided");
+                        return onExtractPdfDocument(file, onProgress, signal);
+                      }}
+                      isExtractPdfPending={isExtractPdfDocumentPending}
+                      onCreatePdf={async (data) => {
+                        if (mode === "edit") {
                           if (onCreatePdfDocument) await onCreatePdfDocument(data);
-                        }}
-                        isCreatePdfPending={isCreatePdfDocumentPending}
-                      />
-                    </div>
+                        } else {
+                          set("documentTitle")(data.title);
+                          set("documentContent")(data.content);
+                          setPendingPdfFileUrl(data.fileUrl);
+                        }
+                      }}
+                      isCreatePdfPending={isCreatePdfDocumentPending}
+                    />
+                  </div>
 
-                    {isLoadingDocuments ? (
+                  {mode === "edit" ? (
+                    isLoadingDocuments ? (
                       <p className="text-xs" style={{ color: "var(--content-muted)" }}>Đang tải tài liệu...</p>
                     ) : documents.length ? (
                       <div className="space-y-2">
                         {documents.map((document, index) => {
                           const documentId = getDocumentId(document);
-                          const selected = !!documentId && draft.documentId === documentId;
 
                           return (
                             <div
                               key={documentId ?? `historical-document-${index}`}
                               className="flex items-start gap-2 rounded-md border p-2"
-                              style={{
-                                borderColor: selected ? "rgba(59,130,246,0.45)" : "var(--card-light-border)",
-                                background: selected ? "rgba(59,130,246,0.08)" : "rgba(255,255,255,0.35)",
-                              }}
+                              style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
                             >
                               <button
                                 type="button"
                                 className="min-w-0 flex-1 text-left"
-                                onClick={() => selectDocument(document)}
+                                onClick={() => setViewingDocument(document)}
+                                title="Xem chi tiết tài liệu này"
                               >
                                 <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
                                   {document.title || "Tài liệu chưa đặt tên"}
@@ -698,18 +667,18 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                       }
                                     }}
                                     style={{ color: "var(--accent-gold)" }}
-                                    title="Xem PDF"
+                                    title="Xem PDF gốc"
                                   >
                                     <EyeIcon className="h-4 w-4" />
                                   </Button>
                                 )}
-                                {onUploadDocumentPdf && !document.fileUrl && (
+                                {onUploadDocumentPdf && !document.fileUrl && isEditing && (
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
                                     className="shrink-0 rounded-full"
-                                    disabled={isUploadDocumentPdfPending || !isEditing}
+                                    disabled={isUploadDocumentPdfPending}
                                     onClick={() => {
                                       if (documentId) {
                                         setUploadTargetDocId(documentId);
@@ -717,24 +686,34 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                                       }
                                     }}
                                     style={{ color: "var(--accent-blue)" }}
-                                    title="Upload PDF"
+                                    title="Đính kèm PDF gốc"
                                   >
                                     <UploadSimpleIcon className="h-4 w-4" />
                                   </Button>
                                 )}
-                                {onDeleteDocument && (
+                                {isEditing && onUpdateDocument && (
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
                                     className="shrink-0 rounded-full"
-                                    disabled={!isEditing || isDeleteDocumentPending}
-                                    onClick={() => {
-                                      if (!documentId) return;
-                                      onDeleteDocument(documentId);
-                                      if (draft.documentId === documentId) clearDocumentDraft();
-                                    }}
+                                    onClick={() => openDocumentEdit(document)}
+                                    style={{ color: "var(--content-heading)" }}
+                                    title="Sửa nội dung"
+                                  >
+                                    <PencilIcon className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {onDeleteDocument && isEditing && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="shrink-0 rounded-full"
+                                    disabled={isDeleteDocumentPending}
+                                    onClick={() => setDeleteDocumentTarget(document)}
                                     style={{ color: "var(--accent-danger)" }}
+                                    title="Xóa tài liệu"
                                   >
                                     <TrashIcon className="h-4 w-4" />
                                   </Button>
@@ -746,175 +725,73 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                       </div>
                     ) : (
                       <p className="text-xs" style={{ color: "var(--content-muted)" }}>Chưa có tài liệu nào.</p>
-                    )}
-                  </div>
-                )}
-
-                {mode === "create" && (
-                  <div className="rounded-lg border p-3" style={{ borderColor: "var(--card-light-border)" }}>
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                        Nhập từ file PDF
-                        {pendingPdfFile && (
-                          <span
-                            className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full"
-                            style={{
-                              background: isExtractPdfDocumentPending ? "rgba(59,130,246,0.1)" : "rgba(234,179,8,0.1)",
-                              color: isExtractPdfDocumentPending ? "var(--accent-blue)" : "var(--accent-gold)",
-                            }}
-                          >
-                            {isExtractPdfDocumentPending
-                              ? pdfOcrProgress
-                                ? `Đã xử lý trang ${pdfOcrProgress.page}/${pdfOcrProgress.total} (${Math.round((pdfOcrProgress.page / pdfOcrProgress.total) * 100)}%)`
-                                : "Đang trích xuất..."
-                              : pendingPdfFileUrl
-                                ? `Đã trích xuất${pendingPdfPageCount ? ` · ${pendingPdfPageCount} trang` : ""}`
-                                : "Đã chọn"}
-                          </span>
-                        )}
-                      </p>
-                      {pendingPdfFile && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          disabled={isExtractPdfDocumentPending}
-                          onClick={clearPendingPdf}
-                          title="Gỡ file PDF"
-                        >
-                          <TrashIcon className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
-
-                    {!pendingPdfFile ? (
-                      <div
-                        onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors hover:border-[var(--accent-gold)]/50 hover:bg-[var(--accent-gold)]/5"
-                        style={{ borderColor: "var(--card-light-border)" }}
-                      >
-                        <FilePdfIcon className="h-8 w-8 mx-auto mb-2" style={{ color: "var(--content-muted)" }} />
-                        <p className="text-sm font-medium" style={{ color: "var(--content-heading)" }}>
-                          Click để chọn file PDF
-                        </p>
-                        <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
-                          Nội dung sẽ được tự động trích xuất vào ô bên dưới
-                        </p>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept=".pdf"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            e.target.value = "";
-                            if (file && file.type === "application/pdf") {
-                              void handlePdfFilePick(file);
-                            } else if (file) {
-                              toast.error("Vui lòng chọn file PDF");
-                            }
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div
-                          className="flex items-center gap-3 p-3 rounded-lg border"
-                          style={{ borderColor: "rgba(234,179,8,0.3)", background: "rgba(234,179,8,0.05)" }}
-                        >
+                    )
+                  ) : draft.documentContent.trim() ? (
+                    // The not-yet-created document lives entirely in the draft
+                    // (no real id until the context is saved) — reuse the same
+                    // row markup, and the view/edit/delete dialogs below, via a
+                    // sentinel "pending" id.
+                    <div className="space-y-2">
+                      {(() => {
+                        const pendingDocument = {
+                          id: PENDING_DOCUMENT_ID,
+                          title: draft.documentTitle,
+                          content: draft.documentContent,
+                          type: "TEXT" as const,
+                          fileUrl: pendingPdfFileUrl || undefined,
+                        };
+                        return (
                           <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                            style={{ background: "rgba(234,179,8,0.1)" }}
+                            className="flex items-start gap-2 rounded-md border p-2"
+                            style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.35)" }}
                           >
-                            {isExtractPdfDocumentPending ? (
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" style={{ color: "var(--accent-gold)" }} />
-                            ) : (
-                              <FilePdfIcon className="h-5 w-5" style={{ color: "var(--accent-gold)" }} />
-                            )}
+                            <button
+                              type="button"
+                              className="min-w-0 flex-1 text-left"
+                              onClick={() => setViewingDocument(pendingDocument)}
+                              title="Xem chi tiết tài liệu này"
+                            >
+                              <p className="truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                                {pendingDocument.title || "Tài liệu chưa đặt tên"}
+                              </p>
+                              <p className="mt-0.5 line-clamp-2 text-xs" style={{ color: "var(--content-muted)" }}>
+                                {pendingDocument.content || "Chưa có nội dung"}
+                              </p>
+                            </button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="shrink-0 rounded-full"
+                                onClick={() => openDocumentEdit(pendingDocument)}
+                                style={{ color: "var(--content-heading)" }}
+                                title="Sửa nội dung"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="shrink-0 rounded-full"
+                                onClick={() => setDeleteDocumentTarget(pendingDocument)}
+                                style={{ color: "var(--accent-danger)" }}
+                                title="Xóa tài liệu"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium truncate" style={{ color: "var(--content-heading)" }}>
-                              {pendingPdfFile.name}
-                            </p>
-                            <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                              {(pendingPdfFile.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setViewerUrl(pdfPreviewUrl);
-                              setViewerOpen(true);
-                            }}
-                            style={{ color: "var(--accent-gold)", borderColor: "rgba(234,179,8,0.3)" }}
-                          >
-                            <EyeIcon className="h-4 w-4 mr-1.5" />
-                            Xem trước
-                          </Button>
-                        </div>
-
-                        {pendingPdfFileUrl && (
-                          <p className="text-xs" style={{ color: "var(--content-muted)" }}>
-                            Nội dung trích xuất đã được điền vào ô &quot;Nội dung tài liệu&quot; bên dưới — hãy kiểm tra và chỉnh sửa trước khi lưu.
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {!selectedDocumentHasPdf && (
-                  <div className="space-y-3 border-t pt-4" style={{ borderColor: "var(--card-light-border)" }}>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--content-heading)" }}>
-                        Soạn tài liệu
-                      </p>
-                      <p className="mt-1 text-xs" style={{ color: "var(--content-muted)" }}>
-                        {mode === "edit"
-                          ? <>Nội dung dưới đây lưu <strong>cùng bối cảnh</strong> khi bạn bấm &quot;Lưu thay đổi&quot; ở trên cùng — chọn một tài liệu đã import ở trên để sửa nó, hoặc gõ nội dung mới để tạo tài liệu khác. Muốn tạo và lưu ngay lập tức (không cần bấm Lưu thay đổi), dùng nút &quot;+ Tài liệu mới&quot; phía trên.</>
-                          : "Gõ nội dung trực tiếp, hoặc chọn file PDF ở trên để tự động điền — tài liệu này sẽ được tạo cùng lúc khi bạn tạo bối cảnh."}
-                      </p>
+                        );
+                      })()}
                     </div>
-                    <div className="grid gap-1.5">
-                      <div className="flex items-center justify-between">
-                        <StaffFormLabel>Tiêu đề tài liệu</StaffFormLabel>
-                        {draft.documentId && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                            Đang sửa
-                          </span>
-                        )}
-                        {!draft.documentId && draft.documentContent.trim() && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
-                            Tài liệu mới
-                          </span>
-                        )}
-                      </div>
-                      <StaffFormInput
-                        value={draft.documentTitle}
-                        onChange={(e) => set("documentTitle")(e.target.value)}
-                        placeholder="Để trống sẽ dùng tên bối cảnh"
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="grid gap-1.5">
-                      <div className="flex items-center justify-between">
-                        <StaffFormLabel>Nội dung tài liệu</StaffFormLabel>
-                        <span className="text-[10px]" style={{ color: "var(--content-muted)" }}>
-                          {draft.documentContent.length.toLocaleString("vi-VN")} ký tự
-                        </span>
-                      </div>
-                      <StaffFormTextarea
-                        value={draft.documentContent}
-                        onChange={(e) => set("documentContent")(e.target.value)}
-                        placeholder="Dán plain text tài liệu tham khảo để AI dùng khi chat..."
-                        style={{ minHeight: "160px" }}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                      Chưa có tài liệu nào. Tài liệu sẽ được tạo cùng lúc khi bạn tạo bối cảnh.
+                    </p>
+                  )}
+                </div>
               </TabsContent>
 
               <TabsContent value="characters" className="space-y-4 mt-0">
@@ -1182,6 +1059,108 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         pdfUrl={viewerUrl}
         isLoading={viewerLoading}
         title="Xem PDF"
+      />
+
+      {/* Document view (read-only) */}
+      <StaffDocumentDetailDialog
+        open={!!viewingDocument}
+        onOpenChange={(open) => !open && setViewingDocument(null)}
+        title={viewingDocument?.title ?? ""}
+        content={viewingDocument?.content ?? ""}
+        titleBadge={
+          viewingDocument?.fileUrl ? (
+            <span
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+              style={{ background: "rgba(234,179,8,0.12)", color: "rgb(146,64,14)" }}
+            >
+              Có PDF gốc
+            </span>
+          ) : undefined
+        }
+      />
+
+      {/* Document edit — header/footer stay fixed, only the middle scrolls,
+          so "Lưu thay đổi" never needs a scroll-to-find on long content. */}
+      <Dialog open={!!editingDocument} onOpenChange={(open) => !open && closeDocumentEdit()}>
+        <DialogContent className="flex max-h-[85vh] w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-[680px]">
+          <DialogHeader className="shrink-0 border-b px-6 py-4" style={{ borderColor: "var(--card-light-border)" }}>
+            <DialogTitle>Sửa tài liệu</DialogTitle>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
+            <div className="grid gap-1.5">
+              <StaffFormLabel>Tiêu đề</StaffFormLabel>
+              <StaffFormInput
+                value={editDraftTitle}
+                onChange={(e) => setEditDraftTitle(e.target.value)}
+                placeholder="Tiêu đề tài liệu"
+                disabled={isSavingDocumentEdit}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <div className="flex items-center justify-between">
+                <StaffFormLabel>Nội dung</StaffFormLabel>
+                <span className="text-[10px]" style={{ color: "var(--content-muted)" }}>
+                  {editDraftContent.length.toLocaleString("vi-VN")} ký tự
+                </span>
+              </div>
+              <StaffFormTextarea
+                value={editDraftContent}
+                onChange={(e) => setEditDraftContent(e.target.value)}
+                placeholder="Nội dung tài liệu"
+                style={{ minHeight: "260px" }}
+                disabled={isSavingDocumentEdit}
+              />
+            </div>
+          </div>
+          <div className="flex shrink-0 justify-end gap-2 border-t px-6 py-4" style={{ borderColor: "var(--card-light-border)" }}>
+            <Button type="button" variant="outline" onClick={closeDocumentEdit} disabled={isSavingDocumentEdit}>
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                // The pending create-mode document has no real id yet — just
+                // write straight back into the draft instead of calling the
+                // (nonexistent) update API.
+                if (editingDocument && getDocumentId(editingDocument) === PENDING_DOCUMENT_ID) {
+                  set("documentTitle")(editDraftTitle.trim());
+                  set("documentContent")(editDraftContent.trim());
+                  closeDocumentEdit();
+                  return;
+                }
+                void handleSaveDocumentEdit();
+              }}
+              disabled={isSavingDocumentEdit || isUpdateDocumentPending}
+            >
+              {isSavingDocumentEdit || isUpdateDocumentPending ? "Đang lưu..." : "Lưu thay đổi"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete document confirm */}
+      <ConfirmDialog
+        open={!!deleteDocumentTarget}
+        onOpenChange={(open) => !open && setDeleteDocumentTarget(null)}
+        title="Xóa tài liệu?"
+        description={`Tài liệu "${deleteDocumentTarget?.title || "chưa đặt tên"}" sẽ bị xóa vĩnh viễn khỏi bối cảnh này.`}
+        confirmLabel="Xóa"
+        variant="danger"
+        isPending={isDeleteDocumentPending}
+        onConfirm={() => {
+          const docId = deleteDocumentTarget ? getDocumentId(deleteDocumentTarget) : undefined;
+          if (!docId) return;
+          if (docId === PENDING_DOCUMENT_ID) {
+            set("documentTitle")("");
+            set("documentContent")("");
+            setPendingPdfFileUrl(null);
+            setDeleteDocumentTarget(null);
+            return;
+          }
+          if (!onDeleteDocument) return;
+          onDeleteDocument(docId);
+          setDeleteDocumentTarget(null);
+        }}
       />
     </div>
   );

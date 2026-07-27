@@ -23,7 +23,6 @@ import {
 import { useEvents } from "@/features/events/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isValidUrl } from "@/lib/utils/url";
-import { toast } from "sonner";
 
 function toInputValue(value: number | null | undefined): string {
   return value == null ? "" : String(value);
@@ -91,31 +90,6 @@ export default function EditCharacterPage() {
 
     try {
       await updateCharacter.mutateAsync({ id, data: payload });
-
-      const documentContent = draft.documentContent.trim();
-      if (documentContent) {
-        try {
-          if (draft.documentId) {
-            await updateCharacterDocument.mutateAsync({
-              docId: draft.documentId,
-              data: {
-                title: draft.documentTitle.trim() || draft.name.trim(),
-                content: documentContent,
-                type: "TEXT",
-              },
-            });
-          } else {
-            await createCharacterDocument.mutateAsync({
-              characterId: id,
-              title: draft.documentTitle.trim() || draft.name.trim(),
-              content: documentContent,
-              type: "TEXT",
-            });
-          }
-        } catch {
-          toast.warning("Nhân vật đã cập nhật, nhưng import tài liệu chưa thành công");
-        }
-      }
     } catch {
       // useUpdateCharacter already shows the API error toast.
     }
@@ -167,7 +141,7 @@ export default function EditCharacterPage() {
       mode="edit"
       initialDraft={initialDraft}
       onSave={handleSave}
-      isPending={updateCharacter.isPending || createCharacterDocument.isPending || updateCharacterDocument.isPending}
+      isPending={updateCharacter.isPending}
       documents={characterDocuments.data ?? []}
       isLoadingDocuments={characterDocuments.isLoading}
       onDeleteDocument={(docId) => deleteCharacterDocument.mutate(docId)}
@@ -192,12 +166,18 @@ export default function EditCharacterPage() {
         await createCharacterDocument.mutateAsync({ characterId: id, title, content, type: "TEXT" });
       }}
       isCreateTextDocumentPending={createCharacterDocument.isPending}
-      onExtractPdfDocument={async (file, onProgress) => extractPdf.mutateAsync({ file, entityType: "character", entityId: id, onProgress })}
+      onExtractPdfDocument={async (file, onProgress, signal) =>
+        extractPdf.mutateAsync({ file, entityType: "character", entityId: id, onProgress, signal })
+      }
       isExtractPdfDocumentPending={extractPdf.isPending}
       onCreatePdfDocument={async ({ title, content, fileUrl }) => {
         await createCharacterDocument.mutateAsync({ characterId: id, title, content, fileUrl });
       }}
       isCreatePdfDocumentPending={createCharacterDocument.isPending}
+      onUpdateDocument={async (docId, data) => {
+        await updateCharacterDocument.mutateAsync({ docId, data: { ...data, type: "TEXT" } });
+      }}
+      isUpdateDocumentPending={updateCharacterDocument.isPending}
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
       onMapContext={(characterId, contextId, options) =>
