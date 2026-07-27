@@ -8,6 +8,7 @@ import { useVoiceChat, VoiceStatus } from "@/features/chat/useVoiceChat";
 import { queryKeys } from "@/shared/query-key";
 import { useAuthStore } from "@/store/auth.store";
 import { userService, type UserProfile } from "@/services/user.service";
+import { splitAssistantContent } from "@/lib/utils/helpers";
 
 const PROFILE_REFRESH_DELAYS_MS = [400, 1200, 2500, 5000];
 
@@ -122,34 +123,43 @@ function TranscriptFeed({
 
   return (
     <div className="w-full max-h-40 overflow-y-auto scrollbar-hide space-y-2 px-1">
-      {messages.slice(-6).map((m, i) => (
-        <div
-          key={i}
-          className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-        >
+      {messages.slice(-6).map((m, i) => {
+        const parts =
+          m.role === "assistant" ? splitAssistantContent(m.text) : [];
+        const displayParts = parts.length > 0 ? parts : [m.text];
+
+        return (
           <div
-            className={`
-              max-w-[80%] rounded-2xl px-3 py-1.5 text-sm leading-snug
-              ${
-                m.role === "user"
-                  ? "bg-white/10 text-white/80 rounded-br-sm"
-                  : "text-white/90 rounded-bl-sm"
-              }
-            `}
-            style={
-              m.role === "assistant"
-                ? {
-                    background:
-                      "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05))",
-                    border: "1px solid rgba(201,168,76,0.2)",
-                  }
-                : {}
-            }
+            key={i}
+            className={`flex flex-col gap-1.5 ${m.role === "user" ? "items-end" : "items-start"}`}
           >
-            {m.text}
+            {displayParts.map((part, partIndex) => (
+              <div
+                key={partIndex}
+                className={`
+                  max-w-[80%] rounded-2xl px-3 py-1.5 text-sm leading-snug
+                  ${
+                    m.role === "user"
+                      ? "bg-white/10 text-white/80 rounded-br-sm"
+                      : "text-white/90 rounded-bl-sm"
+                  }
+                `}
+                style={
+                  m.role === "assistant"
+                    ? {
+                        background:
+                          "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05))",
+                        border: "1px solid rgba(201,168,76,0.2)",
+                      }
+                    : {}
+                }
+              >
+                {part}
+              </div>
+            ))}
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Transcript đang nhận dạng (real-time) */}
       {currentTranscript && (
