@@ -93,7 +93,7 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col p-0 overflow-hidden border-none shadow-strong bg-[rgba(245,241,234,0.85)] backdrop-blur-[20px] text-content-heading">
+      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col p-0 overflow-hidden border-none shadow-strong bg-bg-elevated text-content-heading">
         
         <DialogHeader className="px-8 pt-8 pb-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent-blue via-accent-teal to-accent-gold opacity-60" />
