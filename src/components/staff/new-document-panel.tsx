@@ -126,7 +126,7 @@ export function NewDocumentPanel({
   return (
     <div
       className="w-full rounded-lg border p-3 space-y-2.5"
-      style={{ borderColor: "var(--card-light-border)", background: "rgba(255,255,255,0.5)" }}
+      style={{ borderColor: "var(--card-light-border)", background: "var(--bg-elevated)" }}
     >
       <div className="flex items-center justify-between gap-2">
         <p
