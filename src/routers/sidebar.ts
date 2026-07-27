@@ -81,7 +81,6 @@ export const SYSTEM_ADMIN_SIDEBAR: SidebarSection[] = [
     items: [
       { icon: Users, label: "Customer", href: ROUTES.STAFF.ADMIN.ACCOUNTS.CUSTOMER },
       { icon: User, label: "Content Admin", href: ROUTES.STAFF.ADMIN.ACCOUNTS.CONTENT_ADMIN },
-      { icon: Shield, label: "System Admin", href: ROUTES.STAFF.ADMIN.ACCOUNTS.SYSTEM_ADMIN },
     ],
   },
   {

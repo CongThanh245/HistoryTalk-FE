@@ -3,7 +3,6 @@
 import * as React from "react";
 import {
   CreditCard,
-  Plus,
   Pencil,
   Trash2,
   CheckCircle,
@@ -31,7 +30,6 @@ import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { cn } from "@/lib/utils/cn";
 import {
   useAdminTiers,
-  useAdminCreateTier,
   useAdminUpdateTier,
   useAdminDeleteTier,
   type AdminTier,
@@ -118,12 +116,6 @@ function TierCard({ tier, onEdit, onDelete }: TierCardProps) {
             <h3 className="text-base font-bold text-content-heading">
               {tier.title}
             </h3>
-            <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
-              style={{ background: color.bg, color: color.text, border: `1px solid ${color.border}` }}
-            >
-              {tier.tierId}
-            </span>
           </div>
         </div>
 
@@ -392,7 +384,6 @@ function TierFormDialog({
 
 export default function AdminSubscriptionsPageContent() {
   const { data: tiers = [], isLoading, isFetching } = useAdminTiers();
-  const createTier = useAdminCreateTier();
   const updateTier = useAdminUpdateTier();
   const deleteTier = useAdminDeleteTier();
 
@@ -409,11 +400,6 @@ export default function AdminSubscriptionsPageContent() {
   const totalRevenue = tiers.reduce((s, t) => s + t.amount, 0);
   const totalTokenPool = tiers.reduce((s, t) => s + t.limitedToken, 0);
 
-  function openCreate() {
-    setFormTarget(null);
-    setFormOpen(true);
-  }
-
   function openEdit(tier: AdminTier) {
     setFormTarget(tier);
     setFormOpen(true);
@@ -425,17 +411,14 @@ export default function AdminSubscriptionsPageContent() {
   }
 
   function handleSave(data: CreateTierPayload) {
-    if (formTarget) {
-      updateTier.mutate(
-        { id: formTarget.tierId, payload: data },
-        { onSuccess: () => setFormOpen(false) }
-      );
-    } else {
-      createTier.mutate(data, { onSuccess: () => setFormOpen(false) });
-    }
+    if (!formTarget) return;
+    updateTier.mutate(
+      { id: formTarget.tierId, payload: data },
+      { onSuccess: () => setFormOpen(false) }
+    );
   }
 
-  const isPending = createTier.isPending || updateTier.isPending;
+  const isPending = updateTier.isPending;
 
   return (
     <StaffShell
@@ -496,14 +479,6 @@ export default function AdminSubscriptionsPageContent() {
                 )}
               </p>
             </div>
-
-            <Button
-              onClick={openCreate}
-              className="rounded-xl gap-2 font-semibold border-0 bg-accent-gold text-white"
-            >
-              <Plus className="h-4 w-4" />
-              Tạo gói mới
-            </Button>
           </div>
 
           {/* Cards grid */}
@@ -526,17 +501,9 @@ export default function AdminSubscriptionsPageContent() {
                   Chưa có gói dịch vụ nào
                 </p>
                 <p className="text-xs text-content-muted">
-                  Bắt đầu bằng cách tạo gói đầu tiên.
+                  Chưa có gói dịch vụ nào để hiển thị.
                 </p>
               </div>
-              <Button
-                onClick={openCreate}
-                size="sm"
-                className="rounded-xl gap-2 border-0 bg-accent-gold text-white"
-              >
-                <Plus className="h-4 w-4" />
-                Tạo gói mới
-              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
