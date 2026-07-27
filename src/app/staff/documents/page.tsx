@@ -958,7 +958,6 @@ export default function StaffDocumentsPage() {
                         fileUrl,
                       });
                     }
-                    }
                   }}
                   isCreatePdfPending={createCharacterDocument.isPending || createHistoricalDocument.isPending}
                 />
