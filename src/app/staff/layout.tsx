@@ -10,7 +10,7 @@ function layout({ children }: { children: React.ReactNode }) {
   return (
     <ReactQueryProviders>
       <SidebarProvider>
-        <div className="flex h-screen bg-gray-50/50">
+        <div className="flex h-[100dvh] bg-[var(--bg-content)]">
           <StaffSidebar />
           <div className="flex-1 flex flex-col min-w-0">
             <Header />
