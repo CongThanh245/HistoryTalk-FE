@@ -621,21 +621,22 @@ export function ChatMain({
         const error = err as {
           message?: string;
           response?: {
+            status?: number;
             data?: {
               message?: string;
               errorCode?: string | number;
             };
           };
         };
-        
+
         const serverMessage = error.message || error.response?.data?.message || "";
-        const errorCode = error.response?.data?.errorCode;
-        
+        const lowerServerMessage = serverMessage.toLowerCase();
+
         // Check for token exhaustion - broader matching
-        const isTokenExhausted = 
-          serverMessage.toLowerCase().includes(" Bạn đã hết token.") ||
-          errorCode === 400 ||
-          errorCode === "400";
+        const isTokenExhausted =
+          lowerServerMessage.includes("hết token") ||
+          lowerServerMessage.includes("không đủ token") ||
+          (error.response?.status === 400 && lowerServerMessage.includes("token"));
         
         if (isTokenExhausted) {
           setIsTokenExhausted(true);
