@@ -1,174 +1,165 @@
 /* ================================
       HistoryTalk Design Tokens
-      Fresh – Vibrant – Modern
+      Clean – Premium – Modern
    ================================ */
 
 :root {
   /* ─────────────────────────────
       Backgrounds
    ───────────────────────────── */
-  --bg-main: oklch(97.5% 0.012 85);
-  --bg-deep: oklch(93% 0.018 80);
-  --bg-content:
-    radial-gradient(circle at 12% 10%, oklch(78% 0.14 70 / 0.06), transparent 26rem),
-    radial-gradient(circle at 88% 85%, oklch(72% 0.10 155 / 0.04), transparent 20rem),
-    linear-gradient(180deg, oklch(98.5% 0.008 85) 0%, oklch(97% 0.012 85) 50%, oklch(94.5% 0.015 80) 100%);
-  --bg-surface: oklch(99% 0.006 85);
-  --bg-elevated: oklch(99.8% 0.003 85);
-  --bg-content-decorated:
-    radial-gradient(circle 200px at 88% 85%, color-mix(in srgb, var(--accent-gold) 16%, transparent), transparent 100%),
-    radial-gradient(circle 260px at 5% 15%, color-mix(in srgb, var(--accent-blue) 14%, transparent), transparent 100%),
-    linear-gradient(color-mix(in srgb, var(--bg-main) 95%, transparent), color-mix(in srgb, var(--bg-main) 95%, transparent)),
-    url('/copper_drum_pattern.webp') no-repeat center / 520px,
-    var(--bg-content);
+  --bg-main: #FAFAFA;
+  --bg-deep: #F4F4F5;
+  --bg-content: linear-gradient(180deg, #FAFAFA 0%, #F4F4F5 100%);
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  /* Clean subtle radial glow instead of noisy textures */
+  --bg-content-decorated: 
+    radial-gradient(circle 800px at 100% 0%, rgba(245, 158, 11, 0.05), transparent),
+    radial-gradient(circle 600px at 0% 100%, rgba(59, 130, 246, 0.03), transparent),
+    var(--bg-main);
 
   /* ─────────────────────────────
       Text
    ───────────────────────────── */
-  --text-primary: oklch(22% 0.02 60);
-  --text-secondary: oklch(38% 0.02 60);
-  --text-tertiary: oklch(45% 0.10 55);
-  --text-muted: oklch(52% 0.015 65);
-  --text-inverse: oklch(97% 0.01 85);
-  --text-on-dark: rgba(255, 255, 255, 0.92);
-  --text-on-dark-muted: rgba(255, 255, 255, 0.45);
+  --text-primary: #09090B;
+  --text-secondary: #3F3F46;
+  --text-tertiary: #71717A;
+  --text-muted: #A1A1AA;
+  --text-inverse: #FFFFFF;
+  --text-on-dark: #FFFFFF;
+  --text-on-dark-muted: rgba(255, 255, 255, 0.7);
 
   /* ─────────────────────────────
-      Brand / Accent — Vibrant Gold & Amber
+      Brand / Accent — Vibrant Amber
    ───────────────────────────── */
-  --accent-gold: oklch(62% 0.19 55);
-  --accent-gold-soft: oklch(72% 0.15 65);
-  --accent-gold-active-bg: rgba(217, 119, 6, 0.12);
-  --accent-gold-glow: rgba(245, 158, 11, 0.30);
-  --gold-on-light: oklch(55% 0.18 50);
-  --accent-blue: oklch(50% 0.14 240);
-  --accent-teal: oklch(55% 0.12 180);
+  --accent-gold: #F59E0B;
+  --accent-gold-soft: #FCD34D;
+  --accent-gold-active-bg: rgba(245, 158, 11, 0.1);
+  --accent-gold-glow: rgba(245, 158, 11, 0.2);
+  --gold-on-light: #D97706;
+  --accent-blue: #3B82F6;
+  --accent-teal: #14B8A6;
 
   /* ─────────────────────────────
       Emotional / Historical
    ───────────────────────────── */
-  --accent-earth: oklch(42% 0.08 55);
-  --accent-bronze: oklch(55% 0.14 60);
-  --accent-blood: oklch(45% 0.16 25);
-  --accent-danger: oklch(50% 0.18 25);
+  --accent-earth: #78716C;
+  --accent-bronze: #B45309;
+  --accent-blood: #991B1B;
+  --accent-danger: #EF4444;
 
   /* ─────────────────────────────
       Status
    ───────────────────────────── */
-  --status-success: #16A34A;
-  --status-success-bg: rgba(22, 163, 74, 0.08);
-  --status-success-border: rgba(22, 163, 74, 0.22);
-  --status-warning: #D97706;
-  --status-warning-bg: rgba(217, 119, 6, 0.08);
-  --status-warning-border: rgba(217, 119, 6, 0.22);
-  --status-danger-bg: rgba(220, 38, 38, 0.08);
-  --status-danger-border: rgba(220, 38, 38, 0.22);
-  --status-neutral-bg: rgba(30, 30, 30, 0.04);
-  --status-neutral-border: rgba(30, 30, 30, 0.12);
+  --status-success: #10B981;
+  --status-success-bg: rgba(16, 185, 129, 0.1);
+  --status-success-border: rgba(16, 185, 129, 0.2);
+  --status-warning: #F59E0B;
+  --status-warning-bg: rgba(245, 158, 11, 0.1);
+  --status-warning-border: rgba(245, 158, 11, 0.2);
+  --status-danger-bg: rgba(239, 68, 68, 0.1);
+  --status-danger-border: rgba(239, 68, 68, 0.2);
+  --status-neutral-bg: rgba(9, 9, 11, 0.05);
+  --status-neutral-border: rgba(9, 9, 11, 0.1);
 
   /* ─────────────────────────────
       Palette
    ───────────────────────────── */
-  --palladian: #FFFBF5;
-  --oatmeal: #E8DFD4;
-  --burning-flame: #D97706;
+  --palladian: #FFFFFF;
+  --oatmeal: #F4F4F5;
+  --burning-flame: #F59E0B;
   --truffle: #B45309;
   --blue-fantastic: #EFF6FF;
-  --abyssal-blue: #1C1917;
+  --abyssal-blue: #09090B;
 
   /* ─────────────────────────────
       Header
    ───────────────────────────── */
-  --header-bg: oklch(99% 0.005 85);
-  --header-border: rgba(28, 25, 23, 0.08);
-  --header-text: var(--abyssal-blue);
-  --header-text-muted: #78716C;
-  --header-input-bg: rgba(255, 255, 255, 0.92);
-  --content-heading: #1C1917;
-  --content-text: #37312B;
-  --content-muted: #57534E;
-  --content-subtle: #A8A29E;
+  --header-bg: rgba(255, 255, 255, 0.8);
+  --header-border: rgba(9, 9, 11, 0.08);
+  --header-text: #09090B;
+  --header-text-muted: #71717A;
+  --header-input-bg: rgba(9, 9, 11, 0.04);
+  --content-heading: #09090B;
+  --content-text: #27272A;
+  --content-muted: #52525B;
+  --content-subtle: #A1A1AA;
   --card-light-bg: #FFFFFF;
-  --card-light-border: rgba(28, 25, 23, 0.08);
-  --card-light-hover: rgba(245, 158, 11, 0.06);
+  --card-light-border: rgba(9, 9, 11, 0.08);
+  --card-light-hover: rgba(9, 9, 11, 0.02);
 
   /* ─────────────────────────────
       Streak counter
    ───────────────────────────── */
-  --streak-bg: rgba(245, 158, 11, 0.10);
-  --streak-border: rgba(245, 158, 11, 0.25);
+  --streak-bg: rgba(245, 158, 11, 0.1);
+  --streak-border: rgba(245, 158, 11, 0.2);
   --streak-text: #D97706;
-  --streak-text-muted: rgba(217, 119, 6, 0.6);
+  --streak-text-muted: rgba(217, 119, 6, 0.7);
 
   /* ─────────────────────────────
       Quest categories
    ───────────────────────────── */
-  --quest-chat: #EA580C;
-  --quest-chat-bg: rgba(234, 88, 12, 0.08);
-  --quest-quiz: #7C3AED;
-  --quest-quiz-bg: rgba(124, 58, 237, 0.08);
-  --quest-read: #0D9488;
-  --quest-read-bg: rgba(13, 148, 136, 0.08);
+  --quest-chat: #F97316;
+  --quest-chat-bg: rgba(249, 115, 22, 0.1);
+  --quest-quiz: #8B5CF6;
+  --quest-quiz-bg: rgba(139, 92, 246, 0.1);
+  --quest-read: #14B8A6;
+  --quest-read-bg: rgba(20, 184, 166, 0.1);
 
   /* ─────────────────────────────
       Sidebar
    ───────────────────────────── */
-  --sidebar-bg:
-    linear-gradient(180deg, rgba(245, 158, 11, 0.05), transparent 16rem),
-    oklch(98% 0.008 85);
-  --sidebar-border: rgba(28, 25, 23, 0.07);
-  --sidebar-hover-bg: rgba(245, 158, 11, 0.07);
-  --sidebar-nav-text: #1C1917;
-  --sidebar-nav-icon: rgba(28, 25, 23, 0.50);
-  --sidebar-active-text: #B45309;
-  --sidebar-section-label: rgba(28, 25, 23, 0.40);
+  --sidebar-bg: #FFFFFF;
+  --sidebar-border: rgba(9, 9, 11, 0.08);
+  --sidebar-hover-bg: rgba(9, 9, 11, 0.04);
+  --sidebar-nav-text: #27272A;
+  --sidebar-nav-icon: rgba(39, 39, 42, 0.6);
+  --sidebar-active-text: #09090B;
+  --sidebar-section-label: #71717A;
   --sidebar-pin-active: var(--accent-gold);
-  --sidebar-pin-inactive: rgba(28, 25, 23, 0.35);
+  --sidebar-pin-inactive: rgba(9, 9, 11, 0.2);
 
   /* ─────────────────────────────
       Borders & Lines
    ───────────────────────────── */
-  --border-default: rgba(28, 25, 23, 0.08);
-  --border-strong: rgba(217, 119, 6, 0.25);
+  --border-default: rgba(9, 9, 11, 0.08);
+  --border-strong: rgba(9, 9, 11, 0.15);
 
   /* ─────────────────────────────
       Shadows
    ───────────────────────────── */
-  --shadow-soft: 0 4px 24px rgba(28, 25, 23, 0.06);
-  --shadow-strong: 0 16px 48px rgba(28, 25, 23, 0.14);
-  --shadow-gold: 0 4px 20px rgba(245, 158, 11, 0.20);
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  --shadow-strong: 0 10px 40px -4px rgba(0, 0, 0, 0.1);
+  --shadow-gold: 0 8px 30px -4px rgba(245, 158, 11, 0.2);
 
   /* ─────────────────────────────
-      Home Banner — Warm golden gradient
+      Home Banner
    ───────────────────────────── */
-  --home-banner-bg:
-    radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.15), transparent 50%),
-    radial-gradient(circle at 20% 80%, rgba(245, 158, 11, 0.08), transparent 40%),
-    linear-gradient(135deg, #FFFEFB 0%, #FFF8ED 40%, #FEF3C7 100%);
-  --home-banner-border: rgba(217, 119, 6, 0.12);
-  --home-banner-shadow: 0 8px 32px rgba(245, 158, 11, 0.08);
-  --home-banner-title: #1C1917;
-  --home-banner-text: rgba(28, 25, 23, 0.72);
-  --home-banner-button-bg: rgba(255, 255, 255, 0.95);
-  --home-banner-button-hover-bg: rgba(245, 158, 11, 0.10);
-  --home-banner-button-border: rgba(217, 119, 6, 0.20);
-  --home-banner-button-hover-border: rgba(217, 119, 6, 0.40);
-  --home-banner-button-text: #92400E;
-  --home-banner-card-bg: rgba(255, 255, 255, 0.85);
-  --home-banner-card-border: rgba(217, 119, 6, 0.12);
-  --home-banner-card-footer: #1C1917;
-  --home-banner-card-fade: #FFFEFB;
+  --home-banner-bg: linear-gradient(135deg, #FFFFFF 0%, #FFFBEB 100%);
+  --home-banner-border: rgba(245, 158, 11, 0.1);
+  --home-banner-shadow: 0 10px 30px -5px rgba(245, 158, 11, 0.1);
+  --home-banner-title: #09090B;
+  --home-banner-text: #52525B;
+  --home-banner-button-bg: #09090B;
+  --home-banner-button-hover-bg: #27272A;
+  --home-banner-button-border: #09090B;
+  --home-banner-button-hover-border: #27272A;
+  --home-banner-button-text: #FFFFFF;
+  --home-banner-card-bg: #FFFFFF;
+  --home-banner-card-border: rgba(245, 158, 11, 0.15);
+  --home-banner-card-footer: #FAFAFA;
+  --home-banner-card-fade: #FFFFFF;
 
   /* ─────────────────────────────
       Era filter
    ───────────────────────────── */
-  --era-filter-active-bg: #D97706;
+  --era-filter-active-bg: #09090B;
   --era-filter-active-text: #FFFFFF;
   --era-filter-bg: #FFFFFF;
-  --era-filter-text: #37312B;
-  --era-filter-border: rgba(28, 25, 23, 0.12);
-  --era-filter-count-bg: rgba(217, 119, 6, 0.10);
-  --era-filter-count-text: #B45309;
+  --era-filter-text: #3F3F46;
+  --era-filter-border: rgba(9, 9, 11, 0.08);
+  --era-filter-count-bg: rgba(9, 9, 11, 0.05);
+  --era-filter-count-text: #52525B;
 
   /* ─────────────────────────────
       Radius
@@ -181,123 +172,118 @@
 .dark {
   color-scheme: dark;
 
-  --bg-main: oklch(14% 0.02 250);
-  --bg-deep: oklch(10% 0.015 250);
-  --bg-content:
-    radial-gradient(circle at 18% 12%, oklch(70% 0.16 60 / 0.07), transparent 24rem),
-    radial-gradient(circle at 86% 18%, oklch(65% 0.12 230 / 0.08), transparent 28rem),
-    linear-gradient(180deg, oklch(14% 0.02 250) 0%, oklch(18% 0.025 250) 56%, oklch(10% 0.015 250) 100%);
-  --bg-surface: oklch(20% 0.025 250);
-  --bg-elevated: oklch(26% 0.03 250);
-  --bg-content-decorated:
-    radial-gradient(circle 200px at 88% 85%, color-mix(in srgb, var(--accent-gold) 16%, transparent), transparent 100%),
-    radial-gradient(circle 260px at 5% 15%, color-mix(in srgb, var(--accent-blue) 14%, transparent), transparent 100%),
-    linear-gradient(color-mix(in srgb, var(--bg-main) 95%, transparent), color-mix(in srgb, var(--bg-main) 95%, transparent)),
-    url('/copper_drum_pattern.webp') no-repeat center / 520px,
-    var(--bg-content);
+  --bg-main: #09090B;
+  --bg-deep: #18181B;
+  --bg-content: linear-gradient(180deg, #09090B 0%, #18181B 100%);
+  --bg-surface: #18181B;
+  --bg-elevated: #27272A;
+  
+  --bg-content-decorated: 
+    radial-gradient(circle 800px at 100% 0%, rgba(245, 158, 11, 0.08), transparent),
+    radial-gradient(circle 600px at 0% 100%, rgba(59, 130, 246, 0.05), transparent),
+    var(--bg-main);
 
-  --text-primary: oklch(96% 0.008 85);
-  --text-secondary: oklch(88% 0.02 85);
-  --text-tertiary: oklch(72% 0.16 60);
-  --text-muted: oklch(65% 0.015 220);
-  --text-inverse: oklch(14% 0.02 250);
-  --text-on-dark: rgba(255, 255, 255, 0.92);
-  --text-on-dark-muted: rgba(255, 255, 255, 0.40);
+  --text-primary: #FAFAFA;
+  --text-secondary: #D4D4D8;
+  --text-tertiary: #A1A1AA;
+  --text-muted: #71717A;
+  --text-inverse: #09090B;
+  --text-on-dark: #FFFFFF;
+  --text-on-dark-muted: rgba(255, 255, 255, 0.6);
 
-  --accent-gold: oklch(72% 0.17 60);
-  --accent-gold-soft: oklch(82% 0.10 75);
-  --accent-gold-active-bg: rgba(245, 158, 11, 0.14);
-  --accent-gold-glow: rgba(245, 158, 11, 0.25);
-  --gold-on-light: oklch(78% 0.14 70);
-  --accent-blue: oklch(72% 0.12 230);
-  --accent-teal: oklch(65% 0.12 180);
-  --accent-earth: oklch(35% 0.06 55);
-  --accent-bronze: oklch(60% 0.12 55);
-  --accent-blood: oklch(45% 0.14 25);
-  --accent-danger: oklch(55% 0.18 25);
+  --accent-gold: #F59E0B;
+  --accent-gold-soft: #FDE68A;
+  --accent-gold-active-bg: rgba(245, 158, 11, 0.15);
+  --accent-gold-glow: rgba(245, 158, 11, 0.3);
+  --gold-on-light: #FCD34D;
+  --accent-blue: #60A5FA;
+  --accent-teal: #2DD4BF;
+  
+  --accent-earth: #A8A29E;
+  --accent-bronze: #F59E0B;
+  --accent-blood: #F87171;
+  --accent-danger: #EF4444;
 
-  --status-success: #4ADE80;
-  --status-success-bg: rgba(74, 222, 128, 0.10);
-  --status-success-border: rgba(74, 222, 128, 0.24);
+  --status-success: #34D399;
+  --status-success-bg: rgba(52, 211, 153, 0.1);
+  --status-success-border: rgba(52, 211, 153, 0.2);
   --status-warning: #FBBF24;
-  --status-warning-bg: rgba(251, 191, 36, 0.10);
-  --status-warning-border: rgba(251, 191, 36, 0.24);
-  --status-danger-bg: rgba(248, 113, 113, 0.12);
-  --status-danger-border: rgba(248, 113, 113, 0.26);
-  --status-neutral-bg: rgba(255, 255, 255, 0.05);
-  --status-neutral-border: rgba(255, 255, 255, 0.12);
-  --burning-flame: #FBBF24;
-  --truffle: #D97706;
+  --status-warning-bg: rgba(251, 191, 36, 0.1);
+  --status-warning-border: rgba(251, 191, 36, 0.2);
+  --status-danger-bg: rgba(248, 113, 113, 0.1);
+  --status-danger-border: rgba(248, 113, 113, 0.2);
+  --status-neutral-bg: rgba(250, 250, 250, 0.05);
+  --status-neutral-border: rgba(250, 250, 250, 0.1);
+  
+  --burning-flame: #F59E0B;
+  --truffle: #FCD34D;
   --blue-fantastic: #1E293B;
-  --abyssal-blue: #0F172A;
+  --abyssal-blue: #09090B;
 
-  --palladian: #0F172A;
-  --oatmeal: rgba(255, 255, 255, 0.10);
-  --header-bg: #0F172A;
+  --palladian: #09090B;
+  --oatmeal: rgba(255, 255, 255, 0.05);
+  --header-bg: rgba(9, 9, 11, 0.8);
   --header-border: rgba(255, 255, 255, 0.08);
-  --header-text: #F8FAFC;
-  --header-text-muted: rgba(255, 255, 255, 0.55);
-  --header-input-bg: rgba(255, 255, 255, 0.06);
-  --content-heading: #F8FAFC;
-  --content-text: rgba(255, 255, 255, 0.82);
-  --content-muted: rgba(255, 255, 255, 0.60);
-  --content-subtle: rgba(255, 255, 255, 0.38);
-  --card-light-bg: #1E293B;
+  --header-text: #FAFAFA;
+  --header-text-muted: #A1A1AA;
+  --header-input-bg: rgba(255, 255, 255, 0.05);
+  --content-heading: #FAFAFA;
+  --content-text: #E4E4E7;
+  --content-muted: #A1A1AA;
+  --content-subtle: #71717A;
+  --card-light-bg: #18181B;
   --card-light-border: rgba(255, 255, 255, 0.08);
-  --card-light-hover: rgba(245, 158, 11, 0.08);
+  --card-light-hover: rgba(255, 255, 255, 0.03);
 
-  --sidebar-bg:
-    linear-gradient(180deg, rgba(245, 158, 11, 0.06), transparent 18rem),
-    #0F172A;
+  --sidebar-bg: #09090B;
   --sidebar-border: rgba(255, 255, 255, 0.08);
   --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
-  --sidebar-nav-text: rgba(255, 255, 255, 0.78);
-  --sidebar-nav-icon: rgba(255, 255, 255, 0.45);
-  --sidebar-active-text: #FBBF24;
-  --sidebar-section-label: rgba(255, 255, 255, 0.30);
+  --sidebar-nav-text: #D4D4D8;
+  --sidebar-nav-icon: rgba(212, 212, 216, 0.6);
+  --sidebar-active-text: #FAFAFA;
+  --sidebar-section-label: #71717A;
   --sidebar-pin-active: var(--accent-gold);
-  --sidebar-pin-inactive: rgba(255, 255, 255, 0.30);
+  --sidebar-pin-inactive: rgba(255, 255, 255, 0.2);
 
   --border-default: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(245, 158, 11, 0.25);
-  --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.30);
-  --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.50);
-  --shadow-gold: 0 4px 20px rgba(245, 158, 11, 0.20);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  --shadow-strong: 0 10px 40px -4px rgba(0, 0, 0, 0.7);
+  --shadow-gold: 0 8px 30px -4px rgba(245, 158, 11, 0.15);
 
-  --home-banner-bg:
-    radial-gradient(circle at 78% 15%, rgba(251, 191, 36, 0.10), transparent 24rem),
-    linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
-  --home-banner-border: rgba(255, 255, 255, 0.06);
-  --home-banner-shadow: 0 8px 32px rgba(0, 0, 0, 0.20);
-  --home-banner-title: #FFFFFF;
-  --home-banner-text: rgba(255, 255, 255, 0.70);
-  --home-banner-button-bg: rgba(255, 255, 255, 0.06);
-  --home-banner-button-hover-bg: rgba(245, 158, 11, 0.12);
-  --home-banner-button-border: rgba(255, 255, 255, 0.10);
-  --home-banner-button-hover-border: rgba(245, 158, 11, 0.35);
-  --home-banner-button-text: #FFFFFF;
-  --home-banner-card-bg: rgba(255, 255, 255, 0.06);
+  --home-banner-bg: linear-gradient(135deg, #18181B 0%, #09090B 100%);
+  --home-banner-border: rgba(255, 255, 255, 0.05);
+  --home-banner-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+  --home-banner-title: #FAFAFA;
+  --home-banner-text: #A1A1AA;
+  --home-banner-button-bg: #FAFAFA;
+  --home-banner-button-hover-bg: #E4E4E7;
+  --home-banner-button-border: #FAFAFA;
+  --home-banner-button-hover-border: #E4E4E7;
+  --home-banner-button-text: #09090B;
+  --home-banner-card-bg: #18181B;
   --home-banner-card-border: rgba(255, 255, 255, 0.08);
-  --home-banner-card-footer: #0F172A;
-  --home-banner-card-fade: #0F172A;
+  --home-banner-card-footer: #09090B;
+  --home-banner-card-fade: #18181B;
 
-  --era-filter-active-bg: #F59E0B;
-  --era-filter-active-text: #0F172A;
-  --era-filter-bg: rgba(255, 255, 255, 0.06);
-  --era-filter-text: rgba(255, 255, 255, 0.78);
-  --era-filter-border: rgba(255, 255, 255, 0.10);
-  --era-filter-count-bg: rgba(245, 158, 11, 0.12);
-  --era-filter-count-text: #FBBF24;
+  --era-filter-active-bg: #FAFAFA;
+  --era-filter-active-text: #09090B;
+  --era-filter-bg: #18181B;
+  --era-filter-text: #D4D4D8;
+  --era-filter-border: rgba(255, 255, 255, 0.08);
+  --era-filter-count-bg: rgba(255, 255, 255, 0.05);
+  --era-filter-count-text: #A1A1AA;
 
-  --streak-bg: rgba(251, 191, 36, 0.10);
-  --streak-border: rgba(251, 191, 36, 0.25);
+  --streak-bg: rgba(251, 191, 36, 0.1);
+  --streak-border: rgba(251, 191, 36, 0.2);
   --streak-text: #FBBF24;
-  --streak-text-muted: rgba(251, 191, 36, 0.60);
+  --streak-text-muted: rgba(251, 191, 36, 0.6);
 
   --quest-chat: #FB923C;
-  --quest-chat-bg: rgba(251, 146, 60, 0.12);
+  --quest-chat-bg: rgba(251, 146, 60, 0.15);
   --quest-quiz: #A78BFA;
-  --quest-quiz-bg: rgba(167, 139, 250, 0.10);
+  --quest-quiz-bg: rgba(167, 139, 250, 0.15);
   --quest-read: #2DD4BF;
-  --quest-read-bg: rgba(45, 212, 191, 0.10);
+  --quest-read-bg: rgba(45, 212, 191, 0.15);
 }
