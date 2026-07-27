@@ -12,11 +12,12 @@
   --bg-content: linear-gradient(180deg, #FAFAFA 0%, #F4F4F5 100%);
   --bg-surface: #FFFFFF;
   --bg-elevated: #FFFFFF;
-  /* Clean subtle radial glow with historical drum pattern overlay */
+  /* Clean subtle radial glow with historical drum pattern overlay washed out for a premium subtle look */
   --bg-content-decorated: 
-    radial-gradient(circle 800px at 100% 0%, rgba(245, 158, 11, 0.05), transparent),
-    radial-gradient(circle 600px at 0% 100%, rgba(59, 130, 246, 0.03), transparent),
-    url('/copper_drum_pattern.webp') no-repeat center / 520px,
+    radial-gradient(circle 800px at 100% 0%, rgba(245, 158, 11, 0.1), transparent),
+    radial-gradient(circle 600px at 0% 100%, rgba(59, 130, 246, 0.02), transparent),
+    linear-gradient(rgba(250, 250, 250, 0.96), rgba(250, 250, 250, 0.96)),
+    url('/copper_drum_pattern.webp') no-repeat center / 800px,
     var(--bg-main);
 
   /* ─────────────────────────────
@@ -181,9 +182,10 @@
   --bg-elevated: #29292F;
   
   --bg-content-decorated: 
-    radial-gradient(circle 800px at 100% 0%, rgba(245, 158, 11, 0.05), transparent),
+    radial-gradient(circle 800px at 100% 0%, rgba(245, 158, 11, 0.08), transparent),
     radial-gradient(circle 600px at 0% 100%, rgba(255, 255, 255, 0.02), transparent),
-    url('/copper_drum_pattern.webp') no-repeat center / 520px,
+    linear-gradient(rgba(20, 20, 22, 0.96), rgba(20, 20, 22, 0.96)),
+    url('/copper_drum_pattern.webp') no-repeat center / 800px,
     var(--bg-main);
 
   --text-primary: #FAFAFA;

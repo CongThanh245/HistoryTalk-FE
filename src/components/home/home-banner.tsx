@@ -52,12 +52,7 @@ export function HomeBanner() {
             <Link
               key={href}
               href={href}
-              className="group flex items-center gap-2.5 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 border hover:-translate-y-0.5 hover:shadow-lg"
-              style={{
-                background: "var(--home-banner-button-bg)",
-                borderColor: "var(--home-banner-button-border)",
-                color: "var(--home-banner-button-text)",
-              }}
+              className="group flex items-center gap-2.5 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 backdrop-blur-md hover:bg-black/10 dark:hover:bg-white/10 text-content-heading hover:-translate-y-0.5 hover:shadow-lg"
             >
               <Icon size={16} className="text-accent-gold transition-transform duration-200 group-hover:scale-110" />
               {label}
