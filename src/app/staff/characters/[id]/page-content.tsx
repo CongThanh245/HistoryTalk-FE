@@ -16,7 +16,6 @@ import {
   useCreateCharacterDocument,
   useDeleteCharacterDocument,
   useUpdateCharacterDocument,
-  useUploadDocumentPdf,
   useGetDocumentPdfUrl,
   useUploadAndExtractPdf,
 } from "@/features/documents/hooks";
@@ -42,7 +41,6 @@ export default function EditCharacterPage() {
   const createCharacterDocument = useCreateCharacterDocument();
   const updateCharacterDocument = useUpdateCharacterDocument(id);
   const deleteCharacterDocument = useDeleteCharacterDocument(id);
-  const uploadDocumentPdf = useUploadDocumentPdf();
   const getDocumentPdfUrl = useGetDocumentPdfUrl();
   const extractPdf = useUploadAndExtractPdf();
   const mapContextToCharacter = useMapContextToCharacter();
@@ -146,10 +144,6 @@ export default function EditCharacterPage() {
       isLoadingDocuments={characterDocuments.isLoading}
       onDeleteDocument={(docId) => deleteCharacterDocument.mutate(docId)}
       isDeleteDocumentPending={deleteCharacterDocument.isPending}
-      onUploadDocumentPdf={async (docId, file) => {
-        await uploadDocumentPdf.mutateAsync({ docId, file });
-      }}
-      isUploadDocumentPdfPending={uploadDocumentPdf.isPending}
       onGetDocumentPdfUrl={async (docId) => {
         return await getDocumentPdfUrl.mutateAsync(docId);
       }}

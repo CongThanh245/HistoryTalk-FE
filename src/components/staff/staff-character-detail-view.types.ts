@@ -93,9 +93,6 @@ export interface StaffCharacterDetailViewProps {
   isLoadingDocuments?: boolean;
   onDeleteDocument?: (docId: string) => void;
   isDeleteDocumentPending?: boolean;
-  /** Callback to upload PDF to a document */
-  onUploadDocumentPdf?: (docId: string, file: File) => Promise<void>;
-  isUploadDocumentPdfPending?: boolean;
   /** Callback to get PDF URL for viewing */
   onGetDocumentPdfUrl?: (docId: string) => Promise<{ url: string; expiresIn: number }>;
   isGetDocumentPdfUrlPending?: boolean;

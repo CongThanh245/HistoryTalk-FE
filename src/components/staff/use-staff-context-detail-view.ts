@@ -63,8 +63,6 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
   );
 
   /* ── PDF dialog state ── */
-  const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
-  const [uploadTargetDocId, setUploadTargetDocId] = React.useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = React.useState(false);
   const [viewerUrl, setViewerUrl] = React.useState<string | null>(null);
   const [viewerLoading, setViewerLoading] = React.useState(false);
@@ -250,10 +248,6 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     deleteDocumentTarget,
     setDeleteDocumentTarget,
 
-    uploadDialogOpen,
-    setUploadDialogOpen,
-    uploadTargetDocId,
-    setUploadTargetDocId,
     viewerOpen,
     setViewerOpen,
     viewerUrl,
