@@ -90,7 +90,7 @@ export default function CreateContextPage() {
       onSave={handleSave}
       isPending={createEvent.isPending || createHistoricalDocument.isPending || uploadContextMedia.isPending}
       pendingLabel={saveStep}
-      onExtractPdfDocument={async (file, onProgress) => extractPdf.mutateAsync({ file, entityType: "context", onProgress })}
+      onExtractPdfDocument={async (file, onProgress, signal) => extractPdf.mutateAsync({ file, entityType: "context", onProgress, signal })}
       isExtractPdfDocumentPending={extractPdf.isPending}
     />
   );

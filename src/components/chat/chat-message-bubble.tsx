@@ -8,13 +8,11 @@ import { cn } from "@/lib/utils/cn";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { MarkdownMessage } from "./MarkdownMessage";
-import type { KeywordData } from "@/data/keywords";
 
 interface MessageBubbleProps {
   message: ChatMessage;
   character: ChatCharacter;
   speak?: (text: string) => void;
-  onKeywordSelect?: (kw: KeywordData) => void;
   onViewQuote?: (quote: string) => void;
 }
 
@@ -33,7 +31,6 @@ export function MessageBubble({
   message,
   character,
   speak,
-  onKeywordSelect,
   onViewQuote,
 }: MessageBubbleProps) {
   const isUser = message.role === "USER";
@@ -134,7 +131,7 @@ export function MessageBubble({
                   isLastPart && "pr-9",
                 )}
               >
-                <MarkdownMessage text={part} onKeywordSelect={onKeywordSelect} />
+                <MarkdownMessage text={part} />
 
                 {isLastPart && (
                   <button
@@ -186,7 +183,7 @@ export function MessageBubble({
 
 // ── Nguồn trích dẫn AI đã dùng để trả lời ─────────────────
 
-function MessageQuotes({
+export function MessageQuotes({
   quotes,
   onViewQuote,
 }: {

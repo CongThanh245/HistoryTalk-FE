@@ -19,6 +19,7 @@ export interface VoiceRestMessage {
   role: "user" | "assistant";
   text: string;
   timestamp: Date;
+  quotes?: string[];
 }
 
 interface UseVoiceChatRestOptions {
