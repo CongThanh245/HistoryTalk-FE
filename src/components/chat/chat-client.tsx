@@ -164,6 +164,10 @@ export function ChatClient({
           initialDocumentId={citationRequest.documentId}
           characterId={characterId}
           contextId={contextId}
+          contextIds={
+            activeCharacter?.contexts?.map((c) => c.contextId) ??
+            (contextId ? [contextId] : [])
+          }
           onClose={() => setCitationRequest(null)}
         />
       )}

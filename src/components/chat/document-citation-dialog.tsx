@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import {
   usePublicCharacterDocuments,
-  usePublicContextDocuments,
+  usePublicContextsDocuments,
 } from "@/features/documents/hooks";
 import { useEventDetail } from "@/features/events/hooks";
 import type { RagDocument } from "@/services/document.service";
@@ -19,7 +19,16 @@ import {
 interface DocumentCitationDialogProps {
   onClose: () => void;
   characterId: string;
+  /** Bối cảnh đang active của phiên chat — dùng để hiển thị video minh họa. */
   contextId?: string;
+  /**
+   * Tất cả bối cảnh nhân vật này liên kết (1 nhân vật có thể gắn nhiều hơn 1
+   * bối cảnh/file). Khi đối chiếu quote phải quét tài liệu của TẤT CẢ các
+   * bối cảnh này, không chỉ riêng `contextId` đang active — nếu không sẽ có
+   * trường hợp AI trích dẫn đúng nhưng dialog báo "không tìm thấy" chỉ vì tài
+   * liệu nguồn thuộc một bối cảnh khác của cùng nhân vật.
+   */
+  contextIds?: string[];
   /** Đoạn trích cần highlight + dùng để tìm tài liệu tương ứng. */
   quote?: string | null;
   /** Mở thẳng 1 tài liệu cụ thể (vào từ danh sách "Tài liệu tham khảo", không có quote). */
@@ -90,6 +99,7 @@ export function DocumentCitationDialog({
   onClose,
   characterId,
   contextId,
+  contextIds,
   quote,
   initialDocumentId,
 }: DocumentCitationDialogProps) {
@@ -104,7 +114,7 @@ export function DocumentCitationDialog({
   const { data: characterDocs, isLoading: isLoadingCharacterDocs } =
     usePublicCharacterDocuments(characterId);
   const { data: contextDocs, isLoading: isLoadingContextDocs } =
-    usePublicContextDocuments(contextId);
+    usePublicContextsDocuments(contextIds && contextIds.length > 0 ? contextIds : contextId ? [contextId] : []);
   const { data: event } = useEventDetail(contextId);
 
   const documents = useMemo<RagDocument[]>(
