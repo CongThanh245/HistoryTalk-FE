@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { XIcon, FileTextIcon, WarningCircleIcon, ArrowSquareOutIcon, CircleNotchIcon } from "@phosphor-icons/react";
+import { XIcon, FileTextIcon, WarningCircleIcon, ArrowSquareOutIcon, CircleNotchIcon, CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react";
 
 import type { ChatCharacter } from "@/services/chat.service";
 import { useVoiceChatRest, type VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
@@ -147,6 +147,7 @@ function TranscriptFeed({
   onOpenCitation?: (quote: string) => void;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [expandedQuotesFor, setExpandedQuotesFor] = useState<number | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -157,7 +158,7 @@ function TranscriptFeed({
 
   return (
     <div style={{
-      width: "100%", maxHeight: 140, overflowY: "auto",
+      width: "100%", maxHeight: 220, overflowY: "auto",
       display: "flex", flexDirection: "column", gap: 6,
       padding: "0 4px", scrollbarWidth: "none",
     }}>
@@ -168,7 +169,12 @@ function TranscriptFeed({
             "avatar-message-row",
             m.role === "user" ? "avatar-message-row--user" : "avatar-message-row--assistant",
           ].join(" ")}
-          style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            alignItems: m.role === "user" ? "flex-end" : "flex-start",
+          }}
         >
           <div style={{
             maxWidth: "80%",
@@ -181,15 +187,17 @@ function TranscriptFeed({
             color: m.role === "user" ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.9)",
           }}>
             {m.text}
-            {m.role === "assistant" && m.quotes && m.quotes.length > 0 && (
+          </div>
+          {m.role === "assistant" && m.quotes && m.quotes.length > 0 && (
+            <div style={{ maxWidth: "80%", display: "flex", flexDirection: "column", gap: 6 }}>
               <button
                 type="button"
-                onClick={() => onOpenCitation?.(m.quotes![0])}
+                onClick={() => setExpandedQuotesFor(expandedQuotesFor === i ? null : i)}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 4,
-                  marginTop: 6,
+                  alignSelf: "flex-start",
                   padding: "2px 8px",
                   borderRadius: 999,
                   border: "1px solid rgba(201,168,76,0.35)",
@@ -200,9 +208,47 @@ function TranscriptFeed({
                 }}
               >
                 {m.quotes.length} nguồn trích dẫn
+                {expandedQuotesFor === i ? <CaretUpIcon size={11} /> : <CaretDownIcon size={11} />}
               </button>
-            )}
-          </div>
+
+              {expandedQuotesFor === i && (
+                <div style={{
+                  display: "flex", flexDirection: "column", gap: 8,
+                  padding: "8px 10px", borderRadius: 10,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}>
+                  {m.quotes.map((quote, qi) => (
+                    <div key={qi} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <blockquote style={{
+                        margin: 0, fontSize: 11.5, lineHeight: 1.5,
+                        paddingLeft: 8, borderLeft: "2px solid rgba(201,168,76,0.4)",
+                        color: "rgba(255,255,255,0.65)",
+                      }}>
+                        {quote}
+                      </blockquote>
+                      <button
+                        type="button"
+                        onClick={() => onOpenCitation?.(quote)}
+                        style={{
+                          alignSelf: "flex-start",
+                          paddingLeft: 8,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: "#e0b84a",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Xem trong tài liệu
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ))}
       
