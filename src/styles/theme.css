@@ -227,7 +227,7 @@
 
   --palladian: #09090B;
   --oatmeal: rgba(255, 255, 255, 0.05);
-  --header-bg: rgba(20, 20, 22, 0.85);
+  --header-bg: rgba(0, 0, 0, 0.85);
   --header-border: rgba(255, 255, 255, 0.08);
   --header-text: #FAFAFA;
   --header-text-muted: #A1A1AA;
@@ -240,12 +240,12 @@
   --card-light-border: rgba(255, 255, 255, 0.08);
   --card-light-hover: rgba(255, 255, 255, 0.03);
 
-  --sidebar-bg: #141416;
+  --sidebar-bg: #000000;
   --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
-  --sidebar-nav-text: #D4D4D8;
-  --sidebar-nav-icon: rgba(212, 212, 216, 0.6);
-  --sidebar-active-text: #FAFAFA;
+  --sidebar-hover-bg: rgba(245, 158, 11, 0.08);
+  --sidebar-nav-text: #A1A1AA;
+  --sidebar-nav-icon: rgba(161, 161, 170, 0.6);
+  --sidebar-active-text: var(--accent-gold-soft);
   --sidebar-section-label: #71717A;
   --sidebar-pin-active: var(--accent-gold);
   --sidebar-pin-inactive: rgba(255, 255, 255, 0.2);
