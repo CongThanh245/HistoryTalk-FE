@@ -246,22 +246,22 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
 
   const setQuickContextField =
     <K extends keyof typeof quickCtx>(field: K) =>
-    (val: (typeof quickCtx)[K]) =>
-      setQuickCtx((s) => {
-        const next = { ...s, [field]: val };
-        const nextErrors = validateContextDraft(next);
-        setQuickErrors((prev) => {
-          const updated = { ...prev };
-          const errorField = field as ContextValidationField;
-          if (nextErrors[errorField]) {
-            updated[errorField] = nextErrors[errorField];
-          } else {
-            delete updated[errorField];
-          }
-          return updated;
+      (val: (typeof quickCtx)[K]) =>
+        setQuickCtx((s) => {
+          const next = { ...s, [field]: val };
+          const nextErrors = validateContextDraft(next);
+          setQuickErrors((prev) => {
+            const updated = { ...prev };
+            const errorField = field as ContextValidationField;
+            if (nextErrors[errorField]) {
+              updated[errorField] = nextErrors[errorField];
+            } else {
+              delete updated[errorField];
+            }
+            return updated;
+          });
+          return next;
         });
-        return next;
-      });
 
   const resetQuickCtx = () =>
     setQuickCtx({ name: "", description: "", era: "", year: "", location: "", imageUrl: "", videoUrl: "", isPublished: false });
@@ -466,6 +466,13 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     contextId: activeChatContextId || undefined,
   };
 
+  const hasUnpublishedLinkedContext = React.useMemo(() => {
+    return mappedContexts.some(ctx => {
+      const event = eventOptions.find(ev => ev.id === ctx.contextId);
+      return event && !event.isPublished;
+    });
+  }, [mappedContexts, eventOptions]);
+
   const draftValidationErrors = React.useMemo(() => validateCharacterDraft(draft), [draft]);
   const publishValidationErrors = React.useMemo(
     () => validateCharacterDraft(draft, { requirePublishReady: true }),
@@ -482,11 +489,13 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   // pending file would otherwise silently get dropped from the create call.
   const canSave = !hasSaveErrors && !isPending && !isExtractPdfDocumentPending;
   const canStartChat = isCreated && mappedContexts.length > 0 && !hasPublishErrors;
-  const canPublishCharacter = !isEditing || (!hasPublishErrors && mappedContexts.length > 0);
+  const canPublishCharacter = !isEditing || (!hasPublishErrors && mappedContexts.length > 0 && !hasUnpublishedLinkedContext);
   const publishBlockedMessage =
     mappedContexts.length === 0
       ? "⚠ Cần liên kết bối cảnh lịch sử trước khi xuất bản."
-      : "⚠ Cần hoàn tất các trường bắt buộc trước khi xuất bản.";
+      : hasUnpublishedLinkedContext
+        ? "⚠ Cần xuất bản tất cả bối cảnh lịch sử liên kết trước khi xuất bản nhân vật."
+        : "⚠ Cần hoàn tất các trường bắt buộc trước khi xuất bản.";
 
   const showValidationErrors = (nextErrors = saveValidationErrors) => {
     setErrors(nextErrors);
@@ -531,6 +540,11 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     }
     if (!selectedContextId || !characterId) return;
     const selectedEvent = eventOptions.find(ev => ev.id === selectedContextId);
+
+    if (draft.isPublished && selectedEvent && !selectedEvent.isPublished) {
+      toast.error(`Không thể liên kết bối cảnh chưa xuất bản "${selectedEvent.title}" với nhân vật đã xuất bản.`);
+      return;
+    }
 
     onMapContext(characterId, selectedContextId, {
       contextName: selectedEvent?.title,
