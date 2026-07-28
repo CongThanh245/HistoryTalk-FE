@@ -42,6 +42,7 @@ const STATUS_LABEL: Record<string, string> = {
   idle: "Bấm mic để nói",
   listening: "Đang nghe... bấm mic lần nữa để dừng",
   recording: " Đang ghi âm... (click để gửi)",
+  confirm: "Kiểm tra lại nội dung trước khi gửi",
   processing: "Đang lần theo dấu vết lịch sử...",
   processing_stt: " Đang nhận dạng giọng nói...",
   processing_chat: "Đang đối chiếu sử liệu...",
@@ -377,6 +378,7 @@ type ActiveVoiceHook = {
   messages: VoiceRestMessage[];
   startRecording: () => Promise<void> | void;
   stopRecording: () => void;
+  cancelRecording?: () => void;
   cancel?: () => void;
   ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
   isRecording: boolean;
@@ -547,6 +549,7 @@ export function Avatar3DModal({
     messages,
     startRecording,
     stopRecording,
+    cancelRecording,
     cancel,
     ttsAnalyserRef,
     isRecording,
@@ -649,6 +652,10 @@ export function Avatar3DModal({
     }
   };
 
+  const handleCancelRecording = () => {
+    cancelRecording?.();
+  };
+
   const handleClose = () => {
     playDetachedUiSound("callEnd", 0.55);
     cancel?.();
@@ -656,13 +663,13 @@ export function Avatar3DModal({
     window.setTimeout(onClose, 180);
   };
 
-  // ── Keyboard shortcut: Space = toggle voice ───────────────────────────────
+  // ── Keyboard shortcut: Space = toggle voice, Enter/Esc = xác nhận khi đang chờ ──
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Space") {
         e.preventDefault();
         if (e.repeat) return;
-        
+
         if (isRecording) {
           playUiSound("micOff", 0.42);
           stopRecording();
@@ -684,7 +691,7 @@ export function Avatar3DModal({
   const isBusy = status.startsWith("processing") || status === "speaking" || status === "thinking";
   // Mic vẫn bấm được lúc đang nói để ngắt lời (barge-in); chỉ khóa khi thực sự
   // đang xử lý mạng (processing/thinking) — lúc đó chưa có gì để ngắt.
-  const micDisabled = isBusy && status !== "speaking";
+  const micDisabled = (isBusy && status !== "speaking");
   const isListeningStatus = status === "listening";
   const is2D = variant === "2d";
 
@@ -1296,6 +1303,63 @@ export function Avatar3DModal({
           padding: 14px 0 14px 28px;
           flex-shrink: 0;
         }
+        .avatar-confirm-bar {
+          width: calc(100% - 416px);
+          align-self: flex-start;
+          margin: 10px 0 0;
+          padding: 14px 20px;
+          border-radius: 16px;
+          border: 1px solid rgba(201,168,76,0.3);
+          background: linear-gradient(180deg, rgba(201,168,76,0.1), rgba(20,16,10,0.85));
+          box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+          animation: messageIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        .avatar-confirm-bar__label {
+          margin: 0 0 4px;
+          color: rgba(255,255,255,0.5);
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+        .avatar-confirm-bar__text {
+          margin: 0 0 14px;
+          color: rgba(255,255,255,0.92);
+          font-size: 15px;
+          line-height: 1.5;
+        }
+        .avatar-confirm-bar__actions {
+          display: flex;
+          gap: 12px;
+        }
+        .avatar-confirm-bar__btn {
+          flex: 1;
+          padding: 9px 0;
+          border-radius: 999px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: filter 0.15s, transform 0.15s;
+        }
+        .avatar-confirm-bar__btn:hover {
+          filter: brightness(1.12);
+          transform: translateY(-1px);
+        }
+        .avatar-confirm-bar__btn--retry {
+          border: 1px solid rgba(255,255,255,0.18);
+          background: rgba(255,255,255,0.06);
+          color: rgba(255,255,255,0.82);
+        }
+        .avatar-confirm-bar__btn--send {
+          border: 1px solid rgba(201,168,76,0.5);
+          background: linear-gradient(135deg, #e0b84a, #c9a84c);
+          color: #1a1508;
+        }
+        @media (max-width: 900px) {
+          .avatar-confirm-bar {
+            width: 100%;
+            align-self: center;
+          }
+        }
         .avatar-call-footer-hint {
           width: calc(100% - 416px);
           align-self: flex-start;
@@ -1494,6 +1558,7 @@ export function Avatar3DModal({
             />
           )}
 
+
           {/* ── Controls ── */}
           <div className="avatar-call-footer">
             {/* Toggle mic button */}
@@ -1505,42 +1570,59 @@ export function Avatar3DModal({
                 !isRecording && !micDisabled && "avatar-mic-wrap--idle",
               )}
             >
-            <button
-              type="button"
-              className={cn(
-                "avatar-mic-button flex h-18 w-18 select-none touch-none items-center justify-center rounded-full border-2 bg-gradient-to-br transition-[background,border] duration-200 disabled:cursor-not-allowed disabled:opacity-40",
-                !micDisabled && "cursor-pointer",
-                isRecording
-                  ? "animate-[micPulse_1s_ease-in-out_infinite] border-[#ef5350] from-[#c62828] to-[#ef5350] shadow-[0_0_0_0_rgba(239,83,80,0.5)]"
-                  : "border-[rgba(201,168,76,0.4)] from-[rgba(201,168,76,0.3)] to-[rgba(201,168,76,0.15)] shadow-[0_4px_24px_rgba(201,168,76,0.2)]",
+              <button
+                type="button"
+                className={cn(
+                  "avatar-mic-button flex h-18 w-18 select-none touch-none items-center justify-center rounded-full border-2 bg-gradient-to-br transition-[background,border] duration-200 disabled:cursor-not-allowed disabled:opacity-40",
+                  !micDisabled && "cursor-pointer",
+                  isRecording
+                    ? "animate-[micPulse_1s_ease-in-out_infinite] border-[#ef5350] from-[#c62828] to-[#ef5350] shadow-[0_0_0_0_rgba(239,83,80,0.5)]"
+                    : "border-[rgba(201,168,76,0.4)] from-[rgba(201,168,76,0.3)] to-[rgba(201,168,76,0.15)] shadow-[0_4px_24px_rgba(201,168,76,0.2)]",
+                )}
+                onClick={handleMicClick}
+                disabled={micDisabled}
+                aria-label={
+                  isRecording
+                    ? "Dừng ghi âm và gửi"
+                    : status === "speaking"
+                      ? "Ngắt lời và hỏi câu khác"
+                      : "Bắt đầu ghi âm"
+                }
+                title={
+                  isRecording
+                    ? "Bấm lần nữa để dừng và gửi"
+                    : status === "speaking"
+                      ? "Bấm để ngắt lời và hỏi câu khác"
+                      : "Bấm để nói"
+                }
+              >
+                {/* Mic icon */}
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                  stroke={isRecording ? "#fff" : "#c9a84c"}
+                  strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              </button>
+
+              {/* Hủy ghi âm (nút X) khi đang thu âm */}
+              {isRecording && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playUiSound("micOff", 0.42);
+                    handleCancelRecording();
+                  }}
+                  className="absolute -top-1 -right-1 z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-red-500/50 bg-[#ef5350] text-white shadow-md transition-all hover:scale-110 hover:bg-[#d32f2f]"
+                  title="Hủy ghi âm"
+                  aria-label="Hủy ghi âm"
+                >
+                  <X size={12} strokeWidth={2.5} />
+                </button>
               )}
-              onClick={handleMicClick}
-              disabled={micDisabled}
-              aria-label={
-                isRecording
-                  ? "Dừng ghi âm và gửi"
-                  : status === "speaking"
-                    ? "Ngắt lời và hỏi câu khác"
-                    : "Bắt đầu ghi âm"
-              }
-              title={
-                isRecording
-                  ? "Bấm lần nữa để dừng và gửi"
-                  : status === "speaking"
-                    ? "Bấm để ngắt lời và hỏi câu khác"
-                    : "Bấm để nói"
-              }
-            >
-              {/* Mic icon */}
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                stroke={isRecording ? "#fff" : "#c9a84c"}
-                strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" />
-                <line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
-            </button>
             </div>
 
             {/* End / Close */}

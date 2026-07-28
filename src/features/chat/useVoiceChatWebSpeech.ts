@@ -71,6 +71,8 @@ export function useVoiceChatWebSpeech({
   const bargeInRef = useRef(false);
   const isHoldingRef = useRef(false);
   const shouldSendOnStopRef = useRef(false);
+  // true khi người dùng bấm nút "x" để hủy ghi âm hiện tại — không gửi API dù có transcript.
+  const cancelRequestedRef = useRef(false);
   const restartListeningRef = useRef<() => void>(() => {});
   const sendTextToChatRef = useRef<(text: string) => Promise<void>>(async () => {});
   const finalTranscriptRef = useRef(""); // Lưu transcript khi stop
@@ -306,6 +308,17 @@ export function useVoiceChatWebSpeech({
         return;
       }
 
+      // Người dùng bấm nút "x" để hủy — bỏ transcript, không gửi API.
+      if (cancelRequestedRef.current) {
+        cancelRequestedRef.current = false;
+        setIsListening(false);
+        setInterimText("");
+        finalTranscriptRef.current = "";
+        transcriptBaseRef.current = "";
+        setStatus("idle");
+        return;
+      }
+
       const finalText = transcript.trim() || finalTranscriptRef.current.trim();
 
       if (isHoldingRef.current && !shouldSendOnStopRef.current) {
@@ -323,12 +336,21 @@ export function useVoiceChatWebSpeech({
         return;
       }
 
-      // Có transcript từ STT → xử lý
+      // Có transcript từ STT → gửi xuống BE như bình thường (bấm mic để dừng = gửi).
       if (finalText) {
         setIsListening(false); // ← Dừng trạng thái "recording" trước khi gọi API
         await processAndSend(finalText);
       }
     } catch (err: unknown) {
+      if (cancelRequestedRef.current) {
+        cancelRequestedRef.current = false;
+        setIsListening(false);
+        setInterimText("");
+        finalTranscriptRef.current = "";
+        transcriptBaseRef.current = "";
+        setStatus("idle");
+        return;
+      }
       if (abortRef.current) return;
       const message = err instanceof Error ? err.message : "";
       
@@ -492,8 +514,20 @@ export function useVoiceChatWebSpeech({
   const stopListening = useCallback(async () => {
     isHoldingRef.current = false;
     shouldSendOnStopRef.current = true;
-    // Không abort ngay, để STT trả về transcript và startListening gửi đúng một lần.
     sttRef.current?.stop();
+  }, []);
+
+  /**
+   * Người dùng hủy ghi âm chủ động (bấm nút X) -> không gửi đi
+   */
+  const cancelRecording = useCallback(() => {
+    cancelRequestedRef.current = true;
+    sttRef.current?.abort();
+    setIsListening(false);
+    setInterimText("");
+    finalTranscriptRef.current = "";
+    transcriptBaseRef.current = "";
+    setStatus("idle");
   }, []);
 
   /**
@@ -519,10 +553,11 @@ export function useVoiceChatWebSpeech({
     // Alias để match interface của các hook khác
     startRecording: startListening,
     stopRecording: stopListening,
+    cancelRecording,
     cancel,
     ttsAnalyserRef: activeTtsAnalyserRef,
     // Check support
-    isSupported: typeof window !== 'undefined' && 
+    isSupported: typeof window !== 'undefined' &&
       ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) &&
       'speechSynthesis' in window,
   };
