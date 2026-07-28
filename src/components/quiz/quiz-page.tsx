@@ -192,15 +192,36 @@ export function QuizPageClient() {
                   </p>
                 </div>
 
-                <div className="flex h-10 w-full items-center gap-2 rounded-lg px-3 sm:max-w-[340px] bg-[rgba(27,38,50,0.05)] border border-card-light-border">
-                  <Search size={15} className="text-content-muted" />
-                  <input
-                    type="text"
-                    placeholder="Tìm quiz..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="min-w-0 flex-1 bg-transparent text-sm outline-none text-content-heading"
-                  />
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex h-10 w-full items-center gap-2 rounded-lg px-3 sm:max-w-[340px] bg-[rgba(27,38,50,0.05)] border border-card-light-border">
+                    <Search size={15} className="text-content-muted" />
+                    <input
+                      type="text"
+                      placeholder="Tìm quiz..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="min-w-0 flex-1 bg-transparent text-sm outline-none text-content-heading"
+                    />
+                  </div>
+
+                  {contextFilterOptions.length > 0 && (
+                    <Select
+                      value={selectedContext}
+                      onValueChange={setSelectedContext}
+                    >
+                      <SelectTrigger size="sm" className="h-9 w-full text-xs font-semibold sm:h-10 sm:w-auto">
+                        <SelectValue placeholder="Trận đánh" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ALL_CONTEXTS}>Tất cả trận đánh</SelectItem>
+                        {contextFilterOptions.map((c) => (
+                          <SelectItem key={c.value} value={c.value}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
@@ -221,25 +242,6 @@ export function QuizPageClient() {
                       </button>
                     );
                   })}
-
-                  {contextFilterOptions.length > 0 && (
-                    <Select
-                      value={selectedContext}
-                      onValueChange={setSelectedContext}
-                    >
-                      <SelectTrigger size="sm" className="h-7 md:h-8 text-xs font-semibold">
-                        <SelectValue placeholder="Trận đánh" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ALL_CONTEXTS}>Tất cả trận đánh</SelectItem>
-                        {contextFilterOptions.map((c) => (
-                          <SelectItem key={c.value} value={c.value}>
-                            {c.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
                 </div>
               </div>
 
