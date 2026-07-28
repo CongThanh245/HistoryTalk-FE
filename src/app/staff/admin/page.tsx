@@ -86,6 +86,28 @@ function daysAgoISO(n: number) {
   return d.toISOString().slice(0, 10);
 }
 
+function formatUptime(uptime: string | number | undefined | null): string {
+  if (!uptime) return "—";
+  const seconds = parseFloat(String(uptime));
+  if (isNaN(seconds)) return String(uptime);
+
+  const d = Math.floor(seconds / (3600 * 24));
+  const h = Math.floor((seconds % (3600 * 24)) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+
+  if (d > 0) {
+    return `${d} ngày ${h} giờ`;
+  }
+  if (h > 0) {
+    return `${h} giờ ${m} phút`;
+  }
+  if (m > 0) {
+    return `${m} phút ${s} giây`;
+  }
+  return `${s} giây`;
+}
+
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
 function Skeleton({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
@@ -630,7 +652,7 @@ export default function AdminDashboardPage() {
             loading={healthLoading}
             sub={
               <span className="flex flex-col gap-0.5">
-                <span>Uptime: <strong>{health?.uptime ?? "—"}</strong></span>
+                <span>Uptime: <strong>{formatUptime(health?.uptime)}</strong></span>
                 {health?.lastCheckedAt && <span className="text-[10px]">Cập nhật: {fmtDate(health.lastCheckedAt)}</span>}
               </span>
             }
