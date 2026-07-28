@@ -170,12 +170,15 @@ export function ChatMain({
     setHeaderAvatarBroken(false);
   }, [character.imageUrl]);
 
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+
   const { data, isLoading } = useChatMessages(sessionId);
   const createSession = useCreateSession();
   const stopSpeech = useCallback(() => {
     speechSynthesis.cancel();
     speechSourceRef.current?.stop();
     speechSourceRef.current = null;
+    setSpeakingMessageId(null);
   }, []);
 
   const playAzureSpeech = useCallback(
@@ -225,9 +228,21 @@ export function ChatMain({
           if (speechSourceRef.current === source) {
             speechSourceRef.current = null;
           }
+          setTimeout(() => {
+            if (!speechSynthesis.speaking && !speechSourceRef.current) {
+              setSpeakingMessageId(null);
+            }
+          }, 100);
           resolve();
         };
-        source.addEventListener("error", () => reject(new Error("Khong phat duoc audio Azure TTS")));
+        source.addEventListener("error", () => {
+          setTimeout(() => {
+            if (!speechSynthesis.speaking && !speechSourceRef.current) {
+              setSpeakingMessageId(null);
+            }
+          }, 100);
+          reject(new Error("Khong phat duoc audio Azure TTS"));
+        });
         source.start();
       });
     },
@@ -241,12 +256,27 @@ export function ChatMain({
     if (vietnameseVoice) utterance.voice = vietnameseVoice;
     utterance.lang = "vi-VN";
     utterance.rate = 1.25;
+    utterance.onend = () => {
+      setTimeout(() => {
+        if (!speechSynthesis.speaking && !speechSourceRef.current) {
+          setSpeakingMessageId(null);
+        }
+      }, 100);
+    };
+    utterance.onerror = () => {
+      setTimeout(() => {
+        if (!speechSynthesis.speaking && !speechSourceRef.current) {
+          setSpeakingMessageId(null);
+        }
+      }, 100);
+    };
     speechSynthesis.speak(utterance);
   }, []);
 
   const speakWithFallback = useCallback(
-    async (text: string): Promise<void> => {
+    async (text: string, messageId: string): Promise<void> => {
       stopSpeech();
+      setSpeakingMessageId(messageId);
       try {
         await playAzureSpeech(text);
         return;
@@ -259,13 +289,13 @@ export function ChatMain({
     [playAzureSpeech, speakWebSpeech, stopSpeech],
   );
 
-  const speak = (text: string) => {
-    if (speechSynthesis.speaking || speechSourceRef.current) {
+  const speak = useCallback((text: string, messageId: string) => {
+    if (speakingMessageId === messageId) {
       stopSpeech();
       return;
     }
-    void speakWithFallback(text);
-  };
+    void speakWithFallback(text, messageId);
+  }, [speakingMessageId, speakWithFallback, stopSpeech]);
 
   useEffect(() => {
     return () => {
@@ -599,6 +629,10 @@ export function ChatMain({
           quotes: resData.quotesUsed,
         };
 
+        if (speechSynthesis.speaking || speechSourceRef.current) {
+          setSpeakingMessageId(newAssistantMsg.id);
+        }
+
         qc.setQueryData(
           queryKeys.chat.messages(currentSessionId!),
           (old: GetMessagesResponse | undefined) => ({
@@ -866,7 +900,8 @@ export function ChatMain({
                   key={item.message.id}
                   message={item.message}
                   character={character}
-                  speak={speak}
+                  speak={(text) => speak(text, item.message.id)}
+                  isSpeaking={speakingMessageId === item.message.id}
                   onViewQuote={
                     item.message.role === "ASSISTANT" ? onOpenCitation : undefined
                   }
