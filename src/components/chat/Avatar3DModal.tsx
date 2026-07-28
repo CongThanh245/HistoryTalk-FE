@@ -1337,7 +1337,7 @@ export function Avatar3DModal({
       `}</style>
 
       {/* Backdrop */}
-      <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(0,0,0,0.88)] backdrop-blur-[16px]">
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/90">
         {/* Card */}
         <div className="relative flex h-screen w-screen flex-col items-center overflow-hidden bg-gradient-to-b from-[rgba(20,16,10,1)] to-[rgba(10,8,4,1)] animate-[fadeSlideUp_0.4s_ease_both]">
 

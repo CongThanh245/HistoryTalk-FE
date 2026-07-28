@@ -287,7 +287,7 @@ export function Carousel3DVertical({
               aria-label="Đóng chi tiết nhân vật"
               ref={backdropRef}
               onClick={closeCharacter}
-              className="pointer-events-auto absolute inset-0 bg-black/65 backdrop-blur-[5px] [animation:character-backdrop-in_500ms_ease-out_both]"
+              className="pointer-events-auto absolute inset-0 bg-black/75 [animation:character-backdrop-in_500ms_ease-out_both]"
             />
             <div
               ref={expandedCardRef}
