@@ -1,12 +1,19 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { History, ListChecks, Search } from "lucide-react";
 import { useQuizSets, useMyQuizResults } from "@/features/quiz/hooks";
 import { useAuthStore } from "@/store/auth.store";
 import { type QuizEra, type QuizResult } from "@/services/quiz.service";
 import { cn } from "@/lib/utils/cn";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { QuizStatsBar } from "./quiz-stats-bar";
 import { QuizRecentResults } from "./quiz-recent-result";
 import { QuizHistoryView } from "./quiz-history-view";
@@ -14,6 +21,7 @@ import { QuizCard } from "./quiz-card";
 
 type EraFilter = "ALL" | Exclude<QuizEra, "ALL">;
 type QuizView = "list" | "history";
+const ALL_CONTEXTS = "ALL";
 
 const ERA_FILTERS: { label: string; value: EraFilter }[] = [
   { label: "Tất cả", value: "ALL" },
@@ -29,11 +37,35 @@ export function QuizPageClient() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [search, setSearch] = useState("");
   const [selectedEra, setSelectedEra] = useState<EraFilter>("ALL");
+  const contextIdParam = searchParams.get("contextId");
+  const [selectedContext, setSelectedContext] = useState<string>(
+    contextIdParam ?? ALL_CONTEXTS,
+  );
   const activeView: QuizView =
     searchParams.get("view") === "history" ? "history" : "list";
 
+  // Den tu banner "Kiem tra kien thuc" o trang chi tiet boi canh — ap lai
+  // filter nay moi khi param doi, ke ca khi trang quiz da duoc mount san.
+  useEffect(() => {
+    if (contextIdParam) setSelectedContext(contextIdParam);
+  }, [contextIdParam]);
+
   const { data: quizData, isLoading: quizzesLoading } = useQuizSets();
   const allQuizzes = useMemo(() => quizData?.content ?? [], [quizData?.content]);
+
+  // Danh sach "tran danh" (boi canh lich su) suy ra tu chinh cac quiz da tai,
+  // khong can goi them API rieng.
+  const contextFilterOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const q of allQuizzes) {
+      if (q.contextId && q.contextTitle && !seen.has(q.contextId)) {
+        seen.set(q.contextId, q.contextTitle);
+      }
+    }
+    return Array.from(seen.entries())
+      .sort(([, a], [, b]) => a.localeCompare(b))
+      .map(([value, label]) => ({ value, label }));
+  }, [allQuizzes]);
 
   const { data: resultsData, isLoading: resultsLoading } = useMyQuizResults(
     { page: 0, size: 50 },
@@ -53,9 +85,11 @@ export function QuizPageClient() {
         q.title.toLowerCase().includes(keyword) ||
         q.contextTitle?.toLowerCase().includes(keyword);
       const matchEra = selectedEra === "ALL" || q.era === selectedEra;
-      return matchSearch && matchEra;
+      const matchContext =
+        selectedContext === ALL_CONTEXTS || q.contextId === selectedContext;
+      return matchSearch && matchEra && matchContext;
     });
-  }, [allQuizzes, search, selectedEra]);
+  }, [allQuizzes, search, selectedEra, selectedContext]);
 
   const avgScore = useMemo(() => {
     if (!results.length) return 0;
@@ -169,7 +203,7 @@ export function QuizPageClient() {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 md:gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
                   {ERA_FILTERS.map((f) => {
                     const active = selectedEra === f.value;
                     return (
@@ -187,6 +221,25 @@ export function QuizPageClient() {
                       </button>
                     );
                   })}
+
+                  {contextFilterOptions.length > 0 && (
+                    <Select
+                      value={selectedContext}
+                      onValueChange={setSelectedContext}
+                    >
+                      <SelectTrigger size="sm" className="h-7 md:h-8 text-xs font-semibold">
+                        <SelectValue placeholder="Trận đánh" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ALL_CONTEXTS}>Tất cả trận đánh</SelectItem>
+                        {contextFilterOptions.map((c) => (
+                          <SelectItem key={c.value} value={c.value}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               </div>
 

@@ -2,7 +2,8 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { X, Play, SkipForward, Timer, MapPin, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { X, Play, SkipForward, Timer, MapPin, FileText, ChevronDown, ChevronUp, Trophy, ChevronRight } from "lucide-react";
 import type { HistoricalEvent } from "@/services/event.service";
 import {
   CharacterCarouselCard,
@@ -225,6 +226,7 @@ interface EventDetailModalProps {
 }
 
 export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
+  const router = useRouter();
   const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
   const [finishedEventId, setFinishedEventId] = useState<string | null>(null);
 
@@ -314,6 +316,24 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                   </div>
                 )}
               </div>
+              <button
+                type="button"
+                onClick={() => router.push(`/quiz?contextId=${event.id}`)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer hover:-translate-y-0.5 bg-accent-gold/10 border-accent-gold/25"
+              >
+                <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-lg bg-accent-gold/15">
+                  <Trophy className="w-5 h-5 text-accent-gold" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-bold text-content-heading">
+                    Kiểm tra kiến thức
+                  </p>
+                  <p className="text-xs text-content-muted">
+                    Làm bộ câu hỏi liên quan đến giai đoạn này
+                  </p>
+                </div>
+                <ChevronRight className="w-4 h-4 shrink-0 text-accent-gold" />
+              </button>
               <div className="h-px bg-card-light-border" />
               <div>
                 <h4 className="text-[11px] font-bold uppercase tracking-widest mb-3 text-content-subtle">
