@@ -113,6 +113,13 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
+    if (error.response?.status === 403) {
+      const data = error.response.data as any;
+      if (data && data.message === "Tài khoản của bạn đã bị vô hiệu hóa") {
+        useSessionStore.getState().showLocked();
+      }
+    }
+
     const original = error.config as RetryConfig | undefined;
 
     if (
