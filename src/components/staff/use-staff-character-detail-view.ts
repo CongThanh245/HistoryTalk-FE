@@ -594,6 +594,7 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     setActiveTab,
     hasDraftErrors,
     hasPublishErrors,
+    hasUnpublishedLinkedContext,
     canSave,
     canPublishCharacter,
     publishBlockedMessage,
