@@ -1038,7 +1038,7 @@ export default function AdminDashboardPage() {
                       {(quiz?.topWrongQuestions ?? []).slice(0, 3).map((q) => (
                         <div key={q.questionId} className="p-2.5 rounded border border-red-500/10 bg-red-500/5 text-xs flex flex-col gap-1">
                           <div className="font-medium text-[var(--content-heading)] line-clamp-2">
-                            {q.questionId} {/* Show text or ID depending on what BE returns */}
+                            {q.questionContent || q.questionId}
                           </div>
                           <div className="flex justify-between items-center text-[10px] text-[var(--content-muted)] mt-1 border-t border-dashed border-[var(--card-light-border)] pt-1">
                             <span>Quiz: <strong className="text-[var(--content-heading)] truncate max-w-[120px] inline-block align-bottom">{q.quizTitle}</strong></span>
