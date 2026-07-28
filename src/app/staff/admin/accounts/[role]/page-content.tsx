@@ -300,15 +300,6 @@ export default function AdminAccountsPage() {
 
     base.push(
       {
-        accessorKey: "lastActiveDate",
-        header: "Hoạt động cuối",
-        cell: ({ row }) => (
-          <span className="text-xs text-content-muted">
-            {row.original.lastActiveDate ? timeAgo(row.original.lastActiveDate) : "—"}
-          </span>
-        ),
-      },
-      {
         accessorKey: "createdAt",
         header: "Ngày tạo",
         cell: ({ row }) => (

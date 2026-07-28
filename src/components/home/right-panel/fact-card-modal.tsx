@@ -218,7 +218,7 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
     <div
       ref={overlayRef}
       onClick={handleClose}
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[rgba(10,8,4,0.72)] backdrop-blur-[6px]"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[rgba(10,8,4,0.85)]"
     >
       {/* Particles layer */}
       <div
@@ -241,7 +241,7 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
             e.stopPropagation();
             handleClose();
           }}
-          className="absolute -top-4 -right-4 z-10 w-8 h-8 rounded-full bg-white/[0.12] border border-white/20 text-white/80 text-base cursor-pointer flex items-center justify-center backdrop-blur-[4px] transition-all duration-150 hover:bg-white/[0.22]"
+          className="absolute -top-4 -right-4 z-10 w-8 h-8 rounded-full bg-[#2d1f08] border border-white/20 text-white/80 text-base cursor-pointer flex items-center justify-center transition-all duration-150 hover:bg-[#46300d]"
         >
           ×
         </button>

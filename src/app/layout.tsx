@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/context/theme-provider";
 import { WelcomeScreen } from "@/components/welcome-screen";
 import { WELCOME_SCREEN_KEY } from "@/constants/welcome-screen";
 import { SessionExpiredDialog } from "@/components/session-expired-dialog";
+import { UserLockedDialog } from "@/components/user-locked-dialog";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -157,6 +158,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ReactQueryProviders>{children}</ReactQueryProviders>
           <SessionExpiredDialog />
+          <UserLockedDialog />
           <Toaster
             position="bottom-right"
             duration={4000}

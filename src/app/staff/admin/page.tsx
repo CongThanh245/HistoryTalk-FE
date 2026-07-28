@@ -86,6 +86,28 @@ function daysAgoISO(n: number) {
   return d.toISOString().slice(0, 10);
 }
 
+function formatUptime(uptime: string | number | undefined | null): string {
+  if (!uptime) return "—";
+  const seconds = parseFloat(String(uptime));
+  if (isNaN(seconds)) return String(uptime);
+
+  const d = Math.floor(seconds / (3600 * 24));
+  const h = Math.floor((seconds % (3600 * 24)) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+
+  if (d > 0) {
+    return `${d} ngày ${h} giờ`;
+  }
+  if (h > 0) {
+    return `${h} giờ ${m} phút`;
+  }
+  if (m > 0) {
+    return `${m} phút ${s} giây`;
+  }
+  return `${s} giây`;
+}
+
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
 function Skeleton({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
@@ -630,7 +652,7 @@ export default function AdminDashboardPage() {
             loading={healthLoading}
             sub={
               <span className="flex flex-col gap-0.5">
-                <span>Uptime: <strong>{health?.uptime ?? "—"}</strong></span>
+                <span>Uptime: <strong>{formatUptime(health?.uptime)}</strong></span>
                 {health?.lastCheckedAt && <span className="text-[10px]">Cập nhật: {fmtDate(health.lastCheckedAt)}</span>}
               </span>
             }
@@ -1016,7 +1038,7 @@ export default function AdminDashboardPage() {
                       {(quiz?.topWrongQuestions ?? []).slice(0, 3).map((q) => (
                         <div key={q.questionId} className="p-2.5 rounded border border-red-500/10 bg-red-500/5 text-xs flex flex-col gap-1">
                           <div className="font-medium text-[var(--content-heading)] line-clamp-2">
-                            {q.questionId} {/* Show text or ID depending on what BE returns */}
+                            {q.questionContent || q.questionId}
                           </div>
                           <div className="flex justify-between items-center text-[10px] text-[var(--content-muted)] mt-1 border-t border-dashed border-[var(--card-light-border)] pt-1">
                             <span>Quiz: <strong className="text-[var(--content-heading)] truncate max-w-[120px] inline-block align-bottom">{q.quizTitle}</strong></span>
@@ -1188,7 +1210,7 @@ export default function AdminDashboardPage() {
               >
                 <span className="flex items-center gap-2 font-medium text-[var(--content-heading)]">
                   <UserCheckIcon className="h-4 w-4 text-blue-500" />
-                  Khách hàng
+                  Customer
                 </span>
                 <ArrowRightIcon className="h-4 w-4 opacity-50" />
               </Button>

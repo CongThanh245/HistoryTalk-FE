@@ -47,7 +47,7 @@ function DocumentContent({ content, quote }: { content: string; quote?: string |
   }, [parts]);
 
   return (
-    <p className="whitespace-pre-wrap text-sm leading-7 text-content-heading">
+    <p className="text-sm leading-7 whitespace-pre-wrap text-content-heading">
       {parts.map((part, i) =>
         part.matched ? (
           <mark
@@ -70,8 +70,8 @@ function PanelHeader({ title, onClose }: { title: string; onClose: () => void })
     <div
       className="flex items-start justify-between gap-3 px-5 pt-4 pb-3 border-b border-border-default shrink-0"
     >
-      <div className="flex items-center gap-2 min-w-0">
-        <FileText size={18} className="shrink-0 fill-current text-accent-gold" />
+      <div className="flex items-center min-w-0 gap-2">
+        <FileText size={18} className="fill-current shrink-0 text-accent-gold" />
         <h3 className="text-sm font-bold truncate text-content-heading">
           {title}
         </h3>
@@ -79,7 +79,7 @@ function PanelHeader({ title, onClose }: { title: string; onClose: () => void })
       <button
         onClick={onClose}
         aria-label="Đóng"
-        className="w-7 h-7 flex items-center justify-center rounded-full shrink-0 transition-all hover:scale-110 active:scale-95 cursor-pointer bg-bg-elevated border border-border-default text-content-text"
+        className="flex items-center justify-center transition-all border rounded-full cursor-pointer w-7 h-7 shrink-0 hover:scale-110 active:scale-95 bg-bg-elevated border-border-default text-content-text"
       >
         <X size={13} strokeWidth={3} />
       </button>
@@ -111,11 +111,15 @@ export function DocumentCitationDialog({
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
+  // Nhân vật có thể có nhiều bối cảnh — quét tài liệu của tất cả bối cảnh đó
+  // (không chỉ bối cảnh của session hiện tại) vì AI có thể trích dẫn từ bất kỳ đâu.
+  const effectiveContextIds =
+    contextIds && contextIds.length > 0 ? contextIds : contextId ? [contextId] : [];
+
   const { data: characterDocs, isLoading: isLoadingCharacterDocs } =
     usePublicCharacterDocuments(characterId);
   const { data: contextDocs, isLoading: isLoadingContextDocs } =
-    usePublicContextsDocuments(contextIds && contextIds.length > 0 ? contextIds : contextId ? [contextId] : []);
-  const { data: event } = useEventDetail(contextId);
+    usePublicContextsDocuments(effectiveContextIds);
 
   const documents = useMemo<RagDocument[]>(
     () => [...(characterDocs ?? []), ...(contextDocs ?? [])],
@@ -131,15 +135,19 @@ export function DocumentCitationDialog({
     return null;
   }, [quote, initialDocumentId, documents]);
 
+  // Video minh hoạ phải theo đúng bối cảnh của tài liệu vừa khớp được, không phải
+  // luôn luôn bối cảnh của session hiện tại — nếu không sẽ hiện nhầm video.
+  const { data: event } = useEventDetail(matchedDocument?.contextId ?? contextId);
+
   const hasVideo = !!event?.videoUrl;
   const title = matchedDocument?.title || "Nguồn tham khảo";
 
   const renderVideo = () => (
-    <div className="relative w-full aspect-video bg-black shrink-0">
+    <div className="relative w-full bg-black aspect-video shrink-0">
       <video
         src={event?.videoUrl ?? undefined}
         controls
-        className="absolute inset-0 w-full h-full object-contain"
+        className="absolute inset-0 object-contain w-full h-full"
       />
     </div>
   );
@@ -147,7 +155,7 @@ export function DocumentCitationDialog({
   const renderBody = () => {
     if (isLoading) {
       return (
-        <div className="flex items-center gap-2 text-sm px-5 py-4 text-content-text">
+        <div className="flex items-center gap-2 px-5 py-4 text-sm text-content-text">
           <Loader2 size={16} className="animate-spin" />
           Đang tải tài liệu...
         </div>
@@ -176,7 +184,7 @@ export function DocumentCitationDialog({
     return (
       <div className="flex flex-col gap-3 px-5 py-4">
         <div
-          className="flex items-start gap-2 text-sm rounded-lg border p-3 border-border-default text-content-text"
+          className="flex items-start gap-2 p-3 text-sm border rounded-lg border-border-default text-content-text"
         >
           <AlertTriangle size={16} className="shrink-0 mt-0.5" />
           <span>
@@ -185,7 +193,7 @@ export function DocumentCitationDialog({
         </div>
         {quote && (
           <blockquote
-            className="text-sm leading-relaxed pl-3 border-l-2 border-accent-gold-soft text-content-text"
+            className="pl-3 text-sm leading-relaxed border-l-2 border-accent-gold-soft text-content-text"
           >
             {quote}
           </blockquote>
@@ -206,7 +214,7 @@ export function DocumentCitationDialog({
     <>
       {/* Desktop: sidebar thật trong layout, không overlay — vẫn thao tác được với chat */}
       <div
-        className="hidden md:flex shrink-0 h-full w-105 flex-col border-l border-border-default overflow-hidden bg-bg-surface"
+        className="flex-col hidden h-full overflow-hidden border-l md:flex shrink-0 w-105 border-border-default bg-bg-surface"
       >
         {panelBody}
       </div>

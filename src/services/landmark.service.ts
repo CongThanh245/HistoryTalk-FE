@@ -1,4 +1,3 @@
-import { axiosClient } from "@/configs/axios.client";
 import type { EventEraBackend } from "./event.service";
 import WIKIDATA_LANDMARKS_RAW from "@/data/landmarks-wikidata.json";
 
@@ -49,15 +48,32 @@ export interface GetLandmarksParams {
   type?: LandmarkType;
 }
 
-// ── Map function (dùng khi backend có API) ─────────────────
+export interface RawLandmark {
+  landmarkId?: string;
+  id?: string;
+  name: string;
+  description: string;
+  lat?: number;
+  latitude?: number;
+  lng?: number;
+  longitude?: number;
+  type: string;
+  era: EventEraBackend | "ALL";
+  province: string;
+  contextIds?: string[];
+  characterIds?: string[];
+  imageUrl?: string;
+  yearStart?: number;
+  yearEnd?: number;
+}
 
-export function mapLandmark(raw: any): Landmark {
+export function mapLandmark(raw: RawLandmark): Landmark {
   return {
-    landmarkId: raw.landmarkId ?? raw.id,
+    landmarkId: raw.landmarkId ?? raw.id ?? "",
     name: raw.name,
     description: raw.description,
-    lat: raw.lat ?? raw.latitude,
-    lng: raw.lng ?? raw.longitude,
+    lat: raw.lat ?? raw.latitude ?? 0,
+    lng: raw.lng ?? raw.longitude ?? 0,
     type: raw.type as LandmarkType,
     era: raw.era,
     province: raw.province,
@@ -205,12 +221,15 @@ export const MOCK_LANDMARKS: Landmark[] = [
 // ── Wikidata landmarks (auto-generated) ─────────────────────
 // File được sinh ra bằng: node scripts/fetch-wikidata-landmarks.mjs
 // Nếu file rỗng [] → chưa chạy script. Chạy script để có ~100-300 landmarks.
-const WIKIDATA_LANDMARKS: Landmark[] = (WIKIDATA_LANDMARKS_RAW as any[]).map(
-  (l: any) => ({
+const WIKIDATA_LANDMARKS: Landmark[] = (WIKIDATA_LANDMARKS_RAW as RawLandmark[]).map(
+  (l: RawLandmark) => ({
     ...l,
+    landmarkId: l.landmarkId ?? l.id ?? "",
+    lat: l.lat ?? l.latitude ?? 0,
+    lng: l.lng ?? l.longitude ?? 0,
     type: l.type as LandmarkType,
     era: l.era as EventEraBackend | "ALL",
-  }),
+  } as Landmark),
 );
 
 /** Tổng hợp: mock (curated) + wikidata (auto-fetched) */

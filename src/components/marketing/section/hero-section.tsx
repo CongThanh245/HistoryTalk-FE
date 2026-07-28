@@ -333,7 +333,7 @@ export function HeroSection({
         </div>
       </Container>
       {isVideoOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 px-4">
           <button
             type="button"
             aria-label="Đóng video"

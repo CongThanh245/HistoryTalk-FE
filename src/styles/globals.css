@@ -169,6 +169,8 @@ body {
   --input: rgba(27, 38, 50, 0.14);
   --ring: var(--accent-gold);
   --radius: 0.625rem;
+  --modal-surface: #FFFFFF;
+  --modal-border: #D4D4D8;
 
   /* ─── Motion timing ─── */
   --duration-micro: 150ms;
@@ -218,6 +220,8 @@ body {
    còn không thì theme cinematic của bạn mặc định đã là tone tối rồi */
 .dark {
   color-scheme: dark;
+  --modal-surface: #29292F;
+  --modal-border: #52525B;
 
   /* Toast - Dark Theme */
   --toast-success-bg: #102818;
@@ -267,6 +271,18 @@ body {
   --muted-foreground: var(--text-muted);
   --muted: var(--bg-deep);
   --color-muted: var(--bg-deep);
+}
+
+/* Modal panels must remain a solid reading surface. Backdrops may dim the
+   page, but modal content itself never inherits glass, blur, or opacity. */
+[data-slot="dialog-content"],
+[data-slot="alert-dialog-content"],
+[data-slot="sheet-content"] {
+  background-color: var(--modal-surface) !important;
+  border-color: var(--modal-border) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 @keyframes upgradeOverlayIn {
