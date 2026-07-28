@@ -19,6 +19,7 @@ import {
 import { findDocumentForQuote, splitContentByQuote } from "@/lib/utils/quote-match";
 import type { AnalyserLike } from "./FBXCharacterViewer";
 import { cn } from "@/lib/utils/cn";
+import { splitAssistantContent } from "@/lib/utils/helpers";
 
 // Dynamically import 3D viewer (no SSR)
 const FBXCharacterViewer = dynamic(
@@ -119,7 +120,11 @@ function TranscriptFeed({
 
   return (
     <div className="flex w-full max-h-55 flex-col gap-1.5 overflow-y-auto px-1 [scrollbar-width:none]">
-      {messages.slice(-4).map((m, i) => (
+      {messages.slice(-4).map((m, i) => {
+        const parts = m.role === "assistant" ? splitAssistantContent(m.text) : [];
+        const displayParts = parts.length > 0 ? parts : [m.text];
+
+        return (
         <div
           key={i}
           className={cn(
@@ -127,14 +132,19 @@ function TranscriptFeed({
             m.role === "user" ? "avatar-message-row--user items-end" : "avatar-message-row--assistant items-start",
           )}
         >
-          <div className={cn(
-            "max-w-[80%] px-3 py-1.5 text-[13px] leading-normal",
-            m.role === "user"
-              ? "rounded-[16px_16px_4px_16px] bg-white/[0.08] text-white/75"
-              : "rounded-[16px_16px_16px_4px] border border-[rgba(201,168,76,0.2)] bg-gradient-to-br from-[rgba(201,168,76,0.15)] to-[rgba(201,168,76,0.05)] text-white/90",
-          )}>
-            {m.text}
-          </div>
+          {displayParts.map((part, partIndex) => (
+            <div
+              key={partIndex}
+              className={cn(
+                "max-w-[80%] px-3 py-1.5 text-[13px] leading-normal",
+                m.role === "user"
+                  ? "rounded-[16px_16px_4px_16px] bg-white/[0.08] text-white/75"
+                  : "rounded-[16px_16px_16px_4px] border border-[rgba(201,168,76,0.2)] bg-gradient-to-br from-[rgba(201,168,76,0.15)] to-[rgba(201,168,76,0.05)] text-white/90",
+              )}
+            >
+              {part}
+            </div>
+          ))}
           {m.role === "assistant" && m.quotes && m.quotes.length > 0 && (
             <div className="flex max-w-[80%] flex-col gap-1.5">
               <button
@@ -167,8 +177,9 @@ function TranscriptFeed({
             </div>
           )}
         </div>
-      ))}
-      
+        );
+      })}
+
       {/* Hiển thị text đang nói (real-time) với style italic */}
       {interimText && (
         <div className="flex justify-end">
