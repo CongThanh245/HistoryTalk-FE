@@ -4,87 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  BookOpenText,
   Brain,
   MessageCircle,
-  CheckCircle2,
-  Compass,
   Map,
-  ShieldCheck,
   CircleUser,
   Video,
 } from "lucide-react";
 import { Container } from "@/components/marketing/container";
-import { cn } from "@/lib/utils/cn";
-
-const featureGroups = [
-  {
-    label: "Đối thoại AI",
-    title: "Trò chuyện với nhân vật lịch sử",
-    body: "Đặt câu hỏi tự nhiên, nhận phản hồi theo bối cảnh và đào sâu động cơ phía sau từng quyết định.",
-    icon: MessageCircle,
-    accent: "text-amber-300",
-    glow: "from-amber-500/20",
-    bullets: ["Ngữ cảnh nhân vật", "Câu hỏi mở", "Phản hồi theo mạch hội thoại"],
-  },
-  {
-    label: "Bối cảnh",
-    title: "Khám phá sự kiện như một dòng thời gian",
-    body: "Mỗi sự kiện được đặt trong chuỗi nguyên nhân, diễn biến và hệ quả để người học không bị rơi vào học thuộc rời rạc.",
-    icon: Map,
-    accent: "text-sky-300",
-    glow: "from-sky-500/20",
-    bullets: ["Mốc thời gian", "Bối cảnh địa lý", "Liên kết nhân vật"],
-  },
-  {
-    label: "Ôn tập",
-    title: "Quiz ngắn sau mỗi hành trình",
-    body: "Kiểm tra lại điều vừa hiểu bằng câu hỏi có giải thích, giúp kiến thức được neo lại đúng lúc.",
-    icon: Brain,
-    accent: "text-emerald-300",
-    glow: "from-emerald-500/20",
-    bullets: ["Câu hỏi theo chủ đề", "Giải thích đáp án", "Theo dõi tiến độ"],
-  },
-];
-
-const visualChapters = [
-  {
-    title: "Chọn nhân vật",
-    body: "Bắt đầu từ một con người cụ thể, không phải một đoạn văn khô.",
-    image: "/ngo-quyen-chan-dung.png",
-    alt: "Ngô Quyền illustration",
-  },
-  {
-    title: "Bước vào hội thoại",
-    body: "Câu hỏi mở kéo người học vào bối cảnh và lựa chọn của nhân vật.",
-    image: "/history-talk-ui.png",
-    alt: "History Talk chat interface",
-  },
-  {
-    title: "Ôn lại trên thiết bị cá nhân",
-    body: "Mỗi hành trình khép lại bằng phần ôn tập ngắn, dễ quay lại.",
-    image: "/phone_mock.png",
-    alt: "History Talk mobile interface",
-  },
-];
-
-const capabilityRows = [
-  {
-    title: "Lưu lại cuộc trò chuyện quan trọng",
-    body: "Các đoạn học có giá trị được giữ lại để người học quay về ôn tập sau.",
-    icon: BookOpenText,
-  },
-  {
-    title: "Gợi ý hướng khám phá tiếp theo",
-    body: "Sau mỗi chủ đề, hệ thống đề xuất nhân vật, sự kiện hoặc câu hỏi liên quan.",
-    icon: Compass,
-  },
-  {
-    title: "Ưu tiên độ tin cậy và bối cảnh",
-    body: "Thiết kế trải nghiệm theo hướng giải thích rõ, hạn chế cảm giác trả lời rời rạc.",
-    icon: ShieldCheck,
-  },
-];
 
 const chatMessages = [
   {
@@ -163,19 +89,25 @@ function TypingText({
   useEffect(() => {
     // If already completed before, show full text immediately
     if (hasCompleted || completedRef.current) {
-      setDisplayText(text);
-      setIsTyping(false);
+      Promise.resolve().then(() => {
+        setDisplayText(text);
+        setIsTyping(false);
+      });
       completedRef.current = true;
       return;
     }
 
     if (!isActive) {
-      setDisplayText("");
-      setIsTyping(false);
+      Promise.resolve().then(() => {
+        setDisplayText("");
+        setIsTyping(false);
+      });
       return;
     }
 
-    setIsTyping(true);
+    Promise.resolve().then(() => {
+      setIsTyping(true);
+    });
     let index = 0;
     const interval = setInterval(() => {
       if (index < text.length) {
@@ -245,8 +177,8 @@ function ChatBubble({
         <div className="mb-0.5 text-xs font-medium text-(--text-muted)">{message.name}</div>
         <div
           className={`rounded-2xl px-3 py-2 text-xs leading-relaxed ${isCharacter
-              ? "rounded-tl-none bg-(--bg-surface) text-muted-foreground"
-              : "rounded-tr-none bg-(--accent-gold)/10 text-(--accent-gold) border border-(--accent-gold)/20"
+            ? "rounded-tl-none bg-(--bg-surface) text-muted-foreground"
+            : "rounded-tr-none bg-(--accent-gold)/10 text-(--accent-gold) border border-(--accent-gold)/20"
             }`}
         >
           <TypingText
@@ -267,19 +199,12 @@ export default function FeaturePage() {
   const visualTrackRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const [activeFeature, setActiveFeature] = useState(0);
   const [activeMessage, setActiveMessage] = useState(0);
   const [completedMessages, setCompletedMessages] = useState<Set<number>>(new Set());
-  const [isAnimating, setIsAnimating] = useState(false);
 
   const handleNavigateToHome = () => {
     router.push("/home");
   };
-
-  useEffect(() => {
-    if (activeMessage >= chatMessages.length) return;
-    setIsAnimating(true);
-  }, [activeMessage]);
 
   const handleMessageComplete = (messageIndex: number) => {
     setCompletedMessages((prev) => new Set(prev).add(messageIndex));
@@ -287,8 +212,6 @@ export default function FeaturePage() {
       setTimeout(() => {
         setActiveMessage(messageIndex + 1);
       }, 800);
-    } else {
-      setIsAnimating(false);
     }
   };
 
@@ -534,7 +457,7 @@ export default function FeaturePage() {
     };
   }, []);
 
-  const ActiveIcon = featureGroups[activeFeature].icon;
+
 
   return (
     <main ref={pageRef} className="relative overflow-hidden bg-(--bg-deep) text-muted-foreground">

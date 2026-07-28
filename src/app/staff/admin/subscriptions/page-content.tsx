@@ -54,28 +54,26 @@ const EMPTY_FORM: CreateTierPayload = {
   isActive: true,
 };
 
-// Tier badge color based on title keyword
-function getTierColor(title: string): { bg: string; text: string; border: string; glow: string } {
+function getTierStyleClasses(title: string) {
   const lower = title.toLowerCase();
-  if (lower.includes("pro") || lower.includes("premium"))
+  if (lower.includes("pro") || lower.includes("premium")) {
     return {
-      bg: "rgba(168,85,247,0.10)",
-      text: "#a855f7",
-      border: "rgba(168,85,247,0.25)",
-      glow: "rgba(168,85,247,0.15)",
+      card: "border-[rgba(168,85,247,0.25)] hover:shadow-[0_8px_32px_rgba(168,85,247,0.15)]",
+      iconBg: "bg-[rgba(168,85,247,0.10)] border-[rgba(168,85,247,0.25)]",
+      icon: "text-[#a855f7]",
     };
-  if (lower.includes("plus") || lower.includes("standard"))
+  }
+  if (lower.includes("plus") || lower.includes("standard")) {
     return {
-      bg: "rgba(59,130,246,0.10)",
-      text: "#3b82f6",
-      border: "rgba(59,130,246,0.25)",
-      glow: "rgba(59,130,246,0.15)",
+      card: "border-[rgba(59,130,246,0.25)] hover:shadow-[0_8px_32px_rgba(59,130,246,0.15)]",
+      iconBg: "bg-[rgba(59,130,246,0.10)] border-[rgba(59,130,246,0.25)]",
+      icon: "text-[#3b82f6]",
     };
+  }
   return {
-    bg: "rgba(100,116,139,0.10)",
-    text: "#64748b",
-    border: "rgba(100,116,139,0.25)",
-    glow: "rgba(100,116,139,0.10)",
+    card: "border-[rgba(100,116,139,0.25)] hover:shadow-[0_8px_32px_rgba(100,116,139,0.10)]",
+    iconBg: "bg-[rgba(100,116,139,0.10)] border-[rgba(100,116,139,0.25)]",
+    icon: "text-[#64748b]",
   };
 }
 
@@ -88,29 +86,18 @@ interface TierCardProps {
 }
 
 function TierCard({ tier, onEdit, onDelete }: TierCardProps) {
-  const color = getTierColor(tier.title);
+  const styles = getTierStyleClasses(tier.title);
   return (
     <div
-      className="relative rounded-2xl border p-6 flex flex-col gap-5 transition-all duration-200 hover:shadow-lg bg-card-light-bg"
-      style={{
-        borderColor: color.border,
-        boxShadow: `0 0 0 0 ${color.glow}`,
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 32px ${color.glow}`;
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow = `0 0 0 0 ${color.glow}`;
-      }}
+      className={cn("relative rounded-2xl border p-6 flex flex-col gap-5 transition-all duration-200 hover:shadow-lg bg-card-light-bg", styles.card)}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: color.bg, border: `1px solid ${color.border}` }}
+            className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border", styles.iconBg)}
           >
-            <CreditCard className="w-5 h-5" style={{ color: color.text }} />
+            <CreditCard className={cn("w-5 h-5", styles.icon)} />
           </div>
           <div>
             <h3 className="text-base font-bold text-content-heading">
@@ -224,8 +211,12 @@ function TierFormDialog({
   const isEdit = !!initialData;
   const [form, setForm] = React.useState<CreateTierPayload>(EMPTY_FORM);
 
-  // Sync form when dialog opens
-  React.useEffect(() => {
+  const [prevOpen, setPrevOpen] = React.useState(open);
+  const [prevInitialData, setPrevInitialData] = React.useState(initialData);
+
+  if (open !== prevOpen || initialData !== prevInitialData) {
+    setPrevOpen(open);
+    setPrevInitialData(initialData);
     if (open) {
       setForm(
         initialData
@@ -239,7 +230,7 @@ function TierFormDialog({
           : EMPTY_FORM
       );
     }
-  }, [open, initialData]);
+  }
 
   function set<K extends keyof CreateTierPayload>(key: K, value: CreateTierPayload[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));

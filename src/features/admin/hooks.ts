@@ -82,16 +82,17 @@ export function useAdminUserById(userId: string) {
 export function useAdminCreateUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (_user: Partial<AdminUser>) => {
+    mutationFn: async () => {
       // TODO: Implement via auth service or dedicated admin create API
       throw new Error("User creation via admin panel not yet implemented. Use auth registration flow.");
     },
-    onSuccess: (_newUser) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ADMIN_KEYS.users() });
       qc.invalidateQueries({ queryKey: ADMIN_KEYS.stats });
     },
-    onError: (err: any) => {
-      toast.error(err?.message ?? "Tạo tài khoản thất bại");
+    onError: (err: unknown) => {
+      const error = err as { message?: string } | null;
+      toast.error(error?.message ?? "Tạo tài khoản thất bại");
     },
   });
 }
@@ -109,8 +110,9 @@ export function useAdminUpdateUser() {
       qc.invalidateQueries({ queryKey: ADMIN_KEYS.stats });
       toast.success("Cập nhật tài khoản thành công");
     },
-    onError: (err: any) => {
-      toast.error(err?.message ?? "Cập nhật tài khoản thất bại");
+    onError: (err: unknown) => {
+      const error = err as { message?: string } | null;
+      toast.error(error?.message ?? "Cập nhật tài khoản thất bại");
     },
   });
 }
@@ -129,8 +131,9 @@ export function useAdminUpdateUserRole() {
       qc.invalidateQueries({ queryKey: ADMIN_KEYS.stats });
       toast.success(`Đã cập nhật vai trò thành ${updatedUser.role}`);
     },
-    onError: (err: any) => {
-      toast.error(err?.message ?? "Cập nhật vai trò thất bại");
+    onError: (err: unknown) => {
+      const error = err as { message?: string } | null;
+      toast.error(error?.message ?? "Cập nhật vai trò thất bại");
     },
   });
 }
@@ -153,8 +156,9 @@ export function useAdminDeactivateUser() {
       qc.invalidateQueries({ queryKey: ADMIN_KEYS.stats });
       toast.success("Đã vô hiệu hóa tài khoản");
     },
-    onError: (err: any) => {
-      toast.error(err?.message ?? "Vô hiệu hóa tài khoản thất bại");
+    onError: (err: unknown) => {
+      const error = err as { message?: string } | null;
+      toast.error(error?.message ?? "Vô hiệu hóa tài khoản thất bại");
     },
   });
 }
@@ -179,8 +183,9 @@ export function useAdminRestoreUser() {
       qc.invalidateQueries({ queryKey: ADMIN_KEYS.stats });
       toast.success("Đã khôi phục tài khoản thành công");
     },
-    onError: (err: any) => {
-      toast.error(err?.message ?? "Khôi phục tài khoản thất bại");
+    onError: (err: unknown) => {
+      const error = err as { message?: string } | null;
+      toast.error(error?.message ?? "Khôi phục tài khoản thất bại");
     },
   });
 }
@@ -188,11 +193,12 @@ export function useAdminRestoreUser() {
 export function useAdminPermanentDeleteUser() {
   // TODO: Implement when backend supports permanent deletion
   return useMutation({
-    mutationFn: async (_params: { uid: string; role?: UserRole }) => {
+    mutationFn: async () => {
       throw new Error("Permanent user deletion not yet implemented in backend");
     },
-    onError: (err: any) => {
-      toast.error(err?.message ?? "Xóa vĩnh viễn thất bại");
+    onError: (err: unknown) => {
+      const error = err as { message?: string } | null;
+      toast.error(error?.message ?? "Xóa vĩnh viễn thất bại");
     },
   });
 }
@@ -212,8 +218,9 @@ export function useAdminAddTokens() {
       qc.invalidateQueries({ queryKey: ADMIN_KEYS.stats });
       toast.success(`Đã cộng thêm ${variables.amount} token cho tài khoản`);
     },
-    onError: (err: any) => {
-      toast.error(err?.message ?? "Cộng token thất bại");
+    onError: (err: unknown) => {
+      const error = err as { message?: string } | null;
+      toast.error(error?.message ?? "Cộng token thất bại");
     },
   });
 }
