@@ -133,6 +133,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     setActiveTab,
     hasDraftErrors,
     hasPublishErrors,
+    hasUnpublishedLinkedContext,
     canSave,
     canPublishCharacter,
     publishBlockedMessage,
@@ -303,6 +304,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                       } else if (mappedContexts.length === 0) {
                         setActiveTab("context");
                         toast.error("Vui lòng liên kết bối cảnh lịch sử trước khi xuất bản.");
+                      } else if (hasUnpublishedLinkedContext) {
+                        setActiveTab("context");
+                        toast.error("Vui lòng xuất bản tất cả bối cảnh lịch sử liên kết trước khi xuất bản nhân vật.");
                       }
                     }}
                   />
