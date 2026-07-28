@@ -267,12 +267,12 @@ function GLBCharacterModel({
   // the scene to be "stolen" from any previous render, making every 2nd open fail.
   const clonedScene = React.useMemo(
     () => SkeletonUtils.clone(gltf.scene) as THREE.Group,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [gltf.scene],
   );
   const clonedAnimations = React.useMemo(
     () => gltf.animations.map((clip) => clip.clone()),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [gltf.animations],
   );
 

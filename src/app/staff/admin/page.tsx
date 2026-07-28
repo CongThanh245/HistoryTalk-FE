@@ -1188,7 +1188,7 @@ export default function AdminDashboardPage() {
               >
                 <span className="flex items-center gap-2 font-medium text-[var(--content-heading)]">
                   <UserCheckIcon className="h-4 w-4 text-blue-500" />
-                  Khách hàng
+                  Customer
                 </span>
                 <ArrowRightIcon className="h-4 w-4 opacity-50" />
               </Button>
