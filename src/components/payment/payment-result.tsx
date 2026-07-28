@@ -148,7 +148,7 @@ export default function PaymentResult() {
 
   return (
     <div className="flex min-h-full items-center justify-center px-4 py-8 md:py-12">
-      <section className="w-full max-w-4xl overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]/75 backdrop-blur-md shadow-[var(--shadow-strong)] animate-in fade-in zoom-in-95 duration-500">
+      <section className="w-full max-w-4xl overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-[var(--shadow-strong)] animate-in fade-in zoom-in-95 duration-500">
         <div className="grid md:grid-cols-[0.9fr_1.1fr]">
           <aside className="relative overflow-hidden bg-[var(--abyssal-blue)] p-6 text-white md:p-8">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,146,21,0.28),transparent_22rem)]" />

@@ -1,5 +1,3 @@
-import { axiosClient } from "@/configs/axios.client";
-
 // ── Types ──────────────────────────────────────────────────
 
 export interface RoomHotspot {
@@ -33,11 +31,37 @@ export interface GetRoomsParams {
   contextId?: string;
 }
 
-// ── Map function ───────────────────────────────────────────
+export interface RawHotspot {
+  hotspotId?: string;
+  id?: string;
+  characterId: string;
+  characterName: string;
+  title: string;
+  spriteUrl: string;
+  x: number;
+  y: number;
+  scale?: number;
+  side?: "left" | "right";
+  greeting: string;
+  roomContext: string;
+}
 
-export function mapRoom(raw: any): HistoricalRoom {
+export interface RawRoom {
+  roomId?: string;
+  id?: string;
+  landmarkId: string;
+  contextId: string;
+  name: string;
+  era: string;
+  backgroundUrl: string;
+  backgroundCredit?: string;
+  ambientDescription: string;
+  hotspots?: RawHotspot[];
+}
+
+export function mapRoom(raw: RawRoom): HistoricalRoom {
   return {
-    roomId: raw.roomId ?? raw.id,
+    roomId: raw.roomId ?? raw.id ?? "",
     landmarkId: raw.landmarkId,
     contextId: raw.contextId,
     name: raw.name,
@@ -49,9 +73,9 @@ export function mapRoom(raw: any): HistoricalRoom {
   };
 }
 
-export function mapHotspot(raw: any): RoomHotspot {
+export function mapHotspot(raw: RawHotspot): RoomHotspot {
   return {
-    hotspotId: raw.hotspotId ?? raw.id,
+    hotspotId: raw.hotspotId ?? raw.id ?? "",
     characterId: raw.characterId,
     characterName: raw.characterName,
     title: raw.title,

@@ -14,6 +14,7 @@ interface MessageBubbleProps {
   message: ChatMessage;
   character: ChatCharacter;
   speak?: (text: string) => void;
+  isSpeaking?: boolean;
   onViewQuote?: (quote: string) => void;
 }
 
@@ -21,10 +22,12 @@ export function MessageBubble({
   message,
   character,
   speak,
+  isSpeaking: isSpeakingProp,
   onViewQuote,
 }: MessageBubbleProps) {
   const isUser = message.role === "USER";
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [localIsSpeaking, setLocalIsSpeaking] = useState(false);
+  const isSpeaking = isSpeakingProp !== undefined ? isSpeakingProp : localIsSpeaking;
   const userName = useAuthStore((s) => s.user?.userName ?? "Bạn");
   const userAvatarUrl = useAuthStore((s) => s.user?.avatarUrl);
 
@@ -128,12 +131,19 @@ export function MessageBubble({
                     type="button"
                     aria-label={isSpeaking ? "Tắt đọc tin nhắn" : "Đọc tin nhắn"}
                     onClick={() => {
-                      if (isSpeaking) {
-                        speechSynthesis.cancel();
-                        setIsSpeaking(false);
+                      if (speak) {
+                        speak(message.content);
                       } else {
-                        speak?.(message.content);
-                        setIsSpeaking(true);
+                        if (isSpeaking) {
+                          speechSynthesis.cancel();
+                          setLocalIsSpeaking(false);
+                        } else {
+                          const utterance = new SpeechSynthesisUtterance(message.content);
+                          utterance.onend = () => setLocalIsSpeaking(false);
+                          utterance.onerror = () => setLocalIsSpeaking(false);
+                          speechSynthesis.speak(utterance);
+                          setLocalIsSpeaking(true);
+                        }
                       }
                     }}
                     className={cn(

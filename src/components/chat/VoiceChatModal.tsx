@@ -258,11 +258,11 @@ export function VoiceChatModal({
 
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-[12px]"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/85"
       >
         {/* Card */}
         <div
-          className="relative flex flex-col items-center gap-6 rounded-3xl p-8 w-[360px] max-w-[94vw] bg-gradient-to-b from-[rgba(30,25,15,0.98)] to-[rgba(15,12,8,0.98)] border border-[rgba(201,168,76,0.25)] shadow-[0_0_60px_rgba(201,168,76,0.08),0_24px_80px_rgba(0,0,0,0.7)]"
+          className="relative flex flex-col items-center gap-6 rounded-3xl p-8 w-[360px] max-w-[94vw] bg-gradient-to-b from-[#1e190f] to-[#0f0c08] border border-[rgba(201,168,76,0.25)] shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
           style={{
             animation: "fadeSlideUp 0.35s ease both",
           }}

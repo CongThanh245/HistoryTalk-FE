@@ -132,13 +132,8 @@ export function ChatInput({
     recognition.onend = () => {
       setIsRecording(false);
       recognitionRef.current = null;
-
-      const finalVal = transcriptRef.current.trim();
-      if (finalVal && !disabled && !isLoading) {
-        onSend(finalVal);
-        setText("");
-        if (textareaRef.current) textareaRef.current.style.height = "auto";
-      }
+      // Không tự gửi — chỉ giữ text lại trong ô nhập để người dùng xem lại,
+      // sửa nếu nhận dạng sai, rồi tự bấm nút gửi.
       transcriptRef.current = "";
     };
 
