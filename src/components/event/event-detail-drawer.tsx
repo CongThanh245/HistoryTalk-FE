@@ -252,7 +252,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
     <>
       {authRequiredDialog}
       <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md"
+        className="fixed inset-0 z-40 bg-black/70"
         onClick={onClose}
       />
 
