@@ -295,7 +295,7 @@ export default function AdminAccountsPage() {
                 <p className="text-xs text-content-muted">
                   {u.email}
                 </p>
-                {u.tierTitle && (
+                {meta.showTier && u.tierTitle && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">
                     {u.tierTitle}
                   </span>
