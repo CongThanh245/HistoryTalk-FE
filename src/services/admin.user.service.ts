@@ -50,6 +50,16 @@ export interface UpdateRolePayload {
   role: UserRole;
 }
 
+/** POST /auth/register-content-admin — chỉ tạo được CONTENT_ADMIN hoặc SYSTEM_ADMIN (SYSTEM_ADMIN gọi). */
+export interface RegisterStaffPayload {
+  userName: string;
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  roleName: "CONTENT_ADMIN" | "SYSTEM_ADMIN";
+}
+
 export interface ListUsersParams {
   page?: number;
   size?: number;
@@ -149,6 +159,12 @@ export const adminUserService = {
   restoreUser: async (userId: string): Promise<AdminUser> => {
     const res = await axiosClient.patch(`${BASE}/${userId}/restore`);
     return res.data.data as AdminUser;
+  },
+
+  /** Create a CONTENT_ADMIN or SYSTEM_ADMIN account (SYSTEM_ADMIN only) */
+  registerStaffAccount: async (payload: RegisterStaffPayload): Promise<{ message: string }> => {
+    const res = await axiosClient.post("/auth/register-content-admin", payload);
+    return res.data.data as { message: string };
   },
 
   // ─── Token Analytics ────────────────────────────────────────────────────

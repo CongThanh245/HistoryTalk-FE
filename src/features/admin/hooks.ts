@@ -9,10 +9,11 @@ import {
   type TokenAnalyticsParams,
   type UserRole,
   type ListUsersParams,
+  type RegisterStaffPayload,
 } from "@/services/admin.user.service";
 
 // Re-export types for consumers
-export type { AdminUser, TokenAnalyticsData, TokenAnalyticsParams, UserRole, ListUsersParams };
+export type { AdminUser, TokenAnalyticsData, TokenAnalyticsParams, UserRole, ListUsersParams, RegisterStaffPayload };
 
 const ADMIN_KEYS = {
   stats: ["admin", "stats"] as const,
@@ -77,22 +78,20 @@ export function useAdminUserById(userId: string) {
   });
 }
 
-// Note: User creation should go through auth flow, not admin API
-// This is kept for compatibility but should be replaced with proper auth registration
+/** Tạo tài khoản CONTENT_ADMIN hoặc SYSTEM_ADMIN — POST /auth/register-content-admin (SYSTEM_ADMIN only). */
 export function useAdminCreateUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      // TODO: Implement via auth service or dedicated admin create API
-      throw new Error("User creation via admin panel not yet implemented. Use auth registration flow.");
-    },
-    onSuccess: () => {
+    mutationFn: (payload: RegisterStaffPayload) => adminUserService.registerStaffAccount(payload),
+    onSuccess: (_result, variables) => {
+      qc.invalidateQueries({ queryKey: ADMIN_KEYS.users(variables.roleName) });
       qc.invalidateQueries({ queryKey: ADMIN_KEYS.users() });
       qc.invalidateQueries({ queryKey: ADMIN_KEYS.stats });
+      toast.success("Tạo tài khoản thành công");
     },
     onError: (err: unknown) => {
-      const error = err as { message?: string } | null;
-      toast.error(error?.message ?? "Tạo tài khoản thất bại");
+      const error = err as { response?: { data?: { message?: string } }; message?: string } | null;
+      toast.error(error?.response?.data?.message ?? error?.message ?? "Tạo tài khoản thất bại");
     },
   });
 }
