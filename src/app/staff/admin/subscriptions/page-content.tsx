@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   CreditCard,
   Pencil,
-  Trash2,
   CheckCircle,
   XCircle,
   Coins,
@@ -26,12 +25,10 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { cn } from "@/lib/utils/cn";
 import {
   useAdminTiers,
   useAdminUpdateTier,
-  useAdminDeleteTier,
   type AdminTier,
   type CreateTierPayload,
 } from "@/features/admin/tier.hooks";
@@ -82,10 +79,9 @@ function getTierStyleClasses(title: string) {
 interface TierCardProps {
   tier: AdminTier;
   onEdit: (tier: AdminTier) => void;
-  onDelete: (tier: AdminTier) => void;
 }
 
-function TierCard({ tier, onEdit, onDelete }: TierCardProps) {
+function TierCard({ tier, onEdit }: TierCardProps) {
   const styles = getTierStyleClasses(tier.title);
   return (
     <div
@@ -176,15 +172,6 @@ function TierCard({ tier, onEdit, onDelete }: TierCardProps) {
         >
           <Pencil className="w-3.5 h-3.5" />
           Chỉnh sửa
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="rounded-xl gap-1.5 text-xs font-semibold border-[rgba(239,68,68,0.30)] text-[#ef4444] bg-[rgba(239,68,68,0.04)]"
-          onClick={() => onDelete(tier)}
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-          Xóa
         </Button>
       </div>
     </div>
@@ -376,15 +363,10 @@ function TierFormDialog({
 export default function AdminSubscriptionsPageContent() {
   const { data: tiers = [], isLoading, isFetching } = useAdminTiers();
   const updateTier = useAdminUpdateTier();
-  const deleteTier = useAdminDeleteTier();
 
   // Form dialog
   const [formOpen, setFormOpen] = React.useState(false);
   const [formTarget, setFormTarget] = React.useState<AdminTier | null>(null);
-
-  // Delete confirm
-  const [deleteOpen, setDeleteOpen] = React.useState(false);
-  const [deleteTarget, setDeleteTarget] = React.useState<AdminTier | null>(null);
 
   // Derived stats
   const activeCount = tiers.filter((t) => t.isActive).length;
@@ -394,11 +376,6 @@ export default function AdminSubscriptionsPageContent() {
   function openEdit(tier: AdminTier) {
     setFormTarget(tier);
     setFormOpen(true);
-  }
-
-  function openDelete(tier: AdminTier) {
-    setDeleteTarget(tier);
-    setDeleteOpen(true);
   }
 
   function handleSave(data: CreateTierPayload) {
@@ -503,7 +480,6 @@ export default function AdminSubscriptionsPageContent() {
                   key={tier.tierId}
                   tier={tier}
                   onEdit={openEdit}
-                  onDelete={openDelete}
                 />
               ))}
             </div>
@@ -518,26 +494,6 @@ export default function AdminSubscriptionsPageContent() {
         initialData={formTarget}
         onSave={handleSave}
         isPending={isPending}
-      />
-
-      {/* Delete confirm */}
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title="Xóa gói dịch vụ?"
-        description={`Gói "${deleteTarget?.title}" sẽ bị xóa vĩnh viễn. Thao tác này không thể hoàn tác.`}
-        confirmLabel={deleteTier.isPending ? "Đang xóa..." : "Xóa gói"}
-        variant="danger"
-        isPending={deleteTier.isPending}
-        onConfirm={() => {
-          if (!deleteTarget) return;
-          deleteTier.mutate(deleteTarget.tierId, {
-            onSuccess: () => {
-              setDeleteOpen(false);
-              setDeleteTarget(null);
-            },
-          });
-        }}
       />
     </StaffShell>
   );
