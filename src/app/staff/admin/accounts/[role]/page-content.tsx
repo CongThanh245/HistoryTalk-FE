@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   Pencil,
+  Plus,
   Search,
   Users,
   User,
@@ -31,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import {
   useAdminUsers,
+  useAdminCreateUser,
   useAdminUpdateUser,
   useAdminDeleteUser,
   useAdminRestoreUser,
@@ -148,18 +150,24 @@ export default function AdminAccountsPage() {
   // Data
   const { data: usersResponse, isLoading, isFetching } = useAdminUsers(roleEnum, { page: 0, size: 100 });
   const allUsers = React.useMemo(() => usersResponse?.content ?? [], [usersResponse?.content]);
+  const createUser = useAdminCreateUser();
   const updateUser = useAdminUpdateUser();
   const deleteUser = useAdminDeleteUser();
   const restoreUser = useAdminRestoreUser();
 
+  // POST /auth/register-content-admin chỉ nhận roleName CONTENT_ADMIN | SYSTEM_ADMIN — không tạo được CUSTOMER qua đây.
+  const canCreate = roleEnum === "CONTENT_ADMIN" || roleEnum === "SYSTEM_ADMIN";
 
   // UI state
   const [search, setSearch] = React.useState("");
 
   // Dialogs
   const [formOpen, setFormOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("edit");
   const [formTarget, setFormTarget] = React.useState<AdminUser | null>(null);
   const [formData, setFormData] = React.useState<Partial<AdminUser>>(() => buildEmptyUser(roleEnum));
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
 
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<AdminUser | null>(null);
@@ -181,7 +189,17 @@ export default function AdminAccountsPage() {
 
 
 
+  function openCreate() {
+    setFormMode("create");
+    setFormTarget(null);
+    setFormData(buildEmptyUser(roleEnum));
+    setPassword("");
+    setConfirmPassword("");
+    setFormOpen(true);
+  }
+
   function openEdit(user: AdminUser) {
+    setFormMode("edit");
     setFormTarget(user);
     setFormData({
       userName: user.userName,
@@ -197,6 +215,23 @@ export default function AdminAccountsPage() {
   }
 
   function handleFormSave() {
+    if (formMode === "create") {
+      if (!formData.userName?.trim() || !formData.fullName?.trim() || !formData.email?.trim()) return;
+      if (password.length < 6 || password !== confirmPassword) return;
+      createUser.mutate(
+        {
+          userName: formData.userName.trim(),
+          name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          password,
+          confirmPassword,
+          roleName: roleEnum as "CONTENT_ADMIN" | "SYSTEM_ADMIN",
+        },
+        { onSuccess: () => setFormOpen(false) }
+      );
+      return;
+    }
+
     if (!formTarget || !formData.userName?.trim()) return;
     const updates = {
       userName: formData.userName,
@@ -212,6 +247,15 @@ export default function AdminAccountsPage() {
       { onSuccess: () => setFormOpen(false) }
     );
   }
+
+  const isFormValid =
+    formMode === "create"
+      ? !!formData.userName?.trim() &&
+        !!formData.fullName?.trim() &&
+        !!formData.email?.trim() &&
+        password.length >= 6 &&
+        password === confirmPassword
+      : !!formData.userName?.trim();
 
 
 
@@ -463,6 +507,16 @@ export default function AdminAccountsPage() {
                 className="pl-10 h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border"
               />
             </div>
+            {canCreate && (
+              <Button
+                onClick={openCreate}
+                className="text-white border-0 rounded-xl gap-1.5 shrink-0"
+                style={{ background: meta.accent }}
+              >
+                <Plus className="w-4 h-4" />
+                Tạo tài khoản
+              </Button>
+            )}
           </div>
         </div>
 
@@ -482,10 +536,12 @@ export default function AdminAccountsPage() {
         <DialogContent className="max-w-md staff-theme bg-card-light-bg border-card-light-border text-content-text">
           <DialogHeader>
             <DialogTitle className="text-content-heading">
-              Chỉnh sửa tài khoản
+              {formMode === "create" ? `Tạo tài khoản ${meta.label}` : "Chỉnh sửa tài khoản"}
             </DialogTitle>
             <DialogDescription className="text-content-muted">
-              Cập nhật thông tin tài khoản người dùng.
+              {formMode === "create"
+                ? `Tài khoản mới sẽ có vai trò ${meta.label} và đăng nhập được ngay bằng email/mật khẩu bên dưới.`
+                : "Cập nhật thông tin tài khoản người dùng."}
             </DialogDescription>
           </DialogHeader>
 
@@ -506,7 +562,7 @@ export default function AdminAccountsPage() {
             {/* Full Name */}
             <div className="space-y-1.5">
               <Label className="text-content-heading text-[13px]">
-                Họ và tên
+                Họ và tên {formMode === "create" && <span className="text-destructive">*</span>}
               </Label>
               <Input
                 value={formData.fullName ?? ""}
@@ -524,46 +580,81 @@ export default function AdminAccountsPage() {
               <Input
                 type="email"
                 value={formData.email ?? ""}
+                disabled={formMode === "edit"}
                 onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, email: e.target.value }))}
                 placeholder="example@historytalk.vn"
-                className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading disabled:opacity-60"
               />
             </div>
 
-            {/* Phone Number */}
-            <div className="space-y-1.5">
-              <Label className="text-content-heading text-[13px]">
-                Số điện thoại
-              </Label>
-              <Input
-                value={formData.phoneNumber ?? ""}
-                onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, phoneNumber: e.target.value }))}
-                placeholder="Nhập số điện thoại"
-                className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
-              />
-            </div>
-
-            {/* Address */}
-            <div className="space-y-1.5">
-              <Label className="text-content-heading text-[13px]">
-                Địa chỉ
-              </Label>
-              <Input
-                value={formData.address ?? ""}
-                onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, address: e.target.value }))}
-                placeholder="Nhập địa chỉ"
-                className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
-              />
-            </div>
-
-            {/* Tier - customer only (read only, cannot change via update API) */}
-            {meta.showTier && formTarget?.tierTitle && (
-              <div className="space-y-1.5">
-                <Label className="text-content-heading text-[13px]">Gói dịch vụ hiện tại</Label>
-                <div className="h-10 rounded-xl border px-3 flex items-center text-sm bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading">
-                  {formTarget.tierTitle}
+            {formMode === "create" ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-content-heading text-[13px]">
+                    Mật khẩu <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Tối thiểu 6 ký tự"
+                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-content-heading text-[13px]">
+                    Xác nhận mật khẩu <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Nhập lại mật khẩu"
+                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                  />
+                  {confirmPassword && password !== confirmPassword && (
+                    <p className="text-[11px] text-destructive">Mật khẩu xác nhận không khớp.</p>
+                  )}
                 </div>
               </div>
+            ) : (
+              <>
+                {/* Phone Number */}
+                <div className="space-y-1.5">
+                  <Label className="text-content-heading text-[13px]">
+                    Số điện thoại
+                  </Label>
+                  <Input
+                    value={formData.phoneNumber ?? ""}
+                    onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, phoneNumber: e.target.value }))}
+                    placeholder="Nhập số điện thoại"
+                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                  />
+                </div>
+
+                {/* Address */}
+                <div className="space-y-1.5">
+                  <Label className="text-content-heading text-[13px]">
+                    Địa chỉ
+                  </Label>
+                  <Input
+                    value={formData.address ?? ""}
+                    onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, address: e.target.value }))}
+                    placeholder="Nhập địa chỉ"
+                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                  />
+                </div>
+
+                {/* Tier - customer only (read only, cannot change via update API) */}
+                {meta.showTier && formTarget?.tierTitle && (
+                  <div className="space-y-1.5">
+                    <Label className="text-content-heading text-[13px]">Gói dịch vụ hiện tại</Label>
+                    <div className="h-10 rounded-xl border px-3 flex items-center text-sm bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading">
+                      {formTarget.tierTitle}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -577,11 +668,15 @@ export default function AdminAccountsPage() {
             </Button>
             <Button
               onClick={handleFormSave}
-              disabled={updateUser.isPending}
+              disabled={!isFormValid || createUser.isPending || updateUser.isPending}
               className="text-white border-0 rounded-xl"
               style={{ background: meta.accent }}
             >
-              {updateUser.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+              {createUser.isPending || updateUser.isPending
+                ? "Đang lưu..."
+                : formMode === "create"
+                  ? "Tạo tài khoản"
+                  : "Lưu thay đổi"}
             </Button>
           </DialogFooter>
         </DialogContent>
