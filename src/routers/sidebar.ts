@@ -12,6 +12,7 @@ import {
   Gauge,
   CreditCard,
   Receipt,
+  Flame,
 } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
@@ -61,6 +62,7 @@ export const STAFF_SIDEBAR: SidebarSection[] = [
       { icon: User, label: "Nhân vật", href: ROUTES.STAFF.CHARACTERS },
       { icon: BookOpen, label: "Tài liệu", href: ROUTES.STAFF.DOCUMENTS },
       { icon: ClipboardList, label: "Câu đố lịch sử", href: ROUTES.STAFF.QUIZZES },
+      { icon: Flame, label: "Nhiệm vụ hằng ngày", href: ROUTES.STAFF.QUESTS },
     ],
   },
   // MVP: Ẩn mục Hồ sơ trong sidebar Content Admin
