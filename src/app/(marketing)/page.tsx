@@ -1,4 +1,4 @@
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { Suspense } from "react";
 import { HeroSection } from "@/components/marketing/section/hero-section";
 import type { Character } from "@/services/character.service";
@@ -8,27 +8,27 @@ import { axiosServer } from "@/configs/axios.server";
 export const dynamic = "force-dynamic";
 
 // Lazy load sections below the fold để giảm initial bundle size
-const ProblemSection = dynamic(
+const ProblemSection = nextDynamic(
   () => import("@/components/marketing/section/problem-section").then((m) => m.ProblemSection),
   { loading: () => <SectionSkeleton /> }
 );
 
-const SolutionSection = dynamic(
+const SolutionSection = nextDynamic(
   () => import("@/components/marketing/section/solution-section").then((m) => m.SolutionSection),
   { loading: () => <SectionSkeleton /> }
 );
 
-const FeaturesSection = dynamic(
+const FeaturesSection = nextDynamic(
   () => import("@/components/marketing/section/features-section").then((m) => m.FeaturesSection),
   { loading: () => <SectionSkeleton /> }
 );
 
-// const ImpactSection = dynamic(
+// const ImpactSection = nextDynamic(
 //   () => import("@/components/marketing/section/impact-section").then((m) => m.ImpactSection),
 //   { loading: () => <SectionSkeleton /> }
 // );
 
-const ClosingSection = dynamic(
+const ClosingSection = nextDynamic(
   () => import("@/components/marketing/section/closing-section").then((m) => m.ClosingSection),
   { loading: () => <SectionSkeleton /> }
 );
