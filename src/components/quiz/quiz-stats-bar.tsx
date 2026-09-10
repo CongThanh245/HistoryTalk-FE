@@ -22,18 +22,14 @@ export function QuizStatsBar({
       {stats.map((s) => (
         <div
           key={s.label}
-          className="rounded-lg border px-2.5 py-2.5 md:rounded-xl md:px-4 md:py-3"
-          style={{
-            background: "var(--card-light-bg)",
-            borderColor: "var(--card-light-border)",
-          }}
+          className="rounded-lg border border-card-light-border bg-card-light-bg px-2.5 py-2.5 md:rounded-xl md:px-4 md:py-3"
         >
-          <p className="line-clamp-1 text-[10px] font-semibold uppercase tracking-wide md:text-xs" style={{ color: "var(--content-subtle)" }}>
+          <p className="line-clamp-1 text-[10px] font-semibold uppercase tracking-wide text-content-subtle md:text-xs">
             {s.label}
           </p>
-          <p className="mt-1 text-lg font-bold leading-none md:text-xl" style={{ color: "var(--content-heading)" }}>
+          <p className="mt-1 text-lg font-bold leading-none text-content-heading md:text-xl">
             {s.value}
-            <span className="text-sm font-semibold" style={{ color: "var(--gold-on-light)" }}>
+            <span className="text-sm font-semibold text-gold-on-light">
               {s.suffix}
             </span>
           </p>

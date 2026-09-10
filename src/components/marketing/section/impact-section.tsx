@@ -1,23 +1,23 @@
 "use client";
 
 import { useRef } from "react";
-import { BrainIcon, LinkIcon, ScalesIcon, SparkleIcon } from "@phosphor-icons/react";
+import { Brain, Link, Scale, Sparkles } from "lucide-react";
 import { Container } from "../container";
 import { useRevealAnimation } from "@/lib/hooks/use-reveal-animation";
 
 const impacts = [
   {
-    icon: BrainIcon,
+    icon: Brain,
     title: "Hiểu thay vì học thuộc",
     description: "Người học nhớ sự kiện thông qua nguyên nhân, bối cảnh và lựa chọn của nhân vật.",
   },
   {
-    icon: ScalesIcon,
+    icon: Scale,
     title: "Biết đặt câu hỏi",
     description: "Mỗi cuộc trò chuyện mở ra cách nhìn phản biện: vì sao, nếu không, và điều gì xảy ra sau đó.",
   },
   {
-    icon: LinkIcon,
+    icon: Link,
     title: "Nối quá khứ với hiện tại",
     description: "Lịch sử trở thành chuỗi quyết định có ảnh hưởng đến thế giới người học đang sống.",
   },
@@ -67,7 +67,7 @@ export function ImpactSection() {
 
               <div data-reveal="block" className="mt-6 md:mt-8 border-l-2 border-[var(--accent-gold)]/50 pl-4 md:pl-6">
                 <div className="flex items-start gap-3 md:gap-4">
-                  <SparkleIcon className="mt-1 h-5 w-5 md:h-6 md:w-6 shrink-0 text-[var(--accent-gold)]" />
+                  <Sparkles className="mt-1 h-5 w-5 md:h-6 md:w-6 shrink-0 text-[var(--accent-gold)]" />
                   <p className="max-w-3xl text-lg md:text-xl lg:text-2xl font-semibold leading-relaxed text-[var(--text-secondary)]">
                     History Talk không dạy người học phải nghĩ gì. Nó giúp họ có đủ bối cảnh để tự hiểu vì sao lịch sử đã diễn ra như vậy.
                   </p>

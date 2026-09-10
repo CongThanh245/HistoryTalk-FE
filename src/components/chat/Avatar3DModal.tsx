@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { X, FileText, AlertCircle, ExternalLink, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 
 import type { ChatCharacter } from "@/services/chat.service";
 import { useVoiceChatRest, type VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
@@ -11,7 +12,14 @@ import { useVoiceChatWebSpeech } from "@/features/chat/useVoiceChatWebSpeech";
 import { queryKeys } from "@/shared/query-key";
 import { useAuthStore } from "@/store/auth.store";
 import { userService, type UserProfile } from "@/services/user.service";
+import {
+  usePublicCharacterDocuments,
+  usePublicContextDocuments,
+} from "@/features/documents/hooks";
+import { findDocumentForQuote, splitContentByQuote } from "@/lib/utils/quote-match";
 import type { AnalyserLike } from "./FBXCharacterViewer";
+import { cn } from "@/lib/utils/cn";
+import { splitAssistantContent } from "@/lib/utils/helpers";
 
 // Dynamically import 3D viewer (no SSR)
 const FBXCharacterViewer = dynamic(
@@ -23,19 +31,9 @@ const FBXCharacterViewer = dynamic(
 
 function ModelLoadingPlaceholder() {
   return (
-    <div style={{
-      width: "100%", height: "100%", display: "flex",
-      flexDirection: "column", alignItems: "center", justifyContent: "center",
-      gap: 12, color: "rgba(201,168,76,0.7)",
-    }}>
-      <div style={{
-        width: 40, height: 40, borderRadius: "50%",
-        border: "3px solid rgba(201,168,76,0.3)",
-        borderTopColor: "#c9a84c",
-        animation: "spin 1s linear infinite",
-      }} />
-      <p style={{ fontSize: 13, opacity: 0.7, margin: 0 }}>Đang tải mô hình 3D...</p>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-[rgba(201,168,76,0.7)]">
+      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[rgba(201,168,76,0.3)] border-t-[#c9a84c]" />
+      <p className="m-0 text-[13px] opacity-70">Đang tải mô hình 3D...</p>
     </div>
   );
 }
@@ -44,6 +42,7 @@ const STATUS_LABEL: Record<string, string> = {
   idle: "Bấm mic để nói",
   listening: "Đang nghe... bấm mic lần nữa để dừng",
   recording: " Đang ghi âm... (click để gửi)",
+  confirm: "Kiểm tra lại nội dung trước khi gửi",
   processing: "Đang lần theo dấu vết lịch sử...",
   processing_stt: " Đang nhận dạng giọng nói...",
   processing_chat: "Đang đối chiếu sử liệu...",
@@ -87,41 +86,11 @@ function syncProfileUser(profile: UserProfile) {
 
 function ThinkingIndicator() {
   return (
-    <div style={{
-      display: "flex",
-      justifyContent: "flex-start",
-      padding: "4px 0",
-    }}>
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-        padding: "8px 16px",
-        borderRadius: "16px 16px 16px 4px",
-        background: "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05))",
-        border: "1px solid rgba(201,168,76,0.2)",
-      }}>
-        <span style={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          background: "#c9a84c",
-          animation: "thinkingBounce 0.6s ease-in-out infinite",
-        }} />
-        <span style={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          background: "#c9a84c",
-          animation: "thinkingBounce 0.6s ease-in-out infinite 0.15s",
-        }} />
-        <span style={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          background: "#c9a84c",
-          animation: "thinkingBounce 0.6s ease-in-out infinite 0.3s",
-        }} />
+    <div className="flex justify-start py-1">
+      <div className="flex items-center gap-1 rounded-[16px_16px_16px_4px] border border-[rgba(201,168,76,0.2)] bg-gradient-to-br from-[rgba(201,168,76,0.15)] to-[rgba(201,168,76,0.05)] px-4 py-2">
+        <span className="h-1.5 w-1.5 rounded-full bg-[#c9a84c] animate-[thinkingBounce_0.6s_ease-in-out_infinite]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-[#c9a84c] animate-[thinkingBounce_0.6s_ease-in-out_infinite] [animation-delay:0.15s]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-[#c9a84c] animate-[thinkingBounce_0.6s_ease-in-out_infinite] [animation-delay:0.3s]" />
       </div>
     </div>
   );
@@ -133,12 +102,15 @@ function TranscriptFeed({
   messages,
   isThinking,
   interimText,
+  onOpenCitation,
 }: {
   messages: VoiceRestMessage[];
   isThinking?: boolean;
   interimText?: string; // Text đang nói (real-time)
+  onOpenCitation?: (quote: string) => void;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [expandedQuotesFor, setExpandedQuotesFor] = useState<number | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -148,55 +120,73 @@ function TranscriptFeed({
   if (!hasContent) return null;
 
   return (
-    <div style={{
-      width: "100%", maxHeight: 140, overflowY: "auto",
-      display: "flex", flexDirection: "column", gap: 6,
-      padding: "0 4px", scrollbarWidth: "none",
-    }}>
-      {messages.slice(-4).map((m, i) => (
+    <div className="flex w-full max-h-55 flex-col gap-1.5 overflow-y-auto px-1 [scrollbar-width:none]">
+      {messages.slice(-4).map((m, i) => {
+        const parts = m.role === "assistant" ? splitAssistantContent(m.text) : [];
+        const displayParts = parts.length > 0 ? parts : [m.text];
+
+        return (
         <div
           key={i}
-          className={[
-            "avatar-message-row",
-            m.role === "user" ? "avatar-message-row--user" : "avatar-message-row--assistant",
-          ].join(" ")}
-          style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}
+          className={cn(
+            "avatar-message-row flex flex-col gap-1",
+            m.role === "user" ? "avatar-message-row--user items-end" : "avatar-message-row--assistant items-start",
+          )}
         >
-          <div style={{
-            maxWidth: "80%",
-            borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-            padding: "6px 12px", fontSize: 13, lineHeight: 1.5,
-            background: m.role === "user"
-              ? "rgba(255,255,255,0.08)"
-              : "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05))",
-            border: m.role === "assistant" ? "1px solid rgba(201,168,76,0.2)" : "none",
-            color: m.role === "user" ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.9)",
-          }}>
-            {m.text}
-          </div>
+          {displayParts.map((part, partIndex) => (
+            <div
+              key={partIndex}
+              className={cn(
+                "max-w-[80%] px-3 py-1.5 text-[13px] leading-normal",
+                m.role === "user"
+                  ? "rounded-[16px_16px_4px_16px] bg-white/[0.08] text-white/75"
+                  : "rounded-[16px_16px_16px_4px] border border-[rgba(201,168,76,0.2)] bg-gradient-to-br from-[rgba(201,168,76,0.15)] to-[rgba(201,168,76,0.05)] text-white/90",
+              )}
+            >
+              {part}
+            </div>
+          ))}
+          {m.role === "assistant" && m.quotes && m.quotes.length > 0 && (
+            <div className="flex max-w-[80%] flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={() => setExpandedQuotesFor(expandedQuotesFor === i ? null : i)}
+                className="flex items-center gap-1 self-start rounded-full border border-[rgba(201,168,76,0.35)] bg-[rgba(201,168,76,0.1)] px-2 py-0.5 text-[11px] text-[rgba(240,200,90,0.9)]"
+              >
+                {m.quotes.length} nguồn trích dẫn
+                {expandedQuotesFor === i ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+              </button>
+
+              {expandedQuotesFor === i && (
+                <div className="flex flex-col gap-2 rounded-[10px] border border-white/10 bg-white/[0.04] px-2.5 py-2">
+                  {m.quotes.map((quote, qi) => (
+                    <div key={qi} className="flex flex-col gap-1">
+                      <blockquote className="m-0 border-l-2 border-[rgba(201,168,76,0.4)] pl-2 text-[11.5px] leading-[1.5] text-white/65">
+                        {quote}
+                      </blockquote>
+                      <button
+                        type="button"
+                        onClick={() => onOpenCitation?.(quote)}
+                        className="self-start border-none bg-none pl-2 text-[11px] font-semibold text-[#e0b84a]"
+                      >
+                        Xem trong tài liệu
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      ))}
-      
+        );
+      })}
+
       {/* Hiển thị text đang nói (real-time) với style italic */}
       {interimText && (
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <div style={{
-            maxWidth: "80%",
-            borderRadius: "16px 16px 4px 16px",
-            padding: "6px 12px", fontSize: 13, lineHeight: 1.5,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px dashed rgba(255,255,255,0.2)",
-            color: "rgba(255,255,255,0.5)",
-            fontStyle: "italic",
-          }}>
+        <div className="flex justify-end">
+          <div className="max-w-[80%] rounded-[16px_16px_4px_16px] border border-dashed border-white/20 bg-white/[0.04] px-3 py-1.5 text-[13px] italic leading-normal text-white/50">
             {interimText}
-            <span style={{
-              display: "inline-block",
-              width: 2, height: 14,
-              background: "rgba(255,255,255,0.5)",
-              marginLeft: 4,
-              animation: "pulse 0.8s ease-in-out infinite",
-            }} />
+            <span className="ml-1 inline-block h-3.5 w-0.5 animate-[pulse_0.8s_ease-in-out_infinite] bg-white/50" />
           </div>
         </div>
       )}
@@ -213,12 +203,14 @@ function ConversationDock({
   isThinking,
   interimText,
   isRecording,
+  onOpenCitation,
 }: {
   character: ChatCharacter;
   messages: VoiceRestMessage[];
   isThinking?: boolean;
   interimText?: string;
   isRecording?: boolean;
+  onOpenCitation?: (quote: string) => void;
 }) {
   const hasContent = messages.length > 0 || Boolean(interimText);
 
@@ -228,6 +220,7 @@ function ConversationDock({
         messages={messages}
         isThinking={isThinking}
         interimText={interimText}
+        onOpenCitation={onOpenCitation}
       />
     );
   }
@@ -255,46 +248,128 @@ function ConversationDock({
   );
 }
 
-/*
-function RemovedModelDiagnosticBadge({ diagnostic }: { diagnostic: unknown }) {
-  if (process.env.NODE_ENV !== "development" || !diagnostic) return null;
+// ── Citation panel (riêng cho cuộc gọi 2D/3D, không đóng call) ────────────────
 
-  const blendshapeNames = Object.keys(diagnostic.blendshapes);
-  const sampleBones = diagnostic.bones.slice(0, 6).join(", ") || "none";
-  const sampleBlendshapes = blendshapeNames.slice(0, 6).join(", ") || "none";
+function CallCitationPanel({
+  quote,
+  characterId,
+  contextId,
+  onClose,
+}: {
+  quote: string;
+  characterId: string;
+  contextId?: string;
+  onClose: () => void;
+}) {
+  const { data: characterDocs, isLoading: isLoadingCharacterDocs } =
+    usePublicCharacterDocuments(characterId);
+  const { data: contextDocs, isLoading: isLoadingContextDocs } =
+    usePublicContextDocuments(contextId);
+
+  const isLoading = isLoadingCharacterDocs || isLoadingContextDocs;
+  const documents = useMemo(
+    () => [...(characterDocs ?? []), ...(contextDocs ?? [])],
+    [characterDocs, contextDocs],
+  );
+  const matchedDocument = useMemo(
+    () => findDocumentForQuote(quote, documents),
+    [quote, documents],
+  );
+  const parts = useMemo(
+    () => splitContentByQuote(matchedDocument?.content ?? "", quote),
+    [matchedDocument, quote],
+  );
+  const markRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    markRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [parts]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
 
   return (
     <div
-      style={{
-        position: "absolute",
-        top: 12,
-        left: 12,
-        zIndex: 5,
-        maxWidth: 360,
-        padding: "8px 10px",
-        borderRadius: 8,
-        background: "rgba(0,0,0,0.68)",
-        border: "1px solid rgba(201,168,76,0.3)",
-        color: "rgba(255,255,255,0.82)",
-        fontSize: 11,
-        lineHeight: 1.45,
-        pointerEvents: "none",
-      }}
+      className="absolute inset-0 z-30 flex justify-end bg-[rgba(0,0,0,0.45)]"
+      onClick={onClose}
     >
-      <div style={{ color: "#f0c85a", fontWeight: 700 }}>removed</div>
-      <div>
-        meshes {diagnostic.meshCount} | bones {diagnostic.bones.length} | morphs{" "}
-        {blendshapeNames.length} | anims {diagnostic.animCount}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="flex h-full w-[min(380px,100%)] flex-col overflow-hidden border-l border-[rgba(201,168,76,0.25)] bg-[rgba(20,16,10,0.97)] shadow-[-8px_0_32px_rgba(0,0,0,0.4)]"
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-[rgba(201,168,76,0.2)] px-[18px] py-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <FileText size={18} className="shrink-0 text-[#e0b84a]" />
+            <h3 className="truncate text-[13px] font-bold text-white/90">
+              {matchedDocument?.title || "Nguồn tham khảo"}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Đóng"
+            className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.06] text-white/70"
+          >
+            <X size={13} strokeWidth={2.5} />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-[18px] py-4">
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-[13px] text-white/60">
+              <Loader2 size={16} className="animate-spin" />
+              Đang tải tài liệu...
+            </div>
+          ) : matchedDocument ? (
+            <>
+              <p className="text-[13px] leading-[1.7] whitespace-pre-wrap text-white/85">
+                {parts.map((part, i) =>
+                  part.matched ? (
+                    <mark
+                      key={i}
+                      ref={markRef}
+                      className="rounded-[3px] bg-[rgba(201,168,76,0.35)] px-0.5 text-inherit"
+                    >
+                      {part.text}
+                    </mark>
+                  ) : (
+                    <span key={i}>{part.text}</span>
+                  ),
+                )}
+              </p>
+              {matchedDocument.fileUrl && (
+                <a
+                  href={matchedDocument.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#e0b84a]"
+                >
+                  <ExternalLink size={14} />
+                  Xem file gốc
+                </a>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start gap-2 rounded-lg border border-white/[0.12] p-3 text-[13px] text-white/60">
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                <span>Không tìm thấy vị trí chính xác trong tài liệu. Đây là nội dung AI đã trích dẫn:</span>
+              </div>
+              <blockquote className="border-l-2 border-[rgba(201,168,76,0.4)] pl-3 text-[13px] leading-[1.7] text-white/70">
+                {quote}
+              </blockquote>
+            </div>
+          )}
+        </div>
       </div>
-      <div style={{ opacity: 0.72 }}>bones: {sampleBones}</div>
-      <div style={{ opacity: 0.72 }}>morphs: {sampleBlendshapes}</div>
     </div>
   );
 }
-
-// ── Props ─────────────────────────────────────────────────────────────────────
-
-*/
 
 type VoiceMode = "rest" | "stream" | "web-speech";
 
@@ -303,6 +378,7 @@ type ActiveVoiceHook = {
   messages: VoiceRestMessage[];
   startRecording: () => Promise<void> | void;
   stopRecording: () => void;
+  cancelRecording?: () => void;
   cancel?: () => void;
   ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
   isRecording: boolean;
@@ -320,22 +396,25 @@ interface Avatar3DModalProps {
   useStream?: boolean; // true = streaming mode, false = REST mode
   mode?: VoiceMode; // "rest" | "stream" | "web-speech" (miễn phí, không API key)
   onTokenUpdate?: (remainingTokens: number, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE") => void;
+  contextId?: string;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function Avatar3DModal({ 
+export function Avatar3DModal({
   variant = "3d",
-  character, 
-  sessionId, 
-  onClose, 
+  character,
+  sessionId,
+  onClose,
   onMessagesChange,
   mode: modeProp,
-  onTokenUpdate
+  onTokenUpdate,
+  contextId,
 }: Avatar3DModalProps) {
   const queryClient = useQueryClient();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [voiceVolume, setVoiceVolume] = useState(0);
+  const [citationQuote, setCitationQuote] = useState<string | null>(null);
   
   const uiSoundRefs = useRef<Record<keyof typeof UI_SOUNDS, HTMLAudioElement | null>>({
     callStart: null,
@@ -470,6 +549,7 @@ export function Avatar3DModal({
     messages,
     startRecording,
     stopRecording,
+    cancelRecording,
     cancel,
     ttsAnalyserRef,
     isRecording,
@@ -564,11 +644,16 @@ export function Avatar3DModal({
     if (isRecording) {
       playUiSound("micOff", 0.42);
       stopRecording();
-    } else if (status === "idle") {
+    } else if (status === "idle" || status === "speaking") {
+      // status === "speaking": ngắt lời nhân vật để hỏi câu tiếp theo (barge-in).
       setErrorMsg(null);
       playUiSound("micOn", 0.42);
       startRecording();
     }
+  };
+
+  const handleCancelRecording = () => {
+    cancelRecording?.();
   };
 
   const handleClose = () => {
@@ -578,17 +663,17 @@ export function Avatar3DModal({
     window.setTimeout(onClose, 180);
   };
 
-  // ── Keyboard shortcut: Space = toggle voice ───────────────────────────────
+  // ── Keyboard shortcut: Space = toggle voice, Enter/Esc = xác nhận khi đang chờ ──
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Space") {
         e.preventDefault();
         if (e.repeat) return;
-        
+
         if (isRecording) {
           playUiSound("micOff", 0.42);
           stopRecording();
-        } else if (status === "idle") {
+        } else if (status === "idle" || status === "speaking") {
           setErrorMsg(null);
           playUiSound("micOn", 0.42);
           startRecording();
@@ -604,6 +689,9 @@ export function Avatar3DModal({
   // ── Render ────────────────────────────────────────────────────────────────
 
   const isBusy = status.startsWith("processing") || status === "speaking" || status === "thinking";
+  // Mic vẫn bấm được lúc đang nói để ngắt lời (barge-in); chỉ khóa khi thực sự
+  // đang xử lý mạng (processing/thinking) — lúc đó chưa có gì để ngắt.
+  const micDisabled = (isBusy && status !== "speaking");
   const isListeningStatus = status === "listening";
   const is2D = variant === "2d";
 
@@ -1215,6 +1303,63 @@ export function Avatar3DModal({
           padding: 14px 0 14px 28px;
           flex-shrink: 0;
         }
+        .avatar-confirm-bar {
+          width: calc(100% - 416px);
+          align-self: flex-start;
+          margin: 10px 0 0;
+          padding: 14px 20px;
+          border-radius: 16px;
+          border: 1px solid rgba(201,168,76,0.3);
+          background: linear-gradient(180deg, rgba(201,168,76,0.1), rgba(20,16,10,0.85));
+          box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+          animation: messageIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        .avatar-confirm-bar__label {
+          margin: 0 0 4px;
+          color: rgba(255,255,255,0.5);
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+        .avatar-confirm-bar__text {
+          margin: 0 0 14px;
+          color: rgba(255,255,255,0.92);
+          font-size: 15px;
+          line-height: 1.5;
+        }
+        .avatar-confirm-bar__actions {
+          display: flex;
+          gap: 12px;
+        }
+        .avatar-confirm-bar__btn {
+          flex: 1;
+          padding: 9px 0;
+          border-radius: 999px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: filter 0.15s, transform 0.15s;
+        }
+        .avatar-confirm-bar__btn:hover {
+          filter: brightness(1.12);
+          transform: translateY(-1px);
+        }
+        .avatar-confirm-bar__btn--retry {
+          border: 1px solid rgba(255,255,255,0.18);
+          background: rgba(255,255,255,0.06);
+          color: rgba(255,255,255,0.82);
+        }
+        .avatar-confirm-bar__btn--send {
+          border: 1px solid rgba(201,168,76,0.5);
+          background: linear-gradient(135deg, #e0b84a, #c9a84c);
+          color: #1a1508;
+        }
+        @media (max-width: 900px) {
+          .avatar-confirm-bar {
+            width: 100%;
+            align-self: center;
+          }
+        }
         .avatar-call-footer-hint {
           width: calc(100% - 416px);
           align-self: flex-start;
@@ -1267,42 +1412,25 @@ export function Avatar3DModal({
       `}</style>
 
       {/* Backdrop */}
-      <div style={{
-        position: "fixed", inset: 0, zIndex: 1000,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(0,0,0,0.88)",
-        backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-      }}>
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/90">
         {/* Card */}
-        <div style={{
-          position: "relative", display: "flex", flexDirection: "column",
-          alignItems: "center", width: "100vw", height: "100vh",
-          background: "linear-gradient(180deg, rgba(20,16,10,1) 0%, rgba(10,8,4,1) 100%)",
-          animation: "fadeSlideUp 0.4s ease both", overflow: "hidden",
-        }}>
+        <div className="relative flex h-screen w-screen flex-col items-center overflow-hidden bg-gradient-to-b from-[rgba(20,16,10,1)] to-[rgba(10,8,4,1)] animate-[fadeSlideUp_0.4s_ease_both]">
 
           {/* ── Header ── */}
-          <div style={{
-            width: "100%", display: "flex", alignItems: "center",
-            justifyContent: "space-between", padding: "14px 20px",
-            borderBottom: "1px solid rgba(201,168,76,0.12)", flexShrink: 0,
-          }}>
+          <div className="flex w-full shrink-0 items-center justify-between border-b border-[rgba(201,168,76,0.12)] px-5 py-3.5">
             {/* Status badge */}
-            <div style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "4px 12px", borderRadius: 20,
-              background: "rgba(201,168,76,0.08)",
-              border: "1px solid rgba(201,168,76,0.2)",
-              color: "#c9a84c", fontSize: 12,
-            }}>
+            <div className="flex items-center gap-1.5 rounded-[20px] border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.08)] px-3 py-1 text-xs text-[#c9a84c]">
               {(isRecording || isBusy || isListeningStatus) && (
-                <span style={{
-                  width: 7, height: 7, borderRadius: "50%",
-                  background: isRecording ? "#ef5350" 
-                    : (isBusy && !status.includes("speaking")) ? "#4fc3f7" 
-                    : "#c9a84c",
-                  animation: "pulse 1s ease-in-out infinite",
-                }} />
+                <span
+                  className={cn(
+                    "h-1.75 w-1.75 animate-[pulse_1s_ease-in-out_infinite] rounded-full",
+                    isRecording
+                      ? "bg-[#ef5350]"
+                      : isBusy && !status.includes("speaking")
+                        ? "bg-[#4fc3f7]"
+                        : "bg-[#c9a84c]",
+                  )}
+                />
               )}
               {dynamicStatusLabel}
             </div>
@@ -1314,20 +1442,7 @@ export function Avatar3DModal({
             <button
               type="button"
               onClick={handleClose}
-              style={{
-                width: 32, height: 32, borderRadius: "50%", border: "none",
-                background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)",
-                cursor: "pointer", display: "flex", alignItems: "center",
-                justifyContent: "center", transition: "background 0.2s, color 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.12)";
-                (e.currentTarget as HTMLButtonElement).style.color = "#fff";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.5)";
-              }}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-none bg-white/[0.06] text-white/50 transition-[background,color] duration-200 hover:bg-white/[0.12] hover:text-white"
               aria-label="Đóng"
             >
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
@@ -1339,17 +1454,15 @@ export function Avatar3DModal({
           <div className="avatar-call-body">
           {/* ── 3D Viewport ── */}
           <div
-            className={[
+            className={cn(
               "avatar-call-viewport",
-              isThinkingStatus ? "avatar-call-viewport--thinking" : "",
-              isSpeaking ? "avatar-call-viewport--speaking" : "",
-              isListeningStatus || isRecording ? "avatar-call-viewport--listening" : "",
-            ].filter(Boolean).join(" ")}
+              isThinkingStatus && "avatar-call-viewport--thinking",
+              isSpeaking && "avatar-call-viewport--speaking",
+              (isListeningStatus || isRecording) && "avatar-call-viewport--listening",
+              is2D && "flex items-center justify-center",
+            )}
             style={{
               "--voice-volume": isSpeaking ? voiceVolume.toFixed(3) : "0",
-              display: is2D ? "flex" : undefined,
-              alignItems: is2D ? "center" : undefined,
-              justifyContent: is2D ? "center" : undefined,
             } as CSSProperties}
           >
             <span className="avatar-call-gridscan" aria-hidden="true">
@@ -1359,72 +1472,42 @@ export function Avatar3DModal({
             <span className="avatar-call-viewport__time-streaks" aria-hidden="true" />
             <span className="avatar-call-time-tunnel" aria-hidden="true" />
             {is2D ? (
-              <div style={{
-                position: "relative",
-                width: "min(54vw, 320px)",
-                aspectRatio: "1",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
+              <div className="relative flex aspect-square w-[min(54vw,320px)] items-center justify-center rounded-full">
                 {(isSpeaking || isListeningStatus || isRecording) && (
                   <>
                     {[0, 1, 2].map((i) => (
                       <span
                         key={i}
+                        className="absolute inset-0 rounded-full border border-[rgba(201,168,76,0.45)] opacity-0"
                         style={{
-                          position: "absolute",
-                          inset: 0,
-                          borderRadius: "50%",
-                          border: "1px solid rgba(201,168,76,0.45)",
                           animation: "avatar2DRipple 2.4s ease-out infinite",
                           animationDelay: `${i * 0.45}s`,
-                          opacity: 0,
                         }}
                       />
                     ))}
                   </>
                 )}
-                <div style={{
-                  position: "relative",
-                  width: "78%",
-                  height: "78%",
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  border: isSpeaking
-                    ? "3px solid rgba(201,168,76,0.85)"
-                    : "2px solid rgba(201,168,76,0.35)",
-                  boxShadow: isSpeaking
-                    ? "0 0 48px rgba(201,168,76,0.28)"
-                    : "0 20px 70px rgba(0,0,0,0.35)",
-                  transition: "border-color 0.25s, box-shadow 0.25s",
-                  background: "linear-gradient(135deg, rgba(201,168,76,0.16), rgba(255,255,255,0.04))",
-                }}>
+                <div className={cn(
+                  "relative h-[78%] w-[78%] overflow-hidden rounded-full bg-gradient-to-br from-[rgba(201,168,76,0.16)] to-white/[0.04] transition-[border-color,box-shadow] duration-[250ms]",
+                  isSpeaking
+                    ? "border-[3px] border-[rgba(201,168,76,0.85)] shadow-[0_0_48px_rgba(201,168,76,0.28)]"
+                    : "border-2 border-[rgba(201,168,76,0.35)] shadow-[0_20px_70px_rgba(0,0,0,0.35)]",
+                )}>
                   {character.imageUrl ? (
                     <img
                       src={character.imageUrl}
                       alt={character.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div style={{
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#c9a84c",
-                      fontSize: 72,
-                      fontWeight: 700,
-                    }}>
+                    <div className="flex h-full w-full items-center justify-center text-[72px] font-bold text-[#c9a84c]">
                       {character.name[0]}
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="avatar-call-model-layer" style={{ position: "relative", zIndex: 1, width: "100%", height: "100%" }}>
+              <div className="avatar-call-model-layer relative z-[1] h-full w-full">
                 <FBXCharacterViewer
                   modelUrl={character.modelUrl ?? "/models/character.glb"}
                   isSpeaking={status === "speaking"}
@@ -1439,12 +1522,12 @@ export function Avatar3DModal({
             )}
             {!is2D && (isSpeaking || isListeningStatus || isRecording) && (
               <span
-                className={[
+                className={cn(
                   "avatar-call-ripple",
-                  isListeningStatus || isRecording
+                  (isListeningStatus || isRecording)
                     ? "avatar-call-ripple--listening"
                     : "avatar-call-ripple--speaking",
-                ].join(" ")}
+                )}
               />
             )}
             <div className="avatar-call-identity">
@@ -1461,76 +1544,94 @@ export function Avatar3DModal({
               isThinking={status === "processing_chat" || status === "thinking" || status === "processing"}
               interimText={isRecording ? liveTranscript : ""}
               isRecording={isRecording}
+              onOpenCitation={setCitationQuote}
             />
           </div>
           </div>
+
+          {citationQuote && (
+            <CallCitationPanel
+              quote={citationQuote}
+              characterId={character.id}
+              contextId={contextId}
+              onClose={() => setCitationQuote(null)}
+            />
+          )}
+
 
           {/* ── Controls ── */}
           <div className="avatar-call-footer">
             {/* Toggle mic button */}
             <div
-              className={[
+              className={cn(
                 "avatar-mic-wrap",
-                isRecording ? "avatar-mic-wrap--recording" : "",
-                isBusy ? "avatar-mic-wrap--busy" : "",
-                !isRecording && !isBusy ? "avatar-mic-wrap--idle" : "",
-              ].filter(Boolean).join(" ")}
+                isRecording && "avatar-mic-wrap--recording",
+                micDisabled && "avatar-mic-wrap--busy",
+                !isRecording && !micDisabled && "avatar-mic-wrap--idle",
+              )}
             >
-            <button
-              type="button"
-              className="avatar-mic-button"
-              onClick={handleMicClick}
-              disabled={isBusy}
-              aria-label={isRecording ? "Dừng ghi âm và gửi" : "Bắt đầu ghi âm"}
-              title={isRecording ? "Bấm lần nữa để dừng và gửi" : "Bấm để nói"}
-              style={{
-                width: 72, height: 72, borderRadius: "50%",
-                background: isRecording
-                  ? "linear-gradient(135deg, #c62828, #ef5350)"
-                  : "linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.15))",
-                border: isRecording
-                  ? "2px solid #ef5350"
-                  : "2px solid rgba(201,168,76,0.4)",
-                boxShadow: isRecording
-                  ? "0 0 0 0 rgba(239,83,80,0.5)"
-                  : "0 4px 24px rgba(201,168,76,0.2)",
-                animation: isRecording ? "micPulse 1s ease-in-out infinite" : "none",
-                cursor: isBusy ? "not-allowed" : "pointer",
-                opacity: isBusy ? 0.4 : 1,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "background 0.2s, border 0.2s",
-                userSelect: "none", WebkitUserSelect: "none",
-                touchAction: "none",
-              } as CSSProperties}
-            >
-              {/* Mic icon */}
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                stroke={isRecording ? "#fff" : "#c9a84c"}
-                strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" />
-                <line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
-            </button>
+              <button
+                type="button"
+                className={cn(
+                  "avatar-mic-button flex h-18 w-18 select-none touch-none items-center justify-center rounded-full border-2 bg-gradient-to-br transition-[background,border] duration-200 disabled:cursor-not-allowed disabled:opacity-40",
+                  !micDisabled && "cursor-pointer",
+                  isRecording
+                    ? "animate-[micPulse_1s_ease-in-out_infinite] border-[#ef5350] from-[#c62828] to-[#ef5350] shadow-[0_0_0_0_rgba(239,83,80,0.5)]"
+                    : "border-[rgba(201,168,76,0.4)] from-[rgba(201,168,76,0.3)] to-[rgba(201,168,76,0.15)] shadow-[0_4px_24px_rgba(201,168,76,0.2)]",
+                )}
+                onClick={handleMicClick}
+                disabled={micDisabled}
+                aria-label={
+                  isRecording
+                    ? "Dừng ghi âm và gửi"
+                    : status === "speaking"
+                      ? "Ngắt lời và hỏi câu khác"
+                      : "Bắt đầu ghi âm"
+                }
+                title={
+                  isRecording
+                    ? "Bấm lần nữa để dừng và gửi"
+                    : status === "speaking"
+                      ? "Bấm để ngắt lời và hỏi câu khác"
+                      : "Bấm để nói"
+                }
+              >
+                {/* Mic icon */}
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                  stroke={isRecording ? "#fff" : "#c9a84c"}
+                  strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              </button>
+
+              {/* Hủy ghi âm (nút X) khi đang thu âm */}
+              {isRecording && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playUiSound("micOff", 0.42);
+                    handleCancelRecording();
+                  }}
+                  className="absolute -top-1 -right-1 z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-red-500/50 bg-[#ef5350] text-white shadow-md transition-all hover:scale-110 hover:bg-[#d32f2f]"
+                  title="Hủy ghi âm"
+                  aria-label="Hủy ghi âm"
+                >
+                  <X size={12} strokeWidth={2.5} />
+                </button>
+              )}
             </div>
 
             {/* End / Close */}
             <button
               type="button"
-              className="avatar-hangup-button"
+              className="avatar-hangup-button flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-none bg-gradient-to-br from-[#c0392b] to-[#e74c3c] shadow-[0_4px_24px_rgba(231,76,60,0.45)] transition-[filter] duration-150 hover:brightness-[1.15]"
               onClick={handleClose}
               aria-label="Kết thúc cuộc gọi"
               title="Kết thúc"
-              style={{
-                width: 56, height: 56, borderRadius: "50%", border: "none",
-                background: "linear-gradient(135deg, #c0392b, #e74c3c)",
-                boxShadow: "0 4px 24px rgba(231,76,60,0.45)",
-                cursor: "pointer", display: "flex", alignItems: "center",
-                justifyContent: "center", transition: "filter 0.15s",
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.15)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1)"; }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
                 <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
@@ -1540,7 +1641,9 @@ export function Avatar3DModal({
 
           {/* Hint text */}
           <p className="avatar-call-footer-hint">
-            Bấm mic hoặc Space để nói, bấm lần nữa để dừng
+            {status === "speaking"
+              ? "Bấm mic hoặc Space để ngắt lời và hỏi câu khác"
+              : "Bấm mic hoặc Space để nói, bấm lần nữa để dừng"}
           </p>
         </div>
       </div>

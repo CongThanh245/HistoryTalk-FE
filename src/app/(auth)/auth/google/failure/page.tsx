@@ -11,21 +11,12 @@ const GOOGLE_OAUTH_START_URL =
 
 export default function GoogleOAuthFailurePage() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center px-6"
-      style={{ background: "var(--palladian)", color: "var(--content-text)" }}
-    >
-      <div
-        className="w-full max-w-md rounded-xl border p-6 text-center shadow-sm"
-        style={{
-          background: "var(--card-light-bg)",
-          borderColor: "var(--card-light-border)",
-        }}
-      >
-        <h1 className="text-xl font-semibold" style={{ color: "var(--content-heading)" }}>
+    <div className="flex min-h-screen items-center justify-center px-6 bg-[var(--palladian)] text-content-text">
+      <div className="w-full max-w-md rounded-xl border p-6 text-center shadow-sm bg-card-light-bg border-card-light-border">
+        <h1 className="text-xl font-semibold text-content-heading">
           Google sign in failed
         </h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--content-muted)" }}>
+        <p className="mt-2 text-sm text-content-muted">
           Please try again or sign in with email and password.
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">

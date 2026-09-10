@@ -189,6 +189,12 @@ export function validateContextDraft(
   validateRequired(errors, "location", draft.location, "Địa điểm");
   validateYear(errors, "year", draft.year, "Năm");
 
+  // Catches obvious placeholder/test data (e.g. "2121212") — a real
+  // location name always has at least one letter.
+  if (!isBlank(draft.location) && !/\p{L}/u.test(draft.location.trim())) {
+    errors.location = "Địa điểm không hợp lệ (phải chứa chữ, không thể chỉ là số).";
+  }
+
   if (!isBlank(draft.imageUrl) && !isValidUrl(draft.imageUrl.trim())) {
     errors.imageUrl = "URL hình ảnh không hợp lệ.";
   }

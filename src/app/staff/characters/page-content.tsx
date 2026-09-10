@@ -1,7 +1,7 @@
 ﻿﻿﻿﻿﻿﻿﻿"use client";
 
 import * as React from "react";
-import { UsersIcon } from "@phosphor-icons/react";
+import { Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
@@ -91,11 +91,11 @@ export default function StaffCharactersPage() {
   const trashColumns = React.useMemo(
     () =>
       createCharacterTrashColumns({
-        onRestore: (row: TrashRow) => {
+        onRestore: (row) => {
           setRestoreTarget({ id: row.id, title: row.title });
           setRestoreOpen(true);
         },
-        onPermanentDelete: (row: TrashRow) => {
+        onPermanentDelete: (row) => {
           setPermanentDeleteTarget({ id: row.id, title: row.title });
           setPermanentDeleteOpen(true);
         },
@@ -108,7 +108,7 @@ export default function StaffCharactersPage() {
     <StaffShell
       title="Quản lý nhân vật"
       description="Tạo, cập nhật và kiểm soát nhân vật lịch sử."
-      icon={UsersIcon}
+      icon={Users}
       accent="var(--accent-blue)"
     >
       <section

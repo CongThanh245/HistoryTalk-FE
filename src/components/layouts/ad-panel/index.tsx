@@ -29,8 +29,7 @@ function AdSlot({
 
   return (
     <div
-      className={`overflow-hidden rounded-xl border ${className}`}
-      style={{ borderColor: "var(--border-default)" }}
+      className={`overflow-hidden rounded-xl border border-border-default ${className}`}
     >
       <ins
         className="adsbygoogle block"
@@ -49,16 +48,11 @@ function AdSlot({
 export default function AdPanel() {
   return (
     <aside
-      className="hidden xl:flex flex-col shrink-0 w-[240px] h-screen overflow-y-auto border-l py-6 px-3 gap-4"
-      style={{
-        background: "var(--bg-deep)",
-        borderColor: "var(--border-default)",
-      }}
+      className="hidden xl:flex flex-col shrink-0 w-[240px] h-screen overflow-y-auto border-l py-6 px-3 gap-4 bg-bg-deep border-border-default"
     >
       {/* Label */}
       <p
-        className="text-[10px] font-semibold tracking-[0.12em] uppercase px-1"
-        style={{ color: "var(--text-muted)" }}
+        className="text-[10px] font-semibold tracking-[0.12em] uppercase px-1 text-text-muted"
       >
         Quảng cáo
       </p>
@@ -83,15 +77,10 @@ export default function AdPanel() {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="rounded-xl border min-h-[250px] flex items-center justify-center"
-            style={{
-              borderColor: "var(--border-default)",
-              background: "var(--bg-surface)",
-            }}
+            className="rounded-xl border min-h-[250px] flex items-center justify-center border-border-default bg-bg-surface"
           >
             <p
-              className="text-[11px] text-center px-4"
-              style={{ color: "var(--text-muted)" }}
+              className="text-[11px] text-center px-4 text-text-muted"
             >
               Quảng cáo
             </p>

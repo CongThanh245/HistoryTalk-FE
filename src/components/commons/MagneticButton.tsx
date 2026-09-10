@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { cn } from "@/lib/utils/cn";
 import { useMagneticEffect } from "@/lib/hooks/use-magnetic";
 import { useSlideOverlay } from "@/lib/hooks/use-overlay-slide";
 
@@ -67,34 +68,29 @@ export function MagneticButton({
       ref={magneticEffect.ref}
       asChild
       variant="magnetic"
-      className={`
-        relative overflow-hidden
-        bg-transparent
-        font-medium
-        cursor-pointer
-        transition-all duration-300
-        ${
-          isHeader
-            ? "border border-[var(--header-border)] text-[var(--text-primary)]"
-            : "border-2 border-[var(--accent-gold)] text-[var(--accent-gold)]"
-        }
-        ${rounded === "full" ? "rounded-full" : "rounded-none"}
-        ${sizeClasses[size]}
-        ${className}
-      `}
+      className={cn(
+        "relative overflow-hidden bg-transparent font-medium cursor-pointer transition-all duration-300",
+        isHeader
+          ? "border border-header-border text-text-primary"
+          : "border-2 border-accent-gold text-accent-gold",
+        rounded === "full" ? "rounded-full" : "rounded-none",
+        sizeClasses[size],
+        className,
+      )}
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       <Link href={href}>
-        {/* Lớp Overlay gạt - Giữ nguyên class bg-[var(--accent-gold)] cho bản cũ */}
+        {/* Lớp Overlay gạt - GSAP-driven transform kept as inline style */}
         <span
           ref={overlay.overlayRef}
-          className={`absolute inset-0 pointer-events-none ${
+          className={cn(
+            "absolute inset-0 pointer-events-none",
             isHeader
-              ? "bg-gradient-to-r from-[var(--accent-gold)] to-[var(--truffle)]"
-              : "bg-[var(--accent-gold)]"
-          }`}
+              ? "bg-gradient-to-r from-accent-gold to-[var(--truffle)]"
+              : "bg-accent-gold",
+          )}
           style={{
             transform: "scaleX(0)",
             transformOrigin: "left",
@@ -104,10 +100,10 @@ export function MagneticButton({
         {/* Text */}
         <span
           ref={overlay.textRef}
-          className="relative z-10 tracking-wide"
-          style={{
-            color: isHeader ? "inherit" : "var(--accent-gold)",
-          }}
+          className={cn(
+            "relative z-10 tracking-wide",
+            isHeader ? "text-inherit" : "text-accent-gold",
+          )}
         >
           {children}
         </span>

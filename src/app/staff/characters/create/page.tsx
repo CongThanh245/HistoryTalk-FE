@@ -2,8 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { StaffCharacterDetailView, type CharacterDraft } from "@/components/staff/staff-character-detail-view";
-import { useCreateCharacter, useMapContextToCharacter } from "@/features/characters/hooks";
-import { useCreateCharacterDocument, useUploadDocumentPdf, useGetDocumentPdfUrl } from "@/features/documents/hooks";
+import {
+  useCreateCharacter,
+  useMapContextToCharacter,
+  useUploadCharacterMedia,
+} from "@/features/characters/hooks";
+import { useCreateCharacterDocument, useUploadAndExtractPdf } from "@/features/documents/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { isValidUrl } from "@/lib/utils/url";
 import { toast } from "sonner";
@@ -18,7 +22,8 @@ export default function CreateCharacterPage() {
 
   const createCharacter = useCreateCharacter();
   const createCharacterDocument = useCreateCharacterDocument();
-  const uploadDocumentPdf = useUploadDocumentPdf();
+  const extractPdf = useUploadAndExtractPdf();
+  const uploadCharacterMedia = useUploadCharacterMedia();
   const mapContextToCharacter = useMapContextToCharacter();
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
     page: 1,
@@ -50,31 +55,35 @@ export default function CreateCharacterPage() {
 
     try {
       const newChar = await createCharacter.mutateAsync(payload);
-      const documentContent = draft.documentContent.trim();
-      const pendingPdfFile = draft.pendingPdfFile;
 
-      // Create document if has content or PDF file
-      if (documentContent || pendingPdfFile) {
+      // Upload any media picked before the character existed
+      const pendingMedia: { file: File; mediaType: "IMAGE_2D" | "MODEL_3D" | "VIDEO" }[] = [
+        ...(draft.pendingImageFile ? [{ file: draft.pendingImageFile, mediaType: "IMAGE_2D" as const }] : []),
+        ...(draft.pendingModelFile ? [{ file: draft.pendingModelFile, mediaType: "MODEL_3D" as const }] : []),
+        ...(draft.pendingVideoFile ? [{ file: draft.pendingVideoFile, mediaType: "VIDEO" as const }] : []),
+      ];
+      for (const { file, mediaType } of pendingMedia) {
         try {
-          const newDoc = await createCharacterDocument.mutateAsync({
+          await uploadCharacterMedia.mutateAsync({ characterId: newChar.id, file, mediaType });
+        } catch {
+          toast.warning("Nhân vật đã tạo, nhưng tải lên media chưa thành công");
+        }
+      }
+
+      const documentContent = draft.documentContent.trim();
+
+      // documentContent already carries extracted PDF text when a file was
+      // picked (see handlePdfFilePick in StaffCharacterDetailView) — the
+      // fileUrl from that extraction rides along in pendingPdfFileUrl, so
+      // the document is created in one call, content + file together.
+      if (documentContent) {
+        try {
+          await createCharacterDocument.mutateAsync({
             characterId: newChar.id,
             title: draft.documentTitle.trim() || draft.name.trim(),
-            content: documentContent || "PDF Document",
-            type: "TEXT",
+            content: documentContent,
+            fileUrl: draft.pendingPdfFileUrl || undefined,
           });
-
-          // Upload PDF if file was selected
-          if (pendingPdfFile && newDoc.id) {
-            try {
-              await uploadDocumentPdf.mutateAsync({
-                docId: newDoc.id,
-                file: pendingPdfFile,
-              });
-              toast.success("Đã upload PDF thành công");
-            } catch {
-              toast.warning("Tài liệu đã tạo nhưng upload PDF thất bại");
-            }
-          }
         } catch {
           toast.warning("Nhân vật đã tạo, nhưng import tài liệu chưa thành công");
         }
@@ -91,9 +100,13 @@ export default function CreateCharacterPage() {
     <StaffCharacterDetailView
       mode="create"
       onSave={handleSave}
-      isPending={createCharacter.isPending || createCharacterDocument.isPending}
+      isPending={createCharacter.isPending || createCharacterDocument.isPending || uploadCharacterMedia.isPending}
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
+      onExtractPdfDocument={async (file, onProgress, signal) =>
+        extractPdf.mutateAsync({ file, entityType: "character", onProgress, signal })
+      }
+      isExtractPdfDocumentPending={extractPdf.isPending}
       onMapContext={(characterId, contextId, options) =>
         mapContextToCharacter.mutate(
           { characterId, contextId, contextName: options?.contextName },

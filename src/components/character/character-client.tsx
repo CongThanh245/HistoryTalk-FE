@@ -68,7 +68,7 @@ export function CharactersClient() {
   return (
     <>
       {authRequiredDialog}
-      <div className="space-y-4 md:space-y-5">
+      <div className="space-y-6 lg:space-y-8">
       {/* Filters */}
       <div className="flex min-w-0 flex-col gap-3">
         <div className="-mx-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
@@ -85,7 +85,7 @@ export function CharactersClient() {
 
       {/* Result count */}
       {!isLoading && data && (
-        <p className="text-xs" style={{ color: "var(--content-subtle)" }}>
+        <p className="text-xs text-content-subtle">
           {data.totalElements} nhân vật
           {search && ` · kết quả cho "${search}"`}
         </p>
@@ -94,20 +94,17 @@ export function CharactersClient() {
       {/* Error */}
       {isError && (
         <div className="py-10 text-center">
-          <p
-            className="text-sm font-medium"
-            style={{ color: "var(--content-heading)" }}
-          >
+          <p className="text-sm font-medium text-content-heading">
             Không thể tải danh sách nhân vật
           </p>
-          <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
+          <p className="text-xs mt-1 text-content-muted">
             Vui lòng thử lại sau
           </p>
         </div>
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
         {isLoading
           ? Array.from({ length: PAGE_LIMIT }).map((_, i) => (
               <CharacterPageCardSkeleton key={i} />
@@ -124,13 +121,10 @@ export function CharactersClient() {
       {/* Empty */}
       {!isLoading && !isError && data?.content.length === 0 && (
         <div className="py-20 text-center">
-          <p
-            className="text-sm font-medium"
-            style={{ color: "var(--content-heading)" }}
-          >
+          <p className="text-sm font-medium text-content-heading">
             Không tìm thấy nhân vật nào
           </p>
-          <p className="text-xs mt-1" style={{ color: "var(--content-muted)" }}>
+          <p className="text-xs mt-1 text-content-muted">
             Thử thay đổi bộ lọc hoặc từ khoá tìm kiếm
           </p>
         </div>

@@ -122,4 +122,27 @@ export const userService = {
       throw new Error(res.data.message ?? "Đổi mật khẩu thất bại");
     }
   },
+
+  /** POST /users/{userId}/avatar — Upload avatar (multipart), trả về signed view URL */
+  uploadAvatar: async (
+    userId: string,
+    file: File,
+  ): Promise<{ url: string; expiresIn: number }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await axiosClient.post<ApiEnvelope<{ url: string; expiresIn: number }>>(
+      `/users/${userId}/avatar`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    if (!res.data.success || !res.data.data) {
+      throw new Error(res.data.message ?? "Upload avatar thất bại");
+    }
+    return res.data.data;
+  },
+
+  /** DELETE /users/{userId}/avatar — Xóa avatar hiện tại */
+  deleteAvatar: async (userId: string): Promise<void> => {
+    await axiosClient.delete(`/users/${userId}/avatar`);
+  },
 };

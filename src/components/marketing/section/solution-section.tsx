@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { UserCircleIcon } from "@phosphor-icons/react";
+import { UserCircle } from "lucide-react";
 import { Container } from "../container";
 import { useRevealAnimation } from "@/lib/hooks/use-reveal-animation";
 
@@ -34,7 +34,7 @@ const chatMessages = [
     id: 2,
     sender: "user",
     name: "Người học",
-    icon: UserCircleIcon,
+    icon: UserCircle,
     text: "Tại sao lại chọn sông Bạch Đằng ạ?",
   },
   {
@@ -327,17 +327,15 @@ export function SolutionSection() {
 
             <div
               data-motion-card
-              className="relative flex h-75 w-full flex-col overflow-hidden rounded-xl shadow-2xl md:h-105"
+              className="relative flex h-75 w-full flex-col overflow-hidden rounded-xl shadow-2xl md:h-105 bg-[#0d1627]"
               style={{
-                background: "#0d1627",
                 border: "1px solid color-mix(in srgb, var(--accent-gold) 22%, var(--border-default))",
               }}
             >
               {/* Chat Header */}
               <div
-                className="flex h-10 md:h-12 shrink-0 items-center justify-between border-b px-3 md:px-4"
+                className="flex h-10 md:h-12 shrink-0 items-center justify-between border-b px-3 md:px-4 bg-[#111c2e]"
                 style={{
-                  background: "#111c2e",
                   borderColor: "color-mix(in srgb, var(--accent-gold) 15%, var(--border-default))",
                 }}
               >
@@ -384,9 +382,8 @@ export function SolutionSection() {
 
               {/* Chat Input */}
               <div
-                className="flex h-9 md:h-11 shrink-0 items-center gap-2 border-t px-2 md:px-3"
+                className="flex h-9 md:h-11 shrink-0 items-center gap-2 border-t px-2 md:px-3 bg-[#111c2e]"
                 style={{
-                  background: "#111c2e",
                   borderColor: "color-mix(in srgb, var(--accent-gold) 12%, var(--border-default))",
                 }}
               >

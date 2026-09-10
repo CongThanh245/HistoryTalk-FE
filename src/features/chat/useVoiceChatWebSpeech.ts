@@ -35,6 +35,7 @@ export type WebSpeechMessage = {
   role: "user" | "assistant";
   text: string;
   timestamp: Date;
+  quotes?: string[];
 };
 
 export type UseVoiceChatWebSpeechOptions = {
@@ -63,8 +64,15 @@ export function useVoiceChatWebSpeech({
   const sttRef = useRef<WebSpeechSTT | null>(null);
   const ttsRef = useRef<WebSpeechTTS | null>(null);
   const abortRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  // true khi lượt nói hiện tại của AI bị ngắt giữa chừng (barge-in) — khác với
+  // abortRef (hangup toàn bộ cuộc gọi): câu trả lời đầy đủ vẫn được giữ lại trong
+  // transcript, chỉ dừng phát audio để nhường lượt cho câu hỏi mới của user.
+  const bargeInRef = useRef(false);
   const isHoldingRef = useRef(false);
   const shouldSendOnStopRef = useRef(false);
+  // true khi người dùng bấm nút "x" để hủy ghi âm hiện tại — không gửi API dù có transcript.
+  const cancelRequestedRef = useRef(false);
   const restartListeningRef = useRef<() => void>(() => {});
   const sendTextToChatRef = useRef<(text: string) => Promise<void>>(async () => {});
   const finalTranscriptRef = useRef(""); // Lưu transcript khi stop
@@ -128,11 +136,12 @@ export function useVoiceChatWebSpeech({
   }, []);
 
   const playAzureTts = useCallback(
-    async (text: string): Promise<void> => {
+    async (text: string, signal?: AbortSignal): Promise<void> => {
       const res = await fetch("/api/voice/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, characterId }),
+        signal,
       });
 
       if (!res.ok) {
@@ -145,12 +154,17 @@ export function useVoiceChatWebSpeech({
         throw new Error("Azure TTS khong tra ve audio");
       }
 
+      // Cuộc gọi đã bị hủy hoặc bị ngắt lời (barge-in) trong lúc tải/giải mã audio — đừng phát nữa.
+      if (abortRef.current || bargeInRef.current) return;
+
       const audioContext = ensureAudioContext();
       if (audioContext.state === "suspended") {
         await audioContext.resume();
       }
 
       const decodedAudio = await audioContext.decodeAudioData(audioBuffer.slice(0));
+
+      if (abortRef.current || bargeInRef.current) return;
 
       await new Promise<void>((resolve, reject) => {
         const source = audioContext.createBufferSource();
@@ -165,7 +179,6 @@ export function useVoiceChatWebSpeech({
           }
           resolve();
         };
-        source.onerror = () => reject(new Error("Khong phat duoc audio Azure TTS"));
         source.start();
       });
     },
@@ -173,13 +186,17 @@ export function useVoiceChatWebSpeech({
   );
 
   const speakWithAzureFallback = useCallback(
-    async (text: string): Promise<void> => {
+    async (text: string, signal?: AbortSignal): Promise<void> => {
       try {
-        await playAzureTts(text);
+        await playAzureTts(text, signal);
         return;
       } catch (err) {
+        if (abortRef.current || bargeInRef.current) return;
         console.warn("[VoiceChatWebSpeech] Azure TTS failed, using Web Speech:", err);
       }
+
+      if (abortRef.current || bargeInRef.current) return;
+
       if (!ttsRef.current) {
         ttsRef.current = getWebSpeechTTS();
       }
@@ -203,6 +220,14 @@ export function useVoiceChatWebSpeech({
     [playAzureTts],
   );
 
+  /** Dừng ngay audio TTS đang phát (Azure buffer source + Web Speech synth + lip-sync giả lập). */
+  const stopSpeechPlayback = useCallback(() => {
+    ttsRef.current?.cancel();
+    azureSourceRef.current?.stop();
+    azureSourceRef.current = null;
+    simulatedAnalyserRef.current?.stop();
+  }, []);
+
   /**
    * Bắt đầu nghe (STT)
    * Flow: Listening → [Stop] → Send to BE → Receive response → TTS
@@ -215,9 +240,16 @@ export function useVoiceChatWebSpeech({
 
     if (
       isListening ||
-      (statusRef.current !== "idle" && statusRef.current !== "listening")
+      (statusRef.current !== "idle" && statusRef.current !== "listening" && statusRef.current !== "speaking")
     ) {
       return;
+    }
+
+    // Barge-in: user bấm mic trong lúc AI đang nói → ngắt audio ngay, câu trả lời
+    // đầy đủ vẫn đã nằm trong `messages` từ trước (được thêm vào trước khi phát TTS).
+    if (statusRef.current === "speaking") {
+      bargeInRef.current = true;
+      stopSpeechPlayback();
     }
 
     // Helper: Process text and send to chat
@@ -235,7 +267,9 @@ export function useVoiceChatWebSpeech({
     }
 
     try {
-      const isFreshStart = statusRef.current === "idle";
+      // Barge-in cũng tính là khởi đầu mới — không được nối vào transcript cũ
+      // của phát ngôn nào đó *trước khi* AI trả lời.
+      const isFreshStart = statusRef.current === "idle" || statusRef.current === "speaking";
       isHoldingRef.current = true;
       shouldSendOnStopRef.current = false;
       setIsListening(true);
@@ -274,6 +308,17 @@ export function useVoiceChatWebSpeech({
         return;
       }
 
+      // Người dùng bấm nút "x" để hủy — bỏ transcript, không gửi API.
+      if (cancelRequestedRef.current) {
+        cancelRequestedRef.current = false;
+        setIsListening(false);
+        setInterimText("");
+        finalTranscriptRef.current = "";
+        transcriptBaseRef.current = "";
+        setStatus("idle");
+        return;
+      }
+
       const finalText = transcript.trim() || finalTranscriptRef.current.trim();
 
       if (isHoldingRef.current && !shouldSendOnStopRef.current) {
@@ -291,12 +336,21 @@ export function useVoiceChatWebSpeech({
         return;
       }
 
-      // Có transcript từ STT → xử lý
+      // Có transcript từ STT → gửi xuống BE như bình thường (bấm mic để dừng = gửi).
       if (finalText) {
         setIsListening(false); // ← Dừng trạng thái "recording" trước khi gọi API
         await processAndSend(finalText);
       }
     } catch (err: unknown) {
+      if (cancelRequestedRef.current) {
+        cancelRequestedRef.current = false;
+        setIsListening(false);
+        setInterimText("");
+        finalTranscriptRef.current = "";
+        transcriptBaseRef.current = "";
+        setStatus("idle");
+        return;
+      }
       if (abortRef.current) return;
       const message = err instanceof Error ? err.message : "";
       
@@ -324,7 +378,7 @@ export function useVoiceChatWebSpeech({
         setIsListening(false);
       }
     }
-  }, [isListening, onError]);
+  }, [isListening, onError, stopSpeechPlayback]);
 
   useEffect(() => {
     restartListeningRef.current = () => {
@@ -337,10 +391,15 @@ export function useVoiceChatWebSpeech({
    */
   const sendTextToChat = useCallback(async (text: string) => {
     setStatus("processing");
-    
+    // Lượt mới bắt đầu — reset cờ ngắt lời của lượt trước đó.
+    bargeInRef.current = false;
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       const token = useAuthStore.getState().tokens?.accessToken;
-      
+
       // BE chỉ cần sessionId và content
       const endpoint = `${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}${process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1"}/chat/messages`;
 
@@ -355,7 +414,12 @@ export function useVoiceChatWebSpeech({
           content: text,
           messageType: "VOICE",
         }),
+        signal: controller.signal,
       });
+
+      // Cuộc gọi đã bị hủy (hangup) trong lúc chờ mạng — bỏ luôn phản hồi trễ này,
+      // không hiện tin nhắn/không phát TTS cho một cuộc gọi đã đóng.
+      if (abortRef.current) return;
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -387,10 +451,13 @@ export function useVoiceChatWebSpeech({
         throw new Error(userFriendlyError);
       }
 
+      if (abortRef.current) return;
+
       const resData = await res.json();
       // Response: { success, data: { assistantMessage: { content } } }
       const apiData = resData.data || resData;
       const aiResponse = apiData.assistantMessage?.content || apiData.message || apiData.content || apiData.text || "";
+      const quotes: string[] = apiData.assistantMessage?.quotes || [];
       const remainingTokens = apiData.remainingTokens ?? resData.remainingTokens;
       const promptTokens = apiData.promptTokens ?? resData.promptTokens;
       const completionTokens = apiData.completionTokens ?? resData.completionTokens;
@@ -404,21 +471,36 @@ export function useVoiceChatWebSpeech({
         throw new Error("Không nhận được phản hồi từ AI");
       }
 
+      if (abortRef.current) return;
+
       // Hiển thị AI message
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: aiResponse, timestamp: new Date() },
+        { role: "assistant", text: aiResponse, timestamp: new Date(), quotes },
       ]);
+
+      if (abortRef.current) return;
 
       // TTS with Azure first, then Web Speech fallback.
       setStatus("speaking");
-      await speakWithAzureFallback(aiResponse);
+      await speakWithAzureFallback(aiResponse, controller.signal);
+      // Nếu bị ngắt lời (barge-in), startListening đã tự chuyển sang "listening" —
+      // đừng ghi đè lại thành "idle".
+      if (abortRef.current || bargeInRef.current) return;
       setStatus("idle");
     } catch (err: unknown) {
+      // Hủy có chủ đích (hangup) — không phải lỗi thật, đừng hiện toast lỗi.
+      if (abortRef.current || (err instanceof DOMException && err.name === "AbortError")) {
+        return;
+      }
       const errorMsg = err instanceof Error ? err.message : "Lỗi kết nối";
       onError?.(errorMsg);
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
+    } finally {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
     }
   }, [sessionId, onError, onProfileRefresh, onTokenUpdate, speakWithAzureFallback]);
 
@@ -432,8 +514,20 @@ export function useVoiceChatWebSpeech({
   const stopListening = useCallback(async () => {
     isHoldingRef.current = false;
     shouldSendOnStopRef.current = true;
-    // Không abort ngay, để STT trả về transcript và startListening gửi đúng một lần.
     sttRef.current?.stop();
+  }, []);
+
+  /**
+   * Người dùng hủy ghi âm chủ động (bấm nút X) -> không gửi đi
+   */
+  const cancelRecording = useCallback(() => {
+    cancelRequestedRef.current = true;
+    sttRef.current?.abort();
+    setIsListening(false);
+    setInterimText("");
+    finalTranscriptRef.current = "";
+    transcriptBaseRef.current = "";
+    setStatus("idle");
   }, []);
 
   /**
@@ -441,15 +535,13 @@ export function useVoiceChatWebSpeech({
    */
   const cancel = useCallback(() => {
     abortRef.current = true;
+    abortControllerRef.current?.abort();
     sttRef.current?.abort();
-    ttsRef.current?.cancel();
-    azureSourceRef.current?.stop();
-    azureSourceRef.current = null;
-    simulatedAnalyserRef.current?.stop();
+    stopSpeechPlayback();
     setIsListening(false);
     setInterimText("");
     setStatus("idle");
-  }, []);
+  }, [stopSpeechPlayback]);
 
   return {
     status,
@@ -461,10 +553,11 @@ export function useVoiceChatWebSpeech({
     // Alias để match interface của các hook khác
     startRecording: startListening,
     stopRecording: stopListening,
+    cancelRecording,
     cancel,
     ttsAnalyserRef: activeTtsAnalyserRef,
     // Check support
-    isSupported: typeof window !== 'undefined' && 
+    isSupported: typeof window !== 'undefined' &&
       ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) &&
       'speechSynthesis' in window,
   };

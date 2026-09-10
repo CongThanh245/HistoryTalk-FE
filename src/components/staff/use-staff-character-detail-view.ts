@@ -93,7 +93,8 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     onUnmapContext,
     initialContexts,
     initialEditing,
-    documents = [],
+    isExtractPdfDocumentPending = false,
+    onUpdateDocument,
   } = props;
 
   /* ── State ── */
@@ -104,7 +105,15 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   const [errors, setErrors] = React.useState<ValidationErrors<CharacterValidationField>>({});
   const [quickErrors, setQuickErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
   const [activeTab, setActiveTab] = React.useState<FormTabKey>("basic");
-  const [documentDetailOpen, setDocumentDetailOpen] = React.useState(false);
+
+  /* ── Document view/edit/delete (edit mode) ── */
+  const [viewingDocument, setViewingDocument] = React.useState<RagDocument | null>(null);
+  const [editingDocument, setEditingDocument] = React.useState<RagDocument | null>(null);
+  const [editDraftTitle, setEditDraftTitle] = React.useState("");
+  const [editDraftContent, setEditDraftContent] = React.useState("");
+  const [isSavingDocumentEdit, setIsSavingDocumentEdit] = React.useState(false);
+  const [deleteDocumentTarget, setDeleteDocumentTarget] = React.useState<RagDocument | null>(null);
+
   const [isRecreatingSession, setIsRecreatingSession] = React.useState(false);
   const [isSwitchingContext, setIsSwitchingContext] = React.useState(false);
 
@@ -114,16 +123,24 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   );
 
   /* ── PDF Dialog State ── */
-  const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
-  const [uploadTargetDocId, setUploadTargetDocId] = React.useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = React.useState(false);
   const [viewerUrl, setViewerUrl] = React.useState<string | null>(null);
   const [viewerLoading, setViewerLoading] = React.useState(false);
 
   /* ── PDF File for Create Mode ── */
   const [pendingPdfFile, setPendingPdfFile] = React.useState<File | null>(null);
+  const [pendingPdfFileUrl, setPendingPdfFileUrl] = React.useState<string | null>(null);
+  const [pendingPdfPageCount, setPendingPdfPageCount] = React.useState<number | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
+  const [pdfOcrProgress, setPdfOcrProgress] = React.useState<{ page: number; total: number } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  /* ── Media files (image/3D model/video) for Create Mode ── */
+  const [pendingImageFile, setPendingImageFile] = React.useState<File | null>(null);
+  const [pendingModelFile, setPendingModelFile] = React.useState<File | null>(null);
+  const [pendingVideoFile, setPendingVideoFile] = React.useState<File | null>(null);
+  const [pendingImagePreviewUrl, setPendingImagePreviewUrl] = React.useState<string | null>(null);
+  const [pendingVideoPreviewUrl, setPendingVideoPreviewUrl] = React.useState<string | null>(null);
 
   /* Detect if form is dirty */
   const isDirty = React.useMemo(() => {
@@ -134,7 +151,7 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
       "name", "title", "background", "image", "modelUrl", "personality",
       "bornYear", "bornMonth", "bornDay", "isBornBc",
       "deathYear", "deathMonth", "deathDay", "isDeathBc",
-      "isActive", "isPublished", "documentId", "documentTitle", "documentContent"
+      "isActive", "isPublished"
     ];
 
     return keys.some(key => {
@@ -176,25 +193,29 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     [],
   );
 
-  const selectDocument = (document: RagDocument) => {
-    setDraft((s) => ({
-      ...s,
-      documentId: getDocumentId(document),
-      documentTitle: document.title ?? "",
-      documentContent: document.content ?? "",
-    }));
+  const openDocumentEdit = (document: RagDocument) => {
+    setEditingDocument(document);
+    setEditDraftTitle(document.title ?? "");
+    setEditDraftContent(document.content ?? "");
   };
 
-  const [skipAutoSelect, setSkipAutoSelect] = React.useState(false);
+  const closeDocumentEdit = () => {
+    setEditingDocument(null);
+  };
 
-  const clearDocumentDraft = () => {
-    setSkipAutoSelect(true);
-    setDraft((s) => ({
-      ...s,
-      documentId: undefined,
-      documentTitle: "",
-      documentContent: "",
-    }));
+  const handleSaveDocumentEdit = async () => {
+    if (!editingDocument || !onUpdateDocument) return;
+    const docId = getDocumentId(editingDocument);
+    if (!docId) return;
+    setIsSavingDocumentEdit(true);
+    try {
+      await onUpdateDocument(docId, { title: editDraftTitle.trim(), content: editDraftContent.trim() });
+      closeDocumentEdit();
+    } catch {
+      // onUpdateDocument's hook already shows an error toast
+    } finally {
+      setIsSavingDocumentEdit(false);
+    }
   };
 
   const cancelEditing = () => {
@@ -225,51 +246,35 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
 
   const setQuickContextField =
     <K extends keyof typeof quickCtx>(field: K) =>
-    (val: (typeof quickCtx)[K]) =>
-      setQuickCtx((s) => {
-        const next = { ...s, [field]: val };
-        const nextErrors = validateContextDraft(next);
-        setQuickErrors((prev) => {
-          const updated = { ...prev };
-          const errorField = field as ContextValidationField;
-          if (nextErrors[errorField]) {
-            updated[errorField] = nextErrors[errorField];
-          } else {
-            delete updated[errorField];
-          }
-          return updated;
+      (val: (typeof quickCtx)[K]) =>
+        setQuickCtx((s) => {
+          const next = { ...s, [field]: val };
+          const nextErrors = validateContextDraft(next);
+          setQuickErrors((prev) => {
+            const updated = { ...prev };
+            const errorField = field as ContextValidationField;
+            if (nextErrors[errorField]) {
+              updated[errorField] = nextErrors[errorField];
+            } else {
+              delete updated[errorField];
+            }
+            return updated;
+          });
+          return next;
         });
-        return next;
-      });
 
   const resetQuickCtx = () =>
     setQuickCtx({ name: "", description: "", era: "", year: "", location: "", imageUrl: "", videoUrl: "", isPublished: false });
 
-  // Reset state/sync when props change (especially for edit mode)
+  // Reset state/sync when props change (especially for edit mode). Skipped
+  // while actively editing so an unrelated parent re-render (background
+  // refetch, sibling query update, ...) can't stomp unsaved local edits —
+  // e.g. a just-toggled publish switch reverting before the user hits Save.
   React.useEffect(() => {
-    if (initialDraft) {
+    if (initialDraft && !isEditing) {
       setDraft(initialDraft);
     }
-  }, [initialDraft]);
-
-  // Reset skipAutoSelect when initialDraft changes (different character loaded)
-  React.useEffect(() => {
-    if (skipAutoSelect) {
-      setSkipAutoSelect(false);
-    }
-  }, [initialDraft?.id]);
-
-  React.useEffect(() => {
-    if (mode !== "edit" || draft.documentId || draft.documentContent || skipAutoSelect) return;
-    const firstDocument = documents[0];
-    if (!firstDocument) return;
-    setDraft((s) => ({
-      ...s,
-      documentId: getDocumentId(firstDocument),
-      documentTitle: firstDocument.title ?? "",
-      documentContent: firstDocument.content ?? "",
-    }));
-  }, [documents, draft.documentContent, draft.documentId, getDocumentId, mode, skipAutoSelect]);
+  }, [initialDraft, isEditing]);
 
   React.useEffect(() => {
     setMappedContexts(initialContexts ?? []);
@@ -461,6 +466,13 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     contextId: activeChatContextId || undefined,
   };
 
+  const hasUnpublishedLinkedContext = React.useMemo(() => {
+    return mappedContexts.some(ctx => {
+      const event = eventOptions.find(ev => ev.id === ctx.contextId);
+      return event && !event.isPublished;
+    });
+  }, [mappedContexts, eventOptions]);
+
   const draftValidationErrors = React.useMemo(() => validateCharacterDraft(draft), [draft]);
   const publishValidationErrors = React.useMemo(
     () => validateCharacterDraft(draft, { requirePublishReady: true }),
@@ -472,13 +484,18 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   const hasDraftErrors = hasValidationErrors(draftValidationErrors);
   const hasSaveErrors = hasValidationErrors(saveValidationErrors);
   const hasPublishErrors = hasValidationErrors(publishValidationErrors);
-  const canSave = !hasSaveErrors && !isPending;
+  // Blocked while a PDF pick is still being extracted so Save can't fire
+  // before pendingPdfFileUrl/documentContent are actually populated — the
+  // pending file would otherwise silently get dropped from the create call.
+  const canSave = !hasSaveErrors && !isPending && !isExtractPdfDocumentPending;
   const canStartChat = isCreated && mappedContexts.length > 0 && !hasPublishErrors;
-  const canPublishCharacter = !isEditing || (!hasPublishErrors && mappedContexts.length > 0);
+  const canPublishCharacter = !isEditing || (!hasPublishErrors && mappedContexts.length > 0 && !hasUnpublishedLinkedContext);
   const publishBlockedMessage =
     mappedContexts.length === 0
       ? "⚠ Cần liên kết bối cảnh lịch sử trước khi xuất bản."
-      : "⚠ Cần hoàn tất các trường bắt buộc trước khi xuất bản.";
+      : hasUnpublishedLinkedContext
+        ? "⚠ Cần xuất bản tất cả bối cảnh lịch sử liên kết trước khi xuất bản nhân vật."
+        : "⚠ Cần hoàn tất các trường bắt buộc trước khi xuất bản.";
 
   const showValidationErrors = (nextErrors = saveValidationErrors) => {
     setErrors(nextErrors);
@@ -501,7 +518,18 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
       ? CHAT_RELEVANT_FIELDS.some((key) => (draft[key] ?? "") !== (initialDraft[key] ?? ""))
       : true;
     setErrors({});
-    onSave(draft);
+    // pendingPdfFile/pendingImageFile/pendingModelFile/pendingVideoFile live
+    // in local hook state (not in `draft`) so their pickers can reset
+    // independently of form fields — they have to be merged back in here or
+    // the selected files never reach onSave.
+    onSave({
+      ...draft,
+      pendingPdfFile,
+      pendingPdfFileUrl,
+      pendingImageFile,
+      pendingModelFile,
+      pendingVideoFile,
+    });
   };
 
   /* Handle context mapping */
@@ -512,6 +540,11 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     }
     if (!selectedContextId || !characterId) return;
     const selectedEvent = eventOptions.find(ev => ev.id === selectedContextId);
+
+    if (draft.isPublished && selectedEvent && !selectedEvent.isPublished) {
+      toast.error(`Không thể liên kết bối cảnh chưa xuất bản "${selectedEvent.title}" với nhân vật đã xuất bản.`);
+      return;
+    }
 
     onMapContext(characterId, selectedContextId, {
       contextName: selectedEvent?.title,
@@ -561,6 +594,7 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     setActiveTab,
     hasDraftErrors,
     hasPublishErrors,
+    hasUnpublishedLinkedContext,
     canSave,
     canPublishCharacter,
     publishBlockedMessage,
@@ -569,17 +603,22 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     handleSaveClick,
 
     // documents / RAG
-    documentDetailOpen,
-    setDocumentDetailOpen,
     getDocumentId,
-    selectDocument,
-    clearDocumentDraft,
+    viewingDocument,
+    setViewingDocument,
+    editingDocument,
+    editDraftTitle,
+    setEditDraftTitle,
+    editDraftContent,
+    setEditDraftContent,
+    openDocumentEdit,
+    closeDocumentEdit,
+    handleSaveDocumentEdit,
+    isSavingDocumentEdit,
+    deleteDocumentTarget,
+    setDeleteDocumentTarget,
 
     // PDF dialogs
-    uploadDialogOpen,
-    setUploadDialogOpen,
-    uploadTargetDocId,
-    setUploadTargetDocId,
     viewerOpen,
     setViewerOpen,
     viewerUrl,
@@ -588,9 +627,27 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     setViewerLoading,
     pendingPdfFile,
     setPendingPdfFile,
+    pendingPdfFileUrl,
+    setPendingPdfFileUrl,
+    pendingPdfPageCount,
+    setPendingPdfPageCount,
     pdfPreviewUrl,
     setPdfPreviewUrl,
+    pdfOcrProgress,
+    setPdfOcrProgress,
     fileInputRef,
+
+    // media (image/3D model/video) pending files — create mode only
+    pendingImageFile,
+    setPendingImageFile,
+    pendingModelFile,
+    setPendingModelFile,
+    pendingVideoFile,
+    setPendingVideoFile,
+    pendingImagePreviewUrl,
+    setPendingImagePreviewUrl,
+    pendingVideoPreviewUrl,
+    setPendingVideoPreviewUrl,
 
     // identity / chat
     isCreated,

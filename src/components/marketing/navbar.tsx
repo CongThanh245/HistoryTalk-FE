@@ -140,7 +140,7 @@ export function MarketingNavbar() {
 
       `}</style>
 
-      <div className="fixed top-0 left-0 right-0 z-50 flex justify-center p-3 md:p-4 pointer-events-none" style={{ contain: "layout" }}>
+      <div className="fixed top-0 left-0 right-0 z-50 flex justify-center p-3 md:p-4 pointer-events-none [contain:layout]">
         <nav
           className={`
             pointer-events-auto
@@ -149,8 +149,8 @@ export function MarketingNavbar() {
             transition-all duration-300
             w-full rounded-2xl
             md:max-w-fit md:rounded-full
+            [contain:layout_style_paint]
           `}
-          style={{ contain: "layout style paint" }}
         >
           {/* ── Top bar ── */}
           <div className="flex items-center px-4 py-3 md:px-6 md:py-2">

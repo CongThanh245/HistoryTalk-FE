@@ -97,8 +97,11 @@ export function useLogout() {
     onSettled: () => {
       clearAuth();
 
-      // Xóa profile cache để đảm bảo token được làm mới khi login tài khoản mới
-      queryClient.invalidateQueries({ queryKey: queryKeys.profile.me });
+      // Xóa (không refetch) profile cache để đảm bảo dữ liệu được làm mới khi login tài khoản mới.
+      // Dùng removeQueries thay vì invalidateQueries vì lúc này token đã bị clearAuth() xoá —
+      // nếu query đang active, invalidate sẽ trigger refetch không token → 401 → hiện nhầm
+      // SessionExpiredDialog ngay khi người dùng chỉ đang logout bình thường.
+      queryClient.removeQueries({ queryKey: queryKeys.profile.me });
 
       clearAuthCookies();
 

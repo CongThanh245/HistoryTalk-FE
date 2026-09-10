@@ -9,27 +9,12 @@ import { QuizCard } from "./quiz-card";
 
 function QuizCardSkeleton() {
   return (
-    <div
-      className="rounded-xl sm:rounded-2xl overflow-hidden animate-pulse"
-      style={{
-        background: "var(--card-light-bg)",
-        border: "1px solid var(--card-light-border)",
-      }}
-    >
-      <div className="h-20 sm:h-36" style={{ background: "var(--bg-surface)" }} />
+    <div className="rounded-xl sm:rounded-2xl overflow-hidden animate-pulse bg-card-light-bg border border-card-light-border">
+      <div className="h-20 sm:h-36 bg-bg-surface" />
       <div className="p-3 sm:p-4 space-y-2">
-        <div
-          className="h-4 rounded"
-          style={{ background: "var(--bg-surface)", width: "80%" }}
-        />
-        <div
-          className="h-3 rounded"
-          style={{ background: "var(--bg-surface)", width: "60%" }}
-        />
-        <div
-          className="h-3 rounded"
-          style={{ background: "var(--bg-surface)", width: "40%" }}
-        />
+        <div className="h-4 rounded bg-bg-surface w-4/5" />
+        <div className="h-3 rounded bg-bg-surface w-3/5" />
+        <div className="h-3 rounded bg-bg-surface w-2/5" />
       </div>
     </div>
   );
@@ -54,18 +39,12 @@ export function QuizGrid({ quizzes, isLoading, onStart }: QuizGridProps) {
 
   if (quizzes.length === 0) {
     return (
-      <div
-        className="flex flex-col items-center justify-center py-20 rounded-2xl"
-        style={{
-          background: "var(--card-light-bg)",
-          border: "1px solid var(--card-light-border)",
-        }}
-      >
+      <div className="flex flex-col items-center justify-center py-20 rounded-2xl bg-card-light-bg border border-card-light-border">
         <div className="text-4xl mb-3">📚</div>
-        <p className="font-medium" style={{ color: "var(--content-heading)" }}>
+        <p className="font-medium text-content-heading">
           Không tìm thấy bộ câu hỏi
         </p>
-        <p className="text-sm mt-1" style={{ color: "var(--content-muted)" }}>
+        <p className="text-sm mt-1 text-content-muted">
           Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
         </p>
       </div>
@@ -80,4 +59,3 @@ export function QuizGrid({ quizzes, isLoading, onStart }: QuizGridProps) {
     </div>
   );
 }
-

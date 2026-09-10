@@ -32,7 +32,15 @@ const VALIDATED_FIELDS: ContextValidationField[] = [
  * has to worry about rendering.
  */
 export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
-  const { mode, initialDraft, onSave, isPending, initialEditing, documents = [] } = props;
+  const {
+    mode,
+    initialDraft,
+    onSave,
+    isPending,
+    initialEditing,
+    isExtractPdfDocumentPending = false,
+    onUpdateDocument,
+  } = props;
 
   const [draft, setDraft] = React.useState<ContextDraft>(initialDraft || EMPTY_CONTEXT_DRAFT);
   const [isEditing, setIsEditing] = React.useState(mode === "create" || !!initialEditing);
@@ -41,29 +49,44 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
   const [errors, setErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
   const [activeTab, setActiveTab] = React.useState<FormTabKey>("basic");
 
+  /* ── Document view/edit/delete (edit mode) ── */
+  const [viewingDocument, setViewingDocument] = React.useState<RagDocument | null>(null);
+  const [editingDocument, setEditingDocument] = React.useState<RagDocument | null>(null);
+  const [editDraftTitle, setEditDraftTitle] = React.useState("");
+  const [editDraftContent, setEditDraftContent] = React.useState("");
+  const [isSavingDocumentEdit, setIsSavingDocumentEdit] = React.useState(false);
+  const [deleteDocumentTarget, setDeleteDocumentTarget] = React.useState<RagDocument | null>(null);
+
   const tabHasError = React.useCallback(
     (tab: FormTabKey) => TAB_ERROR_FIELDS[tab].some((field) => !!errors[field]),
     [errors],
   );
 
   /* ── PDF dialog state ── */
-  const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
-  const [uploadTargetDocId, setUploadTargetDocId] = React.useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = React.useState(false);
   const [viewerUrl, setViewerUrl] = React.useState<string | null>(null);
   const [viewerLoading, setViewerLoading] = React.useState(false);
 
   /* ── PDF file for create mode ── */
   const [pendingPdfFile, setPendingPdfFile] = React.useState<File | null>(null);
+  const [pendingPdfFileUrl, setPendingPdfFileUrl] = React.useState<string | null>(null);
+  const [pendingPdfPageCount, setPendingPdfPageCount] = React.useState<number | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = React.useState<string | null>(null);
+  const [pdfOcrProgress, setPdfOcrProgress] = React.useState<{ page: number; total: number } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  /* ── Media files (image/video) for create mode ── */
+  const [pendingImageFile, setPendingImageFile] = React.useState<File | null>(null);
+  const [pendingVideoFile, setPendingVideoFile] = React.useState<File | null>(null);
+  const [pendingImagePreviewUrl, setPendingImagePreviewUrl] = React.useState<string | null>(null);
+  const [pendingVideoPreviewUrl, setPendingVideoPreviewUrl] = React.useState<string | null>(null);
 
   const isDirty = React.useMemo(() => {
     if (!initialDraft) return draft.name !== "" || draft.description !== "";
 
     const keys: (keyof ContextDraft)[] = [
       "name", "description", "era", "year", "location", "imageUrl", "videoUrl",
-      "isPublished", "documentId", "documentTitle", "documentContent",
+      "isPublished",
     ];
 
     return keys.some((key) => (draft[key] ?? "") !== (initialDraft[key] ?? ""));
@@ -95,25 +118,29 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     [],
   );
 
-  const selectDocument = (document: RagDocument) => {
-    setDraft((s) => ({
-      ...s,
-      documentId: getDocumentId(document),
-      documentTitle: document.title ?? "",
-      documentContent: document.content ?? "",
-    }));
+  const openDocumentEdit = (document: RagDocument) => {
+    setEditingDocument(document);
+    setEditDraftTitle(document.title ?? "");
+    setEditDraftContent(document.content ?? "");
   };
 
-  const [skipAutoSelect, setSkipAutoSelect] = React.useState(false);
+  const closeDocumentEdit = () => {
+    setEditingDocument(null);
+  };
 
-  const clearDocumentDraft = () => {
-    setSkipAutoSelect(true);
-    setDraft((s) => ({
-      ...s,
-      documentId: undefined,
-      documentTitle: "",
-      documentContent: "",
-    }));
+  const handleSaveDocumentEdit = async () => {
+    if (!editingDocument || !onUpdateDocument) return;
+    const docId = getDocumentId(editingDocument);
+    if (!docId) return;
+    setIsSavingDocumentEdit(true);
+    try {
+      await onUpdateDocument(docId, { title: editDraftTitle.trim(), content: editDraftContent.trim() });
+      closeDocumentEdit();
+    } catch {
+      // onUpdateDocument's hook already shows an error toast
+    } finally {
+      setIsSavingDocumentEdit(false);
+    }
   };
 
   const cancelEditing = () => {
@@ -121,25 +148,13 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     setIsEditing(false);
   };
 
+  // Skipped while actively editing so an unrelated parent re-render
+  // (background refetch, sibling query update, ...) can't stomp unsaved
+  // local edits — e.g. a just-toggled publish switch reverting before the
+  // user hits Save.
   React.useEffect(() => {
-    if (initialDraft) setDraft(initialDraft);
-  }, [initialDraft]);
-
-  React.useEffect(() => {
-    if (skipAutoSelect) setSkipAutoSelect(false);
-  }, [initialDraft?.id]);
-
-  React.useEffect(() => {
-    if (mode !== "edit" || draft.documentId || draft.documentContent || skipAutoSelect) return;
-    const firstDocument = documents[0];
-    if (!firstDocument) return;
-    setDraft((s) => ({
-      ...s,
-      documentId: getDocumentId(firstDocument),
-      documentTitle: firstDocument.title ?? "",
-      documentContent: firstDocument.content ?? "",
-    }));
-  }, [documents, draft.documentContent, draft.documentId, getDocumentId, mode, skipAutoSelect]);
+    if (initialDraft && !isEditing) setDraft(initialDraft);
+  }, [initialDraft, isEditing]);
 
   React.useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -156,7 +171,10 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
 
   const draftValidationErrors = React.useMemo(() => validateContextDraft(draft), [draft]);
   const hasDraftErrors = hasValidationErrors(draftValidationErrors);
-  const canSave = !hasDraftErrors && !isPending;
+  // Blocked while a PDF pick is still being extracted so Save can't fire
+  // before pendingPdfFileUrl/documentContent are actually populated — the
+  // pending file would otherwise silently get dropped from the create call.
+  const canSave = !hasDraftErrors && !isPending && !isExtractPdfDocumentPending;
   const canPublish = !isEditing || !hasDraftErrors;
   const publishBlockedMessage = "⚠ Cần hoàn tất các trường bắt buộc trước khi xuất bản.";
 
@@ -184,7 +202,11 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
       return;
     }
     setErrors({});
-    onSave(draft);
+    // pendingPdfFile/pendingImageFile/pendingVideoFile live in local hook
+    // state (not in `draft`) so their pickers can reset independently of
+    // form fields — they have to be merged back in here or the selected
+    // files never reach onSave.
+    onSave({ ...draft, pendingPdfFile, pendingPdfFileUrl, pendingImageFile, pendingVideoFile });
   };
 
   return {
@@ -212,13 +234,20 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     handleSaveClick,
 
     getDocumentId,
-    selectDocument,
-    clearDocumentDraft,
+    viewingDocument,
+    setViewingDocument,
+    editingDocument,
+    editDraftTitle,
+    setEditDraftTitle,
+    editDraftContent,
+    setEditDraftContent,
+    openDocumentEdit,
+    closeDocumentEdit,
+    handleSaveDocumentEdit,
+    isSavingDocumentEdit,
+    deleteDocumentTarget,
+    setDeleteDocumentTarget,
 
-    uploadDialogOpen,
-    setUploadDialogOpen,
-    uploadTargetDocId,
-    setUploadTargetDocId,
     viewerOpen,
     setViewerOpen,
     viewerUrl,
@@ -227,9 +256,24 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     setViewerLoading,
     pendingPdfFile,
     setPendingPdfFile,
+    pendingPdfFileUrl,
+    setPendingPdfFileUrl,
+    pendingPdfPageCount,
+    setPendingPdfPageCount,
     pdfPreviewUrl,
     setPdfPreviewUrl,
+    pdfOcrProgress,
+    setPdfOcrProgress,
     fileInputRef,
+
+    pendingImageFile,
+    setPendingImageFile,
+    pendingVideoFile,
+    setPendingVideoFile,
+    pendingImagePreviewUrl,
+    setPendingImagePreviewUrl,
+    pendingVideoPreviewUrl,
+    setPendingVideoPreviewUrl,
 
     isCreated,
   };

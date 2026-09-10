@@ -9,6 +9,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"; // Đảm bảo bạn đã cài shadcn pagination
+import { cn } from "@/lib/utils/cn";
 
 interface PaginationProps {
   page: number;
@@ -43,21 +44,11 @@ export function CustomPagination({
     return pages;
   };
 
-  // Style chung cho các nút (giống btnBase cũ của bạn)
-  const commonStyles = {
-    background: "var(--card-light-bg)",
-    border: "1px solid var(--card-light-border)",
-    color: "var(--content-text)",
-  };
+  // Style chung cho các nút
+  const commonClasses = "bg-card-bg border border-card-border text-content-text";
 
   // Style riêng cho nút đang active
-  const activeStyles = {
-    background:
-      "var(--burning-flame)", 
-    color: "var(--bg-deep)",
-    boxShadow: "0 2px 8px var(--accent-gold-glow)",
-    border: "none",
-  };
+  const activeClasses = "bg-[var(--burning-flame)] text-bg-deep shadow-[0_2px_8px_var(--accent-gold-glow)] border-none";
 
   return (
     <Pagination className="pt-4">
@@ -71,10 +62,11 @@ export function CustomPagination({
               if (page > 1) onChange(page - 1);
             }}
             aria-disabled={page === 1}
-            className={`w-auto h-8 p-0 justify-center transition-all hover:opacity-80 ${
-              page === 1 ? "opacity-30 cursor-not-allowed" : "cursor-pointer"
-            }`}
-            style={commonStyles}
+            className={cn(
+              "w-auto h-8 p-0 justify-center transition-all hover:opacity-80",
+              page === 1 ? "opacity-30 cursor-not-allowed" : "cursor-pointer",
+              commonClasses,
+            )}
           />
         </PaginationItem>
 
@@ -83,8 +75,7 @@ export function CustomPagination({
           <PaginationItem key={i}>
             {p === "..." ? (
               <PaginationEllipsis
-                className="w-8 h-8"
-                style={{ color: "var(--content-muted)" }}
+                className="w-8 h-8 text-content-muted"
               />
             ) : (
               <PaginationLink
@@ -94,8 +85,10 @@ export function CustomPagination({
                   e.preventDefault();
                   onChange(p as number);
                 }}
-                className="w-8 h-8 p-0 flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer"
-                style={page === p ? activeStyles : commonStyles}
+                className={cn(
+                  "w-8 h-8 p-0 flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer",
+                  page === p ? activeClasses : commonClasses,
+                )}
               >
                 {p}
               </PaginationLink>
@@ -112,12 +105,13 @@ export function CustomPagination({
               if (page < totalPages) onChange(page + 1);
             }}
             aria-disabled={page === totalPages}
-            className={`w-auto h-8 p-0 justify-center transition-all hover:opacity-80 ${
+            className={cn(
+              "w-auto h-8 p-0 justify-center transition-all hover:opacity-80",
               page === totalPages
                 ? "opacity-30 cursor-not-allowed"
-                : "cursor-pointer"
-            }`}
-            style={commonStyles}
+                : "cursor-pointer",
+              commonClasses,
+            )}
           />
         </PaginationItem>
       </PaginationContent>

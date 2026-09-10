@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FilePdfIcon, XIcon, DownloadIcon, ArrowSquareOutIcon } from "@phosphor-icons/react";
+import { File, Download, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { PdfFrame } from "@/components/staff/pdf-frame";
 
 interface PdfViewerDialogProps {
   open: boolean;
@@ -32,7 +33,16 @@ export function PdfViewerDialog({
 
   // Fetch PDF and create blob URL when pdfUrl changes
   React.useEffect(() => {
-    if (!pdfUrl || !open) {
+    // Don't tear down the iframe/blobUrl just because the dialog is
+    // closing — Radix's Presence keeps DialogContent mounted for the
+    // ~200ms close animation, and clearing blobUrl here would remove the
+    // <iframe> (still showing a live PDF via Chrome's native viewer) out
+    // from under that still-animating, still-mounted parent. That race is
+    // what throws "Failed to execute 'removeChild': the node to be removed
+    // is not a child of this node". Only reset when actually opening.
+    if (!open) return;
+
+    if (!pdfUrl) {
       setBlobUrl(null);
       setError(null);
       return;
@@ -40,8 +50,13 @@ export function PdfViewerDialog({
 
     let isMounted = true;
     const controller = new AbortController();
+    // Track the blob URL via a local closure var (not state) so cleanup can
+    // reliably revoke exactly the one this run created, instead of a stale
+    // `blobUrl` state value captured before `setBlobUrl` resolved.
+    let createdUrl: string | null = null;
 
     async function fetchPdf() {
+      setBlobUrl(null);
       setInternalLoading(true);
       setError(null);
       if (!pdfUrl) return;
@@ -60,6 +75,7 @@ export function PdfViewerDialog({
 
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
+        createdUrl = url;
 
         if (isMounted) {
           setBlobUrl(url);
@@ -83,8 +99,10 @@ export function PdfViewerDialog({
     return () => {
       isMounted = false;
       controller.abort();
-      if (blobUrl) {
-        URL.revokeObjectURL(blobUrl);
+      if (createdUrl) {
+        // Defer past this tick — see comment above the iframe render.
+        const urlToRevoke = createdUrl;
+        window.setTimeout(() => URL.revokeObjectURL(urlToRevoke), 0);
       }
     };
   }, [pdfUrl, open]);
@@ -111,20 +129,19 @@ export function PdfViewerDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!w-[95vw] !max-w-4xl max-h-[90vh] overflow-hidden p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b" style={{ borderColor: "var(--card-light-border)" }}>
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-card-light-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: "rgba(234, 179, 8, 0.1)" }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center bg-[rgba(234,179,8,0.1)]"
               >
-                <FilePdfIcon className="h-4 w-4" style={{ color: "var(--accent-gold)" }} />
+                <File className="h-4 w-4 text-accent-gold" />
               </div>
               <div>
-                <DialogTitle className="text-base font-semibold" style={{ color: "var(--content-heading)" }}>
+                <DialogTitle className="text-base font-semibold text-content-heading">
                   {title}
                 </DialogTitle>
-                <DialogDescription className="text-xs mt-0.5" style={{ color: "var(--content-muted)" }}>
+                <DialogDescription className="text-xs mt-0.5 text-content-muted">
                   Xem trước tài liệu PDF đã upload
                 </DialogDescription>
               </div>
@@ -137,10 +154,9 @@ export function PdfViewerDialog({
                     variant="outline"
                     size="sm"
                     onClick={handleOpenInNewTab}
-                    className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5"
-                    style={{ color: "var(--content-heading)" }}
+                    className="bg-transparent border-card-light-border text-content-heading hover:bg-black/5"
                   >
-                    <ArrowSquareOutIcon className="h-4 w-4 mr-1.5" />
+                    <ExternalLink className="h-4 w-4 mr-1.5" />
                     Mở tab mới
                   </Button>
                   <Button
@@ -148,10 +164,9 @@ export function PdfViewerDialog({
                     variant="outline"
                     size="sm"
                     onClick={handleDownload}
-                    className="bg-transparent border-[var(--card-light-border)] hover:bg-black/5"
-                    style={{ color: "var(--content-heading)" }}
+                    className="bg-transparent border-card-light-border text-content-heading hover:bg-black/5"
                   >
-                    <DownloadIcon className="h-4 w-4 mr-1.5" />
+                    <Download className="h-4 w-4 mr-1.5" />
                     Tải xuống
                   </Button>
                 </>
@@ -160,12 +175,12 @@ export function PdfViewerDialog({
           </div>
         </DialogHeader>
 
-        <div className="overflow-hidden" style={{ height: "calc(90vh - 140px)" }}>
+        <div className="overflow-hidden h-[calc(90vh-140px)]">
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center space-y-3">
                 <div className="w-10 h-10 border-2 border-[var(--accent-gold)] border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+                <p className="text-sm text-content-muted">
                   Đang tải PDF...
                 </p>
               </div>
@@ -174,36 +189,29 @@ export function PdfViewerDialog({
             <div className="h-full flex items-center justify-center">
               <div className="text-center space-y-3">
                 <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto"
-                  style={{ background: "rgba(239, 68, 68, 0.1)" }}
+                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto bg-[rgba(239,68,68,0.1)]"
                 >
-                  <FilePdfIcon className="h-8 w-8" style={{ color: "rgb(239, 68, 68)" }} />
+                  <File className="h-8 w-8 text-[rgb(239,68,68)]" />
                 </div>
-                <p className="text-sm font-medium" style={{ color: "rgb(239, 68, 68)" }}>
+                <p className="text-sm font-medium text-[rgb(239,68,68)]">
                   Không thể tải PDF
                 </p>
-                <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                <p className="text-xs text-content-muted">
                   {error}
                 </p>
               </div>
             </div>
           ) : blobUrl ? (
-            <iframe
-              src={blobUrl}
-              className="w-full h-full"
-              title="PDF Viewer"
-              style={{ border: "none" }}
-            />
+            <PdfFrame key={blobUrl} src={blobUrl} title="PDF Viewer" className="w-full h-full" />
           ) : (
             <div className="h-full flex items-center justify-center">
               <div className="text-center space-y-3">
                 <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto"
-                  style={{ background: "rgba(234, 179, 8, 0.1)" }}
+                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto bg-[rgba(234,179,8,0.1)]"
                 >
-                  <FilePdfIcon className="h-8 w-8" style={{ color: "var(--content-muted)" }} />
+                  <File className="h-8 w-8 text-content-muted" />
                 </div>
-                <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+                <p className="text-sm text-content-muted">
                   Không thể tải PDF. Vui lòng thử lại sau.
                 </p>
               </div>

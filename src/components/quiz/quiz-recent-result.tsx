@@ -1,5 +1,6 @@
 import React from "react";
 import type { QuizResult } from "@/services/quiz.service";
+import { cn } from "@/lib/utils/cn";
 
 interface QuizRecentResultsProps {
   results: QuizResult[];
@@ -26,16 +27,16 @@ function ScoreBadge({
   percentage: number;
 }) {
   const pct = Math.round(percentage);
-  const tone =
-    pct >= 80
-      ? { bg: "rgba(16,185,129,0.10)", fg: "#047857" }
-      : pct >= 50
-        ? { bg: "rgba(201,162,77,0.14)", fg: "var(--gold-on-light)" }
-        : { bg: "rgba(184,50,42,0.10)", fg: "var(--accent-danger)" };
   return (
     <span
-      className="rounded-md px-2 py-1 text-xs font-bold"
-      style={{ background: tone.bg, color: tone.fg }}
+      className={cn(
+        "rounded-md px-2 py-1 text-xs font-bold",
+        pct >= 80
+          ? "bg-emerald-500/10 text-[#047857]"
+          : pct >= 50
+            ? "bg-accent-gold/14 text-gold-on-light"
+            : "bg-accent-danger/10 text-accent-danger",
+      )}
     >
       {score}/{total}
     </span>
@@ -48,30 +49,20 @@ export function QuizRecentResults({
   onViewAll,
 }: QuizRecentResultsProps) {
   return (
-    <section
-      className="rounded-xl border"
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
-    >
-      <div
-        className="flex items-start justify-between gap-3 px-4 py-3"
-        style={{ borderBottom: "1px solid var(--card-light-border)" }}
-      >
+    <section className="rounded-xl border border-card-light-border bg-card-light-bg">
+      <div className="flex items-start justify-between gap-3 px-4 py-3 border-b border-card-light-border">
         <div>
-          <h3 className="text-sm font-bold" style={{ color: "var(--content-heading)" }}>
+          <h3 className="text-sm font-bold text-content-heading">
             Lịch sử làm bài
           </h3>
-          <p className="mt-0.5 text-xs" style={{ color: "var(--content-muted)" }}>
+          <p className="mt-0.5 text-xs text-content-muted">
             Các lần nộp gần đây của bạn
           </p>
         </div>
         {onViewAll && (
           <button
             onClick={onViewAll}
-            className="shrink-0 rounded-md px-2 py-1 text-xs font-bold transition-colors hover:bg-black/[0.04]"
-            style={{ color: "var(--gold-on-light)" }}
+            className="shrink-0 rounded-md px-2 py-1 text-xs font-bold transition-colors hover:bg-black/[0.04] text-gold-on-light"
           >
             Xem tất cả
           </button>
@@ -79,24 +70,24 @@ export function QuizRecentResults({
       </div>
 
       {isLoading ? (
-        <div className="p-6 text-center text-sm" style={{ color: "var(--content-muted)" }}>
+        <div className="p-6 text-center text-sm text-content-muted">
           Đang tải...
         </div>
       ) : results.length === 0 ? (
-        <div className="p-6 text-center text-sm" style={{ color: "var(--content-muted)" }}>
+        <div className="p-6 text-center text-sm text-content-muted">
           Chưa có lịch sử làm bài
         </div>
       ) : (
-        <div className="divide-y" style={{ borderColor: "var(--card-light-border)" }}>
+        <div className="divide-y divide-card-light-border">
           {results.map((r) => (
             <div key={r.sessionId} className="px-4 py-3 transition-colors hover:bg-black/[0.025]">
               <div className="mb-1.5 flex items-start justify-between gap-3">
-                <p className="min-w-0 flex-1 truncate text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                <p className="min-w-0 flex-1 truncate text-sm font-semibold text-content-heading">
                   {r.quizTitle}
                 </p>
                 <ScoreBadge score={r.score} total={r.totalQuestions} percentage={r.percentage} />
               </div>
-              <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+              <p className="text-xs text-content-muted">
                 {formatDate(r.completedAt)}
               </p>
             </div>

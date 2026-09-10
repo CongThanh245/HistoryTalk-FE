@@ -34,8 +34,9 @@ export function useAdminCreateTier() {
       qc.invalidateQueries({ queryKey: TIER_KEYS.all });
       toast.success("Tạo gói dịch vụ thành công");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? err?.message ?? "Tạo gói thất bại");
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } }; message?: string } | null;
+      toast.error(error?.response?.data?.message ?? error?.message ?? "Tạo gói thất bại");
     },
   });
 }
@@ -51,8 +52,9 @@ export function useAdminUpdateTier() {
       qc.invalidateQueries({ queryKey: TIER_KEYS.byId(id) });
       toast.success("Cập nhật gói dịch vụ thành công");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? err?.message ?? "Cập nhật gói thất bại");
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } }; message?: string } | null;
+      toast.error(error?.response?.data?.message ?? error?.message ?? "Cập nhật gói thất bại");
     },
   });
 }
@@ -66,8 +68,9 @@ export function useAdminDeleteTier() {
       qc.invalidateQueries({ queryKey: TIER_KEYS.all });
       toast.success("Đã xóa gói dịch vụ");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? err?.message ?? "Xóa gói thất bại");
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } }; message?: string } | null;
+      toast.error(error?.response?.data?.message ?? error?.message ?? "Xóa gói thất bại");
     },
   });
 }

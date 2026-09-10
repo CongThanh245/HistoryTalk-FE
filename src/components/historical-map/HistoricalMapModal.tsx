@@ -20,17 +20,10 @@ const LeafletMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div
-        className="w-full h-full flex items-center justify-center"
-        style={{ background: "#f5f1ea" }}
-      >
+      <div className="w-full h-full flex items-center justify-center bg-[#f5f1ea]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2
-            size={32}
-            className="animate-spin"
-            style={{ color: "var(--accent-gold)" }}
-          />
-          <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+          <Loader2 size={32} className="animate-spin text-accent-gold" />
+          <p className="text-sm text-content-muted">
             Đang tải bản đồ...
           </p>
         </div>
@@ -163,17 +156,12 @@ export function HistoricalMapModal({
           boxShadow: "0 2px 16px rgba(35, 20, 8, 0.35)",
         }}
       >
-        <Map size={18} style={{ color: "#f1c66f" }} />
+        <Map size={18} className="text-[#f1c66f]" />
         <div>
-          <h2
-            className="font-bold text-sm leading-tight"
-            style={{
-              color: "#ffe8b1",
-            }}
-          >
+          <h2 className="font-bold text-sm leading-tight text-[#ffe8b1]">
             Bản đồ lịch sử Việt Nam
           </h2>
-          <p className="text-xs" style={{ color: "rgba(255, 232, 177, 0.7)" }}>
+          <p className="text-xs text-[rgba(255,232,177,0.7)]">
             {isLoading
               ? "Đang tải..."
               : `${visibleLandmarks.length}/${allLandmarks.length} di tích trong lãnh thổ Việt Nam`}
@@ -182,8 +170,7 @@ export function HistoricalMapModal({
 
         <button
           onClick={onClose}
-          className="ml-auto p-2 rounded-md transition-colors hover:bg-white/10"
-          style={{ color: "rgba(255, 232, 177, 0.78)" }}
+          className="ml-auto p-2 rounded-md transition-colors hover:bg-white/10 text-[rgba(255,232,177,0.78)]"
           aria-label="Đóng bản đồ"
         >
           <X size={18} />
@@ -208,25 +195,14 @@ export function HistoricalMapModal({
           {/* Empty state */}
           {!isLoading && visibleLandmarks.length === 0 && (
             <div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-5 py-4 rounded-xl text-sm font-medium pointer-events-none text-center"
-              style={{
-                background: "rgba(74, 45, 20, 0.92)",
-                color: "#ffe8b1",
-                boxShadow: "0 12px 30px rgba(50,26,8,0.28)",
-                border: "1px solid rgba(246, 209, 132, 0.32)",
-                backdropFilter: "blur(8px)",
-                maxWidth: 320,
-              }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-5 py-4 rounded-xl text-sm font-medium pointer-events-none text-center max-w-[320px] bg-[rgba(74,45,20,0.92)] text-[#ffe8b1] shadow-[0_12px_30px_rgba(50,26,8,0.28)] border border-[rgba(246,209,132,0.32)] backdrop-blur-[8px]"
             >
               <div className="text-2xl mb-1">🗺️</div>
               Chưa có di tích nào ở năm{" "}
-              <span style={{ color: "#f1c66f" }}>
+              <span className="text-[#f1c66f]">
                 {currentYear < 0 ? `${Math.abs(currentYear)} TCN` : currentYear}
               </span>
-              <div
-                className="text-xs mt-1 font-normal"
-                style={{ color: "rgba(255, 232, 177, 0.7)" }}
-              >
+              <div className="text-xs mt-1 font-normal text-[rgba(255,232,177,0.7)]">
                 Hãy kéo trục thời gian đến mốc khác
               </div>
             </div>
@@ -237,14 +213,10 @@ export function HistoricalMapModal({
         <div
           className={cn(
             "shrink-0 overflow-hidden transition-all duration-300",
-            panelOpen ? "w-full md:w-[360px]" : "w-0"
+            panelOpen
+              ? "w-full md:w-[360px] border-l border-card-light-border shadow-[-4px_0_16px_rgba(27,38,50,0.08)]"
+              : "w-0"
           )}
-          style={{
-            borderLeft: panelOpen
-              ? "1px solid var(--card-light-border)"
-              : "none",
-            boxShadow: panelOpen ? "-4px 0 16px rgba(27,38,50,0.08)" : "none",
-          }}
         >
           {selectedLandmark && (
             <div className="w-full md:w-[360px] h-full overflow-hidden">

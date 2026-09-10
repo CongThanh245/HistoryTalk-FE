@@ -1,11 +1,11 @@
-  const TypingText = ({ text, className = "" }: { text: string, className?: string }) => (
-    <span className={className}>
-      {text.split('').map((char, index) => (
-        <span key={index} className="char inline-block" style={{ fontFamily: "var(--font-title)" }}>
-          {char === ' ' ? '\u00A0' : char}
-        </span>
-      ))}
-    </span>
-  );
+const TypingText = ({ text, className = "" }: { text: string, className?: string }) => (
+  <span className={className}>
+    {text.split('').map((char, index) => (
+      <span key={index} className="char inline-block font-[family-name:var(--font-title)]">
+        {char === ' ' ? ' ' : char}
+      </span>
+    ))}
+  </span>
+);
 
-  export default TypingText;
+export default TypingText;

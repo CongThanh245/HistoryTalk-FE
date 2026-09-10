@@ -1,5 +1,4 @@
 import { axiosClient } from "@/configs/axios.client";
-import { isValidUrl } from "@/lib/utils/url";
 import {
   type EventEra,
   type EventEraBackend,
@@ -134,8 +133,11 @@ export function mapContext(raw: RawHistoricalContext): HistoricalEvent {
     year: raw.year ?? 0,
     yearLabel: raw.yearLabel,
     location: raw.location,
-    imageUrl: isValidUrl(imageUrl) ? imageUrl : null,
-    videoUrl: isValidUrl(raw.videoUrl) ? raw.videoUrl : null,
+    // Backend always resolves these to a directly renderable URL (legacy
+    // pasted http(s) link, or a freshly signed URL for private-storage
+    // uploads) or null — no client-side URL validation needed here.
+    imageUrl: imageUrl ?? null,
+    videoUrl: raw.videoUrl ?? null,
     era: raw.era as EventEraBackend,
     period: raw.period,
     startYear: raw.startYear,

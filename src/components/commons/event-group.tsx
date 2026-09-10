@@ -1,6 +1,6 @@
 "use client";
 
-import { SwordIcon } from "@phosphor-icons/react";
+import { Sword } from "lucide-react";
 import { SessionCard } from "@/components/commons/session-card";
 import type {
   ChatHistoryGroup,
@@ -25,36 +25,25 @@ export function EventGroup({
       {/* Group header */}
       <div className="flex items-center gap-2.5 md:gap-3">
         <div
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg md:h-8 md:w-8"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(201,162,77,0.12) 0%, rgba(163,81,57,0.08) 100%)",
-            border: "1px solid rgba(201,162,77,0.2)",
-          }}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg md:h-8 md:w-8 border border-accent-gold/20 bg-[linear-gradient(135deg,rgba(201,162,77,0.12)_0%,rgba(163,81,57,0.08)_100%)]"
         >
-          <SwordIcon
-            className="h-3.5 w-3.5"
-            style={{ color: "var(--gold-on-light)" }}
+          <Sword
+            className="h-3.5 w-3.5 text-[var(--gold-on-light)]"
           />
         </div>
         <div>
           <h2
-            className="text-xs font-bold md:text-sm"
-            style={{ color: "var(--content-heading)" }}
+            className="text-xs font-bold md:text-sm text-content-heading"
           >
             {group.contextName}
           </h2>
-          <p className="text-[10px] md:text-[11px]" style={{ color: "var(--content-muted)" }}>
+          <p className="text-[10px] md:text-[11px] text-content-muted">
             {group.sessions.length} cuộc trò chuyện
           </p>
         </div>
         {/* Divider */}
         <div
-          className="flex-1 h-px"
-          style={{
-            background:
-              "linear-gradient(to right, var(--card-light-border), transparent)",
-          }}
+          className="flex-1 h-px bg-[linear-gradient(to_right,var(--card-light-border),transparent)]"
         />
       </div>
 
