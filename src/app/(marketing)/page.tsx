@@ -5,6 +5,8 @@ import type { Character } from "@/services/character.service";
 import { mapCharacter } from "@/services/character.service";
 import { axiosServer } from "@/configs/axios.server";
 
+export const dynamic = "force-dynamic";
+
 // Lazy load sections below the fold để giảm initial bundle size
 const ProblemSection = dynamic(
   () => import("@/components/marketing/section/problem-section").then((m) => m.ProblemSection),
@@ -110,6 +112,7 @@ async function fetchHeroCharacters(): Promise<Character[]> {
   try {
     const res = await axiosServer.get("/characters", {
       params: { limit: 6, isPublished: true },
+      timeout: 8000,
     });
     const content = res.data?.data?.content;
     if (Array.isArray(content) && content.length > 0) {
