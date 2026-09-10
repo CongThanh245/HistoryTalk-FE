@@ -230,7 +230,7 @@ export function ChatMain({
           }
           resolve();
         };
-        source.addEventListener("error", () => reject(new Error("Khong phat duoc audio Azure TTS")));
+        source.onerror = () => reject(new Error("Khong phat duoc audio Azure TTS"));
         source.start();
       });
     },
