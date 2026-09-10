@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -20,38 +21,42 @@ import {
   useUpdateProfile,
   useChangePassword,
   useMyPaymentHistory,
+  useUploadAvatar,
+  useDeleteAvatar,
 } from "@/features/profile/hooks";
+import { useMyDashboard } from "@/features/dashboard/hooks";
 import { isPro, type UserProfile } from "@/services/user.service";
 import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
+import { cn } from "@/lib/utils/cn";
 import {
-  UserIcon,
-  CrownSimpleIcon,
-  LockSimpleIcon,
-  CoinsIcon,
-  CalendarIcon,
-  PhoneIcon,
-  MapPinIcon,
-  EnvelopeIcon,
-  LinkIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  XCircleIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  HourglassIcon,
-  FloppyDiskIcon,
-  SparkleIcon,
-} from "@phosphor-icons/react";
+  User,
+  Crown,
+  Lock,
+  Coins,
+  Calendar,
+  Phone,
+  MapPin,
+  Mail,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Eye,
+  EyeOff,
+  Hourglass,
+  Sparkles,
+  Camera,
+  Trash2,
+} from "lucide-react";
 
 // ─────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────
 type TabKey = "profile" | "billing" | "security";
 
-const TABS: { key: TabKey; label: string; icon: React.ComponentType<{ className?: string; weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone" }> }[] = [
-  { key: "profile", label: "Hồ sơ cá nhân", icon: UserIcon },
-  { key: "billing", label: "Gói & Token", icon: CrownSimpleIcon },
-  { key: "security", label: "Bảo mật", icon: LockSimpleIcon },
+const TABS: { key: TabKey; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "profile", label: "Hồ sơ cá nhân", icon: User },
+  { key: "billing", label: "Gói & Token", icon: Crown },
+  { key: "security", label: "Bảo mật", icon: Lock },
 ];
 
 // ─────────────────────────────────────────────
@@ -110,12 +115,12 @@ const GENDER_LABELS: Record<"MALE" | "FEMALE" | "OTHER", string> = {
 
 function statusBadge(status: string) {
   const map: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-    PAID: { label: "Thành công", color: "#22c55e", icon: CheckCircleIcon },
-    PENDING: { label: "Chờ thanh toán", color: "#f59e0b", icon: ClockIcon },
-    CANCELLED: { label: "Đã hủy", color: "#ef4444", icon: XCircleIcon },
-    EXPIRED: { label: "Hết hạn", color: "#6b7280", icon: XCircleIcon },
+    PAID: { label: "Thành công", color: "#22c55e", icon: CheckCircle },
+    PENDING: { label: "Chờ thanh toán", color: "#f59e0b", icon: Clock },
+    CANCELLED: { label: "Đã hủy", color: "#ef4444", icon: XCircle },
+    EXPIRED: { label: "Hết hạn", color: "#6b7280", icon: XCircle },
   };
-  const cfg = map[status] ?? { label: status, color: "#6b7280", icon: ClockIcon };
+  const cfg = map[status] ?? { label: status, color: "#6b7280", icon: Clock };
   const IconEl = cfg.icon;
   return (
     <span
@@ -164,6 +169,9 @@ function PersonalProfileTab() {
 
 function PersonalProfileForm({ profile }: { profile: UserProfile }) {
   const { mutate: updateProfile, isPending } = useUpdateProfile();
+  const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useUploadAvatar();
+  const { mutate: deleteAvatar, isPending: isDeletingAvatar } = useDeleteAvatar();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     fullName: profile.fullName ?? "",
@@ -172,7 +180,6 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
     address: profile.address ?? "",
     dob: profile.dob ? profile.dob.slice(0, 10) : "",
     gender: normalizeGender(profile.gender),
-    avatarUrl: profile.avatarUrl ?? "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -184,9 +191,21 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
       address: form.address || undefined,
       dob: form.dob || undefined,
       gender: normalizeGender(form.gender) || undefined,
-      avatarUrl: form.avatarUrl || undefined,
     });
   };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Vui lòng chọn file ảnh (JPEG, PNG, WEBP, GIF)");
+      return;
+    }
+    uploadAvatar({ userId: profile.uid, file });
+  };
+
+  const isAvatarBusy = isUploadingAvatar || isDeletingAvatar;
 
   const initials = (profile.userName ?? "?")
     .split(" ")
@@ -197,59 +216,67 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <aside
-        className="rounded-2xl border p-5 lg:sticky lg:top-6 lg:self-start"
-        style={{
-          background: "linear-gradient(180deg, var(--bg-main) 0%, var(--bg-elevated) 100%)",
-          borderColor: "var(--border-default)",
-        }}
-      >
+      <aside className="rounded-2xl border p-5 lg:sticky lg:top-6 lg:self-start bg-[linear-gradient(180deg,var(--bg-main)_0%,var(--bg-elevated)_100%)] border-border-default">
         <div className="flex flex-col items-center text-center">
-          <Avatar
-            className="w-24 h-24 border-2 shadow-sm"
-            style={{ borderColor: isPro(profile ?? null) ? "var(--accent-gold)" : "var(--border-strong)" }}
-          >
-            <AvatarImage src={form.avatarUrl || undefined} alt={profile?.userName} />
-            <AvatarFallback
-              className="text-2xl font-bold"
-              style={{
-                background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-                color: "var(--bg-deep)",
-              }}
+          <div className="relative">
+            <Avatar
+              className={cn(
+                "w-24 h-24 border-2 shadow-sm",
+                isPro(profile ?? null) ? "border-accent-gold" : "border-border-strong"
+              )}
             >
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+              <AvatarImage src={profile?.avatarUrl || undefined} alt={profile?.userName} />
+              <AvatarFallback className="text-2xl font-bold bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] text-bg-deep">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
 
-          <p className="mt-4 text-lg font-bold" style={{ color: "var(--text-primary)" }}>
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={isAvatarBusy}
+              title="Đổi ảnh đại diện"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60 bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] border-bg-elevated"
+            >
+              <Camera className="h-4 w-4 text-text-inverse" />
+            </button>
+
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </div>
+
+          {profile?.avatarUrl && (
+            <button
+              type="button"
+              onClick={() => deleteAvatar(profile.uid)}
+              disabled={isAvatarBusy}
+              className="mt-2 flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-80 disabled:opacity-60 text-accent-danger"
+            >
+              <Trash2 className="h-3 w-3" />
+              Xóa ảnh đại diện
+            </button>
+          )}
+
+          <p className="mt-4 text-lg font-bold text-text-primary">
             {profile?.fullName || profile?.userName || "—"}
           </p>
-          <p className="mt-1 max-w-full truncate text-sm" style={{ color: "var(--text-muted)" }}>
+          <p className="mt-1 max-w-full truncate text-sm text-text-muted">
             {profile?.email}
           </p>
 
           {isPro(profile ?? null) ? (
-            <span
-              className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold"
-              style={{
-                background: "linear-gradient(90deg,rgba(201,162,77,0.18),rgba(163,81,57,0.12))",
-                color: "var(--accent-gold)",
-                border: "1px solid rgba(201,162,77,0.3)",
-              }}
-            >
-              <CrownSimpleIcon className="w-3.5 h-3.5" weight="fill" />
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold bg-[linear-gradient(90deg,rgba(201,162,77,0.18),rgba(163,81,57,0.12))] text-accent-gold border border-[rgba(201,162,77,0.3)]">
+              <Crown className="w-3.5 h-3.5 fill-current" />
               {profile?.tierTitle}
             </span>
           ) : (
-            <span
-              className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold"
-              style={{
-                background: "var(--bg-elevated)",
-                color: "var(--text-muted)",
-                border: "1px solid var(--border-default)",
-              }}
-            >
-              <SparkleIcon className="w-3.5 h-3.5" />
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold bg-bg-elevated text-text-muted border border-border-default">
+              <Sparkles className="w-3.5 h-3.5" />
               Tài khoản cơ bản
             </span>
           )}
@@ -264,10 +291,10 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
       <div className="space-y-6">
         <section>
           <div className="mb-4">
-            <h2 className="text-base font-bold" style={{ color: "var(--text-primary)" }}>
+            <h2 className="text-base font-bold text-text-primary">
               Thông tin cá nhân
             </h2>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            <p className="text-sm text-text-muted">
               Cập nhật tên hiển thị và thông tin liên hệ của bạn.
             </p>
           </div>
@@ -275,21 +302,21 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <FormField
               label="Họ và tên"
-              icon={UserIcon}
+              icon={User}
               value={form.fullName}
               onChange={(v) => setForm({ ...form, fullName: v })}
               placeholder="Nguyễn Văn A"
             />
             <FormField
               label="Tên người dùng"
-              icon={UserIcon}
+              icon={User}
               value={form.userName}
               onChange={(v) => setForm({ ...form, userName: v })}
               placeholder="nguyenvana"
             />
             <FormField
               label="Email"
-              icon={EnvelopeIcon}
+              icon={Mail}
               value={profile?.email ?? ""}
               onChange={() => {}}
               disabled
@@ -297,7 +324,7 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
             />
             <FormField
               label="Số điện thoại"
-              icon={PhoneIcon}
+              icon={Phone}
               value={form.phoneNumber}
               onChange={(v) => setForm({ ...form, phoneNumber: v })}
               placeholder="0901234567"
@@ -305,7 +332,7 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
             />
             <FormField
               label="Ngày sinh"
-              icon={CalendarIcon}
+              icon={Calendar}
               value={form.dob}
               onChange={(v) => setForm({ ...form, dob: v })}
               placeholder=""
@@ -313,28 +340,20 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
             />
 
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium flex items-center gap-1.5" style={{ color: "var(--text-secondary)" }}>
-                <UserIcon className="w-3.5 h-3.5" />
+              <Label className="text-sm font-medium flex items-center gap-1.5 text-text-secondary">
+                <User className="w-3.5 h-3.5" />
                 Giới tính
               </Label>
               <Select
                 value={form.gender}
                 onValueChange={(v) => setForm({ ...form, gender: normalizeGender(v) })}
               >
-                <SelectTrigger
-                  className="h-10 border text-sm"
-                  style={{
-                    background: "var(--bg-elevated)",
-                    borderColor: "var(--border-default)",
-                    color: "var(--text-primary)",
-                    borderRadius: "10px",
-                  }}
-                >
+                <SelectTrigger className="h-10 border text-sm bg-bg-elevated border-border-default text-text-primary rounded-[10px]">
                   <span data-slot="select-value" className="line-clamp-1">
                     {form.gender ? (
                       GENDER_LABELS[form.gender as "MALE" | "FEMALE" | "OTHER"]
                     ) : (
-                      <span style={{ color: "var(--text-muted)" }}>Chọn giới tính</span>
+                      <span className="text-text-muted">Chọn giới tính</span>
                     )}
                   </span>
                 </SelectTrigger>
@@ -349,46 +368,26 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
         </section>
 
         <section>
-          <div className="mb-4">
-            <h2 className="text-base font-bold" style={{ color: "var(--text-primary)" }}>
-              Hồ sơ hiển thị
-            </h2>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              Ảnh đại diện và địa chỉ giúp cá nhân hóa trải nghiệm trong HistoryTalk.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1">
             <FormField
               label="Địa chỉ"
-              icon={MapPinIcon}
+              icon={MapPin}
               value={form.address}
               onChange={(v) => setForm({ ...form, address: v })}
               placeholder="123 Lê Lợi, Quận 1, TP.HCM"
             />
-            <FormField
-              label="Đường dẫn Avatar (URL)"
-              icon={LinkIcon}
-              value={form.avatarUrl}
-              onChange={(v) => setForm({ ...form, avatarUrl: v })}
-              placeholder="https://example.com/avatar.jpg"
-              type="url"
-            />
           </div>
         </section>
 
-        <div className="flex justify-end border-t pt-5" style={{ borderColor: "var(--border-default)" }}>
+        <div className="flex justify-end border-t pt-5 border-border-default">
         <Button
           type="submit"
           disabled={isPending}
-          className="gap-2 px-6 font-semibold"
-          style={{
-            background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-            color: "var(--text-inverse)",
-            borderRadius: "10px",
-            boxShadow: "0 2px 10px var(--accent-gold-glow, rgba(201,162,77,0.35))",
-            opacity: isPending ? 0.7 : 1,
-          }}
+          className={cn(
+            "gap-2 px-6 font-semibold bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] text-text-inverse rounded-[10px] shadow-[0_2px_10px_var(--accent-gold-glow,rgba(201,162,77,0.35))]",
+            isPending && "opacity-70"
+          )}
         >
           {isPending ? "Đang lưu..." : "Lưu thay đổi"}
         </Button>
@@ -400,17 +399,11 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
 
 function ProfileMiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className="min-w-0 rounded-xl border px-3 py-2"
-      style={{
-        background: "var(--bg-elevated)",
-        borderColor: "var(--border-default)",
-      }}
-    >
-      <p className="truncate text-sm font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+    <div className="min-w-0 rounded-xl border px-3 py-2 bg-bg-elevated border-border-default">
+      <p className="truncate text-sm font-bold tabular-nums text-text-primary">
         {value}
       </p>
-      <p className="mt-0.5 text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>
+      <p className="mt-0.5 text-[11px] font-medium text-text-muted">
         {label}
       </p>
     </div>
@@ -436,10 +429,7 @@ function FormField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label
-        className="text-sm font-medium flex items-center gap-1.5"
-        style={{ color: "var(--text-secondary)" }}
-      >
+      <Label className="text-sm font-medium flex items-center gap-1.5 text-text-secondary">
         <Icon className="w-3.5 h-3.5" />
         {label}
       </Label>
@@ -449,14 +439,12 @@ function FormField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className="h-10 border text-sm"
-        style={{
-          background: disabled ? "var(--bg-main)" : "var(--bg-elevated)",
-          borderColor: "var(--border-default)",
-          color: disabled ? "var(--text-muted)" : "var(--text-primary)",
-          borderRadius: "10px",
-          opacity: disabled ? 0.7 : 1,
-        }}
+        className={cn(
+          "h-10 border text-sm rounded-[10px] border-border-default",
+          disabled
+            ? "bg-bg-main text-text-muted opacity-70"
+            : "bg-bg-elevated text-text-primary"
+        )}
       />
     </div>
   );
@@ -466,79 +454,58 @@ function FormField({
 function BillingTab() {
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: payments, isLoading: paymentsLoading } = useMyPaymentHistory();
+  const { data: dashboard, isLoading: dashboardLoading } = useMyDashboard();
   const proUser = isPro(profile ?? null);
+  const aiUsage = dashboard?.aiUsage;
 
   return (
     <div className="space-y-6">
       {/* Current Tier Card */}
       <div
-        className="rounded-2xl p-5 border relative overflow-hidden"
-        style={{
-          background: proUser
-            ? "linear-gradient(135deg, rgba(201,162,77,0.14) 0%, rgba(163,81,57,0.10) 100%)"
-            : "var(--bg-elevated)",
-          borderColor: proUser ? "rgba(201,162,77,0.4)" : "var(--border-default)",
-          boxShadow: proUser ? "0 4px 20px rgba(201,162,77,0.1)" : "none",
-        }}
+        className={cn(
+          "rounded-2xl p-5 border relative overflow-hidden",
+          proUser
+            ? "bg-[linear-gradient(135deg,rgba(201,162,77,0.14)_0%,rgba(163,81,57,0.10)_100%)] border-[rgba(201,162,77,0.4)] shadow-[0_4px_20px_rgba(201,162,77,0.1)]"
+            : "bg-bg-elevated border-border-default"
+        )}
       >
         {proUser && (
-          <div
-            className="absolute top-0 left-0 right-0 h-px"
-            style={{ background: "linear-gradient(90deg,transparent,rgba(201,162,77,0.7),transparent)" }}
-          />
+          <div className="absolute top-0 left-0 right-0 h-px bg-[linear-gradient(90deg,transparent,rgba(201,162,77,0.7),transparent)]" />
         )}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-              style={{
-                background: proUser
-                  ? "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)"
-                  : "var(--bg-main)",
-                border: proUser ? "none" : "1px solid var(--border-default)",
-                boxShadow: proUser ? "0 2px 12px var(--accent-gold-glow,rgba(201,162,77,0.4))" : "none",
-              }}
+              className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                proUser
+                  ? "bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] shadow-[0_2px_12px_var(--accent-gold-glow,rgba(201,162,77,0.4))]"
+                  : "bg-bg-main border border-border-default"
+              )}
             >
-              <CrownSimpleIcon
-                className="w-5 h-5"
-                weight={proUser ? "fill" : "regular"}
-                style={{ color: proUser ? "var(--text-inverse)" : "var(--text-muted)" }}
+              <Crown
+                className={cn("w-5 h-5", proUser ? "fill-current text-text-inverse" : "text-text-muted")}
               />
             </div>
             <div>
-              <p className="font-bold text-base" style={{ color: "var(--text-primary)" }}>
+              <p className="font-bold text-base text-text-primary">
                 {profile?.tierTitle ?? "Gói miễn phí"}
-              </p>
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                {proUser ? "Tài khoản Premium đang hoạt động" : "Nâng cấp để mở khóa toàn bộ tính năng"}
               </p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-2 shrink-0">
             {proUser ? (
-              <Badge
-                className="font-bold text-[10px] px-2 py-1 border-0"
-                style={{ background: "rgba(201,162,77,0.15)", color: "var(--accent-gold)" }}
-              >
+              <Badge className="font-bold text-[10px] px-2 py-1 border-0 bg-accent-gold/15 text-accent-gold">
                 ✦ PRO
               </Badge>
             ) : (
-              <Badge
-                className="font-bold text-[10px] px-2 py-1 border-0"
-                style={{ background: "var(--bg-main)", color: "var(--text-muted)", border: "1px solid var(--border-default)" }}
-              >
+              <Badge className="font-bold text-[10px] px-2 py-1 bg-bg-main text-text-muted border border-border-default">
                 Free
               </Badge>
             )}
             <UpgradeProDialog>
               <button
                 type="button"
-                className="text-xs font-semibold whitespace-nowrap px-3 py-1.5 rounded-lg cursor-pointer transition-opacity hover:opacity-90"
-                style={{
-                  background: "linear-gradient(135deg,var(--accent-gold) 0%,var(--truffle) 100%)",
-                  color: "var(--text-inverse)",
-                  boxShadow: "0 2px 8px rgba(201,162,77,0.35)",
-                }}
+                className="text-xs font-semibold whitespace-nowrap px-3 py-1.5 rounded-lg cursor-pointer transition-opacity hover:opacity-90 bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] text-text-inverse shadow-[0_2px_8px_rgba(201,162,77,0.35)]"
               >
                 {proUser ? "Đổi gói" : "Nâng cấp ngay"}
               </button>
@@ -550,23 +517,15 @@ function BillingTab() {
         {profileLoading ? (
           <Skeleton className="h-14 w-full mt-4 rounded-xl" />
         ) : (
-          <div
-            className="mt-4 rounded-xl p-4 flex items-center gap-3"
-            style={{
-              background: "var(--bg-main)",
-              border: "1px solid var(--border-default)",
-            }}
-          >
-            <CoinsIcon
-              className="w-8 h-8 shrink-0"
-              weight="duotone"
-              style={{ color: proUser ? "var(--accent-gold)" : "var(--text-muted)" }}
+          <div className="mt-4 rounded-xl p-4 flex items-center gap-3 bg-bg-main border border-border-default">
+            <Coins
+              className={cn("w-8 h-8 shrink-0", proUser ? "text-accent-gold" : "text-text-muted")}
             />
             <div>
-              <p className="text-2xl font-extrabold tabular-nums" style={{ color: "var(--text-primary)" }}>
+              <p className="text-2xl font-extrabold tabular-nums text-text-primary">
                 {(profile?.token ?? 0).toLocaleString("vi-VN")}
               </p>
-              <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+              <p className="text-xs font-medium text-text-muted">
                 Token AI còn lại
               </p>
             </div>
@@ -578,41 +537,103 @@ function BillingTab() {
           <Skeleton className="h-14 w-full mt-3 rounded-xl" />
         ) : profile?.subscriptionEndTime && (
           <div
-            className="mt-3 rounded-xl p-4 flex items-center gap-3"
-            style={{
-              background: proUser
-                ? "linear-gradient(135deg, rgba(201,162,77,0.08) 0%, rgba(163,81,57,0.05) 100%)"
-                : "var(--bg-main)",
-              border: proUser
-                ? "1px solid rgba(201,162,77,0.3)"
-                : "1px solid var(--border-default)",
-            }}
+            className={cn(
+              "mt-3 rounded-xl p-4 flex items-center gap-3",
+              proUser
+                ? "bg-[linear-gradient(135deg,rgba(201,162,77,0.08)_0%,rgba(163,81,57,0.05)_100%)] border border-[rgba(201,162,77,0.3)]"
+                : "bg-bg-main border border-border-default"
+            )}
           >
-            <HourglassIcon
-              className="w-8 h-8 shrink-0"
-              weight="duotone"
-              style={{ color: proUser ? "var(--accent-gold)" : "var(--text-muted)" }}
+            <Hourglass
+              className={cn("w-8 h-8 shrink-0", proUser ? "text-accent-gold" : "text-text-muted")}
             />
             <div>
               <div className="flex items-center gap-2">
-                <p className="text-base font-bold tabular-nums" style={{ color: "var(--text-primary)" }}>
+                <p className="text-base font-bold tabular-nums text-text-primary">
                   {formatDate(profile.subscriptionEndTime)}
                 </p>
                 {formatRemainingTime(profile.subscriptionEndTime) && (
                   <span
-                    className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full"
-                    style={{
-                      background: proUser ? "rgba(201,162,77,0.15)" : "var(--bg-elevated)",
-                      color: proUser ? "var(--accent-gold)" : "var(--text-muted)",
-                    }}
+                    className={cn(
+                      "text-[11px] font-semibold px-1.5 py-0.5 rounded-full",
+                      proUser ? "bg-accent-gold/15 text-accent-gold" : "bg-bg-elevated text-text-muted"
+                    )}
                   >
                     {formatRemainingTime(profile.subscriptionEndTime)}
                   </span>
                 )}
               </div>
-              <p className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+              <p className="text-xs font-medium text-text-muted">
                 Ngày hết hạn gói
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Token usage breakdown */}
+        {dashboardLoading ? (
+          <Skeleton className="h-20 w-full mt-3 rounded-xl" />
+        ) : aiUsage && aiUsage.totalTokensUsed > 0 && (
+          <div className="mt-3 rounded-xl p-4 bg-bg-main border border-border-default">
+            <p className="text-xs font-semibold mb-3 text-text-secondary">
+              Chi tiết sử dụng token
+            </p>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-base font-bold tabular-nums text-text-primary">
+                  {aiUsage.totalTokensUsed.toLocaleString("vi-VN")}
+                </p>
+                <p className="text-[11px] text-text-muted">
+                  Tổng đã dùng
+                </p>
+              </div>
+              <div>
+                <p className="text-base font-bold tabular-nums text-text-primary">
+                  {aiUsage.promptTokens.toLocaleString("vi-VN")}
+                </p>
+                <p className="text-[11px] text-text-muted">
+                  Prompt (đầu vào)
+                </p>
+              </div>
+              <div>
+                <p className="text-base font-bold tabular-nums text-text-primary">
+                  {aiUsage.completionTokens.toLocaleString("vi-VN")}
+                </p>
+                <p className="text-[11px] text-text-muted">
+                  Completion (đầu ra)
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Top characters mini card */}
+        {!dashboardLoading && aiUsage && aiUsage.topCharacters.length > 0 && (
+          <div className="mt-3 rounded-xl p-4 bg-bg-main border border-border-default">
+            <p className="text-xs font-semibold mb-3 text-text-secondary">
+              Nhân vật tương tác nhiều nhất
+            </p>
+            <div className="space-y-2.5">
+              {aiUsage.topCharacters.slice(0, 3).map((character) => (
+                <div key={character.characterId} className="flex items-center gap-3">
+                  <Avatar className="w-8 h-8 shrink-0">
+                    <AvatarFallback className="text-xs font-bold bg-bg-elevated text-text-muted">
+                      {character.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate text-text-primary">
+                      {character.name}
+                    </p>
+                    <p className="text-xs text-text-muted">
+                      {character.messageCount} tin nhắn
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold shrink-0 text-text-muted">
+                    {character.tokenUsed.toLocaleString("vi-VN")} token
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -620,7 +641,7 @@ function BillingTab() {
 
       {/* Payment History */}
       <div>
-        <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text-secondary)" }}>
+        <h3 className="text-sm font-bold mb-3 text-text-secondary">
           Lịch sử giao dịch
         </h3>
 
@@ -631,12 +652,9 @@ function BillingTab() {
             ))}
           </div>
         ) : !payments || payments.length === 0 ? (
-          <div
-            className="rounded-xl p-8 text-center border"
-            style={{ background: "var(--bg-elevated)", borderColor: "var(--border-default)" }}
-          >
-            <CoinsIcon className="w-10 h-10 mx-auto mb-2" style={{ color: "var(--text-muted)" }} />
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          <div className="rounded-xl p-8 text-center border bg-bg-elevated border-border-default">
+            <Coins className="w-10 h-10 mx-auto mb-2 text-text-muted" />
+            <p className="text-sm text-text-muted">
               Chưa có giao dịch nào
             </p>
           </div>
@@ -645,39 +663,30 @@ function BillingTab() {
             {payments.map((p) => (
               <div
                 key={p.orderId}
-                className="rounded-xl p-4 border flex items-center justify-between gap-4"
-                style={{
-                  background: "var(--bg-elevated)",
-                  borderColor: "var(--border-default)",
-                }}
+                className="rounded-xl p-4 border flex items-center justify-between gap-4 bg-bg-elevated border-border-default"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                    style={{
-                      background: p.status === "PAID"
-                        ? "rgba(34,197,94,0.12)"
-                        : "var(--bg-main)",
-                      border: "1px solid var(--border-default)",
-                    }}
+                    className={cn(
+                      "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border border-border-default",
+                      p.status === "PAID" ? "bg-[rgba(34,197,94,0.12)]" : "bg-bg-main"
+                    )}
                   >
-                    <CrownSimpleIcon
-                      className="w-4 h-4"
-                      weight="fill"
-                      style={{ color: p.status === "PAID" ? "#22c55e" : "var(--text-muted)" }}
+                    <Crown
+                      className={cn("w-4 h-4 fill-current", p.status === "PAID" ? "text-[#22c55e]" : "text-text-muted")}
                     />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+                    <p className="text-sm font-semibold truncate text-text-primary">
                       {p.tierTitle}
                     </p>
-                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    <p className="text-xs text-text-muted">
                       {formatDate(p.paidAt ?? p.createdAt)}
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                  <span className="text-sm font-bold text-text-primary">
                     {formatCurrency(p.amount)}
                   </span>
                   {statusBadge(p.status)}
@@ -736,15 +745,8 @@ function SecurityTab() {
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-md space-y-5">
-      <div
-        className="rounded-xl p-4 border text-sm flex items-start gap-2"
-        style={{
-          background: "rgba(139,179,200,0.08)",
-          borderColor: "rgba(139,179,200,0.25)",
-          color: "var(--accent-blue, #8fb3c8)",
-        }}
-      >
-        <LockSimpleIcon className="w-4 h-4 mt-0.5 shrink-0" weight="fill" />
+      <div className="rounded-xl p-4 border text-sm flex items-start gap-2 bg-[rgba(139,179,200,0.08)] border-[rgba(139,179,200,0.25)] text-[var(--accent-blue,#8fb3c8)]">
+        <Lock className="w-4 h-4 mt-0.5 shrink-0 fill-current" />
         <span>Để bảo vệ tài khoản, mật khẩu mới phải có ít nhất 8 ký tự và khác mật khẩu hiện tại.</span>
       </div>
 
@@ -758,10 +760,9 @@ function SecurityTab() {
           <div key={field} className="space-y-1.5">
             <Label
               htmlFor={field}
-              className="text-sm font-medium flex items-center gap-1.5"
-              style={{ color: "var(--text-secondary)" }}
+              className="text-sm font-medium flex items-center gap-1.5 text-text-secondary"
             >
-              <LockSimpleIcon className="w-3.5 h-3.5" />
+              <Lock className="w-3.5 h-3.5" />
               {labels[field]}
             </Label>
             <div className="relative">
@@ -774,29 +775,25 @@ function SecurityTab() {
                   if (errors[field]) setErrors({ ...errors, [field]: "" });
                 }}
                 placeholder="••••••••"
-                className="h-10 border text-sm pr-10"
-                style={{
-                  background: "var(--bg-elevated)",
-                  borderColor: errors[field] ? "var(--accent-danger, #ef4444)" : "var(--border-default)",
-                  color: "var(--text-primary)",
-                  borderRadius: "10px",
-                }}
+                className={cn(
+                  "h-10 border text-sm pr-10 bg-bg-elevated text-text-primary rounded-[10px]",
+                  errors[field] ? "border-accent-danger" : "border-border-default"
+                )}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword({ ...showPassword, [field]: !showPassword[field] })}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-white/10 transition-colors"
-                style={{ color: "var(--text-muted)" }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-white/10 transition-colors text-text-muted"
               >
                 {showPassword[field] ? (
-                  <EyeSlashIcon className="w-4 h-4" />
+                  <EyeOff className="w-4 h-4" />
                 ) : (
-                  <EyeIcon className="w-4 h-4" />
+                  <Eye className="w-4 h-4" />
                 )}
               </button>
             </div>
             {errors[field] && (
-              <p className="text-xs" style={{ color: "var(--accent-danger, #ef4444)" }}>
+              <p className="text-xs text-accent-danger">
                 {errors[field]}
               </p>
             )}
@@ -807,14 +804,10 @@ function SecurityTab() {
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full font-semibold"
-        style={{
-          background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--truffle) 100%)",
-          color: "var(--text-inverse)",
-          borderRadius: "10px",
-          boxShadow: "0 2px 10px var(--accent-gold-glow, rgba(201,162,77,0.35))",
-          opacity: isPending ? 0.7 : 1,
-        }}
+        className={cn(
+          "w-full font-semibold bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] text-text-inverse rounded-[10px] shadow-[0_2px_10px_var(--accent-gold-glow,rgba(201,162,77,0.35))]",
+          isPending && "opacity-70"
+        )}
       >
         {isPending ? "Đang đổi mật khẩu..." : "Đổi mật khẩu"}
       </Button>
@@ -822,8 +815,7 @@ function SecurityTab() {
       <div className="text-center">
         <Link
           href="/forgot-password"
-          className="text-sm font-semibold transition-colors hover:underline"
-          style={{ color: "var(--accent-gold)" }}
+          className="text-sm font-semibold transition-colors hover:underline text-accent-gold"
         >
           Quên mật khẩu?
         </Link>
@@ -856,74 +848,45 @@ export default function ProfilePage() {
         {/* ── Page Header ── */}
         <div className="flex items-center justify-between">
           <div>
-            <h1
-              className="text-2xl md:text-3xl font-extrabold tracking-tight"
-              style={{ color: "var(--text-primary)" }}
-            >
+            <h1 className="font-title text-2xl md:text-3xl font-extrabold tracking-tight text-text-primary">
               {proUser && (
-                <span
-                  className="inline-flex items-center mr-2 align-middle"
-                  style={{ color: "var(--accent-gold)" }}
-                >
+                <span className="inline-flex items-center mr-2 align-middle text-accent-gold">
                   ✦
                 </span>
               )}
               Hồ sơ của tôi
             </h1>
-            <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+            <p className="text-sm mt-1 text-text-muted">
               Quản lý thông tin tài khoản & gói dịch vụ
             </p>
           </div>
 
           {proUser && profile?.tierTitle && (
-            <div
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
-              style={{
-                background: "linear-gradient(135deg,rgba(201,162,77,0.18),rgba(163,81,57,0.12))",
-                color: "var(--accent-gold)",
-                border: "1px solid rgba(201,162,77,0.35)",
-                boxShadow: "0 2px 10px rgba(201,162,77,0.12)",
-              }}
-            >
-              <CrownSimpleIcon className="w-3.5 h-3.5" weight="fill" />
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[linear-gradient(135deg,rgba(201,162,77,0.18),rgba(163,81,57,0.12))] text-accent-gold border border-[rgba(201,162,77,0.35)] shadow-[0_2px_10px_rgba(201,162,77,0.12)]">
+              <Crown className="w-3.5 h-3.5 fill-current" />
               {profile.tierTitle}
             </div>
           )}
         </div>
 
         {/* ── Tab nav ── */}
-        <div
-          className="flex gap-1 p-1 rounded-2xl border"
-          style={{
-            background: "var(--bg-elevated)",
-            borderColor: "var(--border-default)",
-          }}
-        >
+        <div className="flex gap-1 p-1 rounded-2xl border bg-bg-elevated border-border-default">
           {TABS.map(({ key, label, icon: Icon }) => {
             const isActive = activeTab === key;
             return (
               <button
                 key={key}
                 onClick={() => handleTabChange(key)}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
-                style={{
-                  background: isActive
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border border-transparent",
+                  isActive
                     ? key === "billing" && proUser
-                      ? "linear-gradient(135deg,rgba(201,162,77,0.22),rgba(163,81,57,0.15))"
-                      : "var(--bg-main)"
-                    : "transparent",
-                  color: isActive
-                    ? key === "billing" && proUser
-                      ? "var(--accent-gold)"
-                      : "var(--text-primary)"
-                    : "var(--text-muted)",
-                  boxShadow: isActive ? "0 2px 8px rgba(0,0,0,0.12)" : "none",
-                  border: isActive && key === "billing" && proUser
-                    ? "1px solid rgba(201,162,77,0.3)"
-                    : "1px solid transparent",
-                }}
+                      ? "bg-[linear-gradient(135deg,rgba(201,162,77,0.22),rgba(163,81,57,0.15))] text-accent-gold shadow-[0_2px_8px_rgba(0,0,0,0.12)] border-[rgba(201,162,77,0.3)]"
+                      : "bg-bg-main text-text-primary shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                    : "bg-transparent text-text-muted"
+                )}
               >
-                <Icon className="w-4 h-4" weight={isActive ? "fill" : "regular"} />
+                <Icon className={cn("w-4 h-4", isActive && "fill-current")} />
                 <span className="hidden sm:inline">{label}</span>
               </button>
             );
@@ -931,14 +894,7 @@ export default function ProfilePage() {
         </div>
 
         {/* ── Tab content ── */}
-        <div
-          className="rounded-2xl border p-6"
-          style={{
-            background: "var(--bg-elevated)",
-            borderColor: "var(--border-default)",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-          }}
-        >
+        <div className="rounded-2xl border p-6 bg-bg-elevated border-border-default shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
           {activeTab === "profile" && <PersonalProfileTab />}
           {activeTab === "billing" && <BillingTab />}
           {activeTab === "security" && <SecurityTab />}

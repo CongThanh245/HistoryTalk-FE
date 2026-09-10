@@ -39,6 +39,7 @@ export const ROUTES = {
     CHARACTERS: "/staff/characters",
     CONTEXTS: "/staff/contexts",
     QUIZZES: "/staff/quizzes",
+    QUESTS: "/staff/quests",
     DOCUMENTS: "/staff/documents",
     TRASH: "/staff/trash",
     ADMIN: {

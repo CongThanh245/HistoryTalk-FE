@@ -86,3 +86,32 @@ export function useSoftDeleteQuizSession() {
     },
   });
 }
+
+// GET /quizzes/:quizId/rating/me
+export function useMyQuizRating(quizId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.quizzes.myRating(quizId ?? ""),
+    queryFn: () => quizService.getMyRating(quizId!),
+    enabled: !!quizId,
+  });
+}
+
+// POST /quizzes/:quizId/rating
+export function useRateQuiz(quizId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (value: number) => quizService.rateQuiz(quizId, value),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.myRating(quizId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.detail(quizId) });
+    },
+  });
+}
+
+// POST /quizzes/questions/:questionId/report
+export function useReportQuestion() {
+  return useMutation({
+    mutationFn: ({ questionId, reason }: { questionId: string; reason?: string }) =>
+      quizService.reportQuestion(questionId, reason),
+  });
+}

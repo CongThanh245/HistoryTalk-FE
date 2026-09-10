@@ -3,24 +3,25 @@
 import * as React from "react";
 import { useParams } from "next/navigation";
 import { StaffCharacterDetailView, type CharacterDraft } from "@/components/staff/staff-character-detail-view";
-import { 
-  useCharacter, 
-  useUpdateCharacter, 
+import {
+  useCharacter,
+  useUpdateCharacter,
   useMapContextToCharacter,
-  useUnmapContextFromCharacter
+  useUnmapContextFromCharacter,
+  useUploadCharacterMedia,
+  useDeleteCharacterMedia,
 } from "@/features/characters/hooks";
 import {
   useCharacterDocuments,
   useCreateCharacterDocument,
   useDeleteCharacterDocument,
   useUpdateCharacterDocument,
-  useUploadDocumentPdf,
   useGetDocumentPdfUrl,
+  useUploadAndExtractPdf,
 } from "@/features/documents/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isValidUrl } from "@/lib/utils/url";
-import { toast } from "sonner";
 
 function toInputValue(value: number | null | undefined): string {
   return value == null ? "" : String(value);
@@ -40,10 +41,12 @@ export default function EditCharacterPage() {
   const createCharacterDocument = useCreateCharacterDocument();
   const updateCharacterDocument = useUpdateCharacterDocument(id);
   const deleteCharacterDocument = useDeleteCharacterDocument(id);
-  const uploadDocumentPdf = useUploadDocumentPdf();
   const getDocumentPdfUrl = useGetDocumentPdfUrl();
+  const extractPdf = useUploadAndExtractPdf();
   const mapContextToCharacter = useMapContextToCharacter();
   const unmapContextFromCharacter = useUnmapContextFromCharacter();
+  const uploadCharacterMedia = useUploadCharacterMedia();
+  const deleteCharacterMedia = useDeleteCharacterMedia();
   
   const { data: eventsData, isLoading: isLoadingEvents } = useEvents({
     page: 1,
@@ -85,31 +88,6 @@ export default function EditCharacterPage() {
 
     try {
       await updateCharacter.mutateAsync({ id, data: payload });
-
-      const documentContent = draft.documentContent.trim();
-      if (documentContent) {
-        try {
-          if (draft.documentId) {
-            await updateCharacterDocument.mutateAsync({
-              docId: draft.documentId,
-              data: {
-                title: draft.documentTitle.trim() || draft.name.trim(),
-                content: documentContent,
-                type: "TEXT",
-              },
-            });
-          } else {
-            await createCharacterDocument.mutateAsync({
-              characterId: id,
-              title: draft.documentTitle.trim() || draft.name.trim(),
-              content: documentContent,
-              type: "TEXT",
-            });
-          }
-        } catch {
-          toast.warning("Nhân vật đã cập nhật, nhưng import tài liệu chưa thành công");
-        }
-      }
     } catch {
       // useUpdateCharacter already shows the API error toast.
     }
@@ -139,6 +117,7 @@ export default function EditCharacterPage() {
     background: character.background || "",
     image: character.imageUrl || "",
     modelUrl: character.modelUrl || "",
+    videoUrl: character.videoUrl || "",
     personality: character.personality || "",
     bornYear: toInputValue(character.bornYear),
     bornMonth: toInputValue(character.bornMonth),
@@ -160,19 +139,39 @@ export default function EditCharacterPage() {
       mode="edit"
       initialDraft={initialDraft}
       onSave={handleSave}
-      isPending={updateCharacter.isPending || createCharacterDocument.isPending || updateCharacterDocument.isPending}
+      isPending={updateCharacter.isPending}
       documents={characterDocuments.data ?? []}
       isLoadingDocuments={characterDocuments.isLoading}
       onDeleteDocument={(docId) => deleteCharacterDocument.mutate(docId)}
       isDeleteDocumentPending={deleteCharacterDocument.isPending}
-      onUploadDocumentPdf={async (docId, file) => {
-        await uploadDocumentPdf.mutateAsync({ docId, file });
-      }}
-      isUploadDocumentPdfPending={uploadDocumentPdf.isPending}
       onGetDocumentPdfUrl={async (docId) => {
         return await getDocumentPdfUrl.mutateAsync(docId);
       }}
       isGetDocumentPdfUrlPending={getDocumentPdfUrl.isPending}
+      onUploadMedia={async (characterId, file, mediaType) => {
+        await uploadCharacterMedia.mutateAsync({ characterId, file, mediaType });
+      }}
+      isUploadMediaPending={uploadCharacterMedia.isPending}
+      onDeleteMedia={async (characterId, mediaType) => {
+        await deleteCharacterMedia.mutateAsync({ characterId, mediaType });
+      }}
+      isDeleteMediaPending={deleteCharacterMedia.isPending}
+      onCreateTextDocument={async ({ title, content }) => {
+        await createCharacterDocument.mutateAsync({ characterId: id, title, content, type: "TEXT" });
+      }}
+      isCreateTextDocumentPending={createCharacterDocument.isPending}
+      onExtractPdfDocument={async (file, onProgress, signal) =>
+        extractPdf.mutateAsync({ file, entityType: "character", entityId: id, onProgress, signal })
+      }
+      isExtractPdfDocumentPending={extractPdf.isPending}
+      onCreatePdfDocument={async ({ title, content, fileUrl }) => {
+        await createCharacterDocument.mutateAsync({ characterId: id, title, content, fileUrl });
+      }}
+      isCreatePdfDocumentPending={createCharacterDocument.isPending}
+      onUpdateDocument={async (docId, data) => {
+        await updateCharacterDocument.mutateAsync({ docId, data: { ...data, type: "TEXT" } });
+      }}
+      isUpdateDocumentPending={updateCharacterDocument.isPending}
       eventOptions={eventOptions}
       isLoadingEvents={isLoadingEvents}
       onMapContext={(characterId, contextId, options) =>

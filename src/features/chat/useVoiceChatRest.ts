@@ -19,6 +19,7 @@ export interface VoiceRestMessage {
   role: "user" | "assistant";
   text: string;
   timestamp: Date;
+  quotes?: string[];
 }
 
 interface UseVoiceChatRestOptions {
@@ -268,7 +269,7 @@ export function useVoiceChatRest({
         setTimeout(() => setStatus("idle"), 2000);
       }
     },
-    [sessionId, characterId, playAudio, onError],
+    [sessionId, characterId, playWithFallback, onError],
   );
 
   // ── Bắt đầu ghi âm ─────────────────────────────────────────────────────────

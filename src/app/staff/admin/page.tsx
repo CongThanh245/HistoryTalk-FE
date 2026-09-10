@@ -20,19 +20,22 @@ import {
   CalendarIcon,
   BarChart3Icon,
   MessagesSquareIcon,
-  FileTextIcon,
   CreditCardIcon,
   AwardIcon,
   CrownIcon,
   PercentIcon,
   TrophyIcon,
   HelpCircleIcon,
+  FlameIcon,
+  Gauge,
 } from "lucide-react";
-import { GaugeIcon } from "@phosphor-icons/react";
+import Image from "next/image";
 
 import { StaffShell } from "@/components/staff/staff-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { isValidUrl } from "@/lib/utils/url";
+import { cn } from "@/lib/utils/cn";
 import {
   useAdminOverview,
   useAdminUserAnalytics,
@@ -80,6 +83,28 @@ function daysAgoISO(n: number) {
   const d = new Date();
   d.setDate(d.getDate() - n);
   return d.toISOString().slice(0, 10);
+}
+
+function formatUptime(uptime: string | number | undefined | null): string {
+  if (!uptime) return "—";
+  const seconds = parseFloat(String(uptime));
+  if (isNaN(seconds)) return String(uptime);
+
+  const d = Math.floor(seconds / (3600 * 24));
+  const h = Math.floor((seconds % (3600 * 24)) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+
+  if (d > 0) {
+    return `${d} ngày ${h} giờ`;
+  }
+  if (h > 0) {
+    return `${h} giờ ${m} phút`;
+  }
+  if (m > 0) {
+    return `${m} phút ${s} giây`;
+  }
+  return `${s} giây`;
 }
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
@@ -434,8 +459,7 @@ function KpiCard({
 }) {
   return (
     <Card
-      className="relative overflow-hidden border transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-      style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}
+      className="relative overflow-hidden border transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 bg-card-light-bg border-card-light-border"
     >
       <div className="absolute top-0 left-0 h-[3px] w-full" style={{ background: color }} />
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 pt-5">
@@ -555,7 +579,7 @@ export default function AdminDashboardPage() {
     <StaffShell
       title="Tổng quan hệ thống"
       description="Trung tâm điều khiển và giám sát chỉ số tài chính, nội dung và tăng trưởng HistoryTalk."
-      icon={GaugeIcon}
+      icon={Gauge}
       accent="var(--accent-gold)"
     >
       <div className="space-y-6">
@@ -627,7 +651,7 @@ export default function AdminDashboardPage() {
             loading={healthLoading}
             sub={
               <span className="flex flex-col gap-0.5">
-                <span>Uptime: <strong>{health?.uptime ?? "—"}</strong></span>
+                <span>Uptime: <strong>{formatUptime(health?.uptime)}</strong></span>
                 {health?.lastCheckedAt && <span className="text-[10px]">Cập nhật: {fmtDate(health.lastCheckedAt)}</span>}
               </span>
             }
@@ -661,12 +685,12 @@ export default function AdminDashboardPage() {
               <button
                 key={g}
                 onClick={() => setGranularity(g)}
-                className="rounded-lg px-3 py-1 text-[11px] font-bold transition-all duration-200"
-                style={
+                className={cn(
+                  "rounded-lg px-3 py-1 text-[11px] font-bold transition-all duration-200",
                   granularity === g
-                    ? { background: "var(--accent-gold)", color: "#fff" }
-                    : { background: "transparent", color: "var(--content-muted)" }
-                }
+                    ? "bg-accent-gold text-white"
+                    : "bg-transparent text-[var(--content-muted)]"
+                )}
               >
                 {g === "day" ? "Ngày" : g === "week" ? "Tuần" : g === "month" ? "Tháng" : "Năm"}
               </button>
@@ -680,7 +704,7 @@ export default function AdminDashboardPage() {
         {/* ── Row 3: Trend charts ── */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* User trend */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <BarChart3Icon className="h-4 w-4 text-blue-500" />
@@ -731,7 +755,7 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Revenue trend */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <TrendingUpIcon className="h-4 w-4 text-amber-500" />
@@ -786,7 +810,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           
           {/* Revenue by Tier Progress */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CrownIcon className="h-4 w-4 text-amber-500" />
@@ -848,7 +872,7 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Tier Subscriptions usage */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <UsersIcon className="h-4 w-4 text-blue-500" />
@@ -907,7 +931,7 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Orders status & Details */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CreditCardIcon className="h-4 w-4 text-purple-500" />
@@ -950,86 +974,174 @@ export default function AdminDashboardPage() {
 
         </div>
 
-        {/* ── Row 5: Quiz analytics & Content summary ── */}
+        {/* ── Row 5: Nhân vật hot + Quiz analytics (stacked) & Content summary ── */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-          {/* Quiz Performance Analytics */}
-          <Card className="lg:col-span-2" style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <TrophyIcon className="h-4 w-4 text-yellow-500" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
-                  Hiệu suất & Thống kê Quiz
-                </CardTitle>
-              </div>
-              <CardDescription className="text-xs">Đánh giá kết quả học tập và các câu hỏi học viên thường xuyên trả lời sai</CardDescription>
-            </CardHeader>
-            <CardContent className="border-t border-dashed border-[var(--card-light-border)] pt-4 space-y-4">
-              {quizLoading ? (
-                Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left Column: Stats & Top Quizzes */}
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 rounded-lg border border-[var(--card-light-border)] bg-black/5 dark:bg-white/5">
-                        <span className="text-[10px] uppercase font-bold text-[var(--content-muted)]">Tổng số Quiz</span>
-                        <div className="text-lg font-bold text-[var(--content-heading)] mt-0.5">{(quiz?.summary.totalQuizzes ?? 0).toLocaleString()}</div>
-                        <div className="text-[10px] text-[var(--content-muted)] mt-0.5">Đã xuất bản: {quiz?.summary.publishedQuizzes ?? 0}</div>
+          <div className="flex flex-col gap-6 lg:col-span-2">
+            {/* Top nhân vật hot */}
+            <Card className="bg-card-light-bg border-card-light-border">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <FlameIcon className="h-4 w-4 text-orange-500" />
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                    Nhân vật Hot nhất
+                  </CardTitle>
+                </div>
+                <CardDescription className="text-xs">Xếp hạng nhân vật được trò chuyện nhiều nhất trong hệ thống</CardDescription>
+              </CardHeader>
+              <CardContent className="border-t border-dashed border-[var(--card-light-border)] pt-4">
+                {ovLoading ? (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-24 w-full rounded-xl" />
+                    ))}
+                  </div>
+                ) : (overview?.topCharacters ?? []).length > 0 ? (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {(overview?.topCharacters ?? []).map((c, idx) => {
+                      const rank = idx + 1;
+                      const rankColor =
+                        rank === 1 ? "#f59e0b" : rank === 2 ? "#94a3b8" : rank === 3 ? "#b45309" : "var(--content-muted)";
+                      const total = c.totalMessages || 1;
+                      const userPct = Math.round((c.userMessages / total) * 100);
+                      return (
+                        <div
+                          key={c.characterId}
+                          className="relative flex items-center gap-3 rounded-xl border p-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+                          style={{ borderColor: "var(--card-light-border)" }}
+                        >
+                          <span
+                            className="absolute -top-2 -left-2 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-extrabold text-white shadow"
+                            style={{ background: rankColor }}
+                          >
+                            {rank}
+                          </span>
+                          <div
+                            className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border"
+                            style={{ borderColor: "var(--card-light-border)", background: "var(--card-light-border)" }}
+                          >
+                            {isValidUrl(c.imageUrl) ? (
+                              <Image src={c.imageUrl!} alt={c.name} fill className="object-cover" sizes="48px" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-sm font-bold" style={{ color: "var(--content-subtle)" }}>
+                                {c.name?.charAt(0) ?? "?"}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-xs font-bold text-[var(--content-heading)]" title={c.name}>
+                              {c.name}
+                            </div>
+                            {c.title && (
+                              <div className="truncate text-[10px] text-[var(--content-muted)]" title={c.title}>
+                                {c.title}
+                              </div>
+                            )}
+                            <div className="mt-1 flex items-center gap-1.5">
+                              <MessageSquareIcon className="h-3 w-3 text-orange-500" />
+                              <span className="text-xs font-extrabold text-[var(--content-heading)]">
+                                {c.totalMessages.toLocaleString()}
+                              </span>
+                              <span className="text-[10px] text-[var(--content-muted)]">tin nhắn</span>
+                            </div>
+                            <div className="mt-1 h-1 rounded-full bg-[var(--card-light-border)] overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-blue-500"
+                                style={{ width: `${userPct}%` }}
+                                title={`Người dùng: ${c.userMessages} | AI: ${c.aiMessages}`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex h-[80px] items-center justify-center text-xs text-[var(--content-muted)]">
+                    Chưa có dữ liệu trò chuyện
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Quiz Performance Analytics */}
+            <Card className="bg-card-light-bg border-card-light-border">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <TrophyIcon className="h-4 w-4 text-yellow-500" />
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                    Quiz Đang Hot
+                  </CardTitle>
+                </div>
+                <CardDescription className="text-xs">Đánh giá kết quả học tập và các câu hỏi học viên thường xuyên trả lời sai</CardDescription>
+              </CardHeader>
+              <CardContent className="border-t border-dashed border-[var(--card-light-border)] pt-4 space-y-4">
+                {quizLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Left Column: Stats & Top Quizzes */}
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 rounded-lg border border-[var(--card-light-border)] bg-black/5 dark:bg-white/5">
+                          <span className="text-[10px] uppercase font-bold text-[var(--content-muted)]">Tổng số Quiz</span>
+                          <div className="text-lg font-bold text-[var(--content-heading)] mt-0.5">{(quiz?.summary.totalQuizzes ?? 0).toLocaleString()}</div>
+                          <div className="text-[10px] text-[var(--content-muted)] mt-0.5">Đã xuất bản: {quiz?.summary.publishedQuizzes ?? 0}</div>
+                        </div>
+                        <div className="p-3 rounded-lg border border-[var(--card-light-border)] bg-black/5 dark:bg-white/5">
+                          <span className="text-[10px] uppercase font-bold text-[var(--content-muted)]">Tỷ lệ hoàn thành</span>
+                          <div className="text-lg font-bold text-emerald-500 mt-0.5">{(quiz?.summary.completionRate ?? 0).toFixed(1)}%</div>
+                          <div className="text-[10px] text-[var(--content-muted)] mt-0.5">Lượt làm bài: {quiz?.summary.completedSessions ?? 0}</div>
+                        </div>
                       </div>
-                      <div className="p-3 rounded-lg border border-[var(--card-light-border)] bg-black/5 dark:bg-white/5">
-                        <span className="text-[10px] uppercase font-bold text-[var(--content-muted)]">Tỷ lệ hoàn thành</span>
-                        <div className="text-lg font-bold text-emerald-500 mt-0.5">{(quiz?.summary.completionRate ?? 0).toFixed(1)}%</div>
-                        <div className="text-[10px] text-[var(--content-muted)] mt-0.5">Lượt làm bài: {quiz?.summary.completedSessions ?? 0}</div>
+
+                      <div>
+                        <h4 className="text-xs font-bold text-[var(--content-heading)] mb-2 uppercase tracking-wider">Top Quizzes Phổ Biến</h4>
+                        <div className="space-y-2 max-h-[170px] overflow-y-auto pr-1">
+                          {(quiz?.topQuizzes ?? []).slice(0, 3).map((q) => (
+                            <div key={q.quizId} className="p-2 rounded border border-[var(--card-light-border)] flex items-center justify-between text-xs hover:bg-[var(--card-light-hover)] transition-all">
+                              <div className="truncate max-w-[70%]">
+                                <div className="font-bold text-[var(--content-heading)] truncate" title={q.title}>{q.title}</div>
+                                <span className="text-[10px] text-[var(--content-muted)]">Cấp độ: {q.level === "EASY" ? "Dễ" : q.level === "MEDIUM" ? "Trung bình" : "Khó"}</span>
+                              </div>
+                              <div className="text-right text-[10px]">
+                                <div>Lượt làm: <strong className="text-[var(--content-heading)]">{q.startedSessions}</strong></div>
+                                <div>Đạt trung bình: <strong className="text-amber-500">{q.averageScorePercentage.toFixed(1)}%</strong></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
-                    <div>
-                      <h4 className="text-xs font-bold text-[var(--content-heading)] mb-2 uppercase tracking-wider">Top Quizzes Phổ Biến</h4>
-                      <div className="space-y-2 max-h-[170px] overflow-y-auto pr-1">
-                        {(quiz?.topQuizzes ?? []).slice(0, 3).map((q) => (
-                          <div key={q.quizId} className="p-2 rounded border border-[var(--card-light-border)] flex items-center justify-between text-xs hover:bg-[var(--card-light-hover)] transition-all">
-                            <div className="truncate max-w-[70%]">
-                              <div className="font-bold text-[var(--content-heading)] truncate" title={q.title}>{q.title}</div>
-                              <span className="text-[10px] text-[var(--content-muted)]">Cấp độ: {q.level === "EASY" ? "Dễ" : q.level === "MEDIUM" ? "Trung bình" : "Khó"}</span>
+                    {/* Right Column: Top Wrong Questions */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <HelpCircleIcon className="h-4 w-4 text-red-500" />
+                        <h4 className="text-xs font-bold text-[var(--content-heading)] uppercase tracking-wider">Các Câu Hỏi Hay Sai Nhất</h4>
+                      </div>
+                      <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                        {(quiz?.topWrongQuestions ?? []).slice(0, 3).map((q) => (
+                          <div key={q.questionId} className="p-2.5 rounded border border-red-500/10 bg-red-500/5 text-xs flex flex-col gap-1">
+                            <div className="font-medium text-[var(--content-heading)] line-clamp-2">
+                              {q.questionContent || q.questionId}
                             </div>
-                            <div className="text-right text-[10px]">
-                              <div>Lượt làm: <strong className="text-[var(--content-heading)]">{q.startedSessions}</strong></div>
-                              <div>Đạt trung bình: <strong className="text-amber-500">{q.averageScorePercentage.toFixed(1)}%</strong></div>
+                            <div className="flex justify-between items-center text-[10px] text-[var(--content-muted)] mt-1 border-t border-dashed border-[var(--card-light-border)] pt-1">
+                              <span>Quiz: <strong className="text-[var(--content-heading)] truncate max-w-[120px] inline-block align-bottom">{q.quizTitle}</strong></span>
+                              <span className="text-red-500 font-bold">Tỷ lệ sai: {q.wrongRate.toFixed(1)}% ({q.wrongAnswers}/{q.totalAnswers})</span>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   </div>
-
-                  {/* Right Column: Top Wrong Questions */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <HelpCircleIcon className="h-4 w-4 text-red-500" />
-                      <h4 className="text-xs font-bold text-[var(--content-heading)] uppercase tracking-wider">Các Câu Hỏi Hay Sai Nhất</h4>
-                    </div>
-                    <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
-                      {(quiz?.topWrongQuestions ?? []).slice(0, 3).map((q) => (
-                        <div key={q.questionId} className="p-2.5 rounded border border-red-500/10 bg-red-500/5 text-xs flex flex-col gap-1">
-                          <div className="font-medium text-[var(--content-heading)] line-clamp-2">
-                            {q.questionId} {/* Show text or ID depending on what BE returns */}
-                          </div>
-                          <div className="flex justify-between items-center text-[10px] text-[var(--content-muted)] mt-1 border-t border-dashed border-[var(--card-light-border)] pt-1">
-                            <span>Quiz: <strong className="text-[var(--content-heading)] truncate max-w-[120px] inline-block align-bottom">{q.quizTitle}</strong></span>
-                            <span className="text-red-500 font-bold">Tỷ lệ sai: {q.wrongRate.toFixed(1)}% ({q.wrongAnswers}/{q.totalAnswers})</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Content summary */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <BookOpenIcon className="h-4 w-4 text-blue-500" />
@@ -1044,7 +1156,7 @@ export default function AdminDashboardPage() {
               ) : (
                 <>
                   {/* Historical Contexts */}
-                  <div className="rounded-xl p-3 border border-amber-500/10" style={{ background: "rgba(245,158,11,0.05)" }}>
+                  <div className="rounded-xl p-3 border border-amber-500/10 bg-[rgba(245,158,11,0.05)]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">Bối cảnh lịch sử</span>
                       <span className="text-lg font-extrabold text-[var(--content-heading)]">{(content?.historicalContexts.total ?? 0).toLocaleString()}</span>
@@ -1056,7 +1168,7 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {/* Characters */}
-                  <div className="rounded-xl p-3 border border-purple-500/10" style={{ background: "rgba(139,92,246,0.05)" }}>
+                  <div className="rounded-xl p-3 border border-purple-500/10 bg-[rgba(139,92,246,0.05)]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[11px] font-bold text-purple-500 uppercase tracking-wider">Nhân vật</span>
                       <span className="text-lg font-extrabold text-[var(--content-heading)]">{(content?.characters.total ?? 0).toLocaleString()}</span>
@@ -1068,7 +1180,7 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {/* Documents */}
-                  <div className="rounded-xl p-3 border border-blue-500/10" style={{ background: "rgba(59,130,246,0.05)" }}>
+                  <div className="rounded-xl p-3 border border-blue-500/10 bg-[rgba(59,130,246,0.05)]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Tài liệu</span>
                       <span className="text-lg font-extrabold text-[var(--content-heading)]">{(content?.documents.total ?? 0).toLocaleString()}</span>
@@ -1087,7 +1199,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
           {/* Detailed User analytics */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <UsersIcon className="h-4 w-4 text-emerald-500" />
@@ -1140,7 +1252,7 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Chat activity details */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <MessagesSquareIcon className="h-4 w-4 text-purple-500" />
@@ -1167,7 +1279,7 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Quick nav redirects */}
-          <Card style={{ background: "var(--card-light-bg)", borderColor: "var(--card-light-border)" }}>
+          <Card className="bg-card-light-bg border-card-light-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <ActivityIcon className="h-4 w-4 text-[var(--accent-gold)]" />
@@ -1185,19 +1297,7 @@ export default function AdminDashboardPage() {
               >
                 <span className="flex items-center gap-2 font-medium text-[var(--content-heading)]">
                   <UserCheckIcon className="h-4 w-4 text-blue-500" />
-                  Khách hàng
-                </span>
-                <ArrowRightIcon className="h-4 w-4 opacity-50" />
-              </Button>
-
-              <Button
-                variant="outline"
-                className="w-full justify-between h-10 rounded-xl px-4 hover:bg-[var(--card-light-hover)] border-[var(--card-light-border)] bg-transparent cursor-pointer"
-                onClick={() => router.push("/staff/admin/accounts/content-admin")}
-              >
-                <span className="flex items-center gap-2 font-medium text-[var(--content-heading)]">
-                  <FileTextIcon className="h-4 w-4 text-purple-500" />
-                  Content Admin
+                  Customer
                 </span>
                 <ArrowRightIcon className="h-4 w-4 opacity-50" />
               </Button>
@@ -1217,6 +1317,7 @@ export default function AdminDashboardPage() {
           </Card>
 
         </div>
+
       </div>
     </StaffShell>
   );

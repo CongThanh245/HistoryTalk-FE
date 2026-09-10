@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { CalendarDays, CheckCircle2, Clock3, Eye, RotateCcw, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock3, Eye, Minus, RotateCcw, TrendingDown, TrendingUp, XCircle } from "lucide-react";
 import { useQuizSessionDetail } from "@/features/quiz/hooks";
 import type { QuizResult, QuizSessionQuestion } from "@/services/quiz.service";
+import { cn } from "@/lib/utils/cn";
 import {
   Dialog,
   DialogContent,
@@ -50,14 +51,14 @@ function getDurationFromRange(startedAt?: string, completedAt?: string) {
   return Math.round((completed - started) / 1000);
 }
 
-function getTone(percentage: number) {
+function getToneClasses(percentage: number) {
   if (percentage >= 80) {
-    return { bg: "rgba(16,185,129,0.10)", fg: "#047857" };
+    return "bg-emerald-500/10 text-[#047857]";
   }
   if (percentage >= 50) {
-    return { bg: "rgba(201,162,77,0.14)", fg: "var(--gold-on-light)" };
+    return "bg-accent-gold/14 text-gold-on-light";
   }
-  return { bg: "rgba(184,50,42,0.10)", fg: "var(--accent-danger)" };
+  return "bg-accent-danger/10 text-accent-danger";
 }
 
 function normalizeQuestionCount(value: number, totalQuestions: number) {
@@ -65,30 +66,44 @@ function normalizeQuestionCount(value: number, totalQuestions: number) {
   return Math.min(Math.max(Math.round(value), 0), totalQuestions);
 }
 
-function getOptionTone(question: QuizSessionQuestion, optionIndex: number) {
+function getOptionClasses(question: QuizSessionQuestion, optionIndex: number) {
   const isAnswer = optionIndex === question.correctAnswer;
   const isWrongPick =
     optionIndex === question.selectedAnswer && optionIndex !== question.correctAnswer;
 
   if (isAnswer) {
-    return {
-      background: "rgba(16,185,129,0.10)",
-      color: "#065f46",
-      fontWeight: 700,
-    };
+    return "bg-emerald-500/10 text-[#065f46] font-bold";
   }
   if (isWrongPick) {
-    return {
-      background: "rgba(184,50,42,0.08)",
-      color: "var(--accent-danger)",
-      fontWeight: 700,
-    };
+    return "bg-accent-danger/[0.08] text-accent-danger font-bold";
   }
-  return {
-    background: "rgba(27,38,50,0.025)",
-    color: "var(--content-muted)",
-    fontWeight: 500,
-  };
+  return "bg-[rgba(27,38,50,0.025)] text-content-muted font-medium";
+}
+
+// So sanh % lan nay voi lan gan nhat truoc do cua cung quiz.
+function ComparisonBadge({ percentage, previous }: { percentage: number; previous: { percentage: number } }) {
+  const delta = percentage - previous.percentage;
+  const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
+  const text =
+    delta === 0
+      ? `Bằng lần trước (${previous.percentage}%)`
+      : `${delta > 0 ? "+" : ""}${delta}% so với lần trước (${previous.percentage}%)`;
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold",
+        delta > 0
+          ? "bg-emerald-500/10 text-[#047857]"
+          : delta < 0
+            ? "bg-accent-danger/[0.08] text-accent-danger"
+            : "bg-[rgba(27,38,50,0.05)] text-content-muted",
+      )}
+    >
+      <Icon size={13} strokeWidth={2.25} />
+      {text}
+    </span>
+  );
 }
 
 export function QuizHistoryView({
@@ -97,63 +112,47 @@ export function QuizHistoryView({
   onRetake,
 }: QuizHistoryViewProps) {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [reviewFilter, setReviewFilter] = useState<"all" | "wrong">("all");
   const { data: detail, isLoading: detailLoading } =
     useQuizSessionDetail(selectedSessionId);
   const selectedResult = useMemo(
     () => results.find((item) => item.sessionId === selectedSessionId),
     [results, selectedSessionId],
   );
-  const detailTone = detail ? getTone(detail.percentage) : null;
 
   return (
     <>
-      <section
-        className="rounded-xl border"
-        style={{
-          background: "var(--card-light-bg)",
-          borderColor: "var(--card-light-border)",
-        }}
-      >
-        <div
-          className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-end sm:justify-between"
-          style={{ borderBottom: "1px solid var(--card-light-border)" }}
-        >
+      <section className="rounded-xl border border-card-light-border bg-card-light-bg">
+        <div className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-end sm:justify-between border-b border-card-light-border">
           <div>
-            <h2 className="text-base font-bold" style={{ color: "var(--content-heading)" }}>
+            <h2 className="text-base font-bold text-content-heading">
               Lịch sử làm bài
             </h2>
-            <p className="mt-1 text-sm" style={{ color: "var(--content-muted)" }}>
+            <p className="mt-1 text-sm text-content-muted">
               Xem lại các lần nộp trước đây của bạn.
             </p>
           </div>
-          <span
-            className="rounded-md px-2.5 py-1 text-xs font-bold"
-            style={{
-              background: "rgba(27,38,50,0.05)",
-              color: "var(--content-muted)",
-            }}
-          >
+          <span className="rounded-md px-2.5 py-1 text-xs font-bold bg-[rgba(27,38,50,0.05)] text-content-muted">
             {results.length} lần làm
           </span>
         </div>
 
         {isLoading ? (
-          <div className="p-10 text-center text-sm" style={{ color: "var(--content-muted)" }}>
+          <div className="p-10 text-center text-sm text-content-muted">
             Đang tải lịch sử...
           </div>
         ) : results.length === 0 ? (
           <div className="p-10 text-center">
-            <p className="font-semibold" style={{ color: "var(--content-heading)" }}>
+            <p className="font-semibold text-content-heading">
               Chưa có lịch sử làm bài
             </p>
-            <p className="mt-1 text-sm" style={{ color: "var(--content-muted)" }}>
+            <p className="mt-1 text-sm text-content-muted">
               Sau khi nộp bài, kết quả sẽ xuất hiện ở đây.
             </p>
           </div>
         ) : (
-          <div className="divide-y" style={{ borderColor: "var(--card-light-border)" }}>
+          <div className="divide-y divide-card-light-border">
             {results.map((result) => {
-              const tone = getTone(result.percentage);
               const score = normalizeQuestionCount(result.score, result.totalQuestions);
               return (
                 <article
@@ -162,18 +161,20 @@ export function QuizHistoryView({
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate text-sm font-bold" style={{ color: "var(--content-heading)" }}>
+                      <h3 className="truncate text-sm font-bold text-content-heading">
                         {result.quizTitle}
                       </h3>
                       <span
-                        className="rounded-md px-2 py-1 text-xs font-bold"
-                        style={{ background: tone.bg, color: tone.fg }}
+                        className={cn(
+                          "rounded-md px-2 py-1 text-xs font-bold",
+                          getToneClasses(result.percentage),
+                        )}
                       >
                         {score}/{result.totalQuestions}
                       </span>
                     </div>
 
-                    <div className="mt-3 flex flex-wrap gap-3 text-xs" style={{ color: "var(--content-muted)" }}>
+                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-content-muted">
                       <span className="inline-flex items-center gap-1.5">
                         <CalendarDays size={14} />
                         {formatDateTime(result.completedAt)}
@@ -187,25 +188,18 @@ export function QuizHistoryView({
 
                   <div className="flex flex-wrap gap-2 md:justify-end">
                     <button
-                      onClick={() => setSelectedSessionId(result.sessionId)}
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition-colors"
-                      style={{
-                        background: "var(--card-light-bg)",
-                        color: "var(--content-heading)",
-                        border: "1px solid var(--card-light-border)",
+                      onClick={() => {
+                        setReviewFilter("all");
+                        setSelectedSessionId(result.sessionId);
                       }}
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition-colors bg-card-light-bg text-content-heading border border-card-light-border"
                     >
                       <Eye size={16} />
                       Xem chi tiết
                     </button>
                     <button
                       onClick={() => onRetake(result.quizId)}
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition-colors"
-                      style={{
-                        background: "var(--abyssal-blue)",
-                        color: "var(--text-on-dark)",
-                        boxShadow: "0 8px 18px rgba(27,38,50,0.14)",
-                      }}
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition-colors bg-[var(--abyssal-blue)] text-[var(--text-on-dark)] shadow-[0_8px_18px_rgba(27,38,50,0.14)]"
                     >
                       <RotateCcw size={16} />
                       Làm lại
@@ -224,100 +218,118 @@ export function QuizHistoryView({
           if (!open) setSelectedSessionId(null);
         }}
       >
-        <DialogContent
-          className="max-h-[88vh] overflow-hidden p-0 sm:max-w-5xl"
-          style={{
-            background: "var(--card-light-bg)",
-            borderColor: "var(--card-light-border)",
-          }}
-        >
-          <DialogHeader
-            className="px-5 py-4"
-            style={{ borderBottom: "1px solid var(--card-light-border)" }}
-          >
-            <DialogTitle style={{ color: "var(--content-heading)" }}>
+        <DialogContent className="max-h-[88vh] overflow-hidden p-0 sm:max-w-5xl bg-card-light-bg border-card-light-border">
+          <DialogHeader className="px-5 py-4 border-b border-card-light-border">
+            <DialogTitle className="text-content-heading">
               Chi tiết bài làm
             </DialogTitle>
-            <DialogDescription style={{ color: "var(--content-muted)" }}>
+            <DialogDescription className="text-content-muted">
               Xem lại từng câu, đáp án đã chọn và đáp án đúng.
             </DialogDescription>
           </DialogHeader>
 
           <div className="max-h-[calc(88vh-96px)] overflow-y-auto p-5">
             {detailLoading ? (
-              <div className="py-8 text-center text-sm" style={{ color: "var(--content-muted)" }}>
+              <div className="py-8 text-center text-sm text-content-muted">
                 Đang tải chi tiết bài làm...
               </div>
             ) : detail ? (
               <>
                 <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--content-subtle)" }}>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-content-subtle">
                       Chi tiết bài làm
                     </p>
-                    <h3 className="mt-1 text-lg font-bold" style={{ color: "var(--content-heading)" }}>
+                    <h3 className="mt-1 text-lg font-bold text-content-heading">
                       {detail.quizTitle}
                     </h3>
-                    <p className="mt-1 text-sm" style={{ color: "var(--content-muted)" }}>
+                    <p className="mt-1 text-sm text-content-muted">
                       {formatDateTime(detail.startedAt)} - {formatDateTime(detail.completedAt)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {detailTone && (
-                      <span
-                        className="rounded-md px-3 py-1.5 text-sm font-bold"
-                        style={{ background: detailTone.bg, color: detailTone.fg }}
-                      >
-                        {normalizeQuestionCount(detail.score, detail.totalQuestions)}/{detail.totalQuestions}
-                      </span>
-                    )}
                     <span
-                      className="rounded-md px-3 py-1.5 text-sm font-bold"
-                      style={{ background: "rgba(27,38,50,0.05)", color: "var(--content-muted)" }}
+                      className={cn(
+                        "rounded-md px-3 py-1.5 text-sm font-bold",
+                        getToneClasses(detail.percentage),
+                      )}
                     >
+                      {normalizeQuestionCount(detail.score, detail.totalQuestions)}/{detail.totalQuestions}
+                    </span>
+                    <span className="rounded-md px-3 py-1.5 text-sm font-bold bg-[rgba(27,38,50,0.05)] text-content-muted">
                       {detail.limitedTime ? `Giới hạn ${formatDuration(detail.limitedTime)}` : "Không giới hạn"}
                     </span>
-                    <span
-                      className="rounded-md px-3 py-1.5 text-sm font-bold"
-                      style={{ background: "rgba(27,38,50,0.05)", color: "var(--content-muted)" }}
-                    >
+                    <span className="rounded-md px-3 py-1.5 text-sm font-bold bg-[rgba(27,38,50,0.05)] text-content-muted">
                       Tổng thời gian {formatDuration(getDurationFromRange(detail.startedAt, detail.completedAt))}
                     </span>
+                    {detail.previousAttempt && (
+                      <ComparisonBadge percentage={detail.percentage} previous={detail.previousAttempt} />
+                    )}
                   </div>
                 </div>
 
+                {(() => {
+                  const wrongCount = detail.questions.filter((q) => !q.correct).length;
+                  return wrongCount > 0 ? (
+                    <div className="mb-4 flex gap-2">
+                      <button
+                        onClick={() => setReviewFilter("all")}
+                        className={cn(
+                          "rounded-full px-3 py-1.5 text-xs font-bold transition-colors border",
+                          reviewFilter === "all"
+                            ? "bg-accent-gold-active text-gold-on-light border-accent-gold/35"
+                            : "bg-card-light-bg text-content-muted border-card-light-border",
+                        )}
+                      >
+                        Tất cả ({detail.questions.length})
+                      </button>
+                      <button
+                        onClick={() => setReviewFilter("wrong")}
+                        className={cn(
+                          "rounded-full px-3 py-1.5 text-xs font-bold transition-colors border",
+                          reviewFilter === "wrong"
+                            ? "bg-accent-danger/10 text-accent-danger border-accent-danger/35"
+                            : "bg-card-light-bg text-content-muted border-card-light-border",
+                        )}
+                      >
+                        Câu sai ({wrongCount})
+                      </button>
+                    </div>
+                  ) : null;
+                })()}
+
                 <div className="space-y-3">
-                  {detail.questions.map((question, index) => (
+                  {detail.questions.map((question, index) => {
+                    if (reviewFilter === "wrong" && question.correct) return null;
+                    return (
                     <article
                       key={question.questionId}
-                      className="rounded-xl border p-4"
-                      style={{
-                        borderColor: question.correct
-                          ? "rgba(16,185,129,0.28)"
-                          : "rgba(184,50,42,0.24)",
-                        background: "rgba(27,38,50,0.018)",
-                      }}
+                      className={cn(
+                        "rounded-xl border p-4 bg-[rgba(27,38,50,0.018)]",
+                        question.correct
+                          ? "border-emerald-500/28"
+                          : "border-accent-danger/24",
+                      )}
                     >
                       <div className="mb-3 flex items-start gap-3">
                         <span
-                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                          style={{
-                            background: question.correct
-                              ? "rgba(16,185,129,0.12)"
-                              : "rgba(184,50,42,0.10)",
-                            color: question.correct ? "#047857" : "var(--accent-danger)",
-                          }}
+                          className={cn(
+                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                            question.correct
+                              ? "bg-emerald-500/12 text-[#047857]"
+                              : "bg-accent-danger/10 text-accent-danger",
+                          )}
                         >
                           {index + 1}
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start gap-2">
                             {question.correct ? (
-                              <CheckCircle2 className="mt-0.5 shrink-0" size={16} color="#047857" />
+                              <CheckCircle2 className="mt-0.5 shrink-0 text-[#047857]" size={16} />
                             ) : (
-                              <XCircle className="mt-0.5 shrink-0" size={16} color="var(--accent-danger)" />
+                              <XCircle className="mt-0.5 shrink-0 text-accent-danger" size={16} />
                             )}
-                            <p className="text-sm font-semibold leading-6" style={{ color: "var(--content-heading)" }}>
+                            <p className="text-sm font-semibold leading-6 text-content-heading">
                               {question.content}
                             </p>
                           </div>
@@ -326,32 +338,24 @@ export function QuizHistoryView({
 
                       <div className="grid gap-2 sm:grid-cols-2">
                         {question.options.map((option, optionIndex) => {
-                          const tone = getOptionTone(question, optionIndex);
                           const selected = question.selectedAnswer === optionIndex;
                           return (
                             <div
                               key={optionIndex}
-                              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
-                              style={tone}
+                              className={cn(
+                                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
+                                getOptionClasses(question, optionIndex),
+                              )}
                             >
                               <span
-                                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-                                style={{
-                                  background:
-                                    optionIndex === question.correctAnswer
-                                      ? "#047857"
-                                      : selected
-                                        ? "var(--accent-danger)"
-                                        : "var(--card-light-bg)",
-                                  color:
-                                    optionIndex === question.correctAnswer || selected
-                                      ? "#fff"
-                                      : "var(--content-muted)",
-                                  border:
-                                    optionIndex === question.correctAnswer || selected
-                                      ? "none"
-                                      : "1px solid var(--card-light-border)",
-                                }}
+                                className={cn(
+                                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                                  optionIndex === question.correctAnswer
+                                    ? "bg-[#047857] text-white"
+                                    : selected
+                                      ? "bg-accent-danger text-white"
+                                      : "bg-card-light-bg text-content-muted border border-card-light-border",
+                                )}
                               >
                                 {OPTION_LABELS[optionIndex]}
                               </span>
@@ -362,16 +366,17 @@ export function QuizHistoryView({
                       </div>
 
                       {question.explanation && (
-                        <p className="mt-3 text-sm leading-6" style={{ color: "var(--content-muted)" }}>
+                        <p className="mt-3 text-sm leading-6 text-content-muted">
                           {question.explanation}
                         </p>
                       )}
                     </article>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             ) : selectedResult ? (
-              <p className="py-8 text-center text-sm" style={{ color: "var(--content-muted)" }}>
+              <p className="py-8 text-center text-sm text-content-muted">
                 Chưa tải được chi tiết cho lần làm này.
               </p>
             ) : null}

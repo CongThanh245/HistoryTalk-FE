@@ -4,15 +4,16 @@ import * as React from "react";
 import { useParams } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-  PencilIcon,
-  MagnifyingGlassIcon,
-  UsersIcon,
-  UserIcon,
-  ShieldCheckIcon,
-  CoinsIcon,
-  LockKeyIcon,
-  LockKeyOpenIcon,
-} from "@phosphor-icons/react";
+  Pencil,
+  Plus,
+  Search,
+  Users,
+  User,
+  ShieldCheck,
+  Coins,
+  LockKeyhole,
+  LockKeyholeOpen,
+} from "lucide-react";
 
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
@@ -31,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import {
   useAdminUsers,
+  useAdminCreateUser,
   useAdminUpdateUser,
   useAdminDeleteUser,
   useAdminRestoreUser,
@@ -51,7 +53,7 @@ function isUserDeleted(user: AdminUser): boolean {
 
 interface RoleMeta {
   label: string;
-  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  icon: React.ComponentType<{ className?: string }>;
   accent: string;
   description: string;
   showToken: boolean;
@@ -61,7 +63,7 @@ interface RoleMeta {
 const ROLE_META: Record<string, RoleMeta> = {
   customer: {
     label: "Khách hàng",
-    icon: UsersIcon,
+    icon: Users,
     accent: "var(--accent-blue)",
     description: "Quản lý tài khoản khách hàng: xem danh sách, chỉnh sửa hồ sơ và khoá tài khoản.",
     showToken: true,
@@ -69,7 +71,7 @@ const ROLE_META: Record<string, RoleMeta> = {
   },
   "content-admin": {
     label: "Content Admin",
-    icon: UserIcon,
+    icon: User,
     accent: "var(--accent-bronze)",
     description: "Quản lý tài khoản biên tập viên nội dung.",
     showToken: false,
@@ -77,7 +79,7 @@ const ROLE_META: Record<string, RoleMeta> = {
   },
   "system-admin": {
     label: "System Admin",
-    icon: ShieldCheckIcon,
+    icon: ShieldCheck,
     accent: "var(--accent-gold)",
     description: "Quản lý tài khoản quản trị viên hệ thống.",
     showToken: false,
@@ -148,18 +150,24 @@ export default function AdminAccountsPage() {
   // Data
   const { data: usersResponse, isLoading, isFetching } = useAdminUsers(roleEnum, { page: 0, size: 100 });
   const allUsers = React.useMemo(() => usersResponse?.content ?? [], [usersResponse?.content]);
+  const createUser = useAdminCreateUser();
   const updateUser = useAdminUpdateUser();
   const deleteUser = useAdminDeleteUser();
   const restoreUser = useAdminRestoreUser();
 
+  // POST /auth/register-content-admin chỉ nhận roleName CONTENT_ADMIN | SYSTEM_ADMIN — không tạo được CUSTOMER qua đây.
+  const canCreate = roleEnum === "CONTENT_ADMIN" || roleEnum === "SYSTEM_ADMIN";
 
   // UI state
   const [search, setSearch] = React.useState("");
 
   // Dialogs
   const [formOpen, setFormOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("edit");
   const [formTarget, setFormTarget] = React.useState<AdminUser | null>(null);
   const [formData, setFormData] = React.useState<Partial<AdminUser>>(() => buildEmptyUser(roleEnum));
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
 
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<AdminUser | null>(null);
@@ -181,7 +189,17 @@ export default function AdminAccountsPage() {
 
 
 
+  function openCreate() {
+    setFormMode("create");
+    setFormTarget(null);
+    setFormData(buildEmptyUser(roleEnum));
+    setPassword("");
+    setConfirmPassword("");
+    setFormOpen(true);
+  }
+
   function openEdit(user: AdminUser) {
+    setFormMode("edit");
     setFormTarget(user);
     setFormData({
       userName: user.userName,
@@ -197,6 +215,23 @@ export default function AdminAccountsPage() {
   }
 
   function handleFormSave() {
+    if (formMode === "create") {
+      if (!formData.userName?.trim() || !formData.fullName?.trim() || !formData.email?.trim()) return;
+      if (password.length < 6 || password !== confirmPassword) return;
+      createUser.mutate(
+        {
+          userName: formData.userName.trim(),
+          name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          password,
+          confirmPassword,
+          roleName: roleEnum as "CONTENT_ADMIN" | "SYSTEM_ADMIN",
+        },
+        { onSuccess: () => setFormOpen(false) }
+      );
+      return;
+    }
+
     if (!formTarget || !formData.userName?.trim()) return;
     const updates = {
       userName: formData.userName,
@@ -212,6 +247,15 @@ export default function AdminAccountsPage() {
       { onSuccess: () => setFormOpen(false) }
     );
   }
+
+  const isFormValid =
+    formMode === "create"
+      ? !!formData.userName?.trim() &&
+        !!formData.fullName?.trim() &&
+        !!formData.email?.trim() &&
+        password.length >= 6 &&
+        password === confirmPassword
+      : !!formData.userName?.trim();
 
 
 
@@ -239,19 +283,19 @@ export default function AdminAccountsPage() {
           return (
             <div className="flex items-center gap-3 min-w-[200px]">
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 font-bold text-sm text-white select-none"
+                className="flex items-center justify-center text-sm font-bold text-white rounded-full select-none w-9 h-9 shrink-0"
                 style={{ background: bgColor }}
               >
                 {initials}
               </div>
               <div>
-                <p className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+                <p className="text-sm font-semibold text-content-heading">
                   {u.fullName || u.userName}
                 </p>
-                <p className="text-xs" style={{ color: "var(--content-muted)" }}>
+                <p className="text-xs text-content-muted">
                   {u.email}
                 </p>
-                {u.tierTitle && (
+                {meta.showTier && u.tierTitle && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">
                     {u.tierTitle}
                   </span>
@@ -289,8 +333,8 @@ export default function AdminAccountsPage() {
         header: "Token",
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5">
-            <CoinsIcon className="h-3.5 w-3.5" style={{ color: "var(--accent-gold)" }} />
-            <span className="text-sm font-semibold" style={{ color: "var(--content-heading)" }}>
+            <Coins className="h-3.5 w-3.5 text-accent-gold" />
+            <span className="text-sm font-semibold text-content-heading">
               {row.original.token.toLocaleString()}
             </span>
           </div>
@@ -300,19 +344,10 @@ export default function AdminAccountsPage() {
 
     base.push(
       {
-        accessorKey: "lastActiveDate",
-        header: "Hoạt động cuối",
-        cell: ({ row }) => (
-          <span className="text-xs" style={{ color: "var(--content-muted)" }}>
-            {row.original.lastActiveDate ? timeAgo(row.original.lastActiveDate) : "—"}
-          </span>
-        ),
-      },
-      {
         accessorKey: "createdAt",
         header: "Ngày tạo",
         cell: ({ row }) => (
-          <span className="text-xs" style={{ color: "var(--content-muted)" }}>
+          <span className="text-xs text-content-muted">
             {formatDate(row.original.createdAt)}
           </span>
         ),
@@ -324,26 +359,12 @@ export default function AdminAccountsPage() {
           const u = row.original;
           const isDeleted = isUserDeleted(u);
           return isDeleted ? (
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
-              style={{
-                background: "rgba(239,68,68,0.12)",
-                color: "#ef4444",
-                border: "1px solid rgba(239,68,68,0.25)",
-              }}
-            >
-              <LockKeyIcon className="h-3 w-3" />
+            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold bg-[rgba(239,68,68,0.12)] text-[#ef4444] border border-[rgba(239,68,68,0.25)]">
+              <LockKeyhole className="w-3 h-3" />
               Đã khóa
             </span>
           ) : (
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
-              style={{
-                background: "rgba(16,185,129,0.12)",
-                color: "#10b981",
-                border: "1px solid rgba(16,185,129,0.25)",
-              }}
-            >
+            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold bg-[rgba(16,185,129,0.12)] text-[#10b981] border border-[rgba(16,185,129,0.25)]">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               Hoạt động
             </span>
@@ -352,7 +373,7 @@ export default function AdminAccountsPage() {
       },
       {
         id: "actions",
-        header: () => <div className="text-right pr-2">Thao tác</div>,
+        header: () => <div className="pr-2 text-right">Thao tác</div>,
         cell: ({ row }) => {
           const u = row.original;
           const isDeleted = isUserDeleted(u);
@@ -362,42 +383,39 @@ export default function AdminAccountsPage() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full"
+                  className="rounded-full text-[#10b981]"
                   title="Mở khóa tài khoản"
                   onClick={() => {
                     setRestoreTarget(u);
                     setRestoreOpen(true);
                   }}
                   disabled={restoreUser.isPending}
-                  style={{ color: "#10b981" }}
                 >
-                  <LockKeyOpenIcon className="h-4 w-4" />
+                  <LockKeyholeOpen className="w-4 h-4" />
                 </Button>
               ) : (
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full"
+                  className="rounded-full text-accent-danger"
                   title="Khóa tài khoản"
                   onClick={() => {
                     setDeleteTarget(u);
                     setDeleteOpen(true);
                   }}
                   disabled={deleteUser.isPending}
-                  style={{ color: "var(--accent-danger)" }}
                 >
-                  <LockKeyIcon className="h-4 w-4" />
+                  <LockKeyhole className="w-4 h-4" />
                 </Button>
               )}
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="rounded-full"
+                className="rounded-full text-[var(--header-text-muted)]"
                 title="Chỉnh sửa"
                 onClick={() => openEdit(u)}
-                style={{ color: "var(--header-text-muted)" }}
               >
-                <PencilIcon className="h-4 w-4" />
+                <Pencil className="w-4 h-4" />
               </Button>
             </div>
           );
@@ -429,50 +447,41 @@ export default function AdminAccountsPage() {
           <StaffStatCard
             label="Tổng tài khoản"
             value={allUsers.length}
-            icon={<UsersIcon className="h-5 w-5" />}
+            icon={<Users className="w-5 h-5" />}
             tone="blue"
           />
           <StaffStatCard
             label="Đang hoạt động"
             value={allUsers.filter((u) => !isUserDeleted(u)).length}
-            icon={<ShieldCheckIcon className="h-5 w-5" />}
+            icon={<ShieldCheck className="w-5 h-5" />}
             tone="green"
           />
           <StaffStatCard
             label="Đang bị khoá"
             value={allUsers.filter((u) => isUserDeleted(u)).length}
-            icon={<LockKeyIcon className="h-5 w-5" />}
+            icon={<LockKeyhole className="w-5 h-5" />}
             tone="red"
           />
           {meta.showToken && (
             <StaffStatCard
               label="Tổng token còn lại"
               value={allUsers.reduce((s, u) => s + (u.token || 0), 0).toLocaleString()}
-              icon={<CoinsIcon className="h-5 w-5" />}
+              icon={<Coins className="w-5 h-5" />}
               tone="gold"
             />
           )}
         </StaffStatsGrid>
       )}
       {/* Main table card */}
-      <section
-        className="rounded-2xl border p-6 space-y-5"
-        style={{
-          background: "var(--card-light-bg)",
-          borderColor: "var(--card-light-border)",
-        }}
-      >
+      <section className="p-6 space-y-5 border rounded-2xl bg-card-light-bg border-card-light-border">
         {/* Header row */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           {/* Count info */}
           <div className="space-y-0.5">
-            <h2
-              className="text-base font-semibold"
-              style={{ color: "var(--content-heading)" }}
-            >
+            <h2 className="text-base font-semibold text-content-heading">
               {`Danh sách ${meta.label}`}
             </h2>
-            <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+            <p className="text-sm text-content-muted">
               {isLoading ? (
                 "Đang tải..."
               ) : (
@@ -487,24 +496,27 @@ export default function AdminAccountsPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full sm:w-auto">
+          <div className="flex flex-col w-full gap-2 sm:flex-row sm:items-center sm:w-auto">
             {/* Search */}
             <div className="relative w-full sm:w-[280px]">
-              <MagnifyingGlassIcon
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4"
-                style={{ color: "var(--content-subtle)" }}
-              />
+              <Search className="absolute w-4 h-4 -translate-y-1/2 left-3 top-1/2 text-content-subtle" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm tên, email..."
-                className="pl-10 h-10 rounded-xl border"
-                style={{
-                  background: "rgba(27,38,50,0.05)",
-                  borderColor: "var(--card-light-border)",
-                }}
+                className="pl-10 h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border"
               />
             </div>
+            {canCreate && (
+              <Button
+                onClick={openCreate}
+                className="text-white border-0 rounded-xl gap-1.5 shrink-0"
+                style={{ background: meta.accent }}
+              >
+                <Plus className="w-4 h-4" />
+                Tạo tài khoản
+              </Button>
+            )}
           </div>
         </div>
 
@@ -521,129 +533,128 @@ export default function AdminAccountsPage() {
       </div>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent
-          className="max-w-md staff-theme"
-          style={{
-            background: "var(--card-light-bg)",
-            borderColor: "var(--card-light-border)",
-            color: "var(--content-text)",
-          }}
-        >
+        <DialogContent className="max-w-md staff-theme bg-card-light-bg border-card-light-border text-content-text">
           <DialogHeader>
-            <DialogTitle style={{ color: "var(--content-heading)" }}>
-              Chỉnh sửa tài khoản
+            <DialogTitle className="text-content-heading">
+              {formMode === "create" ? `Tạo tài khoản ${meta.label}` : "Chỉnh sửa tài khoản"}
             </DialogTitle>
-            <DialogDescription style={{ color: "var(--content-muted)" }}>
-              Cập nhật thông tin tài khoản người dùng.
+            <DialogDescription className="text-content-muted">
+              {formMode === "create"
+                ? `Tài khoản mới sẽ có vai trò ${meta.label} và đăng nhập được ngay bằng email/mật khẩu bên dưới.`
+                : "Cập nhật thông tin tài khoản người dùng."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-1">
+          <div className="py-1 space-y-4">
             {/* Username */}
             <div className="space-y-1.5">
-              <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>
+              <Label className="text-content-heading text-[13px]">
                 Tên người dùng <span className="text-destructive">*</span>
               </Label>
               <Input
                 value={formData.userName ?? ""}
                 onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, userName: e.target.value }))}
                 placeholder="Nhập tên người dùng"
-                className="h-10 rounded-xl border"
-                style={{
-                  background: "rgba(27,38,50,0.05)",
-                  borderColor: "var(--card-light-border)",
-                  color: "var(--content-heading)",
-                }}
+                className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
               />
             </div>
 
             {/* Full Name */}
             <div className="space-y-1.5">
-              <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>
-                Họ và tên
+              <Label className="text-content-heading text-[13px]">
+                Họ và tên {formMode === "create" && <span className="text-destructive">*</span>}
               </Label>
               <Input
                 value={formData.fullName ?? ""}
                 onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, fullName: e.target.value }))}
                 placeholder="Nhập họ và tên"
-                className="h-10 rounded-xl border"
-                style={{
-                  background: "rgba(27,38,50,0.05)",
-                  borderColor: "var(--card-light-border)",
-                  color: "var(--content-heading)",
-                }}
+                className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
               />
             </div>
 
             {/* Email */}
             <div className="space-y-1.5">
-              <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>
+              <Label className="text-content-heading text-[13px]">
                 Email <span className="text-destructive">*</span>
               </Label>
               <Input
                 type="email"
                 value={formData.email ?? ""}
+                disabled={formMode === "edit"}
                 onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, email: e.target.value }))}
                 placeholder="example@historytalk.vn"
-                className="h-10 rounded-xl border"
-                style={{
-                  background: "rgba(27,38,50,0.05)",
-                  borderColor: "var(--card-light-border)",
-                  color: "var(--content-heading)",
-                }}
+                className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading disabled:opacity-60"
               />
             </div>
 
-            {/* Phone Number */}
-            <div className="space-y-1.5">
-              <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>
-                Số điện thoại
-              </Label>
-              <Input
-                value={formData.phoneNumber ?? ""}
-                onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, phoneNumber: e.target.value }))}
-                placeholder="Nhập số điện thoại"
-                className="h-10 rounded-xl border"
-                style={{
-                  background: "rgba(27,38,50,0.05)",
-                  borderColor: "var(--card-light-border)",
-                  color: "var(--content-heading)",
-                }}
-              />
-            </div>
-
-            {/* Address */}
-            <div className="space-y-1.5">
-              <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>
-                Địa chỉ
-              </Label>
-              <Input
-                value={formData.address ?? ""}
-                onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, address: e.target.value }))}
-                placeholder="Nhập địa chỉ"
-                className="h-10 rounded-xl border"
-                style={{
-                  background: "rgba(27,38,50,0.05)",
-                  borderColor: "var(--card-light-border)",
-                  color: "var(--content-heading)",
-                }}
-              />
-            </div>
-
-            {/* Tier - customer only (read only, cannot change via update API) */}
-            {meta.showTier && formTarget?.tierTitle && (
-              <div className="space-y-1.5">
-                <Label style={{ color: "var(--content-heading)", fontSize: 13 }}>Gói dịch vụ hiện tại</Label>
-                <div className="h-10 rounded-xl border px-3 flex items-center text-sm"
-                  style={{
-                    background: "rgba(27,38,50,0.05)",
-                    borderColor: "var(--card-light-border)",
-                    color: "var(--content-heading)",
-                  }}
-                >
-                  {formTarget.tierTitle}
+            {formMode === "create" ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-content-heading text-[13px]">
+                    Mật khẩu <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Tối thiểu 6 ký tự"
+                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-content-heading text-[13px]">
+                    Xác nhận mật khẩu <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Nhập lại mật khẩu"
+                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                  />
+                  {confirmPassword && password !== confirmPassword && (
+                    <p className="text-[11px] text-destructive">Mật khẩu xác nhận không khớp.</p>
+                  )}
                 </div>
               </div>
+            ) : (
+              <>
+                {/* Phone Number */}
+                <div className="space-y-1.5">
+                  <Label className="text-content-heading text-[13px]">
+                    Số điện thoại
+                  </Label>
+                  <Input
+                    value={formData.phoneNumber ?? ""}
+                    onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, phoneNumber: e.target.value }))}
+                    placeholder="Nhập số điện thoại"
+                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                  />
+                </div>
+
+                {/* Address */}
+                <div className="space-y-1.5">
+                  <Label className="text-content-heading text-[13px]">
+                    Địa chỉ
+                  </Label>
+                  <Input
+                    value={formData.address ?? ""}
+                    onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, address: e.target.value }))}
+                    placeholder="Nhập địa chỉ"
+                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                  />
+                </div>
+
+                {/* Tier - customer only (read only, cannot change via update API) */}
+                {meta.showTier && formTarget?.tierTitle && (
+                  <div className="space-y-1.5">
+                    <Label className="text-content-heading text-[13px]">Gói dịch vụ hiện tại</Label>
+                    <div className="h-10 rounded-xl border px-3 flex items-center text-sm bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading">
+                      {formTarget.tierTitle}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -651,18 +662,21 @@ export default function AdminAccountsPage() {
             <Button
               variant="outline"
               onClick={() => setFormOpen(false)}
-              className="rounded-xl"
-              style={{ borderColor: "var(--card-light-border)" }}
+              className="rounded-xl border-card-light-border"
             >
               Huỷ
             </Button>
             <Button
               onClick={handleFormSave}
-              disabled={updateUser.isPending}
-              className="rounded-xl border-0"
-              style={{ background: meta.accent, color: "#fff" }}
+              disabled={!isFormValid || createUser.isPending || updateUser.isPending}
+              className="text-white border-0 rounded-xl"
+              style={{ background: meta.accent }}
             >
-              {updateUser.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+              {createUser.isPending || updateUser.isPending
+                ? "Đang lưu..."
+                : formMode === "create"
+                  ? "Tạo tài khoản"
+                  : "Lưu thay đổi"}
             </Button>
           </DialogFooter>
         </DialogContent>

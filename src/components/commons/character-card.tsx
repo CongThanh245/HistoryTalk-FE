@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ChatTextIcon, BankIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react";
+import { MessageSquareText, Landmark, History } from "lucide-react";
 import { DarkCard } from "@/components/commons/card";
 import { isValidUrl } from "@/lib/utils/url";
 import { formatCharacterLifespan } from "@/lib/utils/character-date";
@@ -79,7 +79,7 @@ export function CharacterCarouselCard({
         onFocus={() => setHovered(true)}
         onBlur={() => setHovered(false)}
         onClick={() => onClick?.(character.id)}
-        className="relative h-full w-full cursor-pointer overflow-hidden rounded-[var(--radius-lg)] text-left"
+        className="relative h-full w-full cursor-pointer overflow-hidden rounded-lg text-left"
       >
         <DarkCard
           imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
@@ -89,10 +89,10 @@ export function CharacterCarouselCard({
           priority={priority}
           hoverEffects={false}
         >
-          <h3 className="line-clamp-1 text-sm font-bold text-[var(--text-primary)] sm:text-base">
+          <h3 className="line-clamp-1 text-sm font-bold text-text-primary sm:text-base">
             {character.name}
           </h3>
-          <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-[var(--text-secondary)] sm:text-xs">
+          <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-text-secondary sm:text-xs">
             {character.role ?? character.title}
           </p>
         </DarkCard>
@@ -105,7 +105,7 @@ export function CharacterCarouselCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onClick?.(character.id)}
-      className="group relative w-full h-full rounded-[var(--radius-lg)] overflow-hidden cursor-pointer"
+      className="group relative w-full h-full rounded-lg overflow-hidden cursor-pointer"
     >
       <DarkCard
         imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
@@ -119,39 +119,28 @@ export function CharacterCarouselCard({
         priority={priority}
       >
         <h3
-          className="text-base font-bold line-clamp-1 transition-colors group-hover:text-[var(--accent-gold)]"
-          style={{ color: "var(--text-primary)" }}
+          className="text-base font-bold line-clamp-1 text-text-primary transition-colors group-hover:text-accent-gold"
         >
           {character.name}
         </h3>
         <p
-          className="text-xs font-medium mt-0.5"
-          style={{ color: "var(--text-secondary)" }}
+          className="text-xs font-medium mt-0.5 text-text-secondary"
         >
           {character.role ?? character.title}
         </p>
         {character.side && (
           <span
-            className="inline-block w-fit text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5"
-            style={{
-              background: "rgba(201,162,77,0.15)",
-              color: "var(--accent-gold-soft)",
-            }}
+            className="inline-block w-fit text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5 bg-accent-gold/15 text-accent-gold-soft"
           >
             {character.side}
           </span>
         )}
         <div className="mt-auto pt-3 flex items-center gap-2">
           <div
-            className="h-px flex-1"
-            style={{
-              background:
-                "linear-gradient(to right, rgba(201,162,77,0.5), transparent)",
-            }}
+            className="h-px flex-1 bg-gradient-to-r from-accent-gold/50 to-transparent"
           />
           <span
-            className="text-[10px] uppercase font-bold opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0"
-            style={{ color: "var(--accent-gold)" }}
+            className="text-[10px] uppercase font-bold text-accent-gold opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0"
           >
             Chat ngay
           </span>
@@ -164,7 +153,7 @@ export function CharacterCarouselCard({
       >
         {/* Avatar top left */}
         <div className="flex items-start mb-4">
-          <div className="relative w-12 h-12 rounded-full border-2 border-[var(--accent-gold)] overflow-hidden shadow-md shrink-0">
+          <div className="relative w-12 h-12 rounded-full border-2 border-accent-gold overflow-hidden shadow-md shrink-0">
             {avatarSrc ? (
               <Image
                 src={avatarSrc}
@@ -172,9 +161,12 @@ export function CharacterCarouselCard({
                 fill
                 className="object-cover"
                 sizes="48px"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             ) : (
-              <span className="flex h-full w-full items-center justify-center bg-[var(--accent-gold)] text-sm font-bold text-[var(--bg-deep)]">
+              <span className="flex h-full w-full items-center justify-center bg-accent-gold text-sm font-bold text-bg-deep">
                 {character.name?.charAt(0) ?? "?"}
               </span>
             )}
@@ -184,7 +176,7 @@ export function CharacterCarouselCard({
               {character.name}
             </h4>
             {character.era && (
-              <p className="text-[10px] text-[var(--accent-gold-soft)] font-medium mt-0.5 truncate">
+              <p className="text-[10px] text-accent-gold-soft font-medium mt-0.5 truncate">
                 {character.era}
               </p>
             )}
@@ -199,14 +191,9 @@ export function CharacterCarouselCard({
         {/* Button Trò chuyện ngay */}
         <div className="mt-4">
           <div
-            className="flex items-center justify-center gap-1.5 w-full py-3 rounded-full text-xs font-extrabold transition-all shadow-lg hover:brightness-110"
-            style={{
-              background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-soft) 100%)",
-              color: "var(--text-inverse)",
-              boxShadow: "0 12px 26px var(--accent-gold-glow)",
-            }}
+            className="flex items-center justify-center gap-1.5 w-full py-3 rounded-full text-xs font-extrabold transition-all shadow-lg hover:brightness-110 bg-gradient-to-br from-accent-gold to-accent-gold-soft text-text-inverse shadow-[0_12px_26px_var(--accent-gold-glow)]"
           >
-            <ChatTextIcon className="w-4 h-4 fill-current" />
+            <MessageSquareText className="w-4 h-4 fill-current" />
             Trò chuyện ngay
           </div>
         </div>
@@ -257,6 +244,7 @@ export function TypewriterText({ text, isHovered, speed = 8 }: TypewriterTextPro
 
 export function CharacterPageCard({ character, onClick }: PageCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [imageBroken, setImageBroken] = useState(false);
   const lifespan = formatCharacterLifespan(character);
   const contextLabel = character.contexts
     ?.map((c) => c.name)
@@ -266,23 +254,20 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
   const avatarSrc = isValidUrl(character.avatarUrl)
     ? character.avatarUrl!
     : (isValidUrl(character.imageUrl) ? character.imageUrl! : undefined);
+  const cardImageSrc =
+    !imageBroken && isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg";
 
   return (
     <button
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(character.id)}
-      className="group relative w-full flex flex-col text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer md:hover:-translate-y-1"
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-      }}
+      className="group relative w-full flex flex-col text-left rounded-xl border border-card-border bg-card-bg overflow-hidden transition-all duration-300 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.08)] md:hover:-translate-y-1"
     >
       {/* Image */}
       <div className="relative z-0 aspect-3/4 w-full shrink-0 overflow-hidden bg-black">
         <Image
-          src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
+          src={cardImageSrc}
           alt=""
           fill
           aria-hidden="true"
@@ -291,11 +276,12 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         />
         <div className="absolute inset-0 bg-black/18" />
         <Image
-          src={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
+          src={cardImageSrc}
           alt={character.name}
           fill
           className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.04]"
           sizes="(max-width: 419px) 100vw, (max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
+          onError={() => setImageBroken(true)}
         />
       </div>
 
@@ -303,12 +289,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       {character.side && (
       <div className="absolute top-2.5 sm:top-3 right-2.5 sm:right-3 z-10">
           <span
-            className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm"
-            style={{
-              background: "rgba(201,162,77,0.3)",
-              color: "#ffffff",
-              border: "1px solid rgba(201,162,77,0.5)",
-            }}
+            className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm bg-accent-gold/30 text-white border border-accent-gold/50"
           >
             {character.side}
           </span>
@@ -323,12 +304,12 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
           {lifespan}
         </p>
         <div className="flex items-center gap-1.5 text-[11px] font-semibold min-w-0 text-white/70">
-          <ChatTextIcon className="w-3.5 h-3.5 text-amber-400" />
+          <MessageSquareText className="w-3.5 h-3.5 text-amber-400" />
           <span className="text-neutral-200 font-normal truncate">{character.title}</span>
         </div>
         {contextLabel && (
           <div className="mt-1 flex items-center gap-1.5 text-[10px] font-medium min-w-0 text-white/60">
-            <BankIcon className="w-3 h-3 text-amber-400 shrink-0" />
+            <Landmark className="w-3 h-3 text-amber-400 shrink-0" />
             <span className="truncate">{contextLabel}</span>
           </div>
         )}
@@ -340,29 +321,32 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       </div>
 
       {/* Hover State Overlay */}
-      <div className="absolute inset-0 z-30 hidden flex-col bg-black/92 p-4 text-white opacity-0 transition-all duration-300 group-focus-visible:flex group-focus-visible:opacity-100 md:flex md:group-hover:opacity-100 sm:p-5">
+      <div className="absolute inset-0 z-30 hidden flex-col bg-black/92 p-3 text-white opacity-0 transition-all duration-300 group-focus-visible:flex group-focus-visible:opacity-100 md:flex md:group-hover:opacity-100 sm:p-4">
         {/* Avatar + name top left */}
-        <div className="flex items-center gap-3 mb-3 sm:mb-4">
-          <div className="relative w-14 h-14 shrink-0 rounded-full border-2 border-white overflow-hidden shadow-md sm:w-16 sm:h-16">
+        <div className="flex items-center gap-2.5 mb-2.5 sm:mb-3">
+          <div className="relative w-11 h-11 shrink-0 rounded-full border-2 border-white overflow-hidden shadow-md sm:w-12 sm:h-12">
             {avatarSrc ? (
               <Image
                 src={avatarSrc}
                 alt={character.name}
                 fill
                 className="object-cover"
-                sizes="64px"
+                sizes="48px"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             ) : (
-              <span className="flex h-full w-full items-center justify-center bg-[var(--accent-gold)] text-xl font-bold text-[var(--bg-deep)]">
+              <span className="flex h-full w-full items-center justify-center bg-accent-gold text-base font-bold text-bg-deep">
                 {character.name?.charAt(0) ?? "?"}
               </span>
             )}
           </div>
           <div className="min-w-0">
-            <h4 className="text-base font-bold text-white leading-tight truncate sm:text-lg">
+            <h4 className="text-sm font-bold text-white leading-tight truncate sm:text-base">
               {character.name}
             </h4>
-            <p className="text-xs text-white/60 truncate sm:text-sm">
+            <p className="text-[11px] text-white/60 truncate sm:text-xs">
               {character.role ?? character.title}
             </p>
           </div>
@@ -370,15 +354,15 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
 
         {/* Detail chips: thời gian sống, phe phái, bối cảnh lịch sử */}
         {(lifespan || character.side || contextLabel) && (
-          <div className="flex flex-wrap items-center gap-1.5 mb-3 sm:mb-4">
+          <div className="flex flex-wrap items-center gap-1 mb-2.5 sm:mb-3">
             {lifespan && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-amber-300 sm:text-[11px]">
-                <ClockCounterClockwiseIcon className="w-3 h-3 shrink-0" />
+              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-white/10 text-amber-300 sm:text-[10px]">
+                <History className="w-2.5 h-2.5 shrink-0" />
                 {lifespan}
               </span>
             )}
             {character.side && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-white/80 sm:text-[11px]">
+              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-white/10 text-white/80 sm:text-[10px]">
                 {character.side}
               </span>
             )}
@@ -388,8 +372,8 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
                 contextId={ctx.contextId}
                 fallbackLabel={ctx.name}
               >
-                <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-white/80 transition-colors hover:bg-white/20 hover:text-amber-300 sm:text-[11px]">
-                  <BankIcon className="w-3 h-3 shrink-0" />
+                <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold text-white/80 transition-colors hover:bg-white/20 hover:text-amber-300 sm:text-[10px]">
+                  <Landmark className="w-2.5 h-2.5 shrink-0" />
                   <span className="truncate">{ctx.name}</span>
                 </span>
               </HistoricalContextHoverCard>
@@ -398,28 +382,23 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         )}
 
         {/* Description text with typewriter effect */}
-        <div className="flex-1 text-sm leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium sm:text-base">
+        <div className="flex-1 text-xs leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium sm:text-sm">
           <TypewriterText text={character.description ?? ""} isHovered={isHovered} />
         </div>
 
         {/* Button Trò chuyện ngay */}
-        <div className="mt-4 sm:mt-5">
+        <div className="mt-3 sm:mt-4">
           <div
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-sm font-extrabold transition-all shadow-lg hover:brightness-110 sm:py-3 sm:text-base"
-            style={{
-              background: "linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-soft) 100%)",
-              color: "var(--text-inverse)",
-              boxShadow: "0 8px 20px var(--accent-gold-glow)",
-            }}
+            className="flex items-center justify-center gap-1.5 w-full py-2 rounded-full text-xs font-extrabold transition-all shadow-lg hover:brightness-110 sm:py-2.5 sm:text-sm bg-gradient-to-br from-accent-gold to-accent-gold-soft text-text-inverse shadow-[0_8px_20px_var(--accent-gold-glow)]"
           >
-            <ChatTextIcon className="w-5 h-5 fill-current" />
+            <MessageSquareText className="w-4 h-4 fill-current" />
             Trò chuyện ngay
           </div>
         </div>
       </div>
 
       <div className="absolute bottom-2 right-2 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/80 text-white shadow-lg backdrop-blur-sm sm:h-10 sm:w-10 md:hidden">
-        <ChatTextIcon className="h-[18px] w-[18px] fill-current text-[var(--accent-gold)]" />
+        <MessageSquareText className="h-[18px] w-[18px] fill-current text-accent-gold" />
         <span className="sr-only">TrÃ² chuyá»‡n ngay</span>
       </div>
     </button>
@@ -442,16 +421,11 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
   return (
     <button
       onClick={() => onClick(character.id)}
-      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border text-left
-        transition-all duration-150 cursor-pointer group hover:border-[var(--accent-gold)]"
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
+      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border border-card-border bg-card-bg text-left
+        transition-all duration-150 cursor-pointer group hover:border-accent-gold"
     >
       <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden relative"
-        style={{ background: "var(--accent-gold)", color: "var(--bg-deep)" }}
+        className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden relative bg-accent-gold text-bg-deep"
       >
         {avatarSrc && (
           <Image
@@ -470,22 +444,19 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
 
       <div className="flex-1 min-w-0">
         <p
-          className="text-xs font-semibold truncate"
-          style={{ color: "var(--content-heading)" }}
+          className="text-xs font-semibold truncate text-content-heading"
         >
           {character.name}
         </p>
         <p
-          className="text-[10px] truncate"
-          style={{ color: "var(--content-muted)" }}
+          className="text-[10px] truncate text-content-muted"
         >
           {character.role ?? character.title}
         </p>
       </div>
 
-      <ChatTextIcon
-        className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all shrink-0"
-        style={{ color: "var(--accent-gold)" }}
+      <MessageSquareText
+        className="w-3.5 h-3.5 text-accent-gold opacity-0 group-hover:opacity-100 transition-all shrink-0"
       />
     </button>
   );
@@ -498,45 +469,17 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
 export function CharacterPageCardSkeleton() {
   return (
     <div
-      className="w-full rounded-xl border overflow-hidden animate-pulse"
-      style={{
-        background: "var(--card-light-bg)",
-        borderColor: "var(--card-light-border)",
-      }}
+      className="w-full rounded-xl border border-card-border bg-card-bg overflow-hidden animate-pulse"
     >
-      <div
-        className="aspect-3/4 w-full"
-        style={{ background: "var(--card-light-border)" }}
-      />
+      <div className="aspect-3/4 w-full bg-card-border" />
       <div className="px-2.5 py-3 space-y-2 sm:px-4 sm:pt-3 sm:pb-4">
-        <div
-          className="h-4 w-2/3 rounded"
-          style={{ background: "var(--card-light-border)" }}
-        />
-        <div
-          className="h-3 w-1/2 rounded"
-          style={{ background: "var(--card-light-border)" }}
-        />
-        <div
-          className="h-3 w-full rounded"
-          style={{ background: "var(--card-light-border)" }}
-        />
-        <div
-          className="h-3 w-5/6 rounded"
-          style={{ background: "var(--card-light-border)" }}
-        />
-        <div
-          className="h-px w-full"
-          style={{ background: "var(--card-light-border)" }}
-        />
-        <div
-          className="h-3 w-1/3 rounded"
-          style={{ background: "var(--card-light-border)" }}
-        />
-        <div
-          className="h-3 w-4/5 rounded"
-          style={{ background: "var(--card-light-border)" }}
-        />
+        <div className="h-4 w-2/3 rounded bg-card-border" />
+        <div className="h-3 w-1/2 rounded bg-card-border" />
+        <div className="h-3 w-full rounded bg-card-border" />
+        <div className="h-3 w-5/6 rounded bg-card-border" />
+        <div className="h-px w-full bg-card-border" />
+        <div className="h-3 w-1/3 rounded bg-card-border" />
+        <div className="h-3 w-4/5 rounded bg-card-border" />
       </div>
     </div>
   );

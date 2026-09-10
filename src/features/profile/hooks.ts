@@ -96,6 +96,40 @@ export function useChangePassword() {
   });
 }
 
+// ── useUploadAvatar ───────────────────────────────────────────────────────────
+/** Upload avatar (POST /users/{userId}/avatar) rồi refetch profile để lấy URL đã ký mới nhất */
+export function useUploadAvatar() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, file }: { userId: string; file: File }) =>
+      userService.uploadAvatar(userId, file),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+      toast.success("Đã cập nhật ảnh đại diện");
+    },
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Upload ảnh đại diện thất bại"));
+    },
+  });
+}
+
+// ── useDeleteAvatar ───────────────────────────────────────────────────────────
+export function useDeleteAvatar() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => userService.deleteAvatar(userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+      toast.success("Đã xóa ảnh đại diện");
+    },
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Xóa ảnh đại diện thất bại"));
+    },
+  });
+}
+
 // ── useMyPaymentHistory ───────────────────────────────────────────────────────
 /** Lấy lịch sử giao dịch của người dùng hiện tại từ /payments/me */
 export function useMyPaymentHistory() {

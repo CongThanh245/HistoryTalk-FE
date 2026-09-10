@@ -22,39 +22,23 @@ export function EventDetailPanel({ contextId, onBack }: EventDetailPanelProps) {
   if (!event) return null;
 
   return (
-    <div
-      className="flex flex-col h-full"
-      style={{ background: "var(--bg-content)" }}
-    >
+    <div className="flex flex-col h-full bg-[var(--bg-content)]">
       {/* Back button + header */}
-      <div
-        className="flex-shrink-0 p-4"
-        style={{ borderBottom: "1px solid var(--card-light-border)" }}
-      >
+      <div className="flex-shrink-0 p-4 border-b border-card-light-border">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-sm mb-3 transition-colors hover:opacity-70"
-          style={{ color: "var(--accent-gold)" }}
+          className="flex items-center gap-1.5 text-sm mb-3 transition-colors hover:opacity-70 text-accent-gold"
         >
           <ArrowLeft size={14} />
           Quay lại
         </button>
 
-        <div
-          className="flex items-center gap-2 mb-2"
-          style={{ color: "var(--content-muted)" }}
-        >
+        <div className="flex items-center gap-2 mb-2 text-content-muted">
           <Calendar size={13} />
           <span className="text-xs font-medium">
             Năm {event.year < 0 ? `${Math.abs(event.year)} TCN` : event.year}
           </span>
-          <span
-            className="px-2 py-0.5 rounded-full text-xs font-medium"
-            style={{
-              background: "var(--accent-gold-active-bg)",
-              color: "var(--accent-gold)",
-            }}
-          >
+          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--accent-gold-active-bg)] text-accent-gold">
             {event.era === "ANCIENT"
               ? "Cổ đại"
               : event.era === "MEDIEVAL"
@@ -65,31 +49,19 @@ export function EventDetailPanel({ contextId, onBack }: EventDetailPanelProps) {
           </span>
         </div>
 
-        <h2
-          className="text-lg font-bold mb-2"
-          style={{ color: "var(--content-heading)" }}
-        >
+        <h2 className="text-lg font-bold mb-2 text-content-heading">
           {event.name}
         </h2>
-        <p
-          className="text-sm leading-relaxed"
-          style={{ color: "var(--content-text)" }}
-        >
+        <p className="text-sm leading-relaxed text-content-text">
           {event.description}
         </p>
       </div>
 
       {/* Characters section */}
       <div className="flex-1 overflow-y-auto">
-        <div
-          className="px-4 py-3 flex items-center gap-2"
-          style={{ borderBottom: "1px solid var(--card-light-border)" }}
-        >
-          <Users size={14} style={{ color: "var(--accent-gold)" }} />
-          <span
-            className="text-sm font-semibold"
-            style={{ color: "var(--content-heading)" }}
-          >
+        <div className="px-4 py-3 flex items-center gap-2 border-b border-card-light-border">
+          <Users size={14} className="text-accent-gold" />
+          <span className="text-sm font-semibold text-content-heading">
             Nhân vật liên quan
           </span>
         </div>
@@ -100,47 +72,27 @@ export function EventDetailPanel({ contextId, onBack }: EventDetailPanelProps) {
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="flex gap-3 p-3 animate-pulse rounded-xl"
-                  style={{ background: "var(--card-light-bg)" }}
+                  className="flex gap-3 p-3 animate-pulse rounded-xl bg-card-light-bg"
                 >
-                  <div
-                    className="w-12 h-12 rounded-full flex-shrink-0"
-                    style={{ background: "var(--bg-surface)" }}
-                  />
+                  <div className="w-12 h-12 rounded-full flex-shrink-0 bg-bg-surface" />
                   <div className="flex-1 space-y-2 pt-1">
-                    <div
-                      className="h-4 rounded"
-                      style={{ background: "var(--bg-surface)", width: "60%" }}
-                    />
-                    <div
-                      className="h-3 rounded"
-                      style={{ background: "var(--bg-surface)", width: "40%" }}
-                    />
+                    <div className="h-4 rounded bg-bg-surface w-[60%]" />
+                    <div className="h-3 rounded bg-bg-surface w-[40%]" />
                   </div>
                 </div>
               ))}
             </div>
           ) : characters.length === 0 ? (
             // Fallback khi chưa có API thật
-            <div
-              className="text-center py-8 rounded-xl"
-              style={{
-                background: "var(--card-light-bg)",
-                border: "1px solid var(--card-light-border)",
-              }}
-            >
+            <div className="text-center py-8 rounded-xl bg-card-light-bg border border-card-light-border">
               <Sword
                 size={24}
-                className="mx-auto mb-2 opacity-30"
-                style={{ color: "var(--content-muted)" }}
+                className="mx-auto mb-2 opacity-30 text-content-muted"
               />
-              <p className="text-sm" style={{ color: "var(--content-muted)" }}>
+              <p className="text-sm text-content-muted">
                 Dữ liệu nhân vật đang được cập nhật
               </p>
-              <p
-                className="text-xs mt-1"
-                style={{ color: "var(--content-subtle)" }}
-              >
+              <p className="text-xs mt-1 text-content-subtle">
                 API: GET /characters/context/{contextId}
               </p>
             </div>
@@ -149,11 +101,7 @@ export function EventDetailPanel({ contextId, onBack }: EventDetailPanelProps) {
               {characters.map((char) => (
                 <div
                   key={char.id}
-                  className="flex items-center gap-3 p-3 rounded-xl"
-                  style={{
-                    background: "var(--card-light-bg)",
-                    border: "1px solid var(--card-light-border)",
-                  }}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-card-light-bg border border-card-light-border"
                 >
                   {/* Avatar */}
                   <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-amber-100">
@@ -164,35 +112,20 @@ export function EventDetailPanel({ contextId, onBack }: EventDetailPanelProps) {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center text-lg font-bold"
-                        style={{
-                          background: "var(--accent-gold-active-bg)",
-                          color: "var(--accent-gold)",
-                        }}
-                      >
+                      <div className="w-full h-full flex items-center justify-center text-lg font-bold bg-[var(--accent-gold-active-bg)] text-accent-gold">
                         {char.name[0]}
                       </div>
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p
-                      className="text-sm font-semibold"
-                      style={{ color: "var(--content-heading)" }}
-                    >
+                    <p className="text-sm font-semibold text-content-heading">
                       {char.name}
                     </p>
-                    <p
-                      className="text-xs"
-                      style={{ color: "var(--accent-gold)" }}
-                    >
+                    <p className="text-xs text-accent-gold">
                       {char.title}
                     </p>
-                    <p
-                      className="text-xs mt-0.5"
-                      style={{ color: "var(--content-muted)" }}
-                    >
+                    <p className="text-xs mt-0.5 text-content-muted">
                       {formatCharacterLifespan(char)}
                     </p>
                   </div>

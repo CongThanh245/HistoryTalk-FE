@@ -1,4 +1,4 @@
-import { axiosClient } from "@/configs/axios.client";
+import { axiosClient, refreshAccessToken } from "@/configs/axios.client";
 import { useAuthStore } from "@/store/auth.store";
 import { normalizeChatHistoryGroups } from "./chat-history.mapper";
 
@@ -23,6 +23,8 @@ export interface ChatMessage {
   content: string;
   messageType: MessageType;
   createdAt: string;
+  /** Đoạn trích nguồn AI dựa vào để trả lời. Chỉ có ở message tạo qua /messages/stream. */
+  quotes?: string[];
 }
 
 export interface SendMessageResponse {
@@ -136,29 +138,35 @@ export const chatService = {
     sessionId: string,
     content: string,
     onData: (chunk: string) => void,
-    onDone: (data: { remainingTokens?: number, suggestedQuestions?: string[], fullContent: string, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE" }) => void,
+    onDone: (data: { remainingTokens?: number, suggestedQuestions?: string[], fullContent: string, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE", quotesUsed?: string[] }) => void,
     onError: (error: unknown) => void,
     messageTypeParam: "TEXT" | "VOICE" = "TEXT"
   ) => {
     try {
       let messageType = messageTypeParam;
-      const token = useAuthStore.getState().tokens?.accessToken;
-      
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
 
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
       const basePath = process.env.NEXT_PUBLIC_API_BASE_PATH || '/Historical-tell/api/v1';
-      
-      const response = await fetch(`${baseUrl}${basePath}/chat/messages/stream`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ sessionId, content, messageType }),
-      });
+      const url = `${baseUrl}${basePath}/chat/messages/stream`;
+      const body = JSON.stringify({ sessionId, content, messageType });
+
+      const doFetch = (accessToken?: string) => {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (accessToken) {
+          headers["Authorization"] = `Bearer ${accessToken}`;
+        }
+        return fetch(url, { method: "POST", headers, body });
+      };
+
+      let response = await doFetch(useAuthStore.getState().tokens?.accessToken);
+
+      // Request fetch() thô không đi qua axios interceptor nên phải tự xử lý refresh token khi 401
+      if (response.status === 401) {
+        const newAccessToken = await refreshAccessToken();
+        response = await doFetch(newAccessToken);
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -183,6 +191,7 @@ export const chatService = {
       let suggestedQuestions: string[] | undefined;
       let promptTokens: number | undefined;
       let completionTokens: number | undefined;
+      let quotesUsed: string[] | undefined;
 
       let fullContent = "";
 
@@ -206,6 +215,7 @@ export const chatService = {
                    suggestedQuestions = parsed.data?.suggestedQuestions;
                    promptTokens = parsed.data?.promptTokens;
                    completionTokens = parsed.data?.completionTokens;
+                   quotesUsed = parsed.data?.quotes_used;
                 } else if (parsed.type === "done") {
                    remainingTokens = parsed.remainingTokens;
                    if (parsed.messageType) {
@@ -219,7 +229,7 @@ export const chatService = {
           }
         }
       }
-      onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens, messageType });
+      onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens, messageType, quotesUsed });
     } catch (err) {
       onError(err);
     }

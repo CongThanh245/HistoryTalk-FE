@@ -3,14 +3,19 @@
 import * as React from "react";
 import { useParams } from "next/navigation";
 import { StaffContextDetailView, type ContextDraft } from "@/components/staff/staff-context-detail-view";
-import { useEventDetail, useUpdateEvent } from "@/features/events/hooks";
+import {
+  useEventDetail,
+  useUpdateEvent,
+  useUploadContextMedia,
+  useDeleteContextMedia,
+} from "@/features/events/hooks";
 import {
   useHistoricalDocuments,
   useCreateHistoricalDocument,
   useUpdateHistoricalDocument,
   useDeleteHistoricalDocument,
-  useUploadDocumentPdf,
   useGetDocumentPdfUrl,
+  useUploadAndExtractPdf,
 } from "@/features/documents/hooks";
 import {
   useCharacters,
@@ -30,8 +35,10 @@ export default function EditContextPage() {
   const createHistoricalDocument = useCreateHistoricalDocument();
   const updateHistoricalDocument = useUpdateHistoricalDocument(id);
   const deleteHistoricalDocument = useDeleteHistoricalDocument(id);
-  const uploadDocumentPdf = useUploadDocumentPdf();
   const getDocumentPdfUrl = useGetDocumentPdfUrl();
+  const extractPdf = useUploadAndExtractPdf();
+  const uploadContextMedia = useUploadContextMedia();
+  const deleteContextMedia = useDeleteContextMedia();
 
   const charactersInContext = useCharactersByContext(id);
   const linkedCharacterIds = React.useMemo(
@@ -61,27 +68,6 @@ export default function EditContextPage() {
 
     try {
       await updateEvent.mutateAsync({ id, data: payload });
-
-      const documentContent = draft.documentContent.trim();
-      if (documentContent) {
-        try {
-          if (draft.documentId) {
-            await updateHistoricalDocument.mutateAsync({
-              docId: draft.documentId,
-              data: { title: draft.documentTitle.trim() || payload.name, content: documentContent, type: "TEXT" },
-            });
-          } else {
-            await createHistoricalDocument.mutateAsync({
-              contextId: id,
-              title: draft.documentTitle.trim() || payload.name,
-              content: documentContent,
-              type: "TEXT",
-            });
-          }
-        } catch {
-          // toast already shown by the document mutation hooks
-        }
-      }
     } catch {
       // useUpdateEvent already shows the API error toast.
     }
@@ -123,17 +109,37 @@ export default function EditContextPage() {
       mode="edit"
       initialDraft={initialDraft}
       onSave={handleSave}
-      isPending={updateEvent.isPending || createHistoricalDocument.isPending || updateHistoricalDocument.isPending}
+      isPending={updateEvent.isPending}
       documents={historicalDocuments.data ?? []}
       isLoadingDocuments={historicalDocuments.isLoading}
       onDeleteDocument={(docId) => deleteHistoricalDocument.mutate(docId)}
       isDeleteDocumentPending={deleteHistoricalDocument.isPending}
-      onUploadDocumentPdf={async (docId, file) => {
-        await uploadDocumentPdf.mutateAsync({ docId, file });
-      }}
-      isUploadDocumentPdfPending={uploadDocumentPdf.isPending}
       onGetDocumentPdfUrl={async (docId) => getDocumentPdfUrl.mutateAsync(docId)}
       isGetDocumentPdfUrlPending={getDocumentPdfUrl.isPending}
+      onUploadMedia={(contextId, file, mediaType, onProgress) =>
+        uploadContextMedia.mutateAsync({ contextId, file, mediaType, onProgress })
+      }
+      isUploadMediaPending={uploadContextMedia.isPending}
+      onDeleteMedia={async (contextId, mediaType) => {
+        await deleteContextMedia.mutateAsync({ contextId, mediaType });
+      }}
+      isDeleteMediaPending={deleteContextMedia.isPending}
+      onCreateTextDocument={async ({ title, content }) => {
+        await createHistoricalDocument.mutateAsync({ contextId: id, title, content, type: "TEXT" });
+      }}
+      isCreateTextDocumentPending={createHistoricalDocument.isPending}
+      onExtractPdfDocument={async (file, onProgress, signal) =>
+        extractPdf.mutateAsync({ file, entityType: "context", entityId: id, onProgress, signal })
+      }
+      isExtractPdfDocumentPending={extractPdf.isPending}
+      onCreatePdfDocument={async ({ title, content, fileUrl }) => {
+        await createHistoricalDocument.mutateAsync({ contextId: id, title, content, fileUrl });
+      }}
+      isCreatePdfDocumentPending={createHistoricalDocument.isPending}
+      onUpdateDocument={async (docId, data) => {
+        await updateHistoricalDocument.mutateAsync({ docId, data: { ...data, type: "TEXT" } });
+      }}
+      isUpdateDocumentPending={updateHistoricalDocument.isPending}
       charactersInContext={charactersInContext.data ?? []}
       isLoadingCharactersInContext={charactersInContext.isLoading}
       characterSearch={characterSearch}

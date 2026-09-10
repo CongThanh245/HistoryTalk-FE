@@ -23,7 +23,7 @@ export const StaffFormLabel = React.forwardRef<
   <Label
     ref={ref}
     className={cn(
-      "text-[var(--content-muted)] text-[11px] font-semibold uppercase tracking-wider",
+      "text-content-muted text-[11px] font-semibold uppercase tracking-wider",
       className
     )}
     {...props}
@@ -37,14 +37,13 @@ export type StaffFormInputProps = React.ComponentPropsWithoutRef<typeof Input>;
 export const StaffFormInput = React.forwardRef<
   HTMLInputElement,
   StaffFormInputProps
->(({ className, style, ...props }, ref) => (
+>(({ className, ...props }, ref) => (
   <Input
     ref={ref}
     className={cn(
-      "bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10 disabled:pointer-events-auto disabled:cursor-not-allowed",
+      "bg-black/[0.02] border-card-border text-content-heading focus:bg-white transition-all h-10 disabled:pointer-events-auto disabled:cursor-not-allowed",
       className
     )}
-    style={{ color: "var(--content-heading)", ...style }}
     {...props}
   />
 ));
@@ -56,14 +55,13 @@ export type StaffFormTextareaProps = React.ComponentPropsWithoutRef<typeof Texta
 export const StaffFormTextarea = React.forwardRef<
   HTMLTextAreaElement,
   StaffFormTextareaProps
->(({ className, style, ...props }, ref) => (
+>(({ className, ...props }, ref) => (
   <Textarea
     ref={ref}
     className={cn(
-      "bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all min-h-[140px] resize-none",
+      "bg-black/[0.02] border-card-border text-content-heading focus:bg-white transition-all min-h-[140px] resize-none",
       className
     )}
-    style={{ color: "var(--content-heading)", ...style }}
     {...props}
   />
 ));
@@ -91,10 +89,9 @@ export function StaffFormSelect<T extends string>({
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger
         className={cn(
-          "bg-black/[0.02] border-[var(--card-light-border)] focus:bg-white transition-all h-10",
+          "bg-black/[0.02] border-card-light-border text-content-heading focus:bg-white transition-all h-10",
           className
         )}
-        style={{ color: "var(--content-heading)" }}
       >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>

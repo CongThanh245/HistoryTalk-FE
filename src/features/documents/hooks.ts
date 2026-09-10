@@ -1,8 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   documentService,
   type CreateCharacterDocumentRequest,
   type CreateHistoricalDocumentRequest,
+  type DocumentEntityType,
   type DocumentPayload,
 } from "@/services/document.service";
 import { toast } from "sonner";
@@ -36,6 +37,45 @@ export function useCharacterDocuments(characterId?: string) {
     queryFn: () => documentService.getCharacterDocuments(characterId!),
     enabled: !!characterId,
   });
+}
+
+// Public listing (auth optional) — dùng để hiển thị nguồn tài liệu trong chat
+export function usePublicCharacterDocuments(characterId?: string) {
+  return useQuery({
+    queryKey: queryKeys.documents.publicByCharacter(characterId || ""),
+    queryFn: () => documentService.getPublicCharacterDocuments(characterId!),
+    enabled: !!characterId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function usePublicContextDocuments(contextId?: string) {
+  return useQuery({
+    queryKey: queryKeys.documents.publicByContext(contextId || ""),
+    queryFn: () => documentService.getPublicContextDocuments(contextId!),
+    enabled: !!contextId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// Một nhân vật có thể liên kết nhiều bối cảnh lịch sử, mỗi bối cảnh có tài liệu
+// riêng — khi đối chiếu trích dẫn của AI phải gộp tài liệu của TẤT CẢ bối cảnh
+// đó lại, không chỉ bối cảnh đang active của phiên chat hiện tại.
+export function usePublicContextsDocuments(contextIds: string[]) {
+  const uniqueIds = Array.from(new Set(contextIds.filter(Boolean)));
+
+  const results = useQueries({
+    queries: uniqueIds.map((contextId) => ({
+      queryKey: queryKeys.documents.publicByContext(contextId),
+      queryFn: () => documentService.getPublicContextDocuments(contextId),
+      staleTime: 1000 * 60 * 5,
+    })),
+  });
+
+  return {
+    data: results.flatMap((r) => r.data ?? []),
+    isLoading: results.some((r) => r.isLoading),
+  };
 }
 
 export function useAllCharacterDocuments() {
@@ -203,6 +243,34 @@ export function useGetDocumentPdfUrl() {
     mutationFn: (docId: string) => documentService.getPdfUrl(docId),
     onError: (err: unknown) => {
       toast.error(getErrorMessage(err, "Không thể lấy link tải PDF"));
+    },
+  });
+}
+
+// POST /documents/pdf/upload-and-extract - Upload PDF + extract text before the
+// document exists. No success toast: this is an intermediate step, the actual
+// "document created" toast fires from the create-document mutation that follows.
+export function useUploadAndExtractPdf() {
+  return useMutation({
+    mutationFn: ({
+      file,
+      entityType,
+      entityId,
+      onProgress,
+      signal,
+    }: {
+      file: File;
+      entityType?: DocumentEntityType;
+      entityId?: string;
+      /** Bao tien do sau moi trang xu ly xong (page/total) thay vi im lang cho toi khi xong. */
+      onProgress?: (page: number, total: number) => void;
+      /** Lets a "Hủy" button cancel a long-running OCR extraction. */
+      signal?: AbortSignal;
+    }) => documentService.uploadAndExtractPdfStream(file, entityType, entityId, onProgress, signal),
+    onError: (err: unknown) => {
+      // A user-initiated cancel (AbortController.abort()) isn't a failure — skip the toast.
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      toast.error(getErrorMessage(err, "Không thể trích xuất nội dung từ PDF"));
     },
   });
 }

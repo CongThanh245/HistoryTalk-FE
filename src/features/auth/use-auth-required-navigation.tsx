@@ -59,26 +59,13 @@ export function useAuthRequiredNavigation({
   const authRequiredDialog = useMemo(
     () => (
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent
-          className="sm:max-w-[420px]"
-          style={{
-            background: "var(--card-light-bg)",
-            borderColor: "var(--card-light-border)",
-            color: "var(--content-heading)",
-          }}
-        >
+        <DialogContent className="sm:max-w-[420px] bg-card-light-bg border-card-light-border text-content-heading">
           <DialogHeader className="items-center text-center sm:items-start sm:text-left">
-            <div
-              className="mb-1 flex h-11 w-11 items-center justify-center rounded-full"
-              style={{
-                background: "rgba(201,162,77,0.14)",
-                color: "var(--gold-on-light)",
-              }}
-            >
+            <div className="mb-1 flex h-11 w-11 items-center justify-center rounded-full bg-accent-gold/[0.14] text-gold-on-light">
               <MessageCircleIcon className="h-5 w-5" />
             </div>
             <DialogTitle>{title}</DialogTitle>
-            <DialogDescription style={{ color: "var(--content-muted)" }}>
+            <DialogDescription className="text-content-muted">
               {description}
             </DialogDescription>
           </DialogHeader>
