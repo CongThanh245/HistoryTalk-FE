@@ -36,6 +36,12 @@ const QUEST_META: Record<
 
 const WEEKDAY_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 const STREAK_GREEN = "#16A34A";
+const EMPTY_WEEK = WEEKDAY_LABELS.map((_, i) => ({
+  date: `empty-${i}`,
+  weekday: i,
+  studied: false,
+  isToday: false,
+}));
 
 function DailyQuestsSkeleton() {
   return (
@@ -84,7 +90,9 @@ export function DailyQuestsCard() {
     }
   }
 
-  const doneCount = data.quests.filter((q) => q.completed).length;
+  const quests = Array.isArray(data.quests) ? data.quests : [];
+  const week = Array.isArray(data.week) && data.week.length > 0 ? data.week : EMPTY_WEEK;
+  const doneCount = quests.filter((q) => q.completed).length;
 
   return (
     <section className="rounded-3xl border p-5 md:p-6 bg-card-light-bg border-card-light-border shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
@@ -112,7 +120,7 @@ export function DailyQuestsCard() {
 
       {/* 7 chấm tuần T2 → CN */}
       <div className="flex justify-between mb-3 px-0.5">
-        {data.week.map((d, i) => (
+        {week.map((d, i) => (
           <div key={d.date} className="flex flex-col items-center gap-1">
             <div
               className={`w-7 h-7 rounded-full flex items-center justify-center ${
@@ -168,12 +176,12 @@ export function DailyQuestsCard() {
           Nhiệm vụ hôm nay
         </h3>
         <span className="text-[11px] text-content-muted">
-          {doneCount}/{data.quests.length} hoàn thành
+          {doneCount}/{quests.length} hoàn thành
         </span>
       </div>
 
       <div className="space-y-2">
-        {data.quests.map((q) => {
+        {quests.map((q) => {
           const meta = QUEST_META[q.type] ?? QUEST_META.CHAT;
           const Icon = meta.icon;
           const busy = claimingId === q.id;
@@ -226,7 +234,7 @@ export function DailyQuestsCard() {
                     className="h-full rounded-full transition-[width]"
                     style={{
                       background: q.completed ? STREAK_GREEN : meta.color,
-                      width: `${Math.min(100, Math.round((q.progress / q.target) * 100))}%`,
+                      width: `${Math.min(100, Math.round((q.progress / Math.max(q.target, 1)) * 100))}%`,
                     }}
                   />
                 </div>

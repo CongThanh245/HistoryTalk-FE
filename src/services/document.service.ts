@@ -36,7 +36,7 @@ export interface RagDocument {
   fileUrl?: string;
   createdAt?: string;
   updatedAt?: string;
-  /** Chủ sở hữu tài liệu (từ API /characters/{id}/documents, /historical-contexts/{id}/documents). */
+  /** Chủ sở hữu tài liệu (character hoặc historical context). */
   uploadedByUid?: string;
   uploadedByName?: string;
   /** Chỉ 1 trong 2 field này có giá trị, tuỳ tài liệu gắn với nhân vật hay bối cảnh. */
@@ -126,15 +126,15 @@ export const documentService = {
     return normalizeDocumentList(res.data);
   },
 
-  // GET /characters/{id}/documents - public listing (auth optional), dùng cho chat citation
+  // GET /character-documents/character/{id} - public listing, dùng cho chat citation
   getPublicCharacterDocuments: async (characterId: string): Promise<RagDocument[]> => {
-    const res = await axiosClient.get(`/characters/${characterId}/documents`);
+    const res = await axiosClient.get(`/character-documents/character/${characterId}`);
     return normalizeDocumentList(res.data);
   },
 
-  // GET /historical-contexts/{id}/documents - public listing (auth optional), dùng cho chat citation
+  // GET /historical-documents/context/{id} - public listing, dùng cho chat citation
   getPublicContextDocuments: async (contextId: string): Promise<RagDocument[]> => {
-    const res = await axiosClient.get(`/historical-contexts/${contextId}/documents`);
+    const res = await axiosClient.get(`/historical-documents/context/${contextId}`);
     return normalizeDocumentList(res.data);
   },
 

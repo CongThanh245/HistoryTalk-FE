@@ -33,6 +33,7 @@ import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-det
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import { isValidUrl } from "@/lib/utils/url";
+import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
 import { toast } from "sonner";
 import { FORM_TABS, type StaffContextDetailViewProps } from "./staff-context-detail-view.types";
 import { useStaffContextDetailView } from "./use-staff-context-detail-view";
@@ -225,6 +226,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
   const [imageLightboxOpen, setImageLightboxOpen] = React.useState(false);
   const [videoLightboxOpen, setVideoLightboxOpen] = React.useState(false);
   const hasVideo = !!draft.videoUrl;
+  const youtubeVideoEmbedUrl = getYouTubeEmbedUrl(draft.videoUrl);
 
   const visibleTabs = FORM_TABS.filter((tab) => tab.key !== "characters" || mode === "edit");
 
@@ -930,7 +932,15 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     <ArrowsOutIcon className="h-4 w-4" />
                   </button>
                 )}
-                {draft.videoUrl ? (
+                {youtubeVideoEmbedUrl ? (
+                  <iframe
+                    src={youtubeVideoEmbedUrl}
+                    title="Video boi canh"
+                    className="h-full w-full bg-black"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                ) : draft.videoUrl ? (
                   <video src={draft.videoUrl} controls className="h-full w-full object-contain bg-black" />
                 ) : (
                   <div className="flex h-full items-center justify-center px-4 text-center text-xs text-[var(--content-muted)]">
@@ -960,9 +970,17 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         <DialogContent className="max-w-5xl! w-[92vw] max-h-[90vh] overflow-hidden border-none bg-black p-0">
           <DialogTitle className="sr-only">Xem đầy đủ video bối cảnh</DialogTitle>
           <div className="aspect-video w-full">
-            {videoLightboxOpen && draft.videoUrl && (
+            {videoLightboxOpen && youtubeVideoEmbedUrl ? (
+              <iframe
+                src={getYouTubeEmbedUrl(draft.videoUrl, { autoplay: true }) ?? youtubeVideoEmbedUrl}
+                title="Video boi canh"
+                className="h-full w-full bg-black"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            ) : videoLightboxOpen && draft.videoUrl ? (
               <video src={draft.videoUrl} controls autoPlay className="h-full w-full object-contain bg-black" />
-            )}
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>

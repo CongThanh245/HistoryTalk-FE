@@ -8,6 +8,7 @@ import {
 import { useEventDetail } from "@/features/events/hooks";
 import type { RagDocument } from "@/services/document.service";
 import { findDocumentForQuote, splitContentByQuote } from "@/lib/utils/quote-match";
+import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
 import {
   Loader2,
   AlertTriangle,
@@ -140,15 +141,26 @@ export function DocumentCitationDialog({
   const { data: event } = useEventDetail(matchedDocument?.contextId ?? contextId);
 
   const hasVideo = !!event?.videoUrl;
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(event?.videoUrl);
   const title = matchedDocument?.title || "Nguồn tham khảo";
 
   const renderVideo = () => (
     <div className="relative w-full bg-black aspect-video shrink-0">
-      <video
-        src={event?.videoUrl ?? undefined}
-        controls
-        className="absolute inset-0 object-contain w-full h-full"
-      />
+      {youtubeEmbedUrl ? (
+        <iframe
+          className="absolute inset-0 h-full w-full"
+          src={youtubeEmbedUrl}
+          title={`${event?.title ?? "Video"} minh hoa`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      ) : (
+        <video
+          src={event?.videoUrl ?? undefined}
+          controls
+          className="absolute inset-0 object-contain w-full h-full"
+        />
+      )}
     </div>
   );
 
