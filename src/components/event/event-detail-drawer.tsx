@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 import { usePublicContextDocuments } from "@/features/documents/hooks";
+import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
 
 // ── Mock ──────────────────────────────────────────────────
 // TODO: fetch từ API /events/:id/characters
@@ -29,6 +30,8 @@ function FakeVideoPlayer({
   const hasVideo = !!event.videoUrl;
   const [playing, setPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(event.videoUrl, { autoplay: playing });
+  const isYouTubeVideo = !!youtubeEmbedUrl;
 
   const start = () => {
     if (!hasVideo) {
@@ -36,7 +39,9 @@ function FakeVideoPlayer({
       return;
     }
     setPlaying(true);
-    videoRef.current?.play();
+    if (!isYouTubeVideo) {
+      videoRef.current?.play();
+    }
   };
 
   const skip = () => {
@@ -46,7 +51,17 @@ function FakeVideoPlayer({
   return (
     <div className="relative w-full h-full flex flex-col bg-black overflow-hidden">
       <div className="relative flex-1 overflow-hidden">
-        {hasVideo && (
+        {hasVideo && isYouTubeVideo && playing && (
+          <iframe
+            className="absolute inset-0 w-full h-full"
+            src={youtubeEmbedUrl}
+            title={`${event.title} video`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        )}
+
+        {hasVideo && !isYouTubeVideo && (
           <video
             ref={videoRef}
             className="absolute inset-0 w-full h-full object-cover"
