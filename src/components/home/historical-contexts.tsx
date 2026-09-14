@@ -77,9 +77,10 @@ export function HistoricalContexts() {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-[var(--card-light-bg)] via-transparent to-transparent opacity-80" />
+                  <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/25" />
                 </div>
 
-                <div className="p-3.5 sm:p-4 flex-1 flex flex-col relative z-10 -mt-4">
+                <div className="px-3.5 pb-3.5 pt-5 sm:px-4 sm:pb-4 sm:pt-6 flex-1 flex flex-col relative z-10">
                   <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-accent-gold">
                     {event.year > 0 ? `Năm ${event.year}` : `Năm ${Math.abs(event.year)} TCN`}
                   </p>

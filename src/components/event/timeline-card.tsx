@@ -101,44 +101,39 @@ export function TimelineStripCard({
       <button
         onClick={() => onOpenDetail(event)}
         aria-label={`Xem chi tiết sự kiện ${event.title}`}
-        className="group relative w-full flex flex-col md:flex-row text-left rounded-xl border overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)] bg-card-light-bg border-card-light-border"
+        className="group relative w-full flex flex-col md:flex-row text-left rounded-lg border overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-[0_8px_24px_rgba(0,0,0,0.10)] hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)] bg-card-light-bg border-card-light-border"
       >
         {/* Glow border on hover */}
         <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20 shadow-[inset_0_0_0_1.5px_rgba(201,162,77,0.31)]" />
 
         {/* Image Container */}
-        <div
-          className="relative w-full md:w-[480px] h-[150px] sm:h-[260px] md:h-[320px] overflow-hidden shrink-0"
-        >
+        <div className="relative w-full md:w-[520px] lg:w-[560px] h-[150px] sm:h-[220px] md:h-[270px] overflow-hidden shrink-0">
           <Image
             src={isValidUrl(imageSrc) ? imageSrc : "/card.jpg"}
             alt={event.title}
             fill
-            className="object-cover transition-all duration-700 ease-out grayscale group-hover:grayscale-0 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, 500px"
+            className="object-cover transition-all duration-1000 ease-out group-hover:scale-[1.03]"
+            sizes="(max-width: 768px) 100vw, 560px"
           />
-          {/* Gradient transition from image to card bg */}
-          <div
-            className="absolute inset-0 z-10 bg-gradient-to-t from-[var(--card-light-bg)] via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-[var(--card-light-bg)]"
-          />
+          <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/24 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-[var(--card-light-bg)]/45" />
         </div>
 
         {/* Content Container */}
-        <div className="flex-1 px-4 sm:px-5 py-4 sm:py-6 md:px-7 md:py-8 flex flex-col justify-center relative z-10">
+        <div className="flex-1 px-4 py-4 md:px-6 md:py-5 flex flex-col justify-center relative z-10">
           {/* Year badge with glow effect */}
           <div>
-            <span className="inline-block text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full tracking-wide mb-2 sm:mb-3 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_10px_var(--accent-gold-glow)] group-focus-visible:scale-105 group-focus-visible:shadow-[0_0_10px_var(--accent-gold-glow)] bg-accent-gold/10 text-accent-gold">
+            <span className="inline-block text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full tracking-wide mb-2 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_10px_var(--accent-gold-glow)] group-focus-visible:scale-105 group-focus-visible:shadow-[0_0_10px_var(--accent-gold-glow)] bg-accent-gold/10 text-accent-gold">
               {yearLabel}
             </span>
           </div>
 
           <h2
-            className="text-base sm:text-2xl font-extrabold leading-snug mb-1.5 sm:mb-2.5 transition-colors duration-300 text-[var(--content-heading)] group-hover:text-[var(--accent-gold)] group-focus-visible:text-[var(--accent-gold)]"
+            className="text-base sm:text-xl font-extrabold leading-snug mb-1.5 transition-colors duration-300 text-[var(--content-heading)] group-hover:text-[var(--accent-gold)] group-focus-visible:text-[var(--accent-gold)]"
           >
             {event.title}
           </h2>
           
-          <p className="text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3 mb-3 sm:mb-5 italic text-content-muted">
+          <p className="text-xs sm:text-sm leading-relaxed line-clamp-2 mb-3 italic text-content-muted">
             {event.summary}
           </p>
 
@@ -161,7 +156,7 @@ export function TimelineStripCard({
         </div>
 
         {/* Chronological Progress Line at the bottom */}
-        <div className="absolute bottom-0 left-0 h-1 transition-all duration-700 ease-out w-0 group-hover:w-full z-20 bg-accent-gold" />
+        <div className="absolute bottom-0 left-0 h-0.5 transition-all duration-700 ease-out w-0 group-hover:w-full z-20 bg-accent-gold" />
       </button>
     </div>
   );
@@ -196,9 +191,9 @@ export function TimelineCardSkeleton({ index }: { index: number }) {
 
 export function TimelineStripCardSkeleton() {
   return (
-    <div className="w-full rounded-xl border overflow-hidden animate-pulse flex bg-card-light-bg border-card-light-border min-h-[220px]">
-      <div className="w-80 shrink-0 bg-card-light-border" />
-      <div className="flex-1 p-6 space-y-3">
+    <div className="w-full rounded-lg border overflow-hidden animate-pulse flex bg-card-light-bg border-card-light-border min-h-[180px]">
+      <div className="w-72 shrink-0 bg-card-light-border" />
+      <div className="flex-1 p-5 space-y-3">
         <div className="h-4 w-20 rounded-full bg-card-light-border" />
         <div className="h-6 w-2/3 rounded bg-card-light-border" />
         <div className="h-4 w-full rounded bg-card-light-border" />

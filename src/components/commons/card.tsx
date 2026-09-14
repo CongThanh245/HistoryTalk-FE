@@ -97,12 +97,13 @@ export function Card({
             sizes={imageSizes}
             onError={() => setImageBroken(true)}
           />
+          <div className="absolute inset-0 z-10 bg-black/0 transition-colors duration-300 group-hover:bg-black/25" />
           <div
             className={cn(
-              "absolute inset-0 z-10",
+              "absolute inset-0 z-20",
               isHorizontal
                 ? "bg-gradient-to-t from-card-bg via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-card-bg"
-                : "bg-gradient-to-t from-card-bg via-transparent to-transparent",
+                : "bg-gradient-to-t from-card-bg via-transparent to-transparent [background-size:100%_48%] bg-bottom bg-no-repeat",
             )}
           />
         </div>
@@ -124,7 +125,7 @@ export function Card({
         className={cn(
           isHorizontal
             ? "flex-1 px-4 py-5 md:px-6 md:py-6 flex flex-col justify-center"
-            : "px-4 pb-4 pt-1",
+            : "px-4 pb-4 pt-6",
         )}
       >
         {children}
