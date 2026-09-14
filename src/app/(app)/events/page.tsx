@@ -24,7 +24,7 @@ export default async function EventsPage() {
   });
 
   return (
-    <div className="space-y-6 lg:space-y-8 py-6 lg:py-8">
+    <div className="space-y-4 py-4 lg:py-5">
       <div className="flex items-center gap-3">
         <div>
           <h1 className="font-title text-xl md:text-2xl font-bold text-content-heading">

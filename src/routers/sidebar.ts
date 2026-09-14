@@ -13,6 +13,7 @@ import {
   CreditCard,
   Receipt,
   Flame,
+  Map,
 } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
@@ -39,6 +40,7 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
       { icon: User, label: "Nhân vật", href: ROUTES.CHARACTERS },
       { icon: MessageCircle, label: "Lịch sử trò chuyện", href: ROUTES.CHAT_HISTORY },
       { icon: ClipboardList, label: "Câu đố lịch sử", href: ROUTES.QUIZ },
+      { icon: Map, label: "Bản đồ lịch sử", href: ROUTES.HISTORICAL_MAP },
       // MVP: Ẩn Bản đồ lịch sử, Library và Đã lưu
       // { icon: Map, label: "Bản đồ lịch sử", href: "/map" },
       // { icon: BookOpen, label: "Library", href: "/library" },

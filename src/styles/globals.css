@@ -139,6 +139,84 @@
   animation: page-enter var(--duration-emphasis, 400ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 
+@keyframes homeBannerPortraitFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+@keyframes homeBannerRingPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  18% {
+    opacity: 0.42;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.16);
+  }
+}
+
+@keyframes homeBannerThumbBeat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.home-banner-stage {
+  isolation: isolate;
+}
+
+.home-banner-portrait {
+  animation: homeBannerPortraitFloat 4.8s ease-in-out infinite;
+}
+
+.home-banner-rings {
+  pointer-events: none;
+}
+
+.home-banner-rings::before,
+.home-banner-rings::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(9, 9, 11, 0.16);
+  border-radius: inherit;
+  animation: homeBannerRingPulse 2.4s ease-out infinite;
+}
+
+.dark .home-banner-rings::before,
+.dark .home-banner-rings::after {
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.home-banner-rings::after {
+  animation-delay: 1.2s;
+}
+
+.home-banner-thumb-active {
+  animation: homeBannerThumbBeat 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-banner-portrait,
+  .home-banner-rings::before,
+  .home-banner-rings::after,
+  .home-banner-thumb-active {
+    animation: none;
+  }
+}
+
 body {
   font-family: var(--font-body), system-ui, sans-serif;
 }
@@ -1204,6 +1282,16 @@ div[style*="--palladian"] input::placeholder {
 .thin-scroll::-webkit-scrollbar-thumb {
   border: 1px solid rgba(7, 13, 24, 0.5);
 }
+
+.timeline-scroll-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.timeline-scroll-hidden::-webkit-scrollbar {
+  display: none;
+}
+
 /* ─────────────────────────────────────────
    Timeline Strip Card — slide animation
    Dùng clip thay translateX để không gây scrollbar ngang
@@ -1213,11 +1301,15 @@ div[style*="--palladian"] input::placeholder {
 @keyframes stripEnterRight {
   from {
     opacity: 0;
-    clip-path: inset(0 8% 0 0);
+    transform: translateY(34px) scale(0.98);
+    filter: blur(6px);
+    clip-path: inset(8% 0 0 0);
   }
   to {
     opacity: 1;
-    clip-path: inset(0 0% 0 0);
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+    clip-path: inset(0 0 0 0);
   }
 }
 
@@ -1225,20 +1317,95 @@ div[style*="--palladian"] input::placeholder {
 @keyframes stripEnterLeft {
   from {
     opacity: 0;
-    clip-path: inset(0 0 0 8%);
+    transform: translateY(34px) scale(0.98);
+    filter: blur(6px);
+    clip-path: inset(8% 0 0 0);
   }
   to {
     opacity: 1;
-    clip-path: inset(0 0 0 0%);
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+    clip-path: inset(0 0 0 0);
   }
 }
 
 .strip-card-enter-right {
-  animation: stripEnterRight 0.32s cubic-bezier(0.25, 0, 0.2, 1) both;
+  animation: stripEnterRight 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .strip-card-enter-left {
-  animation: stripEnterLeft 0.32s cubic-bezier(0.25, 0, 0.2, 1) both;
+  animation: stripEnterLeft 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes eventCardRise {
+  from {
+    opacity: 0;
+    transform: translateY(34px) scale(0.98);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.event-card-rise {
+  opacity: 0;
+  animation: eventCardRise 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform, filter;
+}
+
+.event-card-delay-0 {
+  animation-delay: 0ms;
+}
+
+.event-card-delay-1 {
+  animation-delay: 28ms;
+}
+
+.event-card-delay-2 {
+  animation-delay: 56ms;
+}
+
+.event-card-delay-3 {
+  animation-delay: 84ms;
+}
+
+.event-card-delay-4 {
+  animation-delay: 112ms;
+}
+
+.event-card-delay-5 {
+  animation-delay: 140ms;
+}
+
+.event-card-delay-6 {
+  animation-delay: 168ms;
+}
+
+.event-card-delay-7 {
+  animation-delay: 196ms;
+}
+
+.event-card-delay-8 {
+  animation-delay: 224ms;
+}
+
+.event-card-delay-9 {
+  animation-delay: 252ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-card-rise,
+  .strip-card-enter-right,
+  .strip-card-enter-left {
+    opacity: 1;
+    animation: none;
+    filter: none;
+    transform: none;
+    clip-path: none;
+  }
 }
 
 @layer base {

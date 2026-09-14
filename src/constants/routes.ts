@@ -28,7 +28,7 @@ export const ROUTES = {
   QUIZ: "/quiz",
   QUIZ_DETAIL: (id: string) => `/quiz/${id}`,
 
-  HISTORICAL_MAP: "/historical-map",
+  HISTORICAL_MAP: "/map",
 
   PROFILE: "/profile",
   PAYMENT: "/payment",
