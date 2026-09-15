@@ -35,3 +35,24 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
 
   return fallback;
 }
+
+export function isTokenExhaustionError(error: unknown) {
+  const rawMessage = axios.isAxiosError<ApiErrorBody>(error)
+    ? error.response?.data?.message
+    : error instanceof Error
+      ? error.message
+      : undefined;
+
+  const message = typeof rawMessage === "string" ? rawMessage.toLowerCase() : "";
+  const status = axios.isAxiosError<ApiErrorBody>(error)
+    ? error.response?.status
+    : undefined;
+
+  return (
+    message.includes("hết token") ||
+    message.includes("không đủ token") ||
+    message.includes("nap thêm") ||
+    message.includes("nạp thêm") ||
+    (status === 400 && message.includes("token"))
+  );
+}

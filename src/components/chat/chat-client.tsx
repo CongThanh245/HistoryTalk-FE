@@ -9,6 +9,7 @@ import { ChatMain } from "./chat-main";
 import { ChatRightPanel } from "./chat-right-panel";
 import { DocumentCitationDialog } from "./document-citation-dialog";
 import { useCreateSession, useChatSessions } from "@/features/chat/hooks";
+import { isTokenExhaustionError } from "@/lib/utils/api-error";
 
 interface ChatClientProps {
   initialCharacterId: string;
@@ -21,12 +22,16 @@ export function ChatClient({
   initialContextId,
   initialSessionId,
 }: ChatClientProps) {
-  const [activeCharacterId, setActiveCharacterId] =
-    useState<string | null>(initialCharacterId || null);
+  const [activeCharacterId, setActiveCharacterId] = useState<string | null>(
+    initialCharacterId || null,
+  );
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
     initialSessionId || null,
   );
-  const sessionInitialized = useRef(false); // ← tránh gọi nhiều lần
+  const [tokenExhaustedFor, setTokenExhaustedFor] = useState<string | null>(
+    null,
+  );
+  const sessionInitialized = useRef(false);
 
   const { data: activeCharacter, isLoading: isLoadingCharacter } = useQuery({
     queryKey: queryKeys.chat.character(activeCharacterId ?? ""),
@@ -43,73 +48,93 @@ export function ChatClient({
     activeCharacter?.contextId ??
     activeCharacter?.contexts?.[0]?.contextId ??
     "";
+  const tokenExhaustionKey =
+    characterId && contextId ? `${characterId}:${contextId}` : "";
+  const isTokenExhausted = tokenExhaustedFor === tokenExhaustionKey;
 
-  // Fetch sessions — chỉ khi đã có character
   const {
     data: sessions,
     isLoading: isLoadingSessions,
-    isSuccess: isSessionsSuccess, // ← thêm
-  } = useChatSessions(
-    characterId,
-    contextId,
-    !!activeCharacter, // ← thêm param enabled
-  );
+    isSuccess: isSessionsSuccess,
+  } = useChatSessions(characterId, contextId, !!activeCharacter);
 
   const createSession = useCreateSession();
 
-  // Reset ref khi character thay đổi (bao gồm lần mount đầu tiên)
   useEffect(() => {
     sessionInitialized.current = false;
   }, [characterId, contextId]);
 
-  // Init session: dùng session gần nhất nếu có, không thì tạo mới
   useEffect(() => {
     if (!characterId) return;
     if (!contextId) return;
-    if (!isSessionsSuccess) return; // chờ fetch xong
-    if (sessionInitialized.current) return; // đã init rồi
-    if (activeSessionId) return; // đã có session rồi
+    if (!isSessionsSuccess) return;
+    if (sessionInitialized.current) return;
+    if (activeSessionId) return;
+    if (isTokenExhausted) return;
 
     sessionInitialized.current = true;
 
     if (sessions && sessions.length > 0) {
-      setActiveSessionId(sessions[0].id); // dùng session gần nhất
+      setActiveSessionId(sessions[0].id);
     } else {
-      // Chưa có session nào → tạo mới
-      createSession.mutateAsync({ characterId, contextId }).then((session) => {
-        setActiveSessionId(session.id);
-      });
+      createSession
+        .mutateAsync({ characterId, contextId })
+        .then((session) => {
+          setActiveSessionId(session.id);
+        })
+        .catch((error) => {
+          if (isTokenExhaustionError(error)) {
+            setTokenExhaustedFor(tokenExhaustionKey);
+            return;
+          }
+
+          sessionInitialized.current = false;
+        });
     }
-  }, [characterId, contextId, isSessionsSuccess, sessions, activeSessionId, createSession]);
-  // Reset khi đổi nhân vật
+  }, [
+    characterId,
+    contextId,
+    isSessionsSuccess,
+    sessions,
+    activeSessionId,
+    isTokenExhausted,
+    tokenExhaustionKey,
+    createSession,
+  ]);
+
   const handleSelectCharacter = useCallback((char: ChatCharacter) => {
     setActiveCharacterId(char.id);
     setActiveSessionId(null);
-    sessionInitialized.current = false; // ← reset để init lại cho nhân vật mới
+    setTokenExhaustedFor(null);
+    sessionInitialized.current = false;
   }, []);
 
   const handleSessionCreated = useCallback((sessionId: string) => {
     setActiveSessionId(sessionId);
-    // invalidate để left panel cập nhật list
+    setTokenExhaustedFor(null);
   }, []);
 
-  const handleDeleteSession = useCallback((deletedSessionId: string) => {
-    if (activeSessionId === deletedSessionId) {
-      setActiveSessionId(null);
-      sessionInitialized.current = false;
-    }
-  }, [activeSessionId]);
+  const handleDeleteSession = useCallback(
+    (deletedSessionId: string) => {
+      if (activeSessionId === deletedSessionId) {
+        setActiveSessionId(null);
+        sessionInitialized.current = false;
+      }
+    },
+    [activeSessionId],
+  );
 
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
-  const [citationRequest, setCitationRequest] = useState<
-    { quote?: string; documentId?: string } | null
-  >(null);
+  const [citationRequest, setCitationRequest] = useState<{
+    quote?: string;
+    documentId?: string;
+  } | null>(null);
 
-  // Nhảy sang khung chat mới ngay lập tức (activeSessionId = null → ChatMain tự hiện
-  // TypingIndicator), tạo session ở background thay vì loading trên nút bấm.
   const handleStartNewSession = useCallback(() => {
     if (!characterId || !contextId) return;
-    sessionInitialized.current = true; // chặn effect auto-init chọn nhầm session cũ
+    if (isTokenExhausted) return;
+
+    sessionInitialized.current = true;
     setActiveSessionId(null);
     setIsRightPanelOpen(false);
     createSession
@@ -117,17 +142,20 @@ export function ChatClient({
       .then((session) => {
         setActiveSessionId(session.id);
       })
-      .catch(() => {
+      .catch((error) => {
+        if (isTokenExhaustionError(error)) {
+          setTokenExhaustedFor(tokenExhaustionKey);
+          return;
+        }
+
         sessionInitialized.current = false;
       });
-  }, [characterId, contextId, createSession]);
+  }, [characterId, contextId, isTokenExhausted, tokenExhaustionKey, createSession]);
 
   if (isLoadingCharacter || !activeCharacter) {
     return (
       <div className="flex items-center justify-center w-full h-full">
-        <div
-          className="w-6 h-6 border-2 rounded-full border-accent-gold border-t-transparent animate-spin"
-        />
+        <div className="w-6 h-6 border-2 rounded-full border-accent-gold border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -142,6 +170,8 @@ export function ChatClient({
         toggleRightPanel={() => setIsRightPanelOpen(!isRightPanelOpen)}
         isRightOpen={isRightPanelOpen}
         onOpenCitation={(quote) => setCitationRequest({ quote })}
+        isTokenExhausted={isTokenExhausted}
+        onTokenExhausted={() => setTokenExhaustedFor(tokenExhaustionKey)}
       />
       <ChatRightPanel
         activeCharacter={activeCharacter}
