@@ -3,6 +3,7 @@ import { chatService, type ChatHistoryGroup } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
+import { isTokenExhaustionError } from "@/lib/utils/api-error";
 
 export function useChatSessions(
   characterId: string,
@@ -13,9 +14,9 @@ export function useChatSessions(
     queryKey: queryKeys.chat.sessions(characterId, contextId),
     queryFn: () => chatService.getSessions(characterId, contextId),
     enabled: !!characterId && !!contextId && ready,
-    staleTime: 0, // ← luôn fetch lại khi mount để lấy sessions mới nhất
-    refetchOnWindowFocus: false, // ← không refetch khi focus tab
-    refetchOnMount: true, // ← fetch khi mount để tránh dùng cache cũ
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
     refetchOnReconnect: false,
   });
 }
@@ -31,8 +32,10 @@ export function useChatMessages(sessionId: string | null) {
     refetchOnReconnect: false,
   });
 }
+
 export function useCreateSession() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       characterId,
@@ -46,12 +49,22 @@ export function useCreateSession() {
         queryKey: queryKeys.chat.sessions(characterId, contextId),
       });
     },
-    onError: () => toast.error("Không thể tạo cuộc trò chuyện mới"),
+    onError: (error: unknown) => {
+      if (isTokenExhaustionError(error)) {
+        toast.error("Bạn đã hết token. Vui lòng nạp thêm để tiếp tục chat.", {
+          duration: 8000,
+        });
+        return;
+      }
+
+      toast.error("Không thể tạo cuộc trò chuyện mới");
+    },
   });
 }
 
 export function useSendMessage() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       sessionId,
@@ -61,21 +74,13 @@ export function useSendMessage() {
       content: string;
     }) => chatService.sendMessage(sessionId, content),
     onSuccess: () => {
-      // Invalidate profile to update token count in sidebar
       qc.invalidateQueries({ queryKey: queryKeys.profile.me });
     },
     onError: (error: unknown) => {
-      const serverMessage =
-        typeof error === "object" && error !== null && "response" in error
-          ? (error as { response?: { data?: { message?: unknown } } }).response
-              ?.data?.message
-          : undefined;
-      if (
-        typeof serverMessage === "string" &&
-        (serverMessage.includes("hết token") || serverMessage.includes("nạp thêm"))
-      ) {
+      if (isTokenExhaustionError(error)) {
         return;
       }
+
       toast.error("Không thể gửi tin nhắn");
     },
   });
@@ -94,10 +99,10 @@ export function useChatHistory() {
 
 export function useDeleteSession() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: (sessionId: string) => chatService.deleteSession(sessionId),
     onSuccess: async () => {
-      // Force refetch để đảm bảo UI đồng bộ
       await qc.refetchQueries({ queryKey: queryKeys.chat.history });
       toast.success("Đã xóa cuộc trò chuyện");
     },
@@ -109,40 +114,41 @@ export function useDeleteSession() {
 
 export function useSoftDeleteSession() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: (sessionId: string) => chatService.softDeleteSession(sessionId),
     onMutate: async (sessionId) => {
-      // Cancel any outgoing refetches
       await qc.cancelQueries({ queryKey: queryKeys.chat.history });
-      
-      // Snapshot previous value
-      const previousHistory = qc.getQueryData<ChatHistoryGroup[]>(queryKeys.chat.history);
-      
-      // Optimistically update to new value (remove deleted session)
+
+      const previousHistory = qc.getQueryData<ChatHistoryGroup[]>(
+        queryKeys.chat.history,
+      );
+
       if (previousHistory) {
         const newHistory = previousHistory
           .map((group) => ({
             ...group,
-            sessions: (group.sessions ?? []).filter((s: { id: string }) => s.id !== sessionId),
+            sessions: (group.sessions ?? []).filter(
+              (s: { id: string }) => s.id !== sessionId,
+            ),
           }))
-          .filter((group) => group.sessions.length > 0); // Remove empty groups
-        
+          .filter((group) => group.sessions.length > 0);
+
         qc.setQueryData(queryKeys.chat.history, newHistory);
       }
-      
+
       return { previousHistory };
     },
     onSuccess: async () => {
-      // Invalidate và refetch để đảm bảo UI đồng bộ
       await qc.invalidateQueries({ queryKey: ["chat", "sessions"] });
       await qc.refetchQueries({ queryKey: queryKeys.chat.history });
       toast.success("Đã xóa cuộc trò chuyện");
     },
-    onError: (err, sessionId, context) => {
-      // Rollback on error
+    onError: (_err, _sessionId, context) => {
       if (context?.previousHistory) {
         qc.setQueryData(queryKeys.chat.history, context.previousHistory);
       }
+
       toast.error("Không thể xóa cuộc trò chuyện");
     },
   });

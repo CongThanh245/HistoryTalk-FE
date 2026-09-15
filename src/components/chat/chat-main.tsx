@@ -25,6 +25,7 @@ import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialo
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { hasPlusAccess, hasProAccess } from "@/services/user.service";
+import { isTokenExhaustionError } from "@/lib/utils/api-error";
 import { useSidebar } from "@/components/layouts/sidebar/sidebar-context";
 import {
   Dialog,
@@ -122,6 +123,8 @@ interface ChatMainProps {
   /** Overrides the "initializing conversation" message shown while sessionId is null. */
   initializingLabel?: string;
   onOpenCitation?: (quote: string) => void;
+  isTokenExhausted?: boolean;
+  onTokenExhausted?: () => void;
 }
 
 export function ChatMain({
@@ -133,6 +136,8 @@ export function ChatMain({
   isRightOpen = false,
   initializingLabel,
   onOpenCitation,
+  isTokenExhausted: isTokenExhaustedFromParent = false,
+  onTokenExhausted,
 }: ChatMainProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -151,7 +156,8 @@ export function ChatMain({
   const [isVoice3DOpen, setIsVoice3DOpen] = useState(false);
   const [selectedVoiceCall, setSelectedVoiceCall] = useState<VoiceCallGroup | null>(null);
   const [voiceCallDraftMessages, setVoiceCallDraftMessages] = useState<ChatMessage[]>([]);
-  const [isTokenExhausted, setIsTokenExhausted] = useState(false);
+  const [isLocalTokenExhausted, setIsLocalTokenExhausted] = useState(false);
+  const isTokenExhausted = isTokenExhaustedFromParent || isLocalTokenExhausted;
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const [aiWarningVisible, setAiWarningVisible] = useState(false);
   const [aiWarningLeaving, setAiWarningLeaving] = useState(false);
@@ -536,6 +542,11 @@ export function ChatMain({
         currentSessionId = newSession.id;
         onSessionCreated?.(currentSessionId);
       } catch (error) {
+        if (isTokenExhaustionError(error)) {
+          setIsLocalTokenExhausted(true);
+          onTokenExhausted?.();
+        }
+
         return;
       }
     }
@@ -672,8 +683,11 @@ export function ChatMain({
           lowerServerMessage.includes("không đủ token") ||
           (error.response?.status === 400 && lowerServerMessage.includes("token"));
         
-        if (isTokenExhausted) {
-          setIsTokenExhausted(true);
+        void isTokenExhausted;
+
+        if (isTokenExhaustionError(err)) {
+          setIsLocalTokenExhausted(true);
+          onTokenExhausted?.();
           toast.error("Bạn đã hết token. Vui lòng nạp thêm để tiếp tục chat.", {
             action: {
               label: "Nạp thêm",
