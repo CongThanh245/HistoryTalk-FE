@@ -14,11 +14,14 @@ import type {
 } from "leaflet";
 import type { GeoJsonObject } from "geojson";
 import type { MapPin } from "@/services/map-pin.service";
+import type { HistoricalEvent } from "@/services/event.service";
 import { cn } from "@/lib/utils/cn";
 
 interface LeafletMapProps {
+  battle?: HistoricalEvent;
   pins: MapPin[];
   selectedPinId: string | null;
+  panelDismissed?: boolean;
   onSelectPin: (pin: MapPin) => void;
   onMapClick?: (coordinates: { latitude: number; longitude: number }) => void;
 }
@@ -54,8 +57,10 @@ const TRUONG_SA_ISLANDS: LatLngExpression[] = [
 ];
 
 export function LeafletMap({
+  battle,
   pins,
   selectedPinId,
+  panelDismissed = false,
   onSelectPin,
   onMapClick,
 }: LeafletMapProps) {
@@ -129,19 +134,29 @@ export function LeafletMap({
           preferCanvas: true,
         });
 
-        map.setView(VIETNAM_INITIAL_VIEW.center, VIETNAM_INITIAL_VIEW.zoom);
-        map.on("drag", () => {
-          map.panInsideBounds(vietnamBounds, { animate: false });
-        });
-        map.on("moveend", () => {
-          map.panInsideBounds(vietnamBounds, { animate: true });
-        });
+        // maxBounds already enforces the boundary with Leaflet's re-entry guard.
         map.on("click", (event) => {
           onMapClickRef.current?.({
             latitude: event.latlng.lat,
             longitude: event.latlng.lng,
           });
         });
+
+        // Scale markers based on zoom level using CSS variable (safe — doesn't touch Leaflet's transform)
+        const updateMarkerScale = () => {
+          const z = map.getZoom();
+          // zoom 6.25 = scale ~0.65, zoom 9 = scale 1.0
+          const scale = Math.max(0.4, Math.min(1.4, (z - 4) / (9 - 4)));
+          const container = containerRef.current;
+          if (container) {
+            container.style.setProperty("--marker-scale", String(scale));
+          }
+        };
+        map.on("zoom", updateMarkerScale);
+        map.on("zoomend", updateMarkerScale);
+        // Apply initial scale immediately
+        updateMarkerScale();
+
 
         mapRef.current = map;
         setMapReady(true);
@@ -184,25 +199,44 @@ export function LeafletMap({
       // Add new markers / update existing
       pins.forEach((pin) => {
         const isSelected = pin.pinId === selectedPinId;
-        const icon = createCustomIcon(L, pin, isSelected);
+        const icon = createCustomIcon(L, pin, isSelected, battle);
 
         if (markersRef.current[pin.pinId]) {
-          markersRef.current[pin.pinId].setIcon(icon);
+          const marker = markersRef.current[pin.pinId];
+          marker.setIcon(icon).setLatLng([pin.latitude, pin.longitude]);
+          marker.setTooltipContent(createBattlePreview(pin, battle));
+          marker.off("click").on("click", () => onSelectPinRef.current(pin));
+          marker.getElement()?.setAttribute("aria-label", battle?.title ?? pin.label);
         } else {
-          addMarker(L, map, pin, isSelected, markersRef, onSelectPinRef);
+          addMarker(L, map, pin, isSelected, markersRef, onSelectPinRef, battle);
         }
       });
     });
-  }, [pins, selectedPinId, mapReady]);
+  }, [pins, selectedPinId, mapReady, battle]);
 
   // ── Fly to selected landmark ──────────────────────────────
   useEffect(() => {
     if (!mapRef.current || !selectedPinId) return;
     const pin = pins.find((item) => item.pinId === selectedPinId);
-    if (pin) {
-      mapRef.current.flyTo([pin.latitude, pin.longitude], 9, { duration: 1 });
+    if (
+      pin &&
+      typeof pin.latitude === "number" && !isNaN(pin.latitude) &&
+      typeof pin.longitude === "number" && !isNaN(pin.longitude)
+    ) {
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      mapRef.current.flyTo([pin.latitude, pin.longitude], 9, { duration: 1.2, animate: !reducedMotion });
     }
-  }, [selectedPinId, pins]);
+  }, [selectedPinId, pins, mapReady]);
+
+  // ── Fly back to Vietnam overview when panel dismissed ─────
+  useEffect(() => {
+    if (!mapRef.current || !panelDismissed) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    mapRef.current.flyTo(VIETNAM_INITIAL_VIEW.center, VIETNAM_INITIAL_VIEW.zoom, {
+      duration: 1.4,
+      animate: !reducedMotion,
+    });
+  }, [panelDismissed]);
 
   return (
     <>
@@ -420,6 +454,26 @@ export function LeafletMap({
         }
         /* Fade-in animation for new markers */
         .leaflet-marker-icon.landmark-marker { transition: opacity 180ms ease-out; }
+        .battle-pin { position: relative; width: 60px; height: 60px; transform: scale(var(--marker-scale, 0.65)); transform-origin: center bottom; transition: transform 250ms ease; }
+        .battle-pin-photo { width: 60px; height: 60px; border: 3px solid var(--accent-gold); border-radius: 50%; overflow: hidden; background: var(--bg-surface); box-shadow: 0 6px 18px #09090b40; transition: transform 220ms ease; }
+        .battle-pin-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .landmark-marker:hover .battle-pin-photo, .landmark-marker:focus .battle-pin-photo { transform: translateY(-4px); }
+        .battle-pin-year { position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); padding: 2px 8px; border-radius: 4px; background: #09090b; color: #fcd34d; font-family: inherit; font-size: 11px; line-height: 18px; font-weight: 800; white-space: nowrap; }
+        .battle-pin-name { position: absolute; top: 76px; left: 50%; transform: translateX(-50%); max-width: 210px; width: max-content; white-space: normal; padding: 6px 10px; border-radius: 6px; background: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 14px #09090b20; font-size: 12px; line-height: 16px; font-weight: 800; text-align: center; }
+        .battle-pin--selected::before { content: ''; position: absolute; inset: -7px; border: 1px solid var(--accent-gold); border-radius: 50%; animation: battle-pin-arrive 1.4s ease-out 3; pointer-events: none; }
+        .battle-preview.leaflet-tooltip { padding: 0; border: 0; border-radius: 8px; background: var(--bg-surface); color: var(--text-primary); box-shadow: 0 12px 32px #09090b38; white-space: normal; }
+        .battle-preview .battle-preview-content { width: 248px; overflow: hidden; border-radius: 8px; animation: battle-preview-in 180ms ease-out; }
+        .battle-preview-image { display: block; width: 100%; height: 112px; object-fit: cover; }
+        .battle-preview-copy { padding: 12px; }
+        .battle-preview-heading { display: block; font-size: 14px; line-height: 20px; }
+        .battle-preview-meta { margin-top: 4px; color: var(--gold-on-light); font-weight: 700; font-size: 11px; }
+        .battle-preview-summary { margin: 6px 0 0; color: var(--text-secondary); font-size: 12px; line-height: 18px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        @keyframes battle-pin-arrive { from { transform: scale(.9); opacity: .9; } to { transform: scale(1.65); opacity: 0; } }
+        @keyframes battle-preview-in { from { opacity: .3; clip-path: inset(8% 0 0); } to { opacity: 1; clip-path: inset(0); } }
+        @media (prefers-reduced-motion: reduce) {
+          .battle-pin--selected::before, .battle-preview .battle-preview-content { animation: none; }
+          .battle-pin-photo { transition: none; }
+        }
       `}</style>
     </>
   );
@@ -667,55 +721,45 @@ function createCustomIcon(
   L: typeof import("leaflet"),
   pin: MapPin,
   isSelected: boolean,
+  battle?: HistoricalEvent,
 ): DivIcon {
-  const isPersonal = pin.pinOwnerType === "USER";
-  const isEnemy = pin.pinType === "ENEMY_FORCE";
-  const color = isPersonal ? "#2563a6" : isEnemy ? "#9f2f2f" : "#316a48";
-  const symbol = isPersonal ? "●" : isEnemy ? "E" : "A";
-  const size = isSelected ? 42 : 34;
-  const borderColor = isSelected ? "#fff4cf" : "#4f2f15";
-  const shadow = isSelected
-    ? `0 7px 20px ${color}66, 0 0 0 5px rgba(255, 244, 207, 0.38)`
-    : "0 4px 10px rgba(67,38,16,0.32)";
-
-  const html = `
-    <div style="
-      width:${size}px;height:${size}px;
-      background:${color};
-      border:2.5px solid ${borderColor};
-      border-radius:50% 50% 50% 0;
-      transform:rotate(-45deg);
-      box-shadow:${shadow};
-      display:flex;align-items:center;justify-content:center;
-      transition:all 0.2s;
-      outline:1px solid rgba(255,255,255,0.35);
-    ">
-      <span style="transform:rotate(45deg);font-size:${isSelected ? 14 : 12}px;line-height:1;color:white;font-weight:900;">
-        ${symbol}
-      </span>
-    </div>
-    ${
-      isSelected
-        ? `<div style="
-      position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
-      background:#4c2c12;color:#f8dfaa;
-      font-size:10px;font-weight:600;white-space:nowrap;
-      padding:3px 7px;border-radius:3px;
-      border:1px solid rgba(248,223,170,0.35);
-      font-family:inherit;
-      box-shadow:0 6px 14px rgba(67,38,16,0.22);
-    ">${escapeHtml(pin.label)}</div>`
-        : ""
-    }
-  `;
-
+  const title = battle?.title || pin.label;
+  const year = battle?.year ?? pin.pinYear;
   return L.divIcon({
-    html: `<div style="position:relative;">${html}</div>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size],
-    popupAnchor: [0, -size],
+    html: `<div class="battle-pin ${isSelected ? "battle-pin--selected" : ""}">
+      <div class="battle-pin-photo"><img src="${escapeHtml(battle?.imageUrl || "/war.jpg")}" alt="" /></div>
+      <span class="battle-pin-year">${year < 0 ? `${Math.abs(year)} TCN` : year}</span>
+      <span class="battle-pin-name">${escapeHtml(title)}</span>
+    </div>`,
+    iconSize: [60, 60],
+    iconAnchor: [30, 30],
     className: "landmark-marker",
   });
+}
+
+function createBattlePreview(pin: MapPin, battle?: HistoricalEvent) {
+  const preview = document.createElement("div");
+  preview.className = "battle-preview-content";
+  const image = document.createElement("img");
+  image.className = "battle-preview-image";
+  image.src = battle?.imageUrl || "/war.jpg";
+  image.alt = "";
+  image.addEventListener("error", () => { image.src = "/war.jpg"; }, { once: true });
+  const copy = document.createElement("div");
+  copy.className = "battle-preview-copy";
+  const title = document.createElement("strong");
+  title.className = "battle-preview-heading";
+  title.textContent = battle?.title || pin.label;
+  const meta = document.createElement("div");
+  meta.className = "battle-preview-meta";
+  const year = battle?.year ?? pin.pinYear;
+  meta.textContent = [year < 0 ? `${Math.abs(year)} TCN` : String(year), battle?.location].filter(Boolean).join(" · ");
+  const summary = document.createElement("p");
+  summary.className = "battle-preview-summary";
+  summary.textContent = battle?.summary || pin.description || "";
+  copy.append(title, meta, summary);
+  preview.append(image, copy);
+  return preview;
 }
 
 function addMarker(
@@ -725,11 +769,13 @@ function addMarker(
   isSelected: boolean,
   markersRef: React.MutableRefObject<Record<string, Marker>>,
   onSelectRef: React.MutableRefObject<(pin: MapPin) => void>,
+  battle?: HistoricalEvent,
 ) {
-  const icon = createCustomIcon(L, pin, isSelected);
+  const icon = createCustomIcon(L, pin, isSelected, battle);
   const marker = L.marker([pin.latitude, pin.longitude], {
     icon,
     zIndexOffset: 1000,
+    alt: battle?.title || pin.label,
   });
 
   marker.on("click", () => {
@@ -737,10 +783,8 @@ function addMarker(
   });
 
   marker.bindTooltip(
-    `<div style="font-family:inherit;font-size:12px;font-weight:700;color:#4c2c12;padding:5px 9px;">
-      ${escapeHtml(pin.label)}
-    </div>`,
-    { direction: "top", offset: [0, -36], className: "leaflet-tooltip-custom" },
+    createBattlePreview(pin, battle),
+    { direction: "top", offset: [0, -34], className: "battle-preview", opacity: 1 },
   );
 
   marker.addTo(map);
@@ -764,3 +808,4 @@ function fadeOutAndRemove(marker: Marker, map: LeafletMapInstance) {
     } catch {}
   }
 }
+
