@@ -91,9 +91,9 @@ export function useLogout() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const accessToken = useAuthStore.getState().tokens?.accessToken;
-      void authApi.logout(accessToken).catch(() => undefined);
+      await authApi.logout(accessToken).catch(() => undefined);
     },
     onSettled: () => {
       resetClientAuth();
