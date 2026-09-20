@@ -36,6 +36,16 @@ export function useGamificationToday() {
   });
 }
 
+export function useGamificationStudyDays(year: number, month: number, enabled: boolean) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  return useQuery({
+    queryKey: queryKeys.gamification.studyDays(year, month),
+    queryFn: () => gamificationService.getStudyDays(year, month),
+    enabled: enabled && isAuthenticated,
+    staleTime: 1000 * 60,
+  });
+}
+
 // ── useClaimQuest ────────────────────────────────────────────────────────────
 /** Nhận thưởng token cho một nhiệm vụ đã hoàn thành (POST /gamification/claim) */
 export function useClaimQuest() {

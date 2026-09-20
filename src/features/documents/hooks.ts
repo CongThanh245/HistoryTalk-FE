@@ -28,6 +28,7 @@ export function useHistoricalDocuments(contextId?: string) {
     queryKey: queryKeys.documents.historicalByContext(contextId || ""),
     queryFn: () => documentService.getHistoricalDocuments(contextId!),
     enabled: !!contextId,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -36,6 +37,7 @@ export function useCharacterDocuments(characterId?: string) {
     queryKey: queryKeys.documents.characterByCharacter(characterId || ""),
     queryFn: () => documentService.getCharacterDocuments(characterId!),
     enabled: !!characterId,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -82,6 +84,7 @@ export function useAllCharacterDocuments() {
   return useQuery({
     queryKey: queryKeys.documents.characterAll,
     queryFn: () => documentService.getAllCharacterDocuments(),
+    staleTime: 1000 * 60 * 5,
   });
 }
 

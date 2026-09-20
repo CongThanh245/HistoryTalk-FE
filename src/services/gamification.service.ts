@@ -49,6 +49,15 @@ type ApiEnvelope<T> = {
 // ── Service ──────────────────────────────────────────────
 
 export const gamificationService = {
+  getStudyDays: async (year: number, month: number): Promise<string[]> => {
+    const res = await axiosClient.get<ApiEnvelope<string[]>>("/gamification/study-days", {
+      params: { year, month },
+    });
+    if (!res.data.success || !res.data.data) {
+      throw new Error(res.data.message ?? "Không thể lấy lịch sử ngày học");
+    }
+    return res.data.data;
+  },
   /** GET /gamification/today — Streak & nhiệm vụ hôm nay của người dùng hiện tại */
   getToday: async (): Promise<GamificationToday> => {
     const res = await axiosClient.get<ApiEnvelope<GamificationToday>>("/gamification/today");

@@ -3,5 +3,5 @@ export default function RoomLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="w-screen h-screen overflow-hidden">{children}</div>;
+  return <div className="map-page h-full min-h-0 w-full overflow-hidden">{children}</div>;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { EraFilter } from "@/components/commons/era-filter";
 import { SearchInput } from "@/components/commons/search-input";
 import { useQuery } from "@tanstack/react-query";
@@ -16,6 +16,7 @@ import {
 } from "../commons/character-card";
 import { CustomPagination } from "../commons/pagination";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
+import { parseEra, parsePage } from "@/lib/catalog-url-state";
 
 const PAGE_LIMIT = 10;
 
@@ -41,6 +42,10 @@ function useCharacters(era: EventEra, search: string, page: number) {
   return useQuery({
     queryKey: queryKeys.characters.list(params), // ← đổi
     queryFn: () => characterService.getAll(params), // ← đổi
+    staleTime: 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     placeholderData: (prev) => prev,
   });
 }
@@ -49,19 +54,32 @@ function useCharacters(era: EventEra, search: string, page: number) {
 
 export function CharactersClient() {
   const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
-  const [era, setEra] = useState<EventEra>("all");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const era = parseEra(searchParams.get("era"));
+  const search = searchParams.get("search") ?? "";
+  const page = parsePage(searchParams.get("page"));
 
   const { data, isLoading, isError } = useCharacters(era, search, page);
 
+  const updateUrl = (changes: Record<string, string | null>, replace = false) => {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(changes)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
+    const query = params.toString();
+    const url = query ? `${pathname}?${query}` : pathname;
+    if (url !== `${window.location.pathname}${window.location.search}`) {
+      window.history[replace ? "replaceState" : "pushState"](null, "", url);
+    }
+  };
+
   const handleEraChange = (e: EventEra) => {
-    setEra(e);
-    setPage(1);
+    updateUrl({ era: e === "all" ? null : e, page: null });
   };
   const handleSearch = (s: string) => {
-    setSearch(s);
-    setPage(1);
+    updateUrl({ search: s || null, page: null }, true);
   };
   const handleClick = (id: string) => navigateWithAuth(`/chat/${id}`);
 
@@ -135,7 +153,7 @@ export function CharactersClient() {
         <CustomPagination
           page={page}
           totalPages={data.totalPages}
-          onChange={setPage}
+          onChange={(nextPage) => updateUrl({ page: nextPage === 1 ? null : String(nextPage) })}
         />
       )}
       </div>

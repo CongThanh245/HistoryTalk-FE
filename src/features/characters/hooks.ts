@@ -19,6 +19,22 @@ function isCharactersResponse(value: unknown): value is GetCharactersResponse {
   );
 }
 
+function prependCharacterToList(
+  old: unknown,
+  newCharacter: Character,
+): unknown {
+  if (!isCharactersResponse(old)) return old;
+  if (old.content.some((character) => character.id === newCharacter.id)) {
+    return old;
+  }
+
+  return {
+    ...old,
+    content: [newCharacter, ...old.content],
+    totalElements: old.totalElements + 1,
+  };
+}
+
 function getErrorMessage(err: unknown, fallback: string) {
   if (
     typeof err === "object" &&
@@ -48,6 +64,7 @@ export function useCharacters(
     queryFn: () => characterService.getAll(params),
     initialData,
     staleTime: 1000 * 60 * 5,
+    refetchOnMount: true,
     placeholderData: (prev) => prev,
     enabled: options?.enabled ?? true,
   });
@@ -96,14 +113,12 @@ export function useCreateCharacter() {
   return useMutation({
     mutationFn: (data: CreateCharacterRequest) => characterService.create(data),
     onSuccess: (newChar) => {
-      qc.setQueriesData(
-        { queryKey: queryKeys.characters.all },
-        (old: unknown) => {
-          if (!isCharactersResponse(old)) return old;
-          return { ...old, content: [newChar, ...old.content] };
-        },
-      );
       qc.setQueryData(queryKeys.characters.detail(newChar.id), newChar);
+      qc.setQueriesData(
+        { queryKey: ["characters", "list"] },
+        (old: unknown) => prependCharacterToList(old, newChar),
+      );
+      qc.invalidateQueries({ queryKey: ["characters", "list"] });
       toast.success("Tạo nhân vật thành công");
     },
     onError: (err: unknown) => {
@@ -140,6 +155,7 @@ export function useUpdateCharacter() {
           };
         },
       );
+      qc.invalidateQueries({ queryKey: ["characters", "list"] });
       toast.success("Cập nhật thành công");
     },
     onError: (err: unknown) => {

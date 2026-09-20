@@ -99,10 +99,24 @@ export default function RootLayout({
                 document.documentElement.dataset.welcomeScreenSeen = "true";
               }
               try {
+                function clearAuthCookies() {
+                  var keys = ["auth-token", "auth-role"];
+                  var paths = ["/", window.location.pathname || "/"];
+                  var host = window.location.hostname;
+                  var domains = ["", host, "." + host];
+                  keys.forEach(function (key) {
+                    paths.forEach(function (path) {
+                      domains.forEach(function (domain) {
+                        var domainAttr = domain ? "; domain=" + domain : "";
+                        document.cookie = key + "=; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=" + path + domainAttr + "; sameSite=lax";
+                      });
+                    });
+                  });
+                }
                 var auth = localStorage.getItem("auth-storage");
                 if (auth) {
                   var parsed = JSON.parse(auth);
-                  if (parsed && parsed.state && parsed.state.user && parsed.state.tokens) {
+                  if (parsed && parsed.state && parsed.state.user && parsed.state.tokens && parsed.state.tokens.accessToken) {
                     var user = parsed.state.user;
                     var tokens = parsed.state.tokens;
                     var role = user.role;
@@ -126,9 +140,14 @@ export default function RootLayout({
                       else if (role === "SYSTEM_ADMIN") home = "/staff/admin";
                       window.location.replace(home);
                     }
+                  } else {
+                    clearAuthCookies();
                   }
+                } else {
+                  clearAuthCookies();
                 }
               } catch (e) {
+                clearAuthCookies();
                 console.error(e);
               }
             `,

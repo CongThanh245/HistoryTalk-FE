@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import SidebarHeader from "./sidebar-header";
 import SidebarNav from "./sidebar-nav";
 import SidebarFooter from "./sidebar-footer";
+import type { CatalogPath } from "./sidebar-nav";
 import { SidebarSection } from "@/routers/sidebar";
 import { useSidebar } from "./sidebar-context";
 
@@ -13,6 +14,7 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
   const [isPinned, setIsPinned] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
+  const [catalogUrls, setCatalogUrls] = useState<Partial<Record<CatalogPath, string>>>({});
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   // On tablet (md–lg) force icon-only; on desktop respect pin/hover
   const isDesktopExpanded = isTablet ? false : (isPinned || isHovered);
@@ -60,6 +62,10 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
     hoverTimeout.current = setTimeout(() => setIsHovered(false), 120);
   };
 
+  const rememberCatalogUrl = (path: CatalogPath, url: string) => {
+    setCatalogUrls((current) => current[path] === url ? current : { ...current, [path]: url });
+  };
+
   useEffect(() => {
     return () => {
       if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
@@ -90,7 +96,12 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
         isMobileDrawer={isMobileOpen}
         logoHref={logoHref}
       />
-      <SidebarNav isExpanded={isExpanded} sections={sections} />
+      <SidebarNav
+        isExpanded={isExpanded}
+        sections={sections}
+        catalogUrls={catalogUrls}
+        onRememberCatalogUrl={rememberCatalogUrl}
+      />
       <SidebarFooter isExpanded={isExpanded} showUpgrade={showUpgrade} />
     </aside>
   );

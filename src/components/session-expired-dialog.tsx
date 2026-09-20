@@ -1,9 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useSessionStore } from "@/store/session.store";
-import { useAuthStore } from "@/store/auth.store";
-import { clearAuthCookies } from "@/features/auth/auth-cookies";
+import { resetClientAuth } from "@/features/auth/auth-cookies";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,13 +15,11 @@ import {
 export function SessionExpiredDialog() {
   const isExpired = useSessionStore((s) => s.isExpired);
   const hideExpired = useSessionStore((s) => s.hideExpired);
-  const router = useRouter();
 
   const handleConfirm = () => {
-    useAuthStore.getState().clearAuth();
-    clearAuthCookies();
+    resetClientAuth();
     hideExpired();
-    router.replace("/login");
+    window.location.replace("/login");
   };
 
   return (

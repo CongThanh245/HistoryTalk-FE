@@ -5,21 +5,17 @@
 
 import React from "react";
 import { ArrowLeft, Users, Calendar, Sword } from "lucide-react";
-import { MOCK_CONTEXT_EVENTS } from "@/services/landmark.service";
+import type { LandmarkContextEvent } from "@/services/landmark.service";
 import { useEventCharacters } from "@/features/landmark/hooks";
 import { formatCharacterLifespan } from "@/lib/utils/character-date";
 
 interface EventDetailPanelProps {
-  contextId: string;
+  event: LandmarkContextEvent;
   onBack: () => void;
 }
 
-export function EventDetailPanel({ contextId, onBack }: EventDetailPanelProps) {
-  const event = MOCK_CONTEXT_EVENTS[contextId];
-  // TODO: thay MOCK_CONTEXT_EVENTS bằng useQuery khi có API GET /historical-contexts/:id
-  const { data: characters = [], isLoading } = useEventCharacters(contextId);
-
-  if (!event) return null;
+export function EventDetailPanel({ event, onBack }: EventDetailPanelProps) {
+  const { data: characters = [], isLoading } = useEventCharacters(event.contextId);
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-content)]">
@@ -91,9 +87,6 @@ export function EventDetailPanel({ contextId, onBack }: EventDetailPanelProps) {
               />
               <p className="text-sm text-content-muted">
                 Dữ liệu nhân vật đang được cập nhật
-              </p>
-              <p className="text-xs mt-1 text-content-subtle">
-                API: GET /characters/context/{contextId}
               </p>
             </div>
           ) : (

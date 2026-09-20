@@ -4,6 +4,7 @@ import {
   type GetEventsParams,
   type CreateEventRequest,
   type UpdateEventRequest,
+  type HistoricalEvent,
   GetEventsResponse,
   EventEra,
   EventEraBackend,
@@ -12,6 +13,39 @@ import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
 import { removeContextFromCharacterCaches } from "@/features/characters/context-cache";
 import { contextMediaService, type MediaType } from "@/services/media.service";
+
+function isEventsResponse(value: unknown): value is GetEventsResponse {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Array.isArray((value as GetEventsResponse).content)
+  );
+}
+
+function prependEventToList(old: unknown, newEvent: HistoricalEvent): unknown {
+  if (!isEventsResponse(old)) return old;
+  if (old.content.some((event) => event.id === newEvent.id)) return old;
+
+  return {
+    ...old,
+    content: [newEvent, ...old.content].sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year;
+      return a.title.localeCompare(b.title, "vi");
+    }),
+    totalElements: old.totalElements + 1,
+  };
+}
+
+function applyContextMediaUrl(
+  event: HistoricalEvent,
+  mediaType: MediaType,
+  viewUrl?: string,
+): HistoricalEvent {
+  if (!viewUrl) return event;
+  if (mediaType === "IMAGE_2D") return { ...event, imageUrl: viewUrl };
+  if (mediaType === "VIDEO") return { ...event, videoUrl: viewUrl };
+  return event;
+}
 
 function getErrorMessage(err: unknown, fallback: string) {
   if (
@@ -39,6 +73,7 @@ export function useEvents(params?: GetEventsParams) {
       return eventService.getAllClient(params);
     },
     staleTime: 1000 * 60 * 5,
+    refetchOnMount: true,
     placeholderData: (prev) => prev,
   });
 }
@@ -54,14 +89,12 @@ export function useCreateEvent() {
   return useMutation({
     mutationFn: (data: CreateEventRequest) => eventService.create(data),
     onSuccess: (newEvent) => {
-      // Cập nhật cache ngay, không cần chờ refetch
-      qc.setQueryData(
-        queryKeys.events.list({ page: 1, limit: 100 }),
-        (old: GetEventsResponse | undefined) => {
-          if (!old) return old;
-          return { ...old, content: [newEvent, ...old.content] };
-        },
+      qc.setQueryData(queryKeys.events.detail(newEvent.id), newEvent);
+      qc.setQueriesData(
+        { queryKey: ["events", "list"] },
+        (old: unknown) => prependEventToList(old, newEvent),
       );
+      qc.invalidateQueries({ queryKey: ["events", "list"] });
       toast.success("Đã tạo bối cảnh thành công");
     },
     onError: (err: unknown) => {
@@ -89,6 +122,7 @@ export function useUpdateEvent() {
           };
         },
       );
+      qc.invalidateQueries({ queryKey: ["events", "list"] });
     },
     onError: (err: unknown) => {
       toast.error(getErrorMessage(err, "Cập nhật thất bại"));
@@ -129,11 +163,12 @@ export function useTimelineEvents(era: EventEra) {
   const { data, isLoading, isFetching, isPlaceholderData } = useQuery({
     queryKey: queryKeys.events.list(params),
     queryFn: () => eventService.getAllClient(params),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     placeholderData: (prev) => prev,
   });
-  console.log({ isLoading, isFetching });
-
   return {
     events: data?.content ?? [],
     showSkeleton: isLoading || (isFetching && isPlaceholderData),
@@ -155,7 +190,23 @@ export function useUploadContextMedia() {
       mediaType: MediaType;
       onProgress?: (percent: number) => void;
     }) => contextMediaService.upload(contextId, file, mediaType, onProgress),
-    onSuccess: (_result, { contextId }) => {
+    onSuccess: (result, { contextId, mediaType }) => {
+      qc.setQueryData(
+        queryKeys.events.detail(contextId),
+        (old: HistoricalEvent | undefined) =>
+          old ? applyContextMediaUrl(old, mediaType, result.viewUrl) : old,
+      );
+      qc.setQueriesData({ queryKey: queryKeys.events.all }, (old: unknown) => {
+        if (!isEventsResponse(old)) return old;
+        return {
+          ...old,
+          content: old.content.map((event) =>
+            event.id === contextId
+              ? applyContextMediaUrl(event, mediaType, result.viewUrl)
+              : event,
+          ),
+        };
+      });
       qc.invalidateQueries({ queryKey: queryKeys.events.detail(contextId) });
       qc.invalidateQueries({ queryKey: queryKeys.events.all });
       toast.success("Đã tải lên media thành công");

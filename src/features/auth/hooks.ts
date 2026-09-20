@@ -10,7 +10,7 @@ import {
   RegisterRequest,
   ResetPasswordRequest,
 } from "./type";
-import { clearAuthCookies, persistAuthCookies } from "./auth-cookies";
+import { persistAuthCookies, resetClientAuth } from "./auth-cookies";
 
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -88,14 +88,15 @@ export function useResetPassword() {
 }
 
 export function useLogout() {
-  const router = useRouter();
-  const clearAuth = useAuthStore((s) => s.clearAuth);
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => authApi.logout(),
+    mutationFn: () => {
+      const accessToken = useAuthStore.getState().tokens?.accessToken;
+      void authApi.logout(accessToken).catch(() => undefined);
+    },
     onSettled: () => {
-      clearAuth();
+      resetClientAuth();
 
       // Xóa (không refetch) profile cache để đảm bảo dữ liệu được làm mới khi login tài khoản mới.
       // Dùng removeQueries thay vì invalidateQueries vì lúc này token đã bị clearAuth() xoá —
@@ -103,9 +104,7 @@ export function useLogout() {
       // SessionExpiredDialog ngay khi người dùng chỉ đang logout bình thường.
       queryClient.removeQueries({ queryKey: queryKeys.profile.me });
 
-      clearAuthCookies();
-
-      router.push("/login");
+      window.location.replace("/login");
     },
   });
 }

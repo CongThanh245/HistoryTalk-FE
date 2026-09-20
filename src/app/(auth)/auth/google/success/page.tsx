@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { User } from "@/features/auth/type";
-import { clearAuthCookies, persistAuthCookies } from "@/features/auth/auth-cookies";
+import { persistAuthCookies, resetClientAuth } from "@/features/auth/auth-cookies";
 
 const VALID_ROLES = ["CUSTOMER", "CONTENT_ADMIN", "SYSTEM_ADMIN"] as const;
 
@@ -15,7 +15,6 @@ function isValidRole(role: string | null): role is User["role"] {
 export default function GoogleOAuthSuccessPage() {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -42,8 +41,7 @@ export default function GoogleOAuthSuccessPage() {
       !email ||
       !isValidRole(role)
     ) {
-      clearAuth();
-      clearAuthCookies();
+      resetClientAuth();
       router.replace("/login");
       return;
     }
@@ -68,7 +66,7 @@ export default function GoogleOAuthSuccessPage() {
             : "/home";
 
     window.location.href = redirectPath;
-  }, [clearAuth, router, setAuth]);
+  }, [router, setAuth]);
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6 bg-[var(--palladian)] text-content-text">
