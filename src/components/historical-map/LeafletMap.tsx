@@ -1,11 +1,10 @@
 "use client";
 
 // components/historical-map/LeafletMap.tsx
-// Leaflet map: chỉ render landmark markers.
-// Component cha (HistoricalMapModal) đã filter landmarks theo currentYear,
-// LeafletMap không cần biết về year — chỉ render những gì được pass vào.
+// Leaflet map shell and the API-backed map pin layer.
 
 import React, { useEffect, useRef } from "react";
+import "leaflet/dist/leaflet.css";
 import type {
   DivIcon,
   LayerGroup,
@@ -14,13 +13,14 @@ import type {
   Marker,
 } from "leaflet";
 import type { GeoJsonObject } from "geojson";
-import type { Landmark } from "@/services/landmark.service";
-import { LANDMARK_TYPE_CONFIG } from "./landmark-config";
+import type { MapPin } from "@/services/map-pin.service";
+import { cn } from "@/lib/utils/cn";
 
 interface LeafletMapProps {
-  landmarks: Landmark[];
-  selectedLandmarkId: string | null;
-  onSelectLandmark: (landmark: Landmark) => void;
+  pins: MapPin[];
+  selectedPinId: string | null;
+  onSelectPin: (pin: MapPin) => void;
+  onMapClick?: (coordinates: { latitude: number; longitude: number }) => void;
 }
 
 const VIETNAM_BOUNDS = {
@@ -54,9 +54,10 @@ const TRUONG_SA_ISLANDS: LatLngExpression[] = [
 ];
 
 export function LeafletMap({
-  landmarks,
-  selectedLandmarkId,
-  onSelectLandmark,
+  pins,
+  selectedPinId,
+  onSelectPin,
+  onMapClick,
 }: LeafletMapProps) {
   const mapRef = useRef<LeafletMapInstance | null>(null);
   const markersRef = useRef<Record<string, Marker>>({});
@@ -65,10 +66,20 @@ export function LeafletMap({
   );
   const [mapReady, setMapReady] = React.useState(false);
 
-  // Stable ref for callback (avoid re-binding on every render)
-  const onSelectLandmarkRef = useRef(onSelectLandmark);
   useEffect(() => {
-    onSelectLandmarkRef.current = onSelectLandmark;
+    if (!mapReady || !containerRef.current || !mapRef.current) return;
+    const observer = new ResizeObserver(() => mapRef.current?.invalidateSize());
+    observer.observe(containerRef.current);
+    mapRef.current.invalidateSize();
+    return () => observer.disconnect();
+  }, [mapReady]);
+
+  // Stable ref for callback (avoid re-binding on every render)
+  const onSelectPinRef = useRef(onSelectPin);
+  const onMapClickRef = useRef(onMapClick);
+  useEffect(() => {
+    onSelectPinRef.current = onSelectPin;
+    onMapClickRef.current = onMapClick;
   });
 
   // ── Init map ──────────────────────────────────────────────
@@ -76,13 +87,14 @@ export function LeafletMap({
     if (typeof window === "undefined") return;
     if (!containerRef.current) return;
     if (mapRef.current) return;
+    let cancelled = false;
 
     const timer = setTimeout(() => {
       if (!containerRef.current) return;
       if (containerRef.current._leaflet_id) return;
 
-      import("leaflet").then(async (L) => {
-        if (!containerRef.current) return;
+      import("leaflet").then((L) => {
+        if (cancelled || !containerRef.current) return;
         if (containerRef.current._leaflet_id) return;
 
         delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })
@@ -124,15 +136,23 @@ export function LeafletMap({
         map.on("moveend", () => {
           map.panInsideBounds(vietnamBounds, { animate: true });
         });
-
-        await drawVietnamBasemap(L, map);
+        map.on("click", (event) => {
+          onMapClickRef.current?.({
+            latitude: event.latlng.lat,
+            longitude: event.latlng.lng,
+          });
+        });
 
         mapRef.current = map;
         setMapReady(true);
+        void drawVietnamBasemap(L, map).catch((error) => {
+          console.error("Could not load Vietnam map overlays", error);
+        });
       });
     }, 0);
 
     return () => {
+      cancelled = true;
       clearTimeout(timer);
       if (mapRef.current) {
         mapRef.current.remove();
@@ -142,8 +162,7 @@ export function LeafletMap({
     };
   }, []);
 
-  // ── Sync markers with `landmarks` prop ────────────────────
-  // Runs whenever landmarks change OR after map finishes initializing.
+  // Sync API pins whenever the selected context or year changes.
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
 
@@ -151,7 +170,7 @@ export function LeafletMap({
       const map = mapRef.current;
       if (!map) return;
 
-      const currentIds = new Set(landmarks.map((l) => l.landmarkId));
+      const currentIds = new Set(pins.map((pin) => pin.pinId));
 
       // Fade out + remove markers no longer in list
       Object.keys(markersRef.current).forEach((id) => {
@@ -163,38 +182,38 @@ export function LeafletMap({
       });
 
       // Add new markers / update existing
-      landmarks.forEach((landmark) => {
-        const isSelected = landmark.landmarkId === selectedLandmarkId;
-        const icon = createCustomIcon(L, landmark, isSelected);
+      pins.forEach((pin) => {
+        const isSelected = pin.pinId === selectedPinId;
+        const icon = createCustomIcon(L, pin, isSelected);
 
-        if (markersRef.current[landmark.landmarkId]) {
-          markersRef.current[landmark.landmarkId].setIcon(icon);
+        if (markersRef.current[pin.pinId]) {
+          markersRef.current[pin.pinId].setIcon(icon);
         } else {
-          addMarker(L, map, landmark, isSelected, markersRef, onSelectLandmarkRef);
+          addMarker(L, map, pin, isSelected, markersRef, onSelectPinRef);
         }
       });
     });
-  }, [landmarks, selectedLandmarkId, mapReady]);
+  }, [pins, selectedPinId, mapReady]);
 
   // ── Fly to selected landmark ──────────────────────────────
   useEffect(() => {
-    if (!mapRef.current || !selectedLandmarkId) return;
-    const lm = landmarks.find((l) => l.landmarkId === selectedLandmarkId);
-    if (lm) {
-      mapRef.current.flyTo([lm.lat, lm.lng], 9, { duration: 1 });
+    if (!mapRef.current || !selectedPinId) return;
+    const pin = pins.find((item) => item.pinId === selectedPinId);
+    if (pin) {
+      mapRef.current.flyTo([pin.latitude, pin.longitude], 9, { duration: 1 });
     }
-  }, [selectedLandmarkId, landmarks]);
+  }, [selectedPinId, pins]);
 
   return (
     <>
-      <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      />
       <div className="relative w-full h-full historical-map-shell">
         <div
           ref={containerRef}
-          className="w-full h-full historical-leaflet-map"
+          className={cn(
+            "w-full h-full historical-leaflet-map",
+            onMapClick && "cursor-crosshair",
+          )}
+          aria-label="Bản đồ tương tác Việt Nam"
         />
         <div className="historical-map-compass" aria-hidden="true">
           <span className="historical-map-compass-n">N</span>
@@ -400,13 +419,7 @@ export function LeafletMap({
           border-right: 2px solid rgba(81, 48, 25, 0.62);
         }
         /* Fade-in animation for new markers */
-        .leaflet-marker-icon.landmark-marker {
-          animation: markerFadeIn 350ms ease-out;
-        }
-        @keyframes markerFadeIn {
-          from { opacity: 0; transform: translateY(-8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        .leaflet-marker-icon.landmark-marker { transition: opacity 180ms ease-out; }
       `}</style>
     </>
   );
@@ -421,11 +434,10 @@ async function drawVietnamBasemap(
   const layer = L.layerGroup().addTo(map);
 
   L.tileLayer(
-    "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
-      subdomains: "abcd",
       maxZoom: 19,
-      attribution: "&copy; OpenStreetMap &copy; CARTO",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     },
   ).addTo(map);
 
@@ -653,20 +665,23 @@ function addMapLabel(
 
 function createCustomIcon(
   L: typeof import("leaflet"),
-  landmark: Landmark,
+  pin: MapPin,
   isSelected: boolean,
 ): DivIcon {
-  const config = LANDMARK_TYPE_CONFIG[landmark.type];
-  const size = isSelected ? 44 : 36;
-  const borderColor = isSelected ? "#f7d780" : "#5a3418";
+  const isPersonal = pin.pinOwnerType === "USER";
+  const isEnemy = pin.pinType === "ENEMY_FORCE";
+  const color = isPersonal ? "#2563a6" : isEnemy ? "#9f2f2f" : "#316a48";
+  const symbol = isPersonal ? "●" : isEnemy ? "E" : "A";
+  const size = isSelected ? 42 : 34;
+  const borderColor = isSelected ? "#fff4cf" : "#4f2f15";
   const shadow = isSelected
-    ? `0 6px 18px ${config.color}66, 0 0 0 5px rgba(247, 215, 128, 0.32)`
+    ? `0 7px 20px ${color}66, 0 0 0 5px rgba(255, 244, 207, 0.38)`
     : "0 4px 10px rgba(67,38,16,0.32)";
 
   const html = `
     <div style="
       width:${size}px;height:${size}px;
-      background:${isSelected ? config.color : "#f8dfaa"};
+      background:${color};
       border:2.5px solid ${borderColor};
       border-radius:50% 50% 50% 0;
       transform:rotate(-45deg);
@@ -675,8 +690,8 @@ function createCustomIcon(
       transition:all 0.2s;
       outline:1px solid rgba(255,255,255,0.35);
     ">
-      <span style="transform:rotate(45deg);font-size:${isSelected ? 18 : 15}px;line-height:1;">
-        ${config.emoji}
+      <span style="transform:rotate(45deg);font-size:${isSelected ? 14 : 12}px;line-height:1;color:white;font-weight:900;">
+        ${symbol}
       </span>
     </div>
     ${
@@ -689,7 +704,7 @@ function createCustomIcon(
       border:1px solid rgba(248,223,170,0.35);
       font-family:inherit;
       box-shadow:0 6px 14px rgba(67,38,16,0.22);
-    ">${landmark.name}</div>`
+    ">${escapeHtml(pin.label)}</div>`
         : ""
     }
   `;
@@ -706,30 +721,30 @@ function createCustomIcon(
 function addMarker(
   L: typeof import("leaflet"),
   map: LeafletMapInstance,
-  landmark: Landmark,
+  pin: MapPin,
   isSelected: boolean,
   markersRef: React.MutableRefObject<Record<string, Marker>>,
-  onSelectRef: React.MutableRefObject<(landmark: Landmark) => void>,
+  onSelectRef: React.MutableRefObject<(pin: MapPin) => void>,
 ) {
-  const icon = createCustomIcon(L, landmark, isSelected);
-  const marker = L.marker([landmark.lat, landmark.lng], {
+  const icon = createCustomIcon(L, pin, isSelected);
+  const marker = L.marker([pin.latitude, pin.longitude], {
     icon,
     zIndexOffset: 1000,
   });
 
   marker.on("click", () => {
-    onSelectRef.current(landmark);
+    onSelectRef.current(pin);
   });
 
   marker.bindTooltip(
     `<div style="font-family:inherit;font-size:12px;font-weight:700;color:#4c2c12;padding:5px 9px;">
-      ${LANDMARK_TYPE_CONFIG[landmark.type].emoji} ${landmark.name}
+      ${escapeHtml(pin.label)}
     </div>`,
     { direction: "top", offset: [0, -36], className: "leaflet-tooltip-custom" },
   );
 
   marker.addTo(map);
-  markersRef.current[landmark.landmarkId] = marker;
+  markersRef.current[pin.pinId] = marker;
 }
 
 function fadeOutAndRemove(marker: Marker, map: LeafletMapInstance) {

@@ -12,10 +12,12 @@ import {
   Flame,
   Loader2,
   Trophy,
+  CalendarDays,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { useClaimQuest, useGamificationToday } from "@/features/gamification/hooks";
 import type { DailyQuest, QuestType } from "@/services/gamification.service";
+import { StudyCalendar } from "./study-calendar";
 
 /**
  * Thẻ "Hôm nay" trên trang chủ web — đối chiếu 1:1 với DailyQuestsCard trên mobile:
@@ -45,7 +47,7 @@ const EMPTY_WEEK = WEEKDAY_LABELS.map((_, i) => ({
 
 function DailyQuestsSkeleton() {
   return (
-    <div className="rounded-2xl border p-4 animate-pulse bg-card-light-bg border-card-light-border">
+    <div className="home-quest-ledger home-quest-skeleton p-4 animate-pulse">
       <div className="h-5 w-40 rounded mb-4 bg-card-light-border" />
       <div className="flex justify-between mb-4">
         {Array.from({ length: 7 }).map((_, i) => (
@@ -66,6 +68,7 @@ export function DailyQuestsCard() {
   const { mutateAsync: claim, isPending: claiming } = useClaimQuest();
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [justClaimed, setJustClaimed] = useState<string | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   useEffect(() => {
     if (!justClaimed) return;
@@ -95,92 +98,53 @@ export function DailyQuestsCard() {
   const doneCount = quests.filter((q) => q.completed).length;
 
   return (
-    <section className="rounded-3xl border p-5 md:p-6 bg-card-light-bg border-card-light-border shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+    <section className="home-quest-ledger" aria-label="Chuỗi ngày học và nhiệm vụ hôm nay">
+      <div className="home-quest-ledger-inner">
       {/* ── Khối streak ── */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-1.5">
-          <Flame
-            className="w-4 h-4"
-            fill={data.studiedToday ? "currentColor" : "none"}
-            style={{ color: "var(--streak-text)" }}
-          />
-          <h3 className="text-sm font-bold text-content-heading">
-            Chuỗi ngày học
-          </h3>
+      <button type="button" onClick={() => setCalendarOpen(true)} aria-haspopup="dialog" className="home-quest-ledger-header w-full cursor-pointer rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--streak-text)]">
+        <div className="home-quest-ledger-title">
+          <Flame size={28} fill={data.studiedToday ? "currentColor" : "none"} aria-hidden="true" />
+          <h2 className="font-title">Chuỗi ngày học</h2>
         </div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-black text-content-heading">
-            {data.streakCount}
-          </span>
-          <span className="text-xs font-semibold text-content-muted">
-            ngày
-          </span>
+        <div className="home-quest-ledger-count">
+          <strong>{data.streakCount}</strong><span>ngày</span>
+          <CalendarDays size={18} className="ml-2" aria-hidden="true" />
         </div>
-      </div>
+      </button>
 
-      {/* 7 chấm tuần T2 → CN */}
-      <div className="flex justify-between mb-3 px-0.5">
+      <div className="home-quest-week" aria-label="Tiến độ học trong tuần">
         {week.map((d, i) => (
-          <div key={d.date} className="flex flex-col items-center gap-1">
-            <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center ${
-                d.studied
-                  ? "bg-[#16A34A]"
-                  : d.isToday
-                    ? "bg-[var(--streak-bg)] border-[1.5px] border-[var(--streak-border)]"
-                    : "bg-card-light-border"
-              }`}
-            >
-              {d.studied ? <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} /> : null}
-            </div>
-            <span
-              className={`text-[10px] font-semibold ${
-                d.studied
-                  ? "text-[#16A34A]"
-                  : d.isToday
-                    ? "text-[var(--streak-text)]"
-                    : "text-content-muted"
-              }`}
-            >
-              {WEEKDAY_LABELS[i]}
+          <div key={d.date} className="home-quest-day">
+            <span className="home-quest-day-label">{WEEKDAY_LABELS[i]}</span>
+            <span className={`home-quest-day-tile ${d.studied ? "is-studied" : ""} ${d.isToday ? "is-today" : ""}`} aria-label={`${WEEKDAY_LABELS[i]}: ${d.studied ? "đã học" : d.isToday ? "hôm nay, chưa học" : "chưa học"}`}>
+              {d.studied ? <Check size={15} strokeWidth={3} aria-hidden="true" /> : WEEKDAY_LABELS[i]}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Kỷ lục + tổng ngày học */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1">
-          <p className="text-[11px] text-content-muted">
-            Chuỗi dài nhất
-          </p>
-          <p className="text-sm font-bold mt-0.5 text-content-heading">
-            {data.longestStreak} ngày
-          </p>
+      <StudyCalendar today={data.date} open={calendarOpen} onOpenChange={setCalendarOpen} />
+
+      <div className="home-quest-ledger-stats">
+        <div>
+          <span>Chuỗi dài nhất</span>
+          <strong>{data.longestStreak} ngày</strong>
         </div>
-        <div className="flex-1 text-right">
-          <p className="text-[11px] text-content-muted">
-            Tổng ngày học
-          </p>
-          <p className="text-sm font-bold mt-0.5 text-content-heading">
-            {data.totalStudyDays}
-          </p>
+        <div>
+          <span>Tổng ngày học</span>
+          <strong>{data.totalStudyDays}</strong>
         </div>
       </div>
 
-      <div className="h-px my-3.5 bg-card-light-border" />
-
       {/* ── Nhiệm vụ hôm nay ── */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-content-heading">
-          Nhiệm vụ hôm nay
-        </h3>
-        <span className="text-[11px] text-content-muted">
+      <div className="home-quest-ledger-subhead">
+        <h3 className="font-title">Nhiệm vụ hôm nay</h3>
+        <span>
           {doneCount}/{quests.length} hoàn thành
         </span>
       </div>
 
-      <div className="space-y-2">
+      <div className="home-quest-list">
         {quests.map((q) => {
           const meta = QUEST_META[q.type] ?? QUEST_META.CHAT;
           const Icon = meta.icon;
@@ -204,13 +168,13 @@ export function DailyQuestsCard() {
                     }
                   : undefined
               }
-              className={`w-full flex items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left transition-opacity bg-bg-surface border-card-light-border ${
+              className={`home-quest-item w-full flex items-center gap-2.5 text-left ${
                 tappable ? "cursor-pointer" : "cursor-default"
-              } ${q.claimed ? "opacity-75" : "opacity-100"}`}
+              } ${q.claimed ? "is-claimed" : ""}`}
             >
               {/* Icon màu theo loại nhiệm vụ */}
               <div
-                className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0"
+                className="home-quest-item-icon flex items-center justify-center shrink-0"
                 style={{ background: meta.bg }}
               >
                 {q.completed ? (
@@ -223,13 +187,11 @@ export function DailyQuestsCard() {
               {/* Tên + progress bar */}
               <div className="flex-1 min-w-0 space-y-1">
                 <p
-                  className={`text-[13px] font-semibold truncate ${
-                    q.claimed ? "text-content-muted line-through" : "text-content-text"
-                  }`}
+                  className={`home-quest-item-title ${q.claimed ? "line-through" : ""}`}
                 >
                   {q.title}
                 </p>
-                <div className="h-[5px] rounded-full overflow-hidden bg-card-light-border">
+                <div className="home-quest-progress">
                   <div
                     className="h-full rounded-full transition-[width]"
                     style={{
@@ -243,11 +205,11 @@ export function DailyQuestsCard() {
               {/* Bên phải: thưởng / nút nhận / đã nhận / mũi tên */}
               {q.claimed ? (
                 celebrated ? (
-                  <span className="text-[11px] font-bold px-2 py-1 rounded-full shrink-0 bg-[rgba(34,197,94,0.12)] text-[#16A34A]">
-                    +{q.rewardTokens} 🎉
+                  <span className="home-quest-reward is-claimed">
+                    +{q.rewardTokens}
                   </span>
                 ) : (
-                  <span className="text-[11px] font-bold shrink-0 text-[#16A34A]">
+                  <span className="home-quest-reward is-claimed">
                     Đã nhận
                   </span>
                 )
@@ -266,7 +228,7 @@ export function DailyQuestsCard() {
                       void handleClaim(q);
                     }
                   }}
-                  className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 shrink-0 min-w-[64px] justify-center cursor-pointer bg-[var(--streak-text)]"
+                  className="home-quest-reward is-ready flex items-center gap-1 shrink-0 justify-center cursor-pointer"
                 >
                   {busy ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
@@ -280,7 +242,7 @@ export function DailyQuestsCard() {
                   )}
                 </span>
               ) : (
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="home-quest-reward flex items-center gap-1.5 shrink-0">
                   <span className="flex items-center gap-0.5">
                     <Coins className="w-3 h-3 text-content-muted" />
                     <span className="text-[11px] font-bold text-content-muted">
@@ -293,6 +255,7 @@ export function DailyQuestsCard() {
             </div>
           );
         })}
+      </div>
       </div>
     </section>
   );

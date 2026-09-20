@@ -39,6 +39,12 @@ export interface Character {
   contexts?: { contextId: string; name: string }[]; // bối cảnh lịch sử nhân vật thuộc về
 }
 
+const chatCtaClassName =
+  "flex w-full items-center justify-center gap-2 rounded-full border border-accent-gold/45 bg-[linear-gradient(90deg,var(--accent-bronze)_0%,var(--accent-gold)_28%,var(--accent-gold-soft)_50%,var(--accent-gold)_72%,var(--accent-bronze)_100%)] font-extrabold text-bg-deep shadow-[0_10px_24px_-8px_var(--accent-gold-glow)] transition-all duration-200 group-hover:border-accent-gold-soft/70 group-hover:bg-[linear-gradient(90deg,var(--accent-bronze)_0%,var(--accent-gold)_24%,var(--accent-gold-soft)_50%,var(--accent-gold)_76%,var(--accent-bronze)_100%)] group-hover:shadow-[0_14px_28px_-10px_var(--accent-gold-glow)] group-active:translate-y-px";
+
+const chatCtaIconClassName =
+  "flex size-7 items-center justify-center rounded-full bg-bg-deep/90 text-accent-gold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)] transition-colors duration-200 group-hover:bg-abyssal-blue group-hover:text-accent-gold-soft";
+
 // ─────────────────────────────────────────────────────────
 // Variant 1: Carousel card — nền tối, dùng trong Carousel3D + CharactersReveal
 // ─────────────────────────────────────────────────────────
@@ -79,7 +85,7 @@ export function CharacterCarouselCard({
         onFocus={() => setHovered(true)}
         onBlur={() => setHovered(false)}
         onClick={() => onClick?.(character.id)}
-        className="relative h-full w-full cursor-pointer overflow-hidden rounded-lg text-left"
+        className="relative h-full w-full cursor-pointer overflow-hidden rounded-lg border border-accent-gold/30 text-left transition-colors duration-300 hover:border-accent-gold/60 focus-visible:border-accent-gold"
       >
         <DarkCard
           imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
@@ -105,7 +111,7 @@ export function CharacterCarouselCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onClick?.(character.id)}
-      className="group relative w-full h-full rounded-lg overflow-hidden cursor-pointer"
+      className="group relative w-full h-full rounded-lg border border-accent-gold/30 overflow-hidden cursor-pointer transition-colors duration-300 hover:border-accent-gold/60"
     >
       <DarkCard
         imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
@@ -191,9 +197,11 @@ export function CharacterCarouselCard({
         {/* Button Trò chuyện ngay */}
         <div className="mt-4">
           <div
-            className="flex items-center justify-center gap-1.5 w-full py-3 rounded-full text-xs font-extrabold transition-all shadow-lg hover:brightness-110 bg-gradient-to-br from-accent-gold to-accent-gold-soft text-text-inverse shadow-[0_12px_26px_var(--accent-gold-glow)]"
+            className={`${chatCtaClassName} py-2.5 pr-4 pl-2.5 text-xs`}
           >
-            <MessageSquareText className="w-4 h-4 fill-current" />
+            <span className={chatCtaIconClassName}>
+              <MessageSquareText className="h-4 w-4 fill-current" />
+            </span>
             Trò chuyện ngay
           </div>
         </div>
@@ -262,7 +270,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(character.id)}
-      className="group relative w-full flex flex-col text-left rounded-xl border border-card-border bg-card-bg overflow-hidden transition-all duration-300 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.08)] md:hover:-translate-y-1"
+      className="group relative w-full flex flex-col text-left rounded-xl border border-accent-gold/30 bg-card-bg overflow-hidden transition-all duration-300 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-accent-gold/60 focus-visible:border-accent-gold md:hover:-translate-y-1"
     >
       {/* Image */}
       <div className="relative z-0 aspect-3/4 w-full shrink-0 overflow-hidden bg-black">
@@ -389,9 +397,11 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         {/* Button Trò chuyện ngay */}
         <div className="mt-3 sm:mt-4">
           <div
-            className="flex items-center justify-center gap-1.5 w-full py-2 rounded-full text-xs font-extrabold transition-all shadow-lg hover:brightness-110 sm:py-2.5 sm:text-sm bg-gradient-to-br from-accent-gold to-accent-gold-soft text-text-inverse shadow-[0_8px_20px_var(--accent-gold-glow)]"
+            className={`${chatCtaClassName} py-1.5 pr-3 pl-1.5 text-xs sm:py-2 sm:pr-4 sm:pl-2 sm:text-sm`}
           >
-            <MessageSquareText className="w-4 h-4 fill-current" />
+            <span className={chatCtaIconClassName}>
+              <MessageSquareText className="h-4 w-4 fill-current" />
+            </span>
             Trò chuyện ngay
           </div>
         </div>

@@ -27,6 +27,11 @@ const PUBLIC_AUTH_CONFIG: SkipAuthRefreshConfig = {
   skipAuthRefresh: true,
 };
 
+const PUBLIC_AUTH_FAST_CONFIG: SkipAuthRefreshConfig = {
+  ...PUBLIC_AUTH_CONFIG,
+  timeout: 15000,
+};
+
 type RawLoginData = {
   uid: string;
   userName: string;
@@ -73,7 +78,7 @@ export const authApi = {
     const res = await axiosClient.post<ApiEnvelope<RawLoginData>>(
       "/auth/login",
       data,
-      PUBLIC_AUTH_CONFIG,
+      PUBLIC_AUTH_FAST_CONFIG,
     );
 
     if (!res.data.success || !res.data.data) {
@@ -87,7 +92,7 @@ export const authApi = {
     const res = await axiosClient.post<ApiEnvelope<RawLoginData>>(
       "/auth/google",
       data,
-      PUBLIC_AUTH_CONFIG,
+      PUBLIC_AUTH_FAST_CONFIG,
     );
 
     if (!res.data.success || !res.data.data) {
@@ -98,7 +103,7 @@ export const authApi = {
   },
 
   register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-    const res = await axiosClient.post("/auth/register", data, PUBLIC_AUTH_CONFIG);
+    const res = await axiosClient.post("/auth/register", data, PUBLIC_AUTH_FAST_CONFIG);
     return res.data.data;
   },
 
@@ -124,8 +129,17 @@ export const authApi = {
     return unwrapMessageResponse(res, "Không thể đặt lại mật khẩu");
   },
 
-  logout: async (): Promise<void> => {
-    await axiosClient.post("/auth/logout");
+  logout: async (accessToken?: string): Promise<void> => {
+    await axiosClient.post(
+      "/auth/logout",
+      undefined,
+      accessToken
+        ? ({
+            headers: { Authorization: `Bearer ${accessToken}` },
+            skipAuthRefresh: true,
+          } as SkipAuthRefreshConfig)
+        : undefined,
+    );
   },
 
   refreshToken: async (

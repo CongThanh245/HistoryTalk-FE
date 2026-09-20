@@ -61,6 +61,7 @@ export const STAFF_SIDEBAR: SidebarSection[] = [
     items: [
       { icon: Shield, label: "Tổng quan", href: ROUTES.STAFF.HOME, exact: true },
       { icon: Scroll, label: "Bối cảnh", href: ROUTES.STAFF.CONTEXTS },
+      { icon: Map, label: "Bản đồ lịch sử", href: ROUTES.STAFF.MAP },
       { icon: User, label: "Nhân vật", href: ROUTES.STAFF.CHARACTERS },
       { icon: BookOpen, label: "Tài liệu", href: ROUTES.STAFF.DOCUMENTS },
       { icon: ClipboardList, label: "Câu đố lịch sử", href: ROUTES.STAFF.QUIZZES },
@@ -91,6 +92,7 @@ export const SYSTEM_ADMIN_SIDEBAR: SidebarSection[] = [
   {
     title: "Hệ thống",
     items: [
+      { icon: Map, label: "Bản đồ lịch sử", href: ROUTES.STAFF.ADMIN.MAP },
       { icon: CreditCard, label: "Gói dịch vụ", href: ROUTES.STAFF.ADMIN.SUBSCRIPTIONS },
       { icon: Receipt, label: "Lịch sử giao dịch", href: ROUTES.STAFF.ADMIN.PAYMENT_HISTORY },
     ],

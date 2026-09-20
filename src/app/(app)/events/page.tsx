@@ -7,6 +7,8 @@ import { getQueryClient } from "@/lib/get-query-client";
 import { queryKeys } from "@/shared/query-key";
 import { eventServerService } from "@/services/event.server.service";
 import { EventsClient } from "@/components/event/event-page";
+import { firstParam, parseEra } from "@/lib/catalog-url-state";
+import type { EventEraBackend, GetEventsParams } from "@/services/event.service";
 
 export const metadata = {
   title: "Sự kiện lịch sử",
@@ -14,13 +16,23 @@ export const metadata = {
 };
 
 export const dynamic = "force-dynamic";
-export default async function EventsPage() {
+export default async function EventsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const queryClient = getQueryClient();
 
-  const defaultParams = { page: 1, limit: 100 };
+  const urlParams = await searchParams;
+  const era = parseEra(firstParam(urlParams.era));
+  const params: GetEventsParams = {
+    page: 1,
+    limit: 100,
+    ...(era !== "all" && { era: era.toUpperCase() as EventEraBackend }),
+  };
   await queryClient.prefetchQuery({
-    queryKey: queryKeys.events.list(defaultParams),
-    queryFn: () => eventServerService.getAll(defaultParams),
+    queryKey: queryKeys.events.list(params),
+    queryFn: () => eventServerService.getAll(params),
   });
 
   return (

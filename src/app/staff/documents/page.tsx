@@ -310,6 +310,7 @@ export default function StaffDocumentsPage() {
       queryKey: queryKeys.documents.historicalByContext(context.id),
       queryFn: () => documentService.getHistoricalDocuments(context.id),
       enabled: !!context.id,
+      staleTime: 1000 * 60 * 5,
     })),
   });
 
@@ -318,6 +319,7 @@ export default function StaffDocumentsPage() {
       queryKey: queryKeys.documents.characterByCharacter(character.id),
       queryFn: () => documentService.getCharacterDocuments(character.id),
       enabled: !!character.id,
+      staleTime: 1000 * 60 * 5,
     })),
   });
 
@@ -378,11 +380,14 @@ export default function StaffDocumentsPage() {
   const selectedRow =
     filteredRows.find((row) => row.key === selectedKey) ?? filteredRows[0];
 
-  const isLoadingDocuments =
+  const hasAnyOwner = contexts.length > 0 || characters.length > 0;
+  const isInitialLoadingDocuments =
     isLoadingEvents ||
     isLoadingCharacters ||
     contextDocumentQueries.some((query) => query.isLoading) ||
     characterDocumentQueries.some((query) => query.isLoading);
+  const isLoadingDocuments =
+    isInitialLoadingDocuments && !rows.length && hasAnyOwner;
 
   const openCreateForm = React.useCallback(
     (ownerType: DocumentOwnerType) => {

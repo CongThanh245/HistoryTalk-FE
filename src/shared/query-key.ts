@@ -107,6 +107,7 @@ export const queryKeys = {
 
   gamification: {
     today: ["gamification", "today"] as const,
+    studyDays: (year: number, month: number) => ["gamification", "study-days", year, month] as const,
   },
 
   trash: {

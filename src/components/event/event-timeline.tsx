@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { MapPin } from "lucide-react";
 import type { HistoricalEvent, EventEra } from "@/services/event.service";
 import { TimelineStripCard, TimelineStripCardSkeleton } from "./timeline-card";
@@ -9,20 +9,24 @@ import { useTimelineEvents } from "@/features/events/hooks";
 import { useTimelineNavigation } from "@/features/events/use-timeline";
 import { isValidUrl } from "@/lib/utils/url";
 import { cn } from "@/lib/utils/cn";
+import { EraFilter } from "@/components/commons/era-filter";
+import type { EventView } from "@/lib/catalog-url-state";
 
 interface EventTimelineProps {
   era: EventEra;
+  view: EventView;
+  onViewChange: (view: EventView) => void;
   onEraChange: (era: EventEra) => void;
   onSelectEvent: (event: HistoricalEvent) => void;
 }
-
-type EventView = "all" | "time";
 
 const EVENT_CARD_IMAGE = "/card.jpg";
 const TIMELINE_SCROLL_DURATION = 900;
 
 export function EventTimeline({
   era,
+  view,
+  onViewChange,
   onEraChange,
   onSelectEvent,
 }: EventTimelineProps) {
@@ -31,7 +35,6 @@ export function EventTimeline({
   const timelineTrackRef = useRef<HTMLDivElement>(null);
   const activeMarkerRef = useRef<HTMLButtonElement>(null);
   const scrollAnimationRef = useRef<number>(0);
-  const [view, setView] = useState<EventView>("all");
   const { events, showSkeleton } = useTimelineEvents(era);
   const { resolvedActiveId, direction, handleSelect, handleWheel, reset } =
     useTimelineNavigation(events);
@@ -116,10 +119,7 @@ export function EventTimeline({
               <button
                 key={tab.value}
                 type="button"
-                onClick={() => {
-                  setView(tab.value);
-                  onEraChange("all");
-                }}
+                onClick={() => onViewChange(tab.value)}
                 className={cn(
                   "relative h-9 px-1 text-sm font-semibold transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-main",
                   active
@@ -140,6 +140,8 @@ export function EventTimeline({
           })}
         </div>
       </div>
+
+      <EraFilter active={era} onChange={onEraChange} />
 
       {showSkeleton ? (
         <EventGridSkeleton />

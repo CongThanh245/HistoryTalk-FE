@@ -11,12 +11,31 @@ import {
 } from "@/components/ui/tooltip";
 import { type SidebarSection, type SidebarMenuItem } from "@/routers/sidebar";
 
+export type CatalogPath = "/characters" | "/events";
+
+function catalogUrl(pathname: string, query: string) {
+  if (pathname !== "/characters" && pathname !== "/events") return null;
+  const params = new URLSearchParams(query);
+  const allowed = pathname === "/characters" ? ["era", "search", "page"] : ["view", "era"];
+  const filters = new URLSearchParams();
+  for (const key of allowed) {
+    const value = params.get(key);
+    if (value) filters.set(key, value);
+  }
+  const suffix = filters.toString();
+  return suffix ? `${pathname}?${suffix}` : pathname;
+}
+
 function NavItem({
   item,
   isExpanded,
+  href,
+  onNavigate,
 }: {
   item: SidebarMenuItem;
   isExpanded: boolean;
+  href: string;
+  onNavigate: () => void;
 }) {
   const pathname = usePathname();
   const Icon = item.icon;
@@ -29,7 +48,13 @@ function NavItem({
 
   const linkEl = (
     <Link
-      href={item.href}
+      href={href}
+      onClick={(event) => {
+        if (pathname === item.href && (item.href === "/characters" || item.href === "/events")) {
+          event.preventDefault();
+        }
+        onNavigate();
+      }}
       className={cn(
         "relative flex group items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 outline-none",
         isExpanded ? "px-3 py-2" : "w-10 h-10 justify-center mx-auto",
@@ -38,16 +63,6 @@ function NavItem({
         isActive && "bg-accent-gold-active text-[var(--sidebar-active-text)]",
       )}
     >
-      {isActive && isExpanded && (
-        <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[22px] rounded-r-full bg-linear-to-b from-accent-gold-soft to-[var(--truffle)] shadow-[0_0_8px_var(--accent-gold-glow)]"
-        />
-      )}
-      {isActive && !isExpanded && (
-        <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[18px] rounded-r-full bg-linear-to-b from-accent-gold-soft to-[var(--truffle)]"
-        />
-      )}
       <Icon
         className={cn(
           "shrink-0 w-[17px] h-[17px]",
@@ -81,10 +96,22 @@ function NavItem({
 export default function SidebarNav({
   isExpanded,
   sections,
+  catalogUrls,
+  onRememberCatalogUrl,
 }: {
   isExpanded: boolean;
   sections: SidebarSection[];
+  catalogUrls: Partial<Record<CatalogPath, string>>;
+  onRememberCatalogUrl: (path: CatalogPath, url: string) => void;
 }) {
+  const rememberCurrentUrl = () => {
+    const path = window.location.pathname;
+    const url = catalogUrl(path, window.location.search);
+    if (url) {
+      onRememberCatalogUrl(path as CatalogPath, url);
+    }
+  };
+
   return (
     <nav className="relative z-10 flex-1 overflow-hidden py-4 space-y-4">
       {sections.map((section) => (
@@ -102,7 +129,17 @@ export default function SidebarNav({
           )}
           <div className="space-y-2">
             {section.items.map((item) => (
-              <NavItem key={item.href} item={item} isExpanded={isExpanded} />
+              <NavItem
+                key={item.href}
+                item={item}
+                isExpanded={isExpanded}
+                href={
+                  item.href === "/characters" || item.href === "/events"
+                    ? catalogUrls[item.href] ?? item.href
+                    : item.href
+                }
+                onNavigate={rememberCurrentUrl}
+              />
             ))}
           </div>
         </div>

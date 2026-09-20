@@ -36,6 +36,7 @@ export const ROUTES = {
   // ── Staff / Admin ───────────────────────────────────
   STAFF: {
     HOME: "/staff",
+    MAP: "/staff/map",
     CHARACTERS: "/staff/characters",
     CONTEXTS: "/staff/contexts",
     QUIZZES: "/staff/quizzes",
@@ -44,6 +45,7 @@ export const ROUTES = {
     TRASH: "/staff/trash",
     ADMIN: {
       HOME: "/staff/admin",
+      MAP: "/staff/admin/map",
       ACCOUNTS: {
         CUSTOMER: "/staff/admin/accounts/customer",
         CONTENT_ADMIN: "/staff/admin/accounts/content-admin",

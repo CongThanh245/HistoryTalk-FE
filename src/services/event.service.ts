@@ -100,6 +100,7 @@ type RawHistoricalContext = {
   startYear?: number;
   endYear?: number;
   beforeTCN?: boolean;
+  isBC?: boolean;
   isDraft?: boolean;
   isActive?: boolean;
   isPublished?: boolean;
@@ -142,7 +143,7 @@ export function mapContext(raw: RawHistoricalContext): HistoricalEvent {
     period: raw.period,
     startYear: raw.startYear,
     endYear: raw.endYear,
-    beforeTCN: raw.beforeTCN,
+    beforeTCN: raw.beforeTCN ?? raw.isBC,
     isDraft: raw.isDraft,
     isActive: raw.isActive ?? true,
     isPublished: raw.isPublished ?? false,

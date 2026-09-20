@@ -7,6 +7,9 @@ import { getQueryClient } from "@/lib/get-query-client";
 import { queryKeys } from "@/shared/query-key";
 import { CharactersClient } from "@/components/character/character-client";
 import { characterServerService } from "@/services/character.server.service";
+import { firstParam, parseEra, parsePage } from "@/lib/catalog-url-state";
+import type { EventEraBackend } from "@/services/event.service";
+import type { GetCharactersParams } from "@/services/character.service";
 
 export const metadata = {
   title: "Nhân vật lịch sử",
@@ -16,18 +19,29 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 /**
- * Server Component — prefetch danh sách nhân vật mặc định (page 1, limit 10)
+ * Server Component — prefetch danh sách nhân vật theo bộ lọc trên URL
  * để HTML đã có data sẵn → tốt cho SEO (public catalog) và giảm LCP.
- * React Query trên client sẽ tự pick up prefetched data, không fetch lại.
+ * React Query trên client dùng lại dữ liệu đã prefetch nếu query key khớp.
  */
-export default async function CharactersPage() {
+export default async function CharactersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const queryClient = getQueryClient();
 
-  // Prefetch với params mặc định — khớp với CharactersClient initial state
-  const defaultParams = { page: 1, limit: 10 };
+  const urlParams = await searchParams;
+  const era = parseEra(firstParam(urlParams.era));
+  const search = (firstParam(urlParams.search) ?? "").trim();
+  const params: GetCharactersParams = {
+    page: parsePage(firstParam(urlParams.page)),
+    limit: 10,
+    ...(era !== "all" && { era: era.toUpperCase() as EventEraBackend }),
+    ...(search && { search }),
+  };
   await queryClient.prefetchQuery({
-    queryKey: queryKeys.characters.list(defaultParams),
-    queryFn: () => characterServerService.getAll(defaultParams),
+    queryKey: queryKeys.characters.list(params),
+    queryFn: () => characterServerService.getAll(params),
   });
 
   return (

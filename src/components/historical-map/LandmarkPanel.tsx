@@ -46,7 +46,7 @@ export function LandmarkPanel({
   const eraConfig = ERA_CONFIG_MAP[landmark.era as keyof typeof ERA_CONFIG_MAP];
   // 2. Trong component, thêm:
   const router = useRouter();
-  const room = MOCK_ROOMS.find((r) => r.landmarkId === landmark.landmarkId);
+  const room = MOCK_ROOMS.find((r) => landmark.contextIds.includes(r.contextId));
   return (
     <div className="flex flex-col h-full bg-[var(--bg-content)]">
       {/* Header */}

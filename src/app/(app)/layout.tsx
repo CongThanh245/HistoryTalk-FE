@@ -23,7 +23,7 @@ function layout({ children }: { children: React.ReactNode }) {
                 className="flex-1 min-h-0 overflow-y-auto"
                 style={{ background: "var(--bg-content-decorated)" }}
               >
-                <div className="mx-auto h-full max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="mx-auto h-full max-w-7xl px-4 sm:px-6 lg:px-8 has-[.map-page]:!max-w-none has-[.map-page]:!px-0">
                   {children}
                 </div>
               </main>

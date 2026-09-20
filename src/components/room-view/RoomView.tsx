@@ -4,12 +4,28 @@
 // Component chính điều phối toàn bộ room experience
 
 import React, { useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Compass, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { HistoricalRoom, RoomHotspot } from "@/services/room.service";
 import { RoomBackground } from "./RoomBackground";
 import { CharacterSprite } from "./CharacterSprite";
-import { RoomChatPlaceholder } from "./RoomChatPlaceholder";
+import { RoomActionsPanel } from "./RoomActionsPanel";
+import { eventService, type HistoricalEvent } from "@/services/event.service";
+import { characterService } from "@/services/character.service";
+
+const ROOM_SEARCH: Record<string, { terms: string[]; year: number }> = {
+  "room-bach-dang-938": { terms: ["Bạch Đằng"], year: 938 },
+  "room-co-loa": { terms: ["Cổ Loa", "Âu Lạc"], year: -257 },
+  "room-dien-bien-phu": { terms: ["Điện Biên Phủ"], year: 1954 },
+  "room-thang-long": { terms: ["Chiếu dời đô", "Thăng Long"], year: 1010 },
+  "room-lam-son": { terms: ["Lam Sơn"], year: 1418 },
+};
+
+function personName(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d")
+    .toLowerCase().replace(/^dai tuong\s+/, "").trim();
+}
 
 const ERA_LABELS: Record<string, string> = {
   ANCIENT: "Cổ đại",
@@ -27,6 +43,28 @@ export function RoomView({ room, onBack }: RoomViewProps) {
   const router = useRouter();
   const [activeHotspot, setActiveHotspot] = useState<RoomHotspot | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const roomContent = useQuery({
+    queryKey: ["room", "content", room.roomId],
+    queryFn: async () => {
+      const search = ROOM_SEARCH[room.roomId];
+      if (!search) return null;
+      let event: HistoricalEvent | null = null;
+      for (const term of search.terms) {
+        const result = await eventService.getAllClient({ search: term, page: 1, limit: 100 });
+        event = result.content.find((item) =>
+          (item.beforeTCN ? -Math.abs(item.year) : item.year) === search.year,
+        ) ?? null;
+        if (event) break;
+      }
+      if (!event) return null;
+      const characters = await characterService.getByContext(event.id);
+      return { event, characters };
+    },
+    retry: false,
+  });
+  const selectedCharacter = roomContent.data?.characters.find(
+    (character) => activeHotspot && personName(character.name) === personName(activeHotspot.characterName),
+  );
 
   const handleHotspotClick = useCallback((hotspot: RoomHotspot) => {
     setActiveHotspot(hotspot);
@@ -35,13 +73,10 @@ export function RoomView({ room, onBack }: RoomViewProps) {
 
   const handleCloseChat = useCallback(() => {
     setChatOpen(false);
-    // Delay clearing active to allow close animation
-    setTimeout(() => setActiveHotspot(null), 300);
+    setActiveHotspot(null);
   }, []);
 
   const handleBack = onBack ?? (() => router.back());
-
-  const chatPanelWidth = 340;
 
   return (
     <div className="relative w-full h-full flex overflow-hidden bg-black">
@@ -84,42 +119,37 @@ export function RoomView({ room, onBack }: RoomViewProps) {
             </div>
           </div>
 
-          {/* Click-outside to close chat hint */}
+          {/* Room action hint */}
           {!chatOpen && room.hotspots.length > 0 && (
             <div
               className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full text-xs pointer-events-none bg-black/50 text-[rgba(255,245,220,0.7)] backdrop-blur-[8px] border border-white/10"
               style={{ animation: "pulse-hint 3s ease-in-out infinite" }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-accent-gold animate-pulse" />
-              Nhấn vào nhân vật để trò chuyện
+              Chọn nhân vật để tìm hiểu sự kiện, trò chuyện hoặc làm quiz
             </div>
           )}
         </RoomBackground>
       </div>
 
       {/* Chat panel — slides in from right */}
-      <div
-        className="flex-shrink-0 h-full overflow-hidden transition-all duration-300 ease-out"
-        style={{ width: chatOpen ? `${chatPanelWidth}px` : "0px" }}
-      >
-        {activeHotspot && (
-          <div style={{ width: `${chatPanelWidth}px`, height: "100%" }}>
-            {/* 
-              TODO: Khi nối chat thật, thay RoomChatPlaceholder bằng:
-              <ChatPanel
-                characterId={activeHotspot.characterId}
-                contextId={room.contextId}
-                roomContext={activeHotspot.roomContext}
-                onClose={handleCloseChat}
-              />
-            */}
-            <RoomChatPlaceholder
-              hotspot={activeHotspot}
+      {chatOpen && activeHotspot && (
+        <div className="absolute inset-0 z-30 h-full w-full overflow-hidden md:static md:w-[min(380px,42%)] md:shrink-0">
+          {roomContent.data?.event && selectedCharacter ? (
+            <RoomActionsPanel
+              character={selectedCharacter}
+              event={roomContent.data.event}
               onClose={handleCloseChat}
             />
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="flex h-full flex-col gap-3 bg-[#211b18] p-4 text-sm text-white">
+              <button type="button" onClick={handleCloseChat} className="self-end rounded-md border border-white/40 px-3 py-2">Đóng</button>
+              <p>{roomContent.isPending ? "Đang tìm dữ liệu lịch sử..." : roomContent.isError ? "Không tải được dữ liệu. Vui lòng thử lại sau." : "Chưa có nhân vật và bối cảnh tương ứng trong thư viện."}</p>
+              {roomContent.isError && <button type="button" onClick={() => void roomContent.refetch()} className="self-start rounded-md border border-white/40 px-3 py-2">Thử lại</button>}
+            </div>
+          )}
+        </div>
+      )}
 
       <style>{`
         @keyframes pulse-hint {

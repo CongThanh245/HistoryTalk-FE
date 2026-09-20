@@ -7,6 +7,8 @@ export default function MapPage() {
   const router = useRouter();
 
   return (
-    <HistoricalMapModal isOpen={true} onClose={() => router.push("/home")} />
+    <div className="map-page h-full min-h-0 w-full">
+      <HistoricalMapModal isOpen={true} onClose={() => router.push("/home")} />
+    </div>
   );
 }
