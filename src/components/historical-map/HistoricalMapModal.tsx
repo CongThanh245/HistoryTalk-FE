@@ -15,17 +15,15 @@ import {
   MessageCircle,
   Plus,
   RefreshCw,
-  Shield,
-  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useEvents } from "@/features/events/hooks";
-import { useCreateMapPin, useDeleteMapPin, useMapPins } from "@/features/map-pins/hooks";
+import { useCreateMapPin, useDeleteMapPin, useMapPins, useOverviewMapPins } from "@/features/map-pins/hooks";
 import { useEventCharacters } from "@/features/landmark/hooks";
 import { useAuthStore } from "@/store/auth.store";
-import type { CreateMapPinRequest, MapPin as BattlePin, MapPinType } from "@/services/map-pin.service";
+import type { CreateMapPinRequest, MapPin as BattlePin } from "@/services/map-pin.service";
 import type { Character } from "@/services/character.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { BattleDetailView } from "./BattleDetailView";
@@ -36,7 +34,7 @@ const LeafletMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full items-center justify-center bg-[#fff7e6]">
+      <div className="flex h-full items-center justify-center bg-bg-main">
         <Loader2 className="animate-spin text-[var(--accent-gold)]" size={30} />
       </div>
     ),
@@ -66,7 +64,7 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
   const isAdmin = user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN";
   const [contextId, setContextId] = useState<string | null>(null);
   const [selectedPin, setSelectedPin] = useState<BattlePin | null>(null);
-  const [panelDismissed, setPanelDismissed] = useState(false);
+  const [panelDismissed, setPanelDismissed] = useState(true);
   const [draftCoordinates, setDraftCoordinates] = useState<Coordinates | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("map");
@@ -80,7 +78,8 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
     [eventsData?.content],
   );
 
-  const activeContextId = contextId ?? events[0]?.id ?? null;
+  const activeContextId = contextId;
+  const overviewQueries = useOverviewMapPins(events.map((event) => ({ id: event.id, year: eventYear(event) })));
   const activeEvent = events.find((event) => event.id === activeContextId);
   const activeYear = eventYear(activeEvent);
 
@@ -100,8 +99,11 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
     () => pins.find((pin) => pin.pinOwnerType === "ADMIN") ?? pins[0] ?? null,
     [pins],
   );
-  const focusedPin = selectedPin ?? mainPin;
-  const visiblePins = useMemo(() => mainPin ? [mainPin] : [], [mainPin]);
+  const focusedPin = panelDismissed ? null : selectedPin ?? mainPin;
+  const visiblePins = overviewQueries.flatMap((query) => {
+    const pin = query.data?.find((item) => item.pinOwnerType === "ADMIN") ?? query.data?.[0];
+    return pin ? [pin] : [];
+  });
   const canDeleteSelected = Boolean(focusedPin && isAdmin && focusedPin.pinOwnerType === "ADMIN");
 
   useEffect(() => {
@@ -114,8 +116,11 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
         setIsAdding(false);
         setDraftCoordinates(null);
         setSelectedPin(null);
+        setContextId(null);
+        setPanelDismissed(true);
       } else if (focusedPin && !panelDismissed) {
         setPanelDismissed(true);
+        setContextId(null);
       } else {
         onClose();
       }
@@ -125,7 +130,8 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
   }, [isAdding, isOpen, onClose, selectedPin, viewMode, focusedPin, panelDismissed]);
 
   const chooseContext = (nextContextId: string) => {
-    setContextId(nextContextId);
+    setContextId(nextContextId || null);
+    setPanelDismissed(!nextContextId);
     setSelectedPin(null);
     setDraftCoordinates(null);
     setIsAdding(false);
@@ -135,6 +141,7 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
 
   const startAdding = () => {
     if (!isAdmin || !activeContextId) return;
+    setPanelDismissed(false);
     setSelectedPin(null);
     setDraftCoordinates(null);
     setIsAdding(true);
@@ -177,14 +184,14 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[var(--bg-main)] text-[var(--text-primary)]">
+    <div className={cn(styles.mapPage, "flex h-full min-h-0 flex-col bg-[var(--bg-main)] text-[var(--text-primary)]")}>
       <header className="shrink-0 border-b border-[var(--border-default)] bg-[var(--header-bg)] px-4 py-3 backdrop-blur md:px-6">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#09090B] text-[var(--accent-gold)] shadow-[0_10px_30px_rgba(9,9,11,0.18)]">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-text-primary text-[var(--accent-gold)] shadow-[var(--shadow-soft)]">
             <Map size={20} />
           </div>
           <div className="mr-auto min-w-0 flex-1 sm:flex-none">
-            <h1 className="text-base font-black leading-tight md:text-lg">Bản đồ trận đánh</h1>
+            <h1 className="text-base font-bold leading-tight md:text-lg">Bản đồ trận đánh</h1>
             <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">
               Những trận đánh làm nên lịch sử.
             </p>
@@ -198,6 +205,7 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
               disabled={eventsLoading || events.length === 0}
               className="h-10 w-full appearance-none rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] py-0 pl-3 pr-9 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-gold)] focus:ring-2 focus:ring-[var(--accent-gold-glow)] disabled:opacity-60"
             >
+              {events.length > 0 && <option value="" aria-label="Chưa chọn trận đánh" />}
               {events.length === 0 ? (
                 <option value="">Không có bối cảnh khả dụng</option>
               ) : (
@@ -216,7 +224,7 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
               type="button"
               onClick={startAdding}
               disabled={!activeContextId || isAdding}
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#09090B] px-3 text-sm font-bold text-white transition hover:bg-[#27272A] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]"
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-text-primary px-3 text-sm font-bold text-text-inverse transition hover:bg-text-secondary disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]"
             >
               <Plus size={17} />
               <span className="hidden sm:inline">{mainPin ? "Đổi vị trí ghim" : "Ghim vị trí"}</span>
@@ -224,13 +232,11 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
           )}
 
           {/* Nút X chỉ hiện khi đang có pin được chọn/hiển thị */}
-          {!panelDismissed && focusedPin && (
+          {!panelDismissed && activeContextId && (
             <button
               type="button"
-              onClick={() => {
-                setPanelDismissed(true);
-                setSelectedPin(null);
-              }}
+              onClick={() => chooseContext("")}
+              title="Bỏ chọn trận đánh"
               className="grid h-10 w-10 place-items-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-secondary)] transition hover:bg-[var(--sidebar-hover-bg)]"
               aria-label="Bỏ chọn trận đánh"
             >
@@ -241,7 +247,7 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
       </header>
 
       <div className={cn(
-        "grid min-h-0 flex-1 gap-0 overflow-y-auto bg-[var(--bg-content-decorated)]",
+        "grid min-h-0 flex-1 gap-0 overflow-y-auto bg-bg-main",
         panelDismissed
           ? "grid-rows-1 lg:grid-cols-1 lg:grid-rows-1 lg:overflow-hidden"
           : "grid-rows-[minmax(200px,35%)_1fr] lg:grid-cols-[minmax(0,1fr)_390px] lg:grid-rows-1 lg:overflow-hidden",
@@ -249,28 +255,22 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
         <main className="relative min-h-0 min-w-0 overflow-hidden border-r border-[var(--border-default)]">
           <LeafletMap
             battle={activeEvent}
+            battles={events}
             pins={visiblePins}
+            draftCoordinates={draftCoordinates}
             selectedPinId={focusedPin?.pinId ?? null}
             panelDismissed={panelDismissed}
+            isAdding={isAdding}
             onSelectPin={(pin) => {
+              setContextId(pin.contextId);
               setSelectedPin(pin);
               setPanelDismissed(false);
               setIsAdding(false);
               setDraftCoordinates(null);
             }}
-            onMapClick={isAdding ? setDraftCoordinates : undefined}
+            onMapClick={isAdding ? setDraftCoordinates : () => chooseContext("")}
           />
 
-
-          <div className="absolute left-14 top-4 z-[500] max-w-[calc(100%-72px)] rounded-lg border border-white/70 bg-white/90 p-3 shadow-[0_16px_42px_rgba(9,9,11,0.12)] backdrop-blur">
-            <div className="flex items-center gap-2 text-xs font-black text-[#09090B]">
-              <Sparkles size={14} className="text-[var(--accent-gold)]" />
-              {activeEvent ? activeEvent.title : "Bản đồ lịch sử"}
-            </div>
-            <p className="mt-1 text-xs font-semibold text-[var(--text-tertiary)]">
-              {pinsLoading ? "Đang tải điểm ghim..." : mainPin ? `1 vị trí ghim · ${formatYear(activeYear)}` : "Chưa có vị trí ghim"}
-            </p>
-          </div>
 
           {pinsFetching && !pinsLoading && (
             <StatusPill className="right-4 top-4">
@@ -279,19 +279,19 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
           )}
 
           {isAdding && !draftCoordinates && (
-            <StatusPill className="left-1/2 top-4 -translate-x-1/2 bg-[#09090B] text-white">
+            <StatusPill className="left-1/2 top-4 -translate-x-1/2 bg-text-primary text-text-inverse">
               <LocateFixed size={16} /> Chọn một vị trí trên bản đồ
             </StatusPill>
           )}
 
           {(eventsError || pinsError) && (
-            <div className="absolute left-1/2 top-1/2 z-[500] w-[min(390px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 text-center shadow-[0_20px_48px_rgba(9,9,11,0.16)]">
+            <div className="absolute left-1/2 top-1/2 z-[500] w-[min(390px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 text-center shadow-[var(--shadow-soft)]">
               <AlertCircle className="mx-auto text-[var(--accent-danger)]" size={28} />
               <p className="mt-2 text-sm font-bold">Không tải được dữ liệu bản đồ</p>
               <button
                 type="button"
                 onClick={() => void (eventsError ? refetchEvents() : refetchPins())}
-                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#09090B] px-3 py-2 text-xs font-bold text-white"
+                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-text-primary px-3 py-2 text-xs font-bold text-text-inverse"
               >
                 <RefreshCw size={14} /> Thử lại
               </button>
@@ -299,7 +299,7 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
           )}
 
           {!pinsLoading && !pinsError && !mainPin && !isAdding && activeContextId && (
-            <div className="absolute left-1/2 top-1/2 z-[500] w-[min(390px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border-default)] bg-white/92 p-5 text-center shadow-[0_20px_48px_rgba(9,9,11,0.14)] backdrop-blur">
+            <div className="absolute left-1/2 top-1/2 z-[500] w-[min(390px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border-default)] bg-bg-surface p-5 text-center shadow-[var(--shadow-soft)] backdrop-blur">
               <MapPin className="mx-auto text-[var(--accent-gold)]" size={30} />
               <p className="mt-2 text-sm font-bold">Trận đánh này chưa có vị trí ghim</p>
               <p className="mt-1 text-xs leading-relaxed text-[var(--text-tertiary)]">
@@ -348,7 +348,7 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
 
 function StatusPill({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("absolute z-[500] flex items-center gap-2 rounded-lg bg-white/92 px-3 py-2 text-xs font-bold text-[var(--text-secondary)] shadow-[0_12px_32px_rgba(9,9,11,0.16)] backdrop-blur", className)}>
+    <div className={cn("absolute z-[500] flex items-center gap-2 rounded-lg bg-bg-surface px-3 py-2 text-xs font-bold text-[var(--text-secondary)] shadow-[var(--shadow-soft)] backdrop-blur", className)}>
       {children}
     </div>
   );
@@ -379,7 +379,7 @@ function BattleContextPanel({
 }) {
   return (
     <div className={cn("flex min-h-full flex-col lg:h-full", styles.contextPanel)}>
-      <div className="relative h-32 shrink-0 overflow-hidden bg-[#09090B] lg:h-[clamp(80px,17vh,160px)]">
+      <div className="relative h-32 shrink-0 overflow-hidden bg-[var(--abyssal-blue)] lg:h-[clamp(80px,17vh,160px)]">
         <Image
           src={event?.imageUrl || HISTORICAL_MAP_IMAGE}
           alt=""
@@ -387,16 +387,16 @@ function BattleContextPanel({
           sizes="430px"
           className={cn("object-cover", styles.contextImage)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#09090B]/86 via-[#09090B]/18 to-transparent" />
-        <div className="absolute bottom-4 left-4 right-4 text-white">
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--abyssal-blue)]/85 via-[var(--abyssal-blue)]/20 to-transparent" />
+        <div className="absolute bottom-4 left-4 right-4 text-[var(--text-on-dark)]">
           <p className="text-xs font-bold text-[var(--accent-gold-soft)]">{event ? formatYear(event.year) : "Bản đồ lịch sử"}</p>
-          <h2 className="mt-1 text-lg font-black leading-tight">{event?.title ?? "Chọn một bối cảnh"}</h2>
+          <h2 className="mt-1 text-lg font-bold leading-tight">{event?.title ?? "Chọn một bối cảnh"}</h2>
         </div>
       </div>
 
       <div className="min-h-0 space-y-3 px-4 py-3 lg:flex-1 lg:overflow-y-auto">
         <section>
-          <div className="mb-2 flex items-center gap-2 text-sm font-black">
+          <div className="mb-2 flex items-center gap-2 text-sm font-bold">
             <MapPin size={16} className="text-[var(--accent-gold)]" />
             Địa điểm trận đánh
           </div>
@@ -408,7 +408,7 @@ function BattleContextPanel({
                     {event?.location ? `${event.location} · ` : ""}{pin.latitude.toFixed(4)}, {pin.longitude.toFixed(4)}
                   </p>
                 </div>
-                <span className="rounded-md bg-[var(--accent-gold-active-bg)] px-2 py-1 text-xs font-black text-[var(--gold-on-light)]">
+                <span className="rounded-md bg-[var(--accent-gold-active-bg)] px-2 py-1 text-xs font-bold text-[var(--gold-on-light)]">
                   {formatYear(pin.pinYear)}
                 </span>
               </div>
@@ -425,7 +425,7 @@ function BattleContextPanel({
 
         {event && (
           <section>
-            <div className="mb-2 flex items-center gap-2 text-sm font-black">
+            <div className="mb-2 flex items-center gap-2 text-sm font-bold">
               <BookOpen size={16} className="text-[var(--accent-gold)]" />
               Bối cảnh
             </div>
@@ -436,7 +436,7 @@ function BattleContextPanel({
         )}
 
         <section>
-          <div className="mb-2 flex items-center gap-2 text-sm font-black">
+          <div className="mb-2 flex items-center gap-2 text-sm font-bold">
             <MessageCircle size={16} className="text-[var(--accent-gold)]" />
             Gặp nhân vật lịch sử
           </div>
@@ -459,7 +459,7 @@ function BattleContextPanel({
           type="button"
           onClick={onOpenDetail}
           disabled={!event}
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#09090B] text-sm font-black text-white transition hover:bg-[#27272A] disabled:opacity-45"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-text-primary text-sm font-bold text-text-inverse transition hover:bg-text-secondary disabled:opacity-45"
         >
           <BookOpen size={17} /> Khám phá trận đánh <ArrowUpRight size={16} />
         </button>
@@ -496,7 +496,6 @@ interface CreatePinPanelProps {
 function CreatePinPanel({ battleTitle, coordinates, year, isSubmitting, onCancel, onSubmit }: CreatePinPanelProps) {
   const [label, setLabel] = useState(battleTitle);
   const [description, setDescription] = useState("");
-  const [pinType, setPinType] = useState<MapPinType>("ALLIED_FORCE");
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -504,7 +503,9 @@ function CreatePinPanel({ battleTitle, coordinates, year, isSubmitting, onCancel
     await onSubmit({
       label: label.trim(),
       description: description.trim() || undefined,
-      pinType,
+      // Temporary compatibility with the current BE contract. Admin map pins
+      // should be a single battle location, not allied/enemy force markers.
+      pinType: "ALLIED_FORCE",
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
       pinYear: year,
@@ -516,7 +517,7 @@ function CreatePinPanel({ battleTitle, coordinates, year, isSubmitting, onCancel
       <div className="border-b border-[var(--border-default)] p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-black">Ghim vị trí trận đánh</h2>
+            <h2 className="text-lg font-bold">Ghim vị trí trận đánh</h2>
             <p className="mt-1 text-xs leading-relaxed text-[var(--text-tertiary)]">
               {coordinates ? `${coordinates.latitude.toFixed(5)}, ${coordinates.longitude.toFixed(5)} · ${formatYear(year)}` : "Bấm lên bản đồ để chọn một vị trí duy nhất."}
             </p>
@@ -534,27 +535,6 @@ function CreatePinPanel({ battleTitle, coordinates, year, isSubmitting, onCancel
             <span>Chọn vị trí trung tâm của trận đánh trên bản đồ trước khi nhập thông tin.</span>
           </div>
         )}
-
-        <fieldset>
-          <legend className="mb-2 text-xs font-bold text-[var(--text-tertiary)]">Loại vị trí</legend>
-          <div className="grid grid-cols-2 gap-2">
-            {(["ALLIED_FORCE", "ENEMY_FORCE"] as const).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setPinType(type)}
-                className={cn(
-                  "flex min-h-10 items-center justify-center gap-2 rounded-lg border px-2 text-xs font-bold transition",
-                  pinType === type
-                    ? "border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]"
-                    : "border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-secondary)]",
-                )}
-              >
-                <Shield size={15} />{type === "ALLIED_FORCE" ? "Quân ta" : "Đối phương"}
-              </button>
-            ))}
-          </div>
-        </fieldset>
 
         <label className="block">
           <span className="mb-2 block text-xs font-bold text-[var(--text-tertiary)]">Tiêu đề *</span>
@@ -586,7 +566,7 @@ function CreatePinPanel({ battleTitle, coordinates, year, isSubmitting, onCancel
         <button type="button" onClick={onCancel} className="h-10 flex-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-sm font-bold text-[var(--text-secondary)]">
           Hủy
         </button>
-        <button type="submit" disabled={!coordinates || !label.trim() || isSubmitting} className="inline-flex h-10 flex-[1.4] items-center justify-center gap-2 rounded-lg bg-[#09090B] text-sm font-bold text-white disabled:opacity-45">
+        <button type="submit" disabled={!coordinates || !label.trim() || isSubmitting} className="inline-flex h-10 flex-[1.4] items-center justify-center gap-2 rounded-lg bg-text-primary text-sm font-bold text-text-inverse disabled:opacity-45">
           {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />} Lưu vị trí
         </button>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   mapPinService,
@@ -9,6 +9,16 @@ import {
 
 const mapPinKey = (contextId: string, year: number) =>
   ["map-pins", contextId, year] as const;
+
+export function useOverviewMapPins(contexts: { id: string; year: number }[]) {
+  return useQueries({
+    queries: contexts.map(({ id, year }) => ({
+      queryKey: mapPinKey(id, year),
+      queryFn: () => mapPinService.getByContextAndYear(id, year),
+      staleTime: 30_000,
+    })),
+  });
+}
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (
