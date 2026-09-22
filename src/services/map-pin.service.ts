@@ -1,7 +1,6 @@
 import { axiosClient } from "@/configs/axios.client";
 
 export type MapPinOwnerType = "ADMIN" | "USER";
-export type MapPinType = "ALLIED_FORCE" | "ENEMY_FORCE";
 
 export interface MapPin {
   pinId: string;
@@ -10,7 +9,6 @@ export interface MapPin {
   pinOwnerType: MapPinOwnerType;
   label: string;
   description?: string | null;
-  pinType?: MapPinType | null;
   latitude: number;
   longitude: number;
   pinYear: number;
@@ -21,7 +19,6 @@ export interface MapPin {
 export interface CreateMapPinRequest {
   label: string;
   description?: string;
-  pinType?: MapPinType;
   latitude: number;
   longitude: number;
   pinYear: number;

@@ -100,10 +100,36 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
     [pins],
   );
   const focusedPin = panelDismissed ? null : selectedPin ?? mainPin;
-  const visiblePins = overviewQueries.flatMap((query) => {
+
+  // Build the visible pin list for the map overview.
+  // When admin is actively placing a new pin, exclude the current context's pin
+  // so that clicking on the map doesn't accidentally hit the existing marker
+  // instead of setting draftCoordinates.
+  const visiblePins = overviewQueries.flatMap((query, index) => {
+    const eventId = events[index]?.id;
+    if (isAdding && eventId === activeContextId) return [];
     const pin = query.data?.find((item) => item.pinOwnerType === "ADMIN") ?? query.data?.[0];
     return pin ? [pin] : [];
   });
+
+  // For regular users, only show events that have an admin-pinned location.
+  // Admins always see all events so they can manage pins.
+  const pinnedEventIds = useMemo(() => {
+    const ids = new Set<string>();
+    overviewQueries.forEach((query, index) => {
+      const hasPin = query.data && query.data.length > 0;
+      if (hasPin && events[index]?.id) {
+        ids.add(events[index].id);
+      }
+    });
+    return ids;
+  }, [overviewQueries, events]);
+
+  const selectableEvents = useMemo(
+    () => isAdmin ? events : events.filter((event) => pinnedEventIds.has(event.id)),
+    [isAdmin, events, pinnedEventIds],
+  );
+  const overviewQueriesLoading = overviewQueries.some((q) => q.isLoading);
   const canDeleteSelected = Boolean(focusedPin && isAdmin && focusedPin.pinOwnerType === "ADMIN");
 
   useEffect(() => {
@@ -202,14 +228,16 @@ export function HistoricalMapModal({ isOpen, onClose }: HistoricalMapModalProps)
             <select
               value={activeContextId ?? ""}
               onChange={(event) => chooseContext(event.target.value)}
-              disabled={eventsLoading || events.length === 0}
+              disabled={eventsLoading || overviewQueriesLoading || selectableEvents.length === 0}
               className="h-10 w-full appearance-none rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] py-0 pl-3 pr-9 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-gold)] focus:ring-2 focus:ring-[var(--accent-gold-glow)] disabled:opacity-60"
             >
-              {events.length > 0 && <option value="" aria-label="Chưa chọn trận đánh" />}
-              {events.length === 0 ? (
-                <option value="">Không có bối cảnh khả dụng</option>
+              {selectableEvents.length > 0 && <option value="">— Tất cả trận đánh —</option>}
+              {selectableEvents.length === 0 ? (
+                <option value="">
+                  {overviewQueriesLoading ? "Đang tải..." : isAdmin ? "Không có bối cảnh khả dụng" : "Chưa có trận đánh nào được ghim"}
+                </option>
               ) : (
-                events.map((event) => (
+                selectableEvents.map((event) => (
                   <option key={event.id} value={event.id}>
                     {event.title}
                   </option>
@@ -503,9 +531,6 @@ function CreatePinPanel({ battleTitle, coordinates, year, isSubmitting, onCancel
     await onSubmit({
       label: label.trim(),
       description: description.trim() || undefined,
-      // Temporary compatibility with the current BE contract. Admin map pins
-      // should be a single battle location, not allied/enemy force markers.
-      pinType: "ALLIED_FORCE",
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
       pinYear: year,
