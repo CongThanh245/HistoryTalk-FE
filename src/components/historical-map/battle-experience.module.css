@@ -1,3 +1,16 @@
+.mapPage,
+.experience {
+  font-family: var(--font-body), system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+.mapPage :is(h1, h2, h3),
+.experience :is(h1, h2, h3) {
+  font-family: var(--font-title), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
 .contextPanel { animation: context-reveal 420ms cubic-bezier(.16,1,.3,1); }
 .contextImage { transition: transform 600ms cubic-bezier(.16,1,.3,1); }
 .contextPanel:hover .contextImage { transform: scale(1.035); }
@@ -520,4 +533,3 @@
 @media (prefers-reduced-motion: reduce) {
   .immersive, .immersiveCharBtn, .immersiveImg img, .audioPlayBtn, .audioBarActive, .immersiveCharPulse { animation: none; transition: none; }
 }
-

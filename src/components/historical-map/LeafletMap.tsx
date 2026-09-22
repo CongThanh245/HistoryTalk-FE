@@ -5,6 +5,7 @@
 
 import React, { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
+import "./historical-map.css";
 import type {
   DivIcon,
   LayerGroup,
@@ -19,7 +20,10 @@ import { cn } from "@/lib/utils/cn";
 
 interface LeafletMapProps {
   battle?: HistoricalEvent;
+  battles?: HistoricalEvent[];
+  isAdding?: boolean;
   pins: MapPin[];
+  draftCoordinates?: { latitude: number; longitude: number } | null;
   selectedPinId: string | null;
   panelDismissed?: boolean;
   onSelectPin: (pin: MapPin) => void;
@@ -58,7 +62,10 @@ const TRUONG_SA_ISLANDS: LatLngExpression[] = [
 
 export function LeafletMap({
   battle,
+  battles,
+  isAdding = false,
   pins,
+  draftCoordinates,
   selectedPinId,
   panelDismissed = false,
   onSelectPin,
@@ -135,6 +142,7 @@ export function LeafletMap({
         });
 
         // maxBounds already enforces the boundary with Leaflet's re-entry guard.
+        map.zoomControl.setPosition("bottomright");
         map.on("click", (event) => {
           onMapClickRef.current?.({
             latitude: event.latlng.lat,
@@ -177,6 +185,47 @@ export function LeafletMap({
     };
   }, []);
 
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !draftCoordinates) return;
+    const map = mapRef.current;
+    let cancelled = false;
+    let preview: LayerGroup | undefined;
+
+    import("leaflet").then((L) => {
+      if (cancelled) return;
+      const position: LatLngExpression = [draftCoordinates.latitude, draftCoordinates.longitude];
+      preview = L.layerGroup().addTo(map);
+      L.circleMarker(position, {
+        radius: 18,
+        color: "#ffffff",
+        weight: 2,
+        fillColor: "#00796b",
+        fillOpacity: 0.2,
+        interactive: false,
+        pane: "markerPane",
+      }).addTo(preview);
+      L.circleMarker(position, {
+        radius: 8,
+        color: "#ffffff",
+        weight: 3,
+        fillColor: "#00796b",
+        fillOpacity: 1,
+        interactive: false,
+        pane: "markerPane",
+      }).bindTooltip("Vị trí ghim · Chưa lưu", {
+        permanent: true,
+        direction: "top",
+        offset: [0, -20],
+        opacity: 1,
+      }).addTo(preview);
+    });
+
+    return () => {
+      cancelled = true;
+      preview?.remove();
+    };
+  }, [draftCoordinates, mapReady]);
+
   // Sync API pins whenever the selected context or year changes.
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
@@ -198,45 +247,43 @@ export function LeafletMap({
 
       // Add new markers / update existing
       pins.forEach((pin) => {
+        const pinBattle = battles?.find((item) => item.id === pin.contextId) ?? battle;
         const isSelected = pin.pinId === selectedPinId;
-        const icon = createCustomIcon(L, pin, isSelected, battle);
+        const icon = createCustomIcon(L, pin, isSelected, pinBattle);
 
         if (markersRef.current[pin.pinId]) {
           const marker = markersRef.current[pin.pinId];
           marker.setIcon(icon).setLatLng([pin.latitude, pin.longitude]);
-          marker.setTooltipContent(createBattlePreview(pin, battle));
+          marker.setTooltipContent(createBattlePreview(pin, pinBattle));
           marker.off("click").on("click", () => onSelectPinRef.current(pin));
-          marker.getElement()?.setAttribute("aria-label", battle?.title ?? pin.label);
+          marker.getElement()?.setAttribute("aria-label", pinBattle?.title ?? pin.label);
         } else {
-          addMarker(L, map, pin, isSelected, markersRef, onSelectPinRef, battle);
+          addMarker(L, map, pin, isSelected, markersRef, onSelectPinRef, pinBattle);
         }
       });
     });
-  }, [pins, selectedPinId, mapReady, battle]);
+  }, [pins, selectedPinId, mapReady, battle, battles]);
 
-  // ── Fly to selected landmark ──────────────────────────────
+  const targetPin = pins.find((item) => item.pinId === selectedPinId);
+  const targetLatitude = targetPin?.latitude;
+  const targetLongitude = targetPin?.longitude;
+
+  // One camera effect prevents overview and selection animations competing.
   useEffect(() => {
-    if (!mapRef.current || !selectedPinId) return;
-    const pin = pins.find((item) => item.pinId === selectedPinId);
-    if (
-      pin &&
-      typeof pin.latitude === "number" && !isNaN(pin.latitude) &&
-      typeof pin.longitude === "number" && !isNaN(pin.longitude)
-    ) {
+    const map = mapRef.current;
+    if (!mapReady || !map || isAdding) return;
+    const frame = requestAnimationFrame(() => {
+      map.stop();
+      map.invalidateSize({ pan: false });
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      mapRef.current.flyTo([pin.latitude, pin.longitude], 9, { duration: 1.2, animate: !reducedMotion });
-    }
-  }, [selectedPinId, pins, mapReady]);
-
-  // ── Fly back to Vietnam overview when panel dismissed ─────
-  useEffect(() => {
-    if (!mapRef.current || !panelDismissed) return;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    mapRef.current.flyTo(VIETNAM_INITIAL_VIEW.center, VIETNAM_INITIAL_VIEW.zoom, {
-      duration: 1.4,
-      animate: !reducedMotion,
+      if (!panelDismissed && typeof targetLatitude === "number" && Number.isFinite(targetLatitude) && typeof targetLongitude === "number" && Number.isFinite(targetLongitude)) {
+        map.flyTo([targetLatitude, targetLongitude], 9, { duration: 1.2, animate: !reducedMotion });
+      } else {
+        map.flyTo(VIETNAM_INITIAL_VIEW.center, VIETNAM_INITIAL_VIEW.zoom, { duration: 1.2, animate: !reducedMotion });
+      }
     });
-  }, [panelDismissed]);
+    return () => cancelAnimationFrame(frame);
+  }, [selectedPinId, targetLatitude, targetLongitude, panelDismissed, mapReady, isAdding]);
 
   return (
     <>
@@ -245,7 +292,7 @@ export function LeafletMap({
           ref={containerRef}
           className={cn(
             "w-full h-full historical-leaflet-map",
-            onMapClick && "cursor-crosshair",
+            isAdding && "cursor-crosshair",
           )}
           aria-label="Bản đồ tương tác Việt Nam"
         />
@@ -260,221 +307,7 @@ export function LeafletMap({
           <span />
         </div>
       </div>
-      <style>{`
-        .historical-map-shell {
-          background:
-            radial-gradient(circle at 46% 36%, rgba(246, 233, 198, 0.72), transparent 34%),
-            linear-gradient(135deg, #8fa8a6 0%, #cbd2bd 38%, #d3bc82 100%);
-          overflow: hidden;
-        }
-        .historical-map-shell::before {
-          content: "";
-          position: absolute;
-          inset: 18px;
-          z-index: 460;
-          pointer-events: none;
-          border: 1px solid rgba(83, 52, 24, 0.28);
-          box-shadow:
-            inset 0 0 0 1px rgba(255, 239, 196, 0.28),
-            inset 0 0 72px rgba(66, 39, 16, 0.2);
-        }
-        .historical-map-shell::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          z-index: 461;
-          pointer-events: none;
-          background:
-            radial-gradient(circle at 50% 42%, transparent 0 48%, rgba(52, 31, 13, 0.2) 100%),
-            linear-gradient(rgba(78, 49, 23, 0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(78, 49, 23, 0.04) 1px, transparent 1px);
-          background-size: auto, 72px 72px, 72px 72px;
-          mix-blend-mode: multiply;
-        }
-        .historical-leaflet-map {
-          background:
-            radial-gradient(circle at 42% 32%, rgba(255, 244, 207, 0.75), transparent 31%),
-            radial-gradient(circle at 66% 70%, rgba(112, 151, 147, 0.32), transparent 34%),
-            linear-gradient(145deg, #9db8a7 0%, #d7d0aa 52%, #c6a96f 100%);
-        }
-        .historical-leaflet-map .leaflet-container {
-          background: transparent;
-          font-family: inherit;
-        }
-        .historical-leaflet-map .leaflet-tile-pane {
-          filter: sepia(0.26) saturate(0.68) contrast(0.94) brightness(1.02);
-          opacity: 0.72;
-        }
-        .historical-leaflet-map .leaflet-control-zoom {
-          border: 1px solid rgba(76, 44, 18, 0.28) !important;
-          border-radius: 6px !important;
-          box-shadow: 0 8px 20px rgba(72, 42, 16, 0.18) !important;
-        }
-        .historical-leaflet-map .leaflet-control-zoom a {
-          background: rgba(250, 231, 184, 0.95) !important;
-          color: #4f2f15 !important;
-          border-bottom-color: rgba(76, 44, 18, 0.2) !important;
-        }
-        .historical-leaflet-map .leaflet-control-zoom a:hover {
-          background: #f6dda7 !important;
-        }
-        .historical-map-label {
-          color: #563114;
-          font-family: inherit;
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: 0;
-          text-shadow:
-            0 1px 0 rgba(255, 236, 184, 0.85),
-            0 3px 10px rgba(68, 38, 14, 0.16);
-          white-space: nowrap;
-        }
-        .historical-map-label--country {
-          font-size: 18px;
-          letter-spacing: 0;
-        }
-        .historical-island-dot {
-          filter: drop-shadow(0 3px 5px rgba(71, 42, 16, 0.22));
-        }
-        .historical-map-sea-label {
-          color: rgba(67, 56, 34, 0.52);
-          font-family: inherit;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0;
-          white-space: nowrap;
-          text-shadow: 0 1px 0 rgba(251, 237, 194, 0.72);
-        }
-        .historical-map-region-label {
-          color: rgba(79, 47, 21, 0.46);
-          font-family: inherit;
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0;
-          white-space: nowrap;
-          text-shadow: 0 1px 0 rgba(251, 237, 194, 0.72);
-        }
-        .historical-province-label {
-          color: rgba(58, 38, 20, 0.76);
-          font-family: inherit;
-          font-size: 10px;
-          font-weight: 700;
-          letter-spacing: 0;
-          line-height: 1.05;
-          max-width: 92px;
-          text-align: center;
-          text-shadow:
-            0 1px 0 rgba(255, 242, 204, 0.95),
-            0 -1px 0 rgba(255, 242, 204, 0.72),
-            1px 0 0 rgba(255, 242, 204, 0.72),
-            -1px 0 0 rgba(255, 242, 204, 0.72);
-          white-space: normal;
-        }
-        .historical-province-label-wrapper {
-          opacity: 0;
-          transition: opacity 180ms ease;
-        }
-        .historical-leaflet-map.show-province-labels .historical-province-label-wrapper {
-          opacity: 1;
-        }
-        .historical-map-compass {
-          position: absolute;
-          right: 28px;
-          top: 28px;
-          z-index: 470;
-          width: 54px;
-          height: 72px;
-          color: #513019;
-          opacity: 0.76;
-          pointer-events: none;
-        }
-        .historical-map-compass-n {
-          position: absolute;
-          top: 0;
-          left: 50%;
-          transform: translateX(-50%);
-          font-size: 12px;
-          font-weight: 800;
-        }
-        .historical-map-compass-line {
-          position: absolute;
-          left: 50%;
-          top: 18px;
-          width: 1px;
-          height: 48px;
-          background: linear-gradient(#513019, rgba(81, 48, 25, 0.12));
-          transform: translateX(-50%);
-        }
-        .historical-map-compass-line::before,
-        .historical-map-compass-line::after {
-          content: "";
-          position: absolute;
-          left: 50%;
-          top: 15px;
-          width: 1px;
-          height: 28px;
-          background: rgba(81, 48, 25, 0.55);
-          transform-origin: top;
-        }
-        .historical-map-compass-line::before {
-          transform: rotate(48deg);
-        }
-        .historical-map-compass-line::after {
-          transform: rotate(-48deg);
-        }
-        .historical-map-compass-dot {
-          position: absolute;
-          left: 50%;
-          top: 39px;
-          width: 8px;
-          height: 8px;
-          border: 1px solid rgba(81, 48, 25, 0.55);
-          border-radius: 50%;
-          transform: translate(-50%, -50%);
-          background: rgba(248, 224, 168, 0.62);
-        }
-        .historical-map-scale {
-          position: absolute;
-          left: 32px;
-          bottom: 30px;
-          z-index: 470;
-          display: flex;
-          width: 112px;
-          height: 14px;
-          border-bottom: 2px solid rgba(81, 48, 25, 0.62);
-          pointer-events: none;
-          opacity: 0.72;
-        }
-        .historical-map-scale span {
-          flex: 1;
-          border-left: 2px solid rgba(81, 48, 25, 0.62);
-        }
-        .historical-map-scale span:last-child {
-          border-right: 2px solid rgba(81, 48, 25, 0.62);
-        }
-        /* Fade-in animation for new markers */
-        .leaflet-marker-icon.landmark-marker { transition: opacity 180ms ease-out; }
-        .battle-pin { position: relative; width: 60px; height: 60px; transform: scale(var(--marker-scale, 0.65)); transform-origin: center bottom; transition: transform 250ms ease; }
-        .battle-pin-photo { width: 60px; height: 60px; border: 3px solid var(--accent-gold); border-radius: 50%; overflow: hidden; background: var(--bg-surface); box-shadow: 0 6px 18px #09090b40; transition: transform 220ms ease; }
-        .battle-pin-photo img { width: 100%; height: 100%; object-fit: cover; }
-        .landmark-marker:hover .battle-pin-photo, .landmark-marker:focus .battle-pin-photo { transform: translateY(-4px); }
-        .battle-pin-year { position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); padding: 2px 8px; border-radius: 4px; background: #09090b; color: #fcd34d; font-family: inherit; font-size: 11px; line-height: 18px; font-weight: 800; white-space: nowrap; }
-        .battle-pin-name { position: absolute; top: 76px; left: 50%; transform: translateX(-50%); max-width: 210px; width: max-content; white-space: normal; padding: 6px 10px; border-radius: 6px; background: var(--bg-surface); color: var(--text-primary); box-shadow: 0 4px 14px #09090b20; font-size: 12px; line-height: 16px; font-weight: 800; text-align: center; }
-        .battle-pin--selected::before { content: ''; position: absolute; inset: -7px; border: 1px solid var(--accent-gold); border-radius: 50%; animation: battle-pin-arrive 1.4s ease-out 3; pointer-events: none; }
-        .battle-preview.leaflet-tooltip { padding: 0; border: 0; border-radius: 8px; background: var(--bg-surface); color: var(--text-primary); box-shadow: 0 12px 32px #09090b38; white-space: normal; }
-        .battle-preview .battle-preview-content { width: 248px; overflow: hidden; border-radius: 8px; animation: battle-preview-in 180ms ease-out; }
-        .battle-preview-image { display: block; width: 100%; height: 112px; object-fit: cover; }
-        .battle-preview-copy { padding: 12px; }
-        .battle-preview-heading { display: block; font-size: 14px; line-height: 20px; }
-        .battle-preview-meta { margin-top: 4px; color: var(--gold-on-light); font-weight: 700; font-size: 11px; }
-        .battle-preview-summary { margin: 6px 0 0; color: var(--text-secondary); font-size: 12px; line-height: 18px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        @keyframes battle-pin-arrive { from { transform: scale(.9); opacity: .9; } to { transform: scale(1.65); opacity: 0; } }
-        @keyframes battle-preview-in { from { opacity: .3; clip-path: inset(8% 0 0); } to { opacity: 1; clip-path: inset(0); } }
-        @media (prefers-reduced-motion: reduce) {
-          .battle-pin--selected::before, .battle-preview .battle-preview-content { animation: none; }
-          .battle-pin-photo { transition: none; }
-        }
-      `}</style>
+
     </>
   );
 }
@@ -775,6 +608,7 @@ function addMarker(
   const marker = L.marker([pin.latitude, pin.longitude], {
     icon,
     zIndexOffset: 1000,
+    bubblingMouseEvents: false,
     alt: battle?.title || pin.label,
   });
 
