@@ -1,4 +1,4 @@
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 /**
  * src/app/(app)/chat/[id]/page.tsx

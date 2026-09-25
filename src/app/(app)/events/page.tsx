@@ -1,4 +1,4 @@
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 // app/(app)/events/page.tsx
 import { dehydrate } from "@tanstack/react-query";
