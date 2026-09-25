@@ -24,7 +24,7 @@ export function MarkdownMessage({ text }: Props) {
       <a
         href={href}
         target="_blank"
-        rel="noopener noreferrer"
+        rel="noopener noreferrer nofollow"
         className="underline"
         style={{ color: "var(--accent-gold)" }}
       >

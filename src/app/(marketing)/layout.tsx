@@ -1,4 +1,5 @@
 import { Footer } from "@/components/footer";
+import { MarketingBreadcrumbs } from "@/components/seo/marketing-breadcrumbs";
 import { MarketingNavbar } from "@/components/marketing/navbar";
 import type { CSSProperties } from "react";
 
@@ -62,6 +63,7 @@ export default function MarketingLayout({
       {/* Main Content */}
 
       <main className="w-full">
+        <MarketingBreadcrumbs />
         {children}
       </main>
       <Footer></Footer>

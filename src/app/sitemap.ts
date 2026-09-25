@@ -1,23 +1,10 @@
 import type { MetadataRoute } from "next";
-
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://historytalk.online";
-
-  // Public static routes
-  const staticRoutes = ["", "/about", "/pricing", "/features", "/login", "/register"].map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date().toISOString(),
-    changeFrequency: "daily" as const,
-    priority: route === "" ? 1.0 : 0.8,
+import { siteUrl } from "@/lib/seo";
+export default function sitemap(): MetadataRoute.Sitemap {
+  // TODO: configure the actual public-content revision date, never the current request time.
+  const revision = process.env.SEO_CONTENT_UPDATED_AT;
+  const lastModified = revision && !Number.isNaN(Date.parse(revision)) ? new Date(revision) : undefined;
+  return ["", "/features", "/pricing", "/characters", "/events"].map((path) => ({
+    url: siteUrl + path, ...(lastModified ? { lastModified } : {}),
   }));
-
-  // App core routes (authenticated but visible in sitemap)
-  const appRoutes = ["/home", "/characters", "/events", "/map", "/library", "/quiz"].map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date().toISOString(),
-    changeFrequency: "weekly" as const,
-    priority: 0.7,
-  }));
-
-  return [...staticRoutes, ...appRoutes];
 }

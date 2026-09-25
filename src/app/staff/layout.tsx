@@ -1,3 +1,5 @@
+import { privateMetadata } from "@/lib/seo";
+export const metadata = privateMetadata;
 import Header from "@/components/layouts/header";
 import ReactQueryProviders from "@/components/context/query-client-provider";
 import React from "react";

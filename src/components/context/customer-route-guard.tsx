@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { syncAuthCookies } from "@/features/auth/auth-cookies";
 
@@ -14,6 +14,8 @@ function getStaffHome(role: string | undefined) {
 
 export function CustomerRouteGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const publicCatalog = pathname === "/characters" || pathname === "/events";
   const user = useAuthStore((state) => state.user);
   const tokens = useAuthStore((state) => state.tokens);
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
@@ -27,7 +29,7 @@ export function CustomerRouteGuard({ children }: { children: React.ReactNode }) 
     router.replace(staffHome);
   }, [router, staffHome, tokens, user]);
 
-  if (!hasHydrated || staffHome) {
+  if ((!hasHydrated && !publicCatalog) || staffHome) {
     return null;
   }
 

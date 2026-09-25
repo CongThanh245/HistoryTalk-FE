@@ -1,3 +1,5 @@
+import { privateMetadata } from "@/lib/seo";
+export const metadata = privateMetadata;
 // src/app/(app)/chat/layout.tsx
 //
 // Layout riêng cho tất cả trang /chat/*
