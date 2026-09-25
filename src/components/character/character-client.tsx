@@ -153,6 +153,12 @@ export function CharactersClient() {
         <CustomPagination
           page={page}
           totalPages={data.totalPages}
+          getPageHref={(nextPage) => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (nextPage === 1) params.delete("page");
+            else params.set("page", String(nextPage));
+            return params.size ? `${pathname}?${params}` : pathname;
+          }}
           onChange={(nextPage) => updateUrl({ page: nextPage === 1 ? null : String(nextPage) })}
         />
       )}

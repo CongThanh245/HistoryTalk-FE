@@ -1,3 +1,6 @@
+import { pageMetadata } from "@/lib/seo";
+import { SiteSchema } from "@/components/seo/site-schema";
+export const metadata = pageMetadata("/", "HistoryTalk - Trò chuyện và khám phá lịch sử Việt Nam", "Khám phá lịch sử Việt Nam qua trò chuyện AI với nhân vật lịch sử, tìm hiểu sự kiện và thử sức cùng câu đố. Bắt đầu hành trình học tương tác với HistoryTalk.");
 import nextDynamic from "next/dynamic";
 import { Suspense } from "react";
 import { HeroSection } from "@/components/marketing/section/hero-section";
@@ -129,6 +132,7 @@ export default async function MarketingPage() {
 
   return (
     <div data-marketing-scroll className="w-full">
+      <SiteSchema />
       <HeroSection initialCharacters={heroCharacters} />
       <Suspense fallback={<SectionSkeleton />}>
         <ProblemSection />

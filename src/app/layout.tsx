@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { pageMetadata, siteUrl } from "@/lib/seo";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
@@ -27,38 +28,15 @@ const jakarta = Plus_Jakarta_Sans({
 const googleAnalyticsId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
 
 export const metadata: Metadata = {
-  title: "HistoryTalk - Trò chuyện với nhân vật lịch sử",
-  description: "Trò chuyện, chat trực tiếp với các nhân vật lịch sử. Trải nghiệm học lịch sử tương tác thú vị, sinh động cùng HistoryTalk.",
-  icons: {
-    icon: [
-      { url: "/solo-logo.png?v=2", type: "image/png", sizes: "32x32" },
-    ],
-    shortcut: "/solo-logo.png?v=2",
-    apple: "/solo-logo.png?v=2",
-  },
-  metadataBase: new URL("https://historytalk.online"),
-  openGraph: {
-    title: "HistoryTalk - Trò chuyện với nhân vật lịch sử qua các cuộc hội thoại",
-    description: "Trò chuyện, chat trực tiếp với các nhân vật lịch sử. Trải nghiệm học lịch sử tương tác thú vị, sinh động cùng HistoryTalk.",
-    images: [
-      {
-        url: "/historytalk-banner.png",
-        width: 1200,
-        height: 630,
-        alt: "HistoryTalk Banner",
-      },
-    ],
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "HistoryTalk - Trò chuyện với nhân vật lịch sử",
-    description: "Trò chuyện, chat trực tiếp với các nhân vật lịch sử. Trải nghiệm học lịch sử tương tác thú vị, sinh động cùng HistoryTalk.",
-    images: ["/historytalk-banner.png"],
+  ...pageMetadata("/", "HistoryTalk - Trò chuyện và khám phá lịch sử Việt Nam", "Khám phá lịch sử Việt Nam qua trò chuyện AI với nhân vật lịch sử, tìm hiểu sự kiện và thử sức cùng câu đố. Bắt đầu hành trình học tương tác với HistoryTalk."),
+  alternates: undefined,
+  metadataBase: new URL(siteUrl),
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
   },
 };
 
-// Tách viewport export theo chuẩn Next.js 16
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

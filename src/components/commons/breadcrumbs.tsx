@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, House } from "lucide-react";
 import React from "react";
+import { jsonLd, siteUrl } from "@/lib/seo";
 import { useCharacter } from "@/features/characters/hooks";
 import { useEventDetail } from "@/features/events/hooks";
 import { useStaffQuizDetail } from "@/features/staff/quiz/hooks";
@@ -50,6 +51,14 @@ export default function Breadcrumbs() {
       aria-label="Breadcrumb" 
       className="px-3 md:px-6 py-2.5 border-b bg-header-bg border-header-border"
     >
+      {["/characters", "/events"].includes(pathname) && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd({
+          "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Trang chủ", item: `${siteUrl}/home` },
+            { "@type": "ListItem", position: 2, name: routeLabels[pathname.slice(1)], item: siteUrl + pathname },
+          ],
+        }) }} />
+      )}
       <ol className="flex items-center space-x-2 text-sm text-header-text-muted">
         <li className="flex items-center">
           <Link
@@ -78,7 +87,7 @@ export default function Breadcrumbs() {
                   </span>
                 ) : (
                   <Link
-                    href={segment === "chat" ? "/character" : href}
+                    href={segment === "chat" ? "/characters" : href}
                     className="hover:text-[--accent-gold] transition-colors truncate max-w-[200px] text-header-text"
                   >
                     <BreadcrumbLabel segment={segment} parentSegment={parentSegment} />

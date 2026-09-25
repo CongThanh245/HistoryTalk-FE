@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   WELCOME_SCREEN_FINISHED_EVENT,
@@ -12,11 +13,14 @@ const FADE_DURATION = 500;
 const SESSION_COOKIE = `${WELCOME_SCREEN_KEY}=true; path=/; samesite=lax`;
 
 export function WelcomeScreen() {
+  const pathname = usePathname();
+  const isPublicPage = ["/", "/features", "/pricing", "/characters", "/events"].includes(pathname);
   const [isVisible, setIsVisible] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    if (isPublicPage) return;
     const isSeenInCookie = document.documentElement.dataset.welcomeScreenSeen === "true";
     if (sessionStorage.getItem(WELCOME_SCREEN_KEY) || isSeenInCookie) {
       if (isSeenInCookie && !sessionStorage.getItem(WELCOME_SCREEN_KEY)) {
@@ -72,9 +76,9 @@ export function WelcomeScreen() {
       window.clearTimeout(hideTimer);
       document.body.style.overflow = "";
     };
-  }, []);
+  }, [isPublicPage]);
 
-  if (!isVisible) {
+  if (isPublicPage || !isVisible) {
     return null;
   }
 

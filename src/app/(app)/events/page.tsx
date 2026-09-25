@@ -10,10 +10,10 @@ import { EventsClient } from "@/components/event/event-page";
 import { firstParam, parseEra } from "@/lib/catalog-url-state";
 import type { EventEraBackend, GetEventsParams } from "@/services/event.service";
 
-export const metadata = {
-  title: "Sự kiện lịch sử",
-  description: "Hành trình qua các mốc lịch sử quan trọng của dân tộc",
-};
+import { catalogMetadata } from "@/lib/catalog-metadata";
+export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  return catalogMetadata("/events", await searchParams);
+}
 
 export const dynamic = "force-dynamic";
 export default async function EventsPage({

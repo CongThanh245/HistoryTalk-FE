@@ -15,12 +15,14 @@ interface PaginationProps {
   page: number;
   totalPages: number;
   onChange: (page: number) => void;
+  getPageHref?: (page: number) => string;
 }
 
 export function CustomPagination({
   page,
   totalPages,
   onChange,
+  getPageHref,
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
@@ -56,7 +58,7 @@ export function CustomPagination({
         {/* Nút Quay lại */}
         <PaginationItem>
           <PaginationPrevious
-            href="#"
+            href={getPageHref?.(Math.max(1, page - 1)) ?? "#"}
             onClick={(e) => {
               e.preventDefault();
               if (page > 1) onChange(page - 1);
@@ -79,7 +81,7 @@ export function CustomPagination({
               />
             ) : (
               <PaginationLink
-                href="#"
+                href={getPageHref?.(p as number) ?? "#"}
                 isActive={page === p}
                 onClick={(e) => {
                   e.preventDefault();
@@ -99,7 +101,7 @@ export function CustomPagination({
         {/* Nút Tiếp theo */}
         <PaginationItem>
           <PaginationNext
-            href="#"
+            href={getPageHref?.(Math.min(totalPages, page + 1)) ?? "#"}
             onClick={(e) => {
               e.preventDefault();
               if (page < totalPages) onChange(page + 1);

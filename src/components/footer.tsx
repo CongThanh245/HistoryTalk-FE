@@ -22,7 +22,7 @@ const NAV_LINKS = [
     heading: "Tài khoản",
     links: [
       { label: "Trang cá nhân", href: "/profile" },
-      { label: "Cài đặt", href: "/settings" },
+      { label: "Bảng giá", href: "/pricing" },
     ],
   },
 ];

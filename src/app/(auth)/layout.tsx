@@ -1,3 +1,5 @@
+import { privateMetadata } from "@/lib/seo";
+export const metadata = privateMetadata;
 // app/(auth)/layout.tsx
 export default function AuthLayoutWrapper({
   children,

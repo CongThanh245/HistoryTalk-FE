@@ -11,10 +11,10 @@ import { firstParam, parseEra, parsePage } from "@/lib/catalog-url-state";
 import type { EventEraBackend } from "@/services/event.service";
 import type { GetCharactersParams } from "@/services/character.service";
 
-export const metadata = {
-  title: "Nhân vật lịch sử",
-  description: "Trò chuyện với những nhân vật đã làm nên lịch sử Việt Nam",
-};
+import { catalogMetadata } from "@/lib/catalog-metadata";
+export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  return catalogMetadata("/characters", await searchParams);
+}
 
 export const dynamic = "force-dynamic";
 
