@@ -23,7 +23,7 @@ export const StaffFormLabel = React.forwardRef<
   <Label
     ref={ref}
     className={cn(
-      "text-content-muted text-[11px] font-semibold uppercase tracking-wider",
+      "text-[var(--text-tertiary)] text-[11px] font-semibold uppercase tracking-[0.1em]",
       className
     )}
     {...props}
@@ -41,7 +41,7 @@ export const StaffFormInput = React.forwardRef<
   <Input
     ref={ref}
     className={cn(
-      "bg-black/[0.02] border-card-border text-content-heading focus:bg-white transition-all h-10 disabled:pointer-events-auto disabled:cursor-not-allowed",
+      "rounded-[2px] bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading focus:bg-[var(--bg-elevated)] focus-visible:border-[var(--text-primary)] transition-all h-10 disabled:pointer-events-auto disabled:cursor-not-allowed",
       className
     )}
     {...props}
@@ -59,7 +59,7 @@ export const StaffFormTextarea = React.forwardRef<
   <Textarea
     ref={ref}
     className={cn(
-      "bg-black/[0.02] border-card-border text-content-heading focus:bg-white transition-all min-h-[140px] resize-none",
+      "rounded-[2px] bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading focus:bg-[var(--bg-elevated)] focus-visible:border-[var(--text-primary)] transition-all min-h-[140px] resize-none",
       className
     )}
     {...props}
@@ -89,7 +89,7 @@ export function StaffFormSelect<T extends string>({
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger
         className={cn(
-          "bg-black/[0.02] border-card-light-border text-content-heading focus:bg-white transition-all h-10",
+          "rounded-[2px] bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading focus:bg-[var(--bg-elevated)] focus-visible:border-[var(--text-primary)] transition-all h-10",
           className
         )}
       >

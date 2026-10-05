@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Container } from "./marketing/container";
 import { BrandLogo } from "./commons/brand-logo";
+import { useEntitlements } from "@/features/saas/entitlements";
 
 const NAV_LINKS = [
   {
@@ -22,14 +25,21 @@ const NAV_LINKS = [
     heading: "Tài khoản",
     links: [
       { label: "Trang cá nhân", href: "/profile" },
-      { label: "Bảng giá", href: "/pricing" },
+      { label: "Bảng giá", href: "/pricing", purchaseOnly: true },
     ],
   },
 ];
 
 export function Footer() {
+  // School accounts cannot buy plans, so the pricing link is hidden for them.
+  const { canPurchase } = useEntitlements();
+  const navLinks = NAV_LINKS.map((col) => ({
+    ...col,
+    links: col.links.filter((link) => canPurchase || !("purchaseOnly" in link && link.purchaseOnly)),
+  }));
+
   return (
-    <footer className="bg-[var(--bg-main)] border-t border-[var(--border-default)]">
+    <footer className="bg-[var(--bg-main)] border-t border-[var(--text-primary)]">
       <Container>
         {/* Main grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 sm:gap-12 py-10 sm:py-16">
@@ -40,7 +50,7 @@ export function Footer() {
               href="/"
               className="inline-flex items-center gap-2 mb-6 group"
             >
-              <BrandLogo forceTheme="dark" size="large" />
+              <BrandLogo size="large" />
             </Link>
 
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-8">
@@ -50,12 +60,12 @@ export function Footer() {
 
             {/* Contact */}
             <div className="space-y-1">
-              <p className="text-xs font-semibold tracking-widest uppercase text-[var(--text-muted)] mb-2">
+              <p className="archive-label mb-2">
                 Liên hệ
               </p>
               <a
                 href="mailto:hello@historytalk.vn"
-                className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent-gold)] transition-colors duration-200"
+                className="archive-link normal-case tracking-normal text-sm font-semibold"
               >
                 hello@historytalk.vn
               </a>
@@ -64,9 +74,9 @@ export function Footer() {
 
           {/* RIGHT: Nav columns */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-10 lg:gap-16">
-            {NAV_LINKS.map((col) => (
+            {navLinks.map((col) => (
               <div key={col.heading}>
-                <p className="text-xs font-semibold tracking-widest uppercase text-[var(--accent-gold)] opacity-80 mb-4">
+                <p className="font-display text-lg font-extrabold uppercase leading-[1.25] tracking-[0.02em] text-[var(--text-primary)] pb-3 mb-4 border-b border-[var(--text-primary)]">
                   {col.heading}
                 </p>
                 <ul className="space-y-3">
@@ -74,7 +84,7 @@ export function Footer() {
                     <li key={link.label}>
                       <Link
                         href={link.href}
-                        className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-200"
+                        className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent-gold)] transition-colors duration-200"
                       >
                         {link.label}
                       </Link>
@@ -87,8 +97,8 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-[var(--border-default)] py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-[var(--text-muted)]">
+        <div className="border-t border-[var(--border-strong)] py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">
             © {new Date().getFullYear()} HistoryTalk. Bảo lưu mọi quyền.
           </p>
 

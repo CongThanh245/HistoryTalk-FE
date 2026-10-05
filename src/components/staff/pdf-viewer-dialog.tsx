@@ -133,7 +133,7 @@ export function PdfViewerDialog({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center bg-[rgba(234,179,8,0.1)]"
+                className="w-8 h-8 rounded-[2px] flex items-center justify-center bg-[var(--accent-gold-active-bg)]"
               >
                 <File className="h-4 w-4 text-accent-gold" />
               </div>
@@ -154,7 +154,7 @@ export function PdfViewerDialog({
                     variant="outline"
                     size="sm"
                     onClick={handleOpenInNewTab}
-                    className="bg-transparent border-card-light-border text-content-heading hover:bg-black/5"
+                    className="bg-transparent border-card-light-border text-content-heading hover:bg-[var(--status-neutral-bg)]"
                   >
                     <ExternalLink className="h-4 w-4 mr-1.5" />
                     Mở tab mới
@@ -164,7 +164,7 @@ export function PdfViewerDialog({
                     variant="outline"
                     size="sm"
                     onClick={handleDownload}
-                    className="bg-transparent border-card-light-border text-content-heading hover:bg-black/5"
+                    className="bg-transparent border-card-light-border text-content-heading hover:bg-[var(--status-neutral-bg)]"
                   >
                     <Download className="h-4 w-4 mr-1.5" />
                     Tải xuống
@@ -189,11 +189,11 @@ export function PdfViewerDialog({
             <div className="h-full flex items-center justify-center">
               <div className="text-center space-y-3">
                 <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto bg-[rgba(239,68,68,0.1)]"
+                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto bg-[var(--status-danger-bg)]"
                 >
-                  <File className="h-8 w-8 text-[rgb(239,68,68)]" />
+                  <File className="h-8 w-8 text-[var(--accent-danger)]" />
                 </div>
-                <p className="text-sm font-medium text-[rgb(239,68,68)]">
+                <p className="text-sm font-medium text-[var(--accent-danger)]">
                   Không thể tải PDF
                 </p>
                 <p className="text-xs text-content-muted">
@@ -207,7 +207,7 @@ export function PdfViewerDialog({
             <div className="h-full flex items-center justify-center">
               <div className="text-center space-y-3">
                 <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto bg-[rgba(234,179,8,0.1)]"
+                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto bg-[var(--accent-gold-active-bg)]"
                 >
                   <File className="h-8 w-8 text-content-muted" />
                 </div>

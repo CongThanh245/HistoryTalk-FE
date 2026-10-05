@@ -44,7 +44,7 @@ export function WelcomeHeading() {
             // Chia chuỗi thành 2 phần: trước và sau highlight
             const parts = currentString.split(HIGHLIGHT_TEXT);
             el.innerHTML = `
-              ${parts[0]}<span style="color: var(--accent-gold, #c9a24d)">${HIGHLIGHT_TEXT}</span>${parts[1]}
+              ${parts[0]}<span style="color: var(--accent-gold)">${HIGHLIGHT_TEXT}</span>${parts[1]}
             `;
           } else {
             el.textContent = currentString;
@@ -72,11 +72,11 @@ export function WelcomeHeading() {
   }, []);
 
   return (
-    <h2 className="text-lg font-bold uppercase text-content-heading tracking-[0.06em]">
+    <h2 className="archive-title is-plain text-[22px] md:text-[26px]">
       <span ref={textRef} />
       <span
         ref={cursorRef}
-        className="inline-block w-[2px] h-[1em] bg-accent-gold ml-[2px] align-middle rounded-[1px]"
+        className="inline-block w-[2px] h-[1em] bg-accent-gold ml-[2px] align-middle rounded-none"
       />
     </h2>
   );

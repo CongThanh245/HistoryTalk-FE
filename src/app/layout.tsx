@@ -2,13 +2,15 @@ import type { Metadata, Viewport } from "next";
 import { pageMetadata, siteUrl } from "@/lib/seo";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Big_Shoulders, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "../styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProviders from "@/components/context/query-client-provider";
 import { ThemeProvider } from "@/components/context/theme-provider";
 import { WelcomeScreen } from "@/components/welcome-screen";
 import { WELCOME_SCREEN_KEY } from "@/constants/welcome-screen";
+import { ROLE_HOME } from "@/constants/roles";
+import { RolePreviewSwitcher } from "@/components/dev/role-preview-switcher";
 import { SessionExpiredDialog } from "@/components/session-expired-dialog";
 import { UserLockedDialog } from "@/components/user-locked-dialog";
 
@@ -23,6 +25,14 @@ const jakarta = Plus_Jakarta_Sans({
   variable: "--font-title",
   display: "swap",
   weight: ["400", "500", "600", "700", "800"],
+});
+
+// Condensed display face for archive-style headings (Google merged "Big Shoulders Display" into this family).
+const bigShoulders = Big_Shoulders({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-display-face",
+  display: "swap",
+  weight: ["700", "800", "900"],
 });
 
 const googleAnalyticsId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
@@ -50,7 +60,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" suppressHydrationWarning>
+    <html lang="vi" className={bigShoulders.variable} suppressHydrationWarning>
       <head>
         <style
           dangerouslySetInnerHTML={{
@@ -109,14 +119,14 @@ export default function RootLayout({
                     var pathname = window.location.pathname;
                     var isLanding = pathname === "/";
                     var isAuthOnly = ["/login", "/register", "/forgot-password"].includes(pathname);
-                    var isAdmin = role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN";
-                    var isStaffRoute = pathname === "/staff" || pathname.startsWith("/staff/");
-                    
-                    if (isAuthOnly || (isAdmin && !isStaffRoute)) {
-                      var home = "/home";
-                      if (role === "CONTENT_ADMIN") home = "/staff";
-                      else if (role === "SYSTEM_ADMIN") home = "/staff/admin";
-                      window.location.replace(home);
+                    // Roles that work in their own area (staff / school) are kept inside it.
+                    var homes = ${JSON.stringify(ROLE_HOME)};
+                    var areas = { CONTENT_ADMIN: "/staff", SYSTEM_ADMIN: "/staff", SCHOOL_ADMIN: "/school" };
+                    var area = areas[role];
+                    var outsideArea = area && !(pathname === area || pathname.startsWith(area + "/"));
+
+                    if (isAuthOnly || outsideArea) {
+                      window.location.replace(homes[role] || "/home");
                     }
                   } else {
                     clearAuthCookies();
@@ -152,6 +162,7 @@ export default function RootLayout({
         className={`${inter.variable} ${jakarta.variable} antialiased`}
       >
         <WelcomeScreen />
+        <RolePreviewSwitcher />
         <ThemeProvider>
           <ReactQueryProviders>{children}</ReactQueryProviders>
           <SessionExpiredDialog />

@@ -5,10 +5,11 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { syncAuthCookies } from "@/features/auth/auth-cookies";
+import { getRoleHome } from "@/constants/roles";
 
+/** Roles that work outside the learning app get sent to their own area. */
 function getStaffHome(role: string | undefined) {
-  if (role === "CONTENT_ADMIN") return "/staff";
-  if (role === "SYSTEM_ADMIN") return "/staff/admin";
+  if (role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN" || role === "SCHOOL_ADMIN") return getRoleHome(role);
   return null;
 }
 

@@ -4,13 +4,13 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils/cn";
 
 const themedCardVariants = cva(
-  "rounded-lg border transition-colors",
+  "rounded-[2px] border transition-colors",
   {
     variants: {
       surface: {
         default: "bg-card-bg border-card-border",
         elevated: "bg-bg-elevated border-border-strong",
-        interactive: "bg-card-bg border-card-border hover:bg-card-hover cursor-pointer",
+        interactive: "bg-card-bg border-card-border hover:border-[var(--text-primary)] cursor-pointer",
         ghost: "bg-transparent border-transparent",
       },
       padding: {

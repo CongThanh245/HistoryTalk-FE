@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { StaffContextDetailView, type ContextDraft } from "@/components/staff/staff-context-detail-view";
 import {
   useEventDetail,
@@ -28,6 +28,8 @@ import type { EventEraBackend } from "@/services/event.service";
 
 export default function EditContextPage() {
   const { id } = useParams() as { id: string };
+  // ?tab=characters (from the battle map) opens the character tab ready to link.
+  const openCharactersTab = useSearchParams().get("tab") === "characters";
 
   const { data: context, isLoading: isLoadingContext } = useEventDetail(id);
   const updateEvent = useUpdateEvent();
@@ -86,7 +88,7 @@ export default function EditContextPage() {
   }
 
   if (!context) {
-    return <div className="p-8 text-center bg-gray-50 h-screen">Không tìm thấy bối cảnh.</div>;
+    return <div className="p-8 text-center bg-[var(--bg-deep)] h-screen">Không tìm thấy bối cảnh.</div>;
   }
 
   const initialDraft: ContextDraft = {
@@ -107,6 +109,8 @@ export default function EditContextPage() {
   return (
     <StaffContextDetailView
       mode="edit"
+      initialTab={openCharactersTab ? "characters" : undefined}
+      initialEditing={openCharactersTab}
       initialDraft={initialDraft}
       onSave={handleSave}
       isPending={updateEvent.isPending}

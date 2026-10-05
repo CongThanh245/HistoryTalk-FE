@@ -97,7 +97,7 @@ export function RoomView({ room, onBack }: RoomViewProps) {
           <div className="absolute top-0 left-0 right-0 flex items-center gap-3 px-5 py-4 z-20 bg-gradient-to-b from-black/55 to-transparent">
             <button
               onClick={handleBack}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm transition-all hover:bg-white/20 active:scale-95 bg-black/35 text-white/85 border border-white/15"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.1em] backdrop-blur-sm transition-colors hover:bg-white hover:text-[#111111] bg-black/45 text-white border border-white/40"
             >
               <ArrowLeft size={14} />
               Quay lại
@@ -107,12 +107,12 @@ export function RoomView({ room, onBack }: RoomViewProps) {
 
             {/* Room name + era */}
             <div className="text-right">
-              <p className="text-sm font-bold leading-tight text-[rgba(255,245,220,0.95)] [text-shadow:0_1px_6px_rgba(0,0,0,0.8)]">
+              <p className="archive-title is-plain text-lg text-[var(--text-on-dark)] [text-shadow:0_1px_6px_rgba(0,0,0,0.8)]">
                 {room.name}
               </p>
               <div className="flex items-center justify-end gap-1.5 mt-0.5">
-                <Compass size={11} className="text-[rgba(201,162,77,0.8)]" />
-                <span className="text-xs text-[rgba(201,162,77,0.8)]">
+                <Compass size={11} className="text-[var(--accent-gold-soft)]" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--accent-gold-soft)]">
                   {ERA_LABELS[room.era] ?? room.era}
                 </span>
               </div>
@@ -122,7 +122,7 @@ export function RoomView({ room, onBack }: RoomViewProps) {
           {/* Room action hint */}
           {!chatOpen && room.hotspots.length > 0 && (
             <div
-              className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full text-xs pointer-events-none bg-black/50 text-[rgba(255,245,220,0.7)] backdrop-blur-[8px] border border-white/10"
+              className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-[2px] text-xs pointer-events-none bg-black/60 text-[var(--text-on-dark-muted)] backdrop-blur-[8px] border border-white/20"
               style={{ animation: "pulse-hint 3s ease-in-out infinite" }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-accent-gold animate-pulse" />
@@ -142,10 +142,10 @@ export function RoomView({ room, onBack }: RoomViewProps) {
               onClose={handleCloseChat}
             />
           ) : (
-            <div className="flex h-full flex-col gap-3 bg-[#211b18] p-4 text-sm text-white">
-              <button type="button" onClick={handleCloseChat} className="self-end rounded-md border border-white/40 px-3 py-2">Đóng</button>
+            <div className="flex h-full flex-col gap-3 border-l border-[var(--text-primary)] bg-[var(--bg-surface)] p-4 text-sm text-[var(--text-primary)]">
+              <button type="button" onClick={handleCloseChat} className="self-end btn-line min-h-0 px-3 py-2 text-xs">Đóng</button>
               <p>{roomContent.isPending ? "Đang tìm dữ liệu lịch sử..." : roomContent.isError ? "Không tải được dữ liệu. Vui lòng thử lại sau." : "Chưa có nhân vật và bối cảnh tương ứng trong thư viện."}</p>
-              {roomContent.isError && <button type="button" onClick={() => void roomContent.refetch()} className="self-start rounded-md border border-white/40 px-3 py-2">Thử lại</button>}
+              {roomContent.isError && <button type="button" onClick={() => void roomContent.refetch()} className="self-start btn-line min-h-0 px-3 py-2 text-xs">Thử lại</button>}
             </div>
           )}
         </div>
@@ -165,10 +165,10 @@ export function RoomView({ room, onBack }: RoomViewProps) {
 
 export function RoomViewLoading() {
   return (
-    <div className="w-full h-full flex items-center justify-center bg-black">
+    <div className="w-full h-full flex items-center justify-center bg-[var(--bg-main)]">
       <div className="flex flex-col items-center gap-3">
         <Loader2 size={32} className="animate-spin text-accent-gold" />
-        <p className="text-sm text-[rgba(255,245,220,0.6)]">
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
           Đang bước vào không gian lịch sử...
         </p>
       </div>
@@ -179,13 +179,13 @@ export function RoomViewLoading() {
 export function RoomViewEmpty({ onBack }: { onBack?: () => void }) {
   const router = useRouter();
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-black gap-4">
-      <p className="text-lg text-[rgba(255,245,220,0.5)]">
+    <div className="w-full h-full flex flex-col items-center justify-center bg-[var(--bg-main)] gap-4">
+      <p className="archive-title text-2xl text-[var(--text-tertiary)]">
         Không gian này chưa được mở khóa
       </p>
       <button
         onClick={onBack ?? (() => router.back())}
-        className="px-4 py-2 rounded-full text-sm bg-[rgba(201,162,77,0.15)] text-accent-gold border border-[rgba(201,162,77,0.3)]"
+        className="btn-line"
       >
         Quay lại
       </button>

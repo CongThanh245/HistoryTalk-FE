@@ -5,16 +5,19 @@ import { useEvents } from "@/features/events/hooks";
 import { Landmark, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { isValidUrl } from "@/lib/utils/url";
+import { ArchiveHeading } from "@/components/commons/archive-heading";
+
+const formatYear = (year: number) => (year > 0 ? String(year) : `${Math.abs(year)} TCN`);
 
 // Skeleton for loading state
 function SkeletonCard() {
   return (
-    <div className="w-full h-[230px] sm:h-[320px] rounded-xl sm:rounded-2xl border animate-pulse flex flex-col overflow-hidden bg-card-light-bg border-card-light-border">
-      <div className="h-[118px] sm:h-[180px] w-full bg-card-light-border opacity-50" />
+    <div className="w-full h-[250px] sm:h-[350px] border-r border-b border-[var(--text-primary)] animate-pulse flex flex-col overflow-hidden bg-[var(--bg-surface)]">
+      <div className="h-[130px] sm:h-[190px] w-full bg-[var(--bg-deep)]" />
       <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-        <div className="h-3 w-1/3 rounded bg-card-light-border" />
-        <div className="h-4 w-4/5 rounded bg-card-light-border" />
-        <div className="h-3 w-full rounded bg-card-light-border" />
+        <div className="h-3 w-1/3 bg-[var(--border-default)]" />
+        <div className="h-5 w-4/5 bg-[var(--border-default)]" />
+        <div className="h-3 w-full bg-[var(--border-default)]" />
       </div>
     </div>
   );
@@ -26,71 +29,52 @@ export function HistoricalContexts() {
 
   return (
     <section className="mb-8 md:mb-12">
-      {/* Title Header */}
-      <div className="flex items-center justify-between mb-5 md:mb-7">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-accent-gold/10 border border-accent-gold/20">
-            <Landmark className="w-4.5 h-4.5 text-accent-gold" />
-          </div>
-          <div>
-            <h2 className="font-title text-xl md:text-2xl font-bold text-content-heading leading-tight">
-              Khám phá bối cảnh lịch sử
-            </h2>
-            <p className="text-xs text-content-muted mt-0.5 hidden sm:block">
-              Bước vào không gian của từng thời đại
-            </p>
-          </div>
-        </div>
-        {!isLoading && events.length > 0 && (
-          <Link
-            href="/events"
-            className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200 text-accent-gold border-accent-gold/30 hover:bg-accent-gold/10 hover:border-accent-gold/50"
-          >
-            Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        )}
-      </div>
+      <ArchiveHeading
+        label="Bối cảnh"
+        title="Khám phá bối cảnh lịch sử"
+        description="Bước vào không gian của từng thời đại"
+        action={!isLoading && events.length > 0 ? { href: "/events", text: "Xem tất cả" } : undefined}
+      />
 
-      {/* Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+      {/* Ruled grid: the container draws the top/left rules, each file its right/bottom ones. */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 border-t border-l border-[var(--text-primary)]">
         {isLoading
           ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
-          : events.map((event) => (
+          : events.map((event, index) => (
             <Link
               key={event.id}
               href={`/events?event=${event.id}`}
-              className="w-full group block outline-none ring-0 no-underline"
+              className="group flex flex-col h-[250px] sm:h-[350px] overflow-hidden border-r border-b border-[var(--text-primary)] bg-[var(--bg-surface)] outline-none no-underline transition-colors duration-200 hover:bg-[var(--text-primary)] focus-visible:bg-[var(--text-primary)]"
             >
-              <div className="h-[240px] sm:h-[320px] rounded-2xl border flex flex-col overflow-hidden relative bg-card-light-bg border-card-light-border transition-all duration-300 hover:border-accent-gold/40 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)]">
-                {/* Background Image */}
-                <div className="h-[130px] sm:h-[190px] relative w-full overflow-hidden bg-bg-deep">
-                  {isValidUrl(event.imageUrl) ? (
-                    <Image
-                      src={event.imageUrl!}
-                      alt={event.title}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center opacity-20">
-                      <Landmark className="w-10 h-10" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--card-light-bg)] via-transparent to-transparent opacity-80" />
-                  <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/25" />
-                </div>
+              <div className="relative h-[130px] sm:h-[190px] w-full overflow-hidden bg-[var(--bg-deep)] border-b border-[var(--text-primary)]">
+                {isValidUrl(event.imageUrl) ? (
+                  <Image
+                    src={event.imageUrl!}
+                    alt={event.title}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="archive-photo object-cover group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[var(--text-muted)]">
+                    <Landmark className="w-10 h-10" />
+                  </div>
+                )}
+                <span className="absolute left-0 top-0 px-2 py-1 text-[10px] font-bold tracking-[0.12em] bg-[var(--text-primary)] text-accent-brass-on-ink">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+              </div>
 
-                <div className="px-3.5 pb-3.5 pt-5 sm:px-4 sm:pb-4 sm:pt-6 flex-1 flex flex-col relative z-10">
-                  <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] mb-1.5 text-accent-gold">
-                    {event.year > 0 ? `Năm ${event.year}` : `Năm ${Math.abs(event.year)} TCN`}
-                  </p>
-                  <h3 className="text-[13px] sm:text-[15px] font-bold line-clamp-2 sm:line-clamp-1 mb-1.5 leading-snug group-hover:text-accent-gold transition-colors duration-200 text-content-heading">
-                    {event.title}
-                  </h3>
-                  <p className="text-[11px] sm:text-xs line-clamp-2 text-content-muted leading-relaxed">
-                    {event.summary || "Khám phá câu chuyện chi tiết về bối cảnh lịch sử này ngay."}
-                  </p>
-                </div>
+              <div className="flex-1 flex flex-col px-3.5 pt-3 pb-3.5 sm:px-4 sm:pt-4 sm:pb-4">
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-accent-gold group-hover:text-accent-on-ink">
+                  Năm {formatYear(event.year)}
+                </p>
+                <h3 className="archive-title is-plain mt-1.5 text-[17px] sm:text-[21px] line-clamp-2 group-hover:text-[var(--text-inverse)]">
+                  {event.title}
+                </h3>
+                <p className="mt-auto pt-2 text-[11px] sm:text-xs line-clamp-2 leading-relaxed text-content-muted group-hover:text-[var(--text-inverse)] group-hover:opacity-75">
+                  {event.summary || "Khám phá câu chuyện chi tiết về bối cảnh lịch sử này ngay."}
+                </p>
               </div>
             </Link>
           ))
@@ -98,7 +82,7 @@ export function HistoricalContexts() {
 
         {/* Placeholder if no events */}
         {!isLoading && events.length === 0 && (
-          <div className="col-span-full text-center py-12 rounded-2xl border border-dashed border-card-light-border text-content-muted">
+          <div className="col-span-full text-center py-12 border-r border-b border-[var(--text-primary)] text-content-muted">
             <p className="text-sm">Chưa có sự kiện nào.</p>
           </div>
         )}
@@ -107,11 +91,8 @@ export function HistoricalContexts() {
       {/* Mobile view all */}
       {!isLoading && events.length > 0 && (
         <div className="flex justify-center mt-5 sm:hidden">
-          <Link
-            href="/events"
-            className="flex items-center gap-1.5 px-5 py-2.5 rounded-full border text-sm font-medium text-accent-gold border-accent-gold/30"
-          >
-            Xem tất cả bối cảnh <ArrowRight className="w-4 h-4" />
+          <Link href="/events" className="archive-link">
+            Xem tất cả bối cảnh <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       )}

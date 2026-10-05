@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Landmark, ChevronRight } from "lucide-react";
-import { useEventDetail } from "@/features/events/hooks";
+import { useEventDetail, useEvents } from "@/features/events/hooks";
 import { isValidUrl } from "@/lib/utils/url";
 import {
   HoverCard,
@@ -25,7 +25,13 @@ export function HistoricalContextHoverCard({
 }: HistoricalContextHoverCardProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { data: event, isLoading } = useEventDetail(open ? contextId : undefined);
+  const { data: eventList } = useEvents({ page: 1, limit: 100 });
+  const listedEvent = eventList?.content.find((item) => item.id === contextId);
+  const { data: detailEvent, isLoading: detailLoading } = useEventDetail(
+    open && !listedEvent ? contextId : undefined,
+  );
+  const event = listedEvent ?? detailEvent;
+  const isLoading = !listedEvent && detailLoading;
 
   const handleNavigate = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -42,7 +48,7 @@ export function HistoricalContextHoverCard({
         className="cursor-pointer overflow-hidden"
         onClick={handleNavigate}
       >
-        <div className="relative h-28 w-full overflow-hidden bg-black">
+        <div className="relative h-28 w-full overflow-hidden border-b border-[var(--text-primary)] bg-[var(--bg-deep)]">
           {isValidUrl(event?.imageUrl) ? (
             <Image
               src={event!.imageUrl!}
@@ -63,17 +69,17 @@ export function HistoricalContextHoverCard({
         </div>
         <div className="p-3">
           <h4
-            className="line-clamp-1 text-sm font-bold text-content-heading"
+            className="archive-title is-plain line-clamp-1 text-[17px]"
           >
             {event?.title ?? fallbackLabel}
           </h4>
           {isLoading ? (
             <div className="mt-2 space-y-1.5">
               <div
-                className="h-2.5 w-full animate-pulse rounded bg-card-border"
+                className="h-2.5 w-full animate-pulse rounded-[2px] bg-card-border"
               />
               <div
-                className="h-2.5 w-4/5 animate-pulse rounded bg-card-border"
+                className="h-2.5 w-4/5 animate-pulse rounded-[2px] bg-card-border"
               />
             </div>
           ) : (
@@ -86,7 +92,7 @@ export function HistoricalContextHoverCard({
             )
           )}
           <div
-            className="mt-2.5 flex items-center gap-1 text-xs font-semibold text-accent-gold"
+            className="mt-2.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.1em] text-accent-gold"
           >
             Xem thêm
             <ChevronRight className="h-3 w-3" />

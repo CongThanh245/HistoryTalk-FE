@@ -86,22 +86,22 @@ function MenuRow({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors hover:bg-white/5 text-left"
+      className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-none border-b border-(--border-default) cursor-pointer transition-colors hover:bg-[var(--text-primary)] text-left"
     >
       <div
-        className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-(--accent-gold-active-bg) text-accent-gold"
+        className="w-7 h-7 rounded-[2px] flex items-center justify-center shrink-0 border border-[var(--border-strong)] text-[var(--text-primary)] group-hover:border-[var(--text-inverse)] group-hover:text-[var(--text-inverse)]"
       >
         {icon}
       </div>
-      <span className="flex-1 text-sm font-semibold truncate text-content-heading">
+      <span className="flex-1 text-sm font-semibold truncate text-content-heading group-hover:text-[var(--text-inverse)]">
         {label}
       </span>
       {value && (
-        <span className="text-xs shrink-0 text-content-text">
+        <span className="font-display text-sm font-extrabold shrink-0 text-content-muted group-hover:text-[var(--text-inverse)]">
           {value}
         </span>
       )}
-      <ChevronRight className="w-3.5 h-3.5 shrink-0 text-content-text" />
+      <ChevronRight className="w-3.5 h-3.5 shrink-0 text-content-text group-hover:text-[var(--text-inverse)]" />
     </button>
   );
 }
@@ -109,16 +109,16 @@ function MenuRow({
 function SectionHeader({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <div
-      className="flex items-center gap-2 px-3 py-3 border-b border-border-default shrink-0"
+      className="flex items-center gap-2 px-3 py-3 border-b border-[var(--text-primary)] shrink-0"
     >
       <button
         onClick={onBack}
         aria-label="Quay lại"
-        className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer transition-colors hover:bg-white/5 text-content-text"
+        className="w-7 h-7 flex items-center justify-center rounded-[2px] border border-[var(--border-strong)] cursor-pointer transition-colors hover:bg-[var(--text-primary)] hover:border-[var(--text-primary)] hover:text-[var(--text-inverse)] text-content-text"
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
-      <h4 className="text-sm font-bold text-content-heading">
+      <h4 className="archive-title text-[17px]">
         {title}
       </h4>
     </div>
@@ -140,7 +140,7 @@ function ImageHoverPreview({
     <HoverCard openDelay={150} closeDelay={100}>
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
       <HoverCardContent
-        className="w-56 overflow-hidden p-0 border-border-default"
+        className="w-56 overflow-hidden p-0 rounded-[2px] border-[var(--text-primary)]"
       >
         <div className="relative w-full aspect-3/4">
           <Image
@@ -172,10 +172,10 @@ function ContextRow({
     <HistoricalContextHoverCard contextId={contextId} fallbackLabel={fallbackLabel}>
       <button
         onClick={() => onOpen(contextId)}
-        className="w-full flex items-center gap-3 p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-150 hover:-translate-y-0.5 bg-bg-elevated border-border-default"
+        className="group w-full flex items-center gap-3 px-1 py-2.5 rounded-none border-b border-(--border-default) text-left cursor-pointer transition-colors duration-150 bg-transparent hover:bg-(--status-neutral-bg)"
       >
         <div
-          className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0 bg-(--card-light-hover)"
+          className="relative w-11 h-11 rounded-[2px] overflow-hidden shrink-0 border border-[var(--text-primary)] bg-[var(--bg-deep)]"
         >
           {isLoading ? (
             <div className="w-full h-full animate-pulse" />
@@ -184,11 +184,11 @@ function ContextRow({
               src={imageUrl}
               alt={event?.title ?? fallbackLabel}
               fill
-              className="object-cover"
+              className="archive-photo object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Landmark className="w-4 h-4 text-accent-gold" />
+              <Landmark className="w-4 h-4 text-content-muted" />
             </div>
           )}
         </div>
@@ -302,7 +302,7 @@ export function ChatRightPanel({
     <>
       {/* Compact hero */}
       <div
-        className="shrink-0 border-b border-border-default"
+        className="shrink-0 border-b border-[var(--text-primary)]"
       >
         <div className="flex items-center gap-3 px-4 pt-4 pb-3">
           <ImageHoverPreview
@@ -311,7 +311,7 @@ export function ChatRightPanel({
             fit="contain"
           >
             <div
-              className="relative w-14 h-14 rounded-full overflow-hidden shrink-0 cursor-pointer border-2 border-border-default"
+              className="relative w-14 h-14 rounded-full overflow-hidden shrink-0 cursor-pointer border border-[var(--text-primary)]"
             >
               <Image
                 src={isValidUrl(activeCharacter.imageUrl) ? activeCharacter.imageUrl! : "/card.jpg"}
@@ -324,20 +324,20 @@ export function ChatRightPanel({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <h3
-                className="text-sm font-bold truncate text-content-heading"
+                className="archive-title is-plain text-[19px] truncate"
               >
                 {activeCharacter.name}
               </h3>
               {activeCharacter.side && (
                 <span
-                  className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 bg-accent-gold/20 text-accent-gold border border-accent-gold/30"
+                  className="text-[9px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded-[2px] shrink-0 text-[var(--text-primary)] border border-[var(--text-primary)]"
                 >
                   {activeCharacter.side}
                 </span>
               )}
             </div>
             <p
-              className="text-[11px] mt-0.5 leading-snug text-accent-gold-soft"
+              className="text-[10px] font-bold uppercase tracking-[0.1em] mt-0.5 leading-snug text-content-muted"
             >
               {activeCharacter.title}
             </p>
@@ -353,17 +353,17 @@ export function ChatRightPanel({
       </div>
 
       {/* Menu list */}
-      <div className="flex-1 overflow-y-auto px-2 py-2">
+      <div className="flex-1 overflow-y-auto px-2 py-1">
         <button
           onClick={handleNewSession}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors hover:bg-white/5 text-left"
+          className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-none border-b border-(--border-default) cursor-pointer transition-colors hover:bg-[var(--text-primary)] text-left"
         >
           <div
-            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-(--accent-gold-active-bg) text-accent-gold"
+            className="w-7 h-7 rounded-[2px] flex items-center justify-center shrink-0 bg-[var(--text-primary)] text-[var(--text-inverse)] group-hover:bg-[var(--text-inverse)] group-hover:text-[var(--text-primary)]"
           >
             <Plus className="w-4 h-4" />
           </div>
-          <span className="flex-1 text-sm font-semibold text-accent-gold-soft">
+          <span className="flex-1 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] group-hover:text-[var(--text-inverse)]">
             Cuộc trò chuyện mới
           </span>
         </button>
@@ -407,13 +407,13 @@ export function ChatRightPanel({
   const renderHistory = () => (
     <>
       <SectionHeader title={sectionTitles.history} onBack={() => setSection("menu")} />
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5">
+      <div className="flex-1 overflow-y-auto px-3 py-2">
         {isLoadingSessions ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-16 rounded-lg animate-pulse bg-(--card-light-hover)"
+                className="h-16 animate-pulse bg-(--border-default)"
               />
             ))}
           </div>
@@ -424,15 +424,15 @@ export function ChatRightPanel({
             Chưa có cuộc trò chuyện nào
           </p>
         ) : (
-          <div className="space-y-1.5">
+          <div>
             {sessions.map((session, index) => (
               <div
                 key={`session-${session.id ?? index}-${index}`}
                 className={cn(
-                  "group relative w-full text-left px-3 py-2.5 rounded-lg transition-all duration-150 cursor-pointer border",
+                  "group relative w-full text-left px-3 py-2.5 rounded-none transition-colors duration-150 cursor-pointer border-b border-(--border-default) ",
                   activeSessionId === session.id
-                    ? "bg-(--accent-gold-active-bg) border-(--border-strong)"
-                    : "bg-transparent border-transparent",
+                    ? "is-active bg-(--accent-gold-active-bg) "
+                    : "bg-transparent hover:bg-(--status-neutral-bg)",
                 )}
                 onClick={() => {
                   onSelectSession(session.id);
@@ -445,7 +445,7 @@ export function ChatRightPanel({
                       "w-3.5 h-3.5 mt-0.5 shrink-0",
                       activeSessionId === session.id
                         ? "text-accent-gold"
-                        : "text-content-text",
+                        : "text-content-muted",
                     )}
                   />
                   <div className="flex-1 min-w-0">
@@ -453,23 +453,23 @@ export function ChatRightPanel({
                       className={cn(
                         "text-[12px] font-semibold truncate",
                         activeSessionId === session.id
-                          ? "text-accent-gold-soft"
+                          ? "text-(--gold-on-light)"
                           : "text-content-heading",
                       )}
                     >
                       {session.title || "Cuộc trò chuyện"}
                     </p>
                     <p
-                      className="text-[10px] truncate mt-0.5 text-content-text"
+                      className="text-[11px] truncate mt-0.5 text-content-text"
                     >
                       {session.lastMessage}
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       <Clock
-                        className="w-2.5 h-2.5 text-content-text"
+                        className="w-2.5 h-2.5 text-content-muted"
                       />
                       <span
-                        className="text-[9px] text-content-text"
+                        className="text-[9px] font-semibold uppercase tracking-[0.08em] text-content-muted"
                       >
                         {formatDate(session.lastMessageAt)} · {session.messageCount} tin
                       </span>
@@ -483,12 +483,12 @@ export function ChatRightPanel({
                     if (softDeleteSession.isPending) return;
                     setDeleteSessionId(session.id);
                   }}
-                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-red-50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70 text-content-subtle"
+                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-[2px] opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-(--status-danger-bg) disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70 text-content-subtle"
                 >
                   {softDeleteSession.isPending && deleteSessionId === session.id ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-red-500" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-danger" />
                   ) : (
-                    <Trash2 className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
+                    <Trash2 className="w-3.5 h-3.5 hover:text-accent-danger transition-colors" />
                   )}
                 </button>
               </div>
@@ -497,11 +497,11 @@ export function ChatRightPanel({
         )}
       </div>
       <div
-        className="px-3 py-3 border-t border-border-default shrink-0"
+        className="px-3 py-3 border-t border-[var(--text-primary)] shrink-0"
       >
         <button
           onClick={handleNewSession}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150 bg-(--accent-gold-active-bg) border border-(--border-strong) text-accent-gold-soft"
+          className="btn-ink w-full min-h-9 px-3 text-[11px] cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
           Cuộc trò chuyện mới
@@ -519,7 +519,7 @@ export function ChatRightPanel({
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-16 rounded-xl animate-pulse bg-(--card-light-hover)"
+                className="h-16 animate-pulse bg-(--border-default)"
               />
             ))}
           </div>
@@ -530,7 +530,7 @@ export function ChatRightPanel({
             Không có nhân vật nào khác
           </p>
         ) : (
-          <div className="space-y-2">
+          <div>
             {otherCharacters.map((char) => (
               <ImageHoverPreview
                 key={char.id}
@@ -542,19 +542,19 @@ export function ChatRightPanel({
                     onSelectCharacter(char);
                     setIsOpen(false);
                   }}
-                  className="group w-full flex items-center gap-3 p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-150 hover:-translate-y-0.5 bg-bg-elevated border-border-default"
+                  className="group w-full flex items-center gap-3 px-1 py-2.5 rounded-none border-b border-(--border-default) text-left cursor-pointer transition-colors duration-150 bg-transparent hover:bg-(--status-neutral-bg)"
                 >
-                  <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0">
+                  <div className="relative w-11 h-11 rounded-[2px] overflow-hidden shrink-0 border border-[var(--text-primary)] bg-[var(--bg-deep)]">
                     <Image
                       src={isValidUrl(char.imageUrl) ? char.imageUrl! : "/card.jpg"}
                       alt={char.name}
                       fill
-                      className="object-cover object-top"
+                      className="archive-photo object-cover object-top"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p
-                      className="text-xs font-semibold truncate group-hover:text-accent-gold transition-colors text-content-heading"
+                      className="archive-title is-plain text-[15px] truncate"
                     >
                       {char.name}
                     </p>
@@ -565,14 +565,14 @@ export function ChatRightPanel({
                     </p>
                     {char.side && (
                       <span
-                        className="text-[9px] font-medium text-accent-gold/70"
+                        className="text-[9px] font-bold uppercase tracking-[0.1em] text-content-muted"
                       >
                         {char.side}
                       </span>
                     )}
                   </div>
                   <MessageSquare
-                    className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-accent-gold"
+                    className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--text-primary)]"
                   />
                 </button>
               </ImageHoverPreview>
@@ -592,7 +592,7 @@ export function ChatRightPanel({
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-14 rounded-xl animate-pulse bg-(--card-light-hover)"
+                className="h-14 animate-pulse bg-(--border-default)"
               />
             ))}
           </div>
@@ -621,7 +621,7 @@ export function ChatRightPanel({
   const renderContexts = () => (
     <>
       <SectionHeader title={sectionTitles.contexts} onBack={() => setSection("menu")} />
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+      <div className="flex-1 overflow-y-auto px-3 py-2">
         {contexts.map((ctx) => (
           <ContextRow
             key={ctx.contextId}
@@ -643,7 +643,7 @@ export function ChatRightPanel({
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-14 rounded-xl animate-pulse bg-(--card-light-hover)"
+                className="h-14 animate-pulse bg-(--border-default)"
               />
             ))}
           </div>
@@ -658,10 +658,10 @@ export function ChatRightPanel({
             <button
               key={doc.id}
               onClick={() => doc.id && onOpenDocument?.(doc.id)}
-              className="w-full flex items-start gap-2.5 p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-150 hover:-translate-y-0.5 bg-bg-elevated border-border-default"
+              className="w-full flex items-start gap-2.5 px-1 py-2.5 rounded-none border-b border-(--border-default) text-left cursor-pointer transition-colors duration-150 bg-transparent hover:bg-(--status-neutral-bg)"
             >
               <FileText
-                className="w-4 h-4 mt-0.5 shrink-0 text-accent-gold"
+                className="w-4 h-4 mt-0.5 shrink-0 text-content-muted"
               />
               <div className="flex-1 min-w-0">
                 <p
@@ -716,7 +716,7 @@ export function ChatRightPanel({
       {/* Desktop: Sidebar */}
       <div
         className={cn(
-          "hidden md:flex shrink-0 h-full flex-col z-50 border-l border-border-default overflow-hidden",
+          "hidden md:flex shrink-0 h-full flex-col z-50 border-l border-[var(--text-primary)] overflow-hidden",
           "relative w-[280px] bg-bg-surface",
         )}
       >
@@ -730,7 +730,7 @@ export function ChatRightPanel({
             side="bottom"
             disableAnimation={disableSheetAnimationOnDesktop}
             disableOverlayAnimation={disableSheetAnimationOnDesktop}
-            className="h-[80vh] p-0 border-t border-border-default bg-bg-surface"
+            className="h-[80vh] p-0 rounded-none border-t border-[var(--text-primary)] bg-bg-surface"
           >
             <SheetTitle className="sr-only">Bảng điều khiển</SheetTitle>
             <div className="flex flex-col h-full">

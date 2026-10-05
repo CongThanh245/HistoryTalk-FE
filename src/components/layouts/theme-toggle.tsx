@@ -24,7 +24,7 @@ export function ThemeToggle() {
       type="button"
       variant="ghost"
       size="icon"
-      className="h-9 w-9 rounded-full cursor-pointer text-header-text-muted bg-[var(--header-input-bg)] border border-card-border"
+      className="h-9 w-9 rounded-[2px] cursor-pointer text-header-text-muted bg-transparent border border-[var(--border-strong)] hover:border-[var(--text-primary)] hover:bg-transparent hover:text-header-text"
       aria-label={isDark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
       title={isDark ? "Giao diện sáng" : "Giao diện tối"}
       onClick={() => setTheme(isDark ? "light" : "dark")}

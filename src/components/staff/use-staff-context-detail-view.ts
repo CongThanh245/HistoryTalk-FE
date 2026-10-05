@@ -38,6 +38,7 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     onSave,
     isPending,
     initialEditing,
+    initialTab,
     isExtractPdfDocumentPending = false,
     onUpdateDocument,
   } = props;
@@ -47,7 +48,7 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = React.useState(false);
   const [errors, setErrors] = React.useState<ValidationErrors<ContextValidationField>>({});
-  const [activeTab, setActiveTab] = React.useState<FormTabKey>("basic");
+  const [activeTab, setActiveTab] = React.useState<FormTabKey>(initialTab ?? "basic");
 
   /* ── Document view/edit/delete (edit mode) ── */
   const [viewingDocument, setViewingDocument] = React.useState<RagDocument | null>(null);

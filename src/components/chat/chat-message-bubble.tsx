@@ -42,7 +42,7 @@ export function MessageBubble({
       <div className="flex justify-end gap-3 px-4 mb-4">
         <div className="max-w-[70%] flex flex-col items-end gap-1.5">
           <div
-            className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-lg flex items-center gap-2 bg-(--accent-bronze) text-white"
+            className="px-4 py-2.5 rounded-[2px] text-sm leading-relaxed flex items-center gap-2 bg-accent-gold text-white"
           >
             {message.content}
             {message.messageType === "VOICE" && (
@@ -50,7 +50,7 @@ export function MessageBubble({
             )}
           </div>
           <span
-            className="text-[10px] opacity-60 text-content-heading"
+            className="text-[10px] tracking-[0.06em] text-content-muted"
           >
             {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
               hour: "2-digit",
@@ -62,7 +62,7 @@ export function MessageBubble({
 
         {/* User Avatar */}
         <div
-          className="relative w-9 h-9 rounded-full flex items-center justify-center overflow-hidden text-sm font-bold shrink-0 mt-auto border bg-bg-elevated text-accent-gold-soft border-(--accent-gold-glow) shadow-(--shadow-gold)"
+          className="relative w-9 h-9 rounded-full flex items-center justify-center overflow-hidden text-sm font-bold shrink-0 mt-auto border bg-bg-elevated text-[var(--text-primary)] border-[var(--text-primary)]"
         >
           {hasUserAvatar ? (
             <Image
@@ -86,7 +86,7 @@ export function MessageBubble({
     <div className="flex gap-3 px-4 mb-4">
       {/* Character Avatar */}
       <div
-        className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 mt-auto border-2 bg-(--card-light-border) border-accent-gold-soft"
+        className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 mt-auto border bg-[var(--bg-deep)] border-[var(--text-primary)]"
       >
         {isValidUrl(character.imageUrl) && (
           <Image
@@ -104,12 +104,12 @@ export function MessageBubble({
       <div className="max-w-[75%] flex flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
           <span
-            className="text-[11px] font-bold px-1 tracking-wide text-accent-gold"
+            className="text-[11px] font-bold px-1 uppercase tracking-[0.1em] text-[var(--text-primary)]"
           >
             {character.name.toUpperCase()}
           </span>
           {message.messageType === "VOICE" && (
-            <Mic size={12} className="fill-current text-accent-gold" />
+            <Mic size={12} className="fill-current text-content-muted" />
           )}
         </div>
         <div className="flex flex-col gap-2">
@@ -120,7 +120,7 @@ export function MessageBubble({
               <div
                 key={index}
                 className={cn(
-                  "relative px-4 py-3 rounded-2xl rounded-tl-sm text-sm leading-relaxed border bg-bg-surface text-content-heading border-(--border-strong)",
+                  "relative px-4 py-3 rounded-[2px] text-sm leading-relaxed border bg-bg-surface text-content-heading border-(--border-strong)",
                   isLastPart && "pr-9",
                 )}
               >
@@ -147,8 +147,8 @@ export function MessageBubble({
                       }
                     }}
                     className={cn(
-                      "absolute bottom-2 right-2 transition-all duration-200 hover:scale-110",
-                      isSpeaking ? "text-accent-gold" : "text-content-muted",
+                      "absolute bottom-2 right-2 transition-colors duration-200 hover:text-[var(--text-primary)]",
+                      isSpeaking ? "text-[var(--text-primary)]" : "text-content-muted",
                     )}
                   >
                     {isSpeaking ? (
@@ -168,7 +168,7 @@ export function MessageBubble({
         )}
 
         <span
-          className="text-[10px] px-1 opacity-60 text-content-heading"
+          className="text-[10px] px-1 tracking-[0.06em] text-content-muted"
         >
           {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
             hour: "2-digit",
@@ -197,7 +197,7 @@ export function MessageQuotes({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border transition-colors cursor-pointer bg-bg-elevated border-border-default text-content-text"
+        className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-1 rounded-[2px] border transition-colors cursor-pointer bg-transparent border-[var(--border-strong)] text-content-text hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]"
       >
         <Quote size={12} className="fill-current" />
         {quotes.length} nguồn trích dẫn
@@ -206,12 +206,12 @@ export function MessageQuotes({
 
       {isOpen && (
         <div
-          className="mt-1.5 flex flex-col gap-1.5 rounded-xl border px-3 py-2 bg-bg-elevated border-border-default"
+          className="mt-1.5 flex flex-col divide-y divide-[var(--border-default)] rounded-[2px] border px-3 py-1 bg-bg-elevated border-[var(--border-strong)]"
         >
           {quotes.map((quote, i) => (
-            <div key={i} className="flex flex-col gap-1">
+            <div key={i} className="flex flex-col gap-1 py-2">
               <blockquote
-                className="text-xs leading-relaxed pl-2 border-l-2 border-accent-gold-soft text-content-text"
+                className="text-xs leading-relaxed pl-2 border-[var(--text-primary)] text-content-text"
               >
                 {quote}
               </blockquote>
@@ -219,7 +219,7 @@ export function MessageQuotes({
                 <button
                   type="button"
                   onClick={() => onViewQuote(quote)}
-                  className="self-start text-[11px] font-medium pl-2 hover:underline cursor-pointer text-accent-gold"
+                  className="self-start ml-2 text-[10px] font-bold uppercase tracking-[0.1em] border-b border-current cursor-pointer text-[var(--text-primary)] transition-colors hover:text-accent-gold"
                 >
                   Xem trong tài liệu
                 </button>
@@ -238,7 +238,7 @@ export function TypingIndicator({ character }: { character: ChatCharacter }) {
   return (
     <div className="flex gap-2.5 px-4">
       <div
-        className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border bg-(--card-light-border) border-border-default"
+        className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border bg-[var(--bg-deep)] border-[var(--text-primary)]"
       >
         {isValidUrl(character.imageUrl) && (
           <Image
@@ -254,12 +254,12 @@ export function TypingIndicator({ character }: { character: ChatCharacter }) {
       </div>
       <div className="flex flex-col gap-1">
         <span
-          className="text-[10px] font-semibold px-1 text-accent-gold-soft"
+          className="text-[10px] font-bold uppercase tracking-[0.1em] px-1 text-content-muted"
         >
           {character.name}
         </span>
         <div
-          className="px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1 bg-bg-elevated border border-border-default"
+          className="px-4 py-3 rounded-[2px] flex items-center gap-1 bg-bg-surface border border-(--border-strong)"
         >
           {[0, 1, 2].map((i) => (
             <div

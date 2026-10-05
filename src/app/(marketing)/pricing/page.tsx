@@ -123,16 +123,16 @@ function tierToPlan(tier: PaymentTier, index: number, paidTierCount: number): Di
 
 function PricingSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-0 overflow-hidden rounded-2xl border border-[var(--border-default)] md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 border-t border-l border-[var(--text-primary)] md:grid-cols-2 xl:grid-cols-4">
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="min-h-[460px] border-b border-[var(--border-default)] p-6 md:border-r xl:border-b-0">
-          <div className="h-5 w-28 animate-pulse rounded bg-white/10" />
-          <div className="mt-5 h-12 w-full animate-pulse rounded bg-white/10" />
-          <div className="mt-6 h-9 w-36 animate-pulse rounded bg-white/10" />
-          <div className="mt-7 h-11 w-full animate-pulse rounded-full bg-white/10" />
+        <div key={index} className="min-h-[460px] border-r border-b border-[var(--text-primary)] bg-[var(--bg-surface)] p-6">
+          <div className="h-5 w-28 animate-pulse bg-[var(--border-default)]" />
+          <div className="mt-5 h-12 w-full animate-pulse bg-[var(--border-default)]" />
+          <div className="mt-6 h-9 w-36 animate-pulse bg-[var(--border-default)]" />
+          <div className="mt-7 h-11 w-full animate-pulse bg-[var(--border-default)]" />
           <div className="mt-8 space-y-3">
             {Array.from({ length: 5 }).map((__, itemIndex) => (
-              <div key={itemIndex} className="h-4 w-full animate-pulse rounded bg-white/10" />
+              <div key={itemIndex} className="h-4 w-full animate-pulse bg-[var(--border-default)]" />
             ))}
           </div>
         </div>
@@ -221,36 +221,38 @@ export default function PricingPage() {
   return (
     <div ref={pageRef} className="w-full overflow-hidden">
       <section className="relative overflow-hidden pb-10 pt-32 md:pb-14 md:pt-40">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `
-              radial-gradient(ellipse 60% 50% at 50% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 70%),
-              radial-gradient(circle at 82% 18%, rgba(143, 179, 200, 0.08) 0%, transparent 46%)
-            `,
-          }}
-        />
+        <Container className="relative">
+          <div data-pricing-hero className="flex items-center justify-between gap-4 border-b border-[var(--text-primary)] pb-3">
+            {plans.length > 0 && (
+              <span className="archive-label hidden sm:inline-block">{String(plans.length).padStart(2, "0")} gói</span>
+            )}
+          </div>
 
-        <Container className="relative text-center">
-          <h1 data-pricing-hero className="text-4xl font-bold leading-tight text-[var(--text-primary)] sm:text-5xl md:text-6xl">
-            Chọn gói học phù hợp
-            <br />
-            <span className="text-[var(--accent-gold-soft)]">với hành trình lịch sử của bạn</span>
-          </h1>
+          <div className="mt-10 grid items-end gap-8 md:grid-cols-[minmax(0,1fr)_auto]">
+            <div>
+              <h1 data-pricing-hero className="archive-title max-w-4xl text-[clamp(36px,6vw,72px)]">
+                Chọn gói học phù hợp
+                <br />
+                <em>với hành trình lịch sử của bạn</em>
+              </h1>
 
-          <p data-pricing-hero className="mx-auto mt-6 max-w-2xl text-base leading-8 text-[var(--text-secondary)]">
-            Các gói được tải trực tiếp từ hệ thống thanh toán, luôn phản ánh giá và giới hạn token hiện tại.
-          </p>
+              <p data-pricing-hero className="mt-6 max-w-2xl text-base leading-8 text-[var(--text-secondary)]">
+                Các gói được tải trực tiếp từ hệ thống thanh toán, luôn phản ánh giá và giới hạn token hiện tại.
+              </p>
 
-          <div data-pricing-hero className="mt-8">
-            <MagneticButton
-              href="/register"
-              size="lg"
-              rounded="full"
-              className="border-[var(--accent-gold)]/70 bg-white/[0.03]"
-            >
-              Bắt đầu ngay
-            </MagneticButton>
+              <div data-pricing-hero className="mt-8">
+                <MagneticButton
+                  href="/register"
+                  size="lg"
+                  className="rounded-[2px] border border-[var(--accent-gold)] text-base font-bold uppercase tracking-[0.08em]"
+                >
+                  Bắt đầu ngay
+                </MagneticButton>
+              </div>
+            </div>
+
+            {/* 國史 — "quốc sử", national history */}
+            <span data-pricing-hero className="archive-seal mb-2 mr-2 hidden md:inline-grid" aria-hidden="true">國史</span>
           </div>
         </Container>
       </section>
@@ -260,16 +262,16 @@ export default function PricingPage() {
           {isLoading ? (
             <PricingSkeleton />
           ) : plans.length === 0 ? (
-            <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-8 text-center text-[var(--text-secondary)]">
+            <div className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-8 text-center text-[var(--text-secondary)]">
               Hiện chưa có gói thanh toán đang hoạt động.
             </div>
           ) : (
             <>
               {usingFallback && (
-                <div className="mb-5 rounded-2xl border border-[var(--accent-gold)]/30 bg-[var(--accent-gold)]/10 p-5 text-left">
+                <div className="mb-5 rounded-[2px] border border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] p-5 text-left">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <h2 className="text-lg font-bold text-[var(--text-primary)]">
+                      <h2 className="archive-title is-plain text-[19px]">
                         Đang hiển thị bảng giá tham khảo
                       </h2>
                       <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">
@@ -279,7 +281,7 @@ export default function PricingPage() {
                     <button
                       type="button"
                       onClick={() => refetch()}
-                      className="shrink-0 rounded-full border border-[var(--accent-gold)]/40 px-5 py-2.5 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white/[0.05]"
+                      className="btn-line shrink-0"
                     >
                       {isFetching ? "Đang tải lại..." : "Thử tải lại API"}
                     </button>
@@ -287,10 +289,11 @@ export default function PricingPage() {
                 </div>
               )}
 
+              {/* Ruled columns: the grid draws the top/left rules, each plan its right/bottom ones. */}
               <div
                 data-pricing-grid
                 className={cn(
-                  "mx-auto grid grid-cols-1 gap-0 overflow-hidden rounded-2xl border border-[var(--border-default)] md:grid-cols-2",
+                  "mx-auto grid grid-cols-1 border-t border-l border-[var(--text-primary)] md:grid-cols-2",
                   plans.length <= 1 && "max-w-md xl:grid-cols-1",
                   plans.length === 2 && "max-w-3xl xl:grid-cols-2",
                   plans.length === 3 && "max-w-6xl xl:grid-cols-3",
@@ -299,46 +302,45 @@ export default function PricingPage() {
               >
                 {plans.map((plan, idx) => {
                   const tier = activeTiers[idx];
-                  const isLast = idx === plans.length - 1;
-                  const isLastDesktopCol = idx === plans.length - 1 || (plans.length >= 4 && (idx + 1) % 4 === 0);
+                  const isInk = !!plan.popular;
 
                   return (
                     <div
                       key={plan.id}
                       data-pricing-card
                       className={cn(
-                        "relative flex min-h-[520px] flex-col p-6 transition-all duration-300 lg:p-8",
-                        "border-b border-[var(--border-default)] md:border-r xl:border-b-0",
-                        (idx + 1) % 2 === 0 && "md:border-r-0",
-                        isLast && "border-b-0 md:border-r-0",
-                        !isLastDesktopCol && "xl:border-r",
-                        isLastDesktopCol && "xl:border-r-0",
-                        "hover:bg-white/[0.025]",
-                        plan.popular && "bg-white/[0.025]",
+                        "relative flex min-h-[520px] flex-col border-r border-b border-[var(--text-primary)] p-6 transition-colors duration-200 lg:p-8",
+                        isInk
+                          ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                          : "bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)]",
                       )}
                     >
-                      {plan.popular && (
-                        <div className="absolute -top-px left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[var(--accent-gold)] to-transparent" />
-                      )}
+                      {isInk && <div className="absolute left-0 right-0 top-0 h-[3px] bg-[var(--accent-gold)]" />}
 
-                      <div className="mb-3 flex items-center gap-3">
-                        <span className="text-[var(--accent-gold)]">{plan.icon}</span>
-                        <h3 className="text-lg font-bold text-[var(--text-primary)]">{plan.name}</h3>
+                      <div className="mb-4 flex min-h-6 items-center justify-between gap-3">
+                        <span className={cn("text-[11px] font-bold tracking-[0.12em]", isInk ? "text-[var(--accent-on-ink)]" : "text-[var(--text-tertiary)]")}>
+                          {String(idx + 1).padStart(2, "0")}
+                        </span>
                         {plan.badge && (
-                          <span className="rounded-full border border-[var(--accent-gold)]/25 bg-[var(--accent-gold)]/10 px-2.5 py-0.5 text-xs font-semibold text-[var(--accent-gold)]">
+                          <span className="rounded-[2px] bg-[var(--accent-gold)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#FFFFFF]">
                             {plan.badge}
                           </span>
                         )}
                       </div>
 
-                      <p className="min-h-[76px] text-sm leading-relaxed text-[var(--text-muted)]">{plan.description}</p>
+                      <div className="mb-3 flex items-center gap-3">
+                        <span className={isInk ? "text-[var(--accent-on-ink)]" : "text-[var(--accent-gold)]"}>{plan.icon}</span>
+                        <h3 className={cn("archive-title is-plain text-[22px]", isInk && "text-[var(--text-inverse)]")}>{plan.name}</h3>
+                      </div>
 
-                      <div className="mb-6 mt-5">
+                      <p className={cn("min-h-[76px] text-sm leading-relaxed", isInk ? "text-[var(--text-inverse)] opacity-75" : "text-[var(--text-tertiary)]")}>{plan.description}</p>
+
+                      <div className={cn("mb-6 mt-5 border-t pt-5", isInk ? "border-[var(--text-inverse)]/25" : "border-[var(--border-default)]")}>
                         <div className="flex items-baseline gap-1.5">
-                          <span className="text-3xl font-bold text-[var(--text-primary)]">{plan.price}</span>
-                          {plan.priceSuffix && <span className="text-sm text-[var(--text-muted)]">{plan.priceSuffix}</span>}
+                          <span className={cn("font-display text-[40px] font-extrabold leading-none", isInk ? "text-[var(--text-inverse)]" : "text-[var(--text-primary)]")}>{plan.price}</span>
+                          {plan.priceSuffix && <span className={cn("text-sm", isInk ? "text-[var(--text-inverse)] opacity-70" : "text-[var(--text-muted)]")}>{plan.priceSuffix}</span>}
                         </div>
-                        <p className="mt-1 text-xs text-[var(--text-muted)]">
+                        <p className={cn("mt-2 text-[10px] font-bold uppercase tracking-[0.1em]", isInk ? "text-[var(--accent-on-ink)]" : "text-[var(--text-muted)]")}>
                           {tier.noMonth > 0 ? `${tier.noMonth} tháng sử dụng` : "Gói dùng thử"}
                         </p>
                       </div>
@@ -346,32 +348,37 @@ export default function PricingPage() {
                       <MagneticButton
                         href={plan.ctaHref}
                         size="md"
-                        rounded="full"
                         magneticStrength={0.09}
                         className={cn(
-                          "w-full justify-center",
-                          plan.ctaStyle === "gold" && "border-[var(--accent-gold)] bg-[var(--accent-gold)]/10",
-                          plan.ctaStyle === "primary" && "border-[var(--accent-blue)]/70 bg-[var(--accent-blue)]/10",
+                          "w-full justify-center rounded-[2px] border text-[13px] font-bold uppercase tracking-[0.08em]",
+                          plan.ctaStyle === "outline" && "border-[var(--text-primary)]",
+                          plan.ctaStyle === "primary" && "border-[var(--accent-gold)]",
+                          plan.ctaStyle === "gold" && "border-[var(--accent-gold)] [&_span]:text-[var(--text-inverse)]!",
                         )}
                       >
                         {plan.ctaLabel}
                       </MagneticButton>
 
-                      <div className="my-6 border-t border-[var(--border-default)]" />
-
-                      <ul className="space-y-3">
+                      <ul className={cn("mt-6 border-t", isInk ? "border-[var(--text-inverse)]/25" : "border-[var(--border-default)]")}>
                         {plan.features.map((feature) => (
-                          <li key={feature.text} className="flex items-start gap-2.5">
+                          <li
+                            key={feature.text}
+                            className={cn("flex items-start gap-2.5 border-b py-2.5", isInk ? "border-[var(--text-inverse)]/15" : "border-[var(--border-default)]")}
+                          >
                             <Check
                               className={cn(
                                 "mt-0.5 h-4 w-4 flex-shrink-0",
-                                feature.highlight ? "text-[var(--accent-gold)]" : "text-[var(--accent-blue)]",
+                                feature.highlight
+                                  ? isInk ? "text-[var(--accent-on-ink)]" : "text-[var(--accent-gold)]"
+                                  : isInk ? "text-[var(--text-inverse)] opacity-60" : "text-[var(--text-muted)]",
                               )}
                             />
                             <span
                               className={cn(
                                 "text-sm leading-relaxed",
-                                feature.highlight ? "font-medium text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
+                                isInk
+                                  ? feature.highlight ? "font-semibold text-[var(--text-inverse)]" : "text-[var(--text-inverse)] opacity-80"
+                                  : feature.highlight ? "font-semibold text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
                               )}
                             >
                               {feature.text}
@@ -388,20 +395,16 @@ export default function PricingPage() {
         </Container>
       </section>
 
-      <section className="relative border-t border-[var(--border-default)] py-16 md:py-24">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: "radial-gradient(ellipse 50% 60% at 50% 100%, rgba(212, 175, 55, 0.05) 0%, transparent 70%)",
-          }}
-        />
-        <Container className="relative max-w-2xl text-center">
-          <h2 className="mb-4 text-2xl font-bold text-[var(--text-primary)] md:text-3xl">Câu hỏi thường gặp</h2>
-          <p className="mb-10 text-sm leading-relaxed text-[var(--text-muted)]">
-            Chưa tìm được gói phù hợp? Liên hệ với chúng tôi để được tư vấn giải pháp tốt nhất.
-          </p>
+      <section className="relative border-t border-[var(--text-primary)] py-16 md:py-24">
+        <Container className="relative max-w-3xl">
+          <div className="archive-heading">
+            <div className="min-w-0">
+              <h2 className="archive-title">Câu hỏi thường gặp</h2>
+              <p>Chưa tìm được gói phù hợp? Liên hệ với chúng tôi để được tư vấn giải pháp tốt nhất.</p>
+            </div>
+          </div>
 
-          <div data-faq-list className="space-y-4 text-left">
+          <div data-faq-list className="text-left">
             {[
               {
                 q: "Tôi có thể hủy gói đăng ký bất cứ lúc nào không?",
@@ -415,19 +418,20 @@ export default function PricingPage() {
                 q: "Tôi có thể nâng cấp hoặc hạ cấp gói không?",
                 a: "Có, bạn có thể thay đổi gói bất cứ lúc nào. Phần chênh lệch sẽ được xử lý theo chính sách thanh toán hiện tại.",
               },
-            ].map((faq) => (
+            ].map((faq, index) => (
               <details
                 key={faq.q}
                 data-faq-item
-                className="group overflow-hidden rounded-xl border border-[var(--border-default)] transition-colors hover:border-[var(--accent-gold)]/20"
+                className="group border-b border-[var(--border-strong)]"
               >
-                <summary className="flex cursor-pointer select-none items-center justify-between px-5 py-4 text-sm font-medium text-[var(--text-primary)] transition-colors">
-                  {faq.q}
+                <summary className="flex cursor-pointer select-none items-center gap-4 px-1 py-4 text-sm font-semibold text-[var(--text-primary)] transition-colors hover:text-[var(--accent-gold)]">
+                  <span className="text-[11px] font-bold tracking-[0.12em] text-[var(--text-tertiary)]">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="flex-1">{faq.q}</span>
                   <span className="ml-3 text-lg text-[var(--text-muted)] transition-transform duration-200 group-open:rotate-45">
                     +
                   </span>
                 </summary>
-                <div className="px-5 pb-4 text-sm leading-relaxed text-[var(--text-secondary)]">{faq.a}</div>
+                <div className="pb-4 pl-12 pr-1 text-sm leading-relaxed text-[var(--text-secondary)]">{faq.a}</div>
               </details>
             ))}
           </div>

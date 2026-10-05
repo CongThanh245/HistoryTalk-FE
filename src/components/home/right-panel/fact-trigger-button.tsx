@@ -25,13 +25,13 @@ export function FactTriggerButton({ onClick }: { onClick: () => void }) {
       ref={btnRef}
       onClick={onClick}
       title="Khám phá sự thật lịch sử"
-      className="fixed bottom-7 right-7 z-[1000] flex items-center gap-2.5 px-5 py-3 rounded-[50px] bg-gradient-to-br from-[#2d1f08] to-[#1a1209] border border-accent-gold/40 shadow-[0_8px_28px_rgba(0,0,0,0.38),0_0_0_1px_rgba(201,162,77,0.07),inset_0_1px_0_rgba(201,162,77,0.14)] cursor-pointer text-accent-gold/[0.92] transition-[border,box-shadow] duration-[180ms] whitespace-nowrap hover:border-accent-gold/65 hover:shadow-[0_10px_36px_rgba(0,0,0,0.44),0_0_28px_rgba(201,162,77,0.13),inset_0_1px_0_rgba(201,162,77,0.22)]"
+      className="group fixed bottom-7 right-7 z-[1000] flex items-center gap-2.5 px-5 py-3 rounded-[2px] bg-[var(--text-primary)] border border-[var(--text-primary)] shadow-[var(--shadow-soft)] cursor-pointer text-[var(--text-inverse)] transition-colors duration-[180ms] whitespace-nowrap hover:bg-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--accent-gold)]"
     >
-      <span className="text-xl leading-none">
+      <span className="text-xl leading-none text-[var(--accent-on-ink)] group-hover:text-white">
         <HelpCircle />
       </span>
       <div className="flex flex-col items-start gap-0.5">
-        <span className="text-xs font-extrabold leading-none tracking-[0.04em]">
+        <span className="text-xs font-extrabold leading-none uppercase tracking-[0.08em]">
           +1 Kiến thức về lịch sử
         </span>
         <span className="text-[9px] opacity-80 font-normal tracking-[0.06em]">

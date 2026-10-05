@@ -10,7 +10,7 @@ const DIFF: Record<DifficultyKey, { label: string; className: string }> = {
 
 export function DifficultyBadge({ value }: { value: DifficultyKey }) {
   const c = DIFF[value] ?? DIFF.MEDIUM;
-  return <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${c.className}`}>{c.label}</span>;
+  return <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-[2px] ${c.className}`}>{c.label}</span>;
 }
 
 export type EraKey = "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY" | "ALL";
@@ -32,9 +32,9 @@ export const ERA_OPTIONS: { value: EraKey; label: string }[] = [
 
 export function EraBadge({ value }: { value: EraKey }) {
   const c = ERA[value] ?? ERA.ALL;
-  return <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${c.className}`}>{c.label}</span>;
+  return <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-[2px] ${c.className}`}>{c.label}</span>;
 }
 
 export function GradeBadge({ value }: { value: number }) {
-  return <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent-blue/10 text-accent-blue">Lớp {value}</span>;
+  return <span className="text-[10px] font-semibold px-2 py-0.5 rounded-[2px] bg-accent-blue/10 text-accent-blue">Lớp {value}</span>;
 }

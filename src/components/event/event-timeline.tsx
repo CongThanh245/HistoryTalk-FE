@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
 import type { HistoricalEvent, EventEra } from "@/services/event.service";
 import { TimelineStripCard, TimelineStripCardSkeleton } from "./timeline-card";
@@ -40,6 +40,13 @@ export function EventTimeline({
     useTimelineNavigation(events);
 
   const activeEvent = events.find((e) => e.id === resolvedActiveId) ?? null;
+  // Year of the card that was on screen before this one, so the new card counts from it
+  // (state adjusted during render when the active event changes).
+  const [yearTrail, setYearTrail] = useState<{ id?: string; year?: number; previous?: number }>({});
+  if (activeEvent && yearTrail.id !== activeEvent.id) {
+    setYearTrail({ id: activeEvent.id, year: activeEvent.year, previous: yearTrail.year });
+  }
+  const previousYear = yearTrail.previous;
   const activeIdx = events.findIndex((e) => e.id === resolvedActiveId);
   const animationSeed = `${view}-${era}-${resolvedActiveId}-${events.length}`;
 
@@ -111,8 +118,8 @@ export function EventTimeline({
 
   return (
     <div ref={containerRef} className="space-y-3 overflow-hidden">
-      <div className="border-b border-card-light-border">
-        <div className="mx-auto flex w-fit items-end gap-8 md:gap-12">
+      <div className="border-b border-[var(--text-primary)]">
+        <div className="flex w-fit items-end gap-8 md:gap-10">
           {tabs.map((tab) => {
             const active = view === tab.value;
             return (
@@ -121,7 +128,7 @@ export function EventTimeline({
                 type="button"
                 onClick={() => onViewChange(tab.value)}
                 className={cn(
-                  "relative h-9 px-1 text-sm font-semibold transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-main",
+                  "relative h-10 px-0.5 text-xs font-bold uppercase tracking-[0.12em] transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-main",
                   active
                     ? "text-content-heading"
                     : "text-content-muted hover:text-content-heading",
@@ -131,7 +138,7 @@ export function EventTimeline({
                 {tab.label}
                 <span
                   className={cn(
-                    "absolute -bottom-px left-0 h-0.5 bg-accent-gold transition-all duration-200",
+                    "absolute -bottom-px left-0 h-[3px] bg-accent-gold transition-all duration-200",
                     active ? "w-full opacity-100" : "w-0 opacity-0",
                   )}
                 />
@@ -217,6 +224,7 @@ export function EventTimeline({
                 event={activeEvent}
                 direction={direction}
                 onOpenDetail={onSelectEvent}
+                fromYear={previousYear}
               />
             ) : (
               <TimelineStripCardSkeleton />
@@ -257,20 +265,23 @@ function EventPosterCard({
         src={imageSrc}
         alt={event.title}
         fill
-        className="object-cover transition duration-500 ease-out group-hover:scale-105"
+        className="live-develop-on-view object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] group-focus-visible:scale-[1.04]"
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/22 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-        <h3 className="line-clamp-2 text-base font-bold leading-tight drop-shadow">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+      <span className="absolute left-0 top-0 px-2.5 py-1 text-[11px] font-bold tracking-[0.12em] bg-[var(--accent-gold)] text-white">
+        {formatTimelineYear(event)}
+      </span>
+      <div className="absolute inset-x-0 bottom-0 p-4 text-white transition-transform duration-300 ease-out group-hover:-translate-y-1">
+        <h3 className="line-clamp-2 font-display text-[22px] font-bold leading-[1.2] drop-shadow underline decoration-transparent decoration-2 underline-offset-4 transition-[text-decoration-color] duration-300 group-hover:decoration-white/80">
           {event.title}
         </h3>
-        <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-white/92">
-          {event.location ? <MapPin className="h-3 w-3 shrink-0" /> : null}
-          <span className="line-clamp-1">
-            {event.location ?? formatTimelineYear(event)}
-          </span>
-        </div>
+        {event.location ? (
+          <div className="mt-2 flex items-center gap-1.5 pt-2 border-t border-white/25 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/85">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="line-clamp-1">{event.location}</span>
+          </div>
+        ) : null}
       </div>
     </button>
   );

@@ -23,6 +23,14 @@ export interface WeekDay {
   isToday: boolean;
 }
 
+export interface DailyCheckInResult {
+  date: string;
+  streakCount: number;
+  rewardTokens: number;
+  tokenBalance: number;
+  alreadyCheckedInToday: boolean;
+}
+
 export interface GamificationToday {
   date: string;
   streakCount: number;
@@ -63,6 +71,15 @@ export const gamificationService = {
     const res = await axiosClient.get<ApiEnvelope<GamificationToday>>("/gamification/today");
     if (!res.data.success || !res.data.data) {
       throw new Error(res.data.message ?? "Không thể lấy dữ liệu nhiệm vụ hôm nay");
+    }
+    return res.data.data;
+  },
+
+  /** POST /users/me/daily-check-in — Điểm danh hôm nay: tăng chuỗi ngày học và thưởng token (1 lần/ngày) */
+  dailyCheckIn: async (): Promise<DailyCheckInResult> => {
+    const res = await axiosClient.post<ApiEnvelope<DailyCheckInResult>>("/users/me/daily-check-in");
+    if (!res.data.success || !res.data.data) {
+      throw new Error(res.data.message ?? "Không thể điểm danh hôm nay");
     }
     return res.data.data;
   },

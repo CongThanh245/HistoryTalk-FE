@@ -113,7 +113,7 @@ export default function StaffContextsPage() {
           <StaffImageHoverPreview
             src={row.original.imageUrl}
             alt={row.original.title || "Ảnh bối cảnh lịch sử"}
-            thumbClassName="h-14 w-20 rounded-lg border"
+            thumbClassName="h-14 w-20 rounded-[2px] border"
             previewClassName="h-48 w-72"
             sizes="80px"
             previewSizes="288px"
@@ -158,10 +158,10 @@ export default function StaffContextsPage() {
           return (
             <div
               className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-[10px] font-bold uppercase tracking-wider border",
                 isDraft
-                  ? "bg-[rgba(234,179,8,0.1)] text-[rgb(161,98,7)] border-[rgba(234,179,8,0.2)]"
-                  : "bg-[rgba(34,197,94,0.1)] text-[rgb(22,163,74)] border-[rgba(34,197,94,0.2)]"
+                  ? "bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)] border-[var(--border-strong)]"
+                  : "bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]"
               )}
             >
               <Eye className="h-3 w-3" />
@@ -177,7 +177,7 @@ export default function StaffContextsPage() {
           <div className="flex min-w-[140px] items-center gap-2">
             <Button
               variant="outline"
-              className="h-8 rounded-md px-3 text-xs font-semibold hover:bg-black/[0.04] hover:text-content-heading border-card-light-border text-content-heading"
+              className="h-8 rounded-[2px] px-3 text-xs font-semibold hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
               onClick={() => router.push(`/staff/contexts/${row.original.id}`)}
             >
               Chỉnh sửa
@@ -186,7 +186,7 @@ export default function StaffContextsPage() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="h-8 rounded-md px-3 text-sm font-bold hover:bg-black/[0.04] hover:text-content-heading border-card-light-border text-content-heading"
+                  className="h-8 rounded-[2px] px-3 text-sm font-bold hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
                 >
                   ...
                 </Button>
@@ -300,12 +300,12 @@ export default function StaffContextsPage() {
         header: () => <div className="text-right pr-4">Thao tác</div>,
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1">
-            <Button variant="ghost" size="icon-sm" className="rounded-full text-accent-blue" title="Khôi phục"
+            <Button variant="ghost" size="icon-sm" className="rounded-[2px] text-accent-blue" title="Khôi phục"
               onClick={() => { setRestoreTarget({ id: row.original.id, title: row.original.title }); setRestoreOpen(true); }}
             >
               <RotateCcw className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon-sm" className="rounded-full text-accent-danger" title="Xoa vinh vien"
+            <Button variant="ghost" size="icon-sm" className="rounded-[2px] text-accent-danger" title="Xoa vinh vien"
               onClick={() => { setPermanentDeleteTarget({ id: row.original.id, title: row.original.title }); setPermanentDeleteOpen(true); }}
             >
               <Trash2 className="h-4 w-4" />
@@ -320,11 +320,12 @@ export default function StaffContextsPage() {
   return (
     <StaffShell
       title="Quản lý bối cảnh lịch sử"
+      label="Nội dung"
       description="Tạo, cập nhật và kiểm soát bối cảnh lịch sử."
       icon={Scroll}
       accent="var(--accent-gold)"
     >
-      <section className="rounded-2xl border p-6 space-y-5 bg-card-light-bg border-card-light-border">
+      <section className="rounded-[2px] border p-6 space-y-5 bg-[var(--bg-surface)] border-[var(--text-primary)]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <h2 className="text-base font-semibold text-content-heading">
@@ -353,7 +354,7 @@ export default function StaffContextsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm theo tiêu đề..."
-                className="pl-10 h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border"
+                className="pl-10 h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)]"
               />
             </div>
             <StaffFormSelect
@@ -364,7 +365,7 @@ export default function StaffContextsPage() {
                 { value: "published", label: "Đã xuất bản" },
                 { value: "draft", label: "Chưa xuất bản" },
               ]}
-              className="w-full rounded-xl sm:w-[150px]"
+              className="w-full rounded-[2px] sm:w-[150px]"
             />
             <StaffFormSelect
               value={eraFilter}
@@ -373,14 +374,14 @@ export default function StaffContextsPage() {
                 { value: "all", label: "Mọi thời đại" },
                 ...ERA_OPTIONS,
               ]}
-              className="w-full rounded-xl sm:w-[150px]"
+              className="w-full rounded-[2px] sm:w-[150px]"
             />
             <Button
               variant="outline"
               className={cn(
-                "h-10 rounded-xl px-4 font-semibold",
+                "h-10 rounded-[2px] px-4 font-semibold",
                 showTrash
-                  ? "border-accent-danger text-accent-danger bg-[rgba(239,68,68,0.08)]"
+                  ? "border-accent-danger text-accent-danger bg-[var(--status-danger-bg)]"
                   : "border-card-light-border text-content-heading bg-transparent"
               )}
               onClick={() => setShowTrash(!showTrash)}
@@ -393,7 +394,7 @@ export default function StaffContextsPage() {
             </Button>
             {!showTrash && (
               <Button
-                className="h-10 rounded-xl px-4 font-semibold border-0 bg-[var(--accent-gold)] text-[var(--bg-deep)] shadow-[0_0_14px_var(--accent-gold-glow)] transition-all duration-200 hover:brightness-90 hover:shadow-[0_0_18px_var(--accent-gold-glow)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                className="h-10 rounded-[2px] px-4 font-semibold border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] transition-all duration-200 active:translate-y-0 cursor-pointer"
                 onClick={() => router.push("/staff/contexts/create")}
               >
                 <Plus className="h-4 w-4 mr-1.5" /> Tạo bối cảnh

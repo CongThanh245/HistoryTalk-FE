@@ -143,7 +143,7 @@ const ChatBubble = React.memo(function ChatBubble({
       {/* Avatar */}
       <div className="shrink-0">
         {isCharacter ? (
-          <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-[var(--accent-gold)]/30">
+          <div className="relative h-10 w-10 overflow-hidden rounded-full border border-[var(--text-primary)]">
             <Image
               src={message.avatar || ""}
               alt={message.name}
@@ -153,7 +153,7 @@ const ChatBubble = React.memo(function ChatBubble({
             />
           </div>
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-strong)] bg-[var(--bg-elevated)] text-[var(--text-primary)]">
             {Icon && <Icon className="h-5 w-5" />}
           </div>
         )}
@@ -161,12 +161,12 @@ const ChatBubble = React.memo(function ChatBubble({
 
       {/* Bubble */}
       <div className={`max-w-[75%] ${isCharacter ? "text-left" : "text-right"}`}>
-        <div className="mb-0.5 text-xs font-medium text-[var(--text-muted)]">{message.name}</div>
+        <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{message.name}</div>
         <div
-          className={`rounded-2xl px-3 py-2 text-xs leading-relaxed ${
+          className={`rounded-[2px] border px-3 py-2 text-xs leading-relaxed ${
             isCharacter
-              ? "rounded-tl-none bg-[var(--bg-surface)] text-[var(--text-secondary)]"
-              : "rounded-tr-none bg-[var(--accent-gold)]/10 text-[var(--accent-gold)] border border-[var(--accent-gold)]/20"
+              ? "border-[var(--border-strong)] bg-[var(--bg-elevated)] text-[var(--text-secondary)]"
+              : "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
           }`}
         >
           <TypingText
@@ -239,21 +239,12 @@ export function SolutionSection() {
       <div
         className="absolute inset-0 z-0 pointer-events-none"
         style={{
-          backgroundImage: `radial-gradient(circle, rgba(231,221,200,0.07) 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(circle, color-mix(in srgb, var(--text-primary) 12%, transparent) 1px, transparent 1px)`,
           backgroundSize: "30px 30px",
           maskImage: "radial-gradient(ellipse at 55% 50%, black 20%, transparent 80%)",
           WebkitMaskImage: "radial-gradient(ellipse at 55% 50%, black 20%, transparent 80%)",
         }}
       />
-
-      {/* Ambient colour washes */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div
-          className="absolute left-1/4 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-          style={{ background: "color-mix(in srgb, var(--accent-gold) 6%, transparent)" }}
-        />
-        <div className="absolute right-1/4 bottom-1/4 h-80 w-80 rounded-full bg-[#8fb3c8]/5 blur-3xl" />
-      </div>
 
       <Container className="relative z-10">
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.25fr] lg:gap-16">
@@ -263,42 +254,27 @@ export function SolutionSection() {
 
             {/* Heading */}
             <div data-reveal="fast">
-              <h2 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] font-bold leading-tight text-muted-foreground">
+              <h2 className="archive-title text-[28px] md:text-[36px] lg:text-[44px]">
                 Bước vào góc nhìn của{" "}
-                <span className="text-(--accent-gold) font-title">người làm nên lịch sử</span>
+                <em>người làm nên lịch sử</em>
               </h2>
-              <p className="mt-3 max-w-[320px] text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-3 max-w-[360px] text-sm leading-relaxed text-[var(--text-secondary)]">
                 History Talk biến những dòng chữ tĩnh thành cuộc đối thoại có bối cảnh, ký ức và phản hồi.
               </p>
             </div>
 
             {/* Vertical timeline steps */}
-            <div data-reveal="fast" className="relative pl-1">
-              {/* Gradient connector line */}
-              <div
-                className="absolute left-4.5 top-4 h-[calc(100%-2rem)] w-px"
-                style={{
-                  background:
-                    "linear-gradient(to bottom, color-mix(in srgb, var(--accent-gold) 40%, transparent), color-mix(in srgb, var(--accent-gold) 10%, transparent), transparent)",
-                }}
-              />
-
+            <div data-reveal="fast" className="relative border-t border-[var(--text-primary)]">
               {solutions.map((item, index) => (
-                <div key={item.title} className="relative flex gap-5 pb-8 last:pb-0">
-                  {/* Glowing step number */}
-                  <div
-                    className="relative z-10 mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-(--accent-gold)/50 bg-(--bg-main) text-micro font-bold text-(--accent-gold)"
-                    style={{
-                      boxShadow:
-                        "0 0 0 4px color-mix(in srgb, var(--accent-gold) 8%, transparent), 0 0 14px -2px color-mix(in srgb, var(--accent-gold) 35%, transparent)",
-                    }}
-                  >
-                    {index + 1}
+                <div key={item.title} className="relative flex gap-5 border-b border-[var(--border-default)] py-4 last:border-[var(--text-primary)]">
+                  {/* Step number */}
+                  <div className="mt-0.5 w-10 shrink-0 font-display text-[18px] font-extrabold leading-none text-[var(--accent-gold)]">
+                    [{String(index + 1).padStart(2, "0")}]
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-semibold text-(--text-primary)">{item.title}</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.description}</p>
+                    <h3 className="archive-title is-plain text-[19px]">{item.title}</h3>
+                    <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">{item.description}</p>
                   </div>
                 </div>
               ))}
@@ -307,40 +283,16 @@ export function SolutionSection() {
 
           {/* ── Right column — Chat ── */}
           <div ref={chatRef} data-reveal="block" className="relative">
-            {/* Diffuse backdrop glow */}
-            <div
-              className="absolute -inset-6 rounded-3xl opacity-50 blur-3xl pointer-events-none"
-              style={{
-                background:
-                  "radial-gradient(ellipse at 40% 40%, color-mix(in srgb, var(--accent-gold) 18%, transparent), rgba(143,179,200,0.08) 60%, transparent)",
-              }}
-            />
-
-            {/* Glowing border ring */}
-            <div
-              className="absolute -inset-px rounded-xl pointer-events-none"
-              style={{
-                background:
-                  "linear-gradient(135deg, color-mix(in srgb, var(--accent-gold) 25%, transparent) 0%, transparent 45%)",
-              }}
-            />
-
             <div
               data-motion-card
-              className="relative flex h-75 w-full flex-col overflow-hidden rounded-xl shadow-2xl md:h-105 bg-[#0d1627]"
-              style={{
-                border: "1px solid color-mix(in srgb, var(--accent-gold) 22%, var(--border-default))",
-              }}
+              className="relative flex h-75 w-full flex-col overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] md:h-105"
             >
               {/* Chat Header */}
               <div
-                className="flex h-10 md:h-12 shrink-0 items-center justify-between border-b px-3 md:px-4 bg-[#111c2e]"
-                style={{
-                  borderColor: "color-mix(in srgb, var(--accent-gold) 15%, var(--border-default))",
-                }}
+                className="flex h-10 md:h-12 shrink-0 items-center justify-between border-b border-[var(--text-primary)] bg-[var(--bg-elevated)] px-3 md:px-4"
               >
                 <div className="flex items-center gap-2">
-                  <div className="relative h-7 w-7 md:h-8 md:w-8 overflow-hidden rounded-full border border-[var(--accent-gold)]/30">
+                  <div className="relative h-7 w-7 md:h-8 md:w-8 overflow-hidden rounded-full border border-[var(--text-primary)]">
                     <Image
                       src="/ngo-quyen-chan-dung.png"
                       alt="Ngô Quyền"
@@ -350,16 +302,16 @@ export function SolutionSection() {
                     />
                   </div>
                   <div>
-                    <div className="text-xs md:text-sm font-semibold text-[var(--text-primary)]">Ngô Quyền</div>
-                    <div className="flex items-center gap-1 text-[0.65rem] md:text-xs text-emerald-400">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    <div className="archive-title is-plain text-sm md:text-base">Ngô Quyền</div>
+                    <div className="flex items-center gap-1 text-[0.65rem] md:text-xs text-[var(--status-success)]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--status-success)]" />
                       Đang trò chuyện
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={handleRestart}
-                  className="rounded-md px-3 py-1 text-xs font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-surface)] hover:text-[var(--accent-gold)]"
+                  className="rounded-[2px] border border-[var(--text-primary)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
                 >
                   Xem lại
                 </button>
@@ -382,18 +334,15 @@ export function SolutionSection() {
 
               {/* Chat Input */}
               <div
-                className="flex h-9 md:h-11 shrink-0 items-center gap-2 border-t px-2 md:px-3 bg-[#111c2e]"
-                style={{
-                  borderColor: "color-mix(in srgb, var(--accent-gold) 12%, var(--border-default))",
-                }}
+                className="flex h-9 md:h-11 shrink-0 items-center gap-2 border-t border-[var(--text-primary)] bg-[var(--bg-elevated)] px-2 md:px-3"
               >
                 <button
                   onClick={handleNavigateToHome}
-                  className="flex-1 rounded-full bg-[var(--bg-surface)] px-2 md:px-3 py-1 md:py-1.5 text-left text-xs md:text-sm text-[var(--text-muted)] transition-colors hover:text-muted-foreground"
+                  className="flex-1 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-2 md:px-3 py-1 md:py-1.5 text-left text-xs md:text-sm text-[var(--text-muted)] transition-colors hover:border-[var(--text-primary)] hover:text-[var(--text-secondary)]"
                 >
                   Nhập câu hỏi của bạn...
                 </button>
-                <div className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-full bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]">
+                <div className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-[2px] bg-[var(--accent-gold)] text-white">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>

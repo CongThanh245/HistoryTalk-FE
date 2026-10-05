@@ -84,9 +84,9 @@ export function StaffImageHoverPreview({
           <TooltipContent
             side="right"
             sideOffset={10}
-            className="border bg-white p-2 shadow-xl"
+            className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-2 shadow-[var(--shadow-soft)]"
           >
-            <div className={cn("relative overflow-hidden rounded-lg", previewClassName)}>
+            <div className={cn("relative overflow-hidden rounded-[2px]", previewClassName)}>
               <Image
                 src={src!}
                 alt={alt}
@@ -124,10 +124,10 @@ export function StaffCharacterMediaPreview({
 
   return (
     <div
-      className="grid grid-cols-[160px_1fr] gap-3 rounded-xl border border-card-light-border bg-white/35 p-3"
+      className="grid grid-cols-[160px_1fr] gap-3 rounded-[2px] border border-card-light-border bg-[var(--bg-elevated)] p-3"
     >
       <div
-        className="relative h-44 overflow-hidden rounded-lg border border-card-light-border bg-card-light-border"
+        className="relative h-44 overflow-hidden rounded-[2px] border border-card-light-border bg-card-light-border"
       >
         {isValidUrl(imageUrl) && !imageBroken ? (
           <Image
@@ -146,7 +146,7 @@ export function StaffCharacterMediaPreview({
       </div>
 
       <div
-        className="relative h-44 overflow-hidden rounded-lg border border-card-light-border bg-gradient-to-br from-white/65 to-black/[0.04]"
+        className="relative h-44 overflow-hidden rounded-[2px] border border-card-light-border bg-[var(--bg-deep)]"
       >
         <FBXCharacterViewer
           modelUrl={isValidUrl(modelUrl) ? modelUrl! : undefined}

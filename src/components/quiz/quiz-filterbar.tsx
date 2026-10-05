@@ -32,7 +32,7 @@ export function QuizFilterBar({
   return (
     <div className="flex flex-col gap-3 mb-6">
       {/* Search */}
-      <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card-light-bg border border-border-default">
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-[2px] bg-[var(--bg-surface)] border border-[var(--text-primary)]">
         <Search size={16} className="text-content-muted" />
         <input
           type="text"
@@ -50,10 +50,10 @@ export function QuizFilterBar({
             key={f.value}
             onClick={() => onEraChange(f.value)}
             className={cn(
-              "px-4 py-1.5 rounded-full text-sm font-medium transition-all border",
+              "px-4 h-9 rounded-[2px] text-xs font-bold uppercase tracking-[0.1em] transition-colors border",
               selectedEra === f.value
                 ? "bg-[var(--era-filter-active-bg,var(--accent-gold))] text-[var(--era-filter-active-text,var(--text-inverse))] border-[var(--era-filter-active-bg,var(--accent-gold))]"
-                : "bg-[var(--era-filter-bg,var(--card-light-bg))] text-[var(--era-filter-text,var(--content-text))] border-[var(--era-filter-border,var(--border-default))]",
+                : "bg-transparent text-[var(--era-filter-text,var(--content-text))] border-[var(--border-strong)] hover:border-[var(--text-primary)]",
             )}
           >
             {f.label}

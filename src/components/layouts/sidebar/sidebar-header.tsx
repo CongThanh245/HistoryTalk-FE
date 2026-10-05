@@ -68,8 +68,8 @@ export default function SidebarHeader({
               className={cn(
                 "w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 cursor-pointer shrink-0",
                 isPinned
-                  ? "text-[var(--sidebar-pin-active)] bg-accent-gold-active"
-                  : "text-[var(--sidebar-pin-inactive)] bg-transparent"
+                  ? "text-white bg-[var(--accent-gold)] hover:bg-[var(--accent-bronze)]"
+                  : "text-[var(--sidebar-pin-inactive)] bg-transparent hover:text-[var(--text-primary)]"
               )}
             >
               {isPinned ? <Pin className="w-3.5 h-3.5" /> : <PinOff className="w-3.5 h-3.5" />}

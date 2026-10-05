@@ -28,7 +28,7 @@ export interface User {
   uid: string;
   userName: string;
   email: string;
-  role: "CUSTOMER" | "CONTENT_ADMIN" | "SYSTEM_ADMIN";
+  role: "CUSTOMER" | "CONTENT_ADMIN" | "SYSTEM_ADMIN" | "SCHOOL_ADMIN" | "TEACHER" | "SCHOOL_STUDENT";
   avatarUrl?: string;
   fullName?: string | null;
   tierId?: string | null;

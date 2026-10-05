@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/features/profile/hooks";
+import { useEntitlements } from "@/features/saas/entitlements";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -108,14 +109,14 @@ function SkeletonCard({ index }: { index: number }) {
   return (
     <section className={`upgrade-pro-card upgrade-pro-card-${index} opacity-60`}>
       <div className="upgrade-pro-card-head">
-        <CrownIcon className="size-5 text-white/20" />
+        <CrownIcon className="size-5 text-[var(--border-strong)]" />
         <div className="flex-1">
-          <div className="h-[18px] w-[60%] bg-white/10 rounded-md mb-2" />
-          <div className="h-3.5 w-[80%] bg-white/[0.07] rounded-md" />
+          <div className="h-[18px] w-[60%] bg-[var(--border-default)] rounded-[2px] mb-2" />
+          <div className="h-3.5 w-[80%] bg-[var(--border-default)] rounded-[2px]" />
         </div>
       </div>
-      <div className="h-10 w-1/2 bg-white/10 rounded-lg mt-7" />
-      <div className="h-11 bg-white/[0.08] rounded-lg mt-[22px]" />
+      <div className="h-10 w-1/2 bg-[var(--border-default)] rounded-[2px] mt-7" />
+      <div className="h-11 bg-[var(--border-default)] rounded-[2px] mt-[22px]" />
     </section>
   );
 }
@@ -133,7 +134,10 @@ export function UpgradeProDialog({
 }: UpgradeProDialogProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [localOpen, setLocalOpen] = useState(false);
-  const open = controlledOpen !== undefined ? controlledOpen : localOpen;
+  // School accounts never buy plans: the dialog stays closed and the trigger explains who to ask.
+  const entitlements = useEntitlements();
+  const isSchoolAccount = entitlements.mode === "B2B";
+  const open = !isSchoolAccount && (controlledOpen !== undefined ? controlledOpen : localOpen);
   const setOpen = controlledOnOpenChange !== undefined ? controlledOnOpenChange : setLocalOpen;
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const router = useRouter();
@@ -157,6 +161,10 @@ export function UpgradeProDialog({
   });
 
   const handleTriggerClick = () => {
+    if (isSchoolAccount) {
+      toast.info(entitlements.upgradeHint);
+      return;
+    }
     if (!isAuthenticated) {
       toast.error("Vui lòng đăng nhập để nâng cấp Pro.", {
         action: {

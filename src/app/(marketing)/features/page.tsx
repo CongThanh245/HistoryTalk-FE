@@ -156,7 +156,7 @@ function ChatBubble({
       {/* Avatar */}
       <div className="shrink-0">
         {isCharacter ? (
-          <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-(--accent-gold)/30">
+          <div className="relative h-10 w-10 overflow-hidden rounded-full border border-(--text-primary)">
             <Image
               src={message.avatar || ""}
               alt={message.name}
@@ -166,7 +166,7 @@ function ChatBubble({
             />
           </div>
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-(--accent-gold)/10 text-(--accent-gold)">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-(--text-primary) bg-(--text-primary) text-(--text-inverse)">
             {Icon && <Icon className="h-5 w-5" />}
           </div>
         )}
@@ -174,11 +174,11 @@ function ChatBubble({
 
       {/* Bubble */}
       <div className={`max-w-[75%] ${isCharacter ? "text-left" : "text-right"}`}>
-        <div className="mb-0.5 text-xs font-medium text-(--text-muted)">{message.name}</div>
+        <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-(--text-tertiary)">{message.name}</div>
         <div
-          className={`rounded-2xl px-3 py-2 text-xs leading-relaxed ${isCharacter
-            ? "rounded-tl-none bg-(--bg-surface) text-muted-foreground"
-            : "rounded-tr-none bg-(--accent-gold)/10 text-(--accent-gold) border border-(--accent-gold)/20"
+          className={`rounded-[2px] border px-3 py-2 text-xs leading-relaxed ${isCharacter
+            ? "border-(--border-strong) bg-(--bg-elevated) text-(--text-secondary)"
+            : "border-(--accent-gold)/30 bg-(--accent-gold-active-bg) text-(--gold-on-light)"
             }`}
         >
           <TypingText
@@ -460,34 +460,34 @@ export default function FeaturePage() {
 
 
   return (
-    <main ref={pageRef} className="relative overflow-hidden bg-(--bg-deep) text-muted-foreground">
-      <div className="fixed inset-x-0 top-0 z-50 h-0.5 bg-white/5">
-        <div ref={progressRef} className="h-full origin-left bg-(--accent-gold) shadow-[0_0_18px_rgba(255,146,21,0.65)]" />
+    <main ref={pageRef} className="relative overflow-hidden bg-(--bg-main) text-(--text-secondary)">
+      <div className="fixed inset-x-0 top-0 z-50 h-0.5 bg-(--border-default)">
+        <div ref={progressRef} className="h-full origin-left bg-(--accent-gold)" />
       </div>
 
       <section className="relative min-h-[calc(100svh-80px)] overflow-hidden pb-20 pt-32">
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_72%_26%,rgba(143,179,200,0.18),transparent_34%),radial-gradient(circle_at_16%_72%,rgba(255,146,21,0.12),transparent_30%)]" />
-        <div className="absolute inset-0 pointer-events-none opacity-[0.08] bg-[linear-gradient(rgba(255,255,255,0.45)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.45)_1px,transparent_1px)] bg-size-[72px_72px]" />
+        <div className="absolute inset-0 pointer-events-none opacity-60 bg-[linear-gradient(var(--border-default)_1px,transparent_1px),linear-gradient(90deg,var(--border-default)_1px,transparent_1px)] bg-size-[72px_72px]" />
+        <span aria-hidden="true" className="archive-seal pointer-events-none absolute right-8 top-28 z-10 hidden xl:inline-grid">
+          國史
+        </span>
 
         <Container className="relative z-10">
           <div className="grid items-center gap-12 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16">
             <div>
-              <h1 data-hero-copy className="text-hero uppercase tracking-wide text-muted-foreground mb-4">
-                Bộ tính năng giúp lịch sử <span className="text-(--accent-gold) font-title">trở thành một cuộc đối thoại</span>
+              <h1 data-hero-copy className="archive-title mb-4 text-[clamp(2.5rem,5.2vw,4.5rem)] leading-[1.1]">
+                Bộ tính năng giúp lịch sử <em>trở thành một cuộc đối thoại</em>
               </h1>
-              <p data-hero-copy className="mt-6 max-w-2xl text-base leading-8 text-muted-foreground lg:text-lg">
+              <p data-hero-copy className="mt-6 max-w-2xl border-t border-(--text-primary) pt-4 text-base leading-8 text-(--text-secondary) lg:text-lg">
                 History Talk kết hợp nhân vật AI, bối cảnh sự kiện và quiz ôn tập để biến mỗi chủ đề thành một hành trình học có mạch.
               </p>
             </div>
 
             <div ref={heroVisualRef} className="relative min-h-107.5">
-              <div className="absolute -inset-2 rounded-2xl bg-linear-to-r from-(--accent-gold)/10 to-[#8fb3c8]/10 opacity-50 blur-2xl" />
-
-              <div className="relative flex h-107.5 w-full flex-col overflow-hidden rounded-lg border border-(--border-default) bg-[#0d1627] shadow-2xl">
+              <div className="relative flex h-107.5 w-full flex-col overflow-hidden rounded-[2px] border border-(--text-primary) bg-(--bg-surface)">
                 {/* Chat Header */}
-                <div className="flex h-12 shrink-0 items-center justify-between border-b border-(--border-default) bg-[#111c2e] px-4">
+                <div className="flex h-12 shrink-0 items-center justify-between border-b border-(--text-primary) bg-(--bg-elevated) px-4">
                   <div className="flex items-center gap-2">
-                    <div className="relative h-8 w-8 overflow-hidden rounded-full border border-(--accent-gold)/30">
+                    <div className="relative h-8 w-8 overflow-hidden rounded-full border border-(--text-primary)">
                       <Image
                         src="/ngo-quyen-chan-dung.png"
                         alt="Ngô Quyền"
@@ -497,16 +497,16 @@ export default function FeaturePage() {
                       />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-(--text-primary)">Ngô Quyền</div>
-                      <div className="flex items-center gap-1 text-xs text-emerald-400">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                      <div className="archive-title is-plain text-[15px]">Ngô Quyền</div>
+                      <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-(--status-success)">
+                        <span className="h-1.5 w-1.5 rounded-full bg-(--status-success)" />
                         Đang trò chuyện
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={handleRestart}
-                    className="rounded-md px-3 py-1 text-xs font-medium text-(--text-muted) transition-colors hover:bg-(--bg-surface) hover:text-(--accent-gold)"
+                    className="rounded-[2px] border border-(--text-primary) px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-(--text-primary) transition-colors hover:bg-(--text-primary) hover:text-(--text-inverse)"
                   >
                     Xem lại
                   </button>
@@ -528,14 +528,14 @@ export default function FeaturePage() {
                 </div>
 
                 {/* Chat Input Placeholder */}
-                <div className="flex h-11 shrink-0 items-center gap-2 border-t border-(--border-default) bg-[#111c2e] px-3">
+                <div className="flex h-11 shrink-0 items-center gap-2 border-t border-(--text-primary) bg-(--bg-elevated) px-3">
                   <button
                     onClick={handleNavigateToHome}
-                    className="flex-1 rounded-full bg-(--bg-surface) px-3 py-1.5 text-left text-sm text-(--text-muted) transition-colors hover:bg-(--bg-surface)/80 hover:text-muted-foreground"
+                    className="flex-1 rounded-[2px] border border-(--border-strong) bg-(--bg-surface) px-3 py-1.5 text-left text-sm text-(--text-muted) transition-colors hover:border-(--text-primary) hover:text-(--text-primary)"
                   >
                     Nhập câu hỏi của bạn...
                   </button>
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-(--accent-gold)/10 text-(--accent-gold)">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-[2px] bg-(--accent-gold) text-[#FFFFFF]">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                     </svg>
@@ -543,7 +543,7 @@ export default function FeaturePage() {
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="mt-4 grid border-l border-t border-(--text-primary) sm:grid-cols-3">
                 {[
                   "Hỏi đáp theo nhân vật",
                   "Bối cảnh theo sự kiện",
@@ -551,7 +551,7 @@ export default function FeaturePage() {
                 ].map((item) => (
                   <div
                     key={item}
-                    className="rounded-md border border-(--border-default) bg-white/3 px-4 py-3 text-sm font-medium text-muted-foreground"
+                    className="border-b border-r border-(--text-primary) bg-(--bg-surface) px-4 py-3 text-[11px] font-bold uppercase tracking-[0.1em] text-(--text-primary)"
                   >
                     {item}
                   </div>
@@ -565,7 +565,7 @@ export default function FeaturePage() {
       {/* Full-screen Timeline Sections - wrapped for progress bar */}
       <div data-journey-wrapper className="relative">
         {/* Global Progress Bar - spans all journey sections */}
-        <div className="absolute left-6 top-0 z-10 h-full w-0.5 bg-(--border-default) sm:left-8 lg:left-1/2 lg:-translate-x-1/2">
+        <div className="absolute left-6 top-0 z-10 h-full w-0.5 bg-(--border-strong) sm:left-8 lg:left-1/2 lg:-translate-x-1/2">
           <div
             data-journey-progress
             className="h-full w-0.5 origin-top bg-(--accent-gold)"
@@ -580,12 +580,12 @@ export default function FeaturePage() {
             <section
               key={item.step}
               data-journey-step
-              className="relative min-h-[auto] overflow-hidden border-t border-(--border-default) bg-(--bg-main) py-16 sm:py-20 lg:min-h-screen lg:py-0"
+              className="relative min-h-[auto] overflow-hidden border-t border-(--text-primary) bg-(--bg-main) py-16 sm:py-20 lg:min-h-screen lg:py-0"
             >
               {/* Step Number Indicator - positioned within section */}
               <div className="absolute left-6 top-16 z-10 -translate-x-1/2 sm:left-8 sm:top-20 lg:left-1/2 lg:top-1/2 lg:-translate-y-1/2" data-step-indicator>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-(--accent-gold) bg-(--accent-gold) text-(--bg-deep) shadow-lg sm:h-12 sm:w-12">
-                  <span className="text-sm font-bold">{item.step}</span>
+                <div className="flex h-10 w-10 items-center justify-center rounded-[2px] border border-(--accent-gold) bg-(--accent-gold) text-[#FFFFFF] sm:h-12 sm:w-12">
+                  <span className="font-display text-base font-extrabold">{item.step}</span>
                 </div>
               </div>
 
@@ -594,22 +594,22 @@ export default function FeaturePage() {
                   {/* Content */}
                   <div className={`${isEven ? '' : 'lg:col-start-2'}`}>
                     <div className="max-w-lg">
-                      <span className="mb-4 block text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-(--accent-gold)">
+                      <span className="mb-4 block text-[11px] font-bold uppercase tracking-[0.1em] text-(--gold-on-light)">
                         {item.eyebrow}
                       </span>
-                      <h2 className="mb-4 text-2xl font-bold uppercase leading-tight text-(--text-primary) sm:mb-6 sm:text-3xl lg:text-4xl">
+                      <h2 className="archive-title mb-4 text-[1.75rem] sm:mb-6 sm:text-[2.25rem] lg:text-[2.75rem]">
                         {item.title}
                       </h2>
-                      <p className="mb-6 text-base leading-relaxed text-muted-foreground sm:mb-8 sm:text-lg">
+                      <p className="mb-6 border-t border-(--text-primary) pt-4 text-base leading-relaxed text-(--text-secondary) sm:mb-8 sm:text-lg">
                         {item.body}
                       </p>
                       <div className="flex items-center gap-4">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-(--accent-gold)/30 bg-(--accent-gold)/10 text-(--accent-gold)">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-[2px] bg-(--text-primary) text-(--text-inverse)">
                           <Icon className="h-7 w-7" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-(--text-primary)">Bước {item.step}</p>
-                          <p className="text-xs text-(--text-muted)">Hành trình học lịch sử</p>
+                          <p className="font-display text-lg font-extrabold uppercase leading-[1.25] text-(--text-primary)">Bước {item.step}</p>
+                          <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.1em] text-(--text-muted)">Hành trình học lịch sử</p>
                         </div>
                       </div>
                     </div>
@@ -617,7 +617,7 @@ export default function FeaturePage() {
 
                   {/* Image */}
                   <div className={`${isEven ? '' : 'lg:col-start-1'}`}>
-                    <div className="relative aspect-4/3 w-full overflow-hidden rounded-xl border border-(--border-default) bg-(--bg-surface) shadow-2xl sm:rounded-2xl">
+                    <div className="relative aspect-4/3 w-full overflow-hidden rounded-[2px] border border-(--text-primary) bg-(--bg-deep)">
                       <Image
                         src={item.image}
                         alt={item.title}

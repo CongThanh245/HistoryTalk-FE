@@ -14,6 +14,16 @@ import {
   Receipt,
   Flame,
   Map,
+  School,
+  GraduationCap,
+  Presentation,
+  UsersRound,
+  Coins,
+  NotebookPen,
+  FilePenLine,
+  ClipboardCheck,
+  ChartColumn,
+  BadgeCheck,
 } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
@@ -50,7 +60,72 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
   {
     title: "Account",
     items: [
+      { icon: ChartColumn, label: "Tiến độ học tập", href: ROUTES.GRADES },
       { icon: User, label: "Hồ sơ", href: ROUTES.PROFILE },
+    ],
+  },
+];
+
+/** School student: the learning app plus the classes they belong to (Role Matrix row 8). */
+export const SCHOOL_STUDENT_SIDEBAR: SidebarSection[] = [
+  CUSTOMER_SIDEBAR[0],
+  {
+    title: "Lớp học",
+    items: [
+      { icon: GraduationCap, label: "Lớp của tôi", href: ROUTES.CLASSES },
+      { icon: ClipboardCheck, label: "Bài tập được giao", href: ROUTES.MY_ASSIGNMENTS },
+      { icon: ChartColumn, label: "Bảng điểm", href: ROUTES.GRADES },
+    ],
+  },
+  { title: "Account", items: [{ icon: User, label: "Hồ sơ", href: ROUTES.PROFILE }] },
+];
+
+/** Teacher: classes first, then the learning content they also use (rows 7, 8, 19, 21). */
+export const TEACHER_SIDEBAR: SidebarSection[] = [
+  {
+    title: "Giảng dạy",
+    items: [
+      { icon: Gauge, label: "Tổng quan", href: ROUTES.TEACHING.HOME, exact: true },
+      { icon: Presentation, label: "Lớp của tôi", href: ROUTES.CLASSES },
+      { icon: NotebookPen, label: "Bài tập", href: ROUTES.TEACHING.ASSIGNMENTS },
+      { icon: FilePenLine, label: "Lịch sử địa phương", href: ROUTES.TEACHING.LOCAL },
+      { icon: Map, label: "Bản đồ lớp", href: ROUTES.HISTORICAL_MAP },
+    ],
+  },
+  {
+    title: "Nội dung",
+    items: [
+      { icon: Landmark, label: "Sự kiện lịch sử", href: ROUTES.EVENTS },
+      { icon: User, label: "Nhân vật", href: ROUTES.CHARACTERS },
+      { icon: MessageCircle, label: "Lịch sử trò chuyện", href: ROUTES.CHAT_HISTORY },
+      { icon: ClipboardList, label: "Câu đố lịch sử", href: ROUTES.QUIZ },
+    ],
+  },
+  { title: "Account", items: [{ icon: User, label: "Hồ sơ", href: ROUTES.PROFILE }] },
+];
+
+/** School Admin: accounts, classes and the school's token quota (rows 3, 4, 6, 7, 20, 21). */
+export const SCHOOL_ADMIN_SIDEBAR: SidebarSection[] = [
+  {
+    title: "Trường học",
+    items: [
+      { icon: Gauge, label: "Tổng quan", href: ROUTES.SCHOOL.HOME, exact: true },
+      { icon: School, label: "Lớp học", href: ROUTES.SCHOOL.CLASSES },
+      { icon: BadgeCheck, label: "Duyệt nội dung địa phương", href: ROUTES.SCHOOL.CONTENT },
+    ],
+  },
+  {
+    title: "Tài khoản",
+    items: [
+      { icon: Presentation, label: "Giáo viên", href: ROUTES.SCHOOL.TEACHERS },
+      { icon: UsersRound, label: "Học sinh", href: ROUTES.SCHOOL.STUDENTS },
+    ],
+  },
+  {
+    title: "Cấu hình",
+    items: [
+      { icon: Coins, label: "Hạn mức token", href: ROUTES.SCHOOL.TOKENS },
+      { icon: Map, label: "Bản đồ lịch sử", href: ROUTES.SCHOOL.MAP },
     ],
   },
 ];
@@ -87,6 +162,12 @@ export const SYSTEM_ADMIN_SIDEBAR: SidebarSection[] = [
     items: [
       { icon: Users, label: "Customer", href: ROUTES.STAFF.ADMIN.ACCOUNTS.CUSTOMER },
       { icon: User, label: "Content Admin", href: ROUTES.STAFF.ADMIN.ACCOUNTS.CONTENT_ADMIN },
+    ],
+  },
+  {
+    title: "Gói trường học",
+    items: [
+      { icon: School, label: "Trường & School Admin", href: ROUTES.STAFF.ADMIN.SCHOOLS },
     ],
   },
   {

@@ -59,3 +59,23 @@ function buildMediaService(basePath: "characters" | "historical-contexts") {
 
 export const characterMediaService = buildMediaService("characters");
 export const contextMediaService = buildMediaService("historical-contexts");
+
+/**
+ * Battle-map background images are public assets not tied to a media slot:
+ * POST /media/map-image returns a permanent URL to embed in battleMap.imageUrl.
+ */
+export const battleMapImageService = {
+  upload: async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await axiosClient.post<ApiEnvelope<{ url: string }>>(
+      "/media/map-image",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    if (!res.data.success || !res.data.data?.url) {
+      throw new Error(res.data.message ?? "Tải ảnh lược đồ thất bại");
+    }
+    return res.data.data.url;
+  },
+};

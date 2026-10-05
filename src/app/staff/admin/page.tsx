@@ -112,7 +112,7 @@ function formatUptime(uptime: string | number | undefined | null): string {
 function Skeleton({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
   return (
     <div
-      className={`animate-pulse rounded bg-[var(--card-light-border)] ${className}`}
+      className={`animate-pulse rounded-[2px] bg-[var(--card-light-border)] ${className}`}
       style={style}
     />
   );
@@ -124,18 +124,18 @@ function HealthBadge({ status }: { status?: string }) {
   const s = (status ?? "").toUpperCase();
   if (s === "UP" || s === "HEALTHY" || s === "OK")
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-500">
+      <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-[var(--status-success-bg)] px-3 py-1 text-xs font-bold text-[var(--status-success)]">
         <CheckCircle2Icon className="h-3.5 w-3.5" /> Online
       </span>
     );
   if (s === "DOWN" || s === "ERROR")
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-3 py-1 text-xs font-bold text-red-500">
+      <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-[var(--status-danger-bg)] px-3 py-1 text-xs font-bold text-[var(--accent-danger)]">
         <XCircleIcon className="h-3.5 w-3.5" /> Offline
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3 py-1 text-xs font-bold text-amber-500">
+    <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-[var(--status-warning-bg)] px-3 py-1 text-xs font-bold text-[var(--status-warning)]">
       <AlertCircleIcon className="h-3.5 w-3.5" /> {status ?? "Unknown"}
     </span>
   );
@@ -253,7 +253,7 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
       <div className="flex items-center gap-4 mb-4 select-none">
         {series.map((s, idx) => (
           <span key={idx} className="flex items-center gap-1.5 text-[11px] font-bold text-[var(--content-muted)]">
-            <span className="inline-block h-2.5 w-2.5 rounded-full border border-white/10 shadow-sm" style={{ background: s.color }} />
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />
             {s.label}
           </span>
         ))}
@@ -316,7 +316,7 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="transition-all duration-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)]"
+                  className="transition-all duration-300"
                 />
               )}
               {sp.points.length === 1 && (
@@ -325,7 +325,7 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
                   cy={sp.points[0].y}
                   r="4.5"
                   fill={sp.color}
-                  className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)]"
+                  className=""
                 />
               )}
             </g>
@@ -362,7 +362,7 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
                       cy={pt.y}
                       r="4"
                       fill={sp.color}
-                      stroke="white"
+                      stroke="var(--bg-surface)"
                       strokeWidth="1.5"
                     />
                   </g>
@@ -373,7 +373,7 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
         </svg>
 
         {/* X-Axis Labels: HTML overlay to prevent overlaps and fit perfectly inside card bounds */}
-        <div className="relative w-full h-5 mt-2 border-t border-dashed border-[var(--card-light-border)] pt-1.5 select-none">
+        <div className="relative w-full h-5 mt-2 border-t border-[var(--border-default)] pt-1.5 select-none">
           {tickIndices.map((idx) => {
             const dateStr = dates[idx];
             const pct = N > 1 ? (idx / (N - 1)) * 100 : 50;
@@ -402,8 +402,8 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
               transform: `translate(${(N > 1 ? hoveredIdx / (N - 1) : 0.5) > 0.7 ? "-105%" : "12px"}, -50%)`,
             }}
           >
-            <div className="bg-[var(--bg-surface,#1a2436)] border border-[var(--card-light-border)] rounded-xl py-2 px-3.5 shadow-2xl text-[10px] min-w-[155px]">
-              <div className="font-bold border-b border-dashed border-[var(--card-light-border)] pb-1 mb-1.5 text-[var(--content-heading)]">
+            <div className="bg-[var(--bg-surface)] shadow-[var(--shadow-soft)] border border-[var(--card-light-border)] rounded-[2px] py-2 px-3.5 text-[10px] min-w-[155px]">
+              <div className="font-bold border-b border-[var(--border-default)] pb-1 mb-1.5 text-[var(--content-heading)]">
                 {dates[hoveredIdx]}
               </div>
               <div className="space-y-1.5">
@@ -431,7 +431,7 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
 
 function StatRow({ label, value, highlight = false }: { label: string; value: string | number; highlight?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-1.5 border-b border-dashed border-[var(--card-light-border)] last:border-0">
+    <div className="flex items-center justify-between py-1.5 border-b border-[var(--border-default)] last:border-0">
       <span className="text-xs text-[var(--content-muted)]">{label}</span>
       <span className={`text-xs font-bold ${highlight ? "text-[var(--accent-gold)]" : "text-[var(--content-heading)]"}`}>
         {typeof value === "number" ? value.toLocaleString() : value}
@@ -459,12 +459,12 @@ function KpiCard({
 }) {
   return (
     <Card
-      className="relative overflow-hidden border transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 bg-card-light-bg border-card-light-border"
+      className="relative overflow-hidden rounded-[2px] border shadow-none transition-colors duration-300 bg-[var(--bg-surface)] border-[var(--text-primary)]"
     >
       <div className="absolute top-0 left-0 h-[3px] w-full" style={{ background: color }} />
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 pt-5">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--content-muted)]">{title}</span>
-        <div className="rounded-lg p-2" style={{ background: `${color}18`, color }}>
+        <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{title}</span>
+        <div className="rounded-[2px] p-2" style={{ background: `color-mix(in srgb, ${color} 10%, transparent)`, color }}>
           <Icon className="h-4 w-4" />
         </div>
       </CardHeader>
@@ -476,7 +476,7 @@ function KpiCard({
           </>
         ) : (
           <>
-            <div className="text-2xl font-extrabold text-[var(--content-heading)] leading-none truncate">
+            <div className="font-display text-2xl font-extrabold text-[var(--content-heading)] leading-[1.2] truncate">
               {value}
             </div>
             {sub && <div className="mt-1.5 text-xs text-[var(--content-muted)]">{sub}</div>}
@@ -491,16 +491,16 @@ function KpiCard({
 
 function MemoryBar({ used, max }: { used: number; max: number }) {
   const pct = max > 0 ? Math.min((used / max) * 100, 100) : 0;
-  const color = pct > 85 ? "#ef4444" : pct > 65 ? "#f59e0b" : "#10b981";
+  const color = pct > 85 ? "var(--accent-danger)" : pct > 65 ? "var(--status-warning)" : "var(--status-success)";
   return (
     <div>
       <div className="flex justify-between text-[10px] font-semibold text-[var(--content-muted)] mb-1">
         <span>JVM Memory</span>
         <span style={{ color }}>{pct.toFixed(1)}%</span>
       </div>
-      <div className="h-2 rounded-full bg-[var(--card-light-border)] overflow-hidden">
+      <div className="h-2 bg-[var(--card-light-border)] overflow-hidden">
         <div
-          className="h-full rounded-full transition-all duration-700"
+          className="h-full transition-all duration-700"
           style={{ width: `${pct}%`, background: color }}
         />
       </div>
@@ -516,12 +516,12 @@ function MemoryBar({ used, max }: { used: number; max: number }) {
 
 function orderStatusMeta(status: string) {
   const normalized = status.toLowerCase();
-  if (normalized === "paid") return { label: "Đã thanh toán", color: "#10b981" };
-  if (normalized === "pending") return { label: "Đang chờ", color: "#f59e0b" };
-  if (normalized === "cancelled") return { label: "Đã huỷ", color: "#6b7280" };
-  if (normalized === "expired") return { label: "Hết hạn", color: "#8b5cf6" };
-  if (normalized === "failed") return { label: "Thất bại", color: "#ef4444" };
-  return { label: status, color: "#3b82f6" };
+  if (normalized === "paid") return { label: "Đã thanh toán", color: "var(--status-success)" };
+  if (normalized === "pending") return { label: "Đang chờ", color: "var(--status-warning)" };
+  if (normalized === "cancelled") return { label: "Đã huỷ", color: "var(--text-muted)" };
+  if (normalized === "expired") return { label: "Hết hạn", color: "var(--quest-quiz)" };
+  if (normalized === "failed") return { label: "Thất bại", color: "var(--accent-danger)" };
+  return { label: status, color: "var(--accent-blue)" };
 }
 
 export default function AdminDashboardPage() {
@@ -578,6 +578,7 @@ export default function AdminDashboardPage() {
   return (
     <StaffShell
       title="Tổng quan hệ thống"
+      label="Quản trị"
       description="Trung tâm điều khiển và giám sát chỉ số tài chính, nội dung và tăng trưởng HistoryTalk."
       icon={Gauge}
       accent="var(--accent-gold)"
@@ -590,7 +591,7 @@ export default function AdminDashboardPage() {
             title="Doanh thu hệ thống"
             value={formatVND(revenue?.summary.totalRevenue ?? 0)}
             icon={TrendingUpIcon}
-            color="#f59e0b"
+            color="var(--accent-gold)"
             loading={revenueLoading}
             sub={
               <span className="flex flex-col gap-0.5">
@@ -603,12 +604,12 @@ export default function AdminDashboardPage() {
             title="Tổng người dùng"
             value={(overview?.users.total ?? 0).toLocaleString()}
             icon={UsersIcon}
-            color="#3b82f6"
+            color="var(--accent-blue)"
             loading={ovLoading}
             sub={
               <span className="flex items-center gap-1 mt-0.5">
-                <TrendingUpIcon className="h-3 w-3 text-emerald-500" />
-                <span className="text-emerald-500 font-semibold">+{overview?.users.newToday ?? 0}</span> hôm nay
+                <TrendingUpIcon className="h-3 w-3 text-[var(--status-success)]" />
+                <span className="text-[var(--status-success)] font-semibold">+{overview?.users.newToday ?? 0}</span> hôm nay
                 <span className="text-[var(--content-muted)] ml-1">|+{overview?.users.newThisMonth ?? 0} tháng này</span>
               </span>
             }
@@ -617,7 +618,7 @@ export default function AdminDashboardPage() {
             title="Đang hoạt động"
             value={(overview?.users.active ?? 0).toLocaleString()}
             icon={UserCheckIcon}
-            color="#10b981"
+            color="var(--status-success)"
             loading={ovLoading}
             sub={
               <span className="flex flex-col gap-0.5">
@@ -630,7 +631,7 @@ export default function AdminDashboardPage() {
             title="Đơn hàng thành công"
             value={`${(revenue?.summary.paidOrders ?? 0).toLocaleString()} đơn`}
             icon={CheckCircle2Icon}
-            color="#8b5cf6"
+            color="var(--quest-quiz)"
             loading={revenueLoading}
             sub={
               <span className="flex flex-col gap-0.5">
@@ -645,8 +646,8 @@ export default function AdminDashboardPage() {
             icon={ServerIcon}
             color={
               (health?.status ?? "").toUpperCase() === "UP" || (health?.status ?? "").toUpperCase() === "HEALTHY"
-                ? "#10b981"
-                : "#ef4444"
+                ? "var(--status-success)"
+                : "var(--accent-danger)"
             }
             loading={healthLoading}
             sub={
@@ -659,7 +660,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ── Row 2: Date range selector ── */}
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--card-light-border)] bg-[var(--card-light-bg)] px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3">
           <CalendarIcon className="h-4 w-4 text-[var(--content-muted)] shrink-0" />
           <span className="text-xs font-semibold text-[var(--content-muted)] shrink-0">Khoảng thời gian:</span>
           <div className="flex items-center gap-2">
@@ -668,7 +669,7 @@ export default function AdminDashboardPage() {
               value={from}
               max={to}
               onChange={(e) => setFrom(e.target.value)}
-              className="rounded-lg border border-[var(--card-light-border)] bg-transparent px-2 py-1 text-xs text-[var(--content-heading)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-gold)]"
+              className="rounded-[2px] border border-[var(--card-light-border)] bg-transparent px-2 py-1 text-xs text-[var(--content-heading)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-gold)]"
             />
             <span className="text-xs text-[var(--content-muted)]">→</span>
             <input
@@ -677,7 +678,7 @@ export default function AdminDashboardPage() {
               min={from}
               max={todayISO()}
               onChange={(e) => setTo(e.target.value)}
-              className="rounded-lg border border-[var(--card-light-border)] bg-transparent px-2 py-1 text-xs text-[var(--content-heading)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-gold)]"
+              className="rounded-[2px] border border-[var(--card-light-border)] bg-transparent px-2 py-1 text-xs text-[var(--content-heading)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-gold)]"
             />
           </div>
           <div className="flex items-center gap-1 ml-2">
@@ -686,10 +687,10 @@ export default function AdminDashboardPage() {
                 key={g}
                 onClick={() => setGranularity(g)}
                 className={cn(
-                  "rounded-lg px-3 py-1 text-[11px] font-bold transition-all duration-200",
+                  "rounded-[2px] px-3 py-1 text-[11px] font-bold transition-all duration-200",
                   granularity === g
-                    ? "bg-accent-gold text-white"
-                    : "bg-transparent text-[var(--content-muted)]"
+                    ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                    : "bg-transparent text-[var(--content-muted)] hover:text-[var(--text-primary)]"
                 )}
               >
                 {g === "day" ? "Ngày" : g === "week" ? "Tuần" : g === "month" ? "Tháng" : "Năm"}
@@ -704,23 +705,23 @@ export default function AdminDashboardPage() {
         {/* ── Row 3: Trend charts ── */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* User trend */}
-          <Card className="bg-card-light-bg border-card-light-border">
+          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <BarChart3Icon className="h-4 w-4 text-blue-500" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                <BarChart3Icon className="h-4 w-4 text-accent-blue" />
+                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
                   Xu hướng người dùng
                 </CardTitle>
               </div>
               <CardDescription className="text-xs">Người dùng mới & đang hoạt động theo {granularity === "day" ? "ngày" : granularity === "week" ? "tuần" : granularity === "month" ? "tháng" : "năm"}</CardDescription>
             </CardHeader>
-            <CardContent className="pt-2 px-5 pb-4 border-t border-dashed border-[var(--card-light-border)]">
+            <CardContent className="pt-2 px-5 pb-4 border-t border-[var(--border-default)]">
               {usersLoading ? (
                 <div className="flex items-end gap-1.5 h-[180px]">
                   {[60, 80, 50, 90, 70, 45, 85, 65, 75, 55].map((h, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
                       <div className="w-full flex items-end" style={{ height: "130px" }}>
-                        <Skeleton className="w-full rounded-t" style={{ height: `${h}%` }} />
+                        <Skeleton className="w-full rounded-t-[2px]" style={{ height: `${h}%` }} />
                       </div>
                       <Skeleton className="h-2 w-full" />
                     </div>
@@ -733,14 +734,14 @@ export default function AdminDashboardPage() {
                     {
                       label: "Người dùng mới",
                       data: newUsersList,
-                      color: "#3b82f6",
+                      color: "var(--accent-blue)",
                       gradientId: "gradUserNew",
                       valueFormatter: (v) => `${v.toLocaleString()} người`,
                     },
                     {
                       label: "Đang hoạt động",
                       data: activeUsersList,
-                      color: "#10b981",
+                      color: "var(--status-success)",
                       gradientId: "gradUserActive",
                       valueFormatter: (v) => `${v.toLocaleString()} người`,
                     },
@@ -755,23 +756,23 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Revenue trend */}
-          <Card className="bg-card-light-bg border-card-light-border">
+          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <TrendingUpIcon className="h-4 w-4 text-amber-500" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                <TrendingUpIcon className="h-4 w-4 text-[var(--status-warning)]" />
+                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
                   Xu hướng Doanh thu & Đơn hàng
                 </CardTitle>
               </div>
               <CardDescription className="text-xs">Doanh thu và lượng đơn thanh toán thành công theo {granularity === "day" ? "ngày" : granularity === "week" ? "tuần" : granularity === "month" ? "tháng" : "năm"}</CardDescription>
             </CardHeader>
-            <CardContent className="pt-2 px-5 pb-4 border-t border-dashed border-[var(--card-light-border)]">
+            <CardContent className="pt-2 px-5 pb-4 border-t border-[var(--border-default)]">
               {revenueLoading ? (
                 <div className="flex items-end gap-1.5 h-[180px]">
                   {[40, 75, 55, 85, 65, 90, 50, 70, 80, 60].map((h, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
                       <div className="w-full flex items-end" style={{ height: "130px" }}>
-                        <Skeleton className="w-full rounded-t" style={{ height: `${h}%` }} />
+                        <Skeleton className="w-full rounded-t-[2px]" style={{ height: `${h}%` }} />
                       </div>
                       <Skeleton className="h-2 w-full" />
                     </div>
@@ -784,14 +785,14 @@ export default function AdminDashboardPage() {
                     {
                       label: "Doanh thu (VND)",
                       data: revenueList,
-                      color: "#f59e0b",
+                      color: "var(--accent-gold)",
                       gradientId: "gradRevenue",
                       valueFormatter: (v) => formatVND(v),
                     },
                     {
                       label: "Đơn hàng thành công",
                       data: paidOrdersList,
-                      color: "#8b5cf6",
+                      color: "var(--quest-quiz)",
                       gradientId: "gradOrders",
                       valueFormatter: (v) => `${v.toLocaleString()} đơn`,
                     },
@@ -810,16 +811,16 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           
           {/* Revenue by Tier Progress */}
-          <Card className="bg-card-light-bg border-card-light-border">
+          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <CrownIcon className="h-4 w-4 text-amber-500" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                <CrownIcon className="h-4 w-4 text-[var(--status-warning)]" />
+                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
                   Doanh thu theo Gói dịch vụ
                 </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4 border-t border-dashed border-[var(--card-light-border)] pt-4">
+            <CardContent className="space-y-4 border-t border-[var(--border-default)] pt-4">
               {revenueLoading ? (
                 Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)
               ) : (
@@ -839,16 +840,16 @@ export default function AdminDashboardPage() {
                               </span>
                             </span>
                           </div>
-                          <div className="h-2 rounded-full bg-[var(--card-light-border)] overflow-hidden">
+                          <div className="h-2 bg-[var(--card-light-border)] overflow-hidden">
                             <div
-                              className="h-full rounded-full transition-all duration-700"
+                              className="h-full transition-all duration-700"
                               style={{
                                 width: `${pct}%`,
                                 background: t.tierTitle.toLowerCase().includes("pro")
-                                  ? "#EA7A0A"
+                                  ? "var(--accent-gold)"
                                   : t.tierTitle.toLowerCase().includes("plus")
-                                    ? "#8b5cf6"
-                                    : "#3b82f6",
+                                    ? "var(--quest-quiz)"
+                                    : "var(--accent-blue)",
                               }}
                             />
                           </div>
@@ -860,7 +861,7 @@ export default function AdminDashboardPage() {
                       );
                     })}
                   </div>
-                  <div className="pt-2 border-t border-dashed border-[var(--card-light-border)] text-xs text-[var(--content-muted)]">
+                  <div className="pt-2 border-t border-[var(--border-default)] text-xs text-[var(--content-muted)]">
                     <div className="flex justify-between py-1">
                       <span>Giá trị đơn hàng trung bình:</span>
                       <strong className="text-[var(--content-heading)]">{formatVND(revenue?.summary.averageOrderValue ?? 0)}</strong>
@@ -872,16 +873,16 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Tier Subscriptions usage */}
-          <Card className="bg-card-light-bg border-card-light-border">
+          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <UsersIcon className="h-4 w-4 text-blue-500" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                <UsersIcon className="h-4 w-4 text-accent-blue" />
+                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
                   Phân tích Hội viên
                 </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4 border-t border-dashed border-[var(--card-light-border)] pt-4">
+            <CardContent className="space-y-4 border-t border-[var(--border-default)] pt-4">
               {tiersLoading ? (
                 Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)
               ) : (
@@ -901,16 +902,16 @@ export default function AdminDashboardPage() {
                               </span>
                             </span>
                           </div>
-                          <div className="h-2 rounded-full bg-[var(--card-light-border)] overflow-hidden">
+                          <div className="h-2 bg-[var(--card-light-border)] overflow-hidden">
                             <div
-                              className="h-full rounded-full transition-all duration-700"
+                              className="h-full transition-all duration-700"
                               style={{
                                 width: `${pct}%`,
                                 background: t.tierTitle.toLowerCase().includes("pro")
-                                  ? "#EA7A0A"
+                                  ? "var(--accent-gold)"
                                   : t.tierTitle.toLowerCase().includes("plus")
-                                    ? "#8b5cf6"
-                                    : "#3b82f6",
+                                    ? "var(--quest-quiz)"
+                                    : "var(--accent-blue)",
                               }}
                             />
                           </div>
@@ -918,7 +919,7 @@ export default function AdminDashboardPage() {
                       );
                     })}
                   </div>
-                  <div className="pt-2 border-t border-dashed border-[var(--card-light-border)]">
+                  <div className="pt-2 border-t border-[var(--border-default)]">
                     <StatRow label="Gói hoạt động" value={tiers?.summary.activeTiers ?? 0} />
                     <StatRow label="Hội viên trả phí" value={tiers?.summary.currentPaidUsers ?? 0} />
                     <StatRow label="Hội viên miễn phí" value={tiers?.summary.currentFreeUsers ?? 0} />
@@ -931,16 +932,16 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Orders status & Details */}
-          <Card className="bg-card-light-bg border-card-light-border">
+          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <CreditCardIcon className="h-4 w-4 text-purple-500" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                <CreditCardIcon className="h-4 w-4 text-[var(--quest-quiz)]" />
+                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
                   Trạng thái đơn hàng
                 </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="border-t border-dashed border-[var(--card-light-border)] pt-4 space-y-4">
+            <CardContent className="border-t border-[var(--border-default)] pt-4 space-y-4">
               {paymentsLoading ? (
                 Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)
               ) : (
@@ -954,9 +955,9 @@ export default function AdminDashboardPage() {
                         <span className="text-[var(--content-muted)]">{meta.label}</span>
                         <span className="text-[var(--content-heading)]">{row.count.toLocaleString()} <span className="text-[var(--content-muted)] font-normal text-[10px]">({pct}%)</span></span>
                       </div>
-                      <div className="h-1.5 rounded-full bg-[var(--card-light-border)] overflow-hidden">
+                      <div className="h-1.5 bg-[var(--card-light-border)] overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all duration-700"
+                          className="h-full transition-all duration-700"
                           style={{ width: `${widthPct}%`, background: meta.color }}
                         />
                       </div>
@@ -964,7 +965,7 @@ export default function AdminDashboardPage() {
                   );
                 })
               )}
-              <div className="pt-2 border-t border-dashed border-[var(--card-light-border)]">
+              <div className="pt-2 border-t border-[var(--border-default)]">
                 <StatRow label="Tổng đơn hàng" value={totalOrders} highlight />
                 <StatRow label="Giao dịch thành công" value={payments?.summary?.successfulTransactions ?? 0} />
                 <StatRow label="Giao dịch thất bại" value={payments?.summary?.failedTransactions ?? 0} />
@@ -979,21 +980,21 @@ export default function AdminDashboardPage() {
 
           <div className="flex flex-col gap-6 lg:col-span-2">
             {/* Top nhân vật hot */}
-            <Card className="bg-card-light-bg border-card-light-border">
+            <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <FlameIcon className="h-4 w-4 text-orange-500" />
-                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                  <FlameIcon className="h-4 w-4 text-[var(--accent-gold)]" />
+                  <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
                     Nhân vật Hot nhất
                   </CardTitle>
                 </div>
                 <CardDescription className="text-xs">Xếp hạng nhân vật được trò chuyện nhiều nhất trong hệ thống</CardDescription>
               </CardHeader>
-              <CardContent className="border-t border-dashed border-[var(--card-light-border)] pt-4">
+              <CardContent className="border-t border-[var(--border-default)] pt-4">
                 {ovLoading ? (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <Skeleton key={i} className="h-24 w-full rounded-xl" />
+                      <Skeleton key={i} className="h-24 w-full rounded-[2px]" />
                     ))}
                   </div>
                 ) : (overview?.topCharacters ?? []).length > 0 ? (
@@ -1001,17 +1002,17 @@ export default function AdminDashboardPage() {
                     {(overview?.topCharacters ?? []).map((c, idx) => {
                       const rank = idx + 1;
                       const rankColor =
-                        rank === 1 ? "#f59e0b" : rank === 2 ? "#94a3b8" : rank === 3 ? "#b45309" : "var(--content-muted)";
+                        rank === 1 ? "var(--accent-gold)" : rank === 2 ? "var(--text-tertiary)" : rank === 3 ? "var(--accent-bronze)" : "var(--content-muted)";
                       const total = c.totalMessages || 1;
                       const userPct = Math.round((c.userMessages / total) * 100);
                       return (
                         <div
                           key={c.characterId}
-                          className="relative flex items-center gap-3 rounded-xl border p-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+                          className="relative flex items-center gap-3 rounded-[2px] border p-3 transition-all duration-300"
                           style={{ borderColor: "var(--card-light-border)" }}
                         >
                           <span
-                            className="absolute -top-2 -left-2 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-extrabold text-white shadow"
+                            className="absolute -top-2 -left-2 flex h-6 w-6 items-center justify-center rounded-[2px] text-[11px] font-extrabold text-white"
                             style={{ background: rankColor }}
                           >
                             {rank}
@@ -1038,15 +1039,15 @@ export default function AdminDashboardPage() {
                               </div>
                             )}
                             <div className="mt-1 flex items-center gap-1.5">
-                              <MessageSquareIcon className="h-3 w-3 text-orange-500" />
+                              <MessageSquareIcon className="h-3 w-3 text-[var(--accent-gold)]" />
                               <span className="text-xs font-extrabold text-[var(--content-heading)]">
                                 {c.totalMessages.toLocaleString()}
                               </span>
                               <span className="text-[10px] text-[var(--content-muted)]">tin nhắn</span>
                             </div>
-                            <div className="mt-1 h-1 rounded-full bg-[var(--card-light-border)] overflow-hidden">
+                            <div className="mt-1 h-1 bg-[var(--card-light-border)] overflow-hidden">
                               <div
-                                className="h-full rounded-full bg-blue-500"
+                                className="h-full bg-accent-blue"
                                 style={{ width: `${userPct}%` }}
                                 title={`Người dùng: ${c.userMessages} | AI: ${c.aiMessages}`}
                               />
@@ -1065,17 +1066,17 @@ export default function AdminDashboardPage() {
             </Card>
 
             {/* Quiz Performance Analytics */}
-            <Card className="bg-card-light-bg border-card-light-border">
+            <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <TrophyIcon className="h-4 w-4 text-yellow-500" />
-                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                  <TrophyIcon className="h-4 w-4 text-[var(--status-warning)]" />
+                  <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
                     Quiz Đang Hot
                   </CardTitle>
                 </div>
                 <CardDescription className="text-xs">Đánh giá kết quả học tập và các câu hỏi học viên thường xuyên trả lời sai</CardDescription>
               </CardHeader>
-              <CardContent className="border-t border-dashed border-[var(--card-light-border)] pt-4 space-y-4">
+              <CardContent className="border-t border-[var(--border-default)] pt-4 space-y-4">
                 {quizLoading ? (
                   Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)
                 ) : (
@@ -1083,14 +1084,14 @@ export default function AdminDashboardPage() {
                     {/* Left Column: Stats & Top Quizzes */}
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 rounded-lg border border-[var(--card-light-border)] bg-black/5 dark:bg-white/5">
+                        <div className="p-3 rounded-[2px] border border-[var(--card-light-border)] bg-[var(--bg-elevated)]">
                           <span className="text-[10px] uppercase font-bold text-[var(--content-muted)]">Tổng số Quiz</span>
                           <div className="text-lg font-bold text-[var(--content-heading)] mt-0.5">{(quiz?.summary.totalQuizzes ?? 0).toLocaleString()}</div>
                           <div className="text-[10px] text-[var(--content-muted)] mt-0.5">Đã xuất bản: {quiz?.summary.publishedQuizzes ?? 0}</div>
                         </div>
-                        <div className="p-3 rounded-lg border border-[var(--card-light-border)] bg-black/5 dark:bg-white/5">
+                        <div className="p-3 rounded-[2px] border border-[var(--card-light-border)] bg-[var(--bg-elevated)]">
                           <span className="text-[10px] uppercase font-bold text-[var(--content-muted)]">Tỷ lệ hoàn thành</span>
-                          <div className="text-lg font-bold text-emerald-500 mt-0.5">{(quiz?.summary.completionRate ?? 0).toFixed(1)}%</div>
+                          <div className="text-lg font-bold text-[var(--status-success)] mt-0.5">{(quiz?.summary.completionRate ?? 0).toFixed(1)}%</div>
                           <div className="text-[10px] text-[var(--content-muted)] mt-0.5">Lượt làm bài: {quiz?.summary.completedSessions ?? 0}</div>
                         </div>
                       </div>
@@ -1099,14 +1100,14 @@ export default function AdminDashboardPage() {
                         <h4 className="text-xs font-bold text-[var(--content-heading)] mb-2 uppercase tracking-wider">Top Quizzes Phổ Biến</h4>
                         <div className="space-y-2 max-h-[170px] overflow-y-auto pr-1">
                           {(quiz?.topQuizzes ?? []).slice(0, 3).map((q) => (
-                            <div key={q.quizId} className="p-2 rounded border border-[var(--card-light-border)] flex items-center justify-between text-xs hover:bg-[var(--card-light-hover)] transition-all">
+                            <div key={q.quizId} className="p-2 rounded-[2px] border border-[var(--card-light-border)] flex items-center justify-between text-xs hover:bg-[var(--card-light-hover)] transition-all">
                               <div className="truncate max-w-[70%]">
                                 <div className="font-bold text-[var(--content-heading)] truncate" title={q.title}>{q.title}</div>
                                 <span className="text-[10px] text-[var(--content-muted)]">Cấp độ: {q.level === "EASY" ? "Dễ" : q.level === "MEDIUM" ? "Trung bình" : "Khó"}</span>
                               </div>
                               <div className="text-right text-[10px]">
                                 <div>Lượt làm: <strong className="text-[var(--content-heading)]">{q.startedSessions}</strong></div>
-                                <div>Đạt trung bình: <strong className="text-amber-500">{q.averageScorePercentage.toFixed(1)}%</strong></div>
+                                <div>Đạt trung bình: <strong className="text-[var(--status-warning)]">{q.averageScorePercentage.toFixed(1)}%</strong></div>
                               </div>
                             </div>
                           ))}
@@ -1117,18 +1118,18 @@ export default function AdminDashboardPage() {
                     {/* Right Column: Top Wrong Questions */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <HelpCircleIcon className="h-4 w-4 text-red-500" />
+                        <HelpCircleIcon className="h-4 w-4 text-[var(--accent-danger)]" />
                         <h4 className="text-xs font-bold text-[var(--content-heading)] uppercase tracking-wider">Các Câu Hỏi Hay Sai Nhất</h4>
                       </div>
                       <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
                         {(quiz?.topWrongQuestions ?? []).slice(0, 3).map((q) => (
-                          <div key={q.questionId} className="p-2.5 rounded border border-red-500/10 bg-red-500/5 text-xs flex flex-col gap-1">
+                          <div key={q.questionId} className="p-2.5 rounded-[2px] border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-xs flex flex-col gap-1">
                             <div className="font-medium text-[var(--content-heading)] line-clamp-2">
                               {q.questionContent || q.questionId}
                             </div>
-                            <div className="flex justify-between items-center text-[10px] text-[var(--content-muted)] mt-1 border-t border-dashed border-[var(--card-light-border)] pt-1">
+                            <div className="flex justify-between items-center text-[10px] text-[var(--content-muted)] mt-1 border-t border-[var(--border-default)] pt-1">
                               <span>Quiz: <strong className="text-[var(--content-heading)] truncate max-w-[120px] inline-block align-bottom">{q.quizTitle}</strong></span>
-                              <span className="text-red-500 font-bold">Tỷ lệ sai: {q.wrongRate.toFixed(1)}% ({q.wrongAnswers}/{q.totalAnswers})</span>
+                              <span className="text-[var(--accent-danger)] font-bold">Tỷ lệ sai: {q.wrongRate.toFixed(1)}% ({q.wrongAnswers}/{q.totalAnswers})</span>
                             </div>
                           </div>
                         ))}
@@ -1141,25 +1142,25 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Content summary */}
-          <Card className="bg-card-light-bg border-card-light-border">
+          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <BookOpenIcon className="h-4 w-4 text-blue-500" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                <BookOpenIcon className="h-4 w-4 text-accent-blue" />
+                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
                   Kho nội dung
                 </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="border-t border-dashed border-[var(--card-light-border)] pt-4 space-y-3">
+            <CardContent className="border-t border-[var(--border-default)] pt-4 space-y-3">
               {contentLoading ? (
-                Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)
+                Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-[2px]" />)
               ) : (
                 <>
                   {/* Historical Contexts */}
-                  <div className="rounded-xl p-3 border border-amber-500/10 bg-[rgba(245,158,11,0.05)]">
+                  <div className="rounded-[2px] p-3 border border-accent-gold/30 bg-[var(--accent-gold-active-bg)]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">Bối cảnh lịch sử</span>
-                      <span className="text-lg font-extrabold text-[var(--content-heading)]">{(content?.historicalContexts.total ?? 0).toLocaleString()}</span>
+                      <span className="text-[11px] font-bold text-[var(--accent-gold)] uppercase tracking-wider">Bối cảnh lịch sử</span>
+                      <span className="font-display text-lg font-extrabold text-[var(--content-heading)]">{(content?.historicalContexts.total ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex gap-3 text-[11px] text-[var(--content-muted)]">
                       <span>Xuất bản: <strong className="text-[var(--content-heading)]">{content?.historicalContexts.published ?? 0}</strong></span>
@@ -1168,10 +1169,10 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {/* Characters */}
-                  <div className="rounded-xl p-3 border border-purple-500/10 bg-[rgba(139,92,246,0.05)]">
+                  <div className="rounded-[2px] p-3 border border-[var(--quest-quiz)]/20 bg-[var(--quest-quiz-bg)]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold text-purple-500 uppercase tracking-wider">Nhân vật</span>
-                      <span className="text-lg font-extrabold text-[var(--content-heading)]">{(content?.characters.total ?? 0).toLocaleString()}</span>
+                      <span className="text-[11px] font-bold text-[var(--quest-quiz)] uppercase tracking-wider">Nhân vật</span>
+                      <span className="font-display text-lg font-extrabold text-[var(--content-heading)]">{(content?.characters.total ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex gap-3 text-[11px] text-[var(--content-muted)]">
                       <span>Xuất bản: <strong className="text-[var(--content-heading)]">{content?.characters.published ?? 0}</strong></span>
@@ -1180,10 +1181,10 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {/* Documents */}
-                  <div className="rounded-xl p-3 border border-blue-500/10 bg-[rgba(59,130,246,0.05)]">
+                  <div className="rounded-[2px] p-3 border border-accent-blue/20 bg-accent-blue/10">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Tài liệu</span>
-                      <span className="text-lg font-extrabold text-[var(--content-heading)]">{(content?.documents.total ?? 0).toLocaleString()}</span>
+                      <span className="text-[11px] font-bold text-accent-blue uppercase tracking-wider">Tài liệu</span>
+                      <span className="font-display text-lg font-extrabold text-[var(--content-heading)]">{(content?.documents.total ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="text-[11px] text-[var(--content-muted)]">
                       Hoạt động: <strong className="text-[var(--content-heading)]">{content?.documents.active ?? 0}</strong>
@@ -1199,16 +1200,16 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
           {/* Detailed User analytics */}
-          <Card className="bg-card-light-bg border-card-light-border">
+          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <UsersIcon className="h-4 w-4 text-emerald-500" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                <UsersIcon className="h-4 w-4 text-[var(--status-success)]" />
+                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
                   Chi tiết người dùng
                 </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-1 border-t border-dashed border-[var(--card-light-border)] pt-4">
+            <CardContent className="space-y-1 border-t border-[var(--border-default)] pt-4">
               {usersLoading ? (
                 Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)
               ) : (
@@ -1229,16 +1230,16 @@ export default function AdminDashboardPage() {
                             <span className="text-[var(--content-muted)]">{r.role}</span>
                             <span className="text-[var(--content-heading)]">{r.count.toLocaleString()} ({pct}%)</span>
                           </div>
-                          <div className="h-1.5 rounded-full bg-[var(--card-light-border)] overflow-hidden">
+                          <div className="h-1.5 bg-[var(--card-light-border)] overflow-hidden">
                             <div
-                              className="h-full rounded-full transition-all duration-700"
+                              className="h-full transition-all duration-700"
                               style={{
                                 width: `${pct}%`,
                                 background: r.role.toLowerCase().includes("system")
-                                  ? "#10b981"
+                                  ? "var(--status-success)"
                                   : r.role.toLowerCase().includes("content")
-                                    ? "#8b5cf6"
-                                    : "#3b82f6",
+                                    ? "var(--quest-quiz)"
+                                    : "var(--accent-blue)",
                               }}
                             />
                           </div>
@@ -1252,16 +1253,16 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Chat activity details */}
-          <Card className="bg-card-light-bg border-card-light-border">
+          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <MessagesSquareIcon className="h-4 w-4 text-purple-500" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                <MessagesSquareIcon className="h-4 w-4 text-[var(--quest-quiz)]" />
+                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
                   Thống kê Hội thoại Chat
                 </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-1 border-t border-dashed border-[var(--card-light-border)] pt-4">
+            <CardContent className="space-y-1 border-t border-[var(--border-default)] pt-4">
               {chatLoading ? (
                 Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)
               ) : (
@@ -1279,11 +1280,11 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Quick nav redirects */}
-          <Card className="bg-card-light-bg border-card-light-border">
+          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <ActivityIcon className="h-4 w-4 text-[var(--accent-gold)]" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[var(--content-heading)]">
+                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
                   Lối tắt quản lý
                 </CardTitle>
               </div>
@@ -1292,11 +1293,11 @@ export default function AdminDashboardPage() {
             <CardContent className="space-y-2 border-t border-[var(--card-light-border)] pt-4">
               <Button
                 variant="outline"
-                className="w-full justify-between h-10 rounded-xl px-4 hover:bg-[var(--card-light-hover)] border-[var(--card-light-border)] bg-transparent cursor-pointer"
+                className="w-full justify-between h-10 rounded-[2px] px-4 hover:bg-[var(--card-light-hover)] border-[var(--card-light-border)] bg-transparent cursor-pointer"
                 onClick={() => router.push("/staff/admin/accounts/customer")}
               >
                 <span className="flex items-center gap-2 font-medium text-[var(--content-heading)]">
-                  <UserCheckIcon className="h-4 w-4 text-blue-500" />
+                  <UserCheckIcon className="h-4 w-4 text-accent-blue" />
                   Customer
                 </span>
                 <ArrowRightIcon className="h-4 w-4 opacity-50" />
@@ -1304,11 +1305,11 @@ export default function AdminDashboardPage() {
 
               <Button
                 variant="outline"
-                className="w-full justify-between h-10 rounded-xl px-4 hover:bg-[var(--card-light-hover)] border-[var(--card-light-border)] bg-transparent cursor-pointer"
+                className="w-full justify-between h-10 rounded-[2px] px-4 hover:bg-[var(--card-light-hover)] border-[var(--card-light-border)] bg-transparent cursor-pointer"
                 onClick={() => router.push("/staff/admin/accounts/system-admin")}
               >
                 <span className="flex items-center gap-2 font-medium text-[var(--content-heading)]">
-                  <ShieldCheckIcon className="h-4 w-4 text-emerald-500" />
+                  <ShieldCheckIcon className="h-4 w-4 text-[var(--status-success)]" />
                   System Admin
                 </span>
                 <ArrowRightIcon className="h-4 w-4 opacity-50" />

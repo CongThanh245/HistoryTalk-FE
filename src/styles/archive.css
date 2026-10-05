@@ -1,0 +1,212 @@
+/* ================================
+      Archive primitives
+      Paper – ink – crimson. Square corners, ink hairlines, condensed display type.
+      Shared by every page; page-specific layouts live next to their component styles.
+   ================================ */
+
+@layer components {
+  /* Condensed display heading (Big Shoulders). Tall stacked Vietnamese diacritics need line-height ≥ 1. */
+  .archive-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+
+  /* Long names (cards, people) read better in sentence case with the same condensed face. */
+  .archive-title.is-plain {
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .archive-title em {
+    font-style: normal;
+    color: var(--accent-gold);
+  }
+
+  /* Bracketed index label: [ BỐI CẢNH ] */
+  .archive-label {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-brass);
+  }
+
+
+  /* Section heading: label + display title over a full-width ink rule. */
+  .archive-heading {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--text-primary);
+  }
+
+  /* A short brass segment sitting on the ink rule. */
+  .archive-heading::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 56px;
+    height: 3px;
+    background: var(--accent-brass);
+  }
+
+  .archive-heading.border-b-0::after { display: none; }
+
+  .archive-heading :is(h1, h2) {
+    margin-top: 0;
+    font-size: clamp(24px, 2.4vw, 32px);
+  }
+
+  .archive-heading p {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text-tertiary);
+  }
+
+  /* Underlined uppercase text link ("Xem tất cả →"). */
+  .archive-link {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 2px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    border-bottom: 1px solid currentColor;
+    transition: color 150ms ease;
+  }
+
+  .archive-link:hover { color: var(--accent-gold); }
+
+  /* Buttons: square, uppercase. crimson = primary action, ink = strong secondary, line = quiet. */
+  .btn-crimson,
+  .btn-ink,
+  .btn-line {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 0 20px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+  }
+
+  .btn-crimson { color: #FFFFFF; background: var(--accent-gold); border-color: var(--accent-gold); }
+  .btn-crimson:hover { background: var(--accent-bronze); border-color: var(--accent-bronze); }
+
+  .btn-ink { color: var(--text-inverse); background: var(--text-primary); border-color: var(--text-primary); }
+  .btn-ink:hover { color: #FFFFFF; background: var(--accent-gold); border-color: var(--accent-gold); }
+
+  .btn-line { color: var(--text-primary); background: transparent; border-color: var(--text-primary); }
+  .btn-line:hover { color: var(--text-inverse); background: var(--text-primary); }
+
+  :is(.btn-crimson, .btn-ink, .btn-line, .archive-link):focus-visible {
+    outline: 2px solid var(--accent-gold);
+    outline-offset: 3px;
+  }
+
+  /* Red seal stamp (ấn triện). Text is set vertically; keep it to short, verified Hán Nôm phrases. */
+  .archive-seal {
+    display: inline-grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    color: var(--accent-gold);
+    border: 2px solid currentColor;
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 3px var(--bg-surface), inset 0 0 0 4px var(--accent-brass);
+    font-family: "Noto Serif TC", "Noto Serif SC", "MingLiU", "SimSun", serif;
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1;
+    writing-mode: vertical-rl;
+    letter-spacing: 0.05em;
+    transform: rotate(-6deg);
+    opacity: 0.9;
+    user-select: none;
+  }
+
+  /* Photos sit quietly in the paper until hovered or selected. */
+  .archive-photo {
+    filter: grayscale(0.2) contrast(1.02);
+    transition: filter 300ms ease, transform 500ms ease;
+  }
+
+  :is(a, button, .group):hover .archive-photo,
+  .is-active .archive-photo {
+    filter: none;
+  }
+}
+
+/* ================================
+      "Lịch sử sống" — living-history motion
+      Slow, one-shot, story-driven motion that replaces hover colour changes.
+      Everything sits behind prefers-reduced-motion: no-preference, so the static state is the default.
+   ================================ */
+
+@keyframes live-develop {
+  from { filter: sepia(0.9) grayscale(0.35) contrast(0.85) brightness(1.08); opacity: 0.55; }
+  to { filter: none; opacity: 1; }
+}
+
+@keyframes live-ink {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes live-stamp {
+  0% { opacity: 0; transform: scale(1.7) rotate(-20deg); }
+  60% { opacity: 1; transform: scale(0.9) rotate(-5deg); }
+  100% { opacity: 0.9; transform: scale(1) rotate(-6deg); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* An old photograph being developed: sepia → full colour, once. */
+  .live-develop {
+    animation: live-develop 1.1s ease-out both;
+  }
+
+  /* Ink writing the title from left to right. */
+  .live-ink {
+    animation: live-ink 0.8s cubic-bezier(0.65, 0, 0.35, 1) 0.15s both;
+  }
+
+  /* Seal pressed onto the dossier after the title is written. */
+  .live-stamp {
+    animation: live-stamp 0.5s cubic-bezier(0.34, 1.3, 0.64, 1) 0.7s both;
+  }
+
+  /* In long grids, develop each photo as it scrolls into view (browsers without view timelines show it in colour). */
+  @supports (animation-timeline: view()) {
+    .live-develop-on-view {
+      animation: live-develop linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+  }
+}

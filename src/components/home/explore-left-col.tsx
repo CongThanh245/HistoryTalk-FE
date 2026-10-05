@@ -25,48 +25,36 @@ const FEATURE_CARDS = [
     title: "Sự kiện lịch sử",
     desc: "Dòng thời gian tương tác",
     href: "/events",
-    accentHex: "#c9a24d",
-    glow: "rgba(201,162,77,0.1)",
   },
   {
     icon: User,
     title: "Nhân vật",
     desc: "Những người làm thay đổi lịch sử",
     href: "/characters",
-    accentHex: "#c46a2f",
-    glow: "rgba(196,106,47,0.1)",
   },
   {
     icon: MessageSquareText,
     title: "Chat với lịch sử",
     desc: "AI đóng vai nhân vật lịch sử",
     href: "/chat-history",
-    accentHex: "#8fb3c8",
-    glow: "rgba(143,179,200,0.1)",
   },
   {
     icon: ClipboardList,
     title: "Câu đố lịch sử",
     desc: "Hàng nghìn câu hỏi theo chủ đề",
     href: "/quiz",
-    accentHex: "#ffb162",
-    glow: "rgba(255,177,98,0.1)",
   },
   {
     icon: Landmark,
     title: "Thư viện",
     desc: "Tư liệu & hình ảnh lịch sử",
     href: "/library",
-    accentHex: "#2f8a8e",
-    glow: "rgba(47,111,115,0.1)",
   },
   {
     icon: Bookmark,
     title: "Đã lưu",
     desc: "Nội dung bạn đã đánh dấu",
     href: "/saved",
-    accentHex: "#e2c77a",
-    glow: "rgba(226,199,122,0.1)",
   },
 ];
 
@@ -129,17 +117,17 @@ function InlineFactCard() {
   }, [fading]);
 
   return (
-    <div className="bg-card-light-bg border border-card-light-border rounded-[14px] overflow-hidden shadow-[0_1px_8px_rgba(27,38,50,0.06)]">
+    <div className="bg-[var(--bg-surface)] border border-[var(--text-primary)] rounded-[2px] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3.5 pt-[11px] pb-2.5 border-b border-card-light-border bg-gradient-to-r from-accent-gold/[0.06] to-transparent">
+      <div className="flex items-center justify-between px-3.5 pt-[11px] pb-2.5 border-b border-[var(--text-primary)]">
         <div className="flex items-center gap-1.5">
           <Sparkles className="w-[13px] h-[13px] text-accent-gold" fill="currentColor" />
-          <span className="text-[10px] font-extrabold tracking-[0.12em] uppercase text-[#7a5a1e]">
+          <span className="font-display text-[17px] font-extrabold leading-[1.1] uppercase text-content-heading">
             Bạn có biết?
           </span>
         </div>
         {fact.year && (
-          <span className="text-[10px] font-extrabold text-[#8a4a1a] bg-[rgba(196,106,47,0.1)] border border-[rgba(196,106,47,0.22)] rounded-[5px] px-[7px] py-px">
+          <span className="font-display text-[13px] font-extrabold text-white bg-[var(--accent-gold)] rounded-[2px] px-[7px] py-px">
             {fact.year}
           </span>
         )}
@@ -154,7 +142,7 @@ function InlineFactCard() {
           {fact.tags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-[3px] text-[10px] px-2 py-0.5 rounded-[20px] bg-accent-gold/[0.08] border border-accent-gold/20 text-[#7a5a1e] font-medium"
+              className="inline-flex items-center gap-[3px] text-[10px] px-2 py-0.5 rounded-[2px] border border-[var(--border-strong)] text-[var(--text-secondary)] font-semibold"
             >
               <Tag className="w-[9px] h-[9px]" strokeWidth={2.5} />
               {tag}
@@ -167,7 +155,7 @@ function InlineFactCard() {
       <div className="flex justify-end px-3.5 pb-3">
         <button
           onClick={next}
-          className="inline-flex items-center gap-[5px] text-[11px] font-bold cursor-pointer px-[11px] py-[5px] rounded-[7px] bg-[#e8d5a8] border border-[#b8922a] text-[#5c3d0e] transition-colors duration-150 hover:bg-[#dcc88e]"
+          className="btn-line min-h-[30px] px-[11px] gap-[5px] text-[11px] cursor-pointer"
         >
           <RefreshCcw className="w-[11px] h-[11px]" strokeWidth={2.5} />
           Sự kiện khác
@@ -186,41 +174,21 @@ function FeatureRow({
   title,
   desc,
   href,
-  accentHex,
-  glow,
 }: (typeof FEATURE_CARDS)[0]) {
   return (
-    <Link href={href} className="group no-underline">
-      <div
-        className="flex items-center gap-[11px] px-3 py-[9px] rounded-[11px] border border-transparent transition-all duration-150"
-        onMouseEnter={(e) => {
-          const el = e.currentTarget as HTMLElement;
-          el.style.background = glow;
-          el.style.borderColor = `${accentHex}30`;
-        }}
-        onMouseLeave={(e) => {
-          const el = e.currentTarget as HTMLElement;
-          el.style.background = "transparent";
-          el.style.borderColor = "transparent";
-        }}
-      >
+    <Link href={href} className="group block no-underline">
+      <div className="flex items-center gap-[11px] px-3.5 py-[9px] border-b border-[var(--border-default)] transition-colors duration-150 group-last:border-b-0 group-hover:bg-[var(--text-primary)]">
         {/* Icon bubble */}
-        <div
-          className="w-[34px] h-[34px] rounded-[9px] shrink-0 flex items-center justify-center"
-          style={{
-            background: glow,
-            border: `1px solid ${accentHex}25`,
-          }}
-        >
-          <Icon size={16} style={{ color: accentHex }} />
+        <div className="w-[34px] h-[34px] rounded-[2px] shrink-0 flex items-center justify-center border border-[var(--border-strong)] bg-[var(--bg-elevated)] text-[var(--accent-gold)] transition-colors duration-150 group-hover:border-[var(--accent-on-ink)] group-hover:bg-transparent group-hover:text-[var(--accent-on-ink)]">
+          <Icon size={16} />
         </div>
 
         {/* Text */}
         <div className="flex-1 min-w-0">
-          <p className="m-0 text-[13px] font-semibold text-content-heading">
+          <p className="m-0 text-[13px] font-bold text-content-heading transition-colors duration-150 group-hover:text-[var(--text-inverse)]">
             {title}
           </p>
-          <p className="m-0 text-[11px] text-content-muted mt-px">
+          <p className="m-0 text-[11px] text-content-muted mt-px transition-colors duration-150 group-hover:text-[var(--text-inverse)] group-hover:opacity-70">
             {desc}
           </p>
         </div>
@@ -229,8 +197,7 @@ function FeatureRow({
         <ChevronRight
           size={13}
           strokeWidth={2.5}
-          className="shrink-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-          style={{ color: accentHex }}
+          className="shrink-0 opacity-0 text-[var(--text-inverse)] transition-opacity duration-150 group-hover:opacity-100"
         />
       </div>
     </Link>
@@ -249,13 +216,13 @@ export function ExploreLeftCol() {
       <InlineFactCard />
 
       {/* Feature list */}
-      <div className="bg-card-light-bg border border-card-light-border rounded-[14px] overflow-hidden shadow-[0_1px_8px_rgba(27,38,50,0.06)]">
-        <div className="flex items-center gap-1.5 px-3.5 pt-[11px] pb-2.5 border-b border-card-light-border bg-gradient-to-r from-accent-gold/[0.04] to-transparent">
-          <span className="text-[10px] font-extrabold tracking-[0.12em] uppercase text-[#7a5a1e]">
+      <div className="bg-[var(--bg-surface)] border border-[var(--text-primary)] rounded-[2px] overflow-hidden">
+        <div className="flex items-center gap-1.5 px-3.5 pt-[11px] pb-2.5 border-b border-[var(--text-primary)]">
+          <span className="font-display text-[17px] font-extrabold leading-[1.1] uppercase text-content-heading">
             Khám phá
           </span>
         </div>
-        <div className="py-1.5 px-1">
+        <div>
           {FEATURE_CARDS.map((card) => (
             <FeatureRow key={card.href} {...card} />
           ))}

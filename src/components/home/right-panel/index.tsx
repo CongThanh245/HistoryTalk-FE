@@ -37,15 +37,15 @@ export function HomeRightPanel() {
       {/* Fixed floating trigger button */}
       {mounted && <FactTriggerButton onClick={() => setShowFact(true)} />}
 
-      <div className="bg-card-light-bg border border-card-light-border rounded-2xl overflow-hidden shadow-[0_2px_10px_rgba(27,38,50,0.06)] flex flex-col min-h-[480px] max-h-[580px]">
+      <div className="bg-[var(--bg-surface)] border border-[var(--text-primary)] rounded-[2px] overflow-hidden flex flex-col min-h-[480px] max-h-[580px]">
         {/* Header */}
-        <div className="px-4 pt-3 pb-2.5 border-b border-card-light-border flex items-center justify-between shrink-0 gap-3">
+        <div className="px-4 pt-3 pb-2.5 border-b border-[var(--text-primary)] flex items-center justify-between shrink-0 gap-3">
           <div className="min-w-0">
-            <p className="m-0 text-xs font-bold text-content-heading whitespace-nowrap overflow-hidden text-ellipsis">
+            <p className="m-0 font-display text-[18px] font-extrabold uppercase leading-[1.1] text-content-heading whitespace-nowrap overflow-hidden text-ellipsis">
               {MODE_LABELS[mode]}
             </p>
             {score.total > 0 && (
-              <p className="m-0 mt-px text-[10px] text-content-muted">
+              <p className="m-0 mt-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
                 {score.correct}/{score.total} câu đúng
               </p>
             )}
@@ -58,7 +58,7 @@ export function HomeRightPanel() {
                 setMode((m) => randomMode(m));
                 setGameKey((k) => k + 1);
               }}
-              className="text-[10px] font-semibold cursor-pointer px-2.5 py-1 rounded-md bg-transparent border border-card-light-border text-content-muted transition-all duration-100 whitespace-nowrap hover:border-accent-gold/40 hover:text-gold-on-light"
+              className="text-[10px] font-bold uppercase tracking-[0.1em] cursor-pointer px-2.5 py-1.5 rounded-[2px] bg-transparent border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors duration-100 whitespace-nowrap hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
             >
               Game khác
             </button>

@@ -34,41 +34,41 @@ export function QuizQuestionCard({
   function getOptionClasses(optionIndex: number) {
     if (revealed) {
       if (optionIndex === question.correctAnswer) {
-        return "bg-emerald-500/10 border-[1.5px] border-emerald-500/45 text-[#065f46] cursor-default";
+        return "bg-[var(--status-success)] text-[var(--text-inverse)] font-semibold cursor-default";
       }
       if (optionIndex === selectedAnswer) {
-        return "bg-accent-danger/[0.08] border-[1.5px] border-accent-danger/40 text-accent-danger cursor-default";
+        return "bg-[var(--accent-danger)] text-[var(--text-inverse)] font-semibold cursor-default";
       }
-      return "bg-card-light-bg border-[1.5px] border-card-light-border text-content-muted cursor-default";
+      return "bg-[var(--bg-surface)] text-content-muted cursor-default";
     }
 
     if (optionIndex === selectedAnswer) {
-      return "bg-accent-gold-active border-[1.5px] border-accent-gold text-gold-on-light cursor-pointer";
+      return "bg-[var(--text-primary)] text-[var(--text-inverse)] font-semibold cursor-pointer";
     }
 
-    return "bg-card-light-bg border-[1.5px] border-card-light-border text-content-heading cursor-pointer";
+    return "bg-[var(--bg-surface)] text-content-heading cursor-pointer hover:bg-[var(--bg-elevated)]";
   }
 
   return (
     <div
       className={cn(
-        "rounded-xl overflow-hidden transition-all duration-200 bg-card-light-bg shadow-[0_2px_8px_rgba(27,38,50,0.05)] border-[1.5px]",
-        hasAnswered ? "border-accent-gold/35" : "border-card-light-border",
+        "rounded-[2px] overflow-hidden transition-colors duration-200 bg-[var(--bg-surface)] border border-[var(--text-primary)]",
+        hasAnswered ? "" : "",
       )}
     >
-      <div className="px-5 py-4 border-b border-card-light-border">
+      <div className="px-5 py-4 border-b border-[var(--text-primary)]">
         <div className="flex items-start gap-3">
-          <span className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 bg-accent-gold-active text-accent-gold">
-            {index + 1}
+          <span className="flex-shrink-0 font-display text-[28px] font-extrabold leading-none text-accent-gold tabular-nums">
+            {String(index + 1).padStart(2, "0")}
           </span>
-          <p className="text-sm font-semibold leading-relaxed pt-0.5 flex-1 text-content-heading">
+          <p className="text-[15px] font-semibold leading-relaxed pt-0.5 flex-1 text-content-heading">
             {question.content}
           </p>
           {onToggleFlag && (
             <button
               onClick={() => onToggleFlag(question.questionId)}
               className={cn(
-                "flex-shrink-0 p-1 -mt-0.5 -mr-1 rounded-lg transition-colors hover:bg-black/5",
+                "flex-shrink-0 p-1 -mt-0.5 -mr-1 rounded-[2px] border border-transparent transition-colors hover:border-[var(--text-primary)]",
                 flagged ? "text-accent-gold" : "text-content-subtle",
               )}
               title={flagged ? "Bỏ đánh dấu" : "Đánh dấu để xem lại"}
@@ -79,14 +79,14 @@ export function QuizQuestionCard({
         </div>
       </div>
 
-      <div className="p-4 space-y-2.5">
+      <div>
         {revealed && (
           <div
             className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold",
+              "flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.08em] border-b border-[var(--border-default)]",
               isCorrect
-                ? "bg-emerald-500/10 text-[#047857]"
-                : "bg-accent-danger/[0.08] text-accent-danger",
+                ? "bg-[var(--status-success-bg)] text-[var(--status-success)]"
+                : "bg-[var(--status-danger-bg)] text-accent-danger",
             )}
           >
             {isCorrect ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
@@ -100,20 +100,18 @@ export function QuizQuestionCard({
             onClick={() => !revealed && onAnswer(question.questionId, optIndex)}
             disabled={revealed}
             className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200",
+              "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-200 border-b border-[var(--border-default)] last:border-b-0",
               getOptionClasses(optIndex),
             )}
           >
             <span
               className={cn(
-                "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-                revealed && optIndex === question.correctAnswer
-                  ? "bg-[#047857] text-white"
-                  : revealed && optIndex === selectedAnswer
-                    ? "bg-accent-danger text-white"
-                    : optIndex === selectedAnswer
-                      ? "bg-accent-gold text-white"
-                      : "bg-card-light-bg text-content-muted border border-card-light-border",
+                "flex-shrink-0 w-6 h-6 rounded-[2px] flex items-center justify-center text-xs font-bold border",
+                revealed && (optIndex === question.correctAnswer || optIndex === selectedAnswer)
+                  ? "border-[var(--text-inverse)] text-[var(--text-inverse)]"
+                  : optIndex === selectedAnswer
+                    ? "bg-[var(--text-inverse)] text-[var(--text-primary)] border-[var(--text-inverse)]"
+                    : "bg-transparent text-content-muted border-[var(--border-strong)]",
               )}
             >
               {OPTION_LABELS[optIndex]}
@@ -123,8 +121,8 @@ export function QuizQuestionCard({
         ))}
 
         {revealed && question.explanation && (
-          <div className="rounded-lg px-3 py-2.5 text-xs leading-5 bg-[rgba(27,38,50,0.035)] text-content-muted">
-            <span className="font-bold text-content-heading">
+          <div className="px-4 py-3 text-xs leading-5 border-t border-[var(--text-primary)] bg-[var(--bg-elevated)] text-content-muted">
+            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-content-heading">
               Giải thích:{" "}
             </span>
             {question.explanation}

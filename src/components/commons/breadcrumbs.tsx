@@ -28,6 +28,19 @@ const routeLabels: Record<string, string> = {
   features: "Tính năng",
   pricing: "Bảng giá",
   create: "Tạo mới",
+  // Gói trường học
+  school: "Trường học",
+  schools: "Trường học",
+  classes: "Lớp học",
+  teachers: "Giáo viên",
+  students: "Học sinh",
+  tokens: "Hạn mức token",
+  content: "Duyệt nội dung",
+  teaching: "Giảng dạy",
+  assignments: "Bài tập",
+  grades: "Bảng điểm",
+  local: "Lịch sử địa phương",
+  new: "Tạo mới",
 };
 
 export default function Breadcrumbs() {
@@ -49,7 +62,7 @@ export default function Breadcrumbs() {
   return (
     <nav 
       aria-label="Breadcrumb" 
-      className="px-3 md:px-6 py-2.5 border-b bg-header-bg border-header-border"
+      className="px-3 md:px-6 py-2.5 border-b bg-header-bg border-[var(--border-strong)]"
     >
       {["/characters", "/events"].includes(pathname) && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd({
@@ -59,11 +72,11 @@ export default function Breadcrumbs() {
           ],
         }) }} />
       )}
-      <ol className="flex items-center space-x-2 text-sm text-header-text-muted">
+      <ol className="flex items-center space-x-2 text-[11px] font-bold uppercase tracking-[0.1em] text-header-text-muted">
         <li className="flex items-center">
           <Link
             href="/home"
-            className="hover:text-[--accent-gold] transition-colors flex items-center gap-1.5 text-header-text"
+            className="hover:text-[var(--accent-gold)] transition-colors flex items-center gap-1.5 text-header-text"
           >
             <House size={16} fill="currentColor" />
             <span className="sr-only">Trang chủ</span>
@@ -81,14 +94,14 @@ export default function Breadcrumbs() {
                 <ChevronRight size={12} className="mx-1 opacity-40" />
                 {isLast ? (
                   <span 
-                    className="font-semibold truncate max-w-[250px] text-accent-gold"
+                    className="truncate max-w-[250px] text-accent-gold"
                   >
                     <BreadcrumbLabel segment={segment} parentSegment={parentSegment} />
                   </span>
                 ) : (
                   <Link
                     href={segment === "chat" ? "/characters" : href}
-                    className="hover:text-[--accent-gold] transition-colors truncate max-w-[200px] text-header-text"
+                    className="hover:text-[var(--accent-gold)] transition-colors truncate max-w-[200px] text-header-text"
                   >
                     <BreadcrumbLabel segment={segment} parentSegment={parentSegment} />
                   </Link>

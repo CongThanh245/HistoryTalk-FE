@@ -68,18 +68,18 @@ export function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               }}
               onDragEnd={handleDrop}
               onDragOver={(e) => e.preventDefault()}
-              className={`rounded-[9px] px-[11px] py-2 flex items-center gap-[9px] select-none transition-all duration-100 ${
+              className={`rounded-[2px] border px-[11px] py-2 flex items-center gap-[9px] select-none transition-all duration-100 ${
                 submitted ? "cursor-default" : "cursor-grab"
               } ${dragging === i ? "opacity-35" : "opacity-100"}`}
               style={{
                 background: placedOk
-                  ? "rgba(16,40,24,0.08)"
+                  ? "var(--status-success-bg)"
                   : placedWrong
-                    ? "rgba(90,35,35,0.08)"
+                    ? "var(--status-danger-bg)"
                     : dragOverIdx === i && dragging !== i
-                      ? "rgba(201,162,77,0.06)"
-                      : "var(--card-light-bg)",
-                border: `1px solid ${placedOk ? "rgba(74,178,98,0.45)" : placedWrong ? "rgba(184,50,42,0.45)" : dragOverIdx === i && dragging !== i ? "rgba(201,162,77,0.35)" : "var(--card-light-border)"}`,
+                      ? "var(--accent-gold-active-bg)"
+                      : "var(--bg-elevated)",
+                borderColor: placedOk ? "var(--status-success)" : placedWrong ? "var(--accent-danger)" : dragOverIdx === i && dragging !== i ? "var(--text-primary)" : "var(--border-strong)",
               }}
             >
               <span
@@ -87,9 +87,9 @@ export function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
                 style={{
                   background: submitted
                     ? placedOk
-                      ? "#5dcc78"
-                      : "#f07070"
-                    : "rgba(201,162,77,0.4)",
+                      ? "var(--status-success)"
+                      : "var(--accent-danger)"
+                    : "var(--accent-gold)",
                 }}
               />
               <div className="flex-1">
@@ -102,16 +102,16 @@ export function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               </div>
               {submitted && (
                 <span
-                  className={`text-[10px] font-extrabold rounded px-1.5 py-px border ${
+                  className={`text-[10px] font-extrabold rounded-[2px] px-1.5 py-px border ${
                     placedOk
-                      ? "text-[#1f5c34] bg-[rgba(74,178,98,0.12)] border-[rgba(74,178,98,0.3)]"
-                      : "text-[#9b2222] bg-[rgba(184,50,42,0.12)] border-[rgba(184,50,42,0.3)]"
+                      ? "text-[var(--status-success)] bg-[var(--status-success-bg)] border-[var(--status-success-border)]"
+                      : "text-[var(--accent-danger)] bg-[var(--status-danger-bg)] border-[var(--status-danger-border)]"
                   }`}
                 >
                   {item.yearDisplay}
                 </span>
               )}
-              <span className="text-[9px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded bg-accent-gold/10 text-gold-on-light shrink-0">
+              <span className="font-display text-[12px] font-extrabold min-w-[20px] h-[20px] flex items-center justify-center rounded-[2px] border border-[var(--text-primary)] text-[var(--text-primary)] shrink-0">
                 {i + 1}
               </span>
             </div>
@@ -126,7 +126,7 @@ export function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
             setSubmitted(true);
             onScore(ok);
           }}
-          className="text-xs font-bold cursor-pointer py-[9px] rounded-lg bg-[#e8d5a8] border border-[#b8922a] text-[#5c3d0e] w-full"
+          className="btn-crimson w-full min-h-[38px] cursor-pointer text-xs"
         >
           Kiểm tra thứ tự
         </button>

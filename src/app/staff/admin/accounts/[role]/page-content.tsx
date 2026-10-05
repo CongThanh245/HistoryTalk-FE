@@ -100,9 +100,9 @@ const TIER_LABELS: Record<string, string> = {
 };
 
 const TIER_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  free: { bg: "rgba(100,116,139,0.10)", text: "rgb(71,85,105)", border: "rgba(100,116,139,0.25)" },
-  plus: { bg: "rgba(59,130,246,0.10)", text: "rgb(37,99,235)", border: "rgba(59,130,246,0.25)" },
-  pro: { bg: "rgba(168,85,247,0.10)", text: "rgb(126,34,206)", border: "rgba(168,85,247,0.25)" },
+  free: { bg: "var(--status-neutral-bg)", text: "var(--text-tertiary)", border: "var(--status-neutral-border)" },
+  plus: { bg: "color-mix(in srgb, var(--accent-blue) 10%, transparent)", text: "var(--accent-blue)", border: "color-mix(in srgb, var(--accent-blue) 25%, transparent)" },
+  pro: { bg: "var(--accent-gold-active-bg)", text: "var(--accent-gold)", border: "color-mix(in srgb, var(--accent-gold) 30%, transparent)" },
 };
 
 function formatDate(iso: string) {
@@ -275,15 +275,15 @@ export default function AdminAccountsPage() {
             .join("")
             .toUpperCase() || "?";
           const colors = [
-            "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981",
-            "#06b6d4", "#ef4444", "#6366f1",
+            "var(--accent-gold)", "var(--accent-blue)", "var(--accent-teal)", "var(--quest-quiz)",
+            "var(--accent-bronze)", "var(--status-success)", "var(--accent-earth)", "var(--gold-on-light)",
           ];
           const uidKey = u.uid || displayName;
           const bgColor = colors[uidKey.charCodeAt(uidKey.length - 1) % colors.length];
           return (
             <div className="flex items-center gap-3 min-w-[200px]">
               <div
-                className="flex items-center justify-center text-sm font-bold text-white rounded-full select-none w-9 h-9 shrink-0"
+                className="flex items-center justify-center text-sm font-bold text-[var(--text-inverse)] rounded-full select-none w-9 h-9 shrink-0"
                 style={{ background: bgColor }}
               >
                 {initials}
@@ -296,7 +296,7 @@ export default function AdminAccountsPage() {
                   {u.email}
                 </p>
                 {meta.showTier && u.tierTitle && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-[2px] bg-primary/10 text-primary">
                     {u.tierTitle}
                   </span>
                 )}
@@ -317,7 +317,7 @@ export default function AdminAccountsPage() {
           const c = TIER_COLORS[tier] ?? TIER_COLORS["free"];
           return (
             <span
-              className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold"
+              className="inline-flex items-center px-2 py-0.5 rounded-[2px] text-[11px] font-bold"
               style={{ background: c.bg, color: c.text, border: `1px solid ${c.border}` }}
             >
               {TIER_LABELS[tier] ?? tier}
@@ -359,13 +359,13 @@ export default function AdminAccountsPage() {
           const u = row.original;
           const isDeleted = isUserDeleted(u);
           return isDeleted ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold bg-[rgba(239,68,68,0.12)] text-[#ef4444] border border-[rgba(239,68,68,0.25)]">
+            <span className="inline-flex items-center gap-1.5 rounded-[2px] px-2.5 py-1 text-[11px] font-bold bg-[var(--status-danger-bg)] text-[var(--accent-danger)] border border-[var(--status-danger-border)]">
               <LockKeyhole className="w-3 h-3" />
               Đã khóa
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold bg-[rgba(16,185,129,0.12)] text-[#10b981] border border-[rgba(16,185,129,0.25)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span className="inline-flex items-center gap-1.5 rounded-[2px] px-2.5 py-1 text-[11px] font-bold bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--status-success)]" />
               Hoạt động
             </span>
           );
@@ -383,7 +383,7 @@ export default function AdminAccountsPage() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full text-[#10b981]"
+                  className="rounded-[2px] text-[var(--status-success)]"
                   title="Mở khóa tài khoản"
                   onClick={() => {
                     setRestoreTarget(u);
@@ -397,7 +397,7 @@ export default function AdminAccountsPage() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full text-accent-danger"
+                  className="rounded-[2px] text-accent-danger"
                   title="Khóa tài khoản"
                   onClick={() => {
                     setDeleteTarget(u);
@@ -411,7 +411,7 @@ export default function AdminAccountsPage() {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="rounded-full text-[var(--header-text-muted)]"
+                className="rounded-[2px] text-[var(--header-text-muted)]"
                 title="Chỉnh sửa"
                 onClick={() => openEdit(u)}
               >
@@ -436,6 +436,7 @@ export default function AdminAccountsPage() {
   return (
     <StaffShell
       title={`Quản lý ${meta.label}`}
+      label="Tài khoản"
       description={meta.description}
       icon={Icon}
       accent={meta.accent}
@@ -473,7 +474,7 @@ export default function AdminAccountsPage() {
         </StaffStatsGrid>
       )}
       {/* Main table card */}
-      <section className="p-6 space-y-5 border rounded-2xl bg-card-light-bg border-card-light-border">
+      <section className="p-6 space-y-5 border rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)]">
         {/* Header row */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           {/* Count info */}
@@ -504,14 +505,13 @@ export default function AdminAccountsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm tên, email..."
-                className="pl-10 h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border"
+                className="pl-10 h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)]"
               />
             </div>
             {canCreate && (
               <Button
                 onClick={openCreate}
-                className="text-white border-0 rounded-xl gap-1.5 shrink-0"
-                style={{ background: meta.accent }}
+                className="text-white border-0 rounded-[2px] gap-1.5 shrink-0 bg-[var(--accent-gold)] hover:bg-[var(--accent-bronze)]"
               >
                 <Plus className="w-4 h-4" />
                 Tạo tài khoản
@@ -533,7 +533,7 @@ export default function AdminAccountsPage() {
       </div>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-md staff-theme bg-card-light-bg border-card-light-border text-content-text">
+        <DialogContent className="max-w-md staff-theme rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] text-content-text">
           <DialogHeader>
             <DialogTitle className="text-content-heading">
               {formMode === "create" ? `Tạo tài khoản ${meta.label}` : "Chỉnh sửa tài khoản"}
@@ -555,7 +555,7 @@ export default function AdminAccountsPage() {
                 value={formData.userName ?? ""}
                 onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, userName: e.target.value }))}
                 placeholder="Nhập tên người dùng"
-                className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
               />
             </div>
 
@@ -568,7 +568,7 @@ export default function AdminAccountsPage() {
                 value={formData.fullName ?? ""}
                 onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, fullName: e.target.value }))}
                 placeholder="Nhập họ và tên"
-                className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
               />
             </div>
 
@@ -583,7 +583,7 @@ export default function AdminAccountsPage() {
                 disabled={formMode === "edit"}
                 onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, email: e.target.value }))}
                 placeholder="example@historytalk.vn"
-                className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading disabled:opacity-60"
+                className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading disabled:opacity-60"
               />
             </div>
 
@@ -598,7 +598,7 @@ export default function AdminAccountsPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Tối thiểu 6 ký tự"
-                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                    className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -610,7 +610,7 @@ export default function AdminAccountsPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Nhập lại mật khẩu"
-                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                    className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
                   />
                   {confirmPassword && password !== confirmPassword && (
                     <p className="text-[11px] text-destructive">Mật khẩu xác nhận không khớp.</p>
@@ -628,7 +628,7 @@ export default function AdminAccountsPage() {
                     value={formData.phoneNumber ?? ""}
                     onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, phoneNumber: e.target.value }))}
                     placeholder="Nhập số điện thoại"
-                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                    className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
                   />
                 </div>
 
@@ -641,7 +641,7 @@ export default function AdminAccountsPage() {
                     value={formData.address ?? ""}
                     onChange={(e) => setFormData((p: Partial<AdminUser>) => ({ ...p, address: e.target.value }))}
                     placeholder="Nhập địa chỉ"
-                    className="h-10 rounded-xl border bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+                    className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
                   />
                 </div>
 
@@ -649,7 +649,7 @@ export default function AdminAccountsPage() {
                 {meta.showTier && formTarget?.tierTitle && (
                   <div className="space-y-1.5">
                     <Label className="text-content-heading text-[13px]">Gói dịch vụ hiện tại</Label>
-                    <div className="h-10 rounded-xl border px-3 flex items-center text-sm bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading">
+                    <div className="h-10 rounded-[2px] border px-3 flex items-center text-sm bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading">
                       {formTarget.tierTitle}
                     </div>
                   </div>
@@ -662,15 +662,14 @@ export default function AdminAccountsPage() {
             <Button
               variant="outline"
               onClick={() => setFormOpen(false)}
-              className="rounded-xl border-card-light-border"
+              className="rounded-[2px] border-card-light-border"
             >
               Huỷ
             </Button>
             <Button
               onClick={handleFormSave}
               disabled={!isFormValid || createUser.isPending || updateUser.isPending}
-              className="text-white border-0 rounded-xl"
-              style={{ background: meta.accent }}
+              className="text-white border-0 rounded-[2px] bg-[var(--accent-gold)] hover:bg-[var(--accent-bronze)]"
             >
               {createUser.isPending || updateUser.isPending
                 ? "Đang lưu..."

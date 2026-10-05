@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
-import { Star } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, Clock, Star, Users } from "lucide-react";
 import type { QuizSet } from "@/services/quiz.service";
 import { cn } from "@/lib/utils/cn";
+import { isValidUrl } from "@/lib/utils/url";
 
 const ERA_LABELS: Record<QuizSet["era"], string> = {
   ALL: "Tổng hợp",
@@ -19,55 +21,71 @@ const LEVEL_LABELS: Record<QuizSet["level"], string> = {
   HARD: "Khó",
 };
 
-const LEVEL_TONE: Record<QuizSet["level"], { bg: string; fg: string; border: string }> = {
-  EASY: {
-    bg: "bg-accent-teal/10",
-    fg: "text-accent-teal",
-    border: "border-accent-teal/22",
-  },
-  MEDIUM: {
-    bg: "bg-accent-gold/12",
-    fg: "text-gold-on-light",
-    border: "border-accent-gold/24",
-  },
-  HARD: {
-    bg: "bg-accent-danger/10",
-    fg: "text-accent-danger",
-    border: "border-accent-danger/22",
-  },
+/** Difficulty as a 3-step meter: filled steps + colour read at a glance. */
+const LEVEL_METER: Record<QuizSet["level"], { steps: number; color: string; text: string }> = {
+  EASY: { steps: 1, color: "bg-[var(--status-success)]", text: "text-[var(--status-success)]" },
+  MEDIUM: { steps: 2, color: "bg-[var(--accent-gold)]", text: "text-[var(--gold-on-light)]" },
+  HARD: { steps: 3, color: "bg-[var(--accent-danger)]", text: "text-accent-danger" },
 };
+
+const FALLBACK_IMAGE = "/war.jpg";
 
 interface QuizCardProps {
   quiz: QuizSet;
   isActive?: boolean;
   onStart: (quizId: string) => void;
   compact?: boolean;
+  /** Cover image, usually the historical context's image. */
+  imageUrl?: string | null;
+  /** Wide horizontal layout used for the lead card of the grid. */
+  featured?: boolean;
 }
 
-export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
-  const levelTone = LEVEL_TONE[quiz.level] ?? LEVEL_TONE.MEDIUM;
+function LevelMeter({ level }: { level: QuizSet["level"] }) {
+  const meter = LEVEL_METER[level] ?? LEVEL_METER.MEDIUM;
+  return (
+    <span className="inline-flex items-center gap-2" title={`Độ khó: ${LEVEL_LABELS[level] ?? level}`}>
+      <span className="flex items-end gap-[3px]" aria-hidden="true">
+        {[1, 2, 3].map((step) => (
+          <span
+            key={step}
+            className={cn(
+              "w-[5px]",
+              step === 1 ? "h-[7px]" : step === 2 ? "h-[10px]" : "h-[13px]",
+              step <= meter.steps ? meter.color : "bg-[var(--border-strong)]",
+            )}
+          />
+        ))}
+      </span>
+      <span className={cn("text-[11px] font-bold uppercase tracking-[0.1em]", meter.text)}>
+        {LEVEL_LABELS[level] ?? level}
+      </span>
+    </span>
+  );
+}
 
+export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured }: QuizCardProps) {
   if (compact) {
     return (
       <button
         onClick={() => onStart(quiz.quizId)}
         className={cn(
-          "w-full cursor-pointer text-left px-4 py-3 rounded-xl transition-colors duration-200 hover:border-[rgba(201,162,77,0.45)] border",
+          "w-full cursor-pointer text-left px-4 py-3 rounded-[2px] transition-colors duration-200 border-b border-[var(--border-default)] ",
           isActive
-            ? "bg-accent-gold/14 border-accent-gold/34"
-            : "bg-transparent border-transparent",
+            ? "bg-[var(--accent-gold-active-bg)] "
+            : "bg-transparent hover:bg-[var(--bg-elevated)]",
         )}
       >
         <p
           className={cn(
-            "text-sm font-semibold leading-snug line-clamp-2",
-            isActive ? "text-gold-on-light" : "text-content-heading",
+            "archive-title is-plain text-[16px] line-clamp-2",
+            isActive ? "text-[var(--gold-on-light)]" : "text-content-heading",
           )}
         >
           {quiz.title}
         </p>
         {quiz.contextTitle && (
-          <p className="text-xs mt-1 truncate text-content-muted">
+          <p className="text-[11px] mt-1 truncate font-semibold uppercase tracking-[0.08em] text-content-muted">
             {quiz.contextTitle}
           </p>
         )}
@@ -75,10 +93,14 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
     );
   }
 
+  const cover = imageUrl && isValidUrl(imageUrl) ? imageUrl : FALLBACK_IMAGE;
+  const minutes = quiz.durationSeconds ? Math.max(1, Math.round(quiz.durationSeconds / 60)) : null;
+
   return (
     <article
       role="button"
       tabIndex={0}
+      aria-label={`Làm bài: ${quiz.title}`}
       onClick={() => onStart(quiz.quizId)}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -87,69 +109,85 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
         }
       }}
       className={cn(
-        "group flex h-full min-h-[190px] cursor-pointer rounded-xl border transition-[border-color,box-shadow] duration-200 md:min-h-[220px] bg-card-light-bg",
-        "hover:border-[rgba(201,162,77,0.55)] hover:shadow-[0_10px_24px_rgba(201,162,77,0.12)]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
-        isActive
-          ? "border-[rgba(201,162,77,0.35)] shadow-[0_10px_24px_rgba(201,162,77,0.14)]"
-          : "border-card-light-border shadow-[0_8px_20px_rgba(27,38,50,0.06)]",
+        "group relative flex h-full cursor-pointer overflow-hidden rounded-[2px] border transition-colors duration-200",
+        "border-[var(--border-strong)] hover:border-[var(--text-primary)] focus-visible:outline-none focus-visible:border-[var(--text-primary)] focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]",
+        featured ? "flex-col md:flex-row" : "flex-col",
+        isActive ? "bg-[var(--accent-gold-active-bg)]" : "bg-[var(--bg-surface)]",
       )}
     >
-      <div className="flex h-full w-full flex-col p-3 md:p-4">
-        <div className="mb-2 flex min-h-7 flex-wrap items-start gap-1.5 md:mb-3 md:gap-2">
-          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold md:text-[11px] bg-accent-gold/10 text-gold-on-light border border-accent-gold/22">
-            {ERA_LABELS[quiz.era] ?? quiz.era}
+      {/* Cover */}
+      <div
+        className={cn(
+          "relative shrink-0 overflow-hidden bg-[var(--bg-deep)]",
+          featured ? "aspect-[16/9] md:aspect-auto md:w-[55%]" : "aspect-[16/9]",
+        )}
+      >
+        <Image
+          src={cover}
+          alt=""
+          fill
+          sizes={featured ? "(max-width: 768px) 100vw, 40vw" : "(max-width: 768px) 50vw, 25vw"}
+          className="archive-photo object-cover group-hover:scale-[1.04]"
+        />
+        <span className="absolute left-0 top-0 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] bg-[var(--text-primary)] text-accent-brass-on-ink">
+          {ERA_LABELS[quiz.era] ?? quiz.era}
+        </span>
+        {featured && (
+          <span className="absolute right-0 top-0 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] bg-[var(--accent-gold)] text-white">
+            Đề nổi bật
           </span>
-          <span
-            className={cn(
-              "rounded-full px-2 py-0.5 text-[10px] font-semibold md:text-[11px] border",
-              levelTone.bg,
-              levelTone.fg,
-              levelTone.border,
-            )}
-          >
-            {LEVEL_LABELS[quiz.level] ?? quiz.level}
-          </span>
-        </div>
+        )}
+      </div>
 
-        <h3 className="min-h-[2.4rem] text-[13px] font-bold leading-snug line-clamp-2 transition-colors md:min-h-[2.75rem] md:text-base text-content-heading">
+      {/* Body */}
+      <div className={cn("flex min-w-0 flex-1 flex-col", featured ? "p-4 md:p-6" : "p-3 md:p-4")}>
+        {quiz.contextTitle && (
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.1em] line-clamp-1 text-accent-gold">
+            {quiz.contextTitle}
+          </p>
+        )}
+
+        <h3
+          className={cn(
+            "archive-title is-plain mt-1 line-clamp-2",
+            featured ? "text-[24px] md:text-[32px]" : "text-[18px] md:text-[20px]",
+          )}
+        >
           {quiz.title}
         </h3>
 
-        <p className="mt-1.5 min-h-4 text-xs line-clamp-1 md:text-sm text-content-muted">
-          {quiz.contextTitle ?? ""}
-        </p>
-
-        <div className="mt-auto flex items-center justify-between gap-2 pt-2.5 md:pt-3 border-t border-card-light-border">
-          <div className="flex items-center gap-3">
-            <div>
-              <p className="text-[10px] uppercase tracking-wide md:text-[11px] text-content-subtle">
-                Lượt làm
-              </p>
-              <p className="text-xs font-bold md:text-sm text-content-heading">
-                {quiz.playCount.toLocaleString("vi-VN")}
-              </p>
-            </div>
+        <div className="mt-auto pt-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <LevelMeter level={quiz.level} />
+            {minutes && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">
+                <Clock className="h-3 w-3" aria-hidden="true" /> {minutes} phút
+              </span>
+            )}
+            {quiz.playCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">
+                <Users className="h-3 w-3" aria-hidden="true" /> {quiz.playCount.toLocaleString("vi-VN")}
+              </span>
+            )}
             {quiz.rating ? (
-              <div className="flex items-center gap-1">
-                <Star size={12} fill="var(--gold-on-light)" color="var(--gold-on-light)" strokeWidth={0} />
-                <span className="text-xs font-bold md:text-sm text-content-heading">
-                  {quiz.rating.toFixed(1)}
-                </span>
-              </div>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-content-text">
+                <Star size={12} fill="var(--accent-gold)" color="var(--accent-gold)" strokeWidth={0} />
+                {quiz.rating.toFixed(1)}
+              </span>
             ) : null}
           </div>
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              onStart(quiz.quizId);
-            }}
-            className="h-8 rounded-lg px-2.5 text-xs font-semibold transition-[filter,transform,box-shadow] duration-200 hover:brightness-110 hover:shadow-[0_10px_22px_rgba(27,38,50,0.22)] active:translate-y-px md:h-9 md:px-3 md:text-sm bg-[var(--abyssal-blue)] text-[var(--text-on-dark)] shadow-[0_8px_18px_rgba(27,38,50,0.16)]"
-          >
-            Làm bài ngay
-          </button>
+
+          <div className="mt-3 flex items-center justify-end border-t border-[var(--border-default)] pt-2.5">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-content-heading transition-colors group-hover:text-accent-gold">
+              Làm bài
+              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
+            </span>
+          </div>
         </div>
       </div>
+
+      {/* Same progress line as the timeline card */}
+      <span className="absolute bottom-0 left-0 h-[3px] w-0 bg-accent-gold transition-all duration-500 ease-out group-hover:w-full" aria-hidden="true" />
     </article>
   );
 }

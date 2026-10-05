@@ -26,3 +26,15 @@ export function useIsCustomer() {
 export function useRole() {
   return useAuthStore((s) => s.user?.role ?? null);
 }
+
+export function useIsSchoolAdmin() {
+  return useAuthStore((s) => s.user?.role === "SCHOOL_ADMIN");
+}
+
+export function useIsTeacher() {
+  return useAuthStore((s) => s.user?.role === "TEACHER");
+}
+
+export function useIsSchoolStudent() {
+  return useAuthStore((s) => s.user?.role === "SCHOOL_STUDENT");
+}

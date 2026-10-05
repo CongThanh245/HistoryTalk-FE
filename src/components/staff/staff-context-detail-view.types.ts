@@ -53,6 +53,8 @@ export interface StaffContextDetailViewProps {
   pendingLabel?: string | null;
   /** If true, start in editing mode immediately (e.g. navigated from Edit button) */
   initialEditing?: boolean;
+  /** Tab to show first, e.g. "characters" when linking characters from the battle map */
+  initialTab?: FormTabKey;
 
   documents?: RagDocument[];
   isLoadingDocuments?: boolean;

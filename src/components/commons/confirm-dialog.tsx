@@ -41,14 +41,10 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const confirmStyles =
     variant === "danger"
-      ? { backgroundColor: "#ef4444", color: "#fff" }
+      ? { backgroundColor: "var(--accent-danger)", color: "#FFFFFF" }
       : variant === "warning"
-        ? {
-            backgroundColor: "var(--accent-gold)",
-            color: "var(--bg-deep)",
-            boxShadow: "0 0 14px var(--accent-gold-glow)",
-          }
-        : { backgroundColor: "var(--accent-blue)", color: "#fff" };
+        ? { backgroundColor: "var(--status-warning)", color: "#FFFFFF" }
+        : { backgroundColor: "var(--accent-gold)", color: "#FFFFFF" };
 
   return (
     <AlertDialog
@@ -59,11 +55,11 @@ export function ConfirmDialog({
       }}
     >
       <AlertDialogContent
-        className="max-w-[400px] rounded-2xl border bg-card-bg border-card-border"
+        className="max-w-[400px] rounded-[2px] border bg-card-bg border-[var(--text-primary)]"
       >
         <AlertDialogHeader className="space-y-3">
           <AlertDialogTitle
-            className="text-xl font-bold text-content-heading"
+            className="archive-title is-plain text-2xl"
           >
             {title}
           </AlertDialogTitle>
@@ -79,14 +75,14 @@ export function ConfirmDialog({
           <AlertDialogCancel
             disabled={isPending}
             onClick={onCancel}
-            className="flex-1 rounded-xl h-11 border transition-all hover:bg-black/[0.03] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60 bg-transparent border-card-border text-content-heading"
+            className="flex-1 rounded-[2px] h-11 border text-[13px] font-bold uppercase tracking-[0.08em] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60 bg-transparent border-[var(--text-primary)] text-content-heading"
           >
             {cancelLabel}
           </AlertDialogCancel>
           <AlertDialogAction
             disabled={isPending}
             className={cn(
-              "flex-1 rounded-xl h-11 border-0 shadow-lg shadow-blue-500/10 transition-all active:scale-[0.98] disabled:pointer-events-none disabled:opacity-70",
+              "flex-1 rounded-[2px] h-11 border-0 text-[13px] font-bold uppercase tracking-[0.08em] transition-[filter,transform] hover:brightness-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-70",
             )}
             style={confirmStyles}
             onClick={(e) => {

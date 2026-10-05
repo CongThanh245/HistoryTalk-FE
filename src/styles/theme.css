@@ -1,294 +1,320 @@
 /* ================================
       HistoryTalk Design Tokens
-      Clean – Premium – Modern
+      Archive: giấy dó – mực – đỏ son – vàng đồng
    ================================ */
 
 :root {
   /* ─────────────────────────────
       Backgrounds
    ───────────────────────────── */
-  --bg-main: #FAFAFA;
-  --bg-deep: #F4F4F5;
-  --bg-content: linear-gradient(180deg, #FAFAFA 0%, #F4F4F5 100%);
-  --bg-surface: #FFFFFF;
-  --bg-elevated: #FFFFFF;
+  --bg-main: #ECE7DC;
+  --bg-deep: #E2DCCF;
+  --bg-content: linear-gradient(180deg, #ECE7DC 0%, #E2DCCF 100%);
+  --bg-surface: #F5F2EA;
+  --bg-elevated: #FAF8F3;
   /* Clean subtle radial glow with historical drum pattern overlay washed out for a premium subtle look */
   --bg-content-decorated: 
-    radial-gradient(circle 800px at 100% 0%, rgba(245, 158, 11, 0.1), transparent),
-    radial-gradient(circle 600px at 0% 100%, rgba(59, 130, 246, 0.02), transparent),
-    linear-gradient(rgba(250, 250, 250, 0.96), rgba(250, 250, 250, 0.96)),
+    radial-gradient(circle 800px at 100% 0%, rgba(184, 50, 31, 0.06), transparent),
+    radial-gradient(circle 600px at 0% 100%, rgba(17, 17, 17, 0.03), transparent),
+    linear-gradient(rgba(236, 231, 220, 0.9), rgba(236, 231, 220, 0.9)),
     url('/copper_drum_pattern.webp') no-repeat center / 800px,
     var(--bg-main);
 
   /* ─────────────────────────────
       Text
    ───────────────────────────── */
-  --text-primary: #09090B;
-  --text-secondary: #3F3F46;
-  --text-tertiary: #71717A;
-  --text-muted: #A1A1AA;
-  --text-inverse: #FFFFFF;
-  --text-on-dark: #FFFFFF;
-  --text-on-dark-muted: rgba(255, 255, 255, 0.7);
+  --text-primary: #111111;
+  --text-secondary: #2E2C29;
+  --text-tertiary: #5F5B55;
+  --text-muted: #8F8A82;
+  --text-inverse: #F5F2EA;
+  --text-on-dark: #F5F2EA;
+  --text-on-dark-muted: rgba(245, 242, 234, 0.7);
 
   /* ─────────────────────────────
-      Brand / Accent — Vibrant Amber
+      Brand / Accent — đỏ son (kept under the historical "gold" token names) + vàng đồng (--accent-brass)
    ───────────────────────────── */
-  --accent-gold: #F59E0B;
-  --accent-gold-soft: #FCD34D;
-  --accent-gold-active-bg: rgba(245, 158, 11, 0.1);
-  --accent-gold-glow: rgba(245, 158, 11, 0.2);
-  --gold-on-light: #D97706;
-  --accent-blue: #3B82F6;
-  --accent-teal: #14B8A6;
+  --accent-gold: #B8321F;
+  --accent-gold-soft: #E89A86;
+  --accent-gold-active-bg: rgba(184, 50, 31, 0.08);
+  --accent-gold-glow: rgba(184, 50, 31, 0.2);
+  --gold-on-light: #9A2A18;
+  --accent-on-ink: #F08C74;
+  --accent-brass: #9A7426;
+  /* Learning energy (gamification): thếp vàng, men lam, ngọc bích */
+  --gold-leaf: #C9961F;
+  --gold-leaf-bg: rgba(201, 150, 31, 0.14);
+  --men-lam: #1F4E9C;
+  --jade: #1E8A6E;
+  --accent-brass-soft: rgba(154, 116, 38, 0.14);
+  --accent-brass-on-ink: #D9B25C;
+  --accent-blue: #2F4A5C;
+  --accent-teal: #3D6B63;
 
   /* ─────────────────────────────
       Emotional / Historical
    ───────────────────────────── */
-  --accent-earth: #78716C;
-  --accent-bronze: #B45309;
-  --accent-blood: #991B1B;
-  --accent-danger: #EF4444;
+  --accent-earth: #6F6A62;
+  --accent-bronze: #7A1F12;
+  --accent-blood: #B8321F;
+  --accent-danger: #C9620E;
 
   /* ─────────────────────────────
       Status
    ───────────────────────────── */
-  --status-success: #D97706; /* Changed from green to gold for luxury feel */
-  --status-success-bg: rgba(217, 119, 6, 0.1);
-  --status-success-border: rgba(217, 119, 6, 0.2);
-  --status-warning: #F59E0B;
-  --status-warning-bg: rgba(245, 158, 11, 0.1);
-  --status-warning-border: rgba(245, 158, 11, 0.2);
-  --status-danger-bg: rgba(239, 68, 68, 0.1);
-  --status-danger-border: rgba(239, 68, 68, 0.2);
-  --status-neutral-bg: rgba(9, 9, 11, 0.05);
-  --status-neutral-border: rgba(9, 9, 11, 0.1);
+  --status-success: #3F6B45;
+  --status-success-bg: rgba(63, 107, 69, 0.1);
+  --status-success-border: rgba(63, 107, 69, 0.24);
+  --status-warning: #B7791F;
+  --status-warning-bg: rgba(183, 121, 31, 0.1);
+  --status-warning-border: rgba(183, 121, 31, 0.24);
+  --status-danger-bg: rgba(201, 98, 14, 0.08);
+  --status-danger-border: rgba(201, 98, 14, 0.24);
+  --status-neutral-bg: rgba(17, 17, 17, 0.05);
+  --status-neutral-border: rgba(17, 17, 17, 0.12);
 
   /* ─────────────────────────────
       Palette
    ───────────────────────────── */
-  --palladian: #FFFFFF;
-  --oatmeal: #F4F4F5;
-  --burning-flame: #F59E0B;
-  --truffle: #B45309;
-  --blue-fantastic: #EFF6FF;
-  --abyssal-blue: #09090B;
+  --palladian: #F5F2EA;
+  --oatmeal: #E2DCCF;
+  --burning-flame: #B8321F;
+  --truffle: #7A1F12;
+  --blue-fantastic: #E8ECEE;
+  --abyssal-blue: #111111;
 
   /* ─────────────────────────────
       Header
    ───────────────────────────── */
-  --header-bg: rgba(255, 255, 255, 0.8);
-  --header-border: rgba(9, 9, 11, 0.08);
-  --header-text: #09090B;
-  --header-text-muted: #71717A;
-  --header-input-bg: rgba(9, 9, 11, 0.04);
-  --content-heading: #09090B;
-  --content-text: #27272A;
-  --content-muted: #52525B;
-  --content-subtle: #A1A1AA;
-  --card-light-bg: #FFFFFF;
-  --card-light-border: rgba(9, 9, 11, 0.08);
-  --card-light-hover: rgba(9, 9, 11, 0.02);
+  --header-bg: rgba(245, 242, 234, 0.88);
+  --header-border: rgba(17, 17, 17, 0.12);
+  --header-text: #111111;
+  --header-text-muted: #5F5B55;
+  --header-input-bg: rgba(17, 17, 17, 0.04);
+  --content-heading: #111111;
+  --content-text: #2E2C29;
+  --content-muted: #5F5B55;
+  --content-subtle: #8F8A82;
+  --card-light-bg: #F5F2EA;
+  --card-light-border: rgba(17, 17, 17, 0.16);
+  --card-light-hover: rgba(184, 50, 31, 0.04);
 
   /* ─────────────────────────────
       Streak counter
    ───────────────────────────── */
-  --streak-bg: rgba(245, 158, 11, 0.1);
-  --streak-border: rgba(245, 158, 11, 0.2);
-  --streak-text: #D97706;
-  --streak-text-muted: rgba(217, 119, 6, 0.7);
+  --streak-bg: rgba(184, 50, 31, 0.08);
+  --streak-border: rgba(184, 50, 31, 0.22);
+  --streak-text: #9A2A18;
+  --streak-text-muted: rgba(158, 19, 40, 0.7);
 
   /* ─────────────────────────────
       Quest categories
    ───────────────────────────── */
-  --quest-chat: #F97316;
-  --quest-chat-bg: rgba(249, 115, 22, 0.1);
-  --quest-quiz: #8B5CF6;
-  --quest-quiz-bg: rgba(139, 92, 246, 0.1);
-  --quest-read: #14B8A6;
-  --quest-read-bg: rgba(20, 184, 166, 0.1);
+  --quest-chat: #B8321F;
+  --quest-chat-bg: rgba(184, 50, 31, 0.08);
+  --quest-quiz: #1F4E9C;
+  --quest-quiz-bg: rgba(31, 78, 156, 0.1);
+  --quest-read: #1E8A6E;
+  --quest-read-bg: rgba(30, 138, 110, 0.1);
 
   /* ─────────────────────────────
       Sidebar
    ───────────────────────────── */
-  --sidebar-bg: #FFFFFF;
-  --sidebar-border: rgba(9, 9, 11, 0.08);
-  --sidebar-hover-bg: rgba(9, 9, 11, 0.04);
-  --sidebar-nav-text: #27272A;
-  --sidebar-nav-icon: rgba(39, 39, 42, 0.6);
-  --sidebar-active-text: #09090B;
-  --sidebar-section-label: #71717A;
+  --sidebar-bg: #F5F2EA;
+  --sidebar-border: rgba(17, 17, 17, 0.12);
+  --sidebar-hover-bg: rgba(17, 17, 17, 0.05);
+  --sidebar-nav-text: #2E2C29;
+  --sidebar-nav-icon: rgba(46, 44, 41, 0.6);
+  --sidebar-active-text: #111111;
+  --sidebar-section-label: #5F5B55;
   --sidebar-pin-active: var(--accent-gold);
-  --sidebar-pin-inactive: rgba(9, 9, 11, 0.2);
+  --sidebar-pin-inactive: rgba(17, 17, 17, 0.2);
 
   /* ─────────────────────────────
       Borders & Lines
    ───────────────────────────── */
-  --border-default: rgba(9, 9, 11, 0.08);
-  --border-strong: rgba(9, 9, 11, 0.15);
+  --border-default: rgba(17, 17, 17, 0.14);
+  --border-strong: rgba(17, 17, 17, 0.32);
 
   /* ─────────────────────────────
       Shadows
    ───────────────────────────── */
-  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-  --shadow-strong: 0 10px 40px -4px rgba(0, 0, 0, 0.1);
-  --shadow-gold: 0 8px 30px -4px rgba(245, 158, 11, 0.2);
+  --shadow-soft: 0 6px 24px -6px rgba(0, 0, 0, 0.12);
+  --shadow-strong: 0 10px 40px -4px rgba(0, 0, 0, 0.16);
+  --shadow-gold: 0 8px 30px -4px rgba(184, 50, 31, 0.2);
 
   /* ─────────────────────────────
       Home Banner
    ───────────────────────────── */
-  --home-banner-bg: linear-gradient(135deg, #FFFFFF 0%, #FFFBEB 100%);
-  --home-banner-border: rgba(245, 158, 11, 0.1);
-  --home-banner-shadow: 0 10px 30px -5px rgba(245, 158, 11, 0.1);
-  --home-banner-title: #09090B;
-  --home-banner-text: #52525B;
-  --home-banner-button-bg: #09090B;
-  --home-banner-button-hover-bg: #27272A;
-  --home-banner-button-border: #09090B;
-  --home-banner-button-hover-border: #27272A;
-  --home-banner-button-text: #FFFFFF;
-  --home-banner-card-bg: #FFFFFF;
-  --home-banner-card-border: rgba(245, 158, 11, 0.15);
-  --home-banner-card-footer: #FAFAFA;
-  --home-banner-card-fade: #FFFFFF;
+  --home-banner-bg: linear-gradient(135deg, #F5F2EA 0%, #EAE3D3 100%);
+  --home-banner-border: rgba(17, 17, 17, 0.14);
+  --home-banner-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+  --home-banner-title: #111111;
+  --home-banner-text: #5F5B55;
+  --home-banner-button-bg: #111111;
+  --home-banner-button-hover-bg: #2E2C29;
+  --home-banner-button-border: #111111;
+  --home-banner-button-hover-border: #2E2C29;
+  --home-banner-button-text: #F5F2EA;
+  --home-banner-card-bg: #F5F2EA;
+  --home-banner-card-border: rgba(17, 17, 17, 0.14);
+  --home-banner-card-footer: #ECE7DC;
+  --home-banner-card-fade: #F5F2EA;
 
   /* ─────────────────────────────
       Era filter
    ───────────────────────────── */
-  --era-filter-active-bg: #09090B;
-  --era-filter-active-text: #FFFFFF;
-  --era-filter-bg: #FFFFFF;
-  --era-filter-text: #3F3F46;
-  --era-filter-border: rgba(9, 9, 11, 0.08);
-  --era-filter-count-bg: rgba(9, 9, 11, 0.05);
-  --era-filter-count-text: #52525B;
+  --era-filter-active-bg: #111111;
+  --era-filter-active-text: #F5F2EA;
+  --era-filter-bg: #F5F2EA;
+  --era-filter-text: #2E2C29;
+  --era-filter-border: rgba(17, 17, 17, 0.14);
+  --era-filter-count-bg: rgba(17, 17, 17, 0.06);
+  --era-filter-count-text: #5F5B55;
 
   /* ─────────────────────────────
       Radius
    ───────────────────────────── */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
 }
 
 .dark {
   color-scheme: dark;
 
-  /* Softer dark backgrounds for a premium, less heavy look */
-  --bg-main: #141416;
-  --bg-deep: #0D0D10;
-  --bg-content: linear-gradient(180deg, #141416 0%, #0D0D10 100%);
-  --bg-surface: #1E1E22;
-  --bg-elevated: #29292F;
+  /* Charcoal darks; paper-coloured text; brighter crimson for contrast */
+  --bg-main: #141312;
+  --bg-deep: #0D0C0B;
+  --bg-content: linear-gradient(180deg, #141312 0%, #0D0C0B 100%);
+  --bg-surface: #1E1C1A;
+  --bg-elevated: #2A2724;
   
   --bg-content-decorated: 
-    radial-gradient(circle 800px at 100% 0%, rgba(245, 158, 11, 0.08), transparent),
-    radial-gradient(circle 600px at 0% 100%, rgba(255, 255, 255, 0.02), transparent),
-    linear-gradient(rgba(20, 20, 22, 0.96), rgba(20, 20, 22, 0.96)),
+    radial-gradient(circle 800px at 100% 0%, rgba(224, 100, 74, 0.1), transparent),
+    radial-gradient(circle 600px at 0% 100%, rgba(237, 234, 227, 0.03), transparent),
+    linear-gradient(rgba(20, 19, 18, 0.88), rgba(20, 19, 18, 0.88)),
     url('/copper_drum_pattern.webp') no-repeat center / 800px,
     var(--bg-main);
 
-  --text-primary: #FAFAFA;
-  --text-secondary: #D4D4D8;
-  --text-tertiary: #A1A1AA;
-  --text-muted: #71717A;
-  --text-inverse: #09090B;
-  --text-on-dark: #FFFFFF;
-  --text-on-dark-muted: rgba(255, 255, 255, 0.6);
+  --text-primary: #EDEAE3;
+  --text-secondary: #CFCAC0;
+  --text-tertiary: #9C968C;
+  --text-muted: #6E6962;
+  --text-inverse: #111111;
+  --text-on-dark: #F5F2EA;
+  --text-on-dark-muted: rgba(245, 242, 234, 0.65);
 
-  --accent-gold: #F59E0B;
-  --accent-gold-soft: #FDE68A;
-  --accent-gold-active-bg: rgba(245, 158, 11, 0.15);
-  --accent-gold-glow: rgba(245, 158, 11, 0.3);
-  --gold-on-light: #FCD34D;
-  --accent-blue: #60A5FA;
-  --accent-teal: #2DD4BF;
+  --accent-gold: #E0644A;
+  --accent-gold-soft: #F4B3A3;
+  --accent-gold-active-bg: rgba(224, 100, 74, 0.16);
+  --accent-gold-glow: rgba(224, 100, 74, 0.3);
+  --gold-on-light: #F08C74;
+  --accent-on-ink: #9A2A18;
+  --accent-brass: #D4A853;
+  --gold-leaf: #E8B84A;
+  --gold-leaf-bg: rgba(232, 184, 74, 0.16);
+  --men-lam: #7FA6E8;
+  --jade: #4CC3A0;
+  --accent-brass-soft: rgba(212, 168, 83, 0.14);
+  --accent-brass-on-ink: #7A5A18;
+  --accent-blue: #8FA9BA;
+  --accent-teal: #7FB0A6;
   
-  --accent-earth: #A8A29E;
-  --accent-bronze: #F59E0B;
-  --accent-blood: #F87171;
-  --accent-danger: #EF4444;
+  --accent-earth: #9C968C;
+  --accent-bronze: #C2482F;
+  --accent-blood: #E0644A;
+  --accent-danger: #F29A4A;
 
-  --status-success: #F59E0B; /* Changed from green to gold */
-  --status-success-bg: rgba(245, 158, 11, 0.1);
-  --status-success-border: rgba(245, 158, 11, 0.2);
-  --status-warning: #FBBF24;
-  --status-warning-bg: rgba(251, 191, 36, 0.1);
-  --status-warning-border: rgba(251, 191, 36, 0.2);
-  --status-danger-bg: rgba(248, 113, 113, 0.1);
-  --status-danger-border: rgba(248, 113, 113, 0.2);
-  --status-neutral-bg: rgba(250, 250, 250, 0.05);
-  --status-neutral-border: rgba(250, 250, 250, 0.1);
+  --status-success: #86B08C;
+  --status-success-bg: rgba(134, 176, 140, 0.12);
+  --status-success-border: rgba(134, 176, 140, 0.25);
+  --status-warning: #E0B04B;
+  --status-warning-bg: rgba(224, 176, 75, 0.1);
+  --status-warning-border: rgba(224, 176, 75, 0.22);
+  --status-danger-bg: rgba(242, 154, 74, 0.1);
+  --status-danger-border: rgba(242, 154, 74, 0.24);
+  --status-neutral-bg: rgba(237, 234, 227, 0.05);
+  --status-neutral-border: rgba(237, 234, 227, 0.1);
   
-  --burning-flame: #F59E0B;
-  --truffle: #FCD34D;
-  --blue-fantastic: #1E293B;
-  --abyssal-blue: #09090B;
+  --burning-flame: #E0644A;
+  --truffle: #9A2A18;
+  --blue-fantastic: #1D2328;
+  --abyssal-blue: #0D0C0B;
 
-  --palladian: #09090B;
-  --oatmeal: rgba(255, 255, 255, 0.05);
-  --header-bg: rgba(0, 0, 0, 0.85);
-  --header-border: rgba(255, 255, 255, 0.08);
-  --header-text: #FAFAFA;
-  --header-text-muted: #A1A1AA;
-  --header-input-bg: rgba(255, 255, 255, 0.05);
-  --content-heading: #FAFAFA;
-  --content-text: #E4E4E7;
-  --content-muted: #A1A1AA;
-  --content-subtle: #71717A;
-  --card-light-bg: #1E1E22;
-  --card-light-border: rgba(255, 255, 255, 0.08);
-  --card-light-hover: rgba(255, 255, 255, 0.03);
+  --palladian: #0D0C0B;
+  --oatmeal: rgba(237, 234, 227, 0.05);
+  --header-bg: rgba(13, 12, 11, 0.85);
+  --header-border: rgba(237, 234, 227, 0.1);
+  --header-text: #EDEAE3;
+  --header-text-muted: #9C968C;
+  --header-input-bg: rgba(237, 234, 227, 0.05);
+  --content-heading: #EDEAE3;
+  --content-text: #DDD8CE;
+  --content-muted: #9C968C;
+  --content-subtle: #6E6962;
+  --card-light-bg: #1E1C1A;
+  --card-light-border: rgba(237, 234, 227, 0.12);
+  --card-light-hover: rgba(224, 100, 74, 0.05);
 
-  --sidebar-bg: rgba(0, 0, 0, 0.85);
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-hover-bg: rgba(245, 158, 11, 0.08);
-  --sidebar-nav-text: #A1A1AA;
-  --sidebar-nav-icon: rgba(161, 161, 170, 0.6);
+  --sidebar-bg: rgba(10, 9, 8, 0.92);
+  --sidebar-border: rgba(237, 234, 227, 0.1);
+  --sidebar-hover-bg: rgba(224, 100, 74, 0.1);
+  --sidebar-nav-text: #9C968C;
+  --sidebar-nav-icon: rgba(156, 150, 140, 0.65);
   --sidebar-active-text: var(--accent-gold-soft);
-  --sidebar-section-label: #71717A;
+  --sidebar-section-label: #6E6962;
   --sidebar-pin-active: var(--accent-gold);
-  --sidebar-pin-inactive: rgba(255, 255, 255, 0.2);
+  --sidebar-pin-inactive: rgba(237, 234, 227, 0.2);
 
-  --border-default: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.15);
+  --border-default: rgba(237, 234, 227, 0.1);
+  --border-strong: rgba(237, 234, 227, 0.2);
   
   --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
   --shadow-strong: 0 10px 40px -4px rgba(0, 0, 0, 0.7);
-  --shadow-gold: 0 8px 30px -4px rgba(245, 158, 11, 0.15);
+  --shadow-gold: 0 8px 30px -4px rgba(224, 100, 74, 0.18);
 
-  --home-banner-bg: linear-gradient(135deg, #1E1E22 0%, #141416 100%);
-  --home-banner-border: rgba(255, 255, 255, 0.05);
+  --home-banner-bg: linear-gradient(135deg, #24211E 0%, #141312 100%);
+  --home-banner-border: rgba(237, 234, 227, 0.08);
   --home-banner-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
-  --home-banner-title: #FAFAFA;
-  --home-banner-text: #A1A1AA;
-  --home-banner-button-bg: #FAFAFA;
-  --home-banner-button-hover-bg: #E4E4E7;
-  --home-banner-button-border: #FAFAFA;
-  --home-banner-button-hover-border: #E4E4E7;
-  --home-banner-button-text: #09090B;
-  --home-banner-card-bg: #1E1E22;
-  --home-banner-card-border: rgba(255, 255, 255, 0.08);
-  --home-banner-card-footer: #141416;
-  --home-banner-card-fade: #1E1E22;
+  --home-banner-title: #EDEAE3;
+  --home-banner-text: #9C968C;
+  --home-banner-button-bg: #EDEAE3;
+  --home-banner-button-hover-bg: #D6D1C7;
+  --home-banner-button-border: #EDEAE3;
+  --home-banner-button-hover-border: #D6D1C7;
+  --home-banner-button-text: #111111;
+  --home-banner-card-bg: #1E1C1A;
+  --home-banner-card-border: rgba(237, 234, 227, 0.1);
+  --home-banner-card-footer: #141312;
+  --home-banner-card-fade: #1E1C1A;
 
-  --era-filter-active-bg: #FAFAFA;
-  --era-filter-active-text: #09090B;
-  --era-filter-bg: #1E1E22;
-  --era-filter-text: #D4D4D8;
-  --era-filter-border: rgba(255, 255, 255, 0.08);
-  --era-filter-count-bg: rgba(255, 255, 255, 0.05);
-  --era-filter-count-text: #A1A1AA;
+  --era-filter-active-bg: #EDEAE3;
+  --era-filter-active-text: #111111;
+  --era-filter-bg: #1E1C1A;
+  --era-filter-text: #CFCAC0;
+  --era-filter-border: rgba(237, 234, 227, 0.1);
+  --era-filter-count-bg: rgba(237, 234, 227, 0.06);
+  --era-filter-count-text: #9C968C;
 
-  --streak-bg: rgba(251, 191, 36, 0.1);
-  --streak-border: rgba(251, 191, 36, 0.2);
-  --streak-text: #FBBF24;
-  --streak-text-muted: rgba(251, 191, 36, 0.6);
+  --streak-bg: rgba(224, 100, 74, 0.12);
+  --streak-border: rgba(224, 100, 74, 0.25);
+  --streak-text: #F08C74;
+  --streak-text-muted: rgba(240, 138, 153, 0.6);
 
-  --quest-chat: #FB923C;
-  --quest-chat-bg: rgba(251, 146, 60, 0.15);
-  --quest-quiz: #A78BFA;
-  --quest-quiz-bg: rgba(167, 139, 250, 0.15);
-  --quest-read: #2DD4BF;
-  --quest-read-bg: rgba(45, 212, 191, 0.15);
+  --quest-chat: #E0644A;
+  --quest-chat-bg: rgba(224, 100, 74, 0.15);
+  --quest-quiz: #7FA6E8;
+  --quest-quiz-bg: rgba(127, 166, 232, 0.15);
+  --quest-read: #4CC3A0;
+  --quest-read-bg: rgba(76, 195, 160, 0.15);
+}
+
+/* ─────────────────────────────
+    Sidebar active item (light mode)
+    Paper sidebar; the current page is a solid crimson block.
+ ───────────────────────────── */
+:root:not(.dark) .sidebar-ink {
+  --accent-gold-active-bg: #B8321F;
+  --sidebar-active-text: #FFFFFF;
 }

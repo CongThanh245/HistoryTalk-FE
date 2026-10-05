@@ -15,6 +15,7 @@ import {
 } from "@/features/chat/hooks";
 import { chatService } from "@/services/chat.service";
 import { useQueryClient } from "@tanstack/react-query";
+import { recordStudyActivity } from "@/features/gamification/study-check-in";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { queryKeys } from "@/shared/query-key";
 import { Avatar3DModal } from "./Avatar3DModal";
@@ -24,6 +25,7 @@ import { isValidUrl } from "@/lib/utils/url";
 import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
+import { useEntitlements } from "@/features/saas/entitlements";
 import { hasPlusAccess, hasProAccess } from "@/services/user.service";
 import { isTokenExhaustionError } from "@/lib/utils/api-error";
 import { useSidebar } from "@/components/layouts/sidebar/sidebar-context";
@@ -159,6 +161,10 @@ export function ChatMain({
   const [isLocalTokenExhausted, setIsLocalTokenExhausted] = useState(false);
   const isTokenExhausted = isTokenExhaustedFromParent || isLocalTokenExhausted;
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+  // Teacher / School Student tokens come from the school's daily quota; they cannot buy plans.
+  const entitlements = useEntitlements();
+  const isSchoolAccount = entitlements.mode === "B2B";
+  const canUpgrade = entitlements.canPurchase;
   const [aiWarningVisible, setAiWarningVisible] = useState(false);
   const [aiWarningLeaving, setAiWarningLeaving] = useState(false);
   const dismissedCallModeRef = useRef<"2d" | "3d" | null>(null);
@@ -356,11 +362,14 @@ export function ChatMain({
     !isStreaming &&
     !isTokenExhausted &&
     !!sessionId &&
-    hasPlusAccess(accessUser);
+    (isSchoolAccount ? entitlements.voiceCall : hasPlusAccess(accessUser));
   const sessionIdRef = useRef(sessionId);
   const isStaffOrAdmin = user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN";
-  const canUseVoiceCall = isStaffOrAdmin || hasPlusAccess(accessUser);
-  const canUseVideoCall = isStaffOrAdmin || hasProAccess(accessUser);
+  // Customers unlock calls with their personal tier; school accounts with the school package.
+  const canUseVoiceCall =
+    isStaffOrAdmin || (isSchoolAccount ? entitlements.voiceCall : hasPlusAccess(accessUser));
+  const canUseVideoCall =
+    isStaffOrAdmin || (isSchoolAccount ? entitlements.videoCall : hasProAccess(accessUser));
   const isConversationInitializing = !sessionId;
   const requestedCallMode = searchParams.get("call");
 
@@ -383,8 +392,12 @@ export function ChatMain({
   );
 
   const handleLockedFeatureClick = useCallback(() => {
+    if (!canUpgrade) {
+      toast.info(entitlements.upgradeHint || "Tính năng này chưa có trong gói trường học của bạn.");
+      return;
+    }
     setIsUpgradeOpen(true);
-  }, []);
+  }, [canUpgrade, entitlements.upgradeHint]);
 
   useEffect(() => {
     sessionIdRef.current = sessionId;
@@ -616,6 +629,8 @@ export function ChatMain({
         setIsStreaming(false);
         setOptimisticMessages([]);
         setSuggestedQuestions(resData.suggestedQuestions || []);
+        // A finished reply is a study activity: check in today's streak (once per day).
+        recordStudyActivity(qc);
         
         // Update tokens correctly, using values from resData or defaulting to 0
         setLastTokenUsage((prev) => ({
@@ -688,13 +703,17 @@ export function ChatMain({
         if (isTokenExhaustionError(err)) {
           setIsLocalTokenExhausted(true);
           onTokenExhausted?.();
-          toast.error("Bạn đã hết token. Vui lòng nạp thêm để tiếp tục chat.", {
-            action: {
-              label: "Nạp thêm",
-              onClick: () => setIsUpgradeOpen(true),
-            },
-            duration: 8000,
-          });
+          if (canUpgrade) {
+            toast.error("Bạn đã hết token. Vui lòng nạp thêm để tiếp tục chat.", {
+              action: {
+                label: "Nạp thêm",
+                onClick: () => setIsUpgradeOpen(true),
+              },
+              duration: 8000,
+            });
+          } else {
+            toast.error("Bạn đã dùng hết hạn mức token hôm nay do trường cấp. Hạn mức làm mới lúc 00:00.", { duration: 8000 });
+          }
         } else {
           toast.error("Không thể gửi tin nhắn");
         }
@@ -707,19 +726,19 @@ export function ChatMain({
     <div className="relative flex-1 flex flex-col min-w-0 h-full overflow-hidden">
       {/* Header */}
       <div
-        className="px-4 md:px-6 py-4 border-b border-border-default flex items-center gap-3 shrink-0 bg-bg-main"
+        className="px-4 md:px-6 py-3.5 border-b border-[var(--text-primary)] flex items-center gap-3 shrink-0 bg-bg-main"
       >
         {/* Mobile hamburger: open website sidebar */}
         <button
           onClick={toggleMobileSidebar}
-          className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95 text-content-text"
+          className="md:hidden w-8 h-8 flex items-center justify-center rounded-[2px] cursor-pointer hover:bg-[var(--status-neutral-bg)] active:scale-95 text-content-text"
           aria-label="Mở menu"
         >
           <Menu className="w-5 h-5" />
         </button>
 
         <div
-          className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-bg-elevated"
+          className="w-11 h-11 rounded-[2px] flex items-center justify-center shrink-0 overflow-hidden bg-[var(--bg-deep)] border border-[var(--text-primary)]"
         >
           {!headerAvatarBroken && isValidUrl(character.imageUrl) ? (
             <img
@@ -730,7 +749,7 @@ export function ChatMain({
             />
           ) : (
             <ScrollText
-              className="w-6 h-6 text-bg-deep"
+              className="w-6 h-6 text-content-muted"
             />
           )}
         </div>
@@ -738,7 +757,7 @@ export function ChatMain({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 min-w-0">
             <h2
-              className="text-sm font-bold truncate text-content-heading"
+              className="archive-title is-plain text-[19px] truncate"
             >
               {character.name}
             </h2>
@@ -748,7 +767,7 @@ export function ChatMain({
                   <button
                     type="button"
                     aria-label="Lưu ý về độ chính xác của AI"
-                    className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 bg-(--accent-gold-active-bg) text-accent-gold"
+                    className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 border border-[var(--border-strong)] text-content-muted hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]"
                   >
                     <span className="text-[10px] font-bold leading-none">!</span>
                   </button>
@@ -757,7 +776,7 @@ export function ChatMain({
                   side="top"
                   align="start"
                   sideOffset={10}
-                  className="max-w-[min(380px,90vw)] whitespace-normal bg-bg-elevated border border-border-default text-content-heading"
+                  className="max-w-[min(380px,90vw)] whitespace-normal rounded-[2px] bg-bg-elevated border border-[var(--text-primary)] text-content-heading shadow-(--shadow-soft)"
                 >
                   <p className="text-xs leading-relaxed">
                     AI có thể đưa ra thông tin không chính xác. Hãy kiểm chứng lại các thông tin quan trọng.
@@ -766,7 +785,7 @@ export function ChatMain({
                     href={AI_FEEDBACK_FORM_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-1 inline-block text-xs font-semibold underline text-accent-gold"
+                    className="mt-1 inline-block text-xs font-semibold underline underline-offset-2 text-(--gold-on-light)"
                   >
                     Báo lỗi qua form
                   </a>
@@ -782,7 +801,7 @@ export function ChatMain({
               )}
             >
               <AlertTriangle
-                className="w-3 h-3 shrink-0 text-accent-gold"
+                className="w-3 h-3 shrink-0 text-(--status-warning)"
               />
               <span className="flex-1 min-w-0 truncate">
                 AI có thể đưa ra thông tin không chính xác. Hãy kiểm chứng lại các thông tin quan trọng.
@@ -796,7 +815,7 @@ export function ChatMain({
               </button>
             </div>
           ) : (
-            <p className="text-[11px] truncate text-content-text">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] truncate text-content-muted">
               {character.title}
             </p>
           )}
@@ -807,29 +826,37 @@ export function ChatMain({
           onClick={handleOpenVoice2DCall}
           disabled={isConversationInitializing || (canUseVoiceCall && isTokenExhausted)}
           aria-label={
-            canUseVoiceCall ? `Gọi thoại với ${character.name}` : "Mở nâng cấp gói Plus"
+            canUseVoiceCall
+              ? `Gọi thoại với ${character.name}`
+              : isSchoolAccount
+                ? "Gọi thoại chưa có trong gói của trường"
+                : "Mở nâng cấp gói Plus"
           }
           title={
             !canUseVoiceCall
-              ? "Gọi thoại có trong gói Plus. Bấm để xem các gói nâng cấp."
+              ? isSchoolAccount
+                ? "Gọi thoại chưa có trong gói của trường. Bấm để xem hướng dẫn."
+                : "Gọi thoại có trong gói Plus. Bấm để xem các gói nâng cấp."
               : isTokenExhausted
-              ? "Bạn đã hết token. Vui lòng nâng cấp để gọi thoại."
+              ? isSchoolAccount
+                ? "Đã hết hạn mức hôm nay. Hạn mức làm mới lúc 00:00."
+                : "Bạn đã hết token. Vui lòng nâng cấp để gọi thoại."
               : sessionId
                 ? `Gọi thoại với ${character.name}`
                 : "Đang khởi tạo..."
           }
           className={cn(
-            "w-8 h-8 flex items-center justify-center rounded-full transition-all hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
+            "group/call w-8 h-8 flex items-center justify-center rounded-[2px] transition-colors active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
             showVoiceNudge && "voice-call-nudge",
             canUseVoiceCall
-              ? "bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.3)]"
-              : "bg-[rgba(148,163,184,0.08)] border border-[rgba(148,163,184,0.22)] opacity-56",
+              ? "bg-transparent border border-[var(--text-primary)] hover:bg-[var(--text-primary)]"
+              : "bg-transparent border border-[var(--border-strong)] opacity-56",
           )}
         >
           <Phone
             className={cn(
               "w-4 h-4",
-              canUseVoiceCall ? "text-accent-gold" : "text-content-text"
+              canUseVoiceCall ? "text-[var(--text-primary)] group-hover/call:text-[var(--text-inverse)]" : "text-content-text"
             )}
           />
         </button>
@@ -838,29 +865,37 @@ export function ChatMain({
           onClick={handleOpenVoice3DCall}
           disabled={isConversationInitializing || (canUseVideoCall && isTokenExhausted)}
           aria-label={
-            canUseVideoCall ? `Video call 3D với ${character.name}` : "Mở nâng cấp gói Pro"
+            canUseVideoCall
+              ? `Video call 3D với ${character.name}`
+              : isSchoolAccount
+                ? "Video call 3D chưa có trong gói của trường"
+                : "Mở nâng cấp gói Pro"
           }
           title={
             !canUseVideoCall
-              ? "Video call có trong gói Pro. Bấm để xem các gói nâng cấp."
+              ? isSchoolAccount
+                ? "Video call 3D chưa có trong gói của trường. Bấm để xem hướng dẫn."
+                : "Video call có trong gói Pro. Bấm để xem các gói nâng cấp."
               : isTokenExhausted
-              ? "Bạn đã hết token. Vui lòng nâng cấp để gọi 3D."
+              ? isSchoolAccount
+                ? "Đã hết hạn mức hôm nay. Hạn mức làm mới lúc 00:00."
+                : "Bạn đã hết token. Vui lòng nâng cấp để gọi 3D."
               : sessionId
                 ? `Video call 3D với ${character.name}`
                 : "Đang khởi tạo..."
           }
           className={cn(
-            "w-8 h-8 flex items-center justify-center rounded-full transition-all hover:brightness-110 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
+            "group/call w-8 h-8 flex items-center justify-center rounded-[2px] transition-colors active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
             showVoiceNudge && "voice-call-nudge voice-call-nudge--delay",
             canUseVideoCall
-              ? "bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.3)]"
-              : "bg-[rgba(148,163,184,0.08)] border border-[rgba(148,163,184,0.22)] opacity-56",
+              ? "bg-transparent border border-[var(--text-primary)] hover:bg-[var(--text-primary)]"
+              : "bg-transparent border border-[var(--border-strong)] opacity-56",
           )}
         >
           <Video
             className={cn(
               "w-4 h-4",
-              canUseVideoCall ? "fill-current text-accent-gold" : "text-content-text"
+              canUseVideoCall ? "fill-current text-[var(--text-primary)] group-hover/call:text-[var(--text-inverse)]" : "text-content-text"
             )}
           />
         </button>
@@ -870,8 +905,8 @@ export function ChatMain({
           <button
             onClick={toggleRightPanel}
             className={cn(
-              "md:hidden w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer hover:bg-white/5 active:scale-95",
-              isRightOpen ? "text-accent-gold" : "text-content-text",
+              "md:hidden w-8 h-8 flex items-center justify-center rounded-[2px] cursor-pointer active:scale-95",
+              isRightOpen ? "bg-[var(--text-primary)] text-[var(--text-inverse)]" : "text-content-text hover:bg-[var(--status-neutral-bg)]",
             )}
             aria-label="Mở bảng điều khiển"
           >
@@ -885,14 +920,14 @@ export function ChatMain({
         {isLoading ? (
           <div className="flex justify-center py-10">
             <div
-              className="w-5 h-5 rounded-full border-2 border-accent-gold border-t-transparent animate-spin"
+              className="w-5 h-5 rounded-full border-2 border-[var(--text-primary)] border-t-transparent animate-spin"
             />
           </div>
         ) : !sessionId ? (
           <>
             {initializingLabel && (
               <p
-                className="px-4 pb-2 text-xs text-center text-content-text"
+                className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-center text-content-muted"
               >
                 {initializingLabel}
               </p>
@@ -948,7 +983,7 @@ export function ChatMain({
               <button
                 key={i}
                 onClick={() => handleSend(q)}
-                className="text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-all hover:border-accent-gold bg-bg-elevated border-border-default text-content-text"
+                className="text-xs text-left px-3 py-1.5 rounded-[2px] border cursor-pointer transition-colors bg-transparent border-[var(--border-strong)] text-content-text hover:bg-[var(--text-primary)] hover:border-[var(--text-primary)] hover:text-[var(--text-inverse)]"
               >
                 {q}
               </button>
@@ -972,7 +1007,7 @@ export function ChatMain({
             ) : (
               <>
                 <div className="flex items-center gap-1.5">
-                  <Coins className="w-3 h-3 text-accent-gold" />
+                  <Coins className="w-3 h-3 text-content-muted" />
                   <span>Còn lại: <strong className="tabular-nums text-content-text">{lastTokenUsage.remainingTokens.toLocaleString()}</strong></span>
                 </div>
                 <span className="w-px h-3 bg-(--border-default)" />
@@ -987,20 +1022,26 @@ export function ChatMain({
 
       {isTokenExhausted && (
         <div 
-          className="px-4 py-2.5 border-t border-b border-[rgba(212,175,55,0.25)] flex items-center justify-between gap-3 text-xs shrink-0 backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 bg-[rgba(212,175,55,0.08)]"
+          className="px-4 py-2.5 border-t border-b border-[var(--text-primary)] flex items-center justify-between gap-3 text-xs shrink-0 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 bg-(--accent-gold-active-bg)"
         >
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[var(--accent-gold)] animate-pulse shrink-0" />
             <span className="text-content-text">
-              Bạn đã dùng hết số token giới hạn. Vui lòng nâng cấp gói để tiếp tục cuộc trò chuyện.
+              {canUpgrade
+                ? "Bạn đã dùng hết số token giới hạn. Vui lòng nâng cấp gói để tiếp tục cuộc trò chuyện."
+                : `Bạn đã dùng hết hạn mức token hôm nay do trường cấp${
+                    entitlements.dailyQuota ? ` (${entitlements.dailyQuota.toLocaleString("vi-VN")} token)` : ""
+                  }. Hạn mức sẽ được làm mới lúc 00:00.`}
             </span>
           </div>
-          <button
-            onClick={() => setIsUpgradeOpen(true)}
-            className="px-3 py-1.5 rounded-lg text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-110 active:scale-95 shrink-0 cursor-pointer bg-gradient-to-br from-accent-gold to-(--truffle)"
-          >
-            Nâng cấp ngay
-          </button>
+          {canUpgrade && (
+            <button
+              onClick={() => setIsUpgradeOpen(true)}
+              className="btn-crimson min-h-0 px-3 py-1.5 text-[11px] active:scale-95 shrink-0 cursor-pointer"
+            >
+              Nâng cấp ngay
+            </button>
+          )}
         </div>
       )}
 
@@ -1015,7 +1056,7 @@ export function ChatMain({
       <style>{`
         .voice-call-nudge {
           animation: voiceCallNudge 1.15s ease-in-out 4;
-          box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.36);
+          box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-gold) 36%, transparent);
           transform-origin: 50% 50%;
         }
 
@@ -1026,7 +1067,7 @@ export function ChatMain({
         @keyframes voiceCallNudge {
           0%, 100% {
             transform: translateX(0) rotate(0deg) scale(1);
-            box-shadow: 0 0 0 0 rgba(201, 168, 76, 0);
+            box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-gold) 0%, transparent);
             filter: brightness(1);
           }
           12% {
@@ -1034,7 +1075,7 @@ export function ChatMain({
           }
           24% {
             transform: translateX(1px) rotate(5deg) scale(1.07);
-            box-shadow: 0 0 0 5px rgba(201, 168, 76, 0.16);
+            box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent-gold) 16%, transparent);
             filter: brightness(1.28);
           }
           36% {
@@ -1042,7 +1083,7 @@ export function ChatMain({
           }
           52% {
             transform: translateX(1px) rotate(3deg) scale(1.06);
-            box-shadow: 0 0 0 8px rgba(201, 168, 76, 0);
+            box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent-gold) 0%, transparent);
             filter: brightness(1.18);
           }
           68% {
@@ -1105,7 +1146,7 @@ export function ChatMain({
         onOpenCitation={onOpenCitation}
       />
 
-      <UpgradeProDialog open={isUpgradeOpen} onOpenChange={setIsUpgradeOpen} />
+      {canUpgrade && <UpgradeProDialog open={isUpgradeOpen} onOpenChange={setIsUpgradeOpen} />}
     </div>
   );
 }
@@ -1122,24 +1163,24 @@ function VoiceCallBubble({
   return (
     <div className="flex justify-end px-4 mb-4">
       <div
-        className="w-[240px] overflow-hidden rounded-2xl border shadow-lg bg-bg-elevated border-(--border-strong)"
+        className="w-[240px] overflow-hidden rounded-[2px] border bg-bg-surface border-[var(--text-primary)]"
       >
         <button
           type="button"
           onClick={() => onOpen(call)}
           aria-label={`Mở chi tiết cuộc gọi thoại lúc ${formatVietnamTime(call.startedAt)}`}
-          className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-white/5"
+          className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-[var(--status-neutral-bg)]"
         >
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-(--accent-gold-active-bg) text-accent-gold"
+            className="w-10 h-10 rounded-[2px] flex items-center justify-center shrink-0 bg-[var(--text-primary)] text-[var(--text-inverse)]"
           >
             <PhoneCall className="w-5 h-5 fill-current" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-content-heading">
+            <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-content-heading">
               Cuộc gọi thoại
             </p>
-            <p className="text-xs text-content-text">
+            <p className="text-xs text-content-muted">
               {formatVietnamTime(call.startedAt)}
             </p>
           </div>
@@ -1148,7 +1189,7 @@ function VoiceCallBubble({
           type="button"
           onClick={onCallAgain}
           aria-label="Gọi lại"
-          className="w-full py-2.5 text-sm font-semibold cursor-pointer transition-colors hover:brightness-110 bg-(--accent-gold-active-bg) text-accent-gold-soft"
+          className="w-full py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] cursor-pointer transition-colors border-t border-[var(--text-primary)] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
         >
           Gọi lại
         </button>
@@ -1171,10 +1212,10 @@ function VoiceCallTranscriptDialog({
   return (
     <Dialog open={!!call} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-h-[80vh] overflow-hidden border border-border-default bg-bg-surface"
+        className="max-h-[80vh] overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-bg-surface"
       >
         <DialogHeader>
-          <DialogTitle className="text-content-heading">
+          <DialogTitle className="archive-title is-plain text-xl">
             Cuộc gọi thoại - {call ? formatVietnamTime(call.startedAt) : ""}
           </DialogTitle>
         </DialogHeader>
@@ -1190,13 +1231,13 @@ function VoiceCallTranscriptDialog({
               >
                 <div
                   className={cn(
-                    "max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+                    "max-w-[82%] rounded-[2px] px-4 py-2.5 text-sm leading-relaxed",
                     isUser
-                      ? "bg-(--accent-bronze) text-white"
-                      : "bg-bg-elevated text-content-heading border border-border-default",
+                      ? "bg-accent-gold text-white"
+                      : "bg-bg-elevated text-content-heading border border-(--border-strong)",
                   )}
                 >
-                  <p className="mb-1 text-[10px] font-semibold opacity-70">
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.08em] opacity-70">
                     {isUser ? "Bạn" : character.name} - {formatVietnamTime(message.createdAt)}
                   </p>
                   <p>{message.content}</p>

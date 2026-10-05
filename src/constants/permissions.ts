@@ -49,4 +49,20 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.CHARACTERS_READ,
     PERMISSIONS.QUIZZES_READ,
   ],
+  // Gói trường học: đọc nội dung chung (Role Matrix row 11); quyền lớp học/tài khoản trường do BE kiểm tra.
+  [Role.SCHOOL_ADMIN]: [
+    PERMISSIONS.CONTEXTS_READ,
+    PERMISSIONS.CHARACTERS_READ,
+    PERMISSIONS.QUIZZES_READ,
+  ],
+  [Role.TEACHER]: [
+    PERMISSIONS.CONTEXTS_READ,
+    PERMISSIONS.CHARACTERS_READ,
+    PERMISSIONS.QUIZZES_READ,
+  ],
+  [Role.SCHOOL_STUDENT]: [
+    PERMISSIONS.CONTEXTS_READ,
+    PERMISSIONS.CHARACTERS_READ,
+    PERMISSIONS.QUIZZES_READ,
+  ],
 };

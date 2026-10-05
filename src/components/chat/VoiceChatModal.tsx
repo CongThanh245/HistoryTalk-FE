@@ -67,7 +67,7 @@ function Waveform({ active }: { active: boolean }) {
             className="rounded-full transition-all"
             style={{
               width: 3,
-              backgroundColor: "var(--accent-gold, #c9a84c)",
+              backgroundColor: "var(--accent-gold)",
               height: active ? `${height}px` : "4px",
               opacity: active ? opacity : 0.3,
               animation: active
@@ -93,7 +93,7 @@ function RippleRings({ active }: { active: boolean }) {
           key={i}
           className="absolute inset-0 rounded-full border"
           style={{
-            borderColor: "var(--accent-gold, #c9a84c)",
+            borderColor: "var(--accent-gold)",
             opacity: 0,
             animation: `ripple 2s ease-out infinite`,
             animationDelay: `${i * 0.5}s`,
@@ -137,19 +137,19 @@ function TranscriptFeed({
               <div
                 key={partIndex}
                 className={`
-                  max-w-[80%] rounded-2xl px-3 py-1.5 text-sm leading-snug
+                  max-w-[80%] rounded-[2px] px-3 py-1.5 text-sm leading-snug
                   ${
                     m.role === "user"
-                      ? "bg-white/10 text-white/80 rounded-br-sm"
-                      : "text-white/90 rounded-bl-sm"
+                      ? "bg-white/10 text-white/80"
+                      : "text-white/90"
                   }
                 `}
                 style={
                   m.role === "assistant"
                     ? {
                         background:
-                          "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05))",
-                        border: "1px solid rgba(201,168,76,0.2)",
+                          "linear-gradient(135deg, color-mix(in srgb, var(--accent-gold) 15%, transparent), color-mix(in srgb, var(--accent-gold) 5%, transparent))",
+                        border: "1px solid color-mix(in srgb, var(--accent-gold) 20%, transparent)",
                       }
                     : {}
                 }
@@ -164,7 +164,7 @@ function TranscriptFeed({
       {/* Transcript đang nhận dạng (real-time) */}
       {currentTranscript && (
         <div className="flex justify-end">
-          <div className="max-w-[80%] rounded-2xl rounded-br-sm px-3 py-1.5 text-sm text-white/50 bg-white/5 italic">
+          <div className="max-w-[80%] rounded-[2px] px-3 py-1.5 text-sm text-white/50 bg-white/5 italic">
             {currentTranscript}
             <span className="inline-block w-1 h-3 ml-1 bg-white/40 animate-pulse" />
           </div>
@@ -262,7 +262,7 @@ export function VoiceChatModal({
       >
         {/* Card */}
         <div
-          className="relative flex flex-col items-center gap-6 rounded-3xl p-8 w-[360px] max-w-[94vw] bg-gradient-to-b from-[#1e190f] to-[#0f0c08] border border-[rgba(201,168,76,0.25)] shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
+          className="relative flex flex-col items-center gap-6 rounded-[2px] p-8 w-[360px] max-w-[94vw] bg-gradient-to-b from-[var(--abyssal-blue)] to-[var(--abyssal-blue)] border border-[color-mix(in_srgb,_var(--accent-gold)_25%,_transparent)] shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
           style={{
             animation: "fadeSlideUp 0.35s ease both",
           }}
@@ -285,7 +285,7 @@ export function VoiceChatModal({
 
           {/* Status badge */}
           <div
-            className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium tracking-wide bg-[rgba(201,168,76,0.1)] border border-[rgba(201,168,76,0.2)] text-accent-gold"
+            className="flex items-center gap-2 px-3 py-1 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.1em] bg-[color-mix(in_srgb,_var(--accent-gold)_10%,_transparent)] border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] text-accent-gold"
           >
             {isActive && (
               <span
@@ -306,9 +306,9 @@ export function VoiceChatModal({
             <div
               className="relative w-24 h-24 rounded-full overflow-hidden"
               style={{
-                border: `2px solid ${isSpeaking ? "rgba(201,168,76,0.7)" : "rgba(201,168,76,0.25)"}`,
+                border: `2px solid ${isSpeaking ? "color-mix(in srgb, var(--accent-gold) 70%, transparent)" : "color-mix(in srgb, var(--accent-gold) 25%, transparent)"}`,
                 boxShadow: isSpeaking
-                  ? "0 0 24px rgba(201,168,76,0.3)"
+                  ? "0 0 24px color-mix(in srgb, var(--accent-gold) 30%, transparent)"
                   : "none",
                 transition: "box-shadow 0.4s, border-color 0.4s",
               }}
@@ -321,7 +321,7 @@ export function VoiceChatModal({
                 />
               ) : (
                 <div
-                  className="w-full h-full flex items-center justify-center text-3xl font-bold bg-gradient-to-br from-[#2a2010] to-[#1a1508] text-accent-gold"
+                  className="w-full h-full flex items-center justify-center text-3xl font-bold bg-gradient-to-br from-[var(--abyssal-blue)] to-[var(--abyssal-blue)] text-accent-gold"
                 >
                   {character.name[0]}
                 </div>
@@ -369,10 +369,10 @@ export function VoiceChatModal({
                 className="w-12 h-12 rounded-full flex items-center justify-center transition-all"
                 style={{
                   background: isMuted
-                    ? "rgba(201,168,76,0.2)"
+                    ? "color-mix(in srgb, var(--accent-gold) 20%, transparent)"
                     : "rgba(255,255,255,0.08)",
                   border: isMuted
-                    ? "1px solid rgba(201,168,76,0.5)"
+                    ? "1px solid color-mix(in srgb, var(--accent-gold) 50%, transparent)"
                     : "1px solid rgba(255,255,255,0.1)",
                 }}
               >
@@ -383,7 +383,8 @@ export function VoiceChatModal({
                     height="20"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="rgba(201,168,76,0.9)"
+                    stroke="currentColor"
+                    className="text-[var(--accent-gold-soft)]"
                     strokeWidth="1.8"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -424,7 +425,7 @@ export function VoiceChatModal({
               className="flex flex-col items-center gap-1"
             >
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-95 hover:brightness-110 bg-gradient-to-br from-[#c0392b] to-[#e74c3c] shadow-[0_4px_20px_rgba(231,76,60,0.4)]"
+                className="w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-95 hover:brightness-110 bg-gradient-to-br from-[var(--accent-danger)] to-[var(--accent-danger)] shadow-[0_4px_20px_color-mix(in_srgb,_var(--accent-danger)_40%,_transparent)]"
               >
                 {/* Phone hang up */}
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
@@ -461,7 +462,7 @@ export function VoiceChatModal({
           {/* Error state */}
           {status === "error" && (
             <div className="w-full text-center">
-              <p className="text-red-400/80 text-xs mb-3">
+              <p className="text-accent-danger text-xs mb-3">
                 {errorMsg ?? "Không thể kết nối. Vui lòng thử lại."}
               </p>
               <button
@@ -469,7 +470,7 @@ export function VoiceChatModal({
                   setErrorMsg(null);
                   startCall();
                 }}
-                className="px-4 py-1.5 rounded-full text-sm transition-all hover:brightness-110 bg-[rgba(201,168,76,0.15)] border border-[rgba(201,168,76,0.3)] text-accent-gold"
+                className="px-4 py-1.5 rounded-[2px] text-sm transition-all hover:brightness-110 bg-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] border border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] text-accent-gold"
               >
                 Thử lại
               </button>

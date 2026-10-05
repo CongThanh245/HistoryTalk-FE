@@ -67,33 +67,35 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
       <div className="mx-auto max-w-4xl">
         <button
           onClick={() => router.back()}
-          className="mb-5 text-sm font-medium transition-opacity hover:opacity-70 text-content-muted"
+          className="archive-link mb-5"
         >
           Quay lại
         </button>
 
-        <section className="rounded-xl border border-card-light-border bg-card-light-bg p-6 md:p-8 shadow-[0_16px_36px_rgba(27,38,50,0.08)]">
+        <section className="relative rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-6 md:p-8">
+          {/* 史 — "sử", history */}
+          <span className="archive-seal absolute right-5 top-5 hidden md:inline-grid w-[52px] h-[52px] text-[22px]" aria-hidden="true">史</span>
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
             <div>
               <div className="mb-4 flex flex-wrap gap-2">
-                <span className="rounded-full px-3 py-1 text-xs font-semibold bg-accent-gold/12 text-gold-on-light border border-accent-gold/24">
+                <span className="rounded-[2px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] bg-[var(--text-primary)] text-[var(--text-inverse)]">
                   {ERA_LABELS[quiz.era] ?? quiz.era}
                 </span>
-                <span className="rounded-full px-3 py-1 text-xs font-semibold bg-[rgba(27,38,50,0.06)] text-content-heading border border-card-light-border">
+                <span className="rounded-[2px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-content-heading border border-[var(--text-primary)]">
                   {LEVEL_LABELS[quiz.level] ?? quiz.level}
                 </span>
               </div>
 
-              <h1 className="text-3xl font-bold leading-tight md:text-4xl text-content-heading">
+              <h1 className="archive-title is-plain mt-1 text-[32px] md:text-[44px] md:pr-16">
                 {quiz.title}
               </h1>
               {quiz.contextTitle && (
-                <p className="mt-3 text-base leading-7 text-content-muted">
+                <p className="mt-3 text-[12px] font-bold uppercase tracking-[0.1em] text-accent-gold">
                   {quiz.contextTitle}
                 </p>
               )}
               {(quiz.grade || quiz.chapterTitle) && (
-                <p className="mt-1 text-sm text-content-muted">
+                <p className="mt-1 text-sm text-text-tertiary">
                   {quiz.grade ? `Lớp ${quiz.grade}` : ""}
                   {quiz.grade && quiz.chapterTitle ? " · " : ""}
                   {quiz.chapterNumber ? `Chương ${quiz.chapterNumber}: ` : ""}
@@ -108,19 +110,19 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                       <Star
                         key={i}
                         size={16}
-                        color="var(--gold-on-light)"
-                        fill={i <= Math.round(quiz.rating!) ? "var(--gold-on-light)" : "transparent"}
+                        color="var(--accent-gold)"
+                        fill={i <= Math.round(quiz.rating!) ? "var(--accent-gold)" : "transparent"}
                         strokeWidth={1.5}
                       />
                     ))}
                   </div>
-                  <span className="text-sm font-semibold text-content-muted">
+                  <span className="font-display text-lg font-extrabold leading-none text-content-heading">
                     {quiz.rating.toFixed(1)}/5
                   </span>
                 </div>
               ) : null}
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 border-t border-l border-[var(--text-primary)]">
                 {[
                   { label: "Lượt làm", value: quiz.playCount.toLocaleString("vi-VN") },
                   { label: "Cấp độ", value: LEVEL_LABELS[quiz.level] ?? quiz.level },
@@ -130,12 +132,12 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-lg border border-card-light-border bg-[rgba(27,38,50,0.035)] px-4 py-3"
+                    className="border-r border-b border-[var(--text-primary)] bg-[var(--bg-elevated)] px-4 py-3"
                   >
-                    <p className="text-xs font-semibold uppercase tracking-wide text-content-subtle">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
                       {item.label}
                     </p>
-                    <p className="mt-1 text-sm font-bold text-content-heading">
+                    <p className="mt-1 font-display text-2xl font-extrabold leading-none text-content-heading">
                       {item.value}
                     </p>
                   </div>
@@ -153,8 +155,8 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
               )}
             </div>
 
-            <aside className="rounded-xl border border-accent-gold/24 bg-accent-gold/[0.08] p-5">
-              <p className="text-sm font-semibold text-content-heading">
+            <aside className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-elevated)] p-5 border-t-[3px] border-t-[var(--accent-gold)]">
+              <p className="archive-title text-[22px]">
                 Sẵn sàng luyện tập?
               </p>
               <p className="mt-2 text-sm leading-6 text-content-muted">
@@ -164,17 +166,17 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                 ) : null}
               </p>
 
-              <p className="mt-4 text-xs font-semibold text-content-subtle">
+              <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
                 Chế độ làm bài
               </p>
-              <div className="mt-1.5 grid grid-cols-2 gap-2">
+              <div className="mt-1.5 grid grid-cols-2 gap-1.5">
                 <button
                   onClick={() => setMode("exam")}
                   className={cn(
-                    "flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-colors border",
+                    "flex h-9 items-center justify-center gap-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.06em] transition-colors border",
                     mode === "exam"
-                      ? "bg-[var(--abyssal-blue)] text-[var(--text-on-dark)] border-[var(--abyssal-blue)]"
-                      : "bg-card-light-bg text-content-muted border-card-light-border",
+                      ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
+                      : "bg-[var(--bg-surface)] text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)] hover:text-content-heading",
                   )}
                 >
                   <Timer size={13} />
@@ -183,10 +185,10 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                 <button
                   onClick={() => setMode("practice")}
                   className={cn(
-                    "flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-colors border",
+                    "flex h-9 items-center justify-center gap-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.06em] transition-colors border",
                     mode === "practice"
-                      ? "bg-[var(--abyssal-blue)] text-[var(--text-on-dark)] border-[var(--abyssal-blue)]"
-                      : "bg-card-light-bg text-content-muted border-card-light-border",
+                      ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
+                      : "bg-[var(--bg-surface)] text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)] hover:text-content-heading",
                   )}
                 >
                   <BookOpen size={13} />
@@ -199,7 +201,7 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                   : "Biết ngay đúng/sai sau mỗi câu, phù hợp để ôn bài."}
               </p>
 
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-4 grid grid-cols-2 gap-1.5">
                 {TIME_PRESETS.map((preset) => {
                   const active = selectedTime === preset.seconds && customMinutes.trim() === "";
                   return (
@@ -210,10 +212,10 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                         setCustomMinutes("");
                       }}
                       className={cn(
-                        "h-9 rounded-lg text-xs font-bold transition-colors border",
+                        "h-9 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.06em] transition-colors border",
                         active
-                          ? "bg-[var(--abyssal-blue)] text-[var(--text-on-dark)] border-[var(--abyssal-blue)]"
-                          : "bg-card-light-bg text-content-muted border-card-light-border",
+                          ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
+                          : "bg-[var(--bg-surface)] text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)] hover:text-content-heading",
                       )}
                     >
                       {preset.label}
@@ -223,7 +225,7 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
               </div>
 
               <label className="mt-4 block">
-                <span className="text-xs font-semibold text-content-subtle">
+                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
                   Tùy chỉnh theo phút
                 </span>
                 <input
@@ -232,13 +234,13 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                   value={customMinutes}
                   onChange={(event) => setCustomMinutes(event.target.value)}
                   placeholder="Ví dụ: 20"
-                  className="mt-1 h-10 w-full rounded-lg border border-card-light-border bg-transparent px-3 text-sm outline-none text-content-heading"
+                  className="mt-1 h-10 w-full rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 text-sm outline-none text-content-heading transition-colors focus:border-[var(--text-primary)]"
                 />
               </label>
 
               <button
                 onClick={() => onStart(resolvedLimitedTime, mode === "practice")}
-                className="mt-5 h-12 w-full rounded-lg text-sm font-bold transition-colors duration-200 bg-[var(--abyssal-blue)] text-[var(--text-on-dark)] shadow-[0_10px_22px_rgba(27,38,50,0.20)]"
+                className="btn-crimson mt-5 h-12 w-full"
               >
                 Bắt đầu làm bài
               </button>

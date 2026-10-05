@@ -14,15 +14,14 @@ export function FeatureCard({
   return (
     <div
       className={`
-        bg-[var(--bg-surface)] 
-        border rounded-[var(--radius-lg)] 
+        bg-[var(--bg-surface)]
+        border rounded-[2px]
         p-8
-        hover:bg-[var(--bg-elevated)]
-        transition-all duration-300
+        transition-colors duration-200
         group
-        ${variant === 'highlighted' 
-          ? 'border-[var(--accent-gold)]' 
-          : 'border-[var(--border-default)] hover:border-[var(--accent-gold)]/30'
+        ${variant === 'highlighted'
+          ? 'border-[var(--accent-gold)] border-t-[3px]'
+          : 'border-[var(--text-primary)] hover:bg-[var(--text-primary)]'
         }
       `}
     >
@@ -33,10 +32,10 @@ export function FeatureCard({
 
       {/* Content */}
       <div className="space-y-3">
-        <h3 className="text-xl font-bold text-[var(--text-primary)]">
+        <h3 className={`archive-title is-plain text-[21px] ${variant === 'highlighted' ? '' : 'group-hover:text-[var(--text-inverse)]'}`}>
           {title}
         </h3>
-        <p className="text-[var(--text-secondary)] leading-relaxed">
+        <p className={`text-[var(--text-secondary)] leading-relaxed ${variant === 'highlighted' ? '' : 'group-hover:text-[var(--text-inverse)] group-hover:opacity-80'}`}>
           {description}
         </p>
       </div>

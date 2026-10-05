@@ -75,7 +75,7 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
   const sidebarContent = (isExpanded: boolean) => (
     <aside
       className={cn(
-        "relative h-screen flex flex-col transition-all duration-250 ease-in-out select-none shrink-0 border-r z-40 bg-sidebar-bg border-sidebar-border",
+        "sidebar-ink relative h-screen flex flex-col transition-all duration-250 ease-in-out select-none shrink-0 border-r z-40 bg-[var(--sidebar-bg)] border-sidebar-border",
         isExpanded ? "w-64" : "w-16",
       )}
     >

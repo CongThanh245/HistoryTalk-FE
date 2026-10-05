@@ -9,12 +9,12 @@ import { QuizCard } from "./quiz-card";
 
 function QuizCardSkeleton() {
   return (
-    <div className="rounded-xl sm:rounded-2xl overflow-hidden animate-pulse bg-card-light-bg border border-card-light-border">
-      <div className="h-20 sm:h-36 bg-bg-surface" />
+    <div className="rounded-[2px] overflow-hidden animate-pulse bg-[var(--bg-surface)] border border-[var(--text-primary)]">
+      <div className="h-20 sm:h-36 bg-[var(--bg-deep)]" />
       <div className="p-3 sm:p-4 space-y-2">
-        <div className="h-4 rounded bg-bg-surface w-4/5" />
-        <div className="h-3 rounded bg-bg-surface w-3/5" />
-        <div className="h-3 rounded bg-bg-surface w-2/5" />
+        <div className="h-4 bg-[var(--border-default)] w-4/5" />
+        <div className="h-3 bg-[var(--border-default)] w-3/5" />
+        <div className="h-3 bg-[var(--border-default)] w-2/5" />
       </div>
     </div>
   );
@@ -39,9 +39,9 @@ export function QuizGrid({ quizzes, isLoading, onStart }: QuizGridProps) {
 
   if (quizzes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 rounded-2xl bg-card-light-bg border border-card-light-border">
+      <div className="flex flex-col items-center justify-center py-20 rounded-[2px] bg-[var(--bg-surface)] border border-[var(--text-primary)]">
         <div className="text-4xl mb-3">📚</div>
-        <p className="font-medium text-content-heading">
+        <p className="archive-title text-[22px]">
           Không tìm thấy bộ câu hỏi
         </p>
         <p className="text-sm mt-1 text-content-muted">

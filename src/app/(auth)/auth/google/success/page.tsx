@@ -1,12 +1,13 @@
 "use client";
 
+import { getRoleHome } from "@/constants/roles";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { User } from "@/features/auth/type";
 import { persistAuthCookies, resetClientAuth } from "@/features/auth/auth-cookies";
 
-const VALID_ROLES = ["CUSTOMER", "CONTENT_ADMIN", "SYSTEM_ADMIN"] as const;
+const VALID_ROLES = ["CUSTOMER", "CONTENT_ADMIN", "SYSTEM_ADMIN", "SCHOOL_ADMIN", "TEACHER", "SCHOOL_STUDENT"] as const;
 
 function isValidRole(role: string | null): role is User["role"] {
   return VALID_ROLES.includes(role as User["role"]);
@@ -56,22 +57,16 @@ export default function GoogleOAuthSuccessPage() {
 
     // Force full page reload to trigger middleware with fresh cookies.
     // For CUSTOMER, append ?notify=google_welcome ONLY if it is a new user
-    const redirectPath =
-      role === "CONTENT_ADMIN"
-        ? "/staff"
-        : role === "SYSTEM_ADMIN"
-          ? "/staff/admin"
-          : isNewUser
-            ? "/home?notify=google_welcome"
-            : "/home";
+    const home = getRoleHome(role);
+    const redirectPath = isNewUser && home === "/home" ? "/home?notify=google_welcome" : home;
 
     window.location.href = redirectPath;
   }, [router, setAuth]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6 bg-[var(--palladian)] text-content-text">
+    <div className="flex min-h-screen items-center justify-center px-6 bg-[var(--bg-main)] text-content-text">
       <div className="text-center">
-        <p className="text-sm font-semibold">Completing Google sign in...</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-content-muted animate-pulse">Completing Google sign in...</p>
       </div>
     </div>
   );

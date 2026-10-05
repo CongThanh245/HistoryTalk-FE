@@ -11,5 +11,6 @@ export default function ChatLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="h-full w-full overflow-hidden">{children}</div>;
+  // `chat-page` lets the (app) layout drop its max-width container so the chat fills the space beside the sidebar.
+  return <div className="chat-page h-full w-full overflow-hidden">{children}</div>;
 }

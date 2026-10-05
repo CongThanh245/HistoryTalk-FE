@@ -6,12 +6,12 @@ import { cn } from "@/lib/utils/cn";
 type StaffStatTone = "gold" | "green" | "amber" | "blue" | "red" | "muted";
 
 const toneClasses: Record<StaffStatTone, string> = {
-  gold: "bg-[rgba(255,146,21,0.14)] text-[var(--accent-gold)]",
-  green: "bg-emerald-500/10 text-emerald-500",
-  amber: "bg-amber-500/10 text-amber-500",
-  blue: "bg-blue-500/10 text-blue-500",
-  red: "bg-rose-500/10 text-rose-500",
-  muted: "bg-slate-500/10 text-slate-500",
+  gold: "bg-[var(--accent-gold-active-bg)] text-[var(--accent-gold)]",
+  green: "bg-[var(--status-success-bg)] text-[var(--status-success)]",
+  amber: "bg-[var(--status-warning-bg)] text-[var(--status-warning)]",
+  blue: "bg-accent-blue/10 text-accent-blue",
+  red: "bg-[var(--status-danger-bg)] text-[var(--accent-danger)]",
+  muted: "bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)]",
 };
 
 interface StaffStatCardProps {
@@ -33,22 +33,22 @@ export function StaffStatCard({
 }: StaffStatCardProps) {
   return (
     <div
-      className={cn("rounded-xl border border-card-border bg-card-bg p-4 shadow-sm", className)}
+      className={cn("rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4", className)}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-content-subtle">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
             {label}
           </p>
           <p
-            className="mt-1 truncate text-2xl font-extrabold text-content-heading"
+            className="mt-1 truncate font-display text-3xl font-extrabold leading-[1.2] text-content-heading"
             style={valueColor ? { color: valueColor } : undefined}
           >
             {value}
           </p>
         </div>
         {icon && (
-          <div className={cn("grid size-10 shrink-0 place-items-center rounded-lg", toneClasses[tone])}>
+          <div className={cn("grid size-10 shrink-0 place-items-center rounded-[2px]", toneClasses[tone])}>
             {icon}
           </div>
         )}

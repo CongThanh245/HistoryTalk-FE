@@ -11,13 +11,12 @@ interface SectionHeadingProps {
 }
 
 const variantStyles: Record<Variant, string> = {
-  default: "text-[#e7ddc8]",
+  default: "",
   gold: "text-[var(--accent-gold)]",
-  blue: "text-[#8fb3c8]",
-  gradient:
-    "bg-gradient-to-r from-[#e7ddc8] via-[var(--accent-gold)] to-[#8fb3c8] bg-clip-text text-transparent",
-  warm: "text-[#FAB95B]",
-  cream: "text-[#f5ecd9]",
+  blue: "",
+  gradient: "",
+  warm: "text-[var(--accent-gold)]",
+  cream: "",
 };
 
 export function SectionHeading({
@@ -37,14 +36,18 @@ export function SectionHeading({
     >
       <h2
         className={cn(
-          "text-3xl md:text-4xl lg:text-5xl font-bold mb-4",
+          "archive-title mb-4 text-[clamp(30px,4vw,52px)]",
           variantStyles[variant]
         )}
       >
         {title}
       </h2>
+      <div
+        className={cn("h-px w-16 bg-[var(--accent-gold)] mb-5", centered && "mx-auto")}
+        aria-hidden="true"
+      />
       {subtitle && (
-        <p className="text-lg md:text-xl text-[var(--text-secondary)] max-w-3xl mx-auto">
+        <p className={cn("text-base md:text-lg leading-relaxed text-[var(--text-secondary)] max-w-3xl", centered && "mx-auto")}>
           {subtitle}
         </p>
       )}

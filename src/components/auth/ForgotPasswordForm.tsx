@@ -45,23 +45,23 @@ export default function ForgotPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-5 py-10 bg-[var(--palladian)]">
+    <div className="min-h-screen flex items-center justify-center px-5 py-10 bg-[var(--bg-main)]">
       <div className="w-full max-w-md">
         <Link
           href="/login"
-          className="mb-6 inline-flex items-center gap-2 text-sm font-medium hover:underline text-content-text"
+          className="archive-link mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
           Quay lại đăng nhập
         </Link>
 
-        <div className="rounded-2xl border p-6 shadow-sm bg-card-light-bg border-card-light-border">
+        <div className="rounded-[2px] border border-[var(--text-primary)] border-t-[3px] border-t-[var(--accent-gold)] p-6 sm:p-8 bg-[var(--bg-surface)]">
           <div className="mb-6 flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent-gold to-[var(--truffle)] text-bg-deep">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[2px] bg-[var(--text-primary)] text-[var(--text-inverse)]">
               <Mail className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-content-heading">
+              <h1 className="archive-title mt-1 text-[28px]">
                 Quên mật khẩu
               </h1>
               <p className="mt-1 text-sm leading-6 text-content-muted">
@@ -74,7 +74,7 @@ export default function ForgotPasswordForm() {
             <div className="space-y-1.5">
               <Label
                 htmlFor="email"
-                className="text-sm font-medium text-content-text"
+                className="text-[11px] font-bold uppercase tracking-[0.1em] text-content-text"
               >
                 Email
               </Label>
@@ -85,14 +85,14 @@ export default function ForgotPasswordForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Nhập địa chỉ email của bạn"
-                className="h-11 rounded-xl text-sm focus-visible:ring-1 bg-[var(--palladian)] border-card-light-border text-content-text"
+                className="h-11 rounded-[2px] text-sm shadow-none focus-visible:ring-0 focus-visible:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text placeholder:text-[var(--text-muted)]"
               />
             </div>
 
             <Button
               type="submit"
               disabled={forgotPassword.isPending}
-              className="h-11 w-full rounded-xl border-0 font-semibold bg-gradient-to-br from-accent-gold to-[var(--truffle)] text-bg-deep shadow-[0_4px_16px_var(--accent-gold-glow)]"
+              className="h-11 w-full rounded-[2px] border-0 text-[13px] font-bold uppercase tracking-[0.08em] shadow-none bg-[var(--accent-gold)] text-[#FFFFFF] hover:bg-[var(--accent-bronze)]"
             >
               {forgotPassword.isPending ? "Đang gửi..." : "Gửi liên kết"}
             </Button>

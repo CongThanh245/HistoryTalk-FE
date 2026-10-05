@@ -42,12 +42,8 @@ export function SessionCard({
   return (
     <div
       onClick={() => onClick(session)}
-      className="group relative w-full text-left flex items-start gap-3 rounded-xl border border-card-border bg-card-bg px-3 py-3 transition-all duration-200 cursor-pointer md:gap-4 md:px-4 md:py-3.5 md:hover:-translate-y-0.5"
+      className="group relative w-full text-left flex items-start gap-3 rounded-[2px] border border-[var(--border-strong)] bg-card-bg px-3 py-3 transition-colors duration-200 cursor-pointer hover:border-[var(--text-primary)] md:gap-4 md:px-4 md:py-3.5"
     >
-      {/* Hover glow */}
-      <div
-        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-[inset_0_0_0_1px_rgba(201,162,77,0.3)]"
-      />
       {onDelete && (
         <>
           <button
@@ -57,12 +53,12 @@ export function SessionCard({
               if (isDeleting) return;
               setDeleteOpen(true);
             }}
-            className="absolute right-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-md text-content-subtle transition-all cursor-pointer hover:bg-red-50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70 md:h-6 md:w-6 md:opacity-0 md:group-hover:opacity-100"
+            className="absolute right-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-[2px] text-content-subtle transition-all cursor-pointer hover:bg-[var(--status-danger-bg)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70 md:h-6 md:w-6 md:opacity-0 md:group-hover:opacity-100"
           >
             {isDeleting ? (
-              <LoaderCircle className="w-3.5 h-3.5 animate-spin text-red-500" />
+              <LoaderCircle className="w-3.5 h-3.5 animate-spin text-accent-danger" />
             ) : (
-              <Trash2 className="w-3.5 h-3.5 hover:text-red-500 transition-colors" />
+              <Trash2 className="w-3.5 h-3.5 hover:text-accent-danger transition-colors" />
             )}
           </button>
 
@@ -82,13 +78,13 @@ export function SessionCard({
       )}
       {/* Avatar */}
       <div
-        className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-card-border md:h-11 md:w-11"
+        className="relative h-10 w-10 shrink-0 overflow-hidden rounded-[2px] border border-[var(--text-primary)] md:h-11 md:w-11"
       >
         <Image
           src={isValidUrl(session.characterImage) ? session.characterImage! : "/card.jpg"}
           alt={session.characterName}
           fill
-          className="object-cover object-top"
+          className="archive-photo object-cover object-top"
         />
       </div>
 
@@ -96,14 +92,14 @@ export function SessionCard({
       <div className="flex-1 min-w-0">
         <div className="mb-0.5 flex items-start justify-between gap-2">
           <div className="min-w-0 pr-7 md:pr-0">
-            <p className="truncate text-sm font-bold leading-snug text-content-heading">
+            <p className="archive-title is-plain truncate text-[17px]">
               {session.characterName}
             </p>
             <p className="truncate text-[11px] text-content-muted">
               {session.characterTitle}
             </p>
             {showEvent && (
-              <p className="text-[10px] font-medium mt-0.5 text-accent-gold">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] mt-0.5 text-accent-gold">
                 {session.contextName}
               </p>
             )}
@@ -138,7 +134,7 @@ export function SessionCard({
             )}
           </div>
           <div
-            className="hidden items-center gap-1 text-[11px] font-semibold text-accent-gold opacity-0 transition-opacity group-hover:opacity-100 md:flex"
+            className="hidden items-center gap-1 text-[11px] font-bold uppercase tracking-[0.1em] text-accent-gold opacity-0 transition-opacity group-hover:opacity-100 md:flex"
           >
             Xem lại <ChevronRight className="w-3.5 h-3.5" />
           </div>

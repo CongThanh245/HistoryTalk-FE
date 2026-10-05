@@ -29,64 +29,51 @@ export function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="relative flex h-auto min-h-[600px] items-start overflow-hidden bg-[var(--bg-deep)] py-16 md:h-svh md:items-center md:py-0">
-      <div className="absolute inset-x-0 top-0 h-px bg-[var(--border-default)]" />
+    <section id="how-it-works" className="relative flex h-auto min-h-[600px] items-start overflow-hidden bg-(--bg-main) py-16 md:h-svh md:items-center md:py-0">
+      <div className="absolute inset-x-0 top-0 h-px bg-(--text-primary)" />
 
       <div className="relative z-10 w-full py-16 md:py-0">
         <Container>
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[0.9fr_1.4fr] lg:gap-20">
             <div>
-              <span className="mb-4 block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-gold)]">
-                Cách hoạt động
-              </span>
-              <h2 className="mb-4 text-[clamp(2.2rem,5.5vw,5.5rem)] font-bold uppercase leading-[0.95] tracking-wide text-[var(--text-secondary)]">
+              <h2 className="archive-title mb-4 text-[clamp(2.2rem,5.5vw,4.5rem)] leading-[1.1]">
                 Bốn bước
                 <br />
-                <span className="text-[var(--accent-gold)] font-title">đơn giản</span>
+                <em>đơn giản</em>
               </h2>
-              <p className="max-w-[320px] text-sm leading-relaxed text-[var(--text-secondary)] lg:text-base">
+              <p className="max-w-[320px] border-t border-(--text-primary) pt-3 text-sm leading-relaxed text-(--text-secondary) lg:text-base">
                 Bắt đầu hành trình khám phá lịch sử của bạn qua những cuộc đối thoại ý nghĩa.
               </p>
             </div>
 
             <div className="-mx-4 overflow-hidden px-4">
               <div className="max-w-5xl">
-          {/* Steps grid */}
-          <div className="grid md:grid-cols-2 gap-8">
+          {/* Steps — ruled grid */}
+          <div className="grid border-l border-t border-(--text-primary) md:grid-cols-2">
             {steps.map((step, index) => (
               <div
                 key={index}
-                className="
-                  bg-[var(--bg-surface)] 
-                  border border-[var(--border-default)] 
-                  rounded-[var(--radius-lg)] 
-                  p-8
-                  hover:border-[var(--accent-gold)]/30 
-                  hover:bg-[var(--bg-elevated)]
-                  transition-all duration-300
-                  group
-                "
+                className="group border-b border-r border-(--text-primary) bg-(--bg-surface) p-6 transition-colors duration-200 hover:bg-(--text-primary) md:p-8"
               >
                 {/* Step number & icon */}
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="flex-shrink-0">
-                    <div className="text-5xl group-hover:scale-110 transition-transform duration-300">
-                      {step.icon}
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <span className="text-4xl font-bold text-[var(--accent-gold)]/20 group-hover:text-[var(--accent-gold)]/40 transition-colors">
-                      {step.number}
-                    </span>
-                  </div>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <span className="font-display text-4xl font-extrabold leading-none text-(--accent-gold) transition-colors group-hover:text-(--accent-on-ink)">
+                    [{step.number}]
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[2px] border border-(--border-strong) text-xl grayscale transition-[filter] group-hover:grayscale-0"
+                  >
+                    {step.icon}
+                  </span>
                 </div>
 
                 {/* Content */}
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold text-[var(--text-primary)]">
+                <div className="space-y-3 border-t border-(--border-default) pt-4 group-hover:border-(--text-inverse)/20">
+                  <h3 className="archive-title is-plain text-[18px] transition-colors group-hover:text-(--text-inverse) md:text-[20px]">
                     {step.title}
                   </h3>
-                  <p className="text-[var(--text-secondary)] leading-relaxed">
+                  <p className="text-sm leading-relaxed text-(--text-secondary) transition-colors group-hover:text-(--text-inverse) md:text-base">
                     {step.description}
                   </p>
                 </div>
@@ -96,8 +83,8 @@ export function HowItWorksSection() {
               </div>
 
               {/* Bottom message */}
-              <div className="mt-8 border-l-2 border-[var(--accent-gold)]/50 pl-6">
-                <p className="max-w-3xl text-lg font-semibold leading-relaxed text-[var(--text-secondary)] md:text-xl">
+              <div className="mt-8 border-(--accent-gold) pl-6">
+                <p className="max-w-3xl text-lg font-semibold leading-relaxed text-(--text-primary) md:text-xl">
                   Mỗi cuộc trò chuyện là độc nhất. Mỗi người học có một con đường khác nhau.
                 </p>
               </div>
@@ -106,7 +93,7 @@ export function HowItWorksSection() {
         </Container>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 h-px bg-[var(--border-default)]" />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-(--text-primary)" />
     </section>
   );
 }

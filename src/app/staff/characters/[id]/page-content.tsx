@@ -106,7 +106,7 @@ export default function EditCharacterPage() {
   }
 
   if (!character) {
-    return <div className="p-8 text-center bg-gray-50 h-screen">Không tìm thấy nhân vật.</div>;
+    return <div className="p-8 text-center bg-[var(--bg-deep)] h-screen">Không tìm thấy nhân vật.</div>;
   }
 
   // Pre-mapping draft data
