@@ -20,7 +20,7 @@ export default function QuizDetailRoute({ params }: Props) {
       <div className="flex-1 flex items-center justify-center bg-[var(--bg-content)]">
         <div className="flex flex-col items-center gap-3">
           <Loader2 size={28} className="animate-spin text-accent-gold" />
-          <p className="text-sm text-content-muted">
+          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-content-muted">
             Đang tải...
           </p>
         </div>
@@ -31,12 +31,12 @@ export default function QuizDetailRoute({ params }: Props) {
   if (!quiz) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-4 bg-[var(--bg-content)]">
-        <p className="text-sm text-content-muted">
+        <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-content-muted">
           Không tìm thấy bộ câu hỏi
         </p>
         <button
           onClick={() => router.push("/trac-nghiem")}
-          className="px-4 py-2 rounded-xl text-sm font-medium bg-accent-gold text-white"
+          className="btn-crimson"
         >
           Quay lại
         </button>

@@ -11,7 +11,7 @@ interface SearchInputProps {
 export function SearchInput({ value, onChange, placeholder = "Tìm kiếm..." }: SearchInputProps) {
   return (
     <div
-      className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all duration-150 focus-within:border-[rgba(201,162,77,0.4)] bg-card-bg border-card-border"
+      className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-[2px] border transition-colors duration-150 hover:border-[var(--text-primary)] focus-within:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--border-strong)]"
     >
       <Search className="w-4 h-4 shrink-0 text-content-subtle" />
       <input
@@ -24,7 +24,7 @@ export function SearchInput({ value, onChange, placeholder = "Tìm kiếm..." }:
       {value && (
         <button
           onClick={() => onChange("")}
-          className="text-xs cursor-pointer transition-opacity hover:opacity-70 text-content-subtle"
+          className="text-xs cursor-pointer transition-colors hover:text-[var(--accent-gold)] text-content-subtle"
         >
           ✕
         </button>

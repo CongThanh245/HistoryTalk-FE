@@ -18,7 +18,7 @@ export default function QuizPageClient({ params }: QuizPageClientProps) {
   if (isLoading || isFetching) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin text-accent-gold" />
       </div>
     );
   }
@@ -26,8 +26,8 @@ export default function QuizPageClient({ params }: QuizPageClientProps) {
   if (!quiz) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p>Không tìm thấy quiz</p>
-        <button onClick={() => router.push("/quiz")}>Quay lại</button>
+        <p className="archive-title text-[24px]">Không tìm thấy quiz</p>
+        <button onClick={() => router.push("/quiz")} className="btn-line">Quay lại</button>
       </div>
     );
   }

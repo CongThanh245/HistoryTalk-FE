@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import {
   mapPinService,
   type CreateMapPinRequest,
+  type MapPin,
+  type UpdateMapPinRequest,
 } from "@/services/map-pin.service";
 
 const mapPinKey = (contextId: string, year: number) =>
@@ -58,6 +60,52 @@ export function useCreateMapPin(contextId: string | null, year: number) {
     },
     onError: (error) =>
       toast.error(getErrorMessage(error, "Không thể thêm điểm. Vui lòng thử lại.")),
+  });
+}
+
+function isMethodNotAllowed(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    (error as { response?: { status?: number } }).response?.status === 405
+  );
+}
+
+/**
+ * Edits a pin in place (PUT). Until the backend exposes PUT (it answers 405), falls back to
+ * creating a copy with the changes and only then deleting the old pin, so a failure never loses it.
+ */
+export function useUpdateMapPin(contextId: string | null, year: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ pin, changes }: { pin: MapPin; changes: UpdateMapPinRequest }) => {
+      try {
+        return await mapPinService.update(contextId!, pin.pinId, changes);
+      } catch (error) {
+        if (!isMethodNotAllowed(error)) throw error;
+        const created = await mapPinService.create(contextId!, {
+          label: changes.label ?? pin.label,
+          description: (changes.description ?? pin.description ?? "") || undefined,
+          latitude: changes.latitude ?? pin.latitude,
+          longitude: changes.longitude ?? pin.longitude,
+          pinYear: changes.pinYear ?? pin.pinYear,
+        });
+        await mapPinService.delete(contextId!, pin.pinId);
+        return created;
+      }
+    },
+    onSuccess: (updatedPin, { pin }) => {
+      queryClient.setQueryData(
+        mapPinKey(contextId!, year),
+        (current: unknown) =>
+          Array.isArray(current)
+            ? current.map((item: MapPin) => (item.pinId === pin.pinId ? updatedPin : item))
+            : [updatedPin],
+      );
+    },
+    onError: (error) =>
+      toast.error(getErrorMessage(error, "Không lưu được thuyết minh. Vui lòng thử lại.")),
   });
 }
 

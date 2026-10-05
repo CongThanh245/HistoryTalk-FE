@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { History, ListChecks, Search } from "lucide-react";
 import { useQuizSets, useMyQuizResults } from "@/features/quiz/hooks";
+import { useEvents } from "@/features/events/hooks";
 import { useAuthStore } from "@/store/auth.store";
 import { type QuizEra, type QuizResult } from "@/services/quiz.service";
 import { cn } from "@/lib/utils/cn";
@@ -67,6 +68,14 @@ export function QuizPageClient() {
       .map(([value, label]) => ({ value, label }));
   }, [allQuizzes]);
 
+  // Quizzes have no cover of their own: reuse the historical context's image (same query the events page caches).
+  const { data: eventsData } = useEvents({ page: 1, limit: 100 });
+  const contextImages = useMemo(() => {
+    const map = new Map<string, string | null | undefined>();
+    for (const event of eventsData?.content ?? []) map.set(event.id, event.imageUrl);
+    return map;
+  }, [eventsData?.content]);
+
   const { data: resultsData, isLoading: resultsLoading } = useMyQuizResults(
     { page: 0, size: 50 },
     isAuthenticated,
@@ -100,6 +109,10 @@ export function QuizPageClient() {
     return `${averageScore}/${averageTotal}`;
   }, [results]);
 
+  const completedCount = resultsData?.totalElements ?? results.length;
+  // Until the learner has submitted something, the stats strip and history column are just zeros and an empty box.
+  const hasHistory = isAuthenticated && (resultsLoading || completedCount > 0);
+
   const handleStartQuiz = (quizId: string) => {
     router.push(`/quiz/${quizId}`);
   };
@@ -111,22 +124,19 @@ export function QuizPageClient() {
   return (
     <main className="min-h-screen bg-[var(--bg-content)]">
       <div className="mx-auto max-w-7xl">
-        <section className="mb-3 rounded-xl border border-card-light-border bg-card-light-bg px-4 py-3 md:mb-4 md:px-5 md:py-4 shadow-[0_10px_28px_rgba(27,38,50,0.06)]">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="max-w-2xl">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide md:text-xs text-gold-on-light">
-                Luyện tập theo chủ đề
-              </p>
-              <h1 className="text-xl font-bold md:text-2xl text-content-heading">
+        <section className="archive-heading mb-4 flex-col items-stretch md:mb-5 md:flex-row md:items-end">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between w-full">
+            <div className="max-w-2xl min-w-0">
+              <h1 className="archive-title">
                 Câu đố lịch sử
               </h1>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 md:text-sm text-content-muted">
+              <p className="line-clamp-2">
                 Chọn một bộ đề, làm nhanh theo bối cảnh lịch sử và xem lại đáp án ngay sau khi nộp bài.
               </p>
             </div>
 
             <div className="w-full md:w-[360px]">
-              <div className="grid grid-cols-2 rounded-lg p-1 bg-[rgba(27,38,50,0.05)] border border-card-light-border">
+              <div className="grid grid-cols-2 rounded-[2px] border border-[var(--text-primary)]">
                 {[
                   { label: "Danh sách đề", value: "list" as const, icon: ListChecks },
                   { label: "Lịch sử", value: "history" as const, icon: History },
@@ -138,10 +148,10 @@ export function QuizPageClient() {
                       key={item.value}
                       onClick={() => handleViewChange(item.value)}
                       className={cn(
-                        "inline-flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-bold transition-all md:h-9 md:gap-2 md:text-sm",
+                        "inline-flex h-9 items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors md:h-10 md:gap-2 md:text-xs first:border-r first:border-[var(--text-primary)]",
                         active
-                          ? "bg-card-light-bg text-content-heading shadow-[0_4px_12px_rgba(27,38,50,0.08)]"
-                          : "text-content-muted",
+                          ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                          : "bg-[var(--bg-surface)] text-content-muted hover:text-content-heading",
                       )}
                     >
                       <Icon size={16} />
@@ -152,7 +162,7 @@ export function QuizPageClient() {
               </div>
 
               {activeView === "list" && (
-                <div className="hidden bg-[rgba(27,38,50,0.05)] border border-card-light-border">
+                <div className="hidden bg-[var(--bg-surface)] border border-[var(--border-strong)]">
                   <Search size={16} className="text-content-muted" />
                   <input
                     type="text"
@@ -167,11 +177,13 @@ export function QuizPageClient() {
           </div>
         </section>
 
-        <QuizStatsBar
-          totalQuizzes={quizData?.totalElements ?? 0}
-          completedCount={resultsData?.totalElements ?? results.length}
-          averageScore={avgScore}
-        />
+        {hasHistory && (
+          <QuizStatsBar
+            totalQuizzes={quizData?.totalElements ?? 0}
+            completedCount={completedCount}
+            averageScore={avgScore}
+          />
+        )}
 
         {activeView === "history" ? (
           <QuizHistoryView
@@ -180,20 +192,20 @@ export function QuizPageClient() {
             onRetake={handleStartQuiz}
           />
         ) : (
-          <div className="grid gap-4 md:gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className={cn("grid gap-4 md:gap-5", hasHistory && "lg:grid-cols-[minmax(0,1fr)_300px]")}>
             <section className="min-w-0">
               <div className="mb-3 flex flex-col gap-3">
-                <div>
-                  <h2 className="text-base font-bold text-content-heading">
+                <div className="flex items-baseline justify-between gap-3 border-b border-[var(--border-strong)] pb-2">
+                  <h2 className="archive-title text-[20px] md:text-[22px]">
                     Danh sách đề
                   </h2>
-                  <p className="text-xs md:text-sm text-content-muted">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-content-muted">
                     {filteredQuizzes.length} đề phù hợp
                   </p>
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex h-10 w-full items-center gap-2 rounded-lg px-3 sm:max-w-[340px] bg-[rgba(27,38,50,0.05)] border border-card-light-border">
+                  <div className="flex h-10 w-full items-center gap-2 rounded-[2px] px-3 sm:max-w-[340px] bg-[var(--bg-surface)] border border-[var(--border-strong)] transition-colors focus-within:border-[var(--text-primary)]">
                     <Search size={15} className="text-content-muted" />
                     <input
                       type="text"
@@ -209,7 +221,7 @@ export function QuizPageClient() {
                       value={selectedContext}
                       onValueChange={setSelectedContext}
                     >
-                      <SelectTrigger size="sm" className="h-9 w-full text-xs font-semibold sm:h-10 sm:w-auto">
+                      <SelectTrigger size="sm" className="h-9 w-full rounded-[2px] text-xs font-semibold sm:h-10 sm:w-auto">
                         <SelectValue placeholder="Trận đánh" />
                       </SelectTrigger>
                       <SelectContent>
@@ -232,10 +244,10 @@ export function QuizPageClient() {
                         key={f.value}
                         onClick={() => setSelectedEra(f.value)}
                         className={cn(
-                          "h-7 rounded-lg px-2 text-xs font-semibold transition-all duration-200 md:h-8 md:px-2.5 md:hover:-translate-y-0.5 border",
+                          "h-8 rounded-[2px] px-3 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors duration-150 md:h-9 md:px-4 md:text-xs border",
                           active
-                            ? "bg-[var(--abyssal-blue)] text-[var(--text-on-dark)] border-[var(--abyssal-blue)]"
-                            : "bg-card-light-bg text-content-muted border-card-light-border",
+                            ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
+                            : "bg-transparent text-content-text border-[var(--border-strong)] hover:border-[var(--text-primary)]",
                         )}
                       >
                         {f.label}
@@ -246,14 +258,14 @@ export function QuizPageClient() {
               </div>
 
               {quizzesLoading ? (
-                <div className="rounded-xl border border-card-light-border bg-card-light-bg px-6 py-16 text-center">
-                  <p className="font-semibold text-content-heading">
+                <div className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] px-6 py-16 text-center">
+                  <p className="archive-title text-[22px]">
                     Đang tải...
                   </p>
                 </div>
               ) : filteredQuizzes.length === 0 ? (
-                <div className="rounded-xl border border-card-light-border bg-card-light-bg px-6 py-16 text-center">
-                  <p className="font-semibold text-content-heading">
+                <div className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] px-6 py-16 text-center">
+                  <p className="archive-title text-[22px]">
                     Không tìm thấy bộ câu hỏi
                   </p>
                   <p className="mt-1 text-sm text-content-muted">
@@ -261,27 +273,37 @@ export function QuizPageClient() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-3">
-                  {filteredQuizzes.map((quiz, index) => (
-                    <div
-                      key={quiz.quizId}
-                      className="animate-[quiz-card-in_260ms_ease-out_both]"
-                      style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
-                    >
-                      <QuizCard quiz={quiz} onStart={handleStartQuiz} />
-                    </div>
-                  ))}
+                <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4", hasHistory ? "xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4")}>
+                  {filteredQuizzes.map((quiz, index) => {
+                    const featured = index === 0 && filteredQuizzes.length > 2;
+                    return (
+                      <div
+                        key={quiz.quizId}
+                        className={cn("animate-[quiz-card-in_260ms_ease-out_both]", featured && "sm:col-span-2")}
+                        style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
+                      >
+                        <QuizCard
+                          quiz={quiz}
+                          onStart={handleStartQuiz}
+                          featured={featured}
+                          imageUrl={quiz.contextId ? contextImages.get(quiz.contextId) : undefined}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </section>
 
-            <aside className="lg:sticky lg:top-6 lg:self-start">
-              <QuizRecentResults
-                results={results.slice(0, 10)}
-                isLoading={resultsLoading}
-                onViewAll={() => handleViewChange("history")}
-              />
-            </aside>
+            {hasHistory && (
+              <aside className="lg:sticky lg:top-6 lg:self-start">
+                <QuizRecentResults
+                  results={results.slice(0, 10)}
+                  isLoading={resultsLoading}
+                  onViewAll={() => handleViewChange("history")}
+                />
+              </aside>
+            )}
           </div>
         )}
       </div>

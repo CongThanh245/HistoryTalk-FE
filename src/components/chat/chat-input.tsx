@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Mic, Send, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { useEntitlements } from "@/features/saas/entitlements";
 
 // ── Web Speech API types (chưa có trong lib dom mặc định) ──
 declare global {
@@ -67,6 +68,7 @@ export function ChatInput({
   isTokenExhausted,
 }: ChatInputProps) {
   const [text, setText] = useState("");
+  const { mode } = useEntitlements();
   const [isRecording, setIsRecording] = useState(false);
   const [isSupported] = useState(
     () =>
@@ -164,15 +166,15 @@ export function ChatInput({
 
   return (
     <div
-      className="sticky bottom-0 z-10 px-4 py-3 border-t border-border-default shrink-0 pb-[calc(env(safe-area-inset-bottom)+12px)] bg-bg-main"
+      className="sticky bottom-0 z-10 px-4 py-3 border-t border-[var(--text-primary)] shrink-0 pb-[calc(env(safe-area-inset-bottom)+12px)] bg-bg-main"
     >
       {/* Recording indicator */}
       {isRecording && (
         <div className="flex items-center gap-2 mb-2 px-1">
           <span
-            className="w-2 h-2 rounded-full animate-pulse bg-red-500"
+            className="w-2 h-2 rounded-full animate-pulse bg-accent-danger"
           />
-          <span className="text-xs text-content-text">
+          <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-accent-danger">
             Đang nghe... bấm mic lần nữa để dừng và gửi
           </span>
         </div>
@@ -187,7 +189,9 @@ export function ChatInput({
           onKeyDown={handleKeyDown}
           placeholder={
             isTokenExhausted
-              ? "Bạn đã hết token. Vui lòng nâng cấp gói để tiếp tục chat."
+              ? mode === "B2B"
+                ? "Đã hết hạn mức token hôm nay. Hạn mức làm mới lúc 00:00."
+                : "Bạn đã hết token. Vui lòng nâng cấp gói để tiếp tục chat."
               : isRecording
                 ? "Đang nhận giọng nói..."
                 : `Nhắn tin với ${characterName ?? "nhân vật"}...`
@@ -196,10 +200,10 @@ export function ChatInput({
           maxLength={MAX_LENGTH + 20}
           rows={1}
           className={cn(
-            "flex-1 resize-none rounded-xl px-4 py-2.5 text-sm outline-none leading-normal min-h-12 max-h-40",
-            "transition-all placeholder:text-content-text",
+            "flex-1 resize-none rounded-[2px] px-4 py-2.5 text-sm outline-none leading-normal min-h-12 max-h-40",
+            "transition-colors placeholder:text-content-muted focus:border-[var(--text-primary)]",
             "disabled:opacity-60 overflow-hidden bg-bg-elevated text-content-heading",
-            isRecording ? "border border-red-500/40" : "border border-border-default",
+            isRecording ? "border border-accent-danger" : "border border-[var(--border-strong)]",
           )}
         />
 
@@ -212,18 +216,18 @@ export function ChatInput({
             aria-label={isRecording ? "Dừng ghi âm và gửi" : "Bắt đầu ghi âm"}
             title={isRecording ? "Bấm lần nữa để dừng và gửi" : "Bấm để nói"}
             className={cn(
-              "w-10 h-10 flex items-center justify-center rounded-xl",
-              "transition-all active:scale-95 select-none",
+              "w-10 h-10 flex items-center justify-center rounded-[2px]",
+              "transition-colors active:scale-95 select-none",
               "disabled:opacity-30 disabled:cursor-not-allowed shrink-0",
               isRecording
-                ? "bg-red-500/15 border border-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.2)]"
-                : "bg-bg-elevated border border-border-default",
+                ? "bg-[var(--status-danger-bg)] border border-accent-danger"
+                : "bg-bg-elevated border border-[var(--border-strong)] hover:border-[var(--text-primary)]",
             )}
           >
             <Mic
               className={cn(
                 "w-4 h-4 transition-colors",
-                isRecording ? "text-red-500" : "text-content-text",
+                isRecording ? "text-accent-danger" : "text-content-text",
               )}
             />
           </button>
@@ -236,13 +240,13 @@ export function ChatInput({
           disabled={!text.trim() || isLoading || disabled || isOverLimit}
           aria-label="Gửi tin nhắn"
           className={cn(
-            "w-10 h-10 flex items-center justify-center rounded-xl",
-            "transition-all hover:brightness-110 active:scale-95",
+            "w-10 h-10 flex items-center justify-center rounded-[2px]",
+            "transition-colors active:scale-95",
             "disabled:opacity-30 disabled:cursor-not-allowed shrink-0",
-            "border border-border-default",
+            "border",
             text.trim()
-              ? "bg-gradient-to-br from-accent-gold to-(--truffle)"
-              : "bg-bg-elevated",
+              ? "bg-accent-gold border-accent-gold hover:bg-accent-bronze hover:border-accent-bronze"
+              : "bg-bg-elevated border-[var(--border-strong)]",
           )}
         >
           {isLoading ? (
@@ -253,7 +257,7 @@ export function ChatInput({
             <Send
               className={cn(
                 "w-4 h-4",
-                text.trim() ? "text-bg-deep" : "text-content-text",
+                text.trim() ? "text-white" : "text-content-text",
               )}
             />
           )}
@@ -262,7 +266,7 @@ export function ChatInput({
 
       <div className="flex items-center justify-between mt-1.5 px-1">
         <p
-          className="text-[10px] text-content-text/92"
+          className="text-[10px] tracking-[0.04em] text-content-muted"
         >
           Enter để gửi · Shift+Enter xuống dòng
           {isSupported ? " · Bấm mic để nói, bấm lần nữa để dừng" : ""}
@@ -274,7 +278,7 @@ export function ChatInput({
               ? "text-accent-danger"
               : remainingChars <= 20
                 ? "text-accent-gold"
-                : "text-content-text/92",
+                : "text-content-muted",
           )}
         >
           {isOverLimit && <AlertTriangle className="w-3 h-3" />}

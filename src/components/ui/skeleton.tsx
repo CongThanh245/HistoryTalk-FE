@@ -4,15 +4,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils/cn";
 
 const skeletonVariants = cva(
-  "animate-pulse bg-card-border/60 rounded-md",
+  "animate-pulse bg-card-border/60 rounded-[2px]",
   {
     variants: {
       variant: {
         default: "",
         text: "h-4 w-full rounded-sm",
         circle: "rounded-full aspect-square",
-        card: "h-40 w-full rounded-lg",
-        image: "h-48 w-full rounded-lg",
+        card: "h-40 w-full rounded-[2px]",
+        image: "h-48 w-full rounded-[2px]",
       },
     },
     defaultVariants: {
@@ -61,7 +61,7 @@ function SkeletonCard({ className, ...props }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 rounded-lg border border-card-border p-4",
+        "flex flex-col gap-4 rounded-[2px] border border-[var(--border-strong)] p-4",
         className,
       )}
       {...props}

@@ -11,6 +11,8 @@ import { firstParam, parseEra } from "@/lib/catalog-url-state";
 import type { EventEraBackend, GetEventsParams } from "@/services/event.service";
 
 import { catalogMetadata } from "@/lib/catalog-metadata";
+import { ArchiveHeading } from "@/components/commons/archive-heading";
+import { LocalCatalogSwitch } from "@/components/saas/local-catalog-switch";
 export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   return catalogMetadata("/events", await searchParams);
 }
@@ -37,18 +39,17 @@ export default async function EventsPage({
 
   return (
     <div className="space-y-4 py-4 lg:py-5">
-      <div className="flex items-center gap-3">
-        <div>
-          <h1 className="font-title text-xl md:text-2xl font-bold text-content-heading">
-            Sự kiện lịch sử
-          </h1>
-          <p className="text-xs md:text-sm mt-0.5 text-content-muted">
-            Hành trình qua các mốc lịch sử quan trọng của dân tộc
-          </p>
-        </div>
-      </div>
+      <ArchiveHeading
+        as="h1"
+        label="Biên niên"
+        title="Sự kiện lịch sử"
+        description="Hành trình qua các mốc lịch sử quan trọng của dân tộc"
+        className="mb-2 border-b-0 pb-0"
+      />
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <EventsClient />
+        <LocalCatalogSwitch kind="CONTEXT">
+          <EventsClient />
+        </LocalCatalogSwitch>
       </HydrationBoundary>
     </div>
   );

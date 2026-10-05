@@ -100,59 +100,65 @@ export function FeaturesSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative border-t border-(--border-default) h-[480vh]"
+      className="relative border-t border-(--text-primary) h-[480vh]"
     >
       <div className="sticky top-0 h-svh overflow-hidden bg-(--bg-main)">
-        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(90deg,rgba(255,146,21,0.06)_0,transparent_28%,transparent_72%,rgba(143,179,200,0.06)_100%)]" />
+        <span
+          aria-hidden="true"
+          className="archive-seal pointer-events-none absolute right-6 top-24 hidden lg:inline-grid"
+        >
+          國史
+        </span>
 
         <Container className="relative z-10 flex h-full flex-col justify-center py-16 md:py-24 lg:py-32">
           {/* Header */}
-          <div className="mb-10 grid gap-4 lg:mb-14 lg:grid-cols-2 lg:gap-16 lg:items-end">
-            <h2 className="text-subtitle font-bold leading-tight text-muted-foreground md:text-title lg:text-[2.5rem]">
-              Một dòng thời gian,{" "}
-              <span className="font-title text-(--accent-gold)">bốn lần chạm</span>
-            </h2>
-            <p className="text-sm text-muted-foreground md:text-base lg:max-w-sm">
+          <div className="mb-10 grid gap-4 border-b border-(--text-primary) pb-4 lg:mb-14 lg:grid-cols-2 lg:items-end lg:gap-16">
+            <div>
+              <h2 className="archive-title text-subtitle md:text-title lg:text-[2.5rem]">
+                Một dòng thời gian, <em>bốn lần chạm</em>
+              </h2>
+            </div>
+            <p className="text-sm text-(--text-secondary) md:text-base lg:max-w-sm">
               Mỗi bước đều dẫn dắt người học từ sự tò mò đến những cuộc đối thoại sâu sắc, và khép lại bằng các bài ôn tập đầy ý nghĩa.
             </p>
           </div>
 
-          {/* Cards */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Cards — ruled grid */}
+          <div className="grid grid-cols-1 border-l border-t border-(--text-primary) md:grid-cols-2">
             {journeySteps.map((item, index) => (
               <div
                 key={item.step}
                 ref={(el) => { cardRefs.current[index] = el; }}
-                className="relative overflow-hidden rounded-2xl border border-(--border-default) bg-(--bg-surface) p-6"
+                className="relative overflow-hidden border-b border-r border-(--text-primary) bg-(--bg-surface) p-6"
               >
                 {/* Watermark number */}
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute -right-2 -top-4 select-none font-black leading-none text-(--accent-gold) text-[6rem] opacity-5"
+                  className="pointer-events-none absolute -right-1 -top-3 select-none font-display text-[6rem] font-extrabold leading-none text-(--text-primary) opacity-[0.06]"
                 >
                   {item.step}
                 </span>
 
                 {/* Step badge + eyebrow */}
                 <div className="mb-5 flex items-center gap-2.5">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-(--accent-gold)/40 text-[0.55rem] font-bold text-(--accent-gold)">
-                    {item.step}
+                  <span className="font-display text-[15px] font-extrabold text-(--accent-gold)">
+                    [{item.step}]
                   </span>
-                  <span className="text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-(--accent-gold)/60">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-(--text-tertiary)">
                     {item.eyebrow}
                   </span>
                 </div>
 
                 {/* Title */}
-                <h3 className="mb-3 text-[0.95rem] font-bold leading-snug text-white lg:text-[1.05rem]">
+                <h3 className="archive-title is-plain mb-3 text-[18px] lg:text-[21px]">
                   {item.title}
                 </h3>
 
                 {/* Divider */}
-                <div className="mb-3 h-px w-7 bg-(--accent-gold)/35" />
+                <div className="mb-3 h-px w-7 bg-(--accent-gold)" />
 
                 {/* Body */}
-                <p className="text-sm leading-relaxed text-muted-foreground">
+                <p className="text-sm leading-relaxed text-(--text-secondary)">
                   {item.body}
                 </p>
               </div>

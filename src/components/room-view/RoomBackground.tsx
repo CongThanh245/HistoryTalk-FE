@@ -82,7 +82,7 @@ export function RoomBackground({ room, children }: RoomBackgroundProps) {
         className="absolute bottom-5 left-5 max-w-xs z-10 pointer-events-none"
         style={{ animation: "fade-in-up 0.8s ease-out 0.3s both" }}
       >
-        <p className="text-xs italic leading-relaxed text-[rgba(255,245,220,0.7)] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+        <p className="text-xs italic leading-relaxed text-[var(--text-on-dark-muted)] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
           {room.ambientDescription}
         </p>
       </div>

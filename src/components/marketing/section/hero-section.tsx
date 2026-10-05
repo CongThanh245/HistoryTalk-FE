@@ -21,7 +21,7 @@ const Carousel3DVertical = lazy(() =>
 // Simple placeholder cho carousel
 const CarouselPlaceholder = () => (
   <div className="flex items-center justify-center h-full">
-    <div className="w-32 h-32 rounded-full bg-[var(--bg-surface)] animate-pulse" />
+    <div className="h-40 w-28 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-deep)] animate-pulse" />
   </div>
 );
 
@@ -36,7 +36,6 @@ function StaticCharacterPreview({
 
   return (
     <div className="relative flex h-full w-full items-center justify-center [perspective:1200px]">
-      <div className="absolute pointer-events-none h-[620px] w-[620px] rounded-full opacity-55 bg-[radial-gradient(ellipse_at_center,rgba(205,211,22,0.22)_0%,rgba(205,211,22,0.08)_40%,transparent_70%)]" />
       {visibleCharacters.map((character, index) => {
         const imageSrc = isValidUrl(character.imageUrl)
           ? character.imageUrl!
@@ -50,13 +49,13 @@ function StaticCharacterPreview({
         return (
           <div
             key={character.id}
-            className="absolute h-[198px] w-[136px] overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-[var(--bg-surface)] shadow-[var(--shadow-soft)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
+            className="absolute h-[198px] w-[136px] overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
             style={{
               transform: transforms[index],
               zIndex: 30 - index,
             }}
           >
-            <div className="relative h-[65%] w-full bg-[var(--bg-elevated)]">
+            <div className="relative h-[65%] w-full border-b border-[var(--text-primary)] bg-[var(--bg-deep)]">
               <Image
                 src={imageSrc}
                 alt={character.name}
@@ -65,15 +64,14 @@ function StaticCharacterPreview({
                 fetchPriority="high"
                 quality={65}
                 sizes="(max-width: 640px) 136px, (max-width: 768px) 190px, (max-width: 1024px) 240px, 280px"
-                className="object-cover"
+                className={index === 0 ? "object-cover" : "object-cover archive-photo"}
               />
-              <div className="absolute inset-0 bg-[linear-gradient(to_top,var(--bg-surface)_0%,rgba(26,36,54,0)_50%)]" />
             </div>
             <div className="flex h-[35%] flex-col px-3 py-3 text-left sm:px-4">
-              <span className="mb-1 w-fit rounded-full border border-[var(--accent-gold)]/55 px-2 py-0.5 text-[9px] font-bold uppercase text-[var(--accent-gold-soft)]">
+              <span className="mb-1 w-fit rounded-[2px] border border-[var(--accent-gold)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--gold-on-light)]">
                 {character.era ?? ""}
               </span>
-              <h3 className="line-clamp-1 text-sm font-bold text-[var(--text-primary)] sm:text-base">
+              <h3 className="archive-title is-plain line-clamp-1 text-[15px] sm:text-[17px] lg:text-[20px]">
                 {character.name}
               </h3>
               <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-snug text-[var(--text-secondary)] sm:text-xs">
@@ -240,18 +238,22 @@ export function HeroSection({
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{
-          background: `
-            radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
-            radial-gradient(ellipse 100% 80% at 50% 120%, #2a1f0d 0%, rgba(10, 12, 16, 0) 70%)
+          backgroundColor: "var(--bg-main)",
+          backgroundImage: `
+            linear-gradient(color-mix(in srgb, var(--text-primary) 6%, transparent) 1px, transparent 1px),
+            linear-gradient(90deg, color-mix(in srgb, var(--text-primary) 6%, transparent) 1px, transparent 1px)
           `,
+          backgroundSize: "56px 56px",
+          maskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
         }}
       />
       <div className="landing-ambient-beam hidden" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden h-24 lg:block">
-        <div className="absolute bottom-0 left-1/2 h-24 w-px -translate-x-1/2 overflow-hidden rounded-full bg-white/10">
+        <div className="absolute bottom-0 left-1/2 h-24 w-px -translate-x-1/2 overflow-hidden bg-[var(--border-default)]">
           <div
             ref={lineRef}
-            className="h-full w-full origin-bottom rounded-full bg-gradient-to-b from-transparent via-[var(--accent-gold)]/70 to-[var(--accent-gold)] shadow-[0_0_18px_rgba(255,146,21,0.45)]"
+            className="h-full w-full origin-bottom bg-gradient-to-b from-transparent via-[var(--accent-gold)]/70 to-[var(--accent-gold)]"
           />
         </div>
       </div>
@@ -262,12 +264,18 @@ export function HeroSection({
             ref={contentWrapperRef}
             className="z-10 shrink-0 space-y-3 pb-2 pt-[5.8rem] sm:pt-[6.5rem] md:space-y-4 md:pb-4 md:pt-28 lg:space-y-8 lg:pb-0 lg:pt-0"
           >
-            <h1 className="text-hero text-[var(--text-primary)]">
+            <div className="hero-stagger-item hidden items-center justify-between gap-4 border-b border-[var(--border-strong)] pb-3 lg:flex">
+              {/* 國史 — "quốc sử", national history */}
+              <span className="archive-seal" aria-hidden="true">國史</span>
+            </div>
+            <h1 className="archive-title">
               <span className="sr-only">HistoryTalk - Trò chuyện với nhân vật lịch sử- Học lịch sử tương tác</span>
               <span className="block overflow-hidden pb-[0.08em]">
-                <span className="hero-reveal-title block">HISTORY TALK</span>
+                <span className="hero-reveal-title block text-[clamp(44px,6.4vw,72px)]">
+                  HISTORY <em>TALK</em>
+                </span>
               </span>
-              <span className="text-subtitle mt-2 block overflow-hidden pb-[0.08em] font-normal normal-case text-[var(--text-tertiary)]">
+              <span className="mt-2 block overflow-hidden pb-[0.08em] font-body text-[18px] font-normal normal-case tracking-normal text-[var(--text-tertiary)] md:text-[22px]">
                 <span className="hero-reveal-subtitle block">
                   Khi lịch sử trở nên sống động
                 </span>
@@ -281,11 +289,11 @@ export function HeroSection({
                 </p>
               </div>
 
-              <div className="hero-stagger-item my-2 space-y-0.5 border-l-2 border-[var(--accent-gold)]/40 py-1.5 pl-4 md:my-3 md:py-2 md:pl-5 lg:my-4 lg:py-3 lg:pl-6">
-                <p className="text-xs font-light italic text-[var(--text-primary)] md:text-sm lg:text-base">
+              <div className="hero-stagger-item my-2 space-y-0.5 border-[var(--accent-gold)] py-1.5 pl-4 md:my-3 md:py-2 md:pl-5 lg:my-4 lg:py-3 lg:pl-6">
+                <p className="text-xs italic text-[var(--text-primary)] md:text-sm lg:text-base">
                   &quot;Học sinh chỉ chán học Lịch sử trên trường
                 </p>
-                <p className="text-xs font-light italic text-[var(--accent-gold)] md:text-sm lg:text-base">
+                <p className="text-xs italic text-[var(--gold-on-light)] md:text-sm lg:text-base">
                   chứ không học sinh nào chán lịch sử dân tộc cả!&quot;
                 </p>
               </div>
@@ -295,13 +303,13 @@ export function HeroSection({
                   type="button"
                   aria-label="Xem video giới thiệu"
                   onClick={() => setIsVideoOpen(true)}
-                  className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-full border border-white/15 bg-white/[0.04] text-white backdrop-blur-md transition-all duration-300 hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/10 hover:text-[var(--accent-gold)] active:scale-95 lg:h-[58px] lg:w-[58px]"
+                  className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-[2px] border border-[var(--text-primary)] bg-transparent text-[var(--text-primary)] transition-colors duration-150 hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] active:scale-95 lg:h-[58px] lg:w-[58px]"
                 >
                   <Play className="h-5 w-5 translate-x-0.5 fill-current lg:h-6 lg:w-6" />
                 </button>
                 <MarketingButton
                   href="/home"
-                  className="flex min-w-0 flex-1 lg:inline-flex lg:w-auto lg:flex-none lg:overflow-visible"
+                  className="flex min-w-0 flex-1 rounded-[2px] border-[var(--accent-gold)] bg-[var(--accent-gold)] font-bold uppercase tracking-[0.08em] text-white backdrop-blur-none hover:border-[var(--accent-bronze)] hover:bg-[var(--accent-bronze)] lg:inline-flex lg:w-auto lg:flex-none lg:overflow-visible"
                 >
                   TRẢI NGHIỆM NGAY
                 </MarketingButton>
@@ -309,7 +317,7 @@ export function HeroSection({
                   type="button"
                   aria-label="Xem video giới thiệu"
                   onClick={() => setIsVideoOpen(true)}
-                  className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-full border border-white/15 bg-white/[0.04] text-white backdrop-blur-md transition-all duration-300 hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/10 hover:text-[var(--accent-gold)] active:scale-95 lg:h-[58px] lg:w-[58px]"
+                  className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-[2px] border border-[var(--text-primary)] bg-transparent text-[var(--text-primary)] transition-colors duration-150 hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] active:scale-95 lg:h-[58px] lg:w-[58px]"
                 >
                   <Play className="h-5 w-5 translate-x-0.5 fill-current lg:h-6 lg:w-6" />
                 </button>
@@ -341,12 +349,12 @@ export function HeroSection({
             onClick={() => setIsVideoOpen(false)}
             className="absolute inset-0"
           />
-          <div className="relative z-10 w-full max-w-5xl overflow-hidden rounded-lg border border-white/15 bg-black shadow-[0_30px_90px_rgba(0,0,0,0.65)]">
+          <div className="relative z-10 w-full max-w-5xl overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-black shadow-[var(--shadow-soft)]">
             <button
               type="button"
               aria-label="Đóng"
               onClick={() => setIsVideoOpen(false)}
-              className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-black/55 text-white backdrop-blur-md transition-colors hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
+              className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-[2px] border border-white/30 bg-black/60 text-white transition-colors hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold)]"
             >
               <X className="h-4 w-4" />
             </button>

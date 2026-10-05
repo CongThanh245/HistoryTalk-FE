@@ -18,13 +18,13 @@ export function StaffSearchBar({ value, onChange, placeholder = "Tìm kiếm..."
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="pl-10 h-10 rounded-xl border border-card-border bg-bg-main/50 text-content-text"
+          className="pl-10 h-10 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] text-content-text focus-visible:border-[var(--text-primary)]"
         />
       </div>
       {filters}
       <div className="flex-1" />
       {onAction && (
-        <Button type="button" className="h-10 rounded-xl px-4 font-semibold border-0 shrink-0 bg-primary text-primary-foreground" onClick={onAction}>
+        <Button type="button" className="h-10 rounded-[2px] px-4 font-semibold border-0 shrink-0 bg-primary text-primary-foreground" onClick={onAction}>
           <Plus className="h-4 w-4 mr-1.5" />{actionLabel}
         </Button>
       )}

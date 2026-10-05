@@ -77,7 +77,7 @@ export function SearchInputWithSuggestions({
   return (
     <div ref={containerRef} className="relative w-full">
       <div
-        className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-card-border bg-card-bg transition-all duration-150 focus-within:border-accent-gold/40"
+        className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] transition-colors duration-150 hover:border-[var(--text-primary)] focus-within:border-[var(--accent-gold)]"
       >
         <Search className="w-4 h-4 shrink-0 text-content-subtle" />
         <input
@@ -101,7 +101,7 @@ export function SearchInputWithSuggestions({
               setIsOpen(false);
               inputRef.current?.focus();
             }}
-            className="p-0.5 rounded-full cursor-pointer text-content-subtle transition-opacity hover:opacity-70"
+            className="p-0.5 rounded-[2px] cursor-pointer text-content-subtle transition-colors hover:text-[var(--accent-gold)]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -111,7 +111,7 @@ export function SearchInputWithSuggestions({
       {/* Suggestions Dropdown */}
       {showDropdown && (
         <div
-          className="absolute top-full left-0 right-0 mt-2 py-2 rounded-xl border border-border-default bg-bg-elevated shadow-lg z-50 max-h-[320px] overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-2 py-2 rounded-[2px] border border-[var(--text-primary)] bg-bg-elevated shadow-[var(--shadow-soft)] z-50 max-h-[320px] overflow-y-auto"
         >
           {isLoading && (
             <div className="flex items-center justify-center py-4">
@@ -133,7 +133,7 @@ export function SearchInputWithSuggestions({
               {suggestions.some((s) => s.type === "character") && (
                 <>
                   <div
-                    className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-accent-gold"
+                    className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-text-tertiary"
                   >
                     Nhân vật
                   </div>
@@ -147,11 +147,11 @@ export function SearchInputWithSuggestions({
                         onClick={() => handleSelect(suggestion.url)}
                         onMouseEnter={() => setHighlightedKey(suggestionKey)}
                         className={`w-full px-3 py-2.5 flex items-center gap-3 text-left cursor-pointer transition-colors ${
-                          highlightedKey === suggestionKey ? "bg-accent-gold/10" : ""
+                          highlightedKey === suggestionKey ? "bg-accent-gold-active" : ""
                         }`}
                       >
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-bg-deep"
+                          className="w-8 h-8 rounded-[2px] flex items-center justify-center shrink-0 overflow-hidden bg-bg-deep"
                         >
                           {suggestion.imageUrl ? (
                             <Image
@@ -185,7 +185,7 @@ export function SearchInputWithSuggestions({
               {suggestions.some((s) => s.type === "event") && (
                 <>
                   <div
-                    className="px-3 py-1.5 mt-1 text-[10px] font-semibold uppercase tracking-wider border-t border-border-default text-accent-gold"
+                    className="px-3 py-1.5 mt-1 text-[10px] font-bold uppercase tracking-[0.14em] border-t border-border-default text-text-tertiary"
                   >
                     Sự kiện
                   </div>
@@ -199,11 +199,11 @@ export function SearchInputWithSuggestions({
                         onClick={() => handleSelect(suggestion.url)}
                         onMouseEnter={() => setHighlightedKey(suggestionKey)}
                         className={`w-full px-3 py-2.5 flex items-center gap-3 text-left cursor-pointer transition-colors ${
-                          highlightedKey === suggestionKey ? "bg-accent-gold/10" : ""
+                          highlightedKey === suggestionKey ? "bg-accent-gold-active" : ""
                         }`}
                       >
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-bg-deep"
+                          className="w-8 h-8 rounded-[2px] flex items-center justify-center shrink-0 overflow-hidden bg-bg-deep"
                         >
                           {suggestion.imageUrl ? (
                             <Image

@@ -66,7 +66,7 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "bg-bg-elevated text-foreground fixed z-50 flex flex-col gap-4 shadow-[var(--shadow-strong)]",
+          "bg-bg-elevated text-foreground fixed z-50 flex flex-col gap-4 shadow-[var(--shadow-soft)]",
           !disableAnimation &&
             "data-[state=open]:animate-in data-[state=closed]:animate-out transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
           disableAnimation && "data-[state=open]:animate-none data-[state=closed]:animate-none",
@@ -99,7 +99,7 @@ function SheetContent({
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
+        <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-[2px] opacity-70 transition-[opacity,color] hover:opacity-100 hover:text-[var(--accent-gold)] focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
           <XIcon className="size-4" />
           <span className="sr-only">Close</span>
         </SheetPrimitive.Close>

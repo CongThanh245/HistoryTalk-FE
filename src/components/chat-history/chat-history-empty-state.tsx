@@ -13,12 +13,12 @@ export function ChatHistoryEmptyState({
   isNotAuthenticated,
 }: ChatHistoryEmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-24 gap-4">
-      <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-accent-gold/10 to-[rgba(163,81,57,0.06)] border border-accent-gold/15">
-        <Glasses className="w-7 h-7 text-gold-on-light opacity-50" />
+    <div className="flex flex-col items-center justify-center py-24 gap-4 border-y border-[var(--border-strong)]">
+      <div className="w-16 h-16 rounded-[2px] flex items-center justify-center bg-[var(--bg-surface)] border border-[var(--text-primary)]">
+        <Glasses className="w-7 h-7 text-[var(--text-tertiary)]" />
       </div>
       <div className="text-center">
-        <p className="text-base font-semibold text-content-heading">
+        <p className="archive-title is-plain text-xl">
           {isNotAuthenticated
             ? "Lịch sử trống"
             : hasFilter

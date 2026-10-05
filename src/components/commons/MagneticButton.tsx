@@ -69,11 +69,11 @@ export function MagneticButton({
       asChild
       variant="magnetic"
       className={cn(
-        "relative overflow-hidden bg-transparent font-medium cursor-pointer transition-all duration-300",
+        "relative overflow-hidden bg-transparent font-bold uppercase tracking-[0.08em] cursor-pointer transition-all duration-300",
         isHeader
-          ? "border border-header-border text-text-primary"
-          : "border-2 border-accent-gold text-accent-gold",
-        rounded === "full" ? "rounded-full" : "rounded-none",
+          ? "border border-[var(--text-primary)] text-text-primary"
+          : "border border-accent-gold text-accent-gold",
+        rounded === "full" ? "rounded-[2px]" : "rounded-none",
         sizeClasses[size],
         className,
       )}
@@ -88,7 +88,7 @@ export function MagneticButton({
           className={cn(
             "absolute inset-0 pointer-events-none",
             isHeader
-              ? "bg-gradient-to-r from-accent-gold to-[var(--truffle)]"
+              ? "bg-[var(--text-primary)]"
               : "bg-accent-gold",
           )}
           style={{

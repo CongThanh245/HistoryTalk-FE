@@ -4,6 +4,7 @@ import { HomeBanner } from "@/components/home/home-banner";
 import { HistoricalContexts } from "@/components/home/historical-contexts";
 import { LearningDashboard } from "@/components/home/learning-dashboard";
 import { DailyQuestsCard } from "@/components/home/daily-quests-card";
+import { StudentToday } from "@/components/home/student-today";
 
 export const metadata = {
   title: "Trang chủ | HistoryTalk",
@@ -13,6 +14,9 @@ export const metadata = {
 export default function HomePage() {
   return (
     <div className="space-y-8 lg:space-y-12 py-6 lg:py-10 pb-10 md:pb-14">
+      {/* Học sinh trường: "Hôm nay của em" đứng đầu, banner xuống dưới. Các vai trò khác: không render gì. */}
+      <StudentToday />
+
       {/* Hero Banner with Quick Navigation */}
       <HomeBanner />
 

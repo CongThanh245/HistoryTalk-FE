@@ -18,48 +18,36 @@ const ALL_CARDS = [
     title: "Sự kiện lịch sử",
     desc: "Dòng thời gian tương tác",
     href: "/events",
-    accentHex: "#c9a24d",
-    glow: "rgba(201,162,77,0.1)",
   },
   {
     icon: User,
     title: "Nhân vật",
     desc: "Những người làm thay đổi lịch sử",
     href: "/characters",
-    accentHex: "#c46a2f",
-    glow: "rgba(196,106,47,0.1)",
   },
   {
     icon: MessageSquareText,
     title: "Chat với lịch sử",
     desc: "AI đóng vai nhân vật lịch sử",
     href: "/chat-history",
-    accentHex: "#8fb3c8",
-    glow: "rgba(143,179,200,0.1)",
   },
   {
     icon: ClipboardList,
     title: "Câu đố lịch sử",
     desc: "Hàng nghìn câu hỏi theo chủ đề",
     href: "/quiz",
-    accentHex: "#e8924a",
-    glow: "rgba(255,177,98,0.1)",
   },
   {
     icon: Landmark,
     title: "Thư viện",
     desc: "Tư liệu & hình ảnh lịch sử",
     href: "/library",
-    accentHex: "#2f8a8e",
-    glow: "rgba(47,111,115,0.1)",
   },
   {
     icon: Bookmark,
     title: "Đã lưu",
     desc: "Nội dung bạn đã đánh dấu",
     href: "/saved",
-    accentHex: "#b89a3a",
-    glow: "rgba(226,199,122,0.1)",
   },
 ];
 
@@ -75,7 +63,7 @@ export function FeatureCards() {
   );
 
   return (
-    <div className="bg-card-light-bg border border-card-light-border rounded-[14px] overflow-hidden shadow-[0_1px_6px_rgba(27,38,50,0.06)] flex flex-col pb-5">
+    <div className="bg-[var(--bg-surface)] border border-[var(--text-primary)] rounded-[2px] overflow-hidden flex flex-col pb-5">
       {/* Header */}
       <div className="flex items-center justify-between p-[11px]">
         {/* Pagination arrows */}
@@ -84,24 +72,24 @@ export function FeatureCards() {
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className={`w-6 h-6 rounded-md border border-card-light-border flex items-center justify-center transition-all duration-150 ${
+              className={`w-6 h-6 rounded-[2px] border flex items-center justify-center transition-colors duration-150 ${
                 page === 0
-                  ? "bg-transparent text-content-subtle cursor-default"
-                  : "bg-card-light-bg text-[#7a5a1e] cursor-pointer"
+                  ? "bg-transparent border-[var(--border-default)] text-content-subtle cursor-default"
+                  : "bg-transparent border-[var(--text-primary)] text-[var(--text-primary)] cursor-pointer hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
               }`}
             >
               <ChevronLeft size={11} strokeWidth={2.5} />
             </button>
-            <span className="text-[10px] text-content-muted font-semibold">
+            <span className="text-[10px] text-content-muted font-bold tracking-[0.1em]">
               {page + 1}/{totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
-              className={`w-6 h-6 rounded-md border border-card-light-border flex items-center justify-center transition-all duration-150 ${
+              className={`w-6 h-6 rounded-[2px] border flex items-center justify-center transition-colors duration-150 ${
                 page === totalPages - 1
-                  ? "bg-transparent text-content-subtle cursor-default"
-                  : "bg-card-light-bg text-[#7a5a1e] cursor-pointer"
+                  ? "bg-transparent border-[var(--border-default)] text-content-subtle cursor-default"
+                  : "bg-transparent border-[var(--text-primary)] text-[var(--text-primary)] cursor-pointer hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
               }`}
             >
               <ChevronRight size={11} strokeWidth={2.5} />
@@ -116,49 +104,26 @@ export function FeatureCards() {
           <Link
             key={card.href}
             href={card.href}
-            className="group no-underline"
+            className="group block no-underline"
           >
-            <div
-              className="flex flex-col gap-2.5 p-3 rounded-[10px] border border-card-light-border bg-card-light-bg transition-all duration-150 cursor-pointer"
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.background = card.glow;
-                el.style.borderColor = `${card.accentHex}40`;
-                el.style.transform = "translateY(-1px)";
-                el.style.boxShadow = `0 4px 16px ${card.accentHex}14`;
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.background = "var(--card-light-bg)";
-                el.style.borderColor = "var(--card-light-border)";
-                el.style.transform = "translateY(0)";
-                el.style.boxShadow = "none";
-              }}
-            >
+            <div className="h-full flex flex-col gap-2.5 p-3 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] transition-colors duration-150 cursor-pointer group-hover:border-[var(--text-primary)] group-hover:bg-[var(--text-primary)]">
               {/* Icon */}
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{
-                  background: card.glow,
-                  border: `1px solid ${card.accentHex}28`,
-                }}
-              >
-                <card.icon size={16} style={{ color: card.accentHex }} />
+              <div className="w-8 h-8 rounded-[2px] flex items-center justify-center border border-[var(--border-strong)] text-[var(--accent-gold)] transition-colors duration-150 group-hover:border-[var(--accent-on-ink)] group-hover:text-[var(--accent-on-ink)]">
+                <card.icon size={16} />
               </div>
 
               {/* Text */}
               <div>
-                <p className="m-0 text-base font-bold text-content-heading leading-[1.3]">
+                <p className="m-0 archive-title is-plain text-[19px] transition-colors duration-150 group-hover:text-[var(--text-inverse)]">
                   {card.title}
                 </p>
-                <p className="m-0 mt-[3px] text-sm text-content-muted leading-[1.4]">
+                <p className="m-0 mt-[3px] text-sm text-content-muted leading-[1.4] transition-colors duration-150 group-hover:text-[var(--text-inverse)] group-hover:opacity-70">
                   {card.desc}
                 </p>
               </div>
 
               <div
-                className="flex items-center gap-[3px] text-[11px] font-semibold opacity-60 group-hover:opacity-100 transition-opacity mt-1"
-                style={{ color: card.accentHex }}
+                className="flex items-center gap-[3px] text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--gold-on-light)] opacity-80 group-hover:opacity-100 group-hover:text-[var(--accent-on-ink)] transition-[opacity,color] mt-1"
               >
                 Khám phá ngay <ChevronRight size={10} strokeWidth={2.5} />
               </div>

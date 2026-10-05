@@ -28,6 +28,11 @@ import { useMyDashboard } from "@/features/dashboard/hooks";
 import { isPro, type UserProfile } from "@/services/user.service";
 import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
 import { cn } from "@/lib/utils/cn";
+import { ArchiveHeading } from "@/components/commons/archive-heading";
+import { SchoolQuotaCard } from "@/components/saas/school-quota-card";
+import { useAuthStore } from "@/store/auth.store";
+import { useEntitlements } from "@/features/saas/entitlements";
+import { useTodayQuota } from "@/features/saas/quota-bonus";
 import {
   User,
   Crown,
@@ -46,6 +51,7 @@ import {
   Sparkles,
   Camera,
   Trash2,
+  School,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -114,24 +120,52 @@ const GENDER_LABELS: Record<"MALE" | "FEMALE" | "OTHER", string> = {
 };
 
 function statusBadge(status: string) {
-  const map: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-    PAID: { label: "Thành công", color: "#22c55e", icon: CheckCircle },
-    PENDING: { label: "Chờ thanh toán", color: "#f59e0b", icon: Clock },
-    CANCELLED: { label: "Đã hủy", color: "#ef4444", icon: XCircle },
-    EXPIRED: { label: "Hết hạn", color: "#6b7280", icon: XCircle },
+  const map: Record<string, { label: string; classes: string; icon: React.ComponentType<{ className?: string }> }> = {
+    PAID: {
+      label: "Thành công",
+      classes: "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]",
+      icon: CheckCircle,
+    },
+    PENDING: {
+      label: "Chờ thanh toán",
+      classes: "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]",
+      icon: Clock,
+    },
+    CANCELLED: {
+      label: "Đã hủy",
+      classes: "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--accent-danger)]",
+      icon: XCircle,
+    },
+    EXPIRED: {
+      label: "Hết hạn",
+      classes: "border-[var(--status-neutral-border)] bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)]",
+      icon: XCircle,
+    },
   };
-  const cfg = map[status] ?? { label: status, color: "#6b7280", icon: Clock };
+  const cfg = map[status] ?? {
+    label: status,
+    classes: "border-[var(--status-neutral-border)] bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)]",
+    icon: Clock,
+  };
   const IconEl = cfg.icon;
   return (
     <span
-      className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full"
-      style={{ background: `${cfg.color}20`, color: cfg.color, border: `1px solid ${cfg.color}40` }}
+      className={cn(
+        "inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-[2px] border px-2 text-[10px] font-bold uppercase tracking-[0.1em]",
+        cfg.classes
+      )}
     >
       <IconEl className="w-3 h-3" />
       {cfg.label}
     </span>
   );
 }
+
+const FIELD_LABEL =
+  "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary";
+const FIELD_INPUT = "h-10 rounded-[2px] border text-sm focus-visible:border-[var(--text-primary)]";
+const CRIMSON_SUBMIT =
+  "h-[42px] gap-2 rounded-[2px] px-6 text-[13px] font-bold uppercase tracking-[0.08em] bg-[var(--accent-gold)] text-[#FFFFFF] hover:bg-[var(--accent-bronze)]";
 
 // ─────────────────────────────────────────────
 // Sub-components
@@ -143,14 +177,14 @@ function ProfileSkeleton() {
       <div className="flex items-center gap-4">
         <Skeleton className="w-20 h-20 rounded-full" />
         <div className="space-y-2">
-          <Skeleton className="h-5 w-36" />
-          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-5 w-36 rounded-[2px]" />
+          <Skeleton className="h-4 w-24 rounded-[2px]" />
         </div>
       </div>
       {[1, 2, 3, 4].map((i) => (
         <div key={i} className="space-y-1.5">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-4 w-20 rounded-[2px]" />
+          <Skeleton className="h-10 w-full rounded-[2px]" />
         </div>
       ))}
     </div>
@@ -172,6 +206,11 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
   const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useUploadAvatar();
   const { mutate: deleteAvatar, isPending: isDeletingAvatar } = useDeleteAvatar();
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  // School accounts show the school package and today's quota instead of a personal tier / wallet.
+  const entitlements = useEntitlements();
+  const isSchoolAccount = entitlements.mode === "B2B";
+  const todayQuota = useTodayQuota();
+  const proUser = !isSchoolAccount && isPro(profile ?? null);
 
   const [form, setForm] = useState({
     fullName: profile.fullName ?? "",
@@ -215,18 +254,21 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
     .slice(0, 2);
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <aside className="rounded-2xl border p-5 lg:sticky lg:top-6 lg:self-start bg-[linear-gradient(180deg,var(--bg-main)_0%,var(--bg-elevated)_100%)] border-border-default">
-        <div className="flex flex-col items-center text-center">
+    <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8">
+      <aside className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-elevated)] lg:sticky lg:top-6 lg:self-start">
+        <div className="border-b border-[var(--text-primary)] px-4 py-2">
+        </div>
+
+        <div className="flex flex-col items-center p-5 text-center">
           <div className="relative">
             <Avatar
               className={cn(
-                "w-24 h-24 border-2 shadow-sm",
-                isPro(profile ?? null) ? "border-accent-gold" : "border-border-strong"
+                "w-24 h-24 border-2",
+                proUser ? "border-accent-gold" : "border-[var(--text-primary)]"
               )}
             >
               <AvatarImage src={profile?.avatarUrl || undefined} alt={profile?.userName} />
-              <AvatarFallback className="text-2xl font-bold bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] text-bg-deep">
+              <AvatarFallback className="font-display text-3xl font-extrabold bg-[var(--text-primary)] text-text-inverse">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -236,9 +278,9 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
               onClick={() => avatarInputRef.current?.click()}
               disabled={isAvatarBusy}
               title="Đổi ảnh đại diện"
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60 bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] border-bg-elevated"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-[2px] border-2 border-[var(--bg-elevated)] bg-[var(--accent-gold)] transition-colors hover:bg-[var(--accent-bronze)] disabled:opacity-60"
             >
-              <Camera className="h-4 w-4 text-text-inverse" />
+              <Camera className="h-4 w-4 text-[#FFFFFF]" />
             </button>
 
             <input
@@ -255,51 +297,68 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
               type="button"
               onClick={() => deleteAvatar(profile.uid)}
               disabled={isAvatarBusy}
-              className="mt-2 flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-80 disabled:opacity-60 text-accent-danger"
+              className="mt-3 flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.1em] transition-opacity hover:opacity-80 disabled:opacity-60 text-accent-danger"
             >
               <Trash2 className="h-3 w-3" />
               Xóa ảnh đại diện
             </button>
           )}
 
-          <p className="mt-4 text-lg font-bold text-text-primary">
+          <p className="archive-title is-plain mt-4 max-w-full text-[22px]">
             {profile?.fullName || profile?.userName || "—"}
           </p>
-          <p className="mt-1 max-w-full truncate text-sm text-text-muted">
+          <p className="mt-1 max-w-full truncate text-sm text-text-tertiary">
             {profile?.email}
           </p>
 
-          {isPro(profile ?? null) ? (
-            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold bg-[linear-gradient(90deg,rgba(201,162,77,0.18),rgba(163,81,57,0.12))] text-accent-gold border border-[rgba(201,162,77,0.3)]">
+          {isSchoolAccount ? (
+            <span className="mt-3 inline-flex max-w-full items-center gap-1.5 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text-secondary">
+              <School className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Gói của trường: {entitlements.planLabel}</span>
+            </span>
+          ) : proUser ? (
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-[2px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] bg-[var(--accent-gold)] text-[#FFFFFF]">
               <Crown className="w-3.5 h-3.5 fill-current" />
               {profile?.tierTitle}
             </span>
           ) : (
-            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold bg-bg-elevated text-text-muted border border-border-default">
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
               <Sparkles className="w-3.5 h-3.5" />
               Tài khoản cơ bản
             </span>
           )}
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-2 text-center">
-          <ProfileMiniStat label="Token" value={(profile?.token ?? 0).toLocaleString("vi-VN")} />
-          <ProfileMiniStat label="Ngày tham gia" value={formatDate(profile?.createdAt)} />
-        </div>
+        <dl className="grid grid-cols-2 border-t border-[var(--text-primary)] text-center">
+          {isSchoolAccount ? (
+            <ProfileMiniStat
+              label="Hạn mức hôm nay"
+              value={
+                todayQuota
+                  ? `${todayQuota.used.toLocaleString("vi-VN")} / ${todayQuota.quota.toLocaleString("vi-VN")}`
+                  : "—"
+              }
+            />
+          ) : (
+            <ProfileMiniStat label="Token" value={(profile?.token ?? 0).toLocaleString("vi-VN")} />
+          )}
+          <ProfileMiniStat
+            label="Ngày tham gia"
+            value={formatDate(profile?.createdAt)}
+            className="border-l border-[var(--border-default)]"
+          />
+        </dl>
       </aside>
 
       <div className="space-y-6">
         <section>
-          <div className="mb-4">
-            <h2 className="text-base font-bold text-text-primary">
-              Thông tin cá nhân
-            </h2>
-            <p className="text-sm text-text-muted">
-              Cập nhật tên hiển thị và thông tin liên hệ của bạn.
-            </p>
-          </div>
+          <ArchiveHeading
+            label="Hồ sơ"
+            title="Thông tin cá nhân"
+            description="Cập nhật tên hiển thị và thông tin liên hệ của bạn."
+          />
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
             <FormField
               label="Họ và tên"
               icon={User}
@@ -339,8 +398,8 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
               type="date"
             />
 
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium flex items-center gap-1.5 text-text-secondary">
+            <div className="space-y-1.5 border-b border-[var(--border-default)] py-4">
+              <Label className={FIELD_LABEL}>
                 <User className="w-3.5 h-3.5" />
                 Giới tính
               </Label>
@@ -348,7 +407,7 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
                 value={form.gender}
                 onValueChange={(v) => setForm({ ...form, gender: normalizeGender(v) })}
               >
-                <SelectTrigger className="h-10 border text-sm bg-bg-elevated border-border-default text-text-primary rounded-[10px]">
+                <SelectTrigger className="h-10 rounded-[2px] border text-sm bg-bg-main border-border-strong text-text-primary">
                   <span data-slot="select-value" className="line-clamp-1">
                     {form.gender ? (
                       GENDER_LABELS[form.gender as "MALE" | "FEMALE" | "OTHER"]
@@ -368,7 +427,6 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
         </section>
 
         <section>
-
           <div className="grid grid-cols-1">
             <FormField
               label="Địa chỉ"
@@ -380,32 +438,29 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
           </div>
         </section>
 
-        <div className="flex justify-end border-t pt-5 border-border-default">
-        <Button
-          type="submit"
-          disabled={isPending}
-          className={cn(
-            "gap-2 px-6 font-semibold bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] text-text-inverse rounded-[10px] shadow-[0_2px_10px_var(--accent-gold-glow,rgba(201,162,77,0.35))]",
-            isPending && "opacity-70"
-          )}
-        >
-          {isPending ? "Đang lưu..." : "Lưu thay đổi"}
-        </Button>
+        <div className="flex justify-end border-t border-[var(--text-primary)] pt-5">
+          <Button
+            type="submit"
+            disabled={isPending}
+            className={cn(CRIMSON_SUBMIT, isPending && "opacity-70")}
+          >
+            {isPending ? "Đang lưu..." : "Lưu thay đổi"}
+          </Button>
         </div>
       </div>
     </form>
   );
 }
 
-function ProfileMiniStat({ label, value }: { label: string; value: string }) {
+function ProfileMiniStat({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
-    <div className="min-w-0 rounded-xl border px-3 py-2 bg-bg-elevated border-border-default">
-      <p className="truncate text-sm font-bold tabular-nums text-text-primary">
+    <div className={cn("min-w-0 px-3 py-3", className)}>
+      <dd className="truncate font-display text-lg font-extrabold leading-tight tabular-nums text-text-primary">
         {value}
-      </p>
-      <p className="mt-0.5 text-[11px] font-medium text-text-muted">
+      </dd>
+      <dt className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
         {label}
-      </p>
+      </dt>
     </div>
   );
 }
@@ -428,8 +483,8 @@ function FormField({
   disabled?: boolean;
 }) {
   return (
-    <div className="space-y-1.5">
-      <Label className="text-sm font-medium flex items-center gap-1.5 text-text-secondary">
+    <div className="space-y-1.5 border-b border-[var(--border-default)] py-4">
+      <Label className={FIELD_LABEL}>
         <Icon className="w-3.5 h-3.5" />
         {label}
       </Label>
@@ -440,10 +495,10 @@ function FormField({
         placeholder={placeholder}
         disabled={disabled}
         className={cn(
-          "h-10 border text-sm rounded-[10px] border-border-default",
+          FIELD_INPUT,
           disabled
-            ? "bg-bg-main text-text-muted opacity-70"
-            : "bg-bg-elevated text-text-primary"
+            ? "border-border-default bg-bg-elevated text-text-muted opacity-70"
+            : "border-border-strong bg-bg-main text-text-primary"
         )}
       />
     </div>
@@ -459,53 +514,48 @@ function BillingTab() {
   const aiUsage = dashboard?.aiUsage;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Current Tier Card */}
       <div
         className={cn(
-          "rounded-2xl p-5 border relative overflow-hidden",
-          proUser
-            ? "bg-[linear-gradient(135deg,rgba(201,162,77,0.14)_0%,rgba(163,81,57,0.10)_100%)] border-[rgba(201,162,77,0.4)] shadow-[0_4px_20px_rgba(201,162,77,0.1)]"
-            : "bg-bg-elevated border-border-default"
+          "rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]",
+          proUser && "border-t-[3px] border-t-[var(--accent-gold)]"
         )}
       >
-        {proUser && (
-          <div className="absolute top-0 left-0 right-0 h-px bg-[linear-gradient(90deg,transparent,rgba(201,162,77,0.7),transparent)]" />
-        )}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--text-primary)] p-5">
           <div className="flex items-center gap-3">
             <div
               className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                "w-10 h-10 rounded-[2px] flex items-center justify-center shrink-0",
                 proUser
-                  ? "bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] shadow-[0_2px_12px_var(--accent-gold-glow,rgba(201,162,77,0.4))]"
-                  : "bg-bg-main border border-border-default"
+                  ? "bg-[var(--accent-gold)]"
+                  : "border border-[var(--border-strong)]"
               )}
             >
               <Crown
-                className={cn("w-5 h-5", proUser ? "fill-current text-text-inverse" : "text-text-muted")}
+                className={cn("w-5 h-5", proUser ? "fill-current text-[#FFFFFF]" : "text-text-muted")}
               />
             </div>
             <div>
-              <p className="font-bold text-base text-text-primary">
+              <p className="archive-title is-plain mt-0.5 text-[20px]">
                 {profile?.tierTitle ?? "Gói miễn phí"}
               </p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-2 shrink-0">
             {proUser ? (
-              <Badge className="font-bold text-[10px] px-2 py-1 border-0 bg-accent-gold/15 text-accent-gold">
+              <Badge className="rounded-[2px] font-bold uppercase tracking-[0.1em] text-[10px] px-2 py-1 border-0 bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]">
                 ✦ PRO
               </Badge>
             ) : (
-              <Badge className="font-bold text-[10px] px-2 py-1 bg-bg-main text-text-muted border border-border-default">
+              <Badge className="rounded-[2px] font-bold uppercase tracking-[0.1em] text-[10px] px-2 py-1 bg-transparent text-text-tertiary border border-border-strong">
                 Free
               </Badge>
             )}
             <UpgradeProDialog>
               <button
                 type="button"
-                className="text-xs font-semibold whitespace-nowrap px-3 py-1.5 rounded-lg cursor-pointer transition-opacity hover:opacity-90 bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] text-text-inverse shadow-[0_2px_8px_rgba(201,162,77,0.35)]"
+                className="btn-crimson min-h-[34px] cursor-pointer whitespace-nowrap px-3 text-[11px]"
               >
                 {proUser ? "Đổi gói" : "Nâng cấp ngay"}
               </button>
@@ -513,123 +563,113 @@ function BillingTab() {
           </div>
         </div>
 
-        {/* Token display */}
-        {profileLoading ? (
-          <Skeleton className="h-14 w-full mt-4 rounded-xl" />
-        ) : (
-          <div className="mt-4 rounded-xl p-4 flex items-center gap-3 bg-bg-main border border-border-default">
-            <Coins
-              className={cn("w-8 h-8 shrink-0", proUser ? "text-accent-gold" : "text-text-muted")}
-            />
-            <div>
-              <p className="text-2xl font-extrabold tabular-nums text-text-primary">
-                {(profile?.token ?? 0).toLocaleString("vi-VN")}
-              </p>
-              <p className="text-xs font-medium text-text-muted">
-                Token AI còn lại
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Subscription end time display */}
-        {profileLoading ? (
-          <Skeleton className="h-14 w-full mt-3 rounded-xl" />
-        ) : profile?.subscriptionEndTime && (
-          <div
-            className={cn(
-              "mt-3 rounded-xl p-4 flex items-center gap-3",
-              proUser
-                ? "bg-[linear-gradient(135deg,rgba(201,162,77,0.08)_0%,rgba(163,81,57,0.05)_100%)] border border-[rgba(201,162,77,0.3)]"
-                : "bg-bg-main border border-border-default"
-            )}
-          >
-            <Hourglass
-              className={cn("w-8 h-8 shrink-0", proUser ? "text-accent-gold" : "text-text-muted")}
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="text-base font-bold tabular-nums text-text-primary">
-                  {formatDate(profile.subscriptionEndTime)}
+        <div className="grid sm:grid-cols-2">
+          {/* Token display */}
+          {profileLoading ? (
+            <Skeleton className="m-5 h-14 rounded-[2px]" />
+          ) : (
+            <div className="flex items-center gap-3 p-5">
+              <Coins
+                className={cn("w-7 h-7 shrink-0", proUser ? "text-accent-gold" : "text-text-muted")}
+              />
+              <div>
+                <p className="font-display text-3xl font-extrabold leading-none tabular-nums text-text-primary">
+                  {(profile?.token ?? 0).toLocaleString("vi-VN")}
                 </p>
-                {formatRemainingTime(profile.subscriptionEndTime) && (
-                  <span
-                    className={cn(
-                      "text-[11px] font-semibold px-1.5 py-0.5 rounded-full",
-                      proUser ? "bg-accent-gold/15 text-accent-gold" : "bg-bg-elevated text-text-muted"
-                    )}
-                  >
-                    {formatRemainingTime(profile.subscriptionEndTime)}
-                  </span>
-                )}
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
+                  Token AI còn lại
+                </p>
               </div>
-              <p className="text-xs font-medium text-text-muted">
-                Ngày hết hạn gói
-              </p>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Subscription end time display */}
+          {profileLoading ? (
+            <Skeleton className="m-5 h-14 rounded-[2px]" />
+          ) : profile?.subscriptionEndTime && (
+            <div className="flex items-center gap-3 border-t border-[var(--border-default)] p-5 sm:border-l sm:border-t-0">
+              <Hourglass
+                className={cn("w-7 h-7 shrink-0", proUser ? "text-accent-gold" : "text-text-muted")}
+              />
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-display text-2xl font-extrabold leading-none tabular-nums text-text-primary">
+                    {formatDate(profile.subscriptionEndTime)}
+                  </p>
+                  {formatRemainingTime(profile.subscriptionEndTime) && (
+                    <span
+                      className={cn(
+                        "rounded-[2px] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em]",
+                        proUser
+                          ? "bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]"
+                          : "border border-border-default text-text-tertiary"
+                      )}
+                    >
+                      {formatRemainingTime(profile.subscriptionEndTime)}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
+                  Ngày hết hạn gói
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Token usage breakdown */}
         {dashboardLoading ? (
-          <Skeleton className="h-20 w-full mt-3 rounded-xl" />
+          <Skeleton className="mx-5 mb-5 h-20 rounded-[2px]" />
         ) : aiUsage && aiUsage.totalTokensUsed > 0 && (
-          <div className="mt-3 rounded-xl p-4 bg-bg-main border border-border-default">
-            <p className="text-xs font-semibold mb-3 text-text-secondary">
+          <div className="border-t border-[var(--border-default)] px-5 py-4">
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.1em] text-text-secondary">
               Chi tiết sử dụng token
             </p>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div>
-                <p className="text-base font-bold tabular-nums text-text-primary">
-                  {aiUsage.totalTokensUsed.toLocaleString("vi-VN")}
-                </p>
-                <p className="text-[11px] text-text-muted">
-                  Tổng đã dùng
-                </p>
-              </div>
-              <div>
-                <p className="text-base font-bold tabular-nums text-text-primary">
-                  {aiUsage.promptTokens.toLocaleString("vi-VN")}
-                </p>
-                <p className="text-[11px] text-text-muted">
-                  Prompt (đầu vào)
-                </p>
-              </div>
-              <div>
-                <p className="text-base font-bold tabular-nums text-text-primary">
-                  {aiUsage.completionTokens.toLocaleString("vi-VN")}
-                </p>
-                <p className="text-[11px] text-text-muted">
-                  Completion (đầu ra)
-                </p>
-              </div>
+            <div className="grid grid-cols-3 border border-[var(--border-strong)] text-center">
+              {[
+                { value: aiUsage.totalTokensUsed, label: "Tổng đã dùng" },
+                { value: aiUsage.promptTokens, label: "Prompt (đầu vào)" },
+                { value: aiUsage.completionTokens, label: "Completion (đầu ra)" },
+              ].map((cell, i) => (
+                <div
+                  key={cell.label}
+                  className={cn("px-2 py-3", i > 0 && "border-l border-[var(--border-default)]")}
+                >
+                  <p className="font-display text-lg font-extrabold tabular-nums text-text-primary">
+                    {cell.value.toLocaleString("vi-VN")}
+                  </p>
+                  <p className="text-[11px] text-text-tertiary">
+                    {cell.label}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
         {/* Top characters mini card */}
         {!dashboardLoading && aiUsage && aiUsage.topCharacters.length > 0 && (
-          <div className="mt-3 rounded-xl p-4 bg-bg-main border border-border-default">
-            <p className="text-xs font-semibold mb-3 text-text-secondary">
+          <div className="border-t border-[var(--border-default)] px-5 py-4">
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.1em] text-text-secondary">
               Nhân vật tương tác nhiều nhất
             </p>
-            <div className="space-y-2.5">
+            <div className="divide-y divide-[var(--border-default)]">
               {aiUsage.topCharacters.slice(0, 3).map((character) => (
-                <div key={character.characterId} className="flex items-center gap-3">
+                <div key={character.characterId} className="flex items-center gap-3 py-2.5">
                   <Avatar className="w-8 h-8 shrink-0">
-                    <AvatarFallback className="text-xs font-bold bg-bg-elevated text-text-muted">
+                    <AvatarFallback className="text-xs font-bold bg-bg-elevated text-text-tertiary">
                       {character.name.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate text-text-primary">
+                    <p className="text-sm font-semibold truncate text-text-primary">
                       {character.name}
                     </p>
-                    <p className="text-xs text-text-muted">
+                    <p className="text-xs text-text-tertiary">
                       {character.messageCount} tin nhắn
                     </p>
                   </div>
-                  <span className="text-xs font-semibold shrink-0 text-text-muted">
+                  <span className="font-display text-sm font-extrabold shrink-0 tabular-nums text-text-secondary">
                     {character.tokenUsed.toLocaleString("vi-VN")} token
                   </span>
                 </div>
@@ -641,58 +681,69 @@ function BillingTab() {
 
       {/* Payment History */}
       <div>
-        <h3 className="text-sm font-bold mb-3 text-text-secondary">
-          Lịch sử giao dịch
-        </h3>
+        <ArchiveHeading label="Thanh toán" title="Lịch sử giao dịch" className="mb-0 border-b-0" />
 
         {paymentsLoading ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              <Skeleton key={i} className="h-16 w-full rounded-[2px]" />
             ))}
           </div>
         ) : !payments || payments.length === 0 ? (
-          <div className="rounded-xl p-8 text-center border bg-bg-elevated border-border-default">
+          <div className="rounded-[2px] border border-dashed border-border-strong p-8 text-center">
             <Coins className="w-10 h-10 mx-auto mb-2 text-text-muted" />
-            <p className="text-sm text-text-muted">
+            <p className="text-sm text-text-tertiary">
               Chưa có giao dịch nào
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {payments.map((p) => (
-              <div
-                key={p.orderId}
-                className="rounded-xl p-4 border flex items-center justify-between gap-4 bg-bg-elevated border-border-default"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={cn(
-                      "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border border-border-default",
-                      p.status === "PAID" ? "bg-[rgba(34,197,94,0.12)]" : "bg-bg-main"
-                    )}
-                  >
-                    <Crown
-                      className={cn("w-4 h-4 fill-current", p.status === "PAID" ? "text-[#22c55e]" : "text-text-muted")}
-                    />
+          <div className="rounded-[2px] border border-[var(--text-primary)]">
+            <div className="hidden grid-cols-[minmax(0,1fr)_150px_140px] gap-4 border-b border-[var(--text-primary)] bg-bg-elevated px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary sm:grid">
+              <span>Gói</span>
+              <span>Trạng thái</span>
+              <span className="text-right">Số tiền</span>
+            </div>
+            <div className="divide-y divide-[var(--border-default)]">
+              {payments.map((p) => (
+                <div
+                  key={p.orderId}
+                  className="flex items-center justify-between gap-4 px-4 py-3 sm:grid sm:grid-cols-[minmax(0,1fr)_150px_140px]"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={cn(
+                        "w-9 h-9 rounded-[2px] flex items-center justify-center shrink-0 border",
+                        p.status === "PAID"
+                          ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)]"
+                          : "border-border-default"
+                      )}
+                    >
+                      <Crown
+                        className={cn(
+                          "w-4 h-4 fill-current",
+                          p.status === "PAID" ? "text-[var(--status-success)]" : "text-text-muted"
+                        )}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate text-text-primary">
+                        {p.tierTitle}
+                      </p>
+                      <p className="text-xs text-text-tertiary">
+                        {formatDate(p.paidAt ?? p.createdAt)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold truncate text-text-primary">
-                      {p.tierTitle}
-                    </p>
-                    <p className="text-xs text-text-muted">
-                      {formatDate(p.paidAt ?? p.createdAt)}
-                    </p>
+                  <div className="hidden sm:block">{statusBadge(p.status)}</div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className="font-display text-lg font-extrabold leading-none tabular-nums text-text-primary">
+                      {formatCurrency(p.amount)}
+                    </span>
+                    <span className="sm:hidden">{statusBadge(p.status)}</span>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span className="text-sm font-bold text-text-primary">
-                    {formatCurrency(p.amount)}
-                  </span>
-                  {statusBadge(p.status)}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -744,9 +795,11 @@ function SecurityTab() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-md space-y-5">
-      <div className="rounded-xl p-4 border text-sm flex items-start gap-2 bg-[rgba(139,179,200,0.08)] border-[rgba(139,179,200,0.25)] text-[var(--accent-blue,#8fb3c8)]">
-        <Lock className="w-4 h-4 mt-0.5 shrink-0 fill-current" />
+    <form onSubmit={handleSubmit} className="mx-auto max-w-md">
+      <ArchiveHeading label="Bảo mật" title="Đổi mật khẩu" />
+
+      <div className="flex items-start gap-2 border-[var(--text-primary)] bg-bg-elevated px-4 py-3 text-sm text-text-secondary">
+        <Lock className="w-4 h-4 mt-0.5 shrink-0" />
         <span>Để bảo vệ tài khoản, mật khẩu mới phải có ít nhất 8 ký tự và khác mật khẩu hiện tại.</span>
       </div>
 
@@ -757,11 +810,8 @@ function SecurityTab() {
           confirmPassword: "Xác nhận mật khẩu mới",
         };
         return (
-          <div key={field} className="space-y-1.5">
-            <Label
-              htmlFor={field}
-              className="text-sm font-medium flex items-center gap-1.5 text-text-secondary"
-            >
+          <div key={field} className="space-y-1.5 border-b border-[var(--border-default)] py-4">
+            <Label htmlFor={field} className={FIELD_LABEL}>
               <Lock className="w-3.5 h-3.5" />
               {labels[field]}
             </Label>
@@ -776,14 +826,15 @@ function SecurityTab() {
                 }}
                 placeholder="••••••••"
                 className={cn(
-                  "h-10 border text-sm pr-10 bg-bg-elevated text-text-primary rounded-[10px]",
-                  errors[field] ? "border-accent-danger" : "border-border-default"
+                  FIELD_INPUT,
+                  "pr-10 bg-bg-main text-text-primary",
+                  errors[field] ? "border-accent-danger" : "border-border-strong"
                 )}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword({ ...showPassword, [field]: !showPassword[field] })}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-white/10 transition-colors text-text-muted"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-[2px] transition-colors text-text-muted hover:text-text-primary"
               >
                 {showPassword[field] ? (
                   <EyeOff className="w-4 h-4" />
@@ -804,19 +855,13 @@ function SecurityTab() {
       <Button
         type="submit"
         disabled={isPending}
-        className={cn(
-          "w-full font-semibold bg-[linear-gradient(135deg,var(--accent-gold)_0%,var(--truffle)_100%)] text-text-inverse rounded-[10px] shadow-[0_2px_10px_var(--accent-gold-glow,rgba(201,162,77,0.35))]",
-          isPending && "opacity-70"
-        )}
+        className={cn("mt-6 w-full", CRIMSON_SUBMIT, isPending && "opacity-70")}
       >
         {isPending ? "Đang đổi mật khẩu..." : "Đổi mật khẩu"}
       </Button>
 
-      <div className="text-center">
-        <Link
-          href="/forgot-password"
-          className="text-sm font-semibold transition-colors hover:underline text-accent-gold"
-        >
+      <div className="mt-5 text-center">
+        <Link href="/forgot-password" className="archive-link">
           Quên mật khẩu?
         </Link>
       </div>
@@ -835,7 +880,11 @@ export default function ProfilePage() {
     TABS.find((t) => t.key === tabParam)?.key ?? "profile"
   );
   const { data: profile } = useProfile();
-  const proUser = isPro(profile ?? null);
+  const role = useAuthStore((s) => s.user?.role);
+  // Teacher / School Student get tokens from the school's daily quota: no plans to buy (Role Matrix row 26).
+  const { canPurchase } = useEntitlements();
+  const schoolAccount = !canPurchase;
+  const proUser = !schoolAccount && isPro(profile ?? null);
 
   const handleTabChange = (key: TabKey) => {
     setActiveTab(key);
@@ -846,57 +895,55 @@ export default function ProfilePage() {
     <div className="px-3 py-6 md:px-6 md:py-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* ── Page Header ── */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-title text-2xl md:text-3xl font-extrabold tracking-tight text-text-primary">
-              {proUser && (
-                <span className="inline-flex items-center mr-2 align-middle text-accent-gold">
-                  ✦
-                </span>
-              )}
-              Hồ sơ của tôi
-            </h1>
-            <p className="text-sm mt-1 text-text-muted">
-              Quản lý thông tin tài khoản & gói dịch vụ
-            </p>
-          </div>
+        <div className="relative">
+          <ArchiveHeading
+            as="h1"
+            label="Tài khoản"
+            title="Hồ sơ của tôi"
+            description="Quản lý thông tin tài khoản & gói dịch vụ"
+            className="mb-0 pr-20 sm:pr-64"
+          />
 
-          {proUser && profile?.tierTitle && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[linear-gradient(135deg,rgba(201,162,77,0.18),rgba(163,81,57,0.12))] text-accent-gold border border-[rgba(201,162,77,0.35)] shadow-[0_2px_10px_rgba(201,162,77,0.12)]">
-              <Crown className="w-3.5 h-3.5 fill-current" />
-              {profile.tierTitle}
-            </div>
-          )}
+          <div className="absolute bottom-3 right-0 flex items-end gap-4">
+            {proUser && profile?.tierTitle && (
+              <div className="hidden sm:flex items-center gap-1.5 rounded-[2px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] bg-[var(--accent-gold)] text-[#FFFFFF]">
+                <Crown className="w-3.5 h-3.5 fill-current" />
+                {profile.tierTitle}
+              </div>
+            )}
+            <span className="archive-seal h-[52px] w-[52px] text-[17px]" aria-hidden="true">國史</span>
+          </div>
         </div>
 
         {/* ── Tab nav ── */}
-        <div className="flex gap-1 p-1 rounded-2xl border bg-bg-elevated border-border-default">
-          {TABS.map(({ key, label, icon: Icon }) => {
+        <div className="flex rounded-[2px] border border-[var(--text-primary)] bg-bg-surface">
+          {TABS.map(({ key, label, icon: Icon }, i) => {
             const isActive = activeTab === key;
             return (
               <button
                 key={key}
                 onClick={() => handleTabChange(key)}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border border-transparent",
+                  "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-[12px] font-bold uppercase tracking-[0.1em] transition-colors duration-200",
+                  i > 0 && "border-l border-[var(--text-primary)]",
                   isActive
                     ? key === "billing" && proUser
-                      ? "bg-[linear-gradient(135deg,rgba(201,162,77,0.22),rgba(163,81,57,0.15))] text-accent-gold shadow-[0_2px_8px_rgba(0,0,0,0.12)] border-[rgba(201,162,77,0.3)]"
-                      : "bg-bg-main text-text-primary shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
-                    : "bg-transparent text-text-muted"
+                      ? "bg-[var(--accent-gold)] text-[#FFFFFF]"
+                      : "bg-[var(--text-primary)] text-text-inverse"
+                    : "bg-transparent text-text-tertiary hover:bg-bg-elevated hover:text-text-primary"
                 )}
               >
-                <Icon className={cn("w-4 h-4", isActive && "fill-current")} />
-                <span className="hidden sm:inline">{label}</span>
+                <Icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{key === "billing" && schoolAccount ? "Hạn mức token" : label}</span>
               </button>
             );
           })}
         </div>
 
         {/* ── Tab content ── */}
-        <div className="rounded-2xl border p-6 bg-bg-elevated border-border-default shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
+        <div className="rounded-[2px] border border-[var(--text-primary)] bg-bg-surface p-5 sm:p-6">
           {activeTab === "profile" && <PersonalProfileTab />}
-          {activeTab === "billing" && <BillingTab />}
+          {activeTab === "billing" && (schoolAccount ? <SchoolQuotaCard role={role} /> : <BillingTab />)}
           {activeTab === "security" && <SecurityTab />}
         </div>
       </div>

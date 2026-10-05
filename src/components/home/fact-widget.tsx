@@ -87,34 +87,32 @@ export function FactWidget() {
         className="w-full h-full relative [transform-style:preserve-3d]"
       >
         {/* ── MẶT TRƯỚC (hiện khi chưa lật) ── */}
-        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] rounded-[18px] overflow-hidden shadow-[0_8px_32px_rgba(27,38,50,0.18),0_2px_8px_rgba(27,38,50,0.1)] bg-gradient-to-br from-[#1a1209] via-[#2d1f08] to-[#1a1209] flex flex-col items-center justify-center gap-[18px]">
+        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] rounded-[2px] overflow-hidden border border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)] flex flex-col items-center justify-center gap-[18px]">
           {/* Họa tiết nền */}
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              backgroundImage: `
-                repeating-linear-gradient(45deg, rgba(201,162,77,0.04) 0px, rgba(201,162,77,0.04) 1px, transparent 1px, transparent 28px),
-                repeating-linear-gradient(-45deg, rgba(201,162,77,0.04) 0px, rgba(201,162,77,0.04) 1px, transparent 1px, transparent 28px)
-              `,
+              backgroundImage: `repeating-linear-gradient(0deg, var(--text-inverse) 0px, var(--text-inverse) 1px, transparent 1px, transparent 28px)`,
+              opacity: 0.05,
             }}
           />
           {/* Viền vàng */}
-          <div className="absolute inset-3 rounded-xl border border-accent-gold/25 pointer-events-none" />
-          <div className="absolute inset-[18px] rounded-lg border border-accent-gold/10 pointer-events-none" />
+          <div className="absolute inset-3 rounded-[2px] border border-[var(--accent-gold)] pointer-events-none" />
+          <div className="absolute inset-[18px] rounded-[2px] border border-[var(--text-inverse)] opacity-15 pointer-events-none" />
 
           {/* Emblem */}
           <div className="relative z-[1] text-center">
-            <div className="w-16 h-16 rounded-full bg-[radial-gradient(circle,rgba(201,162,77,0.18)_0%,transparent_70%)] border-[1.5px] border-accent-gold/35 flex items-center justify-center mx-auto mb-3 text-[28px]">
+            <div className="w-16 h-16 rounded-[2px] border-[1.5px] border-[var(--accent-on-ink)] flex items-center justify-center mx-auto mb-3 text-[28px]">
               📜
             </div>
-            <p className="m-0 text-[11px] font-extrabold tracking-[0.22em] uppercase text-accent-gold/70">
+            <p className="m-0 font-display text-[22px] font-extrabold leading-[1.1] tracking-[0.04em] uppercase text-[var(--text-inverse)]">
               Sự kiện hôm nay
             </p>
           </div>
 
           {/* Hint */}
           <div className="relative z-[1] text-center">
-            <p className="m-0 text-xs text-white/30 tracking-[0.08em]">
+            <p className="m-0 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-inverse)] opacity-60">
               Chạm để khám phá
             </p>
             <div className="mt-2.5 flex justify-center">
@@ -124,7 +122,7 @@ export function FactWidget() {
               >
                 <path
                   d="M8 0 L8 16 M2 10 L8 16 L14 10"
-                  stroke="rgba(201,162,77,0.45)" strokeWidth="1.5"
+                  stroke="var(--accent-on-ink)" strokeWidth="1.5"
                   strokeLinecap="round" strokeLinejoin="round"
                 />
               </svg>
@@ -140,22 +138,22 @@ export function FactWidget() {
         </div>
 
         {/* ── MẶT SAU (hiện sau khi lật) ── */}
-        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[18px] overflow-hidden shadow-[0_8px_32px_rgba(27,38,50,0.18),0_2px_8px_rgba(27,38,50,0.1)] bg-card-light-bg border border-card-light-border flex flex-col">
+        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2px] overflow-hidden bg-[var(--bg-surface)] border border-[var(--text-primary)] flex flex-col">
           {/* Header */}
-          <div className="px-[18px] pt-4 pb-3.5 border-b border-accent-gold/15 bg-gradient-to-br from-accent-gold/[0.08] to-transparent">
+          <div className="px-[18px] pt-4 pb-3.5 border-b border-[var(--text-primary)]">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-extrabold tracking-[0.15em] uppercase text-[#7a5a1e]">
+              <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-[var(--gold-on-light)]">
                 📅 Sự kiện hôm nay
               </span>
               {fact.year && (
-                <span className="text-[10px] font-extrabold text-[#8a4a1a] bg-[rgba(196,106,47,0.1)] border border-[rgba(196,106,47,0.22)] rounded-[5px] px-2 py-0.5">
+                <span className="font-display text-[13px] font-extrabold text-white bg-[var(--accent-gold)] rounded-[2px] px-2 py-0.5">
                   {fact.year}
                 </span>
               )}
             </div>
             <div className="flex flex-wrap gap-[5px]">
               {fact.tags.map((tag) => (
-                <span key={tag} className="text-[10px] px-2 py-0.5 rounded-[20px] bg-accent-gold/[0.08] border border-accent-gold/20 text-[#7a5a1e] font-semibold">
+                <span key={tag} className="text-[10px] px-2 py-0.5 rounded-[2px] border border-[var(--border-strong)] text-[var(--text-secondary)] font-semibold">
                   {tag}
                 </span>
               ))}
@@ -170,8 +168,8 @@ export function FactWidget() {
           </div>
 
           {/* Footer */}
-          <div className="px-[18px] py-3 border-t border-accent-gold/10 flex justify-center">
-            <span className="text-[10px] text-accent-gold/50 tracking-[0.1em] font-semibold uppercase">
+          <div className="px-[18px] py-3 border-t border-[var(--border-default)] flex justify-center">
+            <span className="text-[10px] text-[var(--text-muted)] tracking-[0.1em] font-bold uppercase">
               Quay lại vào ngày mai để xem thêm
             </span>
           </div>

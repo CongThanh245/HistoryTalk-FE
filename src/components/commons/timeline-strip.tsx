@@ -65,9 +65,9 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
   };
 
   const btnBase =
-    "w-7 h-7 md:w-8 md:h-8 shrink-0 rounded-full border flex items-center justify-center transition-all duration-150 " +
-    "bg-card-bg border-card-border text-content-heading " +
-    "hover:border-accent-gold hover:text-[var(--gold-on-light)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer";
+    "w-7 h-7 md:w-8 md:h-8 shrink-0 rounded-[2px] border flex items-center justify-center transition-all duration-150 " +
+    "bg-card-bg border-[var(--text-primary)] text-content-heading " +
+    "hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer";
 
   return (
     <div className="flex items-center gap-1 md:gap-2">
@@ -85,13 +85,13 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
       <div className="flex-1 overflow-hidden relative h-16 md:h-[72px]">
         {/* Axis line */}
         <div
-          className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 pointer-events-none bg-[linear-gradient(to_right,transparent_0%,var(--card-light-border)_3%,var(--card-light-border)_97%,transparent_100%)]"
+          className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-px pointer-events-none bg-[var(--border-strong)]"
         />
 
         {/* Progress fill */}
         <div
           ref={progressRef}
-          className="absolute top-1/2 -translate-y-1/2 left-0 h-0.5 w-0 pointer-events-none rounded-[1px] bg-[linear-gradient(to_right,var(--gold-soft,#c9a24d),var(--accent-gold,#a07828))] transition-[width] duration-[380ms] ease-[ease]"
+          className="absolute top-1/2 -translate-y-1/2 left-0 h-0.5 w-0 pointer-events-none rounded-[1px] bg-[var(--accent-gold)] transition-[width] duration-[380ms] ease-[ease]"
         />
 
         {/* Scrollable items — khoảng cách đều nhau */}
@@ -108,14 +108,14 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
                 onClick={() => onSelect(item.id)}
                 aria-label={`Chọn sự kiện năm ${item.yearLabel}`}
                 aria-current={isActive ? "step" : undefined}
-                className="tl-item flex flex-col items-center relative cursor-pointer group w-[64px] md:w-20 h-16 md:h-[72px] bg-transparent border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-card-bg rounded-lg"
+                className="tl-item flex flex-col items-center relative cursor-pointer group w-[64px] md:w-20 h-16 md:h-[72px] bg-transparent border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-card-bg rounded-[2px]"
               >
                 {/* Year label — alternating top/bottom */}
                 <span
                   className={cn(
-                    "absolute text-[9px] md:text-[10px] font-bold tracking-wide transition-colors duration-150 whitespace-nowrap font-[Georgia,serif]",
+                    "absolute font-display text-[11px] md:text-[13px] font-bold tracking-[0.02em] transition-colors duration-150 whitespace-nowrap",
                     i % 2 === 0 ? "bottom-1.5 md:bottom-2.5" : "top-1.5 md:top-2.5",
-                    isActive ? "text-[var(--gold-on-light,#a07828)]" : "text-content-muted",
+                    isActive ? "text-[var(--gold-on-light)]" : "text-content-muted",
                   )}
                 >
                   {item.yearLabel}
@@ -129,7 +129,7 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
                     height: isActive ? 14 : 10,
                     background: isActive ? dotColor : "var(--card-light-bg)",
                     border: `2px solid ${isActive ? dotColor : "var(--card-light-border)"}`,
-                    boxShadow: isActive ? `0 0 0 4px ${dotColor}22` : "none",
+                    boxShadow: isActive ? `0 0 0 4px color-mix(in srgb, ${dotColor} 14%, transparent)` : "none",
                   }}
                 />
               </button>

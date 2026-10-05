@@ -24,13 +24,15 @@ function getErrorMessage(error: unknown, fallback: string): string {
 
 // ── useGamificationToday ────────────────────────────────────────────────────
 /** Streak & nhiệm vụ hôm nay từ /gamification/today */
-export function useGamificationToday() {
+export function useGamificationToday(options?: { retry?: boolean }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return useQuery({
     queryKey: queryKeys.gamification.today,
     queryFn: () => gamificationService.getToday(),
     enabled: isAuthenticated,
+    // School accounts fall back to mock quests when the API rejects their role, so don't retry.
+    ...(options?.retry === false ? { retry: false } : {}),
     staleTime: 1000 * 30, // Cache 30 giây — tiến độ có thể vừa được ghi nhận ở tab/trang khác
     refetchOnWindowFocus: true,
   });

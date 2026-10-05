@@ -1,13 +1,16 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { HistoricalMapModal } from "./HistoricalMapModal";
+import { LayeredHistoricalMap } from "@/components/saas/map-layered-view";
 
 export function StaffMapPage({ closeHref }: { closeHref: string }) {
   const router = useRouter();
   return (
     <div className="map-page h-full min-h-0 w-full">
-      <HistoricalMapModal isOpen onClose={() => router.push(closeHref)} />
+      <Suspense fallback={null}>
+        <LayeredHistoricalMap onClose={() => router.push(closeHref)} />
+      </Suspense>
     </div>
   );
 }

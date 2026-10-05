@@ -25,25 +25,25 @@ export function EventGroup({
       {/* Group header */}
       <div className="flex items-center gap-2.5 md:gap-3">
         <div
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg md:h-8 md:w-8 border border-accent-gold/20 bg-[linear-gradient(135deg,rgba(201,162,77,0.12)_0%,rgba(163,81,57,0.08)_100%)]"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[2px] md:h-8 md:w-8 bg-[var(--text-primary)]"
         >
           <Sword
-            className="h-3.5 w-3.5 text-[var(--gold-on-light)]"
+            className="h-3.5 w-3.5 text-[var(--accent-on-ink)]"
           />
         </div>
         <div>
           <h2
-            className="text-xs font-bold md:text-sm text-content-heading"
+            className="archive-title is-plain text-[17px] md:text-xl"
           >
             {group.contextName}
           </h2>
-          <p className="text-[10px] md:text-[11px] text-content-muted">
+          <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.1em] text-content-muted">
             {group.sessions.length} cuộc trò chuyện
           </p>
         </div>
         {/* Divider */}
         <div
-          className="flex-1 h-px bg-[linear-gradient(to_right,var(--card-light-border),transparent)]"
+          className="flex-1 h-px bg-[var(--text-primary)]"
         />
       </div>
 

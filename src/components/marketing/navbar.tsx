@@ -6,13 +6,14 @@ import { useState, lazy, Suspense, useEffect } from "react";
 import { MagneticButton } from "../commons/MagneticButton";
 import Image from "next/image";
 import { useAuthStore } from "@/store/auth.store";
+import { useEntitlements } from "@/features/saas/entitlements";
 
 // Lazy load UserProfileDropdown để giảm initial render load
 const UserProfileDropdown = lazy(() => import("../layouts/user-profile-dropdown").then(m => ({ default: m.UserProfileDropdown })));
 
 // Simple placeholder cho avatar
 const AvatarPlaceholder = () => (
-  <div className="w-9 h-9 rounded-full bg-[var(--bg-surface)] animate-pulse" />
+  <div className="w-9 h-9 rounded-full bg-[var(--bg-deep)] animate-pulse" />
 );
 
 
@@ -29,10 +30,12 @@ export function MarketingNavbar() {
     return () => clearTimeout(timer);
   }, []);
 
+  // School accounts cannot buy plans (middleware blocks /pricing for them), so hide the pricing link.
+  const { canPurchase } = useEntitlements();
   const navLinks = [
     { href: "/", label: "Trang Chủ" },
     { href: "/features", label: "Tính Năng" },
-    { href: "/pricing", label: "Bảng Giá" },
+    ...(canPurchase ? [{ href: "/pricing", label: "Bảng Giá" }] : []),
   ];
 
   return (
@@ -41,66 +44,28 @@ export function MarketingNavbar() {
         .auth-group {
           display: flex;
           align-items: center;
-          border: 1px solid var(--border-default);
-          border-radius: 9999px;
+          border: 1px solid var(--accent-gold);
+          border-radius: 2px;
           overflow: hidden;
-          transition: border-color 0.25s ease, box-shadow 0.25s ease;
           position: relative;
         }
-        .auth-group::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 9999px;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-          background: radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-gold) 8%, transparent), transparent 70%);
-          pointer-events: none;
-        }
-        .auth-group:hover {
-          border-color: color-mix(in srgb, var(--accent-gold) 40%, transparent);
-          box-shadow: 0 0 16px -4px color-mix(in srgb, var(--accent-gold) 25%, transparent);
-        }
-        .auth-group:hover::before { opacity: 1; }
-        .auth-group .login-link {
-          position: relative;
-          padding: 6px 16px;
-          font-size: 13px;
-          font-weight: 500;
-          color: var(--text-secondary);
-          text-decoration: none;
-          transition: color 0.2s ease, background 0.2s ease;
-          white-space: nowrap;
-        }
-        .auth-group:hover .login-link { color: var(--text-primary); background: color-mix(in srgb, var(--accent-gold) 5%, transparent); }
         .auth-divider {
-          width: 1px; height: 18px;
-          background: var(--border-default);
+          width: 1px;
+          align-self: stretch;
+          background: var(--accent-gold);
           flex-shrink: 0;
-          transition: background 0.25s ease;
         }
-        .auth-group:hover .auth-divider { background: color-mix(in srgb, var(--accent-gold) 30%, transparent); }
-        .auth-group .cta-wrapper > * { border-radius: 0 9999px 9999px 0 !important; }
+        .auth-group > *,
+        .auth-group .cta-wrapper > * { border-radius: 0 !important; }
 
         .marketing-nav {
-          background:
-            linear-gradient(135deg, rgba(14, 26, 43, 0.9), rgba(19, 35, 43, 0.85)),
-            color-mix(in srgb, var(--bg-main) 80%, transparent);
-          border-color: rgba(255, 146, 21, 0.15);
-          box-shadow:
-            0 8px 24px rgba(0, 0, 0, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.06);
-          /* Giảm blur để tăng performance */
+          background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+          border-color: var(--text-primary);
           backdrop-filter: blur(8px);
           -webkit-backdrop-filter: blur(8px);
         }
         .brand-link {
-          border-radius: 9999px;
           padding: 0;
-          transition: transform 0.25s ease;
-        }
-        .brand-link:hover {
-          transform: translateY(-1px);
         }
         .brand-mark {
           position: relative;
@@ -122,16 +87,30 @@ export function MarketingNavbar() {
           align-items: center;
           min-height: 36px;
           padding: 0 13px;
-          border-radius: 9999px;
-          overflow: hidden;
-          color: rgba(247, 241, 232, 0.72);
-          transition: color 0.2s ease, transform 0.2s ease, text-shadow 0.2s ease;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          transition: color 0.2s ease;
+        }
+        .nav-link::after {
+          content: '';
+          position: absolute;
+          left: 13px;
+          right: 13px;
+          bottom: 4px;
+          height: 2px;
+          background: var(--accent-gold);
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform 0.2s ease;
         }
         .nav-link:hover,
         .nav-link.is-active {
-          color: #ffb95c;
-          transform: translateY(-2px);
-          text-shadow: 0 0 14px rgba(255, 146, 21, 0.38);
+          color: var(--text-primary);
+        }
+        .nav-link:hover::after,
+        .nav-link.is-active::after {
+          transform: scaleX(1);
         }
         .nav-link > span {
           position: relative;
@@ -147,8 +126,8 @@ export function MarketingNavbar() {
             marketing-nav
             border
             transition-all duration-300
-            w-full rounded-2xl
-            md:max-w-fit md:rounded-full
+            w-full rounded-[2px]
+            md:max-w-fit
             [contain:layout_style_paint]
           `}
         >
@@ -160,12 +139,20 @@ export function MarketingNavbar() {
             >
               <span className="brand-mark">
                 <Image
+                  src="/logo-light-theme.png"
+                  alt="HistoryTalk Logo"
+                  width={140}
+                  height={44}
+                  priority
+                  className="brand-logo-img object-contain w-[140px] h-auto md:w-[180px] dark:hidden"
+                />
+                <Image
                   src="/logo-dark-theme.png"
                   alt="HistoryTalk Logo"
                   width={140}
                   height={44}
                   priority
-                  className="brand-logo-img object-contain w-[140px] h-auto md:w-[180px]"
+                  className="brand-logo-img object-contain w-[140px] h-auto md:w-[180px] hidden dark:block"
                 />
               </span>
             </Link>
@@ -178,7 +165,7 @@ export function MarketingNavbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`nav-link text-[14px] font-semibold tracking-wide ${isActive ? "is-active" : ""}`}
+                    className={`nav-link text-[12px] font-bold ${isActive ? "is-active" : ""}`}
                   >
                     <span>{link.label}</span>
                   </Link>
@@ -201,7 +188,7 @@ export function MarketingNavbar() {
                   <MagneticButton
                     href="/login"
                     magnetic={false}
-                    className="border-0! rounded-none"
+                    className="border-0! rounded-none text-[12px]! font-bold uppercase tracking-[0.08em]"
                   >
                     Đăng nhập
                   </MagneticButton>
@@ -210,7 +197,7 @@ export function MarketingNavbar() {
                     <MagneticButton
                       href="/home"
                       magnetic={false}
-                      className="border-0!"
+                      className="border-0! text-[12px]! font-bold uppercase tracking-[0.08em]"
                     >
                       Khám phá ngay
                     </MagneticButton>
@@ -232,7 +219,7 @@ export function MarketingNavbar() {
               ) : (
                 <Link
                   href="/login"
-                  className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-2 py-2 whitespace-nowrap"
+                  className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-2 py-2 whitespace-nowrap"
                 >
                   Đăng nhập
                 </Link>
@@ -241,7 +228,7 @@ export function MarketingNavbar() {
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="Toggle menu"
-                className="flex items-center justify-center w-10 h-10 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-default)] transition-colors active:bg-[var(--bg-surface)] shrink-0"
+                className="flex items-center justify-center w-10 h-10 rounded-[2px] bg-transparent border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors active:bg-[var(--bg-surface)] shrink-0"
               >
                 {isOpen ? (
                   <svg
@@ -278,7 +265,7 @@ export function MarketingNavbar() {
 
           {/* ── Mobile dropdown menu ── */}
           {isOpen && (
-            <div className="md:hidden border-t border-[var(--border-default)] px-4 py-4 space-y-1">
+            <div className="md:hidden border-t border-[var(--border-default)] px-4 py-4">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (
@@ -288,11 +275,12 @@ export function MarketingNavbar() {
                     onClick={() => setIsOpen(false)}
                     className={`
                       flex items-center justify-between
-                      w-full px-3 py-3.5 rounded-xl text-sm font-medium
-                      transition-colors active:scale-[0.98]
+                      w-full px-3 py-3.5 text-[13px] font-bold uppercase tracking-[0.08em]
+                      border-b border-[var(--border-default)]
+                      transition-colors
                       ${isActive
-                        ? "bg-[var(--accent-gold)]/10 text-[var(--accent-gold)]"
-                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
+                        ? "text-[var(--accent-gold)]"
+                        : "text-[var(--text-secondary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
                       }
                     `}
                   >
@@ -308,7 +296,7 @@ export function MarketingNavbar() {
                 <Link
                   href="/home"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center w-full py-3.5 rounded-xl bg-[var(--accent-gold)] text-black text-sm font-bold uppercase tracking-widest transition-opacity active:opacity-80"
+                  className="btn-crimson w-full py-3.5"
                 >
                   TRẢI NGHIỆM NGAY
                 </Link>

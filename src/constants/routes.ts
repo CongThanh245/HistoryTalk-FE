@@ -33,6 +33,38 @@ export const ROUTES = {
   PROFILE: "/profile",
   PAYMENT: "/payment",
 
+  // ── Lớp học (Teacher + School Student) ────────────────
+  CLASSES: "/classes",
+  CLASS_DETAIL: (classId: string) => `/classes/${classId}`,
+
+  // ── Giáo viên: dashboard, bài tập, lịch sử địa phương ──
+  TEACHING: {
+    HOME: "/teaching",
+    ASSIGNMENTS: "/teaching/assignments",
+    ASSIGNMENT_NEW: "/teaching/assignments/new",
+    ASSIGNMENT_DETAIL: (id: string) => `/teaching/assignments/${id}`,
+    LOCAL: "/teaching/local",
+    LOCAL_NEW: (kind: "CONTEXT" | "CHARACTER" | "QUIZ") => `/teaching/local/new?kind=${kind}`,
+    LOCAL_EDIT: (id: string) => `/teaching/local/${id}`,
+  },
+
+  // ── Học sinh: bài được giao, bảng điểm (bảng điểm cũng mở cho Customer) ──
+  MY_ASSIGNMENTS: "/assignments",
+  MY_ASSIGNMENT_DETAIL: (id: string) => `/assignments/${id}`,
+  GRADES: "/grades",
+
+  // ── School Admin ────────────────────────────────────
+  SCHOOL: {
+    HOME: "/school",
+    CONTENT: "/school/content",
+    CLASSES: "/school/classes",
+    CLASS_DETAIL: (classId: string) => `/school/classes/${classId}`,
+    TEACHERS: "/school/teachers",
+    STUDENTS: "/school/students",
+    TOKENS: "/school/tokens",
+    MAP: "/school/map",
+  },
+
   // ── Staff / Admin ───────────────────────────────────
   STAFF: {
     HOME: "/staff",
@@ -51,6 +83,8 @@ export const ROUTES = {
         CONTENT_ADMIN: "/staff/admin/accounts/content-admin",
         SYSTEM_ADMIN: "/staff/admin/accounts/system-admin",
       },
+      SCHOOLS: "/staff/admin/schools",
+      SCHOOL_DETAIL: (schoolId: string) => `/staff/admin/schools/${schoolId}`,
       SUBSCRIPTIONS: "/staff/admin/subscriptions",
       PAYMENT_HISTORY: "/staff/admin/payment/history",
     },

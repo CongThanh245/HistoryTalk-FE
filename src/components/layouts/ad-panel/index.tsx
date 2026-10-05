@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useEntitlements } from "@/features/saas/entitlements";
 
 /* ─────────────────────────────────────────────
    Khai báo adsbygoogle trên window
@@ -29,7 +30,7 @@ function AdSlot({
 
   return (
     <div
-      className={`overflow-hidden rounded-xl border border-border-default ${className}`}
+      className={`overflow-hidden rounded-[2px] border border-border-strong ${className}`}
     >
       <ins
         className="adsbygoogle block"
@@ -46,13 +47,17 @@ function AdSlot({
    Panel
 ───────────────────────────────────────────── */
 export default function AdPanel() {
+  // No ads for school accounts (or staff); customers keep them.
+  const { showUpsell } = useEntitlements();
+  if (!showUpsell) return null;
+
   return (
     <aside
       className="hidden xl:flex flex-col shrink-0 w-[240px] h-screen overflow-y-auto border-l py-6 px-3 gap-4 bg-bg-deep border-border-default"
     >
       {/* Label */}
       <p
-        className="text-[10px] font-semibold tracking-[0.12em] uppercase px-1 text-text-muted"
+        className="archive-label px-1"
       >
         Quảng cáo
       </p>
@@ -77,10 +82,10 @@ export default function AdPanel() {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="rounded-xl border min-h-[250px] flex items-center justify-center border-border-default bg-bg-surface"
+            className="rounded-[2px] border border-dashed min-h-[250px] flex items-center justify-center border-border-strong bg-bg-surface"
           >
             <p
-              className="text-[11px] text-center px-4 text-text-muted"
+              className="text-[10px] font-bold uppercase tracking-[0.1em] text-center px-4 text-text-muted"
             >
               Quảng cáo
             </p>

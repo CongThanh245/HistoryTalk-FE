@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Clock,
-  ImageIcon,
   Loader2,
   MessageCircle,
   Pause,
@@ -27,10 +26,17 @@ import { splitAssistantContent } from "@/lib/utils/helpers";
 import { isTokenExhaustionError } from "@/lib/utils/api-error";
 import { cn } from "@/lib/utils/cn";
 import { queryKeys } from "@/shared/query-key";
+import { useUpdateEvent } from "@/features/events/hooks";
+import { useUpdateMapPin } from "@/features/map-pins/hooks";
 import type { GetMessagesResponse } from "@/services/chat.service";
 import type { Character } from "@/services/character.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import type { MapPin } from "@/services/map-pin.service";
+import { useAuthStore } from "@/store/auth.store";
+import { BattleMapCanvas } from "./BattleMapCanvas";
+import { BattleMapEditor } from "./BattleMapEditor";
+import { emptyBattleMap, isBattleMap, type BattleMap } from "./battle-map.types";
+import { toast } from "sonner";
 
 // ── Audio narration hook (Web Speech API) ─────────────────────
 function useBattleNarration(script: string) {
@@ -101,7 +107,7 @@ function useBattleNarration(script: string) {
     else { if (progress >= 99) reset(); play(); }
   }, [isPlaying, progress, stop, reset, play]);
 
-  useEffect(() => () => stop(), [stop]);
+  useEffect(() => () => stop(), [stop, script]);
 
   return { isPlaying, progress, currentText, toggle, reset, stop };
 }
@@ -114,6 +120,10 @@ export function BattleDetailView({
   onBack,
   onClose,
   initialCharacterId,
+  editing = false,
+  onOpenEditor,
+  onCloseEditor,
+  onPreview,
 }: {
   event: HistoricalEvent;
   pin: MapPin | null;
@@ -121,6 +131,12 @@ export function BattleDetailView({
   onBack: () => void;
   onClose: () => void;
   initialCharacterId?: string;
+  /** Show the lược đồ editor (admins only) instead of the battle page. */
+  editing?: boolean;
+  onOpenEditor: () => void;
+  onCloseEditor: () => void;
+  /** Editor saved the draft and wants to show the learner-facing battle page. */
+  onPreview: () => void;
 }) {
   const [chatOpen, setChatOpen] = useState(!!initialCharacterId);
   const [chatMounted, setChatMounted] = useState(!!initialCharacterId);
@@ -128,16 +144,30 @@ export function BattleDetailView({
   const [chatBusy, setChatBusy] = useState(false);
   const [chatDraft, setChatDraft] = useState("");
   const [muted, setMuted] = useState(false);
+  const user = useAuthStore(state => state.user);
+  const isAdmin = user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN";
+  const editingMap = editing && isAdmin;
+  const updateEvent = useUpdateEvent();
+  // Same cache key as the map page: pins are fetched per (contextId, event year).
+  const updatePin = useUpdateMapPin(event.id, event.year ?? event.startYear ?? new Date().getFullYear());
+  // Before the server stored lược đồ, the editor kept drafts in localStorage; offer one only while the server has none.
+  const legacyDraftKey = `historytalk:battle-map:v1:${user?.uid ?? "anonymous"}:${event.id}`;
+  const [legacyDraft] = useState<BattleMap | null>(() => {
+    if (!isAdmin || event.battleMap || typeof window === "undefined") return null;
+    try {
+      const value: unknown = JSON.parse(localStorage.getItem(legacyDraftKey) ?? "null");
+      return isBattleMap(value) ? value : null;
+    } catch { return null; }
+  });
+  /** Last map saved in this view, shown until the refetched event list catches up. */
+  const [savedMap, setSavedMap] = useState<BattleMap | null>(null);
+  const battleMap = savedMap ?? event.battleMap ?? emptyBattleMap();
+  const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
   const character = characters.find((item) => item.id === characterId) ?? characters[0];
   const year = event.year < 0 ? `${Math.abs(event.year)} TCN` : String(event.year);
 
-  const narrationScript = muted
-    ? ""
-    : (event.summary ||
-        `Trận ${event.title} diễn ra vào năm ${year}. ${
-          event.location ? `Tại ${event.location}. ` : ""
-        }Đây là một trong những trận đánh lịch sử quan trọng nhất của dân tộc Việt Nam, để lại dấu ấn sâu đậm trong lòng người dân qua nhiều thế kỷ.`);
+  const narrationScript = muted ? "" : (pin?.description?.trim() ?? "");
 
   const narration = useBattleNarration(narrationScript);
 
@@ -160,14 +190,36 @@ export function BattleDetailView({
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && chatOpen) {
+      if (e.key === "Escape" && !editingMap) {
         e.stopImmediatePropagation();
-        setChatOpen(false);
+        if (chatOpen) setChatOpen(false);
+        else onBack();
       }
     };
     window.addEventListener("keydown", h, true);
     return () => window.removeEventListener("keydown", h, true);
-  }, [chatOpen]);
+  }, [chatOpen, editingMap, onBack]);
+
+  if (editingMap) return <BattleMapEditor
+    key={pin?.pinId ?? "no-pin"}
+    initialValue={savedMap ?? event.battleMap ?? legacyDraft ?? emptyBattleMap()}
+    title={event.title}
+    onClose={onCloseEditor}
+    onPreview={onPreview}
+    narration={pin ? {
+      value: pin.description ?? "",
+      onSave: async text => {
+        await updatePin.mutateAsync({ pin, changes: { description: text } });
+        toast.success("Đã lưu thuyết minh");
+      },
+    } : null}
+    onSave={async value => {
+      const updated = await updateEvent.mutateAsync({ id: event.id, data: { battleMap: value } });
+      setSavedMap(updated.battleMap ?? value);
+      try { localStorage.removeItem(legacyDraftKey); } catch { /* storage unavailable */ }
+      toast.success("Đã lưu lược đồ trận đánh");
+    }}
+  />;
 
   return (
     <div className={cn(styles.immersive, chatOpen && styles.immersiveChatShown)}>
@@ -189,7 +241,12 @@ export function BattleDetailView({
             {event.location && <span>{event.location}</span>}
           </p>
         </div>
+        {/* 史 — "sử", history */}
+        <span className={cn("archive-seal", styles.immersiveSeal)} aria-hidden="true">史</span>
 
+        {isAdmin && <button type="button" className={styles.mapEditButton} onClick={() => { narration.stop(); onOpenEditor(); }}>
+          <SquarePen size={16} /> Chỉnh sửa lược đồ
+        </button>}
         <button
           type="button"
           onClick={onClose}
@@ -202,25 +259,7 @@ export function BattleDetailView({
 
       {/* ── Full-screen battle image ── */}
       <div className={styles.immersiveScene}>
-        {/* Battle image */}
-        <div className={styles.immersiveImg}>
-          <Image
-            src={event.imageUrl || "/war.jpg"}
-            alt={`Tư liệu minh họa: ${event.title}`}
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-
-        {/* Gradient overlays */}
-        <div className={styles.immersiveGradTop} aria-hidden="true" />
-        <div className={styles.immersiveGradBottom} aria-hidden="true" />
-
-        {/* Image caption */}
-        <span className={styles.immersiveImgLabel} aria-hidden="true">
-          <ImageIcon size={11} /> Tư liệu minh họa
-        </span>
+        <BattleMapCanvas value={battleMap} title={`Lược đồ ${event.title}`} legendTitle={`${event.title} – ${year}`} />
 
         {/* Character avatar — bottom right corner */}
         {character && (
@@ -279,6 +318,7 @@ export function BattleDetailView({
           <button
             type="button"
             onClick={narration.toggle}
+            disabled={!narrationScript || !speechSupported}
             className={styles.audioPlayBtn}
             aria-label={narration.isPlaying ? "Dừng" : "Phát"}
           >
@@ -306,7 +346,7 @@ export function BattleDetailView({
               </span>
             )}
             {!narration.isPlaying && narration.progress === 0 && !muted && (
-              <span className={styles.audioHint}>Bấm ▶ để nghe tường thuật</span>
+              <span className={styles.audioHint}>{!pin?.description?.trim() ? "Trận đánh này chưa có thuyết minh" : !speechSupported ? "Trình duyệt chưa hỗ trợ đọc văn bản" : "Bấm phát để nghe thuyết minh"}</span>
             )}
             {muted && (
               <span className={styles.audioHint}>Âm thanh đang tắt</span>
@@ -505,7 +545,7 @@ function BattleChat({
     <div className="flex h-full min-h-0 flex-col bg-[var(--bg-surface)]">
 
       {/* ── Header ── */}
-      <header className="flex shrink-0 items-center gap-2 border-b border-[var(--border-default)] px-3 py-2.5">
+      <header className="flex shrink-0 items-center gap-2 border-b border-[var(--text-primary)] px-3 py-2.5">
         <CharacterAvatar character={character} />
         <div className="min-w-0 flex-1">
           {characters.length > 1 ? (
@@ -523,7 +563,7 @@ function BattleChat({
               ))}
             </select>
           ) : (
-            <h2 className="text-sm font-bold">{character.name}</h2>
+            <h2 className="archive-title is-plain text-[17px]">{character.name}</h2>
           )}
           <p className="truncate text-xs text-[var(--text-tertiary)]">{character.title}</p>
         </div>
@@ -537,10 +577,10 @@ function BattleChat({
             aria-label="Lịch sử trò chuyện"
             aria-expanded={historyOpen}
             className={cn(
-              "grid h-9 w-9 shrink-0 place-items-center rounded-lg border transition",
+              "grid h-9 w-9 shrink-0 place-items-center rounded-[2px] border transition",
               historyOpen
-                ? "border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]"
-                : "border-[var(--border-default)] text-[var(--text-secondary)] hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold-active-bg)] hover:text-[var(--gold-on-light)]",
+                ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                : "border-[var(--border-strong)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]",
             )}
           >
             <Clock size={14} />
@@ -554,7 +594,7 @@ function BattleChat({
           disabled={busy}
           title="Cuộc trò chuyện mới"
           aria-label="Tạo cuộc trò chuyện mới"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[var(--border-default)] text-[var(--text-secondary)] transition hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold-active-bg)] hover:text-[var(--gold-on-light)] disabled:opacity-40"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-[2px] border border-[var(--border-strong)] text-[var(--text-secondary)] transition hover:border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] disabled:opacity-40"
         >
           {createSession.isPending ? (
             <Loader2 size={14} className="animate-spin" />
@@ -568,7 +608,7 @@ function BattleChat({
           onClick={onClose}
           aria-label="Thu gọn trò chuyện"
           title="Thu gọn trò chuyện"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-secondary)] transition hover:bg-[var(--sidebar-hover-bg)]"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] text-[var(--text-secondary)] transition hover:border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
         >
           <X size={18} />
         </button>
@@ -589,9 +629,9 @@ function BattleChat({
                     type="button"
                     onClick={() => handleSelectSession(s.id)}
                     className={cn(
-                      "flex w-full items-start gap-2 rounded-lg px-3 py-2 pr-8 text-left transition-colors",
+                      "flex w-full items-start gap-2 rounded-[2px] border-b border-[var(--border-default)] px-3 py-2 pr-8 text-left transition-colors",
                       isActive
-                        ? "bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]"
+                        ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
                         : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover-bg)]",
                     )}
                   >
@@ -599,7 +639,7 @@ function BattleChat({
                       size={13}
                       className={cn(
                         "mt-0.5 shrink-0",
-                        isActive ? "text-[var(--gold-on-light)]" : "text-[var(--text-tertiary)]",
+                        isActive ? "text-[var(--accent-on-ink)]" : "text-[var(--text-tertiary)]",
                       )}
                     />
                     <div className="min-w-0 flex-1">
@@ -623,10 +663,10 @@ function BattleChat({
                       if (activeSessionId === s.id) setActiveSessionId(null);
                     }}
                     className={cn(
-                      "absolute right-2 top-1/2 -translate-y-1/2 hidden place-items-center rounded p-1 transition group-hover:grid",
+                      "absolute right-2 top-1/2 -translate-y-1/2 hidden place-items-center rounded-[2px] p-1 transition group-hover:grid",
                       isActive
-                        ? "text-[var(--gold-on-light)] hover:bg-[rgba(0,0,0,0.12)]"
-                        : "text-[var(--text-tertiary)] hover:bg-[rgba(239,68,68,0.1)] hover:text-[#ef4444]",
+                        ? "text-[var(--text-inverse)] hover:text-[var(--accent-on-ink)]"
+                        : "text-[var(--text-tertiary)] hover:bg-[var(--status-danger-bg)] hover:text-[var(--accent-danger)]",
                     )}
                   >
                     <Trash2 size={12} />
@@ -667,7 +707,7 @@ function BattleChat({
         )}
         {!loading && !loadError && !history.data?.messages.length && !pendingText && (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--accent-gold-active-bg)]">
+            <div className="grid h-12 w-12 place-items-center rounded-[2px] border border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)]">
               <MessageCircle size={20} className="text-[var(--gold-on-light)]" />
             </div>
             <p className="text-sm text-[var(--text-secondary)]">
@@ -686,10 +726,10 @@ function BattleChat({
                 <div
                   key={i}
                   className={cn(
-                    "max-w-[90%] min-w-0 overflow-x-auto break-words rounded-lg px-3 py-2 text-sm leading-6",
+                    "max-w-[90%] min-w-0 overflow-x-auto break-words rounded-[2px] px-3 py-2 text-sm leading-6",
                     isUser
-                      ? "bg-[#09090B] text-white"
-                      : "bg-[var(--bg-main)] text-[var(--text-secondary)]",
+                      ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                      : "border-[var(--accent-gold)] bg-[var(--bg-main)] text-[var(--text-secondary)]",
                   )}
                 >
                   <MarkdownMessage text={part} />
@@ -701,7 +741,7 @@ function BattleChat({
         {pendingText && (
           <>
             <div className="flex justify-end">
-              <p className="max-w-[90%] break-words rounded-lg bg-[#09090B] px-3 py-2 text-sm text-white">
+              <p className="max-w-[90%] break-words rounded-[2px] bg-[var(--text-primary)] px-3 py-2 text-sm text-[var(--text-inverse)]">
                 {pendingText}
               </p>
             </div>
@@ -714,13 +754,13 @@ function BattleChat({
       </div>
 
       {/* ── Input ── */}
-      <form onSubmit={send} className="shrink-0 border-t border-[var(--border-default)] p-3">
+      <form onSubmit={send} className="shrink-0 border-t border-[var(--text-primary)] p-3">
         {error && (
           <p role="alert" className="mb-2 text-xs text-[var(--accent-danger)]">
             {error}
           </p>
         )}
-        <div className="flex items-end gap-2 rounded-lg border border-[var(--border-default)] p-2 focus-within:border-[var(--accent-gold)]">
+        <div className="flex items-end gap-2 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] p-2 focus-within:border-[var(--accent-gold)]">
           <textarea
             ref={inputRef}
             aria-label="Tin nhắn"
@@ -742,7 +782,7 @@ function BattleChat({
             disabled={!draft.trim() || busy || loading || loadError}
             aria-label="Gửi tin nhắn"
             title="Gửi tin nhắn"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#09090B] text-white disabled:opacity-40"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-[2px] bg-[var(--accent-gold)] text-white transition-colors hover:bg-[var(--accent-bronze)] disabled:opacity-40"
           >
             {busy ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </button>

@@ -1,20 +1,22 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { X, Play, SkipForward, Timer, MapPin, FileText, ChevronDown, ChevronUp, Trophy, ChevronRight } from "lucide-react";
+import { X, Play, SkipForward, MapPin, FileText, ChevronDown, ChevronUp, Trophy, ChevronRight } from "lucide-react";
 import type { HistoricalEvent } from "@/services/event.service";
 import {
   CharacterCarouselCard,
   CharacterCompactCard,
 } from "@/components/commons/character-card";
 import { characterService, type Character } from "@/services/character.service";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { recordStudyActivity } from "@/features/gamification/study-check-in";
 import { queryKeys } from "@/shared/query-key";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 import { usePublicContextDocuments } from "@/features/documents/hooks";
 import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
+import { ERA_CONFIG, getEraFromYear, mapEraLabel } from "@/constants/eras";
 
 // ── Mock ──────────────────────────────────────────────────
 // TODO: fetch từ API /events/:id/characters
@@ -89,11 +91,11 @@ function FakeVideoPlayer({
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
             <button
               onClick={start}
-              className="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 cursor-pointer bg-white/[0.12] backdrop-blur-[12px] border-2 border-white/25"
+              className="w-[72px] h-[72px] rounded-[2px] flex items-center justify-center transition-all duration-200 hover:scale-110 cursor-pointer bg-[var(--accent-gold)] hover:bg-[var(--accent-bronze)]"
             >
               <Play className="w-8 h-8 text-white ml-1.5 fill-white" />
             </button>
-            <p className="text-white/70 text-sm font-medium tracking-wide">
+            <p className="text-white/75 text-[11px] font-bold uppercase tracking-[0.16em]">
               {hasVideo ? "Xem video giới thiệu" : "Chưa có video giới thiệu"}
             </p>
           </div>
@@ -103,7 +105,7 @@ function FakeVideoPlayer({
         {playing && (
           <button
             onClick={skip}
-            className="absolute top-10 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:bg-white/20 transition-all bg-black/50 backdrop-blur-[8px] text-white/85 border border-white/15"
+            className="absolute top-10 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.1em] cursor-pointer hover:bg-white hover:text-black transition-colors bg-black/60 text-white/90 border border-white/40"
           >
             <SkipForward className="w-3.5 h-3.5" /> Bỏ qua
           </button>
@@ -114,7 +116,7 @@ function FakeVideoPlayer({
             <p className="text-white/50 text-micro font-bold uppercase tracking-[0.2em] mb-1">
               Video giới thiệu
             </p>
-            <p className="text-white text-xl font-bold leading-snug drop-shadow-lg">
+            <p className="font-display text-white text-[28px] font-bold leading-[1.1] drop-shadow-lg">
               {event.title}
             </p>
           </div>
@@ -163,7 +165,7 @@ function CharactersReveal({
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5 text-accent-gold-soft">
             Nhân vật trong sự kiện
           </p>
-          <h3 className="text-lg font-bold leading-snug text-[var(--text-on-dark)]">
+          <h3 className="font-display text-[26px] font-bold leading-[1.1] text-[var(--text-on-dark)]">
             {event.title}
           </h3>
         </div>
@@ -208,32 +210,38 @@ function DocumentRow({ title, content }: { title: string; content: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="rounded-lg border overflow-hidden bg-card-light-bg border-card-light-border">
+    <div className="border-b border-[var(--border-default)]">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full flex items-center gap-2.5 px-3 py-2 text-left cursor-pointer"
+        aria-expanded={isOpen}
+        className="group w-full flex items-center gap-2.5 py-3 text-left cursor-pointer"
       >
-        <FileText className="w-4 h-4 shrink-0 text-content-subtle" />
-        <span className="flex-1 text-sm font-medium truncate text-content-text">
+        <FileText className="w-4 h-4 shrink-0 text-accent-gold" />
+        <span className="flex-1 text-sm font-semibold truncate text-content-heading group-hover:underline underline-offset-4">
           {title}
         </span>
         {isOpen ? (
-          <ChevronUp className="w-3.5 h-3.5 shrink-0 text-content-subtle" />
+          <ChevronUp className="w-4 h-4 shrink-0 text-content-muted" />
         ) : (
-          <ChevronDown className="w-3.5 h-3.5 shrink-0 text-content-subtle" />
+          <ChevronDown className="w-4 h-4 shrink-0 text-content-muted" />
         )}
       </button>
       {isOpen && (
-        <p className="px-3 pb-3 text-xs leading-relaxed whitespace-pre-wrap text-content-subtle">
-          {content}
-        </p>
+        <div className="mb-4 max-h-[320px] overflow-y-auto border-[var(--accent-gold)] bg-[var(--bg-elevated)] px-4 py-3">
+          <p className="text-[13.5px] leading-7 whitespace-pre-wrap text-content-text">
+            {content}
+          </p>
+        </div>
       )}
     </div>
   );
 }
 
 // ── Main Modal ────────────────────────────────────────────
+
+const SECTION_HEADING =
+  "mb-3 pb-2 border-b border-[var(--text-primary)] text-[11px] font-bold uppercase tracking-[0.14em] text-content-heading";
 
 interface EventDetailModalProps {
   event?: HistoricalEvent | null;
@@ -244,6 +252,11 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   const router = useRouter();
   const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
   const [finishedEventId, setFinishedEventId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (event?.id) recordStudyActivity(queryClient);
+  }, [event?.id, queryClient]);
 
   const { data: characters = [], isLoading: isLoadingCharacters } = useQuery({
     queryKey: queryKeys.characters.byContext(event?.id ?? ""),
@@ -260,6 +273,11 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   const yearLabel =
     event.yearLabel ??
     `${Math.abs(event.year)} ${event.year < 0 ? "TCN" : "SCN"}`;
+  const yearSuffix = event.year < 0 ? "TCN" : "SCN";
+  const yearNumber = event.yearLabel
+    ? event.yearLabel.replace(/\s*(SCN|TCN)$/i, "")
+    : String(Math.abs(event.year));
+  const eraLabel = mapEraLabel(event.era) || ERA_CONFIG[getEraFromYear(event.year)].label;
 
   const handleSelectChar = (charId: string) => {
     navigateWithAuth(`/chat/${charId}?contextId=${event.id}`);
@@ -274,13 +292,14 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
       />
 
       <div className="fixed inset-0 z-50 flex overflow-hidden">
-        <div className="relative flex flex-col md:flex-row w-full h-full shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+        <div className="relative flex flex-col md:flex-row w-full h-full">
           {/* Close */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 md:top-8 md:right-8 z-50 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer hover:rotate-90 active:scale-95 group bg-bg-elevated border border-border-default shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
+            aria-label="Đóng"
+            className="absolute top-4 right-4 md:top-7 md:right-7 z-50 w-10 h-10 flex items-center justify-center rounded-[2px] transition-colors duration-200 cursor-pointer active:scale-95 group bg-[var(--bg-surface)] border border-[var(--text-primary)] hover:bg-[var(--text-primary)]"
           >
-            <X className="w-5 h-5 transition-colors text-content-heading" />
+            <X className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90 text-content-heading group-hover:text-[var(--text-inverse)]" />
           </button>
 
           {/* ── Left 60% ── */}
@@ -300,69 +319,72 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
           </div>
 
           {/* ── Right 40% ── */}
-          <div className="flex-1 flex flex-col h-[45dvh] md:h-full overflow-hidden bg-[var(--palladian)] border-l border-l-card-light-border">
-            <div className="h-1 w-full shrink-0 bg-gradient-to-r from-accent-gold to-transparent" />
+          <div className="flex-1 flex flex-col h-[45dvh] md:h-full overflow-hidden bg-[var(--bg-surface)] border-t md:border-t-0 md:border-l border-[var(--text-primary)]">
+            <div className="h-[3px] w-full shrink-0 bg-accent-gold" />
 
-            <div className="px-5 md:px-8 py-4 md:py-6 border-b shrink-0 border-b-card-light-border">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-accent-gold/10 text-accent-gold">
-                  {yearLabel}
-                </span>
+            <div className="px-5 md:px-8 pt-4 md:pt-6 pb-4 border-b shrink-0 border-[var(--text-primary)]">
+              <div className="mt-2 flex items-end gap-4 pr-12">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-display text-[44px] md:text-[52px] font-extrabold leading-[0.9] text-accent-gold">
+                    {yearNumber}
+                  </span>
+                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-content-muted">
+                    {yearSuffix}
+                  </span>
+                </div>
+                {/* 史 — "sử", history */}
+                <span className="archive-seal live-stamp hidden sm:inline-grid ml-auto w-[44px] h-[44px] text-[19px] mb-1" aria-hidden="true">史</span>
               </div>
-              <h2 className="text-2xl font-bold leading-snug text-content-heading">
+              <h2 className="archive-title is-plain live-ink mt-2 text-[26px] md:text-[30px]">
                 {event.title}
               </h2>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 md:px-8 py-5 md:py-6 space-y-6">
-              <div className="flex flex-col gap-2.5">
-                <div className="flex items-center gap-2.5">
-                  <Timer className="w-4 h-4 shrink-0 text-accent-gold" />
-                  <span className="text-sm text-content-text">
-                    {yearLabel}
-                  </span>
-                </div>
+            <div className="flex-1 overflow-y-auto px-5 md:px-8 py-5 md:py-6 space-y-7">
+              <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[11px] uppercase tracking-[0.08em]">
+                <dt className="font-semibold text-accent-brass">Thời kỳ</dt>
+                <dd className="font-bold text-content-text">{eraLabel}</dd>
+                <dt className="font-semibold text-accent-brass">Năm</dt>
+                <dd className="font-bold text-content-text">{yearLabel}</dd>
                 {event.location && (
-                  <div className="flex items-center gap-2.5">
-                    <MapPin className="w-4 h-4 shrink-0 text-content-subtle" />
-                    <span className="text-sm text-content-text">
-                      {event.location}
-                    </span>
-                  </div>
+                  <>
+                    <dt className="font-semibold text-accent-brass">Địa điểm</dt>
+                    <dd className="flex items-center gap-1.5 min-w-0 font-bold text-content-text">
+                      <MapPin className="w-3 h-3 shrink-0 text-accent-gold" />
+                      <span>{event.location}</span>
+                    </dd>
+                  </>
                 )}
-              </div>
+              </dl>
+
               <button
                 type="button"
                 onClick={() => router.push(`/quiz?contextId=${event.id}`)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200 cursor-pointer hover:-translate-y-0.5 bg-accent-gold/10 border-accent-gold/25"
+                className="group w-full flex items-center gap-3 px-4 py-3 rounded-[2px] border border-[var(--text-primary)] transition-colors duration-200 cursor-pointer hover:bg-[var(--bg-elevated)]"
               >
-                <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-lg bg-accent-gold/15">
-                  <Trophy className="w-5 h-5 text-accent-gold" />
+                <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-[2px] bg-accent-gold">
+                  <Trophy className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-bold text-content-heading">
+                  <p className="font-display text-[19px] font-bold leading-tight text-content-heading">
                     Kiểm tra kiến thức
                   </p>
                   <p className="text-xs text-content-muted">
                     Làm bộ câu hỏi liên quan đến giai đoạn này
                   </p>
                 </div>
-                <ChevronRight className="w-4 h-4 shrink-0 text-accent-gold" />
+                <ChevronRight className="w-4 h-4 shrink-0 text-accent-gold transition-transform group-hover:translate-x-0.5" />
               </button>
-              <div className="h-px bg-card-light-border" />
-              <div>
-                <h4 className="text-[11px] font-bold uppercase tracking-widest mb-3 text-content-subtle">
-                  Bối cảnh lịch sử
-                </h4>
-                <p className="text-sm leading-relaxed text-content-text">
+
+              <section>
+                <h4 className={SECTION_HEADING}>Bối cảnh lịch sử</h4>
+                <p className="text-[15px] leading-7 text-content-text">
                   {event.summary}
                 </p>
-              </div>
-              <div className="h-px bg-card-light-border" />
-              <div>
-                <h4 className="text-[11px] font-bold uppercase tracking-widest mb-3 text-content-subtle">
-                  Nhân vật liên quan
-                </h4>
+              </section>
+
+              <section>
+                <h4 className={SECTION_HEADING}>Nhân vật liên quan</h4>
                 <div className="space-y-2">
                   {isLoadingCharacters ? (
                     // Skeleton khi đang loading
@@ -370,9 +392,9 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                       {[1, 2, 3].map((i) => (
                         <div
                           key={i}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border animate-pulse bg-card-light-bg border-card-light-border"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[2px] border animate-pulse bg-[var(--bg-surface)] border-[var(--border-strong)]"
                         >
-                          <div className="w-8 h-8 rounded-lg shrink-0 bg-card-light-border" />
+                          <div className="w-8 h-8 rounded-[2px] shrink-0 bg-card-light-border" />
                           <div className="flex-1 space-y-1.5">
                             <div className="h-3 w-2/3 rounded bg-card-light-border" />
                             <div className="h-2.5 w-1/2 rounded bg-card-light-border" />
@@ -381,7 +403,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                       ))}
                     </>
                   ) : characters.length === 0 ? (
-                    <p className="text-center text-xs py-4 text-content-subtle">
+                    <p className="py-3 text-xs text-content-muted">
                       Chưa có nhân vật nào
                     </p>
                   ) : (
@@ -394,22 +416,17 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                     ))
                   )}
                 </div>
-              </div>
+              </section>
 
               {documents.length > 0 && (
-                <>
-                  <div className="h-px bg-card-light-border" />
+                <section>
+                  <h4 className={SECTION_HEADING}>Tài liệu tham khảo</h4>
                   <div>
-                    <h4 className="text-[11px] font-bold uppercase tracking-widest mb-3 text-content-subtle">
-                      Tài liệu tham khảo
-                    </h4>
-                    <div className="space-y-2">
-                      {documents.map((doc) => (
-                        <DocumentRow key={doc.id} title={doc.title} content={doc.content} />
-                      ))}
-                    </div>
+                    {documents.map((doc) => (
+                      <DocumentRow key={doc.id} title={doc.title} content={doc.content} />
+                    ))}
                   </div>
-                </>
+                </section>
               )}
             </div>
           </div>

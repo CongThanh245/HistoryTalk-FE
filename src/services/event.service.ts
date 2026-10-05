@@ -1,4 +1,5 @@
 import { axiosClient } from "@/configs/axios.client";
+import { isBattleMap, type BattleMap } from "@/components/historical-map/battle-map.types";
 import {
   type EventEra,
   type EventEraBackend,
@@ -17,6 +18,7 @@ export interface HistoricalEvent {
   summary: string;
   location?: string;
   imageUrl?: string | null;
+  battleMap?: BattleMap | null;
   videoUrl?: string | null;
   era?: EventEraBackend;
   period?: string;
@@ -51,6 +53,7 @@ export interface CreateEventRequest {
   beforeTCN?: boolean;
   location?: string;
   imageUrl?: string | null;
+  battleMap?: BattleMap | null;
   videoUrl?: string | null;
   isActive?: boolean;
   isPublished?: boolean;
@@ -87,6 +90,7 @@ type RawHistoricalContext = {
   yearLabel?: string;
   location?: string;
   imageUrl?: string | null;
+  battleMap?: BattleMap | null;
   image?: string | null;
   thumbnailUrl?: string | null;
   thumbnail?: string | null;
@@ -138,6 +142,7 @@ export function mapContext(raw: RawHistoricalContext): HistoricalEvent {
     // pasted http(s) link, or a freshly signed URL for private-storage
     // uploads) or null — no client-side URL validation needed here.
     imageUrl: imageUrl ?? null,
+    battleMap: isBattleMap(raw.battleMap) ? raw.battleMap : null,
     videoUrl: raw.videoUrl ?? null,
     era: raw.era as EventEraBackend,
     period: raw.period,
@@ -210,6 +215,7 @@ function toContractEventPayload(data: UpdateEventRequest) {
     ...(data.year !== undefined && { year: data.year }),
     ...(data.location !== undefined && { location: data.location }),
     ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
+    ...(data.battleMap !== undefined && { battleMap: data.battleMap }),
     ...(data.videoUrl !== undefined && { videoUrl: data.videoUrl }),
     ...(data.isActive !== undefined && { isActive: data.isActive }),
     ...(data.isPublished !== undefined && { isPublished: data.isPublished }),

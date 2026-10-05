@@ -65,12 +65,12 @@ export function QuizProgressBar({
   return (
     <div
       ref={panelRef}
-      className="sticky top-0 z-20 flex-shrink-0 bg-[var(--palladian)] border-b border-[var(--oatmeal)] shadow-[0_2px_8px_rgba(27,38,50,0.06)]"
+      className="sticky top-0 z-20 flex-shrink-0 bg-[var(--bg-surface)] border-b border-[var(--text-primary)]"
     >
       <div className="flex items-center gap-2 px-4 h-14">
         <button
           onClick={onBack}
-          className="ml-8 h-9 rounded-lg px-3 text-sm font-medium transition-colors hover:bg-black/5 flex-shrink-0 text-content-muted"
+          className="ml-8 h-9 rounded-[2px] px-3 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] flex-shrink-0 text-content-heading"
           title="Quay lại"
         >
           Quay lại
@@ -78,16 +78,16 @@ export function QuizProgressBar({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <p className="text-xs font-medium truncate text-content-muted">
+            <p className="archive-title is-plain text-[15px] truncate">
               {quizTitle}
             </p>
             {practiceMode && (
-              <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold bg-accent-gold-active text-gold-on-light border border-accent-gold/35">
+              <span className="flex-shrink-0 rounded-[2px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] bg-[var(--accent-gold)] text-[#FFFFFF]">
                 Luyện tập
               </span>
             )}
           </div>
-          <p className="text-xs text-content-subtle">
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
             {answeredCount}/{totalQuestions} câu đã trả lời
           </p>
         </div>
@@ -95,16 +95,16 @@ export function QuizProgressBar({
         <button
           onClick={() => setPanelOpen((v) => !v)}
           className={cn(
-            "p-1.5 rounded-lg transition-colors hover:bg-black/5 flex-shrink-0 relative",
+            "p-1.5 rounded-[2px] border transition-colors flex-shrink-0 relative",
             panelOpen
-              ? "text-accent-gold bg-accent-gold-active"
-              : "text-content-muted bg-transparent",
+              ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
+              : "text-content-heading bg-transparent border-[var(--border-strong)] hover:border-[var(--text-primary)]",
           )}
           title="Danh sách câu hỏi"
         >
           <LayoutGrid size={16} />
           {answeredCount < totalQuestions && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center bg-accent-gold text-bg-deep">
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-[2px] text-[10px] font-bold flex items-center justify-center bg-accent-gold text-[#FFFFFF]">
               {totalQuestions - answeredCount}
             </span>
           )}
@@ -112,25 +112,25 @@ export function QuizProgressBar({
 
         <div
           className={cn(
-            "flex min-w-[104px] flex-col items-center rounded-full px-3 py-1 text-xs flex-shrink-0 border",
+            "flex min-w-[104px] flex-col items-center rounded-[2px] px-3 py-1 text-xs flex-shrink-0 border",
             timerDanger
-              ? "bg-accent-danger/10 text-accent-danger border-accent-danger/22"
-              : "bg-card-light-bg text-content-muted border-card-light-border",
+              ? "bg-[var(--status-danger-bg)] text-accent-danger border-[var(--accent-danger)]"
+              : "bg-[var(--bg-elevated)] text-content-heading border-[var(--text-primary)]",
           )}
         >
-          <span className="text-[10px] font-semibold leading-none">
+          <span className="text-[9px] font-bold uppercase tracking-[0.12em] leading-none opacity-75">
             {hasTimeLimit ? "Còn lại" : "Thời gian"}
           </span>
-          <span className="font-bold leading-5">
+          <span className="font-display text-lg font-extrabold leading-5 tabular-nums">
             {formatTime(hasTimeLimit ? remainingSeconds : elapsedSeconds)}
           </span>
         </div>
 
-        <div className="w-px h-5 flex-shrink-0 bg-card-light-border" />
+        <div className="w-px h-5 flex-shrink-0 bg-[var(--border-strong)]" />
 
         <button
           onClick={onGoHome}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-80 flex-shrink-0 bg-card-light-bg text-content-muted border border-card-light-border"
+          className="px-3 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-transparent text-content-heading border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
           title="Về trang quiz"
         >
           <span className="hidden sm:inline">Về trang</span>
@@ -138,51 +138,51 @@ export function QuizProgressBar({
 
         <button
           onClick={onRetry}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-85 flex-shrink-0 bg-[var(--abyssal-blue)] text-[var(--text-on-dark)]"
+          className="px-3 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-[var(--text-primary)] text-[var(--text-inverse)] border border-[var(--text-primary)] hover:bg-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:text-[#FFFFFF]"
           title="Làm lại"
         >
           <span className="hidden sm:inline">Làm lại</span>
         </button>
       </div>
 
-      <div className="h-1 bg-[var(--oatmeal)]">
+      <div className="h-1 bg-[var(--border-default)]">
         <div
           className={cn(
             "h-full transition-all duration-500",
-            pct === 100 ? "bg-[#047857]" : "bg-accent-gold",
+            pct === 100 ? "bg-[var(--status-success)]" : "bg-accent-gold",
           )}
           style={{ width: `${pct}%` }}
         />
       </div>
 
       {panelOpen && (
-        <div className="absolute left-0 right-0 top-full z-30 px-4 py-3 bg-[var(--palladian)] border-b border-[var(--oatmeal)] shadow-[0_6px_20px_rgba(27,38,50,0.1)]">
+        <div className="absolute left-0 right-0 top-full z-30 px-4 py-3 bg-[var(--bg-surface)] border-b border-[var(--text-primary)] shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3 text-xs text-content-muted">
+            <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.08em] text-content-muted">
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-sm inline-block bg-accent-gold" />
+                <span className="w-2.5 h-2.5 rounded-[1px] inline-block bg-[var(--text-primary)]" />
                 Đã làm ({answeredCount})
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-sm inline-block bg-card-light-bg border border-card-light-border" />
+                <span className="w-2.5 h-2.5 rounded-[1px] inline-block bg-[var(--bg-surface)] border border-[var(--border-strong)]" />
                 Chưa làm ({totalQuestions - answeredCount})
               </span>
               {!!flagged?.size && (
                 <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-sm inline-block bg-accent-danger" />
+                  <span className="w-2.5 h-2.5 rounded-full inline-block bg-accent-gold" />
                   Đã đánh dấu ({flagged.size})
                 </span>
               )}
             </div>
             <button
               onClick={() => setPanelOpen(false)}
-              className="text-content-muted"
+              className="text-content-muted transition-colors hover:text-content-heading"
             >
               <X size={14} />
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {questionIds.map((qId, idx) => {
               const answered = answers[qId] !== undefined;
               const isFlagged = flagged?.has(qId);
@@ -191,15 +191,15 @@ export function QuizProgressBar({
                   key={qId}
                   onClick={() => scrollToQuestion(idx)}
                   className={cn(
-                    "relative w-8 h-8 rounded-lg text-xs font-bold transition-colors",
+                    "relative w-8 h-8 rounded-[2px] text-xs font-bold transition-colors border tabular-nums",
                     answered
-                      ? "bg-accent-gold text-bg-deep"
-                      : "bg-card-light-bg text-content-muted border border-card-light-border",
+                      ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
+                      : "bg-[var(--bg-surface)] text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)]",
                   )}
                 >
                   {idx + 1}
                   {isFlagged && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-accent-danger border-[1.5px] border-[var(--palladian)]" />
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-accent-gold border-[1.5px] border-[var(--bg-surface)]" />
                   )}
                 </button>
               );

@@ -45,7 +45,7 @@ function sortByPublishedStatus<TData>(data: TData[], desc: boolean) {
 
 function getStickyColumnClass(columnId: string) {
   if (columnId === "title" || columnId === "name") {
-    return "sticky left-0 z-20 border-r bg-[var(--card-light-bg)] shadow-[10px_0_18px_rgba(27,38,50,0.05)]";
+    return "sticky left-0 z-20 border-r bg-[var(--bg-surface)]";
   }
 
   return "";
@@ -79,12 +79,12 @@ export function StaffDataTable<TData>({
 
   return (
     <div
-      className={cn("rounded-xl border overflow-x-auto overflow-y-hidden bg-card-light-bg border-card-light-border", className)}
+      className={cn("rounded-[2px] border-y overflow-x-auto overflow-y-hidden bg-[var(--bg-surface)] border-[var(--text-primary)]", className)}
     >
       <Table className="min-w-max">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
+            <TableRow key={headerGroup.id} className="border-b border-[var(--border-strong)] hover:bg-transparent">
               {headerGroup.headers.map((header) => {
                 const canSort = header.column.getCanSort();
                 const isPublishStatusColumn = header.column.id === "isPublished";
@@ -102,13 +102,13 @@ export function StaffDataTable<TData>({
                 return (
                   <TableHead
                     key={header.id}
-                    className={cn("px-4 border-card-light-border", getStickyColumnClass(header.column.id))}
+                    className={cn("px-4 border-[var(--border-default)]", getStickyColumnClass(header.column.id))}
                   >
                     {header.isPlaceholder ? null : canSort ? (
                       <Button
                         type="button"
                         variant="ghost"
-                        className="-ml-2 h-8 px-2 font-semibold text-content-heading hover:bg-black/[0.04] hover:text-[var(--content-heading)]"
+                        className="-ml-2 h-8 rounded-[2px] px-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)] hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)]"
                         onClick={handleSortClick}
                       >
                         {flexRender(
@@ -119,7 +119,7 @@ export function StaffDataTable<TData>({
                       </Button>
                     ) : (
                       <span
-                        className="text-xs font-semibold tracking-wide uppercase text-content-subtle"
+                        className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[var(--text-tertiary)]"
                       >
                         {flexRender(
                           header.column.columnDef.header,
@@ -152,7 +152,7 @@ export function StaffDataTable<TData>({
               <TableRow
                 key={row.id}
                 className={cn(
-                  "hover:bg-black/[0.025]!",
+                  "border-b border-[var(--border-default)] last:border-b-0 hover:bg-[var(--status-neutral-bg)]!",
                   onRowClick && "cursor-pointer"
                 )}
                 onClick={() => onRowClick?.(row.original)}
@@ -160,7 +160,7 @@ export function StaffDataTable<TData>({
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className={cn("px-4 border-card-light-border", getStickyColumnClass(cell.column.id))}
+                    className={cn("px-4 border-[var(--border-default)]", getStickyColumnClass(cell.column.id))}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>

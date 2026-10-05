@@ -485,8 +485,8 @@ function ModelLoadOverlay() {
   if (!active) return null;
 
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[rgba(10,8,4,0.72)] text-[rgba(201,168,76,0.9)]">
-      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[rgba(201,168,76,0.3)] border-t-[#c9a84c]" />
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[color-mix(in_srgb,_var(--abyssal-blue)_72%,_transparent)] text-[color-mix(in_srgb,_var(--accent-gold-soft)_90%,_transparent)]">
+      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] border-t-[var(--accent-gold)]" />
       <p className="m-0 text-[13px] opacity-80">
         Đang tải mô hình 3D... {Math.round(progress)}%
       </p>
@@ -669,7 +669,7 @@ function NoModelPlaceholder({ statusLabel, dotColorClass, shouldAnimate }: {
   shouldAnimate: boolean;
 }) {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center text-[rgba(201,168,76,0.6)]">
+    <div className="flex h-full w-full flex-col items-center justify-center text-[color-mix(in_srgb,_var(--accent-gold-soft)_60%,_transparent)]">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
         <circle cx="12" cy="7" r="4" />
@@ -679,7 +679,7 @@ function NoModelPlaceholder({ statusLabel, dotColorClass, shouldAnimate }: {
       </p>
 
       {/* Status dot - same styling as in main component */}
-      <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-[20px] border border-[rgba(201,168,76,0.3)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[#c9a84c]">
+      <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[var(--accent-gold-soft)]">
         <span
           className={cn(
             "h-2 w-2 shrink-0 rounded-full",
@@ -720,13 +720,13 @@ export function FBXCharacterViewer({
 
   // Status label + dot color
   const dotColorClass = effectiveSpeaking
-    ? "bg-[#c9a84c]"
+    ? "bg-[var(--accent-gold)]"
     : isRecording
-    ? "bg-[#ef5350]"
+    ? "bg-[var(--accent-danger)]"
     : isListening
-    ? "bg-[#4caf50]"
+    ? "bg-[var(--status-success)]"
     : isProcessing
-    ? "bg-[#2196f3]"
+    ? "bg-[var(--accent-blue)]"
     : "bg-[#555]";
 
   const statusLabel = effectiveSpeaking
@@ -759,7 +759,7 @@ export function FBXCharacterViewer({
   return (
     <div className="relative h-full w-full">
       {/* Status dot */}
-      <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-[20px] border border-[rgba(201,168,76,0.3)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[#c9a84c]">
+      <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[var(--accent-gold-soft)]">
         <span
           className={cn(
             "h-2 w-2 shrink-0 rounded-full",

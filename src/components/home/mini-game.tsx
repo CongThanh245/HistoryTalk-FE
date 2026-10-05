@@ -61,14 +61,14 @@ function ResultBanner({
     <div className="flex flex-col gap-2 mt-1">
       {/* Status */}
       <div
-        className={`rounded-[10px] px-3.5 py-2.5 border ${
+        className={`rounded-[2px] px-3.5 py-2.5 border ${
           correct
-            ? "bg-[rgba(16,40,24,0.08)] border-[rgba(74,178,98,0.4)]"
-            : "bg-[rgba(90,35,35,0.08)] border-[rgba(184,50,42,0.4)]"
+            ? "bg-[var(--status-success-bg)] border-[var(--status-success)]"
+            : "bg-[var(--status-danger-bg)] border-[var(--accent-danger)]"
         }`}
       >
         <p
-          className={`m-0 text-[13px] font-bold ${correct ? "text-[#1f5c34]" : "text-[#9b2222]"}`}
+          className={`m-0 text-[12px] font-bold uppercase tracking-[0.1em] ${correct ? "text-[var(--status-success)]" : "text-[var(--accent-danger)]"}`}
         >
           {correct ? "Chính xác!" : "Chưa đúng rồi!"}
         </p>
@@ -78,13 +78,13 @@ function ResultBanner({
       {!showExp ? (
         <button
           onClick={() => setShowExp(true)}
-          className="text-xs font-semibold text-[#7a5a1e] bg-accent-gold/[0.07] border border-accent-gold/20 rounded-lg cursor-pointer px-3 py-[7px] text-left"
+          className="archive-link self-start cursor-pointer bg-transparent"
         >
           Xem giải thích →
         </button>
       ) : (
-        <div className="bg-accent-gold/[0.05] border border-accent-gold/[0.18] rounded-lg px-[13px] py-2.5">
-          <p className="m-0 text-[12.5px] leading-[1.7] text-[#2d3d4f]">
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-[2px] px-[13px] py-2.5">
+          <p className="m-0 text-[12.5px] leading-[1.7] text-[var(--text-secondary)]">
             {explanation}
           </p>
         </div>
@@ -93,7 +93,7 @@ function ResultBanner({
       {/* Next button */}
       <button
         onClick={onNext}
-        className="text-[13px] font-bold cursor-pointer py-2.5 rounded-[9px] bg-[#e8d5a8] border border-[#b8922a] text-[#5c3d0e] w-full"
+        className="btn-ink w-full cursor-pointer"
       >
         Câu tiếp theo
       </button>
@@ -122,53 +122,39 @@ function OptionBtn({
 }) {
   const letters = ["A", "B", "C", "D"];
 
-  let bg = "transparent";
-  let border = "var(--card-light-border)";
-  let color = "var(--content-text)";
-  let letterColor = "var(--content-muted)";
+  let tone =
+    "bg-[var(--bg-elevated)] border-[var(--border-strong)] text-[var(--text-primary)] hover:border-[var(--text-primary)]";
+  let letterTone = "border-[var(--text-primary)] text-[var(--text-primary)]";
 
   if (answered) {
     if (isAnswer) {
-      bg = "rgba(16,40,24,0.08)";
-      border = "rgba(74,178,98,0.45)";
-      color = "#2d6b3e";
-      letterColor = "#3a9e57";
+      tone = "bg-[var(--status-success-bg)] border-[var(--status-success)] text-[var(--status-success)]";
+      letterTone = "border-[var(--status-success)] bg-[var(--status-success)] text-[var(--text-inverse)]";
     } else if (isSelected) {
-      bg = "rgba(90,35,35,0.08)";
-      border = "rgba(184,50,42,0.45)";
-      color = "#9b2222";
-      letterColor = "#c94040";
+      tone = "bg-[var(--status-danger-bg)] border-[var(--accent-danger)] text-[var(--accent-danger)]";
+      letterTone = "border-[var(--accent-danger)] bg-[var(--accent-danger)] text-[var(--text-inverse)]";
     } else {
-      color = "var(--content-muted)";
+      tone = "bg-[var(--bg-elevated)] border-[var(--border-default)] text-[var(--text-muted)]";
+      letterTone = "border-[var(--border-strong)] text-[var(--text-muted)]";
     }
+  } else if (isSelected) {
+    tone = "bg-[var(--text-primary)] border-[var(--text-primary)] text-[var(--text-inverse)]";
+    letterTone = "border-[var(--text-inverse)] text-[var(--text-inverse)]";
   }
 
   return (
     <button
       onClick={onClick}
-      className={`rounded-[9px] px-3 py-[9px] text-[13px] text-left flex items-center gap-2.5 w-full transition-[background,border-color] duration-[120ms] ${
+      className={`rounded-[2px] border px-3 py-[9px] text-[13px] text-left flex items-center gap-2.5 w-full transition-[background,border-color,color] duration-[120ms] ${tone} ${
         answered ? "cursor-default" : "cursor-pointer"
       }`}
-      style={{
-        background: bg,
-        border: `1px solid ${border}`,
-        color,
-      }}
-      onMouseEnter={(e) => {
-        if (!answered)
-          e.currentTarget.style.background = "rgba(201,162,77,0.06)";
-      }}
-      onMouseLeave={(e) => {
-        if (!answered) e.currentTarget.style.background = bg;
-      }}
     >
       <span
-        className="text-[10px] font-extrabold min-w-5 h-5 flex items-center justify-center rounded shrink-0 bg-accent-gold/10"
-        style={{ color: letterColor }}
+        className={`text-[10px] font-extrabold min-w-5 h-5 flex items-center justify-center rounded-[2px] border shrink-0 ${letterTone}`}
       >
         {letters[index]}
       </span>
-      <span className="flex-1 font-medium">{label}</span>
+      <span className="flex-1 font-semibold">{label}</span>
     </button>
   );
 }
@@ -197,8 +183,8 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
   return (
     <div className="flex flex-col gap-[11px]">
       {/* Hint card */}
-      <div className="bg-accent-gold/[0.04] border border-accent-gold/15 rounded-xl px-4 py-3.5">
-        <p className="m-0 mb-2.5 text-[11px] font-bold tracking-[0.1em] uppercase text-gold-on-light">
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-[2px] px-4 py-3.5">
+        <p className="m-0 mb-2.5 text-[11px] font-bold tracking-[0.14em] uppercase text-[var(--gold-on-light)]">
           Đây là ai?
         </p>
 
@@ -213,7 +199,7 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
         {!answered && hintsRevealed < q.hints.length && (
           <button
             onClick={() => setHintsRevealed((n) => n + 1)}
-            className="mt-2.5 text-[11px] font-semibold text-gold-on-light bg-accent-gold/10 border border-accent-gold/[0.22] rounded-md px-2.5 py-[3px] cursor-pointer"
+            className="mt-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] bg-transparent border border-[var(--text-primary)] rounded-[2px] px-2.5 py-1 cursor-pointer transition-colors duration-100 hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
           >
             + Gợi ý thêm ({q.hints.length - hintsRevealed} còn lại)
           </button>
@@ -269,12 +255,12 @@ function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
   return (
     <div className="flex flex-col gap-[11px]">
       {/* Year showcase */}
-      <div className="bg-[var(--accent-earth,rgba(196,106,47,0.06))] border border-[rgba(196,106,47,0.2)] rounded-[14px] px-4 py-[18px] text-center">
-        <p className="m-0 mb-1 text-[11px] font-bold tracking-[0.15em] uppercase text-[var(--accent-bronze,#c46a2f)]">
+      <div className="bg-[var(--bg-elevated)] border border-[var(--text-primary)] rounded-[2px] px-4 py-[18px] text-center">
+        <p className="m-0 mb-1 text-[11px] font-bold tracking-[0.14em] uppercase text-[var(--text-tertiary)]">
           Năm xảy ra sự kiện
         </p>
 
-        <p className="m-0 mb-3 text-[52px] font-black leading-none tracking-[-2px] text-[var(--burning-flame,#e08040)]">
+        <p className="m-0 mb-3 font-display text-[56px] font-extrabold leading-none text-[var(--accent-gold)]">
           {q.year}
         </p>
 
@@ -282,7 +268,7 @@ function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
           {q.clues.map((c, i) => (
             <span
               key={i}
-              className="text-[11px] px-2.5 py-[3px] rounded-[20px] bg-[rgba(196,106,47,0.08)] border border-[rgba(196,106,47,0.18)] text-[var(--burning-flame,#c46a2f)]"
+              className="text-[11px] font-semibold px-2.5 py-[3px] rounded-[2px] bg-transparent border border-[var(--border-strong)] text-[var(--text-secondary)]"
             >
               {c}
             </span>
@@ -392,26 +378,24 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               }}
               onDragEnd={handleDrop}
               onDragOver={(e) => e.preventDefault()}
-              className={`rounded-[10px] px-[13px] py-2.5 flex items-center gap-2.5 transition-all duration-[120ms] select-none ${
+              className={`rounded-[2px] border px-[13px] py-2.5 flex items-center gap-2.5 transition-all duration-[120ms] select-none ${
                 submitted ? "cursor-default" : "cursor-grab"
               } ${isDraggingThis ? "opacity-35" : "opacity-100"}`}
               style={{
                 background: placedOk
-                  ? "rgba(16,40,24,0.08)"
+                  ? "var(--status-success-bg)"
                   : placedWrong
-                  ? "rgba(90,35,35,0.08)"
+                  ? "var(--status-danger-bg)"
                   : isDragTarget
-                  ? "rgba(201,162,77,0.07)"
-                  : "var(--card-light-bg)",
-                border: `1px solid ${
-                  placedOk
-                    ? "rgba(74,178,98,0.45)"
-                    : placedWrong
-                    ? "rgba(184,50,42,0.45)"
-                    : isDragTarget
-                    ? "rgba(201,162,77,0.4)"
-                    : "var(--card-light-border)"
-                }`,
+                  ? "var(--accent-gold-active-bg)"
+                  : "var(--bg-elevated)",
+                borderColor: placedOk
+                  ? "var(--status-success)"
+                  : placedWrong
+                  ? "var(--accent-danger)"
+                  : isDragTarget
+                  ? "var(--text-primary)"
+                  : "var(--border-strong)",
               }}
             >
               {/* Handle / result dot */}
@@ -420,9 +404,9 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
                 style={{
                   background: submitted
                     ? placedOk
-                      ? "#5dcc78"
-                      : "#f07070"
-                    : "rgba(201,162,77,0.4)",
+                      ? "var(--status-success)"
+                      : "var(--accent-danger)"
+                    : "var(--accent-gold)",
                 }}
               />
 
@@ -438,10 +422,10 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               {/* Year badge (post-submit) */}
               {submitted && (
                 <span
-                  className={`text-[11px] font-extrabold rounded-[5px] px-[7px] py-px border ${
+                  className={`text-[11px] font-extrabold rounded-[2px] px-[7px] py-px border ${
                     placedOk
-                      ? "text-[#1f5c34] bg-[rgba(74,178,98,0.12)] border-[rgba(74,178,98,0.3)]"
-                      : "text-[#9b2222] bg-[rgba(184,50,42,0.12)] border-[rgba(184,50,42,0.3)]"
+                      ? "text-[var(--status-success)] bg-[var(--status-success-bg)] border-[var(--status-success-border)]"
+                      : "text-[var(--accent-danger)] bg-[var(--status-danger-bg)] border-[var(--status-danger-border)]"
                   }`}
                 >
                   {item.yearDisplay}
@@ -449,7 +433,7 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               )}
 
               {/* Position number */}
-              <span className="text-[10px] font-bold min-w-5 h-5 flex items-center justify-center rounded-[5px] bg-accent-gold/10 text-gold-on-light shrink-0">
+              <span className="font-display text-[12px] font-extrabold min-w-5 h-5 flex items-center justify-center rounded-[2px] border border-[var(--text-primary)] text-[var(--text-primary)] shrink-0">
                 {i + 1}
               </span>
             </div>
@@ -460,7 +444,7 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
       {!submitted ? (
         <button
           onClick={handleSubmit}
-          className="text-[13px] font-bold cursor-pointer py-2.5 rounded-[9px] bg-[#e8d5a8] border border-[#b8922a] text-[#5c3d0e] w-full"
+          className="btn-crimson w-full cursor-pointer"
         >
           Kiểm tra thứ tự
         </button>
@@ -517,15 +501,15 @@ export function HistoryMiniGame() {
   };
 
   return (
-    <div className="bg-card-light-bg border border-card-light-border rounded-[14px] overflow-hidden shadow-[0_2px_12px_rgba(27,38,50,0.07)]">
+    <div className="bg-[var(--bg-surface)] border border-[var(--text-primary)] rounded-[2px] overflow-hidden">
       {/* Header — chỉ text, không icon */}
-      <div className="px-[18px] pt-3.5 pb-3 border-b border-card-light-border flex items-center justify-between">
+      <div className="px-[18px] pt-3.5 pb-3 border-b border-[var(--text-primary)] flex items-center justify-between">
         <div>
-          <p className="m-0 text-[13px] font-bold text-content-heading">
+          <p className="m-0 font-display text-[20px] font-extrabold uppercase leading-[1.1] text-content-heading">
             {MODE_LABELS[mode]}
           </p>
           {score.total > 0 && (
-            <p className="m-0 mt-0.5 text-[11px] text-content-muted">
+            <p className="m-0 mt-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
               {score.correct}/{score.total} câu đúng
             </p>
           )}
@@ -533,7 +517,7 @@ export function HistoryMiniGame() {
 
         <button
           onClick={handleSwitchGame}
-          className="text-[11px] font-semibold cursor-pointer px-[11px] py-[5px] rounded-[7px] bg-transparent border border-card-light-border text-content-muted transition-all duration-[120ms] hover:border-accent-gold/40 hover:text-gold-on-light"
+          className="text-[11px] font-bold uppercase tracking-[0.1em] cursor-pointer px-[11px] py-[6px] rounded-[2px] bg-transparent border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors duration-[120ms] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
         >
           Game khác
         </button>

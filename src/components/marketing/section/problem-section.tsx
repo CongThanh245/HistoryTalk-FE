@@ -94,9 +94,9 @@ export function ProblemSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-svh items-start overflow-hidden bg-[var(--bg-deep)] md:items-center"
+      className="relative flex min-h-svh items-start overflow-hidden bg-(--bg-main) md:items-center"
     >
-      <div className="absolute inset-x-0 top-0 h-px bg-[var(--border-default)]" />
+      <div className="absolute inset-x-0 top-0 h-px bg-(--text-primary)" />
 
       <div className="relative z-10 w-full py-7 md:py-16 lg:py-0">
         <Container>
@@ -104,17 +104,13 @@ export function ProblemSection() {
             <div className="px-2 md:px-0">
               <h2
                 data-reveal="fast"
-                className="text-[1.75rem] font-bold leading-tight md:text-[2.25rem] lg:text-[2.75rem] mb-3 md:mb-4 text-[var(--text-secondary)]"
+                className="archive-title mb-3 text-[1.75rem] md:mb-4 md:text-[2.25rem] lg:text-[2.75rem]"
               >
-                Vấn đề học{" "}
-                <span className="text-[var(--accent-gold)] font-title">
-                  lịch sử
-                </span>{" "}
-                ngày nay
+                Vấn đề học <em>lịch sử</em> ngày nay
               </h2>
               <p
                 data-reveal="block"
-                className="text-sm md:text-base max-w-[320px] text-[var(--text-secondary)]"
+                className="max-w-[320px] border-t border-(--text-primary) pt-3 text-sm text-(--text-secondary) md:text-base"
               >
                 Ba rào cản lớn đang ngăn người học chạm vào chiều sâu của lịch
                 sử: bối cảnh, cảm xúc và khả năng tự đặt câu hỏi.
@@ -130,18 +126,19 @@ export function ProblemSection() {
                       cardsRef.current[i] = el;
                     }}
                     data-motion-card
-                    className="rounded-lg md:rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-surface)] px-4 py-4 md:px-6 md:py-5 shadow-[var(--shadow-strong)] transition-colors duration-200 will-change-transform hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated)]"
+                    className="group flex gap-4 rounded-[2px] border border-(--text-primary) bg-(--bg-surface) px-4 py-4 transition-colors duration-200 will-change-transform hover:bg-(--bg-elevated) md:gap-6 md:px-6 md:py-5"
                   >
-                    <span className="mb-1.5 md:mb-2 block text-[0.55rem] md:text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[var(--accent-gold)] opacity-80">
-                      {/* {problem.tag} */}
+                    <span className="shrink-0 font-display text-[1.5rem] font-extrabold leading-none text-(--accent-gold) md:text-[2rem]">
+                      [{String(problem.id).padStart(2, "0")}]
                     </span>
-                    <h3 className="mb-2 md:mb-2.5 text-[0.875rem] md:text-[1rem] font-bold uppercase leading-snug tracking-wide text-[var(--text-primary)] lg:text-[1.15rem]">
-                      {problem.title}
-                    </h3>
-                    <div className="mb-2 md:mb-2.5 h-[1.5px] w-6 md:w-7 bg-[var(--accent-gold)] opacity-30" />
-                    <p className="text-[0.85rem] md:text-[0.9rem] text-[var(--text-secondary)] lg:text-[0.95rem] leading-relaxed">
-                      {problem.body}
-                    </p>
+                    <div className="min-w-0">
+                      <h3 className="archive-title is-plain mb-2 text-[17px] md:mb-2.5 md:text-[20px] lg:text-[22px]">
+                        {problem.title}
+                      </h3>
+                      <p className="border-t border-(--border-default) pt-2 text-[0.85rem] leading-relaxed text-(--text-secondary) md:pt-2.5 md:text-[0.9rem] lg:text-[0.95rem]">
+                        {problem.body}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -150,7 +147,7 @@ export function ProblemSection() {
         </Container>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 h-px bg-[var(--border-default)]" />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-(--text-primary)" />
     </section>
   );
 }

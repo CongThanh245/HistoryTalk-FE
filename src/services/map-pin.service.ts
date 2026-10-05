@@ -24,6 +24,9 @@ export interface CreateMapPinRequest {
   pinYear: number;
 }
 
+/** Partial update: fields left out stay unchanged; `description: ""` clears the narration. */
+export type UpdateMapPinRequest = Partial<CreateMapPinRequest>;
+
 export const mapPinService = {
   getByContextAndYear: async (
     contextId: string,
@@ -42,6 +45,18 @@ export const mapPinService = {
   ): Promise<MapPin> => {
     const response = await axiosClient.post(
       `/historical-contexts/${contextId}/map-pins`,
+      payload,
+    );
+    return response.data.data;
+  },
+
+  update: async (
+    contextId: string,
+    pinId: string,
+    payload: UpdateMapPinRequest,
+  ): Promise<MapPin> => {
+    const response = await axiosClient.put(
+      `/historical-contexts/${contextId}/map-pins/${pinId}`,
       payload,
     );
     return response.data.data;

@@ -251,13 +251,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-content)]">
       {/* ═══════ Header ═══════ */}
       <div
-        className="flex items-center justify-between px-6 py-4 border-b shrink-0 border-[var(--card-light-border)]"
+        className="flex items-center justify-between px-6 py-4 border-b shrink-0 border-[var(--text-primary)]"
       >
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
-            className="text-content-muted hover:bg-black/8 dark:hover:bg-black/8"
+            className="text-content-muted hover:bg-[var(--status-neutral-bg)] "
             onClick={() => {
               if (isDirty && isEditing) {
                 setLeaveDialogOpen(true);
@@ -270,7 +270,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
           </Button>
           <div className="flex items-center gap-3">
             <div
-              className="relative w-10 h-10 overflow-hidden rounded-lg shrink-0 bg-[var(--card-light-border)]"
+              className="relative w-10 h-10 overflow-hidden rounded-[2px] shrink-0 bg-[var(--card-light-border)]"
             >
               {isValidUrl(draft.image) && (
                 <Image
@@ -283,7 +283,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <h1 className="text-lg font-bold leading-tight text-[var(--content-heading)]">
+                <h1 className="archive-title is-plain text-2xl">
                   {mode === "create" && !isCreated
                     ? "Tạo nhân vật mới"
                     : draft.name || "Nhân vật"}
@@ -328,7 +328,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-transparent border-[var(--card-light-border)] hover:bg-black/[0.08] hover:border-[var(--content-muted)] text-[var(--content-heading)] transition-colors"
+                  className="rounded-[2px] bg-transparent border-[var(--text-primary)] hover:bg-[var(--status-neutral-bg)] text-[var(--content-heading)] transition-colors"
                   onClick={() => {
                     if (isDirty) {
                       setCancelDialogOpen(true);
@@ -344,7 +344,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 size="sm"
                 onClick={handleSaveClick}
                 disabled={!canSave}
-                className="border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] font-semibold transition-all duration-200 hover:brightness-[0.85] hover:shadow-md cursor-pointer"
+                className="border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] font-semibold transition-all duration-200 cursor-pointer"
               >
                 {isPending
                   ? "Đang lưu..."
@@ -358,7 +358,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             <Button
               variant="outline"
               size="sm"
-              className="bg-transparent border-[var(--card-light-border)] hover:bg-black/[0.08] hover:border-[var(--content-muted)] text-[var(--content-heading)] hover:text-[var(--content-heading)] dark:hover:bg-black/[0.08] dark:hover:text-[var(--content-heading)] transition-colors"
+              className="rounded-[2px] bg-transparent border-[var(--text-primary)] hover:bg-[var(--status-neutral-bg)] text-[var(--content-heading)] hover:text-[var(--content-heading)] dark:hover:text-[var(--content-heading)] transition-colors"
               onClick={() => setIsEditing(true)}
             >
               <PencilIcon className="h-4 w-4 mr-1.5" />
@@ -416,13 +416,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               </p>
 
               <TabsList
-                className="grid w-full h-auto grid-cols-5 gap-1 p-1 bg-[rgba(27,38,50,0.04)]"
+                className="grid w-full h-auto grid-cols-5 gap-0 p-0 bg-transparent"
               >
                 {FORM_TABS.map((tab) => (
                   <TabsTrigger
                     key={tab.key}
                     value={tab.key}
-                    className="relative text-[11px] px-1 py-2 leading-tight whitespace-normal text-center data-[state=active]:shadow-sm"
+                    className="relative text-[11px] px-1 py-2 leading-tight whitespace-normal text-center"
                   >
                     {tab.label}
                     {tabHasError(tab.key) && (
@@ -490,7 +490,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         placeholder="Năm"
                         disabled={!isEditing}
                       />
-                      <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-md border-[var(--card-light-border)] text-[var(--content-heading)]">
+                      <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-[2px] border-[var(--card-light-border)] text-[var(--content-heading)]">
                         <Checkbox
                           checked={draft.isBornBc}
                           onCheckedChange={(val) => set("isBornBc")(!!val)}
@@ -530,7 +530,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         placeholder="Năm"
                         disabled={!isEditing}
                       />
-                      <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-md border-[var(--card-light-border)] text-[var(--content-heading)]">
+                      <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-[2px] border-[var(--card-light-border)] text-[var(--content-heading)]">
                         <Checkbox
                           checked={draft.isDeathBc}
                           onCheckedChange={(val) => set("isDeathBc")(!!val)}
@@ -577,7 +577,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     <img
                       src={pendingImagePreviewUrl}
                       alt="Xem trước ảnh"
-                      className="object-cover w-32 h-32 mt-1 border rounded-lg border-[var(--card-light-border)]"
+                      className="object-cover w-32 h-32 mt-1 border rounded-[2px] border-[var(--card-light-border)]"
                     />
                   )}
                 </MediaSlotField>
@@ -642,7 +642,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                       Tài liệu RAG kèm theo
                     </p>
                   </div>
-                  <div className="p-3 border rounded-lg border-[var(--card-light-border)]">
+                  <div className="p-3 border rounded-[2px] border-[var(--card-light-border)]">
                     <div className="flex items-center justify-between gap-3 mb-2">
                       <p className="text-xs font-semibold tracking-widest uppercase text-[var(--content-heading)]">
                         {mode === "edit" ? "Tài liệu đã import" : "Tài liệu"}
@@ -690,7 +690,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             return (
                               <div
                                 key={documentId ?? `character-document-${index}`}
-                                className="flex items-start gap-2 p-2 border rounded-md border-[var(--card-light-border)] bg-[rgba(255,255,255,0.35)]"
+                                className="flex items-start gap-2 p-2 border rounded-[2px] border-[var(--card-light-border)] bg-[var(--bg-elevated)]"
                               >
                                 <button
                                   type="button"
@@ -711,7 +711,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                       type="button"
                                       variant="ghost"
                                       size="icon-sm"
-                                      className="shrink-0 rounded-full text-accent-gold hover:bg-(--accent-gold)/15"
+                                      className="shrink-0 rounded-[2px] text-accent-gold hover:bg-(--accent-gold)/15"
                                       disabled={isGetDocumentPdfUrlPending}
                                       onClick={async () => {
                                         if (!documentId) return;
@@ -738,7 +738,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                       type="button"
                                       variant="ghost"
                                       size="icon-sm"
-                                      className="rounded-full shrink-0 text-content-heading"
+                                      className="rounded-[2px] shrink-0 text-content-heading"
                                       onClick={() => openDocumentEdit(document)}
                                       title="Sửa nội dung"
                                     >
@@ -750,7 +750,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                       type="button"
                                       variant="ghost"
                                       size="icon-sm"
-                                      className="shrink-0 rounded-full text-accent-danger hover:bg-(--accent-danger)/15"
+                                      className="shrink-0 rounded-[2px] text-accent-danger hover:bg-(--accent-danger)/15"
                                       disabled={isDeleteDocumentPending}
                                       onClick={() => setDeleteDocumentTarget(document)}
                                       title="Xóa tài liệu"
@@ -782,7 +782,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           };
                           return (
                             <div
-                              className="flex items-start gap-2 p-2 border rounded-md border-[var(--card-light-border)] bg-[rgba(255,255,255,0.35)]"
+                              className="flex items-start gap-2 p-2 border rounded-[2px] border-[var(--card-light-border)] bg-[var(--bg-elevated)]"
                             >
                               <button
                                 type="button"
@@ -802,7 +802,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                   type="button"
                                   variant="ghost"
                                   size="icon-sm"
-                                  className="rounded-full shrink-0 text-content-heading"
+                                  className="rounded-[2px] shrink-0 text-content-heading"
                                   onClick={() => openDocumentEdit(pendingDocument)}
                                   title="Sửa nội dung"
                                 >
@@ -812,7 +812,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                   type="button"
                                   variant="ghost"
                                   size="icon-sm"
-                                  className="shrink-0 rounded-full text-accent-danger hover:bg-(--accent-danger)/15"
+                                  className="shrink-0 rounded-[2px] text-accent-danger hover:bg-(--accent-danger)/15"
                                   onClick={() => setDeleteDocumentTarget(pendingDocument)}
                                   title="Xóa tài liệu"
                                 >
@@ -851,20 +851,20 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             <div
                               key={ctx.contextId}
                               className={cn(
-                                "flex items-center gap-2 px-3 py-2.5 rounded-xl border group",
+                                "flex items-center gap-2 px-3 py-2.5 rounded-[2px] border group",
                                 isCtxPublished
-                                  ? "border-[rgba(34,197,94,0.3)] bg-[rgba(34,197,94,0.06)]"
-                                  : "border-[rgba(234,179,8,0.35)] bg-[rgba(254,243,199,0.25)]"
+                                  ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)]"
+                                  : "border-[var(--border-strong)] bg-[var(--status-neutral-bg)]"
                               )}
                             >
                               {isCtxPublished ? (
-                                <CheckCircleIcon className="w-4 h-4 shrink-0 text-[rgb(22,163,74)]" />
+                                <CheckCircleIcon className="w-4 h-4 shrink-0 text-[var(--status-success)]" />
                               ) : (
-                                <span className="w-2 h-2 rounded-full bg-[rgb(234,179,8)] shrink-0 animate-pulse" />
+                                <span className="w-2 h-2 rounded-full bg-[var(--status-warning)] shrink-0 animate-pulse" />
                               )}
                               <p className={cn(
                                 "flex-1 text-xs font-medium",
-                                isCtxPublished ? "text-green-700" : "text-[#92400e]"
+                                isCtxPublished ? "text-[var(--status-success)]" : "text-[var(--text-tertiary)]"
                               )}>
                                 Đã liên kết: {ctx.name} {!isCtxPublished && " (Chưa xuất bản)"}
                               </p>
@@ -872,7 +872,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                 <button
                                   onClick={() => handleRemoveContext(ctx.contextId)}
                                   disabled={isMapContextPending}
-                                  className="p-1 text-red-600 transition-all rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-100 disabled:opacity-50"
+                                  className="p-1 text-[var(--accent-danger)] transition-all rounded-[2px] opacity-0 group-hover:opacity-100 hover:bg-[var(--status-danger-bg)] disabled:opacity-50"
                                   title="Gỡ liên kết"
                                 >
                                   <TrashIcon className="h-3.5 w-3.5" />
@@ -918,7 +918,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           mappedContexts.some(c => c.contextId === selectedContextId)
                         }
                         className={`shrink-0 border-0 transition-all duration-200 ${selectedContextId && !mappedContexts.some(c => c.contextId === selectedContextId)
-                            ? "bg-[var(--accent-blue)] text-[var(--bg-deep)] hover:brightness-90 hover:shadow-sm cursor-pointer"
+                            ? "bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] cursor-pointer"
                             : ""
                           }`}
                       >
@@ -930,13 +930,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     {/* ── Quick-create context — Sheet trigger ── */}
                     <button
                       type="button"
-                      className="w-full mt-2 flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all hover:bg-black/[0.04] border text-[var(--accent-blue)] border-[var(--card-light-border)] bg-transparent"
+                      className="w-full mt-2 flex items-center gap-2 px-3 py-2.5 rounded-[2px] text-xs font-semibold transition-all hover:bg-[var(--status-neutral-bg)] border text-[var(--accent-blue)] border-[var(--card-light-border)] bg-transparent"
                       onClick={() => setQuickCreateOpen(true)}
                     >
                       <PlusIcon className="h-3.5 w-3.5 shrink-0" />
                       Tạo nhanh bối cảnh mới
                       <span
-                        className="ml-auto text-[10px] font-normal px-1.5 py-0.5 rounded text-[var(--accent-blue)] bg-[rgba(59,130,246,0.1)]"
+                        className="ml-auto text-[10px] font-normal px-1.5 py-0.5 rounded-[2px] text-[var(--accent-blue)] bg-accent-blue/10"
                       >
                         Mới
                       </span>
@@ -954,7 +954,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         >
                           <div className="flex items-center gap-2.5">
                             <div
-                              className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0 bg-[rgba(59,130,246,0.1)]"
+                              className="flex items-center justify-center w-8 h-8 rounded-[2px] shrink-0 bg-accent-blue/10"
                             >
                               <ScrollIcon className="w-4 h-4 text-[var(--accent-blue)]" />
                             </div>
@@ -1008,7 +1008,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                 onChange={(e) => setQuickContextField("description")(e.target.value)}
                                 placeholder="Bối cảnh lịch sử, ý nghĩa sự kiện..."
                                 rows={4}
-                                className="w-full px-3 py-2 text-sm transition-colors border rounded-md outline-none resize-none focus:ring-1 focus:ring-blue-400 border-[var(--card-light-border)] bg-[var(--bg-content)] text-[var(--content-text)]"
+                                className="w-full px-3 py-2 text-sm transition-colors border rounded-[2px] outline-none resize-none focus:ring-1 focus:ring-[var(--accent-gold)] border-[var(--card-light-border)] bg-[var(--bg-content)] text-[var(--content-text)]"
                               />
                               <ValidationErrorText message={quickErrors.description} />
                             </div>
@@ -1126,11 +1126,11 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                           {/* Section: Trạng thái */}
                           <div
-                            className={`flex items-center justify-between gap-3 px-4 py-3 transition-colors border rounded-xl ${quickCtx.isPublished ? "border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.06)]" : "border-[rgba(234,179,8,0.35)] bg-[rgba(254,243,199,0.25)]"}`}
+                            className={`flex items-center justify-between gap-3 px-4 py-3 transition-colors border rounded-[2px] ${quickCtx.isPublished ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)]" : "border-[var(--border-strong)] bg-[var(--status-neutral-bg)]"}`}
                           >
                             <div className="flex-1">
                               <p
-                                className={`text-sm font-semibold ${quickCtx.isPublished ? "text-[rgb(22,163,74)]" : "text-[#92400e]"}`}
+                                className={`text-sm font-semibold ${quickCtx.isPublished ? "text-[var(--status-success)]" : "text-[var(--text-tertiary)]"}`}
                               >
                                 {quickCtx.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
                               </p>
@@ -1145,7 +1145,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                               role="switch"
                               aria-checked={quickCtx.isPublished}
                               onClick={() => setQuickContextField("isPublished")(!quickCtx.isPublished)}
-                              className={`relative inline-flex h-6 transition-colors border-2 border-transparent rounded-full cursor-pointer w-11 shrink-0 focus-visible:outline-none ${quickCtx.isPublished ? "bg-[rgb(34,197,94)]" : "bg-[rgba(234,179,8,0.4)]"}`}
+                              className={`relative inline-flex h-6 transition-colors border-2 border-transparent rounded-full cursor-pointer w-11 shrink-0 focus-visible:outline-none ${quickCtx.isPublished ? "bg-[var(--status-success)]" : "bg-[var(--border-strong)]"}`}
                             >
                               <span
                                 className={`block w-5 h-5 transition-transform rounded-full shadow-lg pointer-events-none bg-white ${quickCtx.isPublished ? "translate-x-5" : "translate-x-0"}`}
@@ -1160,7 +1160,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         >
                           <Button
                             variant="outline"
-                            className="bg-transparent border-[var(--card-light-border)] hover:bg-black/[0.08] hover:border-[var(--content-muted)] transition-colors text-[var(--content-heading)]"
+                            className="rounded-[2px] bg-transparent border-[var(--text-primary)] hover:bg-[var(--status-neutral-bg)] transition-colors text-[var(--content-heading)]"
                             onClick={() => {
                               setQuickCreateOpen(false);
                               resetQuickCtx();
@@ -1178,7 +1178,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                               hasValidationErrors(validateContextDraft(quickCtx)) ||
                               createEvent.isPending
                             }
-                            className="border-0 bg-[var(--accent-blue)] text-[var(--bg-deep)] transition-all duration-200 hover:brightness-90 hover:shadow-sm cursor-pointer"
+                            className="border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] transition-all duration-200 cursor-pointer"
                             onClick={() => {
                               const nextErrors = validateContextDraft(quickCtx);
                               if (hasValidationErrors(nextErrors)) {
@@ -1216,7 +1216,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   </div>
                 ) : (
                   <div
-                    className="px-4 py-8 text-center border border-dashed rounded-xl border-[var(--card-light-border)]"
+                    className="px-4 py-8 text-center border border-dashed rounded-[2px] border-[var(--card-light-border)]"
                   >
                     <LinkIcon className="w-5 h-5 mx-auto mb-2 text-[var(--content-muted)]" />
                     <p className="text-sm text-[var(--content-muted)]">
@@ -1241,20 +1241,20 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             />
           ) : (
             <div className="relative flex flex-col items-center justify-center flex-1 p-12">
-              <div className="w-full max-w-2xl aspect-[4/3] relative rounded-3xl overflow-hidden shadow-2xl border border-[var(--card-light-border)]">
+              <div className="w-full max-w-2xl aspect-[4/3] relative rounded-[2px] overflow-hidden border border-[var(--card-light-border)]">
                 {/* Blurred mock-up */}
-                <div className="absolute inset-0 bg-white blur-2xl opacity-60" />
-                <div className="absolute inset-0 flex flex-col p-8 space-y-6 opacity-20 bg-gray-50">
-                  <div className="w-48 h-12 bg-gray-300 rounded-full" />
-                  <div className="w-2/3 h-24 bg-gray-200 rounded-2xl" />
-                  <div className="w-1/2 h-24 ml-auto bg-blue-200 rounded-2xl" />
-                  <div className="w-3/4 h-24 bg-gray-200 rounded-2xl" />
+                <div className="absolute inset-0 bg-[var(--bg-elevated)] opacity-60" />
+                <div className="absolute inset-0 flex flex-col p-8 space-y-6 opacity-20 bg-[var(--bg-deep)]">
+                  <div className="w-48 h-12 bg-[var(--bg-deep)] rounded-[2px]" />
+                  <div className="w-2/3 h-24 bg-[var(--bg-deep)] rounded-[2px]" />
+                  <div className="w-1/2 h-24 ml-auto bg-[var(--bg-deep)] rounded-[2px]" />
+                  <div className="w-3/4 h-24 bg-[var(--bg-deep)] rounded-[2px]" />
                 </div>
 
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="px-6 space-y-4 text-center">
-                    <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto shadow-xl border border-[var(--card-light-border)]">
-                      <ChatCircleDotsIcon className="w-10 h-10 text-[var(--accent-blue)]" />
+                    <div className="w-20 h-20 bg-[var(--bg-elevated)] rounded-[2px] flex items-center justify-center mx-auto border border-[var(--card-light-border)]">
+                      <ChatCircleDotsIcon className="w-10 h-10 text-[var(--accent-gold)]" />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-[var(--content-heading)]">
@@ -1295,7 +1295,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
         titleBadge={
           viewingDocument?.fileUrl ? (
             <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[rgba(234,179,8,0.12)] text-[rgb(146,64,14)]"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] text-[10px] font-bold uppercase bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)]"
             >
               Có PDF gốc
             </span>

@@ -54,7 +54,7 @@ function DocumentContent({ content, quote }: { content: string; quote?: string |
           <mark
             key={i}
             ref={markRef}
-            className="rounded px-0.5 bg-(--accent-gold-glow) text-inherit"
+            className="rounded-[2px] px-0.5 bg-(--accent-gold-glow) text-inherit"
           >
             {part.text}
           </mark>
@@ -69,18 +69,18 @@ function DocumentContent({ content, quote }: { content: string; quote?: string |
 function PanelHeader({ title, onClose }: { title: string; onClose: () => void }) {
   return (
     <div
-      className="flex items-start justify-between gap-3 px-5 pt-4 pb-3 border-b border-border-default shrink-0"
+      className="flex items-start justify-between gap-3 px-5 pt-4 pb-3 border-b border-[var(--text-primary)] shrink-0"
     >
       <div className="flex items-center min-w-0 gap-2">
-        <FileText size={18} className="fill-current shrink-0 text-accent-gold" />
-        <h3 className="text-sm font-bold truncate text-content-heading">
+        <FileText size={18} className="shrink-0 text-[var(--text-primary)]" />
+        <h3 className="archive-title is-plain text-[18px] truncate">
           {title}
         </h3>
       </div>
       <button
         onClick={onClose}
         aria-label="Đóng"
-        className="flex items-center justify-center transition-all border rounded-full cursor-pointer w-7 h-7 shrink-0 hover:scale-110 active:scale-95 bg-bg-elevated border-border-default text-content-text"
+        className="flex items-center justify-center transition-colors border rounded-[2px] cursor-pointer w-7 h-7 shrink-0 active:scale-95 bg-transparent border-[var(--text-primary)] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
       >
         <X size={13} strokeWidth={3} />
       </button>
@@ -183,7 +183,7 @@ export function DocumentCitationDialog({
               href={matchedDocument.fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium hover:underline text-accent-gold"
+              className="archive-link mt-4"
             >
               <ExternalLink size={14} />
               Xem file gốc
@@ -196,7 +196,7 @@ export function DocumentCitationDialog({
     return (
       <div className="flex flex-col gap-3 px-5 py-4">
         <div
-          className="flex items-start gap-2 p-3 text-sm border rounded-lg border-border-default text-content-text"
+          className="flex items-start gap-2 p-3 text-sm border rounded-[2px] border-(--status-warning-border) bg-(--status-warning-bg) text-content-text"
         >
           <AlertTriangle size={16} className="shrink-0 mt-0.5" />
           <span>
@@ -205,7 +205,7 @@ export function DocumentCitationDialog({
         </div>
         {quote && (
           <blockquote
-            className="pl-3 text-sm leading-relaxed border-l-2 border-accent-gold-soft text-content-text"
+            className="pl-3 text-sm leading-relaxed border-[var(--text-primary)] text-content-text"
           >
             {quote}
           </blockquote>
@@ -226,7 +226,7 @@ export function DocumentCitationDialog({
     <>
       {/* Desktop: sidebar thật trong layout, không overlay — vẫn thao tác được với chat */}
       <div
-        className="flex-col hidden h-full overflow-hidden border-l md:flex shrink-0 w-105 border-border-default bg-bg-surface"
+        className="flex-col hidden h-full overflow-hidden border-l md:flex shrink-0 w-105 border-[var(--text-primary)] bg-bg-surface"
       >
         {panelBody}
       </div>
@@ -238,7 +238,7 @@ export function DocumentCitationDialog({
           onClick={onClose}
         />
         <div
-          className="fixed inset-y-0 right-0 z-150 flex flex-col overflow-hidden w-full border-l border-border-default bg-bg-surface shadow-[-8px_0_32px_rgba(0,0,0,0.35)]"
+          className="fixed inset-y-0 right-0 z-150 flex flex-col overflow-hidden w-full border-l border-[var(--text-primary)] bg-bg-surface shadow-(--shadow-strong)"
         >
           {panelBody}
         </div>

@@ -59,26 +59,26 @@ function getStatusConfig(status: string) {
   const map = {
     PAID: {
       label: "Đã thanh toán",
-      icon: <CheckCircle2 size={14} />,
-      classes: "border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
+      icon: <CheckCircle2 size={13} />,
+      classes: "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]",
     },
     CANCELLED: {
       label: "Đã hủy",
-      icon: <XCircle size={14} />,
-      classes: "border-rose-500/25 bg-rose-500/10 text-rose-600 dark:text-rose-300",
+      icon: <XCircle size={13} />,
+      classes: "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--accent-danger)]",
     },
     PENDING: {
       label: "Chờ thanh toán",
-      icon: <Hourglass size={14} />,
-      classes: "border-amber-500/25 bg-amber-500/10 text-amber-600 dark:text-amber-300",
+      icon: <Hourglass size={13} />,
+      classes: "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]",
     },
   } as const;
 
   return (
     map[normalized as keyof typeof map] ?? {
       label: status,
-      icon: <Timer size={14} />,
-      classes: "border-slate-500/25 bg-slate-500/10 text-slate-600 dark:text-slate-300",
+      icon: <Timer size={13} />,
+      classes: "border-[var(--status-neutral-border)] bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]",
     }
   );
 }
@@ -88,11 +88,27 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold ${cfg.classes}`}
+      className={`inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 text-[10px] font-bold uppercase tracking-[0.1em] ${cfg.classes}`}
     >
       {cfg.icon}
       {cfg.label}
     </span>
+  );
+}
+
+const LEDGER_GRID =
+  "md:grid md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.2fr)_150px_150px] md:items-center md:gap-4";
+
+function LedgerHeader() {
+  return (
+    <div
+      className={`hidden border-b border-[var(--text-primary)] bg-[var(--bg-elevated)] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)] sm:px-5 ${LEDGER_GRID}`}
+    >
+      <span>Đơn hàng</span>
+      <span>Thời gian</span>
+      <span>Trạng thái</span>
+      <span className="text-right">Số tiền</span>
+    </div>
   );
 }
 
@@ -102,60 +118,56 @@ function HistoryRow({ item, index }: { item: PaymentHistoryItem; index: number }
 
   return (
     <article
-      className="group relative overflow-hidden rounded-lg border border-[rgba(27,38,50,0.1)] bg-white/80 p-4 shadow-[0_12px_34px_rgba(27,38,50,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[rgba(255,146,21,0.34)] hover:shadow-[0_18px_42px_rgba(27,38,50,0.1)] sm:p-5 animate-in fade-in slide-in-from-bottom-2"
+      className={`group relative px-4 py-4 transition-colors duration-150 hover:bg-[var(--bg-elevated)] sm:px-5 animate-in fade-in slide-in-from-bottom-2 ${LEDGER_GRID}`}
       style={{ animationDelay: `${index * 70}ms` }}
     >
-      <div className="absolute inset-y-0 left-0 w-1 bg-[var(--oatmeal)] transition-colors group-hover:bg-[var(--accent-gold)]" />
+      <div className="absolute inset-y-0 left-0 w-[3px] bg-transparent transition-colors group-hover:bg-[var(--accent-gold)]" />
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 flex-1 pl-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="grid size-9 place-items-center rounded-lg bg-[var(--bg-content)] text-[var(--accent-gold)]">
-              <Package size={18} />
-            </span>
-            <div className="min-w-0">
-              <h2 className="truncate text-base font-bold text-[var(--content-heading)]">
-                {item.tierTitle}
-              </h2>
-              <p className="text-xs text-[var(--content-muted)]">
-                Mã đơn <span className="font-mono font-semibold">#{item.orderCode}</span>
-              </p>
-            </div>
-            <StatusBadge status={item.status} />
-          </div>
-
-          <div className="mt-4 grid gap-2 text-xs text-[var(--content-muted)] sm:grid-cols-2">
-            <div className="inline-flex items-center gap-2">
-              <CalendarDays size={15} className="text-[var(--content-subtle)]" />
-              Tạo lúc {formatDate(item.createdAt)}
-            </div>
-            <div className="inline-flex items-center gap-2">
-              <ShieldCheck
-                size={15}
-                className={paid ? "text-emerald-600" : "text-[var(--content-subtle)]"}
-              />
-              {paid ? `Thanh toán ${formatDate(item.paidAt)}` : `Hết hạn ${formatDate(item.expiredAt)}`}
-            </div>
-            {item.userName && (
-              <div className="inline-flex items-center gap-2 sm:col-span-2">
-                <User size={15} className="text-[var(--content-subtle)]" />
-                <span className="font-medium text-[var(--content-heading)]">{item.userName}</span>
-                {item.userEmail && <span className="text-[var(--content-subtle)]">· {item.userEmail}</span>}
-              </div>
-            )}
-          </div>
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-[2px] border border-[var(--border-strong)] text-[var(--gold-on-light)]">
+          <Package size={17} />
+        </span>
+        <div className="min-w-0">
+          <h2 className="archive-title is-plain truncate text-[17px]">{item.tierTitle}</h2>
+          <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">
+            Mã đơn{" "}
+            <span className="font-mono font-semibold text-[var(--text-secondary)]">#{item.orderCode}</span>
+          </p>
         </div>
+      </div>
 
-        <div className="flex items-end justify-between gap-4 border-t border-[rgba(27,38,50,0.08)] pt-4 sm:block sm:border-t-0 sm:pt-0 sm:text-right">
-          <div>
-            <p className="text-xl font-extrabold text-[var(--content-heading)]">
-              {formatCurrency(item.amount)}
-            </p>
-            <p className="mt-1 text-xs text-[var(--content-muted)]">
-              {pending ? "Đang chờ xác nhận" : "Gói Pro HistoryTalk"}
-            </p>
-          </div>
+      <div className="mt-3 grid gap-1.5 text-xs text-[var(--text-tertiary)] md:mt-0">
+        <div className="inline-flex items-center gap-2">
+          <CalendarDays size={14} className="shrink-0 text-[var(--text-muted)]" />
+          Tạo lúc {formatDate(item.createdAt)}
         </div>
+        <div className="inline-flex items-center gap-2">
+          <ShieldCheck
+            size={14}
+            className={`shrink-0 ${paid ? "text-[var(--status-success)]" : "text-[var(--text-muted)]"}`}
+          />
+          {paid ? `Thanh toán ${formatDate(item.paidAt)}` : `Hết hạn ${formatDate(item.expiredAt)}`}
+        </div>
+        {item.userName && (
+          <div className="inline-flex min-w-0 items-center gap-2">
+            <User size={14} className="shrink-0 text-[var(--text-muted)]" />
+            <span className="truncate font-medium text-[var(--text-primary)]">{item.userName}</span>
+            {item.userEmail && <span className="truncate text-[var(--text-muted)]">· {item.userEmail}</span>}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 md:mt-0">
+        <StatusBadge status={item.status} />
+      </div>
+
+      <div className="mt-3 flex items-end justify-between gap-4 border-t border-dashed border-[var(--border-default)] pt-3 md:mt-0 md:block md:border-t-0 md:pt-0 md:text-right">
+        <p className="font-display text-xl font-extrabold leading-none tabular-nums text-[var(--text-primary)]">
+          {formatCurrency(item.amount)}
+        </p>
+        <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
+          {pending ? "Đang chờ xác nhận" : "Gói Pro HistoryTalk"}
+        </p>
       </div>
     </article>
   );
@@ -163,22 +175,24 @@ function HistoryRow({ item, index }: { item: PaymentHistoryItem; index: number }
 
 function SkeletonRow() {
   return (
-    <div className="rounded-lg border border-[rgba(27,38,50,0.1)] bg-white/70 p-5 shadow-[0_12px_34px_rgba(27,38,50,0.05)]">
+    <div className="px-4 py-4 sm:px-5">
       <div className="flex animate-pulse gap-4">
-        <div className="size-10 rounded-lg bg-[rgba(27,38,50,0.08)]" />
+        <div className="size-9 rounded-[2px] bg-[var(--bg-deep)]" />
         <div className="flex-1 space-y-3">
-          <div className="h-4 w-1/3 rounded bg-[rgba(27,38,50,0.1)]" />
-          <div className="h-3 w-1/2 rounded bg-[rgba(27,38,50,0.08)]" />
-          <div className="h-3 w-2/3 rounded bg-[rgba(27,38,50,0.08)]" />
+          <div className="h-4 w-1/3 rounded-[2px] bg-[var(--bg-deep)]" />
+          <div className="h-3 w-1/2 rounded-[2px] bg-[var(--bg-elevated)]" />
         </div>
         <div className="hidden w-28 space-y-3 sm:block">
-          <div className="h-5 rounded bg-[rgba(27,38,50,0.1)]" />
-          <div className="h-3 rounded bg-[rgba(27,38,50,0.08)]" />
+          <div className="h-5 rounded-[2px] bg-[var(--bg-deep)]" />
+          <div className="h-3 rounded-[2px] bg-[var(--bg-elevated)]" />
         </div>
       </div>
     </div>
   );
 }
+
+const OUTLINE_BUTTON =
+  "rounded-[2px] border-[var(--text-primary)] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]";
 
 function AdminToolbar({
   search,
@@ -196,12 +210,10 @@ function AdminToolbar({
   total: number;
 }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="space-y-0.5">
-        <h2 className="text-base font-semibold text-[var(--content-heading)]">
-          Danh sách giao dịch
-        </h2>
-        <p className="text-sm text-[var(--content-muted)]">
+    <div className="flex flex-col gap-4 border-b border-[var(--text-primary)] pb-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="space-y-1">
+        <h2 className="archive-title text-xl">Danh sách giao dịch</h2>
+        <p className="text-sm text-[var(--text-tertiary)]">
           Hiển thị {count} giao dịch trên trang này · Tổng {total} giao dịch
           {isFetching && <span className="ml-2 text-xs opacity-60">Đang cập nhật...</span>}
         </p>
@@ -209,12 +221,12 @@ function AdminToolbar({
 
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
         <div className="relative w-full sm:w-[320px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
           <Input
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Tìm mã đơn, email, người dùng..."
-            className="h-10 rounded-xl border pl-10 bg-[rgba(27,38,50,0.05)] border-card-light-border text-content-heading"
+            className="h-10 rounded-[2px] border pl-10 bg-[var(--bg-main)] border-[var(--border-strong)] text-[var(--text-primary)] focus-visible:border-[var(--text-primary)]"
           />
         </div>
         <Button
@@ -222,7 +234,7 @@ function AdminToolbar({
           variant="outline"
           onClick={onRefresh}
           disabled={isFetching}
-          className="h-10 rounded-xl border-card-light-border"
+          className={`h-10 ${OUTLINE_BUTTON}`}
         >
           <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} />
           Làm mới
@@ -252,8 +264,8 @@ function PaginationBar({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between gap-4 border-t border-[rgba(27,38,50,0.08)] pt-4">
-      <p className="text-xs text-[var(--content-muted)]">
+    <div className="flex items-center justify-between gap-4 border-t border-[var(--border-default)] pt-4">
+      <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
         Trang {page + 1}/{totalPages}
       </p>
       <div className="flex items-center gap-2">
@@ -262,7 +274,7 @@ function PaginationBar({
           variant="outline"
           onClick={onPrevious}
           disabled={!hasPrevious || isFetching}
-          className="h-9 rounded-lg px-3 border-card-light-border"
+          className={`h-9 px-3 ${OUTLINE_BUTTON}`}
         >
           <ArrowLeft size={14} />
           Trước
@@ -272,7 +284,7 @@ function PaginationBar({
           variant="outline"
           onClick={onNext}
           disabled={!hasNext || isFetching}
-          className="h-9 rounded-lg px-3 border-card-light-border"
+          className={`h-9 px-3 ${OUTLINE_BUTTON}`}
         >
           Sau
           <ArrowRight size={14} />
@@ -388,10 +400,10 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
         header: "Đơn hàng",
         cell: ({ row }) => (
           <div className="min-w-[180px]">
-            <p className="font-mono text-sm font-bold text-[var(--content-heading)]">
+            <p className="font-mono text-sm font-bold text-[var(--text-primary)]">
               #{row.original.orderCode}
             </p>
-            <p className="mt-1 text-xs text-[var(--content-muted)]">{row.original.tierTitle}</p>
+            <p className="mt-1 text-xs text-[var(--text-tertiary)]">{row.original.tierTitle}</p>
           </div>
         ),
       },
@@ -400,10 +412,10 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
         header: "Khách hàng",
         cell: ({ row }) => (
           <div className="min-w-[220px]">
-            <p className="text-sm font-semibold text-[var(--content-heading)]">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
               {row.original.userName || "Chưa có tên"}
             </p>
-            <p className="mt-1 text-xs text-[var(--content-muted)]">
+            <p className="mt-1 text-xs text-[var(--text-tertiary)]">
               {row.original.userEmail || "Chưa có email"}
             </p>
           </div>
@@ -413,7 +425,7 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
         accessorKey: "amount",
         header: "Giá trị",
         cell: ({ row }) => (
-          <span className="font-semibold text-[var(--content-heading)]">
+          <span className="font-display text-base font-extrabold tabular-nums text-[var(--text-primary)]">
             {formatCurrency(row.original.amount)}
           </span>
         ),
@@ -427,7 +439,7 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
         accessorKey: "createdAt",
         header: "Ngày tạo",
         cell: ({ row }) => (
-          <span className="text-xs text-[var(--content-muted)]">
+          <span className="text-xs text-[var(--text-tertiary)]">
             {formatDate(row.original.createdAt)}
           </span>
         ),
@@ -436,7 +448,7 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
         accessorKey: "paidAt",
         header: "Thanh toán",
         cell: ({ row }) => (
-          <span className="text-xs text-[var(--content-muted)]">
+          <span className="text-xs text-[var(--text-tertiary)]">
             {row.original.paidAt ? formatDate(row.original.paidAt) : "Chưa thanh toán"}
           </span>
         ),
@@ -482,12 +494,12 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
           </StaffStatsGrid>
 
           {isError && (
-            <div className="rounded-xl border border-rose-500/25 bg-rose-500/10 p-4 text-sm font-medium text-rose-600 dark:text-rose-300">
+            <div className="rounded-[2px] border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-4 text-sm font-medium text-[var(--accent-danger)]">
               Không thể tải lịch sử giao dịch. Vui lòng thử lại sau.
             </div>
           )}
 
-          <section className="space-y-5 rounded-2xl border p-5 sm:p-6 bg-card-light-bg border-card-light-border">
+          <section className="space-y-5 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-5 sm:p-6">
             <AdminToolbar
               search={search}
               onSearchChange={setSearch}
@@ -523,78 +535,85 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
     );
   }
 
+  const customerStats = [
+    { label: "Tổng đơn", value: summary.total, icon: <Receipt size={14} />, tone: "text-[var(--text-muted)]" },
+    { label: "Đã thanh toán", value: summary.paid, icon: <CheckCircle2 size={14} />, tone: "text-[var(--status-success)]" },
+    { label: "Đang chờ", value: summary.pending, icon: <Hourglass size={14} />, tone: "text-[var(--status-warning)]" },
+  ];
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <section className="relative overflow-hidden rounded-lg border border-[rgba(27,38,50,0.1)] bg-white/65 p-5 shadow-[0_18px_48px_rgba(27,38,50,0.06)] sm:p-6 animate-in fade-in slide-in-from-bottom-2">
-        <div className="absolute right-0 top-0 h-28 w-56 rounded-bl-full bg-[rgba(255,146,21,0.1)] blur-2xl" />
-        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="grid size-11 place-items-center rounded-lg bg-[var(--abyssal-blue)] text-[var(--accent-gold-soft)] shadow-[0_12px_28px_rgba(27,38,50,0.22)]">
-              <Receipt size={22} />
-            </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--accent-gold)]">
-                Payment
-              </p>
-              <h1 className="mt-1 text-2xl font-extrabold text-[var(--content-heading)] sm:text-3xl">
-                Lịch sử đơn hàng
-              </h1>
-              <p className="mt-1 max-w-2xl text-sm text-[var(--content-muted)]">
-                Theo dõi các giao dịch Pro, trạng thái thanh toán và thời hạn xử lý của từng đơn.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[rgba(27,38,50,0.12)] bg-white px-4 text-sm font-bold text-[var(--content-heading)] shadow-sm transition hover:border-[rgba(255,146,21,0.36)] hover:text-[var(--accent-gold)] disabled:cursor-wait disabled:opacity-70"
-          >
-            <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} />
-            Làm mới
-          </button>
+      <header className="archive-heading flex-col items-start sm:flex-row sm:items-end animate-in fade-in slide-in-from-bottom-2">
+        <div className="min-w-0">
+          <h1 className="archive-title">Lịch sử đơn hàng</h1>
+          <p className="max-w-2xl">
+            Theo dõi các giao dịch Pro, trạng thái thanh toán và thời hạn xử lý của từng đơn.
+          </p>
         </div>
-      </section>
 
-      <StaffStatsGrid className="md:grid-cols-3 xl:grid-cols-3">
-        <StaffStatCard label="Tổng đơn" value={isLoading ? "--" : summary.total.toString()} icon={<Receipt size={20} />} />
-        <StaffStatCard label="Đã thanh toán" value={isLoading ? "--" : summary.paid.toString()} icon={<CheckCircle2 size={20} />} tone="green" />
-        <StaffStatCard label="Đang chờ" value={isLoading ? "--" : summary.pending.toString()} icon={<Hourglass size={20} />} tone="amber" />
-      </StaffStatsGrid>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="btn-line shrink-0 disabled:cursor-wait disabled:opacity-70"
+        >
+          <RefreshCw size={15} className={isFetching ? "animate-spin" : ""} />
+          Làm mới
+        </button>
+      </header>
+
+      <dl className="grid grid-cols-3 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
+        {customerStats.map((stat, i) => (
+          <div
+            key={stat.label}
+            className={`min-w-0 px-3 py-4 sm:px-5 ${i > 0 ? "border-l border-[var(--border-default)]" : ""}`}
+          >
+            <dt className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+              <span className={`shrink-0 ${stat.tone}`}>{stat.icon}</span>
+              <span className="truncate">{stat.label}</span>
+            </dt>
+            <dd className="mt-2 font-display text-3xl font-extrabold leading-none tabular-nums text-[var(--text-primary)]">
+              {isLoading ? "--" : stat.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
 
       {isError && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-center text-sm font-medium text-rose-700">
+        <div className="rounded-[2px] border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-4 text-center text-sm font-medium text-[var(--accent-danger)]">
           Không thể tải lịch sử đơn hàng. Vui lòng thử lại sau.
         </div>
       )}
 
-      <div className="space-y-3">
-        {isLoading
-          ? Array.from({ length: 4 }).map((_, index) => <SkeletonRow key={index} />)
-          : items.length > 0
-            ? items.map((item, index) => <HistoryRow key={item.orderId} item={item} index={index} />)
-            : !isLoading && (
-                <div className="rounded-lg border border-dashed border-[rgba(27,38,50,0.18)] bg-white/60 p-10 text-center">
-                  <div className="mx-auto grid size-14 place-items-center rounded-lg bg-[rgba(255,146,21,0.12)] text-[var(--accent-gold)]">
-                    <Receipt size={30} />
-                  </div>
-                  <h2 className="mt-4 text-lg font-bold text-[var(--content-heading)]">
-                    Chưa có giao dịch nào
-                  </h2>
-                  <p className="mt-1 text-sm text-[var(--content-muted)]">
-                    Chưa có giao dịch thanh toán nào trong hệ thống.
-                  </p>
-                </div>
-              )}
-      </div>
+      {isLoading || items.length > 0 ? (
+        <div className="overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
+          <LedgerHeader />
+          <div className="divide-y divide-[var(--border-default)]">
+            {isLoading
+              ? Array.from({ length: 4 }).map((_, index) => <SkeletonRow key={index} />)
+              : items.map((item, index) => <HistoryRow key={item.orderId} item={item} index={index} />)}
+          </div>
 
-      {items.length > 0 && (
-        <div className="rounded-lg border border-[rgba(27,38,50,0.1)] bg-[rgba(27,38,50,0.04)] px-4 py-3 text-sm text-[var(--content-muted)]">
-          Tổng đơn hàng: {summary.total} &nbsp;·&nbsp; Đã thanh toán:{" "}
-          <span className="font-bold text-[var(--content-heading)]">
-            {formatCurrency(summary.totalPaid)}
-          </span>
+          {items.length > 0 && (
+            <div className="flex flex-wrap items-baseline justify-between gap-3 border-t border-[var(--text-primary)] bg-[var(--bg-elevated)] px-4 py-3 sm:px-5">
+              <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                Tổng đơn hàng: {summary.total} &nbsp;·&nbsp; Đã thanh toán
+              </span>
+              <span className="font-display text-xl font-extrabold tabular-nums text-[var(--text-primary)]">
+                {formatCurrency(summary.totalPaid)}
+              </span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-surface)] p-10 text-center">
+          <div className="mx-auto grid size-14 place-items-center rounded-[2px] bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]">
+            <Receipt size={28} />
+          </div>
+          <h2 className="archive-title mt-4 text-xl">Chưa có giao dịch nào</h2>
+          <p className="mt-1 text-sm text-[var(--text-tertiary)]">
+            Chưa có giao dịch thanh toán nào trong hệ thống.
+          </p>
         </div>
       )}
     </div>

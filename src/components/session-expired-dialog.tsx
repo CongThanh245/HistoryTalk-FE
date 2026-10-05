@@ -26,10 +26,10 @@ export function SessionExpiredDialog() {
     <AlertDialog open={isExpired}>
       <AlertDialogContent
         onEscapeKeyDown={(e) => e.preventDefault()}
-        className="bg-bg-surface border-border-default"
+        className="bg-bg-surface border-[var(--text-primary)]"
       >
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-content-heading">
+          <AlertDialogTitle className="archive-title text-2xl">
             Phiên đăng nhập đã hết hạn
           </AlertDialogTitle>
           <AlertDialogDescription>

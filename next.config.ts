@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
     ],
   },
   reactCompiler: true,
+  experimental: {
+    // Dynamic pages await the backend on the server; keep their payload in the client router cache
+    // for a short while so going back to /events or /characters is instant instead of a full reload.
+    staleTimes: { dynamic: 30 },
+  },
   turbopack: {},
   webpack(config, { isServer }) {
     if (isServer) {

@@ -293,17 +293,17 @@ export function Carousel3DVertical({
               ref={expandedCardRef}
               onPointerMove={moveSpotlight}
               onPointerLeave={resetSpotlight}
-              className="pointer-events-auto relative h-[460px] w-[320px] max-w-[84vw] rounded-[30px] [transform-style:preserve-3d] sm:h-[520px] sm:w-[370px]"
+              className="pointer-events-auto relative h-[460px] w-[320px] max-w-[84vw] rounded-[2px] [transform-style:preserve-3d] sm:h-[520px] sm:w-[370px]"
             >
               <div
                 ref={expandedCardInnerRef}
-                className="relative h-full w-full overflow-hidden rounded-[30px] border border-[var(--accent-gold)]/55 bg-neutral-950 p-6 text-left text-white shadow-[0_34px_90px_rgba(0,0,0,0.58)] [backface-visibility:hidden] [transform-style:preserve-3d]"
+                className="relative h-full w-full overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-6 text-left text-[var(--text-primary)] shadow-[var(--shadow-soft)] [backface-visibility:hidden] [transform-style:preserve-3d]"
               >
               <button
                 type="button"
                 aria-label="Đóng"
                 onClick={closeCharacter}
-                className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/45 text-white/75 backdrop-blur-md transition-colors hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
+                className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-[2px] border border-[var(--text-primary)] bg-transparent text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -312,7 +312,7 @@ export function Carousel3DVertical({
                 className="pointer-events-none absolute left-0 top-0 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0 blur-2xl"
                 style={{
                   background:
-                    "radial-gradient(circle, rgba(255,255,255,0.46) 0%, rgba(235,196,91,0.22) 28%, transparent 68%)",
+                    "radial-gradient(circle, color-mix(in srgb, var(--accent-gold) 14%, transparent) 0%, color-mix(in srgb, var(--accent-gold) 6%, transparent) 28%, transparent 68%)",
                 }}
               />
 
@@ -331,10 +331,10 @@ export function Carousel3DVertical({
                   />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-xl font-bold">
+                  <span className="archive-title is-plain block text-[24px]">
                     {expandedCharacter.character.name}
                   </span>
-                  <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--accent-gold-soft)]">
+                  <span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--gold-on-light)]">
                     {expandedCharacter.character.era ||
                       expandedCharacter.character.role ||
                       expandedCharacter.character.title}
@@ -342,7 +342,7 @@ export function Carousel3DVertical({
                 </span>
               </span>
 
-              <span className="relative mt-7 block max-h-[270px] overflow-y-auto text-sm font-medium leading-7 text-neutral-200 [animation:character-detail-in_600ms_260ms_ease-out_both]">
+              <span className="relative mt-7 block max-h-[270px] overflow-y-auto border-t border-[var(--border-default)] pt-5 text-sm leading-7 text-[var(--text-secondary)] [animation:character-detail-in_600ms_260ms_ease-out_both]">
                 {expandedCharacter.character.description ||
                   expandedCharacter.character.title}
               </span>
@@ -352,7 +352,7 @@ export function Carousel3DVertical({
                 onClick={() =>
                   navigateWithAuth(`/chat/${expandedCharacter.character.id}`)
                 }
-                className="absolute inset-x-6 bottom-6 flex items-center justify-center gap-2 rounded-full bg-[var(--accent-gold)] py-3.5 text-sm font-extrabold text-[var(--text-inverse)] shadow-[0_14px_38px_var(--accent-gold-glow)] transition-[filter,transform] hover:brightness-110 active:scale-[0.98] [animation:character-detail-in_600ms_340ms_ease-out_both]"
+                className="absolute inset-x-6 bottom-6 flex items-center justify-center gap-2 rounded-[2px] border border-[var(--accent-gold)] bg-[var(--accent-gold)] py-3.5 text-sm font-bold uppercase tracking-[0.08em] text-white transition-[background-color,border-color,transform] hover:border-[var(--accent-bronze)] hover:bg-[var(--accent-bronze)] active:scale-[0.98] [animation:character-detail-in_600ms_340ms_ease-out_both]"
               >
                 <MessageCircle className="h-5 w-5 fill-current" />
                 Trò chuyện ngay
@@ -376,14 +376,12 @@ export function Carousel3DVertical({
           document.body,
         )}
       <div className="relative flex h-[260px] w-full items-center justify-center sm:h-[340px] md:h-[500px] lg:h-[650px] [perspective:1200px]">
-        <div className="pointer-events-none absolute h-[360px] w-[360px] rounded-full bg-[var(--accent-gold)]/8 blur-[70px] sm:h-[700px] sm:w-[700px]" />
-
         {isLoading ? (
           <div className="relative flex items-center justify-center">
             {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
               <div
                 key={index}
-                className="absolute h-[198px] w-[136px] animate-pulse overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-[var(--bg-surface)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
+                className="absolute h-[198px] w-[136px] animate-pulse overflow-hidden rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-deep)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
                 style={{
                   transform: `translateX(${(index - 2) * 120}px) scale(${index === 2 ? 1 : 0.7})`,
                   opacity: index === 2 ? 1 : 0.35,
@@ -420,18 +418,18 @@ export function Carousel3DVertical({
               type="button"
               aria-label="Chọn nhân vật trước"
               onClick={selectPrevious}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white shadow-lg backdrop-blur-md transition-colors hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
+              className="flex h-11 w-11 items-center justify-center rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <span className="hidden min-w-20 text-center text-xs font-bold tracking-[0.18em] text-white/70 sm:block">
+            <span className="hidden min-w-20 text-center font-display text-sm font-extrabold tracking-[0.1em] text-[var(--text-primary)] sm:block">
               {activeIndex + 1} / {cardCount}
             </span>
             <button
               type="button"
               aria-label="Chọn nhân vật tiếp theo"
               onClick={selectNext}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white shadow-lg backdrop-blur-md transition-colors hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
+              className="flex h-11 w-11 items-center justify-center rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
             >
               <ChevronRight className="h-5 w-5" />
             </button>

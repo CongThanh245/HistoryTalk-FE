@@ -107,15 +107,16 @@ export default function StaffCharactersPage() {
   return (
     <StaffShell
       title="Quản lý nhân vật"
+      label="Nội dung"
       description="Tạo, cập nhật và kiểm soát nhân vật lịch sử."
       icon={Users}
       accent="var(--accent-blue)"
     >
       <section
-        className="rounded-2xl border p-6 space-y-5"
+        className="rounded-[2px] border p-6 space-y-5"
         style={{
-          background: "var(--card-light-bg)",
-          borderColor: "var(--card-light-border)",
+          background: "var(--bg-surface)",
+          borderColor: "var(--text-primary)",
         }}
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

@@ -2,6 +2,7 @@
 
 // features/quiz/hooks.ts
 
+import { recordStudyActivity } from "@/features/gamification/study-check-in";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   quizService,
@@ -72,6 +73,7 @@ export function useSubmitQuiz() {
     mutationFn: (payload: SubmitQuizPayload) => quizService.submitQuiz(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.myResults });
+      recordStudyActivity(queryClient);
     },
   });
 }

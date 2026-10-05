@@ -3,13 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
-import {
-  ArrowRight,
-  ChevronRight,
-  MessageCircle,
-  Flame,
-  Timer,
-} from "lucide-react";
+import { ChevronRight, MessageCircle } from "lucide-react";
+import { ArchiveHeading } from "@/components/commons/archive-heading";
 import { useChatHistory } from "@/features/chat/hooks";
 import { isValidUrl } from "@/lib/utils/url";
 import { useAuthStore } from "@/store/auth.store";
@@ -17,15 +12,15 @@ import type { ChatHistorySession } from "@/services/chat.service";
 
 function SkeletonRow() {
   return (
-    <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border animate-pulse bg-card-light-bg border-card-light-border">
+    <div className="flex items-center justify-between px-2 py-3 border-b border-[var(--border-default)] animate-pulse">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-card-light-border" />
+        <div className="w-9 h-9 bg-card-light-border" />
         <div className="space-y-2">
           <div className="h-3 w-40 rounded bg-card-light-border" />
           <div className="h-2.5 w-28 rounded bg-card-light-border" />
         </div>
       </div>
-      <div className="h-5 w-14 rounded-full bg-card-light-border" />
+      <div className="h-5 w-14 bg-card-light-border" />
     </div>
   );
 }
@@ -53,16 +48,16 @@ function RecentChatRow({ session }: { session: ChatHistorySession }) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border transition-all duration-150 group bg-card-light-bg border-card-light-border"
+      className="flex items-center justify-between px-2 py-3 border-b border-[var(--border-default)] transition-colors duration-150 group hover:bg-[var(--status-neutral-bg)]"
     >
       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-        <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-card-light-border">
+        <div className="relative w-9 h-9 overflow-hidden shrink-0 border border-[var(--text-primary)]">
           <Image
             src={isValidUrl(session.characterImage) ? session.characterImage : "/card.jpg"}
             alt={session.characterName}
             fill
-            sizes="32px"
-            className="object-cover object-top"
+            sizes="36px"
+            className="archive-photo object-cover object-top"
           />
         </div>
         <div className="min-w-0">
@@ -75,15 +70,14 @@ function RecentChatRow({ session }: { session: ChatHistorySession }) {
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[rgba(160,120,40,0.10)] text-gold-on-light">
-          <Timer className="w-3 h-3" />
+        <span className="hidden sm:inline-flex text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
           {timeAgo(session.lastMessageAt)}
         </span>
-        <span className="inline-flex sm:hidden items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[rgba(160,120,40,0.10)] text-gold-on-light">
+        <span className="inline-flex sm:hidden items-center gap-1 text-[10px] font-bold text-content-muted">
           <MessageCircle className="w-3 h-3" />
           {session.messageCount}
         </span>
-        <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-gold-on-light" />
+        <ChevronRight className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity text-accent-gold" />
       </div>
     </Link>
   );
@@ -110,22 +104,13 @@ export function SuggestedQuiz() {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-3 md:mb-4">
-        <div className="flex items-center gap-2">
-          <Flame className="w-4 h-4 text-[var(--burning-flame)]" />
-          <h2 className="font-title text-lg md:text-xl font-bold text-content-heading">
-            Tiếp tục các cuộc trò chuyện gần đây
-          </h2>
-        </div>
-        <Link
-          href="/chat-history"
-          className="flex items-center gap-1 text-xs text-gold-on-light"
-        >
-          Xem thêm <ArrowRight className="w-3 h-3" />
-        </Link>
-      </div>
+      <ArchiveHeading
+        label="Trò chuyện"
+        title="Tiếp tục trò chuyện"
+        action={{ href: "/chat-history", text: "Xem thêm" }}
+      />
 
-      <div className="space-y-2">
+      <div>
         {isAuthenticated && isLoading
           ? Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} />)
           : recentSessions.map((session) => <RecentChatRow key={session.id} session={session} />)}

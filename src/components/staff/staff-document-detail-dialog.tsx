@@ -103,7 +103,7 @@ export function StaffDocumentDetailDialog({
                 />
               ) : (
                 <div
-                  className="whitespace-pre-wrap rounded-xl border border-card-light-border bg-card-light-bg p-5 text-sm leading-7 text-content-muted"
+                  className="whitespace-pre-wrap rounded-[2px] border border-card-light-border bg-card-light-bg p-5 text-sm leading-7 text-content-muted"
                 >
                   {content || emptyContentMessage}
                 </div>

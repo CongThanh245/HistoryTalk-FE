@@ -7,13 +7,13 @@ export function GreetingSection() {
 
   return (
     <div className="hidden md:flex flex-col items-end justify-center leading-tight mr-2">
-      <p className="text-sm font-semibold text-content-heading drop-shadow-sm">
-        <span className="bg-gradient-to-r from-amber-500 to-amber-700 dark:from-yellow-400 dark:to-amber-600 bg-clip-text text-transparent">
+      <p className="font-display text-[16px] font-bold leading-[1.1] text-content-heading">
+        <span className="text-[var(--gold-on-light)]">
           {userName}
         </span>
       </p>
       {/* Dòng này có thể ẩn đi trên mobile hoặc thu nhỏ tối đa */}
-      <p className="text-[10px] opacity-80 text-content-muted">
+      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
         Lịch sử hôm nay có gì?
       </p>
     </div>

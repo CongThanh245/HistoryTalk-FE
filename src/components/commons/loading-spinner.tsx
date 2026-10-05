@@ -64,39 +64,35 @@ export default function LoadingSpinner({
           `}
         </style>
 
-        {/* Vòng ngoài — gold (brand chính) */}
+        {/* Vòng ngoài — crimson (brand chính) */}
         <circle
-          className="ht__ring"
+          className="stroke-[var(--accent-gold)] ht__ring"
           cx={120} cy={120} r={105}
           fill="none" strokeWidth={20}
-          stroke="#c9a24d"
           strokeDasharray="0 660" strokeDashoffset={-330}
           strokeLinecap="round"
         />
-        {/* Vòng nhỏ giữa — blue (AI / tri thức) */}
+        {/* Vòng nhỏ giữa — ink */}
         <circle
-          className="ht__ring ht__ring--b"
+          className="stroke-[var(--text-primary)] ht__ring ht__ring--b"
           cx={120} cy={120} r={35}
           fill="none" strokeWidth={20}
-          stroke="#8fb3c8"
           strokeDasharray="0 220" strokeDashoffset={-110}
           strokeLinecap="round"
         />
-        {/* Vòng trái — bronze (cổ vật) */}
+        {/* Vòng trái — crimson đậm */}
         <circle
-          className="ht__ring ht__ring--c"
+          className="stroke-[var(--accent-bronze)] ht__ring ht__ring--c"
           cx={85} cy={120} r={70}
           fill="none" strokeWidth={20}
-          stroke="#c46a2f"
           strokeDasharray="0 440"
           strokeLinecap="round"
         />
-        {/* Vòng phải — gold soft (highlight) */}
+        {/* Vòng phải — ink nhạt */}
         <circle
-          className="ht__ring ht__ring--d"
+          className="stroke-[var(--text-tertiary)] ht__ring ht__ring--d"
           cx={155} cy={120} r={70}
           fill="none" strokeWidth={20}
-          stroke="#e2c77a"
           strokeDasharray="0 440"
           strokeLinecap="round"
         />

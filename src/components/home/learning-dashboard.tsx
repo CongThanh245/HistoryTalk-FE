@@ -1,8 +1,11 @@
 "use client";
 
-import { BarChart3, Coins, Sparkles, Trophy } from "lucide-react";
+import { Coins, Sparkles, Trophy } from "lucide-react";
+import { ArchiveHeading } from "@/components/commons/archive-heading";
 import { useMyDashboard } from "@/features/dashboard/hooks";
 import { useAuthStore } from "@/store/auth.store";
+import { useEntitlements } from "@/features/saas/entitlements";
+import { useTodayQuota } from "@/features/saas/quota-bonus";
 import { mapEraLabel } from "@/constants/eras";
 import type { DashboardTopCharacter } from "@/services/dashboard.service";
 
@@ -13,7 +16,7 @@ function DashboardSkeleton() {
       {[0, 1].map((i) => (
         <div
           key={i}
-          className="rounded-2xl border h-56 bg-card-light-bg border-card-light-border"
+          className="h-56 rounded-[2px] border bg-[var(--bg-surface)] border-[var(--text-primary)]"
         />
       ))}
     </div>
@@ -51,15 +54,15 @@ function ScoreMeter({ percentage, totalQuizzes }: { percentage: number; totalQui
           background: `conic-gradient(${color} ${percentage * 3.6}deg, var(--card-light-border) 0deg)`,
         }}
       >
-        <div className="absolute inset-2.25 rounded-full flex items-center justify-center bg-card-light-bg">
-          <span className="text-lg font-bold text-content-text">
+        <div className="absolute inset-2.25 rounded-full flex items-center justify-center bg-[var(--bg-surface)]">
+          <span className="font-display text-2xl font-extrabold text-content-text">
             {percentage}%
           </span>
         </div>
       </div>
       <div>
         <span
-          className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full"
+          className="inline-flex items-center text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-[2px]"
           style={{ background: `color-mix(in srgb, ${color} 15%, transparent)`, color }}
         >
           {label}
@@ -79,7 +82,7 @@ function SegmentBar({ segments }: { segments: { label: string; value: number; co
 
   return (
     <div>
-      <div className="flex h-2.5 w-full rounded-full overflow-hidden gap-0.5 bg-card-light-bg">
+      <div className="flex h-2.5 w-full overflow-hidden gap-0.5 bg-[var(--bg-surface)]">
         {shown.map((s) => (
           <div key={s.label} style={{ width: `${(s.value / total) * 100}%`, background: s.color }} />
         ))}
@@ -87,7 +90,7 @@ function SegmentBar({ segments }: { segments: { label: string; value: number; co
       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
         {shown.map((s) => (
           <div key={s.label} className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
+            <span className="w-2 h-2 shrink-0" style={{ background: s.color }} />
             <span className="text-[11px] text-content-muted">
               {s.label}{" "}
               <span className="font-semibold text-content-text">
@@ -110,8 +113,8 @@ function RankedBars({ items }: { items: DashboardTopCharacter[] }) {
       {items.map((character, i) => (
         <div key={character.characterId} className="flex items-center gap-2.5">
           <span
-            className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center text-micro font-bold ${
-              i === 0 ? "bg-gold-on-light text-[var(--text-inverse)]" : "bg-card-light-border text-content-muted"
+            className={`w-5 h-5 shrink-0 rounded-[2px] flex items-center justify-center text-micro font-bold ${
+              i === 0 ? "bg-[var(--text-primary)] text-[var(--text-inverse)]" : "bg-card-light-border text-content-muted"
             }`}
           >
             {i + 1}
@@ -119,9 +122,9 @@ function RankedBars({ items }: { items: DashboardTopCharacter[] }) {
           <span className="text-xs w-20 shrink-0 truncate text-content-text">
             {character.name}
           </span>
-          <div className="flex-1 h-2 rounded-full overflow-hidden bg-card-light-border">
+          <div className="flex-1 h-2 overflow-hidden bg-card-light-border">
             <div
-              className="h-full rounded-full bg-gold-on-light"
+              className="h-full bg-gold-on-light"
               style={{ width: `${(character.messageCount / max) * 100}%` }}
             />
           </div>
@@ -138,6 +141,10 @@ function RankedBars({ items }: { items: DashboardTopCharacter[] }) {
 export function LearningDashboard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { data, isLoading } = useMyDashboard();
+  // School accounts have no personal tier / wallet: show today's school quota instead.
+  const { mode } = useEntitlements();
+  const todayQuota = useTodayQuota();
+  const isSchoolAccount = mode === "B2B";
 
   if (!isAuthenticated) return null;
   if (isLoading || !data) return <DashboardSkeleton />;
@@ -155,20 +162,15 @@ export function LearningDashboard() {
 
   return (
     <section>
-      <div className="flex items-center gap-2 mb-3 md:mb-4">
-        <BarChart3 className="w-4 h-4 text-gold-on-light" />
-        <h2 className="font-title text-lg md:text-xl font-bold text-content-heading">
-          Hoạt động của bạn
-        </h2>
-      </div>
+      <ArchiveHeading label="Hoạt động" title="Hoạt động của bạn" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-8 items-start">
         {/* Learning card */}
         {hasLearningCard && (
-          <div className="rounded-2xl border p-4 md:p-5 bg-card-light-bg border-card-light-border">
-            <div className="flex items-center gap-2 mb-4">
+          <div className="p-4 md:p-5 rounded-[2px] border bg-[var(--bg-surface)] border-[var(--text-primary)]">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[var(--border-default)]">
               <Trophy className="w-4 h-4 text-gold-on-light" />
-              <h3 className="text-sm font-semibold text-content-heading">
+              <h3 className="font-display text-xl font-extrabold uppercase text-content-heading">
                 Kết quả học tập
               </h3>
             </div>
@@ -196,17 +198,17 @@ export function LearningDashboard() {
 
         {/* AI usage card */}
         <div
-          className={`rounded-2xl border p-4 md:p-5 bg-card-light-bg border-card-light-border ${!hasLearningCard ? "lg:col-span-2" : ""}`}
+          className={`p-4 md:p-5 rounded-[2px] border bg-[var(--bg-surface)] border-[var(--text-primary)] ${!hasLearningCard ? "lg:col-span-2" : ""}`}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[var(--border-default)]">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[var(--accent-teal)]" />
-              <h3 className="text-sm font-semibold text-content-heading">
+              <h3 className="font-display text-xl font-extrabold uppercase text-content-heading">
                 Token đã sử dụng
               </h3>
             </div>
-            {aiUsage.tier && (
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full uppercase bg-[rgba(160,120,40,0.10)] text-gold-on-light">
+            {!isSchoolAccount && aiUsage.tier && (
+              <span className="text-[11px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-[2px] uppercase bg-[var(--text-primary)] text-[var(--text-inverse)]">
                 {aiUsage.tier}
               </span>
             )}
@@ -215,11 +217,15 @@ export function LearningDashboard() {
           <div className="flex items-center gap-2 mb-4">
             <Coins className="w-5 h-5 shrink-0 text-gold-on-light" />
             <div>
-              <p className="text-base font-bold text-content-text">
-                {numberFormat(aiUsage.currentBalance)}
+              <p className="font-display text-3xl font-extrabold leading-none text-content-text">
+                {isSchoolAccount && todayQuota
+                  ? numberFormat(todayQuota.remaining)
+                  : numberFormat(aiUsage.currentBalance)}
               </p>
               <p className="text-[11px] text-content-muted">
-                Token còn lại
+                {isSchoolAccount && todayQuota
+                  ? `Hạn mức hôm nay còn lại / ${numberFormat(todayQuota.quota)} · reset 00:00`
+                  : "Token còn lại"}
               </p>
             </div>
           </div>

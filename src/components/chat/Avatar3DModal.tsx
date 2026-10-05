@@ -31,8 +31,8 @@ const FBXCharacterViewer = dynamic(
 
 function ModelLoadingPlaceholder() {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-[rgba(201,168,76,0.7)]">
-      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[rgba(201,168,76,0.3)] border-t-[#c9a84c]" />
+    <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-[color-mix(in_srgb,_var(--accent-gold-soft)_70%,_transparent)]">
+      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] border-t-[var(--accent-gold)]" />
       <p className="m-0 text-[13px] opacity-70">Đang tải mô hình 3D...</p>
     </div>
   );
@@ -87,10 +87,10 @@ function syncProfileUser(profile: UserProfile) {
 function ThinkingIndicator() {
   return (
     <div className="flex justify-start py-1">
-      <div className="flex items-center gap-1 rounded-[16px_16px_16px_4px] border border-[rgba(201,168,76,0.2)] bg-gradient-to-br from-[rgba(201,168,76,0.15)] to-[rgba(201,168,76,0.05)] px-4 py-2">
-        <span className="h-1.5 w-1.5 rounded-full bg-[#c9a84c] animate-[thinkingBounce_0.6s_ease-in-out_infinite]" />
-        <span className="h-1.5 w-1.5 rounded-full bg-[#c9a84c] animate-[thinkingBounce_0.6s_ease-in-out_infinite] [animation-delay:0.15s]" />
-        <span className="h-1.5 w-1.5 rounded-full bg-[#c9a84c] animate-[thinkingBounce_0.6s_ease-in-out_infinite] [animation-delay:0.3s]" />
+      <div className="flex items-center gap-1 rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] bg-gradient-to-br from-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] to-[color-mix(in_srgb,_var(--accent-gold)_5%,_transparent)] px-4 py-2">
+        <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-gold)] animate-[thinkingBounce_0.6s_ease-in-out_infinite]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-gold)] animate-[thinkingBounce_0.6s_ease-in-out_infinite] [animation-delay:0.15s]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-gold)] animate-[thinkingBounce_0.6s_ease-in-out_infinite] [animation-delay:0.3s]" />
       </div>
     </div>
   );
@@ -139,8 +139,8 @@ function TranscriptFeed({
               className={cn(
                 "max-w-[80%] px-3 py-1.5 text-[13px] leading-normal",
                 m.role === "user"
-                  ? "rounded-[16px_16px_4px_16px] bg-white/[0.08] text-white/75"
-                  : "rounded-[16px_16px_16px_4px] border border-[rgba(201,168,76,0.2)] bg-gradient-to-br from-[rgba(201,168,76,0.15)] to-[rgba(201,168,76,0.05)] text-white/90",
+                  ? "rounded-[2px] bg-white/[0.08] text-white/75"
+                  : "rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] bg-gradient-to-br from-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] to-[color-mix(in_srgb,_var(--accent-gold)_5%,_transparent)] text-white/90",
               )}
             >
               {part}
@@ -151,23 +151,23 @@ function TranscriptFeed({
               <button
                 type="button"
                 onClick={() => setExpandedQuotesFor(expandedQuotesFor === i ? null : i)}
-                className="flex items-center gap-1 self-start rounded-full border border-[rgba(201,168,76,0.35)] bg-[rgba(201,168,76,0.1)] px-2 py-0.5 text-[11px] text-[rgba(240,200,90,0.9)]"
+                className="flex items-center gap-1 self-start rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_35%,_transparent)] bg-[color-mix(in_srgb,_var(--accent-gold)_10%,_transparent)] px-2 py-0.5 text-[11px] text-[color-mix(in_srgb,_var(--accent-gold-soft)_90%,_transparent)]"
               >
                 {m.quotes.length} nguồn trích dẫn
                 {expandedQuotesFor === i ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
               </button>
 
               {expandedQuotesFor === i && (
-                <div className="flex flex-col gap-2 rounded-[10px] border border-white/10 bg-white/[0.04] px-2.5 py-2">
+                <div className="flex flex-col gap-2 rounded-[2px] border border-white/10 bg-white/[0.04] px-2.5 py-2">
                   {m.quotes.map((quote, qi) => (
                     <div key={qi} className="flex flex-col gap-1">
-                      <blockquote className="m-0 border-l-2 border-[rgba(201,168,76,0.4)] pl-2 text-[11.5px] leading-[1.5] text-white/65">
+                      <blockquote className="m-0 border-[color-mix(in_srgb,_var(--accent-gold)_40%,_transparent)] pl-2 text-[11.5px] leading-[1.5] text-white/65">
                         {quote}
                       </blockquote>
                       <button
                         type="button"
                         onClick={() => onOpenCitation?.(quote)}
-                        className="self-start border-none bg-none pl-2 text-[11px] font-semibold text-[#e0b84a]"
+                        className="self-start border-none bg-none pl-2 text-[11px] font-semibold text-[var(--accent-gold-soft)]"
                       >
                         Xem trong tài liệu
                       </button>
@@ -184,7 +184,7 @@ function TranscriptFeed({
       {/* Hiển thị text đang nói (real-time) với style italic */}
       {interimText && (
         <div className="flex justify-end">
-          <div className="max-w-[80%] rounded-[16px_16px_4px_16px] border border-dashed border-white/20 bg-white/[0.04] px-3 py-1.5 text-[13px] italic leading-normal text-white/50">
+          <div className="max-w-[80%] rounded-[2px] border border-dashed border-white/20 bg-white/[0.04] px-3 py-1.5 text-[13px] italic leading-normal text-white/50">
             {interimText}
             <span className="ml-1 inline-block h-3.5 w-0.5 animate-[pulse_0.8s_ease-in-out_infinite] bg-white/50" />
           </div>
@@ -300,11 +300,11 @@ function CallCitationPanel({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="flex h-full w-[min(380px,100%)] flex-col overflow-hidden border-l border-[rgba(201,168,76,0.25)] bg-[rgba(20,16,10,0.97)] shadow-[-8px_0_32px_rgba(0,0,0,0.4)]"
+        className="flex h-full w-[min(380px,100%)] flex-col overflow-hidden border-l border-[color-mix(in_srgb,_var(--accent-gold)_25%,_transparent)] bg-[color-mix(in_srgb,_var(--abyssal-blue)_97%,_transparent)] shadow-[-8px_0_32px_rgba(0,0,0,0.4)]"
       >
-        <div className="flex items-center justify-between gap-3 border-b border-[rgba(201,168,76,0.2)] px-[18px] py-4">
+        <div className="flex items-center justify-between gap-3 border-b border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] px-[18px] py-4">
           <div className="flex min-w-0 items-center gap-2">
-            <FileText size={18} className="shrink-0 text-[#e0b84a]" />
+            <FileText size={18} className="shrink-0 text-[var(--accent-gold-soft)]" />
             <h3 className="truncate text-[13px] font-bold text-white/90">
               {matchedDocument?.title || "Nguồn tham khảo"}
             </h3>
@@ -313,7 +313,7 @@ function CallCitationPanel({
             type="button"
             onClick={onClose}
             aria-label="Đóng"
-            className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.06] text-white/70"
+            className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-[2px] border border-white/[0.12] bg-white/[0.06] text-white/70"
           >
             <X size={13} strokeWidth={2.5} />
           </button>
@@ -333,7 +333,7 @@ function CallCitationPanel({
                     <mark
                       key={i}
                       ref={markRef}
-                      className="rounded-[3px] bg-[rgba(201,168,76,0.35)] px-0.5 text-inherit"
+                      className="rounded-[3px] bg-[color-mix(in_srgb,_var(--accent-gold)_35%,_transparent)] px-0.5 text-inherit"
                     >
                       {part.text}
                     </mark>
@@ -347,7 +347,7 @@ function CallCitationPanel({
                   href={matchedDocument.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#e0b84a]"
+                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--accent-gold-soft)]"
                 >
                   <ExternalLink size={14} />
                   Xem file gốc
@@ -356,11 +356,11 @@ function CallCitationPanel({
             </>
           ) : (
             <div className="flex flex-col gap-3">
-              <div className="flex items-start gap-2 rounded-lg border border-white/[0.12] p-3 text-[13px] text-white/60">
+              <div className="flex items-start gap-2 rounded-[2px] border border-white/[0.12] p-3 text-[13px] text-white/60">
                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
                 <span>Không tìm thấy vị trí chính xác trong tài liệu. Đây là nội dung AI đã trích dẫn:</span>
               </div>
-              <blockquote className="border-l-2 border-[rgba(201,168,76,0.4)] pl-3 text-[13px] leading-[1.7] text-white/70">
+              <blockquote className="border-[color-mix(in_srgb,_var(--accent-gold)_40%,_transparent)] pl-3 text-[13px] leading-[1.7] text-white/70">
                 {quote}
               </blockquote>
             </div>
@@ -708,8 +708,8 @@ export function Avatar3DModal({
           50%       { opacity: 0.4; }
         }
         @keyframes micPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(239,83,80,0.5); }
-          50%       { box-shadow: 0 0 0 16px rgba(239,83,80,0); }
+          0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-danger) 50%, transparent); }
+          50%       { box-shadow: 0 0 0 16px color-mix(in srgb, var(--accent-danger) 0%, transparent); }
         }
         @keyframes avatar2DRipple {
           0%   { transform: scale(0.85); opacity: 0.45; }
@@ -766,9 +766,9 @@ export function Avatar3DModal({
           min-height: 0;
           position: relative;
           overflow: hidden;
-          border-radius: 18px;
+          border-radius: 2px;
           background:
-            radial-gradient(ellipse at 50% 72%, rgba(201,168,76,0.14) 0%, rgba(201,168,76,0.04) 34%, transparent 62%),
+            radial-gradient(ellipse at 50% 72%, color-mix(in srgb, var(--accent-gold) 14%, transparent) 0%, color-mix(in srgb, var(--accent-gold) 4%, transparent) 34%, transparent 62%),
             linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0));
           animation: viewportConnect 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
@@ -781,7 +781,7 @@ export function Avatar3DModal({
           height: 58px;
           transform: translateX(-50%);
           border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(201,168,76,0.28) 0%, rgba(201,168,76,0.1) 42%, transparent 72%);
+          background: radial-gradient(ellipse, color-mix(in srgb, var(--accent-gold) 28%, transparent) 0%, color-mix(in srgb, var(--accent-gold) 10%, transparent) 42%, transparent 72%);
           filter: blur(8px);
           animation: callAura 3.4s ease-in-out infinite;
           pointer-events: none;
@@ -798,7 +798,7 @@ export function Avatar3DModal({
           pointer-events: none;
           z-index: 0;
           background:
-            radial-gradient(circle, rgba(240,200,90,0.2) 0%, rgba(116,222,177,0.11) 32%, transparent 68%);
+            radial-gradient(circle, color-mix(in srgb, var(--accent-gold-soft) 20%, transparent) 0%, color-mix(in srgb, var(--text-on-dark) 11%, transparent) 32%, transparent 68%);
           filter: blur(18px);
           opacity: 0;
           animation: connectCore 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
@@ -810,9 +810,9 @@ export function Avatar3DModal({
           pointer-events: none;
           overflow: hidden;
           background:
-            radial-gradient(circle at 50% 44%, rgba(116,222,177,0.14), transparent 28%),
-            radial-gradient(ellipse at 50% 82%, rgba(240,200,90,0.16), transparent 42%),
-            linear-gradient(180deg, rgba(9,18,15,0.32), rgba(8,7,4,0.08) 55%, rgba(9,7,3,0.38));
+            radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--text-on-dark) 14%, transparent), transparent 28%),
+            radial-gradient(ellipse at 50% 82%, color-mix(in srgb, var(--accent-gold-soft) 16%, transparent), transparent 42%),
+            linear-gradient(180deg, color-mix(in srgb, var(--abyssal-blue) 32%, transparent), color-mix(in srgb, var(--abyssal-blue) 8%, transparent) 55%, color-mix(in srgb, var(--abyssal-blue) 38%, transparent));
           opacity: 0.92;
           mix-blend-mode: screen;
         }
@@ -830,18 +830,18 @@ export function Avatar3DModal({
           transform-origin: center bottom;
           transform: perspective(760px) rotateX(62deg) scaleX(1.16);
           background-image:
-            linear-gradient(rgba(116,222,177,0.18) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(240,200,90,0.16) 1px, transparent 1px);
+            linear-gradient(color-mix(in srgb, var(--text-on-dark) 18%, transparent) 1px, transparent 1px),
+            linear-gradient(90deg, color-mix(in srgb, var(--accent-gold-soft) 16%, transparent) 1px, transparent 1px);
           background-size: 42px 42px;
-          filter: drop-shadow(0 0 10px rgba(116,222,177,0.16));
+          filter: drop-shadow(0 0 10px color-mix(in srgb, var(--text-on-dark) 16%, transparent));
           mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 76%, transparent 100%);
           animation: gridScanFloor 5.6s linear infinite;
         }
         .avatar-call-gridscan::after {
           inset: -4% -2% 38%;
           background-image:
-            linear-gradient(rgba(240,200,90,0.08) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(116,222,177,0.11) 1px, transparent 1px);
+            linear-gradient(color-mix(in srgb, var(--accent-gold-soft) 8%, transparent) 1px, transparent 1px),
+            linear-gradient(90deg, color-mix(in srgb, var(--text-on-dark) 11%, transparent) 1px, transparent 1px);
           background-size: 58px 58px;
           opacity: 0.55;
           transform: perspective(900px) rotateX(10deg) scale(1.08);
@@ -853,9 +853,9 @@ export function Avatar3DModal({
           inset: -10% -35%;
           pointer-events: none;
           background:
-            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.05) 42%, rgba(255,244,196,0.28) 49%, rgba(240,200,90,0.16) 53%, transparent 62%),
-            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.12) 48%, transparent 54%);
-          filter: blur(0.3px) drop-shadow(0 0 18px rgba(116,222,177,0.24));
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-on-dark) 5%, transparent) 42%, color-mix(in srgb, var(--text-on-dark) 28%, transparent) 49%, color-mix(in srgb, var(--accent-gold-soft) 16%, transparent) 53%, transparent 62%),
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-on-dark) 12%, transparent) 48%, transparent 54%);
+          filter: blur(0.3px) drop-shadow(0 0 18px color-mix(in srgb, var(--text-on-dark) 24%, transparent));
           opacity: 0.78;
           transform: skewX(-12deg);
           animation: gridScanBeam 1.55s cubic-bezier(0.45, 0, 0.2, 1) 0.25s both;
@@ -867,11 +867,11 @@ export function Avatar3DModal({
           right: 0;
           top: 52%;
           height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(255,244,196,0.52), transparent);
+          background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-on-dark) 52%, transparent), transparent);
           box-shadow:
-            0 36px 0 rgba(116,222,177,0.24),
-            0 92px 0 rgba(240,200,90,0.18),
-            0 -44px 0 rgba(116,222,177,0.18);
+            0 36px 0 color-mix(in srgb, var(--text-on-dark) 24%, transparent),
+            0 92px 0 color-mix(in srgb, var(--accent-gold-soft) 18%, transparent),
+            0 -44px 0 color-mix(in srgb, var(--text-on-dark) 18%, transparent);
         }
         .avatar-call-viewport--listening .avatar-call-gridscan,
         .avatar-call-viewport--speaking .avatar-call-gridscan {
@@ -887,8 +887,8 @@ export function Avatar3DModal({
           width: min(390px, 30vw);
           aspect-ratio: 1;
           border-radius: 50%;
-          border: 1px solid rgba(201,168,76,0.48);
-          box-shadow: inset 0 0 64px rgba(201,168,76,0.07), 0 0 36px rgba(201,168,76,0.14);
+          border: 1px solid color-mix(in srgb, var(--accent-gold) 48%, transparent);
+          box-shadow: inset 0 0 64px color-mix(in srgb, var(--accent-gold) 7%, transparent), 0 0 36px color-mix(in srgb, var(--accent-gold) 14%, transparent);
           animation: avatar3DRipple 2.8s ease-in-out infinite;
           animation-name: haloConnect, avatar3DRipple;
           animation-duration: 0.95s, 2.8s;
@@ -901,19 +901,19 @@ export function Avatar3DModal({
           transform-origin: center;
         }
         .avatar-call-ripple--listening {
-          border-color: rgba(116, 222, 177, 0.7);
+          border-color: color-mix(in srgb, var(--text-on-dark) 70%, transparent);
           box-shadow:
-            inset 0 0 86px rgba(116, 222, 177, 0.13),
-            0 0 56px rgba(116, 222, 177, 0.3),
-            0 0 112px rgba(201,168,76,0.15);
+            inset 0 0 86px color-mix(in srgb, var(--text-on-dark) 13%, transparent),
+            0 0 56px color-mix(in srgb, var(--text-on-dark) 30%, transparent),
+            0 0 112px color-mix(in srgb, var(--accent-gold) 15%, transparent);
           animation-duration: 0.8s, 1.65s;
         }
         .avatar-call-ripple--speaking {
-          border-color: rgba(240,200,90,0.72);
+          border-color: color-mix(in srgb, var(--accent-gold-soft) 72%, transparent);
           box-shadow:
-            inset 0 0 calc(72px + var(--voice-volume, 0) * 44px) rgba(240,200,90,0.11),
-            0 0 calc(48px + var(--voice-volume, 0) * 64px) rgba(240,200,90,calc(0.22 + var(--voice-volume, 0) * 0.28)),
-            0 0 calc(96px + var(--voice-volume, 0) * 90px) rgba(201,168,76,calc(0.12 + var(--voice-volume, 0) * 0.18));
+            inset 0 0 calc(72px + var(--voice-volume, 0) * 44px) color-mix(in srgb, var(--accent-gold-soft) 11%, transparent),
+            0 0 calc(48px + var(--voice-volume, 0) * 64px) color-mix(in srgb, var(--accent-gold-soft) calc((0.22 + var(--voice-volume, 0) * 0.28) * 100%), transparent),
+            0 0 calc(96px + var(--voice-volume, 0) * 90px) color-mix(in srgb, var(--accent-gold) calc((0.12 + var(--voice-volume, 0) * 0.18) * 100%), transparent);
         }
         .avatar-call-identity {
           position: absolute;
@@ -926,9 +926,11 @@ export function Avatar3DModal({
         }
         .avatar-call-identity h2 {
           margin: 0;
-          color: #f0c85a;
-          font-size: 26px;
-          font-weight: 800;
+          color: var(--accent-gold-soft);
+          font-family: var(--font-display);
+          font-size: 28px;
+          font-weight: 700;
+          line-height: 1.12;
           letter-spacing: 0;
           text-shadow: 0 8px 30px rgba(0,0,0,0.65);
         }
@@ -943,11 +945,11 @@ export function Avatar3DModal({
           align-self: stretch;
           padding: 18px;
           overflow-y: auto;
-          border: 1px solid rgba(201,168,76,0.16);
-          border-radius: 18px;
+          border: 1px solid color-mix(in srgb, var(--accent-gold) 16%, transparent);
+          border-radius: 2px;
           background:
             linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035)),
-            rgba(11,9,5,0.76);
+            color-mix(in srgb, var(--abyssal-blue) 76%, transparent);
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 24px 80px rgba(0,0,0,0.28);
           backdrop-filter: blur(18px);
           -webkit-backdrop-filter: blur(18px);
@@ -973,12 +975,12 @@ export function Avatar3DModal({
           z-index: 0;
           pointer-events: none;
           background:
-            linear-gradient(90deg, transparent 0%, rgba(255,244,196,0.34) 16%, rgba(240,200,90,0.5) 50%, rgba(255,244,196,0.26) 84%, transparent 100%) 0 16% / 100% 1px no-repeat,
-            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.28) 20%, rgba(116,222,177,0.46) 52%, rgba(116,222,177,0.18) 82%, transparent 100%) 0 25% / 100% 1px no-repeat,
-            linear-gradient(90deg, transparent 0%, rgba(240,200,90,0.22) 18%, rgba(255,244,196,0.42) 48%, rgba(240,200,90,0.2) 78%, transparent 100%) 0 37% / 100% 1px no-repeat,
-            linear-gradient(90deg, transparent 0%, rgba(201,168,76,0.24) 16%, rgba(240,200,90,0.4) 54%, rgba(201,168,76,0.2) 84%, transparent 100%) 0 52% / 100% 1px no-repeat,
-            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.18) 22%, rgba(116,222,177,0.34) 50%, rgba(116,222,177,0.14) 80%, transparent 100%) 0 66% / 100% 1px no-repeat,
-            linear-gradient(90deg, transparent 0%, rgba(255,244,196,0.18) 18%, rgba(240,200,90,0.3) 48%, rgba(255,244,196,0.12) 82%, transparent 100%) 0 80% / 100% 1px no-repeat;
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-on-dark) 34%, transparent) 16%, color-mix(in srgb, var(--accent-gold-soft) 50%, transparent) 50%, color-mix(in srgb, var(--text-on-dark) 26%, transparent) 84%, transparent 100%) 0 16% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-on-dark) 28%, transparent) 20%, color-mix(in srgb, var(--text-on-dark) 46%, transparent) 52%, color-mix(in srgb, var(--text-on-dark) 18%, transparent) 82%, transparent 100%) 0 25% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--accent-gold-soft) 22%, transparent) 18%, color-mix(in srgb, var(--text-on-dark) 42%, transparent) 48%, color-mix(in srgb, var(--accent-gold-soft) 20%, transparent) 78%, transparent 100%) 0 37% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--accent-gold) 24%, transparent) 16%, color-mix(in srgb, var(--accent-gold-soft) 40%, transparent) 54%, color-mix(in srgb, var(--accent-gold) 20%, transparent) 84%, transparent 100%) 0 52% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-on-dark) 18%, transparent) 22%, color-mix(in srgb, var(--text-on-dark) 34%, transparent) 50%, color-mix(in srgb, var(--text-on-dark) 14%, transparent) 80%, transparent 100%) 0 66% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-on-dark) 18%, transparent) 18%, color-mix(in srgb, var(--accent-gold-soft) 30%, transparent) 48%, color-mix(in srgb, var(--text-on-dark) 12%, transparent) 82%, transparent 100%) 0 80% / 100% 1px no-repeat;
           animation: thinkingTimeBands 2.2s ease-in-out infinite;
           opacity: 0.95;
           mix-blend-mode: screen;
@@ -994,10 +996,10 @@ export function Avatar3DModal({
               180deg,
               transparent 0,
               transparent 28px,
-              rgba(255,244,196,0.05) 29px,
+              color-mix(in srgb, var(--text-on-dark) 5%, transparent) 29px,
               transparent 31px,
               transparent 58px,
-              rgba(116,222,177,0.04) 59px,
+              color-mix(in srgb, var(--text-on-dark) 4%, transparent) 59px,
               transparent 61px
             );
           animation: thinkingScanField 3.4s linear infinite;
@@ -1010,10 +1012,10 @@ export function Avatar3DModal({
           z-index: 0;
           pointer-events: none;
           background:
-            linear-gradient(90deg, transparent, rgba(255,244,196,0.22), transparent) 0 20% / 100% 1px no-repeat,
-            linear-gradient(90deg, transparent, rgba(116,222,177,0.18), transparent) 0 33% / 100% 1px no-repeat,
-            linear-gradient(90deg, transparent, rgba(240,200,90,0.2), transparent) 0 48% / 100% 1px no-repeat,
-            linear-gradient(90deg, transparent, rgba(255,244,196,0.16), transparent) 0 73% / 100% 1px no-repeat;
+            linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-on-dark) 22%, transparent), transparent) 0 20% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-on-dark) 18%, transparent), transparent) 0 33% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent-gold-soft) 20%, transparent), transparent) 0 48% / 100% 1px no-repeat,
+            linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-on-dark) 16%, transparent), transparent) 0 73% / 100% 1px no-repeat;
           opacity: 0;
           mix-blend-mode: screen;
         }
@@ -1029,14 +1031,14 @@ export function Avatar3DModal({
           right: -8%;
           top: 12%;
           height: 1px;
-          background: linear-gradient(90deg, transparent 0%, rgba(255,244,196,0.62) 48%, transparent 100%);
+          background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-on-dark) 62%, transparent) 48%, transparent 100%);
           box-shadow:
-            0 44px 0 rgba(116,222,177,0.34),
-            0 92px 0 rgba(240,200,90,0.42),
-            0 148px 0 rgba(255,244,196,0.28),
-            0 206px 0 rgba(116,222,177,0.22),
-            0 278px 0 rgba(240,200,90,0.3);
-          filter: drop-shadow(0 0 8px rgba(240,200,90,0.42));
+            0 44px 0 color-mix(in srgb, var(--text-on-dark) 34%, transparent),
+            0 92px 0 color-mix(in srgb, var(--accent-gold-soft) 42%, transparent),
+            0 148px 0 color-mix(in srgb, var(--text-on-dark) 28%, transparent),
+            0 206px 0 color-mix(in srgb, var(--text-on-dark) 22%, transparent),
+            0 278px 0 color-mix(in srgb, var(--accent-gold-soft) 30%, transparent);
+          filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent-gold-soft) 42%, transparent));
           animation: timeTunnelLines 1.45s ease-in-out infinite;
         }
         .avatar-call-time-tunnel::after {
@@ -1046,10 +1048,10 @@ export function Avatar3DModal({
           transform: translateX(16%);
         }
         .avatar-call-viewport--listening {
-          box-shadow: inset 0 0 0 1px rgba(116,222,177,0.12), inset 0 0 80px rgba(116,222,177,0.04);
+          box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-on-dark) 12%, transparent), inset 0 0 80px color-mix(in srgb, var(--text-on-dark) 4%, transparent);
         }
         .avatar-call-viewport--speaking {
-          box-shadow: inset 0 0 0 1px rgba(240,200,90,0.12), inset 0 0 92px rgba(240,200,90,0.05);
+          box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-gold-soft) 12%, transparent), inset 0 0 92px color-mix(in srgb, var(--accent-gold-soft) 5%, transparent);
         }
         .avatar-call-model-layer {
           animation: none;
@@ -1060,12 +1062,12 @@ export function Avatar3DModal({
           z-index: 3;
           pointer-events: none;
           background:
-            linear-gradient(90deg, transparent 0%, rgba(240,200,90,0.22) 48%, transparent 100%) 8% 18% / 46% 2px no-repeat,
-            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.18) 48%, transparent 100%) 65% 27% / 34% 1px no-repeat,
-            linear-gradient(90deg, transparent 0%, rgba(255,244,196,0.22) 48%, transparent 100%) 22% 41% / 58% 3px no-repeat,
-            linear-gradient(90deg, transparent 0%, rgba(201,168,76,0.2) 48%, transparent 100%) 72% 56% / 42% 2px no-repeat,
-            linear-gradient(90deg, transparent 0%, rgba(116,222,177,0.14) 48%, transparent 100%) 14% 69% / 38% 1px no-repeat,
-            linear-gradient(90deg, transparent 0%, rgba(240,200,90,0.16) 48%, transparent 100%) 54% 82% / 50% 2px no-repeat;
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--accent-gold-soft) 22%, transparent) 48%, transparent 100%) 8% 18% / 46% 2px no-repeat,
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-on-dark) 18%, transparent) 48%, transparent 100%) 65% 27% / 34% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-on-dark) 22%, transparent) 48%, transparent 100%) 22% 41% / 58% 3px no-repeat,
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--accent-gold) 20%, transparent) 48%, transparent 100%) 72% 56% / 42% 2px no-repeat,
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-on-dark) 14%, transparent) 48%, transparent 100%) 14% 69% / 38% 1px no-repeat,
+            linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--accent-gold-soft) 16%, transparent) 48%, transparent 100%) 54% 82% / 50% 2px no-repeat;
           filter: blur(0.3px);
           opacity: 0;
           animation: timeStreaks 1.25s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
@@ -1079,12 +1081,12 @@ export function Avatar3DModal({
           right: -18%;
           height: 1px;
           pointer-events: none;
-          background: linear-gradient(90deg, transparent, rgba(255,244,196,0.24), transparent);
+          background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-on-dark) 24%, transparent), transparent);
           box-shadow:
-            0 28px 0 rgba(116,222,177,0.14),
-            0 74px 0 rgba(240,200,90,0.18),
-            0 134px 0 rgba(255,244,196,0.13),
-            0 188px 0 rgba(116,222,177,0.1);
+            0 28px 0 color-mix(in srgb, var(--text-on-dark) 14%, transparent),
+            0 74px 0 color-mix(in srgb, var(--accent-gold-soft) 18%, transparent),
+            0 134px 0 color-mix(in srgb, var(--text-on-dark) 13%, transparent),
+            0 188px 0 color-mix(in srgb, var(--text-on-dark) 10%, transparent);
           transform: translateX(-18%);
           opacity: 0;
           animation: timeStreakDrift 1.7s ease-out 0.18s both;
@@ -1110,7 +1112,7 @@ export function Avatar3DModal({
           position: absolute;
           inset: -8px;
           border-radius: 50%;
-          border: 1px solid rgba(201,168,76,0.24);
+          border: 1px solid color-mix(in srgb, var(--accent-gold) 24%, transparent);
           opacity: 0;
           pointer-events: none;
         }
@@ -1120,7 +1122,7 @@ export function Avatar3DModal({
         }
         .avatar-mic-wrap--recording::before,
         .avatar-mic-wrap--recording::after {
-          border-color: rgba(239,83,80,0.52);
+          border-color: color-mix(in srgb, var(--accent-danger) 52%, transparent);
           animation: micWave 1.45s ease-out infinite;
         }
         .avatar-mic-wrap--recording::after {
@@ -1128,7 +1130,7 @@ export function Avatar3DModal({
         }
         .avatar-mic-wrap--busy::before {
           opacity: 0.7;
-          border-color: rgba(79,195,247,0.4);
+          border-color: color-mix(in srgb, var(--accent-blue) 40%, transparent);
           animation: micBusySpin 1.2s linear infinite;
           border-top-color: transparent;
         }
@@ -1191,8 +1193,8 @@ export function Avatar3DModal({
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes micIdleGlow {
-          0%, 100% { transform: scale(0.94); opacity: 0.25; box-shadow: 0 0 18px rgba(201,168,76,0.1); }
-          50% { transform: scale(1.08); opacity: 0.65; box-shadow: 0 0 34px rgba(201,168,76,0.2); }
+          0%, 100% { transform: scale(0.94); opacity: 0.25; box-shadow: 0 0 18px color-mix(in srgb, var(--accent-gold) 10%, transparent); }
+          50% { transform: scale(1.08); opacity: 0.65; box-shadow: 0 0 34px color-mix(in srgb, var(--accent-gold) 20%, transparent); }
         }
         @keyframes micWave {
           0% { transform: scale(0.84); opacity: 0.72; }
@@ -1248,20 +1250,20 @@ export function Avatar3DModal({
           border-radius: 50%;
           display: grid;
           place-items: center;
-          border: 1px solid rgba(201,168,76,0.34);
-          background: radial-gradient(circle, rgba(201,168,76,0.22), rgba(201,168,76,0.06));
-          box-shadow: 0 0 38px rgba(201,168,76,0.16);
+          border: 1px solid color-mix(in srgb, var(--accent-gold) 34%, transparent);
+          background: radial-gradient(circle, color-mix(in srgb, var(--accent-gold) 22%, transparent), color-mix(in srgb, var(--accent-gold) 6%, transparent));
+          box-shadow: 0 0 38px color-mix(in srgb, var(--accent-gold) 16%, transparent);
         }
         .avatar-call-empty__orb span {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #c9a84c;
+          background: var(--accent-gold);
           animation: pulse 1.4s ease-in-out infinite;
         }
         .avatar-call-empty__eyebrow {
           margin: 0 0 8px;
-          color: #c9a84c;
+          color: var(--accent-gold-soft);
           font-size: 12px;
           font-weight: 700;
           text-transform: uppercase;
@@ -1270,7 +1272,9 @@ export function Avatar3DModal({
         .avatar-call-empty h3 {
           margin: 0;
           color: rgba(255,255,255,0.92);
-          font-size: 22px;
+          font-family: var(--font-display);
+          font-size: 24px;
+          font-weight: 700;
           line-height: 1.2;
           letter-spacing: 0;
         }
@@ -1286,9 +1290,9 @@ export function Avatar3DModal({
         }
         .avatar-call-prompts span {
           padding: 7px 10px;
-          border-radius: 999px;
-          border: 1px solid rgba(201,168,76,0.18);
-          background: rgba(201,168,76,0.08);
+          border-radius: 2px;
+          border: 1px solid color-mix(in srgb, var(--accent-gold) 18%, transparent);
+          background: color-mix(in srgb, var(--accent-gold) 8%, transparent);
           color: rgba(255,255,255,0.72);
           font-size: 12px;
           white-space: nowrap;
@@ -1308,9 +1312,9 @@ export function Avatar3DModal({
           align-self: flex-start;
           margin: 10px 0 0;
           padding: 14px 20px;
-          border-radius: 16px;
-          border: 1px solid rgba(201,168,76,0.3);
-          background: linear-gradient(180deg, rgba(201,168,76,0.1), rgba(20,16,10,0.85));
+          border-radius: 2px;
+          border: 1px solid color-mix(in srgb, var(--accent-gold) 30%, transparent);
+          background: linear-gradient(180deg, color-mix(in srgb, var(--accent-gold) 10%, transparent), color-mix(in srgb, var(--abyssal-blue) 85%, transparent));
           box-shadow: 0 16px 40px rgba(0,0,0,0.3);
           animation: messageIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
         }
@@ -1334,7 +1338,7 @@ export function Avatar3DModal({
         .avatar-confirm-bar__btn {
           flex: 1;
           padding: 9px 0;
-          border-radius: 999px;
+          border-radius: 2px;
           font-size: 13px;
           font-weight: 700;
           cursor: pointer;
@@ -1342,7 +1346,6 @@ export function Avatar3DModal({
         }
         .avatar-confirm-bar__btn:hover {
           filter: brightness(1.12);
-          transform: translateY(-1px);
         }
         .avatar-confirm-bar__btn--retry {
           border: 1px solid rgba(255,255,255,0.18);
@@ -1350,9 +1353,9 @@ export function Avatar3DModal({
           color: rgba(255,255,255,0.82);
         }
         .avatar-confirm-bar__btn--send {
-          border: 1px solid rgba(201,168,76,0.5);
-          background: linear-gradient(135deg, #e0b84a, #c9a84c);
-          color: #1a1508;
+          border: 1px solid var(--accent-gold);
+          background: var(--accent-gold);
+          color: #FFFFFF;
         }
         @media (max-width: 900px) {
           .avatar-confirm-bar {
@@ -1384,7 +1387,7 @@ export function Avatar3DModal({
             max-height: 140px;
             padding: 12px;
             border-left: 0;
-            border-radius: 14px;
+            border-radius: 2px;
           }
           .avatar-call-transcript > div {
             height: auto;
@@ -1414,21 +1417,21 @@ export function Avatar3DModal({
       {/* Backdrop */}
       <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/90">
         {/* Card */}
-        <div className="relative flex h-screen w-screen flex-col items-center overflow-hidden bg-gradient-to-b from-[rgba(20,16,10,1)] to-[rgba(10,8,4,1)] animate-[fadeSlideUp_0.4s_ease_both]">
+        <div className="relative flex h-screen w-screen flex-col items-center overflow-hidden bg-gradient-to-b from-[var(--abyssal-blue)] to-[var(--abyssal-blue)] animate-[fadeSlideUp_0.4s_ease_both]">
 
           {/* ── Header ── */}
-          <div className="flex w-full shrink-0 items-center justify-between border-b border-[rgba(201,168,76,0.12)] px-5 py-3.5">
+          <div className="flex w-full shrink-0 items-center justify-between border-b border-[color-mix(in_srgb,_var(--accent-gold)_12%,_transparent)] px-5 py-3.5">
             {/* Status badge */}
-            <div className="flex items-center gap-1.5 rounded-[20px] border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.08)] px-3 py-1 text-xs text-[#c9a84c]">
+            <div className="flex items-center gap-1.5 rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] bg-[color-mix(in_srgb,_var(--accent-gold)_8%,_transparent)] px-3 py-1 text-xs text-[var(--accent-gold-soft)]">
               {(isRecording || isBusy || isListeningStatus) && (
                 <span
                   className={cn(
                     "h-1.75 w-1.75 animate-[pulse_1s_ease-in-out_infinite] rounded-full",
                     isRecording
-                      ? "bg-[#ef5350]"
+                      ? "bg-[var(--accent-danger)]"
                       : isBusy && !status.includes("speaking")
-                        ? "bg-[#4fc3f7]"
-                        : "bg-[#c9a84c]",
+                        ? "bg-[var(--accent-blue)]"
+                        : "bg-[var(--accent-gold)]",
                   )}
                 />
               )}
@@ -1442,7 +1445,7 @@ export function Avatar3DModal({
             <button
               type="button"
               onClick={handleClose}
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-none bg-white/[0.06] text-white/50 transition-[background,color] duration-200 hover:bg-white/[0.12] hover:text-white"
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[2px] border-none bg-white/[0.06] text-white/50 transition-[background,color] duration-200 hover:bg-white/[0.12] hover:text-white"
               aria-label="Đóng"
             >
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
@@ -1478,7 +1481,7 @@ export function Avatar3DModal({
                     {[0, 1, 2].map((i) => (
                       <span
                         key={i}
-                        className="absolute inset-0 rounded-full border border-[rgba(201,168,76,0.45)] opacity-0"
+                        className="absolute inset-0 rounded-full border border-[color-mix(in_srgb,_var(--accent-gold)_45%,_transparent)] opacity-0"
                         style={{
                           animation: "avatar2DRipple 2.4s ease-out infinite",
                           animationDelay: `${i * 0.45}s`,
@@ -1488,10 +1491,10 @@ export function Avatar3DModal({
                   </>
                 )}
                 <div className={cn(
-                  "relative h-[78%] w-[78%] overflow-hidden rounded-full bg-gradient-to-br from-[rgba(201,168,76,0.16)] to-white/[0.04] transition-[border-color,box-shadow] duration-[250ms]",
+                  "relative h-[78%] w-[78%] overflow-hidden rounded-full bg-gradient-to-br from-[color-mix(in_srgb,_var(--accent-gold)_16%,_transparent)] to-white/[0.04] transition-[border-color,box-shadow] duration-[250ms]",
                   isSpeaking
-                    ? "border-[3px] border-[rgba(201,168,76,0.85)] shadow-[0_0_48px_rgba(201,168,76,0.28)]"
-                    : "border-2 border-[rgba(201,168,76,0.35)] shadow-[0_20px_70px_rgba(0,0,0,0.35)]",
+                    ? "border-[3px] border-[color-mix(in_srgb,_var(--accent-gold)_85%,_transparent)] shadow-[0_0_48px_color-mix(in_srgb,_var(--accent-gold)_28%,_transparent)]"
+                    : "border-2 border-[color-mix(in_srgb,_var(--accent-gold)_35%,_transparent)] shadow-[0_20px_70px_rgba(0,0,0,0.35)]",
                 )}>
                   {character.imageUrl ? (
                     <img
@@ -1500,7 +1503,7 @@ export function Avatar3DModal({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[72px] font-bold text-[#c9a84c]">
+                    <div className="flex h-full w-full items-center justify-center text-[72px] font-bold text-[var(--accent-gold-soft)]">
                       {character.name[0]}
                     </div>
                   )}
@@ -1576,8 +1579,8 @@ export function Avatar3DModal({
                   "avatar-mic-button flex h-18 w-18 select-none touch-none items-center justify-center rounded-full border-2 bg-gradient-to-br transition-[background,border] duration-200 disabled:cursor-not-allowed disabled:opacity-40",
                   !micDisabled && "cursor-pointer",
                   isRecording
-                    ? "animate-[micPulse_1s_ease-in-out_infinite] border-[#ef5350] from-[#c62828] to-[#ef5350] shadow-[0_0_0_0_rgba(239,83,80,0.5)]"
-                    : "border-[rgba(201,168,76,0.4)] from-[rgba(201,168,76,0.3)] to-[rgba(201,168,76,0.15)] shadow-[0_4px_24px_rgba(201,168,76,0.2)]",
+                    ? "animate-[micPulse_1s_ease-in-out_infinite] border-[var(--accent-danger)] from-[var(--accent-danger)] to-[var(--accent-danger)] shadow-[0_0_0_0_color-mix(in_srgb,_var(--accent-danger)_50%,_transparent)]"
+                    : "border-[color-mix(in_srgb,_var(--accent-gold)_40%,_transparent)] from-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] to-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] shadow-[0_4px_24px_color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)]",
                 )}
                 onClick={handleMicClick}
                 disabled={micDisabled}
@@ -1597,8 +1600,8 @@ export function Avatar3DModal({
                 }
               >
                 {/* Mic icon */}
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                  stroke={isRecording ? "#fff" : "#c9a84c"}
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className={isRecording ? "text-white" : "text-[var(--accent-gold-soft)]"}
+                  stroke="currentColor"
                   strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -1616,7 +1619,7 @@ export function Avatar3DModal({
                     playUiSound("micOff", 0.42);
                     handleCancelRecording();
                   }}
-                  className="absolute -top-1 -right-1 z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-red-500/50 bg-[#ef5350] text-white shadow-md transition-all hover:scale-110 hover:bg-[#d32f2f]"
+                  className="absolute -top-1 -right-1 z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-white/40 bg-[var(--accent-danger)] text-white transition-all hover:scale-110 hover:brightness-110"
                   title="Hủy ghi âm"
                   aria-label="Hủy ghi âm"
                 >
@@ -1628,7 +1631,7 @@ export function Avatar3DModal({
             {/* End / Close */}
             <button
               type="button"
-              className="avatar-hangup-button flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-none bg-gradient-to-br from-[#c0392b] to-[#e74c3c] shadow-[0_4px_24px_rgba(231,76,60,0.45)] transition-[filter] duration-150 hover:brightness-[1.15]"
+              className="avatar-hangup-button flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-none bg-gradient-to-br from-[var(--accent-danger)] to-[var(--accent-danger)] shadow-[0_4px_24px_color-mix(in_srgb,_var(--accent-danger)_45%,_transparent)] transition-[filter] duration-150 hover:brightness-[1.15]"
               onClick={handleClose}
               aria-label="Kết thúc cuộc gọi"
               title="Kết thúc"

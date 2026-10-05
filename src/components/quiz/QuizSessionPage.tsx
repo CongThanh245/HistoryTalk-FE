@@ -188,7 +188,7 @@ export function QuizSessionPage({
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
           {hasTimeLimit && (
-            <div className="rounded-xl border px-4 py-3 text-sm bg-accent-gold/[0.08] border-accent-gold/24 text-content-muted">
+            <div className="rounded-[2px] border border-[var(--accent-gold)] px-4 py-3 text-sm bg-[var(--accent-gold-active-bg)] text-content-text">
               Hết thời gian hệ thống sẽ tự động nộp bài với các câu đã chọn.
             </div>
           )}
@@ -214,22 +214,22 @@ export function QuizSessionPage({
 
           <div
             className={cn(
-              "rounded-xl border p-5 text-center",
+              "rounded-[2px] border p-5 text-center",
               allAnswered
-                ? "bg-emerald-500/[0.06] border-emerald-500/25"
-                : "bg-card-light-bg border-card-light-border",
+                ? "bg-[var(--status-success-bg)] border-[var(--status-success)]"
+                : "bg-[var(--bg-surface)] border-[var(--text-primary)]",
             )}
           >
             {allAnswered ? (
               <div className="flex items-center justify-center gap-2 mb-3">
-                <CheckCircle2 size={18} color="#10b981" />
-                <p className="text-sm font-semibold text-[#10b981]">
+                <CheckCircle2 size={18} className="text-[var(--status-success)]" />
+                <p className="text-sm font-semibold text-[var(--status-success)]">
                   Bạn đã trả lời tất cả {questions.length} câu!
                 </p>
               </div>
             ) : (
               <div className="mb-3">
-                <p className="text-sm text-content-muted">
+                <p className="archive-title text-[20px]">
                   Còn {questions.length - answeredCount} câu chưa trả lời
                 </p>
                 <p className="text-xs mt-1 text-content-subtle">
@@ -242,10 +242,8 @@ export function QuizSessionPage({
               onClick={handleSubmit}
               disabled={isSubmitted}
               className={cn(
-                "mx-auto h-11 rounded-lg px-8 text-sm font-bold transition-colors duration-200 disabled:opacity-60 text-[var(--text-on-dark)]",
-                allAnswered
-                  ? "bg-[#047857] shadow-[0_8px_18px_rgba(4,120,87,0.18)]"
-                  : "bg-[var(--abyssal-blue)] shadow-[0_8px_18px_rgba(27,38,50,0.18)]",
+                "mx-auto h-11 px-8 disabled:opacity-60",
+                allAnswered ? "btn-crimson" : "btn-ink",
               )}
             >
               Nộp bài

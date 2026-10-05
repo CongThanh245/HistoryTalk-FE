@@ -29,7 +29,7 @@ export default function Header() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full border-b border-header-border backdrop-blur-md bg-header-bg/80 transition-[height] duration-200 ease-in-out",
+        "sticky top-0 z-50 w-full border-b border-[var(--text-primary)] backdrop-blur-md bg-header-bg transition-[height] duration-200 ease-in-out",
         isCompact ? "h-12" : "h-16",
       )}
     >
@@ -38,7 +38,7 @@ export default function Header() {
         <button
           onClick={toggleMobileSidebar}
           aria-label="Open menu"
-          className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg border transition-colors shrink-0 text-header-text-muted border-header-border bg-transparent"
+          className="md:hidden flex items-center justify-center w-9 h-9 rounded-[2px] border transition-colors shrink-0 text-header-text-muted border-[var(--border-strong)] bg-transparent hover:border-[var(--text-primary)] hover:text-header-text"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor">
             <path d="M2 4.5h14M2 9h14M2 13.5h14" strokeWidth="2" strokeLinecap="round" />

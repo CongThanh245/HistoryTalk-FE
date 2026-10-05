@@ -47,10 +47,10 @@ export function CustomPagination({
   };
 
   // Style chung cho các nút
-  const commonClasses = "bg-card-bg border border-card-border text-content-text";
+  const commonClasses = "bg-card-bg border border-[var(--border-strong)] text-content-text hover:border-[var(--text-primary)]";
 
   // Style riêng cho nút đang active
-  const activeClasses = "bg-[var(--burning-flame)] text-bg-deep shadow-[0_2px_8px_var(--accent-gold-glow)] border-none";
+  const activeClasses = "bg-[var(--text-primary)] text-[var(--text-inverse)] border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]";
 
   return (
     <Pagination className="pt-4">
@@ -65,7 +65,7 @@ export function CustomPagination({
             }}
             aria-disabled={page === 1}
             className={cn(
-              "w-auto h-8 p-0 justify-center transition-all hover:opacity-80",
+              "w-auto h-8 p-0 justify-center rounded-[2px] transition-colors",
               page === 1 ? "opacity-30 cursor-not-allowed" : "cursor-pointer",
               commonClasses,
             )}
@@ -88,7 +88,7 @@ export function CustomPagination({
                   onChange(p as number);
                 }}
                 className={cn(
-                  "w-8 h-8 p-0 flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer",
+                  "w-8 h-8 p-0 flex items-center justify-center rounded-[2px] font-display text-base font-bold transition-colors duration-150 cursor-pointer",
                   page === p ? activeClasses : commonClasses,
                 )}
               >
@@ -108,7 +108,7 @@ export function CustomPagination({
             }}
             aria-disabled={page === totalPages}
             className={cn(
-              "w-auto h-8 p-0 justify-center transition-all hover:opacity-80",
+              "w-auto h-8 p-0 justify-center rounded-[2px] transition-colors",
               page === totalPages
                 ? "opacity-30 cursor-not-allowed"
                 : "cursor-pointer",

@@ -49,9 +49,9 @@ export function Card({
   return (
     <div
       className={cn(
-        "group relative rounded-xl border overflow-hidden transition-all duration-200 cursor-pointer",
-        "hover:shadow-[0_4px_24px_rgba(0,0,0,0.10)] hover:-translate-y-0.5",
-        "bg-card-bg border-card-border",
+        "group relative rounded-[2px] border overflow-hidden transition-colors duration-200 cursor-pointer",
+        "hover:border-[var(--text-primary)]",
+        "bg-card-bg border-[var(--border-strong)]",
         isHorizontal ? "flex flex-col md:flex-row" : "flex flex-col",
         className,
       )}
@@ -60,8 +60,8 @@ export function Card({
       {/* Hover border glow */}
       {accentColor && (
         <div
-          className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
-          style={{ boxShadow: `inset 0 0 0 1px ${accentColor}40`, zIndex: 20 }}
+          className="absolute inset-0 rounded-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+          style={{ boxShadow: `inset 0 0 0 1px ${accentColor}`, zIndex: 20 }}
         />
       )}
 
@@ -93,7 +93,7 @@ export function Card({
             src={resolvedImageSrc}
             alt={imageAlt}
             fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="archive-photo object-cover transition-transform duration-500 group-hover:scale-105"
             sizes={imageSizes}
             onError={() => setImageBroken(true)}
           />
@@ -111,7 +111,7 @@ export function Card({
         {badge && (
           <div className="absolute top-2.5 right-2.5 z-20">
             <span
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm"
+              className="text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-[2px]"
               style={{ background: badge.bg, color: badge.color }}
             >
               {badge.label}
@@ -170,7 +170,7 @@ export function DarkCard({
     <div
       className={cn(
         // "relative" bắt buộc phải có để overlay absolute bám đúng chỗ
-        "group relative w-full h-full rounded-[var(--radius-lg)] overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col",
+        "group relative w-full h-full rounded-[2px] overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col",
         "bg-bg-surface border-border-default",
         className,
       )}
@@ -184,7 +184,7 @@ export function DarkCard({
       */}
       <div
         className={cn(
-          "absolute inset-0 pointer-events-none opacity-0 transition-all duration-300 z-50 rounded-[var(--radius-lg)] shadow-[inset_0_0_0_1.5px_var(--accent-gold),var(--shadow-gold)]",
+          "absolute inset-0 pointer-events-none opacity-0 transition-all duration-300 z-50 rounded-[2px] shadow-[inset_0_0_0_1px_var(--accent-gold)]",
           hoverEffects && "group-hover:opacity-100",
         )}
       />
@@ -199,7 +199,7 @@ export function DarkCard({
           alt={imageAlt}
           fill
           className={cn(
-            "object-cover transition-transform duration-700",
+            "archive-photo object-cover transition-transform duration-700",
             hoverEffects && "group-hover:scale-105",
           )}
           sizes={imageSizes}
@@ -213,10 +213,10 @@ export function DarkCard({
         />
         {badge && (
           <div
-            className="absolute right-2 top-2 z-10 rounded-md border px-1.5 py-0.5 sm:right-3 sm:top-3 sm:px-2 sm:py-1 bg-[rgba(14,26,43,0.8)] backdrop-blur-[4px] border-border-default"
+            className="absolute right-2 top-2 z-10 rounded-[2px] border px-1.5 py-0.5 sm:right-3 sm:top-3 sm:px-2 sm:py-1 bg-text-primary border-text-primary"
           >
             <span
-              className="text-[8px] font-bold uppercase tracking-wider sm:text-[10px] text-accent-gold"
+              className="text-[8px] font-bold uppercase tracking-[0.1em] sm:text-[10px] text-accent-gold-soft"
             >
               {badge.label}
             </span>

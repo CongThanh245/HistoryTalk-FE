@@ -48,6 +48,6 @@ export function useEventCharacters(contextId: string | null) {
   return useQuery({
     queryKey: queryKeys.characters.byContext(contextId ?? ""),
     queryFn: () => characterService.getByContext(contextId!),
-    enabled: !!contextId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(contextId),
+    enabled: !!contextId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(contextId),
   });
 }

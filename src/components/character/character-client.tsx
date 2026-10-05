@@ -18,7 +18,7 @@ import { CustomPagination } from "../commons/pagination";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 import { parseEra, parsePage } from "@/lib/catalog-url-state";
 
-const PAGE_LIMIT = 10;
+const PAGE_LIMIT = 12;
 
 // ── Era map: UI lowercase → Backend uppercase ─────────────
 
@@ -88,7 +88,7 @@ export function CharactersClient() {
       {authRequiredDialog}
       <div className="space-y-6 lg:space-y-8">
       {/* Filters */}
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-w-0 flex-col gap-3 pb-5 border-b border-[var(--border-strong)]">
         <div className="-mx-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
           <div className="min-w-max sm:min-w-0">
             <EraFilter active={era} onChange={handleEraChange} />
@@ -103,16 +103,19 @@ export function CharactersClient() {
 
       {/* Result count */}
       {!isLoading && data && (
-        <p className="text-xs text-content-subtle">
-          {data.totalElements} nhân vật
-          {search && ` · kết quả cho "${search}"`}
+        <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-content-muted">
+          <span className="font-display text-base font-extrabold text-[var(--text-primary)] mr-1.5">
+            {data.totalElements}
+          </span>
+          nhân vật
+          {search && <span className="normal-case tracking-normal font-medium">{` · kết quả cho "${search}"`}</span>}
         </p>
       )}
 
       {/* Error */}
       {isError && (
-        <div className="py-10 text-center">
-          <p className="text-sm font-medium text-content-heading">
+        <div className="py-10 text-center border-y border-[var(--border-strong)]">
+          <p className="archive-title is-plain text-lg">
             Không thể tải danh sách nhân vật
           </p>
           <p className="text-xs mt-1 text-content-muted">
@@ -121,25 +124,27 @@ export function CharactersClient() {
         </div>
       )}
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-        {isLoading
-          ? Array.from({ length: PAGE_LIMIT }).map((_, i) => (
-              <CharacterPageCardSkeleton key={i} />
-            ))
-          : data?.content.map((char) => (
-              <CharacterPageCard
-                key={char.id}
-                character={char}
-                onClick={handleClick}
-              />
-            ))}
-      </div>
+      {/* Ruled grid: the container draws the top/left rules, each cell its right/bottom ones. */}
+      {(isLoading || !!data?.content.length) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 border-t border-l border-[var(--text-primary)]">
+          {isLoading
+            ? Array.from({ length: PAGE_LIMIT }).map((_, i) => (
+                <div key={i} className="p-3 lg:p-4 border-r border-b border-[var(--text-primary)] bg-[var(--bg-surface)]">
+                  <CharacterPageCardSkeleton />
+                </div>
+              ))
+            : data?.content.map((char) => (
+                <div key={char.id} className="p-3 lg:p-4 border-r border-b border-[var(--text-primary)] bg-[var(--bg-surface)]">
+                  <CharacterPageCard character={char} onClick={handleClick} />
+                </div>
+              ))}
+        </div>
+      )}
 
       {/* Empty */}
       {!isLoading && !isError && data?.content.length === 0 && (
-        <div className="py-20 text-center">
-          <p className="text-sm font-medium text-content-heading">
+        <div className="py-20 text-center border-y border-[var(--border-strong)]">
+          <p className="archive-title is-plain text-xl">
             Không tìm thấy nhân vật nào
           </p>
           <p className="text-xs mt-1 text-content-muted">

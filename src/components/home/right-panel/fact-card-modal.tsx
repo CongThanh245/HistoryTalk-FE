@@ -83,7 +83,7 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const container = particlesRef.current;
     if (!container) return;
-    const colors = ["#c9a24d", "#e8c96a", "#fff8e1", "#f0d080", "#a07828"];
+    const colors = ["var(--accent-gold)", "var(--accent-on-ink)", "var(--bg-surface)", "var(--accent-on-ink)", "var(--accent-bronze)"];
     const particles = Array.from({ length: 18 }, (_, i) => {
       const el = document.createElement("div");
       const size = 4 + Math.random() * 6;
@@ -218,7 +218,7 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
     <div
       ref={overlayRef}
       onClick={handleClose}
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[rgba(10,8,4,0.85)]"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75"
     >
       {/* Particles layer */}
       <div
@@ -241,7 +241,7 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
             e.stopPropagation();
             handleClose();
           }}
-          className="absolute -top-4 -right-4 z-10 w-8 h-8 rounded-full bg-[#2d1f08] border border-white/20 text-white/80 text-base cursor-pointer flex items-center justify-center transition-all duration-150 hover:bg-[#46300d]"
+          className="absolute -top-4 -right-4 z-10 w-8 h-8 rounded-[2px] bg-[var(--bg-surface)] border border-[var(--text-primary)] text-[var(--text-primary)] text-base cursor-pointer flex items-center justify-center transition-colors duration-150 hover:bg-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:text-white"
         >
           ×
         </button>
@@ -252,17 +252,18 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
           className="w-full h-full relative [transform-style:preserve-3d]"
         >
           {/* ── FRONT (dark) ── */}
-          <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] rounded-[20px] bg-gradient-to-br from-[#1a1209] via-[#2d1f08] to-[#1a1209] shadow-[0_24px_80px_rgba(0,0,0,0.6),0_0_0_1px_rgba(201,162,77,0.15),inset_0_1px_0_rgba(201,162,77,0.1)] flex flex-col items-center justify-center gap-4 overflow-hidden">
+          <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] rounded-[2px] bg-[var(--text-primary)] text-[var(--text-inverse)] border border-[var(--text-primary)] shadow-[var(--shadow-strong)] flex flex-col items-center justify-center gap-4 overflow-hidden">
             {/* Diamond pattern */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
-                backgroundImage: `repeating-linear-gradient(45deg,rgba(201,162,77,0.035) 0,rgba(201,162,77,0.035) 1px,transparent 1px,transparent 22px),repeating-linear-gradient(-45deg,rgba(201,162,77,0.035) 0,rgba(201,162,77,0.035) 1px,transparent 1px,transparent 22px)`,
+                backgroundImage: `repeating-linear-gradient(0deg,var(--text-inverse) 0,var(--text-inverse) 1px,transparent 1px,transparent 22px)`,
+                opacity: 0.05,
               }}
             />
             {/* Borders */}
-            <div className="absolute inset-3 rounded-xl border border-accent-gold/20 pointer-events-none" />
-            <div className="absolute inset-[18px] rounded-lg border border-accent-gold/[0.08] pointer-events-none" />
+            <div className="absolute inset-3 rounded-[2px] border border-[var(--accent-gold)] pointer-events-none" />
+            <div className="absolute inset-[18px] rounded-[2px] border border-[var(--text-inverse)] opacity-15 pointer-events-none" />
             {/* Corner ornaments */}
             {[
               ["12px", "12px"],
@@ -279,30 +280,30 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
                   left: b === "12px" ? 22 : "auto",
                   right: b === "auto" ? 22 : "auto",
                   borderTop:
-                    t === "12px" ? "1.5px solid rgba(201,162,77,0.45)" : "none",
+                    t === "12px" ? "1.5px solid var(--accent-on-ink)" : "none",
                   borderBottom:
-                    t === "auto" ? "1.5px solid rgba(201,162,77,0.45)" : "none",
+                    t === "auto" ? "1.5px solid var(--accent-on-ink)" : "none",
                   borderLeft:
-                    b === "12px" ? "1.5px solid rgba(201,162,77,0.45)" : "none",
+                    b === "12px" ? "1.5px solid var(--accent-on-ink)" : "none",
                   borderRight:
-                    b === "auto" ? "1.5px solid rgba(201,162,77,0.45)" : "none",
+                    b === "auto" ? "1.5px solid var(--accent-on-ink)" : "none",
                 }}
               />
             ))}
 
             {/* Emblem */}
             <div className="relative z-[1] text-center">
-              <div className="w-[72px] h-[72px] rounded-full mx-auto mb-3.5 bg-[radial-gradient(circle,rgba(201,162,77,0.18)_0%,transparent_70%)] border-[1.5px] border-accent-gold/35 shadow-[0_0_30px_rgba(201,162,77,0.12)] flex items-center justify-center text-[30px]">
+              <div className="w-[72px] h-[72px] rounded-[2px] mx-auto mb-3.5 border-[1.5px] border-[var(--accent-on-ink)] text-[var(--accent-on-ink)] flex items-center justify-center text-[30px]">
                 <Lightbulb />
               </div>
-              <p className="m-0 text-[11px] font-extrabold tracking-[0.22em] uppercase text-accent-gold/70">
+              <p className="m-0 font-display text-[22px] font-extrabold leading-[1.1] tracking-[0.04em] uppercase text-[var(--text-inverse)]">
                 Bạn Có Biết?
               </p>
             </div>
 
             {/* Hint */}
             <div className="relative z-[1] text-center justify-items-center">
-              <p className="m-0 mb-2.5 text-xs text-white/[0.28] tracking-[0.06em]">
+              <p className="m-0 mb-2.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-inverse)] opacity-60">
                 Chạm để khám phá
               </p>
               <Pointer />
@@ -311,14 +312,14 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* ── BACK (light) ── */}
-          <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[20px] overflow-hidden bg-[#fffdf8] shadow-[0_24px_80px_rgba(0,0,0,0.5),0_0_0_1px_rgba(201,162,77,0.18)] flex flex-col">
+          <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2px] overflow-hidden bg-[var(--bg-surface)] border border-[var(--text-primary)] shadow-[var(--shadow-strong)] flex flex-col">
             {/* Header accent */}
-            <div className="px-5 pt-[18px] pb-3.5 bg-gradient-to-br from-accent-gold/10 to-transparent border-b border-accent-gold/15 shrink-0">
-              <p className="m-0 text-[11px] font-extrabold tracking-[0.18em] uppercase text-[#7a5a1e]">
+            <div className="px-5 pt-[18px] pb-3.5 border-b border-[var(--text-primary)] shrink-0">
+              <p className="m-0 archive-title text-[22px]">
                 Bạn Có Biết?
               </p>
               {fact.year && (
-                <p className="m-0 mt-1 text-[10px] text-[rgba(138,74,26,0.7)]">
+                <p className="m-0 mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--gold-on-light)]">
                   Sự kiện xảy ra năm {fact.year}
                 </p>
               )}
@@ -326,7 +327,7 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
 
             {/* Body */}
             <div className="flex-1 p-5 flex items-center overflow-y-auto">
-              <p className="m-0 text-[15px] leading-[1.75] text-[#2d3d4f]">
+              <p className="m-0 text-[15px] leading-[1.75] text-[var(--text-secondary)]">
                 {fact.content}
               </p>
             </div>
@@ -335,7 +336,7 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
             <div className="px-5 pt-3 pb-[18px] shrink-0">
               <button
                 onClick={handleRandom}
-                className="w-full text-xs font-bold cursor-pointer py-2.5 rounded-[10px] bg-gradient-to-br from-[#e8d5a8] to-[#dcc078] border border-[#b8922a] text-[#5c3d0e] shadow-[0_2px_8px_rgba(184,146,42,0.25)] transition-all duration-150 hover:-translate-y-px hover:shadow-[0_4px_14px_rgba(184,146,42,0.35)]"
+                className="btn-crimson w-full cursor-pointer text-xs"
               >
                 ✦ Sự kiện khác
               </button>

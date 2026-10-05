@@ -26,10 +26,10 @@ export function UserLockedDialog() {
     <AlertDialog open={isLocked}>
       <AlertDialogContent
         onEscapeKeyDown={(e) => e.preventDefault()}
-        className="bg-bg-surface border-border-default"
+        className="bg-bg-surface border-[var(--text-primary)]"
       >
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-content-heading">
+          <AlertDialogTitle className="archive-title text-2xl">
             Tài khoản đã bị vô hiệu hóa
           </AlertDialogTitle>
           <AlertDialogDescription>

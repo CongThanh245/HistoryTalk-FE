@@ -150,7 +150,7 @@ export function NewDocumentPanel({
 
   return (
     <div
-      className="w-full rounded-lg border border-card-light-border bg-[var(--bg-elevated)] p-3 space-y-2.5"
+      className="w-full rounded-[2px] border border-card-light-border bg-[var(--bg-elevated)] p-3 space-y-2.5"
     >
       <div className="flex items-center justify-between gap-2">
         <p
@@ -190,7 +190,7 @@ export function NewDocumentPanel({
           <StaffFormLabel>File PDF</StaffFormLabel>
           {pdfPhase === "extracting" ? (
             <div
-              className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-center text-xs"
+              className="flex flex-col items-center justify-center gap-2 rounded-[2px] border-2 border-dashed p-4 text-center text-xs"
               style={{ borderColor: "var(--card-light-border)", color: "var(--content-muted)" }}
             >
               <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ export function NewDocumentPanel({
           ) : (
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="cursor-pointer rounded-lg border-2 border-dashed border-card-light-border p-3 text-center text-xs text-content-muted transition-colors hover:border-[var(--accent-gold)]/50 hover:bg-[var(--accent-gold)]/5"
+              className="cursor-pointer rounded-[2px] border-2 border-dashed border-card-light-border p-3 text-center text-xs text-content-muted transition-colors hover:border-[var(--accent-gold)]/50 hover:bg-[var(--accent-gold)]/5"
             >
               Click để chọn file PDF
               <p className="mt-1" style={{ color: "var(--content-subtle)" }}>
@@ -245,7 +245,7 @@ export function NewDocumentPanel({
         <div className="grid gap-1.5">
           <StaffFormLabel>File PDF</StaffFormLabel>
           <div
-            className="flex items-center justify-between gap-2 rounded-lg border p-2 text-xs"
+            className="flex items-center justify-between gap-2 rounded-[2px] border p-2 text-xs"
             style={{ borderColor: "var(--card-light-border)" }}
           >
             <div className="min-w-0">
@@ -263,7 +263,7 @@ export function NewDocumentPanel({
                 size="sm"
                 variant="outline"
                 onClick={() => setPreviewOpen(true)}
-                className="text-accent-gold border-[rgba(234,179,8,0.3)]"
+                className="text-accent-gold border-accent-gold/30"
               >
                 <Eye className="h-3.5 w-3.5 mr-1" />
                 Xem trước

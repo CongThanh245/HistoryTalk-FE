@@ -40,10 +40,10 @@ export interface Character {
 }
 
 const chatCtaClassName =
-  "flex w-full items-center justify-center gap-2 rounded-full border border-accent-gold/45 bg-[linear-gradient(90deg,var(--accent-bronze)_0%,var(--accent-gold)_28%,var(--accent-gold-soft)_50%,var(--accent-gold)_72%,var(--accent-bronze)_100%)] font-extrabold text-bg-deep shadow-[0_10px_24px_-8px_var(--accent-gold-glow)] transition-all duration-200 group-hover:border-accent-gold-soft/70 group-hover:bg-[linear-gradient(90deg,var(--accent-bronze)_0%,var(--accent-gold)_24%,var(--accent-gold-soft)_50%,var(--accent-gold)_76%,var(--accent-bronze)_100%)] group-hover:shadow-[0_14px_28px_-10px_var(--accent-gold-glow)] group-active:translate-y-px";
+  "flex w-full items-center justify-center gap-2 rounded-[2px] border border-accent-gold bg-accent-gold font-bold uppercase tracking-[0.08em] text-white transition-colors duration-200 group-hover:border-[var(--accent-bronze)] group-hover:bg-[var(--accent-bronze)] group-active:translate-y-px";
 
 const chatCtaIconClassName =
-  "flex size-7 items-center justify-center rounded-full bg-bg-deep/90 text-accent-gold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)] transition-colors duration-200 group-hover:bg-abyssal-blue group-hover:text-accent-gold-soft";
+  "flex size-7 items-center justify-center rounded-[2px] bg-[rgba(0,0,0,0.18)] text-white";
 
 // ─────────────────────────────────────────────────────────
 // Variant 1: Carousel card — nền tối, dùng trong Carousel3D + CharactersReveal
@@ -85,7 +85,7 @@ export function CharacterCarouselCard({
         onFocus={() => setHovered(true)}
         onBlur={() => setHovered(false)}
         onClick={() => onClick?.(character.id)}
-        className="relative h-full w-full cursor-pointer overflow-hidden rounded-lg border border-accent-gold/30 text-left transition-colors duration-300 hover:border-accent-gold/60 focus-visible:border-accent-gold"
+        className="relative h-full w-full cursor-pointer overflow-hidden rounded-[2px] border border-[var(--text-primary)] text-left transition-colors duration-300 hover:border-accent-gold focus-visible:border-accent-gold"
       >
         <DarkCard
           imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
@@ -95,7 +95,7 @@ export function CharacterCarouselCard({
           priority={priority}
           hoverEffects={false}
         >
-          <h3 className="line-clamp-1 text-sm font-bold text-text-primary sm:text-base">
+          <h3 className="archive-title is-plain line-clamp-1 text-[17px] sm:text-xl">
             {character.name}
           </h3>
           <p className="mt-0.5 line-clamp-1 text-[11px] font-medium text-text-secondary sm:text-xs">
@@ -111,7 +111,7 @@ export function CharacterCarouselCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onClick?.(character.id)}
-      className="group relative w-full h-full rounded-lg border border-accent-gold/30 overflow-hidden cursor-pointer transition-colors duration-300 hover:border-accent-gold/60"
+      className="group relative w-full h-full rounded-[2px] border border-[var(--text-primary)] overflow-hidden cursor-pointer transition-colors duration-300 hover:border-accent-gold"
     >
       <DarkCard
         imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
@@ -125,7 +125,7 @@ export function CharacterCarouselCard({
         priority={priority}
       >
         <h3
-          className="text-base font-bold line-clamp-1 text-text-primary transition-colors group-hover:text-accent-gold"
+          className="archive-title is-plain text-xl line-clamp-1 transition-colors group-hover:text-accent-gold"
         >
           {character.name}
         </h3>
@@ -136,17 +136,17 @@ export function CharacterCarouselCard({
         </p>
         {character.side && (
           <span
-            className="inline-block w-fit text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5 bg-accent-gold/15 text-accent-gold-soft"
+            className="inline-block w-fit text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-[2px] mt-1.5 bg-accent-gold-active text-[var(--gold-on-light)]"
           >
             {character.side}
           </span>
         )}
         <div className="mt-auto pt-3 flex items-center gap-2">
           <div
-            className="h-px flex-1 bg-gradient-to-r from-accent-gold/50 to-transparent"
+            className="h-px flex-1 bg-[var(--border-strong)]"
           />
           <span
-            className="text-[10px] uppercase font-bold text-accent-gold opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0"
+            className="text-[10px] uppercase tracking-[0.1em] font-bold text-accent-gold opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0"
           >
             Chat ngay
           </span>
@@ -155,11 +155,11 @@ export function CharacterCarouselCard({
 
       {/* Hover State Overlay */}
       <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 flex flex-col p-4 bg-neutral-950/85 backdrop-blur-[6px] text-white"
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 flex flex-col p-4 bg-text-primary/95 text-text-inverse"
       >
         {/* Avatar top left */}
         <div className="flex items-start mb-4">
-          <div className="relative w-12 h-12 rounded-full border-2 border-accent-gold overflow-hidden shadow-md shrink-0">
+          <div className="relative w-12 h-12 rounded-full border-2 border-accent-gold overflow-hidden shrink-0">
             {avatarSrc ? (
               <Image
                 src={avatarSrc}
@@ -172,17 +172,17 @@ export function CharacterCarouselCard({
                 }}
               />
             ) : (
-              <span className="flex h-full w-full items-center justify-center bg-accent-gold text-sm font-bold text-bg-deep">
+              <span className="flex h-full w-full items-center justify-center bg-accent-gold text-sm font-bold text-white">
                 {character.name?.charAt(0) ?? "?"}
               </span>
             )}
           </div>
           <div className="ml-3 min-w-0">
-            <h4 className="text-sm font-bold text-white leading-tight truncate">
+            <h4 className="archive-title is-plain text-lg text-text-inverse leading-tight truncate">
               {character.name}
             </h4>
             {character.era && (
-              <p className="text-[10px] text-accent-gold-soft font-medium mt-0.5 truncate">
+              <p className="text-[10px] uppercase tracking-[0.1em] text-accent-on-ink font-bold mt-0.5 truncate">
                 {character.era}
               </p>
             )}
@@ -190,7 +190,7 @@ export function CharacterCarouselCard({
         </div>
 
         {/* Description text with typewriter effect */}
-        <div className="flex-1 text-xs leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium">
+        <div className="flex-1 text-xs leading-relaxed overflow-y-auto pr-1 text-text-inverse/85 font-medium">
           <TypewriterText text={character.description ?? ""} isHovered={isHovered} />
         </div>
 
@@ -270,10 +270,10 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(character.id)}
-      className="group relative w-full flex flex-col text-left rounded-xl border border-accent-gold/30 bg-card-bg overflow-hidden transition-all duration-300 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-accent-gold/60 focus-visible:border-accent-gold md:hover:-translate-y-1"
+      className="group relative w-full flex flex-col text-left rounded-[2px] border border-[var(--text-primary)] bg-card-bg overflow-hidden transition-colors duration-300 cursor-pointer hover:border-accent-gold focus-visible:border-accent-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
     >
       {/* Image */}
-      <div className="relative z-0 aspect-3/4 w-full shrink-0 overflow-hidden bg-black">
+      <div className="relative z-0 aspect-3/4 w-full shrink-0 overflow-hidden bg-[var(--bg-deep)]">
         <Image
           src={cardImageSrc}
           alt=""
@@ -287,7 +287,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
           src={cardImageSrc}
           alt={character.name}
           fill
-          className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.04]"
+          className="archive-photo object-cover object-top transition-transform duration-500 group-hover:scale-[1.04]"
           sizes="(max-width: 419px) 100vw, (max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
           onError={() => setImageBroken(true)}
         />
@@ -297,42 +297,42 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       {character.side && (
       <div className="absolute top-2.5 sm:top-3 right-2.5 sm:right-3 z-10">
           <span
-            className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm bg-accent-gold/30 text-white border border-accent-gold/50"
+            className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-[2px] bg-accent-gold text-white border border-accent-gold"
           >
             {character.side}
           </span>
         </div>
       )}
       {/* Normal State Text Content */}
-      <div className="relative z-20 flex flex-col justify-center bg-black px-2.5 py-2.5 text-white pointer-events-none transition-all duration-300 md:group-hover:opacity-0 sm:px-3.5 sm:py-3">
-        <h3 className="text-sm font-bold leading-snug mb-1 line-clamp-1 text-white drop-shadow-sm">
+      <div className="relative z-20 flex flex-col justify-center border-t border-text-primary bg-text-primary px-2.5 py-2.5 text-text-inverse pointer-events-none transition-all duration-300 md:group-hover:opacity-0 sm:px-3.5 sm:py-3">
+        <h3 className="archive-title is-plain text-[17px] mb-1 line-clamp-1 text-text-inverse">
           {character.name}
         </h3>
-        <p className="mb-1 text-[9px] font-semibold leading-none text-amber-400 sm:text-[10px]">
+        <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.1em] leading-none text-accent-on-ink sm:text-[10px]">
           {lifespan}
         </p>
-        <div className="flex items-center gap-1.5 text-[11px] font-semibold min-w-0 text-white/70">
-          <MessageSquareText className="w-3.5 h-3.5 text-amber-400" />
-          <span className="text-neutral-200 font-normal truncate">{character.title}</span>
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold min-w-0 text-text-inverse/70">
+          <MessageSquareText className="w-3.5 h-3.5 text-accent-on-ink" />
+          <span className="text-text-inverse/85 font-normal truncate">{character.title}</span>
         </div>
         {contextLabel && (
-          <div className="mt-1 flex items-center gap-1.5 text-[10px] font-medium min-w-0 text-white/60">
-            <Landmark className="w-3 h-3 text-amber-400 shrink-0" />
+          <div className="mt-1 flex items-center gap-1.5 text-[10px] font-medium min-w-0 text-text-inverse/60">
+            <Landmark className="w-3 h-3 text-accent-on-ink shrink-0" />
             <span className="truncate">{contextLabel}</span>
           </div>
         )}
         {character.description && (
-          <p className="mt-1 text-[10px] leading-snug text-white/80 line-clamp-3 sm:line-clamp-3">
+          <p className="mt-1 text-[10px] leading-snug text-text-inverse/80 line-clamp-3 sm:line-clamp-3">
             {character.description}
           </p>
         )}
       </div>
 
       {/* Hover State Overlay */}
-      <div className="absolute inset-0 z-30 hidden flex-col bg-black/92 p-3 text-white opacity-0 transition-all duration-300 group-focus-visible:flex group-focus-visible:opacity-100 md:flex md:group-hover:opacity-100 sm:p-4">
+      <div className="absolute inset-0 z-30 hidden flex-col bg-text-primary/95 p-3 text-text-inverse opacity-0 transition-all duration-300 group-focus-visible:flex group-focus-visible:opacity-100 md:flex md:group-hover:opacity-100 sm:p-4">
         {/* Avatar + name top left */}
         <div className="flex items-center gap-2.5 mb-2.5 sm:mb-3">
-          <div className="relative w-11 h-11 shrink-0 rounded-full border-2 border-white overflow-hidden shadow-md sm:w-12 sm:h-12">
+          <div className="relative w-11 h-11 shrink-0 rounded-full border-2 border-text-inverse overflow-hidden sm:w-12 sm:h-12">
             {avatarSrc ? (
               <Image
                 src={avatarSrc}
@@ -345,16 +345,16 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
                 }}
               />
             ) : (
-              <span className="flex h-full w-full items-center justify-center bg-accent-gold text-base font-bold text-bg-deep">
+              <span className="flex h-full w-full items-center justify-center bg-accent-gold text-base font-bold text-white">
                 {character.name?.charAt(0) ?? "?"}
               </span>
             )}
           </div>
           <div className="min-w-0">
-            <h4 className="text-sm font-bold text-white leading-tight truncate sm:text-base">
+            <h4 className="archive-title is-plain text-lg text-text-inverse leading-tight truncate sm:text-xl">
               {character.name}
             </h4>
-            <p className="text-[11px] text-white/60 truncate sm:text-xs">
+            <p className="text-[11px] text-text-inverse/60 truncate sm:text-xs">
               {character.role ?? character.title}
             </p>
           </div>
@@ -364,13 +364,13 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         {(lifespan || character.side || contextLabel) && (
           <div className="flex flex-wrap items-center gap-1 mb-2.5 sm:mb-3">
             {lifespan && (
-              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-white/10 text-amber-300 sm:text-[10px]">
+              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-[2px] bg-text-inverse/10 text-accent-on-ink sm:text-[10px]">
                 <History className="w-2.5 h-2.5 shrink-0" />
                 {lifespan}
               </span>
             )}
             {character.side && (
-              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-white/10 text-white/80 sm:text-[10px]">
+              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-[2px] bg-text-inverse/10 text-text-inverse/80 sm:text-[10px]">
                 {character.side}
               </span>
             )}
@@ -380,7 +380,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
                 contextId={ctx.contextId}
                 fallbackLabel={ctx.name}
               >
-                <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold text-white/80 transition-colors hover:bg-white/20 hover:text-amber-300 sm:text-[10px]">
+                <span className="inline-flex max-w-full items-center gap-1 rounded-[2px] bg-text-inverse/10 px-1.5 py-0.5 text-[9px] font-semibold text-text-inverse/80 transition-colors hover:bg-text-inverse/20 hover:text-accent-on-ink sm:text-[10px]">
                   <Landmark className="w-2.5 h-2.5 shrink-0" />
                   <span className="truncate">{ctx.name}</span>
                 </span>
@@ -390,7 +390,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         )}
 
         {/* Description text with typewriter effect */}
-        <div className="flex-1 text-xs leading-relaxed overflow-y-auto pr-1 text-neutral-200 font-medium sm:text-sm">
+        <div className="flex-1 text-xs leading-relaxed overflow-y-auto pr-1 text-text-inverse/85 font-medium sm:text-sm">
           <TypewriterText text={character.description ?? ""} isHovered={isHovered} />
         </div>
 
@@ -407,9 +407,9 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         </div>
       </div>
 
-      <div className="absolute bottom-2 right-2 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/80 text-white shadow-lg backdrop-blur-sm sm:h-10 sm:w-10 md:hidden">
-        <MessageSquareText className="h-[18px] w-[18px] fill-current text-accent-gold" />
-        <span className="sr-only">TrÃ² chuyá»‡n ngay</span>
+      <div className="absolute bottom-2 right-2 z-30 flex h-8 w-8 items-center justify-center rounded-[2px] border border-accent-gold bg-accent-gold text-white sm:h-10 sm:w-10 md:hidden">
+        <MessageSquareText className="h-[18px] w-[18px] fill-current text-white" />
+        <span className="sr-only">Trò chuyện ngay</span>
       </div>
     </button>
   );
@@ -431,11 +431,11 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
   return (
     <button
       onClick={() => onClick(character.id)}
-      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border border-card-border bg-card-bg text-left
-        transition-all duration-150 cursor-pointer group hover:border-accent-gold"
+      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[2px] border border-[var(--border-strong)] bg-card-bg text-left
+        transition-colors duration-150 cursor-pointer group hover:border-[var(--text-primary)]"
     >
       <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden relative bg-accent-gold text-bg-deep"
+        className="w-8 h-8 rounded-[2px] flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden relative bg-accent-gold text-white"
       >
         {avatarSrc && (
           <Image
@@ -454,7 +454,7 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
 
       <div className="flex-1 min-w-0">
         <p
-          className="text-xs font-semibold truncate text-content-heading"
+          className="archive-title is-plain text-sm truncate"
         >
           {character.name}
         </p>
@@ -479,7 +479,7 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
 export function CharacterPageCardSkeleton() {
   return (
     <div
-      className="w-full rounded-xl border border-card-border bg-card-bg overflow-hidden animate-pulse"
+      className="w-full rounded-[2px] border border-card-border bg-card-bg overflow-hidden animate-pulse"
     >
       <div className="aspect-3/4 w-full bg-card-border" />
       <div className="px-2.5 py-3 space-y-2 sm:px-4 sm:pt-3 sm:pb-4">

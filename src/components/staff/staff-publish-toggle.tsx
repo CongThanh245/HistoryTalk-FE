@@ -55,13 +55,13 @@ export function StaffPublishToggle({
     <>
       <div
         className={cn(
-          "flex items-center gap-3 rounded-xl border transition-colors",
+          "flex items-center gap-3 rounded-[2px] border transition-colors",
           compact ? "py-1.5 px-3" : "justify-between py-3 px-4",
           isPublished
-            ? "border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.06)]"
+            ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)]"
             : showBlocked
-              ? "border-[rgba(234,179,8,0.3)] bg-[rgba(234,179,8,0.05)]"
-              : "border-card-light-border bg-[rgba(27,38,50,0.03)]",
+              ? "border-[var(--border-strong)] bg-[var(--status-neutral-bg)]"
+              : "border-card-light-border bg-[var(--status-neutral-bg)]",
           className,
         )}
       >
@@ -70,7 +70,7 @@ export function StaffPublishToggle({
             className={cn(
               "font-semibold",
               compact ? "text-xs" : "text-sm",
-              isPublished ? "text-[rgb(22,163,74)]" : showBlocked ? "text-[#92400e]" : "text-content-heading",
+              isPublished ? "text-[var(--status-success)]" : showBlocked ? "text-[var(--text-tertiary)]" : "text-content-heading",
             )}
           >
             {isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
@@ -104,11 +104,11 @@ export function StaffPublishToggle({
           disabled={disabled}
           className={cn(
             "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
-            isPublished ? "bg-[rgb(34,197,94)]" : "bg-[rgba(234,179,8,0.4)]",
+            isPublished ? "bg-[var(--status-success)]" : "bg-[var(--border-strong)]",
           )}
         >
           <span
-            className="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg transition-transform"
+            className="pointer-events-none block h-5 w-5 rounded-full bg-white transition-transform"
             style={{
               transform: isPublished ? "translateX(20px)" : "translateX(0)",
             }}

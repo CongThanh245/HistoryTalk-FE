@@ -1,3 +1,4 @@
+import { recordStudyActivity } from "@/features/gamification/study-check-in";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { chatService, type ChatHistoryGroup } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
@@ -75,6 +76,7 @@ export function useSendMessage() {
     }) => chatService.sendMessage(sessionId, content),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+      recordStudyActivity(qc);
     },
     onError: (error: unknown) => {
       if (isTokenExhaustionError(error)) {

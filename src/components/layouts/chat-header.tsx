@@ -12,20 +12,20 @@ export default function ChatHeader() {
 
   return (
     <header
-      className="h-14 w-full border-b flex items-center justify-between px-3 shrink-0 bg-header-bg border-header-border"
+      className="h-14 w-full border-b flex items-center justify-between px-3 shrink-0 bg-header-bg border-[var(--text-primary)]"
     >
       <div className="flex items-center gap-3">
         {/* Back button */}
         <button
           onClick={() => router.push("/home")}
-          className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors hover:bg-white/5 active:scale-95 text-header-text"
+          className="flex items-center justify-center w-9 h-9 rounded-[2px] border border-transparent transition-colors hover:border-[var(--text-primary)] active:scale-95 text-header-text"
           aria-label="Quay lại trang chủ"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         {/* Page title */}
-        <span className="font-semibold text-sm text-header-text">
+        <span className="font-display text-lg font-extrabold uppercase tracking-[0.02em] text-header-text">
           Chat
         </span>
       </div>
@@ -37,7 +37,7 @@ export default function ChatHeader() {
         ) : (
           <button
             onClick={() => router.push("/login")}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors active:scale-95 text-header-text border-header-border"
+            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] rounded-[2px] border transition-colors active:scale-95 text-header-text border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
           >
             Đăng nhập
           </button>

@@ -53,12 +53,12 @@ function getDurationFromRange(startedAt?: string, completedAt?: string) {
 
 function getToneClasses(percentage: number) {
   if (percentage >= 80) {
-    return "bg-emerald-500/10 text-[#047857]";
+    return "border-[var(--status-success)] text-[var(--status-success)]";
   }
   if (percentage >= 50) {
-    return "bg-accent-gold/14 text-gold-on-light";
+    return "border-[var(--accent-gold)] text-[var(--gold-on-light)]";
   }
-  return "bg-accent-danger/10 text-accent-danger";
+  return "border-[var(--accent-danger)] text-accent-danger";
 }
 
 function normalizeQuestionCount(value: number, totalQuestions: number) {
@@ -72,12 +72,12 @@ function getOptionClasses(question: QuizSessionQuestion, optionIndex: number) {
     optionIndex === question.selectedAnswer && optionIndex !== question.correctAnswer;
 
   if (isAnswer) {
-    return "bg-emerald-500/10 text-[#065f46] font-bold";
+    return "bg-[var(--status-success-bg)] border-[var(--status-success)] text-[var(--status-success)] font-bold";
   }
   if (isWrongPick) {
-    return "bg-accent-danger/[0.08] text-accent-danger font-bold";
+    return "bg-[var(--status-danger-bg)] border-[var(--accent-danger)] text-accent-danger font-bold";
   }
-  return "bg-[rgba(27,38,50,0.025)] text-content-muted font-medium";
+  return "bg-[var(--bg-elevated)] border-[var(--border-default)] text-content-muted font-medium";
 }
 
 // So sanh % lan nay voi lan gan nhat truoc do cua cung quiz.
@@ -92,12 +92,12 @@ function ComparisonBadge({ percentage, previous }: { percentage: number; previou
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold",
+        "inline-flex items-center gap-1.5 rounded-[2px] border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.06em]",
         delta > 0
-          ? "bg-emerald-500/10 text-[#047857]"
+          ? "border-[var(--status-success)] text-[var(--status-success)]"
           : delta < 0
-            ? "bg-accent-danger/[0.08] text-accent-danger"
-            : "bg-[rgba(27,38,50,0.05)] text-content-muted",
+            ? "border-[var(--accent-danger)] text-accent-danger"
+            : "border-[var(--border-strong)] text-content-muted",
       )}
     >
       <Icon size={13} strokeWidth={2.25} />
@@ -122,17 +122,17 @@ export function QuizHistoryView({
 
   return (
     <>
-      <section className="rounded-xl border border-card-light-border bg-card-light-bg">
-        <div className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-end sm:justify-between border-b border-card-light-border">
+      <section className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
+        <div className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-end sm:justify-between border-b border-[var(--text-primary)]">
           <div>
-            <h2 className="text-base font-bold text-content-heading">
+            <h2 className="archive-title mt-1 text-[24px]">
               Lịch sử làm bài
             </h2>
-            <p className="mt-1 text-sm text-content-muted">
+            <p className="mt-1 text-sm text-text-tertiary">
               Xem lại các lần nộp trước đây của bạn.
             </p>
           </div>
-          <span className="rounded-md px-2.5 py-1 text-xs font-bold bg-[rgba(27,38,50,0.05)] text-content-muted">
+          <span className="rounded-[2px] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] bg-[var(--text-primary)] text-[var(--text-inverse)]">
             {results.length} lần làm
           </span>
         </div>
@@ -143,7 +143,7 @@ export function QuizHistoryView({
           </div>
         ) : results.length === 0 ? (
           <div className="p-10 text-center">
-            <p className="font-semibold text-content-heading">
+            <p className="archive-title text-[22px]">
               Chưa có lịch sử làm bài
             </p>
             <p className="mt-1 text-sm text-content-muted">
@@ -151,22 +151,22 @@ export function QuizHistoryView({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-card-light-border">
+          <div className="divide-y divide-[var(--border-default)]">
             {results.map((result) => {
               const score = normalizeQuestionCount(result.score, result.totalQuestions);
               return (
                 <article
                   key={result.sessionId}
-                  className="grid gap-4 px-5 py-4 transition-colors hover:bg-black/[0.025] md:grid-cols-[minmax(0,1fr)_auto]"
+                  className="grid gap-4 px-5 py-4 transition-colors hover:bg-[var(--bg-elevated)] md:grid-cols-[minmax(0,1fr)_auto]"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate text-sm font-bold text-content-heading">
+                      <h3 className="archive-title is-plain truncate text-[18px] md:text-[20px]">
                         {result.quizTitle}
                       </h3>
                       <span
                         className={cn(
-                          "rounded-md px-2 py-1 text-xs font-bold",
+                          "rounded-[2px] border px-2 py-0.5 font-display text-sm font-extrabold",
                           getToneClasses(result.percentage),
                         )}
                       >
@@ -174,7 +174,7 @@ export function QuizHistoryView({
                       </span>
                     </div>
 
-                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-content-muted">
+                    <div className="mt-2 flex flex-wrap gap-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">
                       <span className="inline-flex items-center gap-1.5">
                         <CalendarDays size={14} />
                         {formatDateTime(result.completedAt)}
@@ -192,14 +192,14 @@ export function QuizHistoryView({
                         setReviewFilter("all");
                         setSelectedSessionId(result.sessionId);
                       }}
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition-colors bg-card-light-bg text-content-heading border border-card-light-border"
+                      className="btn-line min-h-10 px-4 text-xs"
                     >
                       <Eye size={16} />
                       Xem chi tiết
                     </button>
                     <button
                       onClick={() => onRetake(result.quizId)}
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition-colors bg-[var(--abyssal-blue)] text-[var(--text-on-dark)] shadow-[0_8px_18px_rgba(27,38,50,0.14)]"
+                      className="btn-ink min-h-10 px-4 text-xs"
                     >
                       <RotateCcw size={16} />
                       Làm lại
@@ -218,9 +218,9 @@ export function QuizHistoryView({
           if (!open) setSelectedSessionId(null);
         }}
       >
-        <DialogContent className="max-h-[88vh] overflow-hidden p-0 sm:max-w-5xl bg-card-light-bg border-card-light-border">
-          <DialogHeader className="px-5 py-4 border-b border-card-light-border">
-            <DialogTitle className="text-content-heading">
+        <DialogContent className="max-h-[88vh] overflow-hidden rounded-[2px] p-0 sm:max-w-5xl bg-[var(--bg-surface)] border-[var(--text-primary)]">
+          <DialogHeader className="px-5 py-4 border-b border-[var(--text-primary)]">
+            <DialogTitle className="archive-title text-[22px]">
               Chi tiết bài làm
             </DialogTitle>
             <DialogDescription className="text-content-muted">
@@ -237,29 +237,26 @@ export function QuizHistoryView({
               <>
                 <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-content-subtle">
-                      Chi tiết bài làm
-                    </p>
-                    <h3 className="mt-1 text-lg font-bold text-content-heading">
+                    <h3 className="archive-title is-plain mt-1 text-[22px]">
                       {detail.quizTitle}
                     </h3>
-                    <p className="mt-1 text-sm text-content-muted">
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">
                       {formatDateTime(detail.startedAt)} - {formatDateTime(detail.completedAt)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <span
                       className={cn(
-                        "rounded-md px-3 py-1.5 text-sm font-bold",
+                        "rounded-[2px] border px-3 py-1 font-display text-lg font-extrabold leading-tight",
                         getToneClasses(detail.percentage),
                       )}
                     >
                       {normalizeQuestionCount(detail.score, detail.totalQuestions)}/{detail.totalQuestions}
                     </span>
-                    <span className="rounded-md px-3 py-1.5 text-sm font-bold bg-[rgba(27,38,50,0.05)] text-content-muted">
+                    <span className="rounded-[2px] border border-[var(--border-strong)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-content-muted">
                       {detail.limitedTime ? `Giới hạn ${formatDuration(detail.limitedTime)}` : "Không giới hạn"}
                     </span>
-                    <span className="rounded-md px-3 py-1.5 text-sm font-bold bg-[rgba(27,38,50,0.05)] text-content-muted">
+                    <span className="rounded-[2px] border border-[var(--border-strong)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-content-muted">
                       Tổng thời gian {formatDuration(getDurationFromRange(detail.startedAt, detail.completedAt))}
                     </span>
                     {detail.previousAttempt && (
@@ -275,10 +272,10 @@ export function QuizHistoryView({
                       <button
                         onClick={() => setReviewFilter("all")}
                         className={cn(
-                          "rounded-full px-3 py-1.5 text-xs font-bold transition-colors border",
+                          "rounded-[2px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors border",
                           reviewFilter === "all"
-                            ? "bg-accent-gold-active text-gold-on-light border-accent-gold/35"
-                            : "bg-card-light-bg text-content-muted border-card-light-border",
+                            ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
+                            : "bg-transparent text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)]",
                         )}
                       >
                         Tất cả ({detail.questions.length})
@@ -286,10 +283,10 @@ export function QuizHistoryView({
                       <button
                         onClick={() => setReviewFilter("wrong")}
                         className={cn(
-                          "rounded-full px-3 py-1.5 text-xs font-bold transition-colors border",
+                          "rounded-[2px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors border",
                           reviewFilter === "wrong"
-                            ? "bg-accent-danger/10 text-accent-danger border-accent-danger/35"
-                            : "bg-card-light-bg text-content-muted border-card-light-border",
+                            ? "bg-[var(--accent-danger)] text-[var(--text-inverse)] border-[var(--accent-danger)]"
+                            : "bg-transparent text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)]",
                         )}
                       >
                         Câu sai ({wrongCount})
@@ -298,26 +295,26 @@ export function QuizHistoryView({
                   ) : null;
                 })()}
 
-                <div className="space-y-3">
+                <div className="border-t border-[var(--text-primary)]">
                   {detail.questions.map((question, index) => {
                     if (reviewFilter === "wrong" && question.correct) return null;
                     return (
                     <article
                       key={question.questionId}
                       className={cn(
-                        "rounded-xl border p-4 bg-[rgba(27,38,50,0.018)]",
+                        "border-b border-b-[var(--border-default)] py-4 pl-4 pr-1",
                         question.correct
-                          ? "border-emerald-500/28"
-                          : "border-accent-danger/24",
+                          ? ""
+                          : "",
                       )}
                     >
                       <div className="mb-3 flex items-start gap-3">
                         <span
                           className={cn(
-                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-[2px] font-display text-sm font-extrabold",
                             question.correct
-                              ? "bg-emerald-500/12 text-[#047857]"
-                              : "bg-accent-danger/10 text-accent-danger",
+                              ? "bg-[var(--status-success)] text-[var(--text-inverse)]"
+                              : "bg-[var(--accent-danger)] text-[var(--text-inverse)]",
                           )}
                         >
                           {index + 1}
@@ -325,7 +322,7 @@ export function QuizHistoryView({
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start gap-2">
                             {question.correct ? (
-                              <CheckCircle2 className="mt-0.5 shrink-0 text-[#047857]" size={16} />
+                              <CheckCircle2 className="mt-0.5 shrink-0 text-[var(--status-success)]" size={16} />
                             ) : (
                               <XCircle className="mt-0.5 shrink-0 text-accent-danger" size={16} />
                             )}
@@ -343,18 +340,18 @@ export function QuizHistoryView({
                             <div
                               key={optionIndex}
                               className={cn(
-                                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
+                                "flex items-center gap-2 rounded-[2px] border px-3 py-2 text-sm",
                                 getOptionClasses(question, optionIndex),
                               )}
                             >
                               <span
                                 className={cn(
-                                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-[2px] text-[11px] font-bold",
                                   optionIndex === question.correctAnswer
-                                    ? "bg-[#047857] text-white"
+                                    ? "bg-[var(--status-success)] text-[var(--text-inverse)]"
                                     : selected
-                                      ? "bg-accent-danger text-white"
-                                      : "bg-card-light-bg text-content-muted border border-card-light-border",
+                                      ? "bg-[var(--accent-danger)] text-[var(--text-inverse)]"
+                                      : "bg-[var(--bg-surface)] text-content-muted border border-[var(--border-strong)]",
                                 )}
                               >
                                 {OPTION_LABELS[optionIndex]}
@@ -366,7 +363,7 @@ export function QuizHistoryView({
                       </div>
 
                       {question.explanation && (
-                        <p className="mt-3 text-sm leading-6 text-content-muted">
+                        <p className="mt-3 border-l border-[var(--border-strong)] pl-3 text-sm leading-6 text-content-muted">
                           {question.explanation}
                         </p>
                       )}

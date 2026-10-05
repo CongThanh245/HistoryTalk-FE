@@ -12,7 +12,7 @@ export function MarkdownMessage({ text }: Props) {
   const components: Components = {
     p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
     strong: ({ children }) => (
-      <strong className="font-semibold text-accent-gold">
+      <strong className="font-semibold text-[var(--text-primary)]">
         {children}
       </strong>
     ),
@@ -25,15 +25,15 @@ export function MarkdownMessage({ text }: Props) {
         href={href}
         target="_blank"
         rel="noopener noreferrer nofollow"
-        className="underline"
-        style={{ color: "var(--accent-gold)" }}
+        className="underline underline-offset-2 transition-colors hover:text-accent-gold"
+        style={{ color: "var(--text-primary)" }}
       >
         {children}
       </a>
     ),
     code: ({ children }) => (
       <code
-        className="px-1 py-0.5 rounded text-xs"
+        className="px-1 py-0.5 rounded-[2px] text-xs"
         style={{ background: "var(--bg-elevated)" }}
       >
         {children}
@@ -41,7 +41,7 @@ export function MarkdownMessage({ text }: Props) {
     ),
     pre: ({ children }) => (
       <pre
-        className="p-2 rounded-lg overflow-x-auto text-xs mb-2 last:mb-0"
+        className="p-2 rounded-[2px] border border-[var(--border-default)] overflow-x-auto text-xs mb-2 last:mb-0"
         style={{ background: "var(--bg-elevated)" }}
       >
         {children}
@@ -49,8 +49,8 @@ export function MarkdownMessage({ text }: Props) {
     ),
     blockquote: ({ children }) => (
       <blockquote
-        className="pl-2 border-l-2 mb-2 last:mb-0"
-        style={{ borderColor: "var(--accent-gold-soft)" }}
+        className="pl-2 mb-2 last:mb-0"
+        style={{ borderColor: "var(--text-primary)" }}
       >
         {children}
       </blockquote>

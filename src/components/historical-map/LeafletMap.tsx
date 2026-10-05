@@ -17,6 +17,7 @@ import type { GeoJsonObject } from "geojson";
 import type { MapPin } from "@/services/map-pin.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { cn } from "@/lib/utils/cn";
+import type { MapCoordinates, OverlayPin } from "./map-overlay.types";
 
 interface LeafletMapProps {
   battle?: HistoricalEvent;
@@ -28,7 +29,17 @@ interface LeafletMapProps {
   panelDismissed?: boolean;
   onSelectPin: (pin: MapPin) => void;
   onMapClick?: (coordinates: { latitude: number; longitude: number }) => void;
+  /** Custom-layer markers (class map, personal notes), kept apart from the battle pins. */
+  overlayPins?: OverlayPin[];
+  selectedOverlayId?: string | null;
+  onSelectOverlayPin?: (id: string) => void;
+  /** Re-centres the map whenever `key` changes. */
+  overlayFocus?: (MapCoordinates & { key: string }) | null;
+  /** Overlay placement mode: crosshair cursor, markers let clicks through to the map. */
+  placing?: boolean;
 }
+
+const EMPTY_OVERLAY: OverlayPin[] = [];
 
 const VIETNAM_BOUNDS = {
   southWest: [5.7, 97.4] as [number, number],
@@ -70,9 +81,15 @@ export function LeafletMap({
   panelDismissed = false,
   onSelectPin,
   onMapClick,
+  overlayPins = EMPTY_OVERLAY,
+  selectedOverlayId = null,
+  onSelectOverlayPin,
+  overlayFocus = null,
+  placing = false,
 }: LeafletMapProps) {
   const mapRef = useRef<LeafletMapInstance | null>(null);
   const markersRef = useRef<Record<string, Marker>>({});
+  const overlayMarkersRef = useRef<Record<string, Marker>>({});
   const containerRef = useRef<(HTMLDivElement & { _leaflet_id?: number }) | null>(
     null,
   );
@@ -89,9 +106,11 @@ export function LeafletMap({
   // Stable ref for callback (avoid re-binding on every render)
   const onSelectPinRef = useRef(onSelectPin);
   const onMapClickRef = useRef(onMapClick);
+  const onSelectOverlayRef = useRef(onSelectOverlayPin);
   useEffect(() => {
     onSelectPinRef.current = onSelectPin;
     onMapClickRef.current = onMapClick;
+    onSelectOverlayRef.current = onSelectOverlayPin;
   });
 
   // ── Init map ──────────────────────────────────────────────
@@ -181,6 +200,7 @@ export function LeafletMap({
         mapRef.current.remove();
         mapRef.current = null;
         markersRef.current = {};
+        overlayMarkersRef.current = {};
       }
     };
   }, []);
@@ -199,7 +219,7 @@ export function LeafletMap({
         radius: 18,
         color: "#ffffff",
         weight: 2,
-        fillColor: "#00796b",
+        fillColor: "#B8321F",
         fillOpacity: 0.2,
         interactive: false,
         pane: "markerPane",
@@ -208,7 +228,7 @@ export function LeafletMap({
         radius: 8,
         color: "#ffffff",
         weight: 3,
-        fillColor: "#00796b",
+        fillColor: "#B8321F",
         fillOpacity: 1,
         interactive: false,
         pane: "markerPane",
@@ -264,6 +284,63 @@ export function LeafletMap({
     });
   }, [pins, selectedPinId, mapReady, battle, battles]);
 
+  // Custom-layer markers live in their own ref so the battle pin sync above stays untouched.
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    let cancelled = false;
+
+    import("leaflet").then((L) => {
+      const map = mapRef.current;
+      if (cancelled || !map) return;
+      const currentIds = new Set(overlayPins.map((pin) => pin.id));
+
+      Object.keys(overlayMarkersRef.current).forEach((id) => {
+        if (currentIds.has(id)) return;
+        try {
+          map.removeLayer(overlayMarkersRef.current[id]);
+        } catch {}
+        delete overlayMarkersRef.current[id];
+      });
+
+      overlayPins.forEach((pin) => {
+        const icon = createOverlayIcon(L, pin, pin.id === selectedOverlayId);
+        const tooltip = createOverlayTooltip(pin);
+        const existing = overlayMarkersRef.current[pin.id];
+        if (existing) {
+          existing.setIcon(icon).setLatLng([pin.latitude, pin.longitude]);
+          existing.setTooltipContent(tooltip);
+          existing.setZIndexOffset(pin.id === selectedOverlayId ? 1500 : 600);
+          return;
+        }
+        const marker = L.marker([pin.latitude, pin.longitude], {
+          icon,
+          zIndexOffset: pin.id === selectedOverlayId ? 1500 : 600,
+          bubblingMouseEvents: false,
+          alt: pin.label,
+        });
+        marker.on("click", () => onSelectOverlayRef.current?.(pin.id));
+        marker.bindTooltip(tooltip, { direction: "top", offset: [0, -32], className: "map-overlay-tooltip", opacity: 1 });
+        marker.addTo(map);
+        overlayMarkersRef.current[pin.id] = marker;
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [overlayPins, selectedOverlayId, mapReady]);
+
+  const focusKey = overlayFocus?.key;
+  const focusLatitude = overlayFocus?.latitude;
+  const focusLongitude = overlayFocus?.longitude;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map || !focusKey || typeof focusLatitude !== "number" || typeof focusLongitude !== "number") return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    map.stop();
+    map.flyTo([focusLatitude, focusLongitude], Math.max(map.getZoom(), 8), { duration: 0.9, animate: !reducedMotion });
+  }, [focusKey, focusLatitude, focusLongitude, mapReady]);
+
   const targetPin = pins.find((item) => item.pinId === selectedPinId);
   const targetLatitude = targetPin?.latitude;
   const targetLongitude = targetPin?.longitude;
@@ -292,7 +369,8 @@ export function LeafletMap({
           ref={containerRef}
           className={cn(
             "w-full h-full historical-leaflet-map",
-            isAdding && "cursor-crosshair",
+            (isAdding || placing) && "cursor-crosshair",
+            placing && "historical-map-placing",
           )}
           aria-label="Bản đồ tương tác Việt Nam"
         />
@@ -320,11 +398,13 @@ async function drawVietnamBasemap(
 ): Promise<LayerGroup> {
   const layer = L.layerGroup().addTo(map);
 
+  // Label-free basemap (Esri Light Gray Base, no API key; labels live in a separate Esri layer we don't load): standard OSM tiles print place names in the controlling party's language
+  // (e.g. Chinese names on Hoàng Sa / Trường Sa). Every label on this map is drawn by the app in Vietnamese.
   L.tileLayer(
-    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
     {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 16,
+      attribution: 'Nền bản đồ &copy; Esri — Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
     },
   ).addTo(map);
 
@@ -346,11 +426,11 @@ async function drawVietnamBasemap(
   L.geoJSON(vietnamGeoJson, {
     interactive: false,
     style: {
-      color: "#8f2f22",
+      color: "#B8321F",
       weight: 3,
       opacity: 0.95,
-      fillColor: "#c6863f",
-      fillOpacity: 0.42,
+      fillColor: "#F5F2EA",
+      fillOpacity: 0.3,
     },
   }).addTo(layer);
 
@@ -358,9 +438,9 @@ async function drawVietnamBasemap(
   L.geoJSON(provinceGeoJson, {
     interactive: false,
     style: {
-      color: "#74391f",
+      color: "#111111",
       weight: 0.8,
-      opacity: 0.5,
+      opacity: 0.32,
       fillOpacity: 0,
     },
     onEachFeature: (feature, featureLayer) => {
@@ -396,7 +476,7 @@ async function drawVietnamBasemap(
       [16.35, 112.45],
     ],
     {
-      color: "#6a3f1c",
+      color: "#111111",
       dashArray: "6 8",
       opacity: 0.42,
       weight: 1.4,
@@ -412,7 +492,7 @@ async function drawVietnamBasemap(
       [9.65, 114.35],
     ],
     {
-      color: "#6a3f1c",
+      color: "#111111",
       dashArray: "6 8",
       opacity: 0.42,
       weight: 1.4,
@@ -436,7 +516,7 @@ async function drawVietnamBasemap(
 
 function addSeaTexture(L: typeof import("leaflet"), layer: LayerGroup) {
   const lineStyle = {
-    color: "#6a3f1c",
+    color: "#111111",
     opacity: 0.15,
     weight: 1,
     interactive: false,
@@ -475,7 +555,7 @@ function addSeaTexture(L: typeof import("leaflet"), layer: LayerGroup) {
   ].forEach(({ center, radius }) => {
     L.circle(center, {
       radius,
-      color: "#6a3f1c",
+      color: "#111111",
       opacity: 0.12,
       weight: 1,
       fill: false,
@@ -513,9 +593,9 @@ function addIslandCluster(
   points.forEach((point) => {
     L.circleMarker(point, {
       radius: 4,
-      color: "#5d3517",
+      color: "#111111",
       weight: 1.4,
-      fillColor: "#c4934c",
+      fillColor: "#B8321F",
       fillOpacity: 0.92,
       className: "historical-island-dot",
       interactive: false,
@@ -568,6 +648,42 @@ function createCustomIcon(
     iconAnchor: [30, 30],
     className: "landmark-marker",
   });
+}
+
+const OVERLAY_GLYPHS: Record<OverlayPin["variant"], string> = {
+  // Flag: a local-history landmark set by the teacher.
+  class: '<path d="M4 22V4"/><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1"/>',
+  // Clipboard with tick: an assignment.
+  assignment: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+  // Open book: a published local context.
+  local: '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>',
+  // Bookmark: a personal study note.
+  personal: '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>',
+};
+
+function createOverlayIcon(L: typeof import("leaflet"), pin: OverlayPin, isSelected: boolean): DivIcon {
+  return L.divIcon({
+    html: `<div class="map-overlay-pin map-overlay-pin--${pin.variant}${isSelected ? " is-selected" : ""}${pin.muted ? " is-muted" : ""}">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${OVERLAY_GLYPHS[pin.variant]}</svg>
+    </div>`,
+    iconSize: [28, 34],
+    iconAnchor: [14, 34],
+    className: "map-overlay-marker",
+  });
+}
+
+function createOverlayTooltip(pin: OverlayPin) {
+  const box = document.createElement("div");
+  box.className = "map-overlay-tooltip-content";
+  const title = document.createElement("strong");
+  title.textContent = pin.label;
+  box.append(title);
+  if (pin.meta) {
+    const meta = document.createElement("span");
+    meta.textContent = pin.meta;
+    box.append(meta);
+  }
+  return box;
 }
 
 function createBattlePreview(pin: MapPin, battle?: HistoricalEvent) {

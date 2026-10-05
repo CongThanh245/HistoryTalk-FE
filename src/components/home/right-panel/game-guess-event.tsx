@@ -19,18 +19,18 @@ export function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
   };
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="bg-[var(--accent-earth,rgba(196,106,47,0.06))] border border-[rgba(196,106,47,0.18)] rounded-xl p-3.5 text-center">
-        <p className="m-0 mb-0.5 text-[10px] font-bold tracking-[0.14em] uppercase text-[var(--accent-bronze,#c46a2f)]">
+      <div className="bg-[var(--bg-elevated)] border border-[var(--text-primary)] rounded-[2px] p-3.5 text-center">
+        <p className="m-0 mb-1 text-[10px] font-bold tracking-[0.14em] uppercase text-[var(--text-tertiary)]">
           Năm xảy ra
         </p>
-        <p className="m-0 mb-2.5 text-[44px] font-black leading-none tracking-[-2px] text-[var(--burning-flame,#e08040)]">
+        <p className="m-0 mb-2.5 font-display text-[48px] font-extrabold leading-none text-[var(--accent-gold)]">
           {q.year}
         </p>
         <div className="flex flex-wrap gap-[5px] justify-center">
           {q.clues.map((c, i) => (
             <span
               key={i}
-              className="text-[10px] px-2 py-0.5 rounded-[20px] bg-[rgba(196,106,47,0.08)] border border-[rgba(196,106,47,0.16)] text-[var(--burning-flame,#c46a2f)]"
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-[2px] bg-transparent border border-[var(--border-strong)] text-[var(--text-secondary)]"
             >
               {c}
             </span>

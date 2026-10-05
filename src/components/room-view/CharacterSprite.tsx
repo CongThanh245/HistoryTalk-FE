@@ -42,7 +42,7 @@ export function CharacterSprite({
           className="absolute bottom-full left-1/2 mb-3 w-56 animate-fade-in"
           style={{ transform: "translateX(-50%)" }}
         >
-          <div className="relative px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-[0_8px_24px_rgba(0,0,0,0.18),0_0_0_1px_rgba(201,162,77,0.15)] bg-[rgba(255,251,240,0.97)] border border-[rgba(201,162,77,0.35)] text-[#2d3d4f]">
+          <div className="relative px-4 py-3 rounded-[2px] text-sm leading-relaxed shadow-[var(--shadow-soft)] bg-[var(--bg-elevated)] border border-[var(--text-primary)] text-[var(--text-secondary)]">
             {/* Quote marks */}
             <span className="absolute -top-3 left-4 text-3xl leading-none text-accent-gold opacity-60">
               &ldquo;
@@ -50,13 +50,13 @@ export function CharacterSprite({
             <p className="mt-1 italic">{hotspot.greeting}</p>
 
             {/* Character name tag */}
-            <div className="mt-2 pt-2 flex items-center gap-2 border-t border-[rgba(201,162,77,0.2)]">
-              <div className="w-1 h-4 rounded-full bg-accent-gold" />
+            <div className="mt-2 pt-2 flex items-center gap-2 border-t border-[var(--border-default)]">
+              <div className="w-1 h-4 bg-accent-gold" />
               <div>
-                <p className="text-xs font-bold text-accent-gold">
+                <p className="text-xs font-bold text-[var(--gold-on-light)]">
                   {hotspot.characterName}
                 </p>
-                <p className="text-xs text-[#7a7469]">
+                <p className="text-xs text-[var(--text-tertiary)]">
                   {hotspot.title}
                 </p>
               </div>
@@ -64,7 +64,7 @@ export function CharacterSprite({
 
             {/* Tail */}
             <div
-              className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-[rgba(255,251,240,0.97)] border border-[rgba(201,162,77,0.35)]"
+              className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-[var(--bg-elevated)] border border-[var(--text-primary)]"
               style={{ clipPath: "polygon(0 0, 100% 100%, 0 100%)" }}
             />
           </div>
@@ -80,13 +80,13 @@ export function CharacterSprite({
           transform: hotspot.side === "left" ? "scaleX(-1)" : "scaleX(1)",
           animation: "sprite-breathe 3s ease-in-out infinite",
           filter: isActive
-            ? "drop-shadow(0 0 20px rgba(201,162,77,0.8))"
+            ? "drop-shadow(0 0 14px var(--accent-gold))"
             : "drop-shadow(0 8px 16px rgba(0,0,0,0.5))",
         }}
       >
         {/* Sprite image — circular crop thành silhouette */}
         <div
-          className="w-full h-full overflow-hidden bg-[#2d1810]"
+          className="w-full h-full overflow-hidden bg-[var(--abyssal-blue)]"
           style={{
             clipPath:
               "polygon(20% 0%, 80% 0%, 95% 15%, 100% 50%, 95% 85%, 80% 100%, 20% 100%, 5% 85%, 0% 50%, 5% 15%)",
@@ -97,17 +97,17 @@ export function CharacterSprite({
             alt={hotspot.characterName}
             className="w-full h-full object-cover object-top"
             style={{
-              filter: "sepia(30%) contrast(1.1) brightness(0.9)",
+              filter: "grayscale(0.45) contrast(1.08) brightness(0.92)",
             }}
           />
           {/* Historical tone overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[rgba(20,10,5,0.4)]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[rgba(17,17,17,0.4)]" />
         </div>
 
         {/* Glow ring when active */}
         {isActive && (
           <div
-            className="absolute inset-0 rounded-full animate-pulse shadow-[0_0_0_3px_rgba(201,162,77,0.6),0_0_30px_rgba(201,162,77,0.3)]"
+            className="absolute inset-0 rounded-full animate-pulse shadow-[0_0_0_3px_var(--accent-gold)]"
             style={{
               clipPath:
                 "polygon(20% 0%, 80% 0%, 95% 15%, 100% 50%, 95% 85%, 80% 100%, 20% 100%, 5% 85%, 0% 50%, 5% 15%)",
@@ -120,10 +120,10 @@ export function CharacterSprite({
       <div className="text-center mt-1.5">
         <div
           className={cn(
-            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm transition-all",
+            "inline-flex items-center gap-1.5 px-3 py-1 rounded-[2px] text-xs font-bold backdrop-blur-sm transition-colors",
             isActive
-              ? "bg-accent-gold text-[var(--text-inverse)] shadow-[0_4px_12px_rgba(201,162,77,0.5)]"
-              : "bg-[rgba(14,26,43,0.75)] text-white/90 border border-[rgba(201,162,77,0.3)]"
+              ? "bg-accent-gold text-white"
+              : "bg-[rgba(17,17,17,0.8)] text-white/90 border border-white/25"
           )}
         >
           <span

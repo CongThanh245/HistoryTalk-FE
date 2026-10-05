@@ -15,14 +15,14 @@ export function ResultBanner({
   return (
     <div className="flex flex-col gap-[7px] mt-1">
       <div
-        className={`rounded-[9px] px-3 py-[9px] border ${
+        className={`rounded-[2px] px-3 py-[9px] border ${
           correct
-            ? "bg-[rgba(16,40,24,0.08)] border-[rgba(74,178,98,0.4)]"
-            : "bg-[rgba(90,35,35,0.08)] border-[rgba(184,50,42,0.4)]"
+            ? "bg-[var(--status-success-bg)] border-[var(--status-success)]"
+            : "bg-[var(--status-danger-bg)] border-[var(--accent-danger)]"
         }`}
       >
         <p
-          className={`m-0 text-xs font-bold ${correct ? "text-[#1f5c34]" : "text-[#9b2222]"}`}
+          className={`m-0 text-[11px] font-bold uppercase tracking-[0.1em] ${correct ? "text-[var(--status-success)]" : "text-[var(--accent-danger)]"}`}
         >
           {correct ? "Chính xác!" : "Chưa đúng rồi!"}
         </p>
@@ -30,20 +30,20 @@ export function ResultBanner({
       {!showExp ? (
         <button
           onClick={() => setShowExp(true)}
-          className="text-[11px] font-semibold text-[#7a5a1e] bg-accent-gold/[0.07] border border-accent-gold/[0.18] rounded-[7px] cursor-pointer px-2.5 py-1.5 text-left"
+          className="archive-link self-start cursor-pointer bg-transparent text-[11px]"
         >
           Xem giải thích →
         </button>
       ) : (
-        <div className="bg-accent-gold/[0.05] border border-accent-gold/[0.16] rounded-[7px] px-3 py-[9px]">
-          <p className="m-0 text-[11.5px] leading-[1.65] text-[#2d3d4f]">
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-[2px] px-3 py-[9px]">
+          <p className="m-0 text-[11.5px] leading-[1.65] text-[var(--text-secondary)]">
             {explanation}
           </p>
         </div>
       )}
       <button
         onClick={onNext}
-        className="text-xs font-bold cursor-pointer py-[9px] rounded-lg bg-[#e8d5a8] border border-[#b8922a] text-[#5c3d0e] w-full"
+        className="btn-ink w-full min-h-[38px] cursor-pointer text-xs"
       >
         Câu tiếp theo
       </button>

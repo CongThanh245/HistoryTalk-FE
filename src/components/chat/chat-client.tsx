@@ -155,7 +155,7 @@ export function ChatClient({
   if (isLoadingCharacter || !activeCharacter) {
     return (
       <div className="flex items-center justify-center w-full h-full">
-        <div className="w-6 h-6 border-2 rounded-full border-accent-gold border-t-transparent animate-spin" />
+        <div className="w-6 h-6 border-2 rounded-full border-[var(--text-primary)] border-t-transparent animate-spin" />
       </div>
     );
   }
