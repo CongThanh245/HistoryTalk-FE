@@ -22,9 +22,10 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 import { useEvents } from "@/features/events/hooks";
-import { useCreateMapPin, useDeleteMapPin, useMapPins, useOverviewMapPins } from "@/features/map-pins/hooks";
+import { useCreateMapPin, useDeleteMapPin, useMapPins, useOverviewMapPins, useUpdateMapPin } from "@/features/map-pins/hooks";
 import { useEventCharacters } from "@/features/landmark/hooks";
 import { useAuthStore } from "@/store/auth.store";
 import type { CreateMapPinRequest, MapPin as BattlePin } from "@/services/map-pin.service";
@@ -120,6 +121,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
 
   const createPin = useCreateMapPin(activeContextId, activeYear);
   const deletePin = useDeleteMapPin(activeContextId, activeYear);
+  const updatePin = useUpdateMapPin(activeContextId, activeYear);
   const { data: characters = [], isLoading: charactersLoading } = useEventCharacters(activeContextId);
 
   const mainPin = useMemo(
@@ -217,8 +219,12 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
 
   const handleCreate = async (payload: CreateMapPinRequest) => {
     try {
-      if (mainPin) await deletePin.mutateAsync(mainPin.pinId);
-      await createPin.mutateAsync(payload);
+      // Moving an existing pin edits it in place (PUT keeps its pinId; falls back to create-then-delete on 405).
+      if (mainPin) {
+        await updatePin.mutateAsync({ pin: mainPin, changes: { ...payload, description: payload.description ?? "" } });
+        toast.success("Đã cập nhật vị trí ghim");
+      }
+      else await createPin.mutateAsync(payload);
       setDraftCoordinates(null);
       setIsAdding(false);
     } catch {
@@ -417,7 +423,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
                 initialPin={mainPin}
                 coordinates={draftCoordinates}
                 year={activeYear}
-                isSubmitting={createPin.isPending || deletePin.isPending}
+                isSubmitting={createPin.isPending || deletePin.isPending || updatePin.isPending}
                 onCancel={() => {
                   setIsAdding(false);
                   setDraftCoordinates(null);
