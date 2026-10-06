@@ -105,7 +105,7 @@ export function useUpdateMapPin(contextId: string | null, year: number) {
       );
     },
     onError: (error) =>
-      toast.error(getErrorMessage(error, "Không lưu được thuyết minh. Vui lòng thử lại.")),
+      toast.error(getErrorMessage(error, "Không lưu được ghim. Vui lòng thử lại.")),
   });
 }
 
