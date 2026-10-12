@@ -51,7 +51,40 @@ export interface BattleSymbol {
   y: number;
   size: number;
   rotation: number;
+  /** Phase the symbol appears in; missing or unknown = always shown (background layer). */
+  phaseId?: string;
+  /** How the symbol appears during playback; missing = "auto" (chosen from the type). */
+  effect?: SymbolEffect;
 }
+
+export const SYMBOL_EFFECTS = { auto: "Tự động", draw: "Vẽ dần", fade: "Hiện dần", pop: "Bật ra", pulse: "Nhấp nháy" } as const;
+export type SymbolEffect = keyof typeof SYMBOL_EFFECTS;
+/** Effect used for "auto": arrows draw themselves, clashes pulse, outcomes pop in. */
+export const autoEffect = (type: BattleSymbolType): Exclude<SymbolEffect, "auto"> =>
+  ["arrow", "flank", "march", "retreat", "defenseLine", "stakes"].includes(type) ? "draw"
+    : type === "clash" ? "pulse" : type === "victory" || type === "destroyed" ? "pop" : "fade";
+export const resolveEffect = (symbol: BattleSymbol) =>
+  !symbol.effect || symbol.effect === "auto" ? autoEffect(symbol.type) : symbol.effect;
+
+/** Area of the image in % of its width (x, w) and height (y, h). */
+export interface CameraRect { x: number; y: number; w: number; h: number }
+
+/** One scene of the battle: its symbols appear while its narration is read. */
+export interface BattlePhase {
+  id: string;
+  title: string;
+  narration: string;
+  /** "auto" zooms onto the phase's symbols, "full" keeps the whole map, "frame" zooms onto `focus`. */
+  camera: "auto" | "full" | "frame";
+  /** Area drawn by the editor for camera "frame". */
+  focus?: CameraRect;
+}
+
+const isCameraRect = (r: unknown): r is CameraRect => !!r && typeof r === "object"
+  && (["x", "y", "w", "h"] as const).every(k => Number.isFinite((r as CameraRect)[k]))
+  && (r as CameraRect).w > 0 && (r as CameraRect).h > 0;
+export const PHASE_NARRATION_MAX = 2000;
+
 export interface BattleMap {
   version: 1;
   mode: "custom" | "image";
@@ -59,6 +92,8 @@ export interface BattleMap {
   imageSource: string;
   factions: BattleFaction[];
   symbols: BattleSymbol[];
+  /** Ordered playback scenes. Maps saved before phases existed have none. */
+  phases?: BattlePhase[];
 }
 
 export const emptyBattleMap = (): BattleMap => ({
@@ -77,5 +112,10 @@ export function isBattleMap(value: unknown): value is BattleMap {
     && map.symbols.every(s => s && typeof s.id === "string" && Object.hasOwn(SYMBOL_LABELS, s.type)
       && typeof s.label === "string" && map.factions.some(f => f.id === s.factionId)
       && [s.x, s.y, s.size, s.rotation].every(Number.isFinite)
-      && s.x >= 0 && s.x <= 100 && s.y >= 0 && s.y <= 100 && s.size >= SYMBOL_SIZE_MIN && s.size <= SYMBOL_SIZE_MAX);
+      && s.x >= 0 && s.x <= 100 && s.y >= 0 && s.y <= 100 && s.size >= SYMBOL_SIZE_MIN && s.size <= SYMBOL_SIZE_MAX
+      && (s.phaseId === undefined || typeof s.phaseId === "string")
+      && (s.effect === undefined || Object.hasOwn(SYMBOL_EFFECTS, s.effect)))
+    && (map.phases === undefined || (Array.isArray(map.phases) && map.phases.every(p => p && typeof p.id === "string"
+      && typeof p.title === "string" && typeof p.narration === "string" && ["auto", "full", "frame"].includes(p.camera)
+      && (p.focus === undefined || isCameraRect(p.focus)))));
 }

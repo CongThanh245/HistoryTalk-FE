@@ -43,6 +43,7 @@ export interface TeacherAccount {
   schoolId: string;
   fullName: string;
   email: string;
+  phone?: string;
   subject: string;
   status: AccountStatus;
   createdAt: string;
@@ -90,8 +91,13 @@ export interface ClassMapPin {
   year?: number;
   /** Assignment pins carry a deadline (Sprint 6: giao bài tập kèm deadline). */
   dueDate?: string;
+  /** ASSIGNMENT pins may point at an assignment of the same class; its `dueAt` then wins over `dueDate`. */
+  assignmentId?: string;
   createdAt: string;
 }
+
+/** Marker colour a learner may give a personal note (default jade). */
+export type PersonalPinColor = "jade" | "crimson" | "gold" | "men-lam" | "ink";
 
 /** Personal study pin of a customer or school student (visible only to its owner). */
 export interface PersonalMapPin {
@@ -101,7 +107,23 @@ export interface PersonalMapPin {
   note: string;
   latitude: number;
   longitude: number;
+  /** Optional colour and short tag ("Ôn thi", "Tham quan"…) to group notes. */
+  color?: PersonalPinColor;
+  tag?: string;
   createdAt: string;
+}
+
+/** Audit trail of account / school changes, shown on the System Admin school detail ("Nhật ký"). */
+export type SchoolActivityKind = "SCHOOL" | "ADMIN" | "TEACHER" | "STUDENT" | "CLASS";
+
+export interface SchoolActivity {
+  id: string;
+  schoolId: string;
+  kind: SchoolActivityKind;
+  /** Who did it, e.g. "Quản trị hệ thống" or the School Admin's name. */
+  actor: string;
+  message: string;
+  at: string;
 }
 
 /** A row parsed from the student import file before it is committed. */
@@ -117,8 +139,16 @@ export interface StudentImportRow {
 
 // ── Lịch sử địa phương (Role Matrix IV, rows 12–14) ─────────────────────────
 
-/** Content status flow: teacher drafts and submits, School Admin publishes / deactivates / trashes (row 13). */
+/**
+ * Content status flow (row 13).
+ * CLASS scope: the teacher publishes directly (DRAFT → PUBLISHED), can unpublish (INACTIVE) or trash it.
+ * SCHOOL scope: the teacher submits (DRAFT → PENDING) and the School Admin publishes / deactivates / trashes.
+ * The School Admin may also deactivate a teacher-published CLASS item (INACTIVE + note).
+ */
 export type LocalContentStatus = "DRAFT" | "PENDING" | "PUBLISHED" | "INACTIVE" | "TRASH";
+
+/** Who sees the content once published: the selected classes (CLASS) or the whole school (SCHOOL). */
+export type LocalContentScope = "CLASS" | "SCHOOL";
 
 export type LocalContentKind = "CONTEXT" | "CHARACTER" | "QUIZ";
 
@@ -126,7 +156,9 @@ interface LocalContentBase {
   id: string;
   schoolId: string;
   authorId: string;
-  /** Classes allowed to see it once published (row 14: "Lớp mình"). */
+  /** CLASS = only `classIds` see it (teacher self-publishes); SCHOOL = the whole school (School Admin approves). */
+  scope: LocalContentScope;
+  /** Classes allowed to see a CLASS-scope item once published (row 14: "Lớp mình"); empty for SCHOOL scope. */
   classIds: string[];
   status: LocalContentStatus;
   /** School Admin's note when sending back or deactivating. */

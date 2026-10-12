@@ -3,12 +3,13 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AudioLines,
   AlertCircle,
   ArrowUpRight,
   BookOpen,
+  Bookmark,
   ChevronDown,
   Link2,
   Eye,
@@ -25,14 +26,30 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 import { useEvents } from "@/features/events/hooks";
-import { useCreateMapPin, useDeleteMapPin, useMapPins, useOverviewMapPins, useUpdateMapPin } from "@/features/map-pins/hooks";
+import {
+  useCreateMapPin,
+  useDeleteMapPin,
+  useMapPins,
+  useOverviewMapPins,
+  useUpdateMapPin,
+  type MapPinMessages,
+} from "@/features/map-pins/hooks";
+import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { useEventCharacters } from "@/features/landmark/hooks";
 import { useAuthStore } from "@/store/auth.store";
 import type { CreateMapPinRequest, MapPin as BattlePin } from "@/services/map-pin.service";
 import type { Character } from "@/services/character.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { BattleDetailView } from "./BattleDetailView";
-import type { MapOverlay } from "./map-overlay.types";
+import type { BattleOverviewItem, MapOverlay, OverlayPin, StudyNoteSummary } from "./map-overlay.types";
+import {
+  STUDY_NOTE_COLOR,
+  STUDY_NOTE_PREFIX,
+  STUDY_NOTE_ROLES,
+  StudyNoteForm,
+  StudyNotesSection,
+  type StudyNoteDraft,
+} from "./StudyNotes";
 import styles from "./battle-experience.module.css";
 
 const LeafletMap = dynamic(
@@ -63,6 +80,18 @@ interface HistoricalMapModalProps {
 }
 
 type Coordinates = { latitude: number; longitude: number };
+/** Add/edit form of a study note; `placing` = the next map click sets its position. */
+type NoteEditor = { contextId: string; pin: BattlePin | null; coordinates: Coordinates | null; placing: boolean };
+
+const STUDY_NOTE_MESSAGES: MapPinMessages = {
+  created: "Đã lưu ghi chú",
+  deleted: "Đã xóa ghi chú",
+  createError: "Không lưu được ghi chú. Vui lòng thử lại.",
+  updateError: "Không cập nhật được ghi chú. Vui lòng thử lại.",
+  deleteError: "Không xóa được ghi chú. Vui lòng thử lại.",
+};
+
+const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
 const DEFAULT_YEAR = new Date().getFullYear();
 const HISTORICAL_MAP_IMAGE = "/war.jpg";
 
@@ -76,7 +105,13 @@ function formatYear(year: number) {
 
 export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, onRouteChange, overlay }: HistoricalMapModalProps) {
   const user = useAuthStore((state) => state.user);
-  const isAdmin = user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN";
+  // "Xem như người học": a Content Admin sees the learner screen, without any editing control.
+  const isAdmin = (user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN") && !overlay?.previewAsLearner;
+  const authHydrated = useAuthStore((state) => state.hasHydrated);
+  // Personal study notes (USER pins): learners only — never in the admin "Xem như người học" preview.
+  const canTakeNotes =
+    Boolean(user && (STUDY_NOTE_ROLES as readonly string[]).includes(user.role)) && !overlay?.previewAsLearner;
+  const isGuest = authHydrated && !user;
   const [localRoute, setLocalRoute] = useState<MapRoute>({ battle: null, view: "map" });
   const route = controlledRoute ?? localRoute;
   const navigate = (next: MapRoute, how: MapRouteNavigation) => {
@@ -91,11 +126,18 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
   const [detailCharacterId, setDetailCharacterId] = useState<string | undefined>();
   /** Screen the editor returns to when closed (only meaningful without browser history). */
   const [editorOrigin, setEditorOrigin] = useState<"map" | "detail">("map");
+  const [noteEditor, setNoteEditor] = useState<NoteEditor | null>(null);
+  const [selectedNote, setSelectedNote] = useState<{ id: string; contextId: string } | null>(null);
+  const [pendingNoteDelete, setPendingNoteDelete] = useState<BattlePin | null>(null);
+  /** Camera target for a study note; only wins while the custom layer's focus is unchanged. */
+  const [noteFocus, setNoteFocus] = useState<(Coordinates & { key: string; seq: number; overlayKey?: string }) | null>(null);
 
   // Keep the side panel in step with the selected battle, including browser Back/Forward.
   useEffect(() => {
     setPanelDismissed(!contextId);
     setSelectedPin((pin) => (pin && pin.contextId === contextId ? pin : null));
+    setNoteEditor((editor) => (editor && editor.contextId === contextId ? editor : null));
+    setSelectedNote((note) => (note && note.contextId === contextId ? note : null));
   }, [contextId]);
 
   const { data: eventsData, isLoading: eventsLoading, isError: eventsError, refetch: refetchEvents } =
@@ -123,13 +165,44 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
   const deletePin = useDeleteMapPin(activeContextId, activeYear);
   const updatePin = useUpdateMapPin(activeContextId, activeYear);
   const { data: characters = [], isLoading: charactersLoading } = useEventCharacters(activeContextId);
+  const createNote = useCreateMapPin(activeContextId, activeYear, STUDY_NOTE_MESSAGES);
+  const updateNote = useUpdateMapPin(activeContextId, activeYear, STUDY_NOTE_MESSAGES);
+  const deleteNote = useDeleteMapPin(activeContextId, activeYear, STUDY_NOTE_MESSAGES);
 
   const mainPin = useMemo(
-    () => pins.find((pin) => pin.pinOwnerType === "ADMIN") ?? pins[0] ?? null,
+    () => pins.find((pin) => pin.pinOwnerType === "ADMIN") ?? null,
     [pins],
   );
   const liveSelectedPin = selectedPin && pins.some((pin) => pin.pinId === selectedPin.pinId) ? selectedPin : null;
   const focusedPin = panelDismissed ? null : liveSelectedPin ?? mainPin;
+
+  // ── Study notes of the selected battle (the API returns only the caller's own USER pins) ──
+  const studyNotes = useMemo(
+    () => (canTakeNotes ? pins.filter((pin) => pin.pinOwnerType === "USER") : []),
+    [canTakeNotes, pins],
+  );
+  const selectedNoteId = selectedNote && studyNotes.some((pin) => pin.pinId === selectedNote.id) ? selectedNote.id : null;
+  const notePlacing = Boolean(noteEditor?.placing) && !isAdding;
+  const notesBusy = Boolean(noteEditor) || createNote.isPending || updateNote.isPending || deleteNote.isPending;
+  const showNoteMarkers = canTakeNotes && !overlay?.hideStudyNotes;
+  const editingNoteId = noteEditor?.pin?.pinId;
+  const overlayPinsSource = overlay?.pins;
+  const activeTitle = activeEvent?.title;
+  const mapOverlayPins = useMemo<OverlayPin[] | undefined>(() => {
+    if (!showNoteMarkers || studyNotes.length === 0) return overlayPinsSource;
+    const notePins: OverlayPin[] = studyNotes
+      .filter((pin) => pin.pinId !== editingNoteId)
+      .map((pin) => ({
+        id: STUDY_NOTE_PREFIX + pin.pinId,
+        label: pin.label,
+        latitude: pin.latitude,
+        longitude: pin.longitude,
+        variant: "personal",
+        tone: "jade",
+        meta: pin.description?.trim() ? clip(pin.description.trim(), 120) : `Ghi chú · ${activeTitle ?? formatYear(pin.pinYear)}`,
+      }));
+    return [...(overlayPinsSource ?? []), ...notePins];
+  }, [showNoteMarkers, studyNotes, overlayPinsSource, editingNoteId, activeTitle]);
 
   // Build the visible pin list for the map overview.
   // When admin is actively placing a new pin, exclude the current context's pin
@@ -138,7 +211,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
   const visiblePins = overviewQueries.flatMap((query, index) => {
     const eventId = events[index]?.id;
     if (isAdding && eventId === activeContextId) return [];
-    const pin = query.data?.find((item) => item.pinOwnerType === "ADMIN") ?? query.data?.[0];
+    const pin = query.data?.find((item) => item.pinOwnerType === "ADMIN");
     return pin ? [pin] : [];
   });
 
@@ -147,7 +220,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
   const pinnedEventIds = useMemo(() => {
     const ids = new Set<string>();
     overviewQueries.forEach((query, index) => {
-      const hasPin = query.data && query.data.length > 0;
+      const hasPin = query.data?.some((pin) => pin.pinOwnerType === "ADMIN");
       if (hasPin && events[index]?.id) {
         ids.add(events[index].id);
       }
@@ -160,8 +233,49 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
     [isAdmin, events, pinnedEventIds],
   );
   const overviewQueriesLoading = overviewQueries.some((q) => q.isLoading);
+
+  // Every saved study note of the viewer, read from the per-battle queries the overview already
+  // makes (each battle at its own year), so listing them costs no extra request.
+  const allStudyNotes = useMemo<StudyNoteSummary[]>(() => {
+    if (!canTakeNotes) return [];
+    return overviewQueries.flatMap((query, index) => {
+      const event = events[index];
+      if (!event) return [];
+      return (query.data ?? [])
+        .filter((pin) => pin.pinOwnerType === "USER")
+        .map((pin) => ({
+          pinId: pin.pinId,
+          contextId: pin.contextId,
+          label: pin.label,
+          note: pin.description,
+          battleTitle: event.title,
+          year: pin.pinYear,
+          latitude: pin.latitude,
+          longitude: pin.longitude,
+        }));
+    });
+  }, [canTakeNotes, overviewQueries, events]);
+
+  // Summary of every selectable battle for the overlay search box and the admin overview list.
+  const battleOverview: BattleOverviewItem[] = selectableEvents.map((event) => {
+    const query = overviewQueries[events.indexOf(event)];
+    const pin = query?.data?.find((item) => item.pinOwnerType === "ADMIN");
+    const battleMap = event.battleMap;
+    return {
+      id: event.id,
+      title: event.title,
+      year: event.year,
+      location: event.location ?? undefined,
+      coordinates: pin ? { latitude: pin.latitude, longitude: pin.longitude } : null,
+      hasNarration:
+        Boolean(battleMap?.phases?.some((phase) => phase.narration.trim().length > 0)) || Boolean(pin?.description?.trim()),
+      hasBattleMap: Boolean(battleMap && (battleMap.symbols.length > 0 || battleMap.imageUrl)),
+    };
+  });
   const canDeleteSelected = Boolean(focusedPin && isAdmin && focusedPin.pinOwnerType === "ADMIN");
-  const overlayPlacing = Boolean(overlay?.placing) && !isAdding;
+  const overlayPlacing = Boolean(overlay?.placing) && !isAdding && !notePlacing;
+  const overlayFocusKey = overlay?.focus?.key;
+  const mapFocus = noteFocus && noteFocus.overlayKey === overlayFocusKey ? noteFocus : overlay?.focus ?? null;
   const overlayEscapeRef = useRef(overlay?.onEscape);
   useEffect(() => {
     overlayEscapeRef.current = overlay?.onEscape;
@@ -173,6 +287,16 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
       if (event.key !== "Escape") return;
       if (route.view !== "map") {
         return; // Detail/editor handles Escape and unsaved changes.
+      } else if (pendingNoteDelete) {
+        return; // The confirm dialog closes itself.
+      } else if (!isAdding && noteEditor) {
+        // Esc while re-placing an existing note returns to its form; otherwise it closes the form.
+        if (noteEditor.placing && noteEditor.coordinates) setNoteEditor({ ...noteEditor, placing: false });
+        else setNoteEditor(null);
+        return;
+      } else if (!isAdding && selectedNote) {
+        setSelectedNote(null);
+        return;
       } else if (!isAdding && overlayEscapeRef.current?.()) {
         return; // A custom layer (placement, detail panel) consumed it.
       } else if (isAdding || selectedPin) {
@@ -191,7 +315,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- navigate is recreated each render
-  }, [isAdding, isOpen, onClose, selectedPin, route.view, focusedPin, panelDismissed]);
+  }, [isAdding, isOpen, onClose, selectedPin, route.view, focusedPin, panelDismissed, noteEditor, selectedNote, pendingNoteDelete]);
 
   const chooseContext = (nextContextId: string) => {
     navigate({ battle: nextContextId || null, view: "map" }, "replace");
@@ -200,6 +324,8 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
     setDraftCoordinates(null);
     setIsAdding(false);
     setDetailCharacterId(undefined);
+    setNoteEditor(null);
+    setSelectedNote(null);
   };
 
   const openScreen = (view: "detail" | "edit", characterId?: string) => {
@@ -215,13 +341,85 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
     setSelectedPin(null);
     setDraftCoordinates(null);
     setIsAdding(true);
+    setNoteEditor(null);
+  };
+
+  // ── Study notes ──
+  const focusNote = (coordinates: Coordinates, id: string) =>
+    setNoteFocus((previous) => {
+      const seq = (previous?.seq ?? 0) + 1;
+      return { latitude: coordinates.latitude, longitude: coordinates.longitude, seq, key: `${id}:${seq}`, overlayKey: overlayFocusKey };
+    });
+
+  const selectNote = (pin: { pinId: string; contextId: string; latitude: number; longitude: number }) => {
+    setSelectedNote({ id: pin.pinId, contextId: pin.contextId });
+    setPanelDismissed(false);
+    focusNote(pin, pin.pinId);
+  };
+
+  const startNote = () => {
+    if (!canTakeNotes || !activeContextId) return;
+    setIsAdding(false);
+    setDraftCoordinates(null);
+    setSelectedNote(null);
+    setPanelDismissed(false);
+    setNoteEditor({ contextId: activeContextId, pin: null, coordinates: null, placing: true });
+  };
+
+  const editNote = (pin: BattlePin, move: boolean) => {
+    if (!canTakeNotes) return;
+    setNoteEditor({
+      contextId: pin.contextId,
+      pin,
+      coordinates: { latitude: pin.latitude, longitude: pin.longitude },
+      placing: move,
+    });
+  };
+
+  const saveNote = async (draft: StudyNoteDraft) => {
+    if (!noteEditor?.coordinates) return;
+    const position = { latitude: noteEditor.coordinates.latitude, longitude: noteEditor.coordinates.longitude };
+    try {
+      const saved = noteEditor.pin
+        ? await updateNote.mutateAsync({
+            pin: noteEditor.pin,
+            // "" clears the note on the server.
+            changes: { label: draft.label, description: draft.note, ...position },
+          })
+        : await createNote.mutateAsync({ label: draft.label, description: draft.note || undefined, ...position, pinYear: activeYear });
+      if (noteEditor.pin) toast.success("Đã cập nhật ghi chú");
+      setNoteEditor(null);
+      setSelectedNote({ id: saved.pinId, contextId: saved.contextId });
+    } catch {
+      // The mutation shows the error toast; keep the form for retry.
+    }
+  };
+
+  const confirmNoteDelete = async () => {
+    const pin = pendingNoteDelete;
+    if (!pin) return;
+    setPendingNoteDelete(null);
+    try {
+      await deleteNote.mutateAsync(pin.pinId);
+      setSelectedNote(null);
+    } catch {
+      // Toast already shown.
+    }
+  };
+
+  const openStudyNote = (note: StudyNoteSummary) => {
+    if (note.contextId !== activeContextId) chooseContext(note.contextId);
+    setIsAdding(false);
+    setNoteEditor(null);
+    selectNote(note);
   };
 
   const handleCreate = async (payload: CreateMapPinRequest) => {
     try {
       // Moving an existing pin edits it in place (PUT keeps its pinId; falls back to create-then-delete on 405).
       if (mainPin) {
-        await updatePin.mutateAsync({ pin: mainPin, changes: { ...payload, description: payload.description ?? "" } });
+        // No description: narration now lives in the battle map phases; the stored text is left as is.
+        await updatePin.mutateAsync({ pin: mainPin, changes: payload });
         toast.success("Đã cập nhật vị trí ghim");
       }
       else await createPin.mutateAsync(payload);
@@ -253,9 +451,9 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
         editing={route.view === "edit"}
         onOpenEditor={() => openScreen("edit")}
         onCloseEditor={() => navigate({ battle: activeEvent.id, view: editorOrigin }, "back")}
-        onPreview={() => navigate({ battle: activeEvent.id, view: "detail" }, "replace")}
         onBack={() => navigate({ battle: activeEvent.id, view: "map" }, "back")}
         onClose={() => { navigate({ battle: activeEvent.id, view: "map" }, "back"); setSelectedPin(null); }}
+        previewAsLearner={overlay?.previewAsLearner}
       />
     );
   }
@@ -312,6 +510,20 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
             </button>
           )}
 
+          {canTakeNotes && activeContextId && mainPin && (
+            <button
+              type="button"
+              onClick={startNote}
+              disabled={notesBusy}
+              aria-label="Thêm ghi chú cho trận đánh này"
+              title="Thêm ghi chú của tôi"
+              className="btn-line h-10 min-h-0 px-3 text-xs disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              <Bookmark size={16} className="text-[var(--jade)]" />
+              <span className="hidden sm:inline">Thêm ghi chú</span>
+            </button>
+          )}
+
           {/* Nút X chỉ hiện khi đang có pin được chọn/hiển thị */}
           {!panelDismissed && activeContextId && (
             <button
@@ -335,12 +547,14 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
           ? "grid-rows-1 lg:grid-cols-1 lg:grid-rows-1 lg:overflow-hidden"
           : "grid-rows-[minmax(200px,35%)_1fr] lg:grid-cols-[minmax(0,1fr)_390px] lg:grid-rows-1 lg:overflow-hidden",
       )}>
-        <main className="relative min-h-0 min-w-0 overflow-hidden border-r border-[var(--text-primary)]">
+        <main className="map-stage relative min-h-0 min-w-0 overflow-hidden border-r border-[var(--text-primary)]">
           <LeafletMap
             battle={activeEvent}
             battles={events}
             pins={overlay?.hideBattlePins ? [] : visiblePins}
-            draftCoordinates={draftCoordinates ?? (isAdding ? null : overlay?.draft ?? null)}
+            draftCoordinates={draftCoordinates ?? (isAdding ? null : noteEditor ? noteEditor.coordinates : overlay?.draft ?? null)}
+            draftLabel={noteEditor && !isAdding ? "Ghi chú · Chưa lưu" : undefined}
+            draftColor={noteEditor && !isAdding ? STUDY_NOTE_COLOR : undefined}
             selectedPinId={focusedPin?.pinId ?? null}
             panelDismissed={panelDismissed}
             isAdding={isAdding}
@@ -354,26 +568,56 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
             onMapClick={
               isAdding
                 ? setDraftCoordinates
-                : overlayPlacing
+                : notePlacing
+                  ? (coordinates) => setNoteEditor((editor) => (editor ? { ...editor, coordinates, placing: false } : editor))
+                  : overlayPlacing
                   ? overlay?.onMapClick
                   : (coordinates) => {
                       overlay?.onMapClick?.(coordinates);
                       chooseContext("");
                     }
             }
-            overlayPins={overlay?.pins}
-            selectedOverlayId={overlay?.selectedId ?? null}
-            onSelectOverlayPin={overlay?.onSelectPin}
-            overlayFocus={overlay?.focus ?? null}
-            placing={overlayPlacing}
+            overlayPins={mapOverlayPins}
+            selectedOverlayId={selectedNoteId && showNoteMarkers ? STUDY_NOTE_PREFIX + selectedNoteId : overlay?.selectedId ?? null}
+            onSelectOverlayPin={(id) => {
+              if (id.startsWith(STUDY_NOTE_PREFIX)) {
+                const pin = studyNotes.find((note) => note.pinId === id.slice(STUDY_NOTE_PREFIX.length));
+                if (pin && !noteEditor) selectNote(pin);
+                return;
+              }
+              setSelectedNote(null);
+              overlay?.onSelectPin?.(id);
+            }}
+            overlayFocus={mapFocus}
+            placing={overlayPlacing || notePlacing}
           />
 
-          {overlay?.renderControls?.({ battleCount: overlay.hideBattlePins ? 0 : visiblePins.length })}
+          {overlay?.renderControls?.({
+            battleCount: overlay.hideBattlePins ? 0 : visiblePins.length,
+            battles: battleOverview,
+            battlesLoading: eventsLoading || overviewQueriesLoading,
+            battlesError: eventsError,
+            retryBattles: () => void refetchEvents(),
+            selectedBattleId: panelDismissed ? null : activeContextId,
+            selectBattle: chooseContext,
+            canTakeNotes,
+            studyNotes: allStudyNotes,
+            studyNotesLoading: canTakeNotes && (eventsLoading || overviewQueriesLoading),
+            openStudyNote,
+            selectedStudyNoteId: selectedNoteId,
+            addStudyNote: canTakeNotes && activeContextId && mainPin && !notesBusy && !panelDismissed ? startNote : null,
+          })}
 
 
           {pinsFetching && !pinsLoading && (
             <StatusPill className="right-4 top-4">
               <Loader2 className="animate-spin" size={14} /> Đang cập nhật
+            </StatusPill>
+          )}
+
+          {notePlacing && (
+            <StatusPill className="left-1/2 top-4 -translate-x-1/2 bg-text-primary text-text-inverse">
+              <Bookmark size={16} /> Chạm vào bản đồ để đặt ghi chú
             </StatusPill>
           )}
 
@@ -430,6 +674,19 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
                 }}
                 onSubmit={handleCreate}
               />
+            ) : noteEditor ? (
+              <StudyNoteForm
+                key={noteEditor.pin?.pinId ?? "new"}
+                battleTitle={activeEvent?.title ?? ""}
+                year={activeYear}
+                initial={noteEditor.pin}
+                coordinates={noteEditor.coordinates}
+                placing={noteEditor.placing}
+                submitting={createNote.isPending || updateNote.isPending}
+                onPickOnMap={() => setNoteEditor({ ...noteEditor, placing: true })}
+                onCancel={() => setNoteEditor(null)}
+                onSubmit={saveNote}
+              />
             ) : (
               <BattleContextPanel
                 key={activeContextId}
@@ -445,11 +702,40 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
                 onOpenDetail={() => openScreen("detail")}
                 onOpenEditor={() => openScreen("edit")}
                 onOpenCharacter={(id) => openScreen("detail", id)}
+                notesSlot={
+                  canTakeNotes ? (
+                    <StudyNotesSection
+                      mode="learner"
+                      notes={studyNotes}
+                      loading={pinsLoading}
+                      selectedId={selectedNoteId}
+                      busy={notesBusy}
+                      onSelect={(pin) => (pin.pinId === selectedNoteId ? setSelectedNote(null) : selectNote(pin))}
+                      onAdd={startNote}
+                      onEdit={(pin) => editNote(pin, false)}
+                      onMove={(pin) => editNote(pin, true)}
+                      onDelete={setPendingNoteDelete}
+                    />
+                  ) : isGuest && activeEvent ? (
+                    <StudyNotesSection mode="guest" />
+                  ) : null
+                }
               />
             )}
           </aside>
         )}
       </div>
+
+      <ConfirmDialog
+        open={pendingNoteDelete !== null}
+        onOpenChange={(open) => !open && setPendingNoteDelete(null)}
+        title="Xóa ghi chú này?"
+        description={pendingNoteDelete ? `«${pendingNoteDelete.label}» sẽ bị xóa vĩnh viễn khỏi bản đồ của bạn.` : undefined}
+        confirmLabel="Xóa ghi chú"
+        variant="danger"
+        isPending={deleteNote.isPending}
+        onConfirm={() => void confirmNoteDelete()}
+      />
     </div>
   );
 }
@@ -478,6 +764,7 @@ function BattleContextPanel({
   onOpenDetail,
   onOpenEditor,
   onOpenCharacter,
+  notesSlot,
 }: {
   event?: HistoricalEvent;
   pin: BattlePin | null;
@@ -491,8 +778,11 @@ function BattleContextPanel({
   onOpenDetail: () => void;
   onOpenEditor: () => void;
   onOpenCharacter: (id: string) => void;
+  /** "Ghi chú của tôi" block (learners) or the sign-in hint (guests). */
+  notesSlot?: ReactNode;
 }) {
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const phases = event?.battleMap?.phases ?? [];
   return (
     <div className={cn("flex min-h-full flex-col lg:h-full", styles.contextPanel)}>
       {/* Compact header: thumbnail beside the facts, so the content below needs little scrolling. */}
@@ -524,7 +814,11 @@ function BattleContextPanel({
                     <MapPin size={12} className="text-[var(--accent-gold)]" aria-hidden="true" /> {event.location}
                   </span>
                 )}
-                {pin?.description?.trim() ? (
+                {phases.length > 0 ? (
+                  <span className="inline-flex items-center gap-1 text-[var(--jade)]">
+                    <AudioLines size={12} aria-hidden="true" /> {phases.length} giai đoạn
+                  </span>
+                ) : pin?.description?.trim() ? (
                   <span className="inline-flex items-center gap-1 text-[var(--jade)]">
                     <AudioLines size={12} aria-hidden="true" /> Có thuyết minh
                   </span>
@@ -615,7 +909,21 @@ function BattleContextPanel({
           )}
         </section>
 
-        {pin?.description?.trim() && (
+        {notesSlot}
+
+        {phases.length > 0 ? (
+          <section>
+            <p className={PANEL_LABEL}>Diễn biến</p>
+            <ol className="space-y-1">
+              {phases.map((phase, i) => (
+                <li key={phase.id} className="flex gap-2 text-[13px] leading-5 text-[var(--text-secondary)]">
+                  <span className="w-4 shrink-0 text-right font-bold tabular-nums text-[var(--text-tertiary)]">{i + 1}</span>
+                  <span className="min-w-0 truncate">{phase.title || "Chưa đặt tên"}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ) : pin?.description?.trim() && (
           <section>
             <p className={PANEL_LABEL}>Thuyết minh diễn biến</p>
             <p className="line-clamp-2 whitespace-pre-wrap text-[13px] leading-6 text-[var(--text-secondary)]" title={pin.description}>
@@ -681,14 +989,12 @@ interface CreatePinPanelProps {
 
 function CreatePinPanel({ battleTitle, initialPin, coordinates, year, isSubmitting, onCancel, onSubmit }: CreatePinPanelProps) {
   const [label, setLabel] = useState(initialPin?.label ?? battleTitle);
-  const [description, setDescription] = useState(initialPin?.description ?? "");
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!coordinates || !label.trim()) return;
     await onSubmit({
       label: label.trim(),
-      description: description.trim() || undefined,
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
       pinYear: year,
@@ -732,18 +1038,9 @@ function CreatePinPanel({ battleTitle, initialPin, coordinates, year, isSubmitti
           />
         </label>
 
-        <label className="block">
-          <span className="mb-2 block text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Thuyết minh diễn biến</span>
-          <textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            disabled={!coordinates}
-            rows={6}
-            placeholder="Nhập diễn biến trận đánh theo trình tự…"
-            className="w-full resize-none rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] p-3 text-base leading-relaxed outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:bg-[var(--bg-deep)]"
-          />
-          <span className="mt-2 block text-xs leading-relaxed text-[var(--text-secondary)]">Nội dung này được đọc thành audio ở trang trận đánh. Có thể để trống.</span>
-        </label>
+        <p className="text-xs leading-relaxed text-[var(--text-secondary)]">
+          Thuyết minh diễn biến soạn theo từng giai đoạn trong «Chỉnh sửa lược đồ trận đánh».
+        </p>
       </div>
 
       <div className="flex gap-2 border-t border-[var(--text-primary)] p-4">

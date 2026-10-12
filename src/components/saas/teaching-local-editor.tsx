@@ -3,12 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowLeft, ArrowUp, CopyPlus, Lock, MessageSquareWarning, Plus, Save, Send, Trash2, Undo2, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, CopyPlus, EyeOff, Lock, MessageSquareWarning, Plus, RotateCcw, Save, Send, Trash2, Undo2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { StaffFormInput, StaffFormSelect, StaffFormTextarea } from "@/components/staff/staff-form";
 import { Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
+import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import { ClassCheckboxList, LocalStatusBadge } from "@/components/saas/teaching-ui";
 import { ROUTES } from "@/constants/routes";
 import {
@@ -21,7 +22,16 @@ import {
 } from "@/features/saas/hooks-teaching";
 import { useSchoolData } from "@/features/saas/hooks";
 import { useDemoSchoolId, useSaasStore } from "@/features/saas/store";
-import type { LocalCharacter, LocalContent, LocalContentKind, LocalContext, LocalQuiz, LocalQuizQuestion } from "@/features/saas/types";
+import type {
+  LocalCharacter,
+  LocalContent,
+  LocalContentKind,
+  LocalContentScope,
+  LocalContentStatus,
+  LocalContext,
+  LocalQuiz,
+  LocalQuizQuestion,
+} from "@/features/saas/types";
 import { cn } from "@/lib/utils/cn";
 
 /* ───────────────────────── Form state ───────────────────────── */
@@ -58,6 +68,7 @@ interface QuizForm {
   questions: LocalQuizQuestion[];
 }
 interface FormState {
+  scope: LocalContentScope;
   classIds: string[];
   ctx: CtxForm;
   chr: ChrForm;
@@ -88,7 +99,7 @@ function initialForm(item: LocalContent | undefined, defaultClassIds: string[]):
       title: item.title, level: item.level, contextId: item.contextId ?? NONE, durationMinutes: str(item.durationMinutes),
       questions: item.questions.map((q) => ({ ...q, options: [...q.options], explanation: q.explanation ?? "" })),
     });
-  return { classIds: item ? [...item.classIds] : defaultClassIds, ctx, chr, quiz };
+  return { scope: item?.scope ?? "CLASS", classIds: item ? [...item.classIds] : defaultClassIds, ctx, chr, quiz };
 }
 
 const optNum = (v: string) => (v.trim() === "" ? undefined : Number(v));
@@ -139,12 +150,13 @@ function validate(kind: LocalContentKind, f: FormState, full: boolean): Errors {
       });
     }
   }
-  if (full && f.classIds.length === 0) e.classes = "Chọn ít nhất một lớp được xem";
+  if (full && f.scope === "CLASS" && f.classIds.length === 0) e.classes = "Chọn ít nhất một lớp được xem";
   return e;
 }
 
 function toPayload(kind: LocalContentKind, f: FormState) {
-  const base = { classIds: f.classIds };
+  // School-wide content is not tied to classes.
+  const base = { scope: f.scope, classIds: f.scope === "SCHOOL" ? [] : f.classIds };
   if (kind === "CONTEXT") {
     const c = f.ctx;
     return {
@@ -170,14 +182,59 @@ function toPayload(kind: LocalContentKind, f: FormState) {
 
 /* ───────────────────────── Editor ───────────────────────── */
 
-const READONLY_NOTE: Record<string, string> = {
-  PENDING: "Nội dung đang chờ quản trị trường duyệt nên không thể chỉnh sửa. Rút lại để sửa tiếp.",
-  PUBLISHED: "Nội dung đã xuất bản cho học sinh. Tạo bản chỉnh sửa để soạn phiên bản mới và gửi duyệt lại.",
-  INACTIVE: "Quản trị trường đã ngừng hiển thị nội dung này. Tạo bản chỉnh sửa để sửa theo góp ý và gửi duyệt lại.",
-  TRASH: "Nội dung đã được chuyển vào thùng rác. Bạn có thể tạo bản chỉnh sửa từ nội dung này.",
+function readOnlyNote(item: LocalContent): string {
+  const byAdmin = !!item.reviewNote;
+  if (item.scope === "CLASS") {
+    switch (item.status) {
+      case "PUBLISHED":
+        return "Nội dung đang hiển thị cho các lớp đã chọn. Ngừng hiển thị rồi chuyển về nháp để sửa, hoặc tạo bản chỉnh sửa.";
+      case "INACTIVE":
+        return byAdmin
+          ? "Quản trị trường đã ngừng hiển thị nội dung này. Chuyển về nháp để sửa theo góp ý rồi xuất bản lại."
+          : "Bạn đã ngừng hiển thị nội dung này. Xuất bản lại, hoặc chuyển về nháp để sửa.";
+      case "TRASH":
+        return "Nội dung nằm trong thùng rác, học sinh không còn thấy. Khôi phục để sửa tiếp.";
+      default:
+        return "";
+    }
+  }
+  switch (item.status) {
+    case "PENDING":
+      return "Nội dung đang chờ quản trị trường duyệt nên không thể chỉnh sửa. Rút lại để sửa tiếp.";
+    case "PUBLISHED":
+      return "Nội dung đã xuất bản cho toàn trường. Tạo bản chỉnh sửa để soạn phiên bản mới và gửi duyệt lại.";
+    case "INACTIVE":
+      return "Quản trị trường đã ngừng hiển thị nội dung này. Tạo bản chỉnh sửa để sửa theo góp ý và gửi duyệt lại.";
+    case "TRASH":
+      return "Nội dung đã được chuyển vào thùng rác. Bạn có thể tạo bản chỉnh sửa từ nội dung này.";
+    default:
+      return "";
+  }
+}
+
+const SCOPE_OPTIONS: { value: LocalContentScope; title: string; hint: string }[] = [
+  {
+    value: "CLASS",
+    title: "Cho lớp của tôi",
+    hint: "Chỉ học sinh các lớp bạn chọn thấy. Bạn tự xuất bản, không cần chờ duyệt.",
+  },
+  {
+    value: "SCHOOL",
+    title: "Cho toàn trường",
+    hint: "Mọi học sinh và giáo viên của trường thấy. Quản trị trường duyệt trước khi xuất bản.",
+  },
+];
+
+const SAVE_TOAST: Record<"DRAFT" | "PENDING" | "PUBLISHED", string> = {
+  DRAFT: "Đã lưu nháp",
+  PENDING: "Đã gửi quản trị trường duyệt cho toàn trường",
+  PUBLISHED: "Đã xuất bản cho lớp",
 };
 
-/** Draft → Gửi duyệt → (School Admin) Xuất bản / Ngừng hiển thị. Teacher only sees the review status (row 13). */
+/**
+ * Lớp: Nháp → Xuất bản cho lớp (giáo viên tự xuất bản) → Ngừng hiển thị / Thùng rác.
+ * Trường: Nháp → Gửi duyệt → (School Admin) Xuất bản / Ngừng hiển thị (row 13).
+ */
 export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKind; item?: LocalContent; data: TeachingData }) {
   const router = useRouter();
   const schoolId = useDemoSchoolId();
@@ -202,8 +259,10 @@ export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKin
 
   const isMine = !item || item.authorId === data.teacherId;
   const readOnly = !!item && (item.status !== "DRAFT" || !isMine);
+  const editable = !readOnly;
   const errors = touched === "none" ? {} : validate(kind, form, touched === "full");
   const err = (k: string) => errors[k] ?? null;
+  const ownClassItem = !!item && isMine && item.scope === "CLASS";
 
   const contexts = data.localContent.filter((c): c is LocalContext => c.kind === "CONTEXT" && c.status !== "TRASH" && c.id !== item?.id);
   const contextOptions = [{ value: NONE, label: "Không liên kết" }, ...contexts.map((c) => ({ value: c.id, label: c.title }))];
@@ -212,8 +271,9 @@ export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKin
   const patchChr = (p: Partial<ChrForm>) => setForm((f) => ({ ...f, chr: { ...f.chr, ...p } }));
   const patchQuiz = (p: Partial<QuizForm>) => setForm((f) => ({ ...f, quiz: { ...f.quiz, ...p } }));
 
-  const persist = (status: "DRAFT" | "PENDING") => {
-    const level = status === "PENDING" ? "full" : "draft";
+  /** DRAFT = lưu nháp; PUBLISHED = xuất bản cho lớp (CLASS); PENDING = gửi duyệt cho toàn trường (SCHOOL). */
+  const persist = (status: "DRAFT" | "PENDING" | "PUBLISHED") => {
+    const level = status === "DRAFT" ? "draft" : "full";
     setTouched(level);
     const v = validate(kind, form, level === "full");
     const firstError = Object.values(v).find(Boolean);
@@ -224,19 +284,19 @@ export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKin
     const payload = toPayload(kind, form);
     if (!item) {
       const created = createLocalContent({ ...payload, schoolId, authorId: data.teacherId, status } as Omit<LocalContent, "id" | "createdAt" | "updatedAt">);
-      toast.success(status === "PENDING" ? "Đã gửi quản trị trường duyệt" : "Đã lưu nháp");
+      toast.success(SAVE_TOAST[status]);
       router.replace(ROUTES.TEACHING.LOCAL_EDIT(created.id));
       return;
     }
-    updateLocalContent(item.id, { ...payload, ...(status === "PENDING" ? { reviewNote: undefined } : {}) } as Partial<LocalContent>);
-    if (status === "PENDING") setLocalContentStatus(item.id, "PENDING");
-    toast.success(status === "PENDING" ? "Đã gửi quản trị trường duyệt" : "Đã lưu nháp");
+    updateLocalContent(item.id, { ...payload, ...(status !== "DRAFT" ? { reviewNote: undefined } : {}) } as Partial<LocalContent>);
+    if (status !== "DRAFT") setLocalContentStatus(item.id, status, "");
+    toast.success(SAVE_TOAST[status]);
   };
 
-  const withdraw = () => {
+  const move = (status: LocalContentStatus, message: string) => {
     if (!item) return;
-    setLocalContentStatus(item.id, "DRAFT");
-    toast.success("Đã rút lại, nội dung trở về bản nháp");
+    setLocalContentStatus(item.id, status);
+    toast.success(message);
   };
 
   const duplicate = () => {
@@ -252,14 +312,22 @@ export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKin
     router.push(ROUTES.TEACHING.LOCAL_EDIT(created.id));
   };
 
+  const classNames = (item?.classIds ?? [])
+    .map((id) => data.classById.get(id)?.name)
+    .filter(Boolean)
+    .join(", ");
+  // Own class items have their own unpublish / restore actions; everything else that is out of draft can be copied.
+  const canDuplicate = !!item && item.status !== "DRAFT" && item.status !== "PENDING" && (!ownClassItem || item.status === "PUBLISHED");
+
   return (
     <div className="space-y-6">
       <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Lịch sử địa phương
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Tư liệu lớp &amp; trường
       </Link>
 
       {item && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+          <ContentSourceTag source={item.scope} detail={item.scope === "CLASS" ? classNames || undefined : undefined} />
           <LocalStatusBadge status={item.status} />
           <span className="text-content-muted">
             {LOCAL_KIND_LABELS[kind]} · Tạo {formatDate(item.createdAt)} · Cập nhật {formatDate(item.updatedAt)}
@@ -278,10 +346,10 @@ export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKin
         </div>
       )}
 
-      {readOnly && (
+      {readOnly && item && (
         <p className="flex items-start gap-2 text-sm text-content-muted">
           <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          {isMine ? READONLY_NOTE[item!.status] : "Nội dung do đồng nghiệp soạn, bạn chỉ có thể xem."}
+          {isMine ? readOnlyNote(item) : "Nội dung do đồng nghiệp soạn, bạn chỉ có thể xem."}
         </p>
       )}
 
@@ -297,39 +365,111 @@ export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKin
         )}
 
         <Panel>
-          <Field label="Lớp được xem" required error={err("classes")} hint="Sau khi được duyệt, chỉ học sinh các lớp này nhìn thấy nội dung.">
-            <ClassCheckboxList classes={data.classes} value={form.classIds} onChange={(classIds) => setForm((f) => ({ ...f, classIds }))} disabled={readOnly} />
-          </Field>
+          <div className="space-y-2">
+            <p id="scope-label" className="text-sm font-semibold text-content-heading">
+              Phạm vi hiển thị
+            </p>
+            <div role="radiogroup" aria-labelledby="scope-label" className="grid gap-2 sm:grid-cols-2">
+              {SCOPE_OPTIONS.map((o) => {
+                const active = form.scope === o.value;
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    disabled={readOnly}
+                    onClick={() => setForm((f) => ({ ...f, scope: o.value }))}
+                    className={cn(
+                      "flex flex-col items-start gap-1.5 rounded-[2px] border p-3 text-left transition-colors disabled:cursor-not-allowed",
+                      active
+                        ? "border-[var(--text-primary)] bg-[var(--status-neutral-bg)]"
+                        : "border-[var(--border-strong)] hover:border-[var(--text-primary)] disabled:opacity-60",
+                    )}
+                  >
+                    <span className="flex w-full items-center justify-between gap-2">
+                      <span className="font-semibold text-content-heading">{o.title}</span>
+                      <ContentSourceTag source={o.value} />
+                    </span>
+                    <span className="text-xs leading-relaxed text-content-muted">{o.hint}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {form.scope === "CLASS" ? (
+            <Field label="Lớp được xem" required error={err("classes")} hint="Sau khi bạn xuất bản, chỉ học sinh các lớp này nhìn thấy nội dung.">
+              <ClassCheckboxList classes={data.classes} value={form.classIds} onChange={(classIds) => setForm((f) => ({ ...f, classIds }))} disabled={readOnly} />
+            </Field>
+          ) : (
+            <p className="text-sm text-content-muted">
+              Nội dung toàn trường không gắn với lớp cụ thể. Sau khi quản trị trường duyệt, mọi học sinh của trường thấy nội dung trong mục
+              Tư liệu lớp &amp; trường.
+            </p>
+          )}
         </Panel>
       </fieldset>
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--text-primary)] pt-4">
-        <div>
+        <div className="flex flex-wrap gap-2">
           {item?.status === "DRAFT" && isMine && (
             <button type="button" className="btn-line text-[var(--accent-danger)]" onClick={() => setDeleteOpen(true)}>
               <Trash2 className="h-4 w-4" aria-hidden="true" /> Xóa bản nháp
             </button>
           )}
+          {ownClassItem && (item.status === "PUBLISHED" || item.status === "INACTIVE") && (
+            <button type="button" className="btn-line text-[var(--accent-danger)]" onClick={() => move("TRASH", "Đã chuyển vào thùng rác")}>
+              <Trash2 className="h-4 w-4" aria-hidden="true" /> Chuyển vào thùng rác
+            </button>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {(!item || (item.status === "DRAFT" && isMine)) && (
+          {editable && (
             <>
               <button type="button" className="btn-line" onClick={() => persist("DRAFT")}>
                 <Save className="h-4 w-4" aria-hidden="true" /> Lưu nháp
               </button>
-              <button type="button" className="btn-crimson" onClick={() => persist("PENDING")}>
-                <Send className="h-4 w-4" aria-hidden="true" /> Gửi duyệt
-              </button>
+              {form.scope === "CLASS" ? (
+                <button type="button" className="btn-crimson" onClick={() => persist("PUBLISHED")}>
+                  <Send className="h-4 w-4" aria-hidden="true" /> Xuất bản cho lớp
+                </button>
+              ) : (
+                <button type="button" className="btn-crimson" onClick={() => persist("PENDING")}>
+                  <Send className="h-4 w-4" aria-hidden="true" /> Gửi duyệt cho toàn trường
+                </button>
+              )}
             </>
           )}
           {item?.status === "PENDING" && isMine && (
-            <button type="button" className="btn-ink" onClick={withdraw}>
+            <button type="button" className="btn-ink" onClick={() => move("DRAFT", "Đã rút lại, nội dung trở về bản nháp")}>
               <Undo2 className="h-4 w-4" aria-hidden="true" /> Rút lại
             </button>
           )}
-          {item && item.status !== "DRAFT" && item.status !== "PENDING" && (
-            <button type="button" className="btn-crimson" onClick={duplicate}>
+          {canDuplicate && (
+            <button type="button" className={ownClassItem ? "btn-line" : "btn-crimson"} onClick={duplicate}>
               <CopyPlus className="h-4 w-4" aria-hidden="true" /> Tạo bản chỉnh sửa
+            </button>
+          )}
+          {ownClassItem && item.status === "PUBLISHED" && (
+            <button type="button" className="btn-ink" onClick={() => move("INACTIVE", "Đã ngừng hiển thị với học sinh")}>
+              <EyeOff className="h-4 w-4" aria-hidden="true" /> Ngừng hiển thị
+            </button>
+          )}
+          {ownClassItem && item.status === "INACTIVE" && (
+            <>
+              <button type="button" className="btn-line" onClick={() => move("DRAFT", "Đã chuyển về bản nháp")}>
+                <Undo2 className="h-4 w-4" aria-hidden="true" /> Chuyển về nháp để sửa
+              </button>
+              {!item.reviewNote && (
+                <button type="button" className="btn-crimson" onClick={() => move("PUBLISHED", "Đã xuất bản lại cho lớp")}>
+                  <Send className="h-4 w-4" aria-hidden="true" /> Xuất bản lại
+                </button>
+              )}
+            </>
+          )}
+          {ownClassItem && item.status === "TRASH" && (
+            <button type="button" className="btn-ink" onClick={() => move("DRAFT", "Đã khôi phục về bản nháp")}>
+              <RotateCcw className="h-4 w-4" aria-hidden="true" /> Khôi phục về nháp
             </button>
           )}
         </div>

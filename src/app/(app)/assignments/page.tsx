@@ -1,5 +1,6 @@
 "use client";
 
+// FAKE UI: màn này chạy bằng dữ liệu mẫu (src/features/saas/store.ts), chưa có API — chờ BE sprint sau.
 import * as React from "react";
 import Link from "next/link";
 import { CheckCircle2, ClipboardList, Hourglass, TimerOff } from "lucide-react";
@@ -109,8 +110,8 @@ function AssignmentsBoard({ role }: { role: string }) {
 
       <Panel>
         <SectionHeading
-          title="Tư liệu địa phương của lớp"
-          description="Bối cảnh, nhân vật và bài luyện tập do thầy cô biên soạn về lịch sử quê hương."
+          title="Tư liệu lớp & trường"
+          description="Bối cảnh, nhân vật và bài luyện tập do thầy cô soạn cho lớp và nhà trường dùng chung."
         />
         <div className="space-y-5">
           {classes.map((c) => (

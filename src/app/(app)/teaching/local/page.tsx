@@ -1,5 +1,6 @@
 "use client";
 
+// FAKE UI: màn này chạy bằng dữ liệu mẫu (src/features/saas/store.ts), chưa có API — chờ BE sprint sau.
 import * as React from "react";
 import Link from "next/link";
 import { ArrowRight, BookMarked, MessageSquareWarning, Plus } from "lucide-react";
@@ -7,29 +8,34 @@ import { ArrowRight, BookMarked, MessageSquareWarning, Plus } from "lucide-react
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SaasShell, SearchInput, formatDate, normalizeText } from "@/components/saas/saas-ui";
+import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import { LocalStatusBadge, SegmentedFilter } from "@/components/saas/teaching-ui";
 import { ROUTES } from "@/constants/routes";
 import { useRole } from "@/features/auth/usePermission";
 import {
   LEVEL_LABELS,
   LOCAL_KIND_LABELS,
+  LOCAL_SCOPE_LABELS,
   LOCAL_STATUS_LABELS,
   formatYear,
   localTitle,
   useTeachingData,
 } from "@/features/saas/hooks-teaching";
-import type { LocalContent, LocalContentKind, LocalContentStatus } from "@/features/saas/types";
+import type { LocalContent, LocalContentKind, LocalContentScope, LocalContentStatus } from "@/features/saas/types";
 
 const KINDS: LocalContentKind[] = ["CONTEXT", "CHARACTER", "QUIZ"];
 const STATUSES: LocalContentStatus[] = ["DRAFT", "PENDING", "PUBLISHED", "INACTIVE", "TRASH"];
 
-/** Lịch sử địa phương: the teacher drafts, School Admin reviews (Role Matrix rows 12–14). */
+/**
+ * Tư liệu lớp & trường (Role Matrix rows 12–14): class content the teacher publishes directly,
+ * and school-wide content the School Admin approves.
+ */
 export default function LocalHistoryPage() {
   return (
     <SaasShell
       variant="app"
-      title="Lịch sử địa phương"
-      description="Soạn bối cảnh, nhân vật và câu đố về lịch sử địa phương. Quản trị trường duyệt trước khi học sinh nhìn thấy."
+      title="Tư liệu lớp & trường"
+      description="Soạn bối cảnh, nhân vật và câu đố cho lớp của bạn (tự xuất bản) hoặc cho toàn trường (quản trị trường duyệt). Tách biệt với nội dung chính thức của HistoryTalk."
     >
       <LocalHistory />
     </SaasShell>
@@ -41,10 +47,13 @@ function LocalHistory() {
   const data = useTeachingData(role);
   const [kind, setKind] = React.useState<LocalContentKind>("CONTEXT");
   const [status, setStatus] = React.useState<LocalContentStatus | "ALL">("ALL");
-  const [scope, setScope] = React.useState<"MINE" | "CLASSES">("MINE");
+  const [owner, setOwner] = React.useState<"MINE" | "CLASSES">("MINE");
+  const [scope, setScope] = React.useState<LocalContentScope | "ALL">("ALL");
   const [search, setSearch] = React.useState("");
 
-  const inScope = data.localContent.filter((c) => (scope === "MINE" ? c.authorId === data.teacherId : c.authorId !== data.teacherId));
+  const inScope = data.localContent.filter(
+    (c) => (owner === "MINE" ? c.authorId === data.teacherId : c.authorId !== data.teacherId) && (scope === "ALL" || c.scope === scope),
+  );
   const ofKind = inScope.filter((c) => c.kind === kind);
   const q = normalizeText(search);
   const rows = ofKind
@@ -79,14 +88,24 @@ function LocalHistory() {
             ...STATUSES.map((s) => ({ value: s, label: LOCAL_STATUS_LABELS[s], count: ofKind.filter((c) => c.status === s).length })),
           ]}
         />
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <SegmentedFilter
-            label="Phạm vi"
+            label="Phạm vi hiển thị"
             value={scope}
             onChange={setScope}
             options={[
+              { value: "ALL" as const, label: "Lớp & trường" },
+              { value: "CLASS" as const, label: LOCAL_SCOPE_LABELS.CLASS },
+              { value: "SCHOOL" as const, label: LOCAL_SCOPE_LABELS.SCHOOL },
+            ]}
+          />
+          <SegmentedFilter
+            label="Người soạn"
+            value={owner}
+            onChange={setOwner}
+            options={[
               { value: "MINE", label: "Tôi soạn" },
-              { value: "CLASSES", label: "Đồng nghiệp · lớp tôi" },
+              { value: "CLASSES", label: "Đồng nghiệp" },
             ]}
           />
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm theo tên..." />
@@ -97,9 +116,13 @@ function LocalHistory() {
         <EmptyState
           icon={BookMarked}
           title={`Chưa có ${LOCAL_KIND_LABELS[kind].toLowerCase()} nào`}
-          description={scope === "MINE" ? "Soạn nội dung mới rồi gửi quản trị trường duyệt." : "Đồng nghiệp chưa chia sẻ nội dung nào cho lớp của bạn."}
+          description={
+            owner === "MINE"
+              ? "Soạn nội dung mới: xuất bản ngay cho lớp, hoặc gửi quản trị trường duyệt để dùng cho toàn trường."
+              : "Đồng nghiệp chưa chia sẻ nội dung nào cho lớp của bạn hoặc cho toàn trường."
+          }
           action={
-            scope === "MINE" ? (
+            owner === "MINE" ? (
               <Link href={ROUTES.TEACHING.LOCAL_NEW(kind)} className="btn-ink">
                 Soạn mới
               </Link>
@@ -129,6 +152,7 @@ function LocalRow({ item, classNames }: { item: LocalContent; classNames: string
       <Link href={ROUTES.TEACHING.LOCAL_EDIT(item.id)} className="group flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
+            <ContentSourceTag source={item.scope} />
             <LocalStatusBadge status={item.status} />
             <span className="text-xs text-content-muted">Cập nhật {formatDate(item.updatedAt)}</span>
           </div>
@@ -144,7 +168,9 @@ function LocalRow({ item, classNames }: { item: LocalContent; classNames: string
           )}
         </div>
         <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end">
-          <span className="text-xs text-content-muted">{classNames.length ? classNames.map((n) => `Lớp ${n}`).join(", ") : "Chưa chọn lớp"}</span>
+          <span className="text-xs text-content-muted">
+            {item.scope === "SCHOOL" ? "Toàn trường" : classNames.length ? classNames.map((n) => `Lớp ${n}`).join(", ") : "Chưa chọn lớp"}
+          </span>
           <span className="archive-link">
             {item.status === "DRAFT" ? "Chỉnh sửa" : "Xem"} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </span>

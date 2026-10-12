@@ -24,6 +24,7 @@ import {
   ClipboardCheck,
   ChartColumn,
   BadgeCheck,
+  LibraryBig,
 } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
@@ -38,6 +39,8 @@ export interface SidebarMenuItem {
 
 export interface SidebarSection {
   title: string;
+  /** Small marker next to the section title, e.g. "Chính thức" for the official HistoryTalk catalogs. */
+  badge?: string;
   items: SidebarMenuItem[];
 }
 
@@ -66,42 +69,61 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
   },
 ];
 
-/** School student: the learning app plus the classes they belong to (Role Matrix row 8). */
+/** Bản đồ lớp: the shared map opened on the class layer (Role Matrix row 21). */
+const CLASS_MAP_HREF = `${ROUTES.HISTORICAL_MAP}?layer=class`;
+
+/**
+ * Official catalogs curated by Content Admin. School accounts reach them as a separate, labelled library so they are
+ * never mixed with class / school content.
+ */
+const HISTORYTALK_LIBRARY: SidebarSection = {
+  title: "Thư viện HistoryTalk",
+  badge: "Chính thức",
+  items: [
+    { icon: Landmark, label: "Sự kiện lịch sử", href: ROUTES.EVENTS },
+    { icon: User, label: "Nhân vật", href: ROUTES.CHARACTERS },
+    { icon: ClipboardList, label: "Câu đố lịch sử", href: ROUTES.QUIZ },
+  ],
+};
+
+const SCHOOL_ACCOUNT: SidebarSection = {
+  title: "Account",
+  items: [
+    { icon: MessageCircle, label: "Lịch sử trò chuyện", href: ROUTES.CHAT_HISTORY },
+    { icon: User, label: "Hồ sơ", href: ROUTES.PROFILE },
+  ],
+};
+
+/** School student: the class workspace ("Không gian lớp học") first, then the official library (Role Matrix rows 8, 14, 17, 25). */
 export const SCHOOL_STUDENT_SIDEBAR: SidebarSection[] = [
-  CUSTOMER_SIDEBAR[0],
   {
-    title: "Lớp học",
+    title: "Không gian lớp học",
     items: [
-      { icon: GraduationCap, label: "Lớp của tôi", href: ROUTES.CLASSES },
-      { icon: ClipboardCheck, label: "Bài tập được giao", href: ROUTES.MY_ASSIGNMENTS },
+      { icon: GraduationCap, label: "Lớp học", href: ROUTES.CLASSES },
+      { icon: ClipboardCheck, label: "Bài tập", href: ROUTES.MY_ASSIGNMENTS },
+      { icon: LibraryBig, label: "Tư liệu lớp & trường", href: ROUTES.CLASS_MATERIALS },
+      { icon: Map, label: "Bản đồ lớp", href: CLASS_MAP_HREF },
       { icon: ChartColumn, label: "Bảng điểm", href: ROUTES.GRADES },
     ],
   },
-  { title: "Account", items: [{ icon: User, label: "Hồ sơ", href: ROUTES.PROFILE }] },
+  HISTORYTALK_LIBRARY,
+  SCHOOL_ACCOUNT,
 ];
 
-/** Teacher: classes first, then the learning content they also use (rows 7, 8, 19, 21). */
+/** Teacher: the class workspace first, then the official library they also use (rows 7, 8, 12, 16, 19, 21). */
 export const TEACHER_SIDEBAR: SidebarSection[] = [
   {
-    title: "Giảng dạy",
+    title: "Không gian lớp học",
     items: [
       { icon: Gauge, label: "Tổng quan", href: ROUTES.TEACHING.HOME, exact: true },
-      { icon: Presentation, label: "Lớp của tôi", href: ROUTES.CLASSES },
+      { icon: Presentation, label: "Lớp học", href: ROUTES.CLASSES },
       { icon: NotebookPen, label: "Bài tập", href: ROUTES.TEACHING.ASSIGNMENTS },
-      { icon: FilePenLine, label: "Lịch sử địa phương", href: ROUTES.TEACHING.LOCAL },
-      { icon: Map, label: "Bản đồ lớp", href: ROUTES.HISTORICAL_MAP },
+      { icon: FilePenLine, label: "Tư liệu lớp & trường", href: ROUTES.TEACHING.LOCAL },
+      { icon: Map, label: "Bản đồ lớp", href: CLASS_MAP_HREF },
     ],
   },
-  {
-    title: "Nội dung",
-    items: [
-      { icon: Landmark, label: "Sự kiện lịch sử", href: ROUTES.EVENTS },
-      { icon: User, label: "Nhân vật", href: ROUTES.CHARACTERS },
-      { icon: MessageCircle, label: "Lịch sử trò chuyện", href: ROUTES.CHAT_HISTORY },
-      { icon: ClipboardList, label: "Câu đố lịch sử", href: ROUTES.QUIZ },
-    ],
-  },
-  { title: "Account", items: [{ icon: User, label: "Hồ sơ", href: ROUTES.PROFILE }] },
+  HISTORYTALK_LIBRARY,
+  SCHOOL_ACCOUNT,
 ];
 
 /** School Admin: accounts, classes and the school's token quota (rows 3, 4, 6, 7, 20, 21). */
@@ -173,7 +195,6 @@ export const SYSTEM_ADMIN_SIDEBAR: SidebarSection[] = [
   {
     title: "Hệ thống",
     items: [
-      { icon: Map, label: "Bản đồ lịch sử", href: ROUTES.STAFF.ADMIN.MAP },
       { icon: CreditCard, label: "Gói dịch vụ", href: ROUTES.STAFF.ADMIN.SUBSCRIPTIONS },
       { icon: Receipt, label: "Lịch sử giao dịch", href: ROUTES.STAFF.ADMIN.PAYMENT_HISTORY },
     ],

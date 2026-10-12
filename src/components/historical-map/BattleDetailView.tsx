@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState, useCallback, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -27,7 +27,6 @@ import { isTokenExhaustionError } from "@/lib/utils/api-error";
 import { cn } from "@/lib/utils/cn";
 import { queryKeys } from "@/shared/query-key";
 import { useUpdateEvent } from "@/features/events/hooks";
-import { useUpdateMapPin } from "@/features/map-pins/hooks";
 import type { GetMessagesResponse } from "@/services/chat.service";
 import type { Character } from "@/services/character.service";
 import type { HistoricalEvent } from "@/services/event.service";
@@ -36,81 +35,8 @@ import { useAuthStore } from "@/store/auth.store";
 import { BattleMapCanvas } from "./BattleMapCanvas";
 import { BattleMapEditor } from "./BattleMapEditor";
 import { emptyBattleMap, isBattleMap, type BattleMap } from "./battle-map.types";
+import { useBattleStory } from "./useBattlePlayback";
 import { toast } from "sonner";
-
-// ── Audio narration hook (Web Speech API) ─────────────────────
-function useBattleNarration(script: string) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [currentText, setCurrentText] = useState("");
-  const startTimeRef = useRef<number>(0);
-  const durationRef = useRef<number>(0);
-  const rafRef = useRef<number>(0);
-
-  const stop = useCallback(() => {
-    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
-    setIsPlaying(false);
-    cancelAnimationFrame(rafRef.current);
-  }, []);
-
-  const play = useCallback(() => {
-    if (typeof window === "undefined" || !window.speechSynthesis || !script) return;
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(script);
-    utterance.lang = "vi-VN";
-    utterance.rate = 0.82;
-    utterance.pitch = 1;
-
-    // Ước tính thời gian: ~85ms/ký tự với giọng tiếng Việt
-    durationRef.current = script.length * 85;
-    startTimeRef.current = Date.now();
-
-    utterance.onstart = () => {
-      setIsPlaying(true);
-      const tick = () => {
-        const elapsed = Date.now() - startTimeRef.current;
-        const pct = Math.min(elapsed / durationRef.current, 1);
-        setProgress(pct * 100);
-        const ci = Math.floor(pct * script.length);
-        const lo = Math.max(0, ci - 70);
-        const hi = Math.min(script.length, ci + 70);
-        setCurrentText(script.slice(lo, hi));
-        if (pct < 1) rafRef.current = requestAnimationFrame(tick);
-      };
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    utterance.onend = () => {
-      setIsPlaying(false);
-      setProgress(100);
-      setCurrentText("");
-      cancelAnimationFrame(rafRef.current);
-    };
-
-    utterance.onerror = () => {
-      setIsPlaying(false);
-      cancelAnimationFrame(rafRef.current);
-    };
-
-    window.speechSynthesis.speak(utterance);
-  }, [script]);
-
-  const reset = useCallback(() => {
-    stop();
-    setProgress(0);
-    setCurrentText("");
-  }, [stop]);
-
-  const toggle = useCallback(() => {
-    if (isPlaying) stop();
-    else { if (progress >= 99) reset(); play(); }
-  }, [isPlaying, progress, stop, reset, play]);
-
-  useEffect(() => () => stop(), [stop, script]);
-
-  return { isPlaying, progress, currentText, toggle, reset, stop };
-}
 
 // ── Main component ────────────────────────────────────────────
 export function BattleDetailView({
@@ -123,7 +49,7 @@ export function BattleDetailView({
   editing = false,
   onOpenEditor,
   onCloseEditor,
-  onPreview,
+  previewAsLearner = false,
 }: {
   event: HistoricalEvent;
   pin: MapPin | null;
@@ -135,8 +61,8 @@ export function BattleDetailView({
   editing?: boolean;
   onOpenEditor: () => void;
   onCloseEditor: () => void;
-  /** Editor saved the draft and wants to show the learner-facing battle page. */
-  onPreview: () => void;
+  /** Content Admin previews the page as a learner: no editor entry point. */
+  previewAsLearner?: boolean;
 }) {
   const [chatOpen, setChatOpen] = useState(!!initialCharacterId);
   const [chatMounted, setChatMounted] = useState(!!initialCharacterId);
@@ -145,11 +71,9 @@ export function BattleDetailView({
   const [chatDraft, setChatDraft] = useState("");
   const [muted, setMuted] = useState(false);
   const user = useAuthStore(state => state.user);
-  const isAdmin = user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN";
+  const isAdmin = (user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN") && !previewAsLearner;
   const editingMap = editing && isAdmin;
   const updateEvent = useUpdateEvent();
-  // Same cache key as the map page: pins are fetched per (contextId, event year).
-  const updatePin = useUpdateMapPin(event.id, event.year ?? event.startYear ?? new Date().getFullYear());
   // Before the server stored lược đồ, the editor kept drafts in localStorage; offer one only while the server has none.
   const legacyDraftKey = `historytalk:battle-map:v1:${user?.uid ?? "anonymous"}:${event.id}`;
   const [legacyDraft] = useState<BattleMap | null>(() => {
@@ -167,9 +91,9 @@ export function BattleDetailView({
   const character = characters.find((item) => item.id === characterId) ?? characters[0];
   const year = event.year < 0 ? `${Math.abs(event.year)} TCN` : String(event.year);
 
-  const narrationScript = muted ? "" : (pin?.description?.trim() ?? "");
-
-  const narration = useBattleNarration(narrationScript);
+  // Maps without phases still read the old pin narration (read-only) until they are split.
+  const story = useBattleStory(battleMap, pin?.description ?? "", { voice: !muted && speechSupported });
+  const { narration, phases, scenes, scene, sentences, hasStory, sceneWeights, sceneProgress } = story;
 
   const openChat = (question?: string) => {
     if (!character) return;
@@ -183,10 +107,8 @@ export function BattleDetailView({
     setChatOpen(false);
   };
 
-  const handleMuteToggle = () => {
-    narration.stop();
-    setMuted((m) => !m);
-  };
+  // The current sentence restarts with or without the voice; captions keep running when muted.
+  const handleMuteToggle = () => setMuted((m) => !m);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -205,14 +127,7 @@ export function BattleDetailView({
     initialValue={savedMap ?? event.battleMap ?? legacyDraft ?? emptyBattleMap()}
     title={event.title}
     onClose={onCloseEditor}
-    onPreview={onPreview}
-    narration={pin ? {
-      value: pin.description ?? "",
-      onSave: async text => {
-        await updatePin.mutateAsync({ pin, changes: { description: text } });
-        toast.success("Đã lưu thuyết minh");
-      },
-    } : null}
+    legacyNarration={pin?.description ?? ""}
     onSave={async value => {
       const updated = await updateEvent.mutateAsync({ id: event.id, data: { battleMap: value } });
       setSavedMap(updated.battleMap ?? value);
@@ -244,7 +159,7 @@ export function BattleDetailView({
         {/* 史 — "sử", history */}
         <span className={cn("archive-seal", styles.immersiveSeal)} aria-hidden="true">史</span>
 
-        {isAdmin && <button type="button" className={styles.mapEditButton} onClick={() => { narration.stop(); onOpenEditor(); }}>
+        {isAdmin && <button type="button" className={styles.mapEditButton} onClick={() => { narration.pause(); onOpenEditor(); }}>
           <SquarePen size={16} /> Chỉnh sửa lược đồ
         </button>}
         <button
@@ -259,7 +174,15 @@ export function BattleDetailView({
 
       {/* ── Full-screen battle image ── */}
       <div className={styles.immersiveScene}>
-        <BattleMapCanvas value={battleMap} title={`Lược đồ ${event.title}`} legendTitle={`${event.title} – ${year}`} />
+        <BattleMapCanvas value={battleMap} title={`Lược đồ ${event.title}`} legendTitle={`${event.title} – ${year}`}
+          symbolView={story.symbolView} focus={story.focus} spotlight={story.spotlight} />
+
+        {/* Scene caption: the sentence being read is highlighted */}
+        {narration.started && phases.length > 0 && scene && <section className={styles.sceneCaption} aria-live="polite">
+          <span className={styles.sceneEyebrow}>Giai đoạn {narration.scene + 1} / {phases.length}</span>
+          <h2>{scene.title}</h2>
+          {sentences.length > 0 && <p>{sentences.map((text, i) => <span key={i} data-state={i < narration.sentence || narration.finished ? "done" : i === narration.sentence ? "now" : undefined}>{text} </span>)}</p>}
+        </section>}
 
         {/* Character avatar — bottom right corner */}
         {character && (
@@ -308,7 +231,7 @@ export function BattleDetailView({
         <div className={styles.audioControls}>
           <button
             type="button"
-            onClick={narration.reset}
+            onClick={narration.restart}
             className={styles.audioIconBtn}
             title="Nghe lại từ đầu"
             aria-label="Nghe lại từ đầu"
@@ -318,11 +241,11 @@ export function BattleDetailView({
           <button
             type="button"
             onClick={narration.toggle}
-            disabled={!narrationScript || !speechSupported}
+            disabled={!hasStory}
             className={styles.audioPlayBtn}
-            aria-label={narration.isPlaying ? "Dừng" : "Phát"}
+            aria-label={narration.playing ? "Dừng" : "Phát"}
           >
-            {narration.isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
+            {narration.playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
           </button>
           <button
             type="button"
@@ -339,30 +262,34 @@ export function BattleDetailView({
         <div className={styles.audioContent}>
           <div className={styles.audioHeader}>
             <span className={styles.audioTitle}>Diễn biến trận đánh</span>
-            {narration.isPlaying && (
+            {narration.playing && (
               <span className={styles.audioLive} aria-live="polite">
                 <span className={styles.audioLiveDot} />
                 Đang phát
               </span>
             )}
-            {!narration.isPlaying && narration.progress === 0 && !muted && (
-              <span className={styles.audioHint}>{!pin?.description?.trim() ? "Trận đánh này chưa có thuyết minh" : !speechSupported ? "Trình duyệt chưa hỗ trợ đọc văn bản" : "Bấm phát để nghe thuyết minh"}</span>
+            {!narration.playing && !narration.started && (
+              <span className={styles.audioHint}>{!hasStory ? "Trận đánh này chưa có thuyết minh" : !speechSupported ? "Trình duyệt không đọc được thành tiếng, phụ đề sẽ tự chạy" : phases.length ? "Bấm phát để xem diễn biến từng giai đoạn" : "Bấm phát để nghe thuyết minh"}</span>
             )}
             {muted && (
-              <span className={styles.audioHint}>Âm thanh đang tắt</span>
+              <span className={styles.audioHint}>Đã tắt tiếng · phụ đề vẫn chạy</span>
             )}
           </div>
 
-          {/* Progress track */}
-          <div className={styles.audioTrack} role="progressbar" aria-valuenow={Math.round(narration.progress)} aria-valuemin={0} aria-valuemax={100}>
-            <div className={styles.audioFill} style={{ width: `${narration.progress}%` }} />
+          {/* Progress: one segment per phase, sized by its reading time; click to jump */}
+          <div className={styles.audioSegments}>
+            {scenes.map((sc, i) => <button key={sc.id} type="button" className={styles.audioSegment} style={{ flexGrow: sceneWeights[i] }}
+              aria-current={narration.started && i === narration.scene ? "step" : undefined}
+              aria-label={scenes.length > 1 ? `Giai đoạn ${i + 1}: ${sc.title}` : "Từ đầu"} title={sc.title}
+              disabled={!hasStory} onClick={() => narration.seek(i)}>
+              <span className={styles.audioTrack}><span className={styles.audioFill} style={{ width: `${sceneProgress(i) * 100}%` }} /></span>
+              {scenes.length > 1 && <small>{sc.title}</small>}
+            </button>)}
           </div>
 
-          {/* Live caption text */}
-          {narration.currentText && (
-            <p className={styles.audioCaption} aria-live="polite">
-              …{narration.currentText}…
-            </p>
+          {/* Live caption (maps without phases; with phases the caption sits on the map) */}
+          {narration.started && phases.length === 0 && sentences[narration.sentence] && (
+            <p className={styles.audioCaption} aria-live="polite">{sentences[narration.sentence]}</p>
           )}
         </div>
 
@@ -371,7 +298,7 @@ export function BattleDetailView({
           {Array.from({ length: 28 }, (_, i) => (
             <span
               key={i}
-              className={cn(styles.audioBar, narration.isPlaying && styles.audioBarActive)}
+              className={cn(styles.audioBar, narration.playing && styles.audioBarActive)}
               style={{
                 animationDelay: `${(i * 43) % 500}ms`,
                 height: `${10 + ((i * 17 + 5) % 22)}px`,

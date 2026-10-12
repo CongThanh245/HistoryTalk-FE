@@ -18,7 +18,7 @@ const at = (days: number, hour = 23) => {
 
 export const SEED_LOCAL_CONTENT: LocalContent[] = [
   {
-    kind: "CONTEXT", id: "lc-ctx-1", schoolId: "sch-lhp", authorId: "t-1", classIds: ["cls-10a1", "cls-11a1"],
+    kind: "CONTEXT", id: "lc-ctx-1", schoolId: "sch-lhp", authorId: "t-1", scope: "CLASS", classIds: ["cls-10a1", "cls-11a1"],
     status: "PUBLISHED", createdAt: D, updatedAt: D,
     title: "Khởi nghĩa Nam Kỳ 1940 tại Sài Gòn – Chợ Lớn",
     era: "MODERN", year: 1940, location: "Hóc Môn – Bà Điểm, Sài Gòn",
@@ -27,7 +27,7 @@ export const SEED_LOCAL_CONTENT: LocalContent[] = [
     latitude: 10.8865, longitude: 106.5944,
   },
   {
-    kind: "CHARACTER", id: "lc-chr-1", schoolId: "sch-lhp", authorId: "t-1", classIds: ["cls-10a1"],
+    kind: "CHARACTER", id: "lc-chr-1", schoolId: "sch-lhp", authorId: "t-1", scope: "CLASS", classIds: ["cls-10a1"],
     status: "PUBLISHED", createdAt: D, updatedAt: D,
     name: "Phan Văn Hớn", title: "Thủ lĩnh khởi nghĩa Hóc Môn 1885", bornYear: 1830, deathYear: 1886,
     biography: "Lãnh đạo cuộc khởi nghĩa chống Pháp năm 1885 ở Hóc Môn, Bà Điểm; bị bắt và hy sinh năm 1886.",
@@ -35,7 +35,7 @@ export const SEED_LOCAL_CONTENT: LocalContent[] = [
     contextId: "lc-ctx-1",
   },
   {
-    kind: "QUIZ", id: "lc-quiz-1", schoolId: "sch-lhp", authorId: "t-1", classIds: ["cls-10a1"],
+    kind: "QUIZ", id: "lc-quiz-1", schoolId: "sch-lhp", authorId: "t-1", scope: "CLASS", classIds: ["cls-10a1"],
     status: "PUBLISHED", createdAt: D, updatedAt: D,
     title: "Lịch sử Sài Gòn – Gia Định (10 câu)", level: "MEDIUM", contextId: "lc-ctx-1", durationMinutes: 15,
     questions: [
@@ -45,7 +45,7 @@ export const SEED_LOCAL_CONTENT: LocalContent[] = [
     ],
   },
   {
-    kind: "CONTEXT", id: "lc-ctx-2", schoolId: "sch-lhp", authorId: "t-1", classIds: ["cls-11a1"],
+    kind: "CONTEXT", id: "lc-ctx-2", schoolId: "sch-lhp", authorId: "t-1", scope: "SCHOOL", classIds: [],
     status: "PENDING", createdAt: D, updatedAt: at(-1, 15),
     title: "Địa đạo Củ Chi trong kháng chiến chống Mỹ",
     era: "CONTEMPORARY", year: 1965, location: "Củ Chi, TP. Hồ Chí Minh",
@@ -54,7 +54,7 @@ export const SEED_LOCAL_CONTENT: LocalContent[] = [
     latitude: 11.1426, longitude: 106.463,
   },
   {
-    kind: "QUIZ", id: "lc-quiz-2", schoolId: "sch-lhp", authorId: "t-2", classIds: ["cls-10a2"],
+    kind: "QUIZ", id: "lc-quiz-2", schoolId: "sch-lhp", authorId: "t-2", scope: "CLASS", classIds: ["cls-10a2"],
     status: "DRAFT", createdAt: D, updatedAt: at(-2, 10),
     title: "Bến Nhà Rồng và hành trình tìm đường cứu nước", level: "EASY", durationMinutes: 10,
     questions: [
@@ -62,11 +62,29 @@ export const SEED_LOCAL_CONTENT: LocalContent[] = [
     ],
   },
   {
-    kind: "CHARACTER", id: "lc-chr-2", schoolId: "sch-lhp", authorId: "t-2", classIds: ["cls-12a1"],
+    kind: "CHARACTER", id: "lc-chr-2", schoolId: "sch-lhp", authorId: "t-2", scope: "SCHOOL", classIds: [],
     status: "INACTIVE", reviewNote: "Bổ sung nguồn tư liệu cho phần tiểu sử trước khi mở lại.", createdAt: D, updatedAt: at(-5, 9),
     name: "Nguyễn Hữu Cảnh", title: "Người mở cõi đất Gia Định (1698)", bornYear: 1650, deathYear: 1700,
     biography: "Năm 1698 được chúa Nguyễn Phúc Chu cử vào kinh lược đất Đồng Nai, lập phủ Gia Định.",
     persona: "Trang trọng, điềm đạm, xưng 'ta' với học trò.",
+  },
+  {
+    kind: "CONTEXT", id: "lc-ctx-3", schoolId: "sch-lhp", authorId: "t-2", scope: "SCHOOL", classIds: [],
+    status: "PUBLISHED", createdAt: D, updatedAt: at(-3, 9),
+    title: "Trường Petrus Ký – Lê Hồng Phong qua gần một thế kỷ",
+    era: "MODERN", year: 1927, location: "235 Nguyễn Văn Cừ, Quận 5, TP. Hồ Chí Minh",
+    summary: "Ngôi trường thành lập năm 1927 với tên Petrus Ký, nơi nhiều thế hệ học sinh tham gia phong trào yêu nước.",
+    body: "Trường được khởi công năm 1925 và khai giảng năm 1927 với tên Collège Petrus Ký. Trong các phong trào yêu nước 1945–1975, nhiều thế hệ học sinh của trường đã tham gia đấu tranh…",
+    latitude: 10.7626, longitude: 106.682,
+  },
+  {
+    kind: "QUIZ", id: "lc-quiz-3", schoolId: "sch-lhp", authorId: "t-2", scope: "CLASS", classIds: ["cls-10a2", "cls-12a1"],
+    status: "PUBLISHED", createdAt: D, updatedAt: at(-2, 16),
+    title: "Ôn tập nhanh: Sài Gòn xưa (5 câu)", level: "EASY", durationMinutes: 8,
+    questions: [
+      { id: "q1", prompt: "Phủ Gia Định được lập vào năm nào?", options: ["1698", "1802", "1859", "1911"], correctIndex: 0 },
+      { id: "q2", prompt: "Ai được cử vào kinh lược đất Đồng Nai năm 1698?", options: ["Nguyễn Hữu Cảnh", "Lê Văn Duyệt", "Trương Định", "Nguyễn Trung Trực"], correctIndex: 0 },
+    ],
   },
 ];
 

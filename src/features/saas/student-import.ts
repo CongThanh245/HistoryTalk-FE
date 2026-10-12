@@ -1,21 +1,7 @@
-import type { Classroom, StudentImportRow } from "./types";
-
 /**
- * Client-side parsing + validation of the student import file (Role Matrix row 4: bulk import).
+ * Student import file helpers (School Admin → POST /school-admin/students/import-excel).
  * No dependencies: a small RFC 4180-style CSV reader that also accepts ";" (Excel with a Vietnamese locale).
  */
-
-export const IMPORT_COLUMNS = ["Họ và tên", "Mã học sinh", "Khối", "Ngày sinh", "Lớp"] as const;
-
-export function buildTemplateCsv() {
-  const rows = [
-    IMPORT_COLUMNS.join(","),
-    "Nguyễn Văn An,HS10101,10,15/03/2010,10A1",
-    "Trần Thị Bình,HS10102,10,02/11/2010,10A2",
-  ];
-  // BOM so Excel opens the file as UTF-8 (keeps the Vietnamese diacritics).
-  return "﻿" + rows.join("\r\n") + "\r\n";
-}
 
 export function downloadTextFile(filename: string, content: string, type = "text/csv;charset=utf-8") {
   const blob = new Blob([content], { type });
@@ -78,57 +64,6 @@ const strip = (v: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
-const HEADER_ALIASES: Record<keyof RawRow, string[]> = {
-  fullName: ["ho va ten", "ho ten", "ten", "full name", "fullname"],
-  studentCode: ["ma hoc sinh", "ma hs", "ma so", "student code", "studentcode"],
-  grade: ["khoi", "grade"],
-  dateOfBirth: ["ngay sinh", "dob", "date of birth"],
-  className: ["lop", "class"],
-};
-
-export interface RawRow {
-  fullName: string;
-  studentCode: string;
-  grade: string;
-  dateOfBirth: string;
-  className: string;
-}
-
-export interface ParsedFile {
-  rows: (RawRow & { line: number })[];
-  /** Fatal problem with the file itself (no header, missing required columns, no data). */
-  fileError?: string;
-}
-
-export function readImportFile(text: string): ParsedFile {
-  const table = parseCsv(text).filter((r) => r.some((c) => c !== ""));
-  if (table.length === 0) return { rows: [], fileError: "File trống." };
-
-  const header = table[0].map(strip);
-  const index = {} as Record<keyof RawRow, number>;
-  (Object.keys(HEADER_ALIASES) as (keyof RawRow)[]).forEach((key) => {
-    index[key] = header.findIndex((h) => HEADER_ALIASES[key].includes(h));
-  });
-  const missing = [
-    index.fullName < 0 && "Họ và tên",
-    index.studentCode < 0 && "Mã học sinh",
-    index.grade < 0 && "Khối",
-  ].filter(Boolean);
-  if (missing.length) return { rows: [], fileError: `Thiếu cột bắt buộc: ${missing.join(", ")}. Hãy dùng file mẫu.` };
-
-  const get = (r: string[], i: number) => (i >= 0 ? (r[i] ?? "").trim() : "");
-  const rows = table.slice(1).map((r, k) => ({
-    line: k + 2,
-    fullName: get(r, index.fullName),
-    studentCode: get(r, index.studentCode),
-    grade: get(r, index.grade),
-    dateOfBirth: get(r, index.dateOfBirth),
-    className: get(r, index.className),
-  }));
-  if (rows.length === 0) return { rows: [], fileError: "File chỉ có dòng tiêu đề, chưa có học sinh." };
-  return { rows };
-}
-
 /** dd/mm/yyyy, d-m-yyyy or yyyy-mm-dd → yyyy-mm-dd; null when invalid. */
 export function parseDob(v: string): string | null {
   let y: number, m: number, d: number;
@@ -142,60 +77,202 @@ export function parseDob(v: string): string | null {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
-export const normalizeClassName = (v: string) => strip(v).replace(/^lop\s*/, "").replace(/\s/g, "");
-
-export type ImportMode = "file" | "class" | "none";
-
-export interface ValidatedRow extends StudentImportRow {
-  /** Class the row will be added to (when valid). */
-  classId?: string;
+export interface ImportTable {
+  headers: string[];
+  /** Data rows (header excluded), padded to the header width. */
+  rows: string[][];
 }
 
-export function validateRows(
-  rows: ParsedFile["rows"],
-  opts: { existingCodes: Set<string>; classes: Classroom[]; mode: ImportMode; targetClass?: Classroom },
-): ValidatedRow[] {
-  const byName = new Map(opts.classes.map((c) => [normalizeClassName(c.name), c]));
-  const seen = new Map<string, number>();
-  return rows.map((r) => {
-    const errors: string[] = [];
-    const code = r.studentCode.toUpperCase();
-    const grade = Number(r.grade);
+/** Decodes the uploaded bytes as UTF-8; falls back to Windows-1258 (old Vietnamese Excel "CSV" files). */
+export function decodeImportFile(buffer: ArrayBuffer): { text: string; encoding: "utf-8" | "windows-1258" } {
+  try {
+    return { text: new TextDecoder("utf-8", { fatal: true }).decode(buffer), encoding: "utf-8" };
+  } catch {
+    try {
+      return { text: new TextDecoder("windows-1258").decode(buffer), encoding: "windows-1258" };
+    } catch {
+      return { text: new TextDecoder("utf-8").decode(buffer), encoding: "utf-8" };
+    }
+  }
+}
 
-    if (!r.fullName) errors.push("Thiếu họ và tên");
-    if (!code) errors.push("Thiếu mã học sinh");
-    else if (!/^[A-Z0-9_-]+$/.test(code)) errors.push("Mã học sinh chỉ gồm chữ không dấu, số, - và _");
-    else if (opts.existingCodes.has(code)) errors.push("Mã học sinh đã tồn tại trong trường");
-    else if (seen.has(code)) errors.push(`Trùng mã với dòng ${seen.get(code)}`);
-    if (code && !seen.has(code)) seen.set(code, r.line);
+export function readTable(text: string): { table?: ImportTable; fileError?: string } {
+  const all = parseCsv(text).filter((r) => r.some((c) => c !== ""));
+  if (all.length === 0) return { fileError: "File trống." };
+  if (all.length === 1) return { fileError: "File chỉ có dòng tiêu đề, chưa có học sinh." };
+  const width = Math.max(...all.map((r) => r.length));
+  const headers = Array.from({ length: width }, (_, i) => all[0][i]?.trim() || `Cột ${i + 1}`);
+  const rows = all.slice(1).map((r) => Array.from({ length: width }, (_, i) => r[i] ?? ""));
+  return { table: { headers, rows } };
+}
 
-    if (!r.grade || !Number.isInteger(grade) || grade < 6 || grade > 12) errors.push("Khối phải từ 6 đến 12");
+/** parseDob plus Excel date serials (e.g. 40252 → 2010-03-15). */
+export function parseDobLoose(v: string): string | null {
+  if (/^\d{5}$/.test(v)) {
+    const d = new Date(Date.UTC(1899, 11, 30) + Number(v) * 86_400_000);
+    return d.toISOString().slice(0, 10);
+  }
+  return parseDob(v);
+}
 
-    let dateOfBirth: string | undefined;
-    if (r.dateOfBirth) {
-      const parsed = parseDob(r.dateOfBirth);
-      if (!parsed) errors.push("Ngày sinh không hợp lệ (dd/mm/yyyy)");
-      else dateOfBirth = parsed;
+// `POST /school-admin/students/import-excel` reads the CSV itself (Apache Commons CSV, UTF-8, header row,
+// header names case-insensitive, "," only). The wizard maps whatever the School Admin uploaded onto the
+// backend columns, checks the rows client-side and then sends a regenerated, normalized CSV:
+//   student_code,full_name,email,dob,gender,phone_number,password,additional_token
+// Backend rules (AbstractStudentImportProcessor): full_name and dob (yyyy-MM-dd) are required; student_code is
+// optional (auto "<SCHOOL>_HSyyNNNNN") and must match ^[A-Za-z0-9_-]{2,30}$; gender MALE/FEMALE (anything else is
+// stored empty); password < 6 chars falls back to "<student_code>@2026"; additional_token is added on top of
+// defaultInitialToken. The backend does NOT strip a UTF-8 BOM, so the file we send never has one.
+
+export const BACKEND_IMPORT_COLUMNS = [
+  "student_code",
+  "full_name",
+  "email",
+  "dob",
+  "gender",
+  "phone_number",
+  "password",
+  "additional_token",
+] as const;
+
+export type StudentImportField = "studentCode" | "fullName" | "email" | "dob" | "gender" | "phoneNumber" | "password" | "additionalToken";
+
+export const STUDENT_IMPORT_FIELDS: { key: StudentImportField; column: (typeof BACKEND_IMPORT_COLUMNS)[number]; label: string; required: boolean; hint: string }[] = [
+  { key: "studentCode", column: "student_code", label: "Mã học sinh", required: false, hint: "2–30 ký tự không dấu, số, - và _ · bỏ trống để hệ thống tự sinh" },
+  { key: "fullName", column: "full_name", label: "Họ và tên", required: true, hint: "Ví dụ: Nguyễn Văn An" },
+  { key: "email", column: "email", label: "Email", required: false, hint: "Bỏ trống: hệ thống cấp email đăng nhập dạng …@saas.historytalk.vn" },
+  { key: "dob", column: "dob", label: "Ngày sinh", required: true, hint: "dd/mm/yyyy hoặc yyyy-mm-dd" },
+  { key: "gender", column: "gender", label: "Giới tính", required: false, hint: "Nam / Nữ (MALE / FEMALE)" },
+  { key: "phoneNumber", column: "phone_number", label: "Số điện thoại", required: false, hint: "Không bắt buộc" },
+  { key: "password", column: "password", label: "Mật khẩu", required: false, hint: "≥ 6 ký tự · bỏ trống: <mã HS>@2026" },
+  { key: "additionalToken", column: "additional_token", label: "Token cộng thêm", required: false, hint: "Số nguyên ≥ 0, cộng thêm vào mức token mặc định" },
+];
+
+const FIELD_ALIASES: Record<StudentImportField, string[]> = {
+  studentCode: ["student_code", "student code", "studentcode", "ma hoc sinh", "ma hs", "mshs", "ma so", "ma so hoc sinh", "student id", "code"],
+  fullName: ["full_name", "full name", "fullname", "ho va ten", "ho ten", "ho & ten", "ten hoc sinh", "hoc sinh", "name", "student name"],
+  email: ["email", "e-mail", "mail", "thu dien tu", "gmail"],
+  dob: ["dob", "date of birth", "birthday", "birth date", "ngay sinh", "ngay thang nam sinh", "sinh ngay"],
+  gender: ["gender", "sex", "gioi tinh", "phai"],
+  phoneNumber: ["phone_number", "phone number", "phone", "so dien thoai", "sdt", "dien thoai"],
+  password: ["password", "mat khau", "mat khau tam"],
+  additionalToken: ["additional_token", "additional token", "token cong them", "token them", "token"],
+};
+
+export type StudentColumnMapping = Record<StudentImportField, number>;
+
+export function autoMapStudentColumns(headers: string[]): StudentColumnMapping {
+  const norm = headers.map((h) => strip(h).replace(/^﻿/, ""));
+  const used = new Set<number>();
+  const mapping = {} as StudentColumnMapping;
+  for (const f of STUDENT_IMPORT_FIELDS) {
+    const idx = norm.findIndex((h, i) => !used.has(i) && FIELD_ALIASES[f.key].includes(h));
+    mapping[f.key] = idx;
+    if (idx >= 0) used.add(idx);
+  }
+  return mapping;
+}
+
+/** "Nam"/"M"/"male" → MALE, "Nữ"/"F"/"female" → FEMALE, "" → "", anything else → null (invalid). */
+export function parseGender(v: string): "MALE" | "FEMALE" | "" | null {
+  const g = strip(v);
+  if (!g) return "";
+  if (["nam", "m", "male", "trai"].includes(g)) return "MALE";
+  if (["nu", "f", "female", "gai"].includes(g)) return "FEMALE";
+  return null;
+}
+
+export type StudentRowValues = Record<StudentImportField, string>;
+
+export interface CheckedStudentRow {
+  /** Line in the uploaded file (header = 1). */
+  line: number;
+  /** Normalized values, ready for the backend CSV. */
+  values: StudentRowValues;
+  errors: Partial<Record<StudentImportField, string>>;
+  warnings: string[];
+}
+
+const STUDENT_CODE_PATTERN = /^[A-Za-z0-9_-]{2,30}$/;
+
+export function checkStudentRows(table: ImportTable, mapping: StudentColumnMapping): CheckedStudentRow[] {
+  const get = (r: string[], i: number) => (i >= 0 ? (r[i] ?? "").trim() : "");
+  const codeLine = new Map<string, number>();
+  const emailLine = new Map<string, number>();
+
+  return table.rows.map((r, k) => {
+    const line = k + 2;
+    const errors: CheckedStudentRow["errors"] = {};
+    const warnings: string[] = [];
+    const raw = Object.fromEntries(STUDENT_IMPORT_FIELDS.map((f) => [f.key, get(r, mapping[f.key])])) as StudentRowValues;
+    const values: StudentRowValues = { ...raw, fullName: raw.fullName.replace(/\s+/g, " ") };
+
+    if (!values.fullName) errors.fullName = "Thiếu họ và tên";
+    else if (values.fullName.length > 150) errors.fullName = "Họ tên tối đa 150 ký tự";
+
+    if (values.studentCode) {
+      const key = values.studentCode.toLowerCase();
+      if (!STUDENT_CODE_PATTERN.test(values.studentCode)) errors.studentCode = "2–30 ký tự: chữ không dấu, số, - và _";
+      else if (codeLine.has(key)) errors.studentCode = `Trùng mã với dòng ${codeLine.get(key)}`;
+      else codeLine.set(key, line);
     }
 
-    let cls: Classroom | undefined;
-    if (opts.mode === "file" && r.className) {
-      cls = byName.get(normalizeClassName(r.className));
-      if (!cls) errors.push(`Không tìm thấy lớp “${r.className}”`);
-    } else if (opts.mode === "class") {
-      cls = opts.targetClass;
+    if (!raw.dob) errors.dob = "Thiếu ngày sinh (máy chủ bắt buộc)";
+    else {
+      const parsed = parseDobLoose(raw.dob);
+      if (!parsed) errors.dob = "Ngày sinh không hợp lệ (dd/mm/yyyy)";
+      else values.dob = parsed;
     }
-    if (cls && Number.isInteger(grade) && cls.grade !== grade) errors.push(`Khối ${grade} không khớp lớp ${cls.name} (khối ${cls.grade})`);
 
-    return {
-      line: r.line,
-      fullName: r.fullName,
-      studentCode: code,
-      grade,
-      dateOfBirth,
-      className: cls?.name ?? (opts.mode === "file" ? r.className || undefined : undefined),
-      classId: cls?.id,
-      error: errors.length ? errors.join("; ") : undefined,
-    };
+    if (values.email) {
+      const key = values.email.toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) errors.email = "Email không hợp lệ";
+      else if (emailLine.has(key)) errors.email = `Trùng email với dòng ${emailLine.get(key)}`;
+      else {
+        emailLine.set(key, line);
+        values.email = key;
+      }
+    }
+
+    if (raw.gender) {
+      const g = parseGender(raw.gender);
+      if (g === null) errors.gender = "Giới tính: Nam hoặc Nữ";
+      else values.gender = g;
+    }
+
+    if (values.phoneNumber.length > 20) errors.phoneNumber = "Tối đa 20 ký tự";
+
+    if (values.password && values.password.length < 6) {
+      warnings.push("Mật khẩu dưới 6 ký tự — máy chủ sẽ dùng <mã HS>@2026");
+    }
+
+    if (raw.additionalToken) {
+      const n = Number(raw.additionalToken.replace(/[.\s]/g, ""));
+      if (!Number.isInteger(n) || n < 0) errors.additionalToken = "Số nguyên ≥ 0";
+      else values.additionalToken = String(n);
+    }
+
+    return { line, values, errors, warnings };
   });
+}
+
+const backendCell = (v: string) => (/[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+
+/** Normalized UTF-8 CSV (no BOM) with the exact backend header. */
+export function buildBackendCsv(rows: StudentRowValues[]): string {
+  const lines = [
+    BACKEND_IMPORT_COLUMNS.join(","),
+    ...rows.map((v) => STUDENT_IMPORT_FIELDS.map((f) => backendCell(v[f.key] ?? "")).join(",")),
+  ];
+  return lines.join("\r\n") + "\r\n";
+}
+
+/** Backend template for download (with BOM so Excel keeps the diacritics; the wizard strips it before sending). */
+export function buildBackendTemplateCsv(): string {
+  const rows = [
+    BACKEND_IMPORT_COLUMNS.join(","),
+    "HS2600001,Nguyễn Văn An,,2010-03-15,MALE,0901234567,,0",
+    "HS2600002,Trần Thị Bình,binh.tran@gmail.com,2010-11-02,FEMALE,,MatKhau@2026,5000",
+  ];
+  return "﻿" + rows.join("\r\n") + "\r\n";
 }

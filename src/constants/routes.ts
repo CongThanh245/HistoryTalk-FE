@@ -36,6 +36,8 @@ export const ROUTES = {
   // ── Lớp học (Teacher + School Student) ────────────────
   CLASSES: "/classes",
   CLASS_DETAIL: (classId: string) => `/classes/${classId}`,
+  /** Tư liệu lớp & trường: class + school content for the class workspace. */
+  CLASS_MATERIALS: "/classes/materials",
 
   // ── Giáo viên: dashboard, bài tập, lịch sử địa phương ──
   TEACHING: {
@@ -77,13 +79,13 @@ export const ROUTES = {
     TRASH: "/staff/trash",
     ADMIN: {
       HOME: "/staff/admin",
-      MAP: "/staff/admin/map",
       ACCOUNTS: {
         CUSTOMER: "/staff/admin/accounts/customer",
         CONTENT_ADMIN: "/staff/admin/accounts/content-admin",
         SYSTEM_ADMIN: "/staff/admin/accounts/system-admin",
       },
       SCHOOLS: "/staff/admin/schools",
+      SCHOOL_NEW: "/staff/admin/schools/new",
       SCHOOL_DETAIL: (schoolId: string) => `/staff/admin/schools/${schoolId}`,
       SUBSCRIPTIONS: "/staff/admin/subscriptions",
       PAYMENT_HISTORY: "/staff/admin/payment/history",

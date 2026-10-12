@@ -766,7 +766,7 @@ export function ChatMain({
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    aria-label="Lưu ý về độ chính xác của AI"
+                    aria-label="Lưu ý: nhân vật do AI nhập vai"
                     className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 border border-[var(--border-strong)] text-content-muted hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]"
                   >
                     <span className="text-[10px] font-bold leading-none">!</span>
@@ -778,9 +778,12 @@ export function ChatMain({
                   sideOffset={10}
                   className="max-w-[min(380px,90vw)] whitespace-normal rounded-[2px] bg-bg-elevated border border-[var(--text-primary)] text-content-heading shadow-(--shadow-soft)"
                 >
-                  <p className="text-xs leading-relaxed">
-                    AI có thể đưa ra thông tin không chính xác. Hãy kiểm chứng lại các thông tin quan trọng.
-                  </p>
+                  <p className="text-xs font-bold leading-relaxed">Đây là AI nhập vai {character.name}, không phải nhân vật thật.</p>
+                  <ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs leading-relaxed">
+                    <li>Lời thoại do AI tạo ra để phục vụ học tập, không phải phát ngôn, trích dẫn hay quan điểm thật của nhân vật.</li>
+                    <li>AI có thể sai về sự kiện, mốc thời gian, số liệu hoặc cách đánh giá.</li>
+                    <li>Hãy đối chiếu với sách giáo khoa và tư liệu chính thống trước khi dùng cho học tập hay trích dẫn.</li>
+                  </ul>
                   <a
                     href={AI_FEEDBACK_FORM_URL}
                     target="_blank"
@@ -803,8 +806,11 @@ export function ChatMain({
               <AlertTriangle
                 className="w-3 h-3 shrink-0 text-(--status-warning)"
               />
-              <span className="flex-1 min-w-0 truncate">
-                AI có thể đưa ra thông tin không chính xác. Hãy kiểm chứng lại các thông tin quan trọng.
+              <span
+                className="flex-1 min-w-0 truncate"
+                title="Lời thoại do AI tạo ra, không phải phát ngôn thật của nhân vật. Hãy đối chiếu với tư liệu chính thống."
+              >
+                AI nhập vai, không phải lời thật của nhân vật. Hãy đối chiếu tư liệu chính thống.
               </span>
               <button
                 onClick={dismissAiWarning}

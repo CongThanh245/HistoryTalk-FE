@@ -16,5 +16,5 @@ export default function CustomerSidebar() {
 
   // Customers see their wallet + upgrade card; school accounts see today's school quota instead
   // (no upgrade, Role Matrix row 26). The footer picks the right card from useEntitlements().
-  return <Sidebar sections={sections} showUpgrade={mode !== "STAFF"} logoHref={role === "TEACHER" ? "/teaching" : "/"} />;
+  return <Sidebar sections={sections} showUpgrade={mode !== "STAFF"} logoHref={role === "TEACHER" ? "/teaching" : role === "SCHOOL_STUDENT" ? "/classes" : "/"} />;
 }

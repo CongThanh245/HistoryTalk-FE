@@ -7,7 +7,7 @@ import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { useSaasStore } from "@/features/saas/store";
 import { cn } from "@/lib/utils/cn";
 
-/** Slim bar shown on every school (SaaS) screen while it runs on the mock store. */
+/** FAKE UI marker: slim bar shown on every screen that still runs on the mock store (no backend API yet). */
 export function MockDataNotice({ className }: { className?: string }) {
   const resetMockData = useSaasStore((s) => s.resetMockData);
   const [open, setOpen] = React.useState(false);
@@ -23,7 +23,9 @@ export function MockDataNotice({ className }: { className?: string }) {
       >
         <span className="inline-flex items-center gap-2">
           <DatabaseZap className="h-3.5 w-3.5 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
-          Dữ liệu mẫu — chưa kết nối API
+          <span>
+            <b className="text-content-heading">Giao diện mẫu</b> — dữ liệu giả, chưa kết nối API. Tính năng sẽ chạy thật khi máy chủ hoàn thiện.
+          </span>
         </span>
         <button
           type="button"

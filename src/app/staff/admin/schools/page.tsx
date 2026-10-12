@@ -3,336 +3,276 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ColumnDef } from "@tanstack/react-table";
-import { Ban, Building2, CheckCircle2, Eye, Plus, Users } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowDown, ArrowUp, ArrowUpDown, Building2, Loader2, Plus } from "lucide-react";
 
-import { ConfirmDialog } from "@/components/commons/confirm-dialog";
-import { StaffDataTable } from "@/components/staff/staff-data-table";
-import { StaffFormInput, StaffFormSelect } from "@/components/staff/staff-form";
-import { StaffStatCard, StaffStatsGrid } from "@/components/staff/staff-stat-card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  DIALOG_CLASS,
-  DIALOG_TITLE_CLASS,
-  Field,
-  IconAction,
-  Panel,
-  PlanBadge,
-  SaasShell,
-  SchoolStatusBadge,
-  SearchInput,
-  formatDate,
-  formatNumber,
-  isValidEmail,
-  normalizeText,
-} from "@/components/saas/saas-ui";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { NoResults, TableEmpty, TablePagination, TableSkeleton } from "@/components/saas/accounts-table";
+import { ErrorRetry, PackageCell, SchoolStatusPill, useDebouncedValue } from "@/components/saas/admin-school-shared";
+import { Panel, SaasShell, SearchInput, TokenBar, formatNumber } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
-import { useSchoolCounts } from "@/features/saas/hooks";
-import { PLAN_DEFAULTS, PLAN_LABELS } from "@/features/saas/mock-data";
-import { useSaasStore } from "@/features/saas/store";
-import type { School, SchoolPlan } from "@/features/saas/types";
+import { apiErrorMessage, useApiSchools } from "@/features/saas/hooks-api";
+import { formatDateTime, schoolPool } from "@/features/saas/admin-schools";
+import type { ApiSchool } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
 
-const PLANS = Object.keys(PLAN_LABELS) as SchoolPlan[];
-
-/** System Admin: schools on the school package and their School Admin accounts (Role Matrix row 2). */
+/** System Admin: schools on the Enterprise package (`GET /admin/schools`, server-side search / paging / sort). */
 export default function AdminSchoolsPage() {
   return (
-    <SaasShell title="Gói trường học" description="Danh sách trường đang dùng gói Enterprise, tạo trường mới cùng tài khoản quản trị trường.">
+    <SaasShell
+      live
+      title="Gói trường học"
+      description="Các trường dùng gói Enterprise: quỹ token hằng tháng và tài khoản quản trị trường."
+      fallback={<TableSkeleton rows={8} cols={7} />}
+    >
       <SchoolsContent />
     </SaasShell>
   );
 }
 
-function SchoolsContent() {
-  const router = useRouter();
-  const schools = useSaasStore((s) => s.schools);
-  const updateSchool = useSaasStore((s) => s.updateSchool);
-  const counts = useSchoolCounts();
+type SortBy = "createdAt" | "name" | "schoolCode" | "totalSchoolTokenQuota";
+type SortDirection = "asc" | "desc";
 
-  const [search, setSearch] = React.useState("");
-  const [plan, setPlan] = React.useState<"ALL" | SchoolPlan>("ALL");
-  const [status, setStatus] = React.useState<"ALL" | School["status"]>("ALL");
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [toggleTarget, setToggleTarget] = React.useState<School | null>(null);
+const PAGE_SIZES = [10, 20, 50];
+const STICKY = "sticky left-0 z-10 bg-[var(--bg-surface)]";
 
-  const filtered = React.useMemo(() => {
-    const q = normalizeText(search);
-    return schools.filter(
-      (s) =>
-        (plan === "ALL" || s.plan === plan) &&
-        (status === "ALL" || s.status === status) &&
-        (!q || normalizeText(s.name).includes(q) || normalizeText(s.code).includes(q) || normalizeText(s.province).includes(q)),
-    );
-  }, [schools, search, plan, status]);
-
-  const columns = React.useMemo<ColumnDef<School>[]>(
-    () => [
-      {
-        id: "name",
-        accessorKey: "name",
-        header: "Trường",
-        cell: ({ row }) => (
-          <div className="min-w-[200px]">
-            <Link href={ROUTES.STAFF.ADMIN.SCHOOL_DETAIL(row.original.id)} className="text-sm font-semibold text-content-heading hover:text-[var(--accent-gold)]" onClick={(e) => e.stopPropagation()}>
-              {row.original.name}
-            </Link>
-            <p className="font-mono text-xs text-content-muted">{row.original.code}</p>
-          </div>
-        ),
-      },
-      { accessorKey: "province", header: "Tỉnh / thành" },
-      { accessorKey: "plan", header: "Gói", cell: ({ row }) => <PlanBadge plan={row.original.plan} /> },
-      {
-        id: "students",
-        header: "Học sinh",
-        cell: ({ row }) => (
-          <span className="tabular-nums">
-            {formatNumber(counts.students.get(row.original.id) ?? 0)}
-            <span className="text-content-muted"> / {formatNumber(row.original.maxStudents)}</span>
-          </span>
-        ),
-      },
-      { id: "classes", header: "Lớp", cell: ({ row }) => <span className="tabular-nums">{counts.classes.get(row.original.id) ?? 0}</span> },
-      { accessorKey: "contractEndsAt", header: "Hết hạn HĐ", cell: ({ row }) => <span className="text-xs">{formatDate(row.original.contractEndsAt)}</span> },
-      { accessorKey: "status", header: "Trạng thái", cell: ({ row }) => <SchoolStatusBadge status={row.original.status} /> },
-      {
-        id: "actions",
-        header: () => <div className="pr-2 text-right">Thao tác</div>,
-        cell: ({ row }) => {
-          const s = row.original;
-          return (
-            <div className="flex items-center justify-end gap-1">
-              <IconAction label="Xem chi tiết" onClick={() => router.push(ROUTES.STAFF.ADMIN.SCHOOL_DETAIL(s.id))}>
-                <Eye className="h-4 w-4" />
-              </IconAction>
-              {s.status === "ACTIVE" ? (
-                <IconAction label="Tạm ngưng" tone="danger" onClick={() => setToggleTarget(s)}>
-                  <Ban className="h-4 w-4" />
-                </IconAction>
-              ) : (
-                <IconAction label="Kích hoạt lại" tone="success" onClick={() => setToggleTarget(s)}>
-                  <CheckCircle2 className="h-4 w-4" />
-                </IconAction>
-              )}
-            </div>
-          );
-        },
-      },
-    ],
-    [counts, router],
-  );
-
-  const totalStudents = schools.reduce((sum, s) => sum + (counts.students.get(s.id) ?? 0), 0);
-  const totalClasses = schools.reduce((sum, s) => sum + (counts.classes.get(s.id) ?? 0), 0);
-
+function SortHeader({
+  label,
+  column,
+  sortBy,
+  direction,
+  onSort,
+}: {
+  label: string;
+  column: SortBy;
+  sortBy: SortBy;
+  direction: SortDirection;
+  onSort: (c: SortBy) => void;
+}) {
+  const active = sortBy === column;
   return (
-    <div className="space-y-6">
-      <StaffStatsGrid>
-        <StaffStatCard label="Trường" value={schools.length} icon={<Building2 className="h-5 w-5" />} tone="gold" />
-        <StaffStatCard label="Đang hoạt động" value={schools.filter((s) => s.status === "ACTIVE").length} icon={<CheckCircle2 className="h-5 w-5" />} tone="green" />
-        <StaffStatCard label="Học sinh" value={formatNumber(totalStudents)} icon={<Users className="h-5 w-5" />} tone="blue" />
-        <StaffStatCard label="Lớp học" value={totalClasses} tone="muted" />
-      </StaffStatsGrid>
-
-      <Panel>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <SearchInput value={search} onChange={setSearch} placeholder="Tìm tên trường, mã, tỉnh..." />
-          <StaffFormSelect
-            value={plan}
-            onValueChange={setPlan}
-            options={[{ value: "ALL", label: "Tất cả gói" }, ...PLANS.map((p) => ({ value: p, label: PLAN_LABELS[p] }))]}
-            className="w-full sm:w-44"
-          />
-          <StaffFormSelect
-            value={status}
-            onValueChange={setStatus}
-            options={[
-              { value: "ALL", label: "Tất cả trạng thái" },
-              { value: "ACTIVE", label: "Đang hoạt động" },
-              { value: "SUSPENDED", label: "Tạm ngưng" },
-            ]}
-            className="w-full sm:w-48"
-          />
-          <div className="hidden flex-1 sm:block" />
-          <button type="button" className="btn-crimson w-full sm:w-auto" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" aria-hidden="true" /> Thêm trường
-          </button>
-        </div>
-        <p className="text-sm text-content-muted">{filtered.length} trường</p>
-        <StaffDataTable
-          columns={columns}
-          data={filtered}
-          emptyMessage="Không có trường phù hợp."
-          onRowClick={(s) => router.push(ROUTES.STAFF.ADMIN.SCHOOL_DETAIL(s.id))}
-        />
-      </Panel>
-
-      <CreateSchoolDialog open={createOpen} onOpenChange={setCreateOpen} schools={schools} />
-
-      <ConfirmDialog
-        open={!!toggleTarget}
-        onOpenChange={(o) => !o && setToggleTarget(null)}
-        title={toggleTarget?.status === "ACTIVE" ? "Tạm ngưng trường?" : "Kích hoạt lại trường?"}
-        description={
-          toggleTarget?.status === "ACTIVE"
-            ? `Mọi tài khoản của ${toggleTarget?.name ?? ""} (quản trị, giáo viên, học sinh) sẽ không đăng nhập được cho đến khi kích hoạt lại.`
-            : `${toggleTarget?.name ?? ""} sẽ dùng lại được gói ${toggleTarget ? PLAN_LABELS[toggleTarget.plan] : ""}.`
-        }
-        confirmLabel={toggleTarget?.status === "ACTIVE" ? "Tạm ngưng" : "Kích hoạt"}
-        variant={toggleTarget?.status === "ACTIVE" ? "danger" : "primary"}
-        onConfirm={() => {
-          if (!toggleTarget) return;
-          const next = toggleTarget.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-          updateSchool(toggleTarget.id, { status: next });
-          toast.success(next === "ACTIVE" ? `Đã kích hoạt ${toggleTarget.name}` : `Đã tạm ngưng ${toggleTarget.name}`);
-          setToggleTarget(null);
-        }}
-      />
-    </div>
+    <button
+      type="button"
+      onClick={() => onSort(column)}
+      className={cn(
+        "-ml-1.5 inline-flex h-8 items-center gap-1 rounded-[2px] px-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]",
+        active ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]",
+      )}
+    >
+      {label}
+      {active ? (
+        direction === "asc" ? (
+          <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
+        ) : (
+          <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
+        )
+      ) : (
+        <ArrowUpDown className="h-3.5 w-3.5 opacity-50" aria-hidden="true" />
+      )}
+    </button>
   );
 }
 
-const emptyForm = () => ({
-  name: "",
-  code: "",
-  province: "",
-  address: "",
-  plan: "ENTERPRISE_1" as SchoolPlan,
-  contractEndsAt: "",
-  adminName: "",
-  adminEmail: "",
-  adminPhone: "",
-});
+const PlainHeader = ({ children }: { children: React.ReactNode }) => (
+  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{children}</span>
+);
 
-function CreateSchoolDialog({ open, onOpenChange, schools }: { open: boolean; onOpenChange: (o: boolean) => void; schools: School[] }) {
+function SchoolsContent() {
   const router = useRouter();
-  const createSchool = useSaasStore((s) => s.createSchool);
-  const [form, setForm] = React.useState(emptyForm);
-  const [touched, setTouched] = React.useState(false);
-  const set = (k: keyof ReturnType<typeof emptyForm>) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const [search, setSearch] = React.useState("");
+  const debouncedSearch = useDebouncedValue(search.trim(), 300);
+  const [page, setPage] = React.useState(0);
+  const [size, setSize] = React.useState(10);
+  const [sortBy, setSortBy] = React.useState<SortBy>("createdAt");
+  const [direction, setDirection] = React.useState<SortDirection>("desc");
 
-  const close = (o: boolean) => {
-    if (!o) {
-      setForm(emptyForm());
-      setTouched(false);
-    }
-    onOpenChange(o);
-  };
-
-  const code = form.code.trim().toUpperCase();
-  const errors = {
-    name: form.name.trim() ? null : "Nhập tên trường",
-    code: !code ? "Nhập mã trường" : schools.some((s) => s.code.toUpperCase() === code) ? "Mã trường đã tồn tại" : null,
-    province: form.province.trim() ? null : "Nhập tỉnh / thành phố",
-    contractEndsAt: form.contractEndsAt ? null : "Chọn ngày hết hạn hợp đồng",
-    adminName: form.adminName.trim() ? null : "Nhập họ tên quản trị trường",
-    adminEmail: isValidEmail(form.adminEmail) ? null : "Email không hợp lệ",
-  };
-  const hasError = Object.values(errors).some(Boolean);
-  const defaults = PLAN_DEFAULTS[form.plan];
-  const err = (k: keyof typeof errors) => (touched ? errors[k] : null);
-
-  function save() {
-    setTouched(true);
-    if (hasError) return;
-    const school = createSchool(
-      {
-        name: form.name.trim(),
-        code,
-        province: form.province.trim(),
-        address: form.address.trim() || undefined,
-        plan: form.plan,
-        ...defaults,
-        status: "ACTIVE",
-        contractEndsAt: form.contractEndsAt,
-      },
-      {
-        fullName: form.adminName.trim(),
-        email: form.adminEmail.trim().toLowerCase(),
-        phone: form.adminPhone.trim() || undefined,
-        status: "INVITED",
-      },
-    );
-    toast.success(`Đã tạo ${school.name} và gửi email mời tới ${form.adminEmail.trim().toLowerCase()}`);
-    close(false);
-    router.push(ROUTES.STAFF.ADMIN.SCHOOL_DETAIL(school.id));
+  // Back to the first page whenever the query changes.
+  const [lastSearch, setLastSearch] = React.useState(debouncedSearch);
+  if (debouncedSearch !== lastSearch) {
+    setLastSearch(debouncedSearch);
+    setPage(0);
   }
 
+  const params = { search: debouncedSearch || undefined, page, size, sortBy, sortDirection: direction };
+  const { data, isLoading, isError, error, refetch, isFetching, isPlaceholderData } = useApiSchools(params);
+
+  // Keep the page in range if the total shrank (e.g. another admin's change).
+  const totalPages = data?.totalPages ?? 1;
+  if (data && !isPlaceholderData && page > 0 && page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
+
+  function onSort(column: SortBy) {
+    if (column === sortBy) setDirection((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortBy(column);
+      // Dates and token pools read best largest/newest first; names and codes A → Z.
+      setDirection(column === "createdAt" || column === "totalSchoolTokenQuota" ? "desc" : "asc");
+    }
+    setPage(0);
+  }
+
+  const rows = data?.items ?? [];
+  const total = data?.totalElements ?? 0;
+  const searching = debouncedSearch !== "";
+  const sortProps = { sortBy, direction, onSort };
+  const ariaSort = (c: SortBy) => (sortBy === c ? (direction === "asc" ? "ascending" : "descending") : "none");
+  const goTo = (s: ApiSchool) => router.push(ROUTES.STAFF.ADMIN.SCHOOL_DETAIL(s.id));
+
   return (
-    <Dialog open={open} onOpenChange={close}>
-      <DialogContent className={cn(DIALOG_CLASS, "sm:max-w-2xl")}>
-        <DialogHeader>
-          <DialogTitle className={DIALOG_TITLE_CLASS}>Thêm trường</DialogTitle>
-          <DialogDescription className="text-content-muted">
-            Tạo trường cùng tài khoản quản trị trường đầu tiên. Quản trị trường sẽ nhận email mời kích hoạt.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-5">
-          <fieldset className="space-y-4">
-            <legend className="mb-3 text-sm font-bold text-content-heading">Thông tin trường</legend>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="Tên trường" required error={err("name")} className="sm:col-span-2">
-                <StaffFormInput value={form.name} onChange={set("name")} placeholder="THPT Nguyễn Du" />
-              </Field>
-              <Field label="Mã trường" required error={err("code")}>
-                <StaffFormInput value={form.code} onChange={set("code")} placeholder="ND-HCM" />
-              </Field>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="Tỉnh / thành" required error={err("province")}>
-                <StaffFormInput value={form.province} onChange={set("province")} placeholder="TP. Hồ Chí Minh" />
-              </Field>
-              <Field label="Địa chỉ" className="sm:col-span-2">
-                <StaffFormInput value={form.address} onChange={set("address")} placeholder="Số nhà, đường, quận" />
-              </Field>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                label="Gói"
-                required
-                hint={`${formatNumber(defaults.dailyTokensPerStudent)} token/HS/ngày · ${formatNumber(defaults.maxStudents)} học sinh`}
-              >
-                <StaffFormSelect
-                  value={form.plan}
-                  onValueChange={(v) => setForm((f) => ({ ...f, plan: v }))}
-                  options={PLANS.map((p) => ({ value: p, label: PLAN_LABELS[p] }))}
-                  className="w-full"
-                />
-              </Field>
-              <Field label="Hết hạn hợp đồng" required error={err("contractEndsAt")}>
-                <StaffFormInput type="date" value={form.contractEndsAt} onChange={set("contractEndsAt")} />
-              </Field>
-            </div>
-          </fieldset>
-
-          <fieldset className="space-y-4 border-t border-[var(--border-default)] pt-4">
-            <legend className="mb-3 text-sm font-bold text-content-heading">Quản trị trường</legend>
-            <Field label="Họ và tên" required error={err("adminName")}>
-              <StaffFormInput value={form.adminName} onChange={set("adminName")} placeholder="Nguyễn Thị B" />
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Email" required error={err("adminEmail")}>
-                <StaffFormInput type="email" value={form.adminEmail} onChange={set("adminEmail")} placeholder="admin@truong.edu.vn" />
-              </Field>
-              <Field label="Số điện thoại">
-                <StaffFormInput type="tel" value={form.adminPhone} onChange={set("adminPhone")} placeholder="0903 000 000" />
-              </Field>
-            </div>
-          </fieldset>
+    <div className="space-y-6">
+      <Panel>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <SearchInput value={search} onChange={setSearch} placeholder="Tìm tên trường, mã trường, email liên hệ..." className="sm:w-[360px]" />
+          <Link href={ROUTES.STAFF.ADMIN.SCHOOL_NEW} className="btn-crimson w-full sm:w-auto">
+            <Plus className="h-4 w-4" aria-hidden="true" /> Thêm trường
+          </Link>
         </div>
 
-        <DialogFooter className="gap-2">
-          <button type="button" className="btn-line" onClick={() => close(false)}>
-            Hủy
-          </button>
-          <button type="button" className="btn-crimson" onClick={save}>
-            Tạo trường
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        {!isLoading && !isError && (
+          <p className="flex items-center gap-2 text-sm text-content-muted" aria-live="polite">
+            {searching ? `${formatNumber(total)} trường khớp “${debouncedSearch}”` : `${formatNumber(total)} trường`}
+            {isFetching && <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--accent-gold)]" aria-label="Đang cập nhật" />}
+          </p>
+        )}
+
+        {isLoading ? (
+          <TableSkeleton rows={size > 10 ? 10 : size} cols={7} />
+        ) : isError ? (
+          <ErrorRetry
+            title="Không tải được danh sách trường"
+            message={apiErrorMessage(error, "Máy chủ không phản hồi. Kiểm tra kết nối rồi thử lại.")}
+            onRetry={() => void refetch()}
+            retrying={isFetching}
+          />
+        ) : (
+          <div className="space-y-3">
+            <div
+              className={cn(
+                "overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)] transition-opacity",
+                isPlaceholderData && "opacity-60",
+              )}
+              aria-busy={isFetching}
+            >
+              <Table className="min-w-max">
+                <caption className="sr-only">Danh sách trường trên gói trường học</caption>
+                <TableHeader>
+                  <TableRow className="border-b border-[var(--border-strong)] hover:bg-transparent">
+                    <TableHead className={cn("px-3", STICKY, "z-20")} aria-sort={ariaSort("name")}>
+                      <SortHeader label="Trường" column="name" {...sortProps} />
+                    </TableHead>
+                    <TableHead className="px-3" aria-sort={ariaSort("schoolCode")}>
+                      <SortHeader label="Mã trường" column="schoolCode" {...sortProps} />
+                    </TableHead>
+                    <TableHead className="px-3">
+                      <PlainHeader>Gói</PlainHeader>
+                    </TableHead>
+                    <TableHead className="px-3" aria-sort={ariaSort("totalSchoolTokenQuota")}>
+                      <SortHeader label="Quỹ token đã phân bổ" column="totalSchoolTokenQuota" {...sortProps} />
+                    </TableHead>
+                    <TableHead className="px-3">
+                      <PlainHeader>Liên hệ</PlainHeader>
+                    </TableHead>
+                    <TableHead className="px-3" aria-sort={ariaSort("createdAt")}>
+                      <SortHeader label="Ngày tạo" column="createdAt" {...sortProps} />
+                    </TableHead>
+                    <TableHead className="px-3">
+                      <PlainHeader>Trạng thái</PlainHeader>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.length === 0 ? (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell colSpan={7} className="p-0">
+                        {searching ? (
+                          <NoResults onReset={() => setSearch("")} message={`Không có trường nào khớp “${debouncedSearch}”.`} />
+                        ) : (
+                          <TableEmpty
+                            icon={Building2}
+                            title="Chưa có trường nào"
+                            description="Thêm trường đầu tiên cùng tài khoản quản trị trường."
+                            action={
+                              <Link href={ROUTES.STAFF.ADMIN.SCHOOL_NEW} className="btn-crimson">
+                                <Plus className="h-4 w-4" aria-hidden="true" /> Thêm trường
+                              </Link>
+                            }
+                          />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    rows.map((s) => {
+                      const pool = schoolPool(s);
+                      return (
+                        <TableRow
+                          key={s.id}
+                          onClick={() => goTo(s)}
+                          className="cursor-pointer border-b border-[var(--border-default)] last:border-b-0 hover:bg-[var(--status-neutral-bg)]"
+                        >
+                          <TableCell className={cn("px-3 py-2.5", STICKY)}>
+                            <div className="min-w-[180px] max-w-[280px] whitespace-normal">
+                              <Link
+                                href={ROUTES.STAFF.ADMIN.SCHOOL_DETAIL(s.id)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-sm font-semibold leading-snug text-content-heading hover:text-[var(--accent-gold)]"
+                              >
+                                {s.name}
+                              </Link>
+                              {s.address && <p className="truncate text-xs text-content-muted" title={s.address}>{s.address}</p>}
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5">
+                            <span className="font-mono text-xs">{s.schoolCode}</span>
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5">
+                            <PackageCell pkg={s.packageType} />
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5">
+                            <div className="w-40 space-y-1">
+                              <p className="text-sm tabular-nums">
+                                {formatNumber(pool.allocated)}
+                                <span className="text-content-muted"> / {formatNumber(pool.total)}</span>
+                              </p>
+                              <TokenBar used={pool.allocated} quota={pool.total} className="h-1.5" />
+                              <p className="text-[11px] text-content-muted">Còn {formatNumber(pool.unallocated)} chưa phân bổ</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5">
+                            <div className="max-w-[220px] text-sm">
+                              <p className="truncate" title={s.contactEmail}>
+                                {s.contactEmail}
+                              </p>
+                              <p className="text-xs tabular-nums text-content-muted">{s.contactPhone || "—"}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5">
+                            <span className="whitespace-nowrap text-xs tabular-nums">{formatDateTime(s.createdAt)}</span>
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5">
+                            <SchoolStatusPill status={s.status} />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            {total > 0 && (
+              <TablePagination
+                pageIndex={page}
+                pageSize={size}
+                total={total}
+                pageSizeOptions={PAGE_SIZES}
+                onPageChange={setPage}
+                onPageSizeChange={(n) => {
+                  setSize(n);
+                  setPage(0);
+                }}
+              />
+            )}
+          </div>
+        )}
+      </Panel>
+
+    </div>
   );
 }

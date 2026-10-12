@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { ERA_CONFIG } from "@/constants/eras";
 import { DEMO_TODAY } from "./mock-classroom";
-import { useDemoStudentId, useDemoTeacherId, useSaasStore } from "./store";
+import { useDemoSchoolId, useDemoStudentId, useDemoTeacherId, useSaasStore } from "./store";
 import type {
   Assignment,
   AssignmentType,
@@ -11,6 +11,7 @@ import type {
   Classroom,
   LocalContent,
   LocalContentKind,
+  LocalContentScope,
   LocalContentStatus,
   StudentAccount,
   Submission,
@@ -62,6 +63,12 @@ export const LOCAL_STATUS_LABELS: Record<LocalContentStatus, string> = {
   PUBLISHED: "Đã xuất bản",
   INACTIVE: "Ngừng hiển thị",
   TRASH: "Thùng rác",
+};
+
+/** Visibility of local content: "Của lớp" is self-published by the teacher, "Của trường" is approved by the School Admin. */
+export const LOCAL_SCOPE_LABELS: Record<LocalContentScope, string> = {
+  CLASS: "Của lớp",
+  SCHOOL: "Của trường",
 };
 
 export const LOCAL_KIND_LABELS: Record<LocalContentKind, string> = {
@@ -234,6 +241,7 @@ export function progressOf(a: Assignment, subs: Submission[], studentIds: string
 export function useTeachingData(role: string | null | undefined) {
   const teacherId = useDemoTeacherId();
   const studentId = useDemoStudentId();
+  const schoolId = useDemoSchoolId();
   const classesAll = useSaasStore((s) => s.classes);
   const assignmentsAll = useSaasStore((s) => s.assignments);
   const submissionsAll = useSaasStore((s) => s.submissions);
@@ -265,12 +273,15 @@ export function useTeachingData(role: string | null | undefined) {
     const progress = new Map<string, AssignmentProgress>(
       assignments.map((a) => [a.id, progressOf(a, subsByAssignment.get(a.id) ?? [], classById.get(a.classId)?.studentIds ?? [])]),
     );
-    /** Mine, plus content other teachers made visible to one of my classes (row 14). */
-    const localContent = localAll.filter(
-      (c) => c.authorId === teacherId || c.classIds.some((id) => classById.has(id)),
+    /** Mine, plus class content other teachers shared with one of my classes and published school-wide content (row 14). */
+    const localContent = localAll.filter((c) =>
+      c.authorId === teacherId ||
+      (c.scope === "SCHOOL"
+        ? c.schoolId === schoolId && c.status === "PUBLISHED"
+        : c.classIds.some((id) => classById.has(id))),
     );
     return { teacherId, classes, classById, assignments, subsByAssignment, studentById, progress, localContent, classPins };
-  }, [role, classesAll, assignmentsAll, submissionsAll, studentsAll, localAll, classPins, teacherId, studentId]);
+  }, [role, classesAll, assignmentsAll, submissionsAll, studentsAll, localAll, classPins, teacherId, studentId, schoolId]);
 }
 
 export type TeachingData = ReturnType<typeof useTeachingData>;

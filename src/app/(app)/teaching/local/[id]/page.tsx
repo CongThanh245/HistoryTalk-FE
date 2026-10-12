@@ -1,5 +1,6 @@
 "use client";
 
+// FAKE UI: màn này chạy bằng dữ liệu mẫu (src/features/saas/store.ts), chưa có API — chờ BE sprint sau.
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -15,7 +16,7 @@ import { useTeachingData } from "@/features/saas/hooks-teaching";
 export default function LocalContentPage() {
   const { id } = useParams<{ id: string }>();
   return (
-    <SaasShell variant="app" title="Nội dung địa phương" description="Bản nháp có thể chỉnh sửa; nội dung đã gửi duyệt chỉ xem được trạng thái và góp ý.">
+    <SaasShell variant="app" title="Tư liệu lớp & trường" description="Bản nháp có thể chỉnh sửa. Nội dung của lớp do bạn tự xuất bản; nội dung của trường đi qua quản trị trường duyệt.">
       <LocalContentDetail id={id} />
     </SaasShell>
   );
@@ -31,7 +32,7 @@ function LocalContentDetail({ id }: { id: string }) {
         description="Nội dung đã bị xóa hoặc không thuộc các lớp của bạn."
         action={
           <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Lịch sử địa phương
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Tư liệu lớp &amp; trường
           </Link>
         }
       />

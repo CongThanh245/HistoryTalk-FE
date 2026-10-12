@@ -24,12 +24,18 @@ export function SaasShell({
   title,
   description,
   variant = "staff",
+  fallback,
+  live = false,
   children,
 }: {
   title: string;
   description?: string;
   /** "staff" = School Admin / System Admin workspace; "app" = learning app (layout already pads). */
   variant?: "staff" | "app";
+  /** Shown until the persisted store has hydrated (defaults to a spinner); e.g. a table skeleton. */
+  fallback?: React.ReactNode;
+  /** True when the screen reads the real API: hides the "Dữ liệu mẫu" notice. */
+  live?: boolean;
   children: React.ReactNode;
 }) {
   const hydrated = useHydrated();
@@ -40,10 +46,12 @@ export function SaasShell({
         variant === "staff" ? "max-w-[1600px] px-4 pb-8 pt-4 sm:px-6 lg:px-10" : "py-6",
       )}
     >
-      <MockDataNotice />
-      <ArchiveHeading as="h1" title={title} description={description} className="mb-0" />
+      {!live && <MockDataNotice />}
+      <ArchiveHeading as="h1" title={title} description={description} />
       {hydrated ? (
         children
+      ) : fallback ? (
+        fallback
       ) : (
         <div className="flex h-40 items-center justify-center gap-2 text-sm text-content-muted">
           <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-gold)]" />
@@ -75,7 +83,8 @@ export function SectionHeading({
 }) {
   return (
     <div className="space-y-3">
-      <ArchiveHeading title={title} description={description} className="mb-0" />
+      {/* Card-level heading: smaller than the page title so a panel doesn't shout. */}
+      <ArchiveHeading title={title} description={description} className="pb-3 [&_h2]:text-xl sm:[&_h2]:text-[22px]" />
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );

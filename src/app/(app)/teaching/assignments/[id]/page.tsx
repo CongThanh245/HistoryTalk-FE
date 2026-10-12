@@ -1,5 +1,6 @@
 "use client";
 
+// FAKE UI: màn này chạy bằng dữ liệu mẫu (src/features/saas/store.ts), chưa có API — chờ BE sprint sau.
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -13,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
 import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, IconAction, Panel, SaasShell, SectionHeading, normalizeText, SearchInput } from "@/components/saas/saas-ui";
 import { givenName } from "@/components/saas/class-roster";
+import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import {
   AssignmentStateBadge,
   AssignmentTypeBadge,
@@ -142,7 +144,11 @@ function AssignmentDetail({ id }: { id: string }) {
             <div className="flex flex-wrap items-center gap-2">
               <AssignmentTypeBadge type={assignment.type} />
               <AssignmentStateBadge state={state} />
-              <span className="text-xs text-content-muted">{assignment.source === "LOCAL" ? "Lịch sử địa phương" : "Kho nội dung chung"}</span>
+              {assignment.source === "LOCAL" ? (
+                <ContentSourceTag source={data.localContent.find((c) => c.id === assignment.targetId)?.scope ?? "CLASS"} />
+              ) : (
+                <ContentSourceTag source="OFFICIAL" label="Chính thức (HistoryTalk)" />
+              )}
             </div>
             <h2 className="archive-title is-plain text-3xl">{assignment.title}</h2>
             <p className="text-sm text-content-muted">

@@ -294,3 +294,79 @@
 @media (prefers-reduced-motion: reduce) {
   .map-overlay-pin { transition: none; }
 }
+
+/* Battle names hidden by the label collision pass (still readable in the hover preview). */
+.battle-pin-name { transition: opacity 160ms ease; }
+.battle-pin.is-label-hidden .battle-pin-name { visibility: hidden; opacity: 0; }
+
+/* Personal-note colours (default jade). */
+.map-overlay-pin--tone-jade { --overlay-color: var(--jade); }
+.map-overlay-pin--tone-men-lam { --overlay-color: var(--men-lam); }
+.map-overlay-pin--tone-gold { --overlay-color: var(--gold-leaf); color: #111111; }
+.map-overlay-pin--tone-crimson { --overlay-color: var(--accent-gold); }
+.map-overlay-pin--tone-ink { --overlay-color: #111111; }
+.map-overlay-pin--assignment { color: #111111; }
+
+/* Due badge on assignment markers: countdown, overdue, handed in. */
+.map-overlay-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border: 1.5px solid #111111;
+  border-radius: 9px;
+  background: #F5F2EA;
+  color: #111111;
+  font-size: 9.5px;
+  font-weight: 800;
+  line-height: 14px;
+  text-align: center;
+  white-space: nowrap;
+}
+.map-overlay-badge--soon { background: #F5F2EA; color: #9A2A18; }
+.map-overlay-badge--overdue { background: #B8321F; color: #FFFFFF; }
+.map-overlay-badge--done { background: #1E8A6E; color: #FFFFFF; }
+
+/* Selected overlay marker: a soft ring that settles (no loop). */
+.map-overlay-pin.is-selected::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border: 1px solid var(--overlay-color);
+  border-radius: 2px;
+  animation: map-overlay-arrive 1.2s ease-out 2;
+  pointer-events: none;
+}
+.map-overlay-pin--local.is-selected::before { border-color: var(--men-lam); }
+@keyframes map-overlay-arrive { from { transform: scale(.9); opacity: .9; } to { transform: scale(1.5); opacity: 0; } }
+.map-overlay-marker:focus-visible { outline: none; }
+.map-overlay-marker:focus-visible .map-overlay-pin { outline: 2px solid var(--accent-gold); outline-offset: 3px; }
+
+/* Phones: an open bottom sheet would cover the zoom buttons, so they step aside (pinch-zoom still works). */
+@media (max-width: 767px) {
+  .map-stage:has(.map-overlay-sheet) .leaflet-control-zoom { display: none; }
+  .map-stage:has(.map-overlay-sheet) .historical-map-scale { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-overlay-pin.is-selected::before { animation: none; opacity: 0; }
+  .battle-pin-name, .battle-pin { transition: none; }
+}
+.map-layer-swatch--crimson { background: var(--accent-gold); }
+.map-layer-swatch--ink { background: #111111; }
+
+/* Basemap attribution (required by Esri terms): small, paper-coloured, never covering the map controls. */
+.historical-leaflet-map .leaflet-control-attribution {
+  margin: 0 !important;
+  padding: 1px 6px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+  background: color-mix(in srgb, var(--bg-surface) 82%, transparent);
+}
+
+.historical-leaflet-map .leaflet-control-attribution a {
+  color: var(--text-secondary);
+}

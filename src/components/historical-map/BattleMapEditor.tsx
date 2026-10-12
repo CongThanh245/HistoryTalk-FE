@@ -1,26 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, AudioLines, Copy, Download, Eye, ImageIcon, Layers, Loader2, MapPin, MousePointerClick, MoveHorizontal, Plus, RotateCw, Save, Shapes, Trash2, Upload, Users, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Clapperboard, Copy, Download, Eye, GripVertical, ImageIcon, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, RotateCw, Save, Shapes, Trash2, Upload, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { battleMapImageService } from "@/services/media.service";
-import { BattleMapCanvas, SymbolGlyph } from "./BattleMapCanvas";
+import { BattleMapCanvas, SymbolGlyph, type SymbolView } from "./BattleMapCanvas";
+import { BattlePreview } from "./BattlePreview";
 import {
-  defaultSymbolSize, isNoteSymbol, SYMBOL_GROUPS, SYMBOL_LABELS, SYMBOL_SIZE_MAX, SYMBOL_SIZE_MIN,
-  type BattleMap, type BattleSymbol, type BattleSymbolType,
+  autoEffect, defaultSymbolSize, isNoteSymbol, PHASE_NARRATION_MAX, SYMBOL_EFFECTS, SYMBOL_GROUPS, SYMBOL_LABELS, SYMBOL_SIZE_MAX, SYMBOL_SIZE_MIN,
+  type BattleMap, type BattlePhase, type BattleSymbol, type BattleSymbolType, type SymbolEffect,
 } from "./battle-map.types";
+import { sceneDurationMs, splitSentences } from "./useBattlePlayback";
 import styles from "./battle-map-editor.module.css";
 
-type Tab = "image" | "factions" | "symbols" | "narration";
+type Tab = "image" | "factions" | "symbols" | "phases";
 const TABS: { id: Tab; label: string; icon: typeof ImageIcon }[] = [
   { id: "image", label: "Ảnh nền", icon: ImageIcon },
   { id: "factions", label: "Phe", icon: Users },
   { id: "symbols", label: "Ký hiệu", icon: Shapes },
-  { id: "narration", label: "Thuyết minh", icon: AudioLines },
+  { id: "phases", label: "Diễn biến", icon: Clapperboard },
 ];
 
-const NARRATION_MAX = 5000;
 
 /** New maps start with two editable sides so admins can place symbols right away. */
 function withDefaultFactions(map: BattleMap): BattleMap {
@@ -31,14 +32,12 @@ function withDefaultFactions(map: BattleMap): BattleMap {
   ] };
 }
 
-export function BattleMapEditor({ initialValue, title, onSave, onClose, onPreview, narration }: {
+export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNarration = "" }: {
   initialValue: BattleMap; title: string; onClose: () => void;
   /** Publishes the map to the server; rejects when the save failed. */
   onSave: (map: BattleMap) => Promise<void>;
-  /** Saves and shows the learner-facing battle page. */
-  onPreview?: () => void;
-  /** Narration read aloud on the battle page (the map pin's description); null when the battle has no pin yet. */
-  narration?: { value: string; onSave: (text: string) => Promise<void> } | null;
+  /** Narration from before phases existed (map pin description). Read-only: only seeds the first split. */
+  legacyNarration?: string;
 }) {
   const [start] = useState(() => withDefaultFactions(initialValue));
   const [value, setValue] = useState(start);
@@ -46,7 +45,10 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
   const [hasDraft, setHasDraft] = useState(!!initialValue.imageUrl);
   const [tab, setTab] = useState<Tab>(start.imageUrl ? "symbols" : "image");
   const [imageUrlInput, setImageUrlInput] = useState(start.imageUrl.startsWith("data:") ? "" : start.imageUrl);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  /** Selected symbols: one opens the inspector, several get the "move to phase" bar. */
+  const [selection, setSelection] = useState<string[]>([]);
+  const selectedId = selection.length === 1 ? selection[0] : null;
+  const setSelectedId = (id: string | null) => setSelection(id ? [id] : []);
   const [placingType, setPlacingType] = useState<BattleSymbolType | null>(null);
   const [factionId, setFactionId] = useState(start.factions[0]?.id ?? "");
   const [newName, setNewName] = useState("");
@@ -55,21 +57,45 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
   const [clipboard, setClipboard] = useState<BattleSymbol | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [narrationText, setNarrationText] = useState(narration?.value ?? "");
-  const [savedNarration, setSavedNarration] = useState(narration?.value ?? "");
+  /** Phase that new symbols go into; null = background layer (always shown). */
+  const [phaseId, setPhaseId] = useState<string | null>(start.phases?.[0]?.id ?? null);
+  const [showPast, setShowPast] = useState(true);
+  /** "Phân giai đoạn": every symbol shown with its phase number, for grouping after placing them all. */
+  const [sorting, setSorting] = useState(false);
+  /** List row being dragged, and where it would land (row id + side, or a phase button). */
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropAt, setDropAt] = useState<{ id: string; after: boolean } | null>(null);
+  const [dropPhase, setDropPhase] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState(false);
+  /** The camera frame of the active phase is being dragged on the map. */
+  const [drawingFrame, setDrawingFrame] = useState(false);
+  /** "Chạy thử" replays the appear effect of one symbol. */
+  const [effectPreview, setEffectPreview] = useState<{ id: string; n: number } | null>(null);
   const selected = value.symbols.find(s => s.id === selectedId);
+  const phases = value.phases ?? [];
+  const activePhase = phases.find(p => p.id === phaseId) ?? null;
+  const phaseIndexOf = (symbol: BattleSymbol) => symbol.phaseId ? phases.findIndex(p => p.id === symbol.phaseId) : -1;
   const activeFaction = value.factions.find(f => f.id === factionId);
   const mapDirty = JSON.stringify(value) !== saved;
-  const narrationDirty = !!narration && narrationText.trim() !== savedNarration.trim();
-  const dirty = mapDirty || narrationDirty;
-  // The map needs a background image; a narration-only edit can be saved without one.
-  const canSave = dirty && (!mapDirty || !!value.imageUrl.trim());
+  const dirty = mapDirty;
+  const canSave = dirty && !!value.imageUrl.trim();
   const canDraw = value.mode === "custom" && !!value.imageUrl && !!activeFaction;
 
   const update = (patch: Partial<BattleMap>) => setValue(v => ({ ...v, ...patch }));
   const changeSymbol = (id: string, patch: Partial<BattleSymbol>) =>
     setValue(v => ({ ...v, symbols: v.symbols.map(s => s.id === id ? { ...s, ...patch } : s) }));
-  const removeSymbol = (id: string) => { update({ symbols: value.symbols.filter(s => s.id !== id) }); if (selectedId === id) setSelectedId(null); };
+  const removeSymbols = (ids: string[]) => {
+    update({ symbols: value.symbols.filter(s => !ids.includes(s.id)) });
+    setSelection(sel => sel.filter(id => !ids.includes(id)));
+  };
+  const removeSymbol = (id: string) => removeSymbols(selection.length > 1 && selection.includes(id) ? selection : [id]);
+  const selectSymbol = (id: string | null, additive = false) => {
+    if (id && additive) { setSelection(sel => sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id]); return; }
+    setSelectedId(id);
+    // Picking a faded symbol of another phase switches to that phase (in sorting mode everything is shown).
+    const symbol = id ? value.symbols.find(s => s.id === id) : undefined;
+    if (symbol && phases.length && !sorting) setPhaseId(phaseIndexOf(symbol) === -1 ? null : symbol.phaseId!);
+  };
   const close = () => { if (!dirty || window.confirm("Bỏ các thay đổi chưa lưu trên lược đồ?")) onClose(); };
 
   useEffect(() => {
@@ -84,7 +110,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
     // A new symbol reuses the note of the latest same-type symbol of this side, so a legend row covers them all.
     const sameKind = value.symbols.filter(s => s.type === type && s.factionId === factionId);
     const label = type === "label" ? "Chú thích" : type === "step" ? String(value.symbols.filter(s => s.type === "step").length + 1) : sameKind.at(-1)?.label ?? "";
-    update({ symbols: [...value.symbols, { id, type, factionId, label, x, y, size: shape?.size ?? defaultSymbolSize(type), rotation: shape?.rotation ?? 0 }] });
+    update({ symbols: [...value.symbols, { id, type, factionId, label, x, y, size: shape?.size ?? defaultSymbolSize(type), rotation: shape?.rotation ?? 0, ...(activePhase && { phaseId: activePhase.id }) }] });
     // The tool is one-shot: the new symbol stays selected so its handles can be dragged right away.
     setSelectedId(id);
     setPlacingType(null);
@@ -103,14 +129,102 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
     return copy;
   };
 
+  // ── Phases ──
+  const changePhase = (id: string, patch: Partial<BattlePhase>) => update({ phases: phases.map(p => p.id === id ? { ...p, ...patch } : p) });
+  const newPhase = (): BattlePhase => ({ id: crypto.randomUUID(), title: `Giai đoạn ${phases.length + 1}`, narration: "", camera: "auto" });
+  const addPhase = () => {
+    const phase = newPhase();
+    update({ phases: [...phases, phase] });
+    setPhaseId(phase.id); setSelectedId(null);
+  };
+  /** Moves symbols into a phase (null = background, "new" = a phase created for them). */
+  const assignPhase = (ids: string[], target: string | null | "new") => {
+    if (!ids.length) return;
+    const created = target === "new" ? newPhase() : null;
+    const id = created ? created.id : target;
+    update({
+      ...(created && { phases: [...phases, created] }),
+      symbols: value.symbols.map(s => ids.includes(s.id) ? { ...s, phaseId: id ?? undefined } : s),
+    });
+    setSelection([]);
+    // Follow the symbols so they stay visible, unless every phase is already shown.
+    if (!sorting || created) setPhaseId(id);
+  };
+  /** Moves a symbol before/after another one: within a phase, array order is appear order. */
+  const reorder = (id: string, targetId: string, after: boolean) => {
+    if (id === targetId) return;
+    const moving = value.symbols.find(s => s.id === id);
+    if (!moving) return;
+    const rest = value.symbols.filter(s => s.id !== id);
+    const at = rest.findIndex(s => s.id === targetId) + (after ? 1 : 0);
+    update({ symbols: [...rest.slice(0, at), moving, ...rest.slice(at)] });
+  };
+  /** Phase buttons accept list rows dropped on them (the whole selection when the row is part of it). */
+  const phaseDropProps = (target: string | null) => {
+    const key = target ?? "base";
+    return {
+      "data-drop-target": dropPhase === key || undefined,
+      onDragOver: (e: React.DragEvent) => { if (!dragId) return; e.preventDefault(); setDropPhase(key); },
+      onDragLeave: () => setDropPhase(p => (p === key ? null : p)),
+      onDrop: (e: React.DragEvent) => {
+        e.preventDefault();
+        if (dragId) assignPhase(selection.includes(dragId) ? selection : [dragId], target);
+        setDragId(null); setDropAt(null); setDropPhase(null);
+      },
+    };
+  };
+  const movePhase = (id: string, dir: -1 | 1) => {
+    const i = phases.findIndex(p => p.id === id), j = i + dir;
+    if (i < 0 || j < 0 || j >= phases.length) return;
+    const next = [...phases]; [next[i], next[j]] = [next[j], next[i]];
+    update({ phases: next });
+  };
+  const removePhase = (phase: BattlePhase) => {
+    const count = value.symbols.filter(s => s.phaseId === phase.id).length;
+    if (count > 0 && !window.confirm(`Xóa giai đoạn «${phase.title}» và ${count} ký hiệu thuộc giai đoạn này?`)) return;
+    const i = phases.indexOf(phase);
+    const next = phases.filter(p => p !== phase);
+    update({ phases: next, symbols: value.symbols.filter(s => s.phaseId !== phase.id) });
+    setPhaseId(next[Math.max(0, i - 1)]?.id ?? null); setSelectedId(null);
+  };
+  /** First split of a legacy map: every paragraph of the narration becomes a phase. */
+  const splitIntoPhases = () => {
+    const paragraphs = legacyNarration.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+    const next: BattlePhase[] = (paragraphs.length ? paragraphs : [""]).map((part, i) => ({
+      id: crypto.randomUUID(), title: `Giai đoạn ${i + 1}`, narration: part.slice(0, PHASE_NARRATION_MAX), camera: "auto",
+    }));
+    update({ phases: next });
+    setPhaseId(next[0].id);
+    setTab("symbols");
+  };
+  const activeIndex = activePhase ? phases.indexOf(activePhase) : -1;
+  // Onion skin: the phase being edited is solid, earlier phases faint, later ones hidden (toggles).
+  const symbolView = phases.length === 0 ? undefined : (s: BattleSymbol): SymbolView => {
+    const i = phaseIndexOf(s);
+    const enter = effectPreview?.id === s.id ? { delay: 0, key: String(effectPreview.n) } : undefined;
+    if (sorting || i === -1 || i === activeIndex) return { enter };
+    if (activeIndex === -1) return { dim: true };
+    return i < activeIndex && showPast ? { dim: true } : { hidden: true };
+  };
+  const listedSymbols = phases.length ? value.symbols.filter(s => phaseIndexOf(s) === activeIndex) : value.symbols;
+  const phaseBadge = sorting ? (s: BattleSymbol) => { const i = phaseIndexOf(s); return i === -1 ? undefined : String(i + 1); } : undefined;
+  const pickPhase = (id: string | null) => { setPhaseId(id); setSelectedId(null); setDrawingFrame(false); };
+  const setCamera = (phase: BattlePhase, camera: BattlePhase["camera"]) => {
+    changePhase(phase.id, { camera });
+    // Picking "Khung" without a frame yet goes straight to drawing one.
+    setDrawingFrame(camera === "frame" && !phase.focus);
+    if (camera === "frame") { setPlacingType(null); setSelectedId(null); }
+  };
+
   // Esc steps back; Ctrl+C / Ctrl+V copy-paste, Ctrl+D duplicate, Delete removes — ignored while typing in a field.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       // Escape works wherever focus is (clicking the image leaves focus on <body>).
       if (e.key === "Escape") {
         e.preventDefault();
-        if (placingType) setPlacingType(null);
-        else if (selectedId) setSelectedId(null);
+        if (drawingFrame) setDrawingFrame(false);
+        else if (placingType) setPlacingType(null);
+        else if (selection.length) setSelection([]);
         else close();
         return;
       }
@@ -122,7 +236,12 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
       if (mod && key === "c" && selected) { e.preventDefault(); setClipboard(selected); }
       else if (mod && key === "v" && clipboard) { e.preventDefault(); const pasted = duplicate(clipboard); if (pasted) setClipboard(pasted); }
       else if (mod && key === "d" && selected) { e.preventDefault(); duplicate(selected); }
-      else if ((e.key === "Delete" || e.key === "Backspace") && selected) { e.preventDefault(); removeSymbol(selected.id); }
+      else if ((e.key === "Delete" || e.key === "Backspace") && selection.length) { e.preventDefault(); removeSymbols(selection); }
+      // 1–9 moves the selection into that phase, 0 back to the background layer.
+      else if (/^[0-9]$/.test(e.key) && !mod && !e.altKey && selection.length && phases.length) {
+        const n = Number(e.key);
+        if (n === 0 || phases[n - 1]) { e.preventDefault(); assignPhase(selection, n === 0 ? null : phases[n - 1].id); }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -162,10 +281,6 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
         await onSave(map);
         setSaved(JSON.stringify(map)); setHasDraft(true);
       }
-      if (narrationDirty && narration) {
-        await narration.onSave(narrationText.trim());
-        setSavedNarration(narrationText.trim());
-      }
       return true;
     } catch (err) {
       setError(getApiErrorMessage(err, "Không lưu được lược đồ. Hãy thử lại hoặc xuất JSON để giữ thiết kế."));
@@ -199,9 +314,13 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
         {saving ? "Đang lưu…" : uploading ? "Đang tải ảnh lên…" : dirty ? "Có thay đổi chưa lưu" : hasDraft ? "Đã lưu" : "Chưa có lược đồ"}
       </span>
       <button type="button" onClick={exportMap} aria-label="Xuất JSON" title="Tải thiết kế dưới dạng JSON"><Download size={16} /><span>Xuất JSON</span></button>
-      {onPreview && <button type="button" aria-label="Lưu và xem trước" title="Lưu rồi xem trang trận đánh như người học" disabled={busy || (mapDirty && !value.imageUrl.trim())} onClick={async () => { if (!dirty || await save()) onPreview(); }}><Eye size={16} /><span>Lưu &amp; xem trước</span></button>}
+      <button type="button" aria-label="Xem trước" title="Phát thử như người học sẽ xem (không lưu)" disabled={!value.imageUrl.trim()}
+        onClick={() => { setPlacingType(null); setSelectedId(null); setDrawingFrame(false); setPreviewing(true); }}><Eye size={16} /><span>Xem trước</span></button>
       <button type="button" className={styles.primary} aria-label="Lưu lược đồ" disabled={!canSave || busy} onClick={() => void save()}>{saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}<span>Lưu</span></button>
     </header>
+
+    {previewing && <BattlePreview value={value} title={title} legacyNarration={legacyNarration}
+      startScene={Math.max(0, activeIndex)} onClose={() => setPreviewing(false)} />}
 
     <div className={styles.layout}>
       <aside className={styles.settings}>
@@ -209,8 +328,6 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
           {TABS.map(t => <button key={t.id} type="button" role="tab" id={`map-tab-${t.id}`} aria-selected={tab === t.id} aria-controls="map-tab-panel"
             className={cn(styles.tab, tab === t.id && styles.tabActive)} onClick={() => setTab(t.id)}>
             <t.icon size={16} />{t.label}
-            {t.id === "factions" && <em>{value.factions.length}</em>}
-            {t.id === "narration" && narrationDirty && <em aria-label="Có thay đổi">•</em>}
           </button>)}
         </div>
 
@@ -287,22 +404,32 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
             </form>
           </div>}
 
-          {tab === "narration" && <div className={styles.group}>
-            <h2>Thuyết minh diễn biến</h2>
-            {narration ? <>
-              <p className={styles.hint}><AudioLines size={14} /> Đọc thành audio ở trang trận đánh. Viết theo trình tự diễn biến, câu ngắn để giọng đọc rõ ràng.</p>
-              <textarea
-                className={styles.narration}
-                value={narrationText}
-                maxLength={NARRATION_MAX}
-                rows={14}
-                placeholder="Ví dụ: Cuối năm 938, quân Nam Hán do Hoằng Tháo chỉ huy tiến vào sông Bạch Đằng…"
-                aria-label="Thuyết minh diễn biến"
-                onChange={e => setNarrationText(e.target.value)}
-              />
-              <small className={styles.narrationCount}>{narrationText.length.toLocaleString("vi-VN")} / {NARRATION_MAX.toLocaleString("vi-VN")} ký tự</small>
-            </> : <div className={styles.callout}>
-              <span><MapPin size={14} className="inline -mt-0.5 mr-1" />Trận đánh này chưa được ghim trên bản đồ. Ghim vị trí trước rồi mới thêm thuyết minh.</span>
+          {tab === "phases" && phases.length > 0 && <div className={styles.group}>
+            <h2>Các giai đoạn</h2>
+            <p className={styles.hint}><Clapperboard size={14} /> Chọn giai đoạn để đặt ký hiệu. Tên và lời thuyết minh sửa ở cột bên phải.</p>
+            <ol className={styles.phaseList}>
+              {phases.map((p, i) => <li key={p.id} className={cn(styles.phaseCard, p.id === phaseId && styles.phaseCardActive)}>
+                <button type="button" className={styles.phaseHead} aria-pressed={p.id === phaseId} onClick={() => pickPhase(p.id)}>
+                  <b className={styles.phaseNum}>{i + 1}</b>
+                  <span><strong>{p.title || "Chưa đặt tên"}</strong>
+                    <small>{value.symbols.filter(x => x.phaseId === p.id).length} ký hiệu · ≈ {Math.round(sceneDurationMs(p.narration) / 1000)} giây</small></span>
+                </button>
+              </li>)}
+            </ol>
+            <button type="button" onClick={addPhase}><Plus size={16} />Thêm giai đoạn</button>
+          </div>}
+
+          {tab === "phases" && phases.length === 0 && <div className={styles.group}>
+            <h2>Diễn biến theo giai đoạn</h2>
+            <div className={styles.callout}>
+              <span>Chia trận đánh thành các giai đoạn: mỗi giai đoạn có lời thuyết minh riêng, và ký hiệu của giai đoạn đó hiện dần khi giọng đọc tới.</span>
+              <button type="button" className={styles.nextStep} onClick={splitIntoPhases}><Clapperboard size={16} />{legacyNarration.trim() ? "Chia thành giai đoạn" : "Tạo giai đoạn đầu tiên"}</button>
+              <small>{legacyNarration.trim() ? "Mỗi đoạn văn của thuyết minh cũ bên dưới sẽ thành một giai đoạn." : "Lời thuyết minh viết ở cột bên phải."} Ký hiệu đã đặt giữ nguyên ở lớp «Luôn hiện».</small>
+            </div>
+            {legacyNarration.trim() && <div className={styles.group}>
+              <h2>Thuyết minh cũ</h2>
+              <p className={styles.legacyNarration}>{legacyNarration}</p>
+              <small className={styles.fieldHint}>Đang được đọc ở trang trận đánh cho tới khi bạn chia giai đoạn và lưu.</small>
             </div>}
           </div>}
 
@@ -342,14 +469,63 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
 
       <main className={styles.workspace}>
         {error && <p className={styles.error} role="alert">{error}<button type="button" aria-label="Đóng thông báo" onClick={() => setError("")}><X size={14} /></button></p>}
-        <BattleMapCanvas value={value} title={title} selectedId={selectedId} placingType={placingType} placingColor={activeFaction?.color}
-          onSelect={value.mode === "custom" ? setSelectedId : undefined} onMove={(id, x, y) => changeSymbol(id, { x, y })}
+        {phases.length > 0 && <div className={styles.phaseBar}>
+          <div className={styles.phaseSteps} role="group" aria-label="Giai đoạn đang soạn">
+            <button type="button" className={styles.phaseStepWide} aria-pressed={!activePhase} title="Ký hiệu hiện suốt trận (địa danh, thành lũy…)" onClick={() => pickPhase(null)} {...phaseDropProps(null)}>Luôn hiện</button>
+            {phases.map((p, i) => <button key={p.id} type="button" aria-pressed={p.id === phaseId} aria-label={`Giai đoạn ${i + 1}: ${p.title}`} title={p.title}
+              onClick={() => pickPhase(p.id)} {...phaseDropProps(p.id)}>{i + 1}</button>)}
+            <button type="button" aria-label="Thêm giai đoạn" title="Thêm giai đoạn" onClick={addPhase}><Plus size={15} /></button>
+          </div>
+          <strong className={styles.phaseCurrent}>{activePhase ? activePhase.title || "Chưa đặt tên" : "Lớp luôn hiện"}</strong>
+          {drawingFrame && <span className={styles.drawHint}>Kéo trên lược đồ để khoanh vùng camera · Esc để hủy</span>}
+          {value.mode === "custom" && <button type="button" className={styles.sortToggle} aria-pressed={sorting} title="Hiện mọi ký hiệu kèm số giai đoạn để gom nhóm"
+            onClick={() => { setSorting(s => !s); setDrawingFrame(false); }}><ListTree size={15} />Phân giai đoạn</button>}
+          {!drawingFrame && !sorting && value.mode === "custom" && activePhase && activeIndex > 0 && <label className={styles.phaseToggle}><input type="checkbox" checked={showPast} onChange={e => setShowPast(e.target.checked)} />Hiện mờ giai đoạn trước</label>}
+        </div>}
+        {sorting && <p className={styles.sortHint}>Chọn ký hiệu (giữ <kbd>Shift</kbd> để chọn thêm, hoặc kéo khung trên vùng trống), rồi bấm phím <kbd>1</kbd>–<kbd>9</kbd> để đưa vào giai đoạn, <kbd>0</kbd> để đưa về «Luôn hiện».</p>}
+        <BattleMapCanvas value={value} title={title} selectedId={selectedId} selectedIds={selection} placingType={placingType} placingColor={activeFaction?.color}
+          symbolView={symbolView} phaseBadge={phaseBadge}
+          onMarquee={value.mode === "custom" ? (ids, additive) => setSelection(sel => additive ? [...new Set([...sel, ...ids])] : ids) : undefined}
+          cameraFrame={activePhase?.camera === "frame" ? activePhase.focus ?? null : null}
+          onDrawFrame={drawingFrame && activePhase ? rect => {
+            changePhase(activePhase.id, { camera: "frame", focus: rect });
+            setDrawingFrame(false);
+          } : undefined}
+          onSelect={value.mode === "custom" ? selectSymbol : undefined} onMove={(id, x, y) => changeSymbol(id, { x, y })}
           onTransform={(id, patch) => changeSymbol(id, patch)}
           onAdd={addSymbol} onDelete={removeSymbol} legendTitle={title} />
       </main>
 
-      <aside className={styles.inspector} aria-label={selected ? "Chỉnh ký hiệu" : "Danh sách ký hiệu"}>
-        {selected ? <>
+      <aside className={styles.inspector} aria-label={selection.length > 1 ? "Ký hiệu đã chọn" : selected ? "Chỉnh ký hiệu" : activePhase ? "Chỉnh giai đoạn" : "Danh sách ký hiệu"}>
+        {selection.length > 1 ? <>
+          <div className={styles.inspectorHead}>
+            <Layers size={17} />
+            <h2>Đã chọn {selection.length} ký hiệu</h2>
+            <button type="button" className={styles.iconButton} aria-label="Bỏ chọn" title="Bỏ chọn (Esc)" onClick={() => setSelection([])}><X size={16} /></button>
+          </div>
+          <div className={styles.field}>Chuyển vào giai đoạn
+            <div className={styles.phaseSteps} role="group" aria-label="Chuyển các ký hiệu đã chọn vào">
+              <button type="button" className={styles.phaseStepWide} onClick={() => assignPhase(selection, null)}>Luôn hiện</button>
+              {phases.map((p, i) => <button key={p.id} type="button" title={p.title} onClick={() => assignPhase(selection, p.id)}>{i + 1}</button>)}
+              <button type="button" className={styles.phaseStepWide} onClick={() => assignPhase(selection, "new")}><Plus size={14} />Giai đoạn mới</button>
+            </div>
+          </div>
+          {phases.length > 0 && <p className={styles.hint}>Hoặc bấm phím <kbd>1</kbd>–<kbd>{Math.min(9, phases.length)}</kbd>, phím <kbd>0</kbd> để đưa về «Luôn hiện».</p>}
+          <ul className={styles.layerList}>
+            {value.symbols.filter(s => selection.includes(s.id)).map(s => {
+              const faction = value.factions.find(f => f.id === s.factionId);
+              const i = phaseIndexOf(s);
+              return <li key={s.id}>
+                <button type="button" onClick={() => selectSymbol(s.id)}>
+                  <span className={styles.layerGlyph} style={{ color: faction?.color }}><SymbolGlyph type={s.type} text={s.label} /></span>
+                  <span className={styles.layerText}><strong>{s.label || SYMBOL_LABELS[s.type]}</strong><small>{i === -1 ? "Luôn hiện" : `Giai đoạn ${i + 1}`} · {faction?.name}</small></span>
+                </button>
+                <button type="button" className={styles.iconButton} aria-label="Bỏ khỏi lựa chọn" title="Bỏ khỏi lựa chọn" onClick={() => selectSymbol(s.id, true)}><X size={14} /></button>
+              </li>;
+            })}
+          </ul>
+          <button type="button" className={styles.delete} onClick={() => removeSymbols(selection)}><Trash2 size={15} />Xóa {selection.length} ký hiệu</button>
+        </> : selected ? <>
           <div className={styles.inspectorHead}>
             <span className={styles.inspectorGlyph} style={{ color: value.factions.find(f => f.id === selected.factionId)?.color }}><SymbolGlyph type={selected.type} text={selected.label} /></span>
             <h2>{SYMBOL_LABELS[selected.type]}</h2>
@@ -377,6 +553,30 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
                 onClick={() => changeSymbol(selected.id, { factionId: f.id })}><i />{f.name || "Chưa đặt tên"}</button>)}
             </div>
           </div>
+          {phases.length > 0 && <>
+            <label className={styles.field}>Xuất hiện ở
+              <select value={phaseIndexOf(selected) === -1 ? "" : selected.phaseId} onChange={e => {
+                const next = e.target.value || null;
+                changeSymbol(selected.id, { phaseId: next ?? undefined }); setPhaseId(next);
+              }}>
+                <option value="">Luôn hiện</option>
+                {phases.map((p, i) => <option key={p.id} value={p.id}>{i + 1}. {p.title || "Chưa đặt tên"}</option>)}
+              </select>
+            </label>
+            <small className={styles.fieldHint}>Phím tắt: <kbd>1</kbd>–<kbd>9</kbd> chuyển giai đoạn, <kbd>0</kbd> về «Luôn hiện».</small>
+            <div className={styles.field}>Hiệu ứng xuất hiện
+              <span className={styles.inline}>
+                <select value={selected.effect ?? "auto"} onChange={e => {
+                  changeSymbol(selected.id, { effect: e.target.value as SymbolEffect });
+                  setEffectPreview(p => ({ id: selected.id, n: (p?.n ?? 0) + 1 }));
+                }}>
+                  {(Object.keys(SYMBOL_EFFECTS) as SymbolEffect[]).map(fx => <option key={fx} value={fx}>
+                    {fx === "auto" ? `Tự động (${SYMBOL_EFFECTS[autoEffect(selected.type)].toLowerCase()})` : SYMBOL_EFFECTS[fx]}</option>)}
+                </select>
+                <button type="button" onClick={() => setEffectPreview(p => ({ id: selected.id, n: (p?.n ?? 0) + 1 }))}>Chạy thử</button>
+              </span>
+            </div>
+          </>}
           <label className={styles.field}>
             <span className={styles.fieldRow}>Hướng xoay <output>{selected.rotation}°</output></span>
             <input type="range" min="0" max="359" value={selected.rotation} onChange={e => changeSymbol(selected.id, { rotation: Number(e.target.value) })} />
@@ -402,17 +602,79 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, onPrevie
             <button type="button" className={styles.delete} title="Xóa (Delete)" onClick={() => removeSymbol(selected.id)}><Trash2 size={15} />Xóa ký hiệu</button>
           </div>
         </> : <>
+          {activePhase && <>
+            <div className={styles.inspectorHead}>
+              <b className={styles.phaseNum}>{activeIndex + 1}</b>
+              <h2>Giai đoạn {activeIndex + 1} / {phases.length}</h2>
+              <button type="button" className={styles.iconButton} aria-label="Đưa giai đoạn lên trước" title="Lên trước" disabled={activeIndex === 0} onClick={() => movePhase(activePhase.id, -1)}><ArrowUp size={15} /></button>
+              <button type="button" className={styles.iconButton} aria-label="Đưa giai đoạn xuống sau" title="Xuống sau" disabled={activeIndex === phases.length - 1} onClick={() => movePhase(activePhase.id, 1)}><ArrowDown size={15} /></button>
+              <button type="button" className={styles.iconButton} aria-label="Xóa giai đoạn" title="Xóa giai đoạn" onClick={() => removePhase(activePhase)}><Trash2 size={15} /></button>
+            </div>
+            <label className={styles.field}>Tên giai đoạn
+              <input value={activePhase.title} maxLength={120} placeholder="Ví dụ: Nhử địch vào bãi cọc" onChange={e => changePhase(activePhase.id, { title: e.target.value })} />
+            </label>
+            <label className={styles.field}>Lời thuyết minh
+              <textarea className={cn(styles.narration, styles.phaseNarration)} value={activePhase.narration} maxLength={PHASE_NARRATION_MAX} rows={6}
+                placeholder="Viết câu ngắn. Mỗi câu được đọc và hiện phụ đề riêng."
+                onChange={e => changePhase(activePhase.id, { narration: e.target.value })} />
+            </label>
+            <small className={styles.narrationCount}>{splitSentences(activePhase.narration).length} câu · đọc ≈ {Math.round(sceneDurationMs(activePhase.narration) / 1000)} giây</small>
+            <div className={styles.field}>Camera
+              <div className={styles.segmented} role="group" aria-label="Camera của giai đoạn">
+                {([["auto", "Tự động"], ["frame", "Khung"], ["full", "Toàn cảnh"]] as const).map(([cam, label]) =>
+                  <button key={cam} type="button" aria-pressed={activePhase.camera === cam} onClick={() => setCamera(activePhase, cam)}>{label}</button>)}
+              </div>
+            </div>
+            <div className={styles.cameraHint}>
+              {activePhase.camera === "auto" && (value.mode === "image"
+                ? "Ảnh vẽ sẵn không có ký hiệu để bám theo: chọn «Khung» để camera phóng vào đúng chỗ."
+                : "Phóng vào vùng có ký hiệu của giai đoạn này.")}
+              {activePhase.camera === "full" && "Giữ nguyên toàn bộ lược đồ."}
+              {activePhase.camera === "frame" && (drawingFrame ? "Kéo trên lược đồ để khoanh vùng."
+                : activePhase.focus ? "Camera phóng vào khung nét đứt trên lược đồ." : "Chưa có khung.")}
+              {activePhase.camera === "frame" && !drawingFrame && <button type="button" onClick={() => { setDrawingFrame(true); setPlacingType(null); setSelectedId(null); }}>
+                {activePhase.focus ? "Vẽ lại khung" : "Vẽ khung"}</button>}
+            </div>
+          </>}
+          {phases.length > 0 && !activePhase && <p className={styles.hint}>Ký hiệu ở lớp này hiện suốt trận: địa danh, thành lũy, doanh trại…</p>}
           <div className={styles.inspectorHead}>
             <Layers size={17} />
-            <h2>Ký hiệu trên lược đồ</h2>
-            <em>{value.symbols.length}</em>
+            <h2>{activePhase ? "Thứ tự xuất hiện" : phases.length ? "Lớp luôn hiện" : "Ký hiệu trên lược đồ"}</h2>
+            <em>{listedSymbols.length}</em>
           </div>
-          {value.symbols.length === 0 ? <p className={styles.hint}>Chưa có ký hiệu nào. Chọn ký hiệu ở cột trái để bắt đầu.</p>
+          {listedSymbols.length > 1 && <p className={styles.fieldHint}>{activePhase ? "Kéo để đổi thứ tự xuất hiện. " : ""}Kéo thả lên nút số giai đoạn phía trên lược đồ để chuyển giai đoạn.</p>}
+          {listedSymbols.length === 0 ? <p className={styles.hint}>Chọn ký hiệu ở tab «Ký hiệu» bên trái rồi bấm lên lược đồ để đặt.</p>
             : <ul className={styles.layerList}>
-              {value.symbols.map(s => {
+              {listedSymbols.map((s, i) => {
                 const faction = value.factions.find(f => f.id === s.factionId);
-                return <li key={s.id}>
-                  <button type="button" onClick={() => setSelectedId(s.id)}>
+                const name = s.label || SYMBOL_LABELS[s.type];
+                return <li key={s.id} className={styles.dragRow} draggable
+                  data-dragging={dragId === s.id || undefined}
+                  data-drop={dropAt?.id === s.id ? (dropAt.after ? "after" : "before") : undefined}
+                  onDragStart={e => { setDragId(s.id); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", s.id); }}
+                  onDragEnd={() => { setDragId(null); setDropAt(null); setDropPhase(null); }}
+                  onDragOver={e => {
+                    if (!dragId || dragId === s.id) return;
+                    e.preventDefault();
+                    const r = e.currentTarget.getBoundingClientRect();
+                    setDropAt({ id: s.id, after: e.clientY > r.top + r.height / 2 });
+                  }}
+                  onDrop={e => {
+                    e.preventDefault();
+                    if (dragId && dropAt) reorder(dragId, dropAt.id, dropAt.after);
+                    setDragId(null); setDropAt(null);
+                  }}>
+                  <span className={styles.dragHandle} aria-hidden="true"><GripVertical size={14} /></span>
+                  <input type="checkbox" className={styles.rowCheck} checked={selection.includes(s.id)} aria-label={`Chọn ${name}`}
+                    onChange={() => selectSymbol(s.id, true)} />
+                  <button type="button" onClick={e => selectSymbol(s.id, e.shiftKey || e.ctrlKey || e.metaKey)}
+                    title="Alt + ↑/↓ để đổi thứ tự"
+                    onKeyDown={e => {
+                      // Keyboard alternative to dragging.
+                      if (!e.altKey || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+                      const neighbour = listedSymbols[i + (e.key === "ArrowUp" ? -1 : 1)];
+                      if (neighbour) { e.preventDefault(); reorder(s.id, neighbour.id, e.key === "ArrowDown"); }
+                    }}>
                     <span className={styles.layerGlyph} style={{ color: faction?.color }}><SymbolGlyph type={s.type} text={s.label} /></span>
                     <span className={styles.layerText}><strong>{s.type === "step" ? `${SYMBOL_LABELS.step} ${s.label}` : s.label || SYMBOL_LABELS[s.type]}</strong><small>{s.label && s.type !== "step" ? `${SYMBOL_LABELS[s.type]} · ` : ""}{faction?.name}</small></span>
                   </button>

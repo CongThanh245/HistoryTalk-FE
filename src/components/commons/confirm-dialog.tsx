@@ -1,5 +1,7 @@
 "use client";
 
+import type * as React from "react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +27,10 @@ interface ConfirmDialogProps {
   onCancel?: () => void;
   isPending?: boolean;
   variant?: "danger" | "primary" | "warning";
+  /** Extra content under the description (e.g. the list of affected records). */
+  children?: React.ReactNode;
+  /** Disables the confirm button (e.g. when the action is not allowed). */
+  confirmDisabled?: boolean;
 }
 
 export function ConfirmDialog({
@@ -38,6 +44,8 @@ export function ConfirmDialog({
   onCancel,
   isPending = false,
   variant = "primary",
+  children,
+  confirmDisabled = false,
 }: ConfirmDialogProps) {
   const confirmStyles =
     variant === "danger"
@@ -71,6 +79,7 @@ export function ConfirmDialog({
             </AlertDialogDescription>
           )}
         </AlertDialogHeader>
+        {children && <div className="max-h-[40dvh] overflow-y-auto text-sm text-content-text">{children}</div>}
         <AlertDialogFooter className="mt-6 gap-2 sm:gap-0">
           <AlertDialogCancel
             disabled={isPending}
@@ -80,14 +89,14 @@ export function ConfirmDialog({
             {cancelLabel}
           </AlertDialogCancel>
           <AlertDialogAction
-            disabled={isPending}
+            disabled={isPending || confirmDisabled}
             className={cn(
               "flex-1 rounded-[2px] h-11 border-0 text-[13px] font-bold uppercase tracking-[0.08em] transition-[filter,transform] hover:brightness-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-70",
             )}
             style={confirmStyles}
             onClick={(e) => {
               e.preventDefault();
-              if (isPending) return;
+              if (isPending || confirmDisabled) return;
               onConfirm();
             }}
           >
