@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, BookMarked, ClipboardList, MapPin, Plus } from "lucide-react";
 
+import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import { formatNumber } from "@/components/saas/saas-ui";
 import {
   AssignmentStateBadge,
@@ -109,6 +110,7 @@ function LocalList({ items, hrefFor, showStatus }: { items: LocalContent[]; href
       {items.map((c) => (
         <li key={c.id}>
           <Link href={hrefFor(c)} className="group flex flex-wrap items-center gap-x-3 gap-y-1 py-3">
+            <ContentSourceTag source={c.scope} className="shrink-0" />
             <span className="w-20 shrink-0 text-xs font-bold uppercase tracking-[0.08em] text-content-muted">{LOCAL_KIND_LABELS[c.kind]}</span>
             <span className="min-w-0 flex-1 font-semibold text-content-heading group-hover:text-[var(--accent-gold)]">{localTitle(c)}</span>
             {showStatus && <LocalStatusBadge status={c.status} />}
@@ -122,18 +124,24 @@ function LocalList({ items, hrefFor, showStatus }: { items: LocalContent[]; href
 
 export function TeacherLocalTab({ data, classroom }: { data: TeachingData; classroom: Classroom }) {
   const items = data.localContent
-    .filter((c) => c.classIds.includes(classroom.id) && c.status !== "TRASH" && (c.authorId === data.teacherId || c.status === "PUBLISHED"))
-    .sort((a, b) => a.kind.localeCompare(b.kind) || b.updatedAt.localeCompare(a.updatedAt));
+    .filter(
+      (c) =>
+        c.status !== "TRASH" &&
+        (c.scope === "SCHOOL" ? c.status === "PUBLISHED" : c.classIds.includes(classroom.id) && (c.authorId === data.teacherId || c.status === "PUBLISHED")),
+    )
+    .sort((a, b) => a.scope.localeCompare(b.scope) || a.kind.localeCompare(b.kind) || b.updatedAt.localeCompare(a.updatedAt));
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-content-muted">Nội dung địa phương hiển thị cho lớp {classroom.name}. Học sinh chỉ thấy nội dung đã xuất bản.</p>
+        <p className="text-sm text-content-muted">
+          Tư liệu của lớp {classroom.name} và tư liệu dùng chung của trường. Học sinh chỉ thấy nội dung đã xuất bản.
+        </p>
         <Link href={ROUTES.TEACHING.LOCAL} className="btn-line">
-          <BookMarked className="h-4 w-4" aria-hidden="true" /> Quản lý nội dung
+          <BookMarked className="h-4 w-4" aria-hidden="true" /> Quản lý tư liệu
         </Link>
       </div>
       {items.length === 0 ? (
-        <p className="rounded-[2px] border border-dashed border-[var(--border-strong)] p-6 text-center text-sm text-content-muted">Chưa có nội dung địa phương nào cho lớp.</p>
+        <p className="rounded-[2px] border border-dashed border-[var(--border-strong)] p-6 text-center text-sm text-content-muted">Chưa có tư liệu nào cho lớp.</p>
       ) : (
         <LocalList items={items} hrefFor={(c) => ROUTES.TEACHING.LOCAL_EDIT(c.id)} showStatus />
       )}
@@ -145,14 +153,14 @@ export function ClassMapTab({ data, classroom }: { data: TeachingData; classroom
   const pins = data.classPins.filter((p) => p.classId === classroom.id);
   const assignmentPins = pins.filter((p) => p.kind === "ASSIGNMENT").length;
   const localWithCoords = data.localContent.filter(
-    (c) => c.kind === "CONTEXT" && c.status === "PUBLISHED" && c.classIds.includes(classroom.id) && c.latitude != null,
+    (c) => c.kind === "CONTEXT" && c.status === "PUBLISHED" && c.scope === "CLASS" && c.classIds.includes(classroom.id) && c.latitude != null,
   ).length;
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">
         <KpiTile label="Điểm ghim của lớp" value={pins.length} icon={<MapPin className="h-4 w-4 text-[var(--men-lam)]" aria-hidden="true" />} />
         <KpiTile label="Ghim bài tập" value={assignmentPins} />
-        <KpiTile label="Bối cảnh có tọa độ" value={localWithCoords} hint="Lịch sử địa phương đã xuất bản" />
+        <KpiTile label="Bối cảnh có tọa độ" value={localWithCoords} hint="Tư liệu của lớp đã xuất bản" />
       </div>
       <Link href={mapHref(classroom.id)} className="btn-ink w-full sm:w-auto">
         Mở bản đồ lớp <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -232,14 +240,16 @@ export function StudentAssignmentsTab({ data, classroom }: { data: TeachingData;
 
 export function StudentLocalTab({ data, classroom }: { data: TeachingData; classroom: Classroom }) {
   const items = data.localContent
-    .filter((c) => c.status === "PUBLISHED" && c.classIds.includes(classroom.id))
-    .sort((a, b) => a.kind.localeCompare(b.kind) || localTitle(a).localeCompare(localTitle(b), "vi"));
+    .filter(
+      (c) => c.status === "PUBLISHED" && (c.scope === "SCHOOL" ? c.schoolId === classroom.schoolId : c.classIds.includes(classroom.id)),
+    )
+    .sort((a, b) => a.scope.localeCompare(b.scope) || a.kind.localeCompare(b.kind) || localTitle(a).localeCompare(localTitle(b), "vi"));
   if (items.length === 0) {
-    return <p className="rounded-[2px] border border-dashed border-[var(--border-strong)] p-6 text-center text-sm text-content-muted">Giáo viên chưa chia sẻ nội dung địa phương nào.</p>;
+    return <p className="rounded-[2px] border border-dashed border-[var(--border-strong)] p-6 text-center text-sm text-content-muted">Thầy cô và nhà trường chưa chia sẻ tư liệu nào.</p>;
   }
   return (
     <div className="space-y-2">
-      <p className="text-sm text-content-muted">Tư liệu lịch sử địa phương do giáo viên biên soạn cho lớp, đã được nhà trường duyệt.</p>
+      <p className="text-sm text-content-muted">Tư liệu thầy cô soạn riêng cho lớp và tư liệu dùng chung của trường.</p>
       <LocalList items={items} hrefFor={(c) => `${ROUTES.CLASS_DETAIL(classroom.id)}/local/${encodeURIComponent(c.id)}`} showStatus={false} />
     </div>
   );

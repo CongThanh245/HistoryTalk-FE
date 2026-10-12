@@ -1,5 +1,6 @@
 "use client";
 
+// FAKE UI: màn này chạy bằng dữ liệu mẫu (src/features/saas/store.ts), chưa có API — chờ BE sprint sau.
 import * as React from "react";
 import Link from "next/link";
 import { ArrowRight, ClipboardList, Plus } from "lucide-react";

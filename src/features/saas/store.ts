@@ -8,6 +8,7 @@ import {
   DEMO_TEACHER_ID,
   SEED_CLASSES,
   SEED_CLASS_PINS,
+  SEED_ACTIVITY,
   SEED_PERSONAL_PINS,
   SEED_SCHOOLS,
   SEED_SCHOOL_ADMINS,
@@ -25,6 +26,7 @@ import type {
   Classroom,
   PersonalMapPin,
   School,
+  SchoolActivity,
   SchoolAdminAccount,
   StudentAccount,
   TeacherAccount,
@@ -50,21 +52,34 @@ interface SaasState {
   assignments: Assignment[];
   submissions: Submission[];
   chatActivity: ChatActivity[];
+  /** Account / school audit trail (System Admin → school detail → Nhật ký). */
+  activityLog: SchoolActivity[];
 
   // ── System Admin: schools + School Admin accounts (row 2) ──
   createSchool: (school: Omit<School, "id" | "createdAt">, admin: Omit<SchoolAdminAccount, "id" | "schoolId" | "createdAt">) => School;
   updateSchool: (id: string, patch: Partial<School>) => void;
-  addSchoolAdmin: (admin: Omit<SchoolAdminAccount, "id" | "createdAt">) => void;
+  addSchoolAdmin: (admin: Omit<SchoolAdminAccount, "id" | "createdAt">) => SchoolAdminAccount;
+  /** Bulk suspend / reactivate from the schools table. */
+  updateSchools: (ids: string[], patch: Partial<School>) => void;
+  logActivity: (entry: Omit<SchoolActivity, "id" | "at">) => void;
   updateSchoolAdmin: (id: string, patch: Partial<SchoolAdminAccount>) => void;
   removeSchoolAdmin: (id: string) => void;
 
   // ── School Admin: teachers and students (rows 3–4) ──
-  createTeacher: (teacher: Omit<TeacherAccount, "id" | "createdAt">) => void;
+  createTeacher: (teacher: Omit<TeacherAccount, "id" | "createdAt">) => TeacherAccount;
+  updateTeachers: (ids: string[], patch: Partial<TeacherAccount>) => void;
+  removeTeachers: (ids: string[]) => void;
+  /** Replaces the classes a teacher teaches and is homeroom of (homeroom implies teaching). */
+  setTeacherClasses: (teacherId: string, teachClassIds: string[], homeroomClassIds: string[]) => void;
   updateTeacher: (id: string, patch: Partial<TeacherAccount>) => void;
   removeTeacher: (id: string) => void;
   createStudents: (students: Omit<StudentAccount, "id" | "createdAt" | "tokensUsedToday">[], classId?: string) => StudentAccount[];
   updateStudent: (id: string, patch: Partial<StudentAccount>) => void;
   removeStudent: (id: string) => void;
+  updateStudents: (ids: string[], patch: Partial<StudentAccount>) => void;
+  removeStudents: (ids: string[]) => void;
+  /** Moves students out of any class they sit in and into `classId` (null = chưa xếp lớp). */
+  assignStudentsToClass: (studentIds: string[], classId: string | null) => void;
 
   // ── Classes (rows 6–7) ──
   createClass: (cls: Omit<Classroom, "id" | "createdAt" | "studentIds"> & { studentIds?: string[] }) => Classroom;
@@ -111,6 +126,7 @@ const seed = () => ({
   assignments: SEED_ASSIGNMENTS,
   submissions: SEED_SUBMISSIONS,
   chatActivity: SEED_CHAT_ACTIVITY,
+  activityLog: SEED_ACTIVITY,
 });
 
 export const useSaasStore = create<SaasState>()(
@@ -127,11 +143,56 @@ export const useSaasStore = create<SaasState>()(
         return created;
       },
       updateSchool: (id, patch) => set((s) => ({ schools: s.schools.map((x) => (x.id === id ? { ...x, ...patch } : x)) })),
-      addSchoolAdmin: (admin) => set((s) => ({ schoolAdmins: [{ ...admin, id: uid("sa"), createdAt: now() }, ...s.schoolAdmins] })),
+      addSchoolAdmin: (admin) => {
+        const created: SchoolAdminAccount = { ...admin, id: uid("sa"), createdAt: now() };
+        set((s) => ({ schoolAdmins: [created, ...s.schoolAdmins] }));
+        return created;
+      },
+      updateSchools: (ids, patch) => {
+        const set_ = new Set(ids);
+        set((s) => ({ schools: s.schools.map((x) => (set_.has(x.id) ? { ...x, ...patch } : x)) }));
+      },
+      logActivity: (entry) => set((s) => ({ activityLog: [{ ...entry, id: uid("log"), at: now() }, ...(s.activityLog ?? [])] })),
       updateSchoolAdmin: (id, patch) => set((s) => ({ schoolAdmins: s.schoolAdmins.map((x) => (x.id === id ? { ...x, ...patch } : x)) })),
       removeSchoolAdmin: (id) => set((s) => ({ schoolAdmins: s.schoolAdmins.filter((x) => x.id !== id) })),
 
-      createTeacher: (teacher) => set((s) => ({ teachers: [{ ...teacher, id: uid("t"), createdAt: now() }, ...s.teachers] })),
+      createTeacher: (teacher) => {
+        const created: TeacherAccount = { ...teacher, id: uid("t"), createdAt: now() };
+        set((s) => ({ teachers: [created, ...s.teachers] }));
+        return created;
+      },
+      updateTeachers: (ids, patch) => {
+        const set_ = new Set(ids);
+        set((s) => ({ teachers: s.teachers.map((x) => (set_.has(x.id) ? { ...x, ...patch } : x)) }));
+      },
+      removeTeachers: (ids) => {
+        const set_ = new Set(ids);
+        set((s) => ({
+          teachers: s.teachers.filter((x) => !set_.has(x.id)),
+          classes: s.classes.map((c) => ({
+            ...c,
+            homeroomTeacherId: c.homeroomTeacherId && set_.has(c.homeroomTeacherId) ? null : c.homeroomTeacherId,
+            teacherIds: c.teacherIds.filter((t) => !set_.has(t)),
+          })),
+        }));
+      },
+      setTeacherClasses: (teacherId, teachClassIds, homeroomClassIds) => {
+        const homeroom = new Set(homeroomClassIds);
+        const teach = new Set([...teachClassIds, ...homeroomClassIds]);
+        set((s) => ({
+          classes: s.classes.map((c) => {
+            const teaches = teach.has(c.id);
+            const teacherIds = teaches
+              ? c.teacherIds.includes(teacherId) ? c.teacherIds : [...c.teacherIds, teacherId]
+              : c.teacherIds.filter((t) => t !== teacherId);
+            const homeroomTeacherId = homeroom.has(c.id)
+              ? teacherId
+              : c.homeroomTeacherId === teacherId ? null : c.homeroomTeacherId;
+            if (teacherIds === c.teacherIds && homeroomTeacherId === c.homeroomTeacherId) return c;
+            return { ...c, teacherIds, homeroomTeacherId };
+          }),
+        }));
+      },
       updateTeacher: (id, patch) => set((s) => ({ teachers: s.teachers.map((x) => (x.id === id ? { ...x, ...patch } : x)) })),
       removeTeacher: (id) =>
         set((s) => ({
@@ -158,6 +219,29 @@ export const useSaasStore = create<SaasState>()(
           students: s.students.filter((x) => x.id !== id),
           classes: s.classes.map((c) => ({ ...c, studentIds: c.studentIds.filter((x) => x !== id) })),
         })),
+      updateStudents: (ids, patch) => {
+        const set_ = new Set(ids);
+        set((s) => ({ students: s.students.map((x) => (set_.has(x.id) ? { ...x, ...patch } : x)) }));
+      },
+      removeStudents: (ids) => {
+        const set_ = new Set(ids);
+        set((s) => ({
+          students: s.students.filter((x) => !set_.has(x.id)),
+          classes: s.classes.map((c) =>
+            c.studentIds.some((x) => set_.has(x)) ? { ...c, studentIds: c.studentIds.filter((x) => !set_.has(x)) } : c,
+          ),
+        }));
+      },
+      assignStudentsToClass: (studentIds, classId) => {
+        const set_ = new Set(studentIds);
+        set((s) => ({
+          classes: s.classes.map((c) => {
+            const rest = c.studentIds.filter((x) => !set_.has(x));
+            if (c.id === classId) return { ...c, studentIds: [...rest, ...studentIds] };
+            return rest.length === c.studentIds.length ? c : { ...c, studentIds: rest };
+          }),
+        }));
+      },
 
       createClass: (cls) => {
         const created: Classroom = { ...cls, studentIds: cls.studentIds ?? [], id: uid("cls"), createdAt: now() };
@@ -248,7 +332,33 @@ export const useSaasStore = create<SaasState>()(
 
       resetMockData: () => set(seed()),
     }),
-    { name: "historytalk:saas-mock:v1" },
+    {
+      name: "historytalk:saas-mock:v1",
+      // v1: local content gained `scope`. Older saved items were all class content, except PENDING ones (school review).
+      // v2: more seed schools (with admins, teachers, classes, students) and the activity log; saved records are kept.
+      version: 2,
+      migrate: (persisted, fromVersion) => {
+        const state = persisted as Partial<SaasState> | undefined;
+        if (state && fromVersion < 2) {
+          const topUp = <T extends { id: string }>(saved: T[] | undefined, seeded: T[]) => {
+            const have = new Set((saved ?? []).map((x) => x.id));
+            return [...(saved ?? []), ...seeded.filter((x) => !have.has(x.id))];
+          };
+          state.schools = topUp(state.schools, SEED_SCHOOLS);
+          state.schoolAdmins = topUp(state.schoolAdmins, SEED_SCHOOL_ADMINS);
+          state.teachers = topUp(state.teachers, SEED_TEACHERS);
+          state.students = topUp(state.students, SEED_STUDENTS);
+          state.classes = topUp(state.classes, SEED_CLASSES);
+          state.activityLog = topUp(state.activityLog, SEED_ACTIVITY);
+        }
+        if (state?.localContent) {
+          state.localContent = state.localContent.map((c) =>
+            c.scope ? c : ({ ...c, scope: c.status === "PENDING" ? "SCHOOL" : "CLASS" } as LocalContent),
+          );
+        }
+        return state as SaasState;
+      },
+    },
   ),
 );
 

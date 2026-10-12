@@ -1,9 +1,11 @@
 "use client";
 
+// FAKE UI: màn này chạy bằng dữ liệu mẫu (src/features/saas/store.ts), chưa có API — chờ BE sprint sau.
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, UserRound } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import { NeutralBadge, Panel, SaasShell } from "@/components/saas/saas-ui";
 import { StudentContextArticle } from "@/components/saas/student-context-article";
 import { StudentMockChat } from "@/components/saas/student-mock-chat";
@@ -29,7 +31,7 @@ export default function ClassLocalContentPage() {
   const { classId, contentId } = useParams<{ classId: string; contentId: string }>();
   const role = useRole();
   return (
-    <SaasShell variant="app" title="Tư liệu địa phương" description="Lịch sử quê hương do thầy cô biên soạn cho lớp.">
+    <SaasShell variant="app" title="Tư liệu lớp & trường" description="Tư liệu do thầy cô hoặc nhà trường biên soạn, tách biệt với nội dung chính thức của HistoryTalk.">
       <LocalContentView classId={classId} contentId={contentId} role={role} />
     </SaasShell>
   );
@@ -41,12 +43,12 @@ function LocalContentView({ classId, contentId, role }: { classId: string; conte
   const classroom = myClasses.find((c) => c.id === classId);
 
   const back = (
-    <Link href={classroom ? ROUTES.CLASS_DETAIL(classId) : ROUTES.CLASSES} className="archive-link">
-      <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> {classroom ? `Lớp ${classroom.name}` : "Lớp của tôi"}
+    <Link href={ROUTES.CLASS_MATERIALS} className="archive-link">
+      <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Tư liệu lớp &amp; trường
     </Link>
   );
 
-  if (!classroom || !item || !canSeeLocal(item, classId, role)) {
+  if (!classroom || !item || !canSeeLocal(item, classId, role, classroom.schoolId)) {
     return (
       <EmptyState
         title="Không xem được tư liệu này"
@@ -60,7 +62,13 @@ function LocalContentView({ classId, contentId, role }: { classId: string; conte
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {back}
-        {role === "TEACHER" && item.status !== "PUBLISHED" && <NeutralBadge>{STATUS_LABEL[item.status]} · học sinh chưa thấy</NeutralBadge>}
+        <span className="flex flex-wrap items-center gap-2">
+          <ContentSourceTag
+            source={item.scope}
+            detail={item.scope === "CLASS" ? `Lớp ${classroom.name}` : undefined}
+          />
+          {role === "TEACHER" && item.status !== "PUBLISHED" && <NeutralBadge>{STATUS_LABEL[item.status]} · học sinh chưa thấy</NeutralBadge>}
+        </span>
       </div>
 
       {item.kind === "CONTEXT" && (

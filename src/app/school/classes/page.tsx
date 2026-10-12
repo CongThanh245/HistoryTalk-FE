@@ -2,54 +2,98 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { StaffFormSelect } from "@/components/staff/staff-form";
-import { EmptyState } from "@/components/ui/empty-state";
-import { ClassFormDialog } from "@/components/saas/class-form-dialog";
-import { IconAction, NeutralBadge, SaasShell, SearchInput, normalizeText } from "@/components/saas/saas-ui";
+import { Skeleton } from "@/components/ui/skeleton";
+import { NoResults, TableEmpty, TablePagination } from "@/components/saas/accounts-table";
+import { ClassFormDialog, CLASS_GRADES, academicYearLabel, currentAcademicYear } from "@/components/saas/class-form-dialog";
+import { IconAction, SearchInput, formatNumber } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
-import { useSchoolData } from "@/features/saas/hooks";
-import { useDemoSchoolId, useSaasStore } from "@/features/saas/store";
-import type { Classroom } from "@/features/saas/types";
+import { apiErrorMessage, useApiSchoolClassrooms, useDeleteApiClassroom } from "@/features/saas/hooks-api";
+import type { ApiClassroom, ClassroomListParams } from "@/services/school.service";
+import { cn } from "@/lib/utils/cn";
+import { ClassStatusBadge } from "../_components/classroom";
+import { CopyTag, ErrorBlock, SchoolShell, useDebouncedValue } from "../_components/shared";
 
-/** School Admin: CRUD classes of the whole school (Role Matrix row 6). */
+const ALL = "ALL";
+const PAGE_SIZES = [12, 24, 48];
+const SORTS = [
+  { value: "className,asc", label: "Tên lớp A → Z" },
+  { value: "className,desc", label: "Tên lớp Z → A" },
+  { value: "gradeLevel,asc", label: "Khối tăng dần" },
+  { value: "createdAt,desc", label: "Mới tạo trước" },
+];
+
+/** School Admin: classrooms of the school (GET /school-admin/classrooms + classroom CRUD). */
 export default function SchoolClassesPage() {
   return (
-    <SaasShell title="Lớp học" description="Tạo lớp, phân công giáo viên chủ nhiệm và giáo viên dạy Lịch sử cho từng lớp.">
+    <SchoolShell title="Lớp học" description="Tạo lớp theo năm học, phân công giáo viên phụ trách và quản lý trạng thái lớp.">
       <ClassesContent />
-    </SaasShell>
+    </SchoolShell>
   );
 }
 
 function ClassesContent() {
-  const schoolId = useDemoSchoolId();
-  const { classes, teachers, teacherById } = useSchoolData(schoolId);
-  const removeClass = useSaasStore((s) => s.removeClass);
-
-  const [grade, setGrade] = React.useState("ALL");
+  const thisYear = currentAcademicYear();
   const [search, setSearch] = React.useState("");
-  const [formOpen, setFormOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<Classroom | null>(null);
-  const [deleting, setDeleting] = React.useState<Classroom | null>(null);
+  const debounced = useDebouncedValue(search.trim(), 300);
+  const [grade, setGrade] = React.useState(ALL);
+  const [year, setYear] = React.useState(String(thisYear));
+  const [sort, setSort] = React.useState(SORTS[0].value);
+  const [page, setPage] = React.useState(0);
+  const [size, setSize] = React.useState(PAGE_SIZES[0]);
 
-  const grades = Array.from(new Set(classes.map((c) => c.grade))).sort((a, b) => a - b);
-  const filtered = classes.filter(
-    (c) => (grade === "ALL" || c.grade === Number(grade)) && (!search || normalizeText(c.name).includes(normalizeText(search))),
-  );
+  const filterKey = `${debounced}|${grade}|${year}|${sort}`;
+  const [lastKey, setLastKey] = React.useState(filterKey);
+  if (filterKey !== lastKey) {
+    setLastKey(filterKey);
+    setPage(0);
+  }
+
+  const params: ClassroomListParams = {
+    search: debounced || undefined,
+    gradeLevel: grade === ALL ? undefined : Number(grade),
+    academicYear: year === ALL ? undefined : Number(year),
+    page,
+    size,
+    sort,
+  };
+  const classes = useApiSchoolClassrooms(params);
+  const remove = useDeleteApiClassroom();
+
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [editing, setEditing] = React.useState<ApiClassroom | null>(null);
+  const [deleting, setDeleting] = React.useState<ApiClassroom | null>(null);
+
+  const rows = classes.data?.items ?? [];
+  const total = classes.data?.totalElements ?? 0;
+  const filtered = !!debounced || grade !== ALL || year !== String(thisYear);
+  const resetFilters = () => {
+    setSearch("");
+    setGrade(ALL);
+    setYear(String(thisYear));
+  };
+
+  const yearOptions = [
+    { value: ALL, label: "Mọi năm học" },
+    ...[thisYear + 1, thisYear, thisYear - 1, thisYear - 2, thisYear - 3].map((y) => ({ value: String(y), label: `Năm học ${academicYearLabel(y)}` })),
+  ];
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <SearchInput value={search} onChange={setSearch} placeholder="Tìm lớp..." />
+        <SearchInput value={search} onChange={setSearch} placeholder="Tìm tên lớp, mã lớp..." />
         <StaffFormSelect
           value={grade}
           onValueChange={setGrade}
-          options={[{ value: "ALL", label: "Tất cả khối" }, ...grades.map((g) => ({ value: String(g), label: `Khối ${g}` }))]}
-          className="w-full sm:w-44"
+          options={[{ value: ALL, label: "Tất cả khối" }, ...CLASS_GRADES.map((g) => ({ value: String(g), label: `Khối ${g}` }))]}
+          className="w-full sm:w-36"
         />
+        <StaffFormSelect value={year} onValueChange={setYear} options={yearOptions} className="w-full sm:w-48" />
+        <StaffFormSelect value={sort} onValueChange={setSort} options={SORTS} className="w-full sm:w-44" />
         <div className="hidden flex-1 sm:block" />
         <button
           type="button"
@@ -63,86 +107,138 @@ function ClassesContent() {
         </button>
       </div>
 
-      <p className="text-sm text-content-muted">{filtered.length} lớp</p>
-
-      {filtered.length === 0 ? (
-        <EmptyState title="Chưa có lớp phù hợp" description="Tạo lớp mới hoặc đổi bộ lọc khối." />
+      {classes.isPending ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" role="status" aria-label="Đang tải danh sách lớp">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-52 w-full" />
+          ))}
+        </div>
+      ) : classes.isError ? (
+        <ErrorBlock error={classes.error} fallback="Không tải được danh sách lớp." onRetry={() => void classes.refetch()} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((c) => {
-            const homeroom = c.homeroomTeacherId ? teacherById.get(c.homeroomTeacherId) : undefined;
-            const others = c.teacherIds.map((id) => teacherById.get(id)).filter((t) => !!t);
-            return (
-              <article key={c.id} className="flex flex-col rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
-                <div className="flex items-start justify-between gap-3 border-b border-[var(--border-strong)] p-4">
-                  <div className="min-w-0">
-                    <h3 className="archive-title is-plain text-2xl">Lớp {c.name}</h3>
-                    <p className="mt-0.5 text-xs text-content-muted">
-                      Khối {c.grade} · Năm học {c.schoolYear}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 gap-1">
-                    <IconAction
-                      label={`Sửa lớp ${c.name}`}
+        <>
+          <p className="text-sm text-content-muted" aria-live="polite">
+            <b className="tabular-nums text-content-heading">{total}</b> lớp
+            {classes.isFetching && <span className="ml-2 text-xs">Đang cập nhật…</span>}
+          </p>
+
+          {rows.length === 0 ? (
+            <div className="rounded-[2px] border border-dashed border-[var(--border-strong)]">
+              {filtered ? (
+                <NoResults onReset={resetFilters} message="Không có lớp phù hợp với bộ lọc." />
+              ) : (
+                <TableEmpty
+                  icon={BookOpen}
+                  title="Chưa có lớp nào"
+                  description="Tạo lớp cho năm học hiện tại rồi phân công giáo viên phụ trách."
+                  action={
+                    <button
+                      type="button"
+                      className="btn-crimson"
                       onClick={() => {
-                        setEditing(c);
+                        setEditing(null);
                         setFormOpen(true);
                       }}
                     >
-                      <Pencil className="h-4 w-4" />
-                    </IconAction>
-                    <IconAction label={`Xóa lớp ${c.name}`} tone="danger" onClick={() => setDeleting(c)}>
-                      <Trash2 className="h-4 w-4" />
-                    </IconAction>
+                      <Plus className="h-4 w-4" aria-hidden="true" /> Tạo lớp
+                    </button>
+                  }
+                />
+              )}
+            </div>
+          ) : (
+            <div className={cn("grid gap-4 sm:grid-cols-2 xl:grid-cols-3", classes.isFetching && "opacity-70")}>
+              {rows.map((c) => (
+                <article key={c.id} className="flex flex-col rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
+                  <div className="flex items-start justify-between gap-3 border-b border-[var(--border-strong)] p-4">
+                    <div className="min-w-0 space-y-1.5">
+                      <h3 className="archive-title is-plain text-2xl">Lớp {c.className}</h3>
+                      <p className="text-xs text-content-muted">
+                        Khối {c.gradeLevel ?? "—"} · Năm học {academicYearLabel(c.academicYear)}
+                      </p>
+                      <CopyTag value={c.classCode} label="mã lớp" />
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <IconAction
+                        label={`Sửa lớp ${c.className}`}
+                        onClick={() => {
+                          setEditing(c);
+                          setFormOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </IconAction>
+                      <IconAction label={`Xóa lớp ${c.className}`} tone="danger" onClick={() => setDeleting(c)}>
+                        <Trash2 className="h-4 w-4" />
+                      </IconAction>
+                    </div>
                   </div>
-                </div>
-                <dl className="grid flex-1 grid-cols-[auto_1fr] gap-x-4 gap-y-2 p-4 text-sm">
-                  <dt className="text-content-muted">Chủ nhiệm</dt>
-                  <dd className="min-w-0 truncate font-medium text-content-heading">
-                    {homeroom ? (
-                      homeroom.fullName
-                    ) : (
-                      <span className="text-[var(--status-warning)]">Chưa phân công</span>
+                  <dl className="grid flex-1 grid-cols-[auto_1fr] gap-x-4 gap-y-2 p-4 text-sm">
+                    <dt className="text-content-muted">Giáo viên</dt>
+                    <dd className="min-w-0 truncate font-medium text-content-heading">
+                      {c.teacher ? c.teacher.fullName : <span className="text-[var(--status-warning)]">Chưa phân công</span>}
+                    </dd>
+                    <dt className="text-content-muted">Sĩ số</dt>
+                    <dd className="font-semibold tabular-nums">{formatNumber(c.studentCount ?? 0)} học sinh</dd>
+                    {c.description && (
+                      <>
+                        <dt className="text-content-muted">Mô tả</dt>
+                        <dd className="line-clamp-2 min-w-0 text-content-text">{c.description}</dd>
+                      </>
                     )}
-                  </dd>
-                  <dt className="text-content-muted">Giáo viên</dt>
-                  <dd className="min-w-0 truncate">{others.length ? others.map((t) => t.fullName).join(", ") : "—"}</dd>
-                  <dt className="text-content-muted">Sĩ số</dt>
-                  <dd className="font-semibold tabular-nums">{c.studentIds.length} học sinh</dd>
-                </dl>
-                <div className="flex items-center justify-between gap-2 border-t border-[var(--border-default)] px-4 py-3">
-                  {homeroom?.status === "LOCKED" ? <NeutralBadge>GVCN đang bị khóa</NeutralBadge> : <span />}
-                  <Link href={ROUTES.SCHOOL.CLASS_DETAIL(c.id)} className="archive-link">
-                    Xem lớp <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                  </Link>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                  </dl>
+                  <div className="flex items-center justify-between gap-2 border-t border-[var(--border-default)] px-4 py-3">
+                    <ClassStatusBadge status={c.status} />
+                    <Link href={ROUTES.SCHOOL.CLASS_DETAIL(c.id)} className="archive-link">
+                      Xem lớp <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {total > 0 && (
+            <TablePagination
+              pageIndex={page}
+              pageSize={size}
+              total={total}
+              pageSizeOptions={PAGE_SIZES}
+              onPageChange={setPage}
+              onPageSizeChange={(n) => {
+                setSize(n);
+                setPage(0);
+              }}
+            />
+          )}
+        </>
       )}
 
       <ClassFormDialog
         open={formOpen}
         onOpenChange={setFormOpen}
-        schoolId={schoolId}
         editing={editing}
-        teachers={teachers}
-        existingClasses={classes}
+        onSaved={(room) => toast.success(editing ? `Đã cập nhật lớp ${room.className}` : `Đã tạo lớp ${room.className} · mã ${room.classCode}`)}
       />
 
       <ConfirmDialog
         open={!!deleting}
-        onOpenChange={(o) => !o && setDeleting(null)}
-        title={`Xóa lớp ${deleting?.name ?? ""}?`}
-        description={`${deleting?.studentIds.length ?? 0} học sinh sẽ trở thành “chưa xếp lớp”. Ghim bản đồ và bài tập của lớp cũng bị xóa. Không thể hoàn tác.`}
+        onOpenChange={(o) => !o && !remove.isPending && setDeleting(null)}
+        title={`Xóa lớp ${deleting?.className ?? ""}?`}
+        description={`Lớp sẽ bị gỡ khỏi danh sách${deleting?.studentCount ? ` (đang có ${deleting.studentCount} học sinh)` : ""}. Tài khoản học sinh và giáo viên không bị xóa.`}
         confirmLabel="Xóa lớp"
         variant="danger"
+        isPending={remove.isPending}
         onConfirm={() => {
           if (!deleting) return;
-          removeClass(deleting.id);
-          toast.success(`Đã xóa lớp ${deleting.name}`);
-          setDeleting(null);
+          const target = deleting;
+          remove.mutate(target.id, {
+            onSuccess: () => {
+              toast.success(`Đã xóa lớp ${target.className}`);
+              setDeleting(null);
+            },
+            onError: (error) => toast.error(apiErrorMessage(error, "Không xóa được lớp. Vui lòng thử lại.")),
+          });
         }}
       />
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+// FAKE UI (chỉ phần học sinh trường — StudentGradeBook): dữ liệu mẫu, chưa có API bảng điểm. Phần Customer dùng API thật.
 import { ArchiveHeading } from "@/components/commons/archive-heading";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SaasShell, useHydrated } from "@/components/saas/saas-ui";
@@ -28,7 +29,7 @@ export default function GradesPage() {
 
   return (
     <div className="space-y-6 py-6 text-content-text">
-      <ArchiveHeading as="h1" title={TITLE} description="Điểm quiz, thời kỳ bạn đã học và mức dùng token." className="mb-0" />
+      <ArchiveHeading as="h1" title={TITLE} description="Điểm quiz, thời kỳ bạn đã học và mức dùng token." />
       {!hydrated ? null : role === "CUSTOMER" ? (
         <CustomerGrades />
       ) : role ? (

@@ -1,5 +1,6 @@
 "use client";
 
+// FAKE UI: màn này chạy bằng dữ liệu mẫu (src/features/saas/store.ts), chưa có API — chờ BE sprint sau.
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -28,7 +29,7 @@ function NewLocalContent() {
     <SaasShell
       variant="app"
       title={`Soạn ${LOCAL_KIND_LABELS[kind].toLowerCase()} mới`}
-      description="Lưu nháp để soạn tiếp, hoặc gửi quản trị trường duyệt khi đã hoàn chỉnh."
+      description="Lưu nháp để soạn tiếp. Nội dung cho lớp bạn tự xuất bản; nội dung cho toàn trường cần quản trị trường duyệt."
     >
       <Editor key={kind} kind={kind} />
     </SaasShell>

@@ -13,7 +13,7 @@ import type { GetCharactersParams } from "@/services/character.service";
 
 import { catalogMetadata } from "@/lib/catalog-metadata";
 import { ArchiveHeading } from "@/components/commons/archive-heading";
-import { LocalCatalogSwitch } from "@/components/saas/local-catalog-switch";
+import { OfficialCatalogBanner } from "@/components/saas/official-catalog-banner";
 export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   return catalogMetadata("/characters", await searchParams);
 }
@@ -48,6 +48,7 @@ export default async function CharactersPage({
 
   return (
     <div className="space-y-6 lg:space-y-8 py-6 lg:py-8">
+      <OfficialCatalogBanner />
       <ArchiveHeading
         as="h1"
         label="Nhân vật"
@@ -56,9 +57,7 @@ export default async function CharactersPage({
         className="mb-0"
       />
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <LocalCatalogSwitch kind="CHARACTER">
-          <CharactersClient />
-        </LocalCatalogSwitch>
+        <CharactersClient />
       </HydrationBoundary>
     </div>
   );

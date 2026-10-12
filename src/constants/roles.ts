@@ -57,7 +57,7 @@ export const canPurchasePlans = (role: string | undefined): boolean =>
  */
 export const ROLE_HOME: Record<Role, string> = {
   [Role.CUSTOMER]: "/home",
-  [Role.SCHOOL_STUDENT]: "/home",
+  [Role.SCHOOL_STUDENT]: "/classes",
   [Role.TEACHER]: "/teaching",
   [Role.SCHOOL_ADMIN]: "/school",
   [Role.CONTENT_ADMIN]: "/staff",

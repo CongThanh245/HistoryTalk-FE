@@ -48,3 +48,12 @@ export function useSchoolCounts() {
     return { students: count(students), classes: count(classes), teachers: count(teachers) };
   }, [students, classes, teachers]);
 }
+
+/** Audit entries of one school, newest first. */
+export function useSchoolActivity(schoolId: string | undefined) {
+  const log = useSaasStore((s) => s.activityLog);
+  return useMemo(
+    () => (log ?? []).filter((x) => x.schoolId === schoolId).sort((a, b) => b.at.localeCompare(a.at)),
+    [log, schoolId],
+  );
+}

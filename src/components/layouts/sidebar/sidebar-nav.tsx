@@ -26,24 +26,44 @@ function catalogUrl(pathname: string, query: string) {
   return suffix ? `${pathname}?${suffix}` : pathname;
 }
 
+/** Path part of a menu href ("/map?layer=class" → "/map"). */
+const pathOf = (href: string) => href.split("?")[0];
+
+/**
+ * The one menu item that owns the current page: the longest href whose path matches it exactly or as a parent,
+ * so "/classes/materials" lights up "Tư liệu lớp & trường" and not also "Lớp học".
+ */
+function activeHrefFor(pathname: string, sections: SidebarSection[]) {
+  let best: string | null = null;
+  let bestLength = -1;
+  for (const section of sections) {
+    for (const item of section.items) {
+      const path = pathOf(item.href);
+      const matches = item.exact || path === "/" ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
+      if (matches && path.length > bestLength) {
+        best = item.href;
+        bestLength = path.length;
+      }
+    }
+  }
+  return best;
+}
+
 function NavItem({
   item,
   isExpanded,
+  isActive,
   href,
   onNavigate,
 }: {
   item: SidebarMenuItem;
   isExpanded: boolean;
+  isActive: boolean;
   href: string;
   onNavigate: () => void;
 }) {
   const pathname = usePathname();
   const Icon = item.icon;
-  const isActive = item.exact
-    ? pathname === item.href
-    : item.href === "/"
-    ? pathname === "/"
-    : pathname.startsWith(item.href);
 
 
   const linkEl = (
@@ -104,6 +124,8 @@ export default function SidebarNav({
   catalogUrls: Partial<Record<CatalogPath, string>>;
   onRememberCatalogUrl: (path: CatalogPath, url: string) => void;
 }) {
+  const pathname = usePathname();
+  const activeHref = activeHrefFor(pathname, sections);
   const rememberCurrentUrl = () => {
     const path = window.location.pathname;
     const url = catalogUrl(path, window.location.search);
@@ -118,9 +140,14 @@ export default function SidebarNav({
         <div key={section.title} className={cn(isExpanded ? "px-3" : "px-2")}>
           {isExpanded ? (
             <p
-              className="mb-1.5 px-2 text-[10px] font-bold tracking-[0.14em] uppercase text-[var(--sidebar-section-label)]"
+              className="mb-1.5 flex items-center gap-2 px-2 text-[10px] font-bold tracking-[0.14em] uppercase text-[var(--sidebar-section-label)]"
             >
-              {section.title}
+              <span className="truncate">{section.title}</span>
+              {section.badge && (
+                <span className="shrink-0 rounded-[2px] border border-current px-1 py-px text-[9px] leading-[1.3] tracking-[0.08em] text-[var(--text-primary)]">
+                  {section.badge}
+                </span>
+              )}
             </p>
           ) : (
             <div
@@ -133,6 +160,7 @@ export default function SidebarNav({
                 key={item.href}
                 item={item}
                 isExpanded={isExpanded}
+                isActive={item.href === activeHref}
                 href={
                   item.href === "/characters" || item.href === "/events"
                     ? catalogUrls[item.href] ?? item.href

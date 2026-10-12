@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,175 +10,267 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { StaffFormInput, StaffFormSelect } from "@/components/staff/staff-form";
-import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, GRADE_OPTIONS } from "@/components/saas/saas-ui";
-import { useSaasStore } from "@/features/saas/store";
-import type { Classroom, TeacherAccount } from "@/features/saas/types";
+import { StaffFormInput, StaffFormSelect, StaffFormTextarea } from "@/components/staff/staff-form";
+import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field } from "@/components/saas/saas-ui";
+import {
+  apiErrorMessage,
+  apiErrorStatus,
+  useApiTeachers,
+  useCreateApiClassroom,
+  useUpdateApiClassroom,
+} from "@/features/saas/hooks-api";
+import type { ApiClassroom, ClassroomStatus, UpdateClassroomPayload } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
 
-const NO_HOMEROOM = "__none__";
+const NO_TEACHER = "__none__";
+export const CLASS_GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-interface FormState {
-  name: string;
-  grade: string;
-  schoolYear: string;
-  homeroomTeacherId: string;
-  teacherIds: string[];
+export const CLASSROOM_STATUS_LABELS: Record<ClassroomStatus, string> = {
+  ACTIVE: "Đang hoạt động",
+  INACTIVE: "Tạm ngưng",
+  ARCHIVED: "Đã lưu trữ",
+};
+
+/** Vietnamese school year starts in August/September: Oct 2026 → 2026 (2026–2027). */
+export function currentAcademicYear(now = new Date()) {
+  return now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
 }
 
-const emptyForm = (): FormState => ({ name: "", grade: "10", schoolYear: "2026-2027", homeroomTeacherId: NO_HOMEROOM, teacherIds: [] });
+export const academicYearLabel = (year: number) => `${year}–${year + 1}`;
 
-/** Create / edit a class of the school (Role Matrix row 6). */
+interface FormState {
+  className: string;
+  gradeLevel: string;
+  academicYear: string;
+  teacherId: string;
+  description: string;
+  status: ClassroomStatus;
+}
+
+type Errors = Partial<Record<"className" | "academicYear" | "description" | "teacherId", string>>;
+
+const fromClassroom = (c: ApiClassroom | null): FormState =>
+  c
+    ? {
+        className: c.className,
+        gradeLevel: String(c.gradeLevel ?? 10),
+        academicYear: String(c.academicYear),
+        teacherId: c.teacher?.uid ?? NO_TEACHER,
+        description: c.description ?? "",
+        status: (["ACTIVE", "INACTIVE", "ARCHIVED"] as const).includes(c.status) ? c.status : "ACTIVE",
+      }
+    : {
+        className: "",
+        gradeLevel: "10",
+        academicYear: String(currentAcademicYear()),
+        teacherId: NO_TEACHER,
+        description: "",
+        status: "ACTIVE",
+      };
+
+/**
+ * Create / edit a classroom (POST /classrooms, PUT /classrooms/{id}). One teacher in charge per class, picked from the
+ * school's teacher accounts. The backend ignores `teacherId: null`, so an assigned teacher can be changed but not removed.
+ */
 export function ClassFormDialog({
   open,
   onOpenChange,
-  schoolId,
   editing,
-  teachers,
-  existingClasses,
+  onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  schoolId: string;
-  editing: Classroom | null;
-  teachers: TeacherAccount[];
-  existingClasses: Classroom[];
+  editing: ApiClassroom | null;
+  onSaved?: (room: ApiClassroom) => void;
 }) {
-  const createClass = useSaasStore((s) => s.createClass);
-  const updateClass = useSaasStore((s) => s.updateClass);
-  const [form, setForm] = React.useState<FormState>(emptyForm);
-  const [touched, setTouched] = React.useState(false);
+  const create = useCreateApiClassroom();
+  const update = useUpdateApiClassroom();
+  const teachers = useApiTeachers({ page: 0, size: 100, sortBy: "fullName", sortDirection: "asc" }, open);
+  const pending = create.isPending || update.isPending;
 
-  // Reset the form each time the dialog opens (state lives in the dialog, derived from props on open).
-  const [lastOpen, setLastOpen] = React.useState(false);
+  const [form, setForm] = React.useState<FormState>(() => fromClassroom(editing));
+  const [touched, setTouched] = React.useState(false);
+  const [serverErrors, setServerErrors] = React.useState<Errors>({});
+  const [formError, setFormError] = React.useState<string | null>(null);
+
+  // Reset each time the dialog opens.
+  const [lastOpen, setLastOpen] = React.useState(open);
   if (open !== lastOpen) {
     setLastOpen(open);
     if (open) {
+      setForm(fromClassroom(editing));
       setTouched(false);
-      setForm(
-        editing
-          ? {
-              name: editing.name,
-              grade: String(editing.grade),
-              schoolYear: editing.schoolYear,
-              homeroomTeacherId: editing.homeroomTeacherId ?? NO_HOMEROOM,
-              teacherIds: editing.teacherIds,
-            }
-          : emptyForm(),
-      );
+      setServerErrors({});
+      setFormError(null);
     }
   }
 
-  const name = form.name.trim();
-  const duplicate = existingClasses.some(
-    (c) => c.id !== editing?.id && c.name.toLowerCase() === name.toLowerCase() && c.schoolYear === form.schoolYear.trim(),
-  );
-  const nameError = !name ? "Nhập tên lớp" : duplicate ? "Tên lớp đã tồn tại trong năm học này" : null;
-  const yearError = /^\d{4}-\d{4}$/.test(form.schoolYear.trim()) ? null : "Định dạng năm học: 2026-2027";
-  const valid = !nameError && !yearError;
+  const name = form.className.trim();
+  const year = Number(form.academicYear);
+  const errors: Errors = {};
+  if (!name) errors.className = "Nhập tên lớp";
+  else if (name.length > 100) errors.className = "Tên lớp tối đa 100 ký tự";
+  if (!/^\d{4}$/.test(form.academicYear.trim()) || year < 2020 || year > 2100) errors.academicYear = "Năm bắt đầu năm học, ví dụ 2026";
+  if (form.description.length > 500) errors.description = "Mô tả tối đa 500 ký tự";
+  const shown: Errors = touched ? { ...serverErrors, ...errors } : serverErrors;
 
-  const selectable = teachers.filter((t) => t.status !== "LOCKED" || form.teacherIds.includes(t.id) || form.homeroomTeacherId === t.id);
-  const homeroomOptions = [
-    { value: NO_HOMEROOM, label: "Chưa phân công" },
-    ...selectable.map((t) => ({ value: t.id, label: `${t.fullName} · ${t.subject}` })),
-  ];
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    setServerErrors((s) => ({ ...s, [key]: undefined }));
+  };
 
-  function save() {
+  const currentTeacher = editing?.teacher ?? null;
+  const teacherOptions = React.useMemo(() => {
+    const list = (teachers.data?.items ?? [])
+      .filter((t) => t.active || t.uid === currentTeacher?.uid)
+      .map((t) => ({ value: t.uid, label: `${t.fullName} · ${t.email}${t.active ? "" : " (đã khóa)"}` }));
+    if (currentTeacher && !list.some((o) => o.value === currentTeacher.uid)) {
+      list.unshift({ value: currentTeacher.uid, label: currentTeacher.fullName });
+    }
+    return currentTeacher ? list : [{ value: NO_TEACHER, label: "Chưa phân công" }, ...list];
+  }, [teachers.data, currentTeacher]);
+
+  function onError(error: unknown) {
+    if (apiErrorStatus(error) === 409) {
+      setServerErrors({ className: apiErrorMessage(error, "Tên lớp đã tồn tại trong năm học này") });
+      return;
+    }
+    const fields = (error as { response?: { data?: { errors?: Record<string, string> } } })?.response?.data?.errors;
+    if (fields && Object.keys(fields).length) {
+      setServerErrors({ className: fields.className, academicYear: fields.academicYear, description: fields.description, teacherId: fields.teacherId });
+      return;
+    }
+    setFormError(apiErrorMessage(error, "Không lưu được lớp học. Vui lòng thử lại."));
+  }
+
+  function save(e: React.FormEvent) {
+    e.preventDefault();
     setTouched(true);
-    if (!valid) return;
-    const homeroomTeacherId = form.homeroomTeacherId === NO_HOMEROOM ? null : form.homeroomTeacherId;
-    const payload = {
-      name,
-      grade: Number(form.grade),
-      schoolYear: form.schoolYear.trim(),
-      homeroomTeacherId,
-      teacherIds: form.teacherIds,
+    setFormError(null);
+    if (Object.keys(errors).length) return;
+    const teacherId = form.teacherId === NO_TEACHER ? undefined : form.teacherId;
+    const base = {
+      className: name,
+      gradeLevel: Number(form.gradeLevel),
+      academicYear: year,
+      description: form.description.trim(),
+    };
+    const done = (room: ApiClassroom) => {
+      onOpenChange(false);
+      onSaved?.(room);
     };
     if (editing) {
-      updateClass(editing.id, payload);
-      toast.success(`Đã cập nhật lớp ${name}`);
+      const payload: UpdateClassroomPayload = { ...base, status: form.status };
+      if (teacherId && teacherId !== editing.teacher?.uid) payload.teacherId = teacherId;
+      update.mutate({ id: editing.id, payload }, { onSuccess: done, onError });
     } else {
-      createClass({ ...payload, schoolId });
-      toast.success(`Đã tạo lớp ${name}`);
+      create.mutate({ ...base, description: base.description || undefined, teacherId }, { onSuccess: done, onError });
     }
-    onOpenChange(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(o) => !pending && onOpenChange(o)}>
       <DialogContent className={cn(DIALOG_CLASS, "sm:max-w-lg")}>
-        <DialogHeader>
-          <DialogTitle className={DIALOG_TITLE_CLASS}>{editing ? `Sửa lớp ${editing.name}` : "Tạo lớp mới"}</DialogTitle>
-          <DialogDescription className="text-content-muted">
-            Phân công giáo viên chủ nhiệm và giáo viên dạy Lịch sử cho lớp.
-          </DialogDescription>
-        </DialogHeader>
+        <form onSubmit={save} noValidate className="space-y-4">
+          <DialogHeader>
+            <DialogTitle className={DIALOG_TITLE_CLASS}>{editing ? `Sửa lớp ${editing.className}` : "Tạo lớp mới"}</DialogTitle>
+            <DialogDescription className="text-content-muted">
+              {editing ? "Mã lớp giữ nguyên khi đổi thông tin." : "Mã lớp (ví dụ CVA-10A1-2026) được hệ thống tạo tự động."}
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Tên lớp" required error={touched ? nameError : null} className="sm:col-span-1">
-              <StaffFormInput value={form.name} placeholder="VD: 10A3" onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            <Field label="Tên lớp" required error={shown.className} htmlFor="class-name">
+              <StaffFormInput
+                id="class-name"
+                value={form.className}
+                placeholder="VD: 10A3"
+                aria-invalid={!!shown.className}
+                onChange={(e) => set("className", e.target.value)}
+              />
             </Field>
             <Field label="Khối" required>
               <StaffFormSelect
-                value={form.grade}
-                onValueChange={(v) => setForm((f) => ({ ...f, grade: v }))}
-                options={GRADE_OPTIONS.map((g) => ({ value: String(g), label: `Khối ${g}` }))}
+                value={form.gradeLevel}
+                onValueChange={(v) => set("gradeLevel", v)}
+                options={CLASS_GRADES.map((g) => ({ value: String(g), label: `Khối ${g}` }))}
                 className="w-full"
               />
             </Field>
-            <Field label="Năm học" required error={touched ? yearError : null}>
-              <StaffFormInput value={form.schoolYear} onChange={(e) => setForm((f) => ({ ...f, schoolYear: e.target.value }))} />
+            <Field
+              label="Năm học"
+              required
+              error={shown.academicYear}
+              hint={/^\d{4}$/.test(form.academicYear) ? academicYearLabel(year) : undefined}
+              htmlFor="class-year"
+            >
+              <StaffFormInput
+                id="class-year"
+                inputMode="numeric"
+                value={form.academicYear}
+                aria-invalid={!!shown.academicYear}
+                onChange={(e) => set("academicYear", e.target.value.replace(/\D/g, "").slice(0, 4))}
+              />
             </Field>
           </div>
 
-          <Field label="Giáo viên chủ nhiệm">
+          <Field
+            label="Giáo viên phụ trách"
+            error={shown.teacherId}
+            hint={
+              teachers.isError
+                ? "Không tải được danh sách giáo viên."
+                : currentTeacher
+                  ? "Có thể chuyển sang giáo viên khác; máy chủ chưa hỗ trợ bỏ phân công."
+                  : "Giáo viên được chọn sẽ thấy lớp trong mục “Lớp của tôi”."
+            }
+          >
             <StaffFormSelect
-              value={form.homeroomTeacherId}
-              onValueChange={(v) => setForm((f) => ({ ...f, homeroomTeacherId: v }))}
-              options={homeroomOptions}
+              value={form.teacherId}
+              onValueChange={(v) => set("teacherId", v)}
+              options={teachers.isPending ? [{ value: form.teacherId, label: "Đang tải giáo viên…" }] : teacherOptions}
+              disabled={teachers.isPending}
               className="w-full"
             />
           </Field>
 
-          <Field label="Giáo viên giảng dạy" hint="Giáo viên được chọn sẽ thấy lớp trong mục “Lớp của tôi”.">
-            <div className="max-h-48 overflow-y-auto rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)]">
-              {selectable.length === 0 ? (
-                <p className="p-3 text-sm text-content-muted">Trường chưa có giáo viên.</p>
-              ) : (
-                <ul className="divide-y divide-[var(--border-default)]">
-                  {selectable.map((t) => (
-                    <li key={t.id}>
-                      <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-[var(--status-neutral-bg)]">
-                        <Checkbox
-                          checked={form.teacherIds.includes(t.id)}
-                          onCheckedChange={(v) =>
-                            setForm((f) => ({
-                              ...f,
-                              teacherIds: v === true ? [...f.teacherIds, t.id] : f.teacherIds.filter((x) => x !== t.id),
-                            }))
-                          }
-                        />
-                        <span className="min-w-0 flex-1 truncate font-medium text-content-heading">{t.fullName}</span>
-                        <span className="text-xs text-content-muted">{t.subject}</span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </Field>
-        </div>
+          {editing && (
+            <Field label="Trạng thái">
+              <StaffFormSelect
+                value={form.status}
+                onValueChange={(v) => set("status", v)}
+                options={(Object.keys(CLASSROOM_STATUS_LABELS) as ClassroomStatus[]).map((s) => ({ value: s, label: CLASSROOM_STATUS_LABELS[s] }))}
+                className="w-full"
+              />
+            </Field>
+          )}
 
-        <DialogFooter className="gap-2">
-          <button type="button" className="btn-line" onClick={() => onOpenChange(false)}>
-            Hủy
-          </button>
-          <button type="button" className="btn-crimson" onClick={save}>
-            {editing ? "Lưu thay đổi" : "Tạo lớp"}
-          </button>
-        </DialogFooter>
+          <Field label="Mô tả" error={shown.description} hint={`${form.description.length}/500`} htmlFor="class-description">
+            <StaffFormTextarea
+              id="class-description"
+              rows={3}
+              value={form.description}
+              placeholder="Ghi chú cho lớp (không bắt buộc)"
+              onChange={(e) => set("description", e.target.value)}
+            />
+          </Field>
+
+          {formError && (
+            <p role="alert" className="text-sm text-[var(--accent-danger)]">
+              {formError}
+            </p>
+          )}
+
+          <DialogFooter className="gap-2">
+            <button type="button" className="btn-line" disabled={pending} onClick={() => onOpenChange(false)}>
+              Hủy
+            </button>
+            <button type="submit" className="btn-crimson disabled:opacity-50" disabled={pending}>
+              {pending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+              {editing ? "Lưu thay đổi" : "Tạo lớp"}
+            </button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

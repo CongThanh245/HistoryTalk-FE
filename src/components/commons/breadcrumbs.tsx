@@ -8,10 +8,12 @@ import { jsonLd, siteUrl } from "@/lib/seo";
 import { useCharacter } from "@/features/characters/hooks";
 import { useEventDetail } from "@/features/events/hooks";
 import { useStaffQuizDetail } from "@/features/staff/quiz/hooks";
+import { useApiClassroom, useApiSchool } from "@/features/saas/hooks-api";
 
 const routeLabels: Record<string, string> = {
   home: "Trang chủ",
   staff: "Quản trị",
+  admin: "Hệ thống",
   quizzes: "Bộ đề",
   characters: "Nhân vật",
   contexts: "Bối cảnh",
@@ -39,7 +41,8 @@ const routeLabels: Record<string, string> = {
   teaching: "Giảng dạy",
   assignments: "Bài tập",
   grades: "Bảng điểm",
-  local: "Lịch sử địa phương",
+  local: "Tư liệu lớp & trường",
+  materials: "Tư liệu lớp & trường",
   new: "Tạo mới",
 };
 
@@ -132,6 +135,12 @@ function BreadcrumbLabel({ segment, parentSegment }: { segment: string; parentSe
     if (parentSegment === "quizzes") {
       return <QuizName id={segment} />;
     }
+    if (parentSegment === "schools") {
+      return <SchoolName id={segment} />;
+    }
+    if (parentSegment === "classes") {
+      return <ClassroomName id={segment} />;
+    }
 
     return <>{segment.slice(0, 8)}...</>;
   }
@@ -153,4 +162,14 @@ function ContextName({ id }: { id: string }) {
 function QuizName({ id }: { id: string }) {
   const { data } = useStaffQuizDetail(id);
   return <>{data?.title || "..."}</>;
+}
+
+function SchoolName({ id }: { id: string }) {
+  const { data } = useApiSchool(id);
+  return <>{data?.name || "..."}</>;
+}
+
+function ClassroomName({ id }: { id: string }) {
+  const { data } = useApiClassroom(id);
+  return <>{data ? `Lớp ${data.className}` : "..."}</>;
 }

@@ -6,9 +6,10 @@ import { BookOpen, CheckCircle2, EyeOff, HelpCircle, MapPin, RotateCcw, Send, Tr
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { StaffFormTextarea } from "@/components/staff/staff-form";
+import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, formatDate, formatNumber } from "@/components/saas/saas-ui";
 import { CONTENT_KIND_LABELS, CONTENT_STATUS_LABELS, contentTitle, type ReviewItem } from "@/features/saas/hooks-school";
-import type { LocalContent, LocalContentKind, LocalContentStatus } from "@/features/saas/types";
+import type { LocalContent, LocalContentKind, LocalContentScope, LocalContentStatus } from "@/features/saas/types";
 import { cn } from "@/lib/utils/cn";
 
 /* ───────────────────────── Badges ───────────────────────── */
@@ -174,7 +175,12 @@ export function ContentPreview({ content, linked }: { content: LocalContent; lin
 /* ───────────────────────── Actions ───────────────────────── */
 export type ReviewAction = "PUBLISH" | "RETURN" | "DEACTIVATE" | "REPUBLISH" | "TRASH" | "RESTORE";
 
-export function actionsFor(status: LocalContentStatus): ReviewAction[] {
+/**
+ * SCHOOL scope goes through the full review flow. CLASS scope is self-published by teachers:
+ * the School Admin only watches it and can deactivate a published item (with a note).
+ */
+export function actionsFor(status: LocalContentStatus, scope: LocalContentScope = "SCHOOL"): ReviewAction[] {
+  if (scope === "CLASS") return status === "PUBLISHED" ? ["DEACTIVATE"] : [];
   switch (status) {
     case "PENDING":
       return ["PUBLISH", "RETURN", "TRASH"];
@@ -211,7 +217,7 @@ export function SchoolContentReviewSheet({
   onAction: (action: ReviewAction, item: ReviewItem) => void;
 }) {
   const c = item?.content;
-  const actions = c ? actionsFor(c.status) : [];
+  const actions = c ? actionsFor(c.status, c.scope) : [];
   return (
     <Sheet open={!!item} onOpenChange={onOpenChange}>
       <SheetContent
@@ -222,6 +228,7 @@ export function SchoolContentReviewSheet({
           <>
             <SheetHeader className="space-y-2 border-b border-[var(--text-primary)] p-5 pr-12">
               <div className="flex flex-wrap items-center gap-2">
+                <ContentSourceTag source={c.scope} />
                 <ContentKindLabel kind={c.kind} />
                 <ContentStatusBadge status={c.status} />
               </div>
@@ -238,11 +245,20 @@ export function SchoolContentReviewSheet({
                   {c.status === "PUBLISHED" ? "Đang hiển thị cho" : "Khi xuất bản sẽ hiển thị cho"}
                 </p>
                 <p className="text-content-text">
-                  {item.classes.length
-                    ? `${item.classes.map((x) => `Lớp ${x.name}`).join(", ")} · ${formatNumber(item.audience)} học sinh`
-                    : "Chưa chọn lớp nào — không học sinh nào thấy nội dung này."}
+                  {c.scope === "SCHOOL"
+                    ? "Toàn trường · mọi học sinh và giáo viên của trường"
+                    : item.classes.length
+                      ? `${item.classes.map((x) => `Lớp ${x.name}`).join(", ")} · ${formatNumber(item.audience)} học sinh`
+                      : "Chưa chọn lớp nào — không học sinh nào thấy nội dung này."}
                 </p>
               </div>
+
+              {c.scope === "CLASS" && (
+                <p className="text-xs text-content-muted">
+                  Nội dung của lớp do giáo viên tự xuất bản, không qua duyệt. Bạn chỉ xem; nếu nội dung không phù hợp, ngừng hiển thị kèm
+                  ghi chú để giáo viên sửa.
+                </p>
+              )}
 
               {c.reviewNote && (
                 <div className="space-y-1 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-3 text-sm">

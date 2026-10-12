@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CONTENT_SOURCE_LABELS, ContentSourceTag, type ContentSource } from "@/components/saas/content-source-tag";
 import { Field, Panel, SearchInput, normalizeText } from "@/components/saas/saas-ui";
 import { AssignmentTypeBadge, ClassCheckboxList, SegmentedFilter } from "@/components/saas/teaching-ui";
 import { ROUTES } from "@/constants/routes";
@@ -35,10 +36,15 @@ import { cn } from "@/lib/utils/cn";
 
 interface Target {
   source: AssignmentSource;
+  /** Chính thức (HistoryTalk) / Của lớp / Của trường, shown as a tag so the sources never blur together. */
+  origin: ContentSource;
   id: string;
   title: string;
   meta?: string;
 }
+
+const OFFICIAL_LABEL = "Chính thức (HistoryTalk)";
+const originLabel = (o: ContentSource) => (o === "OFFICIAL" ? OFFICIAL_LABEL : CONTENT_SOURCE_LABELS[o]);
 
 interface Details {
   title: string;
@@ -94,9 +100,16 @@ export function AssignmentWizard({
   const localOptions = React.useMemo(() => {
     if (!type) return [];
     const kind = KIND_FOR_TYPE[type];
-    return data.localContent.filter(
-      (c) => c.kind === kind && c.status === "PUBLISHED" && classIds.length > 0 && classIds.every((id) => c.classIds.includes(id)),
-    );
+    // Class content must reach every chosen class; published school content reaches all of them.
+    return data.localContent
+      .filter(
+        (c) =>
+          c.kind === kind &&
+          c.status === "PUBLISHED" &&
+          classIds.length > 0 &&
+          (c.scope === "SCHOOL" || classIds.every((id) => c.classIds.includes(id))),
+      )
+      .sort((a, b) => a.scope.localeCompare(b.scope) || localTitle(a).localeCompare(localTitle(b), "vi"));
   }, [data.localContent, type, classIds]);
 
   const chooseTarget = (t: Target) => {
@@ -247,21 +260,21 @@ export function AssignmentWizard({
               value={source}
               onChange={setSource}
               options={[
-                { value: "LOCAL", label: "Lịch sử địa phương" },
-                { value: "GLOBAL", label: "Kho nội dung chung" },
+                { value: "LOCAL", label: "Tư liệu lớp & trường" },
+                { value: "GLOBAL", label: OFFICIAL_LABEL },
               ]}
             />
             {target && (
-              <p className="text-sm">
-                Đã chọn: <span className="font-semibold text-[var(--accent-gold)]">{target.title}</span>{" "}
-                <span className="text-content-muted">({target.source === "LOCAL" ? "địa phương" : "kho chung"})</span>
+              <p className="flex flex-wrap items-center gap-2 text-sm">
+                Đã chọn: <span className="font-semibold text-[var(--accent-gold)]">{target.title}</span>
+                <ContentSourceTag source={target.origin} label={originLabel(target.origin)} />
               </p>
             )}
             {source === "LOCAL" ? (
               localOptions.length === 0 ? (
                 <p className="rounded-[2px] border border-dashed border-[var(--border-strong)] p-4 text-sm text-content-muted">
-                  Chưa có {LOCAL_KIND_LABELS[KIND_FOR_TYPE[type]].toLowerCase()} địa phương nào đã xuất bản và hiển thị cho
-                  {classIds.length > 1 ? " tất cả các lớp đã chọn" : " lớp đã chọn"}.{" "}
+                  Chưa có {LOCAL_KIND_LABELS[KIND_FOR_TYPE[type]].toLowerCase()} nào của lớp (đã xuất bản cho
+                  {classIds.length > 1 ? " tất cả các lớp đã chọn" : " lớp đã chọn"}) hoặc của trường.{" "}
                   <Link href={ROUTES.TEACHING.LOCAL_NEW(KIND_FOR_TYPE[type])} className="archive-link">
                     Soạn mới
                   </Link>
@@ -270,6 +283,7 @@ export function AssignmentWizard({
                 <TargetList
                   options={localOptions.map((c) => ({
                     source: "LOCAL" as const,
+                    origin: c.scope,
                     id: c.id,
                     title: localTitle(c),
                     meta:
@@ -343,7 +357,9 @@ export function AssignmentWizard({
             </dd>
             <dt className="text-content-muted">Nội dung</dt>
             <dd>
-              {target.title} <span className="text-content-muted">({target.source === "LOCAL" ? "lịch sử địa phương" : "kho chung"})</span>
+              <span className="inline-flex flex-wrap items-center gap-2">
+                {target.title} <ContentSourceTag source={target.origin} label={originLabel(target.origin)} />
+              </span>
             </dd>
             <dt className="text-content-muted">Tên bài</dt>
             <dd className="font-semibold">{details.title}</dd>
@@ -429,10 +445,11 @@ function TargetList({ options, selected, onSelect }: { options: Target[]; select
                 >
                   {active && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                 </span>
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <span className="block font-semibold text-content-heading">{o.title}</span>
                   {o.meta && <span className="block truncate text-xs text-content-muted">{o.meta}</span>}
                 </span>
+                <ContentSourceTag source={o.origin} label={originLabel(o.origin)} className="shrink-0" />
               </button>
             </li>
           );
@@ -455,10 +472,10 @@ function ApiState({ loading, error, children }: { loading: boolean; error: boole
   if (loading)
     return (
       <p className="flex items-center gap-2 text-sm text-content-muted">
-        <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-gold)]" aria-hidden="true" /> Đang tải kho nội dung...
+        <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-gold)]" aria-hidden="true" /> Đang tải nội dung chính thức...
       </p>
     );
-  if (error) return <p className="text-sm text-[var(--accent-danger)]">Không tải được kho nội dung chung. Thử lại sau hoặc chọn nội dung địa phương.</p>;
+  if (error) return <p className="text-sm text-[var(--accent-danger)]">Không tải được nội dung chính thức. Thử lại sau hoặc chọn tư liệu lớp &amp; trường.</p>;
   return <>{children}</>;
 }
 
@@ -466,6 +483,7 @@ function GlobalEvents({ selected, onSelect }: PickerProps) {
   const q = useEvents({ page: 1, limit: 100 });
   const options = (q.data?.content ?? []).map((e) => ({
     source: "GLOBAL" as const,
+    origin: "OFFICIAL" as const,
     id: e.id,
     title: e.title,
     meta: [e.yearLabel ?? formatYear(e.year), e.location].filter(Boolean).join(" · "),
@@ -479,7 +497,7 @@ function GlobalEvents({ selected, onSelect }: PickerProps) {
 
 function GlobalCharacters({ selected, onSelect }: PickerProps) {
   const q = useCharacters({ page: 1, limit: 100 });
-  const options = (q.data?.content ?? []).map((c) => ({ source: "GLOBAL" as const, id: c.id, title: c.name, meta: c.title }));
+  const options = (q.data?.content ?? []).map((c) => ({ source: "GLOBAL" as const, origin: "OFFICIAL" as const, id: c.id, title: c.name, meta: c.title }));
   return (
     <ApiState loading={q.isLoading} error={q.isError}>
       <TargetList options={options} selected={selected} onSelect={onSelect} />
@@ -491,6 +509,7 @@ function GlobalQuizzes({ selected, onSelect }: PickerProps) {
   const q = useQuizSets();
   const options = (q.data?.content ?? []).map((z) => ({
     source: "GLOBAL" as const,
+    origin: "OFFICIAL" as const,
     id: z.quizId,
     title: z.title,
     meta: [LEVEL_LABELS[z.level], z.contextTitle].filter(Boolean).join(" · "),

@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SaasShell, SearchInput, formatDate, normalizeText } from "@/components/saas/saas-ui";
+import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import {
   ContentKindLabel,
   ContentStatusBadge,
@@ -27,37 +28,45 @@ export default function SchoolContentPage() {
   return (
     <SaasShell
       title="Duyệt nội dung địa phương"
-      description="Giáo viên soạn bối cảnh, nhân vật và câu đố lịch sử địa phương; quản trị trường quyết định xuất bản, ngừng hiển thị hoặc trả về chỉnh sửa."
+      description="Nội dung cho toàn trường do giáo viên gửi lên cần bạn duyệt trước khi xuất bản. Nội dung cho lớp do giáo viên tự xuất bản; bạn theo dõi và có thể ngừng hiển thị nếu không phù hợp."
     >
       <ContentReview />
     </SaasShell>
   );
 }
 
-const TABS: { status: LocalContentStatus; label: string }[] = [
+/** Status tabs cover SCHOOL-scope content; "CLASS" lists class content teachers published themselves (read-only). */
+type ReviewTab = LocalContentStatus | "CLASS";
+
+const TABS: { status: ReviewTab; label: string }[] = [
   { status: "PENDING", label: "Chờ duyệt" },
   { status: "PUBLISHED", label: "Đã xuất bản" },
   { status: "INACTIVE", label: "Ngừng hiển thị" },
   { status: "DRAFT", label: "Nháp của giáo viên" },
   { status: "TRASH", label: "Thùng rác" },
+  { status: "CLASS", label: "Nội dung lớp do giáo viên tự xuất bản" },
 ];
 
-const EMPTY: Record<LocalContentStatus, string> = {
-  PENDING: "Không có nội dung nào đang chờ duyệt.",
-  PUBLISHED: "Chưa có nội dung nào được xuất bản.",
-  INACTIVE: "Không có nội dung nào đang ngừng hiển thị.",
-  DRAFT: "Giáo viên chưa có bản nháp nào.",
+const EMPTY: Record<ReviewTab, string> = {
+  PENDING: "Không có nội dung toàn trường nào đang chờ duyệt.",
+  PUBLISHED: "Chưa có nội dung toàn trường nào được xuất bản.",
+  INACTIVE: "Không có nội dung toàn trường nào đang ngừng hiển thị.",
+  DRAFT: "Giáo viên chưa có bản nháp nào cho toàn trường.",
   TRASH: "Thùng rác trống.",
+  CLASS: "Giáo viên chưa tự xuất bản nội dung nào cho lớp.",
 };
+
+/** Teacher-published class content the School Admin can see: live or deactivated (drafts / trash stay private). */
+const isClassVisible = (status: LocalContentStatus) => status === "PUBLISHED" || status === "INACTIVE";
 
 type NoteRequest = { action: "RETURN" | "DEACTIVATE"; item: ReviewItem };
 
 function ContentReview() {
   const schoolId = useDemoSchoolId();
-  const { items, counts, byId, teachers, classes } = useSchoolContentReview(schoolId);
+  const { items, byId, teachers, classes } = useSchoolContentReview(schoolId);
   const setStatus = useSaasStore((s) => s.setLocalContentStatus);
 
-  const [tab, setTab] = React.useState<LocalContentStatus>("PENDING");
+  const [tab, setTab] = React.useState<ReviewTab>("PENDING");
   const [kind, setKind] = React.useState<"ALL" | LocalContentKind>("ALL");
   const [author, setAuthor] = React.useState("ALL");
   const [classId, setClassId] = React.useState("ALL");
@@ -67,9 +76,15 @@ function ContentReview() {
   const [noteRequest, setNoteRequest] = React.useState<NoteRequest | null>(null);
   const [trashing, setTrashing] = React.useState<ReviewItem | null>(null);
 
+  const inTab = (it: ReviewItem, t: ReviewTab) =>
+    t === "CLASS"
+      ? it.content.scope === "CLASS" && isClassVisible(it.content.status)
+      : it.content.scope === "SCHOOL" && it.content.status === t;
+  const counts = Object.fromEntries(TABS.map((t) => [t.status, items.filter((it) => inTab(it, t.status)).length])) as Record<ReviewTab, number>;
+
   const filtered = items.filter(
     (it) =>
-      it.content.status === tab &&
+      inTab(it, tab) &&
       (kind === "ALL" || it.content.kind === kind) &&
       (author === "ALL" || it.content.authorId === author) &&
       (classId === "ALL" || it.content.classIds.includes(classId)) &&
@@ -84,9 +99,9 @@ function ContentReview() {
   const linked = linkedId ? byId.get(linkedId) : undefined;
 
   const audienceText = (it: ReviewItem) =>
-    it.classes.length ? it.classes.map((c) => c.name).join(", ") : "chưa chọn lớp";
+    it.content.scope === "SCHOOL" ? "toàn trường" : it.classes.length ? `lớp ${it.classes.map((c) => c.name).join(", ")}` : "chưa chọn lớp";
 
-  const changeTab = (next: LocalContentStatus) => {
+  const changeTab = (next: ReviewTab) => {
     setTab(next);
     setChecked(new Set());
   };
@@ -105,7 +120,7 @@ function ContentReview() {
       case "PUBLISH":
       case "REPUBLISH":
         setStatus(id, "PUBLISHED", "");
-        toast.success(`Đã xuất bản “${it.title}”`, { description: `Hiển thị cho lớp ${audienceText(it)}.` });
+        toast.success(`Đã xuất bản “${it.title}”`, { description: `Hiển thị cho ${audienceText(it)}.` });
         break;
       case "RETURN":
       case "DEACTIVATE":
@@ -151,6 +166,7 @@ function ContentReview() {
                 active
                   ? "border-[var(--accent-gold)] text-[var(--text-primary)]"
                   : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]",
+                t.status === "CLASS" && "ml-auto border-l border-l-[var(--border-strong)] normal-case tracking-normal",
               )}
             >
               {t.label}
@@ -179,6 +195,8 @@ function ContentReview() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-content-muted">
           {filtered.length} nội dung
+          {tab === "CLASS" && " · chỉ xem, giáo viên tự xuất bản cho lớp; mở một mục để ngừng hiển thị nếu không phù hợp"}
+          {tab !== "CLASS" && tab !== "TRASH" && " toàn trường"}
           {tab === "DRAFT" && " · chỉ xem, giáo viên chưa gửi duyệt"}
           {tab === "TRASH" && " · khôi phục sẽ trả nội dung về bản nháp của giáo viên"}
         </p>
@@ -206,7 +224,7 @@ function ContentReview() {
                     />
                   </TableHead>
                 )}
-                {["Loại", "Tiêu đề", "Giáo viên soạn", "Lớp được xem", "Cập nhật", "Trạng thái"].map((h) => (
+                {["Loại", "Tiêu đề", "Giáo viên soạn", "Hiển thị cho", "Cập nhật", "Trạng thái"].map((h) => (
                   <TableHead key={h} className="px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
                     {h}
                   </TableHead>
@@ -252,7 +270,14 @@ function ContentReview() {
                     </TableCell>
                     <TableCell className="px-4">{it.author?.fullName ?? "—"}</TableCell>
                     <TableCell className="px-4">
-                      {it.classes.length ? it.classes.map((x) => x.name).join(", ") : <span className="text-content-muted">Chưa chọn</span>}
+                      <span className="inline-flex flex-wrap items-center gap-1.5">
+                        <ContentSourceTag source={c.scope} />
+                        {c.scope === "SCHOOL"
+                          ? "Toàn trường"
+                          : it.classes.length
+                            ? it.classes.map((x) => x.name).join(", ")
+                            : <span className="text-content-muted">Chưa chọn</span>}
+                      </span>
                     </TableCell>
                     <TableCell className="px-4 tabular-nums">{formatDate(c.updatedAt)}</TableCell>
                     <TableCell className="px-4">
@@ -280,7 +305,7 @@ function ContentReview() {
         description={
           noteRequest?.action === "RETURN"
             ? `“${noteRequest?.item.title ?? ""}” sẽ trở về bản nháp của giáo viên kèm ghi chú của bạn.`
-            : `Học sinh lớp ${noteRequest ? audienceText(noteRequest.item) : ""} sẽ không còn thấy nội dung này. Ghi rõ lý do để giáo viên chỉnh sửa.`
+            : `Học sinh ${noteRequest ? audienceText(noteRequest.item) : ""} sẽ không còn thấy nội dung này. Ghi rõ lý do để giáo viên chỉnh sửa.`
         }
         confirmLabel={noteRequest?.action === "RETURN" ? "Trả về" : "Ngừng hiển thị"}
         onConfirm={(note) => {

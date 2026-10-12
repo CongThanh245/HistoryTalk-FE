@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { DEMO_TODAY } from "./mock-classroom";
-import { DEMO_STUDENT_ID } from "./mock-data";
+import { DEMO_SCHOOL_ID, DEMO_STUDENT_ID, DEMO_TEACHER_ID } from "./mock-data";
 import { useSaasStore } from "./store";
 import type {
   Assignment,
@@ -122,17 +122,70 @@ export function useLocalTarget(a: Assignment | undefined) {
   }, [a, localContent]);
 }
 
-/** Can this viewer see the local item: published (or viewer is a teacher) and shared with the class. */
-export const canSeeLocal = (item: LocalContent, classId: string, role: string | null | undefined) =>
-  item.classIds.includes(classId) && (item.status === "PUBLISHED" || role === "TEACHER") && item.status !== "TRASH";
+/**
+ * Can this viewer open the local item from a class (row 14)?
+ * CLASS scope: shared with the class; students need PUBLISHED, teachers also see unpublished items.
+ * SCHOOL scope: same school; PUBLISHED for everyone, plus the author's own unpublished copy.
+ */
+export function canSeeLocal(item: LocalContent, classId: string, role: string | null | undefined, schoolId: string = DEMO_SCHOOL_ID) {
+  if (item.status === "TRASH") return false;
+  if (item.scope === "SCHOOL") {
+    return item.schoolId === schoolId && (item.status === "PUBLISHED" || (role === "TEACHER" && item.authorId === DEMO_TEACHER_ID));
+  }
+  return item.classIds.includes(classId) && (item.status === "PUBLISHED" || role === "TEACHER");
+}
 
-/** Published local content shared with one class (row 14). */
+export interface WorkspaceLocalEntry {
+  item: LocalContent;
+  /** The viewer's classes the item reaches; the first one is used for the reading link. */
+  classes: Classroom[];
+}
+
+/**
+ * "Tư liệu lớp & trường": PUBLISHED class content shared with the viewer's classes, and PUBLISHED school-wide
+ * content of the viewer's school. Kept in two lists so the UI can label them and never mix them with official content.
+ */
+export function useWorkspaceLibrary(role: string | null | undefined) {
+  const allClasses = useSaasStore((s) => s.classes);
+  const localContent = useSaasStore((s) => s.localContent);
+  return useMemo(() => {
+    const myClasses = allClasses
+      .filter((c) =>
+        role === "SCHOOL_STUDENT"
+          ? c.studentIds.includes(DEMO_STUDENT_ID)
+          : role === "TEACHER"
+            ? c.teacherIds.includes(DEMO_TEACHER_ID) || c.homeroomTeacherId === DEMO_TEACHER_ID
+            : false,
+      )
+      .sort((a, b) => a.grade - b.grade || a.name.localeCompare(b.name, "vi"));
+    const schoolIds = new Set(myClasses.map((c) => c.schoolId));
+    const classItems: WorkspaceLocalEntry[] = [];
+    const schoolItems: WorkspaceLocalEntry[] = [];
+    for (const item of localContent) {
+      if (item.status !== "PUBLISHED") continue;
+      if (item.scope === "SCHOOL") {
+        const reach = myClasses.filter((c) => c.schoolId === item.schoolId);
+        if (schoolIds.has(item.schoolId) && reach.length) schoolItems.push({ item, classes: reach });
+      } else {
+        const shared = myClasses.filter((c) => item.classIds.includes(c.id));
+        if (shared.length) classItems.push({ item, classes: shared });
+      }
+    }
+    const newest = (a: WorkspaceLocalEntry, b: WorkspaceLocalEntry) => b.item.updatedAt.localeCompare(a.item.updatedAt);
+    classItems.sort(newest);
+    schoolItems.sort(newest);
+    return { classes: myClasses, classItems, schoolItems };
+  }, [allClasses, localContent, role]);
+}
+
+/** Published local content one class can open: its class content plus the school's content (row 14). */
 export function useClassLocalContent(classId: string | undefined, role: string | null | undefined) {
   const localContent = useSaasStore((s) => s.localContent);
-  return useMemo(
-    () => (classId ? localContent.filter((x) => canSeeLocal(x, classId, role)) : []),
-    [localContent, classId, role],
-  );
+  const classes = useSaasStore((s) => s.classes);
+  return useMemo(() => {
+    const schoolId = classes.find((c) => c.id === classId)?.schoolId;
+    return classId ? localContent.filter((x) => canSeeLocal(x, classId, role, schoolId)) : [];
+  }, [localContent, classes, classId, role]);
 }
 
 export const localTitle = (item: LocalContent) => (item.kind === "CHARACTER" ? item.name : item.title);

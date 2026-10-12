@@ -1,291 +1,402 @@
 "use client";
 
 import * as React from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-import { LockKeyhole, LockKeyholeOpen, MailPlus, Pencil, Plus, Trash2 } from "lucide-react";
+import { KeyRound, LockKeyhole, LockKeyholeOpen, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
-import { StaffDataTable } from "@/components/staff/staff-data-table";
-import { StaffFormInput, StaffFormSelect } from "@/components/staff/staff-form";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  ACCOUNT_STATUS_LABELS,
-  AccountStatusBadge,
-  DIALOG_CLASS,
-  DIALOG_TITLE_CLASS,
-  Field,
-  IconAction,
-  Panel,
-  SaasShell,
-  SearchInput,
-  formatDate,
-  isValidEmail,
-  normalizeText,
-} from "@/components/saas/saas-ui";
-import { useSchoolData } from "@/features/saas/hooks";
-import { useDemoSchoolId, useSaasStore } from "@/features/saas/store";
-import type { AccountStatus, TeacherAccount } from "@/features/saas/types";
+  BulkActionBar,
+  BulkButton,
+  NoResults,
+  RowActions,
+  TableEmpty,
+  TablePagination,
+  TableSkeleton,
+  useRowSelection,
+} from "@/components/saas/accounts-table";
+import { CredentialsDialog } from "@/components/saas/accounts-credentials";
+import { todayStamp, type CredentialRecord } from "@/components/saas/accounts-utils";
+import { AccountStatusBadge, Panel, SearchInput, formatDate } from "@/components/saas/saas-ui";
+import { TeacherCreateDialog } from "@/components/saas/teacher-create-dialog";
+import { TeacherEditDialog } from "@/components/saas/teacher-edit-dialog";
+import { apiErrorMessage, useApiTeachers, useApiTokenQuota, useSetApiTeacherActive, useTeacherMutations } from "@/features/saas/hooks-api";
+import { schoolService, type AccountListParams, type ApiTeacher } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
+import {
+  ActiveFilterTabs,
+  HEAD,
+  PAGE_SIZES,
+  SortHeader,
+  activeParam,
+  ariaSort,
+  runBulk,
+  useServerSort,
+  type ActiveFilter,
+} from "../_components/account-list";
+import { CopyTag, ErrorBlock, SchoolShell, useDebouncedValue } from "../_components/shared";
 
-const SUBJECTS = ["Lịch sử", "Địa lý", "Ngữ văn", "Giáo dục công dân", "Khác"];
+type SortBy = "fullName" | "userName" | "email" | "createdAt";
 
-/** School Admin: create and manage Teacher accounts (Role Matrix row 3). */
+/** School Admin: Teacher accounts (GET/POST/PUT/DELETE /school-admin/teachers, /{id}/status, /{id}/reset-password). */
 export default function SchoolTeachersPage() {
   return (
-    <SaasShell title="Giáo viên" description="Tạo tài khoản giáo viên, khóa / mở khóa và gửi lại email mời kích hoạt.">
+    <SchoolShell
+      title="Giáo viên"
+      description="Tạo, sửa, khóa / mở khóa và đặt lại mật khẩu tài khoản giáo viên. Phân công giáo viên phụ trách lớp ở trang Lớp học."
+    >
       <TeachersContent />
-    </SaasShell>
+    </SchoolShell>
   );
 }
 
 function TeachersContent() {
-  const schoolId = useDemoSchoolId();
-  const { teachers, classes } = useSchoolData(schoolId);
-  const updateTeacher = useSaasStore((s) => s.updateTeacher);
-  const removeTeacher = useSaasStore((s) => s.removeTeacher);
-
+  const qc = useQueryClient();
   const [search, setSearch] = React.useState("");
-  const [status, setStatus] = React.useState<"ALL" | AccountStatus>("ALL");
-  const [formOpen, setFormOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<TeacherAccount | null>(null);
-  const [lockTarget, setLockTarget] = React.useState<TeacherAccount | null>(null);
-  const [deleteTarget, setDeleteTarget] = React.useState<TeacherAccount | null>(null);
+  const debounced = useDebouncedValue(search.trim(), 300);
+  const [filter, setFilter] = React.useState<ActiveFilter>("ALL");
+  const [page, setPage] = React.useState(0);
+  const [size, setSize] = React.useState(10);
+  const sort = useServerSort<SortBy>("createdAt", "createdAt");
 
-  const filtered = React.useMemo(() => {
-    const q = normalizeText(search);
-    return teachers.filter(
-      (t) =>
-        (status === "ALL" || t.status === status) &&
-        (!q || normalizeText(t.fullName).includes(q) || t.email.toLowerCase().includes(q) || normalizeText(t.subject).includes(q)),
-    );
-  }, [teachers, search, status]);
+  // Back to the first page when the search, filter or sort changes.
+  const queryKey = `${debounced}|${filter}|${sort.sortBy}|${sort.direction}`;
+  const [lastKey, setLastKey] = React.useState(queryKey);
+  if (queryKey !== lastKey) {
+    setLastKey(queryKey);
+    setPage(0);
+  }
 
-  const columns = React.useMemo<ColumnDef<TeacherAccount>[]>(
-    () => [
-      {
-        id: "name",
-        accessorKey: "fullName",
-        header: "Giáo viên",
-        cell: ({ row }) => (
-          <div className="min-w-[200px]">
-            <p className="text-sm font-semibold text-content-heading">{row.original.fullName}</p>
-            <p className="text-xs text-content-muted">{row.original.email}</p>
-          </div>
-        ),
+  const params: AccountListParams = {
+    search: debounced || undefined,
+    active: activeParam(filter),
+    page,
+    size,
+    sortBy: sort.sortBy,
+    sortDirection: sort.direction,
+  };
+  const teachers = useApiTeachers(params);
+  const quota = useApiTokenQuota();
+  const setActive = useSetApiTeacherActive();
+  const { remove, resetPassword } = useTeacherMutations();
+
+  const [createOpen, setCreateOpen] = React.useState(false);
+  const [editTarget, setEditTarget] = React.useState<ApiTeacher | null>(null);
+  const [lockTarget, setLockTarget] = React.useState<ApiTeacher | null>(null);
+  const [resetTarget, setResetTarget] = React.useState<ApiTeacher | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<ApiTeacher | null>(null);
+  const [bulkLock, setBulkLock] = React.useState(false);
+  const [bulkRunning, setBulkRunning] = React.useState(false);
+  const [credentials, setCredentials] = React.useState<{ title: string; records: CredentialRecord[] } | null>(null);
+
+  const data = teachers.data;
+  const rows = React.useMemo(() => data?.items ?? [], [data]);
+  const total = data?.totalElements ?? 0;
+  const rowIds = React.useMemo(() => rows.map((t) => t.uid), [rows]);
+  const selection = useRowSelection(rowIds);
+  const selected = rows.filter((t) => selection.isSelected(t.uid));
+  const selectedOnPage = selected.length;
+  const headerChecked: boolean | "indeterminate" =
+    rows.length > 0 && selectedOnPage === rows.length ? true : selectedOnPage > 0 ? "indeterminate" : false;
+
+  // Keep the page in range after the list shrinks (e.g. a search on a later page).
+  if (data && page > 0 && page >= Math.max(1, data.totalPages)) setPage(Math.max(0, data.totalPages - 1));
+
+  const filtered = !!debounced || filter !== "ALL";
+
+  const bulkSetActive = async (active: boolean) => {
+    const targets = selected.filter((t) => t.active !== active);
+    if (!targets.length) {
+      toast.info(active ? "Các tài khoản đã chọn đều đang hoạt động." : "Các tài khoản đã chọn đều đã bị khóa.");
+      return;
+    }
+    setBulkRunning(true);
+    try {
+      await runBulk({
+        items: targets,
+        run: (t) => schoolService.setTeacherActive(t.uid, active),
+        name: (t) => t.fullName,
+        progressLabel: active ? "Đang mở khóa" : "Đang khóa",
+        doneLabel: (n) => (active ? `Đã mở khóa ${n} tài khoản giáo viên` : `Đã khóa ${n} tài khoản giáo viên`),
+      });
+    } finally {
+      setBulkRunning(false);
+      selection.clear();
+      void qc.invalidateQueries({ queryKey: ["saas", "teachers"] });
+    }
+  };
+
+  const doReset = (t: ApiTeacher) =>
+    resetPassword.mutate(t.uid, {
+      onSuccess: (r) => {
+        setResetTarget(null);
+        setCredentials({
+          title: "Mật khẩu mới của giáo viên",
+          records: [{ id: r.uid, fullName: r.fullName, login: r.email, userName: r.userName, password: r.initialPassword, roleLabel: "Giáo viên" }],
+        });
       },
-      { accessorKey: "subject", header: "Bộ môn" },
-      {
-        id: "classes",
-        header: "Lớp phụ trách",
-        cell: ({ row }) => {
-          const t = row.original;
-          const homeroom = classes.filter((c) => c.homeroomTeacherId === t.id).map((c) => c.name);
-          const teaching = classes.filter((c) => c.teacherIds.includes(t.id) && c.homeroomTeacherId !== t.id).map((c) => c.name);
-          if (!homeroom.length && !teaching.length) return <span className="text-content-muted">—</span>;
-          return (
-            <div className="text-xs">
-              {homeroom.length > 0 && <p>Chủ nhiệm: <span className="font-semibold">{homeroom.join(", ")}</span></p>}
-              {teaching.length > 0 && <p>Giảng dạy: {teaching.join(", ")}</p>}
-            </div>
-          );
-        },
+      onError: (error) => {
+        setResetTarget(null);
+        toast.error(apiErrorMessage(error, "Không đặt lại được mật khẩu. Vui lòng thử lại."));
       },
-      { accessorKey: "status", header: "Trạng thái", cell: ({ row }) => <AccountStatusBadge status={row.original.status} /> },
-      { accessorKey: "createdAt", header: "Ngày tạo", cell: ({ row }) => <span className="text-xs text-content-muted">{formatDate(row.original.createdAt)}</span> },
-      {
-        id: "actions",
-        header: () => <div className="pr-2 text-right">Thao tác</div>,
-        cell: ({ row }) => {
-          const t = row.original;
-          return (
-            <div className="flex items-center justify-end gap-1">
-              {t.status === "INVITED" && (
-                <IconAction label="Gửi lại email mời" onClick={() => toast.success(`Đã gửi lại email mời tới ${t.email}`)}>
-                  <MailPlus className="h-4 w-4" />
-                </IconAction>
-              )}
-              {t.status === "LOCKED" ? (
-                <IconAction
-                  label="Mở khóa"
-                  tone="success"
-                  onClick={() => {
-                    updateTeacher(t.id, { status: "ACTIVE" });
-                    toast.success(`Đã mở khóa ${t.fullName}`);
-                  }}
-                >
-                  <LockKeyholeOpen className="h-4 w-4" />
-                </IconAction>
-              ) : (
-                <IconAction label="Khóa tài khoản" tone="danger" onClick={() => setLockTarget(t)}>
-                  <LockKeyhole className="h-4 w-4" />
-                </IconAction>
-              )}
-              <IconAction
-                label="Chỉnh sửa"
-                onClick={() => {
-                  setEditing(t);
-                  setFormOpen(true);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-              </IconAction>
-              <IconAction label="Xóa tài khoản" tone="danger" onClick={() => setDeleteTarget(t)}>
-                <Trash2 className="h-4 w-4" />
-              </IconAction>
-            </div>
-          );
-        },
+    });
+
+  const doDelete = (t: ApiTeacher) =>
+    remove.mutate(t.uid, {
+      onSuccess: () => {
+        setDeleteTarget(null);
+        toast.success(`Đã xóa tài khoản giáo viên ${t.fullName}`);
       },
-    ],
-    [classes, updateTeacher],
-  );
+      onError: (error) => {
+        setDeleteTarget(null);
+        toast.error(apiErrorMessage(error, "Không xóa được tài khoản. Vui lòng thử lại."));
+      },
+    });
 
   return (
-    <Panel>
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <SearchInput value={search} onChange={setSearch} placeholder="Tìm tên, email, bộ môn..." />
-        <StaffFormSelect
-          value={status}
-          onValueChange={setStatus}
-          options={[
-            { value: "ALL", label: "Tất cả trạng thái" },
-            ...(Object.keys(ACCOUNT_STATUS_LABELS) as AccountStatus[]).map((s) => ({ value: s, label: ACCOUNT_STATUS_LABELS[s] })),
-          ]}
-          className="w-full sm:w-48"
-        />
-        <div className="hidden flex-1 sm:block" />
-        <button
-          type="button"
-          className="btn-crimson w-full sm:w-auto"
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4" aria-hidden="true" /> Thêm giáo viên
-        </button>
-      </div>
-      <p className="text-sm text-content-muted">{filtered.length} giáo viên</p>
-      <StaffDataTable columns={columns} data={filtered} emptyMessage="Không có giáo viên phù hợp." />
+    <div className="space-y-6">
+      <Panel>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <SearchInput value={search} onChange={setSearch} placeholder="Tìm họ tên, tên tài khoản, email..." />
+          <ActiveFilterTabs value={filter} onChange={setFilter} />
+          <div className="hidden flex-1 sm:block" />
+          <button type="button" className="btn-crimson w-full sm:w-auto" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden="true" /> Thêm giáo viên
+          </button>
+        </div>
 
-      <TeacherFormDialog open={formOpen} onOpenChange={setFormOpen} editing={editing} schoolId={schoolId} teachers={teachers} />
+        {teachers.isPending ? (
+          <TableSkeleton rows={6} cols={5} />
+        ) : teachers.isError ? (
+          <ErrorBlock error={teachers.error} fallback="Không tải được danh sách giáo viên." onRetry={() => void teachers.refetch()} />
+        ) : (
+          <>
+            <p className="text-sm text-content-muted" aria-live="polite">
+              <b className="tabular-nums text-content-heading">{total}</b> giáo viên
+              {filter === "ACTIVE" ? " đang hoạt động" : filter === "LOCKED" ? " đã khóa" : ""}
+              {debounced ? ` khớp “${debounced}”` : ""}
+              {teachers.isFetching && <span className="ml-2 text-xs">Đang cập nhật…</span>}
+            </p>
+
+            <BulkActionBar
+              count={selectedOnPage}
+              total={rows.length}
+              noun="giáo viên trên trang này"
+              onSelectAll={() => selection.setMany(rowIds, true)}
+              onClear={selection.clear}
+            >
+              <BulkButton icon={LockKeyhole} tone="danger" disabled={bulkRunning} onClick={() => setBulkLock(true)}>
+                Khóa
+              </BulkButton>
+              <BulkButton icon={LockKeyholeOpen} disabled={bulkRunning} onClick={() => void bulkSetActive(true)}>
+                Mở khóa
+              </BulkButton>
+            </BulkActionBar>
+
+            {rows.length === 0 ? (
+              <div className="border-y border-[var(--text-primary)]">
+                {filtered ? (
+                  <NoResults
+                    onReset={() => {
+                      setSearch("");
+                      setFilter("ALL");
+                    }}
+                    message="Không có giáo viên phù hợp với bộ lọc."
+                  />
+                ) : (
+                  <TableEmpty
+                    icon={Users}
+                    title="Chưa có giáo viên nào"
+                    description="Thêm tài khoản giáo viên rồi phân công phụ trách lớp ở trang Lớp học."
+                    action={
+                      <button type="button" className="btn-crimson" onClick={() => setCreateOpen(true)}>
+                        <Plus className="h-4 w-4" aria-hidden="true" /> Thêm giáo viên
+                      </button>
+                    }
+                  />
+                )}
+              </div>
+            ) : (
+              <div className={cn("overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]", teachers.isFetching && "opacity-70")}>
+                <Table className="min-w-max">
+                  <caption className="sr-only">Danh sách giáo viên</caption>
+                  <TableHeader>
+                    <TableRow className="border-b border-[var(--border-strong)] hover:bg-transparent">
+                      <TableHead className="w-10 px-3">
+                        <Checkbox
+                          checked={headerChecked}
+                          onCheckedChange={(v) => selection.setMany(rowIds, v === true)}
+                          aria-label="Chọn tất cả giáo viên trên trang này"
+                        />
+                      </TableHead>
+                      <TableHead className={HEAD} aria-sort={ariaSort("fullName", sort.sortBy, sort.direction)}>
+                        <SortHeader label="Giáo viên" column="fullName" {...sort} />
+                      </TableHead>
+                      <TableHead className={HEAD} aria-sort={ariaSort("email", sort.sortBy, sort.direction)}>
+                        <SortHeader label="Email đăng nhập" column="email" {...sort} />
+                      </TableHead>
+                      <TableHead className={HEAD} aria-sort={ariaSort("userName", sort.sortBy, sort.direction)}>
+                        <SortHeader label="Tên tài khoản" column="userName" {...sort} />
+                      </TableHead>
+                      <TableHead className={HEAD}>Trạng thái</TableHead>
+                      <TableHead className={HEAD} aria-sort={ariaSort("createdAt", sort.sortBy, sort.direction)}>
+                        <SortHeader label="Ngày tạo" column="createdAt" {...sort} />
+                      </TableHead>
+                      <TableHead className={HEAD}>
+                        <span className="sr-only">Thao tác</span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((t) => {
+                      const pending = setActive.isPending && setActive.variables?.id === t.uid;
+                      const checked = selection.isSelected(t.uid);
+                      return (
+                        <TableRow
+                          key={t.uid}
+                          data-state={checked ? "selected" : undefined}
+                          className={cn(
+                            "border-b border-[var(--border-default)] last:border-b-0",
+                            checked && "bg-[var(--accent-gold-active-bg)] hover:bg-[var(--accent-gold-active-bg)]",
+                          )}
+                        >
+                          <TableCell className="w-10 px-3">
+                            <Checkbox checked={checked} onCheckedChange={(v) => selection.toggle(t.uid, v === true)} aria-label={`Chọn ${t.fullName}`} />
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5">
+                            <div className="min-w-[180px] max-w-[260px]">
+                              <p className="text-sm font-semibold text-content-heading">{t.fullName}</p>
+                              {t.phoneNumber && <p className="text-xs tabular-nums text-content-muted">{t.phoneNumber}</p>}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-[260px] truncate px-3 py-2.5 font-mono text-xs">{t.email}</TableCell>
+                          <TableCell className="px-3 py-2.5">
+                            <CopyTag value={t.userName} label="tên tài khoản" />
+                          </TableCell>
+                          <TableCell className="px-3 py-2.5">
+                            <AccountStatusBadge status={t.active ? "ACTIVE" : "LOCKED"} />
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap px-3 py-2.5 text-xs tabular-nums text-content-muted">{formatDate(t.createdAt)}</TableCell>
+                          <TableCell className="px-3 py-2.5 text-right">
+                            <RowActions
+                              label={`Thao tác với ${t.fullName}`}
+                              actions={[
+                                { label: "Sửa thông tin", icon: Pencil, onSelect: () => setEditTarget(t) },
+                                { label: "Đặt lại mật khẩu", icon: KeyRound, onSelect: () => setResetTarget(t) },
+                                t.active
+                                  ? { label: "Khóa tài khoản", icon: LockKeyhole, disabled: pending, onSelect: () => setLockTarget(t), separated: true }
+                                  : {
+                                      label: "Mở khóa tài khoản",
+                                      icon: LockKeyholeOpen,
+                                      tone: "success",
+                                      disabled: pending,
+                                      onSelect: () => setActive.mutate({ id: t.uid, active: true }),
+                                      separated: true,
+                                    },
+                                // Delete = lock on the backend (both set deletedAt): no-op for an already-locked account.
+                                t.active && { label: "Xóa tài khoản", icon: Trash2, tone: "danger", onSelect: () => setDeleteTarget(t) },
+                              ]}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {total > 0 && (
+              <TablePagination
+                pageIndex={page}
+                pageSize={size}
+                total={total}
+                pageSizeOptions={PAGE_SIZES}
+                onPageChange={setPage}
+                onPageSizeChange={(n) => {
+                  setSize(n);
+                  setPage(0);
+                }}
+              />
+            )}
+          </>
+        )}
+      </Panel>
+
+      <TeacherCreateDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={(t) =>
+          setCredentials({
+            title: "Tài khoản giáo viên đã tạo",
+            records: [
+              { id: t.uid, fullName: t.fullName, login: t.email, userName: t.userName, password: t.initialPassword ?? "", roleLabel: "Giáo viên" },
+            ],
+          })
+        }
+      />
+
+      <TeacherEditDialog teacher={editTarget} onOpenChange={(o) => !o && setEditTarget(null)} />
 
       <ConfirmDialog
         open={!!lockTarget}
         onOpenChange={(o) => !o && setLockTarget(null)}
         title="Khóa tài khoản giáo viên?"
-        description={`${lockTarget?.fullName ?? ""} sẽ không đăng nhập được cho đến khi được mở khóa. Lớp được phân công vẫn giữ nguyên.`}
+        description={`${lockTarget?.fullName ?? ""} sẽ không đăng nhập được cho đến khi được mở khóa. Lớp đang phụ trách vẫn được giữ nguyên.`}
         confirmLabel="Khóa tài khoản"
         variant="danger"
         onConfirm={() => {
-          if (!lockTarget) return;
-          updateTeacher(lockTarget.id, { status: "LOCKED" });
-          toast.success(`Đã khóa ${lockTarget.fullName}`);
+          if (lockTarget) setActive.mutate({ id: lockTarget.uid, active: false });
           setLockTarget(null);
         }}
       />
+
       <ConfirmDialog
-        open={!!deleteTarget}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-        title="Xóa tài khoản giáo viên?"
-        description={`${deleteTarget?.fullName ?? ""} sẽ bị gỡ khỏi mọi lớp đang chủ nhiệm hoặc giảng dạy. Không thể hoàn tác.`}
-        confirmLabel="Xóa"
+        open={bulkLock}
+        onOpenChange={setBulkLock}
+        title={`Khóa ${selected.filter((t) => t.active).length} tài khoản giáo viên?`}
+        description="Các giáo viên đã chọn sẽ không đăng nhập được cho đến khi được mở khóa. Lớp đang phụ trách vẫn được giữ nguyên."
+        confirmLabel="Khóa tài khoản"
         variant="danger"
         onConfirm={() => {
-          if (!deleteTarget) return;
-          removeTeacher(deleteTarget.id);
-          toast.success(`Đã xóa ${deleteTarget.fullName}`);
-          setDeleteTarget(null);
+          setBulkLock(false);
+          void bulkSetActive(false);
         }}
       />
-    </Panel>
-  );
-}
 
-function TeacherFormDialog({
-  open,
-  onOpenChange,
-  editing,
-  schoolId,
-  teachers,
-}: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  editing: TeacherAccount | null;
-  schoolId: string;
-  teachers: TeacherAccount[];
-}) {
-  const createTeacher = useSaasStore((s) => s.createTeacher);
-  const updateTeacher = useSaasStore((s) => s.updateTeacher);
-  const [form, setForm] = React.useState({ fullName: "", email: "", subject: "Lịch sử" });
-  const [touched, setTouched] = React.useState(false);
-  const [lastOpen, setLastOpen] = React.useState(false);
-  if (open !== lastOpen) {
-    setLastOpen(open);
-    if (open) {
-      setTouched(false);
-      setForm(editing ? { fullName: editing.fullName, email: editing.email, subject: editing.subject } : { fullName: "", email: "", subject: "Lịch sử" });
-    }
-  }
+      <ConfirmDialog
+        open={!!resetTarget}
+        onOpenChange={(o) => !o && !resetPassword.isPending && setResetTarget(null)}
+        title="Đặt lại mật khẩu?"
+        description={`Hệ thống sẽ tạo mật khẩu tạm mới cho ${resetTarget?.fullName ?? ""}; mật khẩu hiện tại không dùng được nữa. Giáo viên phải đổi mật khẩu ở lần đăng nhập tiếp theo.`}
+        confirmLabel="Đặt lại mật khẩu"
+        variant="warning"
+        isPending={resetPassword.isPending}
+        onConfirm={() => resetTarget && doReset(resetTarget)}
+      />
 
-  const email = form.email.trim().toLowerCase();
-  const nameError = form.fullName.trim() ? null : "Nhập họ và tên";
-  const emailError = !isValidEmail(email)
-    ? "Email không hợp lệ"
-    : teachers.some((t) => t.id !== editing?.id && t.email.toLowerCase() === email)
-      ? "Email đã được dùng cho giáo viên khác"
-      : null;
-  const subjectOptions = Array.from(new Set([...SUBJECTS, form.subject])).map((s) => ({ value: s, label: s }));
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && !remove.isPending && setDeleteTarget(null)}
+        title="Xóa tài khoản giáo viên?"
+        description={`${deleteTarget?.fullName ?? ""} sẽ bị vô hiệu hóa và không đăng nhập được. Hiện máy chủ xử lý xóa giống khóa: tài khoản vẫn hiện trong danh sách ở trạng thái “Đã khóa” và có thể mở khóa lại.`}
+        confirmLabel="Xóa tài khoản"
+        variant="danger"
+        isPending={remove.isPending}
+        onConfirm={() => deleteTarget && doDelete(deleteTarget)}
+      />
 
-  function save() {
-    setTouched(true);
-    if (nameError || emailError) return;
-    const data = { fullName: form.fullName.trim(), email, subject: form.subject };
-    if (editing) {
-      updateTeacher(editing.id, data);
-      toast.success("Đã cập nhật giáo viên");
-    } else {
-      createTeacher({ ...data, schoolId, status: "INVITED" });
-      toast.success(`Đã tạo tài khoản và gửi email mời tới ${email}`);
-    }
-    onOpenChange(false);
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(DIALOG_CLASS, "sm:max-w-md")}>
-        <DialogHeader>
-          <DialogTitle className={DIALOG_TITLE_CLASS}>{editing ? "Sửa giáo viên" : "Thêm giáo viên"}</DialogTitle>
-          <DialogDescription className="text-content-muted">
-            {editing ? "Cập nhật thông tin tài khoản giáo viên." : "Giáo viên sẽ nhận email mời để đặt mật khẩu và kích hoạt tài khoản."}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Field label="Họ và tên" required error={touched ? nameError : null}>
-            <StaffFormInput value={form.fullName} onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))} placeholder="Nguyễn Văn A" />
-          </Field>
-          <Field label="Email" required error={touched ? emailError : null}>
-            <StaffFormInput
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              placeholder="gv@truong.edu.vn"
-            />
-          </Field>
-          <Field label="Bộ môn">
-            <StaffFormSelect value={form.subject} onValueChange={(v) => setForm((f) => ({ ...f, subject: v }))} options={subjectOptions} className="w-full" />
-          </Field>
-        </div>
-        <DialogFooter className="gap-2">
-          <button type="button" className="btn-line" onClick={() => onOpenChange(false)}>
-            Hủy
-          </button>
-          <button type="button" className="btn-crimson" onClick={save}>
-            {editing ? "Lưu thay đổi" : "Tạo và gửi lời mời"}
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <CredentialsDialog
+        open={!!credentials}
+        onOpenChange={(o) => !o && setCredentials(null)}
+        title={credentials?.title}
+        records={credentials?.records ?? []}
+        schoolName={quota.data?.schoolName}
+        fileName={`tai-khoan-giao-vien-${todayStamp()}.csv`}
+      />
+    </div>
   );
 }

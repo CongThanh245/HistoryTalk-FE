@@ -10,7 +10,6 @@ import { ThemeProvider } from "@/components/context/theme-provider";
 import { WelcomeScreen } from "@/components/welcome-screen";
 import { WELCOME_SCREEN_KEY } from "@/constants/welcome-screen";
 import { ROLE_HOME } from "@/constants/roles";
-import { RolePreviewSwitcher } from "@/components/dev/role-preview-switcher";
 import { SessionExpiredDialog } from "@/components/session-expired-dialog";
 import { UserLockedDialog } from "@/components/user-locked-dialog";
 
@@ -162,7 +161,6 @@ export default function RootLayout({
         className={`${inter.variable} ${jakarta.variable} antialiased`}
       >
         <WelcomeScreen />
-        <RolePreviewSwitcher />
         <ThemeProvider>
           <ReactQueryProviders>{children}</ReactQueryProviders>
           <SessionExpiredDialog />

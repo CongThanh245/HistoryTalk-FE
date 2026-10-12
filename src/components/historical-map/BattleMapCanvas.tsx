@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, Map, Minus, MoveHorizontal, Plus, RotateCcw, RotateCw } from "lucide-react";
-import { clampPercent, isLineSymbol, isNoteSymbol, SYMBOL_LABELS, SYMBOL_SIZE_MAX, SYMBOL_SIZE_MIN, type BattleMap, type BattleSymbol, type BattleSymbolType } from "./battle-map.types";
+import { clampPercent, isLineSymbol, isNoteSymbol, resolveEffect, SYMBOL_LABELS, SYMBOL_SIZE_MAX, SYMBOL_SIZE_MIN, type BattleMap, type BattleSymbol, type BattleSymbolType, type CameraRect } from "./battle-map.types";
 import styles from "./battle-map-editor.module.css";
 
 const UNIT_BOX = <rect x="14" y="9" width="72" height="32" fill="white" />;
@@ -36,13 +36,55 @@ export function SymbolGlyph({ type, text }: { type: BattleSymbolType; text?: str
   </svg>;
 }
 
-export function BattleMapCanvas({ value, title, selectedId, placingType, placingColor, onSelect, onMove, onTransform, onAdd, onDelete, legendTitle }: {
-  value: BattleMap; title: string; selectedId?: string | null;
+/** How one symbol is drawn right now (phase editing / playback). */
+export interface SymbolView {
+  hidden?: boolean;
+  /** Belongs to an earlier phase: kept faintly for context. */
+  dim?: boolean;
+  /** Plays the appear effect; a new `key` replays it. */
+  enter?: { delay: number; key: string };
+}
+
+/** Area around `symbols` (with a margin), in the same % units as a drawn camera frame. */
+function symbolsRect(symbols: BattleSymbol[], aspect: number): CameraRect | null {
+  if (!symbols.length) return null;
+  let x0 = 100, x1 = 0, y0 = 100, y1 = 0;
+  for (const s of symbols) {
+    // Glyphs are 2:1 boxes measured in % of the image width; y extents convert to % of the height.
+    const a = s.rotation * Math.PI / 180, w = s.size / 2, h = s.size / 4;
+    const ex = Math.abs(w * Math.cos(a)) + Math.abs(h * Math.sin(a));
+    const ey = (Math.abs(w * Math.sin(a)) + Math.abs(h * Math.cos(a))) * aspect;
+    x0 = Math.min(x0, s.x - ex); x1 = Math.max(x1, s.x + ex);
+    y0 = Math.min(y0, s.y - ey); y1 = Math.max(y1, s.y + ey);
+  }
+  const pad = 10;
+  return { x: x0 - pad, y: y0 - pad * aspect, w: x1 - x0 + 2 * pad, h: y1 - y0 + 2 * pad * aspect };
+}
+
+/** Zoom/offset (CSS transform, origin top-left) that fits `rect` inside the plane. */
+function cameraTransform(rect: CameraRect) {
+  const scale = Math.max(1, Math.min(4, 100 / rect.w, 100 / rect.h));
+  const clamp = (v: number) => Math.max(100 - 100 * scale, Math.min(0, v));
+  const tx = clamp(50 - (rect.x + rect.w / 2) * scale), ty = clamp(50 - (rect.y + rect.h / 2) * scale);
+  return `translate(${tx}%, ${ty}%) scale(${scale})`;
+}
+
+const rectBetween = (a: { x: number; y: number }, b: { x: number; y: number }): CameraRect =>
+  ({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) });
+const rectStyle = (r: CameraRect) => ({ left: `${r.x}%`, top: `${r.y}%`, width: `${r.w}%`, height: `${r.h}%` });
+
+export function BattleMapCanvas({ value, title, selectedId, selectedIds, placingType, placingColor, onSelect, onMove, onTransform, onAdd, onDelete, legendTitle, symbolView, focus, spotlight, cameraFrame, onDrawFrame, onMarquee, phaseBadge }: {
+  value: BattleMap; title: string;
+  /** Symbol with rotate/resize handles (single selection). */
+  selectedId?: string | null;
+  /** Every selected symbol (outlined); defaults to `selectedId`. */
+  selectedIds?: string[];
   /** When set, the next click on the map places this symbol. */
   placingType?: BattleSymbolType | null;
   /** Colour of the side being drawn, used for the live drawing preview. */
   placingColor?: string;
-  onSelect?: (id: string | null) => void;
+  /** `additive` (Shift/Ctrl click) toggles the symbol in a multi-selection. */
+  onSelect?: (id: string | null, additive?: boolean) => void;
   onMove?: (id: string, x: number, y: number) => void;
   /** Enables the rotate / resize handles on the selected symbol. */
   onTransform?: (id: string, patch: Pick<Partial<BattleSymbol>, "rotation" | "size">) => void;
@@ -50,6 +92,20 @@ export function BattleMapCanvas({ value, title, selectedId, placingType, placing
   onDelete?: (id: string) => void;
   /** Heading of the legend card, e.g. "Trận Bạch Đằng – 1288". */
   legendTitle?: string;
+  /** Per-symbol state for phases; omit to draw every symbol normally. */
+  symbolView?: (symbol: BattleSymbol) => SymbolView;
+  /** Playback camera: zooms onto these symbols or this area (null = whole map). Leave undefined outside playback. */
+  focus?: BattleSymbol[] | CameraRect | null;
+  /** Playback: darkens everything outside this area. */
+  spotlight?: CameraRect | null;
+  /** Editor: camera frame of the phase being edited (dashed outline). */
+  cameraFrame?: CameraRect | null;
+  /** Editor: set while a camera frame is being drawn; receives the dragged area. */
+  onDrawFrame?: (rect: CameraRect) => void;
+  /** Editor: dragging on empty map selects the symbols inside the box. */
+  onMarquee?: (ids: string[], additive: boolean) => void;
+  /** Editor: small tag next to each symbol, e.g. its phase number. */
+  phaseBadge?: (symbol: BattleSymbol) => string | undefined;
 }) {
   const [zoom, setZoom] = useState(1);
   const [imageState, setImageState] = useState({ src: "", status: "loading" });
@@ -57,15 +113,23 @@ export function BattleMapCanvas({ value, title, selectedId, placingType, placing
   const viewport = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState<{ w: number; h: number } | null>(null);
   const [aspect, setAspect] = useState<number | null>(null);
-  const [legendOpen, setLegendOpen] = useState(true);
+  const [legendOpen, setLegendOpen] = useState(!onAdd);
   /** Hover note: symbol id + pointer position in px relative to the plane. */
   const [tip, setTip] = useState<{ id: string; x: number; y: number } | null>(null);
-  const drag = useRef<{ id: string; dx: number; dy: number } | null>(null);
+  /** Symbol drag: moves every symbol of `group` by the pointer delta since `start`. */
+  const drag = useRef<{ id: string; start: { x: number; y: number }; group: { id: string; x: number; y: number }[]; moved: boolean } | null>(null);
+  /** Box selection on empty map. */
+  const marqueeStart = useRef<{ x: number; y: number; additive: boolean } | null>(null);
+  const [marquee, setMarquee] = useState<CameraRect | null>(null);
+  const isSelected = (id: string) => selectedIds ? selectedIds.includes(id) : selectedId === id;
   const handle = useRef<{ id: string; kind: "rotate" | "resize" } | null>(null);
   /** Press-and-drag drawing of a line symbol (start point in px relative to the plane). */
   const drawStart = useRef<{ x: number; y: number } | null>(null);
   const suppressClick = useRef(false);
   const [drawPreview, setDrawPreview] = useState<{ x: number; y: number; size: number; rotation: number } | null>(null);
+  /** Camera frame being dragged (start point and live area, in %). */
+  const frameStart = useRef<{ x: number; y: number } | null>(null);
+  const [framePreview, setFramePreview] = useState<CameraRect | null>(null);
   /** Centre, length and angle of the segment start→end, in the symbol's % units. */
   const segment = (clientX: number, clientY: number) => {
     const rect = plane.current!.getBoundingClientRect();
@@ -96,7 +160,7 @@ export function BattleMapCanvas({ value, title, selectedId, placingType, placing
   }, [value.imageUrl]);
   const factionOf = (symbol: BattleSymbol) => value.factions.find(f => f.id === symbol.factionId);
   /** One legend row per (type, side, note); unnamed symbols fall back to "type (side)". */
-  const legendEntries = [...new globalThis.Map(value.symbols.filter(s => isNoteSymbol(s.type)).map(s => {
+  const legendEntries = [...new globalThis.Map(value.symbols.filter(s => isNoteSymbol(s.type) && !symbolView?.(s).hidden).map(s => {
     const faction = factionOf(s);
     const note = s.label.trim();
     return [`${s.type}|${s.factionId}|${note}`, { type: s.type, color: faction?.color, text: note || `${SYMBOL_LABELS[s.type]}${faction ? ` (${faction.name})` : ""}` }] as const;
@@ -161,8 +225,27 @@ export function BattleMapCanvas({ value, title, selectedId, placingType, placing
     <div ref={viewport} className={styles.viewport}>
       {!value.imageUrl ? <div className={styles.empty}><Map size={32} /><p>Chưa có lược đồ trận đánh</p>{onAdd && <span>Thêm ảnh ở mục «Ảnh nền» bên trái.</span>}</div> : <>
         {!ready && <p className={styles.imageStatus} role={failed ? "alert" : "status"}>{failed ? "Không tải được ảnh. Kiểm tra đường dẫn hoặc chọn ảnh khác." : "Đang tải lược đồ…"}</p>}
-        <div ref={plane} className={styles.plane} data-placing={!!placingType && showSymbols} style={{ width: fitWidth ? `${fitWidth * zoom}px` : `${zoom * 100}%` }}
+        <div className={styles.frame} data-camera={focus !== undefined} style={{ width: fitWidth ? `${fitWidth * zoom}px` : `${zoom * 100}%` }}>
+        <div ref={plane} className={styles.plane} data-placing={!!placingType && showSymbols} data-drawing={!!onDrawFrame && ready}
+          style={{ transform: (() => {
+            if (!focus || !aspect || !ready) return undefined;
+            const rect = Array.isArray(focus) ? symbolsRect(focus, aspect) : focus;
+            return rect ? cameraTransform(rect) : undefined;
+          })() }}
           onPointerDown={e => {
+            if (onDrawFrame && ready && e.button === 0) {
+              e.preventDefault();
+              frameStart.current = point(e.clientX, e.clientY);
+              setFramePreview({ ...frameStart.current, w: 0, h: 0 });
+              e.currentTarget.setPointerCapture(e.pointerId);
+              return;
+            }
+            if (onMarquee && !placingType && showSymbols && e.button === 0 && (e.target === e.currentTarget || e.target instanceof HTMLImageElement)) {
+              const p = point(e.clientX, e.clientY);
+              marqueeStart.current = { ...p, additive: e.shiftKey || e.ctrlKey || e.metaKey };
+              e.currentTarget.setPointerCapture(e.pointerId);
+              return;
+            }
             if (!placingType || !onAdd || !showSymbols || !isLineSymbol(placingType) || e.button !== 0) return;
             e.preventDefault();
             const rect = plane.current!.getBoundingClientRect();
@@ -170,18 +253,38 @@ export function BattleMapCanvas({ value, title, selectedId, placingType, placing
             e.currentTarget.setPointerCapture(e.pointerId);
           }}
           onPointerMove={e => {
+            if (frameStart.current) { setFramePreview(rectBetween(frameStart.current, point(e.clientX, e.clientY))); return; }
+            if (marqueeStart.current) { setMarquee(rectBetween(marqueeStart.current, point(e.clientX, e.clientY))); return; }
             if (!drawStart.current) return;
             const seg = segment(e.clientX, e.clientY);
             setDrawPreview(seg.length >= 8 ? seg : null);
           }}
           onPointerUp={e => {
+            if (frameStart.current) {
+              const rect = rectBetween(frameStart.current, point(e.clientX, e.clientY));
+              frameStart.current = null; setFramePreview(null); suppressClick.current = true;
+              if (rect.w >= 3 && rect.h >= 3) onDrawFrame?.(rect);
+              return;
+            }
+            if (marqueeStart.current) {
+              const start = marqueeStart.current;
+              const rect = rectBetween(start, point(e.clientX, e.clientY));
+              marqueeStart.current = null; setMarquee(null);
+              // A plain click falls through to onClick (deselect); a real box selects what is inside.
+              if (rect.w >= 1 || rect.h >= 1) {
+                suppressClick.current = true;
+                onMarquee?.(value.symbols.filter(s => !symbolView?.(s).hidden
+                  && s.x >= rect.x && s.x <= rect.x + rect.w && s.y >= rect.y && s.y <= rect.y + rect.h).map(s => s.id), start.additive);
+              }
+              return;
+            }
             if (!drawStart.current || !placingType || !onAdd) return;
             const seg = segment(e.clientX, e.clientY);
             drawStart.current = null; setDrawPreview(null);
             // A real drag draws the symbol; a plain click falls through to onClick placement.
             if (seg.length >= 8) { suppressClick.current = true; onAdd(placingType, seg.x, seg.y, { size: seg.size, rotation: seg.rotation }); }
           }}
-          onPointerCancel={() => { drawStart.current = null; setDrawPreview(null); }}
+          onPointerCancel={() => { drawStart.current = null; setDrawPreview(null); frameStart.current = null; setFramePreview(null); marqueeStart.current = null; setMarquee(null); }}
           onClick={e => {
             if (suppressClick.current) { suppressClick.current = false; return; }
             if (!onAdd && !onSelect) return;
@@ -207,27 +310,44 @@ export function BattleMapCanvas({ value, title, selectedId, placingType, placing
             <SymbolGlyph type={placingType} />
           </div>}
           {showSymbols && value.symbols.map(symbol => {
+            const view = symbolView?.(symbol) ?? {};
+            if (view.hidden) return null;
             const faction = value.factions.find(f => f.id === symbol.factionId);
-            return <button type="button" key={symbol.id} className={styles.symbol} data-selected={selectedId === symbol.id}
-              style={{ left: `${symbol.x}%`, top: `${symbol.y}%`, width: `${symbol.size}%`, color: faction?.color ?? "#b91c1c", transform: `translate(-50%, -50%) rotate(${symbol.rotation}deg)` }}
-              aria-label={`${SYMBOL_LABELS[symbol.type]}: ${symbol.label || faction?.name || "Chưa đặt tên"}`} aria-pressed={onSelect ? selectedId === symbol.id : undefined}
+            return <button type="button" key={view.enter ? `${symbol.id}:${view.enter.key}` : symbol.id} className={styles.symbol} data-selected={isSelected(symbol.id)}
+              data-dim={view.dim || undefined} data-fx={view.enter ? resolveEffect(symbol) : undefined}
+              style={{ left: `${symbol.x}%`, top: `${symbol.y}%`, width: `${symbol.size}%`, color: faction?.color ?? "#b91c1c", transform: `translate(-50%, -50%) rotate(${symbol.rotation}deg)`, "--fx-delay": `${view.enter?.delay ?? 0}ms` } as React.CSSProperties}
+              aria-label={`${SYMBOL_LABELS[symbol.type]}: ${symbol.label || faction?.name || "Chưa đặt tên"}`} aria-pressed={onSelect ? isSelected(symbol.id) : undefined}
               tabIndex={onSelect ? 0 : -1}
-              onClick={e => { e.stopPropagation(); onSelect?.(symbol.id); }}
+              // Pointer selection happens on press; a click only selects from the keyboard (Enter/Space).
+              onClick={e => { e.stopPropagation(); if (!onMove || e.detail === 0) onSelect?.(symbol.id); }}
               onPointerDown={e => {
                 if (!onMove) return;
-                e.preventDefault(); onSelect?.(symbol.id); e.currentTarget.focus(); setTip(null);
-                const p = point(e.clientX, e.clientY);
-                drag.current = { id: symbol.id, dx: p.x - symbol.x, dy: p.y - symbol.y };
+                e.preventDefault(); e.currentTarget.focus(); setTip(null);
+                if (e.shiftKey || e.ctrlKey || e.metaKey) { onSelect?.(symbol.id, true); return; }
+                // Pressing a symbol of a multi-selection drags the whole group.
+                const ids = selectedIds && selectedIds.length > 1 && selectedIds.includes(symbol.id) ? selectedIds : [symbol.id];
+                if (ids.length === 1) onSelect?.(symbol.id);
+                drag.current = {
+                  id: symbol.id, start: point(e.clientX, e.clientY), moved: false,
+                  group: value.symbols.filter(s => ids.includes(s.id)).map(s => ({ id: s.id, x: s.x, y: s.y })),
+                };
                 e.currentTarget.setPointerCapture(e.pointerId);
               }}
               onPointerEnter={e => showTip(symbol, e)}
               onPointerLeave={() => setTip(t => (t?.id === symbol.id ? null : t))}
               onPointerMove={e => {
                 if (drag.current?.id !== symbol.id || !onMove) { showTip(symbol, e); return; }
-                const p = point(e.clientX, e.clientY);
-                onMove(symbol.id, Math.round(clampPercent(p.x - drag.current.dx) * 10) / 10, Math.round(clampPercent(p.y - drag.current.dy) * 10) / 10);
+                const p = point(e.clientX, e.clientY), d = drag.current;
+                const dx = p.x - d.start.x, dy = p.y - d.start.y;
+                if (!d.moved && Math.abs(dx) + Math.abs(dy) < .3) return;
+                d.moved = true;
+                for (const g of d.group) onMove(g.id, Math.round(clampPercent(g.x + dx) * 10) / 10, Math.round(clampPercent(g.y + dy) * 10) / 10);
               }}
-              onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}
+              onPointerUp={() => {
+                // A press without moving on a grouped symbol narrows the selection to it.
+                if (drag.current && !drag.current.moved && drag.current.group.length > 1) onSelect?.(symbol.id);
+                drag.current = null;
+              }} onPointerCancel={() => { drag.current = null; }}
               onKeyDown={e => {
                 if ((e.key === "Delete" || e.key === "Backspace") && onDelete) { e.preventDefault(); onDelete(symbol.id); return; }
                 if (moveByKey(symbol, e.key, e.shiftKey ? 5 : 1)) e.preventDefault();
@@ -240,14 +360,25 @@ export function BattleMapCanvas({ value, title, selectedId, placingType, placing
               </>}
             </button>;
           })}
+          {showSymbols && phaseBadge && value.symbols.map(s => {
+            const badge = !symbolView?.(s).hidden && phaseBadge(s);
+            return badge ? <span key={`badge:${s.id}`} className={styles.phaseBadge} aria-hidden="true"
+              style={{ left: `${Math.min(99, s.x + s.size * .4)}%`, top: `${s.y}%` }}>{badge}</span> : null;
+          })}
+          {marquee && <div className={styles.marquee} style={rectStyle(marquee)} aria-hidden="true" />}
+          {ready && spotlight && <div className={styles.spotlight} style={rectStyle(spotlight)} aria-hidden="true" />}
+          {ready && (framePreview ?? cameraFrame) && <div className={styles.cameraFrame} style={rectStyle((framePreview ?? cameraFrame)!)} aria-hidden="true">
+            <span>Khung camera</span>
+          </div>}
           {tipSymbol && tip && <div className={styles.tip} role="tooltip" style={{ left: tip.x, top: tip.y }}>
             <strong>{tipSymbol.type === "step" ? `${SYMBOL_LABELS.step} ${tipSymbol.label}` : tipSymbol.label.trim() || SYMBOL_LABELS[tipSymbol.type]}</strong>
             <span>{tipSymbol.label.trim() && tipSymbol.type !== "step" ? `${SYMBOL_LABELS[tipSymbol.type]} · ` : ""}{tipFaction?.name}</span>
           </div>}
         </div>
+        </div>
       </>}
     </div>
-    {showSymbols && legendEntries.length > 0 && <section className={styles.legendCard} aria-label="Chú giải">
+    {showSymbols && legendEntries.length > 0 && <section className={styles.legendCard} data-open={legendOpen} aria-label="Chú giải">
       <header>
         <h3>{legendTitle || "Chú giải"}</h3>
         <button type="button" onClick={() => setLegendOpen(o => !o)} aria-expanded={legendOpen} aria-label={legendOpen ? "Thu gọn chú giải" : "Mở chú giải"}>

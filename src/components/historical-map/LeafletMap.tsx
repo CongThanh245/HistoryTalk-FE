@@ -17,7 +17,7 @@ import type { GeoJsonObject } from "geojson";
 import type { MapPin } from "@/services/map-pin.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { cn } from "@/lib/utils/cn";
-import type { MapCoordinates, OverlayPin } from "./map-overlay.types";
+import { MAP_BOUNDS, type MapCoordinates, type OverlayPin } from "./map-overlay.types";
 
 interface LeafletMapProps {
   battle?: HistoricalEvent;
@@ -25,6 +25,9 @@ interface LeafletMapProps {
   isAdding?: boolean;
   pins: MapPin[];
   draftCoordinates?: { latitude: number; longitude: number } | null;
+  /** Tooltip and colour of the unsaved draft marker (defaults: battle pin, crimson). */
+  draftLabel?: string;
+  draftColor?: string;
   selectedPinId: string | null;
   panelDismissed?: boolean;
   onSelectPin: (pin: MapPin) => void;
@@ -42,9 +45,14 @@ interface LeafletMapProps {
 const EMPTY_OVERLAY: OverlayPin[] = [];
 
 const VIETNAM_BOUNDS = {
-  southWest: [5.7, 97.4] as [number, number],
-  northEast: [24.6, 117.2] as [number, number],
+  southWest: [MAP_BOUNDS.south, MAP_BOUNDS.west] as [number, number],
+  northEast: [MAP_BOUNDS.north, MAP_BOUNDS.east] as [number, number],
 };
+
+/** Below this zoom only the selected battle keeps its name label (the rest show it on hover). */
+const LABEL_MIN_ZOOM = 6;
+/** Wait for the marker scale transition (250ms) before measuring label boxes. */
+const LABEL_LAYOUT_DELAY = 280;
 
 const VIETNAM_INITIAL_VIEW = {
   center: [15.65, 108.45] as [number, number],
@@ -77,6 +85,8 @@ export function LeafletMap({
   isAdding = false,
   pins,
   draftCoordinates,
+  draftLabel = "Vị trí ghim · Chưa lưu",
+  draftColor = "#B8321F",
   selectedPinId,
   panelDismissed = false,
   onSelectPin,
@@ -94,6 +104,10 @@ export function LeafletMap({
     null,
   );
   const [mapReady, setMapReady] = React.useState(false);
+  /** Re-runs the battle-label collision pass (set once the map exists). */
+  const layoutLabelsRef = useRef<(() => void) | null>(null);
+  /** Who moved the camera last: an overlay focus must not be undone by the "back to overview" flight. */
+  const cameraOwnerRef = useRef<"battle" | "overlay" | null>(null);
 
   useEffect(() => {
     if (!mapReady || !containerRef.current || !mapRef.current) return;
@@ -156,12 +170,14 @@ export function LeafletMap({
           bounceAtZoomLimits: false,
           inertia: false,
           zoomControl: true,
-          attributionControl: false,
+          attributionControl: true,
           preferCanvas: true,
         });
 
         // maxBounds already enforces the boundary with Leaflet's re-entry guard.
         map.zoomControl.setPosition("bottomright");
+        // Basemap terms (Esri) require visible attribution; keep it small under the zoom control.
+        map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
         map.on("click", (event) => {
           onMapClickRef.current?.({
             latitude: event.latlng.lat,
@@ -183,6 +199,16 @@ export function LeafletMap({
         map.on("zoomend", updateMarkerScale);
         // Apply initial scale immediately
         updateMarkerScale();
+
+        // Battle names collide when zoomed out: keep the selected one, then first-come; hidden names still show on hover.
+        let labelTimer: ReturnType<typeof setTimeout> | undefined;
+        const scheduleLabelLayout = () => {
+          clearTimeout(labelTimer);
+          labelTimer = setTimeout(() => layoutBattleLabels(map), LABEL_LAYOUT_DELAY);
+        };
+        layoutLabelsRef.current = scheduleLabelLayout;
+        map.on("zoomend", scheduleLabelLayout);
+        map.on("unload", () => clearTimeout(labelTimer));
 
 
         mapRef.current = map;
@@ -219,7 +245,7 @@ export function LeafletMap({
         radius: 18,
         color: "#ffffff",
         weight: 2,
-        fillColor: "#B8321F",
+        fillColor: draftColor,
         fillOpacity: 0.2,
         interactive: false,
         pane: "markerPane",
@@ -228,11 +254,11 @@ export function LeafletMap({
         radius: 8,
         color: "#ffffff",
         weight: 3,
-        fillColor: "#B8321F",
+        fillColor: draftColor,
         fillOpacity: 1,
         interactive: false,
         pane: "markerPane",
-      }).bindTooltip("Vị trí ghim · Chưa lưu", {
+      }).bindTooltip(draftLabel, {
         permanent: true,
         direction: "top",
         offset: [0, -20],
@@ -244,7 +270,7 @@ export function LeafletMap({
       cancelled = true;
       preview?.remove();
     };
-  }, [draftCoordinates, mapReady]);
+  }, [draftCoordinates, draftLabel, draftColor, mapReady]);
 
   // Sync API pins whenever the selected context or year changes.
   useEffect(() => {
@@ -281,6 +307,7 @@ export function LeafletMap({
           addMarker(L, map, pin, isSelected, markersRef, onSelectPinRef, pinBattle);
         }
       });
+      layoutLabelsRef.current?.();
     });
   }, [pins, selectedPinId, mapReady, battle, battles]);
 
@@ -338,6 +365,7 @@ export function LeafletMap({
     if (!mapReady || !map || !focusKey || typeof focusLatitude !== "number" || typeof focusLongitude !== "number") return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     map.stop();
+    cameraOwnerRef.current = "overlay";
     map.flyTo([focusLatitude, focusLongitude], Math.max(map.getZoom(), 8), { duration: 0.9, animate: !reducedMotion });
   }, [focusKey, focusLatitude, focusLongitude, mapReady]);
 
@@ -350,12 +378,18 @@ export function LeafletMap({
     const map = mapRef.current;
     if (!mapReady || !map || isAdding) return;
     const frame = requestAnimationFrame(() => {
-      map.stop();
       map.invalidateSize({ pan: false });
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (!panelDismissed && typeof targetLatitude === "number" && Number.isFinite(targetLatitude) && typeof targetLongitude === "number" && Number.isFinite(targetLongitude)) {
+        cameraOwnerRef.current = "battle";
+        map.stop();
         map.flyTo([targetLatitude, targetLongitude], 9, { duration: 1.2, animate: !reducedMotion });
+      } else if (cameraOwnerRef.current === "overlay") {
+        // A custom-layer pin (e.g. a deep link) owns the camera: keep it there.
+        cameraOwnerRef.current = null;
       } else {
+        cameraOwnerRef.current = null;
+        map.stop();
         map.flyTo(VIETNAM_INITIAL_VIEW.center, VIETNAM_INITIAL_VIEW.zoom, { duration: 1.2, animate: !reducedMotion });
       }
     });
@@ -662,14 +696,45 @@ const OVERLAY_GLYPHS: Record<OverlayPin["variant"], string> = {
 };
 
 function createOverlayIcon(L: typeof import("leaflet"), pin: OverlayPin, isSelected: boolean): DivIcon {
+  const tone = pin.tone ? ` map-overlay-pin--tone-${pin.tone}` : "";
+  const badge = pin.badge
+    ? `<span class="map-overlay-badge map-overlay-badge--${pin.badge.tone}">${escapeHtml(pin.badge.text)}</span>`
+    : "";
   return L.divIcon({
-    html: `<div class="map-overlay-pin map-overlay-pin--${pin.variant}${isSelected ? " is-selected" : ""}${pin.muted ? " is-muted" : ""}">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${OVERLAY_GLYPHS[pin.variant]}</svg>
+    html: `<div class="map-overlay-pin map-overlay-pin--${pin.variant}${tone}${isSelected ? " is-selected" : ""}${pin.muted ? " is-muted" : ""}">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${OVERLAY_GLYPHS[pin.variant]}</svg>${badge}
     </div>`,
     iconSize: [28, 34],
     iconAnchor: [14, 34],
     className: "map-overlay-marker",
   });
+}
+
+/**
+ * Simple label collision pass for battle names: the selected pin always keeps its label, the others
+ * keep theirs only when it does not overlap a label already placed. Names hide entirely when zoomed out.
+ */
+function layoutBattleLabels(map: LeafletMapInstance) {
+  const container = map.getContainer();
+  if (!container.isConnected) return;
+  const zoom = map.getZoom();
+  const pins = Array.from(container.querySelectorAll<HTMLElement>(".battle-pin"))
+    .filter((pin) => (pin.closest<HTMLElement>(".leaflet-marker-icon")?.style.opacity ?? "") !== "0")
+    .sort((a, b) => Number(b.classList.contains("battle-pin--selected")) - Number(a.classList.contains("battle-pin--selected")));
+  const placed: DOMRect[] = [];
+  for (const pin of pins) {
+    const name = pin.querySelector<HTMLElement>(".battle-pin-name");
+    if (!name) continue;
+    const selected = pin.classList.contains("battle-pin--selected");
+    if (!selected && zoom < LABEL_MIN_ZOOM) {
+      pin.classList.add("is-label-hidden");
+      continue;
+    }
+    const box = name.getBoundingClientRect();
+    const hit = placed.some((r) => box.left < r.right + 4 && box.right + 4 > r.left && box.top < r.bottom + 2 && box.bottom + 2 > r.top);
+    pin.classList.toggle("is-label-hidden", hit && !selected);
+    if (!hit || selected) placed.push(box);
+  }
 }
 
 function createOverlayTooltip(pin: OverlayPin) {

@@ -12,7 +12,7 @@ import type { EventEraBackend, GetEventsParams } from "@/services/event.service"
 
 import { catalogMetadata } from "@/lib/catalog-metadata";
 import { ArchiveHeading } from "@/components/commons/archive-heading";
-import { LocalCatalogSwitch } from "@/components/saas/local-catalog-switch";
+import { OfficialCatalogBanner } from "@/components/saas/official-catalog-banner";
 export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   return catalogMetadata("/events", await searchParams);
 }
@@ -32,13 +32,26 @@ export default async function EventsPage({
     limit: 100,
     ...(era !== "all" && { era: era.toUpperCase() as EventEraBackend }),
   };
-  await queryClient.prefetchQuery({
-    queryKey: queryKeys.events.list(params),
-    queryFn: () => eventServerService.getAll(params),
-  });
+  // Deep links (`?event=<id>`, e.g. from the home page) open the detail modal straight away: the server
+  // fetches only that event, and the list loads on the client behind the modal. Otherwise the user would
+  // wait for the 100-event list and then for the detail, seeing the list flash first.
+  // prefetchQuery never throws; a failed fetch just falls back to the client query.
+  const eventId = firstParam(urlParams.event);
+  if (eventId) {
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.events.detail(eventId),
+      queryFn: () => eventServerService.getById(eventId),
+    });
+  } else {
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.events.list(params),
+      queryFn: () => eventServerService.getAll(params),
+    });
+  }
 
   return (
     <div className="space-y-4 py-4 lg:py-5">
+      <OfficialCatalogBanner />
       <ArchiveHeading
         as="h1"
         label="Biên niên"
@@ -47,9 +60,7 @@ export default async function EventsPage({
         className="mb-2 border-b-0 pb-0"
       />
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <LocalCatalogSwitch kind="CONTEXT">
-          <EventsClient />
-        </LocalCatalogSwitch>
+        <EventsClient />
       </HydrationBoundary>
     </div>
   );
