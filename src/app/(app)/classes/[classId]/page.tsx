@@ -13,10 +13,16 @@ import { ROUTES } from "@/constants/routes";
 import { useRole } from "@/features/auth/usePermission";
 import { apiErrorMessage, apiErrorStatus, useApiClassroom } from "@/features/saas/hooks-api";
 import type { ApiClassroom } from "@/services/school.service";
+import { TeacherClassStats } from "@/components/saas/teacher-classroom-analytics";
+import { ClassRosterManager } from "@/components/saas/class-roster-manager";
+import { TeacherClassAssignments } from "@/components/saas/teacher-class-assignments";
+import { StudentClassAssignments } from "@/components/saas/student-class-assignments";
 
 /**
  * Class page for its teacher and students. The class itself comes from `GET /classrooms/{id}`;
- * roster, assignments, class materials and statistics have no API yet and show an empty state.
+ * roster: `GET /classrooms/{id}/students` (teacher); statistics: `GET /teacher/dashboard/classrooms/{id}`;
+ * assignments: `/teacher/assignments/classroom/{id}` or `/student/assignments?classroomId=`.
+ * Class materials and the student's classmates list have no API yet and show an empty state.
  */
 export default function ClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
@@ -112,23 +118,32 @@ function ClassDetail({ classId, role }: { classId: string; role: string | null }
             label: "Học sinh",
             content: (
               <Section title="Danh sách học sinh" description={`Sĩ số: ${classroom.studentCount} học sinh`}>
-                <NoDataYet title="Chưa có dữ liệu danh sách học sinh" description="Danh sách học sinh của lớp chưa được hiển thị ở đây." />
+                <ClassRosterManager classId={classroom.id} canManage />
               </Section>
             ),
           },
-          { value: "assignments", label: "Bài tập", content: <NoDataYet title="Chưa có bài tập" /> },
+          { value: "assignments", label: "Bài tập", content: <TeacherClassAssignments classId={classroom.id} /> },
           { value: "local", label: "Tư liệu lớp & trường", content: <NoDataYet title="Chưa có tư liệu lớp & trường" /> },
-          { value: "stats", label: "Thống kê", content: <NoDataYet title="Chưa có số liệu thống kê" /> },
+          {
+            value: "stats",
+            label: "Thống kê",
+            content: (
+              <Section title="Thống kê lớp" description="Kết quả quiz và mức dùng trợ lý AI của từng học sinh.">
+                <TeacherClassStats classId={classroom.id} />
+              </Section>
+            ),
+          },
         ]
       : [
-          { value: "assignments", label: "Bài tập", content: <NoDataYet title="Chưa có bài tập" description="Bài tập thầy cô giao cho lớp sẽ hiện ở đây." /> },
+          { value: "assignments", label: "Bài tập", content: <StudentClassAssignments classId={classroom.id} /> },
           { value: "local", label: "Tư liệu lớp & trường", content: <NoDataYet title="Chưa có tư liệu lớp & trường" /> },
           {
             value: "classmates",
             label: "Bạn cùng lớp",
             content: (
               <Section title="Bạn cùng lớp" description={`${classroom.studentCount} học sinh`}>
-                <NoDataYet title="Chưa có dữ liệu danh sách lớp" />
+                {/* GET /classrooms/{id}/students chi cho SCHOOL_ADMIN va TEACHER. */}
+                <NoDataYet title="Chưa xem được danh sách lớp" description="Máy chủ chưa cho học sinh xem danh sách bạn cùng lớp." />
               </Section>
             ),
           },

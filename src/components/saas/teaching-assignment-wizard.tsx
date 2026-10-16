@@ -3,177 +3,124 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, BookOpenText, Check, ClipboardCheck, Loader2, MessagesSquare } from "lucide-react";
+import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
-import { Checkbox } from "@/components/ui/checkbox";
-import { CONTENT_SOURCE_LABELS, ContentSourceTag, type ContentSource } from "@/components/saas/content-source-tag";
+import { StaffFormInput, StaffFormSelect, StaffFormTextarea } from "@/components/staff/staff-form";
 import { Field, Panel, SearchInput, normalizeText } from "@/components/saas/saas-ui";
-import { AssignmentTypeBadge, ClassCheckboxList, SegmentedFilter } from "@/components/saas/teaching-ui";
+import {
+  ASSIGNMENT_TYPES,
+  ASSIGNMENT_TYPE_META,
+  formatDuration,
+  fromDateTimeInput,
+  isPastDeadline,
+} from "@/components/saas/teacher-class-assignments";
 import { ROUTES } from "@/constants/routes";
 import { useCharacters } from "@/features/characters/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { useQuizSets } from "@/features/quiz/hooks";
-import {
-  ASSIGNMENT_TYPE_HINTS,
-  ASSIGNMENT_TYPE_LABELS,
-  DAY_MS,
-  KIND_FOR_TYPE,
-  LEVEL_LABELS,
-  LOCAL_KIND_LABELS,
-  TODAY,
-  formatDateTime,
-  formatYear,
-  fromDatetimeLocal,
-  localTitle,
-  toDatetimeLocal,
-  type TeachingData,
-} from "@/features/saas/hooks-teaching";
-import { useSaasStore } from "@/features/saas/store";
-import type { AssignmentSource, AssignmentType } from "@/features/saas/types";
+import { apiErrorMessage } from "@/features/saas/hooks-api";
+import { useCreateAssignment } from "@/features/saas/hooks-assignment-api";
+import type { AssignmentType } from "@/services/assignment.service";
+import type { ApiClassroom } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
 
+/**
+ * Form "Giao bài tập" tren API that (POST /teacher/assignments).
+ * Moi lan giao = 1 lop + 1 noi dung (boi canh / nhan vat / quiz) + han nop + yeu cau toi thieu.
+ */
+
 interface Target {
-  source: AssignmentSource;
-  /** Chính thức (HistoryTalk) / Của lớp / Của trường, shown as a tag so the sources never blur together. */
-  origin: ContentSource;
   id: string;
   title: string;
   meta?: string;
 }
 
-const OFFICIAL_LABEL = "Chính thức (HistoryTalk)";
-const originLabel = (o: ContentSource) => (o === "OFFICIAL" ? OFFICIAL_LABEL : CONTENT_SOURCE_LABELS[o]);
-
-interface Details {
-  title: string;
-  instructions: string;
-  openAt: string;
-  dueAt: string;
-  minMessages: string;
-  maxScore: string;
-  graded: boolean;
-  allowLate: boolean;
-}
-
-const STEPS = ["Lớp", "Loại bài", "Nội dung", "Thông tin", "Xác nhận"] as const;
-const TYPES: AssignmentType[] = ["EVENT", "CHAT", "TEST"];
-const TYPE_ICON = { EVENT: BookOpenText, CHAT: MessagesSquare, TEST: ClipboardCheck } as const;
-
-const defaultDue = () => {
-  const d = new Date(TODAY.getTime() + 7 * DAY_MS);
-  d.setHours(23, 59, 0, 0);
-  return toDatetimeLocal(d);
+/** Mac dinh cua BE khi bo trong minRequirement (TeacherAssignmentServiceImpl). */
+const DEFAULT_MIN: Record<AssignmentType, number | null> = {
+  AI_CHAT_ROLEPLAY: 5,
+  CONTEXT_READING: 180,
+  QUIZ_TEST: null,
 };
 
-/** Five-step "Giao bài tập" flow (Role Matrix row 16). One assignment is created per chosen class. */
+const LEVEL_LABELS = { EASY: "Dễ", MEDIUM: "Trung bình", HARD: "Khó" } as const;
+
+const defaultDeadline = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  d.setHours(23, 59, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 export function AssignmentWizard({
-  data,
+  classes,
   initialClassId,
   initialType,
 }: {
-  data: TeachingData;
+  classes: ApiClassroom[];
   initialClassId?: string | null;
   initialType?: AssignmentType | null;
 }) {
   const router = useRouter();
-  const createAssignment = useSaasStore((s) => s.createAssignment);
+  const create = useCreateAssignment();
 
-  const [step, setStep] = React.useState(0);
-  const [classIds, setClassIds] = React.useState<string[]>(initialClassId && data.classById.has(initialClassId) ? [initialClassId] : []);
+  const [classId, setClassId] = React.useState(
+    initialClassId && classes.some((c) => c.id === initialClassId) ? initialClassId : classes.length === 1 ? classes[0].id : "",
+  );
   const [type, setType] = React.useState<AssignmentType | null>(initialType ?? null);
-  const [source, setSource] = React.useState<AssignmentSource>("LOCAL");
   const [target, setTarget] = React.useState<Target | null>(null);
-  const [details, setDetails] = React.useState<Details>(() => ({
-    title: "",
-    instructions: "",
-    openAt: toDatetimeLocal(TODAY),
-    dueAt: defaultDue(),
-    minMessages: "5",
-    maxScore: "10",
-    graded: true,
-    allowLate: false,
-  }));
+  const [title, setTitle] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [deadline, setDeadline] = React.useState(defaultDeadline);
+  const [minRequirement, setMinRequirement] = React.useState("");
   const [touched, setTouched] = React.useState(false);
 
-  const localOptions = React.useMemo(() => {
-    if (!type) return [];
-    const kind = KIND_FOR_TYPE[type];
-    // Class content must reach every chosen class; published school content reaches all of them.
-    return data.localContent
-      .filter(
-        (c) =>
-          c.kind === kind &&
-          c.status === "PUBLISHED" &&
-          classIds.length > 0 &&
-          (c.scope === "SCHOOL" || classIds.every((id) => c.classIds.includes(id))),
-      )
-      .sort((a, b) => a.scope.localeCompare(b.scope) || localTitle(a).localeCompare(localTitle(b), "vi"));
-  }, [data.localContent, type, classIds]);
-
   const chooseTarget = (t: Target) => {
+    const prefix = type === "CONTEXT_READING" ? "Đọc: " : type === "AI_CHAT_ROLEPLAY" ? "Trò chuyện với " : "Kiểm tra: ";
+    const autoPrevious = target ? `${prefix}${target.title}` : "";
+    if (!title.trim() || title === autoPrevious) setTitle(`${prefix}${t.title}`.slice(0, 255));
     setTarget(t);
-    setDetails((d) => {
-      const prefix = type === "EVENT" ? "Đọc: " : type === "CHAT" ? "Trò chuyện với " : "Kiểm tra: ";
-      const autoPrevious = target ? `${prefix}${target.title}` : "";
-      return !d.title.trim() || d.title === autoPrevious ? { ...d, title: `${prefix}${t.title}` } : d;
-    });
   };
 
-  // ── Validation per step ──
-  const openIso = fromDatetimeLocal(details.openAt);
-  const dueIso = fromDatetimeLocal(details.dueAt);
-  const detailErrors = {
-    title: details.title.trim() ? null : "Nhập tên bài tập",
-    openAt: openIso ? null : "Chọn thời điểm mở",
-    dueAt: !dueIso ? "Chọn hạn nộp" : openIso && dueIso <= openIso ? "Hạn nộp phải sau thời điểm mở" : null,
-    minMessages: type === "CHAT" && !(Number(details.minMessages) >= 1 && Number.isInteger(Number(details.minMessages))) ? "Tối thiểu 1 tin nhắn" : null,
-    maxScore: type === "TEST" && !(Number(details.maxScore) > 0 && Number(details.maxScore) <= 100) ? "Điểm tối đa từ 1 đến 100" : null,
+  const deadlineValue = fromDateTimeInput(deadline);
+  const min = minRequirement.trim() === "" ? null : Number(minRequirement);
+  const errors = {
+    classId: classId ? null : "Chọn lớp",
+    type: type ? null : "Chọn loại bài",
+    target: target ? null : "Chọn nội dung để giao",
+    title: title.trim().length < 3 ? "Tên bài từ 3 đến 255 ký tự" : title.trim().length > 255 ? "Tên bài tối đa 255 ký tự" : null,
+    deadline: !deadlineValue ? "Chọn hạn nộp" : isPastDeadline(deadlineValue) ? "Hạn nộp phải ở tương lai" : null,
+    minRequirement: type !== "QUIZ_TEST" && min !== null && !(Number.isInteger(min) && min > 0) ? "Nhập số nguyên lớn hơn 0" : null,
   };
-  const stepError = [
-    classIds.length ? null : "Chọn ít nhất một lớp.",
-    type ? null : "Chọn loại bài tập.",
-    target ? null : "Chọn nội dung để giao.",
-    Object.values(detailErrors).find(Boolean) ?? null,
-    null,
-  ][step];
-
-  const next = () => {
-    setTouched(true);
-    if (stepError) return;
-    setTouched(false);
-    setStep((s) => Math.min(STEPS.length - 1, s + 1));
-  };
-  const back = () => {
-    setTouched(false);
-    setStep((s) => Math.max(0, s - 1));
-  };
+  const firstError = Object.values(errors).find(Boolean) ?? null;
 
   const submit = () => {
-    if (!type || !target || !openIso || !dueIso) return;
-    const created = classIds.map((classId) =>
-      createAssignment({
+    setTouched(true);
+    if (firstError || !type || !target) return;
+    create.mutate(
+      {
         classId,
-        teacherId: data.teacherId,
-        type,
-        source: target.source,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        assignmentType: type,
         targetId: target.id,
-        targetTitle: target.title,
-        title: details.title.trim(),
-        instructions: details.instructions.trim(),
-        openAt: openIso,
-        dueAt: dueIso,
-        minMessages: type === "CHAT" ? Number(details.minMessages) : undefined,
-        maxScore: type === "TEST" ? Number(details.maxScore) : undefined,
-        graded: type === "TEST" ? details.graded : undefined,
-        allowLate: details.allowLate,
-      }),
+        deadline: deadlineValue,
+        minRequirement: type !== "QUIZ_TEST" && min !== null ? min : undefined,
+      },
+      {
+        onSuccess: (created) => {
+          toast.success(`Đã giao bài cho lớp ${created.className ?? classes.find((c) => c.id === classId)?.className ?? ""}`, {
+            description: `${created.totalStudents} học sinh được giao bài.`,
+          });
+          router.push(ROUTES.TEACHING.ASSIGNMENT_DETAIL(created.assignmentId));
+        },
+        onError: (err) => toast.error(apiErrorMessage(err, "Không giao được bài tập.")),
+      },
     );
-    const names = classIds.map((id) => data.classById.get(id)?.name).join(", ");
-    toast.success(created.length > 1 ? `Đã giao bài cho ${created.length} lớp: ${names}` : `Đã giao bài cho lớp ${names}`);
-    router.push(created.length === 1 ? ROUTES.TEACHING.ASSIGNMENT_DETAIL(created[0].id) : ROUTES.TEACHING.ASSIGNMENTS);
   };
+
+  const show = (e: string | null) => (touched ? e : null);
 
   return (
     <div className="space-y-6">
@@ -181,51 +128,22 @@ export function AssignmentWizard({
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Bài tập đã giao
       </Link>
 
-      <ol className="grid grid-cols-5 border-y border-[var(--text-primary)]" aria-label="Các bước giao bài">
-        {STEPS.map((label, i) => (
-          <li
-            key={label}
-            aria-current={i === step ? "step" : undefined}
-            className={cn(
-              "flex flex-col items-center gap-1 px-1 py-2 text-center text-[11px] font-bold sm:flex-row sm:justify-center sm:gap-2 sm:text-xs",
-              i === step ? "text-[var(--accent-gold)]" : i < step ? "text-[var(--text-primary)]" : "text-content-subtle",
-            )}
-          >
-            <span
-              className={cn(
-                "grid h-6 w-6 shrink-0 place-items-center rounded-[2px] border text-[11px] tabular-nums",
-                i === step
-                  ? "border-[var(--accent-gold)] bg-[var(--accent-gold)] text-white"
-                  : i < step
-                    ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
-                    : "border-[var(--border-strong)]",
-              )}
-            >
-              {i < step ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : i + 1}
-            </span>
-            <span className="hidden min-[420px]:inline">{label}</span>
-          </li>
-        ))}
-      </ol>
-
       <Panel>
-        {step === 0 && (
-          <Field label="Giao cho lớp" required hint="Chọn nhiều lớp để tạo một bài riêng cho mỗi lớp (theo dõi tiến độ riêng).">
-            <ClassCheckboxList
-              classes={data.classes}
-              value={classIds}
-              onChange={(ids) => {
-                setClassIds(ids);
-                if (target?.source === "LOCAL") setTarget(null);
-              }}
-            />
-          </Field>
-        )}
-
-        {step === 1 && (
-          <div className="space-y-2" role="radiogroup" aria-label="Loại bài tập">
-            {TYPES.map((t) => {
-              const Icon = TYPE_ICON[t];
+        <h2 className="archive-title is-plain text-xl">1. Lớp & loại bài</h2>
+        <Field label="Giao cho lớp" required error={show(errors.classId)}>
+          <StaffFormSelect
+            value={classId}
+            onValueChange={setClassId}
+            placeholder="Chọn lớp"
+            options={classes.map((c) => ({ value: c.id, label: `Lớp ${c.className} · ${c.studentCount} học sinh` }))}
+            className="w-full sm:w-[320px]"
+          />
+        </Field>
+        <Field label="Loại bài tập" required error={show(errors.type)}>
+          <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Loại bài tập">
+            {ASSIGNMENT_TYPES.map((t) => {
+              const meta = ASSIGNMENT_TYPE_META[t];
+              const Icon = meta.icon;
               const active = type === t;
               return (
                 <button
@@ -234,7 +152,10 @@ export function AssignmentWizard({
                   role="radio"
                   aria-checked={active}
                   onClick={() => {
-                    if (type !== t) setTarget(null);
+                    if (type !== t) {
+                      setTarget(null);
+                      setMinRequirement("");
+                    }
                     setType(t);
                   }}
                   className={cn(
@@ -242,176 +163,96 @@ export function AssignmentWizard({
                     active ? "border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)]" : "border-[var(--border-strong)] hover:border-[var(--text-primary)]",
                   )}
                 >
-                  <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", active ? "text-[var(--accent-gold)]" : "text-[var(--text-secondary)]")} aria-hidden="true" />
+                  <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", active ? "text-[var(--accent-gold)]" : meta.color)} aria-hidden="true" />
                   <span>
-                    <span className="block font-semibold text-content-heading">{ASSIGNMENT_TYPE_LABELS[t]}</span>
-                    <span className="block text-sm text-content-muted">{ASSIGNMENT_TYPE_HINTS[t]}</span>
+                    <span className="block font-semibold text-content-heading">{meta.label}</span>
+                    <span className="block text-sm text-content-muted">{meta.hint}</span>
                   </span>
                 </button>
               );
             })}
           </div>
-        )}
-
-        {step === 2 && type && (
-          <div className="space-y-4">
-            <SegmentedFilter
-              label="Nguồn nội dung"
-              value={source}
-              onChange={setSource}
-              options={[
-                { value: "LOCAL", label: "Tư liệu lớp & trường" },
-                { value: "GLOBAL", label: OFFICIAL_LABEL },
-              ]}
-            />
-            {target && (
-              <p className="flex flex-wrap items-center gap-2 text-sm">
-                Đã chọn: <span className="font-semibold text-[var(--accent-gold)]">{target.title}</span>
-                <ContentSourceTag source={target.origin} label={originLabel(target.origin)} />
-              </p>
-            )}
-            {source === "LOCAL" ? (
-              localOptions.length === 0 ? (
-                <p className="rounded-[2px] border border-dashed border-[var(--border-strong)] p-4 text-sm text-content-muted">
-                  Chưa có {LOCAL_KIND_LABELS[KIND_FOR_TYPE[type]].toLowerCase()} nào của lớp (đã xuất bản cho
-                  {classIds.length > 1 ? " tất cả các lớp đã chọn" : " lớp đã chọn"}) hoặc của trường.{" "}
-                  <Link href={ROUTES.TEACHING.LOCAL_NEW(KIND_FOR_TYPE[type])} className="archive-link">
-                    Soạn mới
-                  </Link>
-                </p>
-              ) : (
-                <TargetList
-                  options={localOptions.map((c) => ({
-                    source: "LOCAL" as const,
-                    origin: c.scope,
-                    id: c.id,
-                    title: localTitle(c),
-                    meta:
-                      c.kind === "CONTEXT"
-                        ? `${c.location} · ${formatYear(c.year)}`
-                        : c.kind === "CHARACTER"
-                          ? c.title
-                          : `${c.questions.length} câu · ${c.durationMinutes} phút · ${LEVEL_LABELS[c.level]}`,
-                  }))}
-                  selected={target}
-                  onSelect={chooseTarget}
-                />
-              )
-            ) : (
-              <GlobalTargets type={type} selected={target} onSelect={chooseTarget} />
-            )}
-          </div>
-        )}
-
-        {step === 3 && type && (
-          <div className="space-y-4">
-            <Field label="Tên bài tập" required error={touched ? detailErrors.title : null}>
-              <StaffFormInput value={details.title} onChange={(e) => setDetails((d) => ({ ...d, title: e.target.value }))} />
-            </Field>
-            <Field label="Hướng dẫn cho học sinh">
-              <StaffFormTextarea
-                value={details.instructions}
-                onChange={(e) => setDetails((d) => ({ ...d, instructions: e.target.value }))}
-                placeholder="VD: Đọc kỹ bối cảnh và ghi lại 3 ý chính."
-                className="min-h-[100px]"
-              />
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Mở từ" required error={touched ? detailErrors.openAt : null} htmlFor="as-open">
-                <StaffFormInput id="as-open" type="datetime-local" value={details.openAt} onChange={(e) => setDetails((d) => ({ ...d, openAt: e.target.value }))} />
-              </Field>
-              <Field label="Hạn nộp" required error={touched ? detailErrors.dueAt : null} htmlFor="as-due">
-                <StaffFormInput id="as-due" type="datetime-local" value={details.dueAt} onChange={(e) => setDetails((d) => ({ ...d, dueAt: e.target.value }))} />
-              </Field>
-            </div>
-            {type === "CHAT" && (
-              <Field label="Số tin nhắn tối thiểu" required error={touched ? detailErrors.minMessages : null} htmlFor="as-min" className="sm:max-w-[240px]">
-                <StaffFormInput id="as-min" type="number" min={1} value={details.minMessages} onChange={(e) => setDetails((d) => ({ ...d, minMessages: e.target.value }))} />
-              </Field>
-            )}
-            {type === "TEST" && (
-              <div className="grid gap-4 sm:grid-cols-2 sm:items-end">
-                <Field label="Điểm tối đa" required error={touched ? detailErrors.maxScore : null} htmlFor="as-max">
-                  <StaffFormInput id="as-max" type="number" min={1} step="0.5" value={details.maxScore} onChange={(e) => setDetails((d) => ({ ...d, maxScore: e.target.value }))} />
-                </Field>
-                <label className="flex h-10 cursor-pointer items-center gap-2 text-sm">
-                  <Checkbox checked={details.graded} onCheckedChange={(v) => setDetails((d) => ({ ...d, graded: v === true }))} />
-                  Tính vào sổ điểm
-                </label>
-              </div>
-            )}
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <Checkbox checked={details.allowLate} onCheckedChange={(v) => setDetails((d) => ({ ...d, allowLate: v === true }))} />
-              Cho phép nộp muộn
-            </label>
-          </div>
-        )}
-
-        {step === 4 && type && target && (
-          <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[160px_1fr]">
-            <dt className="text-content-muted">Lớp</dt>
-            <dd className="font-semibold">{classIds.map((id) => `Lớp ${data.classById.get(id)?.name}`).join(", ")}</dd>
-            <dt className="text-content-muted">Loại bài</dt>
-            <dd>
-              <AssignmentTypeBadge type={type} />
-            </dd>
-            <dt className="text-content-muted">Nội dung</dt>
-            <dd>
-              <span className="inline-flex flex-wrap items-center gap-2">
-                {target.title} <ContentSourceTag source={target.origin} label={originLabel(target.origin)} />
-              </span>
-            </dd>
-            <dt className="text-content-muted">Tên bài</dt>
-            <dd className="font-semibold">{details.title}</dd>
-            {details.instructions.trim() && (
-              <>
-                <dt className="text-content-muted">Hướng dẫn</dt>
-                <dd className="whitespace-pre-line">{details.instructions}</dd>
-              </>
-            )}
-            <dt className="text-content-muted">Thời gian</dt>
-            <dd>
-              {formatDateTime(openIso)} → <span className="font-semibold">{formatDateTime(dueIso)}</span>
-            </dd>
-            {type === "CHAT" && (
-              <>
-                <dt className="text-content-muted">Yêu cầu</dt>
-                <dd>Tối thiểu {details.minMessages} tin nhắn</dd>
-              </>
-            )}
-            {type === "TEST" && (
-              <>
-                <dt className="text-content-muted">Chấm điểm</dt>
-                <dd>
-                  Thang {details.maxScore} · {details.graded ? "tính vào sổ điểm" : "không tính điểm"}
-                </dd>
-              </>
-            )}
-            <dt className="text-content-muted">Nộp muộn</dt>
-            <dd>{details.allowLate ? "Cho phép" : "Không cho phép"}</dd>
-          </dl>
-        )}
-
-        {touched && stepError && step !== 3 && <p className="text-sm text-[var(--accent-danger)]">{stepError}</p>}
+        </Field>
       </Panel>
 
-      <div className="flex flex-wrap justify-between gap-2">
-        <button type="button" className="btn-line" onClick={back} disabled={step === 0}>
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Quay lại
+      {type && (
+        <Panel>
+          <h2 className="archive-title is-plain text-xl">2. Nội dung: {ASSIGNMENT_TYPE_META[type].target.toLowerCase()}</h2>
+          {target && (
+            <p className="text-sm">
+              Đã chọn: <span className="font-semibold text-[var(--accent-gold)]">{target.title}</span>
+            </p>
+          )}
+          {type === "CONTEXT_READING" && <ContextPicker selected={target} onSelect={chooseTarget} />}
+          {type === "AI_CHAT_ROLEPLAY" && <CharacterPicker selected={target} onSelect={chooseTarget} />}
+          {type === "QUIZ_TEST" && <QuizPicker selected={target} onSelect={chooseTarget} />}
+          {show(errors.target) && <p className="text-[11px] text-[var(--accent-danger)]">{errors.target}</p>}
+        </Panel>
+      )}
+
+      {type && (
+        <Panel>
+          <h2 className="archive-title is-plain text-xl">3. Thông tin bài</h2>
+          <Field label="Tên bài tập" required error={show(errors.title)} hint="3–255 ký tự.">
+            <StaffFormInput value={title} maxLength={255} onChange={(e) => setTitle(e.target.value)} />
+          </Field>
+          <Field label="Mô tả / lời dặn cho học sinh">
+            <StaffFormTextarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="VD: Đọc kỹ bối cảnh và chuẩn bị câu hỏi thảo luận."
+              className="min-h-[100px]"
+            />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Hạn nộp" required error={show(errors.deadline)} hint="Phải ở tương lai. Học sinh nộp sau hạn sẽ bị tính nộp muộn." htmlFor="as-due">
+              <StaffFormInput id="as-due" type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+            </Field>
+            {type === "AI_CHAT_ROLEPLAY" && (
+              <Field
+                label="Số tin nhắn tối thiểu"
+                error={show(errors.minRequirement)}
+                hint={`Để trống = ${DEFAULT_MIN.AI_CHAT_ROLEPLAY} tin nhắn (mặc định của hệ thống).`}
+                htmlFor="as-min"
+              >
+                <StaffFormInput id="as-min" type="number" min={1} step={1} value={minRequirement} onChange={(e) => setMinRequirement(e.target.value)} placeholder={String(DEFAULT_MIN.AI_CHAT_ROLEPLAY)} />
+              </Field>
+            )}
+            {type === "CONTEXT_READING" && (
+              <Field
+                label="Thời gian đọc tối thiểu (giây)"
+                error={show(errors.minRequirement)}
+                hint={
+                  min && min > 0
+                    ? `= ${formatDuration(min)}`
+                    : `Để trống = ${DEFAULT_MIN.CONTEXT_READING} giây (${formatDuration(DEFAULT_MIN.CONTEXT_READING)}, mặc định của hệ thống).`
+                }
+                htmlFor="as-min"
+              >
+                <StaffFormInput id="as-min" type="number" min={1} step={1} value={minRequirement} onChange={(e) => setMinRequirement(e.target.value)} placeholder={String(DEFAULT_MIN.CONTEXT_READING)} />
+              </Field>
+            )}
+          </div>
+          {type === "QUIZ_TEST" && <p className="text-xs text-content-muted">Bài kiểm tra được hệ thống tự chấm theo thang 10, không có yêu cầu tối thiểu.</p>}
+        </Panel>
+      )}
+
+      {touched && firstError && <p className="text-sm text-[var(--accent-danger)]">{firstError}</p>}
+
+      <div className="flex flex-wrap justify-end gap-2">
+        <Link href={ROUTES.TEACHING.ASSIGNMENTS} className="btn-line">
+          Hủy
+        </Link>
+        <button type="button" className="btn-crimson" onClick={submit} disabled={create.isPending}>
+          {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Check className="h-4 w-4" aria-hidden="true" />}
+          Giao bài
         </button>
-        {step < STEPS.length - 1 ? (
-          <button type="button" className="btn-ink" onClick={next}>
-            Tiếp tục <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </button>
-        ) : (
-          <button type="button" className="btn-crimson" onClick={submit}>
-            <Check className="h-4 w-4" aria-hidden="true" /> Giao bài {classIds.length > 1 ? `cho ${classIds.length} lớp` : ""}
-          </button>
-        )}
       </div>
     </div>
   );
 }
+
+/* ───────────────────────── Target pickers ───────────────────────── */
 
 function TargetList({ options, selected, onSelect }: { options: Target[]; selected: Target | null; onSelect: (t: Target) => void }) {
   const [search, setSearch] = React.useState("");
@@ -423,9 +264,9 @@ function TargetList({ options, selected, onSelect }: { options: Target[]; select
       <ul role="radiogroup" aria-label="Nội dung" className="max-h-80 divide-y divide-[var(--border-default)] overflow-y-auto rounded-[2px] border border-[var(--border-strong)]">
         {shown.length === 0 && <li className="p-3 text-sm text-content-muted">Không tìm thấy nội dung phù hợp.</li>}
         {shown.map((o) => {
-          const active = selected?.id === o.id && selected.source === o.source;
+          const active = selected?.id === o.id;
           return (
-            <li key={`${o.source}-${o.id}`}>
+            <li key={o.id}>
               <button
                 type="button"
                 role="radio"
@@ -449,7 +290,6 @@ function TargetList({ options, selected, onSelect }: { options: Target[]; select
                   <span className="block font-semibold text-content-heading">{o.title}</span>
                   {o.meta && <span className="block truncate text-xs text-content-muted">{o.meta}</span>}
                 </span>
-                <ContentSourceTag source={o.origin} label={originLabel(o.origin)} className="shrink-0" />
               </button>
             </li>
           );
@@ -459,63 +299,55 @@ function TargetList({ options, selected, onSelect }: { options: Target[]; select
   );
 }
 
-/** Shared (global) content from the real API; mounted only when that source is chosen. */
-function GlobalTargets({ type, selected, onSelect }: { type: AssignmentType; selected: Target | null; onSelect: (t: Target) => void }) {
-  if (type === "EVENT") return <GlobalEvents selected={selected} onSelect={onSelect} />;
-  if (type === "CHAT") return <GlobalCharacters selected={selected} onSelect={onSelect} />;
-  return <GlobalQuizzes selected={selected} onSelect={onSelect} />;
-}
-
 type PickerProps = { selected: Target | null; onSelect: (t: Target) => void };
 
-function ApiState({ loading, error, children }: { loading: boolean; error: boolean; children: React.ReactNode }) {
+function ApiState({ loading, error, children }: { loading: boolean; error: unknown; children: React.ReactNode }) {
   if (loading)
     return (
       <p className="flex items-center gap-2 text-sm text-content-muted">
-        <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-gold)]" aria-hidden="true" /> Đang tải nội dung chính thức...
+        <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-gold)]" aria-hidden="true" /> Đang tải nội dung...
       </p>
     );
-  if (error) return <p className="text-sm text-[var(--accent-danger)]">Không tải được nội dung chính thức. Thử lại sau hoặc chọn tư liệu lớp &amp; trường.</p>;
+  if (error) return <p className="text-sm text-[var(--accent-danger)]">{apiErrorMessage(error, "Không tải được nội dung. Thử lại sau.")}</p>;
   return <>{children}</>;
 }
 
-function GlobalEvents({ selected, onSelect }: PickerProps) {
+/** GET /historical-contexts */
+function ContextPicker({ selected, onSelect }: PickerProps) {
   const q = useEvents({ page: 1, limit: 100 });
   const options = (q.data?.content ?? []).map((e) => ({
-    source: "GLOBAL" as const,
-    origin: "OFFICIAL" as const,
     id: e.id,
     title: e.title,
-    meta: [e.yearLabel ?? formatYear(e.year), e.location].filter(Boolean).join(" · "),
+    meta: [e.yearLabel ?? (e.year ? (e.year < 0 ? `${-e.year} TCN` : String(e.year)) : null), e.location].filter(Boolean).join(" · "),
   }));
   return (
-    <ApiState loading={q.isLoading} error={q.isError}>
+    <ApiState loading={q.isLoading} error={q.isError ? q.error : null}>
       <TargetList options={options} selected={selected} onSelect={onSelect} />
     </ApiState>
   );
 }
 
-function GlobalCharacters({ selected, onSelect }: PickerProps) {
+/** GET /characters */
+function CharacterPicker({ selected, onSelect }: PickerProps) {
   const q = useCharacters({ page: 1, limit: 100 });
-  const options = (q.data?.content ?? []).map((c) => ({ source: "GLOBAL" as const, origin: "OFFICIAL" as const, id: c.id, title: c.name, meta: c.title }));
+  const options = (q.data?.content ?? []).map((c) => ({ id: c.id, title: c.name, meta: c.title }));
   return (
-    <ApiState loading={q.isLoading} error={q.isError}>
+    <ApiState loading={q.isLoading} error={q.isError ? q.error : null}>
       <TargetList options={options} selected={selected} onSelect={onSelect} />
     </ApiState>
   );
 }
 
-function GlobalQuizzes({ selected, onSelect }: PickerProps) {
+/** GET /quizzes */
+function QuizPicker({ selected, onSelect }: PickerProps) {
   const q = useQuizSets();
   const options = (q.data?.content ?? []).map((z) => ({
-    source: "GLOBAL" as const,
-    origin: "OFFICIAL" as const,
     id: z.quizId,
     title: z.title,
     meta: [LEVEL_LABELS[z.level], z.contextTitle].filter(Boolean).join(" · "),
   }));
   return (
-    <ApiState loading={q.isLoading} error={q.isError}>
+    <ApiState loading={q.isLoading} error={q.isError ? q.error : null}>
       <TargetList options={options} selected={selected} onSelect={onSelect} />
     </ApiState>
   );

@@ -9,17 +9,18 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClassFormDialog, academicYearLabel } from "@/components/saas/class-form-dialog";
+import { ClassRosterManager } from "@/components/saas/class-roster-manager";
 import { Panel, SectionHeading, formatDate, formatNumber } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
 import { apiErrorStatus, useApiClassroom } from "@/features/saas/hooks-api";
 import { ClassStatusBadge } from "../../_components/classroom";
-import { ApiGapNote, CopyTag, ErrorBlock, SchoolShell } from "../../_components/shared";
+import { CopyTag, ErrorBlock, SchoolShell } from "../../_components/shared";
 
-/** School Admin: one classroom (GET /classrooms/{id}) with its teacher in charge. */
+/** School Admin: one classroom (GET /classrooms/{id}) with its teacher in charge and its roster (/classrooms/{id}/students). */
 export default function SchoolClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
   return (
-    <SchoolShell title="Chi tiết lớp" description="Thông tin lớp, mã lớp và giáo viên phụ trách.">
+    <SchoolShell title="Chi tiết lớp" description="Thông tin lớp, mã lớp, giáo viên phụ trách và danh sách học sinh.">
       <ClassDetail classId={classId} />
     </SchoolShell>
   );
@@ -106,11 +107,8 @@ function ClassDetail({ classId }: { classId: string }) {
       </Panel>
 
       <div className="space-y-4">
-        <SectionHeading title="Học sinh" />
-        <ApiGapNote>
-          Danh sách học sinh của lớp và thao tác thêm / chuyển học sinh sẽ có khi máy chủ bổ sung API xếp lớp. Học sinh có thể dùng mã lớp ở
-          trên để nhận biết lớp của mình.
-        </ApiGapNote>
+        <SectionHeading title="Học sinh" description="Thêm học sinh có sẵn của trường, nhập từ CSV, chuyển lớp hoặc xóa khỏi lớp." />
+        <ClassRosterManager classId={c.id} canManage />
       </div>
 
       <ClassFormDialog

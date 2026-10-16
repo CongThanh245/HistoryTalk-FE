@@ -1,41 +1,52 @@
 "use client";
 
-// FAKE UI: màn này chạy bằng dữ liệu mẫu (src/features/saas/store.ts), chưa có API — chờ BE sprint sau.
+// Bai tap duoc giao cua hoc sinh: GET /student/assignments (API that, khong mock).
 import * as React from "react";
 import Link from "next/link";
-import { CheckCircle2, ClipboardList, Hourglass, TimerOff } from "lucide-react";
+import { CheckCircle2, ClipboardList, Hourglass, ShieldCheck, TimerOff } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Panel, SaasShell, SectionHeading } from "@/components/saas/saas-ui";
-import { StudentAssignmentCard } from "@/components/saas/student-assignment-card";
-import { StudentLocalContentList } from "@/components/saas/student-local-content-list";
+import { SaasShell } from "@/components/saas/saas-ui";
+import {
+  AssignmentListSkeleton,
+  AssignmentLoadError,
+  StudentAssignmentCard,
+  assignmentBucket,
+  parseLocal,
+  type AssignmentBucket,
+} from "@/components/saas/student-assignment-card";
 import { ROUTES } from "@/constants/routes";
 import { useRole } from "@/features/auth/usePermission";
-import { useStudentAssignments, type AssignmentBucket, type StudentAssignmentRow } from "@/features/saas/hooks-student";
+import { useMyAssignments } from "@/features/saas/hooks-assignment-api";
+import { apiErrorMessage } from "@/features/saas/hooks-api";
+import type { StudentAssignment } from "@/services/assignment.service";
 import { cn } from "@/lib/utils/cn";
 
-type Tab = "TODO" | "DUE_SOON" | "DONE" | "OVERDUE";
+type Tab = AssignmentBucket;
 
 const TABS: { id: Tab; label: string; color: string; icon: typeof ClipboardList; empty: string }[] = [
   { id: "TODO", label: "Cần làm", color: "var(--accent-gold)", icon: ClipboardList, empty: "Em đã làm hết bài được giao. Tuyệt vời!" },
   { id: "DUE_SOON", label: "Sắp hết hạn", color: "var(--gold-leaf)", icon: Hourglass, empty: "Không có bài nào hết hạn trong 48 giờ tới." },
   { id: "DONE", label: "Đã nộp", color: "var(--jade)", icon: CheckCircle2, empty: "Chưa có bài nào được nộp." },
   { id: "OVERDUE", label: "Quá hạn", color: "var(--accent-danger)", icon: TimerOff, empty: "Không có bài nào quá hạn." },
+  { id: "EXEMPTED", label: "Được miễn", color: "var(--men-lam)", icon: ShieldCheck, empty: "Em không được miễn bài nào." },
 ];
 
-const inTab = (tab: Tab, bucket: AssignmentBucket) =>
-  tab === "TODO" ? bucket === "TODO" || bucket === "DUE_SOON" : bucket === tab;
+// "Cần làm" gom ca bai sap het han.
+const inTab = (tab: Tab, bucket: AssignmentBucket) => (tab === "TODO" ? bucket === "TODO" || bucket === "DUE_SOON" : bucket === tab);
 
-/** Học sinh: bài tập & bài kiểm tra được giao (Role Matrix row 17). */
+const PAGE_SIZE = 100;
+
+/** Học sinh: bài tập được giao (Role Matrix row 17). */
 export default function MyAssignmentsPage() {
   const role = useRole();
   return (
     <SaasShell
       variant="app"
       title="Bài tập được giao"
-      description="Đọc sự kiện, trò chuyện với nhân vật và làm bài kiểm tra thầy cô đã giao cho lớp em."
+      description="Đọc bối cảnh, trò chuyện với nhân vật và làm bài trắc nghiệm thầy cô đã giao cho lớp em."
     >
       {role === "SCHOOL_STUDENT" ? (
-        <AssignmentsBoard role={role} />
+        <AssignmentsBoard />
       ) : (
         <EmptyState title="Trang dành cho học sinh" description="Chỉ tài khoản học sinh của trường mới có bài tập được giao." />
       )}
@@ -43,88 +54,99 @@ export default function MyAssignmentsPage() {
   );
 }
 
-function AssignmentsBoard({ role }: { role: string }) {
-  const { rows, classes } = useStudentAssignments(role);
+function AssignmentsBoard() {
+  const { data, isLoading, isError, error, refetch } = useMyAssignments({ page: 0, size: PAGE_SIZE });
   const [tab, setTab] = React.useState<Tab>("TODO");
 
+  const rows = React.useMemo(
+    () => (data?.items ?? []).map((a) => ({ a, bucket: assignmentBucket(a) })),
+    [data],
+  );
+
   const counts = React.useMemo(() => {
-    const c: Record<Tab, number> = { TODO: 0, DUE_SOON: 0, DONE: 0, OVERDUE: 0 };
+    const c: Record<Tab, number> = { TODO: 0, DUE_SOON: 0, DONE: 0, OVERDUE: 0, EXEMPTED: 0 };
     for (const r of rows) for (const t of TABS) if (inTab(t.id, r.bucket)) c[t.id] += 1;
     return c;
   }, [rows]);
 
-  const shown: StudentAssignmentRow[] = React.useMemo(() => {
-    const list = rows.filter((r) => inTab(tab, r.bucket));
-    // Done / overdue: most recent first.
-    return tab === "DONE" || tab === "OVERDUE" ? list.slice().reverse() : list;
+  const shown: StudentAssignment[] = React.useMemo(() => {
+    const list = rows.filter((r) => inTab(tab, r.bucket)).map((r) => r.a);
+    const due = (a: StudentAssignment) => parseLocal(a.deadline)?.getTime() ?? 0;
+    // Viec can lam: han gan nhat truoc; da xong / qua han: moi nhat truoc.
+    return list.sort((x, y) => (tab === "TODO" || tab === "DUE_SOON" ? due(x) - due(y) : due(y) - due(x)));
   }, [rows, tab]);
 
-  if (classes.length === 0) {
-    return <EmptyState title="Em chưa thuộc lớp nào" description="Khi nhà trường xếp em vào lớp, bài tập của lớp sẽ hiện ở đây." />;
+  if (isLoading) return <AssignmentListSkeleton />;
+  if (isError) {
+    return <AssignmentLoadError message={apiErrorMessage(error, "Vui lòng kiểm tra kết nối rồi thử lại.")} onRetry={() => void refetch()} />;
+  }
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        icon={ClipboardList}
+        title="Chưa có bài tập nào"
+        description="Khi thầy cô giao bài cho lớp của em, bài sẽ hiện ở đây."
+        action={
+          <Link href={ROUTES.CLASSES} className="archive-link">
+            Lớp học của em
+          </Link>
+        }
+      />
+    );
   }
 
   const active = TABS.find((t) => t.id === tab)!;
+  const truncated = (data?.totalElements ?? 0) > rows.length;
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-4">
-        <div role="tablist" aria-label="Lọc bài tập" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            const selected = t.id === tab;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                id={`tab-${t.id}`}
-                aria-selected={selected}
-                aria-controls="assignment-panel"
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  "flex items-center gap-3 rounded-[2px] border px-3 py-2.5 text-left motion-safe:transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]",
-                  selected ? "border-[var(--text-primary)]" :"border-[var(--border-strong)] bg-transparent hover:border-[var(--text-primary)]",
-                )}
-                style={selected ? { background: `color-mix(in srgb, ${t.color} 9%, var(--bg-surface))` } : undefined}
-              >
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] text-white" style={{ background: t.color }} aria-hidden="true">
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-display text-2xl font-extrabold tabular-nums leading-none text-content-text">{counts[t.id]}</span>
-                  <span className="block truncate text-[12px] font-bold text-content-muted">{t.label}</span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div id="assignment-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="space-y-3">
-          {shown.length === 0 ? (
-            <EmptyState icon={active.icon} title={active.label} description={active.empty} size="sm" />
-          ) : (
-            shown.map((row) => <StudentAssignmentCard key={row.assignment.id} row={row} />)
-          )}
-        </div>
+    <div className="space-y-4">
+      <div role="tablist" aria-label="Lọc bài tập" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          const selected = t.id === tab;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              id={`tab-${t.id}`}
+              aria-selected={selected}
+              aria-controls="assignment-panel"
+              onClick={() => setTab(t.id)}
+              className={cn(
+                "flex items-center gap-3 rounded-[2px] border px-3 py-2.5 text-left motion-safe:transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]",
+                selected ? "border-[var(--text-primary)]" : "border-[var(--border-strong)] bg-transparent hover:border-[var(--text-primary)]",
+              )}
+              style={selected ? { background: `color-mix(in srgb, ${t.color} 9%, var(--bg-surface))` } : undefined}
+            >
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] text-white" style={{ background: t.color }} aria-hidden="true">
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-display text-2xl font-extrabold tabular-nums leading-none text-content-text">{counts[t.id]}</span>
+                <span className="block truncate text-[12px] font-bold text-content-muted">{t.label}</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      <Panel>
-        <SectionHeading
-          title="Tư liệu lớp & trường"
-          description="Bối cảnh, nhân vật và bài luyện tập do thầy cô soạn cho lớp và nhà trường dùng chung."
-        />
-        <div className="space-y-5">
-          {classes.map((c) => (
-            <div key={c.id} className="space-y-2">
-              {classes.length > 1 && <p className="text-[13px] font-bold text-content-text">Lớp {c.name}</p>}
-              <StudentLocalContentList classroom={c} role={role} />
-            </div>
-          ))}
-        </div>
-        <Link href={ROUTES.GRADES} className="archive-link">
-          Xem bảng điểm
-        </Link>
-      </Panel>
+      <div id="assignment-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="space-y-3">
+        {shown.length === 0 ? (
+          <EmptyState icon={active.icon} title={active.label} description={active.empty} size="sm" />
+        ) : (
+          shown.map((a) => <StudentAssignmentCard key={a.assignmentId} assignment={a} />)
+        )}
+      </div>
+
+      {truncated && (
+        <p className="text-[12px] text-content-muted">
+          Đang hiện {rows.length}/{data?.totalElements} bài gần nhất.
+        </p>
+      )}
+      <Link href={ROUTES.GRADES} className="archive-link">
+        Xem bảng điểm
+      </Link>
     </div>
   );
 }

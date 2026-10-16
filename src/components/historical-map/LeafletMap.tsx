@@ -14,7 +14,9 @@ import type {
   Marker,
 } from "leaflet";
 import type { GeoJsonObject } from "geojson";
+import { useQuery } from "@tanstack/react-query";
 import type { MapPin } from "@/services/map-pin.service";
+import { mapFocusService } from "@/services/map-focus.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { cn } from "@/lib/utils/cn";
 import { MAP_BOUNDS, type MapCoordinates, type OverlayPin } from "./map-overlay.types";
@@ -370,8 +372,18 @@ export function LeafletMap({
   }, [focusKey, focusLatitude, focusLongitude, mapReady]);
 
   const targetPin = pins.find((item) => item.pinId === selectedPinId);
-  const targetLatitude = targetPin?.latitude;
-  const targetLongitude = targetPin?.longitude;
+  // Diem camera staff dat cho boi canh (map-focuses): uu tien focus mac dinh, roi focus dau tien.
+  const { data: contextFocuses } = useQuery({
+    queryKey: ["map-focuses", targetPin?.contextId ?? ""],
+    queryFn: () => mapFocusService.list(targetPin!.contextId),
+    enabled: Boolean(targetPin?.contextId),
+    staleTime: 5 * 60 * 1000,
+  });
+  const activeFocuses = (contextFocuses ?? []).filter((f) => f.isActive).sort((a, b) => a.orderIndex - b.orderIndex);
+  const cameraFocus = activeFocuses.find((f) => f.isDefault) ?? activeFocuses[0];
+  const targetLatitude = cameraFocus?.latitude ?? targetPin?.latitude;
+  const targetLongitude = cameraFocus?.longitude ?? targetPin?.longitude;
+  const targetZoom = cameraFocus?.zoomLevel ?? 9;
 
   // One camera effect prevents overview and selection animations competing.
   useEffect(() => {
@@ -383,7 +395,7 @@ export function LeafletMap({
       if (!panelDismissed && typeof targetLatitude === "number" && Number.isFinite(targetLatitude) && typeof targetLongitude === "number" && Number.isFinite(targetLongitude)) {
         cameraOwnerRef.current = "battle";
         map.stop();
-        map.flyTo([targetLatitude, targetLongitude], 9, { duration: 1.2, animate: !reducedMotion });
+        map.flyTo([targetLatitude, targetLongitude], targetZoom, { duration: 1.2, animate: !reducedMotion });
       } else if (cameraOwnerRef.current === "overlay") {
         // A custom-layer pin (e.g. a deep link) owns the camera: keep it there.
         cameraOwnerRef.current = null;
@@ -394,7 +406,7 @@ export function LeafletMap({
       }
     });
     return () => cancelAnimationFrame(frame);
-  }, [selectedPinId, targetLatitude, targetLongitude, panelDismissed, mapReady, isAdding]);
+  }, [selectedPinId, targetLatitude, targetLongitude, targetZoom, panelDismissed, mapReady, isAdding]);
 
   return (
     <>

@@ -1,6 +1,6 @@
 "use client";
 
-// Bối cảnh & nhân vật (?kind=CONTEXT|CHARACTER): API Sprint 6. Không có kind = câu đố dữ liệu mẫu (src/features/saas/store.ts).
+// Bối cảnh & nhân vật (?kind=CONTEXT|CHARACTER): API Sprint 6. Thiếu kind thì không gọi được API chi tiết.
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
@@ -10,12 +10,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SaasShell } from "@/components/saas/saas-ui";
 import { QueryState } from "@/components/saas/local-content-ui";
 import { LocalApiEditor } from "@/components/saas/teaching-local-api-editor";
-import { LocalContentEditor } from "@/components/saas/teaching-local-editor";
 import { ROUTES } from "@/constants/routes";
-import { useRole } from "@/features/auth/usePermission";
 import { apiErrorStatus } from "@/features/saas/hooks-api";
 import { useLocalItem } from "@/features/saas/hooks-local-content";
-import { useTeachingData } from "@/features/saas/hooks-teaching";
 import type { LocalKind } from "@/services/local-content.service";
 
 /** Edit / view local history content — Role Matrix rows 12–14. */
@@ -34,11 +31,15 @@ function LocalContentRoute() {
   return (
     <SaasShell
       variant="app"
-      live={!!kind}
+      live
       title="Tư liệu lớp & trường"
       description="Chỉnh sửa nội dung bạn soạn. Quản trị trường duyệt trước khi học sinh thấy."
     >
-      {kind ? <ApiDetail kind={kind} id={id} /> : <MockDetail id={id} />}
+      {kind ? (
+        <ApiDetail kind={kind} id={id} />
+      ) : (
+        <EmptyState title="Không tìm thấy nội dung" description="Đường dẫn thiếu loại nội dung (bối cảnh hoặc nhân vật)." action={backLink} />
+      )}
     </SaasShell>
   );
 }
@@ -66,13 +67,4 @@ function ApiDetail({ kind, id }: { kind: LocalKind; id: string }) {
       {query.data && <LocalApiEditor key={`${query.data.id}:${query.data.updatedAt}`} kind={kind} item={query.data} />}
     </QueryState>
   );
-}
-
-function MockDetail({ id }: { id: string }) {
-  const data = useTeachingData(useRole());
-  const item = data.localContent.find((c) => c.id === id);
-  if (!item) {
-    return <EmptyState title="Không tìm thấy nội dung" description="Nội dung đã bị xóa hoặc không thuộc các lớp của bạn." action={backLink} />;
-  }
-  return <LocalContentEditor key={item.id} kind={item.kind} item={item} data={data} />;
 }

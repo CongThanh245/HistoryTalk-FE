@@ -1,19 +1,20 @@
 "use client";
 
-// Bối cảnh & nhân vật: API Sprint 6. Câu đố vẫn chạy dữ liệu mẫu (src/features/saas/store.ts) — BE chưa có API.
+// Bối cảnh & nhân vật: API Sprint 6. BE chưa có API câu đố địa phương (?kind=QUIZ chỉ báo trống).
 import * as React from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { SaasShell } from "@/components/saas/saas-ui";
 import { LocalApiEditor } from "@/components/saas/teaching-local-api-editor";
-import { LocalContentEditor } from "@/components/saas/teaching-local-editor";
-import { useRole } from "@/features/auth/usePermission";
-import { LOCAL_KIND_LABELS, useTeachingData } from "@/features/saas/hooks-teaching";
-import type { LocalContentKind } from "@/features/saas/types";
+import { ROUTES } from "@/constants/routes";
+import { LOCAL_KINDS } from "@/features/saas/hooks-local-content";
+import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
+import type { LocalKind } from "@/services/local-content.service";
 
-const KINDS: LocalContentKind[] = ["CONTEXT", "CHARACTER", "QUIZ"];
-
-/** Soạn nội dung lịch sử địa phương mới (?kind=CONTEXT|CHARACTER|QUIZ) — Role Matrix row 12. */
+/** Soạn nội dung lịch sử địa phương mới (?kind=CONTEXT|CHARACTER) — Role Matrix row 12. */
 export default function NewLocalContentPage() {
   return (
     <React.Suspense fallback={null}>
@@ -23,26 +24,31 @@ export default function NewLocalContentPage() {
 }
 
 function NewLocalContent() {
-  const params = useSearchParams();
-  const raw = params.get("kind");
-  const kind: LocalContentKind = KINDS.includes(raw as LocalContentKind) ? (raw as LocalContentKind) : "CONTEXT";
+  const raw = useSearchParams().get("kind");
+  if (raw === "QUIZ") {
+    return (
+      <SaasShell variant="app" live title="Soạn câu đố mới">
+        <EmptyState
+          title="Chưa soạn được câu đố địa phương"
+          description="BE chưa có API quiz địa phương. Hiện chỉ soạn được bối cảnh và nhân vật."
+          action={
+            <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Tư liệu lớp &amp; trường
+            </Link>
+          }
+        />
+      </SaasShell>
+    );
+  }
+  const kind: LocalKind = LOCAL_KINDS.includes(raw as LocalKind) ? (raw as LocalKind) : "CONTEXT";
   return (
     <SaasShell
       variant="app"
-      live={kind !== "QUIZ"}
+      live
       title={`Soạn ${LOCAL_KIND_LABELS[kind].toLowerCase()} mới`}
-      description={
-        kind === "QUIZ"
-          ? "Lưu nháp để soạn tiếp. Nội dung cho lớp bạn tự xuất bản; nội dung cho toàn trường cần quản trị trường duyệt."
-          : "Nội dung được lưu thành bản nháp; quản trị trường duyệt trước khi học sinh thấy."
-      }
+      description="Nội dung được lưu thành bản nháp; quản trị trường duyệt trước khi học sinh thấy."
     >
-      {kind === "QUIZ" ? <MockQuizEditor /> : <LocalApiEditor key={kind} kind={kind} />}
+      <LocalApiEditor key={kind} kind={kind} />
     </SaasShell>
   );
-}
-
-function MockQuizEditor() {
-  const data = useTeachingData(useRole());
-  return <LocalContentEditor kind="QUIZ" data={data} />;
 }

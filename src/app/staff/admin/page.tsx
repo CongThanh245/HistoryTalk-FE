@@ -27,6 +27,9 @@ import {
   TrophyIcon,
   HelpCircleIcon,
   FlameIcon,
+  CoinsIcon,
+  CpuIcon,
+  SchoolIcon,
   Gauge,
 } from "lucide-react";
 import Image from "next/image";
@@ -36,6 +39,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { isValidUrl } from "@/lib/utils/url";
 import { cn } from "@/lib/utils/cn";
+import { useSystemAdminComprehensiveDashboard } from "@/features/dashboard/hooks";
 import {
   useAdminOverview,
   useAdminUserAnalytics,
@@ -543,6 +547,11 @@ export default function AdminDashboardPage() {
   const { data: revenue, isLoading: revenueLoading } = useAdminRevenueAnalytics({ from, to, granularity });
   const { data: tiers, isLoading: tiersLoading } = useAdminTierAnalytics({ from, to, granularity });
   const { data: quiz, isLoading: quizLoading } = useAdminQuizAnalytics({ from, to, granularity });
+  // GET /admin/dashboard — token B2B/B2C, JVM chi tiet, tong quan nen tang.
+  const { data: comprehensive, isLoading: comprehensiveLoading } = useSystemAdminComprehensiveDashboard();
+  const tokenSummary = comprehensive?.tokenSummary;
+  const jvm = comprehensive?.jvmHealth;
+  const platform = comprehensive?.platformOverview;
 
   const anyLoading =
     ovLoading ||
@@ -656,6 +665,49 @@ export default function AdminDashboardPage() {
                 {health?.lastCheckedAt && <span className="text-[10px]">Cập nhật: {fmtDate(health.lastCheckedAt)}</span>}
               </span>
             }
+          />
+        </div>
+
+        {/* ── Row 1b: Token & JVM (GET /admin/dashboard) ── */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <KpiCard
+            title="Token B2B đã cấp"
+            value={(tokenSummary?.totalTokensB2bAllocated ?? 0).toLocaleString()}
+            icon={SchoolIcon}
+            color="var(--accent-blue)"
+            loading={comprehensiveLoading}
+            sub={<span>Trường: <strong>{(platform?.totalSchools ?? 0).toLocaleString()}</strong></span>}
+          />
+          <KpiCard
+            title="Token B2C đã dùng"
+            value={(tokenSummary?.totalTokensB2cConsumed ?? 0).toLocaleString()}
+            icon={CoinsIcon}
+            color="var(--accent-gold)"
+            loading={comprehensiveLoading}
+          />
+          <KpiCard
+            title="Token toàn hệ thống"
+            value={(tokenSummary?.totalTokensSystemConsumed ?? 0).toLocaleString()}
+            icon={FlameIcon}
+            color="var(--accent-danger)"
+            loading={comprehensiveLoading}
+            sub={<span>Quiz: <strong>{(platform?.totalQuizzes ?? 0).toLocaleString()}</strong></span>}
+          />
+          <KpiCard
+            title="CPU JVM"
+            value={`${(jvm?.cpuUsagePercentage ?? 0).toFixed(1)}%`}
+            icon={CpuIcon}
+            color="var(--quest-quiz)"
+            loading={comprehensiveLoading}
+            sub={<span>Threads: <strong>{jvm?.activeThreadCount ?? 0}</strong> · Uptime: <strong>{formatUptime(jvm?.uptimeSeconds)}</strong></span>}
+          />
+          <KpiCard
+            title="Bộ nhớ JVM"
+            value={`${(jvm?.memoryUsagePercentage ?? 0).toFixed(1)}%`}
+            icon={ServerIcon}
+            color="var(--status-success)"
+            loading={comprehensiveLoading}
+            sub={<span>{jvm?.usedMemoryMb ?? 0} / {jvm?.maxMemoryMb ?? 0} MB (trống {jvm?.freeMemoryMb ?? 0} MB)</span>}
           />
         </div>
 
