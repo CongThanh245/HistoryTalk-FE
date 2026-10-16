@@ -8,7 +8,7 @@ interface QuizProgressBarProps {
   quizTitle: string;
   totalQuestions: number;
   answeredCount: number;
-  answers: Record<string, number>;
+  answers: Record<string, unknown>;
   questionIds: string[];
   elapsedSeconds: number;
   limitedTime?: number;

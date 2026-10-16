@@ -26,8 +26,6 @@ export default function ErrorBoundary({
       <div className="absolute top-0 left-0 right-0 h-[3px] bg-[var(--accent-gold)]" />
 
       <div className="relative z-10 flex flex-col items-center text-center max-w-lg mx-auto">
-        {/* 史 — "sử", history */}
-        <span className="archive-seal mb-6" aria-hidden="true">史</span>
 
 
         <h1 className="archive-title mb-4 text-[clamp(1.8rem,5vw,2.75rem)]">

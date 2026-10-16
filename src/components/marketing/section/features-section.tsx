@@ -103,12 +103,6 @@ export function FeaturesSection() {
       className="relative border-t border-(--text-primary) h-[480vh]"
     >
       <div className="sticky top-0 h-svh overflow-hidden bg-(--bg-main)">
-        <span
-          aria-hidden="true"
-          className="archive-seal pointer-events-none absolute right-6 top-24 hidden lg:inline-grid"
-        >
-          國史
-        </span>
 
         <Container className="relative z-10 flex h-full flex-col justify-center py-16 md:py-24 lg:py-32">
           {/* Header */}

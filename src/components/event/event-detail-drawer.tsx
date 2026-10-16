@@ -332,8 +332,6 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                     {yearSuffix}
                   </span>
                 </div>
-                {/* 史 — "sử", history */}
-                <span className="archive-seal live-stamp hidden sm:inline-grid ml-auto w-[44px] h-[44px] text-[19px] mb-1" aria-hidden="true">史</span>
               </div>
               <h2 className="archive-title is-plain live-ink mt-2 text-[26px] md:text-[30px]">
                 {event.title}

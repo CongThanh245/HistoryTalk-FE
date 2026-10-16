@@ -13,6 +13,11 @@ import {
   type SubmitQuizResponse,
 } from "@/services/quiz.service";
 import { useQuizSets, useStartQuiz, useSubmitQuiz } from "@/features/quiz/hooks";
+import {
+  isAnswerComplete,
+  toAnswerPayload,
+  type AnswerData,
+} from "@/features/quiz/question-data";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 import { queryKeys } from "@/shared/query-key";
 import { cn } from "@/lib/utils/cn";
@@ -47,12 +52,12 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
   const [phase, setPhase] = useState<QuizPhase>("detail");
   const [sessionId, setSessionId] = useState("");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [answers, setAnswers] = useState<Record<string, AnswerData>>({});
   const [startTime, setStartTime] = useState(0);
   const [limitedTime, setLimitedTime] = useState<number | undefined>();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [submitResult, setSubmitResult] = useState<SubmitQuizResponse | null>(null);
-  const [initialAnswers, setInitialAnswers] = useState<Record<string, number>>({});
+  const [initialAnswers, setInitialAnswers] = useState<Record<string, AnswerData>>({});
   const [initialFlagged, setInitialFlagged] = useState<string[]>([]);
   const [practiceMode, setPracticeMode] = useState(false);
   const [resumeState, setResumeState] = useState<{
@@ -124,17 +129,16 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
   }, [resumeState]);
 
   const handleSubmit = useCallback(
-    async (finalAnswers: Record<string, number>, elapsedSeconds: number) => {
+    async (finalAnswers: Record<string, AnswerData>, elapsedSeconds: number) => {
       setAnswers(finalAnswers);
       try {
         const payload: SubmitQuizPayload = {
           sessionId,
-          answers: Object.entries(finalAnswers).map(
-            ([questionId, selectedAnswer]) => ({
-              questionId,
-              selectedAnswer,
-            }),
-          ),
+          answers: questions.flatMap((question) => {
+            const answer = finalAnswers[question.questionId];
+            if (!answer || !isAnswerComplete(question, answer)) return [];
+            return [{ questionId: question.questionId, answerData: toAnswerPayload(question, answer) }];
+          }),
         };
         const result = await submitQuizMutation.mutateAsync(payload);
         setSubmitResult({ ...result, durationSeconds: elapsedSeconds });
@@ -158,7 +162,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
         return false;
       }
     },
-    [sessionId, submitQuizMutation, queryClient, currentQuiz.quizId],
+    [sessionId, questions, submitQuizMutation, queryClient, currentQuiz.quizId],
   );
 
   const resetSession = useCallback(() => {

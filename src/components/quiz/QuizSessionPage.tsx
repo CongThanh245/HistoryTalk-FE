@@ -5,10 +5,12 @@ import React, {
   useCallback,
   useRef,
   useEffect,
+  useMemo,
 } from "react";
 import { CheckCircle2 } from "lucide-react";
 import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
 import { saveQuizProgress } from "@/features/quiz/progress-storage";
+import { isAnswerComplete, type AnswerData } from "@/features/quiz/question-data";
 import { cn } from "@/lib/utils/cn";
 import { QuizProgressBar } from "./QuizProgressBar";
 import { QuizQuestionCard } from "./QuizQuestionCard";
@@ -19,13 +21,13 @@ interface QuizSessionPageProps {
   quiz: QuizSet;
   questions: QuizQuestion[];
   sessionId: string;
-  onSubmit: (answers: Record<string, number>, elapsedSeconds: number) => Promise<boolean>;
+  onSubmit: (answers: Record<string, AnswerData>, elapsedSeconds: number) => Promise<boolean>;
   onBack: () => void;
   onGoHome: () => void;
   onRetry: () => void;
   startTime: number;
   limitedTime?: number;
-  initialAnswers?: Record<string, number>;
+  initialAnswers?: Record<string, AnswerData>;
   initialFlagged?: string[];
   /** Che do luyen tap: hien dung/sai ngay sau moi cau, chay song song che do thi hien tai. */
   practiceMode?: boolean;
@@ -45,18 +47,27 @@ export function QuizSessionPage({
   initialFlagged,
   practiceMode = false,
 }: QuizSessionPageProps) {
-  const [answers, setAnswers] = useState<Record<string, number>>(initialAnswers ?? {});
+  const [answers, setAnswers] = useState<Record<string, AnswerData>>(initialAnswers ?? {});
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   // Cau nguoi dung tu danh dau de quay lai xem truoc khi nop bai (khong gui len server).
   const [flagged, setFlagged] = useState<Set<string>>(() => new Set(initialFlagged ?? []));
-  const answersRef = useRef<Record<string, number>>({});
+  const answersRef = useRef<Record<string, AnswerData>>({});
   const submittedRef = useRef(false);
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasTimeLimit = typeof limitedTime === "number" && limitedTime > 0;
 
-  const answeredCount = Object.keys(answers).length;
+  // Cau dien chu / noi cap chi tinh la "da tra loi" khi nhap du.
+  const completedAnswers = useMemo(() => {
+    const result: Record<string, AnswerData> = {};
+    for (const q of questions) {
+      const answer = answers[q.questionId];
+      if (answer && isAnswerComplete(q, answer)) result[q.questionId] = answer;
+    }
+    return result;
+  }, [answers, questions]);
+  const answeredCount = Object.keys(completedAnswers).length;
   const allAnswered = answeredCount === questions.length;
   const questionIds = questions.map((q) => q.questionId);
 
@@ -65,7 +76,7 @@ export function QuizSessionPage({
   }, [answers]);
 
   const submitOnce = useCallback(
-    async (finalAnswers: Record<string, number>, elapsed: number) => {
+    async (finalAnswers: Record<string, AnswerData>, elapsed: number) => {
       if (submittedRef.current) return false;
       submittedRef.current = true;
       setIsSubmitted(true);
@@ -95,17 +106,22 @@ export function QuizSessionPage({
   }, [hasTimeLimit, limitedTime, startTime, submitOnce]);
 
   const handleAnswer = useCallback(
-    (questionId: string, answerIndex: number) => {
+    (questionId: string, answer: AnswerData) => {
       setAnswers((prev) => {
         const alreadyAnswered = prev[questionId] !== undefined;
-        const next = { ...prev, [questionId]: answerIndex };
+        const next = { ...prev, [questionId]: answer };
+        const currentIdx = questions.findIndex(
+          (q) => q.questionId === questionId,
+        );
 
         // Che do luyen tap: giu nguyen vi tri de nguoi dung doc phan hoi
-        // dung/sai truoc, khong tu dong cuon sang cau tiep theo.
-        if (!alreadyAnswered && !practiceMode) {
-          const currentIdx = questions.findIndex(
-            (q) => q.questionId === questionId,
-          );
+        // dung/sai truoc, khong tu dong cuon sang cau tiep theo. Chi tu cuon
+        // voi cau trac nghiem — cau dien chu / noi cap con dang nhap tiep.
+        if (
+          !alreadyAnswered &&
+          !practiceMode &&
+          questions[currentIdx]?.questionType === "MULTIPLE_CHOICE"
+        ) {
           const nextQ = questions[currentIdx + 1];
           if (nextQ) {
             setTimeout(() => {
@@ -173,7 +189,7 @@ export function QuizSessionPage({
         quizTitle={quiz.title}
         totalQuestions={questions.length}
         answeredCount={answeredCount}
-        answers={answers}
+        answers={completedAnswers}
         questionIds={questionIds}
         elapsedSeconds={elapsedSeconds}
         limitedTime={limitedTime}
@@ -203,7 +219,7 @@ export function QuizSessionPage({
               <QuizQuestionCard
                 question={q}
                 index={idx}
-                selectedAnswer={answers[q.questionId] ?? null}
+                answer={answers[q.questionId]}
                 onAnswer={handleAnswer}
                 flagged={flagged.has(q.questionId)}
                 onToggleFlag={toggleFlag}

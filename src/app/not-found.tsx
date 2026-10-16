@@ -157,8 +157,6 @@ export default function NotFoundPage() {
           {/* Divider */}
           <div className="r4 flex items-center gap-3 mb-8 w-full max-w-xs">
             <div className="flex-1 h-px bg-[var(--text-primary)]" />
-            {/* 史 — "sử", history */}
-            <span className="archive-seal w-11 h-11 text-[17px]" aria-hidden="true">史</span>
             <div className="flex-1 h-px bg-[var(--text-primary)]" />
           </div>
 

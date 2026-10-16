@@ -38,6 +38,7 @@ export const ROUTES = {
   CLASS_DETAIL: (classId: string) => `/classes/${classId}`,
   /** Tư liệu lớp & trường: class + school content for the class workspace. */
   CLASS_MATERIALS: "/classes/materials",
+  CLASS_MATERIAL_DETAIL: (kind: "CONTEXT" | "CHARACTER", id: string) => `/classes/materials/${kind.toLowerCase()}/${id}`,
 
   // ── Giáo viên: dashboard, bài tập, lịch sử địa phương ──
   TEACHING: {
@@ -47,7 +48,8 @@ export const ROUTES = {
     ASSIGNMENT_DETAIL: (id: string) => `/teaching/assignments/${id}`,
     LOCAL: "/teaching/local",
     LOCAL_NEW: (kind: "CONTEXT" | "CHARACTER" | "QUIZ") => `/teaching/local/new?kind=${kind}`,
-    LOCAL_EDIT: (id: string) => `/teaching/local/${id}`,
+    /** `kind` is required for API-backed contexts / characters (separate endpoints); mock quizzes omit it. */
+    LOCAL_EDIT: (id: string, kind?: "CONTEXT" | "CHARACTER") => `/teaching/local/${id}${kind ? `?kind=${kind}` : ""}`,
   },
 
   // ── Học sinh: bài được giao, bảng điểm (bảng điểm cũng mở cho Customer) ──

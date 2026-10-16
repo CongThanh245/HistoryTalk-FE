@@ -76,8 +76,6 @@ export function HomeBanner() {
               <div className="home-banner-portrait">
                 <Image src={activeHero.src} alt={`Chân dung ${activeHero.name}`} fill priority sizes="(max-width: 768px) 290px, 350px" className="object-cover object-top" />
               </div>
-              {/* 國史 — "quốc sử", national history */}
-              <span className="archive-seal home-banner-seal" aria-hidden="true">國史</span>
             </div>
             <div className="home-banner-caption">
               <p className="archive-title is-plain home-banner-spotlight-name">{activeHero.name}</p>

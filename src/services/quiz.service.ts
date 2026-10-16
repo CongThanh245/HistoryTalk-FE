@@ -1,4 +1,12 @@
 import { axiosClient } from "@/configs/axios.client";
+import {
+  parseAnswerData,
+  parseQuestionData,
+  parseQuestionType,
+  type AnswerData,
+  type QuestionData,
+  type QuestionType,
+} from "@/features/quiz/question-data";
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -14,13 +22,14 @@ export type QuizEra =
 export interface QuizQuestion {
   questionId: string;
   content: string;
-  options: string[];
-  correctAnswer: number;
+  questionType: QuestionType;
+  /** Khi bat dau lam bai BE luoc dap an; o man chi tiet ket qua co day du. */
+  questionData: QuestionData;
   explanation?: string;
 }
 
 export interface QuizSessionQuestion extends QuizQuestion {
-  selectedAnswer: number | null;
+  submittedAnswer: AnswerData | null;
   correct: boolean;
 }
 
@@ -119,7 +128,7 @@ export interface StartQuizResponse {
 
 export interface SubmitQuizPayload {
   sessionId: string;
-  answers: { questionId: string; selectedAnswer: number }[];
+  answers: { questionId: string; answerData: AnswerData }[];
 }
 
 export interface SubmitQuizResponse {
@@ -155,10 +164,6 @@ function asNumber(value: unknown, fallback = 0) {
 
 function asOptionalNumber(value: unknown) {
   return typeof value === "number" ? value : undefined;
-}
-
-function asStringArray(value: unknown) {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
 
 export function mapQuizSet(rawValue: unknown): QuizSet {
@@ -199,8 +204,8 @@ export function mapQuizQuestion(rawValue: unknown): QuizQuestion {
   return {
     questionId: asString(raw.questionId),
     content: asString(raw.content),
-    options: asStringArray(raw.options),
-    correctAnswer: asNumber(raw.correctAnswer),
+    questionType: parseQuestionType(raw.questionType),
+    questionData: parseQuestionData(raw),
     explanation: asOptionalString(raw.explanation),
   };
 }
@@ -231,16 +236,13 @@ export function mapQuizSessionDetail(rawValue: unknown): QuizSessionDetail {
       ? raw.questions.map((questionValue) => {
           const question = asRecord(questionValue);
           return {
-            questionId: asString(question.questionId),
-            content: asString(question.content),
-            options: asStringArray(question.options),
-            correctAnswer: asNumber(question.correctAnswer),
-            selectedAnswer:
-              typeof question.selectedAnswer === "number"
-                ? question.selectedAnswer
+            ...mapQuizQuestion(question),
+            submittedAnswer:
+              question.submittedAnswer && typeof question.submittedAnswer === "object"
+                ? parseAnswerData(question.submittedAnswer)
                 : null,
-            explanation: asOptionalString(question.explanation),
-            correct: Boolean(question.correct),
+            // BE (Jackson) co the serialize `isCorrect` thanh `correct`.
+            correct: Boolean(question.isCorrect ?? question.correct),
           };
         })
       : [],
@@ -278,10 +280,11 @@ export const quizService = {
     return mapQuizSet(res.data.data);
   },
 
-  // POST /quizzes/:quizId/start
+  // POST /quizzes/:quizId/start?limitedTime=N
   startQuiz: async (quizId: string, limitedTime?: number): Promise<StartQuizResponse> => {
-    const payload = limitedTime ? { limitedTime } : {};
-    const res = await axiosClient.post(`/quizzes/${quizId}/start`, payload);
+    const res = await axiosClient.post(`/quizzes/${quizId}/start`, null, {
+      params: limitedTime ? { limitedTime } : undefined,
+    });
     const raw = res.data.data;
     return {
       sessionId: raw.sessionId,

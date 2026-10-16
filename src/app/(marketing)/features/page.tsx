@@ -467,9 +467,6 @@ export default function FeaturePage() {
 
       <section className="relative min-h-[calc(100svh-80px)] overflow-hidden pb-20 pt-32">
         <div className="absolute inset-0 pointer-events-none opacity-60 bg-[linear-gradient(var(--border-default)_1px,transparent_1px),linear-gradient(90deg,var(--border-default)_1px,transparent_1px)] bg-size-[72px_72px]" />
-        <span aria-hidden="true" className="archive-seal pointer-events-none absolute right-8 top-28 z-10 hidden xl:inline-grid">
-          國史
-        </span>
 
         <Container className="relative z-10">
           <div className="grid items-center gap-12 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16">

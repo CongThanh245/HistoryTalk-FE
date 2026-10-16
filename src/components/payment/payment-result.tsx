@@ -302,7 +302,6 @@ export default function PaymentResult() {
                 <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--text-secondary)]">{cfg.desc}</p>
               </div>
             </div>
-            <span className="archive-seal hidden shrink-0 sm:inline-grid" aria-hidden="true">國史</span>
           </div>
 
           <dl className="mt-4 grid rounded-[2px] border border-[var(--text-primary)] sm:grid-cols-3">

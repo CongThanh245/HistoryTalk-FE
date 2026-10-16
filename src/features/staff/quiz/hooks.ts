@@ -9,6 +9,7 @@ import {
   type UpdateQuestionPayload,
   type ImportQuizFromCsvResponse,
   type GetQuestionReportsParams,
+  type GetQuestionBankParams,
 } from "@/services/staff.quiz.service";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
@@ -200,5 +201,70 @@ export function useResolveQuestionReport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
     },
+  });
+}
+
+// ── Question Bank ───────────────────────────────────────────
+
+// GET /staff/question-bank — ngân hàng câu hỏi độc lập
+export function useQuestionBank(params?: GetQuestionBankParams) {
+  return useQuery({
+    queryKey: queryKeys.staffQuizzes.questionBank(params),
+    queryFn: () => staffQuizService.getQuestionBank(params),
+    placeholderData: (prev) => prev,
+  });
+}
+
+function useInvalidateQuestionBank() {
+  const queryClient = useQueryClient();
+  // Gắn / gỡ / sửa câu hỏi trong bank làm thay đổi cả danh sách quiz.
+  return () => queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
+}
+
+// POST /staff/question-bank
+export function useCreateBankQuestion() {
+  const invalidate = useInvalidateQuestionBank();
+  return useMutation({
+    mutationFn: (payload: CreateQuestionPayload) => staffQuizService.createBankQuestion(payload),
+    onSuccess: invalidate,
+  });
+}
+
+// PUT /staff/question-bank/{questionId}
+export function useUpdateBankQuestion() {
+  const invalidate = useInvalidateQuestionBank();
+  return useMutation({
+    mutationFn: ({ questionId, payload }: { questionId: string; payload: UpdateQuestionPayload }) =>
+      staffQuizService.updateBankQuestion(questionId, payload),
+    onSuccess: invalidate,
+  });
+}
+
+// PATCH /staff/question-bank/{questionId}/soft-delete
+export function useSoftDeleteBankQuestion() {
+  const invalidate = useInvalidateQuestionBank();
+  return useMutation({
+    mutationFn: (questionId: string) => staffQuizService.softDeleteBankQuestion(questionId),
+    onSuccess: invalidate,
+  });
+}
+
+// POST /staff/question-bank/{questionId}/attach/{quizId}
+export function useAttachBankQuestion() {
+  const invalidate = useInvalidateQuestionBank();
+  return useMutation({
+    mutationFn: ({ questionId, quizId }: { questionId: string; quizId: string }) =>
+      staffQuizService.attachBankQuestion(questionId, quizId),
+    onSuccess: invalidate,
+  });
+}
+
+// DELETE /staff/question-bank/{questionId}/detach/{quizId}
+export function useDetachBankQuestion() {
+  const invalidate = useInvalidateQuestionBank();
+  return useMutation({
+    mutationFn: ({ questionId, quizId }: { questionId: string; quizId: string }) =>
+      staffQuizService.detachBankQuestion(questionId, quizId),
+    onSuccess: invalidate,
   });
 }

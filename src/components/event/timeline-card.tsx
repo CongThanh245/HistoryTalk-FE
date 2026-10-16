@@ -167,8 +167,6 @@ export function TimelineStripCard({
                 {era}
               </span>
             </div>
-            {/* 史 — "sử", history: a stamp on the paper, not on the painting */}
-            <span className="archive-seal live-stamp hidden sm:inline-grid w-[46px] h-[46px] text-[20px] mb-1" aria-hidden="true">史</span>
           </div>
 
           <h2 className="archive-title is-plain live-ink mt-3 text-[22px] sm:text-[28px] text-[var(--text-primary)]">

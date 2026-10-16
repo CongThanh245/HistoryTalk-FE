@@ -47,7 +47,7 @@ import {
   useDebouncedValue,
   type AdminAccountValues,
 } from "@/components/saas/admin-school-shared";
-import { Field, SearchInput, SectionHeading, formatNumber, isValidEmail } from "@/components/saas/saas-ui";
+import { Field, SearchInput, formatNumber, isValidEmail } from "@/components/saas/saas-ui";
 import {
   apiErrorMessage,
   apiErrorStatus,
@@ -247,11 +247,13 @@ export function SchoolAdminsTab({ school }: { school: ApiSchool }) {
 
   return (
     <div className="space-y-4">
-      <SectionHeading
-        title="Quản trị trường"
-        description="Quản trị trường tạo tài khoản giáo viên, học sinh, lớp học và phân bổ token của trường. Họ đăng nhập bằng email."
-        actions={addButton}
-      />
+      {/* The tab label already names the section, so no second heading here. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-2xl text-sm leading-relaxed text-content-muted">
+          Quản trị trường tạo tài khoản giáo viên, học sinh, lớp học và phân bổ token của trường. Họ đăng nhập bằng email.
+        </p>
+        {addButton}
+      </div>
 
       {counts.active === 0 && (counts.total ?? 0) > 0 && (
         <p

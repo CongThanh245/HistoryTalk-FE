@@ -3,7 +3,8 @@
 import React, { useMemo, useState } from "react";
 import { CalendarDays, CheckCircle2, Clock3, Eye, Minus, RotateCcw, TrendingDown, TrendingUp, XCircle } from "lucide-react";
 import { useQuizSessionDetail } from "@/features/quiz/hooks";
-import type { QuizResult, QuizSessionQuestion } from "@/services/quiz.service";
+import type { QuizResult } from "@/services/quiz.service";
+import { QuestionAnswerReview } from "./QuestionAnswerReview";
 import { cn } from "@/lib/utils/cn";
 import {
   Dialog,
@@ -13,7 +14,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const OPTION_LABELS = ["A", "B", "C", "D"];
 
 interface QuizHistoryViewProps {
   results: QuizResult[];
@@ -64,20 +64,6 @@ function getToneClasses(percentage: number) {
 function normalizeQuestionCount(value: number, totalQuestions: number) {
   if (!Number.isFinite(value)) return 0;
   return Math.min(Math.max(Math.round(value), 0), totalQuestions);
-}
-
-function getOptionClasses(question: QuizSessionQuestion, optionIndex: number) {
-  const isAnswer = optionIndex === question.correctAnswer;
-  const isWrongPick =
-    optionIndex === question.selectedAnswer && optionIndex !== question.correctAnswer;
-
-  if (isAnswer) {
-    return "bg-[var(--status-success-bg)] border-[var(--status-success)] text-[var(--status-success)] font-bold";
-  }
-  if (isWrongPick) {
-    return "bg-[var(--status-danger-bg)] border-[var(--accent-danger)] text-accent-danger font-bold";
-  }
-  return "bg-[var(--bg-elevated)] border-[var(--border-default)] text-content-muted font-medium";
 }
 
 // So sanh % lan nay voi lan gan nhat truoc do cua cung quiz.
@@ -333,34 +319,11 @@ export function QuizHistoryView({
                         </div>
                       </div>
 
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {question.options.map((option, optionIndex) => {
-                          const selected = question.selectedAnswer === optionIndex;
-                          return (
-                            <div
-                              key={optionIndex}
-                              className={cn(
-                                "flex items-center gap-2 rounded-[2px] border px-3 py-2 text-sm",
-                                getOptionClasses(question, optionIndex),
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-[2px] text-[11px] font-bold",
-                                  optionIndex === question.correctAnswer
-                                    ? "bg-[var(--status-success)] text-[var(--text-inverse)]"
-                                    : selected
-                                      ? "bg-[var(--accent-danger)] text-[var(--text-inverse)]"
-                                      : "bg-[var(--bg-surface)] text-content-muted border border-[var(--border-strong)]",
-                                )}
-                              >
-                                {OPTION_LABELS[optionIndex]}
-                              </span>
-                              <span className="min-w-0">{option}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      <QuestionAnswerReview
+                        question={question}
+                        answer={question.submittedAnswer}
+                        correct={question.correct}
+                      />
 
                       {question.explanation && (
                         <p className="mt-3 border-l border-[var(--border-strong)] pl-3 text-sm leading-6 text-content-muted">

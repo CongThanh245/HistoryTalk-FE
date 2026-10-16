@@ -15,18 +15,39 @@ import {
 } from "@/components/ui/dialog";
 import { newId } from "./staff-utils";
 import {
+  QUESTION_TYPE_LABELS,
+  type QuestionType,
+} from "@/features/quiz/question-data";
+import type { CreateQuestionPayload, StaffQuizQuestion } from "@/services/staff.quiz.service";
+import {
   parseJsonQuestions, parseCsvQuestions, parsePlainTextQuestions,
   type ImportedQuestion,
 } from "./quiz-import-parser";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface MatchingDraftPair {
+  left: string;
+  right: string;
+}
+
+/**
+ * Draft cau hoi trong editor. Moi loai dung nhom field rieng; khi luu se
+ * quy doi sang `questionType` + `questionData` theo contract BE (xem toQuestionPayload).
+ */
 export interface QuizQuestion {
   questionId: string;
   orderIndex: number;
   content: string;
+  questionType: QuestionType;
+  // MULTIPLE_CHOICE
   options: [string, string, string, string];
   correctAnswer: 0 | 1 | 2 | 3;
+  // FILL_IN_BLANK
+  acceptedAnswers: string[];
+  caseSensitive: boolean;
+  // MATCHING
+  matchingPairs: MatchingDraftPair[];
   explanation?: string;
 }
 
@@ -38,14 +59,112 @@ interface QuizQuestionEditorProps {
 }
 
 const LABELS = ["A", "B", "C", "D"] as const;
+const QUESTION_TYPES: QuestionType[] = ["MULTIPLE_CHOICE", "FILL_IN_BLANK", "MATCHING"];
+const EMPTY_TYPE_FIELDS = {
+  questionType: "MULTIPLE_CHOICE" as QuestionType,
+  options: ["", "", "", ""] as [string, string, string, string],
+  correctAnswer: 0 as const,
+  acceptedAnswers: [""],
+  caseSensitive: false,
+  matchingPairs: [{ left: "", right: "" }, { left: "", right: "" }],
+};
 const makeEmpty = (): QuizQuestion => ({
-  questionId: newId(), orderIndex: 0, content: "",
-  options: ["", "", "", ""], correctAnswer: 0, explanation: "",
+  questionId: newId(), orderIndex: 0, content: "", explanation: "",
+  ...EMPTY_TYPE_FIELDS,
 });
 const reindex = (qs: QuizQuestion[]) => qs.map((q, i) => ({ ...q, orderIndex: i + 1 }));
 
 function toQuizQuestion(q: ImportedQuestion): QuizQuestion {
-  return { questionId: newId(), orderIndex: q.orderIndex, content: q.content, options: q.options, correctAnswer: q.correctAnswer, explanation: q.explanation };
+  return {
+    ...makeEmpty(), orderIndex: q.orderIndex, content: q.content,
+    options: q.options, correctAnswer: q.correctAnswer, explanation: q.explanation,
+  };
+}
+
+// ─── Contract conversion ──────────────────────────────────────────────────────
+
+/** Draft editor → payload POST/PUT cau hoi (questionType + questionData). */
+export function toQuestionPayload(q: QuizQuestion): CreateQuestionPayload {
+  const base = { content: q.content.trim(), explanation: q.explanation?.trim() || undefined };
+  if (q.questionType === "FILL_IN_BLANK") {
+    return {
+      ...base,
+      questionType: "FILL_IN_BLANK",
+      questionData: {
+        acceptedAnswers: q.acceptedAnswers.map((a) => a.trim()).filter(Boolean),
+        caseSensitive: q.caseSensitive,
+        trimWhitespace: true,
+      },
+    };
+  }
+  if (q.questionType === "MATCHING") {
+    const pairs = q.matchingPairs.filter((p) => p.left.trim() && p.right.trim());
+    const leftItems = pairs.map((p, i) => ({ id: `L${i + 1}`, text: p.left.trim() }));
+    const rightItems = pairs.map((p, i) => ({ id: `R${i + 1}`, text: p.right.trim() }));
+    return {
+      ...base,
+      questionType: "MATCHING",
+      questionData: {
+        leftItems,
+        // Sap xep cot phai theo chu cai de thu tu khong lo dap an.
+        rightItems: [...rightItems].sort((a, b) => a.text.localeCompare(b.text, "vi")),
+        correctPairs: pairs.map((_, i) => ({ leftId: `L${i + 1}`, rightId: `R${i + 1}` })),
+      },
+    };
+  }
+  return {
+    ...base,
+    questionType: "MULTIPLE_CHOICE",
+    questionData: {
+      options: q.options.map((text, i) => ({ id: String(i), text: text.trim() })),
+      correctOptionIds: [String(q.correctAnswer)],
+    },
+  };
+}
+
+/** Cau hoi tu BE (staff, co dap an) → draft editor. */
+export function fromStaffQuestion(q: StaffQuizQuestion): QuizQuestion {
+  const data = q.questionData;
+  const draft: QuizQuestion = {
+    ...makeEmpty(),
+    questionId: q.questionId,
+    content: q.content,
+    questionType: q.questionType,
+    explanation: q.explanation ?? "",
+  };
+  if (q.questionType === "FILL_IN_BLANK") {
+    draft.acceptedAnswers = data.acceptedAnswers?.length ? [...data.acceptedAnswers] : [""];
+    draft.caseSensitive = data.caseSensitive ?? false;
+  } else if (q.questionType === "MATCHING") {
+    const text = (items: typeof data.leftItems, id: string) => items?.find((it) => it.id === id)?.text ?? "";
+    const pairs = (data.correctPairs ?? []).map((p) => ({
+      left: text(data.leftItems, p.leftId),
+      right: text(data.rightItems, p.rightId),
+    }));
+    draft.matchingPairs = pairs.length ? pairs : EMPTY_TYPE_FIELDS.matchingPairs;
+  } else {
+    const opts = (data.options ?? []).map((o) => o.text);
+    while (opts.length < 4) opts.push("");
+    draft.options = opts.slice(0, 4) as [string, string, string, string];
+    const correctIdx = (data.options ?? []).findIndex((o) => data.correctOptionIds?.includes(o.id));
+    draft.correctAnswer = Math.min(Math.max(correctIdx, 0), 3) as 0 | 1 | 2 | 3;
+  }
+  return draft;
+}
+
+function isQuestionValid(q: QuizQuestion): boolean {
+  if (!q.content.trim()) return false;
+  if (q.questionType === "FILL_IN_BLANK") return q.acceptedAnswers.some((a) => a.trim());
+  if (q.questionType === "MATCHING") {
+    return q.matchingPairs.length >= 2 && q.matchingPairs.every((p) => p.left.trim() && p.right.trim());
+  }
+  return q.options.every((o) => o.trim());
+}
+
+function describeAnswer(q: QuizQuestion): string {
+  if (q.questionType === "FILL_IN_BLANK") return q.acceptedAnswers.filter((a) => a.trim()).join(" / ");
+  if (q.questionType === "MATCHING") return q.matchingPairs.map((p) => `${p.left} → ${p.right}`).join("; ");
+  return `${LABELS[q.correctAnswer]}. ${q.options[q.correctAnswer]}`;
 }
 
 // ─── Paste Dialog ─────────────────────────────────────────────────────────────
@@ -204,75 +323,156 @@ interface QFormProps {
   orderIndex: number;
   onSave: (q: QuizQuestion) => void;
   onCancel: () => void;
+  isSaving?: boolean;
 }
 
-function QuestionForm({ initial, orderIndex, onSave, onCancel }: QFormProps) {
+const FIELD_LABEL = "text-xs font-bold uppercase tracking-wider px-1 text-content-subtle";
+const FIELD_INPUT = "h-10 text-sm rounded-[2px] border-2 transition-all bg-[var(--bg-elevated)] border-[var(--border-default)]";
+
+export function QuestionForm({ initial, orderIndex, onSave, onCancel, isSaving = false }: QFormProps) {
   const [draft, setDraft] = React.useState<QuizQuestion>(initial ?? { ...makeEmpty(), orderIndex });
   const setOpt = (i: number, v: string) =>
     setDraft((s) => { const o = [...s.options] as [string, string, string, string]; o[i] = v; return { ...s, options: o }; });
-  const valid = draft.content.trim() && draft.options.every((o) => o.trim());
+  const setAccepted = (i: number, v: string) =>
+    setDraft((s) => ({ ...s, acceptedAnswers: s.acceptedAnswers.map((a, k) => (k === i ? v : a)) }));
+  const setPair = (i: number, side: keyof MatchingDraftPair, v: string) =>
+    setDraft((s) => ({ ...s, matchingPairs: s.matchingPairs.map((p, k) => (k === i ? { ...p, [side]: v } : p)) }));
+  const valid = isQuestionValid(draft);
 
   return (
     <div className="rounded-[2px] border border-card-light-border p-6 space-y-5 transition-all animate-in zoom-in-95 duration-200 bg-[var(--bg-elevated)]">
-      
-      {/* Content */}
-      <div className="grid gap-2">
-        <Label className="text-xs font-bold uppercase tracking-wider px-1 text-content-subtle">
-          Nội dung câu hỏi *
-        </Label>
-        <Textarea value={draft.content}
-          onChange={(e) => setDraft((s) => ({ ...s, content: e.target.value }))}
-          placeholder="Nhập nội dung câu hỏi..." 
-          className="min-h-[100px] text-sm rounded-[2px] border-2 focus:ring-0 transition-all border-[var(--border-default)] bg-[var(--bg-elevated)]" />
-      </div>
 
-      {/* Options */}
-      <div className="grid gap-3">
-        <Label className="text-xs font-bold uppercase tracking-wider px-1 text-content-subtle">
-          Đáp án & Đáp án đúng ✓
-        </Label>
-        <div className="grid gap-2.5">
-          {LABELS.map((lbl, idx) => {
-            const correct = draft.correctAnswer === idx;
-            return (
-              <div key={lbl} className="flex items-center gap-3">
-                <button type="button"
-                  onClick={() => setDraft((s) => ({ ...s, correctAnswer: idx as 0 | 1 | 2 | 3 }))}
-                  className={cn(
-                    "shrink-0 w-9 h-9 rounded-[2px] border-2 flex items-center justify-center transition-all duration-200 active:scale-90",
-                    correct
-                      ? "border-[var(--status-success)] bg-[var(--status-success)] text-white"
-                      : "border-card-light-border bg-[var(--bg-elevated)] text-content-muted",
-                  )}
-                  title="Đánh dấu đáp án đúng">
-                  {correct ? <CheckCircle2 className="w-5 h-5" /> : <span className="text-sm font-bold">{lbl}</span>}
-                </button>
-                <Input value={draft.options[idx]} onChange={(e) => setOpt(idx, e.target.value)}
-                  placeholder={`Đáp án ${lbl}...`} 
-                  className={cn(
-                    "flex-1 h-10 text-sm rounded-[2px] border-2 transition-all bg-[var(--bg-elevated)] border-[var(--border-default)]",
-                    correct && "border-[var(--status-success-border)]",
-                  )} />
-              </div>
-            );
-          })}
+      {/* Question type */}
+      <div className="grid gap-2">
+        <Label className={FIELD_LABEL}>Loại câu hỏi</Label>
+        <div className="flex flex-wrap gap-1.5">
+          {QUESTION_TYPES.map((type) => (
+            <button key={type} type="button"
+              onClick={() => setDraft((s) => ({ ...s, questionType: type }))}
+              className={cn(
+                "px-3 h-8 rounded-[2px] text-xs font-semibold border transition-all",
+                draft.questionType === type
+                  ? "bg-[var(--accent-gold-active-bg)] border-accent-gold text-content-heading"
+                  : "bg-transparent border-card-light-border text-content-muted",
+              )}>
+              {QUESTION_TYPE_LABELS[type]}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* Content */}
+      <div className="grid gap-2">
+        <Label className={FIELD_LABEL}>Nội dung câu hỏi *</Label>
+        <Textarea value={draft.content}
+          onChange={(e) => setDraft((s) => ({ ...s, content: e.target.value }))}
+          placeholder="Nhập nội dung câu hỏi..."
+          className="min-h-[100px] text-sm rounded-[2px] border-2 focus:ring-0 transition-all border-[var(--border-default)] bg-[var(--bg-elevated)]" />
+      </div>
+
+      {draft.questionType === "MULTIPLE_CHOICE" && (
+        <div className="grid gap-3">
+          <Label className={FIELD_LABEL}>Đáp án & Đáp án đúng ✓</Label>
+          <div className="grid gap-2.5">
+            {LABELS.map((lbl, idx) => {
+              const correct = draft.correctAnswer === idx;
+              return (
+                <div key={lbl} className="flex items-center gap-3">
+                  <button type="button"
+                    onClick={() => setDraft((s) => ({ ...s, correctAnswer: idx as 0 | 1 | 2 | 3 }))}
+                    className={cn(
+                      "shrink-0 w-9 h-9 rounded-[2px] border-2 flex items-center justify-center transition-all duration-200 active:scale-90",
+                      correct
+                        ? "border-[var(--status-success)] bg-[var(--status-success)] text-white"
+                        : "border-card-light-border bg-[var(--bg-elevated)] text-content-muted",
+                    )}
+                    title="Đánh dấu đáp án đúng">
+                    {correct ? <CheckCircle2 className="w-5 h-5" /> : <span className="text-sm font-bold">{lbl}</span>}
+                  </button>
+                  <Input value={draft.options[idx]} onChange={(e) => setOpt(idx, e.target.value)}
+                    placeholder={`Đáp án ${lbl}...`}
+                    className={cn("flex-1", FIELD_INPUT, correct && "border-[var(--status-success-border)]")} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {draft.questionType === "FILL_IN_BLANK" && (
+        <div className="grid gap-3">
+          <Label className={FIELD_LABEL}>Các đáp án được chấp nhận *</Label>
+          <div className="grid gap-2.5">
+            {draft.acceptedAnswers.map((ans, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Input value={ans} onChange={(e) => setAccepted(idx, e.target.value)}
+                  placeholder={idx === 0 ? "Vd. Ngô Quyền" : "Cách viết khác (tuỳ chọn)"}
+                  className={cn("flex-1", FIELD_INPUT)} />
+                <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-8 w-8 text-accent-danger"
+                  disabled={draft.acceptedAnswers.length <= 1}
+                  onClick={() => setDraft((s) => ({ ...s, acceptedAnswers: s.acceptedAnswers.filter((_, k) => k !== idx) }))}
+                  title="Xóa">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-[2px] border-card-light-border bg-transparent text-content-text"
+              onClick={() => setDraft((s) => ({ ...s, acceptedAnswers: [...s.acceptedAnswers, ""] }))}>
+              <Plus className="h-3.5 w-3.5" /> Thêm cách viết
+            </Button>
+            <label className="flex items-center gap-2 text-xs text-content-muted cursor-pointer">
+              <input type="checkbox" checked={draft.caseSensitive}
+                onChange={(e) => setDraft((s) => ({ ...s, caseSensitive: e.target.checked }))} />
+              Phân biệt chữ hoa / thường
+            </label>
+          </div>
+        </div>
+      )}
+
+      {draft.questionType === "MATCHING" && (
+        <div className="grid gap-3">
+          <Label className={FIELD_LABEL}>Các cặp đúng (tối thiểu 2) *</Label>
+          <p className="px-1 text-xs text-content-muted">Cột phải sẽ được xáo thứ tự khi hiển thị cho người học.</p>
+          <div className="grid gap-2.5">
+            {draft.matchingPairs.map((pair, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Input value={pair.left} onChange={(e) => setPair(idx, "left", e.target.value)}
+                  placeholder="Vế trái (vd. Ngô Quyền)" className={cn("flex-1", FIELD_INPUT)} />
+                <span className="text-content-subtle">→</span>
+                <Input value={pair.right} onChange={(e) => setPair(idx, "right", e.target.value)}
+                  placeholder="Vế phải (vd. Bạch Đằng 938)" className={cn("flex-1", FIELD_INPUT)} />
+                <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-8 w-8 text-accent-danger"
+                  disabled={draft.matchingPairs.length <= 2}
+                  onClick={() => setDraft((s) => ({ ...s, matchingPairs: s.matchingPairs.filter((_, k) => k !== idx) }))}
+                  title="Xóa cặp">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <div>
+            <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-[2px] border-card-light-border bg-transparent text-content-text"
+              onClick={() => setDraft((s) => ({ ...s, matchingPairs: [...s.matchingPairs, { left: "", right: "" }] }))}>
+              <Plus className="h-3.5 w-3.5" /> Thêm cặp
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Explanation */}
       <div className="grid gap-2">
-        <Label className="text-xs font-bold uppercase tracking-wider px-1 text-content-subtle">
-          Giải thích (tuỳ chọn)
-        </Label>
+        <Label className={FIELD_LABEL}>Giải thích (tuỳ chọn)</Label>
         <Input value={draft.explanation ?? ""}
           onChange={(e) => setDraft((s) => ({ ...s, explanation: e.target.value }))}
-          placeholder="Lý do vì sao đáp án này đúng..." 
-          className="h-10 text-sm rounded-[2px] border-2 border-[var(--border-default)] bg-[var(--bg-elevated)]" />
+          placeholder="Lý do vì sao đáp án này đúng..."
+          className={FIELD_INPUT} />
       </div>
 
       <div className="flex gap-2.5 pt-2 border-t border-card-light-border mt-4">
         <Button type="button" size="sm" className="px-6 rounded-[2px] font-bold transition-all active:scale-95 border-none bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
-          disabled={!valid} onClick={() => valid && onSave({ ...draft })}>
+          disabled={!valid || isSaving} onClick={() => valid && onSave({ ...draft })}>
           Lưu câu hỏi
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}
@@ -283,6 +483,24 @@ function QuestionForm({ initial, orderIndex, onSave, onCancel }: QFormProps) {
 }
 
 // ─── Question Row ─────────────────────────────────────────────────────────────
+
+export function QuestionTypeBadge({ type }: { type: QuestionType }) {
+  return (
+    <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] bg-[var(--status-neutral-bg)] text-content-muted border border-[var(--border-default)]">
+      {QUESTION_TYPE_LABELS[type]}
+    </span>
+  );
+}
+
+export function QuestionAnswerSummary({ q }: { q: QuizQuestion }) {
+  return (
+    <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
+      <QuestionTypeBadge type={q.questionType} />
+      <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">Đúng</span>
+      <p className="text-xs truncate font-medium text-content-muted">{describeAnswer(q)}</p>
+    </div>
+  );
+}
 
 function QuestionRow({ q, idx, total, onEdit, onDelete, onMove }: {
   q: QuizQuestion; idx: number; total: number;
@@ -295,12 +513,7 @@ function QuestionRow({ q, idx, total, onEdit, onDelete, onMove }: {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold leading-relaxed text-content-text">{q.content}</p>
-        <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
-          <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">Đúng</span>
-          <p className="text-xs truncate font-medium text-content-muted">
-            {LABELS[q.correctAnswer]}. {q.options[q.correctAnswer]}
-          </p>
-        </div>
+        <QuestionAnswerSummary q={q} />
       </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
         <div className="flex items-center gap-0.5 bg-[var(--status-neutral-bg)] p-0.5 rounded-[2px] border border-[var(--border-default)]">

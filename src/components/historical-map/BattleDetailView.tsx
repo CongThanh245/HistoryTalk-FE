@@ -156,8 +156,6 @@ export function BattleDetailView({
             {event.location && <span>{event.location}</span>}
           </p>
         </div>
-        {/* 史 — "sử", history */}
-        <span className={cn("archive-seal", styles.immersiveSeal)} aria-hidden="true">史</span>
 
         {isAdmin && <button type="button" className={styles.mapEditButton} onClick={() => { narration.pause(); onOpenEditor(); }}>
           <SquarePen size={16} /> Chỉnh sửa lược đồ

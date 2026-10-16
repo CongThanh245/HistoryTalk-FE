@@ -6,7 +6,7 @@ import {
   ClipboardList, Trash2, ArrowLeft,
   Gamepad2, Eye, EyeOff, RotateCcw,
   ChevronLeft, ChevronRight, Upload, Flag, CheckCircle,
-  Search, Plus,
+  Search, Plus, Library,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,7 +17,13 @@ import {
   DifficultyBadge, EraBadge,
   type DifficultyKey, type EraKey,
 } from "@/components/staff/staff-badge";
-import { QuizQuestionEditor, type QuizQuestion } from "@/components/staff/quiz-question-editor";
+import {
+  QuizQuestionEditor,
+  fromStaffQuestion,
+  toQuestionPayload,
+  type QuizQuestion,
+} from "@/components/staff/quiz-question-editor";
+import { QuestionBankView } from "@/components/staff/question-bank-view";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,7 +132,7 @@ export default function StaffQuizzesPage() {
   const [page, setPage] = React.useState(0);
 
   // ── View / editor state ───────────────────────────────────
-  const [view, setView] = React.useState<"list" | "editor" | "reports">("list");
+  const [view, setView] = React.useState<"list" | "editor" | "reports" | "bank">("list");
   const [reportStatusFilter, setReportStatusFilter] = React.useState<"OPEN" | "RESOLVED" | "">("OPEN");
   const [reportPage, setReportPage] = React.useState(0);
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
@@ -223,18 +229,7 @@ export default function StaffQuizzesPage() {
       title: q.title,
       contextId: q.contextId,
       level: q.level,
-      questions: q.questions.map((qq) => {
-        const opts = [...qq.options];
-        while (opts.length < 4) opts.push("");
-        return {
-          questionId: qq.questionId,
-          orderIndex: 0,
-          content: qq.content,
-          options: opts.slice(0, 4) as [string, string, string, string],
-          correctAnswer: (Math.min(qq.correctAnswer, 3)) as 0 | 1 | 2 | 3,
-          explanation: qq.explanation ?? "",
-        };
-      }),
+      questions: q.questions.map(fromStaffQuestion),
     });
     setEditorMode("edit");
     setView("editor");
@@ -250,12 +245,7 @@ export default function StaffQuizzesPage() {
           title,
           contextId: draft.contextId.trim(),
           level: draft.level,
-          questions: draft.questions.map((q) => ({
-            content: q.content,
-            options: q.options,
-            correctAnswer: q.correctAnswer,
-            explanation: q.explanation,
-          })),
+          questions: draft.questions.map(toQuestionPayload),
         },
         {
           onSuccess: () => {
@@ -304,33 +294,17 @@ export default function StaffQuizzesPage() {
           const isNew = !originalQuestions.some((oq) => oq.questionId === q.questionId);
 
           if (isNew) {
-            promises.push(
-              staffQuizService.addQuestion(quizId, {
-                content: q.content,
-                options: q.options,
-                correctAnswer: q.correctAnswer,
-                explanation: q.explanation,
-              })
-            );
+            promises.push(staffQuizService.addQuestion(quizId, toQuestionPayload(q)));
           } else {
             const originalQ = originalQuestions.find((oq) => oq.questionId === q.questionId);
             if (originalQ) {
+              // So sanh qua payload chuan hoa de bat ca thay doi loai cau hoi / questionData.
+              const payload = toQuestionPayload(q);
               const hasChanged =
-                originalQ.content !== q.content ||
-                originalQ.correctAnswer !== q.correctAnswer ||
-                originalQ.explanation !== q.explanation ||
-                originalQ.options.length !== q.options.length ||
-                originalQ.options.some((opt, idx) => opt !== q.options[idx]);
+                JSON.stringify(payload) !== JSON.stringify(toQuestionPayload(fromStaffQuestion(originalQ)));
 
               if (hasChanged) {
-                promises.push(
-                  staffQuizService.updateQuestion(quizId, q.questionId, {
-                    content: q.content,
-                    options: q.options,
-                    correctAnswer: q.correctAnswer,
-                    explanation: q.explanation,
-                  })
-                );
+                promises.push(staffQuizService.updateQuestion(quizId, q.questionId, payload));
               }
             }
           }
@@ -819,6 +793,10 @@ export default function StaffQuizzesPage() {
   }
 
   // ═══ REPORTS VIEW ════════════════════════════════════════════════════════
+  if (view === "bank") {
+    return <QuestionBankView onBack={() => setView("list")} />;
+  }
+
   if (view === "reports") {
     const reportItems = reportsData?.content ?? [];
     const reportTotalPages = reportsData?.totalPages ?? 1;
@@ -1057,6 +1035,16 @@ export default function StaffQuizzesPage() {
                 <><Trash2 className="h-3.5 w-3.5 mr-1.5" /> Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}</>
               )}
             </Button>
+            {!showTrash && (
+              <Button
+                variant="outline"
+                className="h-9 rounded-[2px] px-4 font-semibold border-card-light-border text-content-heading"
+                onClick={() => setView("bank")}
+              >
+                <Library className="h-3.5 w-3.5 mr-1.5" />
+                Ngân hàng câu hỏi
+              </Button>
+            )}
             {!showTrash && (
               <Button
                 variant="outline"

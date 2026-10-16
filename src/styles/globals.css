@@ -394,13 +394,6 @@ main:has(.map-page) > div {
   background: var(--bg-deep);
 }
 
-.home-banner-seal {
-  position: absolute;
-  right: -14px;
-  bottom: -18px;
-  background: var(--bg-surface);
-}
-
 .home-banner-caption {
   display: flex;
   align-items: baseline;

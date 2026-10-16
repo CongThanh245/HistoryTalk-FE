@@ -225,8 +225,6 @@ export default function ComingSoonPage() {
               className="flex-1 h-px"
               style={{ background: "var(--text-primary)" }}
             />
-            {/* 史 — "sử", history */}
-            <span className="archive-seal w-11 h-11 text-[17px]" aria-hidden="true">史</span>
             <div
               className="flex-1 h-px"
               style={{ background: "var(--text-primary)" }}
