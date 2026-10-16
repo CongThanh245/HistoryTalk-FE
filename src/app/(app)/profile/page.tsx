@@ -911,7 +911,6 @@ export default function ProfilePage() {
                 {profile.tierTitle}
               </div>
             )}
-            <span className="archive-seal h-[52px] w-[52px] text-[17px]" aria-hidden="true">國史</span>
           </div>
         </div>
 

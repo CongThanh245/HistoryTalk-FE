@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Flag, Minus, Star, TrendingDown, TrendingUp } from "lucide-react";
 import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
+import type { AnswerData } from "@/features/quiz/question-data";
 import { characterService } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
@@ -26,8 +27,7 @@ import {
   useRateQuiz,
   useReportQuestion,
 } from "@/features/quiz/hooks";
-
-const OPTION_LABELS = ["A", "B", "C", "D"];
+import { QuestionAnswerReview } from "./QuestionAnswerReview";
 
 interface SubmitResult {
   score: number;
@@ -41,7 +41,7 @@ interface SubmitResult {
 interface QuizResultPageProps {
   quiz: QuizSet;
   questions: QuizQuestion[];
-  answers: Record<string, number>;
+  answers: Record<string, AnswerData>;
   submitResult: SubmitResult | null;
   onRetry: () => void;
   /** Session vua nop — dung de lay previousAttempt (so voi lan truoc). */
@@ -206,7 +206,7 @@ export function QuizResultPage({
     description: "Đăng nhập để trò chuyện và ôn lại kiến thức với nhân vật lịch sử.",
   });
   const [reviewFilter, setReviewFilter] = useState<"all" | "wrong">("all");
-  // Chi can previousAttempt tu day — cac so lieu khac da co san tu submitResult.
+  // previousAttempt + questionData day du (co dap an) de hien phan xem lai.
   const { data: sessionDetail } = useQuizSessionDetail(sessionId ?? null);
   const previousAttempt = sessionDetail?.previousAttempt;
 
@@ -237,12 +237,14 @@ export function QuizResultPage({
     );
   }
 
+  // Luc lam bai BE luoc dap an; chi tiet phien (sau khi nop) co questionData day du.
+  const reviewQuestions = new Map(
+    (sessionDetail?.questions ?? []).map((q) => [q.questionId, q]),
+  );
+
   const score =
     submitResult?.score ??
-    Object.keys(answers).filter((qId) => {
-      const q = questions.find((item) => item.questionId === qId);
-      return q && answers[qId] === q.correctAnswer;
-    }).length;
+    questions.filter((q, idx) => isCorrect(q, idx)).length;
 
   const totalQuestions = submitResult?.totalQuestions ?? questions.length;
   const correctCount = normalizeQuestionCount(
@@ -276,10 +278,9 @@ export function QuizResultPage({
           : { label: "Cần ôn lại", colorClass: "text-accent-danger", bgClass: "border-[var(--accent-danger)]" };
 
   function isCorrect(q: QuizQuestion, idx: number): boolean {
-    if (submitResult) {
-      return submitResult.correctAnswers.includes(idx);
-    }
-    return answers[q.questionId] === q.correctAnswer;
+    const detail = reviewQuestions.get(q.questionId);
+    if (detail) return detail.correct;
+    return submitResult?.correctAnswers.includes(idx) ?? false;
   }
 
   return (
@@ -420,7 +421,9 @@ export function QuizResultPage({
 
           <div>
             {questions.map((q, idx) => {
-              const selected = answers[q.questionId];
+              const detail = reviewQuestions.get(q.questionId);
+              const reviewQ = detail ?? q;
+              const selected = detail?.submittedAnswer ?? answers[q.questionId];
               const correct = isCorrect(q, idx);
               const notAnswered = selected === undefined;
 
@@ -454,39 +457,11 @@ export function QuizResultPage({
                     </p>
                   </div>
 
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {q.options.map((opt, i) => {
-                      const isAnswer = i === q.correctAnswer;
-                      const isWrongPick = i === selected && !correct;
-                      return (
-                        <div
-                          key={i}
-                          className={cn(
-                            "flex items-center gap-2 rounded-[2px] border px-3 py-2 text-sm",
-                            isAnswer
-                              ? "bg-[var(--status-success-bg)] border-[var(--status-success)] text-[var(--status-success)] font-bold"
-                              : isWrongPick
-                                ? "bg-[var(--status-danger-bg)] border-[var(--accent-danger)] text-accent-danger font-bold"
-                                : "bg-[var(--bg-elevated)] border-[var(--border-default)] text-content-muted font-medium",
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "flex h-5 w-5 shrink-0 items-center justify-center rounded-[2px] text-[11px] font-bold",
-                              isAnswer
-                                ? "bg-[var(--status-success)] text-[var(--text-inverse)]"
-                                : isWrongPick
-                                  ? "bg-[var(--accent-danger)] text-[var(--text-inverse)]"
-                                  : "bg-[var(--bg-surface)] text-content-muted border border-[var(--border-strong)]",
-                            )}
-                          >
-                            {OPTION_LABELS[i]}
-                          </span>
-                          <span className="min-w-0">{opt}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <QuestionAnswerReview
+                    question={reviewQ}
+                    answer={selected}
+                    correct={correct}
+                  />
 
                   {q.explanation && (
                     <p className="mt-3 border-l border-[var(--border-strong)] pl-3 text-sm leading-6 text-content-muted">

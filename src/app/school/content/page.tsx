@@ -1,107 +1,118 @@
 "use client";
 
 import * as React from "react";
-import { Send } from "lucide-react";
+import { EyeOff, Send, ShieldAlert, Undo2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { StaffFormSelect } from "@/components/staff/staff-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SaasShell, SearchInput, formatDate, normalizeText } from "@/components/saas/saas-ui";
-import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import {
-  ContentKindLabel,
-  ContentStatusBadge,
-  SchoolContentReviewSheet,
-  SchoolReviewNoteDialog,
-  type ReviewAction,
-} from "@/components/saas/school-content-review";
-import { CONTENT_KIND_LABELS, useSchoolContentReview, type ReviewItem } from "@/features/saas/hooks-school";
-import { useDemoSchoolId, useSaasStore } from "@/features/saas/store";
-import type { LocalContentKind, LocalContentStatus } from "@/features/saas/types";
+  LocalItemPreview,
+  LocalReviewBadge,
+  LocalScopeTag,
+  QueryState,
+  REVIEW_STATE_LABELS,
+  reviewState,
+  type LocalReviewState,
+} from "@/components/saas/local-content-ui";
+import { ContentKindLabel } from "@/components/saas/school-content-review";
+import { apiErrorMessage } from "@/features/saas/hooks-api";
+import { LOCAL_SCOPE_LABEL, useSchoolLocalContent, useSetLocalStatus } from "@/features/saas/hooks-local-content";
+import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
+import type { LocalItem, LocalKind, LocalScope, LocalStatus } from "@/services/local-content.service";
 import { cn } from "@/lib/utils/cn";
 
-/** School Admin: review the local history content teachers author (Role Matrix row 13). */
+/** School Admin: review the local history content teachers author (Role Matrix row 13, Sprint 6 API). */
 export default function SchoolContentPage() {
   return (
     <SaasShell
+      live
       title="Duyệt nội dung địa phương"
-      description="Nội dung cho toàn trường do giáo viên gửi lên cần bạn duyệt trước khi xuất bản. Nội dung cho lớp do giáo viên tự xuất bản; bạn theo dõi và có thể ngừng hiển thị nếu không phù hợp."
+      description="Giáo viên soạn bối cảnh và nhân vật lịch sử địa phương. Bạn duyệt trước khi học sinh của trường thấy, và có thể ẩn nội dung không phù hợp."
     >
       <ContentReview />
     </SaasShell>
   );
 }
 
-/** Status tabs cover SCHOOL-scope content; "CLASS" lists class content teachers published themselves (read-only). */
-type ReviewTab = LocalContentStatus | "CLASS";
+const TABS: LocalReviewState[] = ["PENDING", "PUBLISHED", "HIDDEN"];
 
-const TABS: { status: ReviewTab; label: string }[] = [
-  { status: "PENDING", label: "Chờ duyệt" },
-  { status: "PUBLISHED", label: "Đã xuất bản" },
-  { status: "INACTIVE", label: "Ngừng hiển thị" },
-  { status: "DRAFT", label: "Nháp của giáo viên" },
-  { status: "TRASH", label: "Thùng rác" },
-  { status: "CLASS", label: "Nội dung lớp do giáo viên tự xuất bản" },
-];
-
-const EMPTY: Record<ReviewTab, string> = {
-  PENDING: "Không có nội dung toàn trường nào đang chờ duyệt.",
-  PUBLISHED: "Chưa có nội dung toàn trường nào được xuất bản.",
-  INACTIVE: "Không có nội dung toàn trường nào đang ngừng hiển thị.",
-  DRAFT: "Giáo viên chưa có bản nháp nào cho toàn trường.",
-  TRASH: "Thùng rác trống.",
-  CLASS: "Giáo viên chưa tự xuất bản nội dung nào cho lớp.",
+const EMPTY: Record<LocalReviewState, string> = {
+  PENDING: "Không có nội dung nào đang chờ duyệt.",
+  PUBLISHED: "Chưa có nội dung nào được xuất bản.",
+  HIDDEN: "Không có nội dung nào đang bị ẩn.",
 };
 
-/** Teacher-published class content the School Admin can see: live or deactivated (drafts / trash stay private). */
-const isClassVisible = (status: LocalContentStatus) => status === "PUBLISHED" || status === "INACTIVE";
+type Action = "PUBLISH" | "HIDE" | "RETURN";
 
-type NoteRequest = { action: "RETURN" | "DEACTIVATE"; item: ReviewItem };
+const ACTIONS: Record<LocalReviewState, Action[]> = {
+  PENDING: ["PUBLISH"],
+  PUBLISHED: ["HIDE"],
+  HIDDEN: ["PUBLISH", "RETURN"],
+};
+
+const ACTION_META: Record<Action, { label: string; status: LocalStatus; icon: typeof Send; className: string; done: string }> = {
+  PUBLISH: { label: "Duyệt & xuất bản", status: "ACTIVE", icon: Send, className: "btn-crimson", done: "Đã xuất bản" },
+  HIDE: { label: "Ẩn với học sinh", status: "INACTIVE", icon: EyeOff, className: "btn-ink", done: "Đã ẩn" },
+  RETURN: { label: "Chuyển về chờ duyệt", status: "DRAFT", icon: Undo2, className: "btn-line", done: "Đã chuyển về chờ duyệt" },
+};
+
+const DISCLAIMER =
+  "Bằng cách duyệt, nhà trường chịu toàn bộ trách nhiệm về tính xác thực của nội dung. HistoryTalk không chịu trách nhiệm với nội dung địa phương.";
+
+const ALL = "ALL";
 
 function ContentReview() {
-  const schoolId = useDemoSchoolId();
-  const { items, byId, teachers, classes } = useSchoolContentReview(schoolId);
-  const setStatus = useSaasStore((s) => s.setLocalContentStatus);
+  const { items, truncated, isLoading, isError, error, refetch } = useSchoolLocalContent();
+  const setStatus = useSetLocalStatus();
 
-  const [tab, setTab] = React.useState<ReviewTab>("PENDING");
-  const [kind, setKind] = React.useState<"ALL" | LocalContentKind>("ALL");
-  const [author, setAuthor] = React.useState("ALL");
-  const [classId, setClassId] = React.useState("ALL");
+  const [tab, setTab] = React.useState<LocalReviewState>("PENDING");
+  const [kind, setKind] = React.useState<LocalKind | typeof ALL>(ALL);
+  const [scope, setScope] = React.useState<LocalScope | typeof ALL>(ALL);
+  const [author, setAuthor] = React.useState(ALL);
   const [search, setSearch] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [checked, setChecked] = React.useState<Set<string>>(new Set());
-  const [noteRequest, setNoteRequest] = React.useState<NoteRequest | null>(null);
-  const [trashing, setTrashing] = React.useState<ReviewItem | null>(null);
+  /** Items waiting for the publish disclaimer to be confirmed. */
+  const [publishing, setPublishing] = React.useState<LocalItem[] | null>(null);
 
-  const inTab = (it: ReviewItem, t: ReviewTab) =>
-    t === "CLASS"
-      ? it.content.scope === "CLASS" && isClassVisible(it.content.status)
-      : it.content.scope === "SCHOOL" && it.content.status === t;
-  const counts = Object.fromEntries(TABS.map((t) => [t.status, items.filter((it) => inTab(it, t.status)).length])) as Record<ReviewTab, number>;
+  const counts = Object.fromEntries(TABS.map((t) => [t, items.filter((it) => reviewState(it) === t).length])) as Record<LocalReviewState, number>;
+  const q = normalizeText(search);
+  const filtered = items
+    .filter(
+      (it) =>
+        reviewState(it) === tab &&
+        (kind === ALL || it.type === kind) &&
+        (scope === ALL || it.contentScope === scope) &&
+        (author === ALL || it.createdBy?.uid === author) &&
+        (!q || normalizeText(it.name).includes(q)),
+    )
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
-  const filtered = items.filter(
-    (it) =>
-      inTab(it, tab) &&
-      (kind === "ALL" || it.content.kind === kind) &&
-      (author === "ALL" || it.content.authorId === author) &&
-      (classId === "ALL" || it.content.classIds.includes(classId)) &&
-      (!search || normalizeText(it.title).includes(normalizeText(search))),
-  );
   const selectable = tab === "PENDING";
-  const visibleChecked = filtered.filter((it) => checked.has(it.content.id));
+  const visibleChecked = filtered.filter((it) => checked.has(it.id));
   const allChecked = filtered.length > 0 && visibleChecked.length === filtered.length;
+  const selected = selectedId ? items.find((it) => it.id === selectedId) ?? null : null;
 
-  const selected = selectedId ? items.find((it) => it.content.id === selectedId) ?? null : null;
-  const linkedId = selected && selected.content.kind !== "CONTEXT" ? selected.content.contextId : undefined;
-  const linked = linkedId ? byId.get(linkedId) : undefined;
+  const authors = [...new Map(items.filter((it) => it.createdBy).map((it) => [it.createdBy!.uid, it.createdBy!.fullName])).entries()];
+  const authorOptions = [{ value: ALL, label: "Tất cả giáo viên" }, ...authors.map(([value, label]) => ({ value, label }))];
+  const kindOptions: { value: LocalKind | typeof ALL; label: string }[] = [
+    { value: ALL, label: "Tất cả loại" },
+    { value: "CONTEXT", label: LOCAL_KIND_LABELS.CONTEXT },
+    { value: "CHARACTER", label: LOCAL_KIND_LABELS.CHARACTER },
+  ];
+  const scopeOptions: { value: LocalScope | typeof ALL; label: string }[] = [
+    { value: ALL, label: "Mọi phạm vi" },
+    { value: "CLASS_ONLY", label: LOCAL_SCOPE_LABEL.CLASS_ONLY },
+    { value: "SCHOOL_WIDE", label: LOCAL_SCOPE_LABEL.SCHOOL_WIDE },
+  ];
 
-  const audienceText = (it: ReviewItem) =>
-    it.content.scope === "SCHOOL" ? "toàn trường" : it.classes.length ? `lớp ${it.classes.map((c) => c.name).join(", ")}` : "chưa chọn lớp";
-
-  const changeTab = (next: ReviewTab) => {
+  const changeTab = (next: LocalReviewState) => {
     setTab(next);
     setChecked(new Set());
   };
@@ -114,71 +125,52 @@ function ContentReview() {
       return next;
     });
 
-  const handleAction = (action: ReviewAction, it: ReviewItem) => {
-    const id = it.content.id;
-    switch (action) {
-      case "PUBLISH":
-      case "REPUBLISH":
-        setStatus(id, "PUBLISHED", "");
-        toast.success(`Đã xuất bản “${it.title}”`, { description: `Hiển thị cho ${audienceText(it)}.` });
-        break;
-      case "RETURN":
-      case "DEACTIVATE":
-        setNoteRequest({ action, item: it });
-        break;
-      case "TRASH":
-        setTrashing(it);
-        break;
-      case "RESTORE":
-        setStatus(id, "DRAFT");
-        toast.success(`Đã khôi phục “${it.title}” về bản nháp của giáo viên`);
-        break;
-    }
-  };
-
-  const bulkPublish = () => {
-    for (const it of visibleChecked) setStatus(it.content.id, "PUBLISHED", "");
-    toast.success(`Đã xuất bản ${visibleChecked.length} nội dung`);
+  const apply = async (action: Action, targets: LocalItem[]) => {
+    const meta = ACTION_META[action];
+    const results = await Promise.allSettled(
+      targets.map((it) => setStatus.mutateAsync({ kind: it.type, id: it.id, payload: { status: meta.status } })),
+    );
+    const failed = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+    const ok = targets.length - failed.length;
+    if (ok) toast.success(targets.length === 1 ? `${meta.done} “${targets[0].name}”` : `${meta.done} ${ok} nội dung`);
+    if (failed.length) toast.error(apiErrorMessage(failed[0].reason, `Không cập nhật được ${failed.length} nội dung.`));
     setChecked(new Set());
   };
 
-  const teacherOptions = [{ value: "ALL", label: "Tất cả giáo viên" }, ...teachers.map((t) => ({ value: t.id, label: t.fullName }))];
-  const classOptions = [{ value: "ALL", label: "Tất cả lớp" }, ...classes.map((c) => ({ value: c.id, label: `Lớp ${c.name}` }))];
-  const kindOptions: { value: "ALL" | LocalContentKind; label: string }[] = [
-    { value: "ALL", label: "Tất cả loại" },
-    ...(Object.keys(CONTENT_KIND_LABELS) as LocalContentKind[]).map((k) => ({ value: k, label: CONTENT_KIND_LABELS[k] })),
-  ];
+  const handleAction = (action: Action, it: LocalItem) => {
+    if (action === "PUBLISH") setPublishing([it]);
+    else void apply(action, [it]);
+  };
 
   return (
     <div className="space-y-5">
       <div role="tablist" aria-label="Trạng thái nội dung" className="flex overflow-x-auto border-b border-[var(--text-primary)]">
         {TABS.map((t) => {
-          const active = t.status === tab;
+          const active = t === tab;
           return (
             <button
-              key={t.status}
+              key={t}
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => changeTab(t.status)}
+              onClick={() => changeTab(t)}
               className={cn(
                 "-mb-px inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-[13px] font-bold uppercase tracking-[0.06em] transition-colors",
                 active
                   ? "border-[var(--accent-gold)] text-[var(--text-primary)]"
                   : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]",
-                t.status === "CLASS" && "ml-auto border-l border-l-[var(--border-strong)] normal-case tracking-normal",
               )}
             >
-              {t.label}
+              {REVIEW_STATE_LABELS[t]}
               <span
                 className={cn(
                   "rounded-[2px] px-1.5 text-[11px] tabular-nums",
-                  t.status === "PENDING" && counts.PENDING > 0
+                  t === "PENDING" && counts.PENDING > 0
                     ? "bg-[var(--status-warning)] text-white"
                     : "bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]",
                 )}
               >
-                {counts[t.status]}
+                {counts[t]}
               </span>
             </button>
           );
@@ -186,74 +178,71 @@ function ContentReview() {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <SearchInput value={search} onChange={setSearch} placeholder="Tìm theo tiêu đề, tên nhân vật..." />
+        <SearchInput value={search} onChange={setSearch} placeholder="Tìm theo tên bối cảnh, nhân vật..." />
         <StaffFormSelect value={kind} onValueChange={setKind} options={kindOptions} className="w-full sm:w-40" />
-        <StaffFormSelect value={author} onValueChange={setAuthor} options={teacherOptions} className="w-full sm:w-52" />
-        <StaffFormSelect value={classId} onValueChange={setClassId} options={classOptions} className="w-full sm:w-40" />
+        <StaffFormSelect value={scope} onValueChange={setScope} options={scopeOptions} className="w-full sm:w-40" />
+        <StaffFormSelect value={author} onValueChange={setAuthor} options={authorOptions} className="w-full sm:w-52" />
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-content-muted">
-          {filtered.length} nội dung
-          {tab === "CLASS" && " · chỉ xem, giáo viên tự xuất bản cho lớp; mở một mục để ngừng hiển thị nếu không phù hợp"}
-          {tab !== "CLASS" && tab !== "TRASH" && " toàn trường"}
-          {tab === "DRAFT" && " · chỉ xem, giáo viên chưa gửi duyệt"}
-          {tab === "TRASH" && " · khôi phục sẽ trả nội dung về bản nháp của giáo viên"}
-        </p>
-        {selectable && (
-          <button type="button" className="btn-crimson w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto" disabled={!visibleChecked.length} onClick={bulkPublish}>
-            <Send className="h-4 w-4" aria-hidden="true" /> Xuất bản các mục đã chọn
-            {visibleChecked.length > 0 && <span className="tabular-nums">({visibleChecked.length})</span>}
-          </button>
-        )}
-      </div>
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-content-muted">
+            {filtered.length} nội dung
+            {truncated && " · đang hiển thị 100 mục mới nhất mỗi loại"}
+          </p>
+          {selectable && (
+            <button
+              type="button"
+              className="btn-crimson w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              disabled={!visibleChecked.length || setStatus.isPending}
+              onClick={() => setPublishing(visibleChecked)}
+            >
+              <Send className="h-4 w-4" aria-hidden="true" /> Duyệt các mục đã chọn
+              {visibleChecked.length > 0 && <span className="tabular-nums">({visibleChecked.length})</span>}
+            </button>
+          )}
+        </div>
 
-      {filtered.length === 0 ? (
-        <EmptyState title={EMPTY[tab]} description="Đổi bộ lọc hoặc chuyển sang thẻ khác." />
-      ) : (
-        <div className="overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]">
-          <Table className="min-w-[860px]">
-            <TableHeader>
-              <TableRow className="border-b border-[var(--border-strong)] hover:bg-transparent">
-                {selectable && (
-                  <TableHead className="w-10 px-4">
-                    <Checkbox
-                      aria-label="Chọn tất cả"
-                      checked={allChecked}
-                      onCheckedChange={(v) => setChecked(v ? new Set(filtered.map((it) => it.content.id)) : new Set())}
-                    />
-                  </TableHead>
-                )}
-                {["Loại", "Tiêu đề", "Giáo viên soạn", "Hiển thị cho", "Cập nhật", "Trạng thái"].map((h) => (
-                  <TableHead key={h} className="px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
-                    {h}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((it) => {
-                const c = it.content;
-                return (
+        {filtered.length === 0 ? (
+          <EmptyState title={EMPTY[tab]} description="Đổi bộ lọc hoặc chuyển sang thẻ khác." />
+        ) : (
+          <div className="overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]">
+            <Table className="min-w-[860px]">
+              <TableHeader>
+                <TableRow className="border-b border-[var(--border-strong)] hover:bg-transparent">
+                  {selectable && (
+                    <TableHead className="w-10 px-4">
+                      <Checkbox
+                        aria-label="Chọn tất cả"
+                        checked={allChecked}
+                        onCheckedChange={(v) => setChecked(v ? new Set(filtered.map((it) => it.id)) : new Set())}
+                      />
+                    </TableHead>
+                  )}
+                  {["Loại", "Tên", "Giáo viên soạn", "Phạm vi", "Cập nhật", "Trạng thái"].map((h) => (
+                    <TableHead key={h} className="px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                      {h}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((it) => (
                   <TableRow
-                    key={c.id}
+                    key={it.id}
                     className={cn(
                       "cursor-pointer border-b border-[var(--border-default)] last:border-b-0 hover:bg-[var(--status-neutral-bg)]!",
-                      selectedId === c.id && "bg-[var(--status-neutral-bg)]",
+                      selectedId === it.id && "bg-[var(--status-neutral-bg)]",
                     )}
-                    onClick={() => setSelectedId(c.id)}
+                    onClick={() => setSelectedId(it.id)}
                   >
                     {selectable && (
                       <TableCell className="px-4" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          aria-label={`Chọn ${it.title}`}
-                          checked={checked.has(c.id)}
-                          onCheckedChange={(v) => toggle(c.id, !!v)}
-                        />
+                        <Checkbox aria-label={`Chọn ${it.name}`} checked={checked.has(it.id)} onCheckedChange={(v) => toggle(it.id, !!v)} />
                       </TableCell>
                     )}
                     <TableCell className="px-4">
-                      <ContentKindLabel kind={c.kind} />
+                      <ContentKindLabel kind={it.type} />
                     </TableCell>
                     <TableCell className="max-w-[320px] px-4">
                       <button
@@ -261,76 +250,122 @@ function ContentReview() {
                         className="block w-full truncate text-left font-semibold text-content-heading hover:text-[var(--accent-gold)]"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedId(c.id);
+                          setSelectedId(it.id);
                         }}
                       >
-                        {it.title}
+                        {it.name}
                       </button>
-                      {c.reviewNote && <p className="truncate text-xs text-content-muted">Ghi chú: {c.reviewNote}</p>}
                     </TableCell>
-                    <TableCell className="px-4">{it.author?.fullName ?? "—"}</TableCell>
+                    <TableCell className="px-4">{it.createdBy?.fullName ?? "—"}</TableCell>
                     <TableCell className="px-4">
-                      <span className="inline-flex flex-wrap items-center gap-1.5">
-                        <ContentSourceTag source={c.scope} />
-                        {c.scope === "SCHOOL"
-                          ? "Toàn trường"
-                          : it.classes.length
-                            ? it.classes.map((x) => x.name).join(", ")
-                            : <span className="text-content-muted">Chưa chọn</span>}
-                      </span>
+                      <LocalScopeTag item={it} />
                     </TableCell>
-                    <TableCell className="px-4 tabular-nums">{formatDate(c.updatedAt)}</TableCell>
+                    <TableCell className="px-4 tabular-nums">{formatDate(it.updatedAt)}</TableCell>
                     <TableCell className="px-4">
-                      <ContentStatusBadge status={c.status} />
+                      <LocalReviewBadge item={it} />
                     </TableCell>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </QueryState>
 
-      <SchoolContentReviewSheet
-        item={selected}
-        linked={linked}
-        onOpenChange={(o) => !o && setSelectedId(null)}
-        onAction={handleAction}
-      />
-
-      <SchoolReviewNoteDialog
-        open={!!noteRequest}
-        onOpenChange={(o) => !o && setNoteRequest(null)}
-        title={noteRequest?.action === "RETURN" ? "Trả về chỉnh sửa" : "Ngừng hiển thị nội dung"}
-        description={
-          noteRequest?.action === "RETURN"
-            ? `“${noteRequest?.item.title ?? ""}” sẽ trở về bản nháp của giáo viên kèm ghi chú của bạn.`
-            : `Học sinh ${noteRequest ? audienceText(noteRequest.item) : ""} sẽ không còn thấy nội dung này. Ghi rõ lý do để giáo viên chỉnh sửa.`
-        }
-        confirmLabel={noteRequest?.action === "RETURN" ? "Trả về" : "Ngừng hiển thị"}
-        onConfirm={(note) => {
-          if (!noteRequest) return;
-          const { action, item } = noteRequest;
-          setStatus(item.content.id, action === "RETURN" ? "DRAFT" : "INACTIVE", note);
-          toast.success(action === "RETURN" ? `Đã trả “${item.title}” về cho giáo viên` : `Đã ngừng hiển thị “${item.title}”`);
-          setNoteRequest(null);
-        }}
-      />
+      <ReviewSheet item={selected} busy={setStatus.isPending} onOpenChange={(o) => !o && setSelectedId(null)} onAction={handleAction} />
 
       <ConfirmDialog
-        open={!!trashing}
-        onOpenChange={(o) => !o && setTrashing(null)}
-        title="Chuyển vào thùng rác?"
-        description={`“${trashing?.title ?? ""}” sẽ bị ẩn khỏi mọi lớp. Bạn có thể khôi phục từ thẻ Thùng rác (về bản nháp).`}
-        confirmLabel="Chuyển vào thùng rác"
-        variant="danger"
+        open={!!publishing}
+        onOpenChange={(o) => !o && setPublishing(null)}
+        title={publishing && publishing.length > 1 ? `Duyệt ${publishing.length} nội dung?` : `Duyệt “${publishing?.[0]?.name ?? ""}”?`}
+        description={`Học sinh của trường sẽ thấy nội dung này. ${DISCLAIMER}`}
+        confirmLabel="Duyệt & xuất bản"
         onConfirm={() => {
-          if (!trashing) return;
-          setStatus(trashing.content.id, "TRASH");
-          toast.success(`Đã chuyển “${trashing.title}” vào thùng rác`);
-          setTrashing(null);
+          if (publishing) void apply("PUBLISH", publishing);
+          setPublishing(null);
         }}
       />
     </div>
+  );
+}
+
+function ReviewSheet({
+  item,
+  busy,
+  onOpenChange,
+  onAction,
+}: {
+  item: LocalItem | null;
+  busy: boolean;
+  onOpenChange: (open: boolean) => void;
+  onAction: (action: Action, item: LocalItem) => void;
+}) {
+  const state = item ? reviewState(item) : null;
+  return (
+    <Sheet open={!!item} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="staff-theme w-full gap-0 border-l border-[var(--text-primary)] bg-[var(--bg-surface)] p-0 text-content-text shadow-none sm:max-w-xl"
+      >
+        {item && state && (
+          <>
+            <SheetHeader className="space-y-2 border-b border-[var(--text-primary)] p-5 pr-12">
+              <div className="flex flex-wrap items-center gap-2">
+                <LocalScopeTag item={item} />
+                <ContentKindLabel kind={item.type} />
+                <LocalReviewBadge item={item} />
+              </div>
+              <SheetTitle className="archive-title is-plain text-2xl leading-[1.25]">{item.name}</SheetTitle>
+              <SheetDescription className="text-xs text-content-muted">
+                {item.createdBy?.fullName ?? "Giáo viên đã rời trường"} · cập nhật {formatDate(item.updatedAt)}
+                {item.approvedBy && ` · duyệt bởi ${item.approvedBy.fullName}`}
+              </SheetDescription>
+            </SheetHeader>
+
+            <div className="flex-1 space-y-5 overflow-y-auto p-5">
+              <div className="space-y-1 rounded-[2px] border border-[var(--border-strong)] p-3 text-sm">
+                <p className="inline-flex items-center gap-2 font-semibold text-content-heading">
+                  <Users className="h-4 w-4 text-[var(--men-lam)]" aria-hidden="true" />
+                  {state === "PUBLISHED" ? "Đang hiển thị cho" : "Khi xuất bản sẽ hiển thị cho"}
+                </p>
+                <p className="text-content-text">
+                  Học sinh của trường.{" "}
+                  {item.contentScope === "SCHOOL_WIDE"
+                    ? "Mọi giáo viên trong trường cũng xem được."
+                    : "Chỉ giáo viên soạn dùng được nội dung này cho lớp của mình."}
+                </p>
+              </div>
+
+              {state !== "PUBLISHED" && (
+                <p className="flex items-start gap-2 text-xs text-content-muted">
+                  <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
+                  {DISCLAIMER}
+                </p>
+              )}
+
+              <LocalItemPreview item={item} />
+            </div>
+
+            <div className="flex flex-col gap-2 border-t border-[var(--text-primary)] p-4 sm:flex-row sm:flex-wrap">
+              {ACTIONS[state].map((a) => {
+                const meta = ACTION_META[a];
+                const Icon = meta.icon;
+                return (
+                  <button
+                    key={a}
+                    type="button"
+                    disabled={busy}
+                    className={cn(meta.className, "w-full disabled:opacity-60 sm:w-auto")}
+                    onClick={() => onAction(a, item)}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" /> {meta.label}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 }

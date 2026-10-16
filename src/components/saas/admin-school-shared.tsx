@@ -56,9 +56,12 @@ export function ErrorRetry({ title, message, onRetry, retrying }: { title: strin
     >
       <div className="flex items-start gap-2">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent-danger)]" aria-hidden="true" />
-        <div className="space-y-0.5">
+        <div className="min-w-0 space-y-0.5">
           <p className="font-semibold text-content-heading">{title}</p>
-          <p className="text-[var(--text-secondary)]">{message}</p>
+          {/* Server messages can be raw SQL with no spaces: wrap anywhere and cap the height. */}
+          <p className="line-clamp-3 text-[var(--text-secondary)] [overflow-wrap:anywhere]" title={message}>
+            {message}
+          </p>
         </div>
       </div>
       <button type="button" className="btn-line w-full sm:w-auto" onClick={onRetry} disabled={retrying}>

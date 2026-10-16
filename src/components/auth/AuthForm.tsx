@@ -237,8 +237,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
           </div>
           <div className="flex items-end justify-between gap-6">
             <BrandLogo size="large" />
-            {/* 國史 — "quốc sử", national history */}
-            <span className="archive-seal" aria-hidden="true">國史</span>
           </div>
         </div>
       </div>

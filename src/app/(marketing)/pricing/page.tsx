@@ -251,8 +251,6 @@ export default function PricingPage() {
               </div>
             </div>
 
-            {/* 國史 — "quốc sử", national history */}
-            <span data-pricing-hero className="archive-seal mb-2 mr-2 hidden md:inline-grid" aria-hidden="true">國史</span>
           </div>
         </Container>
       </section>

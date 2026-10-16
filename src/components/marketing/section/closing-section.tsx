@@ -15,9 +15,6 @@ export function ClosingSection() {
       <Container>
         <div data-motion-card className="relative flex min-h-[calc(100svh-3.5rem)] justify-center overflow-hidden rounded-[2px] border border-(--text-primary) bg-(--bg-surface) md:min-h-[380px] sm:min-h-[520px] lg:h-[600px]">
           <div className="absolute left-1/2 top-0 hidden h-28 w-px -translate-x-1/2 bg-(--accent-gold) lg:block" />
-          <span aria-hidden="true" className="archive-seal pointer-events-none absolute left-6 top-6 z-20 hidden lg:inline-grid">
-            越南
-          </span>
 
           <div className="absolute inset-0 z-10 hidden items-end justify-center pointer-events-none sm:flex">
             <Image

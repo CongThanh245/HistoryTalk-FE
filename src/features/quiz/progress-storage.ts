@@ -1,6 +1,8 @@
 import type { QuizQuestion } from "@/services/quiz.service";
+import type { AnswerData } from "@/features/quiz/question-data";
 
-const KEY_PREFIX = "quiz-progress:";
+// v2: cau hoi dung questionType/questionData, cau tra loi dung answerData.
+const KEY_PREFIX = "quiz-progress-v2:";
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 export interface SavedQuizProgress {
@@ -8,7 +10,7 @@ export interface SavedQuizProgress {
   sessionId: string;
   quizTitle: string;
   questions: QuizQuestion[];
-  answers: Record<string, number>;
+  answers: Record<string, AnswerData>;
   limitedTime?: number;
   elapsedSeconds: number;
   flagged: string[];

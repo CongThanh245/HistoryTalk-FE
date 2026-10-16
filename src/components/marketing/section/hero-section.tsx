@@ -264,10 +264,6 @@ export function HeroSection({
             ref={contentWrapperRef}
             className="z-10 shrink-0 space-y-3 pb-2 pt-[5.8rem] sm:pt-[6.5rem] md:space-y-4 md:pb-4 md:pt-28 lg:space-y-8 lg:pb-0 lg:pt-0"
           >
-            <div className="hero-stagger-item hidden items-center justify-between gap-4 border-b border-[var(--border-strong)] pb-3 lg:flex">
-              {/* 國史 — "quốc sử", national history */}
-              <span className="archive-seal" aria-hidden="true">國史</span>
-            </div>
             <h1 className="archive-title">
               <span className="sr-only">HistoryTalk - Trò chuyện với nhân vật lịch sử- Học lịch sử tương tác</span>
               <span className="block overflow-hidden pb-[0.08em]">

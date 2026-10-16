@@ -9,12 +9,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SchoolAdminsTab } from "@/components/saas/admin-school-admins";
-import { ErrorRetry, PackageCell, SchoolStatusPill } from "@/components/saas/admin-school-shared";
+import { ErrorRetry, SchoolStatusPill } from "@/components/saas/admin-school-shared";
 import { SchoolInfoTab } from "@/components/saas/admin-school-tabs";
 import { SaasShell } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
+import { cn } from "@/lib/utils/cn";
 import { apiErrorMessage, apiErrorStatus, useApiSchool } from "@/features/saas/hooks-api";
-import { SCHOOL_STATUS_LABELS, useSchoolAdminCounts } from "@/features/saas/admin-schools";
+import { PACKAGE_SHORT_LABELS, SCHOOL_STATUS_LABELS, millionTokens, useSchoolAdminCounts } from "@/features/saas/admin-schools";
+import { ENTERPRISE_PACKAGE_TOKENS } from "@/services/school.service";
 
 /** System Admin: one school (`GET /admin/schools/{id}`): info + token pool, and its School Admin accounts. */
 export default function AdminSchoolDetailPage() {
@@ -22,7 +24,7 @@ export default function AdminSchoolDetailPage() {
   // Same query as SchoolDetail (React Query dedupes it); the school name becomes the page title.
   const { data: school } = useApiSchool(schoolId);
   return (
-    <SaasShell live title={school?.name ?? "Chi tiết trường"} fallback={<DetailSkeleton />}>
+    <SaasShell live title={school?.name ?? "Chi tiết trường"} backLink={<BackLink />} fallback={<DetailSkeleton />}>
       <SchoolDetail schoolId={schoolId} />
     </SaasShell>
   );
@@ -70,7 +72,6 @@ function SchoolDetail({ schoolId }: { schoolId: string }) {
     }
     return (
       <div className="space-y-6">
-        <BackLink />
         <ErrorRetry
           title="Không tải được thông tin trường"
           message={apiErrorMessage(error, "Máy chủ không phản hồi. Kiểm tra kết nối rồi thử lại.")}
@@ -83,15 +84,7 @@ function SchoolDetail({ schoolId }: { schoolId: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-content-muted">
-          <span className="font-mono text-content-text">{school.schoolCode}</span>
-          <span aria-hidden="true">·</span>
-          <PackageCell pkg={school.packageType} inline />
-          <SchoolStatusPill status={school.status} />
-        </div>
-        <BackLink />
-      </div>
+      <SchoolSummary school={school} />
 
       {school.status !== "ACTIVE" && (
         <p
@@ -125,5 +118,36 @@ function SchoolDetail({ schoolId }: { schoolId: string }) {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+const SUMMARY_LABEL = "text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]";
+
+/** Key facts of the school as a labelled strip: code, package, monthly pool, status. */
+function SchoolSummary({ school }: { school: NonNullable<ReturnType<typeof useApiSchool>["data"]> }) {
+  const tokens = ENTERPRISE_PACKAGE_TOKENS[school.packageType];
+  const items: { label: string; value: React.ReactNode }[] = [
+    { label: "Mã trường", value: <span className="font-mono">{school.schoolCode}</span> },
+    { label: "Gói dịch vụ", value: PACKAGE_SHORT_LABELS[school.packageType] ?? school.packageType },
+    { label: "Token mỗi tháng", value: tokens ? `${millionTokens(tokens)} token` : "—" },
+    { label: "Trạng thái", value: <SchoolStatusPill status={school.status} /> },
+  ];
+  return (
+    <dl className="grid grid-cols-2 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] lg:grid-cols-4">
+      {items.map(({ label, value }, i) => (
+        <div
+          key={label}
+          className={cn(
+            "space-y-1.5 p-4",
+            i % 2 === 1 && "border-l border-[var(--border-default)]",
+            i >= 2 && "border-t border-[var(--border-default)] lg:border-t-0",
+            i === 2 && "lg:border-l",
+          )}
+        >
+          <dt className={SUMMARY_LABEL}>{label}</dt>
+          <dd className="text-sm font-bold text-content-heading">{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

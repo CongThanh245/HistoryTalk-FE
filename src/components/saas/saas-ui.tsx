@@ -26,10 +26,13 @@ export function SaasShell({
   variant = "staff",
   fallback,
   live = false,
+  backLink,
   children,
 }: {
   title: string;
   description?: string;
+  /** Small "← back" link shown above the page title. */
+  backLink?: React.ReactNode;
   /** "staff" = School Admin / System Admin workspace; "app" = learning app (layout already pads). */
   variant?: "staff" | "app";
   /** Shown until the persisted store has hydrated (defaults to a spinner); e.g. a table skeleton. */
@@ -47,7 +50,14 @@ export function SaasShell({
       )}
     >
       {!live && <MockDataNotice />}
-      <ArchiveHeading as="h1" title={title} description={description} />
+      {backLink ? (
+        <div className="space-y-3">
+          {backLink}
+          <ArchiveHeading as="h1" title={title} description={description} />
+        </div>
+      ) : (
+        <ArchiveHeading as="h1" title={title} description={description} />
+      )}
       {hydrated ? (
         children
       ) : fallback ? (

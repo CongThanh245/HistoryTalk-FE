@@ -1,4 +1,10 @@
 import { axiosClient } from "@/configs/axios.client";
+import {
+  parseQuestionData,
+  parseQuestionType,
+  type QuestionData,
+  type QuestionType,
+} from "@/features/quiz/question-data";
 
 export type StaffQuizEra =
   | "ANCIENT"
@@ -13,15 +19,16 @@ export type StaffQuizLevel = "EASY" | "MEDIUM" | "HARD";
 export interface StaffQuizQuestion {
   questionId: string;
   content: string;
-  options: string[];
-  correctAnswer: number;
+  questionType: QuestionType;
+  /** Staff luon nhan questionData day du (co dap an). */
+  questionData: QuestionData;
   explanation?: string;
 }
 
 export interface CreateQuestionPayload {
   content: string;
-  options: string[];
-  correctAnswer: number;
+  questionType: QuestionType;
+  questionData: QuestionData;
   explanation?: string;
 }
 
@@ -109,11 +116,30 @@ export interface UpdateQuizPayload {
   isPublished?: boolean;
 }
 
-export interface UpdateQuestionPayload {
-  content?: string;
-  options?: string[];
-  correctAnswer?: number;
-  explanation?: string;
+export type UpdateQuestionPayload = Partial<CreateQuestionPayload>;
+
+// ── Question Bank ─────────────────────────────────────────
+
+export interface QuestionBankItem extends StaffQuizQuestion {
+  /** Cau hoi dang duoc gan vao it nhat 1 quiz. */
+  assignedToQuiz: boolean;
+}
+
+export interface GetQuestionBankParams {
+  questionType?: QuestionType;
+  search?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface GetQuestionBankResponse {
+  content: QuestionBankItem[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
 // ── Import CSV Types ──────────────────────────────────────
@@ -126,7 +152,7 @@ export interface ImportQuizFromCsvResponse {
   imported: StaffQuizSet[];
 }
 
-type RawStaffQuizQuestion = Partial<StaffQuizQuestion>;
+type RawStaffQuizQuestion = Record<string, unknown>;
 
 type RawStaffQuizSet = Partial<Omit<StaffQuizSet, "questions">> & {
   questions?: RawStaffQuizQuestion[];
@@ -136,11 +162,18 @@ type RawStaffQuizSet = Partial<Omit<StaffQuizSet, "questions">> & {
 
 export function mapStaffQuestion(raw: RawStaffQuizQuestion): StaffQuizQuestion {
   return {
-    questionId: raw.questionId ?? "",
-    content: raw.content ?? "",
-    options: raw.options ?? [],
-    correctAnswer: raw.correctAnswer ?? 0,
-    explanation: raw.explanation,
+    questionId: typeof raw.questionId === "string" ? raw.questionId : "",
+    content: typeof raw.content === "string" ? raw.content : "",
+    questionType: parseQuestionType(raw.questionType),
+    questionData: parseQuestionData(raw),
+    explanation: typeof raw.explanation === "string" ? raw.explanation : undefined,
+  };
+}
+
+export function mapQuestionBankItem(raw: RawStaffQuizQuestion): QuestionBankItem {
+  return {
+    ...mapStaffQuestion(raw),
+    assignedToQuiz: Boolean(raw.assignedToQuiz),
   };
 }
 
@@ -231,7 +264,7 @@ export const staffQuizService = {
   ): Promise<void> => {
     await axiosClient.put(
       `/staff/quizzes/${quizId}/questions/${questionId}`,
-      toContractQuestionPayload(payload as CreateQuestionPayload),
+      toContractQuestionPayload(payload),
     );
   },
 
@@ -276,15 +309,65 @@ export const staffQuizService = {
   resolveQuestionReport: async (reportId: string): Promise<void> => {
     await axiosClient.patch(`/staff/quizzes/reports/${reportId}/resolve`);
   },
+
+  // ── Question Bank ───────────────────────────────────────
+
+  // GET /staff/question-bank?questionType=&search=&page=&size=
+  getQuestionBank: async (
+    params?: GetQuestionBankParams,
+  ): Promise<GetQuestionBankResponse> => {
+    const res = await axiosClient.get("/staff/question-bank", { params });
+    const raw = res.data.data;
+    return {
+      ...raw,
+      content: (raw.content ?? []).map(mapQuestionBankItem),
+    };
+  },
+
+  // POST /staff/question-bank
+  createBankQuestion: async (payload: CreateQuestionPayload): Promise<QuestionBankItem> => {
+    const res = await axiosClient.post(
+      "/staff/question-bank",
+      toContractQuestionPayload(payload),
+    );
+    return mapQuestionBankItem(res.data.data);
+  },
+
+  // PUT /staff/question-bank/:questionId
+  updateBankQuestion: async (
+    questionId: string,
+    payload: UpdateQuestionPayload,
+  ): Promise<QuestionBankItem> => {
+    const res = await axiosClient.put(
+      `/staff/question-bank/${questionId}`,
+      toContractQuestionPayload(payload),
+    );
+    return mapQuestionBankItem(res.data.data);
+  },
+
+  // PATCH /staff/question-bank/:questionId/soft-delete
+  softDeleteBankQuestion: async (questionId: string): Promise<void> => {
+    await axiosClient.patch(`/staff/question-bank/${questionId}/soft-delete`);
+  },
+
+  // POST /staff/question-bank/:questionId/attach/:quizId
+  attachBankQuestion: async (questionId: string, quizId: string): Promise<void> => {
+    await axiosClient.post(`/staff/question-bank/${questionId}/attach/${quizId}`);
+  },
+
+  // DELETE /staff/question-bank/:questionId/detach/:quizId
+  detachBankQuestion: async (questionId: string, quizId: string): Promise<void> => {
+    await axiosClient.delete(`/staff/question-bank/${questionId}/detach/${quizId}`);
+  },
 };
 
 // ── Internal helpers ───────────────────────────────────────
 
-function toContractQuestionPayload(question: CreateQuestionPayload) {
+function toContractQuestionPayload(question: UpdateQuestionPayload) {
   return {
-    content: question.content,
-    options: question.options,
-    correctAnswer: question.correctAnswer,
+    ...(question.content !== undefined && { content: question.content }),
+    ...(question.questionType !== undefined && { questionType: question.questionType }),
+    ...(question.questionData !== undefined && { questionData: question.questionData }),
     ...(question.explanation !== undefined && { explanation: question.explanation }),
   };
 }

@@ -73,8 +73,6 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
         </button>
 
         <section className="relative rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-6 md:p-8">
-          {/* 史 — "sử", history */}
-          <span className="archive-seal absolute right-5 top-5 hidden md:inline-grid w-[52px] h-[52px] text-[22px]" aria-hidden="true">史</span>
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
             <div>
               <div className="mb-4 flex flex-wrap gap-2">
