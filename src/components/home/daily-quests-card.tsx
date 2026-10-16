@@ -1,8 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import {
   BookOpen,
   ChevronRight,
@@ -16,9 +15,8 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { useClaimQuest, useGamificationToday } from "@/features/gamification/hooks";
-import type { DailyQuest, GamificationToday, QuestType } from "@/services/gamification.service";
+import type { DailyQuest, QuestType } from "@/services/gamification.service";
 import { useEntitlements } from "@/features/saas/entitlements";
-import { localDateKey, questQuotaBonus, useQuotaBonusStore, useTodayQuotaBonus } from "@/features/saas/quota-bonus";
 import { StudyCalendar } from "./study-calendar";
 
 /**
@@ -51,36 +49,6 @@ const EMPTY_WEEK = WEEKDAY_LABELS.map((_, i) => ({
  * School accounts: the gamification API may reject the role (403). Show a mock day so the card still works;
  * rewards then go to today's quota (see quota-bonus.ts). Swap for the real API once it accepts school roles.
  */
-function buildSchoolMockToday(): GamificationToday {
-  const now = new Date();
-  const todayIndex = (now.getDay() + 6) % 7; // 0 = Thứ 2
-  const week = WEEKDAY_LABELS.map((_, i) => {
-    const d = new Date(now);
-    d.setDate(now.getDate() + (i - todayIndex));
-    return {
-      date: localDateKey(d),
-      weekday: i,
-      // Studied the two days before today; today counts once a quest is done.
-      studied: i < todayIndex && i >= todayIndex - 2,
-      isToday: i === todayIndex,
-    };
-  });
-  const quests: DailyQuest[] = [
-    { id: "school-chat", type: "CHAT", title: "Trò chuyện 5 lượt với nhân vật lịch sử", target: 5, progress: 5, rewardTokens: 0, completed: true, claimed: false },
-    { id: "school-quiz", type: "QUIZ", title: "Hoàn thành 1 bài quiz", target: 1, progress: 1, rewardTokens: 0, completed: true, claimed: false },
-    { id: "school-read", type: "READ_CONTEXT", title: "Đọc 2 bối cảnh lịch sử", target: 2, progress: 0, rewardTokens: 0, completed: false, claimed: false },
-  ];
-  return {
-    date: localDateKey(now),
-    streakCount: 3,
-    longestStreak: 7,
-    totalStudyDays: 18,
-    studiedToday: true,
-    week,
-    quests,
-    claimableTokens: 0,
-  };
-}
 
 function DailyQuestsSkeleton() {
   return (
@@ -101,28 +69,10 @@ function DailyQuestsSkeleton() {
 export function DailyQuestsCard() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const userId = useAuthStore((s) => s.user?.uid);
   const entitlements = useEntitlements();
-  // Customers claim tokens into their wallet; school accounts add a bonus to today's school quota.
-  const isQuotaReward = entitlements.questReward === "QUOTA_BONUS";
+  // BE chi mo /gamification cho CUSTOMER va admin — tai khoan truong (TEACHER, SCHOOL_STUDENT) bi 403 nen an the.
   const isSchoolAccount = entitlements.mode === "B2B";
-  const quotaBonus = questQuotaBonus(entitlements.dailyQuota);
-  const claimBonus = useQuotaBonusStore((s) => s.claim);
-  const bonusDay = useTodayQuotaBonus();
-  const { data: apiData, isLoading, isError } = useGamificationToday(isSchoolAccount ? { retry: false } : undefined);
-  const schoolMock = useMemo(() => (isSchoolAccount ? buildSchoolMockToday() : null), [isSchoolAccount]);
-  const rawData = isSchoolAccount && (isError || !apiData) && !isLoading ? schoolMock : apiData;
-  const data = useMemo(() => {
-    if (!rawData || !isQuotaReward) return rawData;
-    return {
-      ...rawData,
-      quests: (Array.isArray(rawData.quests) ? rawData.quests : []).map((q) => ({
-        ...q,
-        rewardTokens: quotaBonus,
-        claimed: q.claimed || bonusDay.questIds.includes(q.id),
-      })),
-    };
-  }, [rawData, isQuotaReward, quotaBonus, bonusDay.questIds]);
+  const { data, isLoading, isError } = useGamificationToday({ enabled: !isSchoolAccount });
   const { mutateAsync: claim, isPending: claiming } = useClaimQuest();
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [justClaimed, setJustClaimed] = useState<string | null>(null);
@@ -134,20 +84,11 @@ export function DailyQuestsCard() {
     return () => clearTimeout(t);
   }, [justClaimed]);
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated || isSchoolAccount) return null;
   if (isLoading) return <DailyQuestsSkeleton />;
-  if (!isSchoolAccount && isError) return null;
-  if (!data) return null;
+  if (isError || !data) return null;
 
   async function handleClaim(quest: DailyQuest) {
-    if (isQuotaReward) {
-      if (!userId) return;
-      if (claimBonus(userId, quest.id, quotaBonus)) {
-        setJustClaimed(quest.id);
-        toast.success(`Đã cộng ${quotaBonus.toLocaleString("vi-VN")} token vào hạn mức hôm nay`);
-      }
-      return;
-    }
     if (claiming) return;
     setClaimingId(quest.id);
     try {
@@ -294,7 +235,7 @@ export function DailyQuestsCard() {
               {q.claimed ? (
                 celebrated ? (
                   <span className="home-quest-reward is-claimed">
-                    +{isQuotaReward ? `${q.rewardTokens.toLocaleString("vi-VN")} lượt hạn mức` : q.rewardTokens}
+                    +{q.rewardTokens}
                   </span>
                 ) : (
                   <span className="home-quest-reward is-claimed">
@@ -316,7 +257,7 @@ export function DailyQuestsCard() {
                       void handleClaim(q);
                     }
                   }}
-                  aria-label={isQuotaReward ? `Nhận +${q.rewardTokens.toLocaleString("vi-VN")} lượt hạn mức hôm nay` : undefined}
+                  aria-label={undefined}
                   className="home-quest-reward is-ready flex items-center gap-1 shrink-0 justify-center cursor-pointer"
                 >
                   {busy ? (
@@ -325,7 +266,7 @@ export function DailyQuestsCard() {
                     <>
                       <Coins className="w-3 h-3 text-white" fill="currentColor" />
                       <span className="text-[12px] font-extrabold text-white whitespace-nowrap">
-                        +{isQuotaReward ? `${q.rewardTokens.toLocaleString("vi-VN")} lượt hạn mức` : q.rewardTokens}
+                        +{q.rewardTokens}
                       </span>
                     </>
                   )}
@@ -335,7 +276,7 @@ export function DailyQuestsCard() {
                   <span className="flex items-center gap-0.5">
                     <Coins className="w-3 h-3 text-content-muted" />
                     <span className="text-[11px] font-bold text-content-muted whitespace-nowrap">
-                      {isQuotaReward ? `+${q.rewardTokens.toLocaleString("vi-VN")} lượt hạn mức` : q.rewardTokens}
+                      {q.rewardTokens}
                     </span>
                   </span>
                   <ChevronRight className="w-3.5 h-3.5 text-content-muted" />

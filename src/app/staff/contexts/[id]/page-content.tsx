@@ -24,6 +24,7 @@ import {
   useUnmapContextFromCharacter,
 } from "@/features/characters/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ContextMapFocusManager } from "@/components/staff/context-map-focus-manager";
 import type { EventEraBackend } from "@/services/event.service";
 
 export default function EditContextPage() {
@@ -156,6 +157,7 @@ export default function EditContextPage() {
       isMapCharacterPending={mapContextToCharacter.isPending}
       onUnmapCharacter={(characterId) => unmapContextFromCharacter.mutate({ characterId, contextId: id })}
       isUnmapCharacterPending={unmapContextFromCharacter.isPending}
+      mapFocusSlot={<ContextMapFocusManager contextId={id} />}
     />
   );
 }

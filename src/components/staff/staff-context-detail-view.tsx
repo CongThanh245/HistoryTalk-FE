@@ -102,6 +102,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     isMapCharacterPending = false,
     onUnmapCharacter,
     isUnmapCharacterPending = false,
+    mapFocusSlot,
   } = props;
 
   const router = useRouter();
@@ -228,7 +229,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
   const hasVideo = !!draft.videoUrl;
   const youtubeVideoEmbedUrl = getYouTubeEmbedUrl(draft.videoUrl);
 
-  const visibleTabs = FORM_TABS.filter((tab) => tab.key !== "characters" || mode === "edit");
+  const visibleTabs = FORM_TABS.filter(
+    (tab) => (tab.key !== "characters" && tab.key !== "map") || mode === "edit",
+  );
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-content)]">
@@ -385,7 +388,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
               </p>
 
               <TabsList
-                className={`w-full grid h-auto p-0 gap-0 bg-transparent ${visibleTabs.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}
+                className={`w-full grid h-auto p-0 gap-0 bg-transparent ${visibleTabs.length === 5 ? "grid-cols-5" : visibleTabs.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}
               >
                 {visibleTabs.map((tab) => (
                   <TabsTrigger
@@ -752,6 +755,12 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   )}
                 </div>
               </TabsContent>
+
+              {mode === "edit" && (
+                <TabsContent value="map" className="space-y-4 mt-0">
+                  {mapFocusSlot}
+                </TabsContent>
+              )}
 
               <TabsContent value="characters" className="space-y-4 mt-0">
                 <div>

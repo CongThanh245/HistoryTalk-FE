@@ -7,7 +7,6 @@ import { ArrowLeft, UserRound } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LocalItemPreview, LocalScopeTag, QueryState } from "@/components/saas/local-content-ui";
 import { NeutralBadge, Panel, SaasShell } from "@/components/saas/saas-ui";
-import { StudentMockChat } from "@/components/saas/student-mock-chat";
 import { ROUTES } from "@/constants/routes";
 import { useRole } from "@/features/auth/usePermission";
 import { useLocalItem, useStudentLocalContent } from "@/features/saas/hooks-local-content";
@@ -94,15 +93,11 @@ function MaterialView({ item, teacher }: { item: LocalItem; teacher?: boolean })
             </div>
             <LocalItemPreview item={{ ...item, title: null }} />
           </Panel>
-          {/* Mock until the AI chat supports local characters. */}
-          <StudentMockChat
-            character={{
-              name: item.name,
-              title: item.title ?? "",
-              biography: item.description,
-              persona: item.personality ?? undefined,
-              imageUrl: item.imageUrl ?? undefined,
-            }}
+          {/* BE chua ho tro chat AI voi nhan vat dia phuong (/chat/sessions chi nhan characterId cua kho chung). */}
+          <EmptyState
+            size="sm"
+            title="Chưa trò chuyện được với nhân vật địa phương"
+            description="Máy chủ chưa hỗ trợ trò chuyện AI với nhân vật do giáo viên soạn."
           />
         </div>
       )}

@@ -7,13 +7,14 @@ import { Panel, SectionHeading, formatNumber } from "@/components/saas/saas-ui";
 import { ProgressMeter } from "@/components/saas/student-ui";
 import { mapEraLabel } from "@/constants/eras";
 import { ROUTES } from "@/constants/routes";
-import { useMyDashboard } from "@/features/dashboard/hooks";
+import { useCustomerDashboard, useMyDashboard } from "@/features/dashboard/hooks";
 import { useMyQuizResults } from "@/features/quiz/hooks";
 import type { LucideIcon } from "lucide-react";
 
 /**
  * Bảng điểm / tiến độ của Customer (Role Matrix row 25), from the real API:
  * GET /users/me/dashboard (learning + aiUsage) and GET /quizzes/results/me.
+ * GET /customer/dashboard bổ sung hạn gói, tổng tin nhắn AI và lịch sử thanh toán.
  */
 
 const ERA_ORDER = ["ANCIENT", "MEDIEVAL", "MODERN", "CONTEMPORARY"];
@@ -43,6 +44,7 @@ function Tile({ icon: Icon, color, label, value, sub }: { icon: LucideIcon; colo
 export function CustomerGrades() {
   const { data, isLoading, isError, refetch } = useMyDashboard();
   const results = useMyQuizResults({ page: 0, size: 10 });
+  const customer = useCustomerDashboard();
 
   if (isLoading) {
     return (
@@ -85,7 +87,20 @@ export function CustomerGrades() {
           sub="Trên tất cả bài quiz đã làm"
         />
         <Tile icon={Trophy} color="var(--men-lam)" label="Bài quiz đã làm" value={formatNumber(learning.totalQuizzesAttempted)} />
-        <Tile icon={Coins} color="var(--accent-gold)" label="Token còn lại" value={formatNumber(aiUsage.currentBalance)} sub={aiUsage.tier ? `Gói ${aiUsage.tier}` : undefined} />
+        <Tile
+          icon={Coins}
+          color="var(--accent-gold)"
+          label="Token còn lại"
+          value={formatNumber(aiUsage.currentBalance)}
+          sub={
+            [
+              aiUsage.tier ? `Gói ${aiUsage.tier}` : null,
+              customer.data?.tierExpiresAt ? `hết hạn ${formatDate(customer.data.tierExpiresAt)}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || undefined
+          }
+        />
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
@@ -150,6 +165,11 @@ export function CustomerGrades() {
               <span className="font-display text-3xl font-extrabold tabular-nums text-content-text">{formatNumber(aiUsage.totalTokensUsed)}</span>
               <span className="text-[13px] text-content-muted">token tổng cộng</span>
             </div>
+            {customer.data && (
+              <p className="text-[13px] text-content-muted">
+                <span className="font-bold tabular-nums text-content-text">{formatNumber(customer.data.totalAiMessages)}</span> tin nhắn đã gửi cho nhân vật
+              </p>
+            )}
             {aiUsage.totalTokensUsed > 0 && (
               <dl className="grid grid-cols-2 gap-3 text-[13px]">
                 <div className="space-y-1">
@@ -184,6 +204,34 @@ export function CustomerGrades() {
                   ))}
                 </ul>
               </div>
+            )}
+          </Panel>
+
+          <Panel>
+            <SectionHeading title="Lịch sử thanh toán" description="Các giao dịch nâng cấp gói gần đây." />
+            {customer.isPending ? (
+              <p className="text-[13px] text-content-muted">Đang tải...</p>
+            ) : customer.isError ? (
+              <p className="text-[13px] text-content-muted">Không tải được lịch sử thanh toán.</p>
+            ) : (customer.data?.paymentHistory.length ?? 0) === 0 ? (
+              <p className="text-[13px] text-content-muted">Chưa có giao dịch.</p>
+            ) : (
+              <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--border-default)]">
+                {customer.data!.paymentHistory.map((p) => (
+                  <li key={p.orderCode} className="flex items-center gap-3 py-2.5 text-[13px]">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-content-text">Gói {p.tierName}</span>
+                      <span className="block text-[12px] text-content-muted">
+                        {formatDate(p.createdAt)} · #{p.orderCode}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="block font-bold tabular-nums text-content-text">{formatNumber(p.amount)}đ</span>
+                      <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-content-muted">{p.status}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </Panel>
         </div>

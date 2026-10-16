@@ -47,7 +47,7 @@ export const ROUTES = {
     ASSIGNMENT_NEW: "/teaching/assignments/new",
     ASSIGNMENT_DETAIL: (id: string) => `/teaching/assignments/${id}`,
     LOCAL: "/teaching/local",
-    LOCAL_NEW: (kind: "CONTEXT" | "CHARACTER" | "QUIZ") => `/teaching/local/new?kind=${kind}`,
+    LOCAL_NEW: (kind: "CONTEXT" | "CHARACTER") => `/teaching/local/new?kind=${kind}`,
     /** `kind` is required for API-backed contexts / characters (separate endpoints); mock quizzes omit it. */
     LOCAL_EDIT: (id: string, kind?: "CONTEXT" | "CHARACTER") => `/teaching/local/${id}${kind ? `?kind=${kind}` : ""}`,
   },

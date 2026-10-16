@@ -25,7 +25,7 @@ export function SaasShell({
   description,
   variant = "staff",
   fallback,
-  live = false,
+  live = true,
   backLink,
   children,
 }: {
@@ -37,7 +37,7 @@ export function SaasShell({
   variant?: "staff" | "app";
   /** Shown until the persisted store has hydrated (defaults to a spinner); e.g. a table skeleton. */
   fallback?: React.ReactNode;
-  /** True when the screen reads the real API: hides the "Dữ liệu mẫu" notice. */
+  /** False chi khi man hinh con doc mock store: hien canh bao "Dữ liệu mẫu". Hien khong con man nao. */
   live?: boolean;
   children: React.ReactNode;
 }) {

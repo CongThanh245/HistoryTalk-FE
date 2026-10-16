@@ -1,3 +1,4 @@
+import type * as React from "react";
 import type { RagDocument } from "@/services/document.service";
 import type { Character } from "@/services/character.service";
 import type { EventEraBackend } from "@/services/event.service";
@@ -104,15 +105,18 @@ export interface StaffContextDetailViewProps {
   isMapCharacterPending?: boolean;
   onUnmapCharacter?: (characterId: string) => void;
   isUnmapCharacterPending?: boolean;
+  /** Noi dung tab "Bản đồ" (chi o che do edit), vd. ContextMapFocusManager. */
+  mapFocusSlot?: React.ReactNode;
 }
 
-export type FormTabKey = "basic" | "media" | "rag" | "characters";
+export type FormTabKey = "basic" | "media" | "rag" | "characters" | "map";
 
 export const FORM_TABS: { key: FormTabKey; label: string }[] = [
   { key: "basic", label: "Cơ bản" },
   { key: "media", label: "Media" },
   { key: "rag", label: "Tài liệu" },
   { key: "characters", label: "Nhân vật" },
+  { key: "map", label: "Bản đồ" },
 ];
 
 export const TAB_ERROR_FIELDS: Record<FormTabKey, ContextValidationField[]> = {
@@ -120,4 +124,5 @@ export const TAB_ERROR_FIELDS: Record<FormTabKey, ContextValidationField[]> = {
   media: ["imageUrl", "videoUrl"],
   rag: [],
   characters: [],
+  map: [],
 };

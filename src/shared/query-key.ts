@@ -105,6 +105,11 @@ export const queryKeys = {
 
   dashboard: {
     me: ["dashboard", "me"] as const,
+    schoolAdmin: ["dashboard", "school-admin"] as const,
+    teacherClassroom: (classId: string) => ["dashboard", "teacher", classId] as const,
+    student: ["dashboard", "student"] as const,
+    customer: ["dashboard", "customer"] as const,
+    systemAdmin: ["dashboard", "system-admin"] as const,
   },
 
   gamification: {

@@ -1,17 +1,19 @@
 "use client";
 
-// FAKE UI (chỉ phần học sinh trường — StudentGradeBook): dữ liệu mẫu, chưa có API bảng điểm. Phần Customer dùng API thật.
+// Học sinh trường: tổng quan (StudentPersonalDashboard) + điểm bài tập (StudentGradeBook, GET /student/assignments).
+// Customer: thống kê học tập. Tất cả dùng API thật.
 import { ArchiveHeading } from "@/components/commons/archive-heading";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SaasShell, useHydrated } from "@/components/saas/saas-ui";
 import { CustomerGrades } from "@/components/saas/student-customer-grades";
 import { StudentGradeBook } from "@/components/saas/student-grade-book";
+import { StudentPersonalDashboard } from "@/components/saas/student-personal-dashboard";
 import { useRole } from "@/features/auth/usePermission";
 
 const TITLE = "Bảng điểm & tiến độ học tập";
 
 /**
- * Role Matrix row 25. School students: grade book per class from the (mock) classroom store.
+ * Role Matrix row 25. School students: assignment scores from the student assignment API.
  * Customers: real learning stats from the API, so no mock-data notice.
  */
 export default function GradesPage() {
@@ -22,7 +24,10 @@ export default function GradesPage() {
   if (hydrated && role === "SCHOOL_STUDENT") {
     return (
       <SaasShell variant="app" title={TITLE} description="Điểm bài kiểm tra, mức độ hoàn thành bài tập và hoạt động học với AI của em.">
-        <StudentGradeBook role={role} />
+        <div className="space-y-10">
+          <StudentPersonalDashboard />
+          <StudentGradeBook />
+        </div>
       </SaasShell>
     );
   }

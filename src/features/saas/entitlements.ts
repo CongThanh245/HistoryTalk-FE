@@ -2,15 +2,19 @@
 
 import { useAuthStore } from "@/store/auth.store";
 import { hasPlusAccess, hasProAccess } from "@/services/user.service";
-import { DEMO_SCHOOL_ID, PLAN_LABELS } from "./mock-data";
-import { useSaasStore } from "./store";
+import { useStudentDashboard } from "@/features/dashboard/hooks";
+import { useApiTeacherClassrooms } from "./hooks-api";
 import type { School } from "./types";
 
 /**
  * One source of truth for "what this account may do" across the shared learning app.
  * B2C customers get features from their personal tier (Free / Plus / Pro) and a personal token wallet;
- * school accounts (Teacher, School Student) get them from the school's package and daily quota.
+ * school accounts (Teacher, School Student) get tokens allocated by the school.
  * Screens ask this hook instead of checking roles or tiers themselves.
+ *
+ * BE chua co API goi / quyen tinh nang cho tai khoan truong (khong co Enterprise 1-3 gating, khong co
+ * han muc theo ngay): ten truong lay tu /student/dashboard (hoc sinh) hoac /teacher/classrooms (giao vien),
+ * goi thoai / video khong bi chan vi BE khong chan.
  */
 
 export type EntitlementMode = "B2C" | "B2B" | "STAFF";
@@ -32,7 +36,7 @@ export interface Entitlements {
   /** Upgrade ads / prompts. */
   showUpsell: boolean;
   tokenSource: "PERSONAL" | "SCHOOL" | "UNLIMITED";
-  /** B2B: daily quota from the school; B2C: undefined (wallet balance lives on the user). */
+  /** BE khong co han muc theo ngay — luon undefined. */
   dailyQuota?: number;
   usedToday?: number;
   voiceCall: boolean;
@@ -48,8 +52,11 @@ export interface Entitlements {
 
 export function useEntitlements(): Entitlements {
   const user = useAuthStore((s) => s.user);
-  const school = useSaasStore((s) => s.schools.find((x) => x.id === DEMO_SCHOOL_ID));
   const role = user?.role;
+  const student = useStudentDashboard(role === "SCHOOL_STUDENT");
+  const teacherClasses = useApiTeacherClassrooms({ page: 0, size: 1 }, role === "TEACHER");
+  const schoolName =
+    role === "SCHOOL_STUDENT" ? student.data?.schoolName : teacherClasses.data?.items[0]?.schoolName;
 
   if (role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN" || role === "SCHOOL_ADMIN") {
     return {
@@ -59,23 +66,21 @@ export function useEntitlements(): Entitlements {
   }
 
   if (role === "TEACHER" || role === "SCHOOL_STUDENT") {
-    const plan = school?.plan ?? "ENTERPRISE_1";
-    const features = SCHOOL_PLAN_FEATURES[plan];
     const isTeacher = role === "TEACHER";
     return {
       mode: "B2B",
       canPurchase: false,
       showUpsell: false,
       tokenSource: "SCHOOL",
-      dailyQuota: isTeacher ? school?.dailyTokensPerTeacher : school?.dailyTokensPerStudent,
-      voiceCall: features.voiceCall,
-      videoCall: features.videoCall,
+      dailyQuota: undefined,
+      voiceCall: true,
+      videoCall: true,
       questReward: "QUOTA_BONUS",
-      planLabel: `${PLAN_LABELS[plan]}${school ? ` · ${school.name}` : ""}`,
+      planLabel: schoolName ? `Tài khoản trường · ${schoolName}` : "Tài khoản trường",
       upgradeHint: isTeacher
         ? "Tính năng này thuộc gói cao hơn của trường. Liên hệ quản trị nhà trường để mở."
         : "Tính năng này chưa có trong gói của trường. Hỏi thầy cô hoặc nhà trường nhé.",
-      schoolName: school?.name,
+      schoolName,
     };
   }
 

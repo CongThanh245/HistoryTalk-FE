@@ -37,7 +37,7 @@ interface SpringPage<T> {
   hasPrevious: boolean;
 }
 
-function fromPagination<T>(body: { data?: T[]; pagination?: PaginationMeta }): ApiPage<T> {
+export function fromPagination<T>(body: { data?: T[]; pagination?: PaginationMeta }): ApiPage<T> {
   const items = body.data ?? [];
   const p = body.pagination;
   return {

@@ -3,9 +3,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useAuthStore } from "@/store/auth.store";
-import { DEMO_STUDENT_ID } from "./mock-data";
-import { SCHOOL_QUEST_BONUS_RATIO, useEntitlements } from "./entitlements";
-import { useSaasStore } from "./store";
+import { useStudentDashboard } from "@/features/dashboard/hooks";
+import { SCHOOL_QUEST_BONUS_RATIO } from "./entitlements";
 
 /**
  * Mock store for daily-quest rewards of school accounts. Claiming a finished quest adds
@@ -71,7 +70,7 @@ export function questQuotaBonus(dailyQuota: number | undefined): number {
 }
 
 export interface TodayQuota {
-  /** School quota plus today's quest bonus. */
+  /** Token dang co + token da dung hom nay (BE khong co han muc theo ngay). */
   quota: number;
   baseQuota: number;
   bonus: number;
@@ -80,19 +79,16 @@ export interface TodayQuota {
 }
 
 /**
- * Today's quota for a school account (B2B). Students read the demo student's usage from the mock store;
- * teachers get a fixed mock share of their quota. Returns null for customers and staff.
+ * Token cua hoc sinh truong tu GET /student/dashboard (currentTokens, tokensUsedToday).
+ * Giao vien: BE khong co API token -> null. Customer / staff: null.
  */
 export function useTodayQuota(): TodayQuota | null {
-  const entitlements = useEntitlements();
   const role = useAuthStore((s) => s.user?.role);
-  const studentUsed = useSaasStore((s) => s.students.find((x) => x.id === DEMO_STUDENT_ID)?.tokensUsedToday);
-  const { bonus } = useTodayQuotaBonus();
+  const { data } = useStudentDashboard(role === "SCHOOL_STUDENT");
 
-  if (entitlements.mode !== "B2B") return null;
-  const baseQuota = entitlements.dailyQuota ?? 0;
-  const quota = baseQuota + bonus;
-  const rawUsed = role === "SCHOOL_STUDENT" ? studentUsed ?? 0 : Math.round(baseQuota * 0.28);
-  const used = Math.min(Math.max(rawUsed, 0), quota);
-  return { quota, baseQuota, bonus, used, remaining: Math.max(quota - used, 0) };
+  if (role !== "SCHOOL_STUDENT" || !data) return null;
+  const used = Math.max(data.tokensUsedToday, 0);
+  const remaining = Math.max(data.currentTokens, 0);
+  const quota = used + remaining;
+  return { quota, baseQuota: quota, bonus: 0, used, remaining };
 }

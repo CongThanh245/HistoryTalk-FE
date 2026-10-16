@@ -1,164 +1,139 @@
 "use client";
 
+// Bang diem hoc sinh: tat ca bai duoc giao + diem BE tu cham (GET /student/assignments, API that).
+import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, MessageCircle, Star } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { CheckCircle2, ClipboardList, Star } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Panel, SectionHeading, formatNumber } from "@/components/saas/saas-ui";
-import { StudentActivityBars } from "@/components/saas/student-activity-bars";
-import { DueLine } from "@/components/saas/student-assignment-card";
-import { AssignmentTypeTile, ProgressMeter, SubmissionStatusBadge, formatScore } from "@/components/saas/student-ui";
-import { ROUTES } from "@/constants/routes";
+import { Panel, SectionHeading } from "@/components/saas/saas-ui";
 import {
+  AssignmentLoadError,
+  AssignmentTypeBadge,
+  SubmissionStatusBadge,
   formatDateTime,
-  useStudentChatActivity,
-  useStudentGradeBook,
-  type ClassGradeSummary,
-} from "@/features/saas/hooks-student";
-import type { LucideIcon } from "lucide-react";
+  formatScore,
+  isDone,
+  parseLocal,
+} from "@/components/saas/student-assignment-card";
+import { ALL, KpiTile } from "@/components/saas/teaching-ui";
+import { StaffDataTable } from "@/components/staff/staff-data-table";
+import { StaffFormSelect } from "@/components/staff/staff-form";
+import { ROUTES } from "@/constants/routes";
+import { useMyAssignments } from "@/features/saas/hooks-assignment-api";
+import { apiErrorMessage } from "@/features/saas/hooks-api";
+import type { StudentAssignment } from "@/services/assignment.service";
 
-/** Bảng điểm & tiến độ học tập của học sinh, theo từng lớp (Role Matrix row 25). */
-export function StudentGradeBook({ role }: { role: string }) {
-  const summaries = useStudentGradeBook(role);
-  const activity = useStudentChatActivity(14);
-  const totalMessages = activity.reduce((s, d) => s + d.messages, 0);
-  const activeDays = activity.filter((d) => d.messages > 0).length;
+const columns: ColumnDef<StudentAssignment, unknown>[] = [
+  {
+    id: "title",
+    header: "Bài",
+    cell: ({ row }) => (
+      <Link
+        href={ROUTES.MY_ASSIGNMENT_DETAIL(row.original.assignmentId)}
+        className="font-semibold text-content-text hover:text-[var(--accent-gold)] hover:underline"
+      >
+        {row.original.title}
+      </Link>
+    ),
+  },
+  { id: "class", header: "Lớp", cell: ({ row }) => row.original.className },
+  { id: "type", header: "Loại", cell: ({ row }) => <AssignmentTypeBadge type={row.original.assignmentType} /> },
+  {
+    id: "deadline",
+    header: "Hạn",
+    cell: ({ row }) => <span className="whitespace-nowrap text-content-muted">{formatDateTime(row.original.deadline)}</span>,
+  },
+  { id: "status", header: "Trạng thái", cell: ({ row }) => <SubmissionStatusBadge assignment={row.original} /> },
+  {
+    id: "score",
+    header: "Điểm /10",
+    cell: ({ row }) =>
+      row.original.score === null ? (
+        <span className="text-content-muted">—</span>
+      ) : (
+        <strong className="font-display text-lg font-extrabold tabular-nums text-[var(--gold-leaf)]">{formatScore(row.original.score)}</strong>
+      ),
+  },
+  {
+    id: "submittedAt",
+    header: "Nộp lúc",
+    cell: ({ row }) => <span className="whitespace-nowrap text-content-muted">{formatDateTime(row.original.submittedAt)}</span>,
+  },
+];
 
-  if (summaries.length === 0) {
-    return <EmptyState title="Em chưa thuộc lớp nào" description="Khi nhà trường xếp em vào lớp, bảng điểm sẽ hiện ở đây." />;
+/** Bảng điểm học sinh theo bài tập được giao (Role Matrix row 25). */
+export function StudentGradeBook() {
+  const { data, isLoading, isError, error, refetch } = useMyAssignments({ page: 0, size: 100 });
+  const [classId, setClassId] = React.useState<string>(ALL);
+
+  const all = React.useMemo(() => data?.items ?? [], [data]);
+  const classes = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const a of all) map.set(a.classroomId, a.className);
+    return [...map].map(([id, name]) => ({ id, name }));
+  }, [all]);
+
+  const rows = React.useMemo(() => {
+    const list = classId === ALL ? all : all.filter((a) => a.classroomId === classId);
+    return list.slice().sort((x, y) => (parseLocal(y.deadline)?.getTime() ?? 0) - (parseLocal(x.deadline)?.getTime() ?? 0));
+  }, [all, classId]);
+
+  const stats = React.useMemo(() => {
+    const scored = rows.filter((a) => a.score !== null);
+    const counted = rows.filter((a) => a.submissionStatus !== "EXEMPTED");
+    return {
+      average: scored.length ? scored.reduce((s, a) => s + (a.score ?? 0), 0) / scored.length : null,
+      scoredCount: scored.length,
+      done: counted.filter((a) => isDone(a.submissionStatus)).length,
+      total: counted.length,
+    };
+  }, [rows]);
+
+  if (isError) {
+    return (
+      <AssignmentLoadError title="Không tải được bảng điểm" message={apiErrorMessage(error, "Vui lòng kiểm tra kết nối rồi thử lại.")} onRetry={() => void refetch()} />
+    );
+  }
+  if (!isLoading && all.length === 0) {
+    return <EmptyState icon={ClipboardList} title="Chưa có bài tập nào" description="Khi thầy cô giao bài cho lớp của em, điểm sẽ hiện ở đây." />;
   }
 
   return (
-    <div className="space-y-8">
-      {summaries.map((s) => (
-        <ClassGrades key={s.classroom.id} summary={s} totalMessages={totalMessages} />
-      ))}
-
-      <Panel>
-        <SectionHeading
-          title="Trò chuyện với AI"
-          description={`${formatNumber(totalMessages)} tin nhắn trong 14 ngày qua · học ${activeDays}/14 ngày`}
-        />
-        <StudentActivityBars data={activity} />
-      </Panel>
-    </div>
-  );
-}
-
-function StatTile({ icon: Icon, color, label, value, sub }: { icon: LucideIcon; color: string; label: string; value: string; sub?: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] p-3">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[2px] text-white" style={{ background: color }} aria-hidden="true">
-        <Icon className="h-5 w-5" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-[12px] font-bold text-content-muted">{label}</p>
-        <p className="font-display text-3xl font-extrabold tabular-nums leading-none text-content-text">{value}</p>
-        {sub && <p className="mt-1 truncate text-[12px] text-content-muted">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-function ClassGrades({ summary, totalMessages }: { summary: ClassGradeSummary; totalMessages: number }) {
-  const { classroom, tests, average, completed, opened, upcoming } = summary;
-  const rate = opened ? Math.round((completed / opened) * 100) : 0;
-
-  return (
     <Panel>
-      <SectionHeading title={`Lớp ${classroom.name}`} description={`Năm học ${classroom.schoolYear}`} />
+      <SectionHeading title="Điểm bài tập" description="Điểm thang 10 do hệ thống tự chấm khi em nộp bài." />
 
-      <div className="grid gap-2 sm:grid-cols-3">
-        <StatTile
-          icon={Star}
-          color="var(--gold-leaf)"
+      <div className="grid gap-3 sm:grid-cols-3">
+        <KpiTile
           label="Điểm trung bình"
-          value={average === null ? "—" : formatScore(average)}
-          sub={average === null ? "Chưa có bài tính điểm" : "Thang điểm 10"}
+          value={stats.average === null ? "—" : formatScore(stats.average)}
+          hint={stats.average === null ? "Chưa có bài có điểm" : `Trên ${stats.scoredCount} bài có điểm`}
+          icon={<Star className="h-4 w-4 text-[var(--gold-leaf)]" aria-hidden="true" />}
         />
-        <div className="space-y-2 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] p-3">
-          <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[2px] bg-[var(--jade)] text-white" aria-hidden="true">
-              <CheckCircle2 className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[12px] font-bold text-content-muted">Hoàn thành</p>
-              <p className="font-display text-3xl font-extrabold tabular-nums leading-none text-content-text">{rate}%</p>
-            </div>
-            <span className="ml-auto text-[12px] font-bold tabular-nums text-content-muted">
-              {completed}/{opened} bài
-            </span>
-          </div>
-          <ProgressMeter value={completed} max={Math.max(opened, 1)} color="var(--jade)" label="Tỉ lệ hoàn thành bài tập" />
-        </div>
-        <StatTile icon={MessageCircle} color="var(--accent-gold)" label="Tin nhắn AI" value={formatNumber(totalMessages)} sub="14 ngày gần nhất" />
+        <KpiTile
+          label="Đã nộp"
+          value={`${stats.done}/${stats.total}`}
+          hint="Không tính bài được miễn"
+          icon={<CheckCircle2 className="h-4 w-4 text-[var(--jade)]" aria-hidden="true" />}
+        />
+        <KpiTile label="Tổng số bài" value={rows.length} hint={classId === ALL ? "Tất cả lớp" : "Lớp đang chọn"} />
       </div>
 
-      <div className="space-y-2">
-        <h3 className="font-display text-xl font-extrabold uppercase leading-tight text-content-text">Bài kiểm tra tính điểm</h3>
-        {tests.length === 0 ? (
-          <p className="text-[13px] text-content-muted">Lớp chưa có bài kiểm tra tính điểm.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] border-collapse text-left text-[13px]">
-              <thead>
-                <tr className="border-b border-[var(--text-primary)] text-[11px] font-bold uppercase tracking-[0.08em] text-content-muted">
-                  <th scope="col" className="py-2 pr-3">Bài kiểm tra</th>
-                  <th scope="col" className="py-2 pr-3">Hạn nộp</th>
-                  <th scope="col" className="py-2 pr-3 text-right">Điểm</th>
-                  <th scope="col" className="py-2">Trạng thái</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tests.map((r) => (
-                  <tr key={r.assignment.id} className="border-b border-[var(--border-default)]">
-                    <td className="py-2.5 pr-3">
-                      <Link href={ROUTES.MY_ASSIGNMENT_DETAIL(r.assignment.id)} className="font-semibold text-content-text hover:text-[var(--accent-gold)] hover:underline">
-                        {r.assignment.title}
-                      </Link>
-                    </td>
-                    <td className="whitespace-nowrap py-2.5 pr-3 text-content-muted">{formatDateTime(r.assignment.dueAt)}</td>
-                    <td className="whitespace-nowrap py-2.5 pr-3 text-right tabular-nums">
-                      {typeof r.submission?.score === "number" ? (
-                        <>
-                          <strong className="font-display text-lg font-extrabold text-[var(--gold-leaf)]">{formatScore(r.submission.score)}</strong>
-                          <span className="text-content-muted"> / {r.assignment.maxScore ?? 10}</span>
-                        </>
-                      ) : (
-                        <span className="text-content-muted">—</span>
-                      )}
-                    </td>
-                    <td className="py-2.5">
-                      <SubmissionStatusBadge status={r.submission?.status} bucket={r.bucket} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {classes.length > 1 && (
+        <StaffFormSelect
+          value={classId}
+          onValueChange={setClassId}
+          options={[{ value: ALL, label: "Tất cả lớp" }, ...classes.map((c) => ({ value: c.id, label: `Lớp ${c.name}` }))]}
+          className="w-full sm:w-[220px]"
+        />
+      )}
 
-      <div className="space-y-2">
-        <h3 className="font-display text-xl font-extrabold uppercase leading-tight text-content-text">Sắp tới</h3>
-        {upcoming.length === 0 ? (
-          <p className="text-[13px] text-content-muted">Không còn bài nào cần làm.</p>
-        ) : (
-          <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--border-default)]">
-            {upcoming.slice(0, 4).map((r) => (
-              <li key={r.assignment.id}>
-                <Link href={ROUTES.MY_ASSIGNMENT_DETAIL(r.assignment.id)} className="group flex items-center gap-3 py-2.5">
-                  <AssignmentTypeTile type={r.assignment.type} size={32} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-semibold text-content-text group-hover:text-[var(--accent-gold)]">{r.assignment.title}</span>
-                    <DueLine row={r} compact />
-                  </span>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-content-muted" aria-hidden="true" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <StaffDataTable columns={columns} data={rows} isLoading={isLoading} emptyMessage="Không có bài tập nào." />
+      {(data?.totalElements ?? 0) > all.length && (
+        <p className="text-[12px] text-content-muted">
+          Đang hiện {all.length}/{data?.totalElements} bài gần nhất.
+        </p>
+      )}
     </Panel>
   );
 }

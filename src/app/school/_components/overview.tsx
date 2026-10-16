@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BookOpen, GraduationCap, Library, UserCheck, Users, Zap } from "lucide-react";
+import { Activity, ArrowRight, BookOpen, Coins, GraduationCap, Library, UserCheck, Users, Zap } from "lucide-react";
 
 import { StaffStatCard, StaffStatsGrid } from "@/components/staff/staff-stat-card";
 import { Panel, SectionHeading, formatNumber } from "@/components/saas/saas-ui";
@@ -9,9 +9,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { academicYearLabel, currentAcademicYear } from "@/components/saas/class-form-dialog";
 import { ROUTES } from "@/constants/routes";
 import { useApiSchoolClassrooms, useApiTeachers, useApiTokenQuota } from "@/features/saas/hooks-api";
+import { useSchoolAdminDashboard } from "@/features/dashboard/hooks";
 import { SchoolHeader, PerStudentAllocationNote, QuotaSkeleton, QuotaSummary } from "./quota";
 import { ErrorBlock } from "./shared";
 
+
+/** Ti le tu BE theo thang 0–100. */
+function formatRate(q: { isPending: boolean; isError: boolean }, value: number | undefined) {
+  if (q.isPending) return "…";
+  if (q.isError || value === undefined) return "—";
+  return `${value.toFixed(1)}%`;
+}
 
 /** School Admin dashboard widgets backed by the API: school + token pool from the API, counts of classes / teachers. */
 export function OverviewWidgets() {
@@ -19,6 +27,10 @@ export function OverviewWidgets() {
   const classes = useApiSchoolClassrooms({ page: 0, size: 1 });
   const yearClasses = useApiSchoolClassrooms({ page: 0, size: 1, academicYear: currentAcademicYear() });
   const teachers = useApiTeachers({ page: 0, size: 1 });
+  // GET /school-admin/dashboard — so hoc sinh, token hoc sinh da dung, thong ke nop bai.
+  const analytics = useSchoolAdminDashboard();
+  const analyticsStat = (value: number | undefined) =>
+    analytics.isPending ? "…" : analytics.isError || value === undefined ? "—" : formatNumber(value);
 
   const stat = (q: { isPending: boolean; isError: boolean; data?: { totalElements: number } }) =>
     q.isPending ? "…" : q.isError ? "—" : formatNumber(q.data?.totalElements ?? 0);
@@ -57,6 +69,32 @@ export function OverviewWidgets() {
           tone="amber"
         />
       </StaffStatsGrid>
+
+      <StaffStatsGrid className="sm:grid-cols-3">
+        <StaffStatCard label="Học sinh" value={analyticsStat(analytics.data?.totalStudents)} icon={<Users className="h-5 w-5" />} tone="blue" />
+        <StaffStatCard
+          label="Token đã cấp cho học sinh"
+          value={analyticsStat(analytics.data?.allocatedTokens)}
+          icon={<Coins className="h-5 w-5" />}
+          tone="gold"
+        />
+        <StaffStatCard
+          label="Token học sinh đã dùng"
+          value={analyticsStat(analytics.data?.tokensUsedByStudents)}
+          icon={<Activity className="h-5 w-5" />}
+          tone="green"
+        />
+      </StaffStatsGrid>
+
+      <Panel>
+        <SectionHeading title="Tình hình nộp bài" description="Tổng hợp bài nộp của học sinh trên toàn trường." />
+        <StaffStatsGrid className="sm:grid-cols-2 lg:grid-cols-4">
+          <StaffStatCard label="Tổng bài nộp" value={analyticsStat(analytics.data?.assignmentStats?.totalSubmissions)} tone="muted" />
+          <StaffStatCard label="Hoàn thành" value={formatRate(analytics, analytics.data?.assignmentStats?.completedRate)} tone="green" />
+          <StaffStatCard label="Nộp muộn" value={formatRate(analytics, analytics.data?.assignmentStats?.lateSubmittedRate)} tone="amber" />
+          <StaffStatCard label="Chưa làm" value={formatRate(analytics, analytics.data?.assignmentStats?.notStartedRate)} tone="red" />
+        </StaffStatsGrid>
+      </Panel>
 
       <Panel>
         <SectionHeading title="Quỹ token của trường" description="Token theo gói, đã cấp cho học sinh và phần còn lại để nhập học sinh mới." />
