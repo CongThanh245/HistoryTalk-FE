@@ -23,7 +23,9 @@ export const localKeys = {
   item: (kind: LocalKind, id: string) => ["local-content", "item", kind, id] as const,
   school: (kind: LocalKind, scope?: LocalScope) => ["local-content", "school", kind, scope ?? "ALL"] as const,
   student: (kind: LocalKind) => ["local-content", "student", kind] as const,
+  studentItem: (kind: LocalKind, id: string) => ["local-content", "student", "item", kind, id] as const,
   documents: (kind: LocalKind, id: string) => ["local-content", "documents", kind, id] as const,
+  schoolDocuments: (kind: LocalKind, id: string) => ["local-content", "school", "documents", kind, id] as const,
 };
 
 export const LOCAL_KINDS: LocalKind[] = ["CONTEXT", "CHARACTER"];
@@ -102,6 +104,10 @@ export function useLocalContentMutations() {
       mutationFn: ({ id, payload }: { id: string; payload: Partial<LocalCharacterPayload> }) => localContentService.updateCharacter(id, payload),
       onSuccess: refresh,
     }),
+    submit: useMutation({
+      mutationFn: ({ kind, id }: { kind: LocalKind; id: string }) => localContentService.submit(kind, id),
+      onSuccess: refresh,
+    }),
     remove: useMutation({
       mutationFn: ({ kind, id }: { kind: LocalKind; id: string }) => localContentService.remove(kind, id),
       onSuccess: (_, { kind, id }) => {
@@ -159,6 +165,15 @@ export function useSchoolLocalContent(enabled = true) {
   };
 }
 
+/** Documents of an item under review (School Admin endpoint). */
+export function useSchoolLocalDocuments(kind: LocalKind | undefined, id: string | undefined) {
+  return useQuery({
+    queryKey: localKeys.schoolDocuments(kind ?? "CONTEXT", id ?? ""),
+    queryFn: () => localContentService.listDocumentsForSchool(kind!, id!),
+    enabled: Boolean(kind && id),
+  });
+}
+
 export function useSetLocalStatus() {
   const qc = useQueryClient();
   return useMutation({
@@ -173,23 +188,37 @@ export function useSetLocalStatus() {
 
 // ─── Student ───────────────────────────────────────────────────────────────
 
-/** Published contexts and characters of the student's school. */
+/** Published contexts and characters of the student's school (first 100 per kind). */
 export function useStudentLocalContent(enabled = true) {
   const contexts = useQuery({
     queryKey: localKeys.student("CONTEXT"),
-    queryFn: () => localContentService.listPublished("CONTEXT"),
+    queryFn: () => localContentService.listPublished("CONTEXT", { page: 1, size: LIST_SIZE }),
     enabled,
   });
   const characters = useQuery({
     queryKey: localKeys.student("CHARACTER"),
-    queryFn: () => localContentService.listPublished("CHARACTER"),
+    queryFn: () => localContentService.listPublished("CHARACTER", { page: 1, size: LIST_SIZE }),
     enabled,
   });
   return {
-    items: [...(contexts.data ?? []), ...(characters.data ?? [])],
+    items: [...(contexts.data?.items ?? []), ...(characters.data?.items ?? [])],
     isLoading: contexts.isLoading || characters.isLoading,
     isError: contexts.isError || characters.isError,
     error: contexts.error ?? characters.error,
     refetch: () => Promise.all([contexts.refetch(), characters.refetch()]),
   };
 }
+
+/** One published item; 404 when it is not ACTIVE or not of the student's school. */
+export function useStudentLocalItem(kind: LocalKind | null, id: string | undefined) {
+  return useQuery({
+    queryKey: localKeys.studentItem(kind ?? "CONTEXT", id ?? ""),
+    queryFn: () => localContentService.getPublished(kind!, id!),
+    enabled: Boolean(kind && id),
+    retry: false,
+  });
+}
+
+/** Whether an item belongs on a class page: assigned to that class, or not assigned to any class (older items). */
+export const showsInClass = (item: Pick<LocalItem, "classIds">, classId: string) =>
+  item.classIds?.length ? item.classIds.includes(classId) : true;

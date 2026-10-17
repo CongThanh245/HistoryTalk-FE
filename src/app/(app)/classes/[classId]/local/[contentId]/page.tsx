@@ -1,6 +1,6 @@
 "use client";
 
-// Bối cảnh & nhân vật địa phương: API Sprint 6. BE không gắn tư liệu với lớp, nên classId chỉ dùng cho nút quay lại.
+// Bối cảnh & nhân vật do giáo viên soạn: API Sprint 6. classId chỉ dùng cho nút quay lại.
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
@@ -11,10 +11,10 @@ import { LocalItemPreview, LocalScopeTag, QueryState } from "@/components/saas/l
 import { NeutralBadge, Panel, SaasShell, SectionHeading, formatDate } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
 import { useRole } from "@/features/auth/usePermission";
-import { useLocalDocuments, useLocalItem, useStudentLocalContent, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
+import { useLocalDocuments, useLocalItem, useStudentLocalContent, useStudentLocalItem, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
 import type { LocalItem, LocalKind } from "@/services/local-content.service";
 
-/** Xem tư liệu lịch sử địa phương (Role Matrix row 14). Students: published items of their school; teachers: any they can read. */
+/** Xem bối cảnh / nhân vật giáo viên soạn (Role Matrix row 14). Students: published items of their school; teachers: any they can read. */
 export default function ClassLocalContentPage() {
   return (
     <SaasShell variant="app" live title="Tư liệu lớp & trường" description="Tư liệu do thầy cô hoặc nhà trường biên soạn, tách biệt với nội dung chính thức của HistoryTalk.">
@@ -47,10 +47,24 @@ function NotFound({ back }: { back: React.ReactNode }) {
   return <EmptyState title="Không xem được tư liệu này" description="Tư liệu không tồn tại, chưa được duyệt hoặc không thuộc trường của bạn." action={back} />;
 }
 
-/** The student API has no detail endpoint: the item is taken from the published list. */
 function StudentView({ kind, id, back }: { kind: LocalKind | null; id: string; back: React.ReactNode }) {
+  return kind ? <StudentItemView kind={kind} id={id} back={back} /> : <StudentListView id={id} back={back} />;
+}
+
+function StudentItemView({ kind, id, back }: { kind: LocalKind; id: string; back: React.ReactNode }) {
+  const query = useStudentLocalItem(kind, id);
+  if (query.isError) return <NotFound back={back} />;
+  return (
+    <QueryState isLoading={query.isLoading} isError={false} error={null} onRetry={query.refetch}>
+      {query.data && <ItemView item={query.data} back={back} />}
+    </QueryState>
+  );
+}
+
+/** Link without ?kind=: look the id up in the published lists. */
+function StudentListView({ id, back }: { id: string; back: React.ReactNode }) {
   const { items, isLoading, isError, error, refetch } = useStudentLocalContent();
-  const item = items.find((i) => i.id === id && (!kind || i.type === kind));
+  const item = items.find((i) => i.id === id);
   return (
     <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
       {item ? <ItemView item={item} back={back} /> : <NotFound back={back} />}

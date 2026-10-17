@@ -1,6 +1,6 @@
 "use client";
 
-// Bối cảnh & nhân vật: API Sprint 6 (đã duyệt). BE chưa có API câu đố địa phương.
+// Bối cảnh & nhân vật: API Sprint 6 (đã duyệt). BE chưa có API câu đố do giáo viên soạn.
 import * as React from "react";
 import Link from "next/link";
 import { ArrowRight, FilePenLine } from "lucide-react";

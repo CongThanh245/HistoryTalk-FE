@@ -1,29 +1,59 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Globe2 } from "lucide-react";
 import { UrlSyncedHistoricalMap } from "@/components/historical-map/UrlSyncedHistoricalMap";
-import type { MapControlsInfo, MapOverlay, OverlayPin } from "@/components/historical-map/map-overlay.types";
+import { isInsideMapBounds, type MapControlsInfo, type MapCoordinates, type MapOverlay, type OverlayPin } from "@/components/historical-map/map-overlay.types";
 import { STUDY_NOTE_PREFIX, STUDY_NOTE_ROLES } from "@/components/historical-map/StudyNotes";
 import { MapLayerControl, MapLayerToggle, type MapLayerRow } from "@/components/saas/map-layer-control";
 import { BattleOverviewList, ListTabs, StudyNotesList } from "@/components/saas/map-pin-lists";
 import { MapSearchBox } from "@/components/saas/map-search";
+import { localMeta } from "@/components/saas/local-content-ui";
+import { ROUTES } from "@/constants/routes";
 import { useRole } from "@/features/auth/usePermission";
 import type { MapLayerKey } from "@/features/saas/hooks-map";
+import { useStudentLocalContent, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
+import type { LocalItem } from "@/services/local-content.service";
 
 type ListTab = "battles" | "notes";
 
 const formatYear = (year: number) => (year < 0 ? `${Math.abs(year)} TCN` : String(year));
+
+const LOCAL_PREFIX = "local:";
+
+/** Published local contexts the viewer's school has, for the "Tư liệu lớp & trường" layer. */
+function usePublishedLocalContexts(role: string | null): { contexts: LocalItem[]; enabled: boolean } {
+  const isTeacher = role === "TEACHER";
+  const isStudent = role === "SCHOOL_STUDENT";
+  const teacher = useTeacherLocalContent(isTeacher);
+  const student = useStudentLocalContent(isStudent);
+  const items = isTeacher ? teacher.contexts : isStudent ? student.items : [];
+  const contexts = items.filter(
+    (i) =>
+      i.type === "CONTEXT" &&
+      i.isPublished &&
+      i.latitude != null &&
+      i.longitude != null &&
+      isInsideMapBounds({ latitude: i.latitude, longitude: i.longitude }),
+  );
+  return { contexts, enabled: isTeacher || isStudent };
+}
 
 /**
  * Battle map with the layers backed by the API:
  * - "Bản đồ chung": battles pinned by Content Admins (editable by them, read-only for everyone else).
  * - "Ghi chú của tôi" (CUSTOMER, SCHOOL_STUDENT, TEACHER): the viewer's own study notes, each anchored
  *   to a battle and its year (USER map pins).
+ * - "Tư liệu lớp & trường" (TEACHER, SCHOOL_STUDENT): published local contexts with coordinates.
  * The class layer (teacher pins per class) has no API yet and is not shown.
  */
 export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
   const role = useRole();
+  const router = useRouter();
+  const local = usePublishedLocalContexts(role);
+  const [localFocus, setLocalFocus] = React.useState<(MapCoordinates & { key: string }) | null>(null);
+  const [selectedLocalId, setSelectedLocalId] = React.useState<string | null>(null);
   const globalEditableRole = role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN";
   const hasNotesLayer = Boolean(role && (STUDY_NOTE_ROLES as readonly string[]).includes(role));
 
@@ -34,6 +64,27 @@ export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
   const visible = {
     global: globalEditable ? true : overrides.global ?? true,
     personal: hasNotesLayer && (overrides.personal ?? true),
+    local: local.enabled && (overrides.local ?? true),
+  };
+
+  const localPins: OverlayPin[] = visible.local
+    ? local.contexts.map((c) => ({
+        id: LOCAL_PREFIX + c.id,
+        label: c.name,
+        latitude: c.latitude!,
+        longitude: c.longitude!,
+        variant: "local",
+        meta: `Tư liệu lớp & trường · ${localMeta(c)}`,
+      }))
+    : [];
+
+  const openLocal = (pinId: string) => {
+    const id = pinId.slice(LOCAL_PREFIX.length);
+    if (selectedLocalId === pinId) {
+      router.push(ROUTES.CLASS_MATERIAL_DETAIL("CONTEXT", id));
+      return;
+    }
+    setSelectedLocalId(pinId);
   };
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [listTab, setListTab] = React.useState<ListTab | null>(null);
@@ -100,6 +151,15 @@ export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
         locked: globalEditable,
       },
     ];
+    if (local.enabled) {
+      rows.push({
+        key: "local",
+        label: "Tư liệu lớp & trường",
+        hint: "Bối cảnh giáo viên soạn, đã duyệt · nhấp hai lần để mở",
+        count: local.contexts.length,
+        checked: visible.local,
+      });
+    }
     if (hasNotesLayer && info.canTakeNotes) {
       rows.push({
         key: "personal",
@@ -127,6 +187,15 @@ export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
         }))
       : [];
     const pickNote = (id: string) => {
+      if (id.startsWith(LOCAL_PREFIX)) {
+        const pin = localPins.find((p) => p.id === id);
+        setMobileOpen(false);
+        if (pin) {
+          setSelectedLocalId(id);
+          setLocalFocus({ latitude: pin.latitude, longitude: pin.longitude, key: `${id}-${Date.now()}` });
+        }
+        return;
+      }
       const note = info.studyNotes.find((n) => STUDY_NOTE_PREFIX + n.pinId === id);
       if (!note) return;
       setMobileOpen(false);
@@ -183,7 +252,7 @@ export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
         )}
         <MapSearchBox
           battles={info.battles}
-          pins={notePins}
+          pins={[...localPins, ...notePins]}
           showBattles={visible.global}
           onPickBattle={pickBattle}
           onPickPin={pickNote}
@@ -216,7 +285,12 @@ export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
   };
 
   const overlay: MapOverlay = {
-    pins: [],
+    pins: localPins,
+    selectedId: selectedLocalId,
+    onSelectPin: (id) => {
+      if (id.startsWith(LOCAL_PREFIX)) openLocal(id);
+    },
+    focus: localFocus,
     onEscape,
     hideBattlePins: !visible.global,
     hideStudyNotes: !visible.personal,

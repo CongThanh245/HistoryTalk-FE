@@ -133,7 +133,7 @@ export const SCHOOL_ADMIN_SIDEBAR: SidebarSection[] = [
     items: [
       { icon: Gauge, label: "Tổng quan", href: ROUTES.SCHOOL.HOME, exact: true },
       { icon: School, label: "Lớp học", href: ROUTES.SCHOOL.CLASSES },
-      { icon: BadgeCheck, label: "Duyệt nội dung địa phương", href: ROUTES.SCHOOL.CONTENT },
+      { icon: BadgeCheck, label: "Duyệt nội dung giáo viên", href: ROUTES.SCHOOL.CONTENT },
     ],
   },
   {
@@ -147,7 +147,6 @@ export const SCHOOL_ADMIN_SIDEBAR: SidebarSection[] = [
     title: "Cấu hình",
     items: [
       { icon: Coins, label: "Hạn mức token", href: ROUTES.SCHOOL.TOKENS },
-      { icon: Map, label: "Bản đồ lịch sử", href: ROUTES.SCHOOL.MAP },
     ],
   },
 ];

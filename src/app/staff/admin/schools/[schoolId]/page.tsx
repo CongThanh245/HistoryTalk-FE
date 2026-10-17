@@ -138,7 +138,7 @@ function SchoolSummary({ school }: { school: NonNullable<ReturnType<typeof useAp
         <div
           key={label}
           className={cn(
-            "space-y-1.5 p-4",
+            "space-y-1 px-4 py-3",
             i % 2 === 1 && "border-l border-[var(--border-default)]",
             i >= 2 && "border-t border-[var(--border-default)] lg:border-t-0",
             i === 2 && "lg:border-l",

@@ -229,7 +229,7 @@ function AssignmentWork({ assignment: a }: { assignment: StudentAssignment }) {
             </Link>
             {type === "CONTEXT_READING" && (
               <Link href={ROUTES.CLASS_MATERIAL_DETAIL("CONTEXT", a.targetId)} className="archive-link" target="_blank">
-                Bối cảnh địa phương? Mở trong tư liệu trường
+                Bối cảnh giáo viên soạn? Mở trong tư liệu lớp & trường
               </Link>
             )}
           </div>

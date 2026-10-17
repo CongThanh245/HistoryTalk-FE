@@ -47,7 +47,7 @@ import {
   useDebouncedValue,
   type AdminAccountValues,
 } from "@/components/saas/admin-school-shared";
-import { Field, SearchInput, formatNumber, isValidEmail } from "@/components/saas/saas-ui";
+import { Field, SearchInput, isValidEmail } from "@/components/saas/saas-ui";
 import {
   apiErrorMessage,
   apiErrorStatus,
@@ -247,14 +247,6 @@ export function SchoolAdminsTab({ school }: { school: ApiSchool }) {
 
   return (
     <div className="space-y-4">
-      {/* The tab label already names the section, so no second heading here. */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-2xl text-sm leading-relaxed text-content-muted">
-          Quản trị trường tạo tài khoản giáo viên, học sinh, lớp học và phân bổ token của trường. Họ đăng nhập bằng email.
-        </p>
-        {addButton}
-      </div>
-
       {counts.active === 0 && (counts.total ?? 0) > 0 && (
         <p
           role="note"
@@ -264,12 +256,9 @@ export function SchoolAdminsTab({ school }: { school: ApiSchool }) {
           <span>Trường chưa có quản trị nào đang hoạt động. Mở khóa một tài khoản hoặc thêm quản trị mới để trường tiếp tục quản lý tài khoản.</span>
         </p>
       )}
-      {counts.active === 1 && (
-        <MutedNotice>Trường chỉ còn một quản trị đang hoạt động, nên không thể khóa hoặc xóa tài khoản này. Thêm quản trị khác trước nếu cần thay người.</MutedNotice>
-      )}
-
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <SearchInput value={search} onChange={setSearch} placeholder="Tìm họ tên, email, tên tài khoản..." className="sm:w-[320px]" />
+      {/* One toolbar: find/filter on the left, the primary action on the right. */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <SearchInput value={search} onChange={setSearch} placeholder="Tìm họ tên, email, tên tài khoản..." className="lg:w-[320px]" />
         <div role="group" aria-label="Lọc theo trạng thái" className="flex w-full sm:w-auto">
           {FILTERS.map((f, i) => (
             <button
@@ -292,14 +281,9 @@ export function SchoolAdminsTab({ school }: { school: ApiSchool }) {
             </button>
           ))}
         </div>
+        {isFetching && !isLoading && <Loader2 className="h-4 w-4 animate-spin text-[var(--accent-gold)]" aria-label="Đang cập nhật" />}
+        <div className="lg:ml-auto">{addButton}</div>
       </div>
-
-      {!isLoading && !isError && (
-        <p className="flex items-center gap-2 text-sm text-content-muted" aria-live="polite">
-          {filtered ? `${formatNumber(total)} tài khoản khớp bộ lọc` : `${formatNumber(total)} tài khoản`}
-          {isFetching && <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--accent-gold)]" aria-label="Đang cập nhật" />}
-        </p>
-      )}
 
       {isLoading ? (
         <div role="status" aria-label="Đang tải danh sách quản trị trường">
@@ -443,6 +427,9 @@ export function SchoolAdminsTab({ school }: { school: ApiSchool }) {
                 setPage(0);
               }}
             />
+          )}
+          {counts.active === 1 && (
+            <MutedNotice>Trường chỉ còn một quản trị đang hoạt động, nên không thể khóa hoặc xóa tài khoản này. Thêm quản trị khác trước nếu cần thay người.</MutedNotice>
           )}
         </div>
       )}

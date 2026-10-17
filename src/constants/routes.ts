@@ -40,7 +40,7 @@ export const ROUTES = {
   CLASS_MATERIALS: "/classes/materials",
   CLASS_MATERIAL_DETAIL: (kind: "CONTEXT" | "CHARACTER", id: string) => `/classes/materials/${kind.toLowerCase()}/${id}`,
 
-  // ── Giáo viên: dashboard, bài tập, lịch sử địa phương ──
+  // ── Giáo viên: dashboard, bài tập, tư liệu lớp & trường ──
   TEACHING: {
     HOME: "/teaching",
     ASSIGNMENTS: "/teaching/assignments",
@@ -66,7 +66,6 @@ export const ROUTES = {
     TEACHERS: "/school/teachers",
     STUDENTS: "/school/students",
     TOKENS: "/school/tokens",
-    MAP: "/school/map",
   },
 
   // ── Staff / Admin ───────────────────────────────────
