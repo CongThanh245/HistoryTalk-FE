@@ -10,15 +10,14 @@ import type { Assignment, ClassMapPin, Classroom, LocalContext, PersonalMapPin, 
  * Global + Custom map (Role Matrix row 21). Everyone sees the global battle map; the class and personal
  * layers depend on the role. Data comes from the mock store until the map-layer API exists.
  */
-export type MapLayerKey = "global" | "class" | "personal";
+export type MapLayerKey = "global" | "class" | "personal" | "local";
 
 export type MapUserRole =
   | "CUSTOMER"
   | "SCHOOL_STUDENT"
   | "TEACHER"
   | "CONTENT_ADMIN"
-  | "SYSTEM_ADMIN"
-  | "SCHOOL_ADMIN";
+  | "SYSTEM_ADMIN";
 
 /** Which classes feed the class-layer picker. */
 export type MapClassScope = "teacher" | "student" | "school" | "all";
@@ -67,8 +66,6 @@ export function getMapRoleConfig(role: string | null | undefined): MapRoleConfig
         classDefaultOn: true,
         usesMockLayers: true,
       };
-    case "SCHOOL_ADMIN":
-      return { ...GUEST_CONFIG, layers: ["global", "class"], classScope: "school", classDefaultOn: true, usesMockLayers: true };
     case "CONTENT_ADMIN":
     case "SYSTEM_ADMIN":
       return { ...GUEST_CONFIG, layers: ["global", "class"], globalEditable: true, classScope: "all" };

@@ -45,6 +45,7 @@ const SWATCH: Record<MapLayerKey, string> = {
   global: "map-layer-swatch--global",
   class: "map-layer-swatch--class",
   personal: "map-layer-swatch--personal",
+  local: "map-layer-swatch--local",
 };
 
 /** Button that opens the layer control on phones. */
@@ -106,8 +107,9 @@ export function MapLayerControl({
   const bodyId = React.useId();
   const classRow = rows.find((r) => r.key === "class");
   const personalRow = rows.find((r) => r.key === "personal");
+  const localRow = rows.find((r) => r.key === "local");
   const visibleCount = rows.filter((r) => r.checked).length;
-  const showLegend = Boolean(classRow?.checked || personalRow?.checked);
+  const showLegend = Boolean(classRow?.checked || personalRow?.checked || localRow?.checked);
 
   const run = (fn: () => void) => () => {
     onMobileOpenChange(false);
@@ -250,9 +252,10 @@ export function MapLayerControl({
                     <LegendItem swatch="map-layer-swatch--assignment">
                       Bài tập · huy hiệu <b>2N</b> sắp hạn, <b>!</b> quá hạn, <b>✓</b> đã nộp
                     </LegendItem>
-                    <LegendItem swatch="map-layer-swatch--local">Bối cảnh địa phương đã xuất bản</LegendItem>
+                    <LegendItem swatch="map-layer-swatch--local">Bối cảnh của lớp đã xuất bản</LegendItem>
                   </>
                 )}
+                {localRow?.checked && <LegendItem swatch="map-layer-swatch--local">Bối cảnh giáo viên soạn (đã duyệt)</LegendItem>}
                 {personalRow?.checked && <LegendItem swatch="map-layer-swatch--personal">Ghi chú của tôi</LegendItem>}
               </div>
             )}

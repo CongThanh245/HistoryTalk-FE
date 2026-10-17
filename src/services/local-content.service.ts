@@ -10,10 +10,10 @@ export type LocalKind = "CONTEXT" | "CHARACTER";
 /** CLASS_ONLY = only the author teacher; SCHOOL_WIDE = every teacher of the school (read-only for others). */
 export type LocalScope = "CLASS_ONLY" | "SCHOOL_WIDE";
 /**
- * Derived by the backend: ACTIVE when published, DRAFT otherwise. Setting INACTIVE only unpublishes,
- * so a hidden item reads back as DRAFT with `approvedBy` kept — see `isHidden`.
+ * Stored by the backend: DRAFT (teacher editing) → PENDING_REVIEW (teacher submitted) → ACTIVE (School Admin
+ * published) or back to DRAFT; INACTIVE = hidden after approval (`approvedBy` kept for audit).
  */
-export type LocalStatus = "DRAFT" | "ACTIVE" | "INACTIVE";
+export type LocalStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "INACTIVE";
 export type LocalEra = "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY";
 export type LocalCategory = "WAR" | "POLITICS" | "CULTURE" | "REVOLUTION";
 export type LocalDocumentType = "TEXT" | "PDF" | "URL";
@@ -37,6 +37,8 @@ export interface LocalItem {
   status: LocalStatus;
   isPublished: boolean;
   contentScope: LocalScope;
+  /** School Admin feedback from the last review. */
+  reviewNote?: string | null;
 
   // CONTEXT only
   era?: LocalEra | null;
@@ -47,11 +49,26 @@ export interface LocalItem {
   isBC?: boolean | null;
   location?: string | null;
   videoUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 
-  // CHARACTER only (birth / death years are accepted on write but not returned)
+  // CHARACTER only
   title?: string | null;
   personality?: string | null;
   modelUrl?: string | null;
+  bornYear?: number | null;
+  bornMonth?: number | null;
+  bornDay?: number | null;
+  isBornBc?: boolean | null;
+  deathYear?: number | null;
+  deathMonth?: number | null;
+  deathDay?: number | null;
+  isDeathBc?: boolean | null;
+  /** Linked local contexts. */
+  contextIds?: string[] | null;
+
+  /** Classrooms the item is assigned to; omitted when none. */
+  classIds?: string[] | null;
 
   createdBy?: LocalAuthor | null;
   approvedBy?: LocalAuthor | null;
@@ -61,8 +78,9 @@ export interface LocalItem {
   updatedAt: string;
 }
 
-/** Unpublished after an approval (School Admin "ẩn"): the backend keeps `approvedBy` for the audit trail. */
-export const isHidden = (item: Pick<LocalItem, "isPublished" | "approvedBy">) => !item.isPublished && !!item.approvedBy;
+/** Hidden by the School Admin after approval. Old rows without a stored status fall back to `approvedBy`. */
+export const isHidden = (item: Pick<LocalItem, "status" | "isPublished" | "approvedBy">) =>
+  item.status === "INACTIVE" || (!item.status && !item.isPublished && !!item.approvedBy);
 
 export interface LocalContextPayload {
   name: string;
@@ -76,7 +94,11 @@ export interface LocalContextPayload {
   location?: string;
   imageUrl?: string;
   videoUrl?: string;
+  latitude?: number;
+  longitude?: number;
   contentScope?: LocalScope;
+  /** Replaces the class assignments; an empty list keeps the current ones (backend skips it). */
+  classIds?: string[];
 }
 
 export interface LocalCharacterPayload {
@@ -90,9 +112,11 @@ export interface LocalCharacterPayload {
   isBornBc?: boolean;
   deathYear?: number;
   isDeathBc?: boolean;
-  /** Create only. */
+  /** On update: replaces the links; [] clears them. */
   contextIds?: string[];
   contentScope?: LocalScope;
+  /** Replaces the class assignments; an empty list keeps the current ones (backend skips it). */
+  classIds?: string[];
 }
 
 export interface LocalStatusPayload {
@@ -124,6 +148,7 @@ export interface LocalDocumentPayload {
 
 export interface LocalListParams {
   search?: string;
+  status?: LocalStatus;
   /** 1-based. */
   page?: number;
   size?: number;
@@ -131,6 +156,15 @@ export interface LocalListParams {
 
 export interface SchoolLocalListParams extends LocalListParams {
   scope?: LocalScope;
+}
+
+export interface StudentLocalListParams {
+  search?: string;
+  /** Only items assigned to this classroom. */
+  classId?: string;
+  /** 1-based. */
+  page?: number;
+  size?: number;
 }
 
 interface SpringPage<T> {
@@ -185,8 +219,13 @@ export const localContentService = {
     const res = await axiosClient.post("/teacher/local-contents/characters", payload);
     return res.data.data;
   },
-  updateCharacter: async (id: string, payload: Partial<Omit<LocalCharacterPayload, "contextIds">>): Promise<LocalItem> => {
+  updateCharacter: async (id: string, payload: Partial<LocalCharacterPayload>): Promise<LocalItem> => {
     const res = await axiosClient.put(`/teacher/local-contents/characters/${id}`, payload);
+    return res.data.data;
+  },
+  /** DRAFT / INACTIVE → PENDING_REVIEW, author only. Rejected once ACTIVE. */
+  submit: async (kind: LocalKind, id: string): Promise<LocalItem> => {
+    const res = await axiosClient.put(`/teacher/local-contents/${segment(kind)}/${id}/submit`);
     return res.data.data;
   },
   /** Soft delete, author only. */
@@ -200,8 +239,7 @@ export const localContentService = {
     return res.data.data ?? [];
   },
   addDocument: async (kind: LocalKind, id: string, payload: LocalDocumentPayload): Promise<LocalDocument> => {
-    // The request DTO still validates `contextId` as required, even for characters; the path id is what is used.
-    const res = await axiosClient.post(`/teacher/local-contents/${segment(kind)}/${id}/documents`, { ...payload, contextId: id });
+    const res = await axiosClient.post(`/teacher/local-contents/${segment(kind)}/${id}/documents`, payload);
     return res.data.data;
   },
   /** Uploader only. */
@@ -214,15 +252,23 @@ export const localContentService = {
     const res = await axiosClient.get(`/school-admin/local-contents/${segment(kind)}`, { params: clean(params) });
     return toPage<LocalItem>(res.data.data);
   },
-  /** ACTIVE = publish (school takes responsibility), DRAFT = send back, INACTIVE = hide. */
+  /** ACTIVE = publish (school takes responsibility), DRAFT = send back, INACTIVE = hide. `note` is shown to the teacher. */
   setStatus: async (kind: LocalKind, id: string, payload: LocalStatusPayload): Promise<LocalItem> => {
     const res = await axiosClient.put(`/school-admin/local-contents/${segment(kind)}/${id}/status`, payload);
     return res.data.data;
   },
-
-  // School student: published items of the school (no paging).
-  listPublished: async (kind: LocalKind): Promise<LocalItem[]> => {
-    const res = await axiosClient.get(`/student/local-contents/${segment(kind)}`);
+  listDocumentsForSchool: async (kind: LocalKind, id: string): Promise<LocalDocument[]> => {
+    const res = await axiosClient.get(`/school-admin/local-contents/${segment(kind)}/${id}/documents`);
     return res.data.data ?? [];
+  },
+
+  // School student: ACTIVE items of the school.
+  listPublished: async (kind: LocalKind, params: StudentLocalListParams = {}): Promise<ApiPage<LocalItem>> => {
+    const res = await axiosClient.get(`/student/local-contents/${segment(kind)}`, { params: clean(params) });
+    return toPage<LocalItem>(res.data.data);
+  },
+  getPublished: async (kind: LocalKind, id: string): Promise<LocalItem> => {
+    const res = await axiosClient.get(`/student/local-contents/${segment(kind)}/${id}`);
+    return res.data.data;
   },
 };

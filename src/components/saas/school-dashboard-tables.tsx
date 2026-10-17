@@ -99,7 +99,7 @@ export function SchoolTeacherActivityTable({ rows }: { rows: TeacherReportRow[] 
       { accessorKey: "assignments30d", header: "Bài giao (30 ngày)", cell: ({ row }) => num(row.original.assignments30d) },
       {
         id: "content",
-        header: "Nội dung địa phương",
+        header: "Nội dung giáo viên",
         accessorFn: (r) => STATUS_ORDER.reduce((s, k) => s + r.content[k], 0),
         cell: ({ row }) => {
           const parts = STATUS_ORDER.filter((k) => row.original.content[k] > 0);

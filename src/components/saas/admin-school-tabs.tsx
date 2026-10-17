@@ -34,7 +34,7 @@ export function SchoolInfoTab({ school }: { school: ApiSchool }) {
             </a>
           </InfoItem>
           <InfoItem label="Điện thoại liên hệ">{school.contactPhone ? <span className="tabular-nums">{school.contactPhone}</span> : <Missing />}</InfoItem>
-          <InfoItem label="Cam kết lịch sử địa phương">
+          <InfoItem label="Cam kết nội dung giáo viên">
             {school.localHistoryPolicyAccepted ? (
               <span className="inline-flex items-center gap-1.5 text-[var(--status-success)]">
                 <Check className="h-4 w-4" aria-hidden="true" /> Đã đồng ý

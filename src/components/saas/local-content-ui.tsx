@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2, MessageSquareText } from "lucide-react";
 
 import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import { LOCAL_ERA_OPTIONS } from "@/features/saas/hooks-teaching";
@@ -16,24 +16,43 @@ const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] b
 const SUCCESS = "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]";
 const WARNING = "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]";
 const DANGER = "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--accent-danger)]";
+const NEUTRAL = "border-[var(--border-strong)] bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]";
 
-/** What the UI shows: the backend's DRAFT covers both "awaiting review" and "hidden after approval". */
-export type LocalReviewState = "PENDING" | "PUBLISHED" | "HIDDEN";
+/** DRAFT = teacher still editing (or sent back), PENDING = submitted, PUBLISHED = ACTIVE, HIDDEN = INACTIVE. */
+export type LocalReviewState = "DRAFT" | "PENDING" | "PUBLISHED" | "HIDDEN";
 
-export const reviewState = (item: LocalItem): LocalReviewState =>
-  item.isPublished ? "PUBLISHED" : isHidden(item) ? "HIDDEN" : "PENDING";
+export const reviewState = (item: LocalItem): LocalReviewState => {
+  if (item.isPublished || item.status === "ACTIVE") return "PUBLISHED";
+  if (isHidden(item)) return "HIDDEN";
+  return item.status === "PENDING_REVIEW" ? "PENDING" : "DRAFT";
+};
 
 export const REVIEW_STATE_LABELS: Record<LocalReviewState, string> = {
+  DRAFT: "Nháp",
   PENDING: "Chờ duyệt",
   PUBLISHED: "Đã xuất bản",
   HIDDEN: "Đã ẩn",
 };
 
-const REVIEW_STATE_CLASS: Record<LocalReviewState, string> = { PENDING: WARNING, PUBLISHED: SUCCESS, HIDDEN: DANGER };
+const REVIEW_STATE_CLASS: Record<LocalReviewState, string> = { DRAFT: NEUTRAL, PENDING: WARNING, PUBLISHED: SUCCESS, HIDDEN: DANGER };
 
 export function LocalReviewBadge({ item }: { item: LocalItem }) {
   const state = reviewState(item);
   return <span className={cn(PILL, REVIEW_STATE_CLASS[state])}>{REVIEW_STATE_LABELS[state]}</span>;
+}
+
+/** School Admin feedback from the last review, if any. */
+export function ReviewNote({ item, className }: { item: Pick<LocalItem, "reviewNote" | "approvedBy">; className?: string }) {
+  if (!item.reviewNote?.trim()) return null;
+  return (
+    <div className={cn("flex items-start gap-2 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-3 text-sm", className)}>
+      <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
+      <div className="min-w-0 space-y-0.5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--status-warning)]">Ghi chú của quản trị trường</p>
+        <p className="whitespace-pre-line break-words text-content-text">{item.reviewNote}</p>
+      </div>
+    </div>
+  );
 }
 
 export function LocalScopeTag({ item }: { item: Pick<LocalItem, "contentScope"> }) {
@@ -49,10 +68,17 @@ export const CATEGORY_LABEL: Record<LocalCategory, string> = {
   REVOLUTION: "Cách mạng",
 };
 
+/** Character life span, e.g. "14 – 43" or "? – 43 TCN". */
+export function lifeYears(item: Pick<LocalItem, "bornYear" | "isBornBc" | "deathYear" | "isDeathBc">) {
+  if (item.bornYear == null && item.deathYear == null) return null;
+  const fmt = (y: number | null | undefined, bc: boolean | null | undefined) => (y == null ? "?" : bc ? `${y} TCN` : String(y));
+  return `${fmt(item.bornYear, item.isBornBc)} – ${fmt(item.deathYear, item.isDeathBc)}`;
+}
+
 /** One-line summary under a title: "Cổ đại · 40 – 43 · Mê Linh" or the character's title. */
 export function localMeta(item: LocalItem) {
-  if (item.type === "CHARACTER") return item.title || "Nhân vật địa phương";
-  return [item.era ? ERA_LABEL[item.era] : null, localYears(item), item.location].filter(Boolean).join(" · ") || "Bối cảnh địa phương";
+  if (item.type === "CHARACTER") return item.title || "Nhân vật";
+  return [item.era ? ERA_LABEL[item.era] : null, localYears(item), item.location].filter(Boolean).join(" · ") || "Bối cảnh";
 }
 
 export function QueryState({
@@ -136,6 +162,7 @@ export function LocalItemPreview({ item }: { item: LocalItem }) {
               ["Chủ đề", item.category ? CATEGORY_LABEL[item.category] : null],
               ["Năm", localYears(item)],
               ["Địa điểm", item.location],
+              ["Tọa độ", item.latitude != null && item.longitude != null ? `${item.latitude}, ${item.longitude}` : null],
               ["Video", link(item.videoUrl)],
             ]}
           />
@@ -143,7 +170,7 @@ export function LocalItemPreview({ item }: { item: LocalItem }) {
         </>
       ) : (
         <>
-          <Meta items={[["Danh hiệu", item.title], ["Mô hình 3D", link(item.modelUrl)]]} />
+          <Meta items={[["Danh hiệu", item.title], ["Năm sinh – năm mất", lifeYears(item)], ["Mô hình 3D", link(item.modelUrl)]]} />
           <Block title="Tiểu sử">{item.description}</Block>
           {item.personality && <Block title="Tính cách khi trò chuyện với AI">{item.personality}</Block>}
         </>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { BookOpen, ChevronRight, UserRound, type LucideIcon } from "lucide-react";
 import { LocalScopeTag, QueryState, localMeta } from "@/components/saas/local-content-ui";
 import { ROUTES } from "@/constants/routes";
-import { useStudentLocalContent, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
+import { showsInClass, useStudentLocalContent, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
 import type { LocalKind } from "@/services/local-content.service";
 
 const KIND_META: Record<LocalKind, { label: string; color: string; icon: LucideIcon }> = {
@@ -16,8 +16,8 @@ export const localContentHref = (classId: string, contentId: string, kind?: Loca
   `${ROUTES.CLASS_DETAIL(classId)}/local/${contentId}${kind ? `?kind=${kind}` : ""}`;
 
 /**
- * Published local contexts / characters of the school (Role Matrix row 14). The API does not tie items to a class,
- * so a class shows every published item of its school.
+ * Published local contexts / characters of the school (Role Matrix row 14): those assigned to this class, plus
+ * items not assigned to any class.
  */
 export function StudentLocalContentList({ classroom, role }: { classroom: { id: string; name: string }; role: string | null }) {
   const isTeacher = role === "TEACHER";
@@ -25,7 +25,7 @@ export function StudentLocalContentList({ classroom, role }: { classroom: { id: 
   const teacher = useTeacherLocalContent(isTeacher);
   const query = isTeacher ? teacher : student;
   const items = (isTeacher ? [...teacher.contexts, ...teacher.characters] : student.items)
-    .filter((i) => i.isPublished)
+    .filter((i) => i.isPublished && showsInClass(i, classroom.id))
     .sort((a, b) => a.contentScope.localeCompare(b.contentScope) || a.type.localeCompare(b.type) || a.name.localeCompare(b.name, "vi"));
 
   return (

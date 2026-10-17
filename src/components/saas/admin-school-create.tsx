@@ -382,10 +382,10 @@ export function CreateSchoolForm() {
                     />
                     <div className="space-y-1">
                       <label htmlFor={ID("localHistoryPolicyAccepted")} className="cursor-pointer text-sm font-semibold text-content-heading">
-                        Trường đồng ý cam kết nội dung lịch sử địa phương <span className="text-[var(--accent-danger)]">*</span>
+                        Trường đồng ý cam kết nội dung do giáo viên soạn <span className="text-[var(--accent-danger)]">*</span>
                       </label>
                       <p id="lcs-policy-text" className="text-xs leading-relaxed text-content-muted">
-                        Nội dung lịch sử địa phương do giáo viên của trường đưa lên phải chính xác, có nguồn và phù hợp chương trình; trường chịu trách
+                        Bối cảnh, nhân vật do giáo viên của trường soạn phải chính xác, có nguồn và phù hợp chương trình; trường chịu trách
                         nhiệm kiểm duyệt trước khi chia sẻ cho học sinh. Bắt buộc để tạo trường.
                       </p>
                     </div>

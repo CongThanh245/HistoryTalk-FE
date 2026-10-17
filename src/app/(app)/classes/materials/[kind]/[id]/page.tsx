@@ -9,10 +9,10 @@ import { LocalItemPreview, LocalScopeTag, QueryState } from "@/components/saas/l
 import { NeutralBadge, Panel, SaasShell } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
 import { useRole } from "@/features/auth/usePermission";
-import { useLocalItem, useStudentLocalContent } from "@/features/saas/hooks-local-content";
+import { useLocalItem, useStudentLocalItem } from "@/features/saas/hooks-local-content";
 import type { LocalItem, LocalKind } from "@/services/local-content.service";
 
-/** Đọc bối cảnh / nhân vật địa phương đã duyệt (Sprint 6 API). Students only see published items of their school. */
+/** Đọc bối cảnh / nhân vật giáo viên soạn đã duyệt (Sprint 6 API). Students only see published items of their school. */
 export default function LocalMaterialPage() {
   const { kind: rawKind, id } = useParams<{ kind: string; id: string }>();
   const kind: LocalKind | null = rawKind === "context" ? "CONTEXT" : rawKind === "character" ? "CHARACTER" : null;
@@ -42,13 +42,12 @@ function NotFound() {
   return <EmptyState title="Không xem được tư liệu này" description="Tư liệu không tồn tại, chưa được duyệt hoặc không thuộc trường của bạn." action={back} />;
 }
 
-/** The student API has no detail endpoint: the item is taken from the published list. */
 function StudentView({ kind, id }: { kind: LocalKind; id: string }) {
-  const { items, isLoading, isError, error, refetch } = useStudentLocalContent();
-  const item = items.find((i) => i.type === kind && i.id === id);
+  const query = useStudentLocalItem(kind, id);
+  if (query.isError) return <NotFound />;
   return (
-    <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>
-      {item ? <MaterialView item={item} /> : <NotFound />}
+    <QueryState isLoading={query.isLoading} isError={false} error={null} onRetry={query.refetch}>
+      {query.data && <MaterialView item={query.data} />}
     </QueryState>
   );
 }
@@ -96,7 +95,7 @@ function MaterialView({ item, teacher }: { item: LocalItem; teacher?: boolean })
           {/* BE chua ho tro chat AI voi nhan vat dia phuong (/chat/sessions chi nhan characterId cua kho chung). */}
           <EmptyState
             size="sm"
-            title="Chưa trò chuyện được với nhân vật địa phương"
+            title="Chưa trò chuyện được với nhân vật này"
             description="Máy chủ chưa hỗ trợ trò chuyện AI với nhân vật do giáo viên soạn."
           />
         </div>

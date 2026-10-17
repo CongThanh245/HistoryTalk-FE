@@ -24,7 +24,7 @@ export const matchesQuery = (query: string, ...fields: (string | undefined)[]) =
 const VARIANT_LABEL: Record<OverlayPin["variant"], string> = {
   class: "Địa danh lớp",
   assignment: "Bài tập",
-  local: "Bối cảnh địa phương",
+  local: "Tư liệu lớp & trường",
   personal: "Ghi chú của tôi",
 };
 

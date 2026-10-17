@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { EyeOff, Send, ShieldAlert, Undo2, Users } from "lucide-react";
+import { EyeOff, FileText, Send, ShieldAlert, Undo2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
-import { StaffFormSelect } from "@/components/staff/staff-form";
+import { StaffFormSelect, StaffFormTextarea } from "@/components/staff/staff-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -17,12 +17,13 @@ import {
   LocalScopeTag,
   QueryState,
   REVIEW_STATE_LABELS,
+  ReviewNote,
   reviewState,
   type LocalReviewState,
 } from "@/components/saas/local-content-ui";
 import { ContentKindLabel } from "@/components/saas/school-content-review";
 import { apiErrorMessage } from "@/features/saas/hooks-api";
-import { LOCAL_SCOPE_LABEL, useSchoolLocalContent, useSetLocalStatus } from "@/features/saas/hooks-local-content";
+import { LOCAL_SCOPE_LABEL, useSchoolLocalContent, useSchoolLocalDocuments, useSetLocalStatus } from "@/features/saas/hooks-local-content";
 import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
 import type { LocalItem, LocalKind, LocalScope, LocalStatus } from "@/services/local-content.service";
 import { cn } from "@/lib/utils/cn";
@@ -32,26 +33,28 @@ export default function SchoolContentPage() {
   return (
     <SaasShell
       live
-      title="Duyệt nội dung địa phương"
-      description="Giáo viên soạn bối cảnh và nhân vật lịch sử địa phương. Bạn duyệt trước khi học sinh của trường thấy, và có thể ẩn nội dung không phù hợp."
+      title="Duyệt nội dung giáo viên"
+      description="Giáo viên soạn bối cảnh và nhân vật lịch sử cho lớp hoặc toàn trường. Bạn duyệt trước khi học sinh của trường thấy, và có thể ẩn nội dung không phù hợp."
     >
       <ContentReview />
     </SaasShell>
   );
 }
 
-const TABS: LocalReviewState[] = ["PENDING", "PUBLISHED", "HIDDEN"];
+/** Drafts stay with the teacher until they submit them, so they are not listed here. */
+type Tab = Exclude<LocalReviewState, "DRAFT">;
+const TABS: Tab[] = ["PENDING", "PUBLISHED", "HIDDEN"];
 
-const EMPTY: Record<LocalReviewState, string> = {
-  PENDING: "Không có nội dung nào đang chờ duyệt.",
+const EMPTY: Record<Tab, string> = {
+  PENDING: "Không có nội dung nào giáo viên gửi lên đang chờ duyệt.",
   PUBLISHED: "Chưa có nội dung nào được xuất bản.",
   HIDDEN: "Không có nội dung nào đang bị ẩn.",
 };
 
 type Action = "PUBLISH" | "HIDE" | "RETURN";
 
-const ACTIONS: Record<LocalReviewState, Action[]> = {
-  PENDING: ["PUBLISH"],
+const ACTIONS: Record<Tab, Action[]> = {
+  PENDING: ["PUBLISH", "RETURN"],
   PUBLISHED: ["HIDE"],
   HIDDEN: ["PUBLISH", "RETURN"],
 };
@@ -59,11 +62,29 @@ const ACTIONS: Record<LocalReviewState, Action[]> = {
 const ACTION_META: Record<Action, { label: string; status: LocalStatus; icon: typeof Send; className: string; done: string }> = {
   PUBLISH: { label: "Duyệt & xuất bản", status: "ACTIVE", icon: Send, className: "btn-crimson", done: "Đã xuất bản" },
   HIDE: { label: "Ẩn với học sinh", status: "INACTIVE", icon: EyeOff, className: "btn-ink", done: "Đã ẩn" },
-  RETURN: { label: "Chuyển về chờ duyệt", status: "DRAFT", icon: Undo2, className: "btn-line", done: "Đã chuyển về chờ duyệt" },
+  RETURN: { label: "Trả lại giáo viên", status: "DRAFT", icon: Undo2, className: "btn-line", done: "Đã trả lại" },
+};
+
+/** Confirm dialog copy per action; the note is saved as `reviewNote` and shown to the teacher. */
+const ACTION_DIALOG: Record<Action, { title: (name: string) => string; description?: string; notePlaceholder: string }> = {
+  PUBLISH: {
+    title: (name) => `Duyệt ${name}?`,
+    notePlaceholder: "Ghi chú cho giáo viên (không bắt buộc)",
+  },
+  HIDE: {
+    title: (name) => `Ẩn ${name} với học sinh?`,
+    description: "Học sinh sẽ không còn thấy nội dung. Giáo viên có thể chỉnh sửa và gửi duyệt lại.",
+    notePlaceholder: "Lý do ẩn (không bắt buộc)",
+  },
+  RETURN: {
+    title: (name) => `Trả lại ${name}?`,
+    description: "Nội dung trở về bản nháp để giáo viên chỉnh sửa rồi gửi duyệt lại.",
+    notePlaceholder: "Cần chỉnh sửa gì? Giáo viên sẽ thấy ghi chú này.",
+  },
 };
 
 const DISCLAIMER =
-  "Bằng cách duyệt, nhà trường chịu toàn bộ trách nhiệm về tính xác thực của nội dung. HistoryTalk không chịu trách nhiệm với nội dung địa phương.";
+  "Bằng cách duyệt, nhà trường chịu toàn bộ trách nhiệm về tính xác thực của nội dung. HistoryTalk không chịu trách nhiệm với nội dung do giáo viên soạn.";
 
 const ALL = "ALL";
 
@@ -71,17 +92,18 @@ function ContentReview() {
   const { items, truncated, isLoading, isError, error, refetch } = useSchoolLocalContent();
   const setStatus = useSetLocalStatus();
 
-  const [tab, setTab] = React.useState<LocalReviewState>("PENDING");
+  const [tab, setTab] = React.useState<Tab>("PENDING");
   const [kind, setKind] = React.useState<LocalKind | typeof ALL>(ALL);
   const [scope, setScope] = React.useState<LocalScope | typeof ALL>(ALL);
   const [author, setAuthor] = React.useState(ALL);
   const [search, setSearch] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [checked, setChecked] = React.useState<Set<string>>(new Set());
-  /** Items waiting for the publish disclaimer to be confirmed. */
-  const [publishing, setPublishing] = React.useState<LocalItem[] | null>(null);
+  /** Action waiting for confirmation (and an optional note). */
+  const [pending, setPending] = React.useState<{ action: Action; targets: LocalItem[] } | null>(null);
+  const [note, setNote] = React.useState("");
 
-  const counts = Object.fromEntries(TABS.map((t) => [t, items.filter((it) => reviewState(it) === t).length])) as Record<LocalReviewState, number>;
+  const counts = Object.fromEntries(TABS.map((t) => [t, items.filter((it) => reviewState(it) === t).length])) as Record<Tab, number>;
   const q = normalizeText(search);
   const filtered = items
     .filter(
@@ -112,7 +134,7 @@ function ContentReview() {
     { value: "SCHOOL_WIDE", label: LOCAL_SCOPE_LABEL.SCHOOL_WIDE },
   ];
 
-  const changeTab = (next: LocalReviewState) => {
+  const changeTab = (next: Tab) => {
     setTab(next);
     setChecked(new Set());
   };
@@ -125,10 +147,10 @@ function ContentReview() {
       return next;
     });
 
-  const apply = async (action: Action, targets: LocalItem[]) => {
+  const apply = async (action: Action, targets: LocalItem[], reviewNote?: string) => {
     const meta = ACTION_META[action];
     const results = await Promise.allSettled(
-      targets.map((it) => setStatus.mutateAsync({ kind: it.type, id: it.id, payload: { status: meta.status } })),
+      targets.map((it) => setStatus.mutateAsync({ kind: it.type, id: it.id, payload: { status: meta.status, note: reviewNote } })),
     );
     const failed = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
     const ok = targets.length - failed.length;
@@ -137,10 +159,13 @@ function ContentReview() {
     setChecked(new Set());
   };
 
-  const handleAction = (action: Action, it: LocalItem) => {
-    if (action === "PUBLISH") setPublishing([it]);
-    else void apply(action, [it]);
+  const ask = (action: Action, targets: LocalItem[]) => {
+    setNote("");
+    setPending({ action, targets });
   };
+  const handleAction = (action: Action, it: LocalItem) => ask(action, [it]);
+  const dialog = pending ? ACTION_DIALOG[pending.action] : null;
+  const dialogName = pending ? (pending.targets.length > 1 ? `${pending.targets.length} nội dung` : `“${pending.targets[0]?.name ?? ""}”`) : "";
 
   return (
     <div className="space-y-5">
@@ -195,7 +220,7 @@ function ContentReview() {
               type="button"
               className="btn-crimson w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               disabled={!visibleChecked.length || setStatus.isPending}
-              onClick={() => setPublishing(visibleChecked)}
+              onClick={() => ask("PUBLISH", visibleChecked)}
             >
               <Send className="h-4 w-4" aria-hidden="true" /> Duyệt các mục đã chọn
               {visibleChecked.length > 0 && <span className="tabular-nums">({visibleChecked.length})</span>}
@@ -275,16 +300,28 @@ function ContentReview() {
       <ReviewSheet item={selected} busy={setStatus.isPending} onOpenChange={(o) => !o && setSelectedId(null)} onAction={handleAction} />
 
       <ConfirmDialog
-        open={!!publishing}
-        onOpenChange={(o) => !o && setPublishing(null)}
-        title={publishing && publishing.length > 1 ? `Duyệt ${publishing.length} nội dung?` : `Duyệt “${publishing?.[0]?.name ?? ""}”?`}
-        description={`Học sinh của trường sẽ thấy nội dung này. ${DISCLAIMER}`}
-        confirmLabel="Duyệt & xuất bản"
+        open={!!pending}
+        onOpenChange={(o) => !o && setPending(null)}
+        variant={pending?.action === "PUBLISH" ? "primary" : "warning"}
+        title={dialog ? dialog.title(dialogName) : ""}
+        description={pending?.action === "PUBLISH" ? `Học sinh của trường sẽ thấy nội dung này. ${DISCLAIMER}` : dialog?.description}
+        confirmLabel={pending ? ACTION_META[pending.action].label : undefined}
         onConfirm={() => {
-          if (publishing) void apply("PUBLISH", publishing);
-          setPublishing(null);
+          if (pending) void apply(pending.action, pending.targets, note.trim() || undefined);
+          setPending(null);
         }}
-      />
+      >
+        <label className="block space-y-1.5">
+          <span className="text-xs font-semibold text-content-heading">Ghi chú cho giáo viên</span>
+          <StaffFormTextarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={dialog?.notePlaceholder}
+            maxLength={1000}
+            className="min-h-[90px] resize-y"
+          />
+        </label>
+      </ConfirmDialog>
     </div>
   );
 }
@@ -300,7 +337,8 @@ function ReviewSheet({
   onOpenChange: (open: boolean) => void;
   onAction: (action: Action, item: LocalItem) => void;
 }) {
-  const state = item ? reviewState(item) : null;
+  const raw = item ? reviewState(item) : null;
+  const state: Tab | null = raw === "DRAFT" ? null : raw;
   return (
     <Sheet open={!!item} onOpenChange={onOpenChange}>
       <SheetContent
@@ -343,7 +381,11 @@ function ReviewSheet({
                 </p>
               )}
 
+              <ReviewNote item={item} />
+
               <LocalItemPreview item={item} />
+
+              <ReviewDocuments item={item} />
             </div>
 
             <div className="flex flex-col gap-2 border-t border-[var(--text-primary)] p-4 sm:flex-row sm:flex-wrap">
@@ -367,5 +409,40 @@ function ReviewSheet({
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** Documents the teacher attached for the AI, so the admin can check sources before publishing. */
+function ReviewDocuments({ item }: { item: LocalItem }) {
+  const query = useSchoolLocalDocuments(item.type, item.id);
+  const docs = query.data ?? [];
+  return (
+    <div className="space-y-2">
+      <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Tài liệu đính kèm ({docs.length})</h4>
+      {query.isLoading ? (
+        <p className="text-sm text-content-muted">Đang tải tài liệu...</p>
+      ) : query.isError ? (
+        <p className="text-sm text-[var(--accent-danger)]">{apiErrorMessage(query.error, "Không tải được tài liệu.")}</p>
+      ) : docs.length === 0 ? (
+        <p className="text-sm text-content-muted">Giáo viên chưa đính kèm tài liệu nào.</p>
+      ) : (
+        <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--border-strong)]">
+          {docs.map((d) => (
+            <li key={d.docId} className="flex items-start gap-3 py-2.5">
+              <FileText className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent-gold)]" aria-hidden="true" />
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <p className="font-semibold text-content-heading">{d.title}</p>
+                <p className="line-clamp-3 whitespace-pre-line text-xs text-content-muted">{d.content}</p>
+                {d.fileUrl && (
+                  <a href={d.fileUrl} target="_blank" rel="noreferrer" className="archive-link break-all text-xs">
+                    {d.fileUrl}
+                  </a>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
