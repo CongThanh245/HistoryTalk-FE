@@ -40,7 +40,7 @@ export function OverviewWidgets() {
     { href: ROUTES.SCHOOL.TEACHERS, label: "Tài khoản giáo viên", desc: "Tạo, khóa / mở khóa tài khoản", icon: GraduationCap },
     { href: ROUTES.SCHOOL.STUDENTS, label: "Tài khoản học sinh", desc: "Nhập hàng loạt từ file CSV", icon: Users },
     { href: ROUTES.SCHOOL.TOKENS, label: "Hạn mức token", desc: "Quỹ token của trường", icon: Zap },
-    { href: ROUTES.SCHOOL.CONTENT, label: "Duyệt nội dung", desc: "Nội dung giáo viên soạn", icon: Library },
+    { href: ROUTES.SCHOOL.CONTENT, label: "Giám sát nội dung", desc: "Nội dung giáo viên đăng", icon: Library },
   ];
 
   return (

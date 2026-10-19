@@ -48,12 +48,21 @@ export default function SchoolStudentsPage() {
   return (
     <SchoolShell
       title="Học sinh"
-      description="Quản lý tài khoản học sinh của trường: nhập danh sách từ CSV, sửa thông tin, khóa / mở khóa, đặt lại mật khẩu và cấp token từ quỹ của trường."
+      description="Tài khoản học sinh của trường: nhập từ CSV, khóa / mở khóa, đặt lại mật khẩu và cấp token."
+      actions={
+        <button type="button" className="btn-crimson w-full sm:w-auto" onClick={openStudentImport}>
+          <Upload className="h-4 w-4" aria-hidden="true" /> Nhập danh sách học sinh
+        </button>
+      }
     >
       <StudentsContent />
     </SchoolShell>
   );
 }
+
+// The header button lives outside StudentsContent, which owns the wizard state.
+const IMPORT_EVENT = "school:open-student-import";
+const openStudentImport = () => window.dispatchEvent(new Event(IMPORT_EVENT));
 
 /** CSV of the selected rows (no passwords). */
 function exportStudentsCsv(students: ApiStudent[]) {
@@ -104,6 +113,11 @@ function StudentsContent() {
   const { setActive, remove, resetPassword } = useStudentMutations();
 
   const [importOpen, setImportOpen] = React.useState(false);
+  React.useEffect(() => {
+    const open = () => setImportOpen(true);
+    window.addEventListener(IMPORT_EVENT, open);
+    return () => window.removeEventListener(IMPORT_EVENT, open);
+  }, []);
   const [editTarget, setEditTarget] = React.useState<ApiStudent | null>(null);
   const [tokenTargets, setTokenTargets] = React.useState<ApiStudent[]>([]);
   const [lockTarget, setLockTarget] = React.useState<ApiStudent | null>(null);
@@ -207,19 +221,15 @@ function StudentsContent() {
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm mã HS, họ tên, email, tên tài khoản..." />
           <ActiveFilterTabs value={filter} onChange={setFilter} />
-          <div className="hidden flex-1 sm:block" />
-          {importButton}
+          {quota.data && (
+            <p className="text-sm text-content-muted sm:ml-auto" title="Chọn học sinh trong bảng rồi bấm “Cấp token” để cộng token vào ví.">
+              Quỹ chưa phân bổ <b className="tabular-nums text-content-heading">{formatNumber(quota.data.unallocatedTokenQuota)}</b> token
+            </p>
+          )}
         </div>
 
-        {quota.data && (
-          <p className="text-sm text-content-muted">
-            Quỹ token chưa phân bổ: <b className="tabular-nums text-content-heading">{formatNumber(quota.data.unallocatedTokenQuota)}</b>. Chọn học
-            sinh trong bảng rồi bấm “Cấp token” để cộng token vào ví.
-          </p>
-        )}
-
         {students.isPending ? (
-          <TableSkeleton rows={8} cols={7} />
+          <TableSkeleton rows={8} cols={6} />
         ) : students.isError ? (
           <ErrorBlock error={students.error} fallback="Không tải được danh sách học sinh." onRetry={() => void students.refetch()} />
         ) : (
@@ -288,16 +298,11 @@ function StudentsContent() {
                         <SortHeader label="Mã HS" column="studentCode" {...sort} />
                       </TableHead>
                       <TableHead className={HEAD} aria-sort={ariaSort("fullName", sort.sortBy, sort.direction)}>
-                        <SortHeader label="Họ và tên" column="fullName" {...sort} />
+                        <SortHeader label="Học sinh" column="fullName" {...sort} />
                       </TableHead>
                       <TableHead className={HEAD} aria-sort={ariaSort("email", sort.sortBy, sort.direction)}>
-                        <SortHeader label="Email đăng nhập" column="email" {...sort} />
+                        <SortHeader label="Tài khoản đăng nhập" column="email" {...sort} />
                       </TableHead>
-                      <TableHead className={HEAD} aria-sort={ariaSort("userName", sort.sortBy, sort.direction)}>
-                        <SortHeader label="Tên tài khoản" column="userName" {...sort} />
-                      </TableHead>
-                      <TableHead className={HEAD}>Ngày sinh</TableHead>
-                      <TableHead className={HEAD}>Giới tính</TableHead>
                       <TableHead className={cn(HEAD, "text-right")} aria-sort={ariaSort("token", sort.sortBy, sort.direction)}>
                         <SortHeader label="Token trong ví" column="token" {...sort} />
                       </TableHead>
@@ -335,19 +340,19 @@ function StudentsContent() {
                             >
                               {s.fullName}
                             </button>
-                            {s.phoneNumber && <p className="text-xs tabular-nums text-content-muted">{s.phoneNumber}</p>}
+                            <p className="text-xs tabular-nums text-content-muted">
+                              {[s.gender && GENDER_LABELS[s.gender], s.dob && formatDate(s.dob), s.phoneNumber].filter(Boolean).join(" · ") || "—"}
+                            </p>
                           </TableCell>
                           <TableCell className="px-3 py-2.5">
-                            <p className="max-w-[260px] truncate font-mono text-xs" title={s.email}>
-                              {s.email}
+                            <p className="flex max-w-[280px] items-center gap-1.5 text-sm" title={s.email}>
+                              <span className="truncate">{s.email}</span>
+                              {isShadowEmail(s.email) && <NeutralBadge className="shrink-0 px-1.5 text-[10px]">Email hệ thống</NeutralBadge>}
                             </p>
-                            {isShadowEmail(s.email) && <NeutralBadge className="mt-1 px-1.5 text-[10px]">Email hệ thống</NeutralBadge>}
+                            <p className="max-w-[280px] truncate font-mono text-xs text-content-muted" title={s.userName}>
+                              {s.userName}
+                            </p>
                           </TableCell>
-                          <TableCell className="max-w-[220px] truncate px-3 py-2.5 font-mono text-xs text-content-muted" title={s.userName}>
-                            {s.userName}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap px-3 py-2.5 text-xs tabular-nums">{formatDate(s.dob)}</TableCell>
-                          <TableCell className="whitespace-nowrap px-3 py-2.5 text-xs">{s.gender ? GENDER_LABELS[s.gender] : "—"}</TableCell>
                           <TableCell className="whitespace-nowrap px-3 py-2.5 text-right text-sm font-semibold tabular-nums">{formatNumber(s.token ?? 0)}</TableCell>
                           <TableCell className="px-3 py-2.5">
                             <AccountStatusBadge status={s.active ? "ACTIVE" : "LOCKED"} />

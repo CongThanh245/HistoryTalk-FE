@@ -159,7 +159,7 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
       rows.push({
         key: "local",
         label: "Tư liệu lớp & trường",
-        hint: "Bối cảnh giáo viên soạn, đã duyệt · nhấp hai lần để mở",
+        hint: "Bối cảnh giáo viên soạn, đã xuất bản · nhấp hai lần để mở",
         count: local.contexts.length,
         checked: visible.local,
       });
@@ -276,7 +276,7 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
             onClassChange={() => undefined}
             footnote={
               classMode && local.contexts.length === 0
-                ? "Chưa có bối cảnh nào của lớp hoặc trường được duyệt và gắn vị trí trên bản đồ."
+                ? "Chưa có bối cảnh nào của lớp hoặc trường được xuất bản và gắn vị trí trên bản đồ."
                 : undefined
             }
             onAddPersonalPin={notesOn && info.addStudyNote ? info.addStudyNote : undefined}
@@ -306,7 +306,7 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
     previewAsLearner: adminPreview,
     ...(classMode && {
       title: "Bản đồ lớp",
-      subtitle: "Bối cảnh lịch sử giáo viên soạn cho lớp và trường, đã được nhà trường duyệt.",
+      subtitle: "Bối cảnh lịch sử giáo viên soạn cho lớp và trường.",
       hideBattlePicker: true,
     }),
     headerSlot,

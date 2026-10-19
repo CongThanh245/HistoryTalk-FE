@@ -38,7 +38,7 @@ const routeLabels: Record<string, string> = {
   teachers: "Giáo viên",
   students: "Học sinh",
   tokens: "Hạn mức token",
-  content: "Duyệt nội dung",
+  content: "Giám sát nội dung",
   teaching: "Giảng dạy",
   assignments: "Bài tập",
   grades: "Bảng điểm",

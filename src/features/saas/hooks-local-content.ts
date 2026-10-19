@@ -85,6 +85,7 @@ export function useLocalContentMutations() {
   const refresh = (item?: LocalItem) => {
     qc.invalidateQueries({ queryKey: ["local-content", "teacher"] });
     qc.invalidateQueries({ queryKey: ["local-content", "school"] });
+    qc.invalidateQueries({ queryKey: ["local-content", "student"] });
     if (item) qc.setQueryData(localKeys.item(item.type, item.id), item);
   };
   return {
@@ -104,8 +105,13 @@ export function useLocalContentMutations() {
       mutationFn: ({ id, payload }: { id: string; payload: Partial<LocalCharacterPayload> }) => localContentService.updateCharacter(id, payload),
       onSuccess: refresh,
     }),
-    submit: useMutation({
-      mutationFn: ({ kind, id }: { kind: LocalKind; id: string }) => localContentService.submit(kind, id),
+    publish: useMutation({
+      mutationFn: ({ kind, id }: { kind: LocalKind; id: string }) => localContentService.publish(kind, id),
+      onSuccess: refresh,
+    }),
+    setStatus: useMutation({
+      mutationFn: ({ kind, id, payload }: { kind: LocalKind; id: string; payload: LocalStatusPayload }) =>
+        localContentService.setMyStatus(kind, id, payload),
       onSuccess: refresh,
     }),
     remove: useMutation({
@@ -165,7 +171,7 @@ export function useSchoolLocalContent(enabled = true) {
   };
 }
 
-/** Documents of an item under review (School Admin endpoint). */
+/** Documents of a teacher's item (School Admin endpoint). */
 export function useSchoolLocalDocuments(kind: LocalKind | undefined, id: string | undefined) {
   return useQuery({
     queryKey: localKeys.schoolDocuments(kind ?? "CONTEXT", id ?? ""),

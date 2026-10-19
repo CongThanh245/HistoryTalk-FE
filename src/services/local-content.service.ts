@@ -1,6 +1,6 @@
 // src/services/local-content.service.ts
 // Sprint 6 — Lịch sử địa phương: teacher-authored contexts / characters scoped to a school.
-// Contract: BE docs/FE-contract/LocalContent_APIContract.md (v2, with document APIs)
+// Contract: BE docs/FE-contract/LocalContent_APIContract.md (v3: teachers self-publish, no School Admin approval)
 import { axiosClient } from "@/configs/axios.client";
 import type { ApiPage } from "@/services/school.service";
 
@@ -10,8 +10,8 @@ export type LocalKind = "CONTEXT" | "CHARACTER";
 /** CLASS_ONLY = only the author teacher; SCHOOL_WIDE = every teacher of the school (read-only for others). */
 export type LocalScope = "CLASS_ONLY" | "SCHOOL_WIDE";
 /**
- * Stored by the backend: DRAFT (teacher editing) → PENDING_REVIEW (teacher submitted) → ACTIVE (School Admin
- * published) or back to DRAFT; INACTIVE = hidden after approval (`approvedBy` kept for audit).
+ * Stored by the backend: DRAFT (teacher editing) ⇄ ACTIVE (published by the teacher themself) ⇄ INACTIVE (hidden by
+ * the teacher or the School Admin). PENDING_REVIEW only exists on rows submitted before v3.
  */
 export type LocalStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "INACTIVE";
 export type LocalEra = "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY";
@@ -37,7 +37,7 @@ export interface LocalItem {
   status: LocalStatus;
   isPublished: boolean;
   contentScope: LocalScope;
-  /** School Admin feedback from the last review. */
+  /** School Admin note from the last status change. */
   reviewNote?: string | null;
 
   // CONTEXT only
@@ -78,7 +78,7 @@ export interface LocalItem {
   updatedAt: string;
 }
 
-/** Hidden by the School Admin after approval. Old rows without a stored status fall back to `approvedBy`. */
+/** Hidden after publishing. Old rows without a stored status fall back to `approvedBy`. */
 export const isHidden = (item: Pick<LocalItem, "status" | "isPublished" | "approvedBy">) =>
   item.status === "INACTIVE" || (!item.status && !item.isPublished && !!item.approvedBy);
 
@@ -99,6 +99,8 @@ export interface LocalContextPayload {
   contentScope?: LocalScope;
   /** Replaces the class assignments; an empty list keeps the current ones (backend skips it). */
   classIds?: string[];
+  /** Create: defaults to true (published at once), false = draft. Update: true = publish, false = back to draft, omitted = keep. */
+  isPublished?: boolean;
 }
 
 export interface LocalCharacterPayload {
@@ -117,6 +119,8 @@ export interface LocalCharacterPayload {
   contentScope?: LocalScope;
   /** Replaces the class assignments; an empty list keeps the current ones (backend skips it). */
   classIds?: string[];
+  /** Create: defaults to true (published at once), false = draft. Update: true = publish, false = back to draft, omitted = keep. */
+  isPublished?: boolean;
 }
 
 export interface LocalStatusPayload {
@@ -210,7 +214,7 @@ export const localContentService = {
     const res = await axiosClient.post("/teacher/local-contents/contexts", payload);
     return res.data.data;
   },
-  /** Partial update; changing `contentScope` sends the item back to DRAFT. */
+  /** Partial update; status only changes when `isPublished` is sent. */
   updateContext: async (id: string, payload: Partial<LocalContextPayload>): Promise<LocalItem> => {
     const res = await axiosClient.put(`/teacher/local-contents/contexts/${id}`, payload);
     return res.data.data;
@@ -223,9 +227,14 @@ export const localContentService = {
     const res = await axiosClient.put(`/teacher/local-contents/characters/${id}`, payload);
     return res.data.data;
   },
-  /** DRAFT / INACTIVE → PENDING_REVIEW, author only. Rejected once ACTIVE. */
-  submit: async (kind: LocalKind, id: string): Promise<LocalItem> => {
+  /** Publish (→ ACTIVE, `approvedBy` = the teacher), author only. */
+  publish: async (kind: LocalKind, id: string): Promise<LocalItem> => {
     const res = await axiosClient.put(`/teacher/local-contents/${segment(kind)}/${id}/submit`);
+    return res.data.data;
+  },
+  /** Author sets their own item to ACTIVE (publish), DRAFT or INACTIVE (hide). */
+  setMyStatus: async (kind: LocalKind, id: string, payload: LocalStatusPayload): Promise<LocalItem> => {
+    const res = await axiosClient.put(`/teacher/local-contents/${segment(kind)}/${id}/status`, payload);
     return res.data.data;
   },
   /** Soft delete, author only. */
@@ -252,7 +261,7 @@ export const localContentService = {
     const res = await axiosClient.get(`/school-admin/local-contents/${segment(kind)}`, { params: clean(params) });
     return toPage<LocalItem>(res.data.data);
   },
-  /** ACTIVE = publish (school takes responsibility), DRAFT = send back, INACTIVE = hide. `note` is shown to the teacher. */
+  /** Oversight: ACTIVE = re-activate, DRAFT = send back to the teacher, INACTIVE = hide. `note` is shown to the teacher. */
   setStatus: async (kind: LocalKind, id: string, payload: LocalStatusPayload): Promise<LocalItem> => {
     const res = await axiosClient.put(`/school-admin/local-contents/${segment(kind)}/${id}/status`, payload);
     return res.data.data;

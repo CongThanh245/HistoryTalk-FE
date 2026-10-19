@@ -16,11 +16,11 @@ import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
 import type { LocalItem, LocalKind } from "@/services/local-content.service";
 import { useAuthStore } from "@/store/auth.store";
 
-const STATES: LocalReviewState[] = ["DRAFT", "PENDING", "PUBLISHED", "HIDDEN"];
+const STATES: LocalReviewState[] = ["DRAFT", "PUBLISHED", "HIDDEN"];
 
 /**
  * Tư liệu lớp & trường (Role Matrix rows 12–14): the teacher's own contexts / characters and colleagues'
- * school-wide ones. Everything starts as a draft the teacher submits and the School Admin publishes.
+ * school-wide ones. Teachers publish their own content; the School Admin only oversees it.
  */
 export default function LocalHistoryPage() {
   const [kind, setKind] = React.useState<LocalKind>("CONTEXT");
@@ -29,7 +29,7 @@ export default function LocalHistoryPage() {
       variant="app"
       live
       title="Tư liệu lớp & trường"
-      description="Soạn bối cảnh và nhân vật lịch sử như Thư viện HistoryTalk, dùng cho lớp hoặc toàn trường. Quản trị trường duyệt trước khi học sinh thấy."
+      description="Soạn bối cảnh và nhân vật lịch sử như Thư viện HistoryTalk, dùng cho lớp hoặc toàn trường. Bạn tự xuất bản, học sinh thấy ngay mà không cần chờ duyệt."
     >
       <LocalHistory kind={kind} setKind={setKind} />
     </SaasShell>
@@ -111,7 +111,7 @@ function ApiList({ kind, items, truncated }: { kind: LocalKind; items: LocalItem
           title={`Chưa có ${LOCAL_KIND_LABELS[kind].toLowerCase()} nào`}
           description={
             owner === "MINE"
-              ? "Soạn nội dung mới rồi gửi quản trị trường duyệt để học sinh thấy."
+              ? "Soạn nội dung mới rồi xuất bản để học sinh thấy."
               : "Đồng nghiệp chưa chia sẻ nội dung nào cho toàn trường."
           }
           action={

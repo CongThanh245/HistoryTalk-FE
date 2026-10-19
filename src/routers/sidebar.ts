@@ -138,7 +138,7 @@ export const SCHOOL_ADMIN_SIDEBAR: SidebarSection[] = [
     items: [
       { icon: Gauge, label: "Tổng quan", href: ROUTES.SCHOOL.HOME, exact: true },
       { icon: School, label: "Lớp học", href: ROUTES.SCHOOL.CLASSES },
-      { icon: BadgeCheck, label: "Duyệt nội dung giáo viên", href: ROUTES.SCHOOL.CONTENT },
+      { icon: BadgeCheck, label: "Giám sát nội dung giáo viên", href: ROUTES.SCHOOL.CONTENT },
     ],
   },
   {

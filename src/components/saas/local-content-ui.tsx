@@ -14,34 +14,34 @@ import { cn } from "@/lib/utils/cn";
 
 const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold";
 const SUCCESS = "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]";
-const WARNING = "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]";
 const DANGER = "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--accent-danger)]";
 const NEUTRAL = "border-[var(--border-strong)] bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]";
 
-/** DRAFT = teacher still editing (or sent back), PENDING = submitted, PUBLISHED = ACTIVE, HIDDEN = INACTIVE. */
-export type LocalReviewState = "DRAFT" | "PENDING" | "PUBLISHED" | "HIDDEN";
+/**
+ * DRAFT = not published yet (or sent back), PUBLISHED = ACTIVE, HIDDEN = INACTIVE. Teachers publish their own content,
+ * so rows still PENDING_REVIEW from the old approval flow count as drafts.
+ */
+export type LocalReviewState = "DRAFT" | "PUBLISHED" | "HIDDEN";
 
 export const reviewState = (item: LocalItem): LocalReviewState => {
   if (item.isPublished || item.status === "ACTIVE") return "PUBLISHED";
-  if (isHidden(item)) return "HIDDEN";
-  return item.status === "PENDING_REVIEW" ? "PENDING" : "DRAFT";
+  return isHidden(item) ? "HIDDEN" : "DRAFT";
 };
 
 export const REVIEW_STATE_LABELS: Record<LocalReviewState, string> = {
   DRAFT: "Nháp",
-  PENDING: "Chờ duyệt",
   PUBLISHED: "Đã xuất bản",
   HIDDEN: "Đã ẩn",
 };
 
-const REVIEW_STATE_CLASS: Record<LocalReviewState, string> = { DRAFT: NEUTRAL, PENDING: WARNING, PUBLISHED: SUCCESS, HIDDEN: DANGER };
+const REVIEW_STATE_CLASS: Record<LocalReviewState, string> = { DRAFT: NEUTRAL, PUBLISHED: SUCCESS, HIDDEN: DANGER };
 
 export function LocalReviewBadge({ item }: { item: LocalItem }) {
   const state = reviewState(item);
   return <span className={cn(PILL, REVIEW_STATE_CLASS[state])}>{REVIEW_STATE_LABELS[state]}</span>;
 }
 
-/** School Admin feedback from the last review, if any. */
+/** School Admin note from the last status change, if any. */
 export function ReviewNote({ item, className }: { item: Pick<LocalItem, "reviewNote" | "approvedBy">; className?: string }) {
   if (!item.reviewNote?.trim()) return null;
   return (
@@ -140,7 +140,7 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-/** Read-only body of a context / character (review drawer, student view). */
+/** Read-only body of a context / character (School Admin drawer, student view). */
 export function LocalItemPreview({ item }: { item: LocalItem }) {
   const link = (url: string | null | undefined) =>
     url ? (

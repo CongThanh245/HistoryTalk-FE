@@ -12,7 +12,7 @@ import { useRole } from "@/features/auth/usePermission";
 import { useLocalItem, useStudentLocalItem } from "@/features/saas/hooks-local-content";
 import type { LocalItem, LocalKind } from "@/services/local-content.service";
 
-/** Đọc bối cảnh / nhân vật giáo viên soạn đã duyệt (Sprint 6 API). Students only see published items of their school. */
+/** Đọc bối cảnh / nhân vật giáo viên soạn đã xuất bản (Sprint 6 API). Students only see published items of their school. */
 export default function LocalMaterialPage() {
   const { kind: rawKind, id } = useParams<{ kind: string; id: string }>();
   const kind: LocalKind | null = rawKind === "context" ? "CONTEXT" : rawKind === "character" ? "CHARACTER" : null;
@@ -39,7 +39,7 @@ const back = (
 );
 
 function NotFound() {
-  return <EmptyState title="Không xem được tư liệu này" description="Tư liệu không tồn tại, chưa được duyệt hoặc không thuộc trường của bạn." action={back} />;
+  return <EmptyState title="Không xem được tư liệu này" description="Tư liệu không tồn tại, chưa được xuất bản hoặc không thuộc trường của bạn." action={back} />;
 }
 
 function StudentView({ kind, id }: { kind: LocalKind; id: string }) {
@@ -69,7 +69,7 @@ function MaterialView({ item, teacher }: { item: LocalItem; teacher?: boolean })
         {back}
         <span className="flex flex-wrap items-center gap-2">
           <LocalScopeTag item={item} />
-          {teacher && !item.isPublished && <NeutralBadge>Chưa duyệt · học sinh chưa thấy</NeutralBadge>}
+          {teacher && !item.isPublished && <NeutralBadge>Chưa xuất bản · học sinh chưa thấy</NeutralBadge>}
         </span>
       </div>
 

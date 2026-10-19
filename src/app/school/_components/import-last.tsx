@@ -13,7 +13,7 @@ import { ImportAccountsTable, ImportErrorsTable, ImportSummary } from "./import-
 import { studentCredentials, useImportSession, type ImportSession } from "./import-session";
 
 const describe = (s: ImportSession) =>
-  `File ${s.fileName} · ${new Date(s.importedAt).toLocaleString("vi-VN")} · ${formatNumber(s.defaultInitialToken)} token mỗi học sinh`;
+  `${s.fileName} · ${new Date(s.importedAt).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" })} · ${formatNumber(s.defaultInitialToken)} token/học sinh`;
 
 /**
  * Notice for the last import of this tab (credentials live in memory only) with buttons to reopen the full result
@@ -33,25 +33,30 @@ export function LastImportBar({ schoolName }: { schoolName?: string }) {
     <>
       <section
         aria-label="Kết quả nhập gần nhất"
-        className="flex flex-col gap-3 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+        className="flex flex-col gap-3 rounded-[2px] border border-[var(--status-warning-border)] border-l-4 border-l-[var(--status-warning)] bg-[var(--status-warning-bg)] px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between"
       >
         <div className="flex min-w-0 items-start gap-3">
-          <FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
-          <div className="min-w-0 space-y-0.5">
-            <p className="text-sm font-bold text-content-heading">
-              Kết quả nhập gần nhất: {created} tài khoản đã tạo{failed ? `, ${failed} dòng lỗi` : ""}
+          <FileCheck2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
+          <div className="min-w-0 space-y-0.5 text-sm">
+            <p className="text-content-heading">
+              <b>Đã tạo {created} tài khoản</b>
+              {failed ? `, ${failed} dòng lỗi` : ""} — <b>in phiếu trước khi tải lại trang</b>, mật khẩu tạm sẽ mất.
             </p>
-            <p className="break-words text-xs text-content-muted">
-              {describe(last)}. Mật khẩu tạm chỉ còn trong phiên này; tải lại trang sẽ mất.
-            </p>
+            <p className="break-words text-xs text-content-muted">{describe(last)}</p>
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <button type="button" className="btn-ink w-full sm:w-auto" onClick={() => setOpen(true)}>
-            Xem kết quả, in phiếu
+        <div className="flex shrink-0 items-center gap-1">
+          <button type="button" className="btn-line w-full sm:w-auto" onClick={() => setOpen(true)}>
+            Xem &amp; in phiếu
           </button>
-          <button type="button" className="archive-link" onClick={() => setConfirmClear(true)}>
-            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> Xóa khỏi phiên
+          <button
+            type="button"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[2px] text-content-muted transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--accent-danger)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]"
+            onClick={() => setConfirmClear(true)}
+            title="Xóa khỏi phiên"
+            aria-label="Xóa kết quả nhập khỏi phiên"
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </section>

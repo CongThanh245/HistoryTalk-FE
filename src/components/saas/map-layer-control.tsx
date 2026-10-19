@@ -255,7 +255,7 @@ export function MapLayerControl({
                     <LegendItem swatch="map-layer-swatch--local">Bối cảnh của lớp đã xuất bản</LegendItem>
                   </>
                 )}
-                {localRow?.checked && <LegendItem swatch="map-layer-swatch--local">Bối cảnh giáo viên soạn (đã duyệt)</LegendItem>}
+                {localRow?.checked && <LegendItem swatch="map-layer-swatch--local">Bối cảnh giáo viên soạn (đã xuất bản)</LegendItem>}
                 {personalRow?.checked && <LegendItem swatch="map-layer-swatch--personal">Ghi chú của tôi</LegendItem>}
               </div>
             )}

@@ -169,7 +169,7 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
           )}
 
           {rows.length === 0 ? (
-            <div className="border-y border-[var(--text-primary)]">
+            <div className="rounded-[2px] border border-dashed border-[var(--border-strong)]">
               {debounced ? (
                 <NoResults onReset={() => setSearch("")} message="Không có học sinh phù hợp trong lớp." />
               ) : (

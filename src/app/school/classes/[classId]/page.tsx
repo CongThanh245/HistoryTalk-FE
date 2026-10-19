@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClassFormDialog, academicYearLabel } from "@/components/saas/class-form-dialog";
 import { ClassRosterManager } from "@/components/saas/class-roster-manager";
-import { Panel, SectionHeading, formatDate, formatNumber } from "@/components/saas/saas-ui";
+import { formatDate, formatNumber } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
 import { apiErrorStatus, useApiClassroom } from "@/features/saas/hooks-api";
 import { ClassStatusBadge } from "../../_components/classroom";
@@ -19,17 +19,48 @@ import { CopyTag, ErrorBlock, SchoolShell } from "../../_components/shared";
 /** School Admin: one classroom (GET /classrooms/{id}) with its teacher in charge and its roster (/classrooms/{id}/students). */
 export default function SchoolClassDetailPage() {
   const { classId } = useParams<{ classId: string }>();
+  const room = useApiClassroom(classId);
+  const [editOpen, setEditOpen] = React.useState(false);
+  const c = room.data;
+
   return (
-    <SchoolShell title="Chi tiết lớp" description="Thông tin lớp, mã lớp, giáo viên phụ trách và danh sách học sinh.">
-      <ClassDetail classId={classId} />
+    <SchoolShell
+      title={c ? `Lớp ${c.className}` : "Chi tiết lớp"}
+      description={c ? `Khối ${c.gradeLevel ?? "—"} · Năm học ${academicYearLabel(c.academicYear)}` : undefined}
+      actions={
+        c && (
+          <button type="button" className="btn-line w-full sm:w-auto" onClick={() => setEditOpen(true)}>
+            <Pencil className="h-4 w-4" aria-hidden="true" /> Sửa thông tin lớp
+          </button>
+        )
+      }
+    >
+      <ClassDetail room={room} onEdit={() => setEditOpen(true)} />
+      {c && (
+        <ClassFormDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          editing={c}
+          onSaved={(saved) => {
+            toast.success(`Đã cập nhật lớp ${saved.className}`);
+            void room.refetch();
+          }}
+        />
+      )}
     </SchoolShell>
   );
 }
 
-function ClassDetail({ classId }: { classId: string }) {
-  const room = useApiClassroom(classId);
-  const [editOpen, setEditOpen] = React.useState(false);
+function InfoItem({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0 space-y-1">
+      <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</dt>
+      <dd className="min-w-0 text-sm text-content-heading">{children}</dd>
+    </div>
+  );
+}
 
+function ClassDetail({ room, onEdit }: { room: ReturnType<typeof useApiClassroom>; onEdit: () => void }) {
   const back = (
     <Link href={ROUTES.SCHOOL.CLASSES} className="archive-link">
       <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Tất cả lớp
@@ -39,7 +70,7 @@ function ClassDetail({ classId }: { classId: string }) {
   if (room.isPending) {
     return (
       <div className="space-y-6" role="status" aria-label="Đang tải thông tin lớp">
-        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-20 w-full" />
         <Skeleton className="h-48 w-full" />
       </div>
     );
@@ -63,63 +94,46 @@ function ClassDetail({ classId }: { classId: string }) {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {back}
-        <button type="button" className="btn-line" onClick={() => setEditOpen(true)}>
-          <Pencil className="h-4 w-4" aria-hidden="true" /> Sửa thông tin lớp
-        </button>
-      </div>
-
-      <Panel>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-2">
-            <p className="archive-title is-plain text-3xl">Lớp {c.className}</p>
-            <p className="text-sm text-content-muted">
-              Khối {c.gradeLevel ?? "—"} · Năm học {academicYearLabel(c.academicYear)} · {formatNumber(c.studentCount ?? 0)} học sinh · tạo ngày{" "}
-              {formatDate(c.createdAt)}
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <CopyTag value={c.classCode} label="mã lớp" />
-              <ClassStatusBadge status={c.status} />
-            </div>
-          </div>
-        </div>
-        {c.description && <p className="whitespace-pre-line text-sm text-content-text">{c.description}</p>}
-
-        <div className="space-y-2 border-t border-[var(--border-default)] pt-4">
-          <h3 className="text-sm font-bold text-content-heading">Giáo viên phụ trách</h3>
-          {teacher ? (
-            <div className="max-w-md rounded-[2px] border border-[var(--border-strong)] px-3 py-2.5">
-              <p className="truncate text-sm font-semibold text-content-heading">{teacher.fullName}</p>
-              <p className="truncate text-xs text-content-muted">
-                {[teacher.email, teacher.phoneNumber, teacher.subjectDepartment].filter(Boolean).join(" · ") || "—"}
+      <section aria-label="Thông tin lớp" className="space-y-3">
+        <dl className="grid gap-x-8 gap-y-4 rounded-[2px] border border-[var(--border-default)] bg-[var(--bg-surface)] px-4 py-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
+          <InfoItem label="Giáo viên phụ trách">
+            {teacher ? (
+              <>
+                <p className="truncate font-semibold">{teacher.fullName}</p>
+                <p className="truncate text-xs text-content-muted">
+                  {[teacher.email, teacher.phoneNumber, teacher.subjectDepartment].filter(Boolean).join(" · ")}
+                </p>
+              </>
+            ) : (
+              <p className="text-[var(--status-warning)]">
+                Chưa phân công.{" "}
+                <button type="button" className="archive-link" onClick={onEdit}>
+                  Phân công
+                </button>
               </p>
-            </div>
-          ) : (
-            <p className="text-sm text-[var(--status-warning)]">
-              Lớp chưa có giáo viên phụ trách.{" "}
-              <button type="button" className="archive-link" onClick={() => setEditOpen(true)}>
-                Phân công
-              </button>
-            </p>
-          )}
-        </div>
-      </Panel>
+            )}
+          </InfoItem>
+          <InfoItem label="Mã lớp">
+            <CopyTag value={c.classCode} label="mã lớp" />
+          </InfoItem>
+          <InfoItem label="Trạng thái">
+            <ClassStatusBadge status={c.status} />
+          </InfoItem>
+          <InfoItem label="Sĩ số · Ngày tạo">
+            <span className="tabular-nums">
+              {formatNumber(c.studentCount ?? 0)} học sinh · {formatDate(c.createdAt)}
+            </span>
+          </InfoItem>
+        </dl>
+        {c.description && <p className="whitespace-pre-line text-sm text-content-muted">{c.description}</p>}
+      </section>
 
-      <div className="space-y-4">
-        <SectionHeading title="Học sinh" description="Thêm học sinh có sẵn của trường, nhập từ CSV, chuyển lớp hoặc xóa khỏi lớp." />
+      <section aria-labelledby="roster-title" className="space-y-4">
+        <h2 id="roster-title" className="text-base font-bold text-content-heading">
+          Học sinh trong lớp
+        </h2>
         <ClassRosterManager classId={c.id} canManage />
-      </div>
-
-      <ClassFormDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        editing={c}
-        onSaved={(saved) => {
-          toast.success(`Đã cập nhật lớp ${saved.className}`);
-          void room.refetch();
-        }}
-      />
+      </section>
     </div>
   );
 }

@@ -28,39 +28,37 @@ import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
 import type { LocalItem, LocalKind, LocalScope, LocalStatus } from "@/services/local-content.service";
 import { cn } from "@/lib/utils/cn";
 
-/** School Admin: review the local history content teachers author (Role Matrix row 13, Sprint 6 API). */
+/** School Admin: oversee the local history content teachers publish themselves (Role Matrix row 13, Sprint 6 API v3). */
 export default function SchoolContentPage() {
   return (
     <SaasShell
       live
-      title="Duyệt nội dung giáo viên"
-      description="Giáo viên soạn bối cảnh và nhân vật lịch sử cho lớp hoặc toàn trường. Bạn duyệt trước khi học sinh của trường thấy, và có thể ẩn nội dung không phù hợp."
+      title="Giám sát nội dung giáo viên"
+      description="Giáo viên tự soạn và xuất bản bối cảnh, nhân vật lịch sử cho lớp hoặc toàn trường. Bạn theo dõi nội dung đã đăng, ẩn hoặc trả lại giáo viên nội dung không phù hợp."
     >
       <ContentReview />
     </SaasShell>
   );
 }
 
-/** Drafts stay with the teacher until they submit them, so they are not listed here. */
+/** Drafts stay with the teacher until they publish them, so they are not listed here. */
 type Tab = Exclude<LocalReviewState, "DRAFT">;
-const TABS: Tab[] = ["PENDING", "PUBLISHED", "HIDDEN"];
+const TABS: Tab[] = ["PUBLISHED", "HIDDEN"];
 
 const EMPTY: Record<Tab, string> = {
-  PENDING: "Không có nội dung nào giáo viên gửi lên đang chờ duyệt.",
-  PUBLISHED: "Chưa có nội dung nào được xuất bản.",
+  PUBLISHED: "Giáo viên chưa xuất bản nội dung nào.",
   HIDDEN: "Không có nội dung nào đang bị ẩn.",
 };
 
 type Action = "PUBLISH" | "HIDE" | "RETURN";
 
 const ACTIONS: Record<Tab, Action[]> = {
-  PENDING: ["PUBLISH", "RETURN"],
-  PUBLISHED: ["HIDE"],
+  PUBLISHED: ["HIDE", "RETURN"],
   HIDDEN: ["PUBLISH", "RETURN"],
 };
 
 const ACTION_META: Record<Action, { label: string; status: LocalStatus; icon: typeof Send; className: string; done: string }> = {
-  PUBLISH: { label: "Duyệt & xuất bản", status: "ACTIVE", icon: Send, className: "btn-crimson", done: "Đã xuất bản" },
+  PUBLISH: { label: "Hiển thị lại", status: "ACTIVE", icon: Send, className: "btn-crimson", done: "Đã hiển thị lại" },
   HIDE: { label: "Ẩn với học sinh", status: "INACTIVE", icon: EyeOff, className: "btn-ink", done: "Đã ẩn" },
   RETURN: { label: "Trả lại giáo viên", status: "DRAFT", icon: Undo2, className: "btn-line", done: "Đã trả lại" },
 };
@@ -68,23 +66,23 @@ const ACTION_META: Record<Action, { label: string; status: LocalStatus; icon: ty
 /** Confirm dialog copy per action; the note is saved as `reviewNote` and shown to the teacher. */
 const ACTION_DIALOG: Record<Action, { title: (name: string) => string; description?: string; notePlaceholder: string }> = {
   PUBLISH: {
-    title: (name) => `Duyệt ${name}?`,
+    title: (name) => `Hiển thị lại ${name}?`,
     notePlaceholder: "Ghi chú cho giáo viên (không bắt buộc)",
   },
   HIDE: {
     title: (name) => `Ẩn ${name} với học sinh?`,
-    description: "Học sinh sẽ không còn thấy nội dung. Giáo viên có thể chỉnh sửa và gửi duyệt lại.",
+    description: "Học sinh sẽ không còn thấy nội dung. Giáo viên thấy ghi chú của bạn và có thể chỉnh sửa rồi xuất bản lại.",
     notePlaceholder: "Lý do ẩn (không bắt buộc)",
   },
   RETURN: {
     title: (name) => `Trả lại ${name}?`,
-    description: "Nội dung trở về bản nháp để giáo viên chỉnh sửa rồi gửi duyệt lại.",
+    description: "Nội dung trở về bản nháp, học sinh không còn thấy. Giáo viên chỉnh sửa theo ghi chú rồi xuất bản lại.",
     notePlaceholder: "Cần chỉnh sửa gì? Giáo viên sẽ thấy ghi chú này.",
   },
 };
 
 const DISCLAIMER =
-  "Bằng cách duyệt, nhà trường chịu toàn bộ trách nhiệm về tính xác thực của nội dung. HistoryTalk không chịu trách nhiệm với nội dung do giáo viên soạn.";
+  "Nhà trường chịu trách nhiệm về tính xác thực của nội dung địa phương do giáo viên đăng tải. HistoryTalk không chịu trách nhiệm với nội dung này.";
 
 const ALL = "ALL";
 
@@ -92,7 +90,7 @@ function ContentReview() {
   const { items, truncated, isLoading, isError, error, refetch } = useSchoolLocalContent();
   const setStatus = useSetLocalStatus();
 
-  const [tab, setTab] = React.useState<Tab>("PENDING");
+  const [tab, setTab] = React.useState<Tab>("PUBLISHED");
   const [kind, setKind] = React.useState<LocalKind | typeof ALL>(ALL);
   const [scope, setScope] = React.useState<LocalScope | typeof ALL>(ALL);
   const [author, setAuthor] = React.useState(ALL);
@@ -116,7 +114,7 @@ function ContentReview() {
     )
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
-  const selectable = tab === "PENDING";
+  const selectable = tab === "PUBLISHED";
   const visibleChecked = filtered.filter((it) => checked.has(it.id));
   const allChecked = filtered.length > 0 && visibleChecked.length === filtered.length;
   const selected = selectedId ? items.find((it) => it.id === selectedId) ?? null : null;
@@ -193,14 +191,7 @@ function ContentReview() {
                 )}
               >
                 {REVIEW_STATE_LABELS[t]}
-                <span
-                  className={cn(
-                    "rounded-[2px] px-1.5 text-[11px] tabular-nums",
-                    t === "PENDING" && counts.PENDING > 0
-                      ? "bg-[var(--status-warning)] text-white"
-                      : "bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]",
-                  )}
-                >
+                <span className="rounded-[2px] bg-[var(--status-neutral-bg)] px-1.5 text-[11px] tabular-nums text-[var(--text-secondary)]">
                   {counts[t]}
                 </span>
               </button>
@@ -230,11 +221,11 @@ function ContentReview() {
           {selectable && (
             <button
               type="button"
-              className="btn-crimson w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="btn-ink w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               disabled={!visibleChecked.length || setStatus.isPending}
-              onClick={() => ask("PUBLISH", visibleChecked)}
+              onClick={() => ask("HIDE", visibleChecked)}
             >
-              <Send className="h-4 w-4" aria-hidden="true" /> Duyệt các mục đã chọn
+              <EyeOff className="h-4 w-4" aria-hidden="true" /> Ẩn các mục đã chọn
               {visibleChecked.length > 0 && <span className="tabular-nums">({visibleChecked.length})</span>}
             </button>
           )}
@@ -316,7 +307,7 @@ function ContentReview() {
         onOpenChange={(o) => !o && setPending(null)}
         variant={pending?.action === "PUBLISH" ? "primary" : "warning"}
         title={dialog ? dialog.title(dialogName) : ""}
-        description={pending?.action === "PUBLISH" ? `Học sinh của trường sẽ thấy nội dung này. ${DISCLAIMER}` : dialog?.description}
+        description={pending?.action === "PUBLISH" ? "Học sinh của trường sẽ thấy lại nội dung này." : dialog?.description}
         confirmLabel={pending ? ACTION_META[pending.action].label : undefined}
         onConfirm={() => {
           if (pending) void apply(pending.action, pending.targets, note.trim() || undefined);
@@ -368,7 +359,7 @@ function ReviewSheet({
               <SheetTitle className="archive-title is-plain text-2xl leading-[1.25]">{item.name}</SheetTitle>
               <SheetDescription className="text-xs text-content-muted">
                 {item.createdBy?.fullName ?? "Giáo viên đã rời trường"} · cập nhật {formatDate(item.updatedAt)}
-                {item.approvedBy && ` · duyệt bởi ${item.approvedBy.fullName}`}
+                {item.approvedBy && ` · xuất bản bởi ${item.approvedBy.fullName}`}
               </SheetDescription>
             </SheetHeader>
 
@@ -376,7 +367,7 @@ function ReviewSheet({
               <div className="space-y-1 rounded-[2px] border border-[var(--border-strong)] p-3 text-sm">
                 <p className="inline-flex items-center gap-2 font-semibold text-content-heading">
                   <Users className="h-4 w-4 text-[var(--men-lam)]" aria-hidden="true" />
-                  {state === "PUBLISHED" ? "Đang hiển thị cho" : "Khi xuất bản sẽ hiển thị cho"}
+                  {state === "PUBLISHED" ? "Đang hiển thị cho" : "Khi hiển thị lại sẽ thấy"}
                 </p>
                 <p className="text-content-text">
                   Học sinh của trường.{" "}
@@ -386,12 +377,10 @@ function ReviewSheet({
                 </p>
               </div>
 
-              {state !== "PUBLISHED" && (
-                <p className="flex items-start gap-2 text-xs text-content-muted">
-                  <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
-                  {DISCLAIMER}
-                </p>
-              )}
+              <p className="flex items-start gap-2 text-xs text-content-muted">
+                <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
+                {DISCLAIMER}
+              </p>
 
               <ReviewNote item={item} />
 
@@ -424,7 +413,7 @@ function ReviewSheet({
   );
 }
 
-/** Documents the teacher attached for the AI, so the admin can check sources before publishing. */
+/** Documents the teacher attached for the AI, so the admin can check the sources. */
 function ReviewDocuments({ item }: { item: LocalItem }) {
   const query = useSchoolLocalDocuments(item.type, item.id);
   const docs = query.data ?? [];

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, FileText, Lock, Plus, Save, Send, ShieldCheck, Trash2 } from "lucide-react";
+import { ArrowLeft, EyeOff, FileText, Lock, Plus, Save, Send, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -148,7 +148,7 @@ const FIELD_TAB: Record<string, Tab> = {
   background: "content", personality: "content",
 };
 
-function contextPayload(f: FormState): LocalContextPayload {
+function contextPayload(f: FormState, isPublished?: boolean): LocalContextPayload {
   const c = f.ctx;
   const year = optInt(c.year);
   return {
@@ -166,10 +166,11 @@ function contextPayload(f: FormState): LocalContextPayload {
     longitude: optFloat(c.longitude),
     contentScope: f.scope,
     classIds: f.classIds,
+    isPublished,
   };
 }
 
-function characterPayload(f: FormState, item?: LocalItem): LocalCharacterPayload {
+function characterPayload(f: FormState, item?: LocalItem, isPublished?: boolean): LocalCharacterPayload {
   const c = f.chr;
   const linked = c.contextId === NONE ? [] : [c.contextId];
   // Only send links when the choice changed, so extra links stored by the API are kept.
@@ -189,6 +190,7 @@ function characterPayload(f: FormState, item?: LocalItem): LocalCharacterPayload
     ...(linksChanged && (item || linked.length) ? { contextIds: linked } : {}),
     contentScope: f.scope,
     classIds: f.classIds,
+    isPublished,
   };
 }
 
@@ -196,20 +198,19 @@ const SCOPE_OPTIONS: { value: LocalScope; title: string; hint: string }[] = [
   {
     value: "CLASS_ONLY",
     title: "Riêng tôi",
-    hint: "Chỉ bạn thấy và dùng cho các lớp của mình. Quản trị trường duyệt trước khi học sinh thấy.",
+    hint: "Chỉ bạn thấy và dùng cho các lớp của mình.",
   },
   {
     value: "SCHOOL_WIDE",
     title: "Toàn trường",
-    hint: "Mọi giáo viên của trường xem được (chỉ đọc). Quản trị trường duyệt trước khi học sinh thấy.",
+    hint: "Lưu vào kho tư liệu của trường: mọi giáo viên của trường xem và dùng được (chỉ đọc).",
   },
 ];
 
 const STATE_NOTE = {
-  DRAFT: "Bản nháp: học sinh chưa thấy. Soạn xong, bấm “Gửi duyệt” để quản trị trường xem xét.",
-  PENDING: "Đã gửi duyệt, đang chờ quản trị trường. Học sinh chưa thấy nội dung này.",
-  PUBLISHED: "Nội dung đã được duyệt và hiển thị cho học sinh của trường.",
-  HIDDEN: "Quản trị trường đã ẩn nội dung này. Chỉnh sửa rồi gửi duyệt lại.",
+  DRAFT: "Bản nháp: học sinh chưa thấy. Soạn xong, bấm “Xuất bản” để học sinh thấy ngay.",
+  PUBLISHED: "Đã xuất bản: học sinh của trường đang thấy nội dung này. Thay đổi bạn lưu được cập nhật ngay.",
+  HIDDEN: "Nội dung đang bị ẩn với học sinh. Chỉnh sửa nếu cần rồi xuất bản lại.",
 } as const;
 
 type Tab = "basic" | "media" | "content" | "sharing" | "rag" | "context";
@@ -225,7 +226,7 @@ const TAB_LABEL: Record<Tab, string> = {
 
 /* ───────────────────────── Editor ───────────────────────── */
 
-/** Create / edit a context or character. Everything starts as a draft the teacher submits and the School Admin publishes. */
+/** Create / edit a context or character. The teacher publishes it themself; the School Admin only oversees (may hide it). */
 export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalItem }) {
   const router = useRouter();
   const myUid = useAuthStore((s) => s.user?.uid);
@@ -245,9 +246,9 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   const tabHasError = (t: Tab) => Object.entries(errors).some(([k, v]) => v && FIELD_TAB[k] === t);
   const saving = mutations.createContext.isPending || mutations.updateContext.isPending
     || mutations.createCharacter.isPending || mutations.updateCharacter.isPending;
-  const scopeChanged = !!item && form.scope !== item.contentScope;
   const state = item ? reviewState(item) : null;
-  const canSubmit = !!item && isMine && (state === "DRAFT" || state === "HIDDEN");
+  const published = state === "PUBLISHED";
+  const busy = saving || mutations.setStatus.isPending;
 
   const tabs: Tab[] = kind === "CONTEXT"
     ? ["basic", "media", "sharing", ...(item ? (["rag"] as Tab[]) : [])]
@@ -256,7 +257,8 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   const patchCtx = (p: Partial<CtxForm>) => setForm((f) => ({ ...f, ctx: { ...f.ctx, ...p } }));
   const patchChr = (p: Partial<ChrForm>) => setForm((f) => ({ ...f, chr: { ...f.chr, ...p } }));
 
-  const save = async () => {
+  /** `publish`: create → published or draft; edit → true publishes, undefined keeps the current status. */
+  const save = async (publish?: boolean) => {
     setShowErrors(true);
     const found = Object.entries(validate(kind, form)).find(([, v]) => v);
     if (found) {
@@ -268,32 +270,30 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
       let saved: LocalItem;
       if (kind === "CONTEXT") {
         saved = item
-          ? await mutations.updateContext.mutateAsync({ id: item.id, payload: contextPayload(form) })
-          : await mutations.createContext.mutateAsync(contextPayload(form));
+          ? await mutations.updateContext.mutateAsync({ id: item.id, payload: contextPayload(form, publish) })
+          : await mutations.createContext.mutateAsync(contextPayload(form, !!publish));
       } else {
         saved = item
-          ? await mutations.updateCharacter.mutateAsync({ id: item.id, payload: characterPayload(form, item) })
-          : await mutations.createCharacter.mutateAsync(characterPayload(form));
+          ? await mutations.updateCharacter.mutateAsync({ id: item.id, payload: characterPayload(form, item, publish) })
+          : await mutations.createCharacter.mutateAsync(characterPayload(form, undefined, !!publish));
       }
-      if (!item) {
-        toast.success("Đã tạo bản nháp", { description: "Bấm “Gửi duyệt” khi soạn xong để quản trị trường xem xét." });
-        router.replace(ROUTES.TEACHING.LOCAL_EDIT(saved.id, kind));
-      } else {
-        toast.success(scopeChanged && item.isPublished ? "Đã lưu — nội dung trở về bản nháp vì đổi phạm vi" : "Đã lưu thay đổi");
-        setShowErrors(false);
-      }
+      if (publish) toast.success(`Đã xuất bản “${saved.name}”`, { description: "Học sinh của trường đã thấy nội dung này." });
+      else if (item) toast.success("Đã lưu thay đổi");
+      else toast.success("Đã lưu bản nháp", { description: "Bấm “Xuất bản” khi soạn xong để học sinh thấy." });
+      if (!item) router.replace(ROUTES.TEACHING.LOCAL_EDIT(saved.id, kind));
+      else setShowErrors(false);
     } catch (error) {
       toast.error(apiErrorMessage(error, "Không lưu được nội dung. Vui lòng thử lại."));
     }
   };
 
-  const submit = async () => {
+  const hide = async () => {
     if (!item) return;
     try {
-      await mutations.submit.mutateAsync({ kind, id: item.id });
-      toast.success("Đã gửi duyệt", { description: "Quản trị trường sẽ xem xét trước khi học sinh thấy." });
+      await mutations.setStatus.mutateAsync({ kind, id: item.id, payload: { status: "INACTIVE" } });
+      toast.success(`Đã ẩn “${item.name}” với học sinh`);
     } catch (error) {
-      toast.error(apiErrorMessage(error, "Không gửi duyệt được. Vui lòng thử lại."));
+      toast.error(apiErrorMessage(error, "Không ẩn được nội dung. Vui lòng thử lại."));
     }
   };
 
@@ -338,7 +338,7 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
               <>
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 {STATE_NOTE[reviewState(item)]}
-                {item.approvedBy && item.isPublished && ` Duyệt bởi ${item.approvedBy.fullName}.`}
+                {item.approvedBy && item.isPublished && item.approvedBy.uid !== myUid && ` Xuất bản bởi ${item.approvedBy.fullName}.`}
               </>
             )}
           </p>
@@ -431,9 +431,6 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
                     );
                   })}
                 </div>
-                {scopeChanged && item?.isPublished && (
-                  <p className="text-xs text-[var(--status-warning)]">Đổi phạm vi sẽ gỡ xuất bản; cần gửi duyệt lại.</p>
-                )}
               </div>
             </Panel>
 
@@ -443,7 +440,7 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
                   Gán cho lớp
                 </p>
                 <p className="text-xs text-content-muted">
-                  Học sinh của lớp được chọn sẽ thấy nội dung trong trang lớp sau khi được duyệt. Không chọn lớp nào thì nội dung hiển thị ở mọi lớp.
+                  Học sinh của lớp được chọn sẽ thấy nội dung trong trang lớp sau khi xuất bản. Không chọn lớp nào thì nội dung hiển thị ở mọi lớp.
                   {form.classIds.length > 0 && " Hệ thống chưa hỗ trợ bỏ chọn hết lớp sau khi đã gán."}
                 </p>
                 {classes.length === 0 ? (
@@ -485,14 +482,24 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="button" className={cn(canSubmit ? "btn-line" : "btn-crimson", "disabled:opacity-60")} onClick={save} disabled={saving}>
-              <Save className="h-4 w-4" aria-hidden="true" />{" "}
-              {saving ? "Đang lưu..." : item ? "Lưu thay đổi" : `Tạo ${LOCAL_KIND_LABELS[kind].toLowerCase()}`}
-            </button>
-            {canSubmit && (
-              <button type="button" className="btn-crimson disabled:opacity-60" onClick={submit} disabled={saving || mutations.submit.isPending}>
-                <Send className="h-4 w-4" aria-hidden="true" /> {mutations.submit.isPending ? "Đang gửi..." : "Gửi duyệt"}
-              </button>
+            {published ? (
+              <>
+                <button type="button" className="btn-line disabled:opacity-60" onClick={hide} disabled={busy}>
+                  <EyeOff className="h-4 w-4" aria-hidden="true" /> {mutations.setStatus.isPending ? "Đang ẩn..." : "Ẩn với học sinh"}
+                </button>
+                <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => save()} disabled={busy}>
+                  <Save className="h-4 w-4" aria-hidden="true" /> {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" className="btn-line disabled:opacity-60" onClick={() => save(item ? undefined : false)} disabled={busy}>
+                  <Save className="h-4 w-4" aria-hidden="true" /> {item ? "Lưu thay đổi" : "Lưu nháp"}
+                </button>
+                <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => save(true)} disabled={busy}>
+                  <Send className="h-4 w-4" aria-hidden="true" /> {saving ? "Đang lưu..." : state === "HIDDEN" ? "Lưu & xuất bản lại" : "Xuất bản"}
+                </button>
+              </>
             )}
           </div>
         </div>

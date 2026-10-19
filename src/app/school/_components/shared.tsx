@@ -14,10 +14,21 @@ import { ENTERPRISE_PACKAGE_TOKENS } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
 
 /** Page shell of the School Admin screens (API-backed): same layout as SaasShell, without the "Dữ liệu mẫu" bar. */
-export function SchoolShell({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+export function SchoolShell({
+  title,
+  description,
+  actions,
+  children,
+}: {
+  title: string;
+  description?: string;
+  /** Primary page actions, shown on the right of the title. */
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="max-w-[1600px] space-y-6 px-4 pb-8 pt-4 text-content-text sm:px-6 lg:px-10">
-      <ArchiveHeading as="h1" title={title} description={description} />
+      <ArchiveHeading as="h1" title={title} description={description} actions={actions} />
       {children}
     </div>
   );

@@ -51,6 +51,11 @@ export function fromPagination<T>(body: { data?: T[]; pagination?: PaginationMet
   };
 }
 
+/** Classroom lists now return `data: T[]` + `pagination`; older builds return a Spring page in `data`. */
+function fromAnyPage<T>(body: { data?: T[] | SpringPage<T>; pagination?: PaginationMeta }): ApiPage<T> {
+  return Array.isArray(body.data) ? fromPagination({ data: body.data, pagination: body.pagination }) : fromSpringPage(body.data);
+}
+
 function fromSpringPage<T>(page: SpringPage<T> | undefined): ApiPage<T> {
   const items = page?.content ?? [];
   return {
@@ -441,13 +446,13 @@ export const schoolService = {
   // Classrooms
   listSchoolClassrooms: async (params: ClassroomListParams = {}): Promise<ApiPage<ApiClassroom>> => {
     const res = await axiosClient.get("/school-admin/classrooms", { params });
-    return fromSpringPage<ApiClassroom>(res.data.data);
+    return fromAnyPage<ApiClassroom>(res.data);
   },
   listTeacherClassrooms: async (
     params: Pick<ClassroomListParams, "academicYear" | "page" | "size"> = {},
   ): Promise<ApiPage<ApiClassroom>> => {
     const res = await axiosClient.get("/teacher/classrooms", { params });
-    return fromSpringPage<ApiClassroom>(res.data.data);
+    return fromAnyPage<ApiClassroom>(res.data);
   },
   listStudentClassrooms: async (): Promise<ApiClassroom[]> => {
     const res = await axiosClient.get("/student/classrooms");

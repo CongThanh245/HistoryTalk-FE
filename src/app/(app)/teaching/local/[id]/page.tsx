@@ -33,7 +33,7 @@ function LocalContentRoute() {
       variant="app"
       live
       title="Tư liệu lớp & trường"
-      description="Chỉnh sửa nội dung bạn soạn. Quản trị trường duyệt trước khi học sinh thấy."
+      description="Chỉnh sửa, xuất bản hoặc ẩn nội dung bạn soạn."
     >
       {kind ? (
         <ApiDetail kind={kind} id={id} />

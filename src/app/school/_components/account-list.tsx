@@ -79,19 +79,25 @@ const ACTIVE_OPTIONS: { value: ActiveFilter; label: string }[] = [
 /** Segmented "Tất cả / Đang hoạt động / Đã khóa" filter. */
 export function ActiveFilterTabs({ value, onChange, className }: { value: ActiveFilter; onChange: (v: ActiveFilter) => void; className?: string }) {
   return (
-    <div role="group" aria-label="Lọc theo trạng thái" className={cn("grid grid-cols-3 sm:inline-grid sm:w-auto", className)}>
-      {ACTIVE_OPTIONS.map((o, i) => (
+    <div
+      role="group"
+      aria-label="Lọc theo trạng thái"
+      className={cn(
+        "grid h-10 grid-cols-3 gap-0.5 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] p-0.5 sm:inline-grid sm:w-auto",
+        className,
+      )}
+    >
+      {ACTIVE_OPTIONS.map((o) => (
         <button
           key={o.value}
           type="button"
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            "h-10 whitespace-nowrap border border-[var(--text-primary)] px-2 text-xs font-bold transition-colors focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] sm:px-3",
-            i > 0 && "-ml-px",
+            "whitespace-nowrap rounded-[2px] px-2 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] sm:px-3",
             value === o.value
-              ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
-              : "bg-[var(--bg-surface)] text-[var(--text-primary)] hover:bg-[var(--status-neutral-bg)]",
+              ? "bg-[var(--accent-gold-active-bg)] font-bold text-[var(--text-primary)]"
+              : "font-semibold text-[var(--text-tertiary)] hover:text-[var(--text-primary)]",
           )}
         >
           {o.label}

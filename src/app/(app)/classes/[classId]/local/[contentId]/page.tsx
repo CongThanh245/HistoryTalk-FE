@@ -44,7 +44,7 @@ function LocalContentRoute() {
 }
 
 function NotFound({ back }: { back: React.ReactNode }) {
-  return <EmptyState title="Không xem được tư liệu này" description="Tư liệu không tồn tại, chưa được duyệt hoặc không thuộc trường của bạn." action={back} />;
+  return <EmptyState title="Không xem được tư liệu này" description="Tư liệu không tồn tại, chưa được xuất bản hoặc không thuộc trường của bạn." action={back} />;
 }
 
 function StudentView({ kind, id, back }: { kind: LocalKind | null; id: string; back: React.ReactNode }) {
@@ -100,7 +100,7 @@ function ItemView({ item, back, teacher }: { item: LocalItem; back: React.ReactN
         {back}
         <span className="flex flex-wrap items-center gap-2">
           <LocalScopeTag item={item} />
-          {teacher && !item.isPublished && <NeutralBadge>Chưa duyệt · học sinh chưa thấy</NeutralBadge>}
+          {teacher && !item.isPublished && <NeutralBadge>Chưa xuất bản · học sinh chưa thấy</NeutralBadge>}
         </span>
       </div>
 

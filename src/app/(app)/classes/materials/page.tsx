@@ -1,6 +1,6 @@
 "use client";
 
-// Bối cảnh & nhân vật: API Sprint 6 (đã duyệt). BE chưa có API câu đố do giáo viên soạn.
+// Bối cảnh & nhân vật: API Sprint 6 (đã xuất bản). BE chưa có API câu đố do giáo viên soạn.
 import * as React from "react";
 import Link from "next/link";
 import { ArrowRight, FilePenLine } from "lucide-react";
@@ -24,13 +24,13 @@ const GROUPS: { scope: Group; title: string; description: string; empty: string 
   {
     scope: "CLASS",
     title: "Của thầy cô",
-    description: "Thầy cô soạn riêng cho lớp mình dạy, đã được nhà trường duyệt.",
-    empty: "Thầy cô chưa có tư liệu riêng nào được duyệt.",
+    description: "Thầy cô soạn riêng cho lớp mình dạy.",
+    empty: "Thầy cô chưa xuất bản tư liệu riêng nào.",
   },
   {
     scope: "SCHOOL",
     title: "Của trường",
-    description: "Tư liệu dùng chung cho toàn trường, đã được nhà trường duyệt.",
+    description: "Tư liệu dùng chung cho toàn trường.",
     empty: "Nhà trường chưa có tư liệu dùng chung nào.",
   },
 ];
