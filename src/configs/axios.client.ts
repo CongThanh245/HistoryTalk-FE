@@ -2,6 +2,7 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/auth.store";
 import { useSessionStore } from "@/store/session.store";
 import { persistAuthCookies } from "@/features/auth/auth-cookies";
+import { handlePlatformLockError } from "@/lib/utils/school-lock";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const BASE_PATH = process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
@@ -117,6 +118,8 @@ axiosClient.interceptors.response.use(
       const data = error.response.data as any;
       if (data && data.message === "Tài khoản của bạn đã bị vô hiệu hóa") {
         useSessionStore.getState().showLocked();
+      } else {
+        handlePlatformLockError(error);
       }
     }
 

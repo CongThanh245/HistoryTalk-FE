@@ -52,6 +52,8 @@ export const ROUTES = {
     LOCAL_NEW: (kind: "CONTEXT" | "CHARACTER") => `/teaching/local/new?kind=${kind}`,
     /** `kind` is required for API-backed contexts / characters (separate endpoints); mock quizzes omit it. */
     LOCAL_EDIT: (id: string, kind?: "CONTEXT" | "CHARACTER") => `/teaching/local/${id}${kind ? `?kind=${kind}` : ""}`,
+    /** Daily token boost requests of the teacher's students (Sprint 7). */
+    TOKEN_REQUESTS: "/teaching/token-requests",
   },
 
   // ── Học sinh: bài được giao, bảng điểm (bảng điểm cũng mở cho Customer) ──

@@ -153,8 +153,7 @@ export function useRosterMutations(classId: string) {
       onSuccess: refresh,
     }),
     importCsv: useMutation({
-      mutationFn: ({ file, defaultInitialToken }: { file: File; defaultInitialToken?: number }) =>
-        classroomStudentService.importCsv(classId, file, defaultInitialToken),
+      mutationFn: ({ file }: { file: File }) => classroomStudentService.importCsv(classId, file),
       onSuccess: refresh,
     }),
   };

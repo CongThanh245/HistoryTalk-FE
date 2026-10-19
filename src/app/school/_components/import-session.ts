@@ -43,9 +43,6 @@ export function studentCredentials(accounts: ImportedStudentAccount[]): Credenti
   }));
 }
 
-/** The backend leaves `totalTokensAllocated` at 0; fall back to the sum of the accounts. */
-export const tokensAllocated = (r: StudentImportResult) =>
-  r.totalTokensAllocated || r.successfulAccounts.reduce((sum, a) => sum + (a.allocatedToken ?? 0), 0);
 
 /** Original file line for a backend row number. */
 export const originalLine = (s: Pick<ImportSession, "sentLines">, rowNumber: number) => s.sentLines[rowNumber - 2] ?? rowNumber;

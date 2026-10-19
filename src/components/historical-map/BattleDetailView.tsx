@@ -23,7 +23,7 @@ import styles from "./battle-experience.module.css";
 import { useChatMessages, useChatSessions, useCreateSession, useSendMessage } from "@/features/chat/hooks";
 import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { splitAssistantContent } from "@/lib/utils/helpers";
-import { isTokenExhaustionError } from "@/lib/utils/api-error";
+import { isTokenExhaustionError, schoolErrorCode } from "@/lib/utils/api-error";
 import { cn } from "@/lib/utils/cn";
 import { queryKeys } from "@/shared/query-key";
 import { useUpdateEvent } from "@/features/events/hooks";
@@ -433,9 +433,11 @@ function BattleChat({
     } catch (err) {
       setDraft(content);
       setError(
-        isTokenExhaustionError(err)
-          ? "Bạn đã hết token. Vui lòng nạp thêm để tiếp tục trò chuyện."
-          : "Không gửi được tin nhắn. Vui lòng thử lại.",
+        schoolErrorCode(err) === "AI_QUOTA_EXCEEDED"
+          ? "Đã hết hạn mức token AI hôm nay. Vào trang Hồ sơ để xin thêm token, hoặc chờ làm mới lúc 00:00."
+          : isTokenExhaustionError(err)
+            ? "Bạn đã hết token. Vui lòng nạp thêm để tiếp tục trò chuyện."
+            : "Không gửi được tin nhắn. Vui lòng thử lại.",
       );
     } finally {
       sendingRef.current = false;

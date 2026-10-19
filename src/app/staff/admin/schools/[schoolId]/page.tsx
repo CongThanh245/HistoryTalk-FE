@@ -93,8 +93,10 @@ function SchoolDetail({ schoolId }: { schoolId: string }) {
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
           <span>
-            Trường đang ở trạng thái <b className="text-content-heading">{SCHOOL_STATUS_LABELS[school.status]}</b>. Tài khoản của trường có thể không dùng được
-            dịch vụ.
+            Trường đang ở trạng thái <b className="text-content-heading">{SCHOOL_STATUS_LABELS[school.status]}</b>.{" "}
+            {school.status === "EXPIRED"
+              ? "Gói năm học đã hết hạn: toàn bộ tài khoản của trường bị khóa cho tới khi gia hạn và kích hoạt năm học mới."
+              : "Tài khoản của trường có thể không dùng được dịch vụ."}
           </span>
         </p>
       )}
@@ -123,13 +125,13 @@ function SchoolDetail({ schoolId }: { schoolId: string }) {
 
 const SUMMARY_LABEL = "text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]";
 
-/** Key facts of the school as a labelled strip: code, package, monthly pool, status. */
+/** Key facts of the school as a labelled strip: code, package, school-year pool, status. */
 function SchoolSummary({ school }: { school: NonNullable<ReturnType<typeof useApiSchool>["data"]> }) {
   const tokens = ENTERPRISE_PACKAGE_TOKENS[school.packageType];
   const items: { label: string; value: React.ReactNode }[] = [
     { label: "Mã trường", value: <span className="font-mono">{school.schoolCode}</span> },
     { label: "Gói dịch vụ", value: PACKAGE_SHORT_LABELS[school.packageType] ?? school.packageType },
-    { label: "Token mỗi tháng", value: tokens ? `${millionTokens(tokens)} token` : "—" },
+    { label: "Token mỗi năm học", value: tokens ? `${millionTokens(tokens)} token` : "—" },
     { label: "Trạng thái", value: <SchoolStatusPill status={school.status} /> },
   ];
   return (

@@ -43,7 +43,6 @@ import { cn } from "@/lib/utils/cn";
 import { ImportAccountsTable, ImportErrorsTable, ImportSummary } from "./import-result";
 import { studentCredentials, useImportSession, type ImportSession } from "./import-session";
 
-export const DEFAULT_INITIAL_TOKEN = 10_000;
 
 /**
  * Template from the backend (GET /school-admin/students/template); falls back to the client-generated one if the
@@ -66,7 +65,7 @@ export async function downloadStudentTemplate() {
   }
 }
 
-const STEPS = ["Tải file", "Ghép cột", "Kiểm tra", "Cấp token", "Kết quả"] as const;
+const STEPS = ["Tải file", "Ghép cột", "Kiểm tra", "Xác nhận", "Kết quả"] as const;
 type Step = 0 | 1 | 2 | 3 | 4;
 type RowFilter = "ALL" | "VALID" | "ERROR";
 
@@ -103,11 +102,9 @@ function StepIndicator({ step }: { step: Step }) {
   );
 }
 
-const isQuotaError = (error: unknown) => /insufficient|token quota/i.test(apiErrorMessage(error, ""));
-
 /**
  * Bulk import of student accounts (POST /school-admin/students/import-excel): upload → map columns → client-side check →
- * token settings → result. The rows are re-written into a normalized UTF-8 CSV with the backend header before sending.
+ * confirm → result. No tokens are handed out (Sprint 7 shared pool + daily limit), so `defaultInitialToken` is 0. The rows are re-written into a normalized UTF-8 CSV with the backend header before sending.
  */
 export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const quota = useApiTokenQuota(open);
@@ -122,7 +119,6 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
   const [dragOver, setDragOver] = React.useState(false);
   const [mapping, setMapping] = React.useState<StudentColumnMapping | null>(null);
   const [filter, setFilter] = React.useState<RowFilter>("ALL");
-  const [tokenInput, setTokenInput] = React.useState(String(DEFAULT_INITIAL_TOKEN));
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [session, setSession] = React.useState<ImportSession | null>(null);
   const [exported, setExported] = React.useState(false);
@@ -136,7 +132,6 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
     setFileError(null);
     setMapping(null);
     setFilter("ALL");
-    setTokenInput(String(DEFAULT_INITIAL_TOKEN));
     setSubmitError(null);
     setSession(null);
     setExported(false);
@@ -192,31 +187,22 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
   const validRows = React.useMemo(() => checked.filter((r) => Object.keys(r.errors).length === 0), [checked]);
   const errorCount = checked.length - validRows.length;
 
-  /* ── Step 4: tokens ── */
-  const token = Number(tokenInput);
-  const tokenError =
-    !tokenInput.trim() || !Number.isInteger(token) ? "Nhập số nguyên" : token < 1 ? "Tối thiểu 1 token" : token > 10_000_000 ? "Tối đa 10.000.000 token" : null;
-  const extraTokens = validRows.reduce((sum, r) => sum + (Number(r.values.additionalToken) || 0), 0);
-  const totalNeeded = tokenError ? 0 : validRows.length * token + extraTokens;
-  const unallocated = quota.data?.unallocatedTokenQuota;
-  const overQuota = unallocated !== undefined && totalNeeded > unallocated;
-
   function submit() {
-    if (tokenError || overQuota || validRows.length === 0) return;
+    if (validRows.length === 0) return;
     setSubmitError(null);
     const csv = buildBackendCsv(validRows.map((r) => r.values));
     const base = (fileName ?? "hoc-sinh").replace(/\.[^.]+$/, "");
     const file = new File([csv], `${base}-chuan-hoa.csv`, { type: "text/csv" });
     const sentLines = validRows.map((r) => r.line);
     importStudents.mutate(
-      { file, defaultInitialToken: token },
+      { file },
       {
         onSuccess: (result) => {
           const s: ImportSession = {
             result,
             fileName: fileName ?? file.name,
             importedAt: new Date().toISOString(),
-            defaultInitialToken: token,
+            defaultInitialToken: 0,
             sentLines,
             skippedRows: errorCount,
           };
@@ -226,16 +212,7 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
           if (result.successCount) toast.success(`Đã tạo ${result.successCount} tài khoản học sinh`);
           else toast.error("Không có tài khoản nào được tạo. Xem các dòng lỗi.");
         },
-        onError: (error) => {
-          if (apiErrorStatus(error) === 400 && isQuotaError(error)) {
-            setSubmitError(
-              `Quỹ token chưa phân bổ của trường không đủ cho lần nhập này. Giảm token mặc định, bớt học sinh hoặc liên hệ quản trị hệ thống để nâng gói. (${apiErrorMessage(error, "")})`,
-            );
-            void quota.refetch();
-          } else {
-            setSubmitError(apiErrorMessage(error, "Không nhập được danh sách học sinh. Vui lòng thử lại."));
-          }
-        },
+        onError: (error) => setSubmitError(apiErrorMessage(error, "Không nhập được danh sách học sinh. Vui lòng thử lại.")),
       },
     );
   }
@@ -259,8 +236,8 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
             <DialogTitle className={DIALOG_TITLE_CLASS}>Nhập học sinh hàng loạt</DialogTitle>
             <DialogDescription className="text-content-muted">
               {quota.data
-                ? `${quota.data.schoolName} · quỹ token chưa phân bổ: ${formatNumber(quota.data.unallocatedTokenQuota)}`
-                : "Tạo tài khoản học sinh và cấp token từ quỹ của trường."}
+                ? `${quota.data.schoolName} · học sinh dùng quỹ token chung của trường theo hạn mức ngày`
+                : "Tạo tài khoản học sinh của trường."}
             </DialogDescription>
           </DialogHeader>
 
@@ -281,23 +258,7 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
             {step === 1 && table && mapping && <MappingStep table={table} mapping={mapping} onChange={setMapping} errors={mappingErrors} />}
             {step === 2 && <CheckStep rows={checked} filter={filter} setFilter={setFilter} validCount={validRows.length} errorCount={errorCount} />}
             {step === 3 && (
-              <TokenStep
-                tokenInput={tokenInput}
-                setTokenInput={(v) => {
-                  setTokenInput(v);
-                  setSubmitError(null);
-                }}
-                tokenError={tokenError}
-                validCount={validRows.length}
-                extraTokens={extraTokens}
-                totalNeeded={totalNeeded}
-                unallocated={unallocated}
-                quotaLoading={quota.isPending}
-                quotaFailed={quota.isError}
-                overQuota={overQuota}
-                skipped={errorCount}
-                submitError={submitError}
-              />
+              <ConfirmStep validCount={validRows.length} skipped={errorCount} submitError={submitError} />
             )}
             {step === 4 && session && <ResultStep session={session} schoolName={quota.data?.schoolName} onExported={() => setExported(true)} />}
           </div>
@@ -344,7 +305,7 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
                   <button
                     type="button"
                     className="btn-crimson w-full disabled:opacity-50 sm:w-auto"
-                    disabled={!!tokenError || overQuota || validRows.length === 0 || importStudents.isPending}
+                    disabled={validRows.length === 0 || importStudents.isPending}
                     onClick={submit}
                   >
                     {importStudents.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
@@ -590,7 +551,6 @@ const PREVIEW_FIELDS: { key: StudentImportField; label: string }[] = [
   { key: "dob", label: "Ngày sinh" },
   { key: "email", label: "Email" },
   { key: "gender", label: "Giới tính" },
-  { key: "additionalToken", label: "Token thêm" },
 ];
 const GENDER_VI: Record<string, string> = { MALE: "Nam", FEMALE: "Nữ" };
 
@@ -698,88 +658,25 @@ function CheckStep({
 }
 
 /* ───────────────────────── Step 4 ───────────────────────── */
-function TokenStep({
-  tokenInput,
-  setTokenInput,
-  tokenError,
-  validCount,
-  extraTokens,
-  totalNeeded,
-  unallocated,
-  quotaLoading,
-  quotaFailed,
-  overQuota,
-  skipped,
-  submitError,
-}: {
-  tokenInput: string;
-  setTokenInput: (v: string) => void;
-  tokenError: string | null;
-  validCount: number;
-  extraTokens: number;
-  totalNeeded: number;
-  unallocated: number | undefined;
-  quotaLoading: boolean;
-  quotaFailed: boolean;
-  overQuota: boolean;
-  skipped: number;
-  submitError: string | null;
-}) {
+function ConfirmStep({ validCount, skipped, submitError }: { validCount: number; skipped: number; submitError: string | null }) {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-      <div className="space-y-4">
-        <Field
-          label="Token cấp cho mỗi học sinh"
-          required
-          error={tokenError}
-          hint="Mặc định 10.000. Cột “Token cộng thêm” trong file được cộng thêm cho từng học sinh."
-          htmlFor="import-token"
-        >
-          <StaffFormInput
-            id="import-token"
-            inputMode="numeric"
-            value={tokenInput}
-            aria-invalid={!!tokenError}
-            onChange={(e) => setTokenInput(e.target.value.replace(/[^\d]/g, ""))}
-          />
-        </Field>
-        <p className="flex items-start gap-2 rounded-[2px] border border-[var(--border-default)] bg-[var(--status-neutral-bg)] px-3 py-2 text-xs leading-relaxed text-content-muted">
+    <div className="space-y-4">
+      <div className="space-y-3 rounded-[2px] border border-[var(--text-primary)] p-4">
+        <p className="text-sm font-bold text-content-heading">Sẵn sàng tạo {formatNumber(validCount)} tài khoản học sinh</p>
+        {skipped > 0 && <p className="text-xs text-content-muted">{skipped} dòng lỗi được bỏ qua.</p>}
+        <p className="flex items-start gap-2 text-xs leading-relaxed text-content-muted">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          Không cần cấp token cho từng học sinh: mọi học sinh dùng quỹ token chung của trường, tối đa theo hạn mức mỗi ngày (cài ở trang Hạn mức
+          token).
+        </p>
+        <p className="flex items-start gap-2 text-xs leading-relaxed text-content-muted">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           Xếp học sinh vào lớp khi nhập chưa được máy chủ hỗ trợ; tài khoản được tạo ở cấp trường.
         </p>
       </div>
 
-      <div className="space-y-3 rounded-[2px] border border-[var(--text-primary)] p-4">
-        <p className="text-sm font-bold text-content-heading">Tổng token cần cấp</p>
-        <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 text-sm">
-          <dt className="text-content-muted">Số học sinh sẽ tạo</dt>
-          <dd className="text-right tabular-nums">{formatNumber(validCount)}</dd>
-          <dt className="text-content-muted">× token mỗi học sinh</dt>
-          <dd className="text-right tabular-nums">{tokenError ? "—" : formatNumber(Number(tokenInput))}</dd>
-          {extraTokens > 0 && (
-            <>
-              <dt className="text-content-muted">+ token cộng thêm trong file</dt>
-              <dd className="text-right tabular-nums">{formatNumber(extraTokens)}</dd>
-            </>
-          )}
-          <dt className="border-t border-[var(--border-default)] pt-1.5 font-semibold text-content-heading">≈ Tổng</dt>
-          <dd className="border-t border-[var(--border-default)] pt-1.5 text-right font-bold tabular-nums text-content-heading">{formatNumber(totalNeeded)}</dd>
-          <dt className="text-content-muted">Quỹ chưa phân bổ</dt>
-          <dd className={cn("text-right tabular-nums", overQuota && "font-bold text-[var(--accent-danger)]")}>
-            {quotaLoading ? "…" : unallocated === undefined ? "—" : formatNumber(unallocated)}
-          </dd>
-        </dl>
-        {overQuota && (
-          <p role="alert" className="text-sm text-[var(--accent-danger)]">
-            Vượt quỹ token chưa phân bổ {formatNumber(totalNeeded - (unallocated ?? 0))} token. Giảm token mỗi học sinh hoặc bớt học sinh.
-          </p>
-        )}
-        {quotaFailed && <p className="text-xs text-[var(--status-warning)]">Không tải được quỹ token; máy chủ vẫn kiểm tra khi gửi.</p>}
-        {skipped > 0 && <p className="text-xs text-content-muted">{skipped} dòng lỗi được bỏ qua và không tính token.</p>}
-      </div>
-
       {submitError && (
-        <p role="alert" className="flex items-start gap-2 text-sm text-[var(--accent-danger)] lg:col-span-2">
+        <p role="alert" className="flex items-start gap-2 text-sm text-[var(--accent-danger)]">
           <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> {submitError}
         </p>
       )}

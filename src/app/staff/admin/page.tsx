@@ -671,12 +671,24 @@ export default function AdminDashboardPage() {
         {/* ── Row 1b: Token & JVM (GET /admin/dashboard) ── */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           <KpiCard
-            title="Token B2B đã cấp"
+            title="Quỹ token B2B"
             value={(tokenSummary?.totalTokensB2bAllocated ?? 0).toLocaleString()}
             icon={SchoolIcon}
             color="var(--accent-blue)"
             loading={comprehensiveLoading}
-            sub={<span>Trường: <strong>{(platform?.totalSchools ?? 0).toLocaleString()}</strong></span>}
+            sub={
+              <span className="flex flex-col gap-0.5">
+                <span>
+                  Đã dùng <strong>{(tokenSummary?.totalTokensB2bConsumed ?? 0).toLocaleString()}</strong> · còn{" "}
+                  <strong>{(tokenSummary?.totalTokensB2bRemainingInPools ?? 0).toLocaleString()}</strong>
+                </span>
+                <span>
+                  Trường: <strong>{(platform?.totalSchools ?? 0).toLocaleString()}</strong>
+                  {platform?.activeSchools != null && <> · hoạt động <strong>{platform.activeSchools.toLocaleString()}</strong></>}
+                  {!!platform?.expiredSchools && <> · hết hạn <strong>{platform.expiredSchools.toLocaleString()}</strong></>}
+                </span>
+              </span>
+            }
           />
           <KpiCard
             title="Token B2C đã dùng"

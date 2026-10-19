@@ -6,6 +6,7 @@ import { Check, X } from "lucide-react";
 import { Panel, SectionHeading, TokenBar, formatNumber } from "@/components/saas/saas-ui";
 import { formatDateTime, schoolPool } from "@/features/saas/admin-schools";
 import type { ApiSchool } from "@/services/school.service";
+import { SchoolSubscriptionPanel } from "@/components/saas/admin-school-subscription";
 
 /* ───────────────────────── Thông tin ───────────────────────── */
 function InfoItem({ label, children }: { label: string; children: React.ReactNode }) {
@@ -23,6 +24,7 @@ const Missing = () => <span className="text-content-muted">Chưa cập nhật</s
 export function SchoolInfoTab({ school }: { school: ApiSchool }) {
   return (
     <div className="space-y-6">
+      <SchoolSubscriptionPanel school={school} />
       <SchoolTokenPoolCard school={school} />
       <Panel>
         <SectionHeading title="Thông tin liên hệ" />
@@ -65,16 +67,23 @@ function PoolFigure({ label, value, hint }: { label: string; value: number; hint
   );
 }
 
-/** Monthly token pool: total from the package, how much the School Admin already handed out, what is left. */
+/** Shared pool of the school year: package + top-ups + carry-over, spent directly by student chats. */
 export function SchoolTokenPoolCard({ school }: { school: ApiSchool }) {
   const pool = schoolPool(school);
   return (
     <Panel>
-      <SectionHeading title="Quỹ token" description="Trường nhận token theo gói; quản trị trường cấp lại cho từng học sinh khi tạo tài khoản." />
+      <SectionHeading
+        title="Quỹ token chung"
+        description="Toàn bộ token của trường trong năm học. Học sinh chat tới đâu trừ thẳng vào quỹ tới đó, trong giới hạn hạn mức mỗi ngày."
+      />
       <div className="grid gap-6 sm:grid-cols-3">
-        <PoolFigure label="Tổng quỹ" value={pool.total} hint="token mỗi tháng theo gói" />
-        <PoolFigure label="Đã cấp cho học sinh" value={pool.allocated} hint={`${pool.percent}% tổng quỹ`} />
-        <PoolFigure label="Còn lại" value={pool.unallocated} hint="có thể cấp thêm cho học sinh" />
+        <PoolFigure label="Tổng quỹ năm học" value={pool.total} hint="gói + nạp thêm + bảo lưu" />
+        <PoolFigure label="Đã sử dụng" value={pool.allocated} hint={`${pool.percent}% tổng quỹ`} />
+        <PoolFigure
+          label="Còn lại"
+          value={pool.unallocated}
+          hint={school.defaultDailyStudentQuota ? `hạn mức ${formatNumber(school.defaultDailyStudentQuota)} token / học sinh / ngày` : undefined}
+        />
       </div>
       <TokenBar used={pool.allocated} quota={pool.total} />
     </Panel>

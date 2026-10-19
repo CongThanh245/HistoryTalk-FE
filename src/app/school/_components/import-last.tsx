@@ -13,7 +13,7 @@ import { ImportAccountsTable, ImportErrorsTable, ImportSummary } from "./import-
 import { studentCredentials, useImportSession, type ImportSession } from "./import-session";
 
 const describe = (s: ImportSession) =>
-  `${s.fileName} · ${new Date(s.importedAt).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" })} · ${formatNumber(s.defaultInitialToken)} token/học sinh`;
+  `${s.fileName} · ${new Date(s.importedAt).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" })}`;
 
 /**
  * Notice for the last import of this tab (credentials live in memory only) with buttons to reopen the full result

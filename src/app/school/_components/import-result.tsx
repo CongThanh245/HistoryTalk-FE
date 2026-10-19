@@ -1,13 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, Coins, Eye, EyeOff, Wallet, XCircle } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, XCircle } from "lucide-react";
 
 import { formatNumber } from "@/components/saas/saas-ui";
 import { STUDENT_IMPORT_FIELDS } from "@/features/saas/student-import";
 import type { ImportedStudentAccount, StudentImportError } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
-import { originalLine, tokensAllocated, type ImportSession } from "./import-session";
+import { originalLine, type ImportSession } from "./import-session";
 
 const FIELD_LABELS: Record<string, string> = Object.fromEntries(STUDENT_IMPORT_FIELDS.map((f) => [f.column, f.label]));
 
@@ -23,7 +23,7 @@ const MESSAGE_VI: [RegExp, string][] = [
 ];
 export const translateImportMessage = (m: string) => MESSAGE_VI.find(([re]) => re.test(m))?.[1] ?? m;
 
-function Stat({ icon: Icon, label, value, tone }: { icon: typeof Coins; label: string; value: number; tone?: "ok" | "bad" }) {
+function Stat({ icon: Icon, label, value, tone }: { icon: typeof CheckCircle2; label: string; value: number; tone?: "ok" | "bad" }) {
   return (
     <div className="flex items-start gap-3 rounded-[2px] border border-[var(--border-strong)] p-3">
       <Icon
@@ -44,11 +44,9 @@ function Stat({ icon: Icon, label, value, tone }: { icon: typeof Coins; label: s
 export function ImportSummary({ session }: { session: ImportSession }) {
   const r = session.result;
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2">
       <Stat icon={CheckCircle2} label="Tạo thành công" value={r.successCount} tone="ok" />
       <Stat icon={XCircle} label="Dòng lỗi" value={r.failureCount + session.skippedRows} tone={r.failureCount + session.skippedRows ? "bad" : undefined} />
-      <Stat icon={Coins} label="Token đã cấp" value={tokensAllocated(r)} />
-      <Stat icon={Wallet} label="Quỹ token còn lại" value={r.remainingSchoolTokens} />
     </div>
   );
 }
@@ -104,7 +102,6 @@ export function ImportAccountsTable({ accounts, maxHeight = "max-h-[50dvh]" }: {
               <th className={TH}>Email đăng nhập</th>
               <th className={TH}>Tên tài khoản</th>
               <th className={TH}>Mật khẩu tạm</th>
-              <th className={cn(TH, "text-right")}>Token</th>
             </tr>
           </thead>
           <tbody>
@@ -117,7 +114,6 @@ export function ImportAccountsTable({ accounts, maxHeight = "max-h-[50dvh]" }: {
                 <td className="break-all px-3 py-2 font-mono text-xs">{a.email}</td>
                 <td className="break-all px-3 py-2 font-mono text-xs text-content-muted">{a.userName}</td>
                 <td className="px-3 py-2 font-mono text-xs font-bold">{reveal ? a.initialPassword : "••••••••••"}</td>
-                <td className="px-3 py-2 text-right text-xs tabular-nums">{formatNumber(a.allocatedToken ?? 0)}</td>
               </tr>
             ))}
           </tbody>

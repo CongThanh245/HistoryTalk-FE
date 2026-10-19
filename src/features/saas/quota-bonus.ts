@@ -70,17 +70,20 @@ export function questQuotaBonus(dailyQuota: number | undefined): number {
 }
 
 export interface TodayQuota {
-  /** Token dang co + token da dung hom nay (BE khong co han muc theo ngay). */
+  /** Han muc hom nay = han muc ngay (lop / truong) + token duoc duyet them hom nay. */
   quota: number;
+  /** Han muc ngay cua lop (hoac mac dinh cua truong). */
   baseQuota: number;
+  /** Token giao vien / quan tri truong duyet them hom nay. */
   bonus: number;
   used: number;
+  /** Con duoc dung hom nay (BE da gioi han theo quy chung cua truong). */
   remaining: number;
 }
 
 /**
- * Token cua hoc sinh truong tu GET /student/dashboard (currentTokens, tokensUsedToday).
- * Giao vien: BE khong co API token -> null. Customer / staff: null.
+ * Han muc token hom nay cua hoc sinh truong tu GET /student/dashboard (Sprint 7: quy chung + han muc ngay).
+ * Giao vien chat khong bi tru token -> null. Customer / staff: null.
  */
 export function useTodayQuota(): TodayQuota | null {
   const role = useAuthStore((s) => s.user?.role);
@@ -89,6 +92,8 @@ export function useTodayQuota(): TodayQuota | null {
   if (role !== "SCHOOL_STUDENT" || !data) return null;
   const used = Math.max(data.tokensUsedToday, 0);
   const remaining = Math.max(data.currentTokens, 0);
-  const quota = used + remaining;
-  return { quota, baseQuota: quota, bonus: 0, used, remaining };
+  const bonus = Math.max(data.dailyBonusTokens ?? 0, 0);
+  // Older builds have no daily limit field: fall back to used + remaining.
+  const baseQuota = data.dailyTokenLimit != null ? Math.max(data.dailyTokenLimit, 0) : used + remaining - bonus;
+  return { quota: baseQuota + bonus, baseQuota, bonus, used, remaining };
 }

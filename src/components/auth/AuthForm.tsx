@@ -1,5 +1,6 @@
 "use client";
 
+import { schoolErrorCode, stripErrorCode } from "@/lib/utils/api-error";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -182,13 +183,16 @@ export default function AuthForm({ mode }: AuthFormProps) {
       login.mutate(
         { email, password },
         {
-          onError: (err: AuthError) =>
+          onError: (err: AuthError) => {
+            const message = err?.response?.data?.message ?? err?.message ?? "Email hoặc mật khẩu không đúng";
             toast.error("Đăng nhập thất bại", {
+              // Graduated / transferred students get "ACCOUNT_DEACTIVATED: …" (Sprint 7).
               description:
-                err?.response?.data?.message ??
-                err?.message ??
-                "Email hoặc mật khẩu không đúng",
-            }),
+                schoolErrorCode(message) === "ACCOUNT_DEACTIVATED"
+                  ? "Tài khoản đã ngừng hoạt động do học sinh đã tốt nghiệp hoặc chuyển trường. Liên hệ nhà trường nếu cần hỗ trợ."
+                  : stripErrorCode(message),
+            });
+          },
         },
       );
     }

@@ -79,14 +79,22 @@ export interface ListParams {
 
 // ─── Schools (SYSTEM_ADMIN) ────────────────────────────────────────────────
 
-/** Monthly school token pool: SMALL 5M, MEDIUM 20M, LARGE 50M. */
+/** Token pool of one school year (01/09 – 31/05): SMALL 5M, MEDIUM 20M, LARGE 50M. */
 export type EnterprisePackage = "ENTERPRISE_SMALL" | "ENTERPRISE_MEDIUM" | "ENTERPRISE_LARGE";
-export type SchoolStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
+/** EXPIRED = the school year ended (after 31/05) without renewal; the whole school is locked. */
+export type SchoolStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED" | "EXPIRED";
 
 export const ENTERPRISE_PACKAGE_TOKENS: Record<EnterprisePackage, number> = {
   ENTERPRISE_SMALL: 5_000_000,
   ENTERPRISE_MEDIUM: 20_000_000,
   ENTERPRISE_LARGE: 50_000_000,
+};
+
+/** Recommended number of students per package (BE `EnterprisePackage.recommendedStudents`). */
+export const ENTERPRISE_PACKAGE_STUDENTS: Record<EnterprisePackage, number> = {
+  ENTERPRISE_SMALL: 350,
+  ENTERPRISE_MEDIUM: 1_500,
+  ENTERPRISE_LARGE: 3_500,
 };
 
 export interface ApiSchool {
@@ -97,8 +105,20 @@ export interface ApiSchool {
   contactEmail: string;
   contactPhone: string | null;
   packageType: EnterprisePackage;
+  recommendedStudents?: number | null;
+  /** Token pool of the current school year (package + top-ups + 20 % carried over). */
   totalSchoolTokenQuota: number;
+  /** What is left in the shared pool; student chats are deducted from here directly. */
   unallocatedTokenQuota: number;
+  /** Tokens a student may spend per day unless their class overrides it. */
+  defaultDailyStudentQuota?: number | null;
+  /** yyyy-MM-dd, 01/09 of the school year. */
+  subscriptionStartDate?: string | null;
+  /** yyyy-MM-dd, 31/05 of the school year. */
+  subscriptionEndDate?: string | null;
+  /** Renewed in May; `nextPackageType` starts on 01/09. */
+  renewedForNextYear?: boolean | null;
+  nextPackageType?: EnterprisePackage | null;
   localHistoryPolicyAccepted: boolean;
   status: SchoolStatus;
   createdAt: string;
@@ -188,6 +208,7 @@ export interface ImportedStudentAccount {
   userName: string;
   fullName: string;
   email: string;
+  /** Always 0 now that students spend from the shared pool. */
   allocatedToken: number;
   /** Plain text, returned once so the School Admin can print the credential sheet. */
   initialPassword: string;
@@ -222,7 +243,7 @@ export interface ApiStudent {
   dob: string | null;
   gender: Gender | null;
   phoneNumber: string | null;
-  /** Token balance in the student's wallet. */
+  /** Legacy wallet field; students now spend from the school pool within a daily limit. */
   token: number;
   active: boolean;
   schoolId: string;
@@ -240,6 +261,7 @@ export interface UpdateStudentPayload {
   email?: string | null;
 }
 
+/** @deprecated Sprint 7 uses a shared pool; per-student allocation tokens are lost at the next daily reset. */
 export interface AllocateTokensPayload {
   studentIds: string[];
   /** Tokens given to EACH student. */
@@ -265,7 +287,9 @@ export interface SchoolTokenQuota {
   schoolCode: string;
   packageType: EnterprisePackage;
   totalSchoolTokenQuota: number;
+  /** Remaining shared pool. */
   unallocatedTokenQuota: number;
+  /** total − remaining: tokens already spent (or handed out under the old allocation flow). */
   allocatedTokenQuota: number;
   usagePercentage: number;
 }
@@ -422,7 +446,10 @@ export const schoolService = {
     const res = await axiosClient.post(`/school-admin/students/${id}/reset-password`);
     return res.data.data;
   },
-  /** Moves `tokenAmount` per student from the school pool into each student's wallet. */
+  /**
+   * @deprecated Sprint 7: students spend from the shared pool within a daily limit. The backend still moves
+   * tokens out of the pool here, but the wallet is overwritten at the next daily reset, so the tokens are lost.
+   */
   allocateTokens: async (payload: AllocateTokensPayload): Promise<AllocateTokensResult> => {
     const res = await axiosClient.put("/school-admin/students/token-allocation", payload);
     return res.data.data;
@@ -432,12 +459,16 @@ export const schoolService = {
     const res = await axiosClient.get("/school-admin/students/template", { responseType: "blob" });
     return res.data;
   },
-  importStudents: async (file: File, defaultInitialToken?: number): Promise<StudentImportResult> => {
+  /**
+   * Always sends `defaultInitialToken=0`: without it the backend gives every new student 10 000 tokens taken
+   * out of the shared pool, which the daily-limit model then throws away.
+   */
+  importStudents: async (file: File): Promise<StudentImportResult> => {
     const form = new FormData();
     form.append("file", file);
     const res = await axiosClient.post("/school-admin/students/import-excel", form, {
       headers: { "Content-Type": "multipart/form-data" },
-      params: defaultInitialToken ? { defaultInitialToken } : undefined,
+      params: { defaultInitialToken: 0 },
       timeout: 180_000,
     });
     return res.data.data;

@@ -29,7 +29,7 @@ import { ImportAccountsTable, ImportErrorsTable } from "@/app/school/_components
 import { useRole } from "@/features/auth/usePermission";
 import { apiErrorMessage, useApiSchoolClassrooms, useApiTeacherClassrooms } from "@/features/saas/hooks-api";
 import { useAvailableStudents, useClassroomStudents, useRosterMutations } from "@/features/saas/hooks-assignment-api";
-import { buildBackendTemplateCsv, downloadTextFile } from "@/features/saas/student-import";
+import { buildBackendTemplateCsv, downloadTextFile, withoutAdditionalTokens } from "@/features/saas/student-import";
 import type { BatchEnrollResult, ClassroomStudent } from "@/services/assignment.service";
 import type { ImportedStudentAccount, StudentImportResult } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
@@ -524,25 +524,22 @@ async function withoutBom(file: File): Promise<File> {
 
 function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const [file, setFile] = React.useState<File | null>(null);
-  const [tokenInput, setTokenInput] = React.useState("");
   const [result, setResult] = React.useState<StudentImportResult | null>(null);
   const [credentials, setCredentials] = React.useState<CredentialRecord[] | null>(null);
   const { importCsv } = useRosterMutations(classId);
 
-  const token = tokenInput.trim() === "" ? undefined : Number(tokenInput.replace(/[.\s]/g, ""));
-  const tokenError = token !== undefined && (!Number.isInteger(token) || token < 0) ? "Số nguyên ≥ 0" : null;
-
   const reset = () => {
     setFile(null);
-    setTokenInput("");
     setResult(null);
   };
 
   const submit = async () => {
-    if (!file || tokenError) return;
-    const clean = await withoutBom(file);
+    if (!file) return;
+    const noBom = await withoutBom(file);
+    // Students spend from the shared school pool, so no tokens are handed out on import.
+    const clean = new File([withoutAdditionalTokens(await noBom.text())], noBom.name, { type: "text/csv" });
     importCsv.mutate(
-      { file: clean, defaultInitialToken: token },
+      { file: clean },
       {
         onSuccess: (r) => {
           setResult(r);
@@ -555,7 +552,6 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
 
   const accounts = result?.successfulAccounts ?? [];
   const fresh = accounts.filter((a) => !isExistingAccount(a));
-  const tokens = result ? result.totalTokensAllocated || fresh.reduce((s, a) => s + (a.allocatedToken ?? 0), 0) : 0;
 
   return (
     <>
@@ -570,19 +566,18 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
           <DialogHeader>
             <DialogTitle className={DIALOG_TITLE_CLASS}>Nhập học sinh từ CSV</DialogTitle>
             <DialogDescription className="text-content-muted">
-              Học sinh đã có trong trường (khớp mã HS hoặc email) được thêm thẳng vào lớp; học sinh mới được tạo tài khoản, cấp token từ quỹ của
-              trường rồi thêm vào lớp.
+              Học sinh đã có trong trường (khớp mã HS hoặc email) được thêm thẳng vào lớp; học sinh mới được tạo tài khoản rồi thêm vào lớp. Học sinh
+              dùng quỹ token chung của trường theo hạn mức ngày, không cần cấp token riêng.
             </DialogDescription>
           </DialogHeader>
 
           {result ? (
             <div className="space-y-4">
-              <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <dl className="grid grid-cols-3 gap-3">
                 {[
                   ["Thêm vào lớp", result.successCount],
                   ["Tài khoản mới", fresh.length],
                   ["Dòng lỗi", result.failureCount],
-                  ["Token đã cấp", tokens],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-[2px] border border-[var(--border-strong)] p-3">
                     <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</dt>
@@ -590,10 +585,7 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
                   </div>
                 ))}
               </dl>
-              <p className="text-sm text-content-muted">
-                {formatNumber(result.totalRows)} dòng trong file · quỹ token còn lại của trường:{" "}
-                <b className="tabular-nums text-content-heading">{formatNumber(result.remainingSchoolTokens)}</b>
-              </p>
+              <p className="text-sm text-content-muted">{formatNumber(result.totalRows)} dòng trong file</p>
               <ImportErrorsTable errors={result.errors} session={{ sentLines: [] }} />
               {accounts.length > 0 && <ImportAccountsTable accounts={accounts} maxHeight="max-h-[35dvh]" />}
               {fresh.length > 0 && (
@@ -614,7 +606,7 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
                 />
               </Field>
               <div className="rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3 text-xs leading-5 text-content-muted">
-                Cột: <code className="font-mono">student_code, full_name, email, dob, gender, phone_number, password, additional_token</code>. Học sinh
+                Cột: <code className="font-mono">student_code, full_name, email, dob, gender, phone_number, password</code> (cột additional_token nếu có sẽ được bỏ qua). Học sinh
                 mới bắt buộc có <code className="font-mono">full_name</code> và <code className="font-mono">dob</code> (yyyy-mm-dd); gender là MALE /
                 FEMALE. Học sinh đã có chỉ cần mã HS hoặc email.{" "}
                 <button
@@ -625,21 +617,6 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
                   <Download className="h-3.5 w-3.5" aria-hidden="true" /> Tải file mẫu
                 </button>
               </div>
-              <Field
-                label="Token mặc định cho học sinh mới"
-                htmlFor="roster-import-token"
-                error={tokenError}
-                hint="Bỏ trống để dùng mức mặc định của máy chủ. Chỉ trừ quỹ trường cho tài khoản mới."
-              >
-                <Input
-                  id="roster-import-token"
-                  inputMode="numeric"
-                  value={tokenInput}
-                  onChange={(e) => setTokenInput(e.target.value)}
-                  placeholder="Ví dụ: 10000"
-                  className="h-10 rounded-[2px] border-[var(--border-strong)] bg-[var(--bg-elevated)]"
-                />
-              </Field>
             </div>
           )}
 
@@ -679,7 +656,7 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
                 <button
                   type="button"
                   className="btn-crimson disabled:opacity-50"
-                  disabled={!file || !!tokenError || importCsv.isPending}
+                  disabled={!file || importCsv.isPending}
                   onClick={() => void submit()}
                 >
                   {importCsv.isPending ? "Đang nhập…" : "Nhập vào lớp"}

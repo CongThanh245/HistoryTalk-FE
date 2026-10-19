@@ -20,19 +20,20 @@ const STATUS_CLASS: Record<SchoolStatus, string> = {
   ACTIVE: "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]",
   INACTIVE: "border-[var(--border-strong)] bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]",
   SUSPENDED: "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--accent-danger)]",
+  EXPIRED: "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]",
 };
 
 export function SchoolStatusPill({ status }: { status: SchoolStatus }) {
   return <span className={cn(PILL, STATUS_CLASS[status] ?? STATUS_CLASS.INACTIVE)}>{SCHOOL_STATUS_LABELS[status] ?? status}</span>;
 }
 
-/** "Enterprise S" pill with the monthly pool under it ("5 triệu token/tháng"). */
+/** "Enterprise S" pill with the school-year pool under it ("5 triệu token/năm học"). */
 export function PackageCell({ pkg, inline }: { pkg: EnterprisePackage; inline?: boolean }) {
   const tokens = ENTERPRISE_PACKAGE_TOKENS[pkg];
   return (
     <span className={cn("inline-flex gap-1", inline ? "flex-row flex-wrap items-center gap-2" : "flex-col items-start")}>
       <span className={cn(PILL, "border-[var(--text-primary)] bg-transparent text-[var(--text-primary)]")}>{PACKAGE_SHORT_LABELS[pkg] ?? pkg}</span>
-      {tokens && <span className="whitespace-nowrap text-xs text-content-muted">{millionTokens(tokens)} token/tháng</span>}
+      {tokens && <span className="whitespace-nowrap text-xs text-content-muted">{millionTokens(tokens)} token/năm học</span>}
     </span>
   );
 }

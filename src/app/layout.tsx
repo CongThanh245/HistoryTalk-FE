@@ -12,6 +12,7 @@ import { WELCOME_SCREEN_KEY } from "@/constants/welcome-screen";
 import { ROLE_HOME } from "@/constants/roles";
 import { SessionExpiredDialog } from "@/components/session-expired-dialog";
 import { UserLockedDialog } from "@/components/user-locked-dialog";
+import { SchoolLockDialog } from "@/components/school-lock-dialog";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -165,6 +166,7 @@ export default function RootLayout({
           <ReactQueryProviders>{children}</ReactQueryProviders>
           <SessionExpiredDialog />
           <UserLockedDialog />
+          <SchoolLockDialog />
           <Toaster
             position="bottom-right"
             duration={4000}

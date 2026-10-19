@@ -121,8 +121,10 @@ export function parseDobLoose(v: string): string | null {
 //   student_code,full_name,email,dob,gender,phone_number,password,additional_token
 // Backend rules (AbstractStudentImportProcessor): full_name and dob (yyyy-MM-dd) are required; student_code is
 // optional (auto "<SCHOOL>_HSyyNNNNN") and must match ^[A-Za-z0-9_-]{2,30}$; gender MALE/FEMALE (anything else is
-// stored empty); password < 6 chars falls back to "<student_code>@2026"; additional_token is added on top of
-// defaultInitialToken. The backend does NOT strip a UTF-8 BOM, so the file we send never has one.
+// stored empty); password < 6 chars falls back to "<student_code>@2026". The backend does NOT strip a UTF-8 BOM,
+// so the file we send never has one.
+// Sprint 7 (shared pool + daily limit): additional_token is always sent empty and defaultInitialToken=0 — the
+// backend still moves those tokens out of the school pool, but the daily-limit model overwrites the wallet.
 
 export const BACKEND_IMPORT_COLUMNS = [
   "student_code",
@@ -145,7 +147,7 @@ export const STUDENT_IMPORT_FIELDS: { key: StudentImportField; column: (typeof B
   { key: "gender", column: "gender", label: "Giới tính", required: false, hint: "Nam / Nữ (MALE / FEMALE)" },
   { key: "phoneNumber", column: "phone_number", label: "Số điện thoại", required: false, hint: "Không bắt buộc" },
   { key: "password", column: "password", label: "Mật khẩu", required: false, hint: "≥ 6 ký tự · bỏ trống: <mã HS>@2026" },
-  { key: "additionalToken", column: "additional_token", label: "Token cộng thêm", required: false, hint: "Số nguyên ≥ 0, cộng thêm vào mức token mặc định" },
+  { key: "additionalToken", column: "additional_token", label: "Token cộng thêm (bỏ qua)", required: false, hint: "Không dùng nữa: học sinh dùng quỹ chung của trường theo hạn mức ngày" },
 ];
 
 const FIELD_ALIASES: Record<StudentImportField, string[]> = {
@@ -246,11 +248,11 @@ export function checkStudentRows(table: ImportTable, mapping: StudentColumnMappi
       warnings.push("Mật khẩu dưới 6 ký tự — máy chủ sẽ dùng <mã HS>@2026");
     }
 
-    if (raw.additionalToken) {
-      const n = Number(raw.additionalToken.replace(/[.\s]/g, ""));
-      if (!Number.isInteger(n) || n < 0) errors.additionalToken = "Số nguyên ≥ 0";
-      else values.additionalToken = String(n);
+    // Never sent: tokens are no longer handed out per student (see the header comment).
+    if (raw.additionalToken && raw.additionalToken.replace(/[.\s0]/g, "")) {
+      warnings.push("Cột token cộng thêm được bỏ qua — học sinh dùng quỹ chung theo hạn mức ngày");
     }
+    values.additionalToken = "";
 
     return { line, values, errors, warnings };
   });
@@ -267,12 +269,23 @@ export function buildBackendCsv(rows: StudentRowValues[]): string {
   return lines.join("\r\n") + "\r\n";
 }
 
+/**
+ * Copy of an uploaded CSV with the `additional_token` column emptied, for imports that send the user's file as is
+ * (class roster). The backend would otherwise take those tokens out of the school pool (see the header comment).
+ */
+export function withoutAdditionalTokens(text: string): string {
+  const rows = parseCsv(text);
+  const col = (rows[0] ?? []).findIndex((h) => h.trim().replace(/^﻿/, "").toLowerCase() === "additional_token");
+  if (col < 0) return text;
+  return rows.map((r, i) => r.map((v, j) => (i > 0 && j === col ? "" : backendCell(v))).join(",")).join("\r\n") + "\r\n";
+}
+
 /** Backend template for download (with BOM so Excel keeps the diacritics; the wizard strips it before sending). */
 export function buildBackendTemplateCsv(): string {
   const rows = [
     BACKEND_IMPORT_COLUMNS.join(","),
-    "HS2600001,Nguyễn Văn An,,2010-03-15,MALE,0901234567,,0",
-    "HS2600002,Trần Thị Bình,binh.tran@gmail.com,2010-11-02,FEMALE,,MatKhau@2026,5000",
+    "HS2600001,Nguyễn Văn An,,2010-03-15,MALE,0901234567,,",
+    "HS2600002,Trần Thị Bình,binh.tran@gmail.com,2010-11-02,FEMALE,,MatKhau@2026,",
   ];
   return "﻿" + rows.join("\r\n") + "\r\n";
 }

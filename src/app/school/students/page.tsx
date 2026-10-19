@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Coins, Download, Eye, KeyRound, LockKeyhole, LockKeyholeOpen, Trash2, Upload, Users } from "lucide-react";
+import { Download, Eye, GraduationCap, KeyRound, LockKeyhole, LockKeyholeOpen, Trash2, Upload, Users } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -22,8 +22,10 @@ import { CredentialsDialog } from "@/components/saas/accounts-credentials";
 import { downloadCsv, todayStamp, type CredentialRecord } from "@/components/saas/accounts-utils";
 import { AccountStatusBadge, NeutralBadge, Panel, SearchInput, formatDate, formatNumber } from "@/components/saas/saas-ui";
 import { GENDER_LABELS, StudentEditDialog, isShadowEmail } from "@/components/saas/student-edit-dialog";
-import { StudentTokenDialog } from "@/components/saas/student-token-dialog";
 import { apiErrorMessage, useApiStudents, useApiTokenQuota, useStudentMutations } from "@/features/saas/hooks-api";
+import { useDeactivateStudent } from "@/features/saas/hooks-school-token";
+import { StaffFormSelect } from "@/components/staff/staff-form";
+import type { DeactivationReason } from "@/services/school-token.service";
 import { schoolService, type AccountListParams, type ApiStudent } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -41,14 +43,22 @@ import { LastImportBar } from "../_components/import-last";
 import { ErrorBlock, SchoolShell, useDebouncedValue } from "../_components/shared";
 import { StudentImportWizard } from "../_components/student-import-wizard";
 
-type SortBy = "studentCode" | "fullName" | "userName" | "email" | "token" | "createdAt";
+type SortBy = "studentCode" | "fullName" | "userName" | "email" | "createdAt";
 
-/** School Admin: student accounts (GET/PUT/DELETE /school-admin/students, import, token allocation, reset password). */
+const DEACTIVATION_OPTIONS: { value: DeactivationReason; label: string }[] = [
+  { value: "GRADUATED", label: "Đã tốt nghiệp" },
+  { value: "TRANSFERRED_OUT", label: "Chuyển trường" },
+];
+
+/**
+ * School Admin: student accounts (GET/PUT/DELETE /school-admin/students, import, reset password, deactivate).
+ * Sprint 7: no per-student token allocation any more — students spend from the shared pool within a daily limit.
+ */
 export default function SchoolStudentsPage() {
   return (
     <SchoolShell
       title="Học sinh"
-      description="Tài khoản học sinh của trường: nhập từ CSV, khóa / mở khóa, đặt lại mật khẩu và cấp token."
+      description="Tài khoản học sinh của trường: nhập từ CSV, khóa / mở khóa, đặt lại mật khẩu, vô hiệu hóa khi ra trường hoặc chuyển trường."
       actions={
         <button type="button" className="btn-crimson w-full sm:w-auto" onClick={openStudentImport}>
           <Upload className="h-4 w-4" aria-hidden="true" /> Nhập danh sách học sinh
@@ -67,7 +77,7 @@ const openStudentImport = () => window.dispatchEvent(new Event(IMPORT_EVENT));
 /** CSV of the selected rows (no passwords). */
 function exportStudentsCsv(students: ApiStudent[]) {
   downloadCsv(`danh-sach-hoc-sinh-${todayStamp()}.csv`, [
-    ["Mã học sinh", "Họ và tên", "Email đăng nhập", "Tên tài khoản", "Ngày sinh", "Giới tính", "Số điện thoại", "Token trong ví", "Trạng thái", "Ngày tạo"],
+    ["Mã học sinh", "Họ và tên", "Email đăng nhập", "Tên tài khoản", "Ngày sinh", "Giới tính", "Số điện thoại", "Trạng thái", "Ngày tạo"],
     ...students.map((s) => [
       s.studentCode,
       s.fullName,
@@ -76,7 +86,6 @@ function exportStudentsCsv(students: ApiStudent[]) {
       s.dob ? formatDate(s.dob) : "",
       s.gender ? GENDER_LABELS[s.gender] : "",
       s.phoneNumber ?? "",
-      s.token ?? 0,
       s.active ? "Hoạt động" : "Đã khóa",
       formatDate(s.createdAt),
     ]),
@@ -111,6 +120,7 @@ function StudentsContent() {
   const students = useApiStudents(params);
   const quota = useApiTokenQuota();
   const { setActive, remove, resetPassword } = useStudentMutations();
+  const deactivate = useDeactivateStudent();
 
   const [importOpen, setImportOpen] = React.useState(false);
   React.useEffect(() => {
@@ -119,7 +129,8 @@ function StudentsContent() {
     return () => window.removeEventListener(IMPORT_EVENT, open);
   }, []);
   const [editTarget, setEditTarget] = React.useState<ApiStudent | null>(null);
-  const [tokenTargets, setTokenTargets] = React.useState<ApiStudent[]>([]);
+  const [deactivateTarget, setDeactivateTarget] = React.useState<ApiStudent | null>(null);
+  const [deactivateReason, setDeactivateReason] = React.useState<DeactivationReason>("GRADUATED");
   const [lockTarget, setLockTarget] = React.useState<ApiStudent | null>(null);
   const [resetTarget, setResetTarget] = React.useState<ApiStudent | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<ApiStudent | null>(null);
@@ -221,11 +232,6 @@ function StudentsContent() {
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm mã HS, họ tên, email, tên tài khoản..." />
           <ActiveFilterTabs value={filter} onChange={setFilter} />
-          {quota.data && (
-            <p className="text-sm text-content-muted sm:ml-auto" title="Chọn học sinh trong bảng rồi bấm “Cấp token” để cộng token vào ví.">
-              Quỹ chưa phân bổ <b className="tabular-nums text-content-heading">{formatNumber(quota.data.unallocatedTokenQuota)}</b> token
-            </p>
-          )}
         </div>
 
         {students.isPending ? (
@@ -248,9 +254,6 @@ function StudentsContent() {
               onSelectAll={() => selection.setMany(rowIds, true)}
               onClear={selection.clear}
             >
-              <BulkButton icon={Coins} disabled={bulkRunning} onClick={() => setTokenTargets(selected)}>
-                Cấp token
-              </BulkButton>
               <BulkButton icon={LockKeyhole} tone="danger" disabled={bulkRunning} onClick={() => setBulkLock(true)}>
                 Khóa
               </BulkButton>
@@ -303,9 +306,6 @@ function StudentsContent() {
                       <TableHead className={HEAD} aria-sort={ariaSort("email", sort.sortBy, sort.direction)}>
                         <SortHeader label="Tài khoản đăng nhập" column="email" {...sort} />
                       </TableHead>
-                      <TableHead className={cn(HEAD, "text-right")} aria-sort={ariaSort("token", sort.sortBy, sort.direction)}>
-                        <SortHeader label="Token trong ví" column="token" {...sort} />
-                      </TableHead>
                       <TableHead className={HEAD}>Trạng thái</TableHead>
                       <TableHead className={HEAD} aria-sort={ariaSort("createdAt", sort.sortBy, sort.direction)}>
                         <SortHeader label="Ngày tạo" column="createdAt" {...sort} />
@@ -353,7 +353,6 @@ function StudentsContent() {
                               {s.userName}
                             </p>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap px-3 py-2.5 text-right text-sm font-semibold tabular-nums">{formatNumber(s.token ?? 0)}</TableCell>
                           <TableCell className="px-3 py-2.5">
                             <AccountStatusBadge status={s.active ? "ACTIVE" : "LOCKED"} />
                           </TableCell>
@@ -363,7 +362,6 @@ function StudentsContent() {
                               label={`Thao tác với ${s.fullName}`}
                               actions={[
                                 { label: "Xem / sửa thông tin", icon: Eye, onSelect: () => setEditTarget(s) },
-                                { label: "Cấp thêm token", icon: Coins, onSelect: () => setTokenTargets([s]) },
                                 { label: "Đặt lại mật khẩu", icon: KeyRound, onSelect: () => setResetTarget(s) },
                                 s.active
                                   ? { label: "Khóa tài khoản", icon: LockKeyhole, disabled: pending, onSelect: () => setLockTarget(s), separated: true }
@@ -376,6 +374,15 @@ function StudentsContent() {
                                       separated: true,
                                     },
                                 // Delete = lock on the backend (both set deletedAt): no-op for an already-locked account.
+                                s.active && {
+                                  label: "Tốt nghiệp / chuyển trường",
+                                  icon: GraduationCap,
+                                  tone: "danger",
+                                  onSelect: () => {
+                                    setDeactivateReason("GRADUATED");
+                                    setDeactivateTarget(s);
+                                  },
+                                },
                                 s.active && { label: "Xóa tài khoản", icon: Trash2, tone: "danger", onSelect: () => setDeleteTarget(s) },
                               ]}
                             />
@@ -409,13 +416,43 @@ function StudentsContent() {
 
       <StudentEditDialog student={editTarget} onOpenChange={(o) => !o && setEditTarget(null)} />
 
-      <StudentTokenDialog students={tokenTargets} onOpenChange={(o) => !o && setTokenTargets([])} onDone={selection.clear} />
+      <ConfirmDialog
+        open={!!deactivateTarget}
+        onOpenChange={(o) => !o && !deactivate.isPending && setDeactivateTarget(null)}
+        title="Vô hiệu hóa tài khoản học sinh?"
+        description={`${deactivateTarget?.fullName ?? ""} sẽ bị khóa đăng nhập vĩnh viễn và rời khỏi lớp hiện tại. Lịch sử học tập được giữ lại; token chưa dùng vẫn nằm trong quỹ chung của trường. Dùng khi học sinh tốt nghiệp hoặc chuyển trường.`}
+        confirmLabel="Vô hiệu hóa"
+        variant="danger"
+        isPending={deactivate.isPending}
+        onConfirm={() => {
+          const target = deactivateTarget;
+          if (!target) return;
+          deactivate.mutate(
+            { uid: target.uid, reason: deactivateReason },
+            {
+              onSuccess: () => {
+                setDeactivateTarget(null);
+                toast.success(`Đã vô hiệu hóa tài khoản ${target.fullName}`);
+              },
+              onError: (error) => {
+                setDeactivateTarget(null);
+                toast.error(apiErrorMessage(error, "Không vô hiệu hóa được tài khoản. Vui lòng thử lại."));
+              },
+            },
+          );
+        }}
+      >
+        <label className="block space-y-1.5">
+          <span className="text-xs font-semibold text-content-heading">Lý do</span>
+          <StaffFormSelect value={deactivateReason} onValueChange={setDeactivateReason} options={DEACTIVATION_OPTIONS} className="w-full" />
+        </label>
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={!!lockTarget}
         onOpenChange={(o) => !o && setLockTarget(null)}
         title="Khóa tài khoản học sinh?"
-        description={`${lockTarget?.fullName ?? ""} sẽ không đăng nhập được cho đến khi được mở khóa. Token trong ví được giữ nguyên.`}
+        description={`${lockTarget?.fullName ?? ""} sẽ không đăng nhập được cho đến khi được mở khóa.`}
         confirmLabel="Khóa tài khoản"
         variant="danger"
         onConfirm={() => {
@@ -428,7 +465,7 @@ function StudentsContent() {
         open={bulkLock}
         onOpenChange={setBulkLock}
         title={`Khóa ${selected.filter((s) => s.active).length} tài khoản học sinh?`}
-        description="Các học sinh đã chọn sẽ không đăng nhập được cho đến khi được mở khóa. Token trong ví được giữ nguyên."
+        description="Các học sinh đã chọn sẽ không đăng nhập được cho đến khi được mở khóa."
         confirmLabel="Khóa tài khoản"
         variant="danger"
         onConfirm={() => {
@@ -456,7 +493,7 @@ function StudentsContent() {
         open={!!deleteTarget}
         onOpenChange={(o) => !o && !remove.isPending && setDeleteTarget(null)}
         title="Xóa tài khoản học sinh?"
-        description={`${deleteTarget?.fullName ?? ""} sẽ bị vô hiệu hóa và không đăng nhập được. Hiện máy chủ xử lý xóa giống khóa: tài khoản vẫn hiện trong danh sách ở trạng thái “Đã khóa” và có thể mở khóa lại; token trong ví không được hoàn về quỹ trường.`}
+        description={`${deleteTarget?.fullName ?? ""} sẽ bị vô hiệu hóa và không đăng nhập được. Hiện máy chủ xử lý xóa giống khóa: tài khoản vẫn hiện trong danh sách ở trạng thái “Đã khóa” và có thể mở khóa lại.`}
         confirmLabel="Xóa tài khoản"
         variant="danger"
         isPending={remove.isPending}

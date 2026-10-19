@@ -10,7 +10,7 @@ import { academicYearLabel, currentAcademicYear } from "@/components/saas/class-
 import { ROUTES } from "@/constants/routes";
 import { useApiSchoolClassrooms, useApiTeachers, useApiTokenQuota } from "@/features/saas/hooks-api";
 import { useSchoolAdminDashboard } from "@/features/dashboard/hooks";
-import { SchoolHeader, PerStudentAllocationNote, QuotaSkeleton, QuotaSummary } from "./quota";
+import { SchoolHeader, QuotaSkeleton, QuotaSummary, SubscriptionSummary } from "./quota";
 import { ErrorBlock } from "./shared";
 
 
@@ -39,7 +39,7 @@ export function OverviewWidgets() {
     { href: ROUTES.SCHOOL.CLASSES, label: "Quản lý lớp học", desc: "Tạo lớp, phân công giáo viên", icon: BookOpen },
     { href: ROUTES.SCHOOL.TEACHERS, label: "Tài khoản giáo viên", desc: "Tạo, khóa / mở khóa tài khoản", icon: GraduationCap },
     { href: ROUTES.SCHOOL.STUDENTS, label: "Tài khoản học sinh", desc: "Nhập hàng loạt từ file CSV", icon: Users },
-    { href: ROUTES.SCHOOL.TOKENS, label: "Hạn mức token", desc: "Quỹ token của trường", icon: Zap },
+    { href: ROUTES.SCHOOL.TOKENS, label: "Hạn mức token", desc: "Quỹ chung, hạn mức ngày, yêu cầu", icon: Zap },
     { href: ROUTES.SCHOOL.CONTENT, label: "Giám sát nội dung", desc: "Nội dung giáo viên đăng", icon: Library },
   ];
 
@@ -63,28 +63,41 @@ export function OverviewWidgets() {
         />
         <StaffStatCard label="Giáo viên" value={stat(teachers)} icon={<GraduationCap className="h-5 w-5" />} tone="green" />
         <StaffStatCard
-          label="Token chưa phân bổ"
+          label="Token còn trong quỹ chung"
           value={quota.data ? formatNumber(quota.data.unallocatedTokenQuota) : quota.isError ? "—" : "…"}
           icon={<UserCheck className="h-5 w-5" />}
           tone="amber"
         />
       </StaffStatsGrid>
 
-      <StaffStatsGrid className="sm:grid-cols-3">
+      <StaffStatsGrid className="sm:grid-cols-2 lg:grid-cols-4">
         <StaffStatCard label="Học sinh" value={analyticsStat(analytics.data?.totalStudents)} icon={<Users className="h-5 w-5" />} tone="blue" />
-        <StaffStatCard
-          label="Token đã cấp cho học sinh"
-          value={analyticsStat(analytics.data?.allocatedTokens)}
-          icon={<Coins className="h-5 w-5" />}
-          tone="gold"
-        />
         <StaffStatCard
           label="Token học sinh đã dùng"
           value={analyticsStat(analytics.data?.tokensUsedByStudents)}
           icon={<Activity className="h-5 w-5" />}
           tone="green"
         />
+        <StaffStatCard
+          label="Hạn mức / học sinh / ngày"
+          value={analyticsStat(analytics.data?.defaultDailyStudentQuota)}
+          icon={<Coins className="h-5 w-5" />}
+          tone="gold"
+        />
+        <StaffStatCard
+          label="Yêu cầu token chờ duyệt"
+          value={analyticsStat(analytics.data?.pendingTokenBoostRequests)}
+          icon={<Zap className="h-5 w-5" />}
+          tone="amber"
+        />
       </StaffStatsGrid>
+
+      {analytics.data?.subscriptionEndDate && (
+        <Panel>
+          <SectionHeading title="Gói năm học" />
+          <SubscriptionSummary data={analytics.data} />
+        </Panel>
+      )}
 
       <Panel>
         <SectionHeading title="Tình hình nộp bài" description="Tổng hợp bài nộp của học sinh trên toàn trường." />
@@ -97,7 +110,7 @@ export function OverviewWidgets() {
       </Panel>
 
       <Panel>
-        <SectionHeading title="Quỹ token của trường" description="Token theo gói, đã cấp cho học sinh và phần còn lại để nhập học sinh mới." />
+        <SectionHeading title="Quỹ token chung của trường" description="Học sinh chat tới đâu trừ thẳng vào quỹ tới đó, trong giới hạn hạn mức mỗi ngày." />
         {quota.isPending ? (
           <QuotaSkeleton />
         ) : quota.isError ? (
@@ -105,9 +118,8 @@ export function OverviewWidgets() {
         ) : (
           <QuotaSummary quota={quota.data} />
         )}
-        <PerStudentAllocationNote />
         <Link href={ROUTES.SCHOOL.TOKENS} className="archive-link">
-          Xem hạn mức token <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          Hạn mức ngày &amp; yêu cầu xin thêm token <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Link>
       </Panel>
 

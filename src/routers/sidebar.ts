@@ -125,6 +125,7 @@ export const TEACHER_SIDEBAR: SidebarSection[] = [
       { icon: NotebookPen, label: "Bài tập", href: ROUTES.TEACHING.ASSIGNMENTS },
       { icon: FilePenLine, label: "Tư liệu lớp & trường", href: ROUTES.TEACHING.LOCAL },
       { icon: Map, label: "Bản đồ lớp", href: CLASS_MAP_HREF },
+      { icon: Coins, label: "Yêu cầu token", href: ROUTES.TEACHING.TOKEN_REQUESTS },
     ],
   },
   HISTORYTALK_LIBRARY,

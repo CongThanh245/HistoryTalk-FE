@@ -5,6 +5,7 @@
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { stripErrorCode } from "@/lib/utils/api-error";
 import {
   schoolService,
   type ClassroomListParams,
@@ -13,7 +14,6 @@ import {
   type CreateSchoolPayload,
   type CreateTeacherPayload,
   type AccountListParams,
-  type AllocateTokensPayload,
   type ListParams,
   type UpdateClassroomPayload,
   type UpdateStaffAccountPayload,
@@ -25,7 +25,8 @@ export function apiErrorMessage(error: unknown, fallback: string): string {
   if (typeof error === "object" && error !== null && "response" in error) {
     const data = (error as { response?: { data?: { message?: string; errors?: Record<string, string> } } }).response?.data;
     const fieldError = data?.errors ? Object.values(data.errors)[0] : undefined;
-    return fieldError ?? data?.message ?? fallback;
+    const message = fieldError ?? data?.message;
+    return message ? stripErrorCode(message) : fallback;
   }
   return fallback;
 }
@@ -129,8 +130,7 @@ export function useSetApiTeacherActive() {
 export function useImportApiStudents() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ file, defaultInitialToken }: { file: File; defaultInitialToken?: number }) =>
-      schoolService.importStudents(file, defaultInitialToken),
+    mutationFn: ({ file }: { file: File }) => schoolService.importStudents(file),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: saasKeys.quota });
       qc.invalidateQueries({ queryKey: ["saas", "students"] });
@@ -306,12 +306,5 @@ export function useStudentMutations() {
     }),
     remove: useMutation({ mutationFn: (id: string) => schoolService.deleteStudent(id), onSuccess: refresh }),
     resetPassword: useMutation({ mutationFn: (id: string) => schoolService.resetStudentPassword(id) }),
-    allocateTokens: useMutation({
-      mutationFn: (payload: AllocateTokensPayload) => schoolService.allocateTokens(payload),
-      onSuccess: () => {
-        refresh();
-        qc.invalidateQueries({ queryKey: saasKeys.quota });
-      },
-    }),
   };
 }

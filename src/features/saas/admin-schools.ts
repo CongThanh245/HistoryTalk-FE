@@ -32,12 +32,13 @@ export const SCHOOL_STATUS_LABELS: Record<SchoolStatus, string> = {
   ACTIVE: "Đang hoạt động",
   INACTIVE: "Ngừng hoạt động",
   SUSPENDED: "Tạm ngưng",
+  EXPIRED: "Hết hạn gói",
 };
 
 /** Same rule as the backend (`^[A-Za-z0-9_-]{2,30}$`); the backend stores it upper-case. */
 export const SCHOOL_CODE_PATTERN = /^[A-Za-z0-9_-]{2,30}$/;
 
-/** Token pool numbers of a school: total, still unallocated, and handed out to students. */
+/** Shared token pool of a school year: total, still in the pool, and already spent by students. */
 export function schoolPool(s: Pick<ApiSchool, "totalSchoolTokenQuota" | "unallocatedTokenQuota">) {
   const total = Math.max(0, s.totalSchoolTokenQuota ?? 0);
   const unallocated = Math.max(0, Math.min(total, s.unallocatedTokenQuota ?? 0));

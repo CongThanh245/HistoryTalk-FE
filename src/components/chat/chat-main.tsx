@@ -28,6 +28,8 @@ import { useAuthStore } from "@/store/auth.store";
 import { useEntitlements } from "@/features/saas/entitlements";
 import { hasPlusAccess, hasProAccess } from "@/services/user.service";
 import { isTokenExhaustionError } from "@/lib/utils/api-error";
+import { handlePlatformLockError } from "@/lib/utils/school-lock";
+import { TokenBoostRequestDialog } from "@/components/saas/token-boost-request-dialog";
 import { useSidebar } from "@/components/layouts/sidebar/sidebar-context";
 import {
   Dialog,
@@ -165,6 +167,9 @@ export function ChatMain({
   const entitlements = useEntitlements();
   const isSchoolAccount = entitlements.mode === "B2B";
   const canUpgrade = entitlements.canPurchase;
+  // School students out of today's limit can ask their teacher for more (Sprint 7 daily boost).
+  const canRequestBoost = user?.role === "SCHOOL_STUDENT";
+  const [isBoostOpen, setIsBoostOpen] = useState(false);
   const [aiWarningVisible, setAiWarningVisible] = useState(false);
   const [aiWarningLeaving, setAiWarningLeaving] = useState(false);
   const dismissedCallModeRef = useRef<"2d" | "3d" | null>(null);
@@ -700,6 +705,9 @@ export function ChatMain({
         
         void isTokenExhausted;
 
+        // The stream uses fetch(), so the axios interceptor never sees the whole-school lock.
+        if (handlePlatformLockError(err)) return;
+
         if (isTokenExhaustionError(err)) {
           setIsLocalTokenExhausted(true);
           onTokenExhausted?.();
@@ -709,6 +717,11 @@ export function ChatMain({
                 label: "Nạp thêm",
                 onClick: () => setIsUpgradeOpen(true),
               },
+              duration: 8000,
+            });
+          } else if (canRequestBoost) {
+            toast.error("Em đã dùng hết hạn mức token AI hôm nay. Các tính năng khác vẫn dùng bình thường.", {
+              action: { label: "Xin thêm token", onClick: () => setIsBoostOpen(true) },
               duration: 8000,
             });
           } else {
@@ -1035,11 +1048,19 @@ export function ChatMain({
             <span className="text-content-text">
               {canUpgrade
                 ? "Bạn đã dùng hết số token giới hạn. Vui lòng nâng cấp gói để tiếp tục cuộc trò chuyện."
-                : `Bạn đã dùng hết hạn mức token hôm nay do trường cấp${
+                : `Bạn đã dùng hết hạn mức token AI hôm nay${
                     entitlements.dailyQuota ? ` (${entitlements.dailyQuota.toLocaleString("vi-VN")} token)` : ""
-                  }. Hạn mức sẽ được làm mới lúc 00:00.`}
+                  } hoặc quỹ token của trường đã hết. Hạn mức làm mới lúc 00:00; quiz, tài liệu và bài tập vẫn dùng bình thường.`}
             </span>
           </div>
+          {canRequestBoost && (
+            <button
+              onClick={() => setIsBoostOpen(true)}
+              className="btn-crimson min-h-0 px-3 py-1.5 text-[11px] active:scale-95 shrink-0 cursor-pointer"
+            >
+              Xin thêm token hôm nay
+            </button>
+          )}
           {canUpgrade && (
             <button
               onClick={() => setIsUpgradeOpen(true)}
@@ -1153,6 +1174,7 @@ export function ChatMain({
       />
 
       {canUpgrade && <UpgradeProDialog open={isUpgradeOpen} onOpenChange={setIsUpgradeOpen} />}
+      {canRequestBoost && <TokenBoostRequestDialog open={isBoostOpen} onOpenChange={setIsBoostOpen} />}
     </div>
   );
 }

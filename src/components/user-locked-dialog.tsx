@@ -33,7 +33,7 @@ export function UserLockedDialog() {
             Tài khoản đã bị vô hiệu hóa
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên để biết thêm chi tiết.
+            Tài khoản của bạn đã bị vô hiệu hóa (ví dụ học sinh đã tốt nghiệp hoặc chuyển trường). Vui lòng liên hệ quản trị viên để biết thêm chi tiết.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

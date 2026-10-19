@@ -36,7 +36,7 @@ export interface Entitlements {
   /** Upgrade ads / prompts. */
   showUpsell: boolean;
   tokenSource: "PERSONAL" | "SCHOOL" | "UNLIMITED";
-  /** BE khong co han muc theo ngay — luon undefined. */
+  /** Han muc token hom nay cua hoc sinh truong (han muc ngay + token duoc duyet them). Giao vien: undefined. */
   dailyQuota?: number;
   usedToday?: number;
   voiceCall: boolean;
@@ -72,7 +72,8 @@ export function useEntitlements(): Entitlements {
       canPurchase: false,
       showUpsell: false,
       tokenSource: "SCHOOL",
-      dailyQuota: undefined,
+      dailyQuota: student.data?.dailyTokenLimit != null ? student.data.dailyTokenLimit + (student.data.dailyBonusTokens ?? 0) : undefined,
+      usedToday: student.data?.tokensUsedToday,
       voiceCall: true,
       videoCall: true,
       questReward: "QUOTA_BONUS",

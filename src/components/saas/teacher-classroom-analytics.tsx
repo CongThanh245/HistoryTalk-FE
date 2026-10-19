@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { ROUTES } from "@/constants/routes";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { formatNumber } from "@/components/saas/saas-ui";
 import { KpiTile } from "@/components/saas/teaching-ui";
@@ -83,7 +85,23 @@ function StudentTable({ students }: { students: TeacherClassroomStudent[] }) {
           ),
       },
       { accessorKey: "aiMessagesCount", header: "Tin nhắn AI", cell: ({ row }) => num(row.original.aiMessagesCount) },
-      { accessorKey: "currentTokens", header: "Token còn lại", cell: ({ row }) => num(row.original.currentTokens) },
+      {
+        accessorKey: "dailyTokensUsed",
+        header: "Token hôm nay",
+        cell: ({ row }) => {
+          const s = row.original;
+          // Older builds only send currentTokens.
+          if (s.dailyTokenLimit == null) return num(s.currentTokens);
+          const limit = s.dailyTokenLimit + (s.dailyBonusTokens ?? 0);
+          return (
+            <span className="tabular-nums" title={`Còn dùng được ${formatNumber(s.currentTokens)} token hôm nay`}>
+              {formatNumber(s.dailyTokensUsed ?? 0)} / {formatNumber(limit)}
+              {(s.dailyBonusTokens ?? 0) > 0 && <span className="text-xs text-[var(--status-success)]"> (+{formatNumber(s.dailyBonusTokens ?? 0)})</span>}
+            </span>
+          );
+        },
+      },
+      { accessorKey: "currentTokens", header: "Còn lại hôm nay", cell: ({ row }) => num(row.original.currentTokens) },
     ];
   }, []);
 
@@ -124,6 +142,28 @@ export function TeacherClassStats({ classId }: { classId: string }) {
               <KpiTile label="Nộp muộn" value={`${(data.assignmentRates?.lateRate ?? 0).toFixed(1)}%`} accent="text-[var(--status-warning)]" />
               <KpiTile label="Chưa nộp" value={`${(data.assignmentRates?.pendingRate ?? 0).toFixed(1)}%`} accent="text-accent-danger" />
             </div>
+            {data.dailyTokenLimit != null && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <KpiTile
+                  label="Hạn mức token / học sinh / ngày"
+                  value={formatNumber(data.dailyTokenLimit)}
+                  hint="Do quản trị trường đặt cho lớp hoặc toàn trường. Làm mới lúc 00:00."
+                />
+                <KpiTile
+                  label="Yêu cầu xin thêm token"
+                  value={formatNumber(data.pendingTokenBoostRequests ?? 0)}
+                  hint={
+                    <Link href={ROUTES.TEACHING.TOKEN_REQUESTS} className="archive-link">
+                      Xem và duyệt
+                    </Link>
+                  }
+                  accent={(data.pendingTokenBoostRequests ?? 0) > 0 ? "text-[var(--status-warning)]" : undefined}
+                />
+              </div>
+            )}
+            {data.status === "ARCHIVED" && (
+              <p className="text-sm text-content-muted">Lớp thuộc năm học đã kết thúc (đã lưu trữ); số liệu chỉ để tham khảo.</p>
+            )}
             <StudentTable students={data.students} />
           </div>
         );

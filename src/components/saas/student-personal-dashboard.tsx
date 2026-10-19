@@ -43,8 +43,17 @@ export function StudentPersonalDashboard() {
   return (
     <section className="space-y-6" aria-label="Tổng quan học tập">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiTile label="Token còn lại" value={formatNumber(data.currentTokens)} accent="text-[var(--gold-leaf)]" />
-        <KpiTile label="Token dùng hôm nay" value={formatNumber(data.tokensUsedToday)} />
+        <KpiTile
+          label="Token còn dùng hôm nay"
+          value={formatNumber(data.currentTokens)}
+          hint={data.dailyTokenLimit != null ? `Hạn mức ${formatNumber(data.dailyTokenLimit + (data.dailyBonusTokens ?? 0))} token/ngày · làm mới lúc 00:00` : undefined}
+          accent="text-[var(--gold-leaf)]"
+        />
+        <KpiTile
+          label="Token dùng hôm nay"
+          value={formatNumber(data.tokensUsedToday)}
+          hint={(data.dailyBonusTokens ?? 0) > 0 ? `Gồm ${formatNumber(data.dailyBonusTokens ?? 0)} token thầy cô duyệt thêm` : undefined}
+        />
         <KpiTile label="Quiz đã làm" value={formatNumber(data.totalQuizzesAttempted)} accent="text-[var(--men-lam)]" />
         <KpiTile
           label="Điểm TB quiz"
@@ -99,6 +108,8 @@ export function StudentPersonalDashboard() {
                   </Link>
                   <span className="block text-[12px] text-content-muted">
                     {c.teacherName ? `GV: ${c.teacherName}` : "Chưa phân công giáo viên"} · Mã lớp {c.classCode}
+                    {c.academicYear ? ` · Năm học ${c.academicYear}–${c.academicYear + 1}` : ""}
+                    {c.status === "ARCHIVED" ? " · Đã lưu trữ" : ""}
                   </span>
                 </li>
               ))}

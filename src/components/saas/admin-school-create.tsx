@@ -348,7 +348,7 @@ export function CreateSchoolForm() {
                           <span className="min-w-0 space-y-0.5">
                             <span className="block text-sm font-bold text-content-heading">{PACKAGE_SHORT_LABELS[p]}</span>
                             <span className="block text-sm tabular-nums text-content-text">
-                              {millionTokens(ENTERPRISE_PACKAGE_TOKENS[p])} token/tháng
+                              {millionTokens(ENTERPRISE_PACKAGE_TOKENS[p])} token/năm học
                             </span>
                             <span className="block text-xs text-content-muted">{PACKAGE_HINTS[p]}</span>
                           </span>
@@ -357,7 +357,7 @@ export function CreateSchoolForm() {
                     })}
                   </div>
                   <p className="text-[11px] text-content-muted">
-                    Quỹ token chung của trường mỗi tháng ({formatNumber(ENTERPRISE_PACKAGE_TOKENS[form.packageType])} token); quản trị trường chia cho học sinh.
+                    Quỹ token chung của trường cho năm học 01/09 – 31/05 ({formatNumber(ENTERPRISE_PACKAGE_TOKENS[form.packageType])} token); học sinh dùng chung quỹ theo hạn mức mỗi ngày.
                   </p>
                 </fieldset>
 

@@ -263,11 +263,12 @@ export const classroomStudentService = {
     const res = await axiosClient.post(`/classrooms/${classId}/students/batch`, { studentIds });
     return res.data.data;
   },
-  importCsv: async (classId: string, file: File, defaultInitialToken?: number): Promise<StudentImportResult> => {
+  /** `defaultInitialToken=0`: students spend from the shared school pool, so nothing is handed out on import. */
+  importCsv: async (classId: string, file: File): Promise<StudentImportResult> => {
     const form = new FormData();
     form.append("file", file);
     const res = await axiosClient.post(`/classrooms/${classId}/students/import-csv`, form, {
-      params: defaultInitialToken !== undefined ? { defaultInitialToken } : undefined,
+      params: { defaultInitialToken: 0 },
       headers: { "Content-Type": "multipart/form-data" },
       timeout: 180_000,
     });

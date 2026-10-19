@@ -21,7 +21,7 @@ export default function AdminSchoolsPage() {
     <SaasShell
       live
       title="Gói trường học"
-      description="Các trường dùng gói Enterprise: quỹ token hằng tháng và tài khoản quản trị trường."
+      description="Các trường dùng gói Enterprise theo năm học (01/09 – 31/05): quỹ token chung, gia hạn, nạp thêm và tài khoản quản trị trường."
       fallback={<TableSkeleton rows={8} cols={7} />}
     >
       <SchoolsContent />

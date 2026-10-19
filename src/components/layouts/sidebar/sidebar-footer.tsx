@@ -67,7 +67,7 @@ function SchoolQuotaCard({ isExpanded }: { isExpanded: boolean }) {
             <span className="truncate text-[10px] text-text-secondary">{entitlements.planLabel}</span>
           </div>
           <span className="text-[10px] whitespace-nowrap text-text-muted">
-            {quota.bonus > 0 ? `+${fmt(quota.bonus)} từ nhiệm vụ · ` : ""}Reset lúc 00:00
+            {quota.bonus > 0 ? `+${fmt(quota.bonus)} được duyệt thêm · ` : ""}Reset lúc 00:00
           </span>
         </div>
       </Link>

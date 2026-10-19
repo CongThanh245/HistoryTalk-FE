@@ -1,50 +1,49 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight, Coins } from "lucide-react";
-
-import { ROUTES } from "@/constants/routes";
 import { Panel, SectionHeading } from "@/components/saas/saas-ui";
-import { QuotaPanel } from "../_components/quota";
-import { SchoolShell } from "../_components/shared";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TokenBoostReviewList } from "@/components/saas/token-boost-ui";
+import { useSchoolAdminDashboard } from "@/features/dashboard/hooks";
+import { QuotaPanel, SubscriptionSummary } from "../_components/quota";
+import { AcademicRolloverPanel, DailyQuotaPolicyPanel } from "../_components/token-policy";
+import { ErrorBlock, SchoolShell } from "../_components/shared";
 
-const STEPS = [
-  "Mở trang Học sinh, tìm hoặc lọc học sinh cần cấp.",
-  "Đánh dấu một hoặc nhiều học sinh (hoặc chọn “Cấp thêm token” ở menu của một dòng).",
-  "Bấm “Cấp token”, nhập số token mỗi học sinh. Tổng không được vượt quỹ chưa phân bổ.",
-];
-
-/** School Admin: the school's monthly token pool (GET /school-admin/token-quota) + entry point to per-student allocation. */
+/**
+ * School Admin (Sprint 7): school-year subscription, the shared token pool, the daily per-student limit,
+ * students' boost requests and the academic-year rollover.
+ */
 export default function SchoolTokensPage() {
+  const dashboard = useSchoolAdminDashboard();
   return (
-    <SchoolShell title="Hạn mức token" description="Quỹ token theo gói của trường: tổng, đã cấp cho học sinh và phần chưa phân bổ.">
+    <SchoolShell
+      title="Hạn mức token"
+      description="Quỹ token chung của trường theo năm học (01/09 – 31/05), hạn mức mỗi học sinh mỗi ngày và yêu cầu xin thêm token."
+    >
       <div className="space-y-6">
+        <Panel>
+          <SectionHeading title="Gói năm học" />
+          {dashboard.isPending ? (
+            <Skeleton className="h-16 w-full" />
+          ) : dashboard.isError ? (
+            <ErrorBlock error={dashboard.error} fallback="Không tải được thông tin gói." onRetry={() => void dashboard.refetch()} />
+          ) : (
+            <SubscriptionSummary data={dashboard.data} />
+          )}
+        </Panel>
+
         <QuotaPanel />
+
+        <DailyQuotaPolicyPanel currentDefault={dashboard.data?.defaultDailyStudentQuota} />
 
         <Panel>
           <SectionHeading
-            title="Cấp token cho học sinh"
-            description="Token được chuyển từ quỹ chưa phân bổ của trường vào ví của từng học sinh."
+            title="Yêu cầu xin thêm token"
+            description="Học sinh hết hạn mức trong ngày gửi yêu cầu cho giáo viên lớp. Bạn cũng có thể duyệt thay. Token duyệt thêm chỉ có hiệu lực trong ngày."
           />
-          <ol className="space-y-2 text-sm text-content-text">
-            {STEPS.map((s, i) => (
-              <li key={s} className="flex items-start gap-3">
-                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center border border-[var(--text-primary)] text-xs font-bold tabular-nums">
-                  {i + 1}
-                </span>
-                <span className="pt-0.5">{s}</span>
-              </li>
-            ))}
-          </ol>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Link href={ROUTES.SCHOOL.STUDENTS} className="btn-crimson w-full sm:w-auto">
-              <Coins className="h-4 w-4" aria-hidden="true" /> Chọn học sinh để cấp token
-            </Link>
-            <Link href={ROUTES.SCHOOL.STUDENTS} className="archive-link self-start sm:self-center">
-              Nhập học sinh mới <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-          </div>
+          <TokenBoostReviewList scopeHint="Yêu cầu của học sinh toàn trường sẽ hiện ở đây." />
         </Panel>
+
+        <AcademicRolloverPanel />
       </div>
     </SchoolShell>
   );

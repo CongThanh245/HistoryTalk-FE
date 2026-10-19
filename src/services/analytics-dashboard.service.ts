@@ -1,4 +1,5 @@
 import { axiosClient } from "@/configs/axios.client";
+import type { EnterprisePackage, SchoolStatus } from "@/services/school.service";
 
 /**
  * 5 dashboard theo role (BE: AnalyticsDashboardController, US-SP6-06 → 10).
@@ -12,13 +13,25 @@ export interface SchoolAdminDashboard {
   schoolId: string;
   schoolName: string;
   schoolCode: string;
+  // School year subscription (01/09 – 31/05) — Sprint 7
+  packageType?: EnterprisePackage | null;
+  recommendedStudents?: number | null;
+  status?: SchoolStatus | null;
+  subscriptionStartDate?: string | null;
+  subscriptionEndDate?: string | null;
+  renewedForNextYear?: boolean | null;
+  nextPackageType?: EnterprisePackage | null;
   totalClassrooms: number;
   totalTeachers: number;
   totalStudents: number;
   totalSchoolTokenQuota: number;
+  /** Remaining shared pool. */
   unallocatedTokenQuota: number;
+  /** total − remaining = tokens spent out of the pool. */
   allocatedTokens: number;
   tokensUsedByStudents: number;
+  defaultDailyStudentQuota?: number;
+  pendingTokenBoostRequests?: number;
   assignmentStats: {
     totalSubmissions: number;
     /** Ti le phan tram 0–100. */
@@ -34,6 +47,12 @@ export interface TeacherClassroomStudent {
   studentId: string;
   studentCode: string;
   fullName: string;
+  /** Daily limit of the class (or the school default), without today's bonus. */
+  dailyTokenLimit?: number;
+  /** Extra limit approved today through boost requests. */
+  dailyBonusTokens?: number;
+  dailyTokensUsed?: number;
+  /** What the student may still spend today (capped by the school pool). */
   currentTokens: number;
   quizzesAttempted: number;
   averageScorePercentage: number;
@@ -46,6 +65,9 @@ export interface TeacherClassroomDashboard {
   classCode: string;
   gradeLevel: number;
   academicYear: number;
+  status?: "ACTIVE" | "INACTIVE" | "ARCHIVED" | string;
+  dailyTokenLimit?: number;
+  pendingTokenBoostRequests?: number;
   studentCount: number;
   totalAiMessages: number;
   avgAiMessagesPerStudent: number;
@@ -71,12 +93,25 @@ export interface StudentPersonalDashboard {
   studentName: string;
   studentCode: string;
   schoolName: string;
+  /** Daily spending limit (class override or school default), without today's bonus. */
+  dailyTokenLimit?: number;
+  /** Extra limit approved today. */
+  dailyBonusTokens?: number;
+  /** What the student may still spend today (capped by the school pool). */
   currentTokens: number;
   tokensUsedToday: number;
   totalQuizzesAttempted: number;
   averageScorePercentage: number;
   recentQuizzes: DashboardRecentQuizItem[];
-  enrolledClassrooms: { classId: string; className: string; classCode: string; teacherName: string | null }[];
+  /** Current class (ACTIVE) and earlier years (ARCHIVED). */
+  enrolledClassrooms: {
+    classId: string;
+    className: string;
+    classCode: string;
+    academicYear?: number | null;
+    status?: string | null;
+    teacherName: string | null;
+  }[];
   upcomingAssignments: { assignmentId: string; title: string; assignmentType: string; deadline: string }[];
 }
 
@@ -113,6 +148,8 @@ export interface SystemAdminComprehensiveDashboard {
   } | null;
   tokenSummary: {
     totalTokensB2bAllocated: number;
+    totalTokensB2bRemainingInPools?: number;
+    totalTokensB2bConsumed?: number;
     totalTokensB2cConsumed: number;
     totalTokensSystemConsumed: number;
   } | null;
@@ -125,6 +162,8 @@ export interface SystemAdminComprehensiveDashboard {
   }[];
   platformOverview: {
     totalSchools: number;
+    activeSchools?: number;
+    expiredSchools?: number;
     totalUsers: number;
     totalQuizzes: number;
     totalRevenue: number;
