@@ -32,7 +32,7 @@ function LocalContentRoute() {
     <SaasShell
       variant="app"
       live
-      title="Tư liệu lớp & trường"
+      title="Kho tư liệu"
       description="Chỉnh sửa, xuất bản hoặc ẩn nội dung bạn soạn."
     >
       {kind ? (
@@ -46,7 +46,7 @@ function LocalContentRoute() {
 
 const backLink = (
   <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-    <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Tư liệu lớp &amp; trường
+    <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu
   </Link>
 );
 

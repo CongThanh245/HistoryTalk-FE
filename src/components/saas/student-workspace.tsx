@@ -49,7 +49,7 @@ export function StudentWorkspace({ classes }: { classes: ApiClassroom[] }) {
 
           <section aria-labelledby="ws-materials" className="space-y-3">
             <h2 id="ws-materials" className="archive-title is-plain text-xl">
-              Tư liệu lớp &amp; trường
+              Kho tư liệu
             </h2>
             <NoDataYet title="Chưa có tư liệu" description="Tư liệu thầy cô và nhà trường xuất bản cho em sẽ hiện ở đây." />
           </section>

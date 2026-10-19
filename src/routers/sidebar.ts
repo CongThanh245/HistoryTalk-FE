@@ -105,7 +105,7 @@ export const SCHOOL_STUDENT_SIDEBAR: SidebarSection[] = [
     items: [
       { icon: GraduationCap, label: "Lớp học", href: ROUTES.CLASSES },
       { icon: ClipboardCheck, label: "Bài tập", href: ROUTES.MY_ASSIGNMENTS },
-      { icon: LibraryBig, label: "Tư liệu lớp & trường", href: ROUTES.CLASS_MATERIALS },
+      { icon: LibraryBig, label: "Kho tư liệu", href: ROUTES.CLASS_MATERIALS },
       { icon: Map, label: "Bản đồ lớp", href: CLASS_MAP_HREF },
       { icon: ChartColumn, label: "Bảng điểm", href: ROUTES.GRADES },
     ],
@@ -123,7 +123,7 @@ export const TEACHER_SIDEBAR: SidebarSection[] = [
       { icon: Gauge, label: "Tổng quan", href: ROUTES.TEACHING.HOME, exact: true },
       { icon: Presentation, label: "Lớp học", href: ROUTES.CLASSES },
       { icon: NotebookPen, label: "Bài tập", href: ROUTES.TEACHING.ASSIGNMENTS },
-      { icon: FilePenLine, label: "Tư liệu lớp & trường", href: ROUTES.TEACHING.LOCAL },
+      { icon: FilePenLine, label: "Kho tư liệu", href: ROUTES.TEACHING.LOCAL },
       { icon: Map, label: "Bản đồ lớp", href: CLASS_MAP_HREF },
       { icon: Coins, label: "Yêu cầu token", href: ROUTES.TEACHING.TOKEN_REQUESTS },
     ],

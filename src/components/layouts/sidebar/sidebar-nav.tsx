@@ -32,7 +32,7 @@ const pathOf = (href: string) => href.split("?")[0];
 
 /**
  * The one menu item that owns the current page: the longest href whose path matches it exactly or as a parent,
- * so "/classes/materials" lights up "Tư liệu lớp & trường" and not also "Lớp học".
+ * so "/classes/materials" lights up "Kho tư liệu" and not also "Lớp học".
  */
 function activeHrefFor(pathname: string, sections: SidebarSection[]) {
   let best: string | null = null;

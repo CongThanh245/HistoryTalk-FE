@@ -123,7 +123,7 @@ function ClassDetail({ classId, role }: { classId: string; role: string | null }
             ),
           },
           { value: "assignments", label: "Bài tập", content: <TeacherClassAssignments classId={classroom.id} /> },
-          { value: "local", label: "Tư liệu lớp & trường", content: <NoDataYet title="Chưa có tư liệu lớp & trường" /> },
+          { value: "local", label: "Kho tư liệu", content: <NoDataYet title="Kho tư liệu chưa có nội dung" /> },
           {
             value: "stats",
             label: "Thống kê",
@@ -136,7 +136,7 @@ function ClassDetail({ classId, role }: { classId: string; role: string | null }
         ]
       : [
           { value: "assignments", label: "Bài tập", content: <StudentClassAssignments classId={classroom.id} /> },
-          { value: "local", label: "Tư liệu lớp & trường", content: <NoDataYet title="Chưa có tư liệu lớp & trường" /> },
+          { value: "local", label: "Kho tư liệu", content: <NoDataYet title="Kho tư liệu chưa có nội dung" /> },
           {
             value: "classmates",
             label: "Bạn cùng lớp",

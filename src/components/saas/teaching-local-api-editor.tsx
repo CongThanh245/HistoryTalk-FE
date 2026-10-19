@@ -3,21 +3,20 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, EyeOff, FileText, Lock, Plus, Save, Send, ShieldCheck, Trash2 } from "lucide-react";
+import { ArrowLeft, EyeOff, FileText, Globe, Lock, Plus, Save, Send, Settings2, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { StaffFormInput, StaffFormSelect, StaffFormTextarea } from "@/components/staff/staff-form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
-import { ContentSourceTag } from "@/components/saas/content-source-tag";
+import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
 import { LocalReviewBadge, LocalScopeTag, ReviewNote, reviewState } from "@/components/saas/local-content-ui";
 import { ROUTES } from "@/constants/routes";
 import { apiErrorMessage, useMyApiClassrooms } from "@/features/saas/hooks-api";
 import {
-  LOCAL_SCOPE_LABEL,
-  scopeSource,
   useLocalContentMutations,
   useLocalDocumentMutations,
   useLocalDocuments,
@@ -194,32 +193,18 @@ function characterPayload(f: FormState, item?: LocalItem, isPublished?: boolean)
   };
 }
 
-const SCOPE_OPTIONS: { value: LocalScope; title: string; hint: string }[] = [
-  {
-    value: "CLASS_ONLY",
-    title: "Riêng tôi",
-    hint: "Chỉ bạn thấy và dùng cho các lớp của mình.",
-  },
-  {
-    value: "SCHOOL_WIDE",
-    title: "Toàn trường",
-    hint: "Lưu vào kho tư liệu của trường: mọi giáo viên của trường xem và dùng được (chỉ đọc).",
-  },
-];
-
 const STATE_NOTE = {
   DRAFT: "Bản nháp: học sinh chưa thấy. Soạn xong, bấm “Xuất bản” để học sinh thấy ngay.",
   PUBLISHED: "Đã xuất bản: học sinh của trường đang thấy nội dung này. Thay đổi bạn lưu được cập nhật ngay.",
   HIDDEN: "Nội dung đang bị ẩn với học sinh. Chỉnh sửa nếu cần rồi xuất bản lại.",
 } as const;
 
-type Tab = "basic" | "media" | "content" | "sharing" | "rag" | "context";
+type Tab = "basic" | "media" | "content" | "rag" | "context";
 
 const TAB_LABEL: Record<Tab, string> = {
   basic: "Cơ bản",
   media: "Media",
   content: "Nội dung",
-  sharing: "Chia sẻ & lớp",
   rag: "Tài liệu",
   context: "Liên kết bối cảnh",
 };
@@ -238,6 +223,7 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   const [showErrors, setShowErrors] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [tab, setTab] = React.useState<Tab>("basic");
+  const [sharingOpen, setSharingOpen] = React.useState(false);
 
   const isMine = !item || item.createdBy?.uid === myUid;
   const readOnly = !isMine;
@@ -251,8 +237,8 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   const busy = saving || mutations.setStatus.isPending;
 
   const tabs: Tab[] = kind === "CONTEXT"
-    ? ["basic", "media", "sharing", ...(item ? (["rag"] as Tab[]) : [])]
-    : ["basic", "media", "content", "context", "sharing", ...(item ? (["rag"] as Tab[]) : [])];
+    ? ["basic", "media", ...(item ? (["rag"] as Tab[]) : [])]
+    : ["basic", "media", "content", "context", ...(item ? (["rag"] as Tab[]) : [])];
 
   const patchCtx = (p: Partial<CtxForm>) => setForm((f) => ({ ...f, ctx: { ...f.ctx, ...p } }));
   const patchChr = (p: Partial<ChrForm>) => setForm((f) => ({ ...f, chr: { ...f.chr, ...p } }));
@@ -309,13 +295,12 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   };
 
   const contextOptions = [{ value: NONE, label: "Không liên kết" }, ...contexts.map((c) => ({ value: c.id, label: c.name }))];
-  const toggleClass = (id: string, on: boolean) =>
-    setForm((f) => ({ ...f, classIds: on ? [...f.classIds, id] : f.classIds.filter((c) => c !== id) }));
+  const sharingDirty = !!item && (form.scope !== item.contentScope || form.classIds.join() !== (item.classIds ?? []).join());
 
   return (
     <div className="space-y-6">
       <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Tư liệu lớp &amp; trường
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu
       </Link>
 
       {item && (
@@ -398,71 +383,6 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
             </>
           )}
 
-          <TabsContent value="sharing" className="mt-0 space-y-4">
-            <Panel>
-              <div className="space-y-2">
-                <p id="scope-label" className="text-sm font-semibold text-content-heading">
-                  Phạm vi chia sẻ
-                </p>
-                <div role="radiogroup" aria-labelledby="scope-label" className="grid gap-2 sm:grid-cols-2">
-                  {SCOPE_OPTIONS.map((o) => {
-                    const active = form.scope === o.value;
-                    return (
-                      <button
-                        key={o.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        disabled={readOnly}
-                        onClick={() => setForm((f) => ({ ...f, scope: o.value }))}
-                        className={cn(
-                          "flex flex-col items-start gap-1.5 rounded-[2px] border p-3 text-left transition-colors disabled:cursor-not-allowed",
-                          active
-                            ? "border-[var(--text-primary)] bg-[var(--status-neutral-bg)]"
-                            : "border-[var(--border-strong)] hover:border-[var(--text-primary)] disabled:opacity-60",
-                        )}
-                      >
-                        <span className="flex w-full items-center justify-between gap-2">
-                          <span className="font-semibold text-content-heading">{o.title}</span>
-                          <ContentSourceTag source={scopeSource(o.value)} label={LOCAL_SCOPE_LABEL[o.value]} />
-                        </span>
-                        <span className="text-xs leading-relaxed text-content-muted">{o.hint}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </Panel>
-
-            <Panel>
-              <div className="space-y-2">
-                <p id="classes-label" className="text-sm font-semibold text-content-heading">
-                  Gán cho lớp
-                </p>
-                <p className="text-xs text-content-muted">
-                  Học sinh của lớp được chọn sẽ thấy nội dung trong trang lớp sau khi xuất bản. Không chọn lớp nào thì nội dung hiển thị ở mọi lớp.
-                  {form.classIds.length > 0 && " Hệ thống chưa hỗ trợ bỏ chọn hết lớp sau khi đã gán."}
-                </p>
-                {classes.length === 0 ? (
-                  <p className="text-sm text-content-muted">Bạn chưa phụ trách lớp nào.</p>
-                ) : (
-                  <div role="group" aria-labelledby="classes-label" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {classes.map((c) => (
-                      <label
-                        key={c.id}
-                        htmlFor={`cls-${c.id}`}
-                        className="flex cursor-pointer items-center gap-2 rounded-[2px] border border-[var(--border-strong)] p-2.5 text-sm hover:border-[var(--text-primary)]"
-                      >
-                        <Checkbox id={`cls-${c.id}`} checked={form.classIds.includes(c.id)} onCheckedChange={(v) => toggleClass(c.id, !!v)} />
-                        <span className="min-w-0 flex-1 truncate font-medium text-content-heading">{c.className}</span>
-                        <span className="text-xs text-content-muted">{c.classCode}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Panel>
-          </TabsContent>
         </fieldset>
 
         {item && (
@@ -474,7 +394,8 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
 
       {!readOnly && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--text-primary)] pt-4">
-          <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <SharingButton scope={form.scope} classCount={form.classIds.length} dirty={sharingDirty} onClick={() => setSharingOpen(true)} />
             {item && (
               <button type="button" className="btn-line text-[var(--accent-danger)]" onClick={() => setDeleteOpen(true)}>
                 <Trash2 className="h-4 w-4" aria-hidden="true" /> Xóa
@@ -505,6 +426,16 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
         </div>
       )}
 
+      <SharingDialog
+        open={sharingOpen}
+        onOpenChange={setSharingOpen}
+        scope={form.scope}
+        classIds={form.classIds}
+        classes={classes}
+        lockedClasses={!!item?.classIds?.length}
+        onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+      />
+
       {item && (
         <ConfirmDialog
           open={deleteOpen}
@@ -517,6 +448,109 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
         />
       )}
     </div>
+  );
+}
+
+/* ───────────────────────── Sharing settings ───────────────────────── */
+
+/** Gear button in the action bar showing the current scope and class count. */
+function SharingButton({ scope, classCount, dirty, onClick }: { scope: LocalScope; classCount: number; dirty: boolean; onClick: () => void }) {
+  const wide = scope === "SCHOOL_WIDE";
+  const Icon = wide ? Globe : Lock;
+  return (
+    <button type="button" className="btn-line" onClick={onClick} aria-haspopup="dialog" title="Cài đặt chia sẻ">
+      <Settings2 className="h-4 w-4" aria-hidden="true" />
+      <Icon className="h-3.5 w-3.5 text-content-muted" aria-hidden="true" />
+      <span>
+        {wide ? "Toàn trường" : "Riêng tôi"}
+        {classCount > 0 && <span className="text-content-muted"> · {classCount} lớp</span>}
+      </span>
+      {dirty && <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-gold)]" aria-label="Chưa lưu" />}
+    </button>
+  );
+}
+
+/**
+ * Scope (private ↔ school-wide) and class assignment. Edits go into the form and are saved with "Lưu" / "Xuất bản".
+ * The API keeps the current classes when an empty list is sent, so assigned classes cannot all be removed.
+ */
+function SharingDialog({
+  open,
+  onOpenChange,
+  scope,
+  classIds,
+  classes,
+  lockedClasses,
+  onChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  scope: LocalScope;
+  classIds: string[];
+  classes: { id: string; className: string; classCode: string }[];
+  lockedClasses: boolean;
+  onChange: (patch: Partial<Pick<FormState, "scope" | "classIds">>) => void;
+}) {
+  const wide = scope === "SCHOOL_WIDE";
+  const toggleClass = (id: string, on: boolean) => onChange({ classIds: on ? [...classIds, id] : classIds.filter((c) => c !== id) });
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={cn(DIALOG_CLASS, "sm:max-w-md")}>
+        <DialogHeader>
+          <DialogTitle className={DIALOG_TITLE_CLASS}>Cài đặt chia sẻ</DialogTitle>
+          <DialogDescription className="text-content-muted">Thay đổi được áp dụng khi bạn bấm Lưu hoặc Xuất bản.</DialogDescription>
+        </DialogHeader>
+
+        <label htmlFor="scope-switch" className="flex cursor-pointer items-start gap-3 rounded-[2px] border border-[var(--border-strong)] p-3">
+          {wide ? (
+            <Globe className="mt-0.5 h-5 w-5 shrink-0 text-[var(--men-lam)]" aria-hidden="true" />
+          ) : (
+            <Lock className="mt-0.5 h-5 w-5 shrink-0 text-content-muted" aria-hidden="true" />
+          )}
+          <span className="min-w-0 flex-1 space-y-0.5">
+            <span className="block text-sm font-semibold text-content-heading">Chia sẻ cho toàn trường</span>
+            <span className="block text-xs leading-relaxed text-content-muted">
+              {wide
+                ? "Công khai: lưu vào kho tư liệu của trường, mọi giáo viên xem và dùng được (chỉ đọc)."
+                : "Riêng tư: chỉ bạn thấy và dùng cho các lớp của mình."}
+            </span>
+          </span>
+          <Switch id="scope-switch" checked={wide} onCheckedChange={(v) => onChange({ scope: v ? "SCHOOL_WIDE" : "CLASS_ONLY" })} />
+        </label>
+
+        <div className="space-y-2">
+          <p id="classes-label" className="text-sm font-semibold text-content-heading">
+            Gán cho lớp
+          </p>
+          <p className="text-xs text-content-muted">
+            Học sinh lớp được chọn thấy nội dung trong trang lớp sau khi xuất bản. Không chọn lớp nào thì nội dung hiện ở mọi lớp.
+            {lockedClasses && " Hệ thống chưa hỗ trợ bỏ chọn hết lớp sau khi đã gán."}
+          </p>
+          {classes.length === 0 ? (
+            <p className="text-sm text-content-muted">Bạn chưa phụ trách lớp nào.</p>
+          ) : (
+            <div role="group" aria-labelledby="classes-label" className="grid max-h-56 gap-1.5 overflow-y-auto sm:grid-cols-2">
+              {classes.map((c) => (
+                <label
+                  key={c.id}
+                  htmlFor={`cls-${c.id}`}
+                  className="flex cursor-pointer items-center gap-2 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-2 text-sm hover:border-[var(--text-primary)]"
+                >
+                  <Checkbox id={`cls-${c.id}`} checked={classIds.includes(c.id)} onCheckedChange={(v) => toggleClass(c.id, !!v)} />
+                  <span className="min-w-0 flex-1 truncate font-medium text-content-heading">{c.className}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <button type="button" className="btn-crimson" onClick={() => onOpenChange(false)}>
+            Xong
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -322,7 +322,7 @@ export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKin
   return (
     <div className="space-y-6">
       <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Tư liệu lớp &amp; trường
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu
       </Link>
 
       {item && (
@@ -404,7 +404,7 @@ export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKin
           ) : (
             <p className="text-sm text-content-muted">
               Nội dung toàn trường không gắn với lớp cụ thể. Sau khi quản trị trường duyệt, mọi học sinh của trường thấy nội dung trong mục
-              Tư liệu lớp &amp; trường.
+              Kho tư liệu.
             </p>
           )}
         </Panel>

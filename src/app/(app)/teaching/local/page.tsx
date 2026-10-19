@@ -19,7 +19,7 @@ import { useAuthStore } from "@/store/auth.store";
 const STATES: LocalReviewState[] = ["DRAFT", "PUBLISHED", "HIDDEN"];
 
 /**
- * Tư liệu lớp & trường (Role Matrix rows 12–14): the teacher's own contexts / characters and colleagues'
+ * Kho tư liệu (Role Matrix rows 12–14): the teacher's own contexts / characters and colleagues'
  * school-wide ones. Teachers publish their own content; the School Admin only oversees it.
  */
 export default function LocalHistoryPage() {
@@ -28,7 +28,7 @@ export default function LocalHistoryPage() {
     <SaasShell
       variant="app"
       live
-      title="Tư liệu lớp & trường"
+      title="Kho tư liệu"
       description="Soạn bối cảnh và nhân vật lịch sử như Thư viện HistoryTalk, dùng cho lớp hoặc toàn trường. Bạn tự xuất bản, học sinh thấy ngay mà không cần chờ duyệt."
     >
       <LocalHistory kind={kind} setKind={setKind} />

@@ -33,7 +33,7 @@ function NewLocalContent() {
           description="Hệ thống chưa hỗ trợ giáo viên soạn câu đố. Hiện chỉ soạn được bối cảnh và nhân vật."
           action={
             <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Tư liệu lớp &amp; trường
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu
             </Link>
           }
         />

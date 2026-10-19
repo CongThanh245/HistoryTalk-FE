@@ -5,6 +5,8 @@ import { Check, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
+import { useTeacherClassroomDashboard } from "@/features/dashboard/hooks";
+import { useAuthStore } from "@/store/auth.store";
 import { StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field, formatDate, formatNumber } from "@/components/saas/saas-ui";
@@ -40,6 +42,8 @@ const PAGE_SIZE = 20;
  * (GET /teacher/token-requests). Approving raises the student's limit for today only.
  */
 export function TokenBoostReviewList({ scopeHint }: { scopeHint: string }) {
+  // Today's usage comes from the teacher class dashboard, which School Admins cannot call.
+  const isTeacher = useAuthStore((s) => s.user?.role) === "TEACHER";
   const [status, setStatus] = React.useState<TokenBoostStatus>("PENDING");
   const [page, setPage] = React.useState(1);
   const query = useTokenBoostsForReview({ status, page, limit: PAGE_SIZE });
@@ -146,6 +150,7 @@ export function TokenBoostReviewList({ scopeHint }: { scopeHint: string }) {
                   )}
                 </p>
                 <p className="whitespace-pre-line break-words text-xs text-content-muted">{r.reason}</p>
+                {isTeacher && r.status === "PENDING" && <StudentTodayUsage classId={r.classroomId} studentUid={r.studentUid} />}
                 {r.reviewNote && (
                   <p className="text-xs text-[var(--text-secondary)]">
                     {r.reviewedByName ?? "Người duyệt"}: {r.reviewNote}
@@ -195,6 +200,7 @@ export function TokenBoostReviewList({ scopeHint }: { scopeHint: string }) {
         onConfirm={confirm}
       >
         <div className="space-y-3">
+          {isTeacher && target && <StudentTodayUsage classId={target.request.classroomId} studentUid={target.request.studentUid} boxed />}
           {target?.action === "APPROVE" && (
             <Field label="Số token duyệt" required error={amountError} htmlFor="boost-approve-amount">
               <StaffFormInput id="boost-approve-amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
@@ -206,5 +212,31 @@ export function TokenBoostReviewList({ scopeHint }: { scopeHint: string }) {
         </div>
       </ConfirmDialog>
     </div>
+  );
+}
+
+/**
+ * "Hôm nay đã dùng 950 / 1.000 token · được duyệt thêm 0" for one student, from the class dashboard
+ * (GET /teacher/dashboard/classrooms/{classId}; one request per class, shared by every row of that class).
+ */
+function StudentTodayUsage({ classId, studentUid, boxed }: { classId: string; studentUid: string; boxed?: boolean }) {
+  const { data, isPending, isError } = useTeacherClassroomDashboard(classId);
+  const box = boxed ? "rounded-[2px] border border-[var(--border-strong)] bg-[var(--status-neutral-bg)] px-3 py-2" : "";
+  if (isPending) return <p className={cn("text-xs text-content-muted", box)}>Đang tải mức dùng hôm nay…</p>;
+  const s = data?.students.find((x) => x.studentId === studentUid);
+  if (isError || !s) return null;
+  if (s.dailyTokenLimit == null) {
+    return <p className={cn("text-xs text-content-muted", box)}>Còn dùng được hôm nay: {formatNumber(s.currentTokens)} token</p>;
+  }
+  const bonus = s.dailyBonusTokens ?? 0;
+  const used = s.dailyTokensUsed ?? 0;
+  const limit = s.dailyTokenLimit + bonus;
+  const pct = limit > 0 ? used / limit : 0;
+  return (
+    <p className={cn("text-xs tabular-nums", box, pct >= 0.9 ? "text-[var(--status-warning)]" : "text-[var(--text-secondary)]")}>
+      Hôm nay đã dùng <b>{formatNumber(used)}</b> / {formatNumber(limit)} token
+      {bonus > 0 ? ` (gồm ${formatNumber(bonus)} đã duyệt thêm)` : " · chưa được duyệt thêm"}
+      {" · "}còn {formatNumber(s.currentTokens)}
+    </p>
   );
 }

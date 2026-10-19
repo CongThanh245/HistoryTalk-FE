@@ -142,7 +142,7 @@ export interface WorkspaceLocalEntry {
 }
 
 /**
- * "Tư liệu lớp & trường": PUBLISHED class content shared with the viewer's classes, and PUBLISHED school-wide
+ * "Kho tư liệu": PUBLISHED class content shared with the viewer's classes, and PUBLISHED school-wide
  * content of the viewer's school. Kept in two lists so the UI can label them and never mix them with official content.
  */
 export function useWorkspaceLibrary(role: string | null | undefined) {

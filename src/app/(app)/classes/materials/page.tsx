@@ -38,13 +38,13 @@ const GROUPS: { scope: Group; title: string; description: string; empty: string 
 /** One card: a published context / character. */
 type Entry = { item: LocalItem; group: Group };
 
-/** Tư liệu lớp & trường: class and school content of the workspace, kept apart from the official HistoryTalk library. */
+/** Kho tư liệu: class and school content of the workspace, kept apart from the official HistoryTalk library. */
 export default function ClassMaterialsPage() {
   return (
     <SaasShell
       variant="app"
       live
-      title="Tư liệu lớp & trường"
+      title="Kho tư liệu"
       description="Bối cảnh và nhân vật do thầy cô và nhà trường biên soạn. Sự kiện, nhân vật và câu đố của HistoryTalk nằm ở mục HistoryTalk trên thanh bên."
     >
       <Materials />

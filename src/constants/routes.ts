@@ -38,11 +38,11 @@ export const ROUTES = {
   // ── Lớp học (Teacher + School Student) ────────────────
   CLASSES: "/classes",
   CLASS_DETAIL: (classId: string) => `/classes/${classId}`,
-  /** Tư liệu lớp & trường: class + school content for the class workspace. */
+  /** Kho tư liệu: class + school content for the class workspace. */
   CLASS_MATERIALS: "/classes/materials",
   CLASS_MATERIAL_DETAIL: (kind: "CONTEXT" | "CHARACTER", id: string) => `/classes/materials/${kind.toLowerCase()}/${id}`,
 
-  // ── Giáo viên: dashboard, bài tập, tư liệu lớp & trường ──
+  // ── Giáo viên: dashboard, bài tập, kho tư liệu ──
   TEACHING: {
     HOME: "/teaching",
     ASSIGNMENTS: "/teaching/assignments",

@@ -22,7 +22,7 @@ const formatYear = (year: number) => (year < 0 ? `${Math.abs(year)} TCN` : Strin
 
 const LOCAL_PREFIX = "local:";
 
-/** Published local contexts the viewer's school has, for the "Tư liệu lớp & trường" layer of the class map. */
+/** Published local contexts the viewer's school has, for the "Kho tư liệu" layer of the class map. */
 function usePublishedLocalContexts(role: string | null, active: boolean): { contexts: LocalItem[]; enabled: boolean } {
   const isTeacher = active && role === "TEACHER";
   const isStudent = active && role === "SCHOOL_STUDENT";
@@ -158,7 +158,7 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
     if (local.enabled) {
       rows.push({
         key: "local",
-        label: "Tư liệu lớp & trường",
+        label: "Kho tư liệu",
         hint: "Bối cảnh giáo viên soạn, đã xuất bản · nhấp hai lần để mở",
         count: local.contexts.length,
         checked: visible.local,

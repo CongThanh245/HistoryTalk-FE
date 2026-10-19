@@ -18,7 +18,7 @@ export default function LocalMaterialPage() {
   const kind: LocalKind | null = rawKind === "context" ? "CONTEXT" : rawKind === "character" ? "CHARACTER" : null;
   const role = useRole();
   return (
-    <SaasShell variant="app" live title="Tư liệu lớp & trường" description="Tư liệu do thầy cô hoặc nhà trường biên soạn, tách biệt với thư viện HistoryTalk.">
+    <SaasShell variant="app" live title="Kho tư liệu" description="Tư liệu do thầy cô hoặc nhà trường biên soạn, tách biệt với thư viện HistoryTalk.">
       {!kind ? (
         <NotFound />
       ) : role === "SCHOOL_STUDENT" ? (
@@ -34,7 +34,7 @@ export default function LocalMaterialPage() {
 
 const back = (
   <Link href={ROUTES.CLASS_MATERIALS} className="archive-link">
-    <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Tư liệu lớp &amp; trường
+    <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu
   </Link>
 );
 
