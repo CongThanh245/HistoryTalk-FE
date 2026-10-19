@@ -316,7 +316,7 @@ function BatchResultView({ result, title }: { result: BatchEnrollResult; title: 
         {[
           ["Yêu cầu", result.totalRequested],
           ["Thành công", result.successCount],
-          ["Đã có trong lớp", result.alreadyEnrolledCount],
+          ["Bỏ qua", result.alreadyEnrolledCount],
           [`Sĩ số lớp ${result.className}`, result.currentStudentCount],
         ].map(([label, value]) => (
           <div key={label} className="rounded-[2px] border border-[var(--border-strong)] p-3">
@@ -327,7 +327,9 @@ function BatchResultView({ result, title }: { result: BatchEnrollResult; title: 
       </dl>
       {result.notes.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-content-muted">Ghi chú từ máy chủ</p>
+          <p className="text-xs font-semibold text-content-muted">
+            Ghi chú từ máy chủ · mỗi học sinh chỉ thuộc một lớp đang hoạt động; học sinh đã ở lớp khác cần được chuyển lớp
+          </p>
           <ul className="max-h-40 list-disc space-y-0.5 overflow-y-auto pl-5 text-sm text-[var(--status-warning)]">
             {result.notes.map((n, i) => (
               <li key={i}>{n}</li>

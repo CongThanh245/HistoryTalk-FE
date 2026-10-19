@@ -44,10 +44,18 @@ interface FormState {
   academicYear: string;
   teacherId: string;
   description: string;
+  /** Daily token limit per student; "" = school default. */
+  dailyTokenQuota: string;
   status: ClassroomStatus;
 }
 
-type Errors = Partial<Record<"className" | "academicYear" | "description" | "teacherId", string>>;
+type Errors = Partial<Record<"className" | "academicYear" | "description" | "teacherId" | "dailyTokenQuota", string>>;
+
+/** Leading grade in a class name, e.g. 11 for "11A1". */
+const gradeInName = (name: string) => {
+  const m = name.trim().match(/^(\d{1,2})/);
+  return m ? Number(m[1]) : null;
+};
 
 const fromClassroom = (c: ApiClassroom | null): FormState =>
   c
@@ -57,6 +65,7 @@ const fromClassroom = (c: ApiClassroom | null): FormState =>
         academicYear: String(c.academicYear),
         teacherId: c.teacher?.uid ?? NO_TEACHER,
         description: c.description ?? "",
+        dailyTokenQuota: c.dailyTokenQuota ? String(c.dailyTokenQuota) : "",
         status: (["ACTIVE", "INACTIVE", "ARCHIVED"] as const).includes(c.status) ? c.status : "ACTIVE",
       }
     : {
@@ -65,6 +74,7 @@ const fromClassroom = (c: ApiClassroom | null): FormState =>
         academicYear: String(currentAcademicYear()),
         teacherId: NO_TEACHER,
         description: "",
+        dailyTokenQuota: "",
         status: "ACTIVE",
       };
 
@@ -112,6 +122,10 @@ export function ClassFormDialog({
   else if (name.length > 100) errors.className = "Tên lớp tối đa 100 ký tự";
   if (!/^\d{4}$/.test(form.academicYear.trim()) || year < 2020 || year > 2100) errors.academicYear = "Năm bắt đầu năm học, ví dụ 2026";
   if (form.description.length > 500) errors.description = "Mô tả tối đa 500 ký tự";
+  const quota = form.dailyTokenQuota.trim() === "" ? null : Number(form.dailyTokenQuota);
+  if (quota !== null && (!Number.isInteger(quota) || quota < 100)) errors.dailyTokenQuota = "Tối thiểu 100 token, hoặc để trống";
+  const nameGrade = gradeInName(name);
+  const gradeMismatch = nameGrade !== null && CLASS_GRADES.includes(nameGrade) && nameGrade !== Number(form.gradeLevel);
   const shown: Errors = touched ? { ...serverErrors, ...errors } : serverErrors;
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
@@ -137,7 +151,13 @@ export function ClassFormDialog({
     }
     const fields = (error as { response?: { data?: { errors?: Record<string, string> } } })?.response?.data?.errors;
     if (fields && Object.keys(fields).length) {
-      setServerErrors({ className: fields.className, academicYear: fields.academicYear, description: fields.description, teacherId: fields.teacherId });
+      setServerErrors({
+        className: fields.className,
+        academicYear: fields.academicYear,
+        description: fields.description,
+        teacherId: fields.teacherId,
+        dailyTokenQuota: fields.dailyTokenQuota,
+      });
       return;
     }
     setFormError(apiErrorMessage(error, "Không lưu được lớp học. Vui lòng thử lại."));
@@ -162,9 +182,15 @@ export function ClassFormDialog({
     if (editing) {
       const payload: UpdateClassroomPayload = { ...base, status: form.status };
       if (teacherId && teacherId !== editing.teacher?.uid) payload.teacherId = teacherId;
+      // Only send the limit when it changed: the API echoes the school default for classes without their own,
+      // so re-sending it would pin that default on the class. Emptying the field sends 0 = school default.
+      if ((quota ?? 0) !== (editing.dailyTokenQuota ?? 0)) payload.dailyTokenQuota = quota ?? 0;
       update.mutate({ id: editing.id, payload }, { onSuccess: done, onError });
     } else {
-      create.mutate({ ...base, description: base.description || undefined, teacherId }, { onSuccess: done, onError });
+      create.mutate(
+        { ...base, description: base.description || undefined, teacherId, dailyTokenQuota: quota ?? undefined },
+        { onSuccess: done, onError },
+      );
     }
   }
 
@@ -180,7 +206,13 @@ export function ClassFormDialog({
           </DialogHeader>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Tên lớp" required error={shown.className} htmlFor="class-name">
+            <Field
+              label="Tên lớp"
+              required
+              error={shown.className}
+              hint={gradeMismatch && !shown.className ? `Tên lớp gợi ý khối ${nameGrade}, đang chọn khối ${form.gradeLevel}` : undefined}
+              htmlFor="class-name"
+            >
               <StaffFormInput
                 id="class-name"
                 value={form.className}
@@ -244,6 +276,22 @@ export function ClassFormDialog({
               />
             </Field>
           )}
+
+          <Field
+            label="Hạn mức token AI / học sinh / ngày"
+            error={shown.dailyTokenQuota}
+            hint="Để trống để dùng mức mặc định của trường (cài ở trang Hạn mức token)."
+            htmlFor="class-quota"
+          >
+            <StaffFormInput
+              id="class-quota"
+              inputMode="numeric"
+              value={form.dailyTokenQuota}
+              placeholder="Mặc định của trường"
+              aria-invalid={!!shown.dailyTokenQuota}
+              onChange={(e) => set("dailyTokenQuota", e.target.value.replace(/\D/g, "").slice(0, 7))}
+            />
+          </Field>
 
           <Field label="Mô tả" error={shown.description} hint={`${form.description.length}/500`} htmlFor="class-description">
             <StaffFormTextarea

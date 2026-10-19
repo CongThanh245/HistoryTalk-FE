@@ -180,6 +180,12 @@ function ClassesContent() {
                     </dd>
                     <dt className="text-content-muted">Sĩ số</dt>
                     <dd className="font-semibold tabular-nums">{formatNumber(c.studentCount ?? 0)} học sinh</dd>
+                    {c.dailyTokenQuota ? (
+                      <>
+                        <dt className="text-content-muted">Token AI</dt>
+                        <dd className="tabular-nums text-content-text">{formatNumber(c.dailyTokenQuota)} / học sinh / ngày</dd>
+                      </>
+                    ) : null}
                     {c.description && (
                       <>
                         <dt className="text-content-muted">Mô tả</dt>

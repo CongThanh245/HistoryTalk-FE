@@ -101,7 +101,7 @@ function ClassDetail({ room, onEdit }: { room: ReturnType<typeof useApiClassroom
               <>
                 <p className="truncate font-semibold">{teacher.fullName}</p>
                 <p className="truncate text-xs text-content-muted">
-                  {[teacher.email, teacher.phoneNumber, teacher.subjectDepartment].filter(Boolean).join(" · ")}
+                  {[teacher.email, teacher.phoneNumber].filter(Boolean).join(" · ")}
                 </p>
               </>
             ) : (

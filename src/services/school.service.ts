@@ -304,7 +304,6 @@ export interface ApiClassroomTeacher {
   fullName: string;
   email?: string | null;
   phoneNumber?: string | null;
-  subjectDepartment?: string | null;
 }
 
 export interface ApiClassroom {
@@ -319,6 +318,11 @@ export interface ApiClassroom {
   academicYear: number;
   status: ClassroomStatus;
   description?: string | null;
+  /**
+   * Tokens one student of the class may spend per day. The backend falls back to the school default when the class
+   * has no limit of its own; 0 = reset to the school default.
+   */
+  dailyTokenQuota?: number | null;
   teacher?: ApiClassroomTeacher | null;
   studentCount: number;
   createdAt: string;
@@ -331,6 +335,8 @@ export interface CreateClassroomPayload {
   academicYear: number;
   teacherId?: string;
   description?: string;
+  /** Own daily limit per student (≥ 0); omitted = keep / school default, 0 = back to the school default. */
+  dailyTokenQuota?: number;
 }
 
 /** Only the School Admin may change `teacherId`. */

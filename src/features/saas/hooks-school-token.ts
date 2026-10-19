@@ -15,7 +15,18 @@ import {
   type TopUpPayload,
   type UpdateTokenPolicyPayload,
 } from "@/services/school-token.service";
-import { saasKeys } from "@/features/saas/hooks-api";
+import { apiErrorMessage, apiErrorStatus, saasKeys } from "@/features/saas/hooks-api";
+
+/**
+ * Error text for the Sprint 7 endpoints. A 404 here means the running backend predates them (Spring answers
+ * "No static resource …"), so say that instead of showing the raw English message.
+ */
+export function tokenApiErrorMessage(error: unknown, fallback: string): string {
+  if (apiErrorStatus(error) === 404 && /no static resource/i.test(apiErrorMessage(error, ""))) {
+    return "Máy chủ chưa có chức năng này (backend đang chạy bản cũ). Vui lòng cập nhật và khởi động lại backend.";
+  }
+  return apiErrorMessage(error, fallback);
+}
 
 export const boostKeys = {
   all: ["school-token", "boosts"] as const,

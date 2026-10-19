@@ -8,8 +8,7 @@ import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field, formatDate, formatNumber } from "@/components/saas/saas-ui";
-import { apiErrorMessage } from "@/features/saas/hooks-api";
-import { useReviewTokenBoost, useTokenBoostsForReview } from "@/features/saas/hooks-school-token";
+import { tokenApiErrorMessage, useReviewTokenBoost, useTokenBoostsForReview } from "@/features/saas/hooks-school-token";
 import { BOOST_MIN_TOKENS, type TokenBoostRequest, type TokenBoostStatus } from "@/services/school-token.service";
 import { cn } from "@/lib/utils/cn";
 
@@ -84,7 +83,7 @@ export function TokenBoostReviewList({ scopeHint }: { scopeHint: string }) {
               ? `Đã duyệt thêm ${formatNumber(approved)} token hôm nay cho ${request.studentName}`
               : `Đã từ chối yêu cầu của ${request.studentName}`,
           ),
-        onError: (err) => toast.error(apiErrorMessage(err, "Không xử lý được yêu cầu. Vui lòng thử lại.")),
+        onError: (err) => toast.error(tokenApiErrorMessage(err, "Không xử lý được yêu cầu. Vui lòng thử lại.")),
       },
     );
     setTarget(null);
@@ -122,7 +121,7 @@ export function TokenBoostReviewList({ scopeHint }: { scopeHint: string }) {
         </p>
       ) : query.isError ? (
         <div role="alert" className="flex flex-wrap items-center gap-3 py-6 text-sm">
-          <span className="text-[var(--accent-danger)]">{apiErrorMessage(query.error, "Không tải được yêu cầu.")}</span>
+          <span className="text-[var(--accent-danger)]">{tokenApiErrorMessage(query.error, "Không tải được yêu cầu.")}</span>
           <button type="button" className="btn-line" onClick={() => void query.refetch()}>
             Thử lại
           </button>
