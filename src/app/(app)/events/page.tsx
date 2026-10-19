@@ -12,7 +12,6 @@ import type { EventEraBackend, GetEventsParams } from "@/services/event.service"
 
 import { catalogMetadata } from "@/lib/catalog-metadata";
 import { ArchiveHeading } from "@/components/commons/archive-heading";
-import { OfficialCatalogBanner } from "@/components/saas/official-catalog-banner";
 export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   return catalogMetadata("/events", await searchParams);
 }
@@ -51,7 +50,6 @@ export default async function EventsPage({
 
   return (
     <div className="space-y-4 py-4 lg:py-5">
-      <OfficialCatalogBanner />
       <ArchiveHeading
         as="h1"
         label="Biên niên"

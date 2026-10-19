@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, House } from "lucide-react";
@@ -9,6 +10,7 @@ import { useCharacter } from "@/features/characters/hooks";
 import { useEventDetail } from "@/features/events/hooks";
 import { useStaffQuizDetail } from "@/features/staff/quiz/hooks";
 import { useApiClassroom, useApiSchool } from "@/features/saas/hooks-api";
+import { useRole } from "@/features/auth/usePermission";
 
 const routeLabels: Record<string, string> = {
   home: "Trang chủ",
@@ -19,8 +21,7 @@ const routeLabels: Record<string, string> = {
   contexts: "Bối cảnh",
   events: "Sự kiện",
   library: "Thư viện",
-  // MVP: Ẩn map
-  // map: "Bản đồ",
+  map: "Bản đồ trận đánh",
   profile: "Hồ sơ",
   quiz: "Câu đố lịch sử",
   saved: "Đã lưu",
@@ -46,8 +47,16 @@ const routeLabels: Record<string, string> = {
   new: "Tạo mới",
 };
 
+/** Catalogs curated by HistoryTalk; school accounts see where they come from in the trail. */
+const HISTORYTALK_PATHS = ["/events", "/characters", "/quiz", "/map"];
+/** Pages whose trail is one crumb, not one per segment ("/map/class" is not a child of the battle map). */
+const SINGLE_CRUMB: Record<string, string> = { "/map/class": "Bản đồ lớp" };
+
+const inPath = (pathname: string, path: string) => pathname === path || pathname.startsWith(`${path}/`);
+
 export default function Breadcrumbs() {
   const pathname = usePathname();
+  const role = useRole();
 
   // Skip rendering if on home or auth pages
   if (
@@ -61,6 +70,11 @@ export default function Breadcrumbs() {
   }
 
   const pathSegments = pathname.split("/").filter((segment) => segment !== "");
+  const singleCrumb = Object.keys(SINGLE_CRUMB).find((path) => inPath(pathname, path));
+  const fromHistoryTalk =
+    (role === "TEACHER" || role === "SCHOOL_STUDENT") &&
+    !singleCrumb &&
+    HISTORYTALK_PATHS.some((path) => inPath(pathname, path));
 
   return (
     <nav 
@@ -86,7 +100,22 @@ export default function Breadcrumbs() {
           </Link>
         </li>
 
-        {pathSegments.map((segment, index) => {
+        {fromHistoryTalk && (
+          <li className="flex items-center">
+            <ChevronRight size={12} className="mx-1 opacity-40" />
+            <span className="flex items-center gap-1.5 text-header-text">
+              <Image src="/solo-logo.png" alt="" width={14} height={14} unoptimized className="h-3.5 w-3.5 object-contain" />
+              HistoryTalk
+            </span>
+          </li>
+        )}
+
+        {singleCrumb ? (
+          <li className="flex items-center">
+            <ChevronRight size={12} className="mx-1 opacity-40" />
+            <span className="truncate max-w-[250px] text-accent-gold">{SINGLE_CRUMB[singleCrumb]}</span>
+          </li>
+        ) : pathSegments.map((segment, index) => {
           const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
           const isLast = index === pathSegments.length - 1;
           const parentSegment = pathSegments[index - 1];

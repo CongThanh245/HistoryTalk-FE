@@ -45,7 +45,7 @@ export default function ClassMaterialsPage() {
       variant="app"
       live
       title="Tư liệu lớp & trường"
-      description="Bối cảnh và nhân vật do thầy cô và nhà trường biên soạn. Nội dung chính thức của HistoryTalk nằm ở mục Thư viện HistoryTalk."
+      description="Bối cảnh và nhân vật do thầy cô và nhà trường biên soạn. Sự kiện, nhân vật và câu đố của HistoryTalk nằm ở mục HistoryTalk trên thanh bên."
     >
       <Materials />
     </SaasShell>
@@ -135,7 +135,7 @@ function Materials() {
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-[2px] border border-[var(--border-strong)] px-4 py-3">
         <p className="flex flex-wrap items-center gap-2 text-sm text-content-text">
           <ContentSourceTag source="OFFICIAL" />
-          Cần thêm tư liệu? Xem sự kiện, nhân vật và câu đố chính thức trong Thư viện HistoryTalk.
+          Cần thêm tư liệu? Xem sự kiện, nhân vật và câu đố do HistoryTalk biên soạn.
         </p>
         <span className="flex flex-wrap gap-x-4 gap-y-1">
           <Link href={ROUTES.EVENTS} className="archive-link">

@@ -17,7 +17,7 @@ import type { LocalItem, LocalKind } from "@/services/local-content.service";
 /** Xem bối cảnh / nhân vật giáo viên soạn (Role Matrix row 14). Students: published items of their school; teachers: any they can read. */
 export default function ClassLocalContentPage() {
   return (
-    <SaasShell variant="app" live title="Tư liệu lớp & trường" description="Tư liệu do thầy cô hoặc nhà trường biên soạn, tách biệt với nội dung chính thức của HistoryTalk.">
+    <SaasShell variant="app" live title="Tư liệu lớp & trường" description="Tư liệu do thầy cô hoặc nhà trường biên soạn, tách biệt với thư viện HistoryTalk.">
       <React.Suspense fallback={null}>
         <LocalContentRoute />
       </React.Suspense>

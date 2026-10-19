@@ -13,7 +13,7 @@ import { localMeta } from "@/components/saas/local-content-ui";
 import { ROUTES } from "@/constants/routes";
 import { useRole } from "@/features/auth/usePermission";
 import type { MapLayerKey } from "@/features/saas/hooks-map";
-import { useStudentLocalContent, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
+import { LOCAL_SCOPE_LABEL, useStudentLocalContent, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
 import type { LocalItem } from "@/services/local-content.service";
 
 type ListTab = "battles" | "notes";
@@ -22,10 +22,10 @@ const formatYear = (year: number) => (year < 0 ? `${Math.abs(year)} TCN` : Strin
 
 const LOCAL_PREFIX = "local:";
 
-/** Published local contexts the viewer's school has, for the "Tư liệu lớp & trường" layer. */
-function usePublishedLocalContexts(role: string | null): { contexts: LocalItem[]; enabled: boolean } {
-  const isTeacher = role === "TEACHER";
-  const isStudent = role === "SCHOOL_STUDENT";
+/** Published local contexts the viewer's school has, for the "Tư liệu lớp & trường" layer of the class map. */
+function usePublishedLocalContexts(role: string | null, active: boolean): { contexts: LocalItem[]; enabled: boolean } {
+  const isTeacher = active && role === "TEACHER";
+  const isStudent = active && role === "SCHOOL_STUDENT";
   const teacher = useTeacherLocalContent(isTeacher);
   const student = useStudentLocalContent(isStudent);
   const items = isTeacher ? teacher.contexts : isStudent ? student.items : [];
@@ -41,28 +41,30 @@ function usePublishedLocalContexts(role: string | null): { contexts: LocalItem[]
 }
 
 /**
- * Battle map with the layers backed by the API:
- * - "Bản đồ chung": battles pinned by Content Admins (editable by them, read-only for everyone else).
- * - "Ghi chú của tôi" (CUSTOMER, SCHOOL_STUDENT, TEACHER): the viewer's own study notes, each anchored
- *   to a battle and its year (USER map pins).
- * - "Tư liệu lớp & trường" (TEACHER, SCHOOL_STUDENT): published local contexts with coordinates.
+ * One map page per content owner, so HistoryTalk and school content never share a map:
+ * - `mode="battles"` (HistoryTalk): "Bản đồ chung", battles pinned by Content Admins (editable by them, read-only
+ *   for everyone else), plus "Ghi chú của tôi" (CUSTOMER, SCHOOL_STUDENT, TEACHER), the viewer's own study notes
+ *   anchored to a battle and its year (USER map pins).
+ * - `mode="class"` ("Bản đồ lớp", TEACHER, SCHOOL_STUDENT): published local contexts with coordinates.
  * The class layer (teacher pins per class) has no API yet and is not shown.
  */
-export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
+export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: () => void; mode?: "battles" | "class" }) {
   const role = useRole();
   const router = useRouter();
-  const local = usePublishedLocalContexts(role);
+  const classMode = mode === "class";
+  const local = usePublishedLocalContexts(role, classMode);
   const [localFocus, setLocalFocus] = React.useState<(MapCoordinates & { key: string }) | null>(null);
   const [selectedLocalId, setSelectedLocalId] = React.useState<string | null>(null);
-  const globalEditableRole = role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN";
-  const hasNotesLayer = Boolean(role && (STUDY_NOTE_ROLES as readonly string[]).includes(role));
+  const globalEditableRole = !classMode && (role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN");
+  // Study notes are anchored to battles, so they belong to the battle map.
+  const hasNotesLayer = !classMode && Boolean(role && (STUDY_NOTE_ROLES as readonly string[]).includes(role));
 
   const [adminPreview, setAdminPreview] = React.useState(false);
   const globalEditable = globalEditableRole && !adminPreview;
 
   const [overrides, setOverrides] = React.useState<Partial<Record<MapLayerKey, boolean>>>({});
   const visible = {
-    global: globalEditable ? true : overrides.global ?? true,
+    global: !classMode && (globalEditable ? true : overrides.global ?? true),
     personal: hasNotesLayer && (overrides.personal ?? true),
     local: local.enabled && (overrides.local ?? true),
   };
@@ -74,7 +76,7 @@ export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
         latitude: c.latitude!,
         longitude: c.longitude!,
         variant: "local",
-        meta: `Tư liệu lớp & trường · ${localMeta(c)}`,
+        meta: `${LOCAL_SCOPE_LABEL[c.contentScope]} · ${localMeta(c)}`,
       }))
     : [];
 
@@ -141,16 +143,18 @@ export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
 
   const renderControls = (info: MapControlsInfo) => {
     const notesOn = hasNotesLayer && info.canTakeNotes && visible.personal;
-    const rows: MapLayerRow[] = [
-      {
-        key: "global",
-        label: "Bản đồ chung",
-        hint: globalEditable ? "Bạn đang chỉnh sửa · hiển thị cho mọi người dùng" : "Trận đánh toàn quốc · chỉ đọc",
-        count: info.battleCount,
-        checked: visible.global,
-        locked: globalEditable,
-      },
-    ];
+    const rows: MapLayerRow[] = classMode
+      ? []
+      : [
+          {
+            key: "global",
+            label: "Bản đồ chung",
+            hint: globalEditable ? "Bạn đang chỉnh sửa · hiển thị cho mọi người dùng" : "Trận đánh toàn quốc · chỉ đọc",
+            count: info.battleCount,
+            checked: visible.global,
+            locked: globalEditable,
+          },
+        ];
     if (local.enabled) {
       rows.push({
         key: "local",
@@ -237,7 +241,7 @@ export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
       </>
     ) : null;
 
-    const showControl = rows.length > 1 || Boolean(list);
+    const showControl = classMode ? rows.length > 0 : rows.length > 1 || Boolean(list);
 
     return (
       <div className="max-md:contents md:pointer-events-none md:absolute md:bottom-4 md:left-4 md:top-4 md:z-[520] md:flex md:w-[300px] md:flex-col md:gap-2">
@@ -270,6 +274,11 @@ export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
             classes={[]}
             classId={null}
             onClassChange={() => undefined}
+            footnote={
+              classMode && local.contexts.length === 0
+                ? "Chưa có bối cảnh nào của lớp hoặc trường được duyệt và gắn vị trí trên bản đồ."
+                : undefined
+            }
             onAddPersonalPin={notesOn && info.addStudyNote ? info.addStudyNote : undefined}
             personalAddHint={
               notesOn && !info.addStudyNote ? "Chọn một trận đánh trên bản đồ để thêm ghi chú cho trận đó." : undefined
@@ -295,6 +304,11 @@ export function LayeredHistoricalMap({ onClose }: { onClose: () => void }) {
     hideBattlePins: !visible.global,
     hideStudyNotes: !visible.personal,
     previewAsLearner: adminPreview,
+    ...(classMode && {
+      title: "Bản đồ lớp",
+      subtitle: "Bối cảnh lịch sử giáo viên soạn cho lớp và trường, đã được nhà trường duyệt.",
+      hideBattlePicker: true,
+    }),
     headerSlot,
     topSlot,
     renderControls,

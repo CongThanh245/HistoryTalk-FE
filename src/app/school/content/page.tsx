@@ -169,44 +169,56 @@ function ContentReview() {
 
   return (
     <div className="space-y-5">
-      <div role="tablist" aria-label="Trạng thái nội dung" className="flex overflow-x-auto border-b border-[var(--text-primary)]">
-        {TABS.map((t) => {
-          const active = t === tab;
-          return (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => changeTab(t)}
-              className={cn(
-                "-mb-px inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-[13px] font-bold uppercase tracking-[0.06em] transition-colors",
-                active
-                  ? "border-[var(--accent-gold)] text-[var(--text-primary)]"
-                  : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]",
-              )}
-            >
-              {REVIEW_STATE_LABELS[t]}
-              <span
+      {/* Tabs + filters share one solid panel so they stay readable over the page texture. */}
+      <div className="rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)]">
+        <div
+          role="tablist"
+          aria-label="Trạng thái nội dung"
+          className="flex overflow-x-auto overflow-y-hidden px-2 shadow-[inset_0_-1px_0_var(--border-default)] [scrollbar-width:none]"
+        >
+          {TABS.map((t) => {
+            const active = t === tab;
+            return (
+              <button
+                key={t}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => changeTab(t)}
                 className={cn(
-                  "rounded-[2px] px-1.5 text-[11px] tabular-nums",
-                  t === "PENDING" && counts.PENDING > 0
-                    ? "bg-[var(--status-warning)] text-white"
-                    : "bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]",
+                  "inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-[13px] font-bold uppercase tracking-[0.06em] transition-colors",
+                  active
+                    ? "border-[var(--accent-gold)] text-[var(--text-primary)]"
+                    : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]",
                 )}
               >
-                {counts[t]}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+                {REVIEW_STATE_LABELS[t]}
+                <span
+                  className={cn(
+                    "rounded-[2px] px-1.5 text-[11px] tabular-nums",
+                    t === "PENDING" && counts.PENDING > 0
+                      ? "bg-[var(--status-warning)] text-white"
+                      : "bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]",
+                  )}
+                >
+                  {counts[t]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <SearchInput value={search} onChange={setSearch} placeholder="Tìm theo tên bối cảnh, nhân vật..." />
-        <StaffFormSelect value={kind} onValueChange={setKind} options={kindOptions} className="w-full sm:w-40" />
-        <StaffFormSelect value={scope} onValueChange={setScope} options={scopeOptions} className="w-full sm:w-40" />
-        <StaffFormSelect value={author} onValueChange={setAuthor} options={authorOptions} className="w-full sm:w-52" />
+        <div className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:p-4">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Tìm theo tên bối cảnh, nhân vật..."
+            className="sm:w-auto sm:min-w-[260px] sm:flex-1"
+          />
+          <StaffFormSelect value={kind} onValueChange={setKind} options={kindOptions} className="w-full sm:w-40" />
+          <StaffFormSelect value={scope} onValueChange={setScope} options={scopeOptions} className="w-full sm:w-44" />
+          <StaffFormSelect value={author} onValueChange={setAuthor} options={authorOptions} className="w-full sm:w-52" />
+        </div>
       </div>
 
       <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={refetch}>

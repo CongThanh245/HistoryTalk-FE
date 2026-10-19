@@ -466,37 +466,39 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
             <Map size={20} />
           </div>
           <div className="mr-auto min-w-0 flex-1 sm:flex-none">
-            <h1 className="archive-title text-[22px] md:text-[26px]">Bản đồ trận đánh</h1>
+            <h1 className="archive-title text-[22px] md:text-[26px]">{overlay?.title ?? "Bản đồ trận đánh"}</h1>
             <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">
-              Những trận đánh làm nên lịch sử.
+              {overlay?.subtitle ?? "Những trận đánh làm nên lịch sử."}
             </p>
           </div>
 
           {overlay?.headerSlot}
 
-          <label className="relative order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1 md:max-w-[420px]">
-            <span className="sr-only">Chọn bối cảnh lịch sử</span>
-            <select
-              value={activeContextId ?? ""}
-              onChange={(event) => chooseContext(event.target.value)}
-              disabled={eventsLoading || overviewQueriesLoading || selectableEvents.length === 0}
-              className="h-10 w-full appearance-none rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] py-0 pl-3 pr-9 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:opacity-60"
-            >
-              {selectableEvents.length > 0 && <option value="">— Tất cả trận đánh —</option>}
-              {selectableEvents.length === 0 ? (
-                <option value="">
-                  {overviewQueriesLoading ? "Đang tải..." : isAdmin ? "Không có bối cảnh khả dụng" : "Chưa có trận đánh nào được ghim"}
-                </option>
-              ) : (
-                selectableEvents.map((event) => (
-                  <option key={event.id} value={event.id}>
-                    {event.title}
+          {!overlay?.hideBattlePicker && (
+            <label className="relative order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1 md:max-w-[420px]">
+              <span className="sr-only">Chọn bối cảnh lịch sử</span>
+              <select
+                value={activeContextId ?? ""}
+                onChange={(event) => chooseContext(event.target.value)}
+                disabled={eventsLoading || overviewQueriesLoading || selectableEvents.length === 0}
+                className="h-10 w-full appearance-none rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] py-0 pl-3 pr-9 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:opacity-60"
+              >
+                {selectableEvents.length > 0 && <option value="">— Tất cả trận đánh —</option>}
+                {selectableEvents.length === 0 ? (
+                  <option value="">
+                    {overviewQueriesLoading ? "Đang tải..." : isAdmin ? "Không có bối cảnh khả dụng" : "Chưa có trận đánh nào được ghim"}
                   </option>
-                ))
-              )}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" size={16} />
-          </label>
+                ) : (
+                  selectableEvents.map((event) => (
+                    <option key={event.id} value={event.id}>
+                      {event.title}
+                    </option>
+                  ))
+                )}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" size={16} />
+            </label>
+          )}
 
           {isAdmin && (
             <button

@@ -1,6 +1,7 @@
 // sidebar-nav.tsx
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
@@ -142,12 +143,10 @@ export default function SidebarNav({
             <p
               className="mb-1.5 flex items-center gap-2 px-2 text-[10px] font-bold tracking-[0.14em] uppercase text-[var(--sidebar-section-label)]"
             >
-              <span className="truncate">{section.title}</span>
-              {section.badge && (
-                <span className="shrink-0 rounded-[2px] border border-current px-1 py-px text-[9px] leading-[1.3] tracking-[0.08em] text-[var(--text-primary)]">
-                  {section.badge}
-                </span>
+              {section.brand && (
+                <Image src="/solo-logo.png" alt="" width={14} height={14} unoptimized className="h-3.5 w-3.5 shrink-0 object-contain" />
               )}
+              <span className="truncate">{section.title}</span>
             </p>
           ) : (
             <div

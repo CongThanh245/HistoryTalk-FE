@@ -39,8 +39,10 @@ export interface SidebarMenuItem {
 
 export interface SidebarSection {
   title: string;
-  /** Small marker next to the section title, e.g. "Chính thức" for the official HistoryTalk catalogs. */
-  badge?: string;
+  /** Section owned by HistoryTalk (the provider): shown with the HistoryTalk mark instead of a label. */
+  brand?: boolean;
+  /** Section owned by the viewer's school: the title is replaced by the school name once it is known. */
+  schoolOwned?: boolean;
   items: SidebarMenuItem[];
 }
 
@@ -69,20 +71,21 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
   },
 ];
 
-/** Bản đồ lớp: the shared map opened on the class layer (Role Matrix row 21). */
-const CLASS_MAP_HREF = `${ROUTES.HISTORICAL_MAP}?layer=class`;
+/** Bản đồ lớp: only class & school content; official battles live in the HistoryTalk library (Role Matrix row 21). */
+const CLASS_MAP_HREF = ROUTES.CLASS_MAP;
 
 /**
- * Official catalogs curated by Content Admin. School accounts reach them as a separate, labelled library so they are
- * never mixed with class / school content.
+ * Catalogs curated by Content Admin. School accounts reach them in a section named after the provider, next to the
+ * section named after their school, so the two sources are told apart by where they live, not by a label.
  */
 const HISTORYTALK_LIBRARY: SidebarSection = {
-  title: "Thư viện HistoryTalk",
-  badge: "Chính thức",
+  title: "HistoryTalk",
+  brand: true,
   items: [
     { icon: Landmark, label: "Sự kiện lịch sử", href: ROUTES.EVENTS },
     { icon: User, label: "Nhân vật", href: ROUTES.CHARACTERS },
     { icon: ClipboardList, label: "Câu đố lịch sử", href: ROUTES.QUIZ },
+    { icon: Map, label: "Bản đồ trận đánh", href: ROUTES.HISTORICAL_MAP },
   ],
 };
 
@@ -98,6 +101,7 @@ const SCHOOL_ACCOUNT: SidebarSection = {
 export const SCHOOL_STUDENT_SIDEBAR: SidebarSection[] = [
   {
     title: "Không gian lớp học",
+    schoolOwned: true,
     items: [
       { icon: GraduationCap, label: "Lớp học", href: ROUTES.CLASSES },
       { icon: ClipboardCheck, label: "Bài tập", href: ROUTES.MY_ASSIGNMENTS },
@@ -114,6 +118,7 @@ export const SCHOOL_STUDENT_SIDEBAR: SidebarSection[] = [
 export const TEACHER_SIDEBAR: SidebarSection[] = [
   {
     title: "Không gian lớp học",
+    schoolOwned: true,
     items: [
       { icon: Gauge, label: "Tổng quan", href: ROUTES.TEACHING.HOME, exact: true },
       { icon: Presentation, label: "Lớp học", href: ROUTES.CLASSES },

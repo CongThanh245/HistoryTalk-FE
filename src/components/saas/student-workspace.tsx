@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ChevronRight, LibraryBig } from "lucide-react";
 import { DailyQuestsCard } from "@/components/home/daily-quests-card";
 import { ApiClassroomSideCard, NoDataYet } from "@/components/saas/api-classroom-ui";
-import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import { ROUTES } from "@/constants/routes";
 import type { ApiClassroom } from "@/services/school.service";
 import { useAuthStore } from "@/store/auth.store";
@@ -68,9 +67,8 @@ export function StudentWorkspace({ classes }: { classes: ApiClassroom[] }) {
             <span className="min-w-0 flex-1">
               <span className="flex flex-wrap items-center gap-2">
                 <span className="text-[15px] font-bold text-content-text group-hover:text-[var(--accent-gold)]">Thư viện HistoryTalk</span>
-                <ContentSourceTag source="OFFICIAL" />
               </span>
-              <span className="block text-[12px] text-content-muted">Sự kiện, nhân vật và câu đố chính thức để tự học thêm.</span>
+              <span className="block text-[12px] text-content-muted">Sự kiện, nhân vật và câu đố do HistoryTalk biên soạn để tự học thêm.</span>
             </span>
             <ChevronRight className="h-4 w-4 shrink-0 text-content-muted" aria-hidden="true" />
           </Link>

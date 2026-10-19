@@ -36,7 +36,7 @@ import { useDemoStudentId } from "@/features/saas/store";
 import type { Classroom, LocalContent } from "@/features/saas/types";
 import { cn } from "@/lib/utils/cn";
 
-const mapHref = (classId: string) => `${ROUTES.HISTORICAL_MAP}?layer=class&classId=${encodeURIComponent(classId)}`;
+const mapHref = (classId: string) => `${ROUTES.CLASS_MAP}?classId=${encodeURIComponent(classId)}`;
 
 function sortedForClass(data: TeachingData, classId: string) {
   return data.assignments

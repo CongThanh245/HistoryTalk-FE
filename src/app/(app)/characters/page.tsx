@@ -13,7 +13,6 @@ import type { GetCharactersParams } from "@/services/character.service";
 
 import { catalogMetadata } from "@/lib/catalog-metadata";
 import { ArchiveHeading } from "@/components/commons/archive-heading";
-import { OfficialCatalogBanner } from "@/components/saas/official-catalog-banner";
 export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   return catalogMetadata("/characters", await searchParams);
 }
@@ -48,7 +47,6 @@ export default async function CharactersPage({
 
   return (
     <div className="space-y-6 lg:space-y-8 py-6 lg:py-8">
-      <OfficialCatalogBanner />
       <ArchiveHeading
         as="h1"
         label="Nhân vật"

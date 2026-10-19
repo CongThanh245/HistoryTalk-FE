@@ -18,7 +18,7 @@ export default function LocalMaterialPage() {
   const kind: LocalKind | null = rawKind === "context" ? "CONTEXT" : rawKind === "character" ? "CHARACTER" : null;
   const role = useRole();
   return (
-    <SaasShell variant="app" live title="Tư liệu lớp & trường" description="Tư liệu do thầy cô hoặc nhà trường biên soạn, tách biệt với nội dung chính thức của HistoryTalk.">
+    <SaasShell variant="app" live title="Tư liệu lớp & trường" description="Tư liệu do thầy cô hoặc nhà trường biên soạn, tách biệt với thư viện HistoryTalk.">
       {!kind ? (
         <NotFound />
       ) : role === "SCHOOL_STUDENT" ? (

@@ -35,7 +35,7 @@ interface WorkProps {
   role: string | null;
 }
 
-const mapHref = (classId: string) => `${ROUTES.HISTORICAL_MAP}?layer=class&classId=${classId}`;
+const mapHref = (classId: string) => `${ROUTES.CLASS_MAP}?classId=${classId}`;
 
 /** Live submission, read straight from the store (avoids stale closures in rapid chat updates). */
 const currentSubmission = (assignmentId: string, studentId: string): Submission | undefined =>

@@ -115,6 +115,11 @@ export interface MapOverlay {
   previewAsLearner?: boolean;
   /** Floating controls inside the map area (layer control, detail panel…). */
   renderControls?: (info: MapControlsInfo) => ReactNode;
+  /** Header title/subtitle when the page is not the battle map (e.g. "Bản đồ lớp"). */
+  title?: string;
+  subtitle?: string;
+  /** Hide the battle picker in the header (pages without the global layer). */
+  hideBattlePicker?: boolean;
   /** Extra content in the map header (e.g. a scope indicator). */
   headerSlot?: ReactNode;
   /** Slim bar between the header and the map (e.g. the mock-data notice). */

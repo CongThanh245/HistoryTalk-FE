@@ -29,6 +29,8 @@ export const ROUTES = {
   QUIZ_DETAIL: (id: string) => `/quiz/${id}`,
 
   HISTORICAL_MAP: "/map",
+  /** Bản đồ lớp: only the class & school content of the viewer's school (Teacher + School Student). */
+  CLASS_MAP: "/map/class",
 
   PROFILE: "/profile",
   PAYMENT: "/payment",

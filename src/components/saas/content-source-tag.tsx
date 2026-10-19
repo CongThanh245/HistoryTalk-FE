@@ -1,14 +1,16 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils/cn";
 import type { LocalContentScope } from "@/features/saas/types";
 
 /**
- * Where a piece of learning content comes from. Official (Content Admin) and school / class content (teachers)
- * are never listed together without this tag: Chính thức = ink, Của trường = men lam, Của lớp = jade.
+ * Where a piece of learning content comes from, named after its owner rather than ranked: HistoryTalk (Content Admin,
+ * ink + logo mark), Của trường (men lam), Của lớp (jade). Needed wherever sources share one list; pages holding a
+ * single source say it in the sidebar section and breadcrumb instead.
  */
 export type ContentSource = "OFFICIAL" | LocalContentScope;
 
 export const CONTENT_SOURCE_LABELS: Record<ContentSource, string> = {
-  OFFICIAL: "Chính thức",
+  OFFICIAL: "HistoryTalk",
   SCHOOL: "Của trường",
   CLASS: "Của lớp",
 };
@@ -28,7 +30,7 @@ export function ContentSourceTag({
   className,
 }: {
   source: ContentSource;
-  /** Overrides the default label, e.g. "Chính thức (HistoryTalk)". */
+  /** Overrides the default label, e.g. "Lớp riêng". */
   label?: string;
   /** Extra text after a dot, e.g. the classes: "Của lớp · 10A1, 11A1". */
   detail?: string;
@@ -42,6 +44,9 @@ export function ContentSourceTag({
         className,
       )}
     >
+      {source === "OFFICIAL" && (
+        <Image src="/solo-logo.png" alt="" width={12} height={12} unoptimized className="mr-1 h-3 w-3 shrink-0 object-contain" />
+      )}
       <span className="truncate">
         {label ?? CONTENT_SOURCE_LABELS[source]}
         {detail ? ` · ${detail}` : ""}
