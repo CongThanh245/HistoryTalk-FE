@@ -13,7 +13,10 @@ import {
   type LocalKind,
   type LocalScope,
   type LocalStatusPayload,
+  type UpdateLocalDocumentPayload,
 } from "@/services/local-content.service";
+import { localQuizService, type CreateLocalQuizPayload } from "@/services/local-quiz.service";
+import type { CreateQuestionPayload, UpdateQuestionPayload, UpdateQuizPayload } from "@/services/staff.quiz.service";
 
 const LIST_SIZE = 100;
 
@@ -25,6 +28,10 @@ export const localKeys = {
   student: (kind: LocalKind) => ["local-content", "student", kind] as const,
   studentItem: (kind: LocalKind, id: string) => ["local-content", "student", "item", kind, id] as const,
   documents: (kind: LocalKind, id: string) => ["local-content", "documents", kind, id] as const,
+  characterContexts: (id: string) => ["local-content", "character-contexts", id] as const,
+  trash: (kind: LocalKind) => ["local-content", "trash", kind] as const,
+  contextQuizzes: (contextId: string) => ["local-content", "quizzes", "context", contextId] as const,
+  quiz: (quizId: string) => ["local-content", "quizzes", "item", quizId] as const,
   schoolDocuments: (kind: LocalKind, id: string) => ["local-content", "school", "documents", kind, id] as const,
 };
 
@@ -119,6 +126,7 @@ export function useLocalContentMutations() {
       onSuccess: (_, { kind, id }) => {
         refresh();
         qc.removeQueries({ queryKey: localKeys.item(kind, id) });
+        qc.invalidateQueries({ queryKey: localKeys.trash(kind) });
       },
     }),
   };
@@ -144,9 +152,115 @@ export function useLocalDocumentMutations(kind: LocalKind, id: string) {
       mutationFn: (docId: string) => localContentService.removeDocument(kind, id, docId),
       onSuccess: refresh,
     }),
+    update: useMutation({
+      mutationFn: ({ docId, payload }: { docId: string; payload: UpdateLocalDocumentPayload }) =>
+        localContentService.updateDocument(kind, id, docId, payload),
+      onSuccess: refresh,
+    }),
     uploadPdf: useMutation({
       mutationFn: ({ file, title }: { file: File; title?: string }) => localContentService.uploadDocumentPdf(kind, id, file, title),
       onSuccess: refresh,
+    }),
+  };
+}
+
+// ─── Teacher: character ↔ context links ────────────────────────────────────
+
+export function useCharacterContexts(characterId: string | undefined) {
+  return useQuery({
+    queryKey: localKeys.characterContexts(characterId ?? ""),
+    queryFn: () => localContentService.listCharacterContexts(characterId!),
+    enabled: Boolean(characterId),
+  });
+}
+
+export function useCharacterContextLinks(characterId: string) {
+  const qc = useQueryClient();
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: localKeys.characterContexts(characterId) });
+    qc.invalidateQueries({ queryKey: localKeys.item("CHARACTER", characterId) });
+  };
+  return {
+    link: useMutation({ mutationFn: (contextId: string) => localContentService.linkCharacterContext(characterId, contextId), onSuccess: refresh }),
+    unlink: useMutation({ mutationFn: (contextId: string) => localContentService.unlinkCharacterContext(characterId, contextId), onSuccess: refresh }),
+  };
+}
+
+// ─── Teacher: trash ────────────────────────────────────────────────────────
+
+export function useLocalTrash(kind: LocalKind) {
+  return useQuery({
+    queryKey: localKeys.trash(kind),
+    queryFn: () => localContentService.listTrash(kind, { page: 1, size: LIST_SIZE }),
+  });
+}
+
+export function useLocalTrashMutations() {
+  const qc = useQueryClient();
+  const refresh = (kind: LocalKind) => {
+    qc.invalidateQueries({ queryKey: localKeys.trash(kind) });
+    qc.invalidateQueries({ queryKey: ["local-content", "teacher"] });
+  };
+  return {
+    restore: useMutation({
+      mutationFn: ({ kind, id }: { kind: LocalKind; id: string }) => localContentService.restore(kind, id),
+      onSuccess: (_, { kind }) => refresh(kind),
+    }),
+    purge: useMutation({
+      mutationFn: ({ kind, id }: { kind: LocalKind; id: string }) => localContentService.purge(kind, id),
+      onSuccess: (_, { kind }) => refresh(kind),
+    }),
+  };
+}
+
+// ─── Teacher: quizzes of a local context ──────────────────────────────────
+
+export function useContextQuizzes(contextId: string | undefined) {
+  return useQuery({
+    queryKey: localKeys.contextQuizzes(contextId ?? ""),
+    queryFn: () => localQuizService.listForContext(contextId!),
+    enabled: Boolean(contextId),
+  });
+}
+
+export function useLocalQuiz(quizId: string | undefined) {
+  return useQuery({
+    queryKey: localKeys.quiz(quizId ?? ""),
+    queryFn: () => localQuizService.get(quizId!),
+    enabled: Boolean(quizId),
+    retry: false,
+  });
+}
+
+export function useLocalQuizMutations() {
+  const qc = useQueryClient();
+  const refresh = (quizId?: string) => {
+    qc.invalidateQueries({ queryKey: ["local-content", "quizzes"] });
+    if (quizId) qc.invalidateQueries({ queryKey: localKeys.quiz(quizId) });
+  };
+  return {
+    create: useMutation({
+      mutationFn: ({ contextId, payload }: { contextId: string; payload: CreateLocalQuizPayload }) => localQuizService.create(contextId, payload),
+      onSuccess: () => refresh(),
+    }),
+    update: useMutation({
+      mutationFn: ({ quizId, payload }: { quizId: string; payload: UpdateQuizPayload }) => localQuizService.update(quizId, payload),
+      onSuccess: (q) => refresh(q.quizId),
+    }),
+    remove: useMutation({ mutationFn: (quizId: string) => localQuizService.remove(quizId), onSuccess: () => refresh() }),
+    togglePublish: useMutation({ mutationFn: (quizId: string) => localQuizService.togglePublish(quizId), onSuccess: (q) => refresh(q.quizId) }),
+    addQuestion: useMutation({
+      mutationFn: ({ quizId, payload }: { quizId: string; payload: CreateQuestionPayload }) => localQuizService.addQuestion(quizId, payload),
+      onSuccess: (_, { quizId }) => refresh(quizId),
+    }),
+    updateQuestion: useMutation({
+      mutationFn: ({ quizId, questionId, payload }: { quizId: string; questionId: string; payload: UpdateQuestionPayload }) =>
+        localQuizService.updateQuestion(quizId, questionId, payload),
+      onSuccess: (_, { quizId }) => refresh(quizId),
+    }),
+    deleteQuestion: useMutation({
+      mutationFn: ({ quizId, questionId }: { quizId: string; questionId: string }) => localQuizService.deleteQuestion(quizId, questionId),
+      onSuccess: (_, { quizId }) => refresh(quizId),
     }),
   };
 }

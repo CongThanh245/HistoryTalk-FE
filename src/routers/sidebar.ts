@@ -71,8 +71,6 @@ export const CUSTOMER_SIDEBAR: SidebarSection[] = [
   },
 ];
 
-/** Bản đồ lớp: only class & school content; official battles live in the HistoryTalk library (Role Matrix row 21). */
-const CLASS_MAP_HREF = ROUTES.CLASS_MAP;
 
 /**
  * Catalogs curated by Content Admin. School accounts reach them in a section named after the provider, next to the
@@ -106,7 +104,6 @@ export const SCHOOL_STUDENT_SIDEBAR: SidebarSection[] = [
       { icon: GraduationCap, label: "Lớp học", href: ROUTES.CLASSES },
       { icon: ClipboardCheck, label: "Bài tập", href: ROUTES.MY_ASSIGNMENTS },
       { icon: LibraryBig, label: "Kho tư liệu", href: ROUTES.CLASS_MATERIALS },
-      { icon: Map, label: "Bản đồ lớp", href: CLASS_MAP_HREF },
       { icon: ChartColumn, label: "Bảng điểm", href: ROUTES.GRADES },
     ],
   },
@@ -124,7 +121,6 @@ export const TEACHER_SIDEBAR: SidebarSection[] = [
       { icon: Presentation, label: "Lớp học", href: ROUTES.CLASSES },
       { icon: NotebookPen, label: "Bài tập", href: ROUTES.TEACHING.ASSIGNMENTS },
       { icon: FilePenLine, label: "Kho tư liệu", href: ROUTES.TEACHING.LOCAL },
-      { icon: Map, label: "Bản đồ lớp", href: CLASS_MAP_HREF },
       { icon: Coins, label: "Yêu cầu token", href: ROUTES.TEACHING.TOKEN_REQUESTS },
     ],
   },

@@ -219,7 +219,7 @@ export function ClassPinDetails({
     ) : undefined;
 
   return (
-    <MapOverlayPanel eyebrow={className ? `Bản đồ lớp ${className}` : "Bản đồ lớp"} title={pin.label} onClose={onClose} footer={footer}>
+    <MapOverlayPanel eyebrow={className ? `Bản đồ tư liệu · Lớp ${className}` : "Bản đồ Kho tư liệu"} title={pin.label} onClose={onClose} footer={footer}>
       <div className="flex flex-wrap items-center gap-1.5">
         <Tag tone={isAssignment ? "assignment" : "class"}>{isAssignment ? "Bài tập" : "Địa danh lịch sử địa phương"}</Tag>
         {typeof pin.year === "number" && <Tag tone="local">{formatYear(pin.year)}</Tag>}
@@ -537,7 +537,7 @@ export function ClassPinForm({
       {placing && <PlacingBar onCancel={onCancel} text="Bấm lên bản đồ để đặt ghim" />}
       <form onSubmit={submit} noValidate className={cn(placing && "max-md:hidden")}>
         <MapOverlayPanel
-          eyebrow={className ? `Bản đồ lớp ${className}` : "Bản đồ lớp"}
+          eyebrow={className ? `Bản đồ tư liệu · Lớp ${className}` : "Bản đồ Kho tư liệu"}
           title={initial ? "Sửa ghim lớp" : "Thêm ghim lớp"}
           onClose={onCancel}
           footer={<FormFooter isEdit={Boolean(initial)} onCancel={onCancel} />}

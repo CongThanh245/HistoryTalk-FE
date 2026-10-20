@@ -50,7 +50,7 @@ const routeLabels: Record<string, string> = {
 /** Catalogs curated by HistoryTalk; school accounts see where they come from in the trail. */
 const HISTORYTALK_PATHS = ["/events", "/characters", "/quiz", "/map"];
 /** Pages whose trail is one crumb, not one per segment ("/map/class" is not a child of the battle map). */
-const SINGLE_CRUMB: Record<string, string> = { "/map/class": "Bản đồ lớp" };
+const SINGLE_CRUMB: Record<string, string> = { "/map/class": "Bản đồ Kho tư liệu" };
 
 const inPath = (pathname: string, path: string) => pathname === path || pathname.startsWith(`${path}/`);
 

@@ -29,8 +29,8 @@ function NewLocalContent() {
     return (
       <SaasShell variant="app" live title="Soạn câu đố mới">
         <EmptyState
-          title="Chưa soạn được câu đố"
-          description="Hệ thống chưa hỗ trợ giáo viên soạn câu đố. Hiện chỉ soạn được bối cảnh và nhân vật."
+          title="Câu đố được soạn trong từng bối cảnh"
+          description="Mở một bối cảnh trong Kho tư liệu, chọn thẻ “Câu đố” rồi bấm “Tạo câu đố”."
           action={
             <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu

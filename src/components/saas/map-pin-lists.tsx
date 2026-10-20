@@ -479,7 +479,7 @@ export function ClassMapList({
     (c) => (filter === "ALL" || filter === "CONTEXT") && matchesQuery(query, c.title, c.location, c.summary),
   );
 
-  const title = mode === "student" ? "Trên bản đồ lớp" : mode === "manage" ? "Ghim của lớp" : "Bản đồ lớp";
+  const title = mode === "student" ? "Trên bản đồ tư liệu" : mode === "manage" ? "Ghim của lớp" : "Bản đồ tư liệu";
 
   return (
     <div>
@@ -495,7 +495,7 @@ export function ClassMapList({
         }
       />
       {loading ? (
-        <EmptyNote>Đang tải bản đồ lớp…</EmptyNote>
+        <EmptyNote>Đang tải bản đồ tư liệu…</EmptyNote>
       ) : total === 0 ? (
         mode === "manage" ? (
           <div className="mx-3 mb-3 rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3">

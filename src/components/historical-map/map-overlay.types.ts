@@ -1,3 +1,5 @@
+import type { HistoricalEvent } from "@/services/event.service";
+import type { BattleMap } from "./battle-map.types";
 import type { ReactNode } from "react";
 
 export type MapCoordinates = { latitude: number; longitude: number };
@@ -38,6 +40,8 @@ export interface OverlayPin {
   /** Small corner badge (due countdown "2N", "!" overdue, "✓" handed in). */
   badge?: { text: string; tone: "soon" | "overdue" | "done" };
   tone?: OverlayPinTone;
+  /** Battle (context) this pin stands for; hidden once that battle has its own map pin. */
+  eventId?: string;
 }
 
 /** One battle of the global layer, summarised for the search box and the admin overview list. */
@@ -120,6 +124,15 @@ export interface MapOverlay {
   subtitle?: string;
   /** Hide the battle picker in the header (pages without the global layer). */
   hideBattlePicker?: boolean;
+  /**
+   * Battles of this map instead of the HistoryTalk events (e.g. the school's local contexts on the Kho tư liệu map).
+   * Map pins, camera focuses and the battle page work the same; only the source differs.
+   */
+  events?: HistoricalEvent[];
+  /** Who may place pins and edit battle maps of `events` (defaults to Content / System Admins). */
+  canEdit?: boolean;
+  /** Saves a battle map of one of `events` (defaults to the Content Admin event API). */
+  saveBattleMap?: (eventId: string, map: BattleMap) => Promise<BattleMap | null | undefined>;
   /** Extra content in the map header (e.g. a scope indicator). */
   headerSlot?: ReactNode;
   /** Slim bar between the header and the map (e.g. the mock-data notice). */

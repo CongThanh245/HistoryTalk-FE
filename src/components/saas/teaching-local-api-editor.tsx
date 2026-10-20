@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, EyeOff, FileText, Globe, Loader2, Lock, Plus, Save, Send, Settings2, ShieldCheck, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, EyeOff, FileText, Globe, Loader2, Lock, Pencil, Plus, Save, Send, Settings2, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
 import { LocalReviewBadge, LocalScopeTag, ReviewNote, reviewState } from "@/components/saas/local-content-ui";
+import { ContextQuizzesPanel, LinkedContextsPanel, LocalBattleMapPanel, LocalMapPanel } from "@/components/saas/local-content-extras";
 import { ROUTES } from "@/constants/routes";
 import { apiErrorMessage, useMyApiClassrooms } from "@/features/saas/hooks-api";
 import {
@@ -200,7 +201,7 @@ const STATE_NOTE = {
   HIDDEN: "Nội dung đang bị ẩn với học sinh. Chỉnh sửa nếu cần rồi xuất bản lại.",
 } as const;
 
-type Tab = "basic" | "media" | "content" | "rag" | "context";
+type Tab = "basic" | "media" | "content" | "rag" | "context" | "battle" | "map" | "quiz";
 
 const TAB_LABEL: Record<Tab, string> = {
   basic: "Cơ bản",
@@ -208,6 +209,9 @@ const TAB_LABEL: Record<Tab, string> = {
   content: "Nội dung",
   rag: "Tài liệu",
   context: "Liên kết bối cảnh",
+  battle: "Lược đồ trận đánh",
+  map: "Bản đồ",
+  quiz: "Câu đố",
 };
 
 /* ───────────────────────── Editor ───────────────────────── */
@@ -238,7 +242,7 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   const busy = saving || mutations.setStatus.isPending;
 
   const tabs: Tab[] = kind === "CONTEXT"
-    ? ["basic", "media", ...(item ? (["rag"] as Tab[]) : [])]
+    ? ["basic", "media", ...(item ? (["map", "battle", "quiz", "rag"] as Tab[]) : [])]
     : ["basic", "media", "content", "context", ...(item ? (["rag"] as Tab[]) : [])];
 
   const patchCtx = (p: Partial<CtxForm>) => setForm((f) => ({ ...f, ctx: { ...f.ctx, ...p } }));
@@ -288,7 +292,7 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
     if (!item) return;
     try {
       await mutations.remove.mutateAsync({ kind, id: item.id });
-      toast.success(`Đã xóa “${item.name}”`);
+      toast.success(`Đã chuyển “${item.name}” vào thùng rác`);
       router.push(ROUTES.TEACHING.LOCAL);
     } catch (error) {
       toast.error(apiErrorMessage(error, "Không xóa được nội dung. Vui lòng thử lại."));
@@ -376,16 +380,35 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
                 </Panel>
               </TabsContent>
               <TabsContent value="context" className="mt-0">
-                <Panel>
-                  <Field label="Bối cảnh liên kết" hint="Bối cảnh bạn soạn hoặc bối cảnh toàn trường của đồng nghiệp.">
-                    <StaffFormSelect value={form.chr.contextId} onValueChange={(contextId) => patchChr({ contextId })} options={contextOptions} className="w-full" />
-                  </Field>
-                </Panel>
+                {item ? (
+                  // Saved character: links are managed one by one through the link API.
+                  <LinkedContextsPanel characterId={item.id} canEdit={isMine} />
+                ) : (
+                  <Panel>
+                    <Field label="Bối cảnh liên kết" hint="Bối cảnh bạn soạn hoặc bối cảnh toàn trường của đồng nghiệp. Lưu nhân vật xong có thể liên kết thêm.">
+                      <StaffFormSelect value={form.chr.contextId} onValueChange={(contextId) => patchChr({ contextId })} options={contextOptions} className="w-full" />
+                    </Field>
+                  </Panel>
+                )}
               </TabsContent>
             </>
           )}
 
         </fieldset>
+
+        {item && kind === "CONTEXT" && (
+          <>
+            <TabsContent value="map" className="mt-0">
+              <LocalMapPanel item={item} />
+            </TabsContent>
+            <TabsContent value="battle" className="mt-0">
+              <LocalBattleMapPanel item={item} canEdit={isMine} />
+            </TabsContent>
+            <TabsContent value="quiz" className="mt-0">
+              <ContextQuizzesPanel contextId={item.id} canEdit={isMine} />
+            </TabsContent>
+          </>
+        )}
 
         {item && (
           <TabsContent value="rag" className="mt-0">
@@ -444,7 +467,7 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
           onOpenChange={setDeleteOpen}
           variant="danger"
           title={`Xóa ${LOCAL_KIND_LABELS[kind].toLowerCase()}?`}
-          description={`“${item.name}” sẽ bị gỡ khỏi danh sách và học sinh không còn thấy.`}
+          description={`“${item.name}” được chuyển vào thùng rác, học sinh không còn thấy. Có thể khôi phục trong Thùng rác của Kho tư liệu.`}
           confirmLabel="Xóa"
           onConfirm={remove}
         />
@@ -845,7 +868,9 @@ const DOC_TYPE_OPTIONS: { value: LocalDocumentType; label: string }[] = [
 
 function DocumentsPanel({ kind, itemId, canEdit, myUid }: { kind: LocalKind; itemId: string; canEdit: boolean; myUid?: string }) {
   const docs = useLocalDocuments(kind, itemId);
-  const { add, remove, uploadPdf } = useLocalDocumentMutations(kind, itemId);
+  const { add, update, remove, uploadPdf } = useLocalDocumentMutations(kind, itemId);
+  /** Document being edited in the form; null = the form adds a new one. */
+  const [editingId, setEditingId] = React.useState<string | null>(null);
   const pdfInputRef = React.useRef<HTMLInputElement>(null);
 
   /** PDF → the backend extracts the text and sends it to the AI (title defaults to the file name). */
@@ -882,8 +907,15 @@ function DocumentsPanel({ kind, itemId, canEdit, myUid }: { kind: LocalKind; ite
     setShowErrors(true);
     if (title.trim().length < 3 || title.trim().length > 255 || content.trim().length < 10) return;
     try {
-      await add.mutateAsync({ title: title.trim(), content: content.trim(), fileUrl: fileUrl.trim() || undefined, type });
-      toast.success("Đã thêm tài liệu", { description: "AI sẽ dùng tài liệu này khi trả lời về nội dung." });
+      const payload = { title: title.trim(), content: content.trim(), fileUrl: fileUrl.trim() || undefined, type };
+      if (editingId) {
+        await update.mutateAsync({ docId: editingId, payload });
+        toast.success("Đã cập nhật tài liệu", { description: "AI đọc lại tài liệu ở chế độ nền." });
+      } else {
+        await add.mutateAsync(payload);
+        toast.success("Đã thêm tài liệu", { description: "AI sẽ dùng tài liệu này khi trả lời về nội dung." });
+      }
+      setEditingId(null);
       setTitle("");
       setContent("");
       setFileUrl("");
@@ -920,7 +952,18 @@ function DocumentsPanel({ kind, itemId, canEdit, myUid }: { kind: LocalKind; ite
                 {uploadPdf.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="h-4 w-4" aria-hidden="true" />}
                 {uploadPdf.isPending ? "Đang tải PDF..." : "Tải PDF"}
               </button>
-              <button type="button" className="btn-ink" onClick={() => setOpen(true)}>
+              <button
+                type="button"
+                className="btn-ink"
+                onClick={() => {
+                  setEditingId(null);
+                  setTitle("");
+                  setContent("");
+                  setFileUrl("");
+                  setType("TEXT");
+                  setOpen(true);
+                }}
+              >
                 <Plus className="h-4 w-4" aria-hidden="true" /> Thêm tài liệu
               </button>
             </div>
@@ -945,11 +988,18 @@ function DocumentsPanel({ kind, itemId, canEdit, myUid }: { kind: LocalKind; ite
             <StaffFormInput type="url" value={fileUrl} onChange={(e) => setFileUrl(e.target.value)} maxLength={500} placeholder="https://..." />
           </Field>
           <div className="flex justify-end gap-2">
-            <button type="button" className="btn-line" onClick={() => setOpen(false)}>
+            <button
+              type="button"
+              className="btn-line"
+              onClick={() => {
+                setOpen(false);
+                setEditingId(null);
+              }}
+            >
               Hủy
             </button>
             <button type="button" className="btn-crimson disabled:opacity-60" onClick={submit} disabled={add.isPending}>
-              {add.isPending ? "Đang thêm..." : "Thêm tài liệu"}
+              {add.isPending || update.isPending ? "Đang lưu..." : editingId ? "Lưu tài liệu" : "Thêm tài liệu"}
             </button>
           </div>
         </Panel>
@@ -982,9 +1032,25 @@ function DocumentsPanel({ kind, itemId, canEdit, myUid }: { kind: LocalKind; ite
                 </p>
               </div>
               {d.uid === myUid && (
-                <IconAction label={`Xóa tài liệu ${d.title}`} tone="danger" onClick={() => setDeleting({ id: d.docId, title: d.title })}>
-                  <Trash2 className="h-4 w-4" />
-                </IconAction>
+                <div className="flex shrink-0">
+                  <IconAction
+                    label={`Sửa tài liệu ${d.title}`}
+                    onClick={() => {
+                      setEditingId(d.docId);
+                      setTitle(d.title);
+                      setContent(d.content ?? "");
+                      setFileUrl(d.fileUrl ?? "");
+                      setType(d.type === "URL" ? "URL" : "TEXT");
+                      setShowErrors(false);
+                      setOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </IconAction>
+                  <IconAction label={`Xóa tài liệu ${d.title}`} tone="danger" onClick={() => setDeleting({ id: d.docId, title: d.title })}>
+                    <Trash2 className="h-4 w-4" />
+                  </IconAction>
+                </div>
               )}
             </li>
           ))}

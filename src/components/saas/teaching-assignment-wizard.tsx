@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useQueries } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, Loader2 } from "lucide-react";
@@ -19,6 +20,8 @@ import { ROUTES } from "@/constants/routes";
 import { useCharacters } from "@/features/characters/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { useQuizSets } from "@/features/quiz/hooks";
+import { localKeys, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
+import { localQuizService } from "@/services/local-quiz.service";
 import { apiErrorMessage } from "@/features/saas/hooks-api";
 import { useCreateAssignment } from "@/features/saas/hooks-assignment-api";
 import type { AssignmentType } from "@/services/assignment.service";
@@ -338,14 +341,34 @@ function CharacterPicker({ selected, onSelect }: PickerProps) {
   );
 }
 
-/** GET /quizzes */
+/**
+ * GET /quizzes (HistoryTalk) + published quizzes of the teacher's local contexts
+ * (GET /teacher/local-contents/contexts/{id}/quizzes), which the public list does not include.
+ */
 function QuizPicker({ selected, onSelect }: PickerProps) {
   const q = useQuizSets();
-  const options = (q.data?.content ?? []).map((z) => ({
-    id: z.quizId,
-    title: z.title,
-    meta: [LEVEL_LABELS[z.level], z.contextTitle].filter(Boolean).join(" · "),
-  }));
+  const { contexts } = useTeacherLocalContent();
+  const local = useQueries({
+    queries: contexts.map((c) => ({
+      queryKey: localKeys.contextQuizzes(c.id),
+      queryFn: () => localQuizService.listForContext(c.id),
+    })),
+  });
+  const localOptions = local
+    .flatMap((r) => r.data?.items ?? [])
+    .filter((z) => z.isPublished)
+    .map((z) => ({ id: z.quizId, title: z.title, meta: ["Kho tư liệu", LEVEL_LABELS[z.level], z.contextTitle].filter(Boolean).join(" · ") }));
+  const localIds = new Set(localOptions.map((o) => o.id));
+  const options = [
+    ...localOptions,
+    ...(q.data?.content ?? [])
+      .filter((z) => !localIds.has(z.quizId))
+      .map((z) => ({
+        id: z.quizId,
+        title: z.title,
+        meta: [LEVEL_LABELS[z.level], z.contextTitle].filter(Boolean).join(" · "),
+      })),
+  ];
   return (
     <ApiState loading={q.isLoading} error={q.isError ? q.error : null}>
       <TargetList options={options} selected={selected} onSelect={onSelect} />

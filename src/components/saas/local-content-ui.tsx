@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Loader2, MessageSquareText } from "lucide-react";
+import { AlertTriangle, Loader2, Map as MapIcon, MessageSquareText } from "lucide-react";
+
+import { BattlePreview } from "@/components/historical-map/BattlePreview";
+import { isBattleMap } from "@/components/historical-map/battle-map.types";
 
 import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import { LOCAL_ERA_OPTIONS } from "@/features/saas/hooks-teaching";
@@ -167,6 +170,7 @@ export function LocalItemPreview({ item }: { item: LocalItem }) {
             ]}
           />
           <Block title="Nội dung">{item.description}</Block>
+          <BattleMapBlock item={item} />
         </>
       ) : (
         <>
@@ -174,6 +178,28 @@ export function LocalItemPreview({ item }: { item: LocalItem }) {
           <Block title="Tiểu sử">{item.description}</Block>
           {item.personality && <Block title="Tính cách khi trò chuyện với AI">{item.personality}</Block>}
         </>
+      )}
+    </div>
+  );
+}
+
+/** Battle map of a local context: thumbnail + full-screen playback (same player as the official battles). */
+function BattleMapBlock({ item }: { item: LocalItem }) {
+  const [open, setOpen] = React.useState(false);
+  const map = isBattleMap(item.battleMap) ? item.battleMap : null;
+  if (!map?.imageUrl) return null;
+  return (
+    <div className="space-y-2">
+      <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Lược đồ trận đánh</h4>
+      {/* eslint-disable-next-line @next/next/no-img-element -- uploaded battle map image */}
+      <img src={map.imageUrl} alt={`Lược đồ ${item.name}`} className="max-h-56 w-full rounded-[2px] border border-[var(--border-default)] object-cover" />
+      <button type="button" className="btn-ink" onClick={() => setOpen(true)}>
+        <MapIcon className="h-4 w-4" aria-hidden="true" /> Xem diễn biến trận đánh
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-[60] overflow-auto bg-[var(--bg-main)]">
+          <BattlePreview value={map} title={item.name} legacyNarration={item.description ?? ""} onClose={() => setOpen(false)} />
+        </div>
       )}
     </div>
   );

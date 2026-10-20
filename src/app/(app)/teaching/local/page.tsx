@@ -3,7 +3,7 @@
 // Bối cảnh & nhân vật: API Sprint 6 (local-contents). BE chưa có API câu đố do giáo viên soạn nên màn này không có mục câu đố.
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, BookMarked, Plus } from "lucide-react";
+import { ArrowRight, BookMarked, Map as MapIcon, Plus, Trash2 } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -53,9 +53,17 @@ function LocalHistory({ kind, setKind }: { kind: LocalKind; setKind: (k: LocalKi
             ))}
           </TabsList>
         </Tabs>
-        <Link href={ROUTES.TEACHING.LOCAL_NEW(kind)} className="btn-crimson">
-          <Plus className="h-4 w-4" aria-hidden="true" /> Soạn {LOCAL_KIND_LABELS[kind].toLowerCase()} mới
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href={ROUTES.CLASS_MAP} className="btn-line">
+            <MapIcon className="h-4 w-4" aria-hidden="true" /> Xem trên bản đồ
+          </Link>
+          <Link href={ROUTES.TEACHING.LOCAL_TRASH} className="btn-line">
+            <Trash2 className="h-4 w-4" aria-hidden="true" /> Thùng rác
+          </Link>
+          <Link href={ROUTES.TEACHING.LOCAL_NEW(kind)} className="btn-crimson">
+            <Plus className="h-4 w-4" aria-hidden="true" /> Soạn {LOCAL_KIND_LABELS[kind].toLowerCase()} mới
+          </Link>
+        </div>
       </div>
 
       <QueryState isLoading={api.isLoading} isError={api.isError} error={api.error} onRetry={api.refetch}>

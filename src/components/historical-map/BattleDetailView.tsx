@@ -50,6 +50,8 @@ export function BattleDetailView({
   onOpenEditor,
   onCloseEditor,
   previewAsLearner = false,
+  canEdit,
+  onSaveBattleMap,
 }: {
   event: HistoricalEvent;
   pin: MapPin | null;
@@ -63,6 +65,10 @@ export function BattleDetailView({
   onCloseEditor: () => void;
   /** Content Admin previews the page as a learner: no editor entry point. */
   previewAsLearner?: boolean;
+  /** Who may edit the battle map (defaults to Content / System Admins). */
+  canEdit?: boolean;
+  /** Saves the battle map elsewhere (e.g. a school's local context) instead of the event API. */
+  onSaveBattleMap?: (map: BattleMap) => Promise<BattleMap | null | undefined>;
 }) {
   const [chatOpen, setChatOpen] = useState(!!initialCharacterId);
   const [chatMounted, setChatMounted] = useState(!!initialCharacterId);
@@ -71,7 +77,7 @@ export function BattleDetailView({
   const [chatDraft, setChatDraft] = useState("");
   const [muted, setMuted] = useState(false);
   const user = useAuthStore(state => state.user);
-  const isAdmin = (user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN") && !previewAsLearner;
+  const isAdmin = (canEdit ?? (user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN")) && !previewAsLearner;
   const editingMap = editing && isAdmin;
   const updateEvent = useUpdateEvent();
   // Before the server stored lược đồ, the editor kept drafts in localStorage; offer one only while the server has none.
@@ -129,8 +135,10 @@ export function BattleDetailView({
     onClose={onCloseEditor}
     legacyNarration={pin?.description ?? ""}
     onSave={async value => {
-      const updated = await updateEvent.mutateAsync({ id: event.id, data: { battleMap: value } });
-      setSavedMap(updated.battleMap ?? value);
+      const saved = onSaveBattleMap
+        ? await onSaveBattleMap(value)
+        : (await updateEvent.mutateAsync({ id: event.id, data: { battleMap: value } })).battleMap;
+      setSavedMap(saved ?? value);
       try { localStorage.removeItem(legacyDraftKey); } catch { /* storage unavailable */ }
       toast.success("Đã lưu lược đồ trận đánh");
     }}

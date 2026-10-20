@@ -363,7 +363,7 @@ export const staffQuizService = {
 
 // ── Internal helpers ───────────────────────────────────────
 
-function toContractQuestionPayload(question: UpdateQuestionPayload) {
+export function toContractQuestionPayload(question: UpdateQuestionPayload) {
   return {
     ...(question.content !== undefined && { content: question.content }),
     ...(question.questionType !== undefined && { questionType: question.questionType }),
@@ -372,7 +372,7 @@ function toContractQuestionPayload(question: UpdateQuestionPayload) {
   };
 }
 
-function toContractQuizPayload(payload: CreateQuizPayload | UpdateQuizPayload) {
+export function toContractQuizPayload(payload: CreateQuizPayload | UpdateQuizPayload) {
   return {
     ...(payload.title !== undefined && { title: payload.title }),
     ...(payload.contextId !== undefined && { contextId: payload.contextId }),

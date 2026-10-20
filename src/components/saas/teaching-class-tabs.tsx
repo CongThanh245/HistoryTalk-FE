@@ -163,7 +163,7 @@ export function ClassMapTab({ data, classroom }: { data: TeachingData; classroom
         <KpiTile label="Bối cảnh có tọa độ" value={localWithCoords} hint="Tư liệu của lớp đã xuất bản" />
       </div>
       <Link href={mapHref(classroom.id)} className="btn-ink w-full sm:w-auto">
-        Mở bản đồ lớp <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        Mở bản đồ tư liệu <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Link>
     </div>
   );

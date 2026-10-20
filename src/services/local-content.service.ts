@@ -3,6 +3,7 @@
 // Contract: BE docs/FE-contract/LocalContent_APIContract.md (v3: teachers self-publish, no School Admin approval)
 import { axiosClient } from "@/configs/axios.client";
 import type { ApiPage } from "@/services/school.service";
+import type { BattleMap } from "@/components/historical-map/battle-map.types";
 
 // ─── Enums ─────────────────────────────────────────────────────────────────
 
@@ -51,6 +52,8 @@ export interface LocalItem {
   videoUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  /** Battle map overlay (same shape as the official events' battleMap). */
+  battleMap?: BattleMap | null;
 
   // CHARACTER only
   title?: string | null;
@@ -72,6 +75,8 @@ export interface LocalItem {
 
   createdBy?: LocalAuthor | null;
   approvedBy?: LocalAuthor | null;
+  /** Set on items in the trash. */
+  deletedAt?: string | null;
   schoolId: string;
   schoolName: string;
   createdAt: string;
@@ -96,6 +101,8 @@ export interface LocalContextPayload {
   videoUrl?: string;
   latitude?: number;
   longitude?: number;
+  /** null clears the battle map. */
+  battleMap?: BattleMap | null;
   contentScope?: LocalScope;
   /** Replaces the class assignments; an empty list keeps the current ones (backend skips it). */
   classIds?: string[];
@@ -141,6 +148,9 @@ export interface LocalDocument {
   uploadDate: string;
   updatedDate: string | null;
 }
+
+/** PUT .../documents/{docId}: every field optional; content ≥ 10 characters, title 3–255. */
+export type UpdateLocalDocumentPayload = Partial<LocalDocumentPayload>;
 
 export interface LocalDocumentPayload {
   title: string;
@@ -251,9 +261,38 @@ export const localContentService = {
     const res = await axiosClient.post(`/teacher/local-contents/${segment(kind)}/${id}/documents`, payload);
     return res.data.data;
   },
+  /** Uploader only; the backend re-embeds it for the AI. */
+  updateDocument: async (kind: LocalKind, id: string, docId: string, payload: UpdateLocalDocumentPayload): Promise<void> => {
+    await axiosClient.put(`/teacher/local-contents/${segment(kind)}/${id}/documents/${docId}`, payload);
+  },
   /** Uploader only. */
   removeDocument: async (kind: LocalKind, id: string, docId: string): Promise<void> => {
     await axiosClient.delete(`/teacher/local-contents/${segment(kind)}/${id}/documents/${docId}`);
+  },
+
+  // Teacher: contexts linked to a character (local or global)
+  listCharacterContexts: async (characterId: string): Promise<LocalItem[]> => {
+    const res = await axiosClient.get(`/teacher/local-contents/characters/${characterId}/contexts`);
+    return res.data.data ?? [];
+  },
+  linkCharacterContext: async (characterId: string, contextId: string): Promise<void> => {
+    await axiosClient.post(`/teacher/local-contents/characters/${characterId}/contexts/${contextId}`);
+  },
+  unlinkCharacterContext: async (characterId: string, contextId: string): Promise<void> => {
+    await axiosClient.delete(`/teacher/local-contents/characters/${characterId}/contexts/${contextId}`);
+  },
+
+  // Teacher: trash (deleted items of the school). Restore is PATCH in the code (the contract says POST).
+  listTrash: async (kind: LocalKind, params: { page?: number; size?: number } = {}): Promise<ApiPage<LocalItem>> => {
+    const res = await axiosClient.get(`/teacher/local-contents/trash/${segment(kind)}`, { params: clean(params) });
+    return toPage<LocalItem>(res.data.data);
+  },
+  restore: async (kind: LocalKind, id: string): Promise<void> => {
+    await axiosClient.patch(`/teacher/local-contents/trash/${segment(kind)}/${id}/restore`);
+  },
+  /** Hard delete, cannot be undone. */
+  purge: async (kind: LocalKind, id: string): Promise<void> => {
+    await axiosClient.delete(`/teacher/local-contents/trash/${segment(kind)}/${id}/permanent`);
   },
 
   // Teacher: uploads (Sprint 7, US-SP7-19)

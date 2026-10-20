@@ -106,7 +106,9 @@ function formatYear(year: number) {
 export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, onRouteChange, overlay }: HistoricalMapModalProps) {
   const user = useAuthStore((state) => state.user);
   // "Xem như người học": a Content Admin sees the learner screen, without any editing control.
-  const isAdmin = (user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN") && !overlay?.previewAsLearner;
+  // Pages with their own battles (overlay.events) decide who edits; otherwise Content / System Admins.
+  const isAdmin =
+    (overlay?.canEdit ?? (user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN")) && !overlay?.previewAsLearner;
   const authHydrated = useAuthStore((state) => state.hasHydrated);
   // Personal study notes (USER pins): learners only — never in the admin "Xem như người học" preview.
   const canTakeNotes =
@@ -143,9 +145,10 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
   const { data: eventsData, isLoading: eventsLoading, isError: eventsError, refetch: refetchEvents } =
     useEvents({ page: 1, limit: 200 });
 
+  const customEvents = overlay?.events;
   const events = useMemo(
-    () => (eventsData?.content ?? []).filter((event) => Boolean(event.id)),
-    [eventsData?.content],
+    () => (customEvents ?? eventsData?.content ?? []).filter((event) => Boolean(event.id)),
+    [customEvents, eventsData?.content],
   );
 
   const activeContextId = contextId;
@@ -454,6 +457,8 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
         onBack={() => navigate({ battle: activeEvent.id, view: "map" }, "back")}
         onClose={() => { navigate({ battle: activeEvent.id, view: "map" }, "back"); setSelectedPin(null); }}
         previewAsLearner={overlay?.previewAsLearner}
+        canEdit={overlay?.canEdit}
+        onSaveBattleMap={overlay?.saveBattleMap ? (map) => overlay.saveBattleMap!(activeEvent.id, map) : undefined}
       />
     );
   }
@@ -579,7 +584,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
                       chooseContext("");
                     }
             }
-            overlayPins={mapOverlayPins}
+            overlayPins={mapOverlayPins?.filter((pin) => !pin.eventId || !pinnedEventIds.has(pin.eventId))}
             selectedOverlayId={selectedNoteId && showNoteMarkers ? STUDY_NOTE_PREFIX + selectedNoteId : overlay?.selectedId ?? null}
             onSelectOverlayPin={(id) => {
               if (id.startsWith(STUDY_NOTE_PREFIX)) {

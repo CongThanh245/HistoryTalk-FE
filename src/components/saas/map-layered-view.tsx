@@ -13,8 +13,11 @@ import { localMeta } from "@/components/saas/local-content-ui";
 import { ROUTES } from "@/constants/routes";
 import { useRole } from "@/features/auth/usePermission";
 import type { MapLayerKey } from "@/features/saas/hooks-map";
-import { LOCAL_SCOPE_LABEL, useStudentLocalContent, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
-import type { LocalItem } from "@/services/local-content.service";
+import { LOCAL_SCOPE_LABEL, localKeys, useStudentLocalContent, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
+import { localContentService, type LocalItem } from "@/services/local-content.service";
+import type { HistoricalEvent } from "@/services/event.service";
+import type { BattleMap } from "@/components/historical-map/battle-map.types";
+import { useQueryClient } from "@tanstack/react-query";
 
 type ListTab = "battles" | "notes";
 
@@ -22,13 +25,21 @@ const formatYear = (year: number) => (year < 0 ? `${Math.abs(year)} TCN` : Strin
 
 const LOCAL_PREFIX = "local:";
 
-/** Published local contexts the viewer's school has, for the "Kho tư liệu" layer of the class map. */
-function usePublishedLocalContexts(role: string | null, active: boolean): { contexts: LocalItem[]; enabled: boolean } {
+/**
+ * Local contexts of the viewer's school for the Kho tư liệu map. `contexts`: published ones with coordinates (the
+ * "Kho tư liệu" layer). `battles`: what the map treats as battles — every context a teacher can see (they place pins
+ * and edit battle maps like a Content Admin), only published ones for students.
+ */
+function usePublishedLocalContexts(
+  role: string | null,
+  active: boolean,
+): { contexts: LocalItem[]; battles: LocalItem[]; enabled: boolean } {
   const isTeacher = active && role === "TEACHER";
   const isStudent = active && role === "SCHOOL_STUDENT";
   const teacher = useTeacherLocalContent(isTeacher);
   const student = useStudentLocalContent(isStudent);
   const items = isTeacher ? teacher.contexts : isStudent ? student.items : [];
+  const battles = items.filter((i) => i.type === "CONTEXT" && (isTeacher || i.isPublished));
   const contexts = items.filter(
     (i) =>
       i.type === "CONTEXT" &&
@@ -37,7 +48,24 @@ function usePublishedLocalContexts(role: string | null, active: boolean): { cont
       i.longitude != null &&
       isInsideMapBounds({ latitude: i.latitude, longitude: i.longitude }),
   );
-  return { contexts, enabled: isTeacher || isStudent };
+  return { contexts, battles, enabled: isTeacher || isStudent };
+}
+
+/** A local context in the shape the battle map expects (BC years are negative there). */
+function toBattleEvent(c: LocalItem): HistoricalEvent {
+  const raw = c.year ?? c.startYear ?? c.endYear ?? new Date().getFullYear();
+  return {
+    id: c.id,
+    title: c.name,
+    summary: c.description ?? "",
+    year: c.isBC ? -Math.abs(raw) : raw,
+    location: c.location ?? undefined,
+    imageUrl: c.imageUrl ?? null,
+    videoUrl: c.videoUrl ?? null,
+    battleMap: c.battleMap ?? null,
+    isPublished: c.isPublished,
+    status: c.status,
+  };
 }
 
 /**
@@ -55,7 +83,10 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
   const local = usePublishedLocalContexts(role, classMode);
   const [localFocus, setLocalFocus] = React.useState<(MapCoordinates & { key: string }) | null>(null);
   const [selectedLocalId, setSelectedLocalId] = React.useState<string | null>(null);
-  const globalEditableRole = !classMode && (role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN");
+  const qc = useQueryClient();
+  // Kho tư liệu map: teachers manage pins, camera focuses and battle maps of their school's contexts.
+  const teacherEditableRole = classMode && role === "TEACHER";
+  const globalEditableRole = (!classMode && (role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN")) || teacherEditableRole;
   // Study notes are anchored to battles, so they belong to the battle map.
   const hasNotesLayer = !classMode && Boolean(role && (STUDY_NOTE_ROLES as readonly string[]).includes(role));
 
@@ -77,6 +108,8 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
         longitude: c.longitude!,
         variant: "local",
         meta: `${LOCAL_SCOPE_LABEL[c.contentScope]} · ${localMeta(c)}`,
+        // Replaced by the context's own map pin once a teacher has placed one.
+        eventId: c.id,
       }))
     : [];
 
@@ -120,7 +153,7 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
     <>
       <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-[var(--text-primary)] px-2 py-1 text-[11px] font-bold tracking-[0.04em] text-[var(--text-primary)]">
         <Globe2 size={13} className="text-[var(--accent-gold)]" aria-hidden="true" />
-        Bản đồ chung — hiển thị cho mọi người dùng
+        {teacherEditableRole ? "Kho tư liệu — hiển thị cho học sinh của trường" : "Bản đồ chung — hiển thị cho mọi người dùng"}
       </span>
       {previewButton}
     </>
@@ -129,7 +162,7 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
   const topSlot = adminPreview ? (
     <div role="status" className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-[var(--text-primary)] bg-[var(--text-primary)] px-4 py-1.5 text-xs font-semibold text-[var(--text-inverse)] md:px-6">
       <span className="inline-flex items-center gap-2">
-        <Eye size={14} aria-hidden="true" /> Đang xem như người học — các công cụ chỉnh sửa bản đồ chung đã ẩn.
+        <Eye size={14} aria-hidden="true" /> Đang xem như người học — các công cụ chỉnh sửa bản đồ đã ẩn.
       </span>
       <button
         type="button"
@@ -159,9 +192,12 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
       rows.push({
         key: "local",
         label: "Kho tư liệu",
-        hint: "Bối cảnh giáo viên soạn, đã xuất bản · nhấp hai lần để mở",
-        count: local.contexts.length,
+        hint: globalEditable
+          ? "Bạn đang chỉnh sửa ghim và lược đồ · học sinh của trường thấy bối cảnh đã xuất bản"
+          : "Bối cảnh giáo viên soạn, đã xuất bản · nhấp hai lần để mở",
+        count: Math.max(local.contexts.length, info.battleCount),
         checked: visible.local,
+        locked: globalEditable,
       });
     }
     if (hasNotesLayer && info.canTakeNotes) {
@@ -301,13 +337,22 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
     },
     focus: localFocus,
     onEscape,
-    hideBattlePins: !visible.global,
+    // On the Kho tư liệu map the "battles" are the school's contexts, shown with the local layer.
+    hideBattlePins: classMode ? !visible.local : !visible.global,
     hideStudyNotes: !visible.personal,
     previewAsLearner: adminPreview,
     ...(classMode && {
-      title: "Bản đồ lớp",
+      title: "Bản đồ Kho tư liệu",
       subtitle: "Bối cảnh lịch sử giáo viên soạn cho lớp và trường.",
-      hideBattlePicker: true,
+      hideBattlePicker: !teacherEditableRole,
+      events: local.battles.map(toBattleEvent),
+      canEdit: teacherEditableRole,
+      saveBattleMap: async (eventId: string, map: BattleMap) => {
+        const saved = await localContentService.updateContext(eventId, { battleMap: map });
+        qc.invalidateQueries({ queryKey: ["local-content", "teacher"] });
+        qc.setQueryData(localKeys.item("CONTEXT", eventId), saved);
+        return saved.battleMap ?? map;
+      },
     }),
     headerSlot,
     topSlot,

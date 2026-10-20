@@ -3,7 +3,7 @@
 // Bối cảnh & nhân vật: API Sprint 6 (đã xuất bản). BE chưa có API câu đố do giáo viên soạn.
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, FilePenLine } from "lucide-react";
+import { ArrowRight, FilePenLine, Map as MapIcon } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { ContentSourceTag } from "@/components/saas/content-source-tag";
@@ -47,6 +47,11 @@ export default function ClassMaterialsPage() {
       title="Kho tư liệu"
       description="Bối cảnh và nhân vật do thầy cô và nhà trường biên soạn. Sự kiện, nhân vật và câu đố của HistoryTalk nằm ở mục HistoryTalk trên thanh bên."
     >
+      <div className="mb-5 flex justify-end">
+        <Link href={ROUTES.CLASS_MAP} className="btn-line">
+          <MapIcon className="h-4 w-4" aria-hidden="true" /> Xem trên bản đồ
+        </Link>
+      </div>
       <Materials />
     </SaasShell>
   );
