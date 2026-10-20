@@ -40,9 +40,12 @@ export function SchoolQuotaCard({ role }: { role: string | undefined }) {
         <div className="space-y-4 p-5">
           {!isStudent ? (
             <div className="space-y-2 text-sm text-content-muted">
-              <p>Trò chuyện AI của giáo viên không bị trừ vào hạn mức token của trường.</p>
               <p>
-                Học sinh dùng hết hạn mức trong ngày có thể xin thêm; thầy cô duyệt tại trang{" "}
+                Giáo viên có hạn mức token riêng mỗi ngày, dùng chung cho trò chuyện AI và phần cấp thêm cho học sinh. Hết hạn mức thì gửi yêu cầu
+                lên quản trị trường.
+              </p>
+              <p>
+                Xem số dư, duyệt yêu cầu của học sinh và xin thêm hạn mức tại trang{" "}
                 <Link href={ROUTES.TEACHING.TOKEN_REQUESTS} className="archive-link">
                   Yêu cầu token
                 </Link>

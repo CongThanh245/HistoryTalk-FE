@@ -30,6 +30,7 @@ import { hasPlusAccess, hasProAccess } from "@/services/user.service";
 import { isTokenExhaustionError } from "@/lib/utils/api-error";
 import { handlePlatformLockError } from "@/lib/utils/school-lock";
 import { TokenBoostRequestDialog } from "@/components/saas/token-boost-request-dialog";
+import { TeacherTicketDialog } from "@/components/saas/token-boost-ui";
 import { useSidebar } from "@/components/layouts/sidebar/sidebar-context";
 import {
   Dialog,
@@ -169,6 +170,8 @@ export function ChatMain({
   const canUpgrade = entitlements.canPurchase;
   // School students out of today's limit can ask their teacher for more (Sprint 7 daily boost).
   const canRequestBoost = user?.role === "SCHOOL_STUDENT";
+  // Teachers have their own daily limit (Sprint 7); when it is used up they ask the School Admin.
+  const canRequestTeacherQuota = user?.role === "TEACHER";
   const [isBoostOpen, setIsBoostOpen] = useState(false);
   const [aiWarningVisible, setAiWarningVisible] = useState(false);
   const [aiWarningLeaving, setAiWarningLeaving] = useState(false);
@@ -719,6 +722,11 @@ export function ChatMain({
               },
               duration: 8000,
             });
+          } else if (canRequestTeacherQuota) {
+            toast.error("Bạn đã dùng hết hạn mức token hôm nay (gồm cả phần đã cấp cho học sinh).", {
+              action: { label: "Xin thêm hạn mức", onClick: () => setIsBoostOpen(true) },
+              duration: 8000,
+            });
           } else if (canRequestBoost) {
             toast.error("Em đã dùng hết hạn mức token AI hôm nay. Các tính năng khác vẫn dùng bình thường.", {
               action: { label: "Xin thêm token", onClick: () => setIsBoostOpen(true) },
@@ -1053,12 +1061,12 @@ export function ChatMain({
                   } hoặc quỹ token của trường đã hết. Hạn mức làm mới lúc 00:00; quiz, tài liệu và bài tập vẫn dùng bình thường.`}
             </span>
           </div>
-          {canRequestBoost && (
+          {(canRequestBoost || canRequestTeacherQuota) && (
             <button
               onClick={() => setIsBoostOpen(true)}
               className="btn-crimson min-h-0 px-3 py-1.5 text-[11px] active:scale-95 shrink-0 cursor-pointer"
             >
-              Xin thêm token hôm nay
+              {canRequestTeacherQuota ? "Xin thêm hạn mức" : "Xin thêm token hôm nay"}
             </button>
           )}
           {canUpgrade && (
@@ -1175,6 +1183,7 @@ export function ChatMain({
 
       {canUpgrade && <UpgradeProDialog open={isUpgradeOpen} onOpenChange={setIsUpgradeOpen} />}
       {canRequestBoost && <TokenBoostRequestDialog open={isBoostOpen} onOpenChange={setIsBoostOpen} />}
+      {canRequestTeacherQuota && <TeacherTicketDialog open={isBoostOpen} onOpenChange={setIsBoostOpen} />}
     </div>
   );
 }

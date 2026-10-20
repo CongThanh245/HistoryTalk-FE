@@ -4,7 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { Gift } from "lucide-react";
+
 import { ROUTES } from "@/constants/routes";
+import { GrantTokensDialog } from "@/components/saas/token-boost-ui";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { formatNumber } from "@/components/saas/saas-ui";
 import { KpiTile } from "@/components/saas/teaching-ui";
@@ -55,7 +58,8 @@ function AnalyticsState({
   return <>{children(query.data)}</>;
 }
 
-function StudentTable({ students }: { students: TeacherClassroomStudent[] }) {
+function StudentTable({ students, classId, canGrant }: { students: TeacherClassroomStudent[]; classId: string; canGrant: boolean }) {
+  const [granting, setGranting] = React.useState<{ uid: string; name: string; classId: string } | null>(null);
   const columns = React.useMemo<ColumnDef<TeacherClassroomStudent, unknown>[]>(() => {
     const base: ColumnDef<TeacherClassroomStudent, unknown>[] = [
       {
@@ -102,10 +106,32 @@ function StudentTable({ students }: { students: TeacherClassroomStudent[] }) {
         },
       },
       { accessorKey: "currentTokens", header: "Còn lại hôm nay", cell: ({ row }) => num(row.original.currentTokens) },
+      ...(canGrant
+        ? [
+            {
+              id: "grant",
+              header: "",
+              cell: ({ row }) => (
+                <button
+                  type="button"
+                  className="archive-link whitespace-nowrap"
+                  onClick={() => setGranting({ uid: row.original.studentId, name: row.original.fullName, classId })}
+                >
+                  <Gift className="h-3.5 w-3.5" aria-hidden="true" /> Cấp token
+                </button>
+              ),
+            } satisfies ColumnDef<TeacherClassroomStudent, unknown>,
+          ]
+        : []),
     ];
-  }, []);
+  }, [canGrant, classId]);
 
-  return <StaffDataTable columns={columns} data={students} emptyMessage="Lớp chưa có học sinh." />;
+  return (
+    <>
+      <StaffDataTable columns={columns} data={students} emptyMessage="Lớp chưa có học sinh." />
+      <GrantTokensDialog student={granting} onOpenChange={(o) => !o && setGranting(null)} />
+    </>
+  );
 }
 
 /** Tab "Thong ke": KPI lop + bang ket qua tung hoc sinh. */
@@ -164,7 +190,7 @@ export function TeacherClassStats({ classId }: { classId: string }) {
             {data.status === "ARCHIVED" && (
               <p className="text-sm text-content-muted">Lớp thuộc năm học đã kết thúc (đã lưu trữ); số liệu chỉ để tham khảo.</p>
             )}
-            <StudentTable students={data.students} />
+            <StudentTable students={data.students} classId={classId} canGrant={data.status !== "ARCHIVED"} />
           </div>
         );
       }}

@@ -256,6 +256,45 @@ export const localContentService = {
     await axiosClient.delete(`/teacher/local-contents/${segment(kind)}/${id}/documents/${docId}`);
   },
 
+  // Teacher: uploads (Sprint 7, US-SP7-19)
+  /** Image (PNG/JPG/WebP ≤ 2 MB) to the school storage; returns a public URL for imageUrl. Works before the item exists. */
+  uploadImage: async (file: File, onProgress?: (percent: number) => void): Promise<string> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await axiosClient.post("/teacher/local-contents/media/upload", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (e) => onProgress && e.total && onProgress(Math.round((e.loaded / e.total) * 100)),
+    });
+    const url = res.data.data?.url;
+    if (!url) throw new Error(res.data.message ?? "Tải ảnh thất bại");
+    return url;
+  },
+  /** 3D model (.glb / .gltf, ≤ 100 MB) for a saved character; returns its URL. */
+  uploadCharacterModel: async (characterId: string, file: File, onProgress?: (percent: number) => void): Promise<string> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await axiosClient.post(`/teacher/local-contents/characters/${characterId}/media/upload-direct`, form, {
+      params: { mediaType: "MODEL_3D" },
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 300_000,
+      onUploadProgress: (e) => onProgress && e.total && onProgress(Math.round((e.loaded / e.total) * 100)),
+    });
+    const url = res.data.data?.url ?? res.data.data?.viewUrl;
+    if (!url) throw new Error(res.data.message ?? "Tải mô hình 3D thất bại");
+    return url;
+  },
+  /** PDF document for the AI (RAG); the backend extracts the text. `title` defaults to the file name. */
+  uploadDocumentPdf: async (kind: LocalKind, id: string, file: File, title?: string): Promise<LocalDocument> => {
+    const form = new FormData();
+    form.append("file", file);
+    if (title?.trim()) form.append("title", title.trim());
+    const res = await axiosClient.post(`/teacher/local-contents/${segment(kind)}/${id}/documents/upload-pdf`, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 180_000,
+    });
+    return res.data.data;
+  },
+
   // School Admin: every item of the school, any status.
   listForSchool: async (kind: LocalKind, params: SchoolLocalListParams = {}): Promise<ApiPage<LocalItem>> => {
     const res = await axiosClient.get(`/school-admin/local-contents/${segment(kind)}`, { params: clean(params) });

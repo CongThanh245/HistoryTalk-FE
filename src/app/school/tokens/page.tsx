@@ -38,9 +38,9 @@ export default function SchoolTokensPage() {
         <Panel>
           <SectionHeading
             title="Yêu cầu xin thêm token"
-            description="Học sinh hết hạn mức trong ngày gửi yêu cầu cho giáo viên lớp. Bạn cũng có thể duyệt thay. Token duyệt thêm chỉ có hiệu lực trong ngày."
+            description="Giáo viên cấp token cho học sinh từ hạn mức của mình; khi hết, giáo viên chuyển yêu cầu (hoặc tự xin) lên đây. Bạn duyệt từ quỹ chung của trường, token chỉ có hiệu lực trong ngày."
           />
-          <TokenBoostReviewList scopeHint="Yêu cầu của học sinh toàn trường sẽ hiện ở đây." />
+          <TokenBoostReviewList reviewer="SCHOOL_ADMIN" scopeHint="Yêu cầu giáo viên chuyển lên và yêu cầu của giáo viên sẽ hiện ở đây." />
         </Panel>
 
         <AcademicRolloverPanel />

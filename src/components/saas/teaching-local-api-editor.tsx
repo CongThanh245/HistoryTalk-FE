@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, EyeOff, FileText, Globe, Lock, Plus, Save, Send, Settings2, ShieldCheck, Trash2 } from "lucide-react";
+import { ArrowLeft, EyeOff, FileText, Globe, Loader2, Lock, Plus, Save, Send, Settings2, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -26,14 +26,15 @@ import { LOCAL_ERA_OPTIONS, LOCAL_KIND_LABELS } from "@/features/saas/hooks-teac
 import { validateCharacterDraft, validateContextDraft } from "@/lib/utils/content-validation";
 import { isValidUrl } from "@/lib/utils/url";
 import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
-import type {
-  LocalCharacterPayload,
-  LocalContextPayload,
-  LocalDocumentType,
-  LocalEra,
-  LocalItem,
-  LocalKind,
-  LocalScope,
+import {
+  localContentService,
+  type LocalCharacterPayload,
+  type LocalContextPayload,
+  type LocalDocumentType,
+  type LocalEra,
+  type LocalItem,
+  type LocalKind,
+  type LocalScope,
 } from "@/services/local-content.service";
 import { useAuthStore } from "@/store/auth.store";
 import { cn } from "@/lib/utils/cn";
@@ -353,14 +354,15 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
               {kind === "CONTEXT" ? (
                 <MediaFields
                   err={err}
-                  image={{ value: form.ctx.imageUrl, onChange: (imageUrl) => patchCtx({ imageUrl }), errKey: "imageUrl", label: "Ảnh bối cảnh (URL)" }}
+                  image={{ value: form.ctx.imageUrl, onChange: (imageUrl) => patchCtx({ imageUrl }), errKey: "imageUrl", label: "Ảnh bối cảnh" }}
                   video={{ value: form.ctx.videoUrl, onChange: (videoUrl) => patchCtx({ videoUrl }), errKey: "videoUrl", label: "Video bối cảnh (URL)" }}
                 />
               ) : (
                 <MediaFields
                   err={err}
-                  image={{ value: form.chr.imageUrl, onChange: (imageUrl) => patchChr({ imageUrl }), errKey: "image", label: "Ảnh nhân vật (URL)" }}
-                  model={{ value: form.chr.modelUrl, onChange: (modelUrl) => patchChr({ modelUrl }), errKey: "modelUrl", label: "Mô hình 3D (URL)" }}
+                  image={{ value: form.chr.imageUrl, onChange: (imageUrl) => patchChr({ imageUrl }), errKey: "image", label: "Ảnh nhân vật" }}
+                  model={{ value: form.chr.modelUrl, onChange: (modelUrl) => patchChr({ modelUrl }), errKey: "modelUrl", label: "Mô hình 3D" }}
+                  characterId={item?.id}
                 />
               )}
             </Panel>
@@ -688,13 +690,104 @@ function CharacterContent({ f, patch, err }: { f: ChrForm; patch: (p: Partial<Ch
 
 type UrlSlot = { value: string; onChange: (v: string) => void; errKey: string; label: string };
 
-/** URL inputs with a live preview, in place of the staff upload slots. */
-function MediaFields({ image, video, model, err }: { image: UrlSlot; video?: UrlSlot; model?: UrlSlot; err: ErrFn }) {
+const IMAGE_MAX_MB = 2;
+/** The contract says 100 MB, but the backend multipart limit is 50 MB. */
+const MODEL_MAX_MB = 50;
+
+/**
+ * Upload button next to a URL input. The returned URL fills the field; it is saved with the rest of the form.
+ * Images: POST /teacher/local-contents/media/upload (works before the item exists). 3D models: the character's
+ * media/upload-direct, so only once the character is saved.
+ */
+function UploadButton({
+  label,
+  accept,
+  maxMb,
+  upload,
+  onUploaded,
+  disabled,
+}: {
+  label: string;
+  accept: string;
+  maxMb: number;
+  upload: (file: File, onProgress: (p: number) => void) => Promise<string>;
+  onUploaded: (url: string) => void;
+  disabled?: boolean;
+}) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [progress, setProgress] = React.useState<number | null>(null);
+
+  const onFile = async (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > maxMb * 1024 * 1024) {
+      toast.error(`Tệp quá lớn: tối đa ${maxMb} MB.`);
+      return;
+    }
+    setProgress(0);
+    try {
+      onUploaded(await upload(file, setProgress));
+      toast.success("Đã tải lên", { description: "Bấm Lưu để cập nhật nội dung." });
+    } catch (error) {
+      toast.error(apiErrorMessage(error, error instanceof Error ? error.message : "Tải lên thất bại. Vui lòng thử lại."));
+    } finally {
+      setProgress(null);
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => {
+          void onFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+      <button
+        type="button"
+        className="btn-line shrink-0 disabled:opacity-60"
+        disabled={disabled || progress !== null}
+        onClick={() => inputRef.current?.click()}
+      >
+        {progress !== null ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="h-4 w-4" aria-hidden="true" />}
+        {progress !== null ? `${progress}%` : label}
+      </button>
+    </>
+  );
+}
+
+/** Upload or paste a URL, with a live preview. */
+function MediaFields({
+  image,
+  video,
+  model,
+  characterId,
+  err,
+}: {
+  image: UrlSlot;
+  video?: UrlSlot;
+  model?: UrlSlot;
+  /** Saved character, required to upload a 3D model. */
+  characterId?: string;
+  err: ErrFn;
+}) {
   const embed = video ? getYouTubeEmbedUrl(video.value) : null;
   return (
     <div className="space-y-5">
-      <Field label={image.label} error={err(image.errKey)} hint="Dán đường dẫn ảnh (JPEG, PNG, WEBP...).">
-        <StaffFormInput type="url" value={image.value} onChange={(e) => image.onChange(e.target.value)} maxLength={500} placeholder="https://..." />
+      <Field label={image.label} error={err(image.errKey)} hint={`Tải ảnh PNG, JPG, WEBP (tối đa ${IMAGE_MAX_MB} MB) hoặc dán đường dẫn ảnh.`}>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <StaffFormInput type="url" value={image.value} onChange={(e) => image.onChange(e.target.value)} maxLength={500} placeholder="https://..." />
+          <UploadButton
+            label="Tải ảnh lên"
+            accept="image/png,image/jpeg,image/webp"
+            maxMb={IMAGE_MAX_MB}
+            upload={(file, onProgress) => localContentService.uploadImage(file, onProgress)}
+            onUploaded={image.onChange}
+          />
+        </div>
       </Field>
       {isValidUrl(image.value.trim()) && (
         // eslint-disable-next-line @next/next/no-img-element -- teacher-provided URL of any host
@@ -702,7 +795,7 @@ function MediaFields({ image, video, model, err }: { image: UrlSlot; video?: Url
       )}
       {video && (
         <>
-          <Field label={video.label} error={err(video.errKey)} hint="YouTube hoặc đường dẫn video trực tiếp (MP4, WEBM).">
+          <Field label={video.label} error={err(video.errKey)} hint="Dán link YouTube hoặc video trực tiếp (MP4, WEBM). Hệ thống chưa hỗ trợ tải video lên.">
             <StaffFormInput type="url" value={video.value} onChange={(e) => video.onChange(e.target.value)} maxLength={500} placeholder="https://.../video.mp4" />
           </Field>
           {embed ? (
@@ -715,8 +808,26 @@ function MediaFields({ image, video, model, err }: { image: UrlSlot; video?: Url
         </>
       )}
       {model && (
-        <Field label={model.label} error={err(model.errKey)} hint="Đường dẫn tệp .glb / .gltf.">
-          <StaffFormInput type="url" value={model.value} onChange={(e) => model.onChange(e.target.value)} maxLength={500} placeholder="https://.../model.glb" />
+        <Field
+          label={model.label}
+          error={err(model.errKey)}
+          hint={
+            characterId
+              ? `Tải tệp .glb / .gltf (tối đa ${MODEL_MAX_MB} MB) hoặc dán đường dẫn.`
+              : "Dán đường dẫn tệp .glb / .gltf. Lưu nhân vật trước để tải tệp lên."
+          }
+        >
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <StaffFormInput type="url" value={model.value} onChange={(e) => model.onChange(e.target.value)} maxLength={500} placeholder="https://.../model.glb" />
+            <UploadButton
+              label="Tải mô hình lên"
+              accept=".glb,.gltf,model/gltf-binary,model/gltf+json"
+              maxMb={MODEL_MAX_MB}
+              disabled={!characterId}
+              upload={(file, onProgress) => localContentService.uploadCharacterModel(characterId!, file, onProgress)}
+              onUploaded={model.onChange}
+            />
+          </div>
         </Field>
       )}
     </div>
@@ -725,6 +836,8 @@ function MediaFields({ image, video, model, err }: { image: UrlSlot; video?: Url
 
 /* ───────────────────────── Documents (RAG) ───────────────────────── */
 
+const PDF_MAX_MB = 20;
+
 const DOC_TYPE_OPTIONS: { value: LocalDocumentType; label: string }[] = [
   { value: "TEXT", label: "Văn bản" },
   { value: "URL", label: "Liên kết" },
@@ -732,7 +845,28 @@ const DOC_TYPE_OPTIONS: { value: LocalDocumentType; label: string }[] = [
 
 function DocumentsPanel({ kind, itemId, canEdit, myUid }: { kind: LocalKind; itemId: string; canEdit: boolean; myUid?: string }) {
   const docs = useLocalDocuments(kind, itemId);
-  const { add, remove } = useLocalDocumentMutations(kind, itemId);
+  const { add, remove, uploadPdf } = useLocalDocumentMutations(kind, itemId);
+  const pdfInputRef = React.useRef<HTMLInputElement>(null);
+
+  /** PDF → the backend extracts the text and sends it to the AI (title defaults to the file name). */
+  const onPdf = (file: File | undefined) => {
+    if (!file) return;
+    if (file.type && file.type !== "application/pdf") {
+      toast.error("Chỉ nhận tệp PDF.");
+      return;
+    }
+    if (file.size > PDF_MAX_MB * 1024 * 1024) {
+      toast.error(`Tệp quá lớn: tối đa ${PDF_MAX_MB} MB.`);
+      return;
+    }
+    uploadPdf.mutate(
+      { file, title: file.name.replace(/\.pdf$/i, "") },
+      {
+        onSuccess: () => toast.success("Đã tải PDF lên", { description: "Hệ thống trích văn bản để AI dùng khi trả lời." }),
+        onError: (error) => toast.error(apiErrorMessage(error, "Không tải được PDF. Vui lòng thử lại.")),
+      },
+    );
+  };
   const [open, setOpen] = React.useState(false);
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
@@ -769,10 +903,27 @@ function DocumentsPanel({ kind, itemId, canEdit, myUid }: { kind: LocalKind; ite
         title={`Tài liệu cho AI (${list.length})`}
         description="Tư liệu tham khảo giúp AI trả lời chính xác hơn khi học sinh hỏi về nội dung này."
         actions={
-          canEdit && !open && (
-            <button type="button" className="btn-ink" onClick={() => setOpen(true)}>
-              <Plus className="h-4 w-4" aria-hidden="true" /> Thêm tài liệu
-            </button>
+          canEdit &&
+          !open && (
+            <div className="flex flex-wrap gap-2">
+              <input
+                ref={pdfInputRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                className="hidden"
+                onChange={(e) => {
+                  onPdf(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+              <button type="button" className="btn-line disabled:opacity-60" disabled={uploadPdf.isPending} onClick={() => pdfInputRef.current?.click()}>
+                {uploadPdf.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="h-4 w-4" aria-hidden="true" />}
+                {uploadPdf.isPending ? "Đang tải PDF..." : "Tải PDF"}
+              </button>
+              <button type="button" className="btn-ink" onClick={() => setOpen(true)}>
+                <Plus className="h-4 w-4" aria-hidden="true" /> Thêm tài liệu
+              </button>
+            </div>
           )
         }
       />

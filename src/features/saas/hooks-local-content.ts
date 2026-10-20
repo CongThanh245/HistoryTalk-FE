@@ -144,6 +144,10 @@ export function useLocalDocumentMutations(kind: LocalKind, id: string) {
       mutationFn: (docId: string) => localContentService.removeDocument(kind, id, docId),
       onSuccess: refresh,
     }),
+    uploadPdf: useMutation({
+      mutationFn: ({ file, title }: { file: File; title?: string }) => localContentService.uploadDocumentPdf(kind, id, file, title),
+      onSuccess: refresh,
+    }),
   };
 }
 

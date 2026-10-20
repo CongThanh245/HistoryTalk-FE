@@ -12,7 +12,7 @@ import { academicYearLabel, currentAcademicYear } from "@/components/saas/class-
 import { apiErrorMessage, useApiSchoolClassrooms, useUpdateApiClassroom } from "@/features/saas/hooks-api";
 import { tokenApiErrorMessage, useRolloverAcademicYear, useUpdateTokenPolicy } from "@/features/saas/hooks-school-token";
 import type { ApiClassroom } from "@/services/school.service";
-import { DAILY_QUOTA_MIN, DEFAULT_DAILY_QUOTA } from "@/services/school-token.service";
+import { DAILY_QUOTA_MIN, DEFAULT_DAILY_QUOTA, DEFAULT_TEACHER_QUOTA, TEACHER_QUOTA_MIN } from "@/services/school-token.service";
 import { cn } from "@/lib/utils/cn";
 
 const parseInt0 = (v: string) => Number(v.replace(/[.\s,]/g, ""));
@@ -38,9 +38,16 @@ export function DailyQuotaPolicyPanel({ currentDefault }: { currentDefault?: num
     setSyncedDefault(currentDefault);
     if (currentDefault != null) setSchoolQuota(String(currentDefault));
   }
+  // No API returns the teacher default yet (only the PUT response), so start from the backend default.
+  const [teacherQuota, setTeacherQuota] = React.useState(String(DEFAULT_TEACHER_QUOTA));
+  const [savedTeacherQuota, setSavedTeacherQuota] = React.useState<number | null>(null);
   const [grade, setGrade] = React.useState("12");
   const [gradeQuota, setGradeQuota] = React.useState("2000");
-  const [touched, setTouched] = React.useState<"school" | "grade" | null>(null);
+  const [touched, setTouched] = React.useState<"school" | "grade" | "teacher" | null>(null);
+  const teacherError =
+    touched === "teacher" && (!Number.isInteger(parseInt0(teacherQuota)) || parseInt0(teacherQuota) < TEACHER_QUOTA_MIN)
+      ? `Tối thiểu ${formatNumber(TEACHER_QUOTA_MIN)} token`
+      : null;
 
   const schoolError = touched === "school" ? quotaError(schoolQuota) : null;
   const gradeError = touched === "grade" ? quotaError(gradeQuota) : null;
@@ -53,6 +60,22 @@ export function DailyQuotaPolicyPanel({ currentDefault }: { currentDefault?: num
       { defaultDailyStudentQuota: parseInt0(schoolQuota) },
       {
         onSuccess: () => toast.success(`Mặc định toàn trường: ${formatNumber(parseInt0(schoolQuota))} token / học sinh / ngày`),
+        onError: (e) => toast.error(policyErrorMessage(e)),
+      },
+    );
+  };
+
+  const saveTeacher = () => {
+    setTouched("teacher");
+    const n = parseInt0(teacherQuota);
+    if (!Number.isInteger(n) || n < TEACHER_QUOTA_MIN) return;
+    update.mutate(
+      { defaultDailyTeacherQuota: n },
+      {
+        onSuccess: (school) => {
+          setSavedTeacherQuota(school.defaultDailyTeacherQuota ?? n);
+          toast.success(`Hạn mức giáo viên: ${formatNumber(n)} token / ngày`);
+        },
         onError: (e) => toast.error(policyErrorMessage(e)),
       },
     );
@@ -80,13 +103,30 @@ export function DailyQuotaPolicyPanel({ currentDefault }: { currentDefault?: num
       <div className="grid gap-x-8 gap-y-5 md:grid-cols-2">
         <QuotaRow
           id="quota-default"
-          label="Mặc định toàn trường"
+          label="Mặc định cho học sinh"
           hint="Áp dụng cho mọi lớp chưa có hạn mức riêng."
           value={schoolQuota}
           onChange={setSchoolQuota}
           error={schoolError}
         >
           <button type="button" className="btn-crimson disabled:opacity-60" disabled={update.isPending || !schoolDirty} onClick={saveSchool}>
+            Lưu
+          </button>
+        </QuotaRow>
+
+        <QuotaRow
+          id="quota-teacher"
+          label="Hạn mức giáo viên"
+          hint={
+            savedTeacherQuota != null
+              ? `Đang áp dụng ${formatNumber(savedTeacherQuota)} token/ngày. Dùng chung cho chat AI của giáo viên và phần cấp cho học sinh.`
+              : `Mặc định ${formatNumber(DEFAULT_TEACHER_QUOTA)} token/ngày. Dùng chung cho chat AI của giáo viên và phần cấp cho học sinh.`
+          }
+          value={teacherQuota}
+          onChange={setTeacherQuota}
+          error={teacherError}
+        >
+          <button type="button" className="btn-crimson disabled:opacity-60" disabled={update.isPending} onClick={saveTeacher}>
             Lưu
           </button>
         </QuotaRow>

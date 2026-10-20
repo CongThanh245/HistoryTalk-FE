@@ -112,6 +112,8 @@ export interface ApiSchool {
   unallocatedTokenQuota: number;
   /** Tokens a student may spend per day unless their class overrides it. */
   defaultDailyStudentQuota?: number | null;
+  /** Teacher's own daily limit (chats + grants to students). */
+  defaultDailyTeacherQuota?: number | null;
   /** yyyy-MM-dd, 01/09 of the school year. */
   subscriptionStartDate?: string | null;
   /** yyyy-MM-dd, 31/05 of the school year. */

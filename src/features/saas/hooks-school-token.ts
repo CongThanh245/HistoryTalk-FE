@@ -8,8 +8,10 @@ import {
   schoolTokenService,
   type AcademicYearRolloverPayload,
   type BoostListParams,
+  type CreateTeacherTicketPayload,
   type CreateTokenBoostPayload,
   type DeactivationReason,
+  type GrantStudentTokensPayload,
   type RenewSubscriptionPayload,
   type ReviewTokenBoostPayload,
   type TopUpPayload,
@@ -32,6 +34,7 @@ export const boostKeys = {
   all: ["school-token", "boosts"] as const,
   mine: ["school-token", "boosts", "mine"] as const,
   review: (params: BoostListParams) => ["school-token", "boosts", "review", params] as const,
+  school: (params: BoostListParams) => ["school-token", "boosts", "school", params] as const,
 };
 
 /** Dashboards (daily limits, pools, pending counts) and the school token quota. */
@@ -59,23 +62,54 @@ export function useRequestTokenBoost() {
 
 // ─── Teacher / School Admin ────────────────────────────────────────────────
 
-export function useTokenBoostsForReview(params: BoostListParams, enabled = true) {
+export type BoostReviewer = "TEACHER" | "SCHOOL_ADMIN";
+
+/** Teacher: requests of their classes + their own tickets. School Admin: the whole school. */
+export function useTokenBoostsForReview(reviewer: BoostReviewer, params: BoostListParams, enabled = true) {
   return useQuery({
-    queryKey: boostKeys.review(params),
-    queryFn: () => schoolTokenService.listBoosts(params),
+    queryKey: reviewer === "TEACHER" ? boostKeys.review(params) : boostKeys.school(params),
+    queryFn: () => (reviewer === "TEACHER" ? schoolTokenService.listBoosts(params) : schoolTokenService.listBoostsForSchool(params)),
     enabled,
   });
 }
 
-export function useReviewTokenBoost() {
+/** Refresh tickets, dashboards and the teacher's profile (its `token` is their remaining daily limit). */
+function useRefreshAfterTokenChange() {
   const qc = useQueryClient();
   const refreshDashboards = useRefreshDashboards();
+  return () => {
+    qc.invalidateQueries({ queryKey: boostKeys.all });
+    qc.invalidateQueries({ queryKey: ["profile"] });
+    refreshDashboards();
+  };
+}
+
+/** Teacher APPROVE takes from their own daily limit (ESCALATE forwards); School Admin APPROVE takes from the pool. */
+export function useReviewTokenBoost(reviewer: BoostReviewer) {
+  const refresh = useRefreshAfterTokenChange();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: ReviewTokenBoostPayload }) => schoolTokenService.reviewBoost(id, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: boostKeys.all });
-      refreshDashboards();
-    },
+    mutationFn: ({ id, payload }: { id: string; payload: ReviewTokenBoostPayload }) =>
+      reviewer === "TEACHER" ? schoolTokenService.reviewBoost(id, payload) : schoolTokenService.reviewBoostAsAdmin(id, payload),
+    onSuccess: refresh,
+  });
+}
+
+/** Teacher gives tokens from their own daily limit to one of their students. */
+export function useGrantStudentTokens() {
+  const refresh = useRefreshAfterTokenChange();
+  return useMutation({
+    mutationFn: ({ studentId, payload }: { studentId: string; payload: GrantStudentTokensPayload }) =>
+      schoolTokenService.grantToStudent(studentId, payload),
+    onSuccess: refresh,
+  });
+}
+
+/** Teacher asks the School Admin for more (for themself, or for a student). */
+export function useCreateTeacherTicket() {
+  const refresh = useRefreshAfterTokenChange();
+  return useMutation({
+    mutationFn: (payload: CreateTeacherTicketPayload) => schoolTokenService.createTeacherTicket(payload),
+    onSuccess: refresh,
   });
 }
 

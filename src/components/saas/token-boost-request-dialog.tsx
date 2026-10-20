@@ -19,7 +19,7 @@ const PRESETS = [500, 1_000, 2_000, 5_000];
 export function usePendingBoostToday(enabled = true): TokenBoostRequest | undefined {
   const { data } = useMyTokenBoosts(enabled);
   const today = localDateKey();
-  return data?.find((r) => r.status === "PENDING" && r.requestDate === today);
+  return data?.find((r) => (r.status === "PENDING" || r.status === "PENDING_ADMIN") && r.requestDate === today);
 }
 
 /**
@@ -81,7 +81,7 @@ export function TokenBoostRequestDialog({ open, onOpenChange }: { open: boolean;
           <DialogHeader>
             <DialogTitle className={DIALOG_TITLE_CLASS}>Xin thêm token hôm nay</DialogTitle>
             <DialogDescription className="text-content-muted">
-              Yêu cầu được gửi tới thầy cô phụ trách lớp. Token được duyệt chỉ dùng trong hôm nay; hạn mức làm mới lúc 00:00.
+              Yêu cầu được gửi tới thầy cô phụ trách lớp, thầy cô cấp từ hạn mức của mình (hoặc chuyển lên quản trị trường). Token được cấp chỉ dùng trong hôm nay; hạn mức làm mới lúc 00:00.
             </DialogDescription>
           </DialogHeader>
 
