@@ -43,7 +43,7 @@ export default function MyAssignmentsPage() {
     <SaasShell
       variant="app"
       title="Bài tập được giao"
-      description="Đọc bối cảnh, trò chuyện với nhân vật và làm bài trắc nghiệm thầy cô đã giao cho lớp em."
+      description="Đọc bối cảnh, trò chuyện với nhân vật và làm bài kiểm tra thầy cô đã giao cho lớp em."
     >
       {role === "SCHOOL_STUDENT" ? (
         <AssignmentsBoard />
@@ -100,9 +100,8 @@ function AssignmentsBoard() {
 
   return (
     <div className="space-y-4">
-      <div role="tablist" aria-label="Lọc bài tập" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      <div role="tablist" aria-label="Lọc bài tập" className="flex flex-wrap gap-1.5">
         {TABS.map((t) => {
-          const Icon = t.icon;
           const selected = t.id === tab;
           return (
             <button
@@ -114,18 +113,15 @@ function AssignmentsBoard() {
               aria-controls="assignment-panel"
               onClick={() => setTab(t.id)}
               className={cn(
-                "flex items-center gap-3 rounded-[2px] border px-3 py-2.5 text-left motion-safe:transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]",
-                selected ? "border-[var(--text-primary)]" : "border-[var(--border-strong)] bg-transparent hover:border-[var(--text-primary)]",
+                "inline-flex items-center gap-2 rounded-[2px] border px-3 py-1.5 text-[13px] font-semibold motion-safe:transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]",
+                selected
+                  ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-surface)]"
+                  : "border-[var(--border-strong)] text-content-text hover:border-[var(--text-primary)]",
               )}
-              style={selected ? { background: `color-mix(in srgb, ${t.color} 9%, var(--bg-surface))` } : undefined}
             >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] text-white" style={{ background: t.color }} aria-hidden="true">
-                <Icon className="h-4 w-4" />
-              </span>
-              <span className="min-w-0">
-                <span className="block font-display text-2xl font-extrabold tabular-nums leading-none text-content-text">{counts[t.id]}</span>
-                <span className="block truncate text-[12px] font-bold text-content-muted">{t.label}</span>
-              </span>
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: t.color }} aria-hidden="true" />
+              {t.label}
+              <span className={cn("tabular-nums", selected ? "opacity-80" : "text-content-muted")}>{counts[t.id]}</span>
             </button>
           );
         })}

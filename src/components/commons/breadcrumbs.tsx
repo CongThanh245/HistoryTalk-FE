@@ -170,6 +170,10 @@ function BreadcrumbLabel({ segment, parentSegment }: { segment: string; parentSe
     if (parentSegment === "classes") {
       return <ClassroomName id={segment} />;
     }
+    // Ten bai tap da hien o tieu de trang; khong in UUID len breadcrumb.
+    if (parentSegment === "assignments") {
+      return <>Chi tiết</>;
+    }
 
     return <>{segment.slice(0, 8)}...</>;
   }

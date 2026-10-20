@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ArrowRight, Link2, Loader2, Map as MapIcon, Plus, Trash2, Unlink } from "lucide-react";
 import { toast } from "sonner";
 
@@ -10,9 +9,8 @@ import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { BattleMapEditor } from "@/components/historical-map/BattleMapEditor";
 import { ContextMapFocusManager } from "@/components/staff/context-map-focus-manager";
 import { emptyBattleMap, isBattleMap } from "@/components/historical-map/battle-map.types";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { StaffFormInput, StaffFormSelect } from "@/components/staff/staff-form";
-import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
+import { StaffFormSelect } from "@/components/staff/staff-form";
+import { Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
 import { apiErrorMessage } from "@/features/saas/hooks-api";
 import {
@@ -20,12 +18,10 @@ import {
   useCharacterContexts,
   useContextQuizzes,
   useLocalContentMutations,
-  useLocalQuizMutations,
   useTeacherLocalContent,
 } from "@/features/saas/hooks-local-content";
 import { LEVEL_LABELS } from "@/features/saas/hooks-teaching";
 import type { LocalItem } from "@/services/local-content.service";
-import type { StaffQuizLevel } from "@/services/staff.quiz.service";
 import { cn } from "@/lib/utils/cn";
 
 /* Sprint 7 additions to the teacher's local content editor: context links, battle map and quizzes. */
@@ -226,66 +222,32 @@ export function LocalBattleMapPanel({ item, canEdit }: { item: LocalItem; canEdi
 
 /* ───────────────────────── Quizzes ───────────────────────── */
 
-const LEVEL_OPTIONS = (Object.keys(LEVEL_LABELS) as StaffQuizLevel[]).map((l) => ({ value: l, label: LEVEL_LABELS[l] }));
-
 /** Quizzes the teacher wrote for one local context (GET/POST .../contexts/{id}/quizzes). */
 export function ContextQuizzesPanel({ contextId, canEdit }: { contextId: string; canEdit: boolean }) {
-  const router = useRouter();
   const quizzes = useContextQuizzes(contextId);
-  const { create } = useLocalQuizMutations();
-  const [open, setOpen] = React.useState(false);
-  const [title, setTitle] = React.useState("");
-  const [level, setLevel] = React.useState<StaffQuizLevel>("MEDIUM");
-  const [touched, setTouched] = React.useState(false);
-  const titleError = touched && !title.trim() ? "Nhập tên câu đố" : null;
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setTouched(true);
-    if (!title.trim()) return;
-    create.mutate(
-      { contextId, payload: { title: title.trim(), level, isPublished: false } },
-      {
-        onSuccess: (q) => {
-          setOpen(false);
-          toast.success("Đã tạo câu đố", { description: "Thêm câu hỏi rồi bật xuất bản để học sinh làm." });
-          router.push(ROUTES.TEACHING.LOCAL_QUIZ(q.quizId));
-        },
-        onError: (err) => toast.error(apiErrorMessage(err, "Không tạo được câu đố.")),
-      },
-    );
-  };
 
   const rows = quizzes.data?.items ?? [];
 
   return (
     <Panel>
       <SectionHeading
-        title={`Câu đố (${rows.length})`}
+        title={`Bộ đề (${rows.length})`}
         description="Bộ câu hỏi ôn tập cho bối cảnh này. Có thể giao cho lớp ở mục Bài tập."
         actions={
           canEdit && (
-            <button
-              type="button"
-              className="btn-ink"
-              onClick={() => {
-                setTitle("");
-                setLevel("MEDIUM");
-                setTouched(false);
-                setOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" /> Tạo câu đố
-            </button>
+            // BE bat buoc >= 1 cau hoi khi tao, nen soan o trang rieng roi tao 1 lan.
+            <Link href={ROUTES.TEACHING.LOCAL_QUIZ_NEW({ contextId })} className="btn-ink">
+              <Plus className="h-4 w-4" aria-hidden="true" /> Tạo bộ đề
+            </Link>
           )
         }
       />
       {quizzes.isPending ? (
-        <p className="text-sm text-content-muted">Đang tải câu đố...</p>
+        <p className="text-sm text-content-muted">Đang tải bộ đề...</p>
       ) : quizzes.isError ? (
-        <p className="text-sm text-[var(--accent-danger)]">{apiErrorMessage(quizzes.error, "Không tải được câu đố.")}</p>
+        <p className="text-sm text-[var(--accent-danger)]">{apiErrorMessage(quizzes.error, "Không tải được bộ đề.")}</p>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-content-muted">Chưa có câu đố nào.</p>
+        <p className="text-sm text-content-muted">Chưa có bộ đề nào.</p>
       ) : (
         <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--text-primary)]">
           {rows.map((q) => (
@@ -315,30 +277,6 @@ export function ContextQuizzesPanel({ contextId, canEdit }: { contextId: string;
         </ul>
       )}
 
-      <Dialog open={open} onOpenChange={(o) => !create.isPending && setOpen(o)}>
-        <DialogContent className={cn(DIALOG_CLASS, "sm:max-w-md")}>
-          <form onSubmit={submit} noValidate className="space-y-4">
-            <DialogHeader>
-              <DialogTitle className={DIALOG_TITLE_CLASS}>Tạo câu đố</DialogTitle>
-              <DialogDescription className="text-content-muted">Tạo xong bạn sẽ chuyển sang trang soạn câu hỏi.</DialogDescription>
-            </DialogHeader>
-            <Field label="Tên câu đố" required error={titleError} htmlFor="quiz-title">
-              <StaffFormInput id="quiz-title" value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Ôn tập khởi nghĩa Hai Bà Trưng" />
-            </Field>
-            <Field label="Mức độ">
-              <StaffFormSelect value={level} onValueChange={setLevel} options={LEVEL_OPTIONS} className="w-full" />
-            </Field>
-            <DialogFooter className="gap-2">
-              <button type="button" className="btn-line" disabled={create.isPending} onClick={() => setOpen(false)}>
-                Hủy
-              </button>
-              <button type="submit" className="btn-crimson disabled:opacity-50" disabled={create.isPending}>
-                {create.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />} Tạo
-              </button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </Panel>
   );
 }

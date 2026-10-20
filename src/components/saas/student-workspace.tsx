@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { ChevronRight, LibraryBig } from "lucide-react";
 import { DailyQuestsCard } from "@/components/home/daily-quests-card";
-import { ApiClassroomSideCard, NoDataYet } from "@/components/saas/api-classroom-ui";
+import { ApiClassroomSideCard } from "@/components/saas/api-classroom-ui";
+import { StudentClassAssignments } from "@/components/saas/student-class-assignments";
 import { ROUTES } from "@/constants/routes";
+import { useStudentLocalContent } from "@/features/saas/hooks-local-content";
 import type { ApiClassroom } from "@/services/school.service";
 import { useAuthStore } from "@/store/auth.store";
 
 /**
- * Trang đầu "Không gian lớp học" của học sinh trường (/classes). The classes come from the classroom API;
- * assignments, class & school materials and grades have no API yet, so they show an honest empty state.
+ * Trang đầu "Không gian lớp học" của học sinh trường (/classes): lớp (GET /classrooms), bài cần làm
+ * (GET /student/assignments) và tư liệu trường đã xuất bản (GET /student/local-contents/...).
  */
 
 function greeting(now: Date) {
@@ -28,14 +30,15 @@ export function StudentWorkspace({ classes }: { classes: ApiClassroom[] }) {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-[var(--border-strong)] pb-4">
-        <div className="min-w-0 space-y-1">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-content-muted first-letter:uppercase">{dateLabel}</p>
-          <p className="text-[15px] leading-relaxed text-content-text">
-            {greeting(now)}, <strong>{firstName}</strong>! Lớp {classes.map((c) => c.className).join(", ")}
-            {schoolName && <> · {schoolName}</>}
-          </p>
-        </div>
+      <div className="min-w-0 space-y-1">
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-content-muted first-letter:uppercase">{dateLabel}</p>
+        <p className="archive-title is-plain text-2xl sm:text-3xl">
+          {greeting(now)}, {firstName}!
+        </p>
+        <p className="text-sm text-content-muted">
+          Lớp {classes.map((c) => c.className).join(", ")}
+          {schoolName && <> · {schoolName}</>}
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -44,14 +47,14 @@ export function StudentWorkspace({ classes }: { classes: ApiClassroom[] }) {
             <h2 id="ws-todo" className="archive-title is-plain text-xl">
               Bài cần làm
             </h2>
-            <NoDataYet title="Chưa có bài tập" description="Bài tập thầy cô giao cho lớp sẽ hiện ở đây." />
+            <StudentClassAssignments openOnly limit={5} />
           </section>
 
           <section aria-labelledby="ws-materials" className="space-y-3">
             <h2 id="ws-materials" className="archive-title is-plain text-xl">
               Kho tư liệu
             </h2>
-            <NoDataYet title="Chưa có tư liệu" description="Tư liệu thầy cô và nhà trường xuất bản cho em sẽ hiện ở đây." />
+            <MaterialsPreview />
           </section>
         </div>
 
@@ -76,6 +79,47 @@ export function StudentWorkspace({ classes }: { classes: ApiClassroom[] }) {
       </div>
 
       <DailyQuestsCard />
+    </div>
+  );
+}
+
+const MATERIALS_PREVIEW = 4;
+
+/** Vai tu lieu truong moi nhat; day du o /classes/materials. */
+function MaterialsPreview() {
+  const { items, isLoading, isError } = useStudentLocalContent();
+  if (isLoading) return <p className="text-sm text-content-muted">Đang tải tư liệu...</p>;
+  if (isError || items.length === 0) {
+    return (
+      <p className="rounded-[2px] border border-dashed border-[var(--border-strong)] px-4 py-3 text-sm text-content-muted">
+        Chưa có tư liệu. Thầy cô đăng tư liệu nào sẽ hiện ở đây.
+      </p>
+    );
+  }
+  const latest = items
+    .slice()
+    .sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""))
+    .slice(0, MATERIALS_PREVIEW);
+  return (
+    <div className="space-y-2">
+      <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--border-default)]">
+        {latest.map((item) => (
+          <li key={`${item.type}-${item.id}`}>
+            <Link href={ROUTES.CLASS_MATERIAL_DETAIL(item.type, item.id)} className="group flex items-center gap-3 py-2.5">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14px] font-semibold text-content-text group-hover:text-[var(--accent-gold)]">{item.name}</span>
+                <span className="block text-xs text-content-muted">{item.type === "CONTEXT" ? "Bối cảnh" : "Nhân vật"}</span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-content-muted" aria-hidden="true" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {items.length > latest.length && (
+        <Link href={ROUTES.CLASS_MATERIALS} className="archive-link">
+          Xem tất cả tư liệu ({items.length})
+        </Link>
+      )}
     </div>
   );
 }

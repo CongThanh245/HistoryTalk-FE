@@ -3,15 +3,23 @@
 // Bối cảnh & nhân vật: API Sprint 6 (local-contents). BE chưa có API câu đố do giáo viên soạn nên màn này không có mục câu đố.
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, BookMarked, Map as MapIcon, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowRight, BookMarked, ChevronDown, Globe, Lock, Map as MapIcon, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SaasShell, SearchInput, formatDate, normalizeText } from "@/components/saas/saas-ui";
 import { LocalReviewBadge, LocalScopeTag, QueryState, REVIEW_STATE_LABELS, localMeta, reviewState, type LocalReviewState } from "@/components/saas/local-content-ui";
 import { SegmentedFilter } from "@/components/saas/teaching-ui";
 import { ROUTES } from "@/constants/routes";
-import { LOCAL_KINDS, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
+import { apiErrorMessage } from "@/features/saas/hooks-api";
+import { LOCAL_KINDS, useLocalContentMutations, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
 import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
 import type { LocalItem, LocalKind } from "@/services/local-content.service";
 import { useAuthStore } from "@/store/auth.store";
@@ -29,7 +37,7 @@ export default function LocalHistoryPage() {
       variant="app"
       live
       title="Kho tư liệu"
-      description="Soạn bối cảnh và nhân vật lịch sử như Thư viện HistoryTalk, dùng cho lớp hoặc toàn trường. Bạn tự xuất bản, học sinh thấy ngay mà không cần chờ duyệt."
+      description="Soạn bối cảnh và nhân vật cho lớp. Xuất bản xong, học sinh trong trường thấy ngay."
     >
       <LocalHistory kind={kind} setKind={setKind} />
     </SaasShell>
@@ -53,16 +61,40 @@ function LocalHistory({ kind, setKind }: { kind: LocalKind; setKind: (k: LocalKi
             ))}
           </TabsList>
         </Tabs>
-        <div className="flex flex-wrap gap-2">
-          <Link href={ROUTES.CLASS_MAP} className="btn-line">
-            <MapIcon className="h-4 w-4" aria-hidden="true" /> Xem trên bản đồ
-          </Link>
-          <Link href={ROUTES.TEACHING.LOCAL_TRASH} className="btn-line">
-            <Trash2 className="h-4 w-4" aria-hidden="true" /> Thùng rác
-          </Link>
-          <Link href={ROUTES.TEACHING.LOCAL_NEW(kind)} className="btn-crimson">
-            <Plus className="h-4 w-4" aria-hidden="true" /> Soạn {LOCAL_KIND_LABELS[kind].toLowerCase()} mới
-          </Link>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="btn-line px-3" aria-label="Thêm tùy chọn">
+                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={ROUTES.CLASS_MAP}>
+                  <MapIcon className="h-4 w-4" aria-hidden="true" /> Xem trên bản đồ
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={ROUTES.TEACHING.LOCAL_TRASH}>
+                  <Trash2 className="h-4 w-4" aria-hidden="true" /> Thùng rác
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="btn-crimson">
+                <Plus className="h-4 w-4" aria-hidden="true" /> Soạn mới <ChevronDown className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {LOCAL_KINDS.map((k) => (
+                <DropdownMenuItem key={k} asChild>
+                  <Link href={ROUTES.TEACHING.LOCAL_NEW(k)}>{LOCAL_KIND_LABELS[k]}</Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -131,10 +163,10 @@ function ApiList({ kind, items, truncated }: { kind: LocalKind; items: LocalItem
           }
         />
       ) : (
-        <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--text-primary)]">
+        <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--border-default)]">
           {rows.map((c) => (
-            <li key={c.id} className="py-3">
-              <Link href={ROUTES.TEACHING.LOCAL_EDIT(c.id, kind)} className="group flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+            <li key={c.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-4">
+              <Link href={ROUTES.TEACHING.LOCAL_EDIT(c.id, kind)} className="group flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <LocalScopeTag item={c} />
@@ -151,10 +183,40 @@ function ApiList({ kind, items, truncated }: { kind: LocalKind; items: LocalItem
                   </span>
                 </div>
               </Link>
+              {owner === "MINE" && <ScopeToggle item={c} />}
             </li>
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+/** One-click scope switch on my items: share with every teacher of the school, or keep it to myself. */
+function ScopeToggle({ item }: { item: LocalItem }) {
+  const m = useLocalContentMutations();
+  const update = item.type === "CONTEXT" ? m.updateContext : m.updateCharacter;
+  const wide = item.contentScope === "SCHOOL_WIDE";
+
+  const toggle = () =>
+    update.mutate(
+      { id: item.id, payload: { contentScope: wide ? "CLASS_ONLY" : "SCHOOL_WIDE" } },
+      {
+        onSuccess: () => toast.success(wide ? `Đã thôi chia sẻ “${item.name}”` : `Đã chia sẻ “${item.name}” cho giáo viên toàn trường`),
+        onError: (error) => toast.error(apiErrorMessage(error, "Không đổi được phạm vi chia sẻ. Vui lòng thử lại.")),
+      },
+    );
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={update.isPending}
+      title={wide ? "Chỉ mình bạn dùng nội dung này" : "Giáo viên khác trong trường xem và dùng được"}
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-1 text-xs font-semibold text-content-text motion-safe:transition-colors hover:border-[var(--text-primary)] hover:bg-[var(--bg-elevated)] disabled:opacity-50"
+    >
+      {wide ? <Lock className="h-3.5 w-3.5" aria-hidden="true" /> : <Globe className="h-3.5 w-3.5" aria-hidden="true" />}
+      {update.isPending ? "Đang lưu..." : wide ? "Thôi chia sẻ" : "Chia sẻ toàn trường"}
+    </button>
   );
 }

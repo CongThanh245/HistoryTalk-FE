@@ -137,7 +137,7 @@ function AssignmentDetail({ id }: { id: string }) {
           </div>
         </div>
         {a.description && <p className="whitespace-pre-line text-sm text-[var(--text-secondary)]">{a.description}</p>}
-        <dl className="grid gap-x-6 gap-y-2 border-t border-[var(--border-default)] pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="grid gap-x-6 gap-y-2 border-t border-[var(--border-default)] pt-4 text-sm sm:grid-cols-3">
           <div>
             <dt className="text-xs text-content-muted">Hạn nộp</dt>
             <dd className="font-semibold tabular-nums">{formatLocalDateTime(a.deadline)}</dd>
@@ -149,12 +149,6 @@ function AssignmentDetail({ id }: { id: string }) {
           <div>
             <dt className="text-xs text-content-muted">Trạng thái bài</dt>
             <dd>{ASSIGNMENT_STATUS_META[a.status]?.label ?? a.status}</dd>
-          </div>
-          <div className="min-w-0">
-            <dt className="text-xs text-content-muted">Mã nội dung (targetId)</dt>
-            <dd className="truncate font-mono text-xs" title={a.targetId}>
-              {a.targetId}
-            </dd>
           </div>
         </dl>
       </Panel>

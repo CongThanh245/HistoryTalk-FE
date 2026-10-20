@@ -1,9 +1,10 @@
 "use client";
 
+import { displayName } from "@/features/auth/display-name";
 import { useAuthStore } from "@/store/auth.store";
 
 export function GreetingSection() {
-  const userName = useAuthStore((s) => s.user?.userName ?? "bạn");
+  const userName = useAuthStore((s) => displayName(s.user, "bạn"));
 
   return (
     <div className="hidden md:flex flex-col items-end justify-center leading-tight mr-2">

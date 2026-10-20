@@ -16,7 +16,7 @@
   --bg-content-decorated: 
     radial-gradient(circle 800px at 100% 0%, rgba(184, 50, 31, 0.06), transparent),
     radial-gradient(circle 600px at 0% 100%, rgba(17, 17, 17, 0.03), transparent),
-    linear-gradient(rgba(236, 231, 220, 0.9), rgba(236, 231, 220, 0.9)),
+    linear-gradient(rgba(236, 231, 220, 0.96), rgba(236, 231, 220, 0.96)),
     url('/copper_drum_pattern.webp') no-repeat center / 800px,
     var(--bg-main);
 
@@ -193,7 +193,7 @@
   --bg-content-decorated: 
     radial-gradient(circle 800px at 100% 0%, rgba(224, 100, 74, 0.1), transparent),
     radial-gradient(circle 600px at 0% 100%, rgba(237, 234, 227, 0.03), transparent),
-    linear-gradient(rgba(20, 19, 18, 0.88), rgba(20, 19, 18, 0.88)),
+    linear-gradient(rgba(20, 19, 18, 0.95), rgba(20, 19, 18, 0.95)),
     url('/copper_drum_pattern.webp') no-repeat center / 800px,
     var(--bg-main);
 

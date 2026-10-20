@@ -6,7 +6,7 @@ import {
   ClipboardList, Trash2, ArrowLeft,
   Gamepad2, Eye, EyeOff, RotateCcw,
   ChevronLeft, ChevronRight, Upload, Flag, CheckCircle,
-  Search, Plus, Library,
+  Search, Plus, Library, MoreHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,6 +24,7 @@ import {
   type QuizQuestion,
 } from "@/components/staff/quiz-question-editor";
 import { QuestionBankView } from "@/components/staff/question-bank-view";
+import { QUESTION_TYPE_LABELS } from "@/features/quiz/question-data";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -146,6 +147,9 @@ export default function StaffQuizzesPage() {
   const [publishTarget, setPublishTarget] = React.useState<StaffQuizSet | null>(null);
   const [publishedOverrides, setPublishedOverrides] = React.useState<Record<string, boolean>>({});
   const [contextSearch, setContextSearch] = React.useState("");
+  const [questionFormOpen, setQuestionFormOpen] = React.useState(false);
+  const [draftSnapshot, setDraftSnapshot] = React.useState("");
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = React.useState(false);
 
   // ── CSV Import ─────────────────────────────────────────────
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -154,9 +158,10 @@ export default function StaffQuizzesPage() {
   // ── API hooks ─────────────────────────────────────────────
   const params = React.useMemo(() => ({
     ...(search.trim() && { search: search.trim() }),
+    ...(filterLevel && { level: filterLevel }),
     page,
     size: 20,
-  }), [search, page]);
+  }), [search, filterLevel, page]);
 
   const { data, isLoading, isError, refetch: refetchQuizzes } = useStaffQuizzes(params);
   const createQuiz = useCreateStaffQuiz();
@@ -207,30 +212,32 @@ export default function StaffQuizzesPage() {
     [data?.content, publishedOverrides],
   );
 
-  // Filter theo level nếu có (active list)
-  const filteredItems = filterLevel
-    ? allItems.filter((q) => q.level === filterLevel)
-    : allItems;
+  // BE (StaffQuizController) chua doc `level` nen van loc them o FE; khi BE ho tro, param da gui san.
+  const filteredItems = filterLevel ? allItems.filter((q) => q.level === filterLevel) : allItems;
 
   const totalPages = data?.totalPages ?? 1;
 
   // ── Handlers ──────────────────────────────────────────────
   const openCreate = () => {
     setOriginalQuiz(null);
-    setDraft(emptyDraft());
+    const next = emptyDraft();
+    setDraft(next);
+    setDraftSnapshot(JSON.stringify(next));
     setEditorMode("create");
     setView("editor");
   };
 
   const openEdit = (q: StaffQuizSet) => {
     setOriginalQuiz(q);
-    setDraft({
+    const next: QuizDraft = {
       quizId: q.quizId,
       title: q.title,
       contextId: q.contextId,
       level: q.level,
       questions: q.questions.map(fromStaffQuestion),
-    });
+    };
+    setDraft(next);
+    setDraftSnapshot(JSON.stringify(next));
     setEditorMode("edit");
     setView("editor");
   };
@@ -249,12 +256,12 @@ export default function StaffQuizzesPage() {
         },
         {
           onSuccess: () => {
-            toast.success(`Đã tạo quiz "${title}" với ${draft.questions.length} câu hỏi.`);
+            toast.success(`Đã tạo bộ đề "${title}" với ${draft.questions.length} câu hỏi.`);
             refetchQuizzes();
             setView("list");
           },
           onError: (error) => {
-            toast.error(getApiErrorMessage(error, "Tạo quiz thất bại. Vui lòng thử lại."));
+            toast.error(getApiErrorMessage(error, "Tạo bộ đề thất bại. Vui lòng thử lại."));
           },
         },
       );
@@ -313,13 +320,13 @@ export default function StaffQuizzesPage() {
         if (promises.length > 0) {
           await Promise.all(promises);
         }
-        toast.success(`Đã cập nhật quiz "${title}" thành công.`);
+        toast.success(`Đã cập nhật bộ đề "${title}".`);
         queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
         queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.detail(quizId) });
         refetchQuizzes();
         setView("list");
       } catch (error) {
-        toast.error(getApiErrorMessage(error, "Cập nhật quiz thất bại. Vui lòng thử lại."));
+        toast.error(getApiErrorMessage(error, "Cập nhật bộ đề thất bại. Vui lòng thử lại."));
       } finally {
         setIsSaving(false);
       }
@@ -330,13 +337,13 @@ export default function StaffQuizzesPage() {
     if (!deleteTarget) return;
     softDeleteQuiz.mutate(deleteTarget.quizId, {
       onSuccess: () => {
-        toast.success(`Đã chuyển quiz "${deleteTarget.title}" vào thùng rác.`);
+        toast.success(`Đã chuyển bộ đề "${deleteTarget.title}" vào thùng rác.`);
         refetchQuizzes();
         refetchTrash();
         setDeleteTarget(null);
       },
       onError: (error) => {
-        toast.error(getApiErrorMessage(error, "Xóa quiz thất bại. Vui lòng thử lại."));
+        toast.error(getApiErrorMessage(error, "Xóa bộ đề thất bại. Vui lòng thử lại."));
       },
     });
   };
@@ -345,7 +352,7 @@ export default function StaffQuizzesPage() {
     if (!restoreTarget) return;
     restoreQuiz.mutate([restoreTarget.id], {
       onSuccess: () => {
-        toast.success(`Đã khôi phục quiz "${restoreTarget.title}".`);
+        toast.success(`Đã khôi phục bộ đề "${restoreTarget.title}".`);
         refetchQuizzes();
         refetchTrash();
         setRestoreTarget(null);
@@ -360,7 +367,7 @@ export default function StaffQuizzesPage() {
     if (!permanentDeleteTarget) return;
     permanentDeleteQuiz.mutate([permanentDeleteTarget.id], {
       onSuccess: () => {
-        toast.success(`Đã xóa vĩnh viễn quiz "${permanentDeleteTarget.title}".`);
+        toast.success(`Đã xóa vĩnh viễn bộ đề "${permanentDeleteTarget.title}".`);
         refetchTrash();
         setPermanentDeleteTarget(null);
       },
@@ -382,8 +389,8 @@ export default function StaffQuizzesPage() {
         onSuccess: () => {
           toast.success(
             nextPublished
-              ? `Đã xuất bản quiz "${publishTarget.title}" hiển thị cho người dùng.`
-              : `Đã ẩn quiz "${publishTarget.title}" khỏi người dùng.`,
+              ? `Đã xuất bản bộ đề "${publishTarget.title}" cho người dùng.`
+              : `Đã ẩn bộ đề "${publishTarget.title}" khỏi người dùng.`,
           );
           setPublishedOverrides((prev) => ({
             ...prev,
@@ -403,7 +410,7 @@ export default function StaffQuizzesPage() {
   const columns = React.useMemo<ColumnDef<StaffQuizSet>[]>(() => [
     {
       accessorKey: "title",
-      header: "Bài quiz",
+      header: "Bộ đề",
       cell: ({ row: r }) => (
         <div className="min-w-[240px]">
           <p className="text-sm font-semibold text-content-heading">
@@ -425,43 +432,6 @@ export default function StaffQuizzesPage() {
       ),
     },
     {
-      id: "actions",
-      header: "Thao tác",
-      cell: ({ row: r }) => (
-        <div className="flex min-w-[140px] items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-8 rounded-[2px] px-3 text-xs font-semibold hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
-            onClick={() => openEdit(r.original)}
-          >
-            Chỉnh sửa
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-8 rounded-[2px] px-3 text-sm font-bold hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
-              >
-                ...
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setPublishTarget(r.original)}>
-                {r.original.isPublished ? "Ngừng xuất bản" : "Xuất bản"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onClick={() => setDeleteTarget(r.original)}>
-                <Trash2 className="h-4 w-4" />
-                Chuyển vào thùng rác
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
-    },
-    {
       accessorKey: "era",
       header: "Thời kỳ",
       cell: ({ row: r }) => (
@@ -476,6 +446,14 @@ export default function StaffQuizzesPage() {
           <p className="text-xs text-content-text">
             {r.original.questions.length} câu hỏi
           </p>
+          {(() => {
+            const types = new Set(r.original.questions.map((q) => q.questionType));
+            return types.size > 1 ? (
+              <p className="text-[11px] text-content-subtle">
+                {[...types].map((t) => QUESTION_TYPE_LABELS[t]).join(" · ")}
+              </p>
+            ) : null;
+          })()}
           <p className="text-xs text-content-muted">
             {r.original.playCount.toLocaleString()} lần làm
           </p>
@@ -526,6 +504,45 @@ export default function StaffQuizzesPage() {
         </span>
       ),
     },
+    {
+      id: "actions",
+      header: "Thao tác",
+      cell: ({ row: r }) => (
+        <div className="flex min-w-[140px] items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-8 rounded-[2px] px-3 text-xs font-semibold hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
+            onClick={() => openEdit(r.original)}
+          >
+            Chỉnh sửa
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                aria-label={`Thao tác khác cho ${r.original.title}`}
+                className="h-8 rounded-[2px] px-2 hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setPublishTarget(r.original)}>
+                {r.original.isPublished ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {r.original.isPublished ? "Ngừng xuất bản" : "Xuất bản"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onClick={() => setDeleteTarget(r.original)}>
+                <Trash2 className="h-4 w-4" />
+                Chuyển vào thùng rác
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
   ],
     [],
   );
@@ -534,7 +551,7 @@ export default function StaffQuizzesPage() {
   const trashColumns = React.useMemo<ColumnDef<TrashRow>[]>(() => [
     {
       accessorKey: "title",
-      header: "Bài quiz",
+      header: "Bộ đề",
       cell: ({ row: r }) => (
         <div className="min-w-[240px] opacity-60">
           <p className="text-sm font-semibold text-content-heading">
@@ -590,7 +607,7 @@ export default function StaffQuizzesPage() {
       ] as const).map((opt) => (
         <button
           key={opt.value || "all"} type="button"
-          onClick={() => setFilterLevel(opt.value)}
+          onClick={() => { setFilterLevel(opt.value); setPage(0); }}
           className={cn(
             "px-3 h-8 rounded-[2px] text-xs font-semibold border transition-all",
             filterLevel === opt.value
@@ -606,44 +623,62 @@ export default function StaffQuizzesPage() {
 
   // ═══ EDITOR VIEW ══════════════════════════════════════════════════════════
   if (view === "editor") {
+    const isDirty = JSON.stringify(draft) !== draftSnapshot;
     const canSave =
       !!(draft.title.trim()) &&
+      !questionFormOpen &&
       !createQuiz.isPending &&
       !updateQuiz.isPending &&
       !isSaving;
+    const saveHint = !draft.title.trim()
+      ? "Nhập tiêu đề để lưu."
+      : questionFormOpen
+        ? "Lưu hoặc hủy câu hỏi đang soạn trước."
+        : draft.questions.length === 0
+          ? "Bộ đề chưa có câu hỏi nào."
+          : null;
+    // Roi editor khi con thay doi chua luu thi hoi lai, tranh mat cong soan.
+    const leaveEditor = () => {
+      if (isDirty || questionFormOpen) setLeaveConfirmOpen(true);
+      else setView("list");
+    };
 
     return (
       <StaffShell
-        title={editorMode === "create" ? "Tạo Quiz mới" : "Chỉnh sửa Quiz"}
-        label="Câu đố"
-        description={editorMode === "create" ? "Điền thông tin và thêm câu hỏi." : `Đang chỉnh sửa: ${draft.title}`}
+        title={editorMode === "create" ? "Tạo bộ đề mới" : "Chỉnh sửa bộ đề"}
+        label="Bộ đề"
+        description={
+          editorMode === "create"
+            ? "Điền thông tin bên trái, rồi thêm câu trắc nghiệm, điền chỗ trống hoặc nối cặp ở bên phải."
+            : `Đang chỉnh sửa: ${draft.title}`
+        }
         icon={ClipboardList}
         accent="var(--accent-blue)"
       >
         <button
           type="button"
-          onClick={() => setView("list")}
+          onClick={leaveEditor}
           className="flex items-center gap-1.5 text-sm mb-6 hover:opacity-70 transition-opacity text-content-muted"
         >
           <ArrowLeft className="h-4 w-4" /> Quay lại danh sách
         </button>
 
-        <div className="grid grid-cols-[360px_1fr] gap-6 items-start">
+        <div className="grid gap-6 items-start lg:grid-cols-[340px_1fr]">
           {/* ── Metadata panel ── */}
-          <div className="rounded-[2px] border p-6 space-y-4 sticky top-6 bg-[var(--bg-surface)] border-[var(--text-primary)]">
+          <div className="rounded-[2px] border p-6 space-y-4 lg:sticky lg:top-24 bg-[var(--bg-surface)] border-[var(--text-primary)]">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-content-subtle">
-              Thông tin bộ quiz
+              Thông tin bộ đề
             </h2>
 
             <Field label="Tiêu đề *">
               <Input
                 value={draft.title}
                 onChange={(e) => setDraft((s) => ({ ...s, title: e.target.value }))}
-                placeholder="VD: Chiến thắng Bạch Đằng — Bài kiểm tra"
+                placeholder="VD: Chiến thắng Bạch Đằng 938"
               />
             </Field>
 
-            <Field label="Sự kiện lịch sử (Context)">
+            <Field label="Bối cảnh lịch sử liên kết">
               {(() => {
                 const allContexts = contextsData?.content ?? [];
                 const q = contextSearch.trim().toLowerCase();
@@ -698,11 +733,6 @@ export default function StaffQuizzesPage() {
                   </Select>
                 );
               })()}
-              {draft.contextId && (
-                <p className="text-[10px] mt-1 text-content-subtle">
-                  ID: {draft.contextId}
-                </p>
-              )}
             </Field>
 
             <Field label="Độ khó">
@@ -763,31 +793,41 @@ export default function StaffQuizzesPage() {
               >
                 {createQuiz.isPending || updateQuiz.isPending || isSaving
                   ? "Đang lưu..."
-                  : editorMode === "create" ? "Tạo Quiz" : "Lưu thay đổi"}
+                  : editorMode === "create" ? "Tạo bộ đề" : "Lưu thay đổi"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setView("list")}
+              <Button type="button" variant="outline" onClick={leaveEditor}
                 className="border-card-light-border bg-transparent text-content-text">
                 Hủy
               </Button>
             </div>
+            {saveHint ? (
+              <p className="text-xs text-[var(--status-warning)]">{saveHint}</p>
+            ) : (
+              isDirty && <p className="text-xs text-content-muted">Có thay đổi chưa lưu.</p>
+            )}
           </div>
 
           {/* ── Question panel ── */}
           <div className="rounded-[2px] border p-6 bg-[var(--bg-surface)] border-[var(--text-primary)]">
-            <div className="flex items-center gap-4 mb-5 pb-4 border-b border-card-light-border">
-              <div className="flex items-center gap-1.5 text-sm text-content-muted">
-                <ClipboardList className="h-4 w-4" />
-                <span>{draft.questions.length} câu hỏi</span>
-              </div>
-            </div>
             <QuizQuestionEditor
               questions={draft.questions}
               onChange={(qs) => setDraft((s) => ({ ...s, questions: qs }))}
               onImportError={(msg) => toast.error(msg)}
-              onImportSuccess={(n) => toast.success(`Đã import ${n} câu hỏi.`)}
+              onImportSuccess={(n) => toast.success(`Đã thêm ${n} câu hỏi.`)}
+              onEditingChange={setQuestionFormOpen}
             />
           </div>
         </div>
+
+        <ConfirmDialog
+          open={leaveConfirmOpen}
+          onOpenChange={setLeaveConfirmOpen}
+          title="Bỏ thay đổi chưa lưu?"
+          description="Các thay đổi trong bộ đề này (kể cả câu hỏi đang soạn dở) sẽ mất nếu bạn rời đi."
+          confirmLabel="Rời đi, bỏ thay đổi"
+          variant="danger"
+          onConfirm={() => { setLeaveConfirmOpen(false); setQuestionFormOpen(false); setView("list"); }}
+        />
       </StaffShell>
     );
   }
@@ -891,7 +931,7 @@ export default function StaffQuizzesPage() {
           onClick={() => setView("list")}
           className="flex items-center gap-1.5 text-sm mb-6 hover:opacity-70 transition-opacity text-content-muted"
         >
-          <ArrowLeft className="h-4 w-4" /> Quay lại danh sách quiz
+          <ArrowLeft className="h-4 w-4" /> Quay lại danh sách bộ đề
         </button>
 
         <section className="rounded-[2px] border p-6 space-y-5 bg-[var(--bg-surface)] border-[var(--text-primary)]">
@@ -970,9 +1010,9 @@ export default function StaffQuizzesPage() {
 
   return (
     <StaffShell
-      title="Quản lý câu đố"
+      title="Quản lý bộ đề"
       label="Nội dung"
-      description="Quản lý bộ câu hỏi lịch sử theo độ khó và thời đại."
+      description="Mỗi bộ đề gồm câu trắc nghiệm, điền chỗ trống hoặc nối cặp, gắn với một bối cảnh lịch sử."
       icon={ClipboardList}
       accent="var(--accent-blue)"
     >
@@ -980,9 +1020,9 @@ export default function StaffQuizzesPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {([
-            { label: "Tổng bộ quiz", value: totalItems, icon: ClipboardList, color: "var(--accent-blue)" },
-            { label: "Tổng câu hỏi", value: totalQues, icon: ClipboardList, color: "var(--accent-teal)" },
-            { label: "Tổng lần làm", value: totalPlays.toLocaleString(), icon: Gamepad2, color: "var(--accent-blue)" },
+            { label: filterLevel ? "Bộ đề (theo bộ lọc)" : "Tổng bộ đề", value: totalItems, icon: ClipboardList, color: "var(--accent-blue)" },
+            { label: totalPages > 1 ? "Câu hỏi (trang này)" : "Tổng câu hỏi", value: totalQues, icon: ClipboardList, color: "var(--accent-teal)" },
+            { label: totalPages > 1 ? "Lần làm (trang này)" : "Tổng lần làm", value: totalPlays.toLocaleString(), icon: Gamepad2, color: "var(--accent-blue)" },
           ] as const).map((s) => {
             const Icon = s.icon;
             return (
@@ -1005,36 +1045,29 @@ export default function StaffQuizzesPage() {
         <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between px-1">
           <div className="flex items-center gap-3">
             <h2 className="text-base font-semibold text-content-heading">
-              {showTrash ? "Thùng rác Quiz" : "Danh sách Quiz"}
+              {showTrash ? "Thùng rác bộ đề" : "Danh sách bộ đề"}
             </h2>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative w-full sm:w-[280px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-40" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm bộ quiz..."
+                placeholder="Tìm bộ đề..."
                 className="pl-9 h-9 rounded-[2px] border-0 bg-[var(--status-neutral-bg)] placeholder:text-[11px]"
               />
             </div>
-            <Button
-              variant="outline"
-              className={cn(
-                "h-9 rounded-[2px] px-4 font-semibold",
-                showTrash
-                  ? "border-accent-danger text-accent-danger bg-[var(--status-danger-bg)]"
-                  : "border-card-light-border text-content-heading bg-transparent"
-              )}
-              onClick={() => setShowTrash(!showTrash)}
-            >
-              {showTrash ? (
-                <><ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Danh sách</>
-              ) : (
-                <><Trash2 className="h-3.5 w-3.5 mr-1.5" /> Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}</>
-              )}
-            </Button>
+            {showTrash && (
+              <Button
+                variant="outline"
+                className="h-9 rounded-[2px] px-4 font-semibold border-accent-danger text-accent-danger bg-[var(--status-danger-bg)]"
+                onClick={() => setShowTrash(false)}
+              >
+                <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Danh sách
+              </Button>
+            )}
             {!showTrash && (
               <Button
                 variant="outline"
@@ -1048,11 +1081,16 @@ export default function StaffQuizzesPage() {
             {!showTrash && (
               <Button
                 variant="outline"
-                className="h-9 rounded-[2px] px-4 font-semibold border-card-light-border text-content-heading"
+                className={cn(
+                  "h-9 rounded-[2px] px-4 font-semibold",
+                  openReportsCount?.totalElements
+                    ? "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]"
+                    : "border-card-light-border text-content-heading",
+                )}
                 onClick={() => setView("reports")}
               >
                 <Flag className="h-3.5 w-3.5 mr-1.5" />
-                Báo cáo câu hỏi {!!openReportsCount?.totalElements && `(${openReportsCount.totalElements})`}
+                Báo cáo câu hỏi {!!openReportsCount?.totalElements && `(${openReportsCount.totalElements} chưa xử lý)`}
               </Button>
             )}
             {!showTrash && (
@@ -1075,22 +1113,34 @@ export default function StaffQuizzesPage() {
                     e.target.value = "";
                   }}
                 />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-9 rounded-[2px] px-4 font-semibold gap-1.5 border-card-light-border text-content-text"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={importCsv.isPending}
-                >
-                  <Upload className="h-4 w-4" />
-                  {importCsv.isPending ? "Đang import..." : "Import CSV"}
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      aria-label="Thao tác khác"
+                      className="h-9 rounded-[2px] px-3 font-semibold gap-1.5 border-card-light-border text-content-heading"
+                      disabled={importCsv.isPending}
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                      {importCsv.isPending && <span className="text-xs">Đang nhập...</span>}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                      <Upload className="h-4 w-4" /> Nhập bộ đề từ CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setShowTrash(true)}>
+                      <Trash2 className="h-4 w-4" /> Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button
                   size="sm"
                   className="h-9 rounded-[2px] px-4 font-semibold gap-1.5 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
                   onClick={openCreate}
                 >
-                  <Plus className="h-4 w-4" /> Tạo Quiz
+                  <Plus className="h-4 w-4" /> Tạo bộ đề
                 </Button>
               </>
             )}
@@ -1121,13 +1171,13 @@ export default function StaffQuizzesPage() {
               <StaffDataTable
                 columns={columns}
                 data={filteredItems}
-                emptyMessage="Không tìm thấy quiz phù hợp."
+                emptyMessage="Không tìm thấy bộ đề phù hợp."
                 isLoading={isLoading}
               />
               {totalPages > 1 && (
                 <div className="flex items-center justify-between pt-2">
                   <p className="text-xs text-content-subtle">
-                    Trang {page + 1} / {totalPages} · {totalItems} bộ quiz
+                    Trang {page + 1} / {totalPages} · {totalItems} bộ đề
                   </p>
                   <div className="flex items-center gap-1">
                     <Button
@@ -1149,7 +1199,7 @@ export default function StaffQuizzesPage() {
               )}
               {totalPages <= 1 && (
                 <p className="text-xs text-content-subtle">
-                  Hiển thị {filteredItems.length} / {totalItems} bộ quiz
+                  Hiển thị {filteredItems.length} / {totalItems} bộ đề
                 </p>
               )}
             </>
@@ -1160,11 +1210,11 @@ export default function StaffQuizzesPage() {
       <ConfirmDialog
         open={!!publishTarget}
         onOpenChange={(o) => !o && setPublishTarget(null)}
-        title={publishTarget?.isPublished ? "Ngừng xuất bản quiz?" : "Xuất bản quiz?"}
+        title={publishTarget?.isPublished ? "Ngừng xuất bản bộ đề?" : "Xuất bản bộ đề?"}
         description={
           publishTarget?.isPublished
-            ? `Quiz "${publishTarget?.title}" sẽ không hiển thị cho người dùng nữa.`
-            : `Quiz "${publishTarget?.title}" sẽ hiển thị cho người dùng.`
+            ? `Bộ đề "${publishTarget?.title}" sẽ không hiển thị cho người dùng nữa.`
+            : `Bộ đề "${publishTarget?.title}" sẽ hiển thị cho người dùng.`
         }
         isPending={updateQuiz.isPending}
         confirmLabel={publishTarget?.isPublished ? "Ngừng xuất bản" : "Xuất bản"}
@@ -1176,7 +1226,7 @@ export default function StaffQuizzesPage() {
         open={!!deleteTarget}
         onOpenChange={(o) => !o && setDeleteTarget(null)}
         title="Chuyển vào thùng rác?"
-        description={`Quiz "${deleteTarget?.title}" sẽ được chuyển vào thùng rác.`}
+        description={`Bộ đề "${deleteTarget?.title}" sẽ được chuyển vào thùng rác.`}
         isPending={softDeleteQuiz.isPending}
         confirmLabel="Chuyển vào thùng rác"
         variant="danger"
@@ -1186,8 +1236,8 @@ export default function StaffQuizzesPage() {
       <ConfirmDialog
         open={!!restoreTarget}
         onOpenChange={(o) => !o && setRestoreTarget(null)}
-        title="Khôi phục quiz?"
-        description={`Quiz "${restoreTarget?.title}" sẽ được khôi phục.`}
+        title="Khôi phục bộ đề?"
+        description={`Bộ đề "${restoreTarget?.title}" sẽ được khôi phục.`}
         isPending={restoreQuiz.isPending}
         confirmLabel="Khôi phục"
         variant="warning"
@@ -1198,7 +1248,7 @@ export default function StaffQuizzesPage() {
         open={!!permanentDeleteTarget}
         onOpenChange={(o) => !o && setPermanentDeleteTarget(null)}
         title="Xóa vĩnh viễn?"
-        description={`Hành động này không thể hoàn tác. Quiz "${permanentDeleteTarget?.title}" sẽ bị xóa hoàn toàn.`}
+        description={`Hành động này không thể hoàn tác. Bộ đề "${permanentDeleteTarget?.title}" sẽ bị xóa hoàn toàn.`}
         isPending={permanentDeleteQuiz.isPending}
         confirmLabel="Xóa vĩnh viễn"
         variant="danger"

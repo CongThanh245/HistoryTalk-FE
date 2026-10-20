@@ -32,8 +32,9 @@ function LocalContentRoute() {
     <SaasShell
       variant="app"
       live
-      title="Kho tư liệu"
-      description="Chỉnh sửa, xuất bản hoặc ẩn nội dung bạn soạn."
+      title="Chỉnh sửa tư liệu"
+      // The editor has its own compact header (back link + status); a big page title only pushes the form down.
+      hideHeading
     >
       {kind ? (
         <ApiDetail kind={kind} id={id} />

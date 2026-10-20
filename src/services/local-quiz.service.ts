@@ -25,6 +25,8 @@ export interface CreateLocalQuizPayload {
   title: string;
   level: StaffQuizLevel;
   isPublished?: boolean;
+  /** BE bat buoc it nhat 1 cau hoi khi tao (CreateQuizRequest: "Yêu cầu ít nhất một câu hỏi"). */
+  questions: CreateQuestionPayload[];
 }
 
 interface SpringPage<T> {
@@ -57,7 +59,7 @@ export const localQuizService = {
   create: async (contextId: string, payload: CreateLocalQuizPayload): Promise<LocalQuiz> => {
     const res = await axiosClient.post(
       `${base}/contexts/${contextId}/quizzes`,
-      toContractQuizPayload({ ...payload, contextId, questions: [] }),
+      toContractQuizPayload({ ...payload, contextId }),
     );
     return mapStaffQuizSet(res.data.data);
   },

@@ -55,6 +55,7 @@ export interface StaffQuizSet {
 export interface GetStaffQuizzesParams {
   search?: string;
   era?: StaffQuizEra;
+  level?: "EASY" | "MEDIUM" | "HARD";
   page?: number;
   size?: number;
 }

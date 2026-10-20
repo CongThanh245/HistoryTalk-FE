@@ -48,8 +48,8 @@ export const ASSIGNMENT_TYPE_META: Record<
   },
   QUIZ_TEST: {
     label: "Bài kiểm tra",
-    hint: "Học sinh làm một bộ quiz; hệ thống tự chấm theo thang 10.",
-    target: "Bộ quiz",
+    hint: "Học sinh làm một bộ đề (trắc nghiệm, điền chỗ trống, nối cặp); hệ thống tự chấm theo thang 10.",
+    target: "Bộ đề",
     icon: ClipboardCheck,
     color: "text-[var(--men-lam)]",
   },
@@ -139,7 +139,7 @@ export function formatDuration(seconds: number | null | undefined): string {
 
 /** Y nghia minRequirement theo loai bai (QUIZ: BE bo qua). */
 export function requirementText(type: AssignmentType, min: number | null | undefined): string {
-  if (type === "QUIZ_TEST") return "Làm và nộp quiz";
+  if (type === "QUIZ_TEST") return "Làm và nộp bài kiểm tra";
   if (min == null) return "—";
   return type === "AI_CHAT_ROLEPLAY" ? `Tối thiểu ${min} tin nhắn` : `Đọc tối thiểu ${formatDuration(min)}`;
 }
@@ -189,21 +189,30 @@ export function TeacherClassAssignments({ classId }: { classId: string }) {
   const query = useClassroomAssignments(classId, { page: 0, size: RECENT_SIZE });
   const items = query.data?.items ?? [];
   const total = query.data?.totalElements ?? 0;
+  // Lop chua co bai: nut giao bai nam trong empty state, khong lap lai o header.
+  const isEmpty = query.isSuccess && items.length === 0;
+  const newButton = (
+    <Link href={newAssignmentHref(classId)} className="btn-crimson">
+      <Plus className="h-4 w-4" aria-hidden="true" /> Giao bài mới
+    </Link>
+  );
 
   return (
     <div className="space-y-4">
       <SectionHeading
         title="Bài tập của lớp"
-        description="Bài mới giao gần nhất trước. Số liệu nộp bài lấy trực tiếp từ hệ thống."
+        description="Bài mới giao hiện trên cùng."
         actions={
-          <>
-            <Link href={newAssignmentHref(classId)} className="btn-crimson">
-              <Plus className="h-4 w-4" aria-hidden="true" /> Giao bài mới
-            </Link>
-            <Link href={`${ROUTES.TEACHING.ASSIGNMENTS}?classId=${encodeURIComponent(classId)}`} className="btn-line">
-              Tất cả bài tập
-            </Link>
-          </>
+          isEmpty ? undefined : (
+            <>
+              {newButton}
+              {total > 0 && (
+                <Link href={`${ROUTES.TEACHING.ASSIGNMENTS}?classId=${encodeURIComponent(classId)}`} className="btn-line">
+                  Tất cả bài tập
+                </Link>
+              )}
+            </>
+          )
         }
       />
 
@@ -216,10 +225,14 @@ export function TeacherClassAssignments({ classId }: { classId: string }) {
           <ClassroomLoadError message={apiErrorMessage(query.error, "Không tải được bài tập của lớp.")} onRetry={() => void query.refetch()} />
         )
       ) : items.length === 0 ? (
-        <NoDataYet title="Lớp chưa có bài tập nào" description="Bấm “Giao bài mới” để giao bài đọc, trò chuyện AI hoặc bài kiểm tra cho lớp." />
+        <NoDataYet
+          title="Lớp chưa có bài tập nào"
+          description="Giao bài đọc bối cảnh, trò chuyện với nhân vật AI hoặc bài kiểm tra để bắt đầu theo dõi tiến độ của lớp."
+          action={newButton}
+        />
       ) : (
         <>
-          <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--text-primary)]">
+          <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--border-default)]">
             {items.map((a) => (
               <li key={a.assignmentId} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0 space-y-1">

@@ -23,7 +23,7 @@ interface QuizSessionPageProps {
   sessionId: string;
   onSubmit: (answers: Record<string, AnswerData>, elapsedSeconds: number) => Promise<boolean>;
   onBack: () => void;
-  onGoHome: () => void;
+  onGoHome?: () => void;
   onRetry: () => void;
   startTime: number;
   limitedTime?: number;
@@ -31,6 +31,11 @@ interface QuizSessionPageProps {
   initialFlagged?: string[];
   /** Che do luyen tap: hien dung/sai ngay sau moi cau, chay song song che do thi hien tai. */
   practiceMode?: boolean;
+  /**
+   * Nhung trong trang khac (bai tap duoc giao): cau hoi chay theo chieu dai trang thay vi
+   * cuon trong khung cao co dinh, thanh tien do dinh o dau khi cuon.
+   */
+  embedded?: boolean;
 }
 
 export function QuizSessionPage({
@@ -46,6 +51,7 @@ export function QuizSessionPage({
   initialAnswers,
   initialFlagged,
   practiceMode = false,
+  embedded = false,
 }: QuizSessionPageProps) {
   const [answers, setAnswers] = useState<Record<string, AnswerData>>(initialAnswers ?? {});
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -184,7 +190,8 @@ export function QuizSessionPage({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[var(--bg-content)]">
+    <div className={cn("flex flex-col bg-[var(--bg-content)]", !embedded && "h-full")}>
+      <div className={cn(embedded && "sticky top-0 z-20")}>
       <QuizProgressBar
         quizTitle={quiz.title}
         totalQuestions={questions.length}
@@ -200,8 +207,9 @@ export function QuizSessionPage({
         onRetry={onRetry}
         scrollToQuestion={scrollToQuestion}
       />
+      </div>
 
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+      <div ref={scrollContainerRef} className={cn(!embedded && "flex-1 overflow-y-auto")}>
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
           {hasTimeLimit && (
             <div className="rounded-[2px] border border-[var(--accent-gold)] px-4 py-3 text-sm bg-[var(--accent-gold-active-bg)] text-content-text">

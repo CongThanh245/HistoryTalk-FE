@@ -153,11 +153,14 @@ export function ClassroomLoadError({ message, onRetry }: { message: string; onRe
 }
 
 /** Honest placeholder for a class feature with no API yet (no sample rows). */
-export function NoDataYet({ title, description }: { title: string; description?: string }) {
+export function NoDataYet({ title, description, action }: { title: string; description?: string; action?: React.ReactNode }) {
   return (
-    <div className="rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-5">
-      <p className="text-sm font-bold text-content-heading">{title}</p>
-      <p className="mt-1 text-sm leading-6 text-content-muted">{description ?? "Chưa có dữ liệu cho lớp này."}</p>
+    <div className="flex flex-col gap-4 rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <p className="text-sm font-bold text-content-heading">{title}</p>
+        <p className="mt-1 text-sm leading-6 text-content-muted">{description ?? "Chưa có dữ liệu cho lớp này."}</p>
+      </div>
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }

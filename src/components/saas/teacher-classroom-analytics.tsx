@@ -135,65 +135,98 @@ function StudentTable({ students, classId, canGrant }: { students: TeacherClassr
 }
 
 /** Tab "Thong ke": KPI lop + bang ket qua tung hoc sinh. */
+type DashboardData = NonNullable<ReturnType<typeof useTeacherClassroomDashboard>["data"]>;
+
+function KpiGrid({ data, compact }: { data: DashboardData; compact?: boolean }) {
+  const attempted = data.students.filter((s) => s.quizzesAttempted > 0);
+  const avgScore = attempted.length ? attempted.reduce((sum, s) => sum + s.averageScorePercentage, 0) / attempted.length : null;
+  const totalQuizzes = data.students.reduce((sum, s) => sum + s.quizzesAttempted, 0);
+  const pending = data.pendingTokenBoostRequests ?? 0;
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiTile label="Sĩ số" value={formatNumber(data.studentCount)} />
+        <KpiTile
+          label="Điểm TB quiz"
+          value={avgScore == null ? "—" : `${avgScore.toFixed(1)}%`}
+          hint={`${attempted.length}/${data.students.length} học sinh đã làm quiz`}
+          accent="text-[var(--men-lam)]"
+        />
+        <KpiTile label="Lượt làm quiz" value={formatNumber(totalQuizzes)} accent="text-[var(--jade)]" />
+        <KpiTile
+          label="Tin nhắn AI"
+          value={formatNumber(data.totalAiMessages)}
+          hint={`TB ${data.avgAiMessagesPerStudent.toFixed(1)} tin nhắn / học sinh`}
+          accent="text-[var(--gold-leaf)]"
+        />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <KpiTile label="Nộp đúng hạn" value={`${(data.assignmentRates?.onTimeRate ?? 0).toFixed(1)}%`} accent="text-[var(--status-success)]" />
+        <KpiTile label="Nộp muộn" value={`${(data.assignmentRates?.lateRate ?? 0).toFixed(1)}%`} accent="text-[var(--status-warning)]" />
+        <KpiTile label="Chưa nộp" value={`${(data.assignmentRates?.pendingRate ?? 0).toFixed(1)}%`} accent="text-accent-danger" />
+      </div>
+      {compact
+        ? pending > 0 && (
+            <p className="flex flex-wrap items-center gap-2 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-4 py-2.5 text-sm text-[var(--status-warning)]">
+              <span className="font-semibold">{formatNumber(pending)} yêu cầu xin thêm token đang chờ duyệt.</span>
+              <Link href={ROUTES.TEACHING.TOKEN_REQUESTS} className="archive-link">
+                Xem và duyệt
+              </Link>
+            </p>
+          )
+        : data.dailyTokenLimit != null && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <KpiTile
+                label="Hạn mức token / học sinh / ngày"
+                value={formatNumber(data.dailyTokenLimit)}
+                hint="Do quản trị trường đặt cho lớp hoặc toàn trường. Làm mới lúc 00:00."
+              />
+              <KpiTile
+                label="Yêu cầu xin thêm token"
+                value={formatNumber(pending)}
+                hint={
+                  <Link href={ROUTES.TEACHING.TOKEN_REQUESTS} className="archive-link">
+                    Xem và duyệt
+                  </Link>
+                }
+                accent={pending > 0 ? "text-[var(--status-warning)]" : undefined}
+              />
+            </div>
+          )}
+      {data.status === "ARCHIVED" && (
+        <p className="text-sm text-content-muted">Lớp thuộc năm học đã kết thúc (đã lưu trữ); số liệu chỉ để tham khảo.</p>
+      )}
+    </div>
+  );
+}
+
+/** Chi so tong quan cua lop (dau trang giang day). `compact`: chi hien canh bao token khi co yeu cau cho duyet. */
+export function TeacherClassKpis({ classId, compact }: { classId: string; compact?: boolean }) {
+  const query = useTeacherClassroomDashboard(classId);
+  return <AnalyticsState query={query}>{(data) => <KpiGrid data={data} compact={compact} />}</AnalyticsState>;
+}
+
+/** Bang ket qua tung hoc sinh cua lop. Dung chung query voi TeacherClassKpis (React Query khu trung). */
+export function TeacherClassStudents({ classId }: { classId: string }) {
+  const query = useTeacherClassroomDashboard(classId);
+  return (
+    <AnalyticsState query={query}>
+      {(data) => <StudentTable students={data.students} classId={classId} canGrant={data.status !== "ARCHIVED"} />}
+    </AnalyticsState>
+  );
+}
+
+/** Chi so + bang hoc sinh (tab Thong ke trong chi tiet lop). */
 export function TeacherClassStats({ classId }: { classId: string }) {
   const query = useTeacherClassroomDashboard(classId);
   return (
     <AnalyticsState query={query}>
-      {(data) => {
-        const attempted = data.students.filter((s) => s.quizzesAttempted > 0);
-        const avgScore = attempted.length
-          ? attempted.reduce((sum, s) => sum + s.averageScorePercentage, 0) / attempted.length
-          : null;
-        const totalQuizzes = data.students.reduce((sum, s) => sum + s.quizzesAttempted, 0);
-        return (
-          <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <KpiTile label="Sĩ số" value={formatNumber(data.studentCount)} />
-              <KpiTile
-                label="Điểm TB quiz"
-                value={avgScore == null ? "—" : `${avgScore.toFixed(1)}%`}
-                hint={`${attempted.length}/${data.students.length} học sinh đã làm quiz`}
-                accent="text-[var(--men-lam)]"
-              />
-              <KpiTile label="Lượt làm quiz" value={formatNumber(totalQuizzes)} accent="text-[var(--jade)]" />
-              <KpiTile
-                label="Tin nhắn AI"
-                value={formatNumber(data.totalAiMessages)}
-                hint={`TB ${data.avgAiMessagesPerStudent.toFixed(1)} tin nhắn / học sinh`}
-                accent="text-[var(--gold-leaf)]"
-              />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <KpiTile label="Nộp đúng hạn" value={`${(data.assignmentRates?.onTimeRate ?? 0).toFixed(1)}%`} accent="text-[var(--status-success)]" />
-              <KpiTile label="Nộp muộn" value={`${(data.assignmentRates?.lateRate ?? 0).toFixed(1)}%`} accent="text-[var(--status-warning)]" />
-              <KpiTile label="Chưa nộp" value={`${(data.assignmentRates?.pendingRate ?? 0).toFixed(1)}%`} accent="text-accent-danger" />
-            </div>
-            {data.dailyTokenLimit != null && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <KpiTile
-                  label="Hạn mức token / học sinh / ngày"
-                  value={formatNumber(data.dailyTokenLimit)}
-                  hint="Do quản trị trường đặt cho lớp hoặc toàn trường. Làm mới lúc 00:00."
-                />
-                <KpiTile
-                  label="Yêu cầu xin thêm token"
-                  value={formatNumber(data.pendingTokenBoostRequests ?? 0)}
-                  hint={
-                    <Link href={ROUTES.TEACHING.TOKEN_REQUESTS} className="archive-link">
-                      Xem và duyệt
-                    </Link>
-                  }
-                  accent={(data.pendingTokenBoostRequests ?? 0) > 0 ? "text-[var(--status-warning)]" : undefined}
-                />
-              </div>
-            )}
-            {data.status === "ARCHIVED" && (
-              <p className="text-sm text-content-muted">Lớp thuộc năm học đã kết thúc (đã lưu trữ); số liệu chỉ để tham khảo.</p>
-            )}
-            <StudentTable students={data.students} classId={classId} canGrant={data.status !== "ARCHIVED"} />
-          </div>
-        );
-      }}
+      {(data) => (
+        <div className="space-y-6">
+          <KpiGrid data={data} />
+          <StudentTable students={data.students} classId={classId} canGrant={data.status !== "ARCHIVED"} />
+        </div>
+      )}
     </AnalyticsState>
   );
 }

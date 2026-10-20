@@ -41,5 +41,14 @@ function NewAssignment() {
   if (classes.length === 0) {
     return <EmptyState title="Chưa có lớp giảng dạy" description="Bạn cần được phân công lớp trước khi giao bài." />;
   }
-  return <AssignmentWizard classes={classes} initialClassId={params.get("classId")} initialType={type} />;
+  const rawSource = params.get("source");
+  return (
+    <AssignmentWizard
+      classes={classes}
+      initialClassId={params.get("classId")}
+      initialType={type}
+      initialSource={rawSource === "school" || rawSource === "library" ? rawSource : null}
+      initialTargetId={params.get("targetId")}
+    />
+  );
 }

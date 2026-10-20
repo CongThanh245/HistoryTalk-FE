@@ -27,17 +27,26 @@ function sortForClass(items: StudentAssignment[]) {
   return items.slice().sort((x, y) => RANK[assignmentBucket(x)] - RANK[assignmentBucket(y)] || due(x) - due(y));
 }
 
-/** Danh sach gon bai tap cua em trong mot lop. */
-export function StudentClassAssignments({ classId }: { classId: string }) {
-  const { data, isLoading, isError, error, refetch } = useMyAssignments({ classroomId: classId, size: 50 });
+/**
+ * Danh sach gon bai tap cua em: mot lop (`classId`) hoac moi lop (trang dau /classes).
+ * `openOnly`: chi bai chua xong (can lam / sap het han / qua han); `limit`: so dong toi da.
+ */
+export function StudentClassAssignments({ classId, openOnly, limit }: { classId?: string; openOnly?: boolean; limit?: number }) {
+  const { data, isLoading, isError, error, refetch } = useMyAssignments({ ...(classId && { classroomId: classId }), size: 50 });
 
   if (isLoading) return <AssignmentListSkeleton count={2} />;
   if (isError) {
     return <AssignmentLoadError message={apiErrorMessage(error, "Vui lòng kiểm tra kết nối rồi thử lại.")} onRetry={() => void refetch()} />;
   }
-  const items = sortForClass(data?.items ?? []);
+  const sorted = sortForClass(data?.items ?? []);
+  const open = openOnly ? sorted.filter((a) => !["DONE", "EXEMPTED"].includes(assignmentBucket(a))) : sorted;
+  const items = limit ? open.slice(0, limit) : open;
   if (items.length === 0) {
-    return <EmptyState icon={ClipboardList} title="Lớp chưa có bài tập" description="Khi thầy cô giao bài cho lớp, bài sẽ hiện ở đây." size="sm" />;
+    return openOnly && sorted.length > 0 ? (
+      <EmptyState icon={ClipboardList} title="Em đã làm hết bài" description="Không còn bài nào cần làm. Bài mới thầy cô giao sẽ hiện ở đây." size="sm" />
+    ) : (
+      <EmptyState icon={ClipboardList} title="Chưa có bài tập" description="Khi thầy cô giao bài cho lớp, bài sẽ hiện ở đây." size="sm" />
+    );
   }
 
   return (
@@ -62,7 +71,7 @@ export function StudentClassAssignments({ classId }: { classId: string }) {
       </ul>
       {(data?.totalElements ?? 0) > items.length && (
         <Link href={ROUTES.MY_ASSIGNMENTS} className="archive-link">
-          Xem tất cả {data?.totalElements} bài
+          {openOnly ? `Xem tất cả bài tập (${data?.totalElements})` : `Xem tất cả ${data?.totalElements} bài`}
         </Link>
       )}
     </div>

@@ -15,6 +15,10 @@ import {
   type UpdateAssignmentPayload,
 } from "@/services/assignment.service";
 
+// Global tat refetchOnMount: bat lai cho bai tap de du lieu da bi invalidate (sau khi nop / giao / sua bai)
+// tai moi khi mo lai trang; du lieu con moi (staleTime) thi khong goi lai.
+const REFETCH_STALE = { refetchOnMount: true } as const;
+
 export const assignmentKeys = {
   all: ["assignments"] as const,
   byClassroom: (classroomId: string, params: TeacherAssignmentListParams) =>
@@ -35,6 +39,7 @@ export const rosterKeys = {
 
 export function useClassroomAssignments(classroomId: string | undefined, params: TeacherAssignmentListParams = {}, enabled = true) {
   return useQuery({
+    ...REFETCH_STALE,
     queryKey: assignmentKeys.byClassroom(classroomId ?? "", params),
     queryFn: () => assignmentService.listByClassroom(classroomId!, params),
     enabled: enabled && Boolean(classroomId),
@@ -44,6 +49,7 @@ export function useClassroomAssignments(classroomId: string | undefined, params:
 
 export function useAssignmentGradebook(assignmentId: string | undefined, enabled = true) {
   return useQuery({
+    ...REFETCH_STALE,
     queryKey: assignmentKeys.gradebook(assignmentId ?? ""),
     queryFn: () => assignmentService.getGradebook(assignmentId!),
     enabled: enabled && Boolean(assignmentId),
@@ -78,6 +84,7 @@ export function useCancelAssignment() {
 
 export function useMyAssignments(params: StudentAssignmentListParams = {}, enabled = true) {
   return useQuery({
+    ...REFETCH_STALE,
     queryKey: assignmentKeys.mine(params),
     queryFn: () => assignmentService.listMine(params),
     enabled,
@@ -87,6 +94,7 @@ export function useMyAssignments(params: StudentAssignmentListParams = {}, enabl
 
 export function useMyAssignment(assignmentId: string | undefined, enabled = true) {
   return useQuery({
+    ...REFETCH_STALE,
     queryKey: assignmentKeys.mineDetail(assignmentId ?? ""),
     queryFn: () => assignmentService.getMine(assignmentId!),
     enabled: enabled && Boolean(assignmentId),
@@ -113,6 +121,7 @@ export function useSubmitAssignment() {
 
 export function useClassroomStudents(classId: string | undefined, params: ClassroomStudentListParams = {}, enabled = true) {
   return useQuery({
+    ...REFETCH_STALE,
     queryKey: rosterKeys.list(classId ?? "", params),
     queryFn: () => classroomStudentService.list(classId!, params),
     enabled: enabled && Boolean(classId),
@@ -122,6 +131,7 @@ export function useClassroomStudents(classId: string | undefined, params: Classr
 
 export function useAvailableStudents(classId: string | undefined, params: ClassroomStudentListParams = {}, enabled = true) {
   return useQuery({
+    ...REFETCH_STALE,
     queryKey: rosterKeys.available(classId ?? "", params),
     queryFn: () => classroomStudentService.listAvailable(classId!, params),
     enabled: enabled && Boolean(classId),

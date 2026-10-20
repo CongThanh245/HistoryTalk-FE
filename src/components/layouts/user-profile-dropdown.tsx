@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { displayName } from "@/features/auth/display-name";
 import { useLogout } from "@/features/auth/hooks";
 import { useAuthStore } from "@/store/auth.store";
 import { useProfile } from "@/features/profile/hooks";
@@ -51,9 +52,11 @@ export function UserProfileDropdown({
 
   if (!user) return null;
 
-  const initials = user.userName
-    ? user.userName
-        .split(" ")
+  const name = displayName(user, "");
+  const initials = name
+    ? name
+        .split(/[\s_-]+/)
+        .filter(Boolean)
         .map((w) => w[0])
         .join("")
         .toUpperCase()
@@ -85,7 +88,7 @@ export function UserProfileDropdown({
           >
             <AvatarImage
               src={user?.avatarUrl ?? undefined}
-              alt={user?.userName}
+              alt={name}
             />
             <AvatarFallback
               className="text-xs font-bold bg-[var(--text-primary)] text-[var(--text-inverse)]"
@@ -114,7 +117,7 @@ export function UserProfileDropdown({
                 />
               )}
               <p className="archive-title is-plain text-base leading-[1.3] truncate">
-                {user?.userName ?? "—"}
+                {name || "—"}
               </p>
             </div>
             <p

@@ -20,11 +20,9 @@ export default function MyClassesPage() {
     <SaasShell
       variant="app"
       title={isStudent ? "Lớp học của em" : "Lớp học"}
-      description={
-        role === "TEACHER"
-          ? "Các lớp bạn được phân công giảng dạy. Mở lớp để xem thông tin lớp."
-          : "Lớp của em và các mục học tập trong không gian lớp học."
-      }
+      // Students get the greeting as the page heading instead (StudentWorkspace).
+      hideHeading={isStudent}
+      description={isStudent ? undefined : "Các lớp bạn được phân công dạy."}
     >
       <MyClasses role={role} />
     </SaasShell>

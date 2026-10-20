@@ -15,7 +15,8 @@ interface QuizProgressBarProps {
   flagged?: Set<string>;
   practiceMode?: boolean;
   onBack: () => void;
-  onGoHome: () => void;
+  /** Bo trong de an nut "Về trang" (vd. lam bai kiem tra trong trang bai tap: "Quay lại" da du). */
+  onGoHome?: () => void;
   onRetry: () => void;
   scrollToQuestion: (index: number) => void;
 }
@@ -128,13 +129,15 @@ export function QuizProgressBar({
 
         <div className="w-px h-5 flex-shrink-0 bg-[var(--border-strong)]" />
 
-        <button
-          onClick={onGoHome}
-          className="px-3 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-transparent text-content-heading border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
-          title="Về trang quiz"
-        >
-          <span className="hidden sm:inline">Về trang</span>
-        </button>
+        {onGoHome && (
+          <button
+            onClick={onGoHome}
+            className="px-3 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-transparent text-content-heading border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+            title="Về trang quiz"
+          >
+            <span className="hidden sm:inline">Về trang</span>
+          </button>
+        )}
 
         <button
           onClick={onRetry}

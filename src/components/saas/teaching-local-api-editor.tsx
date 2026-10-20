@@ -3,16 +3,15 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, EyeOff, FileText, Globe, Loader2, Lock, Pencil, Plus, Save, Send, Settings2, ShieldCheck, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, EyeOff, FileText, Globe, Loader2, Lock, Pencil, Plus, Save, Send, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { StaffFormInput, StaffFormSelect, StaffFormTextarea } from "@/components/staff/staff-form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
+import { Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
 import { LocalReviewBadge, LocalScopeTag, ReviewNote, reviewState } from "@/components/saas/local-content-ui";
 import { ContextQuizzesPanel, LinkedContextsPanel, LocalBattleMapPanel, LocalMapPanel } from "@/components/saas/local-content-extras";
 import { ROUTES } from "@/constants/routes";
@@ -38,7 +37,6 @@ import {
   type LocalScope,
 } from "@/services/local-content.service";
 import { useAuthStore } from "@/store/auth.store";
-import { cn } from "@/lib/utils/cn";
 
 /*
  * Teacher-authored contexts / characters (Sprint 6 API). Same content as the Content Admin's contexts and
@@ -196,9 +194,9 @@ function characterPayload(f: FormState, item?: LocalItem, isPublished?: boolean)
 }
 
 const STATE_NOTE = {
-  DRAFT: "Bản nháp: học sinh chưa thấy. Soạn xong, bấm “Xuất bản” để học sinh thấy ngay.",
-  PUBLISHED: "Đã xuất bản: học sinh của trường đang thấy nội dung này. Thay đổi bạn lưu được cập nhật ngay.",
-  HIDDEN: "Nội dung đang bị ẩn với học sinh. Chỉnh sửa nếu cần rồi xuất bản lại.",
+  DRAFT: "Học sinh chưa thấy. Bấm “Xuất bản” khi soạn xong.",
+  PUBLISHED: "Học sinh trong trường đang thấy. Lưu là cập nhật ngay.",
+  HIDDEN: "Đang ẩn với học sinh. Xuất bản lại để hiện.",
 } as const;
 
 type Tab = "basic" | "media" | "content" | "rag" | "context" | "battle" | "map" | "quiz";
@@ -228,7 +226,6 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   const [showErrors, setShowErrors] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [tab, setTab] = React.useState<Tab>("basic");
-  const [sharingOpen, setSharingOpen] = React.useState(false);
 
   const isMine = !item || item.createdBy?.uid === myUid;
   const readOnly = !isMine;
@@ -303,37 +300,53 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   const sharingDirty = !!item && (form.scope !== item.contentScope || form.classIds.join() !== (item.classIds ?? []).join());
 
   return (
-    <div className="space-y-6">
-      <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu
-      </Link>
-
-      {item && (
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            <LocalScopeTag item={item} />
-            <LocalReviewBadge item={item} />
-            <span className="text-content-muted">
-              {LOCAL_KIND_LABELS[kind]} · Tạo {formatDate(item.createdAt)} · Cập nhật {formatDate(item.updatedAt)}
-              {!isMine && ` · Soạn bởi ${item.createdBy?.fullName ?? "đồng nghiệp"}`}
-            </span>
-          </div>
-          <p className="flex items-start gap-2 text-sm text-content-muted">
+    <div className="space-y-4">
+      {/* Compact header: back link, status and a one-line note; the page title is hidden (the name is in the form). */}
+      <div className="space-y-1.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+          <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu
+          </Link>
+          {item && (
+            <>
+              <span className="h-4 w-px bg-[var(--border-strong)]" aria-hidden="true" />
+              <LocalScopeTag item={item} />
+              <LocalReviewBadge item={item} />
+              <span className="text-xs text-content-muted">
+                {LOCAL_KIND_LABELS[kind]} · Cập nhật {formatDate(item.updatedAt)}
+                {!isMine && ` · Soạn bởi ${item.createdBy?.fullName ?? "đồng nghiệp"}`}
+              </span>
+            </>
+          )}
+        </div>
+        {item && (
+          <p className="flex items-center gap-1.5 text-xs text-content-muted">
             {readOnly ? (
               <>
-                <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                Nội dung do đồng nghiệp soạn cho toàn trường, bạn chỉ có thể xem.
+                <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                Đồng nghiệp chia sẻ cho toàn trường, bạn chỉ xem được.
               </>
             ) : (
               <>
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 {STATE_NOTE[reviewState(item)]}
                 {item.approvedBy && item.isPublished && item.approvedBy.uid !== myUid && ` Xuất bản bởi ${item.approvedBy.fullName}.`}
               </>
             )}
           </p>
-          {isMine && <ReviewNote item={item} />}
-        </div>
+        )}
+        {item && isMine && <ReviewNote item={item} />}
+      </div>
+
+      {!readOnly && (
+        <SharingPanel
+          scope={form.scope}
+          classIds={form.classIds}
+          classes={classes}
+          lockedClasses={!!item?.classIds?.length}
+          dirty={sharingDirty}
+          onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+        />
       )}
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="gap-4">
@@ -418,9 +431,9 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
       </Tabs>
 
       {!readOnly && (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--text-primary)] pt-4">
+        // Sticky so Lưu / Xuất bản stay reachable without scrolling to the end of a long form.
+        <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border-strong)] bg-[var(--bg-main)] px-1 py-3">
           <div className="flex flex-wrap items-center gap-2">
-            <SharingButton scope={form.scope} classCount={form.classIds.length} dirty={sharingDirty} onClick={() => setSharingOpen(true)} />
             {item && (
               <button type="button" className="btn-line text-[var(--accent-danger)]" onClick={() => setDeleteOpen(true)}>
                 <Trash2 className="h-4 w-4" aria-hidden="true" /> Xóa
@@ -451,16 +464,6 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
         </div>
       )}
 
-      <SharingDialog
-        open={sharingOpen}
-        onOpenChange={setSharingOpen}
-        scope={form.scope}
-        classIds={form.classIds}
-        classes={classes}
-        lockedClasses={!!item?.classIds?.length}
-        onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
-      />
-
       {item && (
         <ConfirmDialog
           open={deleteOpen}
@@ -478,104 +481,75 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
 
 /* ───────────────────────── Sharing settings ───────────────────────── */
 
-/** Gear button in the action bar showing the current scope and class count. */
-function SharingButton({ scope, classCount, dirty, onClick }: { scope: LocalScope; classCount: number; dirty: boolean; onClick: () => void }) {
-  const wide = scope === "SCHOOL_WIDE";
-  const Icon = wide ? Globe : Lock;
-  return (
-    <button type="button" className="btn-line" onClick={onClick} aria-haspopup="dialog" title="Cài đặt chia sẻ">
-      <Settings2 className="h-4 w-4" aria-hidden="true" />
-      <Icon className="h-3.5 w-3.5 text-content-muted" aria-hidden="true" />
-      <span>
-        {wide ? "Toàn trường" : "Riêng tôi"}
-        {classCount > 0 && <span className="text-content-muted"> · {classCount} lớp</span>}
-      </span>
-      {dirty && <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-gold)]" aria-label="Chưa lưu" />}
-    </button>
-  );
-}
-
 /**
- * Scope (private ↔ school-wide) and class assignment. Edits go into the form and are saved with "Lưu" / "Xuất bản".
+ * Scope (private ↔ school-wide) and class assignment, always visible above the tabs.
+ * Edits go into the form and are saved with "Lưu" / "Xuất bản".
  * The API keeps the current classes when an empty list is sent, so assigned classes cannot all be removed.
  */
-function SharingDialog({
-  open,
-  onOpenChange,
+function SharingPanel({
   scope,
   classIds,
   classes,
   lockedClasses,
+  dirty,
   onChange,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   scope: LocalScope;
   classIds: string[];
   classes: { id: string; className: string; classCode: string }[];
   lockedClasses: boolean;
+  dirty: boolean;
   onChange: (patch: Partial<Pick<FormState, "scope" | "classIds">>) => void;
 }) {
   const wide = scope === "SCHOOL_WIDE";
   const toggleClass = (id: string, on: boolean) => onChange({ classIds: on ? [...classIds, id] : classIds.filter((c) => c !== id) });
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(DIALOG_CLASS, "sm:max-w-md")}>
-        <DialogHeader>
-          <DialogTitle className={DIALOG_TITLE_CLASS}>Cài đặt chia sẻ</DialogTitle>
-          <DialogDescription className="text-content-muted">Thay đổi được áp dụng khi bạn bấm Lưu hoặc Xuất bản.</DialogDescription>
-        </DialogHeader>
-
-        <label htmlFor="scope-switch" className="flex cursor-pointer items-start gap-3 rounded-[2px] border border-[var(--border-strong)] p-3">
-          {wide ? (
-            <Globe className="mt-0.5 h-5 w-5 shrink-0 text-[var(--men-lam)]" aria-hidden="true" />
-          ) : (
-            <Lock className="mt-0.5 h-5 w-5 shrink-0 text-content-muted" aria-hidden="true" />
-          )}
-          <span className="min-w-0 flex-1 space-y-0.5">
-            <span className="block text-sm font-semibold text-content-heading">Chia sẻ cho toàn trường</span>
-            <span className="block text-xs leading-relaxed text-content-muted">
-              {wide
-                ? "Công khai: lưu vào kho tư liệu của trường, mọi giáo viên xem và dùng được (chỉ đọc)."
-                : "Riêng tư: chỉ bạn thấy và dùng cho các lớp của mình."}
-            </span>
+    <section
+      aria-label="Chia sẻ"
+      className="grid gap-4 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] p-4 md:grid-cols-2 md:gap-6"
+    >
+      <label htmlFor="scope-switch" className="flex cursor-pointer items-start gap-3">
+        {wide ? (
+          <Globe className="mt-0.5 h-5 w-5 shrink-0 text-[var(--men-lam)]" aria-hidden="true" />
+        ) : (
+          <Lock className="mt-0.5 h-5 w-5 shrink-0 text-content-muted" aria-hidden="true" />
+        )}
+        <span className="min-w-0 flex-1 space-y-0.5">
+          <span className="block text-sm font-semibold text-content-heading">Chia sẻ cho giáo viên toàn trường</span>
+          <span className="block text-xs leading-relaxed text-content-muted">
+            {wide ? "Giáo viên khác trong trường xem và dùng được (chỉ đọc)." : "Đang tắt: chỉ bạn dùng nội dung này."}
           </span>
-          <Switch id="scope-switch" checked={wide} onCheckedChange={(v) => onChange({ scope: v ? "SCHOOL_WIDE" : "CLASS_ONLY" })} />
-        </label>
+        </span>
+        <Switch id="scope-switch" checked={wide} onCheckedChange={(v) => onChange({ scope: v ? "SCHOOL_WIDE" : "CLASS_ONLY" })} />
+      </label>
 
-        <div className="space-y-2">
-          <p id="classes-label" className="text-sm font-semibold text-content-heading">
-            Gán cho lớp
-          </p>
-          <p className="text-xs text-content-muted">
-            Học sinh lớp được chọn thấy nội dung trong trang lớp sau khi xuất bản. Không chọn lớp nào thì nội dung hiện ở mọi lớp.
-            {lockedClasses && " Hệ thống chưa hỗ trợ bỏ chọn hết lớp sau khi đã gán."}
-          </p>
-          {classes.length === 0 ? (
-            <p className="text-sm text-content-muted">Bạn chưa phụ trách lớp nào.</p>
-          ) : (
-            <div role="group" aria-labelledby="classes-label" className="grid max-h-56 gap-1.5 overflow-y-auto sm:grid-cols-2">
-              {classes.map((c) => (
-                <label
-                  key={c.id}
-                  htmlFor={`cls-${c.id}`}
-                  className="flex cursor-pointer items-center gap-2 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-2 text-sm hover:border-[var(--text-primary)]"
-                >
-                  <Checkbox id={`cls-${c.id}`} checked={classIds.includes(c.id)} onCheckedChange={(v) => toggleClass(c.id, !!v)} />
-                  <span className="min-w-0 flex-1 truncate font-medium text-content-heading">{c.className}</span>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <button type="button" className="btn-crimson" onClick={() => onOpenChange(false)}>
-            Xong
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <div className="min-w-0 space-y-2">
+        <p id="classes-label" className="text-sm font-semibold text-content-heading">
+          Lớp được xem
+          {dirty && <span className="ml-2 text-xs font-normal text-[var(--accent-gold)]">· Chưa lưu</span>}
+        </p>
+        {classes.length === 0 ? (
+          <p className="text-xs text-content-muted">Bạn chưa phụ trách lớp nào.</p>
+        ) : (
+          <div role="group" aria-labelledby="classes-label" className="flex flex-wrap gap-1.5">
+            {classes.map((c) => (
+              <label
+                key={c.id}
+                htmlFor={`cls-${c.id}`}
+                className="flex cursor-pointer items-center gap-2 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-1.5 text-sm hover:border-[var(--text-primary)]"
+              >
+                <Checkbox id={`cls-${c.id}`} checked={classIds.includes(c.id)} onCheckedChange={(v) => toggleClass(c.id, !!v)} />
+                <span className="font-medium text-content-heading">{c.className}</span>
+              </label>
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-content-muted">
+          Không chọn lớp nào thì hiện ở mọi lớp. Thay đổi áp dụng khi bấm Lưu hoặc Xuất bản.
+          {lockedClasses && " Đã gán lớp thì chưa bỏ chọn hết được."}
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -583,7 +557,8 @@ function SharingDialog({
 
 type ErrFn = (k: string) => string | null;
 
-const ERA_OPTIONS = [{ value: NONE, label: "Chọn thời đại" }, ...LOCAL_ERA_OPTIONS] as { value: LocalEra | typeof NONE; label: string }[];
+// Thoi dai bat buoc: "Chọn thời đại" chi la placeholder, khong phai mot lua chon chon duoc.
+const ERA_OPTIONS = LOCAL_ERA_OPTIONS as { value: LocalEra; label: string }[];
 
 function BcCheckbox({ id, checked, onChange }: { id: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -603,15 +578,16 @@ function ContextBasic({ f, patch, err }: { f: CtxForm; patch: (p: Partial<CtxFor
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Thời đại" required error={err("era")}>
           <StaffFormSelect
-            value={f.era || NONE}
-            onValueChange={(v) => patch({ era: v === NONE ? "" : v })}
+            value={f.era}
+            onValueChange={(v) => patch({ era: v })}
+            placeholder="Chọn thời đại"
             options={ERA_OPTIONS}
             className="w-full"
           />
         </Field>
         <Field label="Năm" required error={err("year")}>
           <div className="flex items-center gap-3">
-            <StaffFormInput type="number" min={0} value={f.year} onChange={(e) => patch({ year: e.target.value })} placeholder="938" />
+            <StaffFormInput type="number" min={0} value={f.year} onChange={(e) => patch({ year: e.target.value })} placeholder="VD: 938" />
             <BcCheckbox id="ctx-bc" checked={f.isBC} onChange={(isBC) => patch({ isBC })} />
           </div>
         </Field>

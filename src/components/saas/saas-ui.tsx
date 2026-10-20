@@ -27,9 +27,12 @@ export function SaasShell({
   fallback,
   live = true,
   backLink,
+  hideHeading = false,
   children,
 }: {
   title: string;
+  /** An tieu de trang (vd. luc hoc sinh dang lam bai, de tap trung vao cau hoi). */
+  hideHeading?: boolean;
   description?: string;
   /** Small "← back" link shown above the page title. */
   backLink?: React.ReactNode;
@@ -50,7 +53,9 @@ export function SaasShell({
       )}
     >
       {!live && <MockDataNotice />}
-      {backLink ? (
+      {hideHeading ? (
+        <h1 className="sr-only">{title}</h1>
+      ) : backLink ? (
         <div className="space-y-3">
           {backLink}
           <ArchiveHeading as="h1" title={title} description={description} />
@@ -92,11 +97,13 @@ export function SectionHeading({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="space-y-3">
-      {/* Card-level heading: smaller than the page title so a panel doesn't shout. */}
-      <ArchiveHeading title={title} description={description} className="pb-3 [&_h2]:text-xl sm:[&_h2]:text-[22px]" />
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-    </div>
+    // Card-level heading: smaller than the page title so a panel doesn't shout. Actions sit on the title row; no rule, the page title already has one.
+    <ArchiveHeading
+      title={title}
+      description={description}
+      actions={actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : undefined}
+      className="border-b-0 pb-0 [&_h2]:text-xl sm:[&_h2]:text-[22px]"
+    />
   );
 }
 

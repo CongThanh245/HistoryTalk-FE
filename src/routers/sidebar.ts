@@ -162,7 +162,7 @@ export const STAFF_SIDEBAR: SidebarSection[] = [
       { icon: Map, label: "Bản đồ lịch sử", href: ROUTES.STAFF.MAP },
       { icon: User, label: "Nhân vật", href: ROUTES.STAFF.CHARACTERS },
       { icon: BookOpen, label: "Tài liệu", href: ROUTES.STAFF.DOCUMENTS },
-      { icon: ClipboardList, label: "Câu đố lịch sử", href: ROUTES.STAFF.QUIZZES },
+      { icon: ClipboardList, label: "Bộ đề", href: ROUTES.STAFF.QUIZZES },
       { icon: Flame, label: "Nhiệm vụ hằng ngày", href: ROUTES.STAFF.QUESTS },
     ],
   },

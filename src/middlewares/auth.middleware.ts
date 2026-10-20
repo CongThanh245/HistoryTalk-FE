@@ -56,6 +56,9 @@ export function authMiddleware(request: NextRequest) {
   // Đã đăng nhập → không cho vào trang login/register
   if (isAuthOnlyRoute) return redirect(getRoleHome(role));
 
+  // The landing page is for guests; signed-in users go straight to their own area.
+  if (pathname === "/") return redirect(getRoleHome(role));
+
   // Staff roles are restricted to staff-only pages, not marketing/customer pages.
   if (isAdminRole(role)) {
     if (!isStaffRoute) return redirect(getRoleHome(role));

@@ -7,6 +7,7 @@ import { MagneticButton } from "../commons/MagneticButton";
 import Image from "next/image";
 import { useAuthStore } from "@/store/auth.store";
 import { useEntitlements } from "@/features/saas/entitlements";
+import { getRoleHome } from "@/constants/roles";
 
 // Lazy load UserProfileDropdown để giảm initial render load
 const UserProfileDropdown = lazy(() => import("../layouts/user-profile-dropdown").then(m => ({ default: m.UserProfileDropdown })));
@@ -294,7 +295,7 @@ export function MarketingNavbar() {
 
               <div className="pt-3">
                 <Link
-                  href="/home"
+                  href={getRoleHome(user?.role)}
                   onClick={() => setIsOpen(false)}
                   className="btn-crimson w-full py-3.5"
                 >

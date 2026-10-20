@@ -56,6 +56,11 @@ export const ROUTES = {
     LOCAL_TRASH: "/teaching/local/trash",
     /** Question editor of a teacher-authored quiz of a local context. */
     LOCAL_QUIZ: (quizId: string) => `/teaching/local/quizzes/${quizId}`,
+    /** Soan bo de moi (cau hoi soan truoc, tao 1 lan). `returnTo`: trang giao bai, se them &targetId=. */
+    LOCAL_QUIZ_NEW: (q: { contextId?: string; returnTo?: string } = {}) => {
+      const sp = new URLSearchParams({ ...(q.contextId && { contextId: q.contextId }), ...(q.returnTo && { returnTo: q.returnTo }) }).toString();
+      return `/teaching/local/quizzes/new${sp ? `?${sp}` : ""}`;
+    },
     /** Daily token boost requests of the teacher's students (Sprint 7). */
     TOKEN_REQUESTS: "/teaching/token-requests",
   },

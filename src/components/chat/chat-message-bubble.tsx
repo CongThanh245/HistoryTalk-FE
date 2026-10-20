@@ -6,6 +6,7 @@ import type { ChatMessage, ChatCharacter } from "@/services/chat.service";
 import { Volume2, VolumeX, Mic, Quote, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useState } from "react";
+import { displayName } from "@/features/auth/display-name";
 import { useAuthStore } from "@/store/auth.store";
 import { MarkdownMessage } from "./MarkdownMessage";
 import { splitAssistantContent } from "@/lib/utils/helpers";
@@ -28,7 +29,7 @@ export function MessageBubble({
   const isUser = message.role === "USER";
   const [localIsSpeaking, setLocalIsSpeaking] = useState(false);
   const isSpeaking = isSpeakingProp !== undefined ? isSpeakingProp : localIsSpeaking;
-  const userName = useAuthStore((s) => s.user?.userName ?? "Bạn");
+  const userName = useAuthStore((s) => displayName(s.user, "Bạn"));
   const userAvatarUrl = useAuthStore((s) => s.user?.avatarUrl);
 
   // Logic lấy chữ cái đầu

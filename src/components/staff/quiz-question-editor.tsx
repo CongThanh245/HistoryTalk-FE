@@ -5,6 +5,7 @@ import {
   ArrowUp, ArrowDown, Pencil, Trash2,
   Plus, Upload, CheckCircle2, ClipboardList,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,10 +57,17 @@ interface QuizQuestionEditorProps {
   onChange: (qs: QuizQuestion[]) => void;
   onImportError?: (msg: string) => void;
   onImportSuccess?: (count: number) => void;
+  /** Bao cho trang cha biet dang co form cau hoi mo (chua luu) de chan nut luu bo de. */
+  onEditingChange?: (editing: boolean) => void;
 }
 
 const LABELS = ["A", "B", "C", "D"] as const;
 const QUESTION_TYPES: QuestionType[] = ["MULTIPLE_CHOICE", "FILL_IN_BLANK", "MATCHING"];
+export const QUESTION_TYPE_HINTS: Record<QuestionType, string> = {
+  MULTIPLE_CHOICE: "4 phương án, chọn 1 đáp án đúng",
+  FILL_IN_BLANK: "Người học gõ câu trả lời",
+  MATCHING: "Nối vế trái với vế phải",
+};
 const EMPTY_TYPE_FIELDS = {
   questionType: "MULTIPLE_CHOICE" as QuestionType,
   options: ["", "", "", ""] as [string, string, string, string],
@@ -216,10 +224,10 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
         
         <DialogHeader className="px-8 pt-8 pb-4 relative overflow-hidden">
           <DialogTitle className="text-2xl font-bold tracking-tight text-content-heading">
-            Dán văn bản — Bulk import câu hỏi
+            Dán nhiều câu trắc nghiệm
           </DialogTitle>
           <DialogDescription className="text-sm mt-1.5 leading-relaxed text-content-muted">
-            Paste nhiều câu hỏi cùng lúc theo định dạng chuẩn. Các câu hỏi được phân tách bằng dấu gạch ngang <code className="px-1.5 py-0.5 rounded-[2px] bg-[var(--status-neutral-bg)] font-mono text-xs">---</code> hoặc một dòng trống.
+            Chỉ dùng cho câu <strong>trắc nghiệm 4 phương án</strong>; câu điền chỗ trống và nối cặp hãy thêm bằng thanh “Thêm câu”. Dán nhiều câu cùng lúc theo định dạng chuẩn. Các câu hỏi được phân tách bằng dấu gạch ngang <code className="px-1.5 py-0.5 rounded-[2px] bg-[var(--status-neutral-bg)] font-mono text-xs">---</code> hoặc một dòng trống.
           </DialogDescription>
         </DialogHeader>
 
@@ -320,6 +328,8 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
 
 interface QFormProps {
   initial?: QuizQuestion;
+  /** Loai cau hoi khi tao moi (chon san tu thanh "Thêm câu"). */
+  initialType?: QuestionType;
   orderIndex: number;
   onSave: (q: QuizQuestion) => void;
   onCancel: () => void;
@@ -329,8 +339,15 @@ interface QFormProps {
 const FIELD_LABEL = "text-xs font-bold uppercase tracking-wider px-1 text-content-subtle";
 const FIELD_INPUT = "h-10 text-sm rounded-[2px] border-2 transition-all bg-[var(--bg-elevated)] border-[var(--border-default)]";
 
-export function QuestionForm({ initial, orderIndex, onSave, onCancel, isSaving = false }: QFormProps) {
-  const [draft, setDraft] = React.useState<QuizQuestion>(initial ?? { ...makeEmpty(), orderIndex });
+export function QuestionForm({ initial, initialType, orderIndex, onSave, onCancel, isSaving = false }: QFormProps) {
+  const [draft, setDraft] = React.useState<QuizQuestion>(
+    initial ?? { ...makeEmpty(), orderIndex, ...(initialType && { questionType: initialType }) },
+  );
+  const ref = React.useRef<HTMLDivElement>(null);
+  // Form mo o cuoi danh sach dai: cuon toi de nguoi soan khong phai tu tim.
+  React.useEffect(() => {
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, []);
   const setOpt = (i: number, v: string) =>
     setDraft((s) => { const o = [...s.options] as [string, string, string, string]; o[i] = v; return { ...s, options: o }; });
   const setAccepted = (i: number, v: string) =>
@@ -340,7 +357,8 @@ export function QuestionForm({ initial, orderIndex, onSave, onCancel, isSaving =
   const valid = isQuestionValid(draft);
 
   return (
-    <div className="rounded-[2px] border border-card-light-border p-6 space-y-5 transition-all animate-in zoom-in-95 duration-200 bg-[var(--bg-elevated)]">
+    <div ref={ref} className="scroll-mt-24 rounded-[2px] border-2 border-[var(--accent-gold)] p-6 space-y-5 transition-all animate-in zoom-in-95 duration-200 bg-[var(--bg-elevated)]">
+      <p className="text-sm font-bold text-content-heading">{initial ? `Sửa câu ${orderIndex}` : `Câu hỏi mới (câu ${orderIndex})`}</p>
 
       {/* Question type */}
       <div className="grid gap-2">
@@ -349,13 +367,15 @@ export function QuestionForm({ initial, orderIndex, onSave, onCancel, isSaving =
           {QUESTION_TYPES.map((type) => (
             <button key={type} type="button"
               onClick={() => setDraft((s) => ({ ...s, questionType: type }))}
+              aria-pressed={draft.questionType === type}
               className={cn(
-                "px-3 h-8 rounded-[2px] text-xs font-semibold border transition-all",
+                "px-3 py-1.5 rounded-[2px] text-left border transition-all",
                 draft.questionType === type
                   ? "bg-[var(--accent-gold-active-bg)] border-accent-gold text-content-heading"
                   : "bg-transparent border-card-light-border text-content-muted",
               )}>
-              {QUESTION_TYPE_LABELS[type]}
+              <span className="block text-xs font-semibold">{QUESTION_TYPE_LABELS[type]}</span>
+              <span className="block text-[11px] opacity-80">{QUESTION_TYPE_HINTS[type]}</span>
             </button>
           ))}
         </div>
@@ -515,7 +535,7 @@ function QuestionRow({ q, idx, total, onEdit, onDelete, onMove }: {
         <p className="text-sm font-semibold leading-relaxed text-content-text">{q.content}</p>
         <QuestionAnswerSummary q={q} />
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+      <div className="flex items-center gap-1 shrink-0 opacity-60 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         <div className="flex items-center gap-0.5 bg-[var(--status-neutral-bg)] p-0.5 rounded-[2px] border border-[var(--border-default)]">
           <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-7 w-7 hover:bg-[var(--bg-elevated)]"
             disabled={idx === 0} onClick={() => onMove("up")} title="Lên">
@@ -542,15 +562,28 @@ function QuestionRow({ q, idx, total, onEdit, onDelete, onMove }: {
 
 // ─── Main Editor ──────────────────────────────────────────────────────────────
 
-export function QuizQuestionEditor({ questions, onChange, onImportError, onImportSuccess }: QuizQuestionEditorProps) {
-  const [addingNew, setAddingNew] = React.useState(false);
+export function QuizQuestionEditor({ questions, onChange, onImportError, onImportSuccess, onEditingChange }: QuizQuestionEditorProps) {
+  const [addingNew, setAddingNew] = React.useState<QuestionType | null>(null);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [pasteOpen, setPasteOpen] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
-  const handleSaveNew = (q: QuizQuestion) => { onChange(reindex([...questions, q])); setAddingNew(false); };
+  const editing = addingNew !== null || editingId !== null;
+  React.useEffect(() => { onEditingChange?.(editing); }, [editing, onEditingChange]);
+
+  const handleSaveNew = (q: QuizQuestion) => { onChange(reindex([...questions, q])); setAddingNew(null); };
   const handleSaveEdit = (u: QuizQuestion) => { onChange(reindex(questions.map((q) => q.questionId === u.questionId ? u : q))); setEditingId(null); };
-  const handleDelete = (id: string) => onChange(reindex(questions.filter((q) => q.questionId !== id)));
+  // Xoa ngay, cho hoan tac trong toast thay vi hop xac nhan.
+  const handleDelete = (id: string) => {
+    const index = questions.findIndex((q) => q.questionId === id);
+    if (index < 0) return;
+    const before = questions;
+    onChange(reindex(questions.filter((q) => q.questionId !== id)));
+    toast(`Đã xóa câu ${index + 1}`, { action: { label: "Hoàn tác", onClick: () => onChange(before) } });
+  };
+  const typeCounts = QUESTION_TYPES
+    .map((type) => ({ type, n: questions.filter((q) => q.questionType === type).length }))
+    .filter((c) => c.n > 0);
   const handleMove = (id: string, dir: "up" | "down") => {
     const i = questions.findIndex((q) => q.questionId === id); if (i < 0) return;
     const next = [...questions]; const j = dir === "up" ? i - 1 : i + 1;
@@ -580,21 +613,26 @@ export function QuizQuestionEditor({ questions, onChange, onImportError, onImpor
     <div className="space-y-3">
       {/* Toolbar */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <span className="text-sm font-semibold text-content-heading">
-          Câu hỏi ({questions.length})
-        </span>
+        <div className="min-w-0">
+          <span className="text-sm font-semibold text-content-heading">Câu hỏi ({questions.length})</span>
+          {typeCounts.length > 0 && (
+            <p className="text-xs text-content-muted">
+              {typeCounts.map((c) => `${c.n} ${QUESTION_TYPE_LABELS[c.type].toLowerCase()}`).join(" · ")}
+            </p>
+          )}
+        </div>
         <div className="flex gap-2 flex-wrap">
           {/* Paste text */}
           <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-[2px] border-card-light-border bg-transparent text-content-text"
             onClick={() => setPasteOpen(true)}>
-            <ClipboardList className="h-3.5 w-3.5" /> Dán văn bản
+            <ClipboardList className="h-3.5 w-3.5" /> Dán nhiều câu trắc nghiệm
           </Button>
 
           {/* File import */}
           <input ref={fileRef} type="file" accept=".json,.csv" className="hidden" onChange={handleFile} />
           <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-[2px] border-card-light-border bg-transparent text-content-text"
             onClick={() => fileRef.current?.click()}>
-            <Upload className="h-3.5 w-3.5" /> Import JSON/CSV
+            <Upload className="h-3.5 w-3.5" /> Nhập file trắc nghiệm (JSON/CSV)
           </Button>
 
         </div>
@@ -608,25 +646,42 @@ export function QuizQuestionEditor({ questions, onChange, onImportError, onImpor
               ? <QuestionForm initial={q} orderIndex={idx + 1}
                 onSave={handleSaveEdit} onCancel={() => setEditingId(null)} />
               : <QuestionRow q={q} idx={idx} total={questions.length}
-                onEdit={() => { setAddingNew(false); setEditingId(q.questionId); }}
+                onEdit={() => { setAddingNew(null); setEditingId(q.questionId); }}
                 onDelete={() => handleDelete(q.questionId)}
                 onMove={(d) => handleMove(q.questionId, d)} />
             }
           </div>
         ))}
         {addingNew && (
-          <QuestionForm orderIndex={questions.length + 1}
-            onSave={handleSaveNew} onCancel={() => setAddingNew(false)} />
+          <QuestionForm key={addingNew} initialType={addingNew} orderIndex={questions.length + 1}
+            onSave={handleSaveNew} onCancel={() => setAddingNew(null)} />
         )}
-        {!questions.length && !addingNew && (
-          <div className="rounded-[2px] border-2 border-dashed border-card-light-border flex flex-col items-center justify-center py-10 gap-2">
-            <p className="text-sm text-content-muted">Chưa có câu hỏi nào</p>
-            <div className="flex gap-2 mt-1">
-              <Button type="button" size="sm" variant="outline" className="rounded-[2px] border-card-light-border bg-transparent text-content-text"
-                onClick={() => setAddingNew(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Thêm câu hỏi
-              </Button>
+        {/* Luon co thanh them cau o cuoi danh sach (truoc day chi hien khi bo de rong). */}
+        {!addingNew && (
+          <div className={cn(
+            "rounded-[2px] border-2 border-dashed border-card-light-border px-4",
+            questions.length ? "py-4" : "py-10",
+          )}>
+            {!questions.length && (
+              <p className="mb-3 text-center text-sm text-content-muted">Chưa có câu hỏi nào. Chọn loại câu để bắt đầu soạn.</p>
+            )}
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <span className="flex items-center gap-1 text-xs font-semibold text-content-subtle">
+                <Plus className="h-3.5 w-3.5" /> Thêm câu:
+              </span>
+              {QUESTION_TYPES.map((type) => (
+                <Button key={type} type="button" size="sm" variant="outline"
+                  disabled={editingId !== null}
+                  title={QUESTION_TYPE_HINTS[type]}
+                  className="rounded-[2px] border-card-light-border bg-transparent text-content-text"
+                  onClick={() => setAddingNew(type)}>
+                  {QUESTION_TYPE_LABELS[type]}
+                </Button>
+              ))}
             </div>
+            {editingId !== null && (
+              <p className="mt-2 text-center text-xs text-content-muted">Lưu hoặc hủy câu đang sửa trước khi thêm câu mới.</p>
+            )}
           </div>
         )}
       </div>

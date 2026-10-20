@@ -25,7 +25,7 @@ export const ASSIGNMENT_TYPE_META: Record<
 > = {
   CONTEXT_READING: { label: "Đọc bối cảnh", color: "var(--jade)", icon: BookOpen, requirementUnit: "giây đọc", defaultRequirement: 60 },
   AI_CHAT_ROLEPLAY: { label: "Trò chuyện AI", color: "var(--accent-gold)", icon: MessageCircle, requirementUnit: "tin nhắn", defaultRequirement: 5 },
-  QUIZ_TEST: { label: "Bài trắc nghiệm", color: "var(--men-lam)", icon: ClipboardCheck, requirementUnit: null, defaultRequirement: null },
+  QUIZ_TEST: { label: "Bài kiểm tra", color: "var(--men-lam)", icon: ClipboardCheck, requirementUnit: null, defaultRequirement: null },
 };
 
 const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold";
@@ -185,15 +185,22 @@ export function DueLine({ assignment: a, compact }: { assignment: StudentAssignm
 /** Cac so lieu tien do BE tra ve (chi hien truong co gia tri). */
 export function AssignmentFacts({ assignment: a, className }: { assignment: StudentAssignment; className?: string }) {
   const req = requirementText(a);
+  // Chi hien thong tin dung loai bai va da xay ra (khong in "0 giây", "—" cho bai chua lam).
   const facts: { label: string; value: string }[] = [
-    ...(req ? [{ label: "Yêu cầu tối thiểu", value: req }] : []),
-    ...(a.messageCount !== null ? [{ label: "Tin nhắn đã tính", value: `${a.messageCount}` }] : []),
-    ...(a.readingDurationSeconds !== null ? [{ label: "Thời gian đọc", value: formatSeconds(a.readingDurationSeconds) }] : []),
-    { label: "Bắt đầu", value: formatDateTime(a.startedAt) },
-    { label: "Nộp lúc", value: formatDateTime(a.submittedAt) },
+    ...(req ? [{ label: "Yêu cầu", value: req }] : []),
+    ...(a.assignmentType === "AI_CHAT_ROLEPLAY" && a.messageCount ? [{ label: "Tin nhắn đã tính", value: `${a.messageCount}` }] : []),
+    ...(a.assignmentType === "CONTEXT_READING" && a.readingDurationSeconds
+      ? [{ label: "Thời gian đọc", value: formatSeconds(a.readingDurationSeconds) }]
+      : []),
+    ...(a.submittedAt
+      ? [{ label: "Nộp lúc", value: formatDateTime(a.submittedAt) }]
+      : a.startedAt
+        ? [{ label: "Bắt đầu", value: formatDateTime(a.startedAt) }]
+        : []),
   ];
+  if (facts.length === 0) return null;
   return (
-    <dl className={cn("grid gap-x-4 gap-y-1 text-[12px] sm:grid-cols-2", className)}>
+    <dl className={cn("flex flex-wrap gap-x-5 gap-y-1 text-[12px]", className)}>
       {facts.map((f) => (
         <div key={f.label} className="flex gap-1.5">
           <dt className="text-content-muted">{f.label}:</dt>

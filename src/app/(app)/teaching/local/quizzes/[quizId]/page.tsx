@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Eye, EyeOff, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Check, Eye, EyeOff, Pencil, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -24,6 +24,10 @@ const LEVEL_OPTIONS = (Object.keys(LEVEL_LABELS) as StaffQuizLevel[]).map((l) =>
 /** Teacher: questions of a quiz written for a local context (Sprint 7, /teacher/local-contents/quizzes/**). */
 export default function LocalQuizPage() {
   const { quizId } = useParams<{ quizId: string }>();
+  const params = useSearchParams();
+  // Chi chap nhan quay ve trang giao bai (tranh open redirect qua ?returnTo=).
+  const rawReturn = params.get("returnTo");
+  const returnTo = rawReturn?.startsWith(`${ROUTES.TEACHING.ASSIGNMENT_NEW}?`) ? rawReturn : null;
   const query = useLocalQuiz(quizId);
   const status = apiErrorStatus(query.error);
   const back = query.data?.contextId ? ROUTES.TEACHING.LOCAL_EDIT(query.data.contextId, "CONTEXT") : ROUTES.TEACHING.LOCAL;
@@ -32,7 +36,7 @@ export default function LocalQuizPage() {
     <SaasShell
       variant="app"
       live
-      title={query.data?.title ?? "Câu đố"}
+      title={query.data?.title ?? "Bộ đề"}
       description="Soạn câu hỏi trắc nghiệm, điền từ hoặc ghép cặp. Bật xuất bản để giao cho lớp ở mục Bài tập."
       backLink={
         <Link href={back} className="archive-link">
@@ -41,17 +45,17 @@ export default function LocalQuizPage() {
       }
     >
       {status === 403 || status === 404 ? (
-        <EmptyState title="Không mở được câu đố" description="Câu đố đã bị xóa hoặc không phải do bạn soạn." />
+        <EmptyState title="Không mở được bộ đề" description="Bộ đề đã bị xóa hoặc không phải do bạn soạn." />
       ) : (
         <QueryState isLoading={query.isLoading} isError={query.isError} error={query.error} onRetry={() => void query.refetch()}>
-          {query.data && <QuizEditor key={query.data.quizId} quiz={query.data} />}
+          {query.data && <QuizEditor key={query.data.quizId} quiz={query.data} returnTo={returnTo} />}
         </QueryState>
       )}
     </SaasShell>
   );
 }
 
-function QuizEditor({ quiz }: { quiz: LocalQuiz }) {
+function QuizEditor({ quiz, returnTo }: { quiz: LocalQuiz; returnTo: string | null }) {
   const router = useRouter();
   const m = useLocalQuizMutations();
   const [title, setTitle] = React.useState(quiz.title);
@@ -67,12 +71,12 @@ function QuizEditor({ quiz }: { quiz: LocalQuiz }) {
 
   const saveInfo = () => {
     if (!title.trim()) {
-      toast.error("Nhập tên câu đố");
+      toast.error("Nhập tên bộ đề");
       return;
     }
     m.update.mutate(
       { quizId: quiz.quizId, payload: { title: title.trim(), level } },
-      { onSuccess: () => toast.success("Đã lưu thông tin câu đố"), onError: fail("Không lưu được câu đố.") },
+      { onSuccess: () => toast.success("Đã lưu thông tin bộ đề"), onError: fail("Không lưu được bộ đề.") },
     );
   };
 
@@ -82,7 +86,7 @@ function QuizEditor({ quiz }: { quiz: LocalQuiz }) {
       return;
     }
     m.togglePublish.mutate(quiz.quizId, {
-      onSuccess: (q) => toast.success(q.isPublished ? "Đã xuất bản câu đố" : "Đã chuyển câu đố về nháp"),
+      onSuccess: (q) => toast.success(q.isPublished ? "Đã xuất bản bộ đề" : "Đã chuyển bộ đề về nháp"),
       onError: fail("Không đổi được trạng thái."),
     });
   };
@@ -99,11 +103,50 @@ function QuizEditor({ quiz }: { quiz: LocalQuiz }) {
 
   const busyQuestion = m.addQuestion.isPending || m.updateQuestion.isPending;
 
+  // Den tu trang giao bai: xuat ban (neu can) roi quay lai, bo de duoc chon san.
+  const backToAssignment = () => {
+    if (!returnTo) return;
+    if (quiz.isPublished) {
+      router.push(returnTo);
+      return;
+    }
+    m.togglePublish.mutate(quiz.quizId, {
+      onSuccess: () => {
+        toast.success("Đã xuất bản bộ đề");
+        router.push(returnTo);
+      },
+      onError: fail("Không xuất bản được bộ đề."),
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {returnTo && (
+        <div className="flex flex-col gap-3 rounded-[2px] border-2 border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-content-heading">
+            {questions.length === 0
+              ? "Bạn đang soạn bộ đề để giao bài. Thêm ít nhất 1 câu hỏi để tiếp tục."
+              : `Đã có ${questions.length} câu hỏi. Soạn xong thì quay lại để giao cho lớp.`}
+          </p>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Link href={returnTo} className="btn-line">
+              Quay lại, chưa giao
+            </Link>
+            <button
+              type="button"
+              className="btn-crimson disabled:opacity-60"
+              disabled={questions.length === 0 || m.togglePublish.isPending || adding || editingId !== null}
+              onClick={backToAssignment}
+            >
+              <Check className="h-4 w-4" aria-hidden="true" />
+              {quiz.isPublished ? "Dùng bộ đề này để giao" : "Xuất bản & dùng để giao"}
+            </button>
+          </div>
+        </div>
+      )}
       <Panel>
         <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
-          <Field label="Tên câu đố" required htmlFor="lq-title">
+          <Field label="Tên bộ đề" required htmlFor="lq-title">
             <StaffFormInput id="lq-title" value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} />
           </Field>
           <Field label="Mức độ">
@@ -116,7 +159,7 @@ function QuizEditor({ quiz }: { quiz: LocalQuiz }) {
           </span>
           <div className="flex flex-wrap gap-2">
             <button type="button" className="btn-line text-[var(--accent-danger)]" onClick={() => setDeleteQuiz(true)}>
-              <Trash2 className="h-4 w-4" aria-hidden="true" /> Xóa câu đố
+              <Trash2 className="h-4 w-4" aria-hidden="true" /> Xóa bộ đề
             </button>
             <button type="button" className="btn-line disabled:opacity-60" disabled={m.togglePublish.isPending} onClick={togglePublish}>
               {quiz.isPublished ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
@@ -202,16 +245,16 @@ function QuizEditor({ quiz }: { quiz: LocalQuiz }) {
         open={deleteQuiz}
         onOpenChange={setDeleteQuiz}
         variant="danger"
-        title={`Xóa câu đố “${quiz.title}”?`}
-        description="Bài tập đã giao bằng câu đố này có thể không làm tiếp được."
-        confirmLabel="Xóa câu đố"
+        title={`Xóa bộ đề “${quiz.title}”?`}
+        description="Bài tập đã giao bằng bộ đề này có thể không làm tiếp được."
+        confirmLabel="Xóa bộ đề"
         onConfirm={() =>
           m.remove.mutate(quiz.quizId, {
             onSuccess: () => {
-              toast.success("Đã xóa câu đố");
+              toast.success("Đã xóa bộ đề");
               router.push(quiz.contextId ? ROUTES.TEACHING.LOCAL_EDIT(quiz.contextId, "CONTEXT") : ROUTES.TEACHING.LOCAL);
             },
-            onError: fail("Không xóa được câu đố."),
+            onError: fail("Không xóa được bộ đề."),
           })
         }
       />

@@ -125,7 +125,7 @@ export default function RootLayout({
                     var area = areas[role];
                     var outsideArea = area && !(pathname === area || pathname.startsWith(area + "/"));
 
-                    if (isAuthOnly || outsideArea) {
+                    if (isLanding || isAuthOnly || outsideArea) {
                       window.location.replace(homes[role] || "/home");
                     }
                   } else {
