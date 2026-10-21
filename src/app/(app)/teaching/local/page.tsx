@@ -37,7 +37,7 @@ export default function LocalHistoryPage() {
       variant="app"
       live
       title="Kho tư liệu"
-      description="Soạn bối cảnh và nhân vật cho lớp. Xuất bản xong, học sinh trong trường thấy ngay."
+      description="Soạn bối cảnh và nhân vật cho lớp. Bản nháp chỉ bạn thấy; xuất bản rồi mới giao bài được."
     >
       <LocalHistory kind={kind} setKind={setKind} />
     </SaasShell>
@@ -202,7 +202,7 @@ function ScopeToggle({ item }: { item: LocalItem }) {
     update.mutate(
       { id: item.id, payload: { contentScope: wide ? "CLASS_ONLY" : "SCHOOL_WIDE" } },
       {
-        onSuccess: () => toast.success(wide ? `Đã thôi chia sẻ “${item.name}”` : `Đã chia sẻ “${item.name}” cho giáo viên toàn trường`),
+        onSuccess: () => toast.success(wide ? `Đã thôi chia sẻ “${item.name}”` : `Đã chia sẻ “${item.name}” toàn trường`),
         onError: (error) => toast.error(apiErrorMessage(error, "Không đổi được phạm vi chia sẻ. Vui lòng thử lại.")),
       },
     );
@@ -212,7 +212,7 @@ function ScopeToggle({ item }: { item: LocalItem }) {
       type="button"
       onClick={toggle}
       disabled={update.isPending}
-      title={wide ? "Chỉ mình bạn dùng nội dung này" : "Giáo viên khác trong trường xem và dùng được"}
+      title={wide ? "Chỉ bạn và lớp được giao bài dùng nội dung này" : "Giáo viên và học sinh cả trường đều thấy"}
       className="inline-flex shrink-0 items-center gap-1.5 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-1 text-xs font-semibold text-content-text motion-safe:transition-colors hover:border-[var(--text-primary)] hover:bg-[var(--bg-elevated)] disabled:opacity-50"
     >
       {wide ? <Lock className="h-3.5 w-3.5" aria-hidden="true" /> : <Globe className="h-3.5 w-3.5" aria-hidden="true" />}

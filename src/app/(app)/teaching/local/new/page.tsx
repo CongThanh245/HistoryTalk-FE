@@ -46,7 +46,7 @@ function NewLocalContent() {
       variant="app"
       live
       title={`Soạn ${LOCAL_KIND_LABELS[kind].toLowerCase()} mới`}
-      description="Bấm “Xuất bản” để học sinh thấy ngay, hoặc lưu nháp để soạn tiếp sau."
+      description="Lưu nháp để soạn tiếp. Xuất bản xong mới giao bài cho lớp được."
     >
       <LocalApiEditor key={kind} kind={kind} />
     </SaasShell>

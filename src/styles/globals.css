@@ -3,6 +3,7 @@
 /* Import file theme của bạn vào đây */
 @import "./theme.css";
 @import "./archive.css";
+@import "./quiz-fun.css";
 /* Import custom fonts */
 @import "./fonts.css";
 

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, UserRound } from "lucide-react";
+import { ArrowLeft, MessageCircle, UserRound } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/empty-state";
+import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import { LocalItemPreview, LocalScopeTag, QueryState } from "@/components/saas/local-content-ui";
 import { NeutralBadge, Panel, SaasShell } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
@@ -68,7 +69,8 @@ function MaterialView({ item, teacher }: { item: LocalItem; teacher?: boolean })
       <div className="flex flex-wrap items-center justify-between gap-3">
         {back}
         <span className="flex flex-wrap items-center gap-2">
-          <LocalScopeTag item={item} />
+          {/* "Riêng tôi" la goc nhin cua GV; hoc sinh thay "Của lớp" / "Của trường" nhu trang danh sach. */}
+          {teacher ? <LocalScopeTag item={item} /> : <ContentSourceTag source={item.contentScope === "SCHOOL_WIDE" ? "SCHOOL" : "CLASS"} />}
           {teacher && !item.isPublished && <NeutralBadge>Chưa xuất bản · học sinh chưa thấy</NeutralBadge>}
         </span>
       </div>
@@ -92,12 +94,22 @@ function MaterialView({ item, teacher }: { item: LocalItem; teacher?: boolean })
             </div>
             <LocalItemPreview item={{ ...item, title: null }} />
           </Panel>
-          {/* BE chua ho tro chat AI voi nhan vat dia phuong (/chat/sessions chi nhan characterId cua kho chung). */}
-          <EmptyState
-            size="sm"
-            title="Chưa trò chuyện được với nhân vật này"
-            description="Máy chủ chưa hỗ trợ trò chuyện AI với nhân vật do giáo viên soạn."
-          />
+          <Panel className="flex h-fit flex-col items-start gap-3">
+            <MessageCircle className="h-7 w-7 text-[var(--accent-gold)]" aria-hidden="true" />
+            <div className="space-y-1">
+              <h3 className="text-[16px] font-bold text-content-heading">Trò chuyện với {item.name}</h3>
+              <p className="text-[13px] leading-relaxed text-content-muted">
+                {teacher && !item.isPublished
+                  ? "Nhân vật chưa xuất bản nên chưa trò chuyện được. Xuất bản để thử trò chuyện và giao bài cho lớp."
+                  : "Hỏi nhân vật về cuộc đời và sự kiện lịch sử. AI nhập vai, nên đối chiếu với tư liệu chính thống."}
+              </p>
+            </div>
+            {(!teacher || item.isPublished) && (
+              <Link href={ROUTES.CHAT(item.id)} className="btn-crimson">
+                <MessageCircle className="h-4 w-4" aria-hidden="true" /> Bắt đầu trò chuyện
+              </Link>
+            )}
+          </Panel>
         </div>
       )}
     </div>

@@ -145,15 +145,20 @@ export function requirementText(type: AssignmentType, min: number | null | undef
 }
 
 /** So bai da nop (dung han + muon) tren tong hoc sinh duoc giao. */
-export function AssignmentCounts({ assignment, className }: { assignment: TeacherAssignment; className?: string }) {
+/** `compact`: mot dong ngan cho bang nhieu cot (chi so muon / chua nop). */
+export function AssignmentCounts({ assignment, className, compact }: { assignment: TeacherAssignment; className?: string; compact?: boolean }) {
   const a = assignment;
   const done = a.submittedCount + a.lateSubmittedCount;
   const pct = a.totalStudents > 0 ? Math.round((done / a.totalStudents) * 100) : 0;
   return (
-    <div className={cn("min-w-[180px] space-y-1", className)}>
+    <div className={cn(compact ? "min-w-[120px] space-y-1" : "min-w-[180px] space-y-1", className)}>
       <div className="flex items-center gap-2">
         <div
-          className="h-2 flex-1 overflow-hidden rounded-[2px] bg-[var(--status-neutral-bg)] ring-1 ring-inset ring-[var(--border-default)]"
+          // Bang min-w-max: svg khong co kich thuoc se mac dinh rong 300px, nen co dinh be ngang khi gon.
+          className={cn(
+            "h-2 overflow-hidden rounded-[2px] bg-[var(--status-neutral-bg)] ring-1 ring-inset ring-[var(--border-default)]",
+            compact ? "w-20" : "flex-1",
+          )}
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
@@ -168,11 +173,18 @@ export function AssignmentCounts({ assignment, className }: { assignment: Teache
           {done}/{a.totalStudents}
         </span>
       </div>
-      <p className="text-[11px] tabular-nums text-content-muted">
-        <span className="text-[var(--status-success)]">{a.submittedCount} đúng hạn</span> ·{" "}
-        <span className="text-[var(--status-warning)]">{a.lateSubmittedCount} muộn</span> · {a.inProgressCount} đang làm ·{" "}
-        {a.notStartedCount} chưa bắt đầu
-      </p>
+      {compact ? (
+        <p className="text-[11px] tabular-nums text-content-muted">
+          {a.lateSubmittedCount > 0 && <span className="text-[var(--status-warning)]">{a.lateSubmittedCount} muộn · </span>}
+          {a.inProgressCount + a.notStartedCount} chưa nộp
+        </p>
+      ) : (
+        <p className="text-[11px] tabular-nums text-content-muted">
+          <span className="text-[var(--status-success)]">{a.submittedCount} đúng hạn</span> ·{" "}
+          <span className="text-[var(--status-warning)]">{a.lateSubmittedCount} muộn</span> · {a.inProgressCount} đang làm ·{" "}
+          {a.notStartedCount} chưa bắt đầu
+        </p>
+      )}
     </div>
   );
 }

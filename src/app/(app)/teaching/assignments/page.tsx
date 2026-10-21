@@ -156,7 +156,6 @@ function AssignmentList() {
               <th className={TH}>Yêu cầu</th>
               <th className={TH}>Trạng thái</th>
               <th className={TH}>Nộp bài</th>
-              <th className={TH}>Tạo lúc</th>
               <th className={cn(TH, "text-right")}>
                 <span className="sr-only">Chi tiết</span>
               </th>
@@ -168,7 +167,7 @@ function AssignmentList() {
                 <td className={TD}>
                   <ApiAssignmentTypeBadge type={a.assignmentType} />
                 </td>
-                <td className={cn(TD, "max-w-[340px]")}>
+                <td className={cn(TD, "max-w-[270px]")}>
                   <Link href={ROUTES.TEACHING.ASSIGNMENT_DETAIL(a.assignmentId)} className="font-semibold text-content-heading hover:text-[var(--accent-gold)]">
                     {a.title}
                   </Link>
@@ -197,12 +196,16 @@ function AssignmentList() {
                   <AssignmentStatusBadge status={a.status} />
                 </td>
                 <td className={TD}>
-                  <AssignmentCounts assignment={a} />
+                  <AssignmentCounts assignment={a} compact />
                 </td>
-                <td className={cn(TD, "tabular-nums text-content-muted")}>{formatLocalDateTime(a.createdAt)}</td>
                 <td className={cn(TD, "text-right")}>
-                  <Link href={ROUTES.TEACHING.ASSIGNMENT_DETAIL(a.assignmentId)} className="archive-link" aria-label={`Chi tiết ${a.title}`}>
-                    Chi tiết <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  <Link
+                    href={ROUTES.TEACHING.ASSIGNMENT_DETAIL(a.assignmentId)}
+                    className="inline-grid h-8 w-8 place-items-center rounded-[2px] text-content-muted hover:bg-[var(--bg-elevated)] hover:text-[var(--accent-gold)]"
+                    aria-label={`Chi tiết ${a.title}`}
+                    title="Chi tiết"
+                  >
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </Link>
                 </td>
               </tr>

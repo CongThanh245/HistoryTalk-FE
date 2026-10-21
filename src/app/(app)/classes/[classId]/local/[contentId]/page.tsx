@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, FileText, UserRound } from "lucide-react";
 
+import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LocalItemPreview, LocalScopeTag, QueryState } from "@/components/saas/local-content-ui";
 import { NeutralBadge, Panel, SaasShell, SectionHeading, formatDate } from "@/components/saas/saas-ui";
@@ -99,7 +100,8 @@ function ItemView({ item, back, teacher }: { item: LocalItem; back: React.ReactN
       <div className="flex flex-wrap items-center justify-between gap-3">
         {back}
         <span className="flex flex-wrap items-center gap-2">
-          <LocalScopeTag item={item} />
+          {/* "Riêng tôi" la goc nhin cua GV; hoc sinh thay "Của lớp" / "Của trường". */}
+          {teacher ? <LocalScopeTag item={item} /> : <ContentSourceTag source={item.contentScope === "SCHOOL_WIDE" ? "SCHOOL" : "CLASS"} />}
           {teacher && !item.isPublished && <NeutralBadge>Chưa xuất bản · học sinh chưa thấy</NeutralBadge>}
         </span>
       </div>

@@ -194,6 +194,7 @@ export const chatService = {
       let quotesUsed: string[] | undefined;
 
       let fullContent = "";
+      let streamError: string | null = null;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -216,6 +217,9 @@ export const chatService = {
                    promptTokens = parsed.data?.promptTokens;
                    completionTokens = parsed.data?.completionTokens;
                    quotesUsed = parsed.data?.quotes_used;
+                } else if (parsed.type === "error") {
+                   // AI loi giua chung: BE van tra 200 + su kien "error" roi "done".
+                   streamError = typeof parsed.message === "string" ? parsed.message : "AI error";
                 } else if (parsed.type === "done") {
                    remainingTokens = parsed.remainingTokens;
                    if (parsed.messageType) {
@@ -228,6 +232,12 @@ export const chatService = {
             }
           }
         }
+      }
+      if (streamError && !fullContent.trim()) {
+        const error: Error & { response?: { status: number; data: unknown }; aiUnavailable?: boolean } = new Error(streamError);
+        error.response = { status: 503, data: { message: streamError } };
+        error.aiUnavailable = true;
+        throw error;
       }
       onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens, messageType, quotesUsed });
     } catch (err) {

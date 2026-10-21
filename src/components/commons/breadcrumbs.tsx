@@ -69,7 +69,10 @@ export default function Breadcrumbs() {
     return null;
   }
 
-  const pathSegments = pathname.split("/").filter((segment) => segment !== "");
+  // "/classes/materials/context/:id": "context" chi la loai tu lieu, khong phai trang rieng.
+  const pathSegments = pathname
+    .split("/")
+    .filter((segment, i, all) => segment !== "" && !(all[i - 1] === "materials" && (segment === "context" || segment === "character")));
   const singleCrumb = Object.keys(SINGLE_CRUMB).find((path) => inPath(pathname, path));
   const fromHistoryTalk =
     (role === "TEACHER" || role === "SCHOOL_STUDENT") &&
@@ -170,12 +173,8 @@ function BreadcrumbLabel({ segment, parentSegment }: { segment: string; parentSe
     if (parentSegment === "classes") {
       return <ClassroomName id={segment} />;
     }
-    // Ten bai tap da hien o tieu de trang; khong in UUID len breadcrumb.
-    if (parentSegment === "assignments") {
-      return <>Chi tiết</>;
-    }
-
-    return <>{segment.slice(0, 8)}...</>;
+    // Ten (bai tap, tu lieu...) da hien o tieu de trang; khong in UUID len breadcrumb.
+    return <>Chi tiết</>;
   }
 
   const label = routeLabels[segment] || segment;

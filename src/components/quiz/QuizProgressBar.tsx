@@ -21,7 +21,7 @@ interface QuizProgressBarProps {
   scrollToQuestion: (index: number) => void;
 }
 
-function formatTime(seconds: number) {
+export function formatTime(seconds: number) {
   const safeSeconds = Math.max(0, seconds);
   const minutes = Math.floor(safeSeconds / 60);
   const remainingSeconds = safeSeconds % 60;

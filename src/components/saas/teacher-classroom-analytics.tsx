@@ -13,6 +13,7 @@ import { formatNumber } from "@/components/saas/saas-ui";
 import { KpiTile } from "@/components/saas/teaching-ui";
 import { ClassroomLoadError, NoDataYet } from "@/components/saas/api-classroom-ui";
 import { useTeacherClassroomDashboard } from "@/features/dashboard/hooks";
+import { useClassroomAssignments } from "@/features/saas/hooks-assignment-api";
 import { apiErrorMessage, apiErrorStatus } from "@/features/saas/hooks-api";
 import type { TeacherClassroomStudent } from "@/services/analytics-dashboard.service";
 
@@ -137,14 +138,21 @@ function StudentTable({ students, classId, canGrant }: { students: TeacherClassr
 /** Tab "Thong ke": KPI lop + bang ket qua tung hoc sinh. */
 type DashboardData = NonNullable<ReturnType<typeof useTeacherClassroomDashboard>["data"]>;
 
-function KpiGrid({ data, compact }: { data: DashboardData; compact?: boolean }) {
+function KpiGrid({ data, classId, compact }: { data: DashboardData; classId: string; compact?: boolean }) {
+  // BE chua tinh assignmentRates (luon 0): cong tu so bai nop cua cac bai dang giao trong lop.
+  const assignments = useClassroomAssignments(classId, { size: 100 });
+  const live = (assignments.data?.items ?? []).filter((a) => a.status !== "CANCELLED");
+  const onTime = live.reduce((sum, a) => sum + a.submittedCount, 0);
+  const late = live.reduce((sum, a) => sum + a.lateSubmittedCount, 0);
+  const notDone = live.reduce((sum, a) => sum + a.inProgressCount + a.notStartedCount, 0);
+  const expected = onTime + late + notDone;
   const attempted = data.students.filter((s) => s.quizzesAttempted > 0);
   const avgScore = attempted.length ? attempted.reduce((sum, s) => sum + s.averageScorePercentage, 0) / attempted.length : null;
   const totalQuizzes = data.students.reduce((sum, s) => sum + s.quizzesAttempted, 0);
   const pending = data.pendingTokenBoostRequests ?? 0;
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <KpiTile label="Sĩ số" value={formatNumber(data.studentCount)} />
         <KpiTile
           label="Điểm TB quiz"
@@ -159,12 +167,14 @@ function KpiGrid({ data, compact }: { data: DashboardData; compact?: boolean }) 
           hint={`TB ${data.avgAiMessagesPerStudent.toFixed(1)} tin nhắn / học sinh`}
           accent="text-[var(--gold-leaf)]"
         />
+        <KpiTile
+          label="Bài đã nộp"
+          value={expected ? `${formatNumber(onTime + late)}/${formatNumber(expected)}` : "—"}
+          hint={expected ? `${onTime} đúng hạn · ${late} muộn · ${notDone} chưa nộp` : "Lớp chưa có bài tập đang giao"}
+          accent={notDone ? "text-[var(--status-warning)]" : "text-[var(--status-success)]"}
+        />
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
-        <KpiTile label="Nộp đúng hạn" value={`${(data.assignmentRates?.onTimeRate ?? 0).toFixed(1)}%`} accent="text-[var(--status-success)]" />
-        <KpiTile label="Nộp muộn" value={`${(data.assignmentRates?.lateRate ?? 0).toFixed(1)}%`} accent="text-[var(--status-warning)]" />
-        <KpiTile label="Chưa nộp" value={`${(data.assignmentRates?.pendingRate ?? 0).toFixed(1)}%`} accent="text-accent-danger" />
-      </div>
+
       {compact
         ? pending > 0 && (
             <p className="flex flex-wrap items-center gap-2 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-4 py-2.5 text-sm text-[var(--status-warning)]">
@@ -203,7 +213,7 @@ function KpiGrid({ data, compact }: { data: DashboardData; compact?: boolean }) 
 /** Chi so tong quan cua lop (dau trang giang day). `compact`: chi hien canh bao token khi co yeu cau cho duyet. */
 export function TeacherClassKpis({ classId, compact }: { classId: string; compact?: boolean }) {
   const query = useTeacherClassroomDashboard(classId);
-  return <AnalyticsState query={query}>{(data) => <KpiGrid data={data} compact={compact} />}</AnalyticsState>;
+  return <AnalyticsState query={query}>{(data) => <KpiGrid data={data} classId={classId} compact={compact} />}</AnalyticsState>;
 }
 
 /** Bang ket qua tung hoc sinh cua lop. Dung chung query voi TeacherClassKpis (React Query khu trung). */
@@ -223,7 +233,7 @@ export function TeacherClassStats({ classId }: { classId: string }) {
     <AnalyticsState query={query}>
       {(data) => (
         <div className="space-y-6">
-          <KpiGrid data={data} />
+          <KpiGrid data={data} classId={classId} />
           <StudentTable students={data.students} classId={classId} canGrant={data.status !== "ARCHIVED"} />
         </div>
       )}

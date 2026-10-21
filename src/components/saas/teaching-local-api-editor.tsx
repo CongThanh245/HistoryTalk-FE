@@ -195,7 +195,8 @@ function characterPayload(f: FormState, item?: LocalItem, isPublished?: boolean)
 
 const STATE_NOTE = {
   DRAFT: "Học sinh chưa thấy. Bấm “Xuất bản” khi soạn xong.",
-  PUBLISHED: "Học sinh trong trường đang thấy. Lưu là cập nhật ngay.",
+  PUBLISHED: "Đã xuất bản: giao bài được cho lớp. Lưu là cập nhật ngay.",
+  PUBLISHED_WIDE: "Đã xuất bản toàn trường: giáo viên và học sinh cả trường đều thấy. Lưu là cập nhật ngay.",
   HIDDEN: "Đang ẩn với học sinh. Xuất bản lại để hiện.",
 } as const;
 
@@ -329,7 +330,7 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
             ) : (
               <>
                 <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                {STATE_NOTE[reviewState(item)]}
+                {STATE_NOTE[reviewState(item) === "PUBLISHED" && item.contentScope === "SCHOOL_WIDE" ? "PUBLISHED_WIDE" : reviewState(item)]}
                 {item.approvedBy && item.isPublished && item.approvedBy.uid !== myUid && ` Xuất bản bởi ${item.approvedBy.fullName}.`}
               </>
             )}
@@ -515,9 +516,11 @@ function SharingPanel({
           <Lock className="mt-0.5 h-5 w-5 shrink-0 text-content-muted" aria-hidden="true" />
         )}
         <span className="min-w-0 flex-1 space-y-0.5">
-          <span className="block text-sm font-semibold text-content-heading">Chia sẻ cho giáo viên toàn trường</span>
+          <span className="block text-sm font-semibold text-content-heading">Chia sẻ toàn trường</span>
           <span className="block text-xs leading-relaxed text-content-muted">
-            {wide ? "Giáo viên khác trong trường xem và dùng được (chỉ đọc)." : "Đang tắt: chỉ bạn dùng nội dung này."}
+            {wide
+              ? "Giáo viên và học sinh cả trường thấy trong Kho tư liệu. Giáo viên khác chỉ xem, không sửa được."
+              : "Đang tắt: riêng bạn và lớp bạn giao bài mới dùng được."}
           </span>
         </span>
         <Switch id="scope-switch" checked={wide} onCheckedChange={(v) => onChange({ scope: v ? "SCHOOL_WIDE" : "CLASS_ONLY" })} />

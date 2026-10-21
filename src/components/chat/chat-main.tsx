@@ -328,7 +328,8 @@ export function ChatMain({
 
   const messages = useMemo(
     () => {
-      const persistedMessages = data?.messages ?? [];
+      // BE luu ca tin tra loi rong khi AI loi giua chung: an di, khong ve bong bong trong.
+      const persistedMessages = (data?.messages ?? []).filter((m) => m.role !== "ASSISTANT" || isVoiceMessage(m) || !!m.content?.trim());
       const pendingVoiceDrafts = voiceCallDraftMessages.filter(
         (draft) =>
           !persistedMessages.some(
@@ -736,7 +737,14 @@ export function ChatMain({
             toast.error("Bạn đã dùng hết hạn mức token hôm nay do trường cấp. Hạn mức làm mới lúc 00:00.", { duration: 8000 });
           }
         } else {
-          toast.error("Không thể gửi tin nhắn");
+          // Tin nhan cua nguoi dung da bi go khoi khung chat o tren: cho gui lai ngay, khoi go lai.
+          const aiDown = (err as { aiUnavailable?: boolean }).aiUnavailable || error.response?.status === 500 || error.response?.status === 503;
+          toast.error(
+            aiDown
+              ? `${character.name} chưa trả lời được vì dịch vụ AI đang gặp sự cố. Thử lại sau ít phút nhé.`
+              : "Không gửi được tin nhắn. Kiểm tra kết nối rồi thử lại.",
+            { action: { label: "Gửi lại", onClick: () => void handleSend(content, msgType) }, duration: 8000 },
+          );
         }
       },
       msgType
