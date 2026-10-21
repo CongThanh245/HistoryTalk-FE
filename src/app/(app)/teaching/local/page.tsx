@@ -18,7 +18,7 @@ import { SaasShell, SearchInput, formatDate, normalizeText } from "@/components/
 import { LocalReviewBadge, QueryState, REVIEW_STATE_LABELS, localMeta, reviewState, type LocalReviewState } from "@/components/saas/local-content-ui";
 import { SegmentedFilter } from "@/components/saas/teaching-ui";
 import { ROUTES } from "@/constants/routes";
-import { apiErrorMessage, useApiTeacherClassrooms } from "@/features/saas/hooks-api";
+import { apiErrorMessage, useMyApiClassrooms } from "@/features/saas/hooks-api";
 import { StaffFormSelect } from "@/components/staff/staff-form";
 import { LOCAL_KINDS, useLocalContentMutations, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
 import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
@@ -78,8 +78,9 @@ const ALL_STATES = "ALL";
 
 function ApiList({ kind, items, truncated }: { kind: LocalKind; items: LocalItem[]; truncated: boolean }) {
   const myUid = useAuthStore((s) => s.user?.uid);
-  const classes = useApiTeacherClassrooms({ size: 100 });
-  const classNames = React.useMemo(() => new Map((classes.data?.items ?? []).map((c) => [c.id, c.className])), [classes.data]);
+  // Cung nguon lop voi trang soan (useMyApiClassrooms) de ten lop khop.
+  const { classes } = useMyApiClassrooms("TEACHER");
+  const classNames = React.useMemo(() => new Map(classes.map((c) => [c.id, c.className])), [classes]);
   const [state, setState] = React.useState<LocalReviewState | typeof ALL_STATES>(ALL_STATES);
   const [owner, setOwner] = React.useState<"MINE" | "OTHERS">("MINE");
   const [search, setSearch] = React.useState("");
@@ -151,7 +152,7 @@ function ApiList({ kind, items, truncated }: { kind: LocalKind; items: LocalItem
                   title={wide ? "Học sinh và giáo viên cả trường đều thấy" : "Chỉ học sinh các lớp được gán thấy"}
                 >
                   {wide ? <Globe className="h-3.5 w-3.5 shrink-0 text-[var(--men-lam)]" aria-hidden="true" /> : <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
-                  {wide ? "Toàn trường" : cls.length ? `Lớp ${cls.join(", ")}` : c.classIds ? "Chưa gán lớp" : "Riêng lớp"}
+                  {wide ? "Toàn trường" : cls.length ? `Lớp ${cls.join(", ")}` : c.classIds?.length ? "Riêng lớp" : "Chưa gán lớp"}
                 </span>
                 <span className="hidden w-20 shrink-0 text-right text-xs tabular-nums text-content-muted md:block">{formatDate(c.updatedAt)}</span>
                 {owner === "MINE" ? <RowMenu item={c} kind={kind} /> : <span className="w-8 shrink-0" />}
