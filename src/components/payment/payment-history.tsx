@@ -27,6 +27,7 @@ import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { StaffStatCard, StaffStatsGrid } from "@/components/staff/staff-stat-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FetchingBadge } from "@/components/commons/fetching-indicator";
 
 const PAGE_SIZE = 20;
 
@@ -215,7 +216,7 @@ function AdminToolbar({
         <h2 className="archive-title text-xl">Danh sách giao dịch</h2>
         <p className="text-sm text-[var(--text-tertiary)]">
           Hiển thị {count} giao dịch trên trang này · Tổng {total} giao dịch
-          {isFetching && <span className="ml-2 text-xs opacity-60">Đang cập nhật...</span>}
+          <FetchingBadge active={isFetching} />
         </p>
       </div>
 

@@ -23,7 +23,7 @@ export default function GradesPage() {
 
   if (hydrated && role === "SCHOOL_STUDENT") {
     return (
-      <SaasShell variant="app" title={TITLE} description="Điểm bài kiểm tra, mức độ hoàn thành bài tập và hoạt động học với AI của em.">
+      <SaasShell variant="app" title={TITLE} description="Điểm bài kiểm tra, mức độ hoàn thành bài tập và hoạt động học với AI của bạn.">
         <div className="space-y-10">
           <StudentPersonalDashboard />
           <StudentGradeBook />

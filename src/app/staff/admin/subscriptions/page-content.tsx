@@ -26,6 +26,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils/cn";
+import { FetchingBadge } from "@/components/commons/fetching-indicator";
 import {
   useAdminTiers,
   useAdminUpdateTier,
@@ -442,7 +443,7 @@ export default function AdminSubscriptionsPageContent() {
                   <>
                     {tiers.length} gói
                     {isFetching && (
-                      <span className="ml-2 text-xs opacity-50">Đang cập nhật...</span>
+                      <FetchingBadge active />
                     )}
                   </>
                 )}

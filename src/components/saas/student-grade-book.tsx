@@ -96,12 +96,12 @@ export function StudentGradeBook() {
     );
   }
   if (!isLoading && all.length === 0) {
-    return <EmptyState icon={ClipboardList} title="Chưa có bài tập nào" description="Khi thầy cô giao bài cho lớp của em, điểm sẽ hiện ở đây." />;
+    return <EmptyState icon={ClipboardList} title="Chưa có bài tập nào" description="Khi thầy cô giao bài cho lớp của bạn, điểm sẽ hiện ở đây." />;
   }
 
   return (
     <Panel>
-      <SectionHeading title="Điểm bài tập" description="Điểm thang 10 do hệ thống tự chấm khi em nộp bài." />
+      <SectionHeading title="Điểm bài tập" description="Điểm thang 10 do hệ thống tự chấm khi bạn nộp bài." />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <KpiTile

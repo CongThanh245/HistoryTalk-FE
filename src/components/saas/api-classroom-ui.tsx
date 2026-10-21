@@ -110,7 +110,7 @@ export function ApiClassroomSideCard({ classroom }: { classroom: ApiClassroom })
   return (
     <div className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--jade)]">Lớp của em</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--jade)]">Lớp của bạn</p>
         <ClassroomStatusPill status={classroom.status} />
       </div>
       <p className="archive-title is-plain mt-1.5 text-2xl">Lớp {classroom.className}</p>

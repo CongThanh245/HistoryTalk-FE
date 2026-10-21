@@ -101,7 +101,7 @@ function MyBoostHistory() {
       ) : isError ? (
         <p className="text-sm text-[var(--accent-danger)]">Không tải được lịch sử yêu cầu.</p>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-content-muted">Em chưa gửi yêu cầu nào.</p>
+        <p className="text-sm text-content-muted">Bạn chưa gửi yêu cầu nào.</p>
       ) : (
         <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--border-default)]">
           {rows.map((r) => (

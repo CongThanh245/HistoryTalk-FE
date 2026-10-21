@@ -729,7 +729,7 @@ export function ChatMain({
               duration: 8000,
             });
           } else if (canRequestBoost) {
-            toast.error("Em đã dùng hết hạn mức token AI hôm nay. Các tính năng khác vẫn dùng bình thường.", {
+            toast.error("Bạn đã dùng hết hạn mức token AI hôm nay. Các tính năng khác vẫn dùng bình thường.", {
               action: { label: "Xin thêm token", onClick: () => setIsBoostOpen(true) },
               duration: 8000,
             });

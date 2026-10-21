@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertCircle, ArrowRightLeft, ChevronLeft, ChevronRight, Download, FileUp, KeyRound, RefreshCw, UserMinus, UserPlus, Users } from "lucide-react";
+import { AlertCircle, ArrowRightLeft, ChevronLeft, ChevronRight, Download, FileUp, Gift, KeyRound, RefreshCw, UserMinus, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -33,6 +33,8 @@ import { buildBackendTemplateCsv, downloadTextFile, withoutAdditionalTokens } fr
 import type { BatchEnrollResult, ClassroomStudent } from "@/services/assignment.service";
 import type { ImportedStudentAccount, StudentImportResult } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
+import { FetchingBadge } from "@/components/commons/fetching-indicator";
+import { GrantTokensDialog } from "@/components/saas/token-boost-ui";
 
 /**
  * Roster of one class on the live API (GET/POST/DELETE /classrooms/{id}/students…), shared by School Admin and the
@@ -96,6 +98,9 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
   const [importOpen, setImportOpen] = React.useState(false);
   const [transferTargets, setTransferTargets] = React.useState<ClassroomStudent[]>([]);
   const [removeTarget, setRemoveTarget] = React.useState<ClassroomStudent | null>(null);
+  // Cap token tu han muc cua GV (chi giao vien; cung hop thoai voi bang thong ke lop).
+  const canGrant = useRole() === "TEACHER";
+  const [granting, setGranting] = React.useState<{ uid: string; name: string; classId: string } | null>(null);
 
   const data = students.data;
   const rows = React.useMemo(() => data?.items ?? [], [data]);
@@ -143,7 +148,7 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
       </div>
 
       {students.isPending ? (
-        <TableSkeleton rows={6} cols={8} />
+        <TableSkeleton rows={6} cols={6} />
       ) : students.isError ? (
         <LoadError message={apiErrorMessage(students.error, "Không tải được danh sách học sinh của lớp.")} onRetry={() => void students.refetch()} />
       ) : (
@@ -151,7 +156,7 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
           <p className="text-sm text-content-muted" aria-live="polite">
             <b className="tabular-nums text-content-heading">{formatNumber(total)}</b> học sinh
             {debounced ? ` khớp “${debounced}”` : " trong lớp"}
-            {students.isFetching && <span className="ml-2 text-xs">Đang cập nhật…</span>}
+            <FetchingBadge active={students.isFetching} />
           </p>
 
           {canManage && (
@@ -198,11 +203,7 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
                     )}
                     <TableHead className={HEAD}>Mã HS</TableHead>
                     <TableHead className={HEAD}>Họ và tên</TableHead>
-                    <TableHead className={HEAD}>Tên tài khoản</TableHead>
-                    <TableHead className={HEAD}>Email</TableHead>
-                    <TableHead className={HEAD}>Ngày sinh</TableHead>
-                    <TableHead className={HEAD}>Giới tính</TableHead>
-                    <TableHead className={HEAD}>SĐT</TableHead>
+                    <TableHead className={HEAD}>Email đăng nhập</TableHead>
                     <TableHead className={cn(HEAD, "text-right")}>Token</TableHead>
                     <TableHead className={HEAD}>Ngày vào lớp</TableHead>
                     <TableHead className={HEAD}>Trạng thái</TableHead>
@@ -231,17 +232,31 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
                           </TableCell>
                         )}
                         <TableCell className={cn(CELL, "font-mono text-xs font-bold text-content-heading")}>{s.studentCode || "—"}</TableCell>
-                        <TableCell className={cn(CELL, "text-sm font-semibold text-content-heading")}>{s.fullName}</TableCell>
-                        <TableCell className={cn(CELL, "max-w-[220px] truncate font-mono text-xs text-content-muted")} title={s.userName ?? undefined}>
-                          {s.userName || "—"}
+                        <TableCell className={CELL}>
+                          <span className="block text-sm font-semibold text-content-heading">{s.fullName}</span>
+                          <span className="block text-xs tabular-nums text-content-muted">
+                            {[s.gender && GENDER_LABELS[s.gender], s.dob && formatDate(s.dob), s.phoneNumber].filter(Boolean).join(" · ") || "—"}
+                          </span>
                         </TableCell>
                         <TableCell className={cn(CELL, "max-w-[260px] truncate font-mono text-xs")} title={s.email ?? undefined}>
                           {s.email || "—"}
                         </TableCell>
-                        <TableCell className={cn(CELL, "text-xs tabular-nums")}>{formatDate(s.dob)}</TableCell>
-                        <TableCell className={cn(CELL, "text-xs")}>{s.gender ? GENDER_LABELS[s.gender] : "—"}</TableCell>
-                        <TableCell className={cn(CELL, "text-xs tabular-nums")}>{s.phoneNumber || "—"}</TableCell>
-                        <TableCell className={cn(CELL, "text-right text-sm font-semibold tabular-nums")}>{s.token === null ? "—" : formatNumber(s.token)}</TableCell>
+                        <TableCell className={cn(CELL, "text-right text-sm font-semibold tabular-nums")}>
+                          <span className="inline-flex items-center justify-end gap-1.5">
+                            {s.token === null ? "—" : formatNumber(s.token)}
+                            {canGrant && (
+                              <button
+                                type="button"
+                                onClick={() => setGranting({ uid: s.studentId, name: s.fullName, classId })}
+                                className="grid h-7 w-7 place-items-center rounded-[2px] text-[var(--accent-gold)] hover:bg-[var(--accent-gold-active-bg)]"
+                                aria-label={`Cấp token cho ${s.fullName}`}
+                                title="Cấp token"
+                              >
+                                <Gift className="h-4 w-4" aria-hidden="true" />
+                              </button>
+                            )}
+                          </span>
+                        </TableCell>
                         <TableCell className={cn(CELL, "text-xs tabular-nums text-content-muted")}>{formatDate(s.joinedAt)}</TableCell>
                         <TableCell className={CELL}>
                           <EnrollStatusBadge status={s.status} />
@@ -251,6 +266,7 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
                             <RowActions
                               label={`Thao tác với ${s.fullName}`}
                               actions={[
+                                canGrant && { label: "Cấp token", icon: Gift, onSelect: () => setGranting({ uid: s.studentId, name: s.fullName, classId }) },
                                 { label: "Chuyển lớp", icon: ArrowRightLeft, onSelect: () => setTransferTargets([s]) },
                                 { label: "Xóa khỏi lớp", icon: UserMinus, tone: "danger", onSelect: () => setRemoveTarget(s), separated: true },
                               ]}
@@ -303,6 +319,7 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
           />
         </>
       )}
+      {canGrant && <GrantTokensDialog student={granting} onOpenChange={(o) => !o && setGranting(null)} />}
     </div>
   );
 }

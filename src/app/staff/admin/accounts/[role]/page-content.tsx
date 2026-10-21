@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
+import { FetchingBadge } from "@/components/commons/fetching-indicator";
 import {
   useAdminUsers,
   useAdminCreateUser,
@@ -489,7 +490,7 @@ export default function AdminAccountsPage() {
                 <>
                   {filtered.length} tài khoản
                   {isFetching && (
-                    <span className="ml-2 text-xs opacity-50">Đang cập nhật...</span>
+                    <FetchingBadge active />
                   )}
                 </>
               )}

@@ -1,7 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CalendarRange, School as SchoolIcon } from "lucide-react";
+import Link from "next/link";
+import { Activity, ArrowRight, CalendarRange, Coins, School as SchoolIcon, Zap } from "lucide-react";
+
+import { ROUTES } from "@/constants/routes";
 
 import { Panel, SectionHeading, TokenBar, formatDate, formatNumber } from "@/components/saas/saas-ui";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -104,6 +107,166 @@ export function QuotaPanel({ title = "Quỹ token chung của trường", footer
       )}
       {footer}
     </Panel>
+  );
+}
+
+/**
+ * Khoi chinh cua tong quan truong: quy token nam hoc la thu quan trong nhat nen dat len dau,
+ * gop luon goi nam hoc (quy thuoc ve goi) va cac chi so token phu.
+ */
+export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: SchoolAdminDashboard }) {
+  const total = Math.max(0, quota.totalSchoolTokenQuota);
+  const remaining = Math.max(0, quota.unallocatedTokenQuota);
+  const used = Math.max(0, total - remaining);
+  const pct = total > 0 ? (used / total) * 100 : 0;
+  const level = pct >= 85 ? "danger" : pct >= 60 ? "warn" : "ok";
+  const end = dash?.subscriptionEndDate;
+  const left = end ? daysUntil(end) : null;
+  const pending = dash?.pendingTokenBoostRequests ?? 0;
+  const daily = dash?.defaultDailyStudentQuota;
+  const students = dash?.totalStudents ?? 0;
+  // Truong hop xau nhat: moi hoc sinh dung het han muc moi ngay.
+  const worstDays = daily && students ? Math.floor(remaining / (daily * students)) : null;
+  const inMay = new Date().getMonth() === 4;
+
+  return (
+    <section
+      aria-label="Quỹ token năm học"
+      className="overflow-hidden rounded-[2px] border-2 border-[var(--text-primary)] bg-[var(--bg-surface)] shadow-[6px_6px_0_var(--accent-gold)]"
+    >
+      <div className="flex flex-col gap-3 border-b border-[var(--border-strong)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <SchoolIcon className="h-6 w-6 shrink-0 text-[var(--accent-gold)]" aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="archive-title is-plain truncate text-xl">{quota.schoolName}</p>
+            <p className="text-xs text-content-muted">Mã trường: {quota.schoolCode}</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <PackageBadge packageType={quota.packageType} />
+          {dash?.status && (
+            <span className="rounded-[2px] bg-[var(--status-success-bg)] px-2 py-0.5 text-[11px] font-bold text-[var(--status-success)]">
+              {SCHOOL_STATUS_LABELS[dash.status] ?? dash.status}
+              {left != null && left >= 0 && ` · còn ${formatNumber(left)} ngày`}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-6 px-5 py-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="space-y-3">
+          <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.1em] text-content-muted">
+            <Coins className="h-4 w-4 text-[var(--accent-gold)]" aria-hidden="true" /> Token còn lại trong quỹ năm học
+          </p>
+          <p
+            className={cn(
+              "font-display text-[52px] font-extrabold leading-none tabular-nums sm:text-[64px]",
+              level === "danger" ? "text-[var(--accent-danger)]" : level === "warn" ? "text-[var(--status-warning)]" : "text-[var(--jade)]",
+            )}
+          >
+            {formatNumber(remaining)}
+          </p>
+          <TokenBar used={used} quota={total} className="h-3" />
+          <p className="text-sm tabular-nums text-content-muted">
+            Đã dùng <b className="text-content-heading">{formatNumber(used)}</b> / {formatNumber(total)} token (
+            {pct.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%)
+            {level === "danger" && <span className="font-semibold text-[var(--accent-danger)]"> — sắp hết, liên hệ HistoryTalk để nạp thêm</span>}
+          </p>
+          {worstDays != null && (
+            <p className="text-xs text-content-muted">
+              Nếu cả {formatNumber(students)} học sinh dùng hết {formatNumber(daily ?? 0)} token mỗi ngày, quỹ còn đủ khoảng{" "}
+              <b className="text-content-heading">{formatNumber(worstDays)} ngày</b>
+              {left != null && left > 0 && worstDays >= left ? " — đủ đến hết năm học." : "."}
+            </p>
+          )}
+        </div>
+
+        <div className="grid content-start gap-3 sm:grid-cols-3 lg:grid-cols-1">
+          <MiniStat icon={Activity} label="Học sinh đã dùng" value={dash ? formatNumber(dash.tokensUsedByStudents) : "…"} />
+          <MiniStat icon={Coins} label="Hạn mức / học sinh / ngày" value={daily != null ? formatNumber(daily) : "…"} />
+          <Link
+            href={ROUTES.SCHOOL.TOKENS}
+            className={cn(
+              "flex items-center gap-3 rounded-[2px] border px-3 py-2.5 motion-safe:transition-colors",
+              pending > 0
+                ? "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] hover:border-[var(--status-warning)]"
+                : "border-[var(--border-default)] hover:border-[var(--text-primary)]",
+            )}
+          >
+            <Zap className={cn("h-4 w-4 shrink-0", pending > 0 ? "text-[var(--status-warning)]" : "text-content-muted")} aria-hidden="true" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">Yêu cầu xin thêm token</span>
+              <span className="font-display text-xl font-extrabold tabular-nums text-content-heading">{formatNumber(pending)}</span>
+              <span className="ml-1.5 text-xs text-content-muted">{pending > 0 ? "đang chờ duyệt" : "không có yêu cầu"}</span>
+            </span>
+            {pending > 0 && <span className="text-xs font-bold text-[var(--status-warning)]">Duyệt →</span>}
+          </Link>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 border-t border-[var(--border-strong)] bg-[var(--bg-elevated)] px-5 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarRange className="h-4 w-4 text-[var(--accent-gold)]" aria-hidden="true" />
+            Gói năm học{" "}
+            <b className="text-content-heading">
+              {dash?.subscriptionStartDate && end ? `${formatDate(dash.subscriptionStartDate)} – ${formatDate(end)}` : "—"}
+            </b>
+          </span>
+          <span>
+            Năm học tới:{" "}
+            <b className={dash?.renewedForNextYear ? "text-[var(--status-success)]" : "text-content-heading"}>
+              {dash?.renewedForNextYear
+                ? `Đã gia hạn${dash.nextPackageType ? ` · ${PACKAGE_SHORT_LABELS[dash.nextPackageType]}` : ""}`
+                : "Chưa gia hạn"}
+            </b>
+          </span>
+        </span>
+        <Link href={ROUTES.SCHOOL.TOKENS} className="archive-link">
+          Hạn mức ngày &amp; yêu cầu token <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Link>
+        {dash && !dash.renewedForNextYear && (
+          <p className={cn("w-full text-xs", inMay ? "text-[var(--status-warning)]" : "text-content-muted")}>
+            Gia hạn trong tháng 5 để gói mới chạy từ 01/09; tối đa 20% token còn dư được bảo lưu sang năm sau. Sau 31/05 nếu chưa gia hạn, tài khoản
+            của trường bị khóa.
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** Mot dong tom tat quy (trang Han muc token): chi tiet day du o Tong quan truong. */
+export function PoolStrip() {
+  const q = useApiTokenQuota();
+  if (q.isPending) return <Skeleton className="h-14 w-full" />;
+  if (q.isError) return <ErrorBlock error={q.error} fallback="Không tải được quỹ token của trường." onRetry={() => void q.refetch()} />;
+  const total = Math.max(0, q.data.totalSchoolTokenQuota);
+  const remaining = Math.max(0, q.data.unallocatedTokenQuota);
+  return (
+    <div className="flex flex-col gap-3 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3 sm:flex-row sm:items-center">
+      <Coins className="hidden h-5 w-5 shrink-0 text-[var(--accent-gold)] sm:block" aria-hidden="true" />
+      <p className="shrink-0 text-sm">
+        Quỹ chung còn <b className="font-display text-lg tabular-nums text-[var(--jade)]">{formatNumber(remaining)}</b>
+        <span className="text-content-muted"> / {formatNumber(total)} token</span>
+      </p>
+      <TokenBar used={total - remaining} quota={total} className="h-2 sm:flex-1" />
+      <Link href={ROUTES.SCHOOL.HOME} className="archive-link shrink-0">
+        Chi tiết quỹ &amp; gói năm học <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+      </Link>
+    </div>
+  );
+}
+
+function MiniStat({ icon: Icon, label, value }: { icon: typeof Coins; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-[2px] border border-[var(--border-default)] px-3 py-2.5">
+      <Icon className="h-4 w-4 shrink-0 text-content-muted" aria-hidden="true" />
+      <span>
+        <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">{label}</span>
+        <span className="font-display text-xl font-extrabold tabular-nums text-content-heading">{value}</span>
+      </span>
+    </div>
   );
 }
 

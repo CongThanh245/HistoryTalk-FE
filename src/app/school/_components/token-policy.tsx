@@ -4,10 +4,10 @@ import * as React from "react";
 import { Archive, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { ConfirmDialog } from "@/components/commons/confirm-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StaffFormInput, StaffFormSelect } from "@/components/staff/staff-form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, GRADE_OPTIONS, Panel, SectionHeading, formatNumber } from "@/components/saas/saas-ui";
+import { Field, Panel, SectionHeading, formatNumber } from "@/components/saas/saas-ui";
 import { academicYearLabel, currentAcademicYear } from "@/components/saas/class-form-dialog";
 import { apiErrorMessage, useApiSchoolClassrooms, useUpdateApiClassroom } from "@/features/saas/hooks-api";
 import { tokenApiErrorMessage, useRolloverAcademicYear, useUpdateTokenPolicy } from "@/features/saas/hooks-school-token";
@@ -31,185 +31,217 @@ export function DailyQuotaPolicyPanel({ currentDefault }: { currentDefault?: num
   const update = useUpdateTokenPolicy();
   const year = currentAcademicYear();
   const classes = useApiSchoolClassrooms({ page: 0, size: 200, academicYear: year, sort: "className,asc" });
-
-  const [schoolQuota, setSchoolQuota] = React.useState(String(currentDefault ?? DEFAULT_DAILY_QUOTA));
-  const [syncedDefault, setSyncedDefault] = React.useState(currentDefault);
-  if (currentDefault !== syncedDefault) {
-    setSyncedDefault(currentDefault);
-    if (currentDefault != null) setSchoolQuota(String(currentDefault));
-  }
   // No API returns the teacher default yet (only the PUT response), so start from the backend default.
-  const [teacherQuota, setTeacherQuota] = React.useState(String(DEFAULT_TEACHER_QUOTA));
-  const [savedTeacherQuota, setSavedTeacherQuota] = React.useState<number | null>(null);
-  const [grade, setGrade] = React.useState("12");
-  const [gradeQuota, setGradeQuota] = React.useState("2000");
-  const [touched, setTouched] = React.useState<"school" | "grade" | "teacher" | null>(null);
-  const teacherError =
-    touched === "teacher" && (!Number.isInteger(parseInt0(teacherQuota)) || parseInt0(teacherQuota) < TEACHER_QUOTA_MIN)
-      ? `Tối thiểu ${formatNumber(TEACHER_QUOTA_MIN)} token`
-      : null;
+  const [teacherQuota, setTeacherQuota] = React.useState(DEFAULT_TEACHER_QUOTA);
+  const studentQuota = currentDefault ?? DEFAULT_DAILY_QUOTA;
 
-  const schoolError = touched === "school" ? quotaError(schoolQuota) : null;
-  const gradeError = touched === "grade" ? quotaError(gradeQuota) : null;
-  const schoolDirty = currentDefault == null || parseInt0(schoolQuota) !== currentDefault;
-
-  const saveSchool = () => {
-    setTouched("school");
-    if (quotaError(schoolQuota)) return;
+  const saveStudent = (n: number, done: () => void) =>
     update.mutate(
-      { defaultDailyStudentQuota: parseInt0(schoolQuota) },
+      { defaultDailyStudentQuota: n },
       {
-        onSuccess: () => toast.success(`Mặc định toàn trường: ${formatNumber(parseInt0(schoolQuota))} token / học sinh / ngày`),
+        onSuccess: () => {
+          done();
+          toast.success(`Mặc định toàn trường: ${formatNumber(n)} token / học sinh / ngày`);
+        },
         onError: (e) => toast.error(policyErrorMessage(e)),
       },
     );
-  };
 
-  const saveTeacher = () => {
-    setTouched("teacher");
-    const n = parseInt0(teacherQuota);
-    if (!Number.isInteger(n) || n < TEACHER_QUOTA_MIN) return;
+  const saveTeacher = (n: number, done: () => void) =>
     update.mutate(
       { defaultDailyTeacherQuota: n },
       {
         onSuccess: (school) => {
-          setSavedTeacherQuota(school.defaultDailyTeacherQuota ?? n);
+          setTeacherQuota(school.defaultDailyTeacherQuota ?? n);
+          done();
           toast.success(`Hạn mức giáo viên: ${formatNumber(n)} token / ngày`);
         },
         onError: (e) => toast.error(policyErrorMessage(e)),
       },
     );
-  };
 
-  const saveGrade = () => {
-    setTouched("grade");
-    if (quotaError(gradeQuota)) return;
+  const saveGrade = (grade: number, n: number, done: () => void) =>
     update.mutate(
-      { gradeLevel: Number(grade), classroomDailyQuota: parseInt0(gradeQuota) },
+      { gradeLevel: grade, classroomDailyQuota: n },
       {
-        onSuccess: () => toast.success(`Cả khối ${grade}: ${formatNumber(parseInt0(gradeQuota))} token / học sinh / ngày`),
+        onSuccess: () => {
+          done();
+          toast.success(`Cả khối ${grade}: ${formatNumber(n)} token / học sinh / ngày`);
+        },
         onError: (e) => toast.error(policyErrorMessage(e)),
       },
     );
-  };
+
+  const byGrade = React.useMemo(() => {
+    const map = new Map<number, ApiClassroom[]>();
+    for (const c of classes.data?.items ?? []) {
+      const g = c.gradeLevel ?? 0;
+      map.set(g, [...(map.get(g) ?? []), c]);
+    }
+    return [...map.entries()].sort((a, b) => a[0] - b[0]);
+  }, [classes.data]);
 
   return (
     <Panel>
       <SectionHeading
         title="Hạn mức token mỗi ngày"
-        description="Số token một học sinh được dùng cho trò chuyện AI mỗi ngày, làm mới lúc 00:00. Hết hạn mức chỉ khóa AI; quiz, tài liệu và bài tập vẫn dùng bình thường."
+        description="Số token được dùng cho trò chuyện AI mỗi ngày, làm mới lúc 00:00. Hết hạn mức chỉ khóa AI; quiz, tài liệu và bài tập vẫn dùng bình thường."
       />
 
-      <div className="grid gap-x-8 gap-y-5 md:grid-cols-2">
-        <QuotaRow
-          id="quota-default"
-          label="Mặc định cho học sinh"
-          hint="Áp dụng cho mọi lớp chưa có hạn mức riêng."
-          value={schoolQuota}
-          onChange={setSchoolQuota}
-          error={schoolError}
-        >
-          <button type="button" className="btn-crimson disabled:opacity-60" disabled={update.isPending || !schoolDirty} onClick={saveSchool}>
-            Lưu
-          </button>
-        </QuotaRow>
-
-        <QuotaRow
-          id="quota-teacher"
-          label="Hạn mức giáo viên"
-          hint={
-            savedTeacherQuota != null
-              ? `Đang áp dụng ${formatNumber(savedTeacherQuota)} token/ngày. Dùng chung cho chat AI của giáo viên và phần cấp cho học sinh.`
-              : `Mặc định ${formatNumber(DEFAULT_TEACHER_QUOTA)} token/ngày. Dùng chung cho chat AI của giáo viên và phần cấp cho học sinh.`
-          }
-          value={teacherQuota}
-          onChange={setTeacherQuota}
-          error={teacherError}
-        >
-          <button type="button" className="btn-crimson disabled:opacity-60" disabled={update.isPending} onClick={saveTeacher}>
-            Lưu
-          </button>
-        </QuotaRow>
-
-        <QuotaRow
-          id="quota-grade"
-          label="Áp dụng cho cả khối"
-          hint={`Đặt cùng hạn mức cho mọi lớp của khối, năm học ${academicYearLabel(year)}.`}
-          value={gradeQuota}
-          onChange={setGradeQuota}
-          error={gradeError}
-          lead={
-            <StaffFormSelect
-              value={grade}
-              onValueChange={setGrade}
-              options={GRADE_OPTIONS.map((g) => ({ value: String(g), label: `Khối ${g}` }))}
-              className="w-28 shrink-0"
-            />
-          }
-        >
-          <button type="button" className="btn-ink disabled:opacity-60" disabled={update.isPending} onClick={saveGrade}>
-            Áp dụng
-          </button>
-        </QuotaRow>
+      <div className="grid gap-3 md:grid-cols-2">
+        <EditableQuota label="Mỗi học sinh" hint="Áp dụng cho mọi lớp, trừ lớp đặt mức riêng bên dưới." value={studentQuota} min={DAILY_QUOTA_MIN} saving={update.isPending} onSave={saveStudent} />
+        <EditableQuota label="Mỗi giáo viên" hint="Gồm chat AI của giáo viên và phần giáo viên cấp thêm cho học sinh." value={teacherQuota} min={TEACHER_QUOTA_MIN} saving={update.isPending} onSave={saveTeacher} />
       </div>
 
       <div className="space-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
-          Theo lớp · năm học {academicYearLabel(year)}
-        </p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Theo lớp · năm học {academicYearLabel(year)}</p>
         {classes.isPending ? (
           <p className="text-sm text-content-muted">Đang tải lớp...</p>
         ) : classes.isError ? (
           <p className="text-sm text-[var(--accent-danger)]">{apiErrorMessage(classes.error, "Không tải được danh sách lớp.")}</p>
-        ) : (classes.data?.items.length ?? 0) === 0 ? (
+        ) : byGrade.length === 0 ? (
           <p className="text-sm text-content-muted">Chưa có lớp nào trong năm học này.</p>
         ) : (
-          <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--text-primary)]">
-            {classes.data!.items.map((c) => (
-              <ClassQuotaRow key={c.id} room={c} schoolDefault={currentDefault} />
+          <div className="border-y border-[var(--text-primary)]">
+            {byGrade.map(([grade, rooms]) => (
+              <div key={grade} className="border-b border-[var(--border-strong)] last:border-b-0">
+                <GradeHeader grade={grade} count={rooms.length} fallback={studentQuota} saving={update.isPending} onApply={saveGrade} />
+                <ul className="divide-y divide-[var(--border-default)]">
+                  {rooms.map((c) => (
+                    <ClassQuotaRow key={c.id} room={c} schoolDefault={currentDefault} />
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </Panel>
   );
 }
 
-function QuotaRow({
-  id,
+/** Mot gia tri han muc: hien so, bam "Sửa" moi hien o nhap. */
+function EditableQuota({
   label,
   hint,
   value,
-  onChange,
-  error,
-  lead,
-  children,
+  min,
+  saving,
+  onSave,
 }: {
-  id: string;
   label: string;
   hint: string;
-  value: string;
-  onChange: (v: string) => void;
-  error: string | null;
-  lead?: React.ReactNode;
-  children: React.ReactNode;
+  value: number;
+  min: number;
+  saving: boolean;
+  onSave: (n: number, done: () => void) => void;
 }) {
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState("");
+  const n = parseInt0(draft);
+  const error = !draft.trim() ? "Nhập số token" : !Number.isInteger(n) || n < min ? `Tối thiểu ${formatNumber(min)} token` : null;
+
   return (
-    <Field label={label} hint={error ? undefined : hint} error={error} htmlFor={id}>
-      <div className="flex flex-wrap items-center gap-2">
-        {lead}
-        <StaffFormInput
-          id={id}
-          inputMode="numeric"
-          value={value}
-          aria-invalid={!!error}
-          onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 7))}
-          className="w-32 tabular-nums"
-        />
-        <span className="text-sm text-content-muted">token / ngày</span>
-        {children}
-      </div>
-    </Field>
+    <div className="flex flex-col gap-2 rounded-[2px] border border-[var(--border-strong)] px-4 py-3">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</span>
+      {editing ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <StaffFormInput
+            aria-label={label}
+            inputMode="numeric"
+            autoFocus
+            value={draft}
+            aria-invalid={!!error}
+            onChange={(e) => setDraft(e.target.value.replace(/\D/g, "").slice(0, 7))}
+            onKeyDown={(e) => e.key === "Enter" && !error && onSave(n, () => setEditing(false))}
+            className="w-32 tabular-nums"
+          />
+          <span className="text-sm text-content-muted">token / ngày</span>
+          <button type="button" className="btn-crimson disabled:opacity-60" disabled={saving || !!error} onClick={() => onSave(n, () => setEditing(false))}>
+            {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />} Lưu
+          </button>
+          <button type="button" className="btn-line" onClick={() => setEditing(false)}>
+            Hủy
+          </button>
+          {error && <span className="w-full text-xs text-[var(--accent-danger)]">{error}</span>}
+        </div>
+      ) : (
+        <div className="flex items-baseline justify-between gap-3">
+          <span>
+            <span className="font-display text-3xl font-extrabold tabular-nums text-content-heading">{formatNumber(value)}</span>
+            <span className="ml-1.5 text-sm text-content-muted">token / ngày</span>
+          </span>
+          <button
+            type="button"
+            className="archive-link"
+            onClick={() => {
+              setDraft(String(value));
+              setEditing(true);
+            }}
+          >
+            Sửa
+          </button>
+        </div>
+      )}
+      <span className="text-xs text-content-muted">{hint}</span>
+    </div>
+  );
+}
+
+/** Dong tieu de moi khoi trong bang theo lop, kem thao tac dat cung muc cho ca khoi. */
+function GradeHeader({
+  grade,
+  count,
+  fallback,
+  saving,
+  onApply,
+}: {
+  grade: number;
+  count: number;
+  fallback: number;
+  saving: boolean;
+  onApply: (grade: number, n: number, done: () => void) => void;
+}) {
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState("");
+  const error = editing ? quotaError(draft) : null;
+  return (
+    <div className="flex flex-wrap items-center gap-2 bg-[var(--bg-elevated)] px-3 py-2">
+      <span className="flex-1 text-sm font-bold text-content-heading">
+        Khối {grade} <span className="font-normal text-content-muted">· {count} lớp</span>
+      </span>
+      {editing ? (
+        <>
+          <StaffFormInput
+            aria-label={`Hạn mức cả khối ${grade}`}
+            inputMode="numeric"
+            autoFocus
+            value={draft}
+            aria-invalid={!!error}
+            onChange={(e) => setDraft(e.target.value.replace(/\D/g, "").slice(0, 7))}
+            className="h-9 w-28 tabular-nums"
+          />
+          <span className="text-xs text-content-muted">token / ngày</span>
+          <button type="button" className="btn-crimson min-h-0 py-1.5 text-xs disabled:opacity-60" disabled={saving || !!error} onClick={() => onApply(grade, parseInt0(draft), () => setEditing(false))}>
+            Áp dụng cho {count} lớp
+          </button>
+          <button type="button" className="btn-line min-h-0 py-1.5 text-xs" onClick={() => setEditing(false)}>
+            Hủy
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          className="archive-link text-xs"
+          onClick={() => {
+            setDraft(String(fallback));
+            setEditing(true);
+          }}
+        >
+          Đặt cho cả khối
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -236,12 +268,10 @@ function ClassQuotaRow({ room, schoolDefault }: { room: ApiClassroom; schoolDefa
     );
 
   return (
-    <li className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center">
+    <li className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center">
       <div className="min-w-0 flex-1">
         <span className="font-semibold text-content-heading">Lớp {room.className}</span>
-        <span className="ml-2 text-xs text-content-muted">
-          Khối {room.gradeLevel} · {formatNumber(room.studentCount ?? 0)} học sinh
-        </span>
+        <span className="ml-2 text-xs text-content-muted">{formatNumber(room.studentCount ?? 0)} học sinh</span>
       </div>
       {editing ? (
         <div className="flex flex-wrap items-center gap-2">
@@ -269,18 +299,8 @@ function ClassQuotaRow({ room, schoolDefault }: { room: ApiClassroom; schoolDefa
         </div>
       ) : (
         <div className="flex items-center gap-3">
-          <span className="tabular-nums text-sm font-semibold text-content-heading">
+          <span className={cn("tabular-nums text-sm font-semibold", own ? "text-[var(--gold-leaf)]" : "text-content-heading")}>
             {effective ? `${formatNumber(effective)} / ngày` : "—"}
-          </span>
-          <span
-            className={cn(
-              "rounded-[2px] border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em]",
-              own
-                ? "border-[var(--gold-leaf)] text-[var(--gold-leaf)]"
-                : "border-[var(--border-strong)] text-[var(--text-tertiary)]",
-            )}
-          >
-            {own ? "Riêng" : "Mặc định"}
           </span>
           <button
             type="button"
@@ -299,7 +319,7 @@ function ClassQuotaRow({ room, schoolDefault }: { room: ApiClassroom; schoolDefa
               disabled={update.isPending}
               onClick={() => save(0, `Lớp ${room.className} dùng lại mức mặc định của trường`)}
             >
-              Về mặc định
+              Dùng mặc định
             </button>
           )}
         </div>
@@ -311,8 +331,9 @@ function ClassQuotaRow({ room, schoolDefault }: { room: ApiClassroom; schoolDefa
 /**
  * POST /school-admin/academic-year/rollover: archives the classes of the finished year, resets daily counters and
  * (optionally) deactivates grade-12 students so they can no longer sign in. Unused tokens stay in the pool.
+ * Viec moi nam lam mot lan, khong hoan tac duoc: chi la mot nut tren trang Lop hoc, mo hop thoai khi can.
  */
-export function AcademicRolloverPanel() {
+export function AcademicRolloverButton() {
   const rollover = useRolloverAcademicYear();
   const thisYear = currentAcademicYear();
   const [year, setYear] = React.useState(String(thisYear - 1));
@@ -324,51 +345,49 @@ export function AcademicRolloverPanel() {
     rollover.mutate(
       { completedAcademicYear: Number(year), deactivateGraduatedGrade12: graduate },
       {
-        onSuccess: (r) =>
-          toast.success(`Đã chuyển giao năm học ${academicYearLabel(r.completedAcademicYear)}`, {
-            description: `${formatNumber(r.archivedClassroomsCount)} lớp được lưu trữ · ${formatNumber(r.deactivatedGraduatedStudentsCount)} học sinh khối 12 ngừng hoạt động · quỹ còn ${formatNumber(r.remainingSchoolTokenPool ?? 0)} token`,
+        onSuccess: (r) => {
+          setOpen(false);
+          toast.success(`Đã kết thúc năm học ${academicYearLabel(r.completedAcademicYear)}`, {
+            description: `${formatNumber(r.archivedClassroomsCount)} lớp được lưu trữ · ${formatNumber(r.deactivatedGraduatedStudentsCount)} học sinh khối 12 ngừng hoạt động`,
             duration: 10_000,
-          }),
-        onError: (e) => toast.error(tokenApiErrorMessage(e, "Không chuyển giao được năm học. Vui lòng thử lại.")),
+          });
+        },
+        onError: (e) => toast.error(tokenApiErrorMessage(e, "Không kết thúc được năm học. Vui lòng thử lại.")),
       },
     );
 
   return (
-    <Panel>
-      <SectionHeading
-        title="Chuyển giao năm học"
-        description="Làm khi kết thúc năm học: lớp của năm cũ chuyển sang lưu trữ (học sinh giữ tài khoản và lịch sử học tập để xếp vào lớp mới). Token chưa dùng vẫn nằm trong quỹ chung."
-      />
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-        <Field label="Năm học đã kết thúc" className="sm:w-64">
-          <StaffFormSelect value={year} onValueChange={setYear} options={yearOptions} className="w-full" />
-        </Field>
-        <label htmlFor="rollover-graduate" className="flex cursor-pointer items-center gap-2 pb-2 text-sm text-content-text">
-          <Checkbox id="rollover-graduate" checked={graduate} onCheckedChange={(v) => setGraduate(!!v)} />
-          Vô hiệu hóa tài khoản học sinh khối 12 (đã tốt nghiệp)
-        </label>
-      </div>
-      <button type="button" className="btn-ink disabled:opacity-60" disabled={rollover.isPending} onClick={() => setOpen(true)}>
-        {rollover.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Archive className="h-4 w-4" aria-hidden="true" />}
-        Chuyển giao năm học
+    <>
+      <button type="button" className="archive-link text-xs text-content-muted" onClick={() => setOpen(true)}>
+        <Archive className="h-3.5 w-3.5" aria-hidden="true" /> Kết thúc năm học…
       </button>
-
-      <ConfirmDialog
-        open={open}
-        onOpenChange={setOpen}
-        variant="danger"
-        title={`Chuyển giao năm học ${academicYearLabel(Number(year))}?`}
-        description={
-          graduate
-            ? "Mọi lớp của năm học này chuyển sang lưu trữ, và tài khoản học sinh khối 12 bị vô hiệu hóa vĩnh viễn (không đăng nhập được nữa). Không hoàn tác được."
-            : "Mọi lớp của năm học này chuyển sang lưu trữ. Không hoàn tác được."
-        }
-        confirmLabel="Chuyển giao"
-        onConfirm={() => {
-          setOpen(false);
-          run();
-        }}
-      />
-    </Panel>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Kết thúc năm học</DialogTitle>
+            <DialogDescription>
+              Các lớp của năm học được chọn chuyển sang lưu trữ. Học sinh giữ tài khoản và lịch sử học tập để xếp vào lớp mới. Không hoàn tác được.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Field label="Năm học đã kết thúc">
+              <StaffFormSelect value={year} onValueChange={setYear} options={yearOptions} className="w-full" />
+            </Field>
+            <label htmlFor="rollover-graduate" className="flex cursor-pointer items-start gap-2 text-sm text-content-text">
+              <Checkbox id="rollover-graduate" checked={graduate} onCheckedChange={(v) => setGraduate(!!v)} className="mt-0.5" />
+              Khóa tài khoản học sinh khối 12 (đã tốt nghiệp)
+            </label>
+          </div>
+          <DialogFooter>
+            <button type="button" className="btn-line" onClick={() => setOpen(false)}>
+              Hủy
+            </button>
+            <button type="button" className="btn-crimson disabled:opacity-60" disabled={rollover.isPending} onClick={run}>
+              {rollover.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />} Kết thúc năm học {academicYearLabel(Number(year))}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

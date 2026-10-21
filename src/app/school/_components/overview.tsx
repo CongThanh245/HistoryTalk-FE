@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Activity, ArrowRight, BookOpen, Coins, GraduationCap, Library, UserCheck, Users, Zap } from "lucide-react";
+import { BookOpen, GraduationCap, Library, Users, Zap } from "lucide-react";
 
 import { StaffStatCard, StaffStatsGrid } from "@/components/staff/staff-stat-card";
 import { Panel, SectionHeading, formatNumber } from "@/components/saas/saas-ui";
@@ -10,7 +10,7 @@ import { academicYearLabel, currentAcademicYear } from "@/components/saas/class-
 import { ROUTES } from "@/constants/routes";
 import { useApiSchoolClassrooms, useApiTeachers, useApiTokenQuota } from "@/features/saas/hooks-api";
 import { useSchoolAdminDashboard } from "@/features/dashboard/hooks";
-import { SchoolHeader, QuotaSkeleton, QuotaSummary, SubscriptionSummary } from "./quota";
+import { TokenHero } from "./quota";
 import { ErrorBlock } from "./shared";
 
 
@@ -46,15 +46,14 @@ export function OverviewWidgets() {
   return (
     <div className="space-y-8">
       {quota.isPending ? (
-        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-72 w-full" />
       ) : quota.isError ? (
         <ErrorBlock error={quota.error} fallback="Không tải được thông tin trường." onRetry={() => void quota.refetch()} />
       ) : (
-        <SchoolHeader quota={quota.data} />
+        <TokenHero quota={quota.data} dash={analytics.data} />
       )}
 
-      <StaffStatsGrid className="sm:grid-cols-2 lg:grid-cols-4">
-        <StaffStatCard label="Lớp học (mọi năm)" value={stat(classes)} icon={<BookOpen className="h-5 w-5" />} tone="gold" />
+      <StaffStatsGrid className="sm:grid-cols-3 lg:grid-cols-3">
         <StaffStatCard
           label={`Lớp năm học ${academicYearLabel(currentAcademicYear())}`}
           value={stat(yearClasses)}
@@ -62,42 +61,8 @@ export function OverviewWidgets() {
           tone="blue"
         />
         <StaffStatCard label="Giáo viên" value={stat(teachers)} icon={<GraduationCap className="h-5 w-5" />} tone="green" />
-        <StaffStatCard
-          label="Token còn trong quỹ chung"
-          value={quota.data ? formatNumber(quota.data.unallocatedTokenQuota) : quota.isError ? "—" : "…"}
-          icon={<UserCheck className="h-5 w-5" />}
-          tone="amber"
-        />
+        <StaffStatCard label="Học sinh" value={analyticsStat(analytics.data?.totalStudents)} icon={<Users className="h-5 w-5" />} tone="gold" />
       </StaffStatsGrid>
-
-      <StaffStatsGrid className="sm:grid-cols-2 lg:grid-cols-4">
-        <StaffStatCard label="Học sinh" value={analyticsStat(analytics.data?.totalStudents)} icon={<Users className="h-5 w-5" />} tone="blue" />
-        <StaffStatCard
-          label="Token học sinh đã dùng"
-          value={analyticsStat(analytics.data?.tokensUsedByStudents)}
-          icon={<Activity className="h-5 w-5" />}
-          tone="green"
-        />
-        <StaffStatCard
-          label="Hạn mức / học sinh / ngày"
-          value={analyticsStat(analytics.data?.defaultDailyStudentQuota)}
-          icon={<Coins className="h-5 w-5" />}
-          tone="gold"
-        />
-        <StaffStatCard
-          label="Yêu cầu token chờ duyệt"
-          value={analyticsStat(analytics.data?.pendingTokenBoostRequests)}
-          icon={<Zap className="h-5 w-5" />}
-          tone="amber"
-        />
-      </StaffStatsGrid>
-
-      {analytics.data?.subscriptionEndDate && (
-        <Panel>
-          <SectionHeading title="Gói năm học" />
-          <SubscriptionSummary data={analytics.data} />
-        </Panel>
-      )}
 
       <Panel>
         <SectionHeading title="Tình hình nộp bài" description="Tổng hợp bài nộp của học sinh trên toàn trường." />
@@ -107,20 +72,6 @@ export function OverviewWidgets() {
           <StaffStatCard label="Nộp muộn" value={formatRate(analytics, analytics.data?.assignmentStats?.lateSubmittedRate)} tone="amber" />
           <StaffStatCard label="Chưa làm" value={formatRate(analytics, analytics.data?.assignmentStats?.notStartedRate)} tone="red" />
         </StaffStatsGrid>
-      </Panel>
-
-      <Panel>
-        <SectionHeading title="Quỹ token chung của trường" description="Học sinh chat tới đâu trừ thẳng vào quỹ tới đó, trong giới hạn hạn mức mỗi ngày." />
-        {quota.isPending ? (
-          <QuotaSkeleton />
-        ) : quota.isError ? (
-          <ErrorBlock error={quota.error} fallback="Không tải được hạn mức token." onRetry={() => void quota.refetch()} />
-        ) : (
-          <QuotaSummary quota={quota.data} />
-        )}
-        <Link href={ROUTES.SCHOOL.TOKENS} className="archive-link">
-          Hạn mức ngày &amp; yêu cầu xin thêm token <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-        </Link>
       </Panel>
 
       <div className="space-y-4">

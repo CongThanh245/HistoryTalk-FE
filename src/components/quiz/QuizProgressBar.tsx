@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { LayoutGrid, X } from "lucide-react";
+import { ArrowLeft, House, LayoutGrid, RotateCcw, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 interface QuizProgressBarProps {
@@ -19,6 +19,8 @@ interface QuizProgressBarProps {
   onGoHome?: () => void;
   onRetry: () => void;
   scrollToQuestion: (index: number) => void;
+  /** QuizFlow dat nut mo danh sach de o goc trai: chua cho cho no. Trang bai tap khong co nut do. */
+  inset?: boolean;
 }
 
 export function formatTime(seconds: number) {
@@ -42,6 +44,7 @@ export function QuizProgressBar({
   onGoHome,
   onRetry,
   scrollToQuestion,
+  inset = true,
 }: QuizProgressBarProps) {
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -68,13 +71,18 @@ export function QuizProgressBar({
       ref={panelRef}
       className="sticky top-0 z-20 flex-shrink-0 bg-[var(--bg-surface)] border-b border-[var(--text-primary)]"
     >
-      <div className="flex items-center gap-2 px-4 h-14">
+      <div className="flex h-14 items-center gap-2 px-3 sm:px-4">
         <button
           onClick={onBack}
-          className="ml-8 h-9 rounded-[2px] px-3 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] flex-shrink-0 text-content-heading"
+          className={cn(
+            "inline-flex h-9 flex-shrink-0 items-center gap-1.5 rounded-[2px] px-2 text-[11px] font-bold uppercase tracking-[0.08em] text-content-heading transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] sm:px-3",
+            inset && "ml-8",
+          )}
           title="Quay lại"
+          aria-label="Quay lại"
         >
-          Quay lại
+          <ArrowLeft size={16} aria-hidden="true" />
+          <span className="hidden sm:inline">Quay lại</span>
         </button>
 
         <div className="flex-1 min-w-0">
@@ -88,8 +96,8 @@ export function QuizProgressBar({
               </span>
             )}
           </div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
-            {answeredCount}/{totalQuestions} câu đã trả lời
+          <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
+            {answeredCount}/{totalQuestions} câu<span className="hidden sm:inline"> đã trả lời</span>
           </p>
         </div>
 
@@ -113,13 +121,13 @@ export function QuizProgressBar({
 
         <div
           className={cn(
-            "flex min-w-[104px] flex-col items-center rounded-[2px] px-3 py-1 text-xs flex-shrink-0 border",
+            "flex min-w-[64px] flex-col items-center rounded-[2px] px-2 py-1 text-xs flex-shrink-0 border sm:min-w-[104px] sm:px-3",
             timerDanger
               ? "bg-[var(--status-danger-bg)] text-accent-danger border-[var(--accent-danger)]"
               : "bg-[var(--bg-elevated)] text-content-heading border-[var(--text-primary)]",
           )}
         >
-          <span className="text-[9px] font-bold uppercase tracking-[0.12em] leading-none opacity-75">
+          <span className="hidden text-[9px] font-bold uppercase tracking-[0.12em] leading-none opacity-75 sm:block">
             {hasTimeLimit ? "Còn lại" : "Thời gian"}
           </span>
           <span className="font-display text-lg font-extrabold leading-5 tabular-nums">
@@ -127,23 +135,30 @@ export function QuizProgressBar({
           </span>
         </div>
 
-        <div className="w-px h-5 flex-shrink-0 bg-[var(--border-strong)]" />
+        <div className="hidden h-5 w-px flex-shrink-0 bg-[var(--border-strong)] sm:block" />
 
         {onGoHome && (
           <button
             onClick={onGoHome}
-            className="px-3 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-transparent text-content-heading border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+            className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-transparent text-content-heading border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] sm:px-3"
             title="Về trang quiz"
+            aria-label="Về trang quiz"
           >
+            <House size={14} className="sm:hidden" aria-hidden="true" />
             <span className="hidden sm:inline">Về trang</span>
           </button>
         )}
 
         <button
-          onClick={onRetry}
-          className="px-3 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-[var(--text-primary)] text-[var(--text-inverse)] border border-[var(--text-primary)] hover:bg-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:text-[#FFFFFF]"
+          onClick={() => {
+            if (answeredCount > 0 && !window.confirm("Làm lại từ đầu? Các câu đã trả lời sẽ bị xóa.")) return;
+            onRetry();
+          }}
+          aria-label="Làm lại"
+          className="inline-flex items-center gap-1.5 px-2 py-1.5 sm:px-3 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-[var(--text-primary)] text-[var(--text-inverse)] border border-[var(--text-primary)] hover:bg-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:text-[#FFFFFF]"
           title="Làm lại"
         >
+          <RotateCcw size={14} className="sm:hidden" aria-hidden="true" />
           <span className="hidden sm:inline">Làm lại</span>
         </button>
       </div>

@@ -76,7 +76,7 @@ export default function MyAssignmentDetailPage() {
     <SaasShell
       variant="app"
       title="Làm bài tập"
-      description="Hoàn thành bài trước hạn nộp. Điểm do hệ thống tự chấm khi em nộp bài."
+      description="Hoàn thành bài trước hạn nộp. Điểm do hệ thống tự chấm khi bạn nộp bài."
       hideHeading={takingQuiz}
     >
       {role === "SCHOOL_STUDENT" ? (
@@ -119,7 +119,7 @@ function AssignmentDetail({
       return (
         <EmptyState
           title="Không tìm thấy bài tập"
-          description="Bài không tồn tại, đã bị hủy hoặc không thuộc lớp của em."
+          description="Bài không tồn tại, đã bị hủy hoặc không thuộc lớp của bạn."
           action={back}
         />
       );
@@ -272,8 +272,8 @@ function AssignmentActions({
 
   if (a.submissionStatus === "EXEMPTED") {
     return (
-      <Notice icon={ShieldCheck} title="Em được miễn bài này">
-        Thầy cô đã miễn bài tập này cho em, không cần nộp.
+      <Notice icon={ShieldCheck} title="Bạn được miễn bài này">
+        Thầy cô đã miễn bài tập này cho bạn, không cần nộp.
       </Notice>
     );
   }
@@ -428,7 +428,7 @@ function AssignmentActions({
     }
     hint = notStarted
       ? `Bối cảnh mở ở tab mới. Thời gian đọc tính từ lúc bấm “Bắt đầu đọc” đến lúc nộp; cần ${requirementText(a)?.toLowerCase() ?? "đủ thời gian"}.`
-      : `Em bắt đầu đọc lúc ${formatDateTime(a.startedAt)}. Đọc xong thì bấm “Nộp bài”.`;
+      : `Bạn bắt đầu đọc lúc ${formatDateTime(a.startedAt)}. Đọc xong thì bấm “Nộp bài”.`;
   }
 
   return (

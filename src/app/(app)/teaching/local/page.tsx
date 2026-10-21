@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { ArrowRight, BookMarked, ChevronDown, Globe, Lock, Map as MapIcon, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { BookMarked, Globe, Lock, Map as MapIcon, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -15,10 +15,11 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SaasShell, SearchInput, formatDate, normalizeText } from "@/components/saas/saas-ui";
-import { LocalReviewBadge, LocalScopeTag, QueryState, REVIEW_STATE_LABELS, localMeta, reviewState, type LocalReviewState } from "@/components/saas/local-content-ui";
+import { LocalReviewBadge, QueryState, REVIEW_STATE_LABELS, localMeta, reviewState, type LocalReviewState } from "@/components/saas/local-content-ui";
 import { SegmentedFilter } from "@/components/saas/teaching-ui";
 import { ROUTES } from "@/constants/routes";
-import { apiErrorMessage } from "@/features/saas/hooks-api";
+import { apiErrorMessage, useApiTeacherClassrooms } from "@/features/saas/hooks-api";
+import { StaffFormSelect } from "@/components/staff/staff-form";
 import { LOCAL_KINDS, useLocalContentMutations, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
 import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
 import type { LocalItem, LocalKind } from "@/services/local-content.service";
@@ -49,7 +50,7 @@ function LocalHistory({ kind, setKind }: { kind: LocalKind; setKind: (k: LocalKi
   const counts: Record<LocalKind, number> = { CONTEXT: api.contexts.length, CHARACTER: api.characters.length };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Tabs value={kind} onValueChange={(v) => setKind(v as LocalKind)}>
           <TabsList className="h-10 w-full sm:w-fit">
@@ -61,41 +62,9 @@ function LocalHistory({ kind, setKind }: { kind: LocalKind; setKind: (k: LocalKi
             ))}
           </TabsList>
         </Tabs>
-        <div className="flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button type="button" className="btn-line px-3" aria-label="Thêm tùy chọn">
-                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={ROUTES.CLASS_MAP}>
-                  <MapIcon className="h-4 w-4" aria-hidden="true" /> Xem trên bản đồ
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={ROUTES.TEACHING.LOCAL_TRASH}>
-                  <Trash2 className="h-4 w-4" aria-hidden="true" /> Thùng rác
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button type="button" className="btn-crimson">
-                <Plus className="h-4 w-4" aria-hidden="true" /> Soạn mới <ChevronDown className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {LOCAL_KINDS.map((k) => (
-                <DropdownMenuItem key={k} asChild>
-                  <Link href={ROUTES.TEACHING.LOCAL_NEW(k)}>{LOCAL_KIND_LABELS[k]}</Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <Link href={ROUTES.TEACHING.LOCAL_NEW(kind)} className="btn-crimson">
+          <Plus className="h-4 w-4" aria-hidden="true" /> Soạn {LOCAL_KIND_LABELS[kind].toLowerCase()} mới
+        </Link>
       </div>
 
       <QueryState isLoading={api.isLoading} isError={api.isError} error={api.error} onRetry={api.refetch}>
@@ -105,42 +74,47 @@ function LocalHistory({ kind, setKind }: { kind: LocalKind; setKind: (k: LocalKi
   );
 }
 
+const ALL_STATES = "ALL";
+
 function ApiList({ kind, items, truncated }: { kind: LocalKind; items: LocalItem[]; truncated: boolean }) {
   const myUid = useAuthStore((s) => s.user?.uid);
-  const [state, setState] = React.useState<LocalReviewState | "ALL">("ALL");
+  const classes = useApiTeacherClassrooms({ size: 100 });
+  const classNames = React.useMemo(() => new Map((classes.data?.items ?? []).map((c) => [c.id, c.className])), [classes.data]);
+  const [state, setState] = React.useState<LocalReviewState | typeof ALL_STATES>(ALL_STATES);
   const [owner, setOwner] = React.useState<"MINE" | "OTHERS">("MINE");
   const [search, setSearch] = React.useState("");
 
-  const ofOwner = items.filter((c) => (owner === "MINE") === (c.createdBy?.uid === myUid));
+  const mine = items.filter((c) => c.createdBy?.uid === myUid);
+  const others = items.filter((c) => c.createdBy?.uid !== myUid);
+  const ofOwner = owner === "MINE" ? mine : others;
   const q = normalizeText(search);
   const rows = ofOwner
-    .filter((c) => (state === "ALL" || reviewState(c) === state) && (!q || normalizeText(c.name).includes(q)))
+    .filter((c) => (state === ALL_STATES || reviewState(c) === state) && (!q || normalizeText(c.name).includes(q)))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="space-y-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <SegmentedFilter
-          label="Lọc theo trạng thái"
-          value={state}
-          onChange={setState}
+          label="Người soạn"
+          value={owner}
+          onChange={setOwner}
           options={[
-            { value: "ALL" as const, label: "Tất cả", count: ofOwner.length },
-            ...STATES.map((s) => ({ value: s, label: REVIEW_STATE_LABELS[s], count: ofOwner.filter((c) => reviewState(c) === s).length })),
+            { value: "MINE", label: "Của tôi", count: mine.length },
+            { value: "OTHERS", label: "Đồng nghiệp chia sẻ", count: others.length },
           ]}
         />
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <SegmentedFilter
-            label="Người soạn"
-            value={owner}
-            onChange={setOwner}
-            options={[
-              { value: "MINE", label: "Tôi soạn" },
-              { value: "OTHERS", label: "Đồng nghiệp (toàn trường)" },
-            ]}
-          />
-          <SearchInput value={search} onChange={setSearch} placeholder="Tìm theo tên..." />
-        </div>
+        <div className="hidden flex-1 sm:block" />
+        <StaffFormSelect
+          value={state}
+          onValueChange={setState}
+          className="w-full sm:w-44"
+          options={[
+            { value: ALL_STATES, label: "Mọi trạng thái" },
+            ...STATES.map((s) => ({ value: s, label: `${REVIEW_STATE_LABELS[s]} (${ofOwner.filter((c) => reviewState(c) === s).length})` })),
+          ]}
+        />
+        <SearchInput value={search} onChange={setSearch} placeholder="Tìm theo tên..." />
       </div>
 
       {truncated && <p className="text-xs text-content-muted">Đang hiển thị 100 mục mới nhất mỗi loại.</p>}
@@ -148,52 +122,59 @@ function ApiList({ kind, items, truncated }: { kind: LocalKind; items: LocalItem
       {rows.length === 0 ? (
         <EmptyState
           icon={BookMarked}
-          title={`Chưa có ${LOCAL_KIND_LABELS[kind].toLowerCase()} nào`}
-          description={
-            owner === "MINE"
-              ? "Soạn nội dung mới rồi xuất bản để học sinh thấy."
-              : "Đồng nghiệp chưa chia sẻ nội dung nào cho toàn trường."
-          }
-          action={
-            owner === "MINE" ? (
-              <Link href={ROUTES.TEACHING.LOCAL_NEW(kind)} className="btn-ink">
-                Soạn mới
-              </Link>
-            ) : undefined
-          }
+          title={ofOwner.length ? "Không có mục phù hợp" : `Chưa có ${LOCAL_KIND_LABELS[kind].toLowerCase()} nào`}
+          description={owner === "MINE" ? "Soạn nội dung mới rồi xuất bản để giao bài cho lớp." : "Đồng nghiệp chưa chia sẻ nội dung nào cho toàn trường."}
         />
       ) : (
         <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--border-default)]">
-          {rows.map((c) => (
-            <li key={c.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-4">
-              <Link href={ROUTES.TEACHING.LOCAL_EDIT(c.id, kind)} className="group flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <LocalScopeTag item={c} />
-                    <LocalReviewBadge item={c} />
-                    <span className="text-xs text-content-muted">Cập nhật {formatDate(c.updatedAt)}</span>
-                  </div>
-                  <p className="mt-1 font-semibold text-content-heading group-hover:text-[var(--accent-gold)]">{c.name}</p>
-                  <p className="text-xs text-content-muted">{localMeta(c)}</p>
+          {rows.map((c) => {
+            const wide = c.contentScope === "SCHOOL_WIDE";
+            const cls = (c.classIds ?? []).map((id) => classNames.get(id)).filter(Boolean);
+            const st = reviewState(c);
+            return (
+              <li key={c.id} className="group relative flex items-center gap-4 py-3 pr-1 hover:bg-[var(--status-neutral-bg)]">
+                <div className="min-w-0 flex-1 pl-1">
+                  <Link
+                    href={ROUTES.TEACHING.LOCAL_EDIT(c.id, kind)}
+                    className="font-semibold text-content-heading after:absolute after:inset-0 group-hover:text-[var(--accent-gold)]"
+                  >
+                    {c.name}
+                  </Link>
+                  <p className="truncate text-xs text-content-muted">
+                    {localMeta(c)}
+                    {owner === "OTHERS" && c.createdBy?.fullName ? ` · ${c.createdBy.fullName}` : ""}
+                  </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end">
-                  {owner === "OTHERS" && <span className="text-xs text-content-muted">{c.createdBy?.fullName ?? "Đồng nghiệp"}</span>}
-                  <span className="archive-link">
-                    {owner === "MINE" ? "Chỉnh sửa" : "Xem"} <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                  </span>
-                </div>
-              </Link>
-              {owner === "MINE" && <ScopeToggle item={c} />}
-            </li>
-          ))}
+                {st !== "PUBLISHED" && <LocalReviewBadge item={c} />}
+                <span
+                  className="hidden w-44 shrink-0 items-center gap-1.5 truncate text-xs text-content-muted sm:inline-flex"
+                  title={wide ? "Học sinh và giáo viên cả trường đều thấy" : "Chỉ học sinh các lớp được gán thấy"}
+                >
+                  {wide ? <Globe className="h-3.5 w-3.5 shrink-0 text-[var(--men-lam)]" aria-hidden="true" /> : <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+                  {wide ? "Toàn trường" : cls.length ? `Lớp ${cls.join(", ")}` : c.classIds ? "Chưa gán lớp" : "Riêng lớp"}
+                </span>
+                <span className="hidden w-20 shrink-0 text-right text-xs tabular-nums text-content-muted md:block">{formatDate(c.updatedAt)}</span>
+                {owner === "MINE" ? <RowMenu item={c} kind={kind} /> : <span className="w-8 shrink-0" />}
+              </li>
+            );
+          })}
         </ul>
       )}
+
+      <p className="flex flex-wrap gap-x-5 gap-y-1 pt-1 text-xs">
+        <Link href={ROUTES.CLASS_MAP} className="archive-link text-content-muted">
+          <MapIcon className="h-3.5 w-3.5" aria-hidden="true" /> Xem trên bản đồ
+        </Link>
+        <Link href={ROUTES.TEACHING.LOCAL_TRASH} className="archive-link text-content-muted">
+          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> Thùng rác
+        </Link>
+      </p>
     </div>
   );
 }
 
-/** One-click scope switch on my items: share with every teacher of the school, or keep it to myself. */
-function ScopeToggle({ item }: { item: LocalItem }) {
+/** Thao tac phu cua mot dong (chia se toan truong / thoi chia se) gom vao menu "…". */
+function RowMenu({ item, kind }: { item: LocalItem; kind: LocalKind }) {
   const m = useLocalContentMutations();
   const update = item.type === "CONTEXT" ? m.updateContext : m.updateCharacter;
   const wide = item.contentScope === "SCHOOL_WIDE";
@@ -208,15 +189,28 @@ function ScopeToggle({ item }: { item: LocalItem }) {
     );
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      disabled={update.isPending}
-      title={wide ? "Chỉ bạn và lớp được giao bài dùng nội dung này" : "Giáo viên và học sinh cả trường đều thấy"}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-1 text-xs font-semibold text-content-text motion-safe:transition-colors hover:border-[var(--text-primary)] hover:bg-[var(--bg-elevated)] disabled:opacity-50"
-    >
-      {wide ? <Lock className="h-3.5 w-3.5" aria-hidden="true" /> : <Globe className="h-3.5 w-3.5" aria-hidden="true" />}
-      {update.isPending ? "Đang lưu..." : wide ? "Thôi chia sẻ" : "Chia sẻ toàn trường"}
-    </button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-[2px] text-content-muted hover:bg-[var(--bg-elevated)] hover:text-content-heading"
+          aria-label={`Thao tác với ${item.name}`}
+          disabled={update.isPending}
+        >
+          <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={ROUTES.TEACHING.LOCAL_EDIT(item.id, kind)}>
+            <Pencil className="h-4 w-4" aria-hidden="true" /> Chỉnh sửa
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={toggle}>
+          {wide ? <Lock className="h-4 w-4" aria-hidden="true" /> : <Globe className="h-4 w-4" aria-hidden="true" />}
+          {wide ? "Thôi chia sẻ toàn trường" : "Chia sẻ toàn trường"}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

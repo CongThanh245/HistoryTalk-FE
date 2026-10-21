@@ -332,6 +332,7 @@ export function QuizSessionPage({
       onGoHome={onGoHome}
       onRetry={onRetry}
       scrollToQuestion={scrollToQuestion}
+      inset={!embedded}
     />
   );
 
@@ -382,7 +383,7 @@ export function QuizSessionPage({
               <CheckCircle2 size={30} />
             </span>
             <p className="font-display text-[22px] font-extrabold text-[var(--status-success)]">
-              Tuyệt! Em đã trả lời cả {questions.length} câu 🎉
+              Tuyệt! Bạn đã trả lời cả {questions.length} câu 🎉
             </p>
           </div>
         ) : (
@@ -391,7 +392,7 @@ export function QuizSessionPage({
               Còn {questions.length - answeredCount} câu nữa thôi! 💪
             </p>
             <p className="mt-1 text-xs text-content-subtle">
-              Em vẫn có thể nộp bài ngay nếu muốn
+              Bạn vẫn có thể nộp bài ngay nếu muốn
             </p>
           </div>
         )}

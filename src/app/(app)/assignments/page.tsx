@@ -42,7 +42,7 @@ const TABS: {
     label: "Cần làm",
     color: "var(--accent-gold)",
     icon: ClipboardList,
-    empty: "Em đã làm hết bài được giao. Tuyệt vời!",
+    empty: "Bạn đã làm hết bài được giao. Tuyệt vời!",
   },
   {
     id: "DUE_SOON",
@@ -70,7 +70,7 @@ const TABS: {
     label: "Được miễn",
     color: "var(--men-lam)",
     icon: ShieldCheck,
-    empty: "Em không được miễn bài nào.",
+    empty: "Bạn không được miễn bài nào.",
   },
 ];
 
@@ -87,7 +87,7 @@ export default function MyAssignmentsPage() {
     <SaasShell
       variant="app"
       title="Bài tập được giao"
-      description="Đọc bối cảnh, trò chuyện với nhân vật và làm bài kiểm tra thầy cô đã giao cho lớp em."
+      description="Đọc bối cảnh, trò chuyện với nhân vật và làm bài kiểm tra thầy cô đã giao cho lớp của bạn."
     >
       {role === "SCHOOL_STUDENT" ? (
         <AssignmentsBoard />
@@ -153,10 +153,10 @@ function AssignmentsBoard() {
       <EmptyState
         icon={ClipboardList}
         title="Chưa có bài tập nào"
-        description="Khi thầy cô giao bài cho lớp của em, bài sẽ hiện ở đây."
+        description="Khi thầy cô giao bài cho lớp của bạn, bài sẽ hiện ở đây."
         action={
           <Link href={ROUTES.CLASSES} className="archive-link">
-            Lớp học của em
+            Lớp học của bạn
           </Link>
         }
       />

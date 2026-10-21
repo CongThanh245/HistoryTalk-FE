@@ -315,7 +315,7 @@ function QuizResult({
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-[2px] border border-[var(--text-primary)] bg-[color-mix(in_srgb,var(--gold-leaf)_9%,var(--bg-surface))] p-4 sm:p-6">
         <div>
-          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-content-muted">Điểm của em</p>
+          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-content-muted">Điểm của bạn</p>
           {score !== null ? <ScoreChip score={score} max={maxScore} size="lg" /> : <p className="text-2xl font-bold">—</p>}
         </div>
         {correct !== null && (
@@ -336,7 +336,7 @@ function QuizResult({
 
       {!answers && (
         <p className="text-[13px] text-content-muted">
-          Không có chi tiết bài làm cho lần nộp này{score !== null ? ` (điểm ${formatScore(score)})` : ""}. Dưới đây là đáp án đúng để em ôn lại.
+          Không có chi tiết bài làm cho lần nộp này{score !== null ? ` (điểm ${formatScore(score)})` : ""}. Dưới đây là đáp án đúng để bạn ôn lại.
         </p>
       )}
 
@@ -377,7 +377,7 @@ function QuizResult({
                       <span className="w-4 shrink-0 font-bold">{OPTION_KEYS[oi] ?? oi + 1}</span>
                       <span className="flex-1">{opt}</span>
                       {isCorrect && <span className="text-[11px] font-bold text-[var(--jade)]">Đáp án đúng</span>}
-                      {isChosen && !isCorrect && <span className="text-[11px] font-bold text-[var(--accent-danger)]">Em chọn</span>}
+                      {isChosen && !isCorrect && <span className="text-[11px] font-bold text-[var(--accent-danger)]">Bạn chọn</span>}
                     </li>
                   );
                 })}

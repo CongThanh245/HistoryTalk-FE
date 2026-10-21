@@ -16,7 +16,9 @@ import { apiErrorMessage, useApiSchoolClassrooms, useDeleteApiClassroom } from "
 import type { ApiClassroom, ClassroomListParams } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
 import { ClassStatusBadge } from "../_components/classroom";
+import { AcademicRolloverButton } from "../_components/token-policy";
 import { CopyTag, ErrorBlock, SchoolShell, useDebouncedValue } from "../_components/shared";
+import { FetchingBadge } from "@/components/commons/fetching-indicator";
 
 const ALL = "ALL";
 const PAGE_SIZES = [12, 24, 48];
@@ -117,10 +119,13 @@ function ClassesContent() {
         <ErrorBlock error={classes.error} fallback="Không tải được danh sách lớp." onRetry={() => void classes.refetch()} />
       ) : (
         <>
-          <p className="text-sm text-content-muted" aria-live="polite">
-            <b className="tabular-nums text-content-heading">{total}</b> lớp
-            {classes.isFetching && <span className="ml-2 text-xs">Đang cập nhật…</span>}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-content-muted" aria-live="polite">
+              <b className="tabular-nums text-content-heading">{total}</b> lớp
+              <FetchingBadge active={classes.isFetching} />
+            </p>
+            <AcademicRolloverButton />
+          </div>
 
           {rows.length === 0 ? (
             <div className="rounded-[2px] border border-dashed border-[var(--border-strong)]">

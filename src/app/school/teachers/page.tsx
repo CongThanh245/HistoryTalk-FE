@@ -38,6 +38,7 @@ import {
   type ActiveFilter,
 } from "../_components/account-list";
 import { CopyTag, ErrorBlock, SchoolShell, useDebouncedValue } from "../_components/shared";
+import { FetchingBadge } from "@/components/commons/fetching-indicator";
 
 type SortBy = "fullName" | "userName" | "email" | "createdAt";
 
@@ -178,7 +179,7 @@ function TeachersContent() {
               <b className="tabular-nums text-content-heading">{total}</b> giáo viên
               {filter === "ACTIVE" ? " đang hoạt động" : filter === "LOCKED" ? " đã khóa" : ""}
               {debounced ? ` khớp “${debounced}”` : ""}
-              {teachers.isFetching && <span className="ml-2 text-xs">Đang cập nhật…</span>}
+              <FetchingBadge active={teachers.isFetching} />
             </p>
 
             <BulkActionBar

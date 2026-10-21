@@ -18,11 +18,11 @@
 }
 
 @keyframes quiz-cheer {
-  0% { opacity: 0; transform: translate(-50%, 24px) scale(0.6); }
+  0% { opacity: 0; transform: translate(-50%, -24px) scale(0.6); }
   18% { opacity: 1; transform: translate(-50%, 0) scale(1.08); }
   30% { transform: translate(-50%, 0) scale(1); }
   80% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -16px) scale(0.95); }
+  100% { opacity: 0; transform: translate(-50%, -12px) scale(0.95); }
 }
 
 @keyframes quiz-confetti {
@@ -48,10 +48,11 @@
   opacity: 0;
 }
 
+/* O tren cung (duoi thanh header) de khong che o dap an cua cau ke tiep. */
 .quiz-cheer {
   position: fixed;
   left: 50%;
-  bottom: 40px;
+  top: 96px;
   z-index: 60;
   opacity: 0;
   pointer-events: none;

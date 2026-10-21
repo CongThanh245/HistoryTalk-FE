@@ -169,8 +169,14 @@ function KpiGrid({ data, classId, compact }: { data: DashboardData; classId: str
         />
         <KpiTile
           label="Bài đã nộp"
-          value={expected ? `${formatNumber(onTime + late)}/${formatNumber(expected)}` : "—"}
-          hint={expected ? `${onTime} đúng hạn · ${late} muộn · ${notDone} chưa nộp` : "Lớp chưa có bài tập đang giao"}
+          value={assignments.isPending ? "…" : expected ? `${formatNumber(onTime + late)}/${formatNumber(expected)}` : "—"}
+          hint={
+            assignments.isPending
+              ? undefined
+              : expected
+                ? `${onTime} đúng hạn · ${late} muộn · ${notDone} chưa nộp`
+                : "Lớp chưa có bài tập đang giao"
+          }
           accent={notDone ? "text-[var(--status-warning)]" : "text-[var(--status-success)]"}
         />
       </div>

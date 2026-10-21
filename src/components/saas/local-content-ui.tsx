@@ -58,8 +58,9 @@ export function ReviewNote({ item, className }: { item: Pick<LocalItem, "reviewN
   );
 }
 
-export function LocalScopeTag({ item }: { item: Pick<LocalItem, "contentScope"> }) {
-  return <ContentSourceTag source={scopeSource(item.contentScope)} label={LOCAL_SCOPE_LABEL[item.contentScope]} />;
+/** `label`: ghi de nhan khi nguoi xem khong phai tac gia (vd. school admin: "Riêng lớp 10A1" thay "Riêng tôi"). */
+export function LocalScopeTag({ item, label }: { item: Pick<LocalItem, "contentScope">; label?: string }) {
+  return <ContentSourceTag source={scopeSource(item.contentScope)} label={label ?? LOCAL_SCOPE_LABEL[item.contentScope]} />;
 }
 
 export const ERA_LABEL = Object.fromEntries(LOCAL_ERA_OPTIONS.map((o) => [o.value, o.label])) as Record<string, string>;
@@ -68,7 +69,9 @@ export const CATEGORY_LABEL: Record<LocalCategory, string> = {
   WAR: "Chiến tranh",
   POLITICS: "Chính trị",
   CULTURE: "Văn hóa",
-  REVOLUTION: "Cách mạng",
+  SCIENCE: "Khoa học",
+  RELIGION: "Tôn giáo",
+  OTHER: "Khác",
 };
 
 /** Character life span, e.g. "14 – 43" or "? – 43 TCN". */

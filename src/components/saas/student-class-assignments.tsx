@@ -43,7 +43,7 @@ export function StudentClassAssignments({ classId, openOnly, limit }: { classId?
   const items = limit ? open.slice(0, limit) : open;
   if (items.length === 0) {
     return openOnly && sorted.length > 0 ? (
-      <EmptyState icon={ClipboardList} title="Em đã làm hết bài" description="Không còn bài nào cần làm. Bài mới thầy cô giao sẽ hiện ở đây." size="sm" />
+      <EmptyState icon={ClipboardList} title="Bạn đã làm hết bài" description="Không còn bài nào cần làm. Bài mới thầy cô giao sẽ hiện ở đây." size="sm" />
     ) : (
       <EmptyState icon={ClipboardList} title="Chưa có bài tập" description="Khi thầy cô giao bài cho lớp, bài sẽ hiện ở đây." size="sm" />
     );

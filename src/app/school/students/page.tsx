@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Download, Eye, GraduationCap, KeyRound, LockKeyhole, LockKeyholeOpen, Trash2, Upload, Users } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -22,7 +22,8 @@ import { CredentialsDialog } from "@/components/saas/accounts-credentials";
 import { downloadCsv, todayStamp, type CredentialRecord } from "@/components/saas/accounts-utils";
 import { AccountStatusBadge, NeutralBadge, Panel, SearchInput, formatDate, formatNumber } from "@/components/saas/saas-ui";
 import { GENDER_LABELS, StudentEditDialog, isShadowEmail } from "@/components/saas/student-edit-dialog";
-import { apiErrorMessage, useApiStudents, useApiTokenQuota, useStudentMutations } from "@/features/saas/hooks-api";
+import { apiErrorMessage, useApiSchoolClassrooms, useApiStudents, useApiTokenQuota, useStudentMutations } from "@/features/saas/hooks-api";
+import { classroomStudentService } from "@/services/assignment.service";
 import { useDeactivateStudent } from "@/features/saas/hooks-school-token";
 import { StaffFormSelect } from "@/components/staff/staff-form";
 import type { DeactivationReason } from "@/services/school-token.service";
@@ -42,6 +43,7 @@ import {
 import { LastImportBar } from "../_components/import-last";
 import { ErrorBlock, SchoolShell, useDebouncedValue } from "../_components/shared";
 import { StudentImportWizard } from "../_components/student-import-wizard";
+import { FetchingBadge, FetchingBar } from "@/components/commons/fetching-indicator";
 
 type SortBy = "studentCode" | "fullName" | "userName" | "email" | "createdAt";
 
@@ -49,6 +51,39 @@ const DEACTIVATION_OPTIONS: { value: DeactivationReason; label: string }[] = [
   { value: "GRADUATED", label: "Đã tốt nghiệp" },
   { value: "TRANSFERRED_OUT", label: "Chuyển trường" },
 ];
+
+// BE /school-admin/students chua tra lop va chua loc theo lop: ghep tu si so tung lop.
+const ALL_CLASSES = "ALL";
+const NO_CLASS = "NONE";
+// Tai het danh sach khi loc theo lop (loc + phan trang o FE).
+const CLASS_FILTER_FETCH = 1000;
+
+function useStudentClasses() {
+  const classes = useApiSchoolClassrooms({ page: 0, size: 200, sort: "className,asc" });
+  const list = (classes.data?.items ?? []).filter((c) => c.status !== "ARCHIVED");
+  const rosters = useQueries({
+    queries: list.map((c) => ({
+      queryKey: ["saas", "roster-all", c.id],
+      queryFn: () => classroomStudentService.list(c.id, { page: 0, size: 500 }),
+      staleTime: 60_000,
+    })),
+  });
+  // Khoa doi khi mot si so tai xong, de tinh lai ban do hoc sinh -> lop.
+  const rosterKey = `${list.map((c) => c.id).join(",")}|${rosters.map((r) => r.dataUpdatedAt).join(",")}`;
+  const byStudent = React.useMemo(() => {
+    const map = new Map<string, { id: string; name: string }[]>();
+    rosters.forEach((r, i) => {
+      for (const st of r.data?.items ?? []) {
+        const arr = map.get(st.studentId) ?? [];
+        arr.push({ id: list[i].id, name: list[i].className });
+        map.set(st.studentId, arr);
+      }
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rosterKey]);
+  return { classes: list, byStudent, loading: classes.isPending || rosters.some((r) => r.isPending) };
+}
 
 /**
  * School Admin: student accounts (GET/PUT/DELETE /school-admin/students, import, reset password, deactivate).
@@ -75,12 +110,13 @@ const IMPORT_EVENT = "school:open-student-import";
 const openStudentImport = () => window.dispatchEvent(new Event(IMPORT_EVENT));
 
 /** CSV of the selected rows (no passwords). */
-function exportStudentsCsv(students: ApiStudent[]) {
+function exportStudentsCsv(students: ApiStudent[], classOf: (uid: string) => string) {
   downloadCsv(`danh-sach-hoc-sinh-${todayStamp()}.csv`, [
-    ["Mã học sinh", "Họ và tên", "Email đăng nhập", "Tên tài khoản", "Ngày sinh", "Giới tính", "Số điện thoại", "Trạng thái", "Ngày tạo"],
+    ["Mã học sinh", "Họ và tên", "Lớp", "Email đăng nhập", "Tên tài khoản", "Ngày sinh", "Giới tính", "Số điện thoại", "Trạng thái", "Ngày tạo"],
     ...students.map((s) => [
       s.studentCode,
       s.fullName,
+      classOf(s.uid),
       s.email,
       s.userName,
       s.dob ? formatDate(s.dob) : "",
@@ -99,10 +135,13 @@ function StudentsContent() {
   const [filter, setFilter] = React.useState<ActiveFilter>("ALL");
   const [page, setPage] = React.useState(0);
   const [size, setSize] = React.useState(20);
+  const [classFilter, setClassFilter] = React.useState<string>(ALL_CLASSES);
   const sort = useServerSort<SortBy>("createdAt", "createdAt");
+  const studentClasses = useStudentClasses();
+  const byClass = classFilter !== ALL_CLASSES;
 
   // Back to the first page when the search, filter or sort changes.
-  const queryKey = `${debounced}|${filter}|${sort.sortBy}|${sort.direction}`;
+  const queryKey = `${debounced}|${filter}|${classFilter}|${sort.sortBy}|${sort.direction}`;
   const [lastKey, setLastKey] = React.useState(queryKey);
   if (queryKey !== lastKey) {
     setLastKey(queryKey);
@@ -112,8 +151,8 @@ function StudentsContent() {
   const params: AccountListParams = {
     search: debounced || undefined,
     active: activeParam(filter),
-    page,
-    size,
+    page: byClass ? 0 : page,
+    size: byClass ? CLASS_FILTER_FETCH : size,
     sortBy: sort.sortBy,
     sortDirection: sort.direction,
   };
@@ -139,8 +178,19 @@ function StudentsContent() {
   const [credentials, setCredentials] = React.useState<CredentialRecord[] | null>(null);
 
   const data = students.data;
-  const rows = React.useMemo(() => data?.items ?? [], [data]);
-  const total = data?.totalElements ?? 0;
+  const classRows = React.useMemo(() => {
+    if (!byClass) return null;
+    return (data?.items ?? []).filter((s) => {
+      const cls = studentClasses.byStudent.get(s.uid) ?? [];
+      return classFilter === NO_CLASS ? cls.length === 0 : cls.some((c) => c.id === classFilter);
+    });
+  }, [byClass, data, studentClasses.byStudent, classFilter]);
+  const rows = React.useMemo(
+    () => (classRows ? classRows.slice(page * size, (page + 1) * size) : data?.items ?? []),
+    [classRows, data, page, size],
+  );
+  const total = classRows ? classRows.length : data?.totalElements ?? 0;
+  const totalPages = classRows ? Math.max(1, Math.ceil(classRows.length / size)) : data?.totalPages ?? 1;
   const rowIds = React.useMemo(() => rows.map((s) => s.uid), [rows]);
   const selection = useRowSelection(rowIds);
   const selected = rows.filter((s) => selection.isSelected(s.uid));
@@ -148,9 +198,9 @@ function StudentsContent() {
     rows.length > 0 && selected.length === rows.length ? true : selected.length > 0 ? "indeterminate" : false;
 
   // Keep the page in range after the list shrinks.
-  if (data && page > 0 && page >= Math.max(1, data.totalPages)) setPage(Math.max(0, data.totalPages - 1));
+  if (data && page > 0 && page >= Math.max(1, totalPages)) setPage(Math.max(0, totalPages - 1));
 
-  const filtered = !!debounced || filter !== "ALL";
+  const filtered = !!debounced || filter !== "ALL" || byClass;
 
   const bulkSetActive = async (active: boolean) => {
     const targets = selected.filter((s) => s.active !== active);
@@ -231,6 +281,16 @@ function StudentsContent() {
       <Panel>
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm mã HS, họ tên, email, tên tài khoản..." />
+          <StaffFormSelect
+            value={classFilter}
+            onValueChange={setClassFilter}
+            className="sm:w-[200px]"
+            options={[
+              { value: ALL_CLASSES, label: "Tất cả lớp" },
+              ...studentClasses.classes.map((c) => ({ value: c.id, label: `Lớp ${c.className}` })),
+              { value: NO_CLASS, label: "Chưa vào lớp nào" },
+            ]}
+          />
           <ActiveFilterTabs value={filter} onChange={setFilter} />
         </div>
 
@@ -243,8 +303,9 @@ function StudentsContent() {
             <p className="text-sm text-content-muted" aria-live="polite">
               <b className="tabular-nums text-content-heading">{formatNumber(total)}</b> học sinh
               {filter === "ACTIVE" ? " đang hoạt động" : filter === "LOCKED" ? " đã khóa" : ""}
+              {byClass && (classFilter === NO_CLASS ? " chưa vào lớp nào" : ` lớp ${studentClasses.classes.find((c) => c.id === classFilter)?.className ?? ""}`)}
               {debounced ? ` khớp “${debounced}”` : ""}
-              {students.isFetching && <span className="ml-2 text-xs">Đang cập nhật…</span>}
+              <FetchingBadge active={students.isFetching} />
             </p>
 
             <BulkActionBar
@@ -260,7 +321,7 @@ function StudentsContent() {
               <BulkButton icon={LockKeyholeOpen} disabled={bulkRunning} onClick={() => void bulkSetActive(true)}>
                 Mở khóa
               </BulkButton>
-              <BulkButton icon={Download} onClick={() => exportStudentsCsv(selected)}>
+              <BulkButton icon={Download} onClick={() => exportStudentsCsv(selected, (uid) => (studentClasses.byStudent.get(uid) ?? []).map((c) => c.name).join(", "))}>
                 Xuất CSV
               </BulkButton>
             </BulkActionBar>
@@ -272,6 +333,7 @@ function StudentsContent() {
                     onReset={() => {
                       setSearch("");
                       setFilter("ALL");
+                      setClassFilter(ALL_CLASSES);
                     }}
                     message="Không có học sinh phù hợp với bộ lọc."
                   />
@@ -285,7 +347,8 @@ function StudentsContent() {
                 )}
               </div>
             ) : (
-              <div className={cn("overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]", students.isFetching && "opacity-70")}>
+              <div className={cn("relative overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]", students.isFetching && "opacity-70")}>
+                <FetchingBar active={students.isFetching} />
                 <Table className="min-w-max">
                   <caption className="sr-only">Danh sách học sinh</caption>
                   <TableHeader>
@@ -303,6 +366,7 @@ function StudentsContent() {
                       <TableHead className={HEAD} aria-sort={ariaSort("fullName", sort.sortBy, sort.direction)}>
                         <SortHeader label="Học sinh" column="fullName" {...sort} />
                       </TableHead>
+                      <TableHead className={HEAD}>Lớp</TableHead>
                       <TableHead className={HEAD} aria-sort={ariaSort("email", sort.sortBy, sort.direction)}>
                         <SortHeader label="Tài khoản đăng nhập" column="email" {...sort} />
                       </TableHead>
@@ -343,6 +407,13 @@ function StudentsContent() {
                             <p className="text-xs tabular-nums text-content-muted">
                               {[s.gender && GENDER_LABELS[s.gender], s.dob && formatDate(s.dob), s.phoneNumber].filter(Boolean).join(" · ") || "—"}
                             </p>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap px-3 py-2.5 text-sm">
+                            {(() => {
+                              const cls = studentClasses.byStudent.get(s.uid);
+                              if (!cls) return <span className="text-content-muted">{studentClasses.loading ? "…" : "Chưa vào lớp"}</span>;
+                              return <span className="font-semibold text-content-heading">{cls.map((c) => c.name).join(", ")}</span>;
+                            })()}
                           </TableCell>
                           <TableCell className="px-3 py-2.5">
                             <p className="flex max-w-[280px] items-center gap-1.5 text-sm" title={s.email}>

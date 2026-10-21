@@ -46,7 +46,7 @@ export function StudentAssignmentWork(props: WorkProps) {
   const win = assignmentWindow(a);
 
   if (win.notOpen) {
-    return <LockedNotice title="Bài chưa mở" text={`Bài sẽ mở lúc ${formatDateTime(a.openAt)}. Em quay lại sau nhé.`} />;
+    return <LockedNotice title="Bài chưa mở" text={`Bài sẽ mở lúc ${formatDateTime(a.openAt)}. Bạn quay lại sau nhé.`} />;
   }
   if (win.closed && !isDone(submission?.status) && a.type === "TEST") {
     return <LockedNotice title="Bài kiểm tra đã đóng" text="Đã hết hạn nộp và thầy cô không nhận bài muộn." />;
@@ -84,7 +84,7 @@ function DoneBanner({ assignment: a, submission }: { assignment: Assignment; sub
           {submission.submittedAt ? ` lúc ${formatDateTime(submission.submittedAt)}` : ""}
         </p>
         <p className="text-[13px] text-content-muted">
-          {a.type === "TEST" ? "Kết quả và đáp án ở bên dưới." : "Thầy cô sẽ xem bài của em trong bảng theo dõi của lớp."}
+          {a.type === "TEST" ? "Kết quả và đáp án ở bên dưới." : "Thầy cô sẽ xem bài của bạn trong bảng theo dõi của lớp."}
         </p>
         {submission.teacherComment && (
           <p className="pt-1 text-[13px] text-content-text">
@@ -100,7 +100,7 @@ function UnavailableTarget({ title }: { title: string }) {
   return (
     <LockedNotice
       title={`Tư liệu "${title}" hiện không khả dụng`}
-      text="Nội dung đang được nhà trường cập nhật hoặc đã tạm ẩn. Em hãy báo thầy cô nếu cần."
+      text="Nội dung đang được nhà trường cập nhật hoặc đã tạm ẩn. Bạn hãy báo thầy cô nếu cần."
     />
   );
 }
@@ -177,7 +177,7 @@ function EventWork({ row, studentId, role }: WorkProps) {
           onChange={(e) => saveNote(e.target.value)}
           readOnly={done}
           maxLength={2000}
-          placeholder="Em rút ra được điều gì? Ghi lại ý chính theo yêu cầu của thầy cô..."
+          placeholder="Bạn rút ra được điều gì? Ghi lại ý chính theo yêu cầu của thầy cô..."
           className="w-full rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] px-3 py-2.5 text-[14px] leading-relaxed text-content-text outline-none focus-visible:border-[var(--text-primary)] read-only:opacity-80"
         />
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -218,7 +218,7 @@ function ChatWork({ row, studentId, role }: WorkProps) {
   }
 
   const locked = done || !canWork;
-  const lockedReason = done ? "Em đã nộp bài này" : "Đã hết hạn nộp";
+  const lockedReason = done ? "Bạn đã nộp bài này" : "Đã hết hạn nộp";
 
   return (
     <div className="space-y-5">
@@ -241,7 +241,7 @@ function ChatWork({ row, studentId, role }: WorkProps) {
         {!done && (
           <p className="text-[13px] text-content-muted">
             {count >= min
-              ? "Em đã gửi đủ tin nhắn. Bấm Nộp bài khi hoàn tất."
+              ? "Bạn đã gửi đủ tin nhắn. Bấm Nộp bài khi hoàn tất."
               : `Gửi thêm ${min - count} tin nhắn để có thể nộp bài.`}
             {!canWork && " Đã hết hạn nộp."}
           </p>

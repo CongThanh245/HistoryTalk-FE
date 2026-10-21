@@ -268,7 +268,7 @@ export const SEED_CLASS_PINS: ClassMapPin[] = [
   {
     id: "cp-1", classId: "cls-10a1", createdBy: "t-1", kind: "LOCAL_HISTORY",
     label: "Bến Nhà Rồng",
-    description: "Nơi Nguyễn Tất Thành ra đi tìm đường cứu nước ngày 5/6/1911. Ghi lại 3 điều em thấy khi tham quan bảo tàng.",
+    description: "Nơi Nguyễn Tất Thành ra đi tìm đường cứu nước ngày 5/6/1911. Ghi lại 3 điều bạn thấy khi tham quan bảo tàng.",
     latitude: 10.7681, longitude: 106.7068, year: 1911, createdAt: D,
   },
   {

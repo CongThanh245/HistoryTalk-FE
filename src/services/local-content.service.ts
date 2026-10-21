@@ -16,7 +16,8 @@ export type LocalScope = "CLASS_ONLY" | "SCHOOL_WIDE";
  */
 export type LocalStatus = "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "INACTIVE";
 export type LocalEra = "ANCIENT" | "MEDIEVAL" | "MODERN" | "CONTEMPORARY";
-export type LocalCategory = "WAR" | "POLITICS" | "CULTURE" | "REVOLUTION";
+// Khop enum EventCategory cua BE.
+export type LocalCategory = "WAR" | "POLITICS" | "CULTURE" | "SCIENCE" | "RELIGION" | "OTHER";
 export type LocalDocumentType = "TEXT" | "PDF" | "URL";
 
 // ─── Shapes ────────────────────────────────────────────────────────────────

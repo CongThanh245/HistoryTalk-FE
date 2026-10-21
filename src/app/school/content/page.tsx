@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { EyeOff, FileText, Send, ShieldAlert, Undo2, Users } from "lucide-react";
+import { EyeOff, FileText, Send, ShieldAlert, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -22,7 +22,7 @@ import {
   type LocalReviewState,
 } from "@/components/saas/local-content-ui";
 import { ContentKindLabel } from "@/components/saas/school-content-review";
-import { apiErrorMessage } from "@/features/saas/hooks-api";
+import { apiErrorMessage, useApiSchoolClassrooms } from "@/features/saas/hooks-api";
 import { LOCAL_SCOPE_LABEL, useSchoolLocalContent, useSchoolLocalDocuments, useSetLocalStatus } from "@/features/saas/hooks-local-content";
 import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
 import type { LocalItem, LocalKind, LocalScope, LocalStatus } from "@/services/local-content.service";
@@ -86,8 +86,23 @@ const DISCLAIMER =
 
 const ALL = "ALL";
 
+/** Nhan pham vi theo goc nhin nha truong: "Riêng tôi" (cua GV) doi thanh lop duoc gan. */
+function useScopeLabel() {
+  const classes = useApiSchoolClassrooms({ page: 0, size: 200 });
+  const names = React.useMemo(() => new Map((classes.data?.items ?? []).map((c) => [c.id, c.className])), [classes.data]);
+  return React.useCallback(
+    (it: Pick<LocalItem, "contentScope" | "classIds">) => {
+      if (it.contentScope === "SCHOOL_WIDE") return undefined;
+      const cls = (it.classIds ?? []).map((id) => names.get(id)).filter(Boolean);
+      return cls.length ? `Riêng lớp ${cls.join(", ")}` : "Riêng giáo viên";
+    },
+    [names],
+  );
+}
+
 function ContentReview() {
   const { items, truncated, isLoading, isError, error, refetch } = useSchoolLocalContent();
+  const scopeLabel = useScopeLabel();
   const setStatus = useSetLocalStatus();
 
   const [tab, setTab] = React.useState<Tab>("PUBLISHED");
@@ -128,7 +143,7 @@ function ContentReview() {
   ];
   const scopeOptions: { value: LocalScope | typeof ALL; label: string }[] = [
     { value: ALL, label: "Mọi phạm vi" },
-    { value: "CLASS_ONLY", label: LOCAL_SCOPE_LABEL.CLASS_ONLY },
+    { value: "CLASS_ONLY", label: "Riêng lớp / giáo viên" },
     { value: "SCHOOL_WIDE", label: LOCAL_SCOPE_LABEL.SCHOOL_WIDE },
   ];
 
@@ -286,7 +301,7 @@ function ContentReview() {
                     </TableCell>
                     <TableCell className="px-4">{it.createdBy?.fullName ?? "—"}</TableCell>
                     <TableCell className="px-4">
-                      <LocalScopeTag item={it} />
+                      <LocalScopeTag item={it} label={scopeLabel(it)} />
                     </TableCell>
                     <TableCell className="px-4 tabular-nums">{formatDate(it.updatedAt)}</TableCell>
                     <TableCell className="px-4">
@@ -300,7 +315,7 @@ function ContentReview() {
         )}
       </QueryState>
 
-      <ReviewSheet item={selected} busy={setStatus.isPending} onOpenChange={(o) => !o && setSelectedId(null)} onAction={handleAction} />
+      <ReviewSheet item={selected} scopeLabel={selected ? scopeLabel(selected) : undefined} busy={setStatus.isPending} onOpenChange={(o) => !o && setSelectedId(null)} onAction={handleAction} />
 
       <ConfirmDialog
         open={!!pending}
@@ -331,11 +346,13 @@ function ContentReview() {
 
 function ReviewSheet({
   item,
+  scopeLabel,
   busy,
   onOpenChange,
   onAction,
 }: {
   item: LocalItem | null;
+  scopeLabel?: string;
   busy: boolean;
   onOpenChange: (open: boolean) => void;
   onAction: (action: Action, item: LocalItem) => void;
@@ -352,7 +369,9 @@ function ReviewSheet({
           <>
             <SheetHeader className="space-y-2 border-b border-[var(--text-primary)] p-5 pr-12">
               <div className="flex flex-wrap items-center gap-2">
-                <LocalScopeTag item={item} />
+                <span title={item.contentScope === "SCHOOL_WIDE" ? "Học sinh và giáo viên cả trường đều thấy" : "Chỉ học sinh các lớp được gán thấy"}>
+                  <LocalScopeTag item={item} label={scopeLabel} />
+                </span>
                 <ContentKindLabel kind={item.type} />
                 <LocalReviewBadge item={item} />
               </div>
@@ -364,19 +383,6 @@ function ReviewSheet({
             </SheetHeader>
 
             <div className="flex-1 space-y-5 overflow-y-auto p-5">
-              <div className="space-y-1 rounded-[2px] border border-[var(--border-strong)] p-3 text-sm">
-                <p className="inline-flex items-center gap-2 font-semibold text-content-heading">
-                  <Users className="h-4 w-4 text-[var(--men-lam)]" aria-hidden="true" />
-                  {state === "PUBLISHED" ? "Đang hiển thị cho" : "Khi hiển thị lại sẽ thấy"}
-                </p>
-                <p className="text-content-text">
-                  Học sinh của trường.{" "}
-                  {item.contentScope === "SCHOOL_WIDE"
-                    ? "Mọi giáo viên trong trường cũng xem được."
-                    : "Chỉ giáo viên soạn dùng được nội dung này cho lớp của mình."}
-                </p>
-              </div>
-
               <p className="flex items-start gap-2 text-xs text-content-muted">
                 <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
                 {DISCLAIMER}

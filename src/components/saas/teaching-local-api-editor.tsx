@@ -3,16 +3,16 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, EyeOff, FileText, Globe, Loader2, Lock, Pencil, Plus, Save, Send, ShieldCheck, Trash2, Upload } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
+import { ArrowLeft, EyeOff, FileText, Globe, Loader2, Lock, Pencil, Plus, Save, Send, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { StaffFormInput, StaffFormSelect, StaffFormTextarea } from "@/components/staff/staff-form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
-import { LocalReviewBadge, LocalScopeTag, ReviewNote, reviewState } from "@/components/saas/local-content-ui";
+import { LocalReviewBadge, ReviewNote, reviewState } from "@/components/saas/local-content-ui";
 import { ContextQuizzesPanel, LinkedContextsPanel, LocalBattleMapPanel, LocalMapPanel } from "@/components/saas/local-content-extras";
 import { ROUTES } from "@/constants/routes";
 import { apiErrorMessage, useMyApiClassrooms } from "@/features/saas/hooks-api";
@@ -193,12 +193,6 @@ function characterPayload(f: FormState, item?: LocalItem, isPublished?: boolean)
   };
 }
 
-const STATE_NOTE = {
-  DRAFT: "Học sinh chưa thấy. Bấm “Xuất bản” khi soạn xong.",
-  PUBLISHED: "Đã xuất bản: giao bài được cho lớp. Lưu là cập nhật ngay.",
-  PUBLISHED_WIDE: "Đã xuất bản toàn trường: giáo viên và học sinh cả trường đều thấy. Lưu là cập nhật ngay.",
-  HIDDEN: "Đang ẩn với học sinh. Xuất bản lại để hiện.",
-} as const;
 
 type Tab = "basic" | "media" | "content" | "rag" | "context" | "battle" | "map" | "quiz";
 
@@ -311,7 +305,6 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
           {item && (
             <>
               <span className="h-4 w-px bg-[var(--border-strong)]" aria-hidden="true" />
-              <LocalScopeTag item={item} />
               <LocalReviewBadge item={item} />
               <span className="text-xs text-content-muted">
                 {LOCAL_KIND_LABELS[kind]} · Cập nhật {formatDate(item.updatedAt)}
@@ -320,20 +313,10 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
             </>
           )}
         </div>
-        {item && (
+        {item && readOnly && (
           <p className="flex items-center gap-1.5 text-xs text-content-muted">
-            {readOnly ? (
-              <>
-                <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                Đồng nghiệp chia sẻ cho toàn trường, bạn chỉ xem được.
-              </>
-            ) : (
-              <>
-                <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                {STATE_NOTE[reviewState(item) === "PUBLISHED" && item.contentScope === "SCHOOL_WIDE" ? "PUBLISHED_WIDE" : reviewState(item)]}
-                {item.approvedBy && item.isPublished && item.approvedBy.uid !== myUid && ` Xuất bản bởi ${item.approvedBy.fullName}.`}
-              </>
-            )}
+            <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            Đồng nghiệp chia sẻ cho toàn trường, bạn chỉ xem được.
           </p>
         )}
         {item && isMine && <ReviewNote item={item} />}
@@ -504,54 +487,53 @@ function SharingPanel({
 }) {
   const wide = scope === "SCHOOL_WIDE";
   const toggleClass = (id: string, on: boolean) => onChange({ classIds: on ? [...classIds, id] : classIds.filter((c) => c !== id) });
+  const opt = (active: boolean) =>
+    cn(
+      "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold motion-safe:transition-colors",
+      active ? "bg-[var(--text-primary)] text-[var(--text-inverse)]" : "text-content-text hover:bg-[var(--bg-elevated)]",
+    );
   return (
     <section
-      aria-label="Chia sẻ"
-      className="grid gap-4 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] p-4 md:grid-cols-2 md:gap-6"
+      aria-label="Ai thấy nội dung này"
+      className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3"
     >
-      <label htmlFor="scope-switch" className="flex cursor-pointer items-start gap-3">
-        {wide ? (
-          <Globe className="mt-0.5 h-5 w-5 shrink-0 text-[var(--men-lam)]" aria-hidden="true" />
-        ) : (
-          <Lock className="mt-0.5 h-5 w-5 shrink-0 text-content-muted" aria-hidden="true" />
-        )}
-        <span className="min-w-0 flex-1 space-y-0.5">
-          <span className="block text-sm font-semibold text-content-heading">Chia sẻ toàn trường</span>
-          <span className="block text-xs leading-relaxed text-content-muted">
-            {wide
-              ? "Giáo viên và học sinh cả trường thấy trong Kho tư liệu. Giáo viên khác chỉ xem, không sửa được."
-              : "Đang tắt: riêng bạn và lớp bạn giao bài mới dùng được."}
-          </span>
-        </span>
-        <Switch id="scope-switch" checked={wide} onCheckedChange={(v) => onChange({ scope: v ? "SCHOOL_WIDE" : "CLASS_ONLY" })} />
-      </label>
+      <span className="text-sm font-semibold text-content-heading">Học sinh thấy:</span>
+      <div role="radiogroup" className="inline-flex overflow-hidden rounded-[2px] border border-[var(--border-strong)]">
+        <button type="button" role="radio" aria-checked={!wide} className={opt(!wide)} onClick={() => onChange({ scope: "CLASS_ONLY" })}>
+          <Lock className="h-3.5 w-3.5" aria-hidden="true" /> Lớp được chọn
+        </button>
+        <button type="button" role="radio" aria-checked={wide} className={opt(wide)} onClick={() => onChange({ scope: "SCHOOL_WIDE" })}>
+          <Globe className="h-3.5 w-3.5" aria-hidden="true" /> Toàn trường
+        </button>
+      </div>
 
-      <div className="min-w-0 space-y-2">
-        <p id="classes-label" className="text-sm font-semibold text-content-heading">
-          Lớp được xem
-          {dirty && <span className="ml-2 text-xs font-normal text-[var(--accent-gold)]">· Chưa lưu</span>}
-        </p>
-        {classes.length === 0 ? (
-          <p className="text-xs text-content-muted">Bạn chưa phụ trách lớp nào.</p>
+      {!wide &&
+        (classes.length === 0 ? (
+          <span className="text-xs text-content-muted">Bạn chưa phụ trách lớp nào.</span>
         ) : (
-          <div role="group" aria-labelledby="classes-label" className="flex flex-wrap gap-1.5">
+          <div role="group" aria-label="Lớp được xem" className="flex flex-wrap items-center gap-1.5">
             {classes.map((c) => (
               <label
                 key={c.id}
                 htmlFor={`cls-${c.id}`}
-                className="flex cursor-pointer items-center gap-2 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-1.5 text-sm hover:border-[var(--text-primary)]"
+                className="flex cursor-pointer items-center gap-2 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-1 text-sm hover:border-[var(--text-primary)]"
               >
-                <Checkbox id={`cls-${c.id}`} checked={classIds.includes(c.id)} onCheckedChange={(v) => toggleClass(c.id, !!v)} />
+                <Checkbox
+                  id={`cls-${c.id}`}
+                  checked={classIds.includes(c.id)}
+                  disabled={lockedClasses && classIds.length === 1 && classIds.includes(c.id)}
+                  onCheckedChange={(v) => toggleClass(c.id, !!v)}
+                />
                 <span className="font-medium text-content-heading">{c.className}</span>
               </label>
             ))}
           </div>
-        )}
-        <p className="text-xs text-content-muted">
-          Không chọn lớp nào thì hiện ở mọi lớp. Thay đổi áp dụng khi bấm Lưu hoặc Xuất bản.
-          {lockedClasses && " Đã gán lớp thì chưa bỏ chọn hết được."}
-        </p>
-      </div>
+        ))}
+
+      {!wide && classIds.length === 0 && classes.length > 0 && (
+        <span className="text-xs font-semibold text-[var(--status-warning)]">Chọn ít nhất một lớp</span>
+      )}
+      {dirty && <span className="ml-auto text-xs font-semibold text-[var(--accent-gold)]">Chưa lưu</span>}
     </section>
   );
 }

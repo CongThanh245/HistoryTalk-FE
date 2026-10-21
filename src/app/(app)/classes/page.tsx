@@ -19,7 +19,7 @@ export default function MyClassesPage() {
   return (
     <SaasShell
       variant="app"
-      title={isStudent ? "Lớp học của em" : "Lớp học"}
+      title={isStudent ? "Lớp học của bạn" : "Lớp học"}
       // Students get the greeting as the page heading instead (StudentWorkspace).
       hideHeading={isStudent}
       description={isStudent ? undefined : "Các lớp bạn được phân công dạy."}
@@ -43,7 +43,7 @@ function MyClasses({ role }: { role: string | null }) {
     return (
       <EmptyState
         icon={Users}
-        title={role === "TEACHER" ? "Bạn chưa được phân công lớp nào" : "Em chưa thuộc lớp nào"}
+        title={role === "TEACHER" ? "Bạn chưa được phân công lớp nào" : "Bạn chưa thuộc lớp nào"}
         description={role === "TEACHER" ? "Quản trị trường sẽ phân công lớp cho bạn." : "Liên hệ giáo viên hoặc quản trị trường."}
       />
     );

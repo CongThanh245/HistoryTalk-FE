@@ -32,6 +32,7 @@ import {
 } from "@/services/event.service";
 import type { TrashItem } from "@/services/trash.service";
 import { cn } from "@/lib/utils/cn";
+import { FetchingBadge } from "@/components/commons/fetching-indicator";
 
 // Constants for Select Options
 const ERA_OPTIONS = [
@@ -337,11 +338,7 @@ export default function StaffContextsPage() {
               ) : (
                 <>
                   {displayedItems.length} bản ghi
-                  {isFetching && (
-                    <span className="ml-2 text-xs opacity-50">
-                      Đang cập nhật...
-                    </span>
-                  )}
+                  <FetchingBadge active={isFetching} />
                 </>
               )}
             </p>

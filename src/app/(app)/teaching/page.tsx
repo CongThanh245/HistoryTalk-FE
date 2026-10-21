@@ -55,10 +55,10 @@ function Dashboard() {
 
   return (
     <div className="space-y-10">
-      <section aria-label="Lớp đang xem" className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
+      <section aria-label="Lớp của tôi" className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
         {classes.length > 1 && (
           <div className="flex flex-col gap-2 border-b border-[var(--border-default)] px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
-            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-content-muted">Lớp đang xem</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-content-muted">Lớp của tôi</span>
             {classes.length <= MAX_CLASS_TABS ? (
               <div role="tablist" aria-label="Chọn lớp" className="flex flex-wrap gap-1.5">
                 {classes.map((c) => {
@@ -114,10 +114,10 @@ function Dashboard() {
 
       <TeacherClassKpis classId={current.id} compact />
 
-      <TeacherClassAssignments classId={current.id} />
+      <TeacherClassAssignments classId={current.id} className={current.className} />
 
       <div className="space-y-4">
-        <SectionHeading title="Kết quả từng học sinh" description="Điểm quiz, tin nhắn AI và token hôm nay của từng học sinh trong lớp." />
+        <SectionHeading title={`Học sinh lớp ${current.className}`} description="Điểm quiz, tin nhắn AI và token hôm nay của từng học sinh." />
         <TeacherClassStudents classId={current.id} />
       </div>
     </div>

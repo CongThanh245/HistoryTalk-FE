@@ -344,5 +344,6 @@ export function useStudentLocalItem(kind: LocalKind | null, id: string | undefin
 }
 
 /** Whether an item belongs on a class page: assigned to that class, or not assigned to any class (older items). */
-export const showsInClass = (item: Pick<LocalItem, "classIds">, classId: string) =>
-  item.classIds?.length ? item.classIds.includes(classId) : true;
+// BE: SCHOOL_WIDE hien o moi lop; CLASS_ONLY chi hien o lop duoc gan (khong gan lop nao = khong lop nao thay).
+export const showsInClass = (item: Pick<LocalItem, "classIds" | "contentScope">, classId: string) =>
+  item.contentScope === "SCHOOL_WIDE" || !!item.classIds?.includes(classId);

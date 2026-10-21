@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils/cn";
+import { FetchingBadge } from "@/components/commons/fetching-indicator";
 import {
   useAdminQuests,
   useAdminUpdateQuest,
@@ -409,7 +410,7 @@ export default function StaffQuestsPageContent() {
                 ) : (
                   <>
                     {quests.length} nhiệm vụ
-                    {isFetching && <span className="ml-2 text-xs opacity-50">Đang cập nhật...</span>}
+                    <FetchingBadge active={isFetching} />
                   </>
                 )}
               </p>

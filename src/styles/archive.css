@@ -189,3 +189,30 @@
     }
   }
 }
+
+/* ================================
+      Fetching indicators (components/commons/fetching-indicator.tsx)
+   ================================ */
+
+@keyframes fetching-appear {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fetching-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+/* An 200ms dau de khong nhap nhay khi API tra nhanh. */
+.fetching-delay {
+  animation: fetching-appear 0.15s ease-out 0.2s both;
+}
+
+.fetching-bar {
+  animation: fetching-slide 1.1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fetching-bar { width: 100%; animation: none; opacity: 0.6; }
+}

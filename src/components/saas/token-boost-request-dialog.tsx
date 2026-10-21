@@ -50,7 +50,7 @@ export function TokenBoostRequestDialog({ open, onOpenChange }: { open: boolean;
   const amountError = !Number.isInteger(tokens) || tokens < BOOST_MIN_TOKENS || tokens > BOOST_MAX_TOKENS
     ? `Từ ${formatNumber(BOOST_MIN_TOKENS)} đến ${formatNumber(BOOST_MAX_TOKENS)} token`
     : null;
-  const reasonError = !reason.trim() ? "Cho thầy cô biết em cần thêm token để làm gì" : reason.trim().length > 500 ? "Tối đa 500 ký tự" : null;
+  const reasonError = !reason.trim() ? "Cho thầy cô biết bạn cần thêm token để làm gì" : reason.trim().length > 500 ? "Tối đa 500 ký tự" : null;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,7 +67,7 @@ export function TokenBoostRequestDialog({ open, onOpenChange }: { open: boolean;
         onError: (err) =>
           setError(
             apiErrorStatus(err) === 409
-              ? "Em đã có một yêu cầu đang chờ duyệt hôm nay. Chờ thầy cô xử lý trước khi gửi yêu cầu mới."
+              ? "Bạn đã có một yêu cầu đang chờ duyệt hôm nay. Chờ thầy cô xử lý trước khi gửi yêu cầu mới."
               : apiErrorMessage(err, "Không gửi được yêu cầu. Vui lòng thử lại."),
           ),
       },
@@ -89,7 +89,7 @@ export function TokenBoostRequestDialog({ open, onOpenChange }: { open: boolean;
             <p role="status" className="flex items-start gap-2 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-3 text-sm">
               <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
               <span>
-                Em đã xin thêm {formatNumber(pending.requestedTokens)} token hôm nay và đang chờ thầy cô duyệt. Mỗi ngày chỉ gửi được một yêu cầu
+                Bạn đã xin thêm {formatNumber(pending.requestedTokens)} token hôm nay và đang chờ thầy cô duyệt. Mỗi ngày chỉ gửi được một yêu cầu
                 đang chờ.
               </span>
             </p>

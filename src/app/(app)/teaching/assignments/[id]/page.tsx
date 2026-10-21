@@ -5,7 +5,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft, Ban, Pencil } from "lucide-react";
+import { ArrowLeft, Ban, Lock, LockOpen, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -34,7 +34,7 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { apiErrorMessage, apiErrorStatus } from "@/features/saas/hooks-api";
 import { useAssignmentGradebook, useCancelAssignment, useUpdateAssignment } from "@/features/saas/hooks-assignment-api";
-import type { AssignmentGradebook, AssignmentStatus, SubmissionItem, SubmissionStatus, UpdateAssignmentPayload } from "@/services/assignment.service";
+import type { AssignmentGradebook, SubmissionItem, SubmissionStatus, UpdateAssignmentPayload } from "@/services/assignment.service";
 import { cn } from "@/lib/utils/cn";
 
 export default function AssignmentDetailPage() {
@@ -62,8 +62,10 @@ function AssignmentDetail({ id }: { id: string }) {
   const router = useRouter();
   const query = useAssignmentGradebook(id);
   const cancel = useCancelAssignment();
+  const update = useUpdateAssignment();
   const [editOpen, setEditOpen] = React.useState(false);
   const [cancelOpen, setCancelOpen] = React.useState(false);
+  const [closeOpen, setCloseOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<SubmissionStatus | "ALL">("ALL");
 
@@ -106,6 +108,19 @@ function AssignmentDetail({ id }: { id: string }) {
       (!q || normalizeText(`${r.fullName} ${r.studentCode ?? ""} ${r.email ?? ""}`).includes(q)),
   );
   const cancelled = a.status === "CANCELLED";
+  // "Đóng bài" = ARCHIVED o BE: hoc sinh khong lam / nop duoc nua, ket qua van giu.
+  const closed = a.status === "ARCHIVED";
+  const setOpenState = (open: boolean) =>
+    update.mutate(
+      { id: a.assignmentId, payload: { status: open ? "ACTIVE" : "ARCHIVED" } },
+      {
+        onSuccess: () => {
+          setCloseOpen(false);
+          toast.success(open ? "Đã mở lại bài, học sinh làm tiếp được" : "Đã đóng bài, học sinh không nộp được nữa");
+        },
+        onError: (err) => toast.error(apiErrorMessage(err, "Không cập nhật được bài tập.")),
+      },
+    );
 
   return (
     <div className="space-y-8">
@@ -128,9 +143,18 @@ function AssignmentDetail({ id }: { id: string }) {
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
-            <button type="button" className="btn-line" onClick={() => setEditOpen(true)}>
+            <button type="button" className="btn-line" onClick={() => setEditOpen(true)} disabled={cancelled}>
               <Pencil className="h-4 w-4" aria-hidden="true" /> Sửa / gia hạn
             </button>
+            {closed ? (
+              <button type="button" className="btn-ink disabled:opacity-60" onClick={() => setOpenState(true)} disabled={update.isPending}>
+                <LockOpen className="h-4 w-4" aria-hidden="true" /> Mở lại bài
+              </button>
+            ) : (
+              <button type="button" className="btn-ink disabled:opacity-60" onClick={() => setCloseOpen(true)} disabled={cancelled || update.isPending}>
+                <Lock className="h-4 w-4" aria-hidden="true" /> Đóng bài
+              </button>
+            )}
             <button type="button" className="btn-line text-[var(--accent-danger)]" onClick={() => setCancelOpen(true)} disabled={cancelled}>
               <Ban className="h-4 w-4" aria-hidden="true" /> Hủy bài
             </button>
@@ -161,7 +185,12 @@ function AssignmentDetail({ id }: { id: string }) {
           accent="text-[var(--jade)]"
           hint={`Gồm ${count("LATE_SUBMITTED")} bài nộp muộn`}
         />
-        <KpiTile label="Đang làm / chưa bắt đầu" value={`${count("IN_PROGRESS")} / ${count("NOT_STARTED")}`} accent="text-[var(--status-warning)]" />
+        <KpiTile
+          label="Chưa nộp"
+          value={count("IN_PROGRESS") + count("NOT_STARTED")}
+          hint={`${count("IN_PROGRESS")} đang làm · ${count("NOT_STARTED")} chưa bắt đầu`}
+          accent="text-[var(--status-warning)]"
+        />
         <KpiTile
           label="Điểm TB (tự chấm)"
           value={avgScore == null ? "—" : avgScore.toFixed(2)}
@@ -193,11 +222,23 @@ function AssignmentDetail({ id }: { id: string }) {
       <EditAssignmentDialog open={editOpen} onOpenChange={setEditOpen} assignment={a} />
 
       <ConfirmDialog
+        open={closeOpen}
+        onOpenChange={setCloseOpen}
+        variant="warning"
+        title="Đóng bài ngay?"
+        description={`Học sinh lớp ${a.className} sẽ không làm hay nộp bài này được nữa. Bài đã nộp và điểm vẫn giữ nguyên; bạn có thể mở lại sau.`}
+        confirmLabel="Đóng bài"
+        cancelLabel="Thôi"
+        isPending={update.isPending}
+        onConfirm={() => setOpenState(false)}
+      />
+
+      <ConfirmDialog
         open={cancelOpen}
         onOpenChange={setCancelOpen}
         variant="danger"
         title="Hủy bài tập?"
-        description={`“${a.title}” của lớp ${a.className} sẽ bị hủy và ẩn khỏi danh sách; học sinh không làm tiếp được nữa.`}
+        description={`“${a.title}” sẽ bị xóa khỏi lớp ${a.className}, kể cả ${a.totalSubmittedStudents} bài đã nộp và điểm — bạn sẽ không xem lại được. Chỉ muốn ngừng nhận bài thì dùng “Đóng bài”.`}
         confirmLabel="Hủy bài tập"
         cancelLabel="Đóng"
         isPending={cancel.isPending}
@@ -273,10 +314,6 @@ function SubmissionTable({ rows }: { rows: SubmissionItem[] }) {
 }
 
 /* ───────────────────────── Edit / extend ───────────────────────── */
-const STATUS_OPTIONS: { value: AssignmentStatus; label: string }[] = (Object.keys(ASSIGNMENT_STATUS_META) as AssignmentStatus[]).map((s) => ({
-  value: s,
-  label: ASSIGNMENT_STATUS_META[s].label,
-}));
 
 function EditAssignmentDialog({
   open,
@@ -295,7 +332,6 @@ function EditAssignmentDialog({
       description: a.description ?? "",
       deadline: toDateTimeInput(a.deadline),
       minRequirement: a.minRequirement != null ? String(a.minRequirement) : "",
-      status: a.status,
     }),
     [a],
   );
@@ -330,7 +366,6 @@ function EditAssignmentDialog({
     if (form.description !== initial.description) payload.description = form.description;
     if (deadlineChanged) payload.deadline = fromDateTimeInput(form.deadline);
     if (!isQuiz && min !== null && form.minRequirement !== initial.minRequirement) payload.minRequirement = min;
-    if (form.status !== initial.status) payload.status = form.status;
     if (Object.keys(payload).length === 0) {
       onOpenChange(false);
       return;
@@ -385,9 +420,6 @@ function EditAssignmentDialog({
               />
             </Field>
           )}
-          <Field label="Trạng thái bài">
-            <StaffFormSelect value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))} options={STATUS_OPTIONS} className="w-full" />
-          </Field>
         </div>
         <DialogFooter className="gap-2">
           <button type="button" className="btn-line" onClick={() => onOpenChange(false)} disabled={update.isPending}>

@@ -69,7 +69,7 @@ export function ApiAssignmentTypeBadge({ type, className }: { type: AssignmentTy
 
 export const ASSIGNMENT_STATUS_META: Record<AssignmentStatus, { label: string; className: string }> = {
   ACTIVE: { label: "Đang giao", className: SUCCESS },
-  ARCHIVED: { label: "Đã lưu trữ", className: NEUTRAL },
+  ARCHIVED: { label: "Đã đóng", className: NEUTRAL },
   CANCELLED: { label: "Đã hủy", className: DANGER },
 };
 
@@ -197,7 +197,8 @@ export const newAssignmentHref = (classId?: string | null) =>
 const RECENT_SIZE = 10;
 
 /** Danh sach bai tap gon cua mot lop (tab bai tap trong chi tiet lop, trang chu giang day). */
-export function TeacherClassAssignments({ classId }: { classId: string }) {
+/** `className`: ghi ten lop len tieu de (GV day nhieu lop can biet dang xem lop nao). */
+export function TeacherClassAssignments({ classId, className }: { classId: string; className?: string }) {
   const query = useClassroomAssignments(classId, { page: 0, size: RECENT_SIZE });
   const items = query.data?.items ?? [];
   const total = query.data?.totalElements ?? 0;
@@ -212,7 +213,7 @@ export function TeacherClassAssignments({ classId }: { classId: string }) {
   return (
     <div className="space-y-4">
       <SectionHeading
-        title="Bài tập của lớp"
+        title={className ? `Bài tập lớp ${className}` : "Bài tập của lớp"}
         description="Bài mới giao hiện trên cùng."
         actions={
           isEmpty ? undefined : (

@@ -22,6 +22,7 @@ import {
   useTrashPermanentDelete,
 } from "@/features/trash/hooks";
 import type { Character } from "@/services/character.service";
+import { FetchingBadge } from "@/components/commons/fetching-indicator";
 
 export default function StaffCharactersPage() {
   const router = useRouter();
@@ -133,11 +134,7 @@ export default function StaffCharactersPage() {
               ) : (
                 <>
                   {filteredItems.length} nhân vật
-                  {isFetching && (
-                    <span className="ml-2 text-xs opacity-50">
-                      Đang cập nhật...
-                    </span>
-                  )}
+                  <FetchingBadge active={isFetching} />
                 </>
               )}
             </p>

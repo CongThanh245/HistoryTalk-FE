@@ -99,7 +99,7 @@ export function StudentPersonalDashboard() {
         <Panel>
           <SectionHeading
             title="Quiz gần đây"
-            description="Các lần làm quiz mới nhất của em."
+            description="Các lần làm quiz mới nhất của bạn."
           />
           {data.recentQuizzes.length === 0 ? (
             <EmptyState

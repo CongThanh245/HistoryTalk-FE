@@ -262,10 +262,10 @@ const BACH_DANG_938: LocalQuizQuestion[] = [
 function genericQuiz(title: string): LocalQuizQuestion[] {
   return [
     { id: "g1", prompt: `Khi tìm hiểu "${title}", nguồn tư liệu nào có giá trị cao nhất?`, options: ["Bài đăng mạng xã hội không rõ tác giả", "Tư liệu gốc cùng thời và sách sử chính thống", "Phim ảnh hư cấu", "Lời kể truyền miệng chưa kiểm chứng"], correctIndex: 1, explanation: "Tư liệu gốc và sách sử đã được kiểm chứng là căn cứ đáng tin cậy nhất." },
-    { id: "g2", prompt: `Để hiểu vì sao "${title}" xảy ra, em nên xem xét điều gì trước tiên?`, options: ["Bối cảnh lịch sử và nguyên nhân", "Màu sắc trang phục thời đó", "Số trang của sách giáo khoa", "Tên các con phố hiện nay"], correctIndex: 0 },
+    { id: "g2", prompt: `Để hiểu vì sao "${title}" xảy ra, bạn nên xem xét điều gì trước tiên?`, options: ["Bối cảnh lịch sử và nguyên nhân", "Màu sắc trang phục thời đó", "Số trang của sách giáo khoa", "Tên các con phố hiện nay"], correctIndex: 0 },
     { id: "g3", prompt: `Cách sắp xếp nào giúp ghi nhớ diễn biến "${title}" tốt nhất?`, options: ["Theo thứ tự chữ cái", "Theo trình tự thời gian và các mốc chính", "Theo độ dài của từng đoạn văn", "Ngẫu nhiên"], correctIndex: 1 },
     { id: "g4", prompt: `Bài học lịch sử rút ra từ "${title}" nên được trình bày thế nào?`, options: ["Chỉ chép lại nguyên văn sách", "Liên hệ với ý nghĩa và tác động đến giai đoạn sau", "Bỏ qua vì không có trong đề", "Chỉ ghi tên nhân vật"], correctIndex: 1 },
-    { id: "g5", prompt: `Khi hai nguồn nói khác nhau về "${title}", em nên làm gì?`, options: ["Chọn nguồn ngắn hơn", "Đối chiếu, xem xét tác giả và thời điểm ra đời của từng nguồn", "Bỏ qua cả hai", "Tin nguồn mới nhất"], correctIndex: 1, explanation: "Đối chiếu nhiều nguồn là kỹ năng cơ bản của người học sử." },
+    { id: "g5", prompt: `Khi hai nguồn nói khác nhau về "${title}", bạn nên làm gì?`, options: ["Chọn nguồn ngắn hơn", "Đối chiếu, xem xét tác giả và thời điểm ra đời của từng nguồn", "Bỏ qua cả hai", "Tin nguồn mới nhất"], correctIndex: 1, explanation: "Đối chiếu nhiều nguồn là kỹ năng cơ bản của người học sử." },
   ];
 }
 

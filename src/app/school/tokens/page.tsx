@@ -1,49 +1,30 @@
 "use client";
 
 import { Panel, SectionHeading } from "@/components/saas/saas-ui";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TokenBoostReviewList } from "@/components/saas/token-boost-ui";
 import { useSchoolAdminDashboard } from "@/features/dashboard/hooks";
-import { QuotaPanel, SubscriptionSummary } from "../_components/quota";
-import { AcademicRolloverPanel, DailyQuotaPolicyPanel } from "../_components/token-policy";
-import { ErrorBlock, SchoolShell } from "../_components/shared";
+import { PoolStrip } from "../_components/quota";
+import { DailyQuotaPolicyPanel } from "../_components/token-policy";
+import { SchoolShell } from "../_components/shared";
 
 /**
- * School Admin (Sprint 7): school-year subscription, the shared token pool, the daily per-student limit,
- * students' boost requests and the academic-year rollover.
+ * School Admin (Sprint 7): hai viec can lam o day — duyet yeu cau xin them token va dat han muc moi ngay.
+ * Quy chung + goi nam hoc nam o Tong quan truong; chuyen giao nam hoc nam o trang Lop hoc.
  */
 export default function SchoolTokensPage() {
   const dashboard = useSchoolAdminDashboard();
+  const pending = dashboard.data?.pendingTokenBoostRequests ?? 0;
   return (
-    <SchoolShell
-      title="Hạn mức token"
-      description="Quỹ token chung của trường theo năm học (01/09 – 31/05), hạn mức mỗi học sinh mỗi ngày và yêu cầu xin thêm token."
-    >
+    <SchoolShell title="Hạn mức token" description="Duyệt yêu cầu xin thêm token và đặt mức token mỗi học sinh, giáo viên được dùng mỗi ngày.">
       <div className="space-y-6">
-        <Panel>
-          <SectionHeading title="Gói năm học" />
-          {dashboard.isPending ? (
-            <Skeleton className="h-16 w-full" />
-          ) : dashboard.isError ? (
-            <ErrorBlock error={dashboard.error} fallback="Không tải được thông tin gói." onRetry={() => void dashboard.refetch()} />
-          ) : (
-            <SubscriptionSummary data={dashboard.data} />
-          )}
-        </Panel>
+        <PoolStrip />
 
-        <QuotaPanel />
+        <Panel>
+          <SectionHeading title={pending > 0 ? `Yêu cầu chờ duyệt (${pending})` : "Yêu cầu xin thêm token"} />
+          <TokenBoostReviewList reviewer="SCHOOL_ADMIN" scopeHint="Hiện chưa có yêu cầu nào. Khi có, bạn sẽ thấy ở đây để duyệt hoặc từ chối." />
+        </Panel>
 
         <DailyQuotaPolicyPanel currentDefault={dashboard.data?.defaultDailyStudentQuota} />
-
-        <Panel>
-          <SectionHeading
-            title="Yêu cầu xin thêm token"
-            description="Giáo viên cấp token cho học sinh từ hạn mức của mình; khi hết, giáo viên chuyển yêu cầu (hoặc tự xin) lên đây. Bạn duyệt từ quỹ chung của trường, token chỉ có hiệu lực trong ngày."
-          />
-          <TokenBoostReviewList reviewer="SCHOOL_ADMIN" scopeHint="Yêu cầu giáo viên chuyển lên và yêu cầu của giáo viên sẽ hiện ở đây." />
-        </Panel>
-
-        <AcademicRolloverPanel />
       </div>
     </SchoolShell>
   );
