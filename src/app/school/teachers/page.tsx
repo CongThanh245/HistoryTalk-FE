@@ -38,7 +38,7 @@ import {
   type ActiveFilter,
 } from "../_components/account-list";
 import { CopyTag, ErrorBlock, SchoolShell, useDebouncedValue } from "../_components/shared";
-import { FetchingBadge } from "@/components/commons/fetching-indicator";
+import { FetchingBadge, FetchingBar } from "@/components/commons/fetching-indicator";
 
 type SortBy = "fullName" | "userName" | "email" | "createdAt";
 
@@ -221,7 +221,8 @@ function TeachersContent() {
                 )}
               </div>
             ) : (
-              <div className={cn("overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]", teachers.isFetching && "opacity-70")}>
+              <div className={cn("relative overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]", teachers.isFetching && "opacity-70")}>
+                <FetchingBar active={teachers.isFetching} />
                 <Table className="min-w-max">
                   <caption className="sr-only">Danh sách giáo viên</caption>
                   <TableHeader>

@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils/cn";
 import { ClassStatusBadge } from "../_components/classroom";
 import { AcademicRolloverButton } from "../_components/token-policy";
 import { CopyTag, ErrorBlock, SchoolShell, useDebouncedValue } from "../_components/shared";
-import { FetchingBadge } from "@/components/commons/fetching-indicator";
+import { FetchingBadge, FetchingBar } from "@/components/commons/fetching-indicator";
 
 const ALL = "ALL";
 const PAGE_SIZES = [12, 24, 48];
@@ -152,7 +152,8 @@ function ClassesContent() {
               )}
             </div>
           ) : (
-            <div className={cn("grid gap-4 sm:grid-cols-2 xl:grid-cols-3", classes.isFetching && "opacity-70")}>
+            <div className={cn("relative grid gap-4 sm:grid-cols-2 xl:grid-cols-3", classes.isFetching && "opacity-70")}>
+              <FetchingBar active={classes.isFetching} />
               {rows.map((c) => (
                 <article key={c.id} className="flex flex-col rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
                   <div className="flex items-start justify-between gap-3 border-b border-[var(--border-strong)] p-4">

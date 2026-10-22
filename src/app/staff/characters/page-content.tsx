@@ -167,6 +167,7 @@ export default function StaffCharactersPage() {
             data={filteredItems}
             emptyMessage="Không tìm thấy nhân vật phù hợp."
             isLoading={isLoading}
+            isFetching={isFetching}
           />
         )}
       </section>

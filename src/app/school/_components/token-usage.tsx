@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Panel, SearchInput, SectionHeading, formatNumber } from "@/components/saas/saas-ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StaffFormSelect } from "@/components/staff/staff-form";
-import { FetchingBadge } from "@/components/commons/fetching-indicator";
+import { FetchingBadge, FetchingBar } from "@/components/commons/fetching-indicator";
 import { useClassroomTokenUsage, useSchoolAdminDashboard, useStudentTokenUsage } from "@/features/dashboard/hooks";
 import type { ClassroomTokenUsage } from "@/services/analytics-dashboard.service";
 import { cn } from "@/lib/utils/cn";
@@ -67,7 +67,7 @@ export function ClassTokenUsagePanel() {
         <p className="py-6 text-center text-sm text-content-muted">Không có lớp phù hợp.</p>
       ) : (
         <div className="relative">
-          <FetchingBadge active={q.isFetching} className="absolute -top-7 right-0" />
+          <FetchingBar active={q.isFetching} />
           {q.isError && <p className="mb-2 text-xs text-content-muted">Đang hiện {rows.length} lớp dùng nhiều nhất.</p>}
           <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--border-default)]">
             {rows.map((r) => (

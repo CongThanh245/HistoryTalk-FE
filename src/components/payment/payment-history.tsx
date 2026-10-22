@@ -519,6 +519,7 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
               columns={adminColumns}
               data={filteredItems}
               isLoading={isLoading}
+              isFetching={isFetching}
               emptyMessage="Không tìm thấy giao dịch phù hợp."
             />
             <PaginationBar

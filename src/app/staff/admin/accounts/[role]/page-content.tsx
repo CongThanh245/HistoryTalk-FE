@@ -526,6 +526,7 @@ export default function AdminAccountsPage() {
           columns={columns}
           data={filtered}
           isLoading={isLoading}
+          isFetching={isFetching}
           emptyMessage={`Không tìm thấy ${meta.label.toLowerCase()} phù hợp.`}
         />
       </section>

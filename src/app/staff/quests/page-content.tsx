@@ -422,6 +422,7 @@ export default function StaffQuestsPageContent() {
             data={quests}
             emptyMessage="Chưa có nhiệm vụ nào."
             isLoading={isLoading}
+            isFetching={isFetching}
           />
         </section>
       </div>

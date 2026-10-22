@@ -403,7 +403,7 @@ export default function StaffContextsPage() {
         {showTrash ? (
           <StaffDataTable columns={trashColumns} data={trashItems} emptyMessage="Thùng rác trống." isLoading={isTrashLoading} />
         ) : (
-          <StaffDataTable columns={columns} data={displayedItems} emptyMessage="Không tìm thấy bối cảnh phù hợp." isLoading={isLoading} />
+          <StaffDataTable columns={columns} data={displayedItems} emptyMessage="Không tìm thấy bối cảnh phù hợp." isLoading={isLoading} isFetching={isFetching} />
         )}
       </section>
 

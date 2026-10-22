@@ -33,7 +33,7 @@ import { buildBackendTemplateCsv, downloadTextFile, withoutAdditionalTokens } fr
 import type { BatchEnrollResult, ClassroomStudent } from "@/services/assignment.service";
 import type { ImportedStudentAccount, StudentImportResult } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
-import { FetchingBadge } from "@/components/commons/fetching-indicator";
+import { FetchingBadge, FetchingBar } from "@/components/commons/fetching-indicator";
 import { GrantTokensDialog } from "@/components/saas/token-boost-ui";
 
 /**
@@ -187,7 +187,8 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
               )}
             </div>
           ) : (
-            <div className={cn("overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]", students.isFetching && "opacity-70")}>
+            <div className={cn("relative overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]", students.isFetching && "opacity-70")}>
+              <FetchingBar active={students.isFetching} />
               <Table className="min-w-max">
                 <caption className="sr-only">Danh sách học sinh của lớp</caption>
                 <TableHeader>

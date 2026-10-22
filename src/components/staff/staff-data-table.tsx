@@ -13,6 +13,7 @@ import { ArrowUpDownIcon, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
+import { FetchingBar } from "@/components/commons/fetching-indicator";
 import {
   Table,
   TableBody,
@@ -28,6 +29,8 @@ export type StaffDataTableProps<TData> = {
   emptyMessage?: string;
   className?: string;
   isLoading?: boolean;
+  /** Dang tai lai (doi bo loc / trang) khi van con du lieu cu: thanh chay ngang o mep tren. */
+  isFetching?: boolean;
   onRowClick?: (row: TData) => void;
 };
 
@@ -57,6 +60,7 @@ export function StaffDataTable<TData>({
   emptyMessage = "Không có dữ liệu phù hợp.",
   className,
   isLoading = false,
+  isFetching = false,
   onRowClick,
 }: StaffDataTableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -79,8 +83,9 @@ export function StaffDataTable<TData>({
 
   return (
     <div
-      className={cn("rounded-[2px] border-y overflow-x-auto overflow-y-hidden bg-[var(--bg-surface)] border-[var(--text-primary)]", className)}
+      className={cn("relative rounded-[2px] border-y overflow-x-auto overflow-y-hidden bg-[var(--bg-surface)] border-[var(--text-primary)]", className)}
     >
+      <FetchingBar active={isFetching && !isLoading} />
       <Table className="min-w-max">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
