@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { dashboardService } from "@/services/dashboard.service";
-import { analyticsDashboardService } from "@/services/analytics-dashboard.service";
+import { analyticsDashboardService, type ClassroomTokenParams } from "@/services/analytics-dashboard.service";
 import { queryKeys } from "@/shared/query-key";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -33,6 +33,33 @@ export function useSchoolAdminDashboard(enabled = true) {
 }
 
 /** GET /teacher/dashboard/classrooms/{classId} — chỉ TEACHER. */
+export function useClassroomTokenUsage(params: ClassroomTokenParams = {}, enabled = true) {
+  return useQuery({
+    queryKey: ["dashboard", "token-usage", "classrooms", params],
+    queryFn: () => analyticsDashboardService.getClassroomTokenUsage(params),
+    enabled,
+    staleTime: ANALYTICS_STALE_TIME,
+  });
+}
+
+export function useStudentTokenUsage(classroomId: string | undefined, params: { search?: string; page?: number; size?: number } = {}) {
+  return useQuery({
+    queryKey: ["dashboard", "token-usage", "students", classroomId, params],
+    queryFn: () => analyticsDashboardService.getStudentTokenUsage(classroomId!, params),
+    enabled: !!classroomId,
+    staleTime: ANALYTICS_STALE_TIME,
+  });
+}
+
+export function useTeacherClassesOverview(enabled = true) {
+  return useQuery({
+    queryKey: ["dashboard", "teacher-classes-overview"],
+    queryFn: () => analyticsDashboardService.getTeacherClassesOverview(),
+    enabled,
+    staleTime: ANALYTICS_STALE_TIME,
+  });
+}
+
 export function useTeacherClassroomDashboard(classId: string | undefined, enabled = true) {
   return useQuery({
     queryKey: queryKeys.dashboard.teacherClassroom(classId ?? ""),

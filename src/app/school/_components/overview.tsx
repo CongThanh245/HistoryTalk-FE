@@ -11,6 +11,7 @@ import { ROUTES } from "@/constants/routes";
 import { useApiSchoolClassrooms, useApiTeachers, useApiTokenQuota } from "@/features/saas/hooks-api";
 import { useSchoolAdminDashboard } from "@/features/dashboard/hooks";
 import { TokenHero } from "./quota";
+import { ClassTokenUsagePanel } from "./token-usage";
 import { ErrorBlock } from "./shared";
 
 
@@ -52,6 +53,8 @@ export function OverviewWidgets() {
       ) : (
         <TokenHero quota={quota.data} dash={analytics.data} />
       )}
+
+      <ClassTokenUsagePanel />
 
       <StaffStatsGrid className="sm:grid-cols-3 lg:grid-cols-3">
         <StaffStatCard

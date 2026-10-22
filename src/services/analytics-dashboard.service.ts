@@ -1,5 +1,5 @@
 import { axiosClient } from "@/configs/axios.client";
-import type { EnterprisePackage, SchoolStatus } from "@/services/school.service";
+import { fromPagination, type ApiPage, type EnterprisePackage, type SchoolStatus } from "@/services/school.service";
 
 /**
  * 5 dashboard theo role (BE: AnalyticsDashboardController, US-SP6-06 → 10).
@@ -30,6 +30,12 @@ export interface SchoolAdminDashboard {
   /** total − remaining = tokens spent out of the pool. */
   allocatedTokens: number;
   tokensUsedByStudents: number;
+  /** Sprint 7: tach token giao vien / hoc sinh + top lop dung nhieu nhat. */
+  tokensUsedByTeachers?: number;
+  tokensUsedTotal?: number;
+  studentTokenUsagePercentage?: number;
+  teacherTokenUsagePercentage?: number;
+  topClassroomsByTokenUsage?: ClassroomTokenUsage[];
   defaultDailyStudentQuota?: number;
   pendingTokenBoostRequests?: number;
   assignmentStats: {
@@ -170,6 +176,57 @@ export interface SystemAdminComprehensiveDashboard {
   } | null;
 }
 
+// ── Token analytics (school admin / teacher) ───────────────
+
+export interface ClassroomTokenUsage {
+  classroomId: string;
+  className: string;
+  classCode: string;
+  gradeLevel: number;
+  academicYear: number;
+  status: "ACTIVE" | "ARCHIVED" | "DELETED";
+  teacherName: string | null;
+  teacherUid: string | null;
+  studentCount: number;
+  tokensUsedTotal: number;
+  tokensUsedToday: number;
+  percentageOfSchoolUsage: number;
+}
+
+export interface StudentTokenUsage {
+  studentId: string;
+  studentCode: string | null;
+  fullName: string;
+  userName: string | null;
+  email: string | null;
+  tokensUsedTotal: number;
+  tokensUsedToday: number;
+  dailyTokenLimit: number;
+  dailyBonusTokens: number;
+  effectiveRemainingToday: number;
+  messageCount: number;
+  lastActiveAt: string | null;
+}
+
+export interface TeacherClassesOverview {
+  teacherUid: string;
+  teacherName: string;
+  totalClassroomsManaged: number;
+  totalStudentsManaged: number;
+  totalTokensUsedByAllClasses: number;
+  classrooms: ClassroomTokenUsage[];
+}
+
+export interface ClassroomTokenParams {
+  academicYear?: number;
+  gradeLevel?: number;
+  status?: "ACTIVE" | "ARCHIVED";
+  search?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
 // ── Service ────────────────────────────────────────────────
 
 export const analyticsDashboardService = {
@@ -182,6 +239,27 @@ export const analyticsDashboardService = {
     const res = await axiosClient.get(`/teacher/dashboard/classrooms/${classId}`);
     const data = res.data.data as TeacherClassroomDashboard;
     return { ...data, students: data.students ?? [] };
+  },
+
+  // GET /school-admin/analytics/classrooms — token theo lop (mac dinh nhieu nhat truoc).
+  getClassroomTokenUsage: async (params: ClassroomTokenParams = {}): Promise<ApiPage<ClassroomTokenUsage>> => {
+    const res = await axiosClient.get("/school-admin/analytics/classrooms", { params });
+    return fromPagination<ClassroomTokenUsage>(res.data);
+  },
+
+  // GET /school-admin/analytics/classrooms/{id}/students — school admin hoac GV phu trach.
+  getStudentTokenUsage: async (
+    classroomId: string,
+    params: { search?: string; page?: number; size?: number; sort?: string } = {},
+  ): Promise<ApiPage<StudentTokenUsage>> => {
+    const res = await axiosClient.get(`/school-admin/analytics/classrooms/${classroomId}/students`, { params });
+    return fromPagination<StudentTokenUsage>(res.data);
+  },
+
+  getTeacherClassesOverview: async (): Promise<TeacherClassesOverview> => {
+    const res = await axiosClient.get("/teacher/dashboard/classes-overview");
+    const data = res.data.data as TeacherClassesOverview;
+    return { ...data, classrooms: data.classrooms ?? [] };
   },
 
   getStudentDashboard: async (): Promise<StudentPersonalDashboard> => {

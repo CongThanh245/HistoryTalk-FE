@@ -182,7 +182,11 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
         </div>
 
         <div className="grid content-start gap-3 sm:grid-cols-3 lg:grid-cols-1">
-          <MiniStat icon={Activity} label="Học sinh đã dùng" value={dash ? formatNumber(dash.tokensUsedByStudents) : "…"} />
+          <MiniStat
+            icon={Activity}
+            label="Học sinh / giáo viên đã dùng"
+            value={dash ? `${formatNumber(dash.tokensUsedByStudents)} / ${formatNumber(dash.tokensUsedByTeachers ?? 0)}` : "…"}
+          />
           <MiniStat icon={Coins} label="Hạn mức / học sinh / ngày" value={daily != null ? formatNumber(daily) : "…"} />
           <Link
             href={ROUTES.SCHOOL.TOKENS}

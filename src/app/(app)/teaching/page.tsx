@@ -13,6 +13,9 @@ import { StaffFormSelect } from "@/components/staff/staff-form";
 import { ClassCodeCopy, ClassroomCardsSkeleton, ClassroomLoadError, ClassroomStatusPill, classroomMeta } from "@/components/saas/api-classroom-ui";
 import { TeacherClassKpis, TeacherClassStudents } from "@/components/saas/teacher-classroom-analytics";
 import { TeacherClassAssignments } from "@/components/saas/teacher-class-assignments";
+import { formatNumber } from "@/components/saas/saas-ui";
+import { ClassStudentsTokenDialog } from "@/app/school/_components/token-usage";
+import { useTeacherClassesOverview } from "@/features/dashboard/hooks";
 import { ROUTES } from "@/constants/routes";
 import { useRole } from "@/features/auth/usePermission";
 import { apiErrorMessage, useMyApiClassrooms } from "@/features/saas/hooks-api";
@@ -37,6 +40,10 @@ function Dashboard() {
   const router = useRouter();
   const params = useSearchParams();
   const { classes, truncated, isLoading, isError, error, refetch } = useMyApiClassrooms(role);
+  // Token cac lop GV phu trach (GET /teacher/dashboard/classes-overview).
+  const overview = useTeacherClassesOverview(role === "TEACHER");
+  const tokensOf = (id: string) => overview.data?.classrooms.find((c) => c.classroomId === id);
+  const [tokenDialog, setTokenDialog] = React.useState(false);
 
   if (role !== "TEACHER") {
     return <EmptyState icon={Users} title="Dành cho giáo viên" description="Mục này dành cho tài khoản giáo viên của trường." />;
@@ -78,6 +85,11 @@ function Dashboard() {
                       )}
                     >
                       {c.className}
+                      {tokensOf(c.id) && (
+                        <span className={cn("ml-1.5 text-xs font-normal tabular-nums", active ? "opacity-80" : "text-content-muted")}>
+                          · {formatNumber(tokensOf(c.id)!.tokensUsedTotal)} token
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -103,6 +115,11 @@ function Dashboard() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            {tokensOf(current.id) && (
+              <button type="button" className="archive-link text-xs" onClick={() => setTokenDialog(true)}>
+                {formatNumber(tokensOf(current.id)!.tokensUsedTotal)} token đã dùng · xem từng học sinh
+              </button>
+            )}
             <ClassCodeCopy code={current.classCode} />
             <Link href={ROUTES.CLASS_DETAIL(current.id)} className="btn-line">
               Mở lớp <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -111,6 +128,10 @@ function Dashboard() {
         </div>
       </section>
       {truncated && <p className="text-xs text-content-muted">Chỉ tải 100 lớp đầu tiên.</p>}
+      <ClassStudentsTokenDialog
+        classroom={tokenDialog && tokensOf(current.id) ? tokensOf(current.id)! : null}
+        onOpenChange={(o) => !o && setTokenDialog(false)}
+      />
 
       <TeacherClassKpis classId={current.id} compact />
 
