@@ -124,7 +124,7 @@ function Composer({
   return (
     <div className="space-y-6">
       <button type="button" className="archive-link" onClick={() => (dirty ? setLeaveOpen(true) : router.push(back))}>
-        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> {returnTo ? "Quay lại giao bài" : "Kho tư liệu"}
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> {returnTo ? "Quay lại giao bài" : "Soạn tư liệu"}
       </button>
 
       <Panel>

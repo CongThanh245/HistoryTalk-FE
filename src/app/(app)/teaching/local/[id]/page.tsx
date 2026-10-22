@@ -47,7 +47,7 @@ function LocalContentRoute() {
 
 const backLink = (
   <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-    <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu
+    <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Soạn tư liệu
   </Link>
 );
 

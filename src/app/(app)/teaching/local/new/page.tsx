@@ -33,7 +33,7 @@ function NewLocalContent() {
           description="Mở một bối cảnh trong Kho tư liệu, chọn thẻ “Câu đố” rồi bấm “Tạo câu đố”."
           action={
             <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Soạn tư liệu
             </Link>
           }
         />

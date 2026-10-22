@@ -300,7 +300,7 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
       <div className="space-y-1.5">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
           <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Soạn tư liệu
           </Link>
           {item && (
             <>

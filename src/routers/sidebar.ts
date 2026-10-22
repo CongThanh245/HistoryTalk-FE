@@ -120,7 +120,7 @@ export const TEACHER_SIDEBAR: SidebarSection[] = [
       { icon: Gauge, label: "Tổng quan", href: ROUTES.TEACHING.HOME, exact: true },
       { icon: Presentation, label: "Lớp học", href: ROUTES.CLASSES },
       { icon: NotebookPen, label: "Bài tập", href: ROUTES.TEACHING.ASSIGNMENTS },
-      { icon: FilePenLine, label: "Kho tư liệu", href: ROUTES.TEACHING.LOCAL },
+      { icon: FilePenLine, label: "Soạn tư liệu", href: ROUTES.TEACHING.LOCAL },
       { icon: Coins, label: "Yêu cầu token", href: ROUTES.TEACHING.TOKEN_REQUESTS },
     ],
   },

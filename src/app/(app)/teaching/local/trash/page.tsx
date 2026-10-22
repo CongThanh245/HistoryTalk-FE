@@ -27,7 +27,7 @@ export default function LocalTrashPage() {
       description="Bối cảnh và nhân vật đã xóa khỏi Kho tư liệu. Khôi phục để dùng lại, hoặc xóa vĩnh viễn."
       backLink={
         <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Kho tư liệu
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Soạn tư liệu
         </Link>
       }
     >

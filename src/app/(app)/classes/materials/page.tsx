@@ -23,7 +23,7 @@ export default function ClassMaterialsPage() {
     <SaasShell
       variant="app"
       live
-      title="Kho tư liệu"
+      title={role === "TEACHER" ? "Tư liệu học sinh thấy" : "Kho tư liệu"}
       description={
         role === "TEACHER"
           ? "Bối cảnh và nhân vật học sinh của bạn đang thấy. Soạn và chỉnh sửa ở mục Quản lý tư liệu."

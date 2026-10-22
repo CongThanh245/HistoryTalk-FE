@@ -42,7 +42,7 @@ const routeLabels: Record<string, string> = {
   teaching: "Giảng dạy",
   assignments: "Bài tập",
   grades: "Bảng điểm",
-  local: "Kho tư liệu",
+  local: "Soạn tư liệu",
   materials: "Kho tư liệu",
   new: "Tạo mới",
 };

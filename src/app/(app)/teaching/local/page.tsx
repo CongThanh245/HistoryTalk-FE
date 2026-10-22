@@ -37,7 +37,7 @@ export default function LocalHistoryPage() {
     <SaasShell
       variant="app"
       live
-      title="Kho tư liệu"
+      title="Soạn tư liệu"
       description="Soạn bối cảnh và nhân vật cho lớp. Bản nháp chỉ bạn thấy; xuất bản rồi mới giao bài được."
     >
       <LocalHistory kind={kind} setKind={setKind} />

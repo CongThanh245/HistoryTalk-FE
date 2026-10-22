@@ -40,7 +40,7 @@ export default function LocalQuizPage() {
       description="Soạn câu hỏi trắc nghiệm, điền từ hoặc ghép cặp. Bật xuất bản để giao cho lớp ở mục Bài tập."
       backLink={
         <Link href={back} className="archive-link">
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> {query.data?.contextTitle ? `Bối cảnh “${query.data.contextTitle}”` : "Kho tư liệu"}
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> {query.data?.contextTitle ? `Bối cảnh “${query.data.contextTitle}”` : "Soạn tư liệu"}
         </Link>
       }
     >
