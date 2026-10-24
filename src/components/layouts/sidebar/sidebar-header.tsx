@@ -30,15 +30,15 @@ export default function SidebarHeader({
     <div
       className={cn(
         "relative z-10 h-16 flex items-center shrink-0 overflow-hidden",
-        isExpanded ? "pl-3 pr-3 gap-2" : "justify-center",
+        // Logo centred on the whole width; the collapse / close button sits on the right edge so it does not push the logo aside.
+        isExpanded ? "justify-center px-11" : "justify-center",
       )}
     >
       {/* Logo + Brand name */}
       <Link
         href={logoHref}
         className={cn(
-          "flex items-center outline-none transition-opacity hover:opacity-80",
-          isExpanded ? "flex-1" : "",
+          "flex items-center justify-center outline-none transition-opacity hover:opacity-80",
         )}
       >
         <BrandLogo
@@ -52,7 +52,7 @@ export default function SidebarHeader({
         <button
           onClick={onClose}
           aria-label="Đóng menu"
-          className="w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 cursor-pointer shrink-0 text-[var(--sidebar-pin-inactive)]"
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 cursor-pointer text-[var(--sidebar-pin-inactive)]"
         >
           <X className="w-4 h-4" />
         </button>
@@ -65,7 +65,7 @@ export default function SidebarHeader({
             <button
               onClick={onTogglePin}
               aria-label={isPinned ? "Thu gọn thanh bên" : "Giữ thanh bên mở"}
-              className="w-8 h-8 flex items-center justify-center rounded-md transition-colors duration-150 cursor-pointer shrink-0 text-[var(--text-muted)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-md transition-colors duration-150 cursor-pointer text-[var(--text-muted)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
             >
               {isPinned ? <ChevronsLeft className="w-[18px] h-[18px]" /> : <ChevronsRight className="w-[18px] h-[18px]" />}
             </button>

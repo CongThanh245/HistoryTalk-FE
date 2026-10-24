@@ -2,9 +2,7 @@
 
 // components/layout/customer-sidebar.tsx
 import {
-  CUSTOMER_QUICK_MENU,
   CUSTOMER_SIDEBAR,
-  SCHOOL_STUDENT_QUICK_MENU,
   SCHOOL_STUDENT_SIDEBAR,
   TEACHER_QUICK_MENU,
   TEACHER_SIDEBAR,
@@ -20,10 +18,8 @@ export default function CustomerSidebar() {
     role === "TEACHER" ? TEACHER_SIDEBAR
       : role === "SCHOOL_STUDENT" ? SCHOOL_STUDENT_SIDEBAR
         : CUSTOMER_SIDEBAR;
-  const quickMenu =
-    role === "TEACHER" ? TEACHER_QUICK_MENU
-      : role === "SCHOOL_STUDENT" ? SCHOOL_STUDENT_QUICK_MENU
-        : CUSTOMER_QUICK_MENU;
+  // Only authors get the "Tạo" button; learners reach everything from the nav itself.
+  const quickMenu = role === "TEACHER" ? TEACHER_QUICK_MENU : undefined;
   // The class workspace is named after the school, next to the "HistoryTalk" section.
   const sections = schoolName
     ? roleSections.map((s) => (s.schoolOwned ? { ...s, title: schoolName } : s))

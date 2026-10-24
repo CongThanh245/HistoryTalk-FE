@@ -256,10 +256,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
         </button>
 
         <div className="w-full max-w-md sm:max-w-xl lg:max-w-md space-y-7">
-          <span className="archive-label">
-            {isRegister ? "Tạo tài khoản" : "Hồ sơ người học"}
-          </span>
-
           {/* Tabs */}
           <div className="grid grid-cols-2 border-b border-[var(--text-primary)] font-display text-[20px] font-bold uppercase tracking-[0.02em]">
             <Link

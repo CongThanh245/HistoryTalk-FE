@@ -25,7 +25,6 @@ import {
   ChartColumn,
   BadgeCheck,
   LibraryBig,
-  MessagesSquare,
   BookOpenText,
   ListChecks,
 } from "lucide-react";
@@ -227,26 +226,6 @@ export const SYSTEM_ADMIN_SIDEBAR: SidebarSection[] = [
 ];
 
 /* ───────────────────────── Quick menus ───────────────────────── */
-
-export const CUSTOMER_QUICK_MENU: SidebarQuickMenu = {
-  label: "Bắt đầu",
-  items: [
-    { icon: MessagesSquare, label: "Trò chuyện với nhân vật", description: "Hỏi trực tiếp nhân vật lịch sử bạn quan tâm", href: ROUTES.CHARACTERS },
-    { icon: Landmark, label: "Khám phá sự kiện", description: "Đọc bối cảnh các sự kiện theo từng thời kỳ", href: ROUTES.EVENTS },
-    { icon: ClipboardList, label: "Làm câu đố", description: "Ôn lại kiến thức bằng bộ câu hỏi ngắn", href: ROUTES.QUIZ },
-    { icon: Map, label: "Mở bản đồ trận đánh", description: "Xem diễn biến trận đánh trên bản đồ", href: ROUTES.HISTORICAL_MAP },
-  ],
-};
-
-export const SCHOOL_STUDENT_QUICK_MENU: SidebarQuickMenu = {
-  label: "Bắt đầu",
-  items: [
-    { icon: ClipboardCheck, label: "Làm bài tập", description: "Bài giáo viên giao cho lớp của bạn, kèm hạn nộp", href: ROUTES.MY_ASSIGNMENTS },
-    { icon: MessagesSquare, label: "Trò chuyện với nhân vật", description: "Hỏi trực tiếp nhân vật lịch sử bạn quan tâm", href: ROUTES.CHARACTERS },
-    { icon: LibraryBig, label: "Mở kho tư liệu", description: "Tư liệu của lớp và của trường", href: ROUTES.CLASS_MATERIALS },
-    { icon: ClipboardList, label: "Làm câu đố", description: "Ôn lại kiến thức bằng bộ câu hỏi ngắn", href: ROUTES.QUIZ },
-  ],
-};
 
 export const TEACHER_QUICK_MENU: SidebarQuickMenu = {
   label: "Tạo",
