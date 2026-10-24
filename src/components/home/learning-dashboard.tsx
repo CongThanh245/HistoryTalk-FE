@@ -16,7 +16,7 @@ function DashboardSkeleton() {
       {[0, 1].map((i) => (
         <div
           key={i}
-          className="h-56 rounded-[2px] border bg-[var(--bg-surface)] border-[var(--text-primary)]"
+          className="h-56 rounded-sm border bg-[var(--bg-surface)] border-[var(--text-primary)]"
         />
       ))}
     </div>
@@ -62,7 +62,7 @@ function ScoreMeter({ percentage, totalQuizzes }: { percentage: number; totalQui
       </div>
       <div>
         <span
-          className="inline-flex items-center text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-[2px]"
+          className="inline-flex items-center text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-sm"
           style={{ background: `color-mix(in srgb, ${color} 15%, transparent)`, color }}
         >
           {label}
@@ -113,7 +113,7 @@ function RankedBars({ items }: { items: DashboardTopCharacter[] }) {
       {items.map((character, i) => (
         <div key={character.characterId} className="flex items-center gap-2.5">
           <span
-            className={`w-5 h-5 shrink-0 rounded-[2px] flex items-center justify-center text-micro font-bold ${
+            className={`w-5 h-5 shrink-0 rounded-sm flex items-center justify-center text-micro font-bold ${
               i === 0 ? "bg-[var(--text-primary)] text-[var(--text-inverse)]" : "bg-card-light-border text-content-muted"
             }`}
           >
@@ -167,7 +167,7 @@ export function LearningDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-8 items-start">
         {/* Learning card */}
         {hasLearningCard && (
-          <div className="p-4 md:p-5 rounded-[2px] border bg-[var(--bg-surface)] border-[var(--text-primary)]">
+          <div className="p-4 md:p-5 rounded-sm border bg-[var(--bg-surface)] border-[var(--text-primary)]">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[var(--border-default)]">
               <Trophy className="w-4 h-4 text-gold-on-light" />
               <h3 className="font-display text-xl font-extrabold uppercase text-content-heading">
@@ -198,7 +198,7 @@ export function LearningDashboard() {
 
         {/* AI usage card */}
         <div
-          className={`p-4 md:p-5 rounded-[2px] border bg-[var(--bg-surface)] border-[var(--text-primary)] ${!hasLearningCard ? "lg:col-span-2" : ""}`}
+          className={`p-4 md:p-5 rounded-sm border bg-[var(--bg-surface)] border-[var(--text-primary)] ${!hasLearningCard ? "lg:col-span-2" : ""}`}
         >
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-[var(--border-default)]">
             <div className="flex items-center gap-2">
@@ -208,7 +208,7 @@ export function LearningDashboard() {
               </h3>
             </div>
             {!isSchoolAccount && aiUsage.tier && (
-              <span className="text-[11px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-[2px] uppercase bg-[var(--text-primary)] text-[var(--text-inverse)]">
+              <span className="text-[11px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-sm uppercase bg-[var(--text-primary)] text-[var(--text-inverse)]">
                 {aiUsage.tier}
               </span>
             )}

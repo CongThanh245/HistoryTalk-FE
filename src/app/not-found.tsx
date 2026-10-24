@@ -138,7 +138,7 @@ export default function NotFoundPage() {
 
           {/* Tag */}
           <div className="r2 mb-5">
-            <span className="inline-block px-3 py-1 rounded-[2px] text-[11px] font-bold tracking-[0.14em] uppercase bg-[var(--accent-gold)] text-white">
+            <span className="inline-block px-3 py-1 rounded-sm text-[11px] font-bold tracking-[0.14em] uppercase bg-[var(--accent-gold)] text-white">
               Không tìm thấy trang
             </span>
           </div>

@@ -257,7 +257,7 @@ function AddStudentsDialog({
             </label>
           </div>
 
-          <div className="max-h-[45dvh] overflow-y-auto rounded-[2px] border border-[var(--border-strong)]">
+          <div className="max-h-[45dvh] overflow-y-auto rounded-sm border border-[var(--border-strong)]">
             {candidates.length === 0 ? (
               <p className="p-6 text-center text-sm text-content-muted">Không còn học sinh phù hợp.</p>
             ) : (
@@ -277,7 +277,7 @@ function AddStudentsDialog({
                       })
                     }
                   />
-                  <label htmlFor="roster-select-all" className="cursor-pointer text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                  <label htmlFor="roster-select-all" className="cursor-pointer text-[13px] font-semibold text-[var(--text-tertiary)]">
                     Chọn tất cả ({candidates.length})
                   </label>
                 </li>

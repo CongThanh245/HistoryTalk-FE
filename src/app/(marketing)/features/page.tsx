@@ -176,7 +176,7 @@ function ChatBubble({
       <div className={`max-w-[75%] ${isCharacter ? "text-left" : "text-right"}`}>
         <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-(--text-tertiary)">{message.name}</div>
         <div
-          className={`rounded-[2px] border px-3 py-2 text-xs leading-relaxed ${isCharacter
+          className={`rounded-sm border px-3 py-2 text-xs leading-relaxed ${isCharacter
             ? "border-(--border-strong) bg-(--bg-elevated) text-(--text-secondary)"
             : "border-(--accent-gold)/30 bg-(--accent-gold-active-bg) text-(--gold-on-light)"
             }`}
@@ -480,7 +480,7 @@ export default function FeaturePage() {
             </div>
 
             <div ref={heroVisualRef} className="relative min-h-107.5">
-              <div className="relative flex h-107.5 w-full flex-col overflow-hidden rounded-[2px] border border-(--text-primary) bg-(--bg-surface)">
+              <div className="relative flex h-107.5 w-full flex-col overflow-hidden rounded-sm border border-(--text-primary) bg-(--bg-surface)">
                 {/* Chat Header */}
                 <div className="flex h-12 shrink-0 items-center justify-between border-b border-(--text-primary) bg-(--bg-elevated) px-4">
                   <div className="flex items-center gap-2">
@@ -503,7 +503,7 @@ export default function FeaturePage() {
                   </div>
                   <button
                     onClick={handleRestart}
-                    className="rounded-[2px] border border-(--text-primary) px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-(--text-primary) transition-colors hover:bg-(--text-primary) hover:text-(--text-inverse)"
+                    className="rounded-sm border border-(--text-primary) px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-(--text-primary) transition-colors hover:bg-(--text-primary) hover:text-(--text-inverse)"
                   >
                     Xem lại
                   </button>
@@ -528,11 +528,11 @@ export default function FeaturePage() {
                 <div className="flex h-11 shrink-0 items-center gap-2 border-t border-(--text-primary) bg-(--bg-elevated) px-3">
                   <button
                     onClick={handleNavigateToHome}
-                    className="flex-1 rounded-[2px] border border-(--border-strong) bg-(--bg-surface) px-3 py-1.5 text-left text-sm text-(--text-muted) transition-colors hover:border-(--text-primary) hover:text-(--text-primary)"
+                    className="flex-1 rounded-sm border border-(--border-strong) bg-(--bg-surface) px-3 py-1.5 text-left text-sm text-(--text-muted) transition-colors hover:border-(--text-primary) hover:text-(--text-primary)"
                   >
                     Nhập câu hỏi của bạn...
                   </button>
-                  <div className="flex h-7 w-7 items-center justify-center rounded-[2px] bg-(--accent-gold) text-[#FFFFFF]">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-(--accent-gold) text-[#FFFFFF]">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                     </svg>
@@ -581,7 +581,7 @@ export default function FeaturePage() {
             >
               {/* Step Number Indicator - positioned within section */}
               <div className="absolute left-6 top-16 z-10 -translate-x-1/2 sm:left-8 sm:top-20 lg:left-1/2 lg:top-1/2 lg:-translate-y-1/2" data-step-indicator>
-                <div className="flex h-10 w-10 items-center justify-center rounded-[2px] border border-(--accent-gold) bg-(--accent-gold) text-[#FFFFFF] sm:h-12 sm:w-12">
+                <div className="flex h-10 w-10 items-center justify-center rounded-sm border border-(--accent-gold) bg-(--accent-gold) text-[#FFFFFF] sm:h-12 sm:w-12">
                   <span className="font-display text-base font-extrabold">{item.step}</span>
                 </div>
               </div>
@@ -601,7 +601,7 @@ export default function FeaturePage() {
                         {item.body}
                       </p>
                       <div className="flex items-center gap-4">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-[2px] bg-(--text-primary) text-(--text-inverse)">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-sm bg-(--text-primary) text-(--text-inverse)">
                           <Icon className="h-7 w-7" />
                         </div>
                         <div>
@@ -614,7 +614,7 @@ export default function FeaturePage() {
 
                   {/* Image */}
                   <div className={`${isEven ? '' : 'lg:col-start-1'}`}>
-                    <div className="relative aspect-4/3 w-full overflow-hidden rounded-[2px] border border-(--text-primary) bg-(--bg-deep)">
+                    <div className="relative aspect-4/3 w-full overflow-hidden rounded-sm border border-(--text-primary) bg-(--bg-deep)">
                       <Image
                         src={item.image}
                         alt={item.title}

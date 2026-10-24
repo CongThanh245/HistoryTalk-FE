@@ -143,7 +143,7 @@ const ChatBubble = React.memo(function ChatBubble({
       {/* Avatar */}
       <div className="shrink-0">
         {isCharacter ? (
-          <div className="relative h-10 w-10 overflow-hidden rounded-full border border-[var(--text-primary)]">
+          <div className="relative h-10 w-10 overflow-hidden rounded-full border border-border-card">
             <Image
               src={message.avatar || ""}
               alt={message.name}
@@ -163,7 +163,7 @@ const ChatBubble = React.memo(function ChatBubble({
       <div className={`max-w-[75%] ${isCharacter ? "text-left" : "text-right"}`}>
         <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{message.name}</div>
         <div
-          className={`rounded-[2px] border px-3 py-2 text-xs leading-relaxed ${
+          className={`rounded-sm border px-3 py-2 text-xs leading-relaxed ${
             isCharacter
               ? "border-[var(--border-strong)] bg-[var(--bg-elevated)] text-[var(--text-secondary)]"
               : "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
@@ -285,14 +285,14 @@ export function SolutionSection() {
           <div ref={chatRef} data-reveal="block" className="relative">
             <div
               data-motion-card
-              className="relative flex h-75 w-full flex-col overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] md:h-105"
+              className="relative flex h-75 w-full flex-col overflow-hidden rounded-sm border border-border-card bg-[var(--bg-surface)] md:h-105"
             >
               {/* Chat Header */}
               <div
                 className="flex h-10 md:h-12 shrink-0 items-center justify-between border-b border-[var(--text-primary)] bg-[var(--bg-elevated)] px-3 md:px-4"
               >
                 <div className="flex items-center gap-2">
-                  <div className="relative h-7 w-7 md:h-8 md:w-8 overflow-hidden rounded-full border border-[var(--text-primary)]">
+                  <div className="relative h-7 w-7 md:h-8 md:w-8 overflow-hidden rounded-full border border-border-card">
                     <Image
                       src="/ngo-quyen-chan-dung.png"
                       alt="Ngô Quyền"
@@ -311,7 +311,7 @@ export function SolutionSection() {
                 </div>
                 <button
                   onClick={handleRestart}
-                  className="rounded-[2px] border border-[var(--text-primary)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+                  className="rounded-sm border border-[var(--text-primary)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
                 >
                   Xem lại
                 </button>
@@ -338,11 +338,11 @@ export function SolutionSection() {
               >
                 <button
                   onClick={handleNavigateToHome}
-                  className="flex-1 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-2 md:px-3 py-1 md:py-1.5 text-left text-xs md:text-sm text-[var(--text-muted)] transition-colors hover:border-[var(--text-primary)] hover:text-[var(--text-secondary)]"
+                  className="flex-1 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-2 md:px-3 py-1 md:py-1.5 text-left text-xs md:text-sm text-[var(--text-muted)] transition-colors hover:border-[var(--text-primary)] hover:text-[var(--text-secondary)]"
                 >
                   Nhập câu hỏi của bạn...
                 </button>
-                <div className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-[2px] bg-[var(--accent-gold)] text-white">
+                <div className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-sm bg-[var(--accent-gold)] text-white">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>

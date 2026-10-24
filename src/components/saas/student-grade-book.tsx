@@ -52,7 +52,7 @@ const columns: ColumnDef<StudentAssignment, unknown>[] = [
       row.original.score === null ? (
         <span className="text-content-muted">—</span>
       ) : (
-        <strong className="font-display text-lg font-extrabold tabular-nums text-[var(--gold-leaf)]">{formatScore(row.original.score)}</strong>
+        <strong className="text-lg font-bold tabular-nums text-[var(--gold-leaf)]">{formatScore(row.original.score)}</strong>
       ),
   },
   {

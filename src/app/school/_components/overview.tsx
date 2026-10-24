@@ -84,7 +84,7 @@ export function OverviewWidgets() {
             <Link
               key={href}
               href={href}
-              className="group flex items-start gap-3 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4 transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+              className="group flex items-start gap-3 rounded-sm border border-border-card bg-[var(--bg-surface)] p-4 transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
             >
               <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[var(--accent-gold)]" aria-hidden="true" />
               <span>

@@ -200,7 +200,7 @@ export function ChatInput({
           maxLength={MAX_LENGTH + 20}
           rows={1}
           className={cn(
-            "flex-1 resize-none rounded-[2px] px-4 py-2.5 text-sm outline-none leading-normal min-h-12 max-h-40",
+            "flex-1 resize-none rounded-sm px-4 py-2.5 text-sm outline-none leading-normal min-h-12 max-h-40",
             "transition-colors placeholder:text-content-muted focus:border-[var(--text-primary)]",
             "disabled:opacity-60 overflow-hidden bg-bg-elevated text-content-heading",
             isRecording ? "border border-accent-danger" : "border border-[var(--border-strong)]",
@@ -216,7 +216,7 @@ export function ChatInput({
             aria-label={isRecording ? "Dừng ghi âm và gửi" : "Bắt đầu ghi âm"}
             title={isRecording ? "Bấm lần nữa để dừng và gửi" : "Bấm để nói"}
             className={cn(
-              "w-10 h-10 flex items-center justify-center rounded-[2px]",
+              "w-10 h-10 flex items-center justify-center rounded-sm",
               "transition-colors active:scale-95 select-none",
               "disabled:opacity-30 disabled:cursor-not-allowed shrink-0",
               isRecording
@@ -240,7 +240,7 @@ export function ChatInput({
           disabled={!text.trim() || isLoading || disabled || isOverLimit}
           aria-label="Gửi tin nhắn"
           className={cn(
-            "w-10 h-10 flex items-center justify-center rounded-[2px]",
+            "w-10 h-10 flex items-center justify-center rounded-sm",
             "transition-colors active:scale-95",
             "disabled:opacity-30 disabled:cursor-not-allowed shrink-0",
             "border",

@@ -30,7 +30,7 @@ function AdSlot({
 
   return (
     <div
-      className={`overflow-hidden rounded-[2px] border border-border-strong ${className}`}
+      className={`overflow-hidden rounded-sm border border-border-strong ${className}`}
     >
       <ins
         className="adsbygoogle block"
@@ -82,7 +82,7 @@ export default function AdPanel() {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="rounded-[2px] border border-dashed min-h-[250px] flex items-center justify-center border-border-strong bg-bg-surface"
+            className="rounded-sm border border-dashed min-h-[250px] flex items-center justify-center border-border-strong bg-bg-surface"
           >
             <p
               className="text-[10px] font-bold uppercase tracking-[0.1em] text-center px-4 text-text-muted"

@@ -63,7 +63,7 @@ export function FeatureCards() {
   );
 
   return (
-    <div className="bg-[var(--bg-surface)] border border-[var(--text-primary)] rounded-[2px] overflow-hidden flex flex-col pb-5">
+    <div className="bg-[var(--bg-surface)] border border-border-card rounded-sm overflow-hidden flex flex-col pb-5">
       {/* Header */}
       <div className="flex items-center justify-between p-[11px]">
         {/* Pagination arrows */}
@@ -72,7 +72,7 @@ export function FeatureCards() {
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className={`w-6 h-6 rounded-[2px] border flex items-center justify-center transition-colors duration-150 ${
+              className={`w-6 h-6 rounded-sm border flex items-center justify-center transition-colors duration-150 ${
                 page === 0
                   ? "bg-transparent border-[var(--border-default)] text-content-subtle cursor-default"
                   : "bg-transparent border-[var(--text-primary)] text-[var(--text-primary)] cursor-pointer hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
@@ -86,7 +86,7 @@ export function FeatureCards() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
-              className={`w-6 h-6 rounded-[2px] border flex items-center justify-center transition-colors duration-150 ${
+              className={`w-6 h-6 rounded-sm border flex items-center justify-center transition-colors duration-150 ${
                 page === totalPages - 1
                   ? "bg-transparent border-[var(--border-default)] text-content-subtle cursor-default"
                   : "bg-transparent border-[var(--text-primary)] text-[var(--text-primary)] cursor-pointer hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
@@ -106,9 +106,9 @@ export function FeatureCards() {
             href={card.href}
             className="group block no-underline"
           >
-            <div className="h-full flex flex-col gap-2.5 p-3 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] transition-colors duration-150 cursor-pointer group-hover:border-[var(--text-primary)] group-hover:bg-[var(--text-primary)]">
+            <div className="h-full flex flex-col gap-2.5 p-3 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] transition-colors duration-150 cursor-pointer group-hover:border-[var(--text-primary)] group-hover:bg-[var(--text-primary)]">
               {/* Icon */}
-              <div className="w-8 h-8 rounded-[2px] flex items-center justify-center border border-[var(--border-strong)] text-[var(--accent-gold)] transition-colors duration-150 group-hover:border-[var(--accent-on-ink)] group-hover:text-[var(--accent-on-ink)]">
+              <div className="w-8 h-8 rounded-sm flex items-center justify-center border border-[var(--border-strong)] text-[var(--accent-gold)] transition-colors duration-150 group-hover:border-[var(--accent-on-ink)] group-hover:text-[var(--accent-on-ink)]">
                 <card.icon size={16} />
               </div>
 

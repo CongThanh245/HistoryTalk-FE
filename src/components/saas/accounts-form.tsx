@@ -32,7 +32,7 @@ export function AccountDrawer({
       <SheetContent
         side="right"
         className={cn(
-          "staff-theme w-full max-w-full gap-0 border-l border-[var(--text-primary)] bg-[var(--bg-surface)] p-0 text-content-text sm:max-w-lg",
+          "staff-theme w-full max-w-full gap-0 border-l border-border-card bg-[var(--bg-surface)] p-0 text-content-text sm:max-w-lg",
           wide && "sm:max-w-xl",
         )}
       >
@@ -98,8 +98,8 @@ export function AccountSetupChoice({
           <label
             key={o.value}
             className={cn(
-              "flex cursor-pointer gap-3 rounded-[2px] border p-3 transition-colors focus-within:outline-2 focus-within:outline-[var(--accent-gold)]",
-              checked ? "border-[var(--text-primary)] bg-[var(--status-neutral-bg)]" : "border-[var(--border-strong)] hover:border-[var(--text-primary)]",
+              "flex cursor-pointer gap-3 rounded-sm border p-3 transition-colors focus-within:outline-2 focus-within:outline-[var(--accent-gold)]",
+              checked ? "border-border-card bg-[var(--status-neutral-bg)]" : "border-[var(--border-strong)] hover:border-[var(--text-primary)]",
             )}
           >
             <input
@@ -151,7 +151,7 @@ export function ClassChecklist({
   if (classes.length === 0) return <p className="text-sm text-content-muted">Trường chưa có lớp nào.</p>;
 
   return (
-    <div role="group" aria-label={label} className="max-h-60 space-y-3 overflow-y-auto rounded-[2px] border border-[var(--border-strong)] p-3">
+    <div role="group" aria-label={label} className="max-h-60 space-y-3 overflow-y-auto rounded-sm border border-[var(--border-strong)] p-3">
       {byGrade.map(([grade, list]) => (
         <div key={grade} className="space-y-1.5">
           <p className="text-xs font-bold text-content-muted">Khối {grade}</p>
@@ -162,7 +162,7 @@ export function ClassChecklist({
               return (
                 <label
                   key={c.id}
-                  className={cn("flex items-start gap-2 rounded-[2px] px-1.5 py-1 text-sm", isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:bg-[var(--status-neutral-bg)]")}
+                  className={cn("flex items-start gap-2 rounded-sm px-1.5 py-1 text-sm", isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:bg-[var(--status-neutral-bg)]")}
                 >
                   <Checkbox
                     className="mt-0.5"

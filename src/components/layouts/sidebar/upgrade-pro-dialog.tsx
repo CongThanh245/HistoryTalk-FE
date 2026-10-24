@@ -111,12 +111,12 @@ function SkeletonCard({ index }: { index: number }) {
       <div className="upgrade-pro-card-head">
         <CrownIcon className="size-5 text-[var(--border-strong)]" />
         <div className="flex-1">
-          <div className="h-[18px] w-[60%] bg-[var(--border-default)] rounded-[2px] mb-2" />
-          <div className="h-3.5 w-[80%] bg-[var(--border-default)] rounded-[2px]" />
+          <div className="h-[18px] w-[60%] bg-[var(--border-default)] rounded-sm mb-2" />
+          <div className="h-3.5 w-[80%] bg-[var(--border-default)] rounded-sm" />
         </div>
       </div>
-      <div className="h-10 w-1/2 bg-[var(--border-default)] rounded-[2px] mt-7" />
-      <div className="h-11 bg-[var(--border-default)] rounded-[2px] mt-[22px]" />
+      <div className="h-10 w-1/2 bg-[var(--border-default)] rounded-sm mt-7" />
+      <div className="h-11 bg-[var(--border-default)] rounded-sm mt-[22px]" />
     </section>
   );
 }

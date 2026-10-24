@@ -42,7 +42,7 @@ export function CharacterSprite({
           className="absolute bottom-full left-1/2 mb-3 w-56 animate-fade-in"
           style={{ transform: "translateX(-50%)" }}
         >
-          <div className="relative px-4 py-3 rounded-[2px] text-sm leading-relaxed shadow-[var(--shadow-soft)] bg-[var(--bg-elevated)] border border-[var(--text-primary)] text-[var(--text-secondary)]">
+          <div className="relative px-4 py-3 rounded-sm text-sm leading-relaxed shadow-[var(--shadow-soft)] bg-[var(--bg-elevated)] border border-border-card text-[var(--text-secondary)]">
             {/* Quote marks */}
             <span className="absolute -top-3 left-4 text-3xl leading-none text-accent-gold opacity-60">
               &ldquo;
@@ -64,7 +64,7 @@ export function CharacterSprite({
 
             {/* Tail */}
             <div
-              className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-[var(--bg-elevated)] border border-[var(--text-primary)]"
+              className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-[var(--bg-elevated)] border border-border-card"
               style={{ clipPath: "polygon(0 0, 100% 100%, 0 100%)" }}
             />
           </div>
@@ -120,7 +120,7 @@ export function CharacterSprite({
       <div className="text-center mt-1.5">
         <div
           className={cn(
-            "inline-flex items-center gap-1.5 px-3 py-1 rounded-[2px] text-xs font-bold backdrop-blur-sm transition-colors",
+            "inline-flex items-center gap-1.5 px-3 py-1 rounded-sm text-xs font-bold backdrop-blur-sm transition-colors",
             isActive
               ? "bg-accent-gold text-white"
               : "bg-[rgba(17,17,17,0.8)] text-white/90 border border-white/25"

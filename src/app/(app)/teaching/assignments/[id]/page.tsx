@@ -73,7 +73,7 @@ function AssignmentDetail({ id }: { id: string }) {
     return (
       <div className="space-y-6">
         {back}
-        <div className="h-48 animate-pulse rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" aria-busy="true" />
+        <div className="h-48 animate-pulse rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" aria-busy="true" />
       </div>
     );
   }

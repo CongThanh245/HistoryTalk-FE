@@ -15,7 +15,6 @@ import {
   Eye,
   Loader2,
   LocateFixed,
-  Map,
   MapPin,
   Plus,
   RefreshCw,
@@ -112,7 +111,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
   const authHydrated = useAuthStore((state) => state.hasHydrated);
   // Personal study notes (USER pins): learners only — never in the admin "Xem như người học" preview.
   const canTakeNotes =
-    Boolean(user && (STUDY_NOTE_ROLES as readonly string[]).includes(user.role)) && !overlay?.previewAsLearner;
+    Boolean(user && (STUDY_NOTE_ROLES as readonly string[]).includes(user.role)) && !overlay?.previewAsLearner && !overlay?.disableStudyNotes;
   const isGuest = authHydrated && !user;
   const [localRoute, setLocalRoute] = useState<MapRoute>({ battle: null, view: "map" });
   const route = controlledRoute ?? localRoute;
@@ -465,13 +464,11 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
 
   return (
     <div className={cn(styles.mapPage, "flex h-full min-h-0 flex-col bg-[var(--bg-main)] text-[var(--text-primary)]")}>
-      <header className="shrink-0 border-b border-[var(--text-primary)] bg-[var(--header-bg)] px-4 py-3 backdrop-blur md:px-6">
+      {/* The map is the content: a slim title row, so the map gets the height. */}
+      <header className="shrink-0 border-b border-[var(--border-default)] bg-[var(--header-bg)] px-4 py-2.5 backdrop-blur md:px-6">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[2px] bg-[var(--accent-gold)] text-white">
-            <Map size={20} />
-          </div>
           <div className="mr-auto min-w-0 flex-1 sm:flex-none">
-            <h1 className="archive-title text-[22px] md:text-[26px]">{overlay?.title ?? "Bản đồ trận đánh"}</h1>
+            <h1 className="font-title text-lg font-bold leading-tight text-[var(--text-primary)] md:text-xl">{overlay?.title ?? "Bản đồ trận đánh"}</h1>
             <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">
               {overlay?.subtitle ?? "Những trận đánh làm nên lịch sử."}
             </p>
@@ -486,7 +483,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
                 value={activeContextId ?? ""}
                 onChange={(event) => chooseContext(event.target.value)}
                 disabled={eventsLoading || overviewQueriesLoading || selectableEvents.length === 0}
-                className="h-10 w-full appearance-none rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] py-0 pl-3 pr-9 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:opacity-60"
+                className="h-10 w-full appearance-none rounded-sm border border-border-card bg-[var(--bg-surface)] py-0 pl-3 pr-9 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:opacity-60"
               >
                 {selectableEvents.length > 0 && <option value="">— Tất cả trận đánh —</option>}
                 {selectableEvents.length === 0 ? (
@@ -505,7 +502,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
             </label>
           )}
 
-          {isAdmin && (
+          {isAdmin && !overlay?.hideBattlePicker && (
             <button
               type="button"
               onClick={startAdding}
@@ -537,7 +534,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
               type="button"
               onClick={() => chooseContext("")}
               title="Bỏ chọn trận đánh"
-              className="grid h-10 w-10 place-items-center rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] transition hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+              className="grid h-10 w-10 place-items-center rounded-sm border border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] transition hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
               aria-label="Bỏ chọn trận đánh"
             >
               <X size={18} />
@@ -635,7 +632,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
           )}
 
           {(eventsError || pinsError) && (
-            <div className="absolute left-1/2 top-1/2 z-[500] w-[min(390px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-5 text-center shadow-[var(--shadow-soft)]">
+            <div className="absolute left-1/2 top-1/2 z-[500] w-[min(390px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 rounded-sm border border-border-card bg-[var(--bg-surface)] p-5 text-center shadow-[var(--shadow-soft)]">
               <AlertCircle className="mx-auto text-[var(--accent-danger)]" size={28} />
               <p className="mt-2 text-sm font-bold">Không tải được dữ liệu bản đồ</p>
               <button
@@ -649,15 +646,12 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
           )}
 
           {!pinsLoading && !pinsError && !mainPin && !isAdding && activeContextId && (
-            <div className="absolute left-1/2 top-1/2 z-[500] w-[min(390px,calc(100%-32px))] -translate-x-1/2 -translate-y-1/2 rounded-[2px] border border-[var(--text-primary)] bg-bg-surface p-5 text-center shadow-[var(--shadow-soft)] backdrop-blur">
-              <MapPin className="mx-auto text-[var(--accent-gold)]" size={30} />
-              <p className="mt-2 text-sm font-bold">Trận đánh này chưa có vị trí trên bản đồ</p>
+            // Thanh nho o mep duoi thay vi hop giua man hinh: khong che ban do.
+            <div className="absolute bottom-4 left-1/2 z-[500] flex w-max max-w-[calc(100%-32px)] -translate-x-1/2 items-center gap-3 rounded-sm border border-border-card bg-bg-surface py-2 pl-3 pr-2 text-sm shadow-[var(--shadow-soft)] backdrop-blur">
+              <MapPin className="shrink-0 text-[var(--accent-gold)]" size={18} aria-hidden="true" />
+              <span className="font-semibold">Chưa có vị trí trên bản đồ</span>
               {isAdmin && (
-                <button
-                  type="button"
-                  onClick={startAdding}
-                  className="btn-ink mt-3 min-h-0 px-3 py-2 text-xs"
-                >
+                <button type="button" onClick={startAdding} className="btn-ink h-8 min-h-0 px-3 text-xs">
                   <LocateFixed size={14} /> Ghim vị trí
                 </button>
               )}
@@ -709,6 +703,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
                 onOpenDetail={() => openScreen("detail")}
                 onOpenEditor={() => openScreen("edit")}
                 onOpenCharacter={(id) => openScreen("detail", id)}
+                characterLinkHref={activeEvent && overlay?.characterLinkHref ? overlay.characterLinkHref(activeEvent.id) : undefined}
                 notesSlot={
                   canTakeNotes ? (
                     <StudyNotesSection
@@ -749,7 +744,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
 
 function StatusPill({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("absolute z-[500] flex items-center gap-2 rounded-[2px] border border-[var(--text-primary)] bg-bg-surface px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] shadow-[var(--shadow-soft)] backdrop-blur", className)}>
+    <div className={cn("absolute z-[500] flex items-center gap-2 rounded-sm border border-border-card bg-bg-surface px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] shadow-[var(--shadow-soft)] backdrop-blur", className)}>
       {children}
     </div>
   );
@@ -771,6 +766,7 @@ function BattleContextPanel({
   onOpenDetail,
   onOpenEditor,
   onOpenCharacter,
+  characterLinkHref,
   notesSlot,
 }: {
   event?: HistoricalEvent;
@@ -785,16 +781,18 @@ function BattleContextPanel({
   onOpenDetail: () => void;
   onOpenEditor: () => void;
   onOpenCharacter: (id: string) => void;
+  characterLinkHref?: string;
   /** "Ghi chú của tôi" block (learners) or the sign-in hint (guests). */
   notesSlot?: ReactNode;
 }) {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const phases = event?.battleMap?.phases ?? [];
+  const linkHref = event ? characterLinkHref ?? `/staff/contexts/${event.id}?tab=characters` : "";
   return (
     <div className={cn("flex min-h-full flex-col lg:h-full", styles.contextPanel)}>
       {/* Compact header: thumbnail beside the facts, so the content below needs little scrolling. */}
       <div className="flex shrink-0 gap-3 border-b border-[var(--text-primary)] px-4 py-3">
-        <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-deep)]">
+        <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-sm border border-border-card bg-[var(--bg-deep)]">
           <Image
             src={event?.imageUrl || HISTORICAL_MAP_IMAGE}
             alt=""
@@ -868,7 +866,7 @@ function BattleContextPanel({
             <p className={PANEL_LABEL}>Gặp nhân vật lịch sử</p>
             {isAdmin && event && characters.length > 0 && (
               <Link
-                href={`/staff/contexts/${event.id}?tab=characters`}
+                href={linkHref}
                 className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--gold-on-light)] hover:underline"
               >
                 <Link2 size={13} /> Liên kết thêm
@@ -883,7 +881,7 @@ function BattleContextPanel({
                   type="button"
                   onClick={() => onOpenCharacter(character.id)}
                   title={`Trò chuyện với ${character.name}`}
-                  className="group flex min-w-0 items-center gap-2 rounded-[2px] border border-[var(--border-strong)] p-1.5 text-left transition-colors hover:border-[var(--text-primary)]"
+                  className="group flex min-w-0 items-center gap-2 rounded-sm border border-[var(--border-strong)] p-1.5 text-left transition-colors hover:border-[var(--text-primary)]"
                 >
                   <span className="relative grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full border border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] font-display text-sm font-bold text-[var(--gold-on-light)]">
                     {character.avatarUrl ? <Image src={character.avatarUrl} alt="" fill sizes="36px" className="object-cover" /> : character.name.charAt(0)}
@@ -901,17 +899,17 @@ function BattleContextPanel({
           {charactersLoading && <p className="text-sm text-[var(--text-tertiary)]">Đang tải nhân vật…</p>}
           {!charactersLoading && characters.length === 0 && (
             isAdmin && event ? (
-              <div className="rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3">
+              <div className="rounded-sm border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3">
                 <p className="text-sm text-[var(--text-tertiary)]">Bối cảnh này chưa liên kết nhân vật nào.</p>
                 <Link
-                  href={`/staff/contexts/${event.id}?tab=characters`}
+                  href={linkHref}
                   className="btn-ink mt-2 h-9 min-h-0 px-3 text-xs"
                 >
                   <Link2 size={15} /> Liên kết nhân vật
                 </Link>
               </div>
             ) : (
-              <p className="text-sm text-[var(--text-tertiary)]">Chưa có nhân vật cho trận đánh này.</p>
+              <p className="text-sm text-[var(--text-tertiary)]">Chưa có nhân vật liên kết.</p>
             )
           )}
         </section>
@@ -942,30 +940,45 @@ function BattleContextPanel({
 
       <div className="mt-auto shrink-0 space-y-2 border-t border-[var(--text-primary)] px-4 py-3">
         {isAdmin ? (
+          // Nut chinh la buoc tiep theo: chua ghim thi ghim truoc, da ghim thi soan luoc do.
           <>
-            <button
-              type="button"
-              onClick={onOpenEditor}
-              disabled={!event}
-              className="btn-crimson h-11 min-h-0 w-full px-3 text-xs disabled:opacity-45"
-            >
-              <SquarePen size={17} /> Chỉnh sửa lược đồ trận đánh
-            </button>
-            <div className="grid grid-cols-3 gap-2">
-              <button type="button" onClick={onOpenDetail} disabled={!event} title="Xem trang trận đánh như người học" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[2px] border border-[var(--text-primary)] text-xs font-bold transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] disabled:opacity-45">
-                <Eye size={15} /> Xem trước
-              </button>
-              <button type="button" onClick={onStartAdding} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[2px] border border-[var(--text-primary)] text-xs font-bold transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]">
-                <LocateFixed size={15} /> {pin ? "Đổi ghim" : "Ghim vị trí"}
-              </button>
+            {pin ? (
               <button
                 type="button"
-                onClick={() => void onDelete()}
-                disabled={!canDelete || isDeleting}
-                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[2px] border border-[var(--accent-danger)] text-xs font-bold text-[var(--accent-danger)] hover:bg-[var(--status-danger-bg)] disabled:opacity-45"
+                onClick={onOpenEditor}
+                disabled={!event}
+                className="btn-crimson h-11 min-h-0 w-full px-3 text-xs disabled:opacity-45"
               >
-                {isDeleting ? <Loader2 className="animate-spin" size={15} /> : <Trash2 size={15} />} Xóa ghim
+                <SquarePen size={17} /> Soạn lược đồ diễn biến
               </button>
+            ) : (
+              <button type="button" onClick={onStartAdding} disabled={!event} className="btn-crimson h-11 min-h-0 w-full px-3 text-xs disabled:opacity-45">
+                <LocateFixed size={17} /> Ghim vị trí lên bản đồ
+              </button>
+            )}
+            <div className={cn("grid gap-2", pin ? "grid-cols-3" : "grid-cols-2")}>
+              <button type="button" onClick={onOpenDetail} disabled={!event} title="Xem như người học" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-sm border border-[var(--text-primary)] text-xs font-bold transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] disabled:opacity-45">
+                <Eye size={15} /> Xem trước
+              </button>
+              {pin ? (
+                <>
+                  <button type="button" onClick={onStartAdding} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-sm border border-[var(--text-primary)] text-xs font-bold transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]">
+                    <LocateFixed size={15} /> Đổi ghim
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void onDelete()}
+                    disabled={!canDelete || isDeleting}
+                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-sm border border-[var(--accent-danger)] text-xs font-bold text-[var(--accent-danger)] hover:bg-[var(--status-danger-bg)] disabled:opacity-45"
+                  >
+                    {isDeleting ? <Loader2 className="animate-spin" size={15} /> : <Trash2 size={15} />} Xóa ghim
+                  </button>
+                </>
+              ) : (
+                <button type="button" onClick={onOpenEditor} disabled={!event} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-sm border border-[var(--text-primary)] text-xs font-bold transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] disabled:opacity-45">
+                  <SquarePen size={15} /> Soạn lược đồ
+                </button>
+              )}
             </div>
           </>
         ) : (
@@ -1013,12 +1026,12 @@ function CreatePinPanel({ battleTitle, initialPin, coordinates, year, isSubmitti
       <div className="border-b border-[var(--text-primary)] p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="archive-title text-[22px]">Ghim vị trí trận đánh</h2>
+            <h2 className="archive-title text-[22px]">Ghim vị trí</h2>
             <p className="mt-1 text-xs leading-relaxed text-[var(--text-tertiary)]">
               {coordinates ? `${coordinates.latitude.toFixed(5)}, ${coordinates.longitude.toFixed(5)} · ${formatYear(year)}` : "Chưa chọn vị trí"}
             </p>
           </div>
-          <button type="button" onClick={onCancel} className="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] hover:bg-[var(--sidebar-hover-bg)]" aria-label="Hủy">
+          <button type="button" onClick={onCancel} className="grid h-8 w-8 shrink-0 place-items-center rounded-sm hover:bg-[var(--sidebar-hover-bg)]" aria-label="Hủy">
             <X size={17} />
           </button>
         </div>
@@ -1026,9 +1039,9 @@ function CreatePinPanel({ battleTitle, initialPin, coordinates, year, isSubmitti
 
       <div className="flex-1 space-y-5 p-5">
         {!coordinates && (
-          <div className="flex items-start gap-3 rounded-[2px] border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] p-4 text-sm text-[var(--gold-on-light)]">
+          <div className="flex items-start gap-3 rounded-sm border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] p-4 text-sm text-[var(--gold-on-light)]">
             <LocateFixed className="mt-0.5 shrink-0" size={18} />
-            <span>Bấm lên bản đồ để chọn nơi diễn ra trận đánh.</span>
+            <span>Bấm lên bản đồ để chọn nơi diễn ra sự kiện.</span>
           </div>
         )}
 
@@ -1041,12 +1054,12 @@ function CreatePinPanel({ battleTitle, initialPin, coordinates, year, isSubmitti
             required
             disabled={!coordinates}
             placeholder="Ví dụ: Trung tâm trận Bạch Đằng"
-            className="h-11 w-full rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 text-base outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:bg-[var(--bg-deep)]"
+            className="h-11 w-full rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 text-base outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:bg-[var(--bg-deep)]"
           />
         </label>
 
         <p className="text-xs leading-relaxed text-[var(--text-secondary)]">
-          Thuyết minh diễn biến soạn theo từng giai đoạn trong «Chỉnh sửa lược đồ trận đánh».
+          Thuyết minh diễn biến soạn theo từng giai đoạn trong «Soạn lược đồ diễn biến».
         </p>
       </div>
 

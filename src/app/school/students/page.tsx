@@ -327,7 +327,7 @@ function StudentsContent() {
             </BulkActionBar>
 
             {rows.length === 0 ? (
-              <div className="border-y border-[var(--text-primary)]">
+              <div className="border-y border-border-card">
                 {filtered ? (
                   <NoResults
                     onReset={() => {
@@ -347,12 +347,12 @@ function StudentsContent() {
                 )}
               </div>
             ) : (
-              <div className={cn("relative overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]", students.isFetching && "opacity-70")}>
+              <div className={cn("relative overflow-x-auto rounded-lg border border-border-card bg-[var(--bg-surface)]", students.isFetching && "opacity-70")}>
                 <FetchingBar active={students.isFetching} />
                 <Table className="min-w-max">
                   <caption className="sr-only">Danh sách học sinh</caption>
                   <TableHeader>
-                    <TableRow className="border-b border-[var(--border-strong)] hover:bg-transparent">
+                    <TableRow className="border-b border-border-card">
                       <TableHead className="w-10 px-3">
                         <Checkbox
                           checked={headerChecked}

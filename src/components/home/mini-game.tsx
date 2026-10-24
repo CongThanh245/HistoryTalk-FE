@@ -61,7 +61,7 @@ function ResultBanner({
     <div className="flex flex-col gap-2 mt-1">
       {/* Status */}
       <div
-        className={`rounded-[2px] px-3.5 py-2.5 border ${
+        className={`rounded-sm px-3.5 py-2.5 border ${
           correct
             ? "bg-[var(--status-success-bg)] border-[var(--status-success)]"
             : "bg-[var(--status-danger-bg)] border-[var(--accent-danger)]"
@@ -83,7 +83,7 @@ function ResultBanner({
           Xem giải thích →
         </button>
       ) : (
-        <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-[2px] px-[13px] py-2.5">
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-sm px-[13px] py-2.5">
           <p className="m-0 text-[12.5px] leading-[1.7] text-[var(--text-secondary)]">
             {explanation}
           </p>
@@ -145,12 +145,12 @@ function OptionBtn({
   return (
     <button
       onClick={onClick}
-      className={`rounded-[2px] border px-3 py-[9px] text-[13px] text-left flex items-center gap-2.5 w-full transition-[background,border-color,color] duration-[120ms] ${tone} ${
+      className={`rounded-sm border px-3 py-[9px] text-[13px] text-left flex items-center gap-2.5 w-full transition-[background,border-color,color] duration-[120ms] ${tone} ${
         answered ? "cursor-default" : "cursor-pointer"
       }`}
     >
       <span
-        className={`text-[10px] font-extrabold min-w-5 h-5 flex items-center justify-center rounded-[2px] border shrink-0 ${letterTone}`}
+        className={`text-[10px] font-extrabold min-w-5 h-5 flex items-center justify-center rounded-sm border shrink-0 ${letterTone}`}
       >
         {letters[index]}
       </span>
@@ -183,7 +183,7 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
   return (
     <div className="flex flex-col gap-[11px]">
       {/* Hint card */}
-      <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-[2px] px-4 py-3.5">
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-sm px-4 py-3.5">
         <p className="m-0 mb-2.5 text-[11px] font-bold tracking-[0.14em] uppercase text-[var(--gold-on-light)]">
           Đây là ai?
         </p>
@@ -199,7 +199,7 @@ function GameGuessCharacter({ onScore }: { onScore: (c: boolean) => void }) {
         {!answered && hintsRevealed < q.hints.length && (
           <button
             onClick={() => setHintsRevealed((n) => n + 1)}
-            className="mt-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] bg-transparent border border-[var(--text-primary)] rounded-[2px] px-2.5 py-1 cursor-pointer transition-colors duration-100 hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+            className="mt-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] bg-transparent border border-[var(--text-primary)] rounded-sm px-2.5 py-1 cursor-pointer transition-colors duration-100 hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
           >
             + Gợi ý thêm ({q.hints.length - hintsRevealed} còn lại)
           </button>
@@ -255,7 +255,7 @@ function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
   return (
     <div className="flex flex-col gap-[11px]">
       {/* Year showcase */}
-      <div className="bg-[var(--bg-elevated)] border border-[var(--text-primary)] rounded-[2px] px-4 py-[18px] text-center">
+      <div className="bg-[var(--bg-elevated)] border border-border-card rounded-sm px-4 py-[18px] text-center">
         <p className="m-0 mb-1 text-[11px] font-bold tracking-[0.14em] uppercase text-[var(--text-tertiary)]">
           Năm xảy ra sự kiện
         </p>
@@ -268,7 +268,7 @@ function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
           {q.clues.map((c, i) => (
             <span
               key={i}
-              className="text-[11px] font-semibold px-2.5 py-[3px] rounded-[2px] bg-transparent border border-[var(--border-strong)] text-[var(--text-secondary)]"
+              className="text-[11px] font-semibold px-2.5 py-[3px] rounded-sm bg-transparent border border-[var(--border-strong)] text-[var(--text-secondary)]"
             >
               {c}
             </span>
@@ -378,7 +378,7 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               }}
               onDragEnd={handleDrop}
               onDragOver={(e) => e.preventDefault()}
-              className={`rounded-[2px] border px-[13px] py-2.5 flex items-center gap-2.5 transition-all duration-[120ms] select-none ${
+              className={`rounded-sm border px-[13px] py-2.5 flex items-center gap-2.5 transition-all duration-[120ms] select-none ${
                 submitted ? "cursor-default" : "cursor-grab"
               } ${isDraggingThis ? "opacity-35" : "opacity-100"}`}
               style={{
@@ -422,7 +422,7 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               {/* Year badge (post-submit) */}
               {submitted && (
                 <span
-                  className={`text-[11px] font-extrabold rounded-[2px] px-[7px] py-px border ${
+                  className={`text-[11px] font-extrabold rounded-sm px-[7px] py-px border ${
                     placedOk
                       ? "text-[var(--status-success)] bg-[var(--status-success-bg)] border-[var(--status-success-border)]"
                       : "text-[var(--accent-danger)] bg-[var(--status-danger-bg)] border-[var(--status-danger-border)]"
@@ -433,7 +433,7 @@ function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               )}
 
               {/* Position number */}
-              <span className="font-display text-[12px] font-extrabold min-w-5 h-5 flex items-center justify-center rounded-[2px] border border-[var(--text-primary)] text-[var(--text-primary)] shrink-0">
+              <span className="font-display text-[12px] font-extrabold min-w-5 h-5 flex items-center justify-center rounded-sm border border-border-card text-[var(--text-primary)] shrink-0">
                 {i + 1}
               </span>
             </div>
@@ -501,7 +501,7 @@ export function HistoryMiniGame() {
   };
 
   return (
-    <div className="bg-[var(--bg-surface)] border border-[var(--text-primary)] rounded-[2px] overflow-hidden">
+    <div className="bg-[var(--bg-surface)] border border-border-card rounded-sm overflow-hidden">
       {/* Header — chỉ text, không icon */}
       <div className="px-[18px] pt-3.5 pb-3 border-b border-[var(--text-primary)] flex items-center justify-between">
         <div>
@@ -517,7 +517,7 @@ export function HistoryMiniGame() {
 
         <button
           onClick={handleSwitchGame}
-          className="text-[11px] font-bold uppercase tracking-[0.1em] cursor-pointer px-[11px] py-[6px] rounded-[2px] bg-transparent border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors duration-[120ms] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+          className="text-[11px] font-bold uppercase tracking-[0.1em] cursor-pointer px-[11px] py-[6px] rounded-sm bg-transparent border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors duration-[120ms] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
         >
           Game khác
         </button>

@@ -127,7 +127,7 @@ export function MarketingNavbar() {
             marketing-nav
             border
             transition-all duration-300
-            w-full rounded-[2px]
+            w-full rounded-sm
             md:max-w-fit
             [contain:layout_style_paint]
           `}
@@ -229,7 +229,7 @@ export function MarketingNavbar() {
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="Toggle menu"
-                className="flex items-center justify-center w-10 h-10 rounded-[2px] bg-transparent border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors active:bg-[var(--bg-surface)] shrink-0"
+                className="flex items-center justify-center w-10 h-10 rounded-sm bg-transparent border border-border-card text-[var(--text-primary)] transition-colors active:bg-[var(--bg-surface)] shrink-0"
               >
                 {isOpen ? (
                   <svg

@@ -13,7 +13,7 @@ export function ClosingSection() {
   return (
     <section ref={sectionRef} className="min-h-svh overflow-hidden bg-(--bg-main) py-7 md:py-20">
       <Container>
-        <div data-motion-card className="relative flex min-h-[calc(100svh-3.5rem)] justify-center overflow-hidden rounded-[2px] border border-(--text-primary) bg-(--bg-surface) md:min-h-[380px] sm:min-h-[520px] lg:h-[600px]">
+        <div data-motion-card className="relative flex min-h-[calc(100svh-3.5rem)] justify-center overflow-hidden rounded-sm border border-(--text-primary) bg-(--bg-surface) md:min-h-[380px] sm:min-h-[520px] lg:h-[600px]">
           <div className="absolute left-1/2 top-0 hidden h-28 w-px -translate-x-1/2 bg-(--accent-gold) lg:block" />
 
           <div className="absolute inset-0 z-10 hidden items-end justify-center pointer-events-none sm:flex">
@@ -43,7 +43,7 @@ export function ClosingSection() {
                 <MagneticButton
                   href="/home"
                   size="md"
-                  className="!rounded-[2px] px-6 py-3 md:px-10 md:py-5"
+                  className="!rounded-sm px-6 py-3 md:px-10 md:py-5"
                 >
                   Bắt đầu ngay
                 </MagneticButton>

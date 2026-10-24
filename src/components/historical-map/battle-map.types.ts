@@ -41,6 +41,8 @@ export const SYMBOL_SIZE_MIN = 2;
 export const SYMBOL_SIZE_MAX = 60;
 
 export interface BattleFaction { id: string; name: string; color: string }
+/** Point on the image, in % of its width (x) and height (y). */
+export interface MapPoint { x: number; y: number }
 export interface BattleSymbol {
   id: string;
   type: BattleSymbolType;
@@ -55,6 +57,33 @@ export interface BattleSymbol {
   phaseId?: string;
   /** How the symbol appears during playback; missing = "auto" (chosen from the type). */
   effect?: SymbolEffect;
+  /**
+   * Line symbols: route through these points, drawn as a smooth curve. x/y/size then hold the centre and
+   * width of its bounding box. Missing = a straight line from x, y, size and rotation (older maps).
+   */
+  points?: MapPoint[];
+  /** Line symbols: stroke weight multiplier; missing = 1. */
+  weight?: number;
+}
+
+/** Line symbol following `points`, with x/y/size kept on its bounding box (camera, selection, badges). */
+export function withPoints(symbol: BattleSymbol, points: MapPoint[]): BattleSymbol {
+  const xs = points.map(p => p.x), ys = points.map(p => p.y);
+  const round = (v: number) => Math.round(v * 10) / 10;
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  return {
+    ...symbol, points: points.map(p => ({ x: round(clampPercent(p.x)), y: round(clampPercent(p.y)) })),
+    x: round((x0 + x1) / 2), y: round((y0 + y1) / 2), size: round(Math.max(SYMBOL_SIZE_MIN, Math.min(SYMBOL_SIZE_MAX, x1 - x0))),
+  };
+}
+
+/** Moves a symbol's centre to x, y; a route moves as a whole and stops at the image edge. */
+export function moveSymbol(symbol: BattleSymbol, x: number, y: number): BattleSymbol {
+  if (!symbol.points) return { ...symbol, x, y };
+  const xs = symbol.points.map(p => p.x), ys = symbol.points.map(p => p.y);
+  const dx = Math.max(-Math.min(...xs), Math.min(100 - Math.max(...xs), x - symbol.x));
+  const dy = Math.max(-Math.min(...ys), Math.min(100 - Math.max(...ys), y - symbol.y));
+  return withPoints(symbol, symbol.points.map(p => ({ x: p.x + dx, y: p.y + dy })));
 }
 
 export const SYMBOL_EFFECTS = { auto: "Tự động", draw: "Vẽ dần", fade: "Hiện dần", pop: "Bật ra", pulse: "Nhấp nháy" } as const;
@@ -114,7 +143,10 @@ export function isBattleMap(value: unknown): value is BattleMap {
       && [s.x, s.y, s.size, s.rotation].every(Number.isFinite)
       && s.x >= 0 && s.x <= 100 && s.y >= 0 && s.y <= 100 && s.size >= SYMBOL_SIZE_MIN && s.size <= SYMBOL_SIZE_MAX
       && (s.phaseId === undefined || typeof s.phaseId === "string")
-      && (s.effect === undefined || Object.hasOwn(SYMBOL_EFFECTS, s.effect)))
+      && (s.effect === undefined || Object.hasOwn(SYMBOL_EFFECTS, s.effect))
+      && (s.points === undefined || (Array.isArray(s.points) && s.points.length >= 2
+        && s.points.every(p => p && Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= 0 && p.x <= 100 && p.y >= 0 && p.y <= 100)))
+      && (s.weight === undefined || (Number.isFinite(s.weight) && s.weight > 0)))
     && (map.phases === undefined || (Array.isArray(map.phases) && map.phases.every(p => p && typeof p.id === "string"
       && typeof p.title === "string" && typeof p.narration === "string" && ["auto", "full", "frame"].includes(p.camera)
       && (p.focus === undefined || isCameraRect(p.focus)))));

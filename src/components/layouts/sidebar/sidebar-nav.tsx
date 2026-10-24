@@ -39,11 +39,12 @@ function activeHrefFor(pathname: string, sections: SidebarSection[]) {
   let bestLength = -1;
   for (const section of sections) {
     for (const item of section.items) {
-      const path = pathOf(item.href);
-      const matches = item.exact || path === "/" ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
-      if (matches && path.length > bestLength) {
-        best = item.href;
-        bestLength = path.length;
+      for (const path of [pathOf(item.href), ...(item.activePaths ?? [])]) {
+        const matches = item.exact || path === "/" ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
+        if (matches && path.length > bestLength) {
+          best = item.href;
+          bestLength = path.length;
+        }
       }
     }
   }
@@ -77,16 +78,16 @@ function NavItem({
         onNavigate();
       }}
       className={cn(
-        "relative flex group items-center gap-3 rounded-[2px] text-sm font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
-        isExpanded ? "px-3 py-2" : "w-10 h-10 justify-center mx-auto",
+        "relative flex group items-center gap-2.5 rounded-lg text-sm transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
+        isExpanded ? "h-8 px-2.5" : "w-10 h-9 justify-center mx-auto",
         !isActive &&
-          "hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--text-primary)] text-[var(--sidebar-nav-text)]",
-        isActive && "bg-accent-gold-active text-[var(--sidebar-active-text)]",
+          "font-medium hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--text-primary)] text-[var(--sidebar-nav-text)]",
+        isActive && "font-semibold bg-accent-gold-active text-[var(--sidebar-active-text)]",
       )}
     >
       <Icon
         className={cn(
-          "shrink-0 w-[17px] h-[17px]",
+          "shrink-0 w-4 h-4",
           isActive ? "text-[var(--sidebar-active-text)]" : "text-[var(--sidebar-nav-icon)] group-hover:text-[var(--text-primary)]"
         )}
       />
@@ -119,11 +120,14 @@ export default function SidebarNav({
   sections,
   catalogUrls,
   onRememberCatalogUrl,
+  onNavigate,
 }: {
   isExpanded: boolean;
   sections: SidebarSection[];
   catalogUrls: Partial<Record<CatalogPath, string>>;
   onRememberCatalogUrl: (path: CatalogPath, url: string) => void;
+  /** Closes the mobile drawer once a page is picked. */
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const activeHref = activeHrefFor(pathname, sections);
@@ -133,15 +137,16 @@ export default function SidebarNav({
     if (url) {
       onRememberCatalogUrl(path as CatalogPath, url);
     }
+    onNavigate?.();
   };
 
   return (
-    <nav className="relative z-10 flex-1 overflow-hidden py-4 space-y-4">
+    <nav className="relative z-10 flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-1 space-y-4 [scrollbar-width:none]">
       {sections.map((section) => (
-        <div key={section.title} className={cn(isExpanded ? "px-3" : "px-2")}>
+        <div key={section.title} className={cn(isExpanded ? "px-2.5" : "px-2")}>
           {isExpanded ? (
             <p
-              className="mb-1.5 flex items-center gap-2 px-2 text-[10px] font-bold tracking-[0.14em] uppercase text-[var(--sidebar-section-label)]"
+              className="mb-1 flex items-center gap-2 px-2.5 text-[11px] font-semibold tracking-[0.06em] uppercase text-[var(--sidebar-section-label)]"
             >
               {section.brand && (
                 <Image src="/solo-logo.png" alt="" width={14} height={14} unoptimized className="h-3.5 w-3.5 shrink-0 object-contain" />
@@ -153,7 +158,7 @@ export default function SidebarNav({
               className="mb-2 mx-auto h-px w-6 bg-border-default"
             />
           )}
-          <div className="space-y-2">
+          <div className="space-y-0.5">
             {section.items.map((item) => (
               <NavItem
                 key={item.href}

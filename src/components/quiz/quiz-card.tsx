@@ -50,14 +50,14 @@ function LevelMeter({ level }: { level: QuizSet["level"] }) {
           <span
             key={step}
             className={cn(
-              "w-[5px]",
+              "w-[5px] rounded-[1px]",
               step === 1 ? "h-[7px]" : step === 2 ? "h-[10px]" : "h-[13px]",
               step <= meter.steps ? meter.color : "bg-[var(--border-strong)]",
             )}
           />
         ))}
       </span>
-      <span className={cn("text-[11px] font-bold uppercase tracking-[0.1em]", meter.text)}>
+      <span className={cn("text-[13px] font-semibold", meter.text)}>
         {LEVEL_LABELS[level] ?? level}
       </span>
     </span>
@@ -70,7 +70,7 @@ export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured 
       <button
         onClick={() => onStart(quiz.quizId)}
         className={cn(
-          "w-full cursor-pointer text-left px-4 py-3 rounded-[2px] transition-colors duration-200 border-b border-[var(--border-default)] ",
+          "w-full cursor-pointer rounded-lg px-3 py-2.5 text-left transition-colors duration-150",
           isActive
             ? "bg-[var(--accent-gold-active-bg)] "
             : "bg-transparent hover:bg-[var(--bg-elevated)]",
@@ -78,14 +78,14 @@ export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured 
       >
         <p
           className={cn(
-            "archive-title is-plain text-[16px] line-clamp-2",
+            "line-clamp-2 text-sm font-semibold leading-snug",
             isActive ? "text-[var(--gold-on-light)]" : "text-content-heading",
           )}
         >
           {quiz.title}
         </p>
         {quiz.contextTitle && (
-          <p className="text-[11px] mt-1 truncate font-semibold uppercase tracking-[0.08em] text-content-muted">
+          <p className="mt-0.5 truncate text-xs text-content-muted">
             {quiz.contextTitle}
           </p>
         )}
@@ -109,8 +109,8 @@ export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured 
         }
       }}
       className={cn(
-        "group relative flex h-full cursor-pointer overflow-hidden rounded-[2px] border transition-colors duration-200",
-        "border-[var(--border-strong)] hover:border-[var(--text-primary)] focus-visible:outline-none focus-visible:border-[var(--text-primary)] focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]",
+        "group relative flex h-full cursor-pointer overflow-hidden rounded-xl border transition-[border-color,box-shadow] duration-200",
+        "border-border-card hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]",
         featured ? "flex-col md:flex-row" : "flex-col",
         isActive ? "bg-[var(--accent-gold-active-bg)]" : "bg-[var(--bg-surface)]",
       )}
@@ -129,11 +129,11 @@ export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured 
           sizes={featured ? "(max-width: 768px) 100vw, 40vw" : "(max-width: 768px) 50vw, 25vw"}
           className="archive-photo object-cover group-hover:scale-[1.04]"
         />
-        <span className="absolute left-0 top-0 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] bg-[var(--text-primary)] text-accent-brass-on-ink">
+        <span className="absolute left-2.5 top-2.5 rounded-full bg-black/60 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
           {ERA_LABELS[quiz.era] ?? quiz.era}
         </span>
         {featured && (
-          <span className="absolute right-0 top-0 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] bg-[var(--accent-gold)] text-white">
+          <span className="absolute right-2.5 top-2.5 rounded-full bg-[var(--accent-gold)] px-2.5 py-0.5 text-xs font-semibold text-white">
             Đề nổi bật
           </span>
         )}
@@ -142,15 +142,15 @@ export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured 
       {/* Body */}
       <div className={cn("flex min-w-0 flex-1 flex-col", featured ? "p-4 md:p-6" : "p-3 md:p-4")}>
         {quiz.contextTitle && (
-          <p className="text-[10.5px] font-bold uppercase tracking-[0.1em] line-clamp-1 text-accent-gold">
+          <p className="line-clamp-1 text-[13px] font-medium text-[var(--gold-on-light)]">
             {quiz.contextTitle}
           </p>
         )}
 
         <h3
           className={cn(
-            "archive-title is-plain mt-1 line-clamp-2",
-            featured ? "text-[24px] md:text-[32px]" : "text-[18px] md:text-[20px]",
+            "archive-title is-plain mt-1",
+            featured ? "line-clamp-4 text-[22px] md:text-2xl" : "line-clamp-2 text-[17px] md:text-lg",
           )}
         >
           {quiz.title}
@@ -160,17 +160,17 @@ export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
             <LevelMeter level={quiz.level} />
             {minutes && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">
-                <Clock className="h-3 w-3" aria-hidden="true" /> {minutes} phút
+              <span className="inline-flex items-center gap-1 text-[13px] text-content-muted">
+                <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {minutes} phút
               </span>
             )}
             {quiz.playCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">
-                <Users className="h-3 w-3" aria-hidden="true" /> {quiz.playCount.toLocaleString("vi-VN")}
+              <span className="inline-flex items-center gap-1 text-[13px] text-content-muted" title="Lượt làm">
+                <Users className="h-3.5 w-3.5" aria-hidden="true" /> {quiz.playCount.toLocaleString("vi-VN")}
               </span>
             )}
             {quiz.rating ? (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-content-text">
+              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-content-text">
                 <Star size={12} fill="var(--accent-gold)" color="var(--accent-gold)" strokeWidth={0} />
                 {quiz.rating.toFixed(1)}
               </span>
@@ -178,7 +178,7 @@ export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured 
           </div>
 
           <div className="mt-3 flex items-center justify-end border-t border-[var(--border-default)] pt-2.5">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-content-heading transition-colors group-hover:text-accent-gold">
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-content-heading transition-colors group-hover:text-[var(--accent-gold)]">
               Làm bài
               <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
             </span>
@@ -186,8 +186,6 @@ export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured 
         </div>
       </div>
 
-      {/* Same progress line as the timeline card */}
-      <span className="absolute bottom-0 left-0 h-[3px] w-0 bg-accent-gold transition-all duration-500 ease-out group-hover:w-full" aria-hidden="true" />
     </article>
   );
 }

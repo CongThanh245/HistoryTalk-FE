@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils/cn";
 
 const themedCardVariants = cva(
-  "rounded-[2px] border transition-colors",
+  "rounded-sm border transition-colors",
   {
     variants: {
       surface: {

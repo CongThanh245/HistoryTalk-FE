@@ -760,14 +760,14 @@ export function ChatMain({
         {/* Mobile hamburger: open website sidebar */}
         <button
           onClick={toggleMobileSidebar}
-          className="md:hidden w-8 h-8 flex items-center justify-center rounded-[2px] cursor-pointer hover:bg-[var(--status-neutral-bg)] active:scale-95 text-content-text"
+          className="md:hidden w-8 h-8 flex items-center justify-center rounded-sm cursor-pointer hover:bg-[var(--status-neutral-bg)] active:scale-95 text-content-text"
           aria-label="Mở menu"
         >
           <Menu className="w-5 h-5" />
         </button>
 
         <div
-          className="w-11 h-11 rounded-[2px] flex items-center justify-center shrink-0 overflow-hidden bg-[var(--bg-deep)] border border-[var(--text-primary)]"
+          className="w-11 h-11 rounded-sm flex items-center justify-center shrink-0 overflow-hidden bg-[var(--bg-deep)] border border-border-card"
         >
           {!headerAvatarBroken && isValidUrl(character.imageUrl) ? (
             <img
@@ -805,7 +805,7 @@ export function ChatMain({
                   side="top"
                   align="start"
                   sideOffset={10}
-                  className="max-w-[min(380px,90vw)] whitespace-normal rounded-[2px] bg-bg-elevated border border-[var(--text-primary)] text-content-heading shadow-(--shadow-soft)"
+                  className="max-w-[min(380px,90vw)] whitespace-normal rounded-sm bg-bg-elevated border border-border-card text-content-heading shadow-(--shadow-soft)"
                 >
                   <p className="text-xs font-bold leading-relaxed">Đây là AI nhập vai {character.name}, không phải nhân vật thật.</p>
                   <ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs leading-relaxed">
@@ -881,7 +881,7 @@ export function ChatMain({
                 : "Đang khởi tạo..."
           }
           className={cn(
-            "group/call w-8 h-8 flex items-center justify-center rounded-[2px] transition-colors active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
+            "group/call w-8 h-8 flex items-center justify-center rounded-sm transition-colors active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
             showVoiceNudge && "voice-call-nudge",
             canUseVoiceCall
               ? "bg-transparent border border-[var(--text-primary)] hover:bg-[var(--text-primary)]"
@@ -920,7 +920,7 @@ export function ChatMain({
                 : "Đang khởi tạo..."
           }
           className={cn(
-            "group/call w-8 h-8 flex items-center justify-center rounded-[2px] transition-colors active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
+            "group/call w-8 h-8 flex items-center justify-center rounded-sm transition-colors active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed",
             showVoiceNudge && "voice-call-nudge voice-call-nudge--delay",
             canUseVideoCall
               ? "bg-transparent border border-[var(--text-primary)] hover:bg-[var(--text-primary)]"
@@ -940,7 +940,7 @@ export function ChatMain({
           <button
             onClick={toggleRightPanel}
             className={cn(
-              "md:hidden w-8 h-8 flex items-center justify-center rounded-[2px] cursor-pointer active:scale-95",
+              "md:hidden w-8 h-8 flex items-center justify-center rounded-sm cursor-pointer active:scale-95",
               isRightOpen ? "bg-[var(--text-primary)] text-[var(--text-inverse)]" : "text-content-text hover:bg-[var(--status-neutral-bg)]",
             )}
             aria-label="Mở bảng điều khiển"
@@ -1018,7 +1018,7 @@ export function ChatMain({
               <button
                 key={i}
                 onClick={() => handleSend(q)}
-                className="text-xs text-left px-3 py-1.5 rounded-[2px] border cursor-pointer transition-colors bg-transparent border-[var(--border-strong)] text-content-text hover:bg-[var(--text-primary)] hover:border-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+                className="text-xs text-left px-3 py-1.5 rounded-sm border cursor-pointer transition-colors bg-transparent border-[var(--border-strong)] text-content-text hover:bg-[var(--text-primary)] hover:border-[var(--text-primary)] hover:text-[var(--text-inverse)]"
               >
                 {q}
               </button>
@@ -1208,7 +1208,7 @@ function VoiceCallBubble({
   return (
     <div className="flex justify-end px-4 mb-4">
       <div
-        className="w-[240px] overflow-hidden rounded-[2px] border bg-bg-surface border-[var(--text-primary)]"
+        className="w-[240px] overflow-hidden rounded-sm border bg-bg-surface border-[var(--text-primary)]"
       >
         <button
           type="button"
@@ -1217,7 +1217,7 @@ function VoiceCallBubble({
           className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer transition-colors hover:bg-[var(--status-neutral-bg)]"
         >
           <div
-            className="w-10 h-10 rounded-[2px] flex items-center justify-center shrink-0 bg-[var(--text-primary)] text-[var(--text-inverse)]"
+            className="w-10 h-10 rounded-sm flex items-center justify-center shrink-0 bg-[var(--text-primary)] text-[var(--text-inverse)]"
           >
             <PhoneCall className="w-5 h-5 fill-current" />
           </div>
@@ -1257,7 +1257,7 @@ function VoiceCallTranscriptDialog({
   return (
     <Dialog open={!!call} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-h-[80vh] overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-bg-surface"
+        className="max-h-[80vh] overflow-hidden rounded-sm border border-border-card bg-bg-surface"
       >
         <DialogHeader>
           <DialogTitle className="archive-title is-plain text-xl">
@@ -1276,7 +1276,7 @@ function VoiceCallTranscriptDialog({
               >
                 <div
                   className={cn(
-                    "max-w-[82%] rounded-[2px] px-4 py-2.5 text-sm leading-relaxed",
+                    "max-w-[82%] rounded-sm px-4 py-2.5 text-sm leading-relaxed",
                     isUser
                       ? "bg-accent-gold text-white"
                       : "bg-bg-elevated text-content-heading border border-(--border-strong)",

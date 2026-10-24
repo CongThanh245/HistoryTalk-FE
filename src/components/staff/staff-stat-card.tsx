@@ -33,22 +33,22 @@ export function StaffStatCard({
 }: StaffStatCardProps) {
   return (
     <div
-      className={cn("rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4", className)}
+      className={cn("rounded-xl border border-border-card bg-[var(--bg-surface)] p-4", className)}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+          <p className="text-[13px] text-[var(--text-secondary)]">
             {label}
           </p>
           <p
-            className="mt-1 truncate font-display text-3xl font-extrabold leading-[1.2] text-content-heading"
+            className="mt-1 truncate text-[26px] font-bold leading-[1.2] tabular-nums text-content-heading"
             style={valueColor ? { color: valueColor } : undefined}
           >
             {value}
           </p>
         </div>
         {icon && (
-          <div className={cn("grid size-10 shrink-0 place-items-center rounded-[2px]", toneClasses[tone])}>
+          <div className={cn("grid size-10 shrink-0 place-items-center rounded-lg", toneClasses[tone])}>
             {icon}
           </div>
         )}

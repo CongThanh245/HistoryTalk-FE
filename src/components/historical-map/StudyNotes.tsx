@@ -19,7 +19,7 @@ export const STUDY_NOTE_COLOR = "#1E8A6E";
 
 const LABEL = "mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-tertiary)]";
 const FIELD =
-  "w-full rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 text-base outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:bg-[var(--bg-deep)] md:text-sm";
+  "w-full rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 text-base outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:bg-[var(--bg-deep)] md:text-sm";
 
 const formatYear = (year: number) => (year < 0 ? `${Math.abs(year)} TCN` : String(year));
 
@@ -46,7 +46,7 @@ export function StudyNotesSection(props: StudyNotesSectionProps) {
     return (
       <section>
         <p className={LABEL}>Ghi chú của tôi</p>
-        <div className="flex items-start gap-2 rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3 text-[13px] leading-5 text-[var(--text-secondary)]">
+        <div className="flex items-start gap-2 rounded-sm border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3 text-[13px] leading-5 text-[var(--text-secondary)]">
           <Bookmark size={15} className="mt-0.5 shrink-0 text-[var(--jade)]" aria-hidden="true" />
           <p className="min-w-0">
             <Link href={ROUTES.LOGIN} className="inline-flex items-center gap-1 font-bold text-[var(--text-primary)] underline-offset-4 hover:underline">
@@ -82,7 +82,7 @@ export function StudyNotesSection(props: StudyNotesSectionProps) {
       {loading ? (
         <p className="text-sm text-[var(--text-tertiary)]">Đang tải ghi chú…</p>
       ) : notes.length === 0 ? (
-        <div className="rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3">
+        <div className="rounded-sm border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3">
           <p className="text-[13px] leading-5 text-[var(--text-secondary)]">
             Đánh dấu một địa điểm của trận đánh kèm lời ghi chú để ôn lại sau. Chỉ mình bạn thấy.
           </p>
@@ -91,7 +91,7 @@ export function StudyNotesSection(props: StudyNotesSectionProps) {
           </button>
         </div>
       ) : (
-        <ul className="divide-y divide-[var(--border-default)] rounded-[2px] border border-[var(--border-default)]">
+        <ul className="divide-y divide-[var(--border-default)] rounded-sm border border-[var(--border-default)]">
           {notes.map((pin) => {
             const selected = pin.pinId === selectedId;
             return (
@@ -158,7 +158,7 @@ function NoteAction({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "inline-flex h-8 items-center gap-1 rounded-[2px] border px-2.5 text-[11px] font-bold transition-colors disabled:opacity-45",
+        "inline-flex h-8 items-center gap-1 rounded-sm border px-2.5 text-[11px] font-bold transition-colors disabled:opacity-45",
         danger
           ? "border-[var(--accent-danger)] text-[var(--accent-danger)] hover:bg-[var(--status-danger-bg)]"
           : "border-[var(--text-primary)] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]",
@@ -219,7 +219,7 @@ export function StudyNoteForm({
               {battleTitle} · {formatYear(year)}
             </p>
           </div>
-          <button type="button" onClick={onCancel} className="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] hover:bg-[var(--sidebar-hover-bg)]" aria-label="Hủy">
+          <button type="button" onClick={onCancel} className="grid h-8 w-8 shrink-0 place-items-center rounded-sm hover:bg-[var(--sidebar-hover-bg)]" aria-label="Hủy">
             <X size={17} />
           </button>
         </div>
@@ -227,12 +227,12 @@ export function StudyNoteForm({
 
       <div className="flex-1 space-y-5 p-5">
         {placing ? (
-          <div className="flex items-start gap-3 rounded-[2px] border border-[var(--jade)] bg-[var(--bg-main)] p-4 text-sm leading-6 text-[var(--text-primary)]">
+          <div className="flex items-start gap-3 rounded-sm border border-[var(--jade)] bg-[var(--bg-main)] p-4 text-sm leading-6 text-[var(--text-primary)]">
             <LocateFixed className="mt-1 shrink-0 text-[var(--jade)]" size={18} />
             <span>Chạm vào bản đồ để đặt ghi chú. Nhấn Esc để hủy.</span>
           </div>
         ) : (
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-[2px] border border-[var(--border-default)] bg-[var(--bg-main)] px-3 py-2 text-xs text-[var(--text-secondary)]">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[var(--border-default)] bg-[var(--bg-main)] px-3 py-2 text-xs text-[var(--text-secondary)]">
             <span className="tabular-nums">
               {coordinates ? `${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)}` : "Chưa chọn vị trí"}
             </span>

@@ -118,8 +118,8 @@ export function EventTimeline({
 
   return (
     <div ref={containerRef} className="space-y-3 overflow-hidden">
-      <div className="border-b border-[var(--text-primary)]">
-        <div className="flex w-fit items-end gap-8 md:gap-10">
+      <div className="border-b border-[var(--border-default)]">
+        <div className="flex w-fit items-end gap-6">
           {tabs.map((tab) => {
             const active = view === tab.value;
             return (
@@ -128,17 +128,17 @@ export function EventTimeline({
                 type="button"
                 onClick={() => onViewChange(tab.value)}
                 className={cn(
-                  "relative h-10 px-0.5 text-xs font-bold uppercase tracking-[0.12em] transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-main",
+                  "relative h-11 px-0.5 text-[15px] transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-main",
                   active
-                    ? "text-content-heading"
-                    : "text-content-muted hover:text-content-heading",
+                    ? "font-semibold text-content-heading"
+                    : "font-medium text-[var(--text-tertiary)] hover:text-content-heading",
                 )}
                 aria-pressed={active}
               >
                 {tab.label}
                 <span
                   className={cn(
-                    "absolute -bottom-px left-0 h-[3px] bg-accent-gold transition-all duration-200",
+                    "absolute -bottom-px left-0 h-[2px] bg-accent-gold transition-all duration-200",
                     active ? "w-full opacity-100" : "w-0 opacity-0",
                   )}
                 />
@@ -148,7 +148,7 @@ export function EventTimeline({
         </div>
       </div>
 
-      <EraFilter active={era} onChange={onEraChange} />
+      <EraFilter active={era} onChange={onEraChange} variant="chips" />
 
       {showSkeleton ? (
         <EventGridSkeleton />
@@ -161,7 +161,7 @@ export function EventTimeline({
       ) : view === "all" ? (
         <div
           key={animationSeed}
-          className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         >
           {staggeredEvents.map(({ event, delaySlot }) => (
             <EventPosterCard
@@ -257,7 +257,7 @@ function EventPosterCard({
       type="button"
       onClick={() => onSelect(event)}
       className={cn(
-        "event-card-rise group relative aspect-[1.05] min-h-[220px] overflow-hidden bg-card-light-border text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-main",
+        "event-card-rise group relative aspect-[1.05] min-h-[220px] overflow-hidden rounded-xl bg-card-light-border text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-main",
         EVENT_CARD_DELAY_CLASSES[delaySlot],
       )}
     >
@@ -302,11 +302,11 @@ const EVENT_CARD_DELAY_CLASSES = [
 
 function EventGridSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {Array.from({ length: 8 }).map((_, index) => (
         <div
           key={index}
-          className="aspect-[1.05] min-h-[220px] animate-pulse bg-card-light-border"
+          className="aspect-[1.05] min-h-[220px] animate-pulse rounded-xl bg-card-light-border"
         />
       ))}
     </div>

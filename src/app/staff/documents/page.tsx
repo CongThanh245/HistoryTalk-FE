@@ -37,8 +37,11 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectEmpty,
+  SelectSearch,
   SelectTrigger,
   SelectValue,
+  useSelectSearch,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -118,6 +121,7 @@ export default function StaffDocumentsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [search, setSearch] = React.useState("");
+  const ownerSearch = useSelectSearch();
   const [filter, setFilter] = React.useState<"all" | DocumentOwnerType>("all");
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
   const [detailOpen, setDetailOpen] = React.useState(false);
@@ -492,7 +496,7 @@ export default function StaffDocumentsPage() {
           return (
             <span
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-1 text-xs font-semibold",
+                "inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs font-semibold",
                 isCharacter
                   ? "border-accent-blue/25 bg-accent-blue/10 text-accent-blue"
                   : "border-accent-gold/30 bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]"
@@ -553,7 +557,7 @@ export default function StaffDocumentsPage() {
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="rounded-[2px] text-[var(--header-text-muted)]"
+                className="rounded-sm text-[var(--header-text-muted)]"
                 onClick={(e) => {
                   e.stopPropagation();
                   router.push(
@@ -569,7 +573,7 @@ export default function StaffDocumentsPage() {
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="rounded-[2px] text-accent-blue"
+                className="rounded-sm text-accent-blue"
                 disabled={
                   !hasDocId ||
                   updateCharacterDocument.isPending ||
@@ -587,7 +591,7 @@ export default function StaffDocumentsPage() {
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="rounded-[2px] text-[var(--accent-danger)]"
+                className="rounded-sm text-[var(--accent-danger)]"
                 disabled={
                   !hasDocId ||
                   deleteCharacterDocument.isPending ||
@@ -606,7 +610,7 @@ export default function StaffDocumentsPage() {
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-[2px] text-accent-blue"
+                  className="rounded-sm text-accent-blue"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedKey(row.original.key);
@@ -622,7 +626,7 @@ export default function StaffDocumentsPage() {
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-[2px] text-accent-gold"
+                  className="rounded-sm text-accent-gold"
                   disabled={getPdfUrl.isPending}
                   onClick={async (e) => {
                     e.stopPropagation();
@@ -668,7 +672,7 @@ export default function StaffDocumentsPage() {
       icon={BookOpen}
       accent="var(--accent-blue)"
     >
-      <section className="rounded-[2px] border p-6 bg-[var(--bg-surface)] border-[var(--text-primary)]">
+      <section className="rounded-xl border p-6 bg-[var(--bg-surface)] border-border-card">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="grid gap-3 sm:grid-cols-3">
             <SummaryCard label="Tổng tài liệu" value={rows.length} />
@@ -689,7 +693,7 @@ export default function StaffDocumentsPage() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Tìm tài liệu, nhân vật, bối cảnh..."
-                className="h-10 rounded-[2px] pl-9"
+                className="h-10 rounded-sm pl-9"
               />
             </div>
             <DropdownMenu>
@@ -774,7 +778,7 @@ export default function StaffDocumentsPage() {
               <form className="space-y-4" onSubmit={submitDocumentForm}>
                 <div className="space-y-2">
                   <Label>Đối tượng liên kết</Label>
-                  <div className="rounded-[2px] border px-3 py-2 text-sm border-card-light-border text-content-heading">
+                  <div className="rounded-sm border px-3 py-2 text-sm border-card-light-border text-content-heading">
                     {editingRow.ownerType === "character" ? "Nhân vật" : "Bối cảnh"}:{" "}
                     {editingRow.ownerName}
                   </div>
@@ -839,12 +843,15 @@ export default function StaffDocumentsPage() {
                       onValueChange={(value) =>
                         setDocumentForm((current) => ({ ...current, ownerId: value }))
                       }
+                      onOpenChange={ownerSearch.onOpenChange}
                     >
                       <SelectTrigger id="document-character" className="w-full">
                         <SelectValue placeholder="Chọn nhân vật" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {characters.map((character) => (
+                      <SelectContent className="max-h-80">
+                        <SelectSearch value={ownerSearch.search} onChange={ownerSearch.setSearch} placeholder="Tìm nhân vật..." />
+                        {!characters.some((character) => ownerSearch.matches(character.name)) && <SelectEmpty />}
+                        {characters.filter((character) => character.id === documentForm.ownerId || ownerSearch.matches(character.name)).map((character) => (
                           <SelectItem key={character.id} value={character.id}>
                             {character.name}
                           </SelectItem>
@@ -860,12 +867,15 @@ export default function StaffDocumentsPage() {
                       onValueChange={(value) =>
                         setDocumentForm((current) => ({ ...current, ownerId: value }))
                       }
+                      onOpenChange={ownerSearch.onOpenChange}
                     >
                       <SelectTrigger id="document-context" className="w-full">
                         <SelectValue placeholder="Chọn bối cảnh" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {contexts.map((context) => (
+                      <SelectContent className="max-h-80">
+                        <SelectSearch value={ownerSearch.search} onChange={ownerSearch.setSearch} placeholder="Tìm bối cảnh..." />
+                        {!contexts.some((context) => ownerSearch.matches(context.title)) && <SelectEmpty />}
+                        {contexts.filter((context) => context.id === documentForm.ownerId || ownerSearch.matches(context.title)).map((context) => (
                           <SelectItem key={context.id} value={context.id}>
                             {context.title}
                           </SelectItem>
@@ -997,7 +1007,7 @@ export default function StaffDocumentsPage() {
             titleBadge={
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] text-[10px] font-bold uppercase border",
+                  "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border",
                   selectedRow.ownerType === "character"
                     ? "bg-accent-blue/10 text-accent-blue border-accent-blue/25"
                     : "bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)] border-accent-gold/30"
@@ -1010,8 +1020,8 @@ export default function StaffDocumentsPage() {
             meta={
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Owner Info */}
-                <div className="rounded-[2px] border p-4 border-[var(--border-strong)] bg-[var(--bg-surface)]">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-content-heading">
+                <div className="rounded-sm border p-4 border-[var(--border-strong)] bg-[var(--bg-surface)]">
+                  <p className="text-sm font-semibold text-content-heading">
                     Đối tượng liên kết
                   </p>
                   <p className="mt-2 text-sm font-medium text-content-heading">
@@ -1071,8 +1081,8 @@ export default function StaffDocumentsPage() {
                 </div>
 
                 {/* Linked Characters */}
-                <div className="rounded-[2px] border p-4 border-[var(--border-strong)] bg-[var(--bg-surface)]">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-content-heading">
+                <div className="rounded-sm border p-4 border-[var(--border-strong)] bg-[var(--bg-surface)]">
+                  <p className="text-sm font-semibold text-content-heading">
                     Nhân vật sử dụng
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -1080,7 +1090,7 @@ export default function StaffDocumentsPage() {
                       selectedRow.linkedCharacters.map((character) => (
                         <span
                           key={character.id}
-                          className="inline-flex items-center gap-1 rounded-[2px] border px-2.5 py-1 text-xs font-medium border-accent-blue/25 bg-accent-blue/10 text-accent-blue"
+                          className="inline-flex items-center gap-1 rounded-sm border px-2.5 py-1 text-xs font-medium border-accent-blue/25 bg-accent-blue/10 text-accent-blue"
                         >
                           <User className="h-3 w-3" />
                           {character.name}
@@ -1104,7 +1114,7 @@ export default function StaffDocumentsPage() {
 
 function SummaryCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-[2px] border px-4 py-3 bg-card-light-bg border-card-light-border">
+    <div className="rounded-sm border px-4 py-3 bg-card-light-bg border-card-light-border">
       <p className="text-xs text-content-muted">
         {label}
       </p>

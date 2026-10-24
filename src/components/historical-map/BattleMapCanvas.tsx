@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Map, Minus, MoveHorizontal, Plus, RotateCcw, RotateCw } from "lucide-react";
-import { clampPercent, isLineSymbol, isNoteSymbol, resolveEffect, SYMBOL_LABELS, SYMBOL_SIZE_MAX, SYMBOL_SIZE_MIN, type BattleMap, type BattleSymbol, type BattleSymbolType, type CameraRect } from "./battle-map.types";
+import { ChevronDown, ChevronUp, Expand, Map, Minus, MoveHorizontal, Plus, RotateCcw, RotateCw } from "lucide-react";
+import { clampPercent, isLineSymbol, isNoteSymbol, resolveEffect, SYMBOL_LABELS, SYMBOL_SIZE_MAX, SYMBOL_SIZE_MIN, type BattleMap, type BattleSymbol, type BattleSymbolType, type CameraRect, type MapPoint } from "./battle-map.types";
+import { controlPoints, lineGeometry, pointsRect, simplify } from "./battle-path";
 import styles from "./battle-map-editor.module.css";
 
 const UNIT_BOX = <rect x="14" y="9" width="72" height="32" fill="white" />;
@@ -50,6 +51,12 @@ function symbolsRect(symbols: BattleSymbol[], aspect: number): CameraRect | null
   if (!symbols.length) return null;
   let x0 = 100, x1 = 0, y0 = 100, y1 = 0;
   for (const s of symbols) {
+    if (isLineSymbol(s.type)) {
+      const r = pointsRect(controlPoints(s, aspect));
+      x0 = Math.min(x0, r.x); x1 = Math.max(x1, r.x + r.w);
+      y0 = Math.min(y0, r.y); y1 = Math.max(y1, r.y + r.h);
+      continue;
+    }
     // Glyphs are 2:1 boxes measured in % of the image width; y extents convert to % of the height.
     const a = s.rotation * Math.PI / 180, w = s.size / 2, h = s.size / 4;
     const ex = Math.abs(w * Math.cos(a)) + Math.abs(h * Math.sin(a));
@@ -59,6 +66,28 @@ function symbolsRect(symbols: BattleSymbol[], aspect: number): CameraRect | null
   }
   const pad = 10;
   return { x: x0 - pad, y: y0 - pad * aspect, w: x1 - x0 + 2 * pad, h: y1 - y0 + 2 * pad * aspect };
+}
+
+/** A line symbol drawn as an SVG path (in the plane's width-% units). */
+function LinePath({ symbol, aspect, color, selected, enterKey }: { symbol: BattleSymbol; aspect: number; color: string; selected?: boolean; enterKey?: string }) {
+  const g = lineGeometry(symbol, aspect);
+  const dashed = !!g.dash;
+  const maskId = enterKey && `trace-${symbol.id}-${enterKey}`;
+  return <>
+    {maskId && <mask id={maskId} maskUnits="userSpaceOnUse" x="-10" y="-10" width="120" height={100 / aspect + 20}>
+      <path d={g.route} className={styles.traceMask} pathLength={1} fill="none" stroke="#fff" strokeWidth={6 + g.width * 3} strokeLinecap="round" strokeLinejoin="round" />
+    </mask>}
+    {selected && <path d={g.route} className={styles.pathSelected} strokeWidth={g.width + 1.6} />}
+    <g mask={maskId ? `url(#${maskId})` : undefined} strokeLinejoin="round">
+      {/* Light casing under the ink keeps every line readable on dark or busy images. */}
+      <path d={g.line} fill="none" stroke="#fff" strokeOpacity=".85" strokeWidth={g.width + .55} strokeDasharray={g.dash} strokeLinecap={dashed ? "butt" : "round"} />
+      {g.teeth && <path d={g.teeth} fill={color} stroke="#fff" strokeOpacity=".85" strokeWidth=".25" paintOrder="stroke" />}
+      <path d={g.line} fill="none" stroke={color} strokeWidth={g.width} strokeDasharray={g.dash} strokeLinecap={dashed ? "butt" : "round"} />
+    </g>
+    {g.head && <path d={g.head} className={styles.pathHead} fill={g.headOpen ? "none" : color} stroke={g.headOpen ? color : "#fff"}
+      strokeOpacity={g.headOpen ? 1 : .85} strokeWidth={g.headOpen ? g.width : .3} strokeLinecap="round" strokeLinejoin="round" paintOrder="stroke" />}
+    <path d={g.route} className={styles.pathHit} strokeWidth={Math.max(2.4, g.width + 1.6)} />
+  </>;
 }
 
 /** Zoom/offset (CSS transform, origin top-left) that fits `rect` inside the plane. */
@@ -73,7 +102,7 @@ const rectBetween = (a: { x: number; y: number }, b: { x: number; y: number }): 
   ({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) });
 const rectStyle = (r: CameraRect) => ({ left: `${r.x}%`, top: `${r.y}%`, width: `${r.w}%`, height: `${r.h}%` });
 
-export function BattleMapCanvas({ value, title, selectedId, selectedIds, placingType, placingColor, onSelect, onMove, onTransform, onAdd, onDelete, legendTitle, symbolView, focus, spotlight, cameraFrame, onDrawFrame, onMarquee, phaseBadge }: {
+export function BattleMapCanvas({ value, title, selectedId, selectedIds, placingType, placingColor, onSelect, onMove, onTransform, onAdd, onPointsChange, onDelete, legendTitle, symbolView, focus, spotlight, cameraFrame, onDrawFrame, onMarquee, phaseBadge, quickLabel }: {
   value: BattleMap; title: string;
   /** Symbol with rotate/resize handles (single selection). */
   selectedId?: string | null;
@@ -88,7 +117,10 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
   onMove?: (id: string, x: number, y: number) => void;
   /** Enables the rotate / resize handles on the selected symbol. */
   onTransform?: (id: string, patch: Pick<Partial<BattleSymbol>, "rotation" | "size">) => void;
-  onAdd?: (type: BattleSymbolType, x: number, y: number, shape?: { size: number; rotation: number }) => void;
+  /** `points`: route of a line symbol drawn by dragging. */
+  onAdd?: (type: BattleSymbolType, x: number, y: number, shape?: { points: MapPoint[] }) => void;
+  /** Editor: the route of a line symbol was reshaped (vertex dragged, added or removed). */
+  onPointsChange?: (id: string, points: MapPoint[]) => void;
   onDelete?: (id: string) => void;
   /** Heading of the legend card, e.g. "Trận Bạch Đằng – 1288". */
   legendTitle?: string;
@@ -104,6 +136,8 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
   onDrawFrame?: (rect: CameraRect) => void;
   /** Editor: dragging on empty map selects the symbols inside the box. */
   onMarquee?: (ids: string[], additive: boolean) => void;
+  /** Editor: note box shown on the map right after a symbol is placed. */
+  quickLabel?: { id: string; onChange: (label: string) => void; onDone: () => void };
   /** Editor: small tag next to each symbol, e.g. its phase number. */
   phaseBadge?: (symbol: BattleSymbol) => string | undefined;
 }) {
@@ -123,33 +157,42 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
   const [marquee, setMarquee] = useState<CameraRect | null>(null);
   const isSelected = (id: string) => selectedIds ? selectedIds.includes(id) : selectedId === id;
   const handle = useRef<{ id: string; kind: "rotate" | "resize" } | null>(null);
-  /** Press-and-drag drawing of a line symbol (start point in px relative to the plane). */
-  const drawStart = useRef<{ x: number; y: number } | null>(null);
+  /** Press-and-drag drawing of a line symbol: the pointer's route (in %) and its length in px. */
+  const drawStart = useRef<{ points: MapPoint[]; last: { x: number; y: number }; length: number } | null>(null);
   const suppressClick = useRef(false);
-  const [drawPreview, setDrawPreview] = useState<{ x: number; y: number; size: number; rotation: number } | null>(null);
+  const [drawPreview, setDrawPreview] = useState<MapPoint[] | null>(null);
+  /** Vertex of a route being dragged (index into its control points). */
+  const vertexDrag = useRef<{ id: string; index: number } | null>(null);
   /** Camera frame being dragged (start point and live area, in %). */
   const frameStart = useRef<{ x: number; y: number } | null>(null);
   const [framePreview, setFramePreview] = useState<CameraRect | null>(null);
-  /** Centre, length and angle of the segment start→end, in the symbol's % units. */
-  const segment = (clientX: number, clientY: number) => {
-    const rect = plane.current!.getBoundingClientRect();
-    const s = drawStart.current!;
-    const ex = Math.max(0, Math.min(rect.width, clientX - rect.left));
-    const ey = Math.max(0, Math.min(rect.height, clientY - rect.top));
-    const length = Math.hypot(ex - s.x, ey - s.y);
-    return {
-      length,
-      x: Math.round((s.x + ex) / 2 / rect.width * 1000) / 10,
-      y: Math.round((s.y + ey) / 2 / rect.height * 1000) / 10,
-      size: Math.round(Math.max(SYMBOL_SIZE_MIN, Math.min(SYMBOL_SIZE_MAX, length / rect.width * 100)) * 10) / 10,
-      rotation: ((Math.round(Math.atan2(ey - s.y, ex - s.x) * 180 / Math.PI) % 360) + 360) % 360,
-    };
+  /** Extends the route being drawn with the pointer position (ignores sub-pixel jitter). */
+  const extendDraw = (clientX: number, clientY: number) => {
+    const d = drawStart.current!;
+    const step = Math.hypot(clientX - d.last.x, clientY - d.last.y);
+    if (step < 3) return d;
+    drawStart.current = { points: [...d.points, point(clientX, clientY)], last: { x: clientX, y: clientY }, length: d.length + step };
+    return drawStart.current;
   };
   const ready = imageState.src === value.imageUrl && imageState.status === "ready";
   const failed = imageState.src === value.imageUrl && imageState.status === "error";
   const showSymbols = ready && value.mode === "custom";
   // At 100% the whole image fits the frame (width and height); zooming in past that scrolls.
   const fitWidth = viewportSize && aspect ? Math.floor(Math.min(viewportSize.w, viewportSize.h * aspect)) - 1 : null;
+  /** Learner view (nothing editable): blurred backdrop, "Lấp đầy" and drag-to-pan. */
+  const viewer = !onAdd && !onSelect;
+  // "Lấp đầy" fills the frame's width; the rest of the image stays reachable by dragging, never cropped away.
+  const fillZoom = viewportSize && fitWidth ? Math.max(1, Math.floor((viewportSize.w - 1) / fitWidth * 100) / 100) : 1;
+  const maxZoom = Math.max(3, fillZoom);
+  const pan = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+  const fill = () => {
+    setZoom(fillZoom);
+    // Centre the image vertically once the larger frame is laid out.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = viewport.current;
+      if (el) el.scrollTop = (el.scrollHeight - el.clientHeight) / 2;
+    }));
+  };
 
   useEffect(() => {
     const el = viewport.current;
@@ -167,7 +210,7 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
   })).values()];
   const tipSymbol = tip && !drag.current && !handle.current ? value.symbols.find(s => s.id === tip.id) : undefined;
   const tipFaction = tipSymbol && factionOf(tipSymbol);
-  const showTip = (symbol: BattleSymbol, e: React.PointerEvent) => {
+  const showTip = (symbol: BattleSymbol, e: React.PointerEvent<Element>) => {
     if (symbol.type === "label" || drag.current || handle.current) return;
     const rect = plane.current!.getBoundingClientRect();
     setTip({ id: symbol.id, x: e.clientX - rect.left, y: e.clientY - rect.top });
@@ -214,15 +257,93 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
     onMove(symbol.id, clampPercent(symbol.x + delta[key][0]), clampPercent(symbol.y + delta[key][1]));
     return true;
   };
+  /** Select, drag, keyboard and hover behaviour shared by glyph buttons and line paths. */
+  const symbolProps = (symbol: BattleSymbol) => {
+    const faction = factionOf(symbol);
+    return {
+      "aria-label": `${SYMBOL_LABELS[symbol.type]}: ${symbol.label || faction?.name || "Chưa đặt tên"}`,
+      "aria-pressed": onSelect ? isSelected(symbol.id) : undefined,
+      tabIndex: onSelect ? 0 : -1,
+      // Pointer selection happens on press; a click only selects from the keyboard (Enter/Space).
+      onClick: (e: React.MouseEvent) => { e.stopPropagation(); if (!onMove || e.detail === 0) onSelect?.(symbol.id); },
+      onPointerDown: (e: React.PointerEvent<HTMLElement | SVGElement>) => {
+        if (!onMove) return;
+        e.preventDefault(); e.currentTarget.focus(); setTip(null);
+        if (e.shiftKey || e.ctrlKey || e.metaKey) { onSelect?.(symbol.id, true); return; }
+        // Pressing a symbol of a multi-selection drags the whole group.
+        const ids = selectedIds && selectedIds.length > 1 && selectedIds.includes(symbol.id) ? selectedIds : [symbol.id];
+        if (ids.length === 1) onSelect?.(symbol.id);
+        drag.current = {
+          id: symbol.id, start: point(e.clientX, e.clientY), moved: false,
+          group: value.symbols.filter(s => ids.includes(s.id)).map(s => ({ id: s.id, x: s.x, y: s.y })),
+        };
+        e.currentTarget.setPointerCapture(e.pointerId);
+      },
+      onPointerEnter: (e: React.PointerEvent<Element>) => showTip(symbol, e),
+      onPointerLeave: () => setTip(t => (t?.id === symbol.id ? null : t)),
+      onPointerMove: (e: React.PointerEvent<Element>) => {
+        if (drag.current?.id !== symbol.id || !onMove) { showTip(symbol, e); return; }
+        const p = point(e.clientX, e.clientY), d = drag.current;
+        const dx = p.x - d.start.x, dy = p.y - d.start.y;
+        if (!d.moved && Math.abs(dx) + Math.abs(dy) < .3) return;
+        d.moved = true;
+        for (const g of d.group) onMove(g.id, Math.round(clampPercent(g.x + dx) * 10) / 10, Math.round(clampPercent(g.y + dy) * 10) / 10);
+      },
+      onPointerUp: () => {
+        // A press without moving on a grouped symbol narrows the selection to it.
+        if (drag.current && !drag.current.moved && drag.current.group.length > 1) onSelect?.(symbol.id);
+        drag.current = null;
+      },
+      onPointerCancel: () => { drag.current = null; },
+      onKeyDown: (e: React.KeyboardEvent) => {
+        if ((e.key === "Delete" || e.key === "Backspace") && onDelete) { e.preventDefault(); onDelete(symbol.id); return; }
+        if (moveByKey(symbol, e.key, e.shiftKey ? 5 : 1)) e.preventDefault();
+      },
+    };
+  };
+  /** Route vertex handle; `insert` (midpoint handle) first adds a vertex at `index`, then drags it. */
+  const vertexProps = (symbol: BattleSymbol, index: number, insert: boolean) => ({
+    onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+      if (e.button !== 0 || !aspect) return;
+      e.preventDefault(); e.stopPropagation(); setTip(null);
+      const pts = controlPoints(symbol, aspect);
+      if (insert) onPointsChange?.(symbol.id, [...pts.slice(0, index), point(e.clientX, e.clientY), ...pts.slice(index)]);
+      vertexDrag.current = { id: symbol.id, index };
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
+    onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
+      const v = vertexDrag.current;
+      if (!v || v.id !== symbol.id || !aspect) return;
+      e.stopPropagation();
+      onPointsChange?.(symbol.id, controlPoints(symbol, aspect).map((p, i) => i === v.index ? point(e.clientX, e.clientY) : p));
+    },
+    onPointerUp: (e: React.PointerEvent<HTMLElement>) => { e.stopPropagation(); vertexDrag.current = null; },
+    onPointerCancel: () => { vertexDrag.current = null; },
+    onClick: (e: React.MouseEvent) => e.stopPropagation(),
+  });
   return <div className={styles.canvas}>
     <div className={styles.zoomTools} aria-label="Thu phóng lược đồ">
       <button type="button" aria-label="Thu nhỏ lược đồ" disabled={zoom === 1} onClick={() => setZoom(z => Math.max(1, z - .25))}><Minus size={16} /></button>
       <output>{Math.round(zoom * 100)}%</output>
-      <button type="button" aria-label="Phóng to lược đồ" disabled={zoom === 3} onClick={() => setZoom(z => Math.min(3, z + .25))}><Plus size={16} /></button>
-      <button type="button" aria-label="Khôi phục mức thu phóng" onClick={() => setZoom(1)}><RotateCcw size={16} /></button>
+      <button type="button" aria-label="Phóng to lược đồ" disabled={zoom >= maxZoom} onClick={() => setZoom(z => Math.min(maxZoom, z + .25))}><Plus size={16} /></button>
+      {viewer && fillZoom > 1.05 && <button type="button" aria-label="Lấp đầy khung" title="Lấp đầy khung (kéo để xem phần còn lại)" aria-pressed={zoom === fillZoom} onClick={fill}><Expand size={15} /></button>}
+      <button type="button" aria-label="Xem toàn bộ lược đồ" title="Xem toàn bộ lược đồ" onClick={() => setZoom(1)}><RotateCcw size={16} /></button>
     </div>
     <div className={styles.stage}>
-    <div ref={viewport} className={styles.viewport}>
+    {/* The sides the image does not cover show a blurred copy of it instead of empty bands. */}
+    {viewer && ready && <div className={styles.ambient} aria-hidden="true" style={{ backgroundImage: `url("${value.imageUrl.replace(/"/g, "%22")}")` }} />}
+    <div ref={viewport} className={styles.viewport} data-ambient={viewer && ready} data-pan={viewer && zoom > 1}
+      onPointerDown={e => {
+        if (!viewer || zoom <= 1 || e.button !== 0) return;
+        pan.current = { x: e.clientX, y: e.clientY, left: e.currentTarget.scrollLeft, top: e.currentTarget.scrollTop };
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }}
+      onPointerMove={e => {
+        if (!pan.current) return;
+        e.currentTarget.scrollLeft = pan.current.left - (e.clientX - pan.current.x);
+        e.currentTarget.scrollTop = pan.current.top - (e.clientY - pan.current.y);
+      }}
+      onPointerUp={() => { pan.current = null; }} onPointerCancel={() => { pan.current = null; }}>
       {!value.imageUrl ? <div className={styles.empty}><Map size={32} /><p>Chưa có lược đồ trận đánh</p>{onAdd && <span>Thêm ảnh ở mục «Ảnh nền» bên trái.</span>}</div> : <>
         {!ready && <p className={styles.imageStatus} role={failed ? "alert" : "status"}>{failed ? "Không tải được ảnh. Kiểm tra đường dẫn hoặc chọn ảnh khác." : "Đang tải lược đồ…"}</p>}
         <div className={styles.frame} data-camera={focus !== undefined} style={{ width: fitWidth ? `${fitWidth * zoom}px` : `${zoom * 100}%` }}>
@@ -248,16 +369,15 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
             }
             if (!placingType || !onAdd || !showSymbols || !isLineSymbol(placingType) || e.button !== 0) return;
             e.preventDefault();
-            const rect = plane.current!.getBoundingClientRect();
-            drawStart.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            drawStart.current = { points: [point(e.clientX, e.clientY)], last: { x: e.clientX, y: e.clientY }, length: 0 };
             e.currentTarget.setPointerCapture(e.pointerId);
           }}
           onPointerMove={e => {
             if (frameStart.current) { setFramePreview(rectBetween(frameStart.current, point(e.clientX, e.clientY))); return; }
             if (marqueeStart.current) { setMarquee(rectBetween(marqueeStart.current, point(e.clientX, e.clientY))); return; }
             if (!drawStart.current) return;
-            const seg = segment(e.clientX, e.clientY);
-            setDrawPreview(seg.length >= 8 ? seg : null);
+            const d = extendDraw(e.clientX, e.clientY);
+            setDrawPreview(d.length >= 8 && d.points.length >= 2 ? d.points : null);
           }}
           onPointerUp={e => {
             if (frameStart.current) {
@@ -279,10 +399,15 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
               return;
             }
             if (!drawStart.current || !placingType || !onAdd) return;
-            const seg = segment(e.clientX, e.clientY);
+            const d = extendDraw(e.clientX, e.clientY);
             drawStart.current = null; setDrawPreview(null);
-            // A real drag draws the symbol; a plain click falls through to onClick placement.
-            if (seg.length >= 8) { suppressClick.current = true; onAdd(placingType, seg.x, seg.y, { size: seg.size, rotation: seg.rotation }); }
+            // A real drag draws the route (freehand, smoothed); a plain click falls through to onClick placement.
+            if (d.length >= 8 && d.points.length >= 2 && aspect) {
+              suppressClick.current = true;
+              const points = simplify(d.points, aspect);
+              const r = pointsRect(points);
+              onAdd(placingType, r.x + r.w / 2, r.y + r.h / 2, { points });
+            }
           }}
           onPointerCancel={() => { drawStart.current = null; setDrawPreview(null); frameStart.current = null; setFramePreview(null); marqueeStart.current = null; setMarquee(null); }}
           onClick={e => {
@@ -305,53 +430,32 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
             if (w && h) setAspect(w / h);
             setImageState({ src: value.imageUrl, status: "ready" });
           }} onError={() => setImageState({ src: value.imageUrl, status: "error" })} />
-          {drawPreview && placingType && <div className={styles.symbol} data-preview aria-hidden="true"
-            style={{ left: `${drawPreview.x}%`, top: `${drawPreview.y}%`, width: `${drawPreview.size}%`, color: placingColor, transform: `translate(-50%, -50%) rotate(${drawPreview.rotation}deg)` }}>
-            <SymbolGlyph type={placingType} />
-          </div>}
+          {showSymbols && aspect && <svg className={styles.lines} viewBox={`0 0 100 ${100 / aspect}`}>
+            {value.symbols.map(symbol => {
+              if (!isLineSymbol(symbol.type)) return null;
+              const view = symbolView?.(symbol) ?? {};
+              if (view.hidden) return null;
+              const fx = view.enter ? resolveEffect(symbol) : undefined;
+              return <g key={view.enter ? `${symbol.id}:${view.enter.key}` : symbol.id} className={styles.pathSymbol} role="button"
+                data-dim={view.dim || undefined} data-fx={fx} style={{ "--fx-delay": `${view.enter?.delay ?? 0}ms` } as React.CSSProperties}
+                {...symbolProps(symbol)}>
+                <LinePath symbol={symbol} aspect={aspect} color={factionOf(symbol)?.color ?? "#b91c1c"} selected={isSelected(symbol.id)}
+                  enterKey={fx === "draw" ? view.enter!.key : undefined} />
+              </g>;
+            })}
+            {drawPreview && placingType && <g className={styles.pathPreview} aria-hidden="true">
+              <LinePath symbol={{ id: "preview", type: placingType, factionId: "", label: "", x: 0, y: 0, size: SYMBOL_SIZE_MIN, rotation: 0, points: drawPreview }}
+                aspect={aspect} color={placingColor ?? "#b91c1c"} />
+            </g>}
+          </svg>}
           {showSymbols && value.symbols.map(symbol => {
+            if (isLineSymbol(symbol.type)) return null;
             const view = symbolView?.(symbol) ?? {};
             if (view.hidden) return null;
-            const faction = value.factions.find(f => f.id === symbol.factionId);
             return <button type="button" key={view.enter ? `${symbol.id}:${view.enter.key}` : symbol.id} className={styles.symbol} data-selected={isSelected(symbol.id)}
               data-dim={view.dim || undefined} data-fx={view.enter ? resolveEffect(symbol) : undefined}
-              style={{ left: `${symbol.x}%`, top: `${symbol.y}%`, width: `${symbol.size}%`, color: faction?.color ?? "#b91c1c", transform: `translate(-50%, -50%) rotate(${symbol.rotation}deg)`, "--fx-delay": `${view.enter?.delay ?? 0}ms` } as React.CSSProperties}
-              aria-label={`${SYMBOL_LABELS[symbol.type]}: ${symbol.label || faction?.name || "Chưa đặt tên"}`} aria-pressed={onSelect ? isSelected(symbol.id) : undefined}
-              tabIndex={onSelect ? 0 : -1}
-              // Pointer selection happens on press; a click only selects from the keyboard (Enter/Space).
-              onClick={e => { e.stopPropagation(); if (!onMove || e.detail === 0) onSelect?.(symbol.id); }}
-              onPointerDown={e => {
-                if (!onMove) return;
-                e.preventDefault(); e.currentTarget.focus(); setTip(null);
-                if (e.shiftKey || e.ctrlKey || e.metaKey) { onSelect?.(symbol.id, true); return; }
-                // Pressing a symbol of a multi-selection drags the whole group.
-                const ids = selectedIds && selectedIds.length > 1 && selectedIds.includes(symbol.id) ? selectedIds : [symbol.id];
-                if (ids.length === 1) onSelect?.(symbol.id);
-                drag.current = {
-                  id: symbol.id, start: point(e.clientX, e.clientY), moved: false,
-                  group: value.symbols.filter(s => ids.includes(s.id)).map(s => ({ id: s.id, x: s.x, y: s.y })),
-                };
-                e.currentTarget.setPointerCapture(e.pointerId);
-              }}
-              onPointerEnter={e => showTip(symbol, e)}
-              onPointerLeave={() => setTip(t => (t?.id === symbol.id ? null : t))}
-              onPointerMove={e => {
-                if (drag.current?.id !== symbol.id || !onMove) { showTip(symbol, e); return; }
-                const p = point(e.clientX, e.clientY), d = drag.current;
-                const dx = p.x - d.start.x, dy = p.y - d.start.y;
-                if (!d.moved && Math.abs(dx) + Math.abs(dy) < .3) return;
-                d.moved = true;
-                for (const g of d.group) onMove(g.id, Math.round(clampPercent(g.x + dx) * 10) / 10, Math.round(clampPercent(g.y + dy) * 10) / 10);
-              }}
-              onPointerUp={() => {
-                // A press without moving on a grouped symbol narrows the selection to it.
-                if (drag.current && !drag.current.moved && drag.current.group.length > 1) onSelect?.(symbol.id);
-                drag.current = null;
-              }} onPointerCancel={() => { drag.current = null; }}
-              onKeyDown={e => {
-                if ((e.key === "Delete" || e.key === "Backspace") && onDelete) { e.preventDefault(); onDelete(symbol.id); return; }
-                if (moveByKey(symbol, e.key, e.shiftKey ? 5 : 1)) e.preventDefault();
-              }}>
+              style={{ left: `${symbol.x}%`, top: `${symbol.y}%`, width: `${symbol.size}%`, color: factionOf(symbol)?.color ?? "#b91c1c", transform: `translate(-50%, -50%) rotate(${symbol.rotation}deg)`, "--fx-delay": `${view.enter?.delay ?? 0}ms` } as React.CSSProperties}
+              {...symbolProps(symbol)}>
               {symbol.type === "step" ? <SymbolGlyph type="step" text={symbol.label} />
                 : symbol.type === "label" ? <span>{symbol.label}</span> : <SymbolGlyph type={symbol.type} />}
               {onTransform && selectedId === symbol.id && <>
@@ -360,11 +464,38 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
               </>}
             </button>;
           })}
+          {/* Route editing: drag a vertex to bend the line, drag a midpoint to add one, double-click a vertex to remove it. */}
+          {showSymbols && aspect && onPointsChange && (() => {
+            const symbol = selectedId ? value.symbols.find(s => s.id === selectedId && isLineSymbol(s.type)) : undefined;
+            if (!symbol || symbolView?.(symbol).hidden) return null;
+            const pts = controlPoints(symbol, aspect);
+            return <>
+              {pts.slice(1).map((p, i) => <i key={`mid:${i}`} className={styles.vertexAdd} title="Kéo để thêm điểm uốn" aria-hidden="true"
+                style={{ left: `${(pts[i].x + p.x) / 2}%`, top: `${(pts[i].y + p.y) / 2}%` }}
+                {...vertexProps(symbol, i + 1, true)} />)}
+              {pts.map((p, i) => <i key={`v:${i}`} className={styles.vertex} aria-hidden="true"
+                title={pts.length > 2 ? "Kéo để uốn · nhấp đúp để xóa điểm" : i ? "Kéo để đổi điểm cuối" : "Kéo để đổi điểm đầu"}
+                style={{ left: `${p.x}%`, top: `${p.y}%` }} {...vertexProps(symbol, i, false)}
+                onDoubleClick={e => { e.stopPropagation(); if (pts.length > 2) onPointsChange(symbol.id, pts.filter((_, j) => j !== i)); }} />)}
+            </>;
+          })()}
           {showSymbols && phaseBadge && value.symbols.map(s => {
             const badge = !symbolView?.(s).hidden && phaseBadge(s);
             return badge ? <span key={`badge:${s.id}`} className={styles.phaseBadge} aria-hidden="true"
               style={{ left: `${Math.min(99, s.x + s.size * .4)}%`, top: `${s.y}%` }}>{badge}</span> : null;
           })}
+          {showSymbols && quickLabel && (() => {
+            const symbol = value.symbols.find(s => s.id === quickLabel.id);
+            if (!symbol) return null;
+            return <input key={symbol.id} className={styles.quickLabel} autoFocus defaultValue={symbol.label}
+              maxLength={symbol.type === "step" ? 3 : 120} aria-label={`Ghi chú cho ${SYMBOL_LABELS[symbol.type].toLowerCase()}`}
+              placeholder={symbol.type === "label" ? "Chữ trên lược đồ · Enter" : symbol.type === "step" ? "Số" : "Ghi chú, vd: Thủy quân Ô Mã Nhi · Enter"}
+              style={{ left: `${symbol.x}%`, top: `${symbol.y}%` }}
+              onFocus={e => e.currentTarget.select()} onChange={e => quickLabel.onChange(e.target.value)} onBlur={quickLabel.onDone}
+              // Keys stay in the box: Enter / Esc close it without reaching the editor shortcuts.
+              onKeyDown={e => { e.stopPropagation(); if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); quickLabel.onDone(); } }}
+              onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()} />;
+          })()}
           {marquee && <div className={styles.marquee} style={rectStyle(marquee)} aria-hidden="true" />}
           {ready && spotlight && <div className={styles.spotlight} style={rectStyle(spotlight)} aria-hidden="true" />}
           {ready && (framePreview ?? cameraFrame) && <div className={styles.cameraFrame} style={rectStyle((framePreview ?? cameraFrame)!)} aria-hidden="true">

@@ -45,12 +45,12 @@ export function CharacterListToolbar({
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder="Tìm theo tên, chức vị..."
-          className="pl-10 h-10 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)]"
+          className="pl-10 h-10 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)]"
         />
       </div>
 
       <Select value={statusFilter} onValueChange={(value) => onStatusFilterChange(value as typeof statusFilter)}>
-        <SelectTrigger className="h-10 w-full rounded-[2px] sm:w-[150px]">
+        <SelectTrigger className="h-10 w-full rounded-sm sm:w-[150px]">
           <SelectValue placeholder="Trạng thái" />
         </SelectTrigger>
         <SelectContent>
@@ -61,7 +61,7 @@ export function CharacterListToolbar({
       </Select>
 
       <Select value={eraFilter} onValueChange={onEraFilterChange}>
-        <SelectTrigger className="h-10 w-full rounded-[2px] sm:w-[150px]">
+        <SelectTrigger className="h-10 w-full rounded-sm sm:w-[150px]">
           <SelectValue placeholder="Thời đại" />
         </SelectTrigger>
         <SelectContent>
@@ -76,7 +76,7 @@ export function CharacterListToolbar({
       <Button
         variant="outline"
         className={cn(
-          "h-10 rounded-[2px] px-4 font-semibold",
+          "h-10 rounded-sm px-4 font-semibold",
           showTrash
             ? "border-accent-danger text-accent-danger bg-accent-danger/8"
             : "border-card-border text-content-heading"
@@ -98,11 +98,11 @@ export function CharacterListToolbar({
 
       {!showTrash && (
         <Button
-          className="h-10 rounded-[2px] px-4 font-semibold border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] transition-all duration-200 active:translate-y-0 cursor-pointer"
+          className="h-10 rounded-sm px-4 font-semibold border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] transition-all duration-200 active:translate-y-0 cursor-pointer"
           onClick={onCreate}
         >
           <Plus className="h-4 w-4 mr-1.5" />
-          Add New
+          Tạo nhân vật
         </Button>
       )}
     </div>

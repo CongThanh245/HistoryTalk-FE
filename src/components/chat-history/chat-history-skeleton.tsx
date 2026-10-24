@@ -5,18 +5,18 @@ export function ChatHistorySkeleton() {
   return (
     <div className="space-y-6 pb-10 animate-pulse md:space-y-8 md:pb-16">
       {[0, 1].map((groupIdx) => (
-        <div key={groupIdx} className="space-y-2.5 md:space-y-3">
+        <div key={groupIdx} className="space-y-3">
           {/* Group header */}
           <div className="mb-3 flex items-center gap-3 md:mb-4">
             <div className="h-4 w-32 bg-[var(--border-default)]" />
-            <div className="h-px flex-1 bg-[var(--text-primary)]" />
+
           </div>
 
           {/* Session cards */}
           {[0, 1, 2].map((cardIdx) => (
             <div
               key={cardIdx}
-              className="flex items-center gap-3 p-3 md:gap-4 md:p-3.5 border-b border-[var(--border-default)]"
+              className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--border-default)] last:border-b-0 bg-[var(--bg-surface)] first-of-type:rounded-t-xl last:rounded-b-xl"
             >
               {/* Avatar */}
               <div className="h-10 w-10 flex-shrink-0 rounded-full md:h-11 md:w-11 bg-[var(--bg-deep)]" />

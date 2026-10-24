@@ -56,7 +56,7 @@ export function ImpactSection() {
                   className="border-b border-r border-(--text-primary) bg-(--bg-surface) p-4 md:p-6"
                 >
                   <div className="mb-3 flex items-center justify-between md:mb-5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-[2px] bg-(--text-primary) text-(--text-inverse) md:h-11 md:w-11">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-(--text-primary) text-(--text-inverse) md:h-11 md:w-11">
                       <Icon className="h-5 w-5 md:h-6 md:w-6" />
                     </div>
                     <span className="font-display text-[15px] font-extrabold text-(--accent-gold)">

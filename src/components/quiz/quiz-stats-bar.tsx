@@ -18,16 +18,16 @@ export function QuizStatsBar({
   ];
 
   return (
-    <div className="mb-4 grid grid-cols-3 border-t border-l border-[var(--text-primary)] md:mb-6">
+    <div className="mb-5 grid grid-cols-3 gap-2 md:mb-6 md:gap-3">
       {stats.map((s) => (
         <div
           key={s.label}
-          className="border-r border-b border-[var(--text-primary)] bg-[var(--bg-surface)] px-2.5 py-2.5 md:px-5 md:py-4"
+          className="rounded-xl border border-border-card bg-[var(--bg-surface)] px-3 py-3 md:px-5 md:py-4"
         >
-          <p className="line-clamp-1 text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted md:text-[11px]">
+          <p className="line-clamp-1 text-xs text-[var(--text-secondary)] md:text-sm">
             {s.label}
           </p>
-          <p className="mt-1.5 font-display text-2xl font-extrabold leading-none text-content-heading md:text-4xl">
+          <p className="mt-1.5 text-xl font-bold leading-none tabular-nums text-content-heading md:text-[28px]">
             {s.value}
             <span className="text-sm font-semibold text-[var(--gold-on-light)]">
               {s.suffix}

@@ -49,7 +49,7 @@ export function ErrorBlock({ error, fallback, onRetry, className }: { error: unk
     <div
       role="alert"
       className={cn(
-        "flex flex-col items-start gap-3 rounded-[2px] border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-4 text-sm sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col items-start gap-3 rounded-sm border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-4 text-sm sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
     >
@@ -72,7 +72,7 @@ export function ApiGapNote({ children, className }: { children: React.ReactNode;
     <p
       role="note"
       className={cn(
-        "flex items-start gap-2 rounded-[2px] border border-[var(--border-default)] bg-[var(--status-neutral-bg)] px-3 py-2 text-xs leading-relaxed text-content-muted",
+        "flex items-start gap-2 rounded-sm border border-[var(--border-default)] bg-[var(--status-neutral-bg)] px-3 py-2 text-xs leading-relaxed text-content-muted",
         className,
       )}
     >
@@ -100,7 +100,7 @@ export function packageLabel(p: EnterprisePackage | string | undefined | null) {
 
 export function PackageBadge({ packageType }: { packageType: EnterprisePackage | string | undefined | null }) {
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border border-[var(--text-primary)] px-2 py-0.5 text-[11px] font-bold text-[var(--text-primary)]">
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-sm border border-border-card px-2 py-0.5 text-[11px] font-bold text-[var(--text-primary)]">
       {packageLabel(packageType)}
     </span>
   );
@@ -118,7 +118,7 @@ export function CopyTag({ value, label = "mã" }: { value: string; label?: strin
       }}
       title={`Sao chép ${label}`}
       aria-label={`Sao chép ${label} ${value}`}
-      className="inline-flex max-w-full items-center gap-1.5 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] px-2 py-0.5 font-mono text-[11px] font-bold text-content-heading transition-colors hover:border-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]"
+      className="inline-flex max-w-full items-center gap-1.5 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] px-2 py-0.5 font-mono text-[11px] font-bold text-content-heading transition-colors hover:border-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]"
     >
       <span className="truncate">{value}</span>
       <Copy className="h-3 w-3 shrink-0 text-content-muted" aria-hidden="true" />

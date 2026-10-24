@@ -122,7 +122,7 @@ function QuizEditor({ quiz, returnTo }: { quiz: LocalQuiz; returnTo: string | nu
   return (
     <div className="space-y-6">
       {returnTo && (
-        <div className="flex flex-col gap-3 rounded-[2px] border-2 border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-sm border-2 border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-content-heading">
             {questions.length === 0
               ? "Bạn đang soạn bộ đề để giao bài. Thêm ít nhất 1 câu hỏi để tiếp tục."
@@ -201,7 +201,7 @@ function QuizEditor({ quiz, returnTo }: { quiz: LocalQuiz; returnTo: string | nu
                 <QuestionForm initial={q} orderIndex={i} isSaving={busyQuestion} onSave={(d) => saveQuestion(d, q.questionId)} onCancel={() => setEditingId(null)} />
               </li>
             ) : (
-              <li key={q.questionId} className="flex items-start gap-3 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3">
+              <li key={q.questionId} className="flex items-start gap-3 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3">
                 <span className="mt-0.5 w-6 shrink-0 text-sm font-bold tabular-nums text-content-muted">{i + 1}.</span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-content-heading">{q.content}</p>

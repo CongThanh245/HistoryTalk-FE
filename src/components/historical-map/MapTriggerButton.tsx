@@ -24,7 +24,7 @@ export function MapTriggerButton({
       <>
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-[2px] text-sm transition-colors hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-nav-text)]"
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-sm text-sm transition-colors hover:bg-[var(--sidebar-hover-bg)] text-[var(--sidebar-nav-text)]"
         >
           <Map size={18} className="text-[var(--sidebar-nav-icon)]" />
           {label}

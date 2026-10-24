@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select, SelectContent, SelectEmpty, SelectItem, SelectSearch, SelectTrigger, SelectValue, useSelectSearch,
 } from "@/components/ui/select";
 import {
   useAttachBankQuestion,
@@ -51,6 +51,7 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
   const [deleteTarget, setDeleteTarget] = React.useState<QuestionBankItem | null>(null);
   const [attachTarget, setAttachTarget] = React.useState<QuestionBankItem | null>(null);
   const [attachQuizId, setAttachQuizId] = React.useState("");
+  const quizSearch = useSelectSearch();
 
   const params = React.useMemo(() => ({
     ...(search.trim() && { search: search.trim() }),
@@ -143,7 +144,7 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
         <ArrowLeft className="h-4 w-4" /> Quay lại danh sách quiz
       </button>
 
-      <section className="rounded-[2px] border p-6 space-y-5 bg-[var(--bg-surface)] border-[var(--text-primary)]">
+      <section className="rounded-xl border p-6 space-y-5 bg-[var(--bg-surface)] border-border-card">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-1.5 flex-wrap">
             {TYPE_FILTERS.map((opt) => (
@@ -152,7 +153,7 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
                 type="button"
                 onClick={() => { setTypeFilter(opt.value); setPage(0); }}
                 className={cn(
-                  "px-3 h-8 rounded-[2px] text-xs font-semibold border transition-all",
+                  "px-3 h-8 rounded-sm text-xs font-semibold border transition-all",
                   typeFilter === opt.value
                     ? "bg-[var(--accent-gold-active-bg)] border-accent-gold text-content-heading"
                     : "bg-transparent border-card-light-border text-content-muted",
@@ -169,12 +170,12 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(0); }}
                 placeholder="Tìm câu hỏi..."
-                className="pl-9 h-9 w-[220px] rounded-[2px] border-0 bg-[var(--status-neutral-bg)]"
+                className="pl-9 h-9 w-[220px] rounded-sm border-0 bg-[var(--status-neutral-bg)]"
               />
             </div>
             <Button
               type="button"
-              className="h-9 rounded-[2px] px-4 font-semibold"
+              className="h-9 rounded-sm px-4 font-semibold"
               onClick={() => setEditing("new")}
               disabled={editing !== null}
             >
@@ -215,21 +216,21 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
               return (
                 <div
                   key={item.questionId}
-                  className="flex items-start gap-4 rounded-[2px] border border-card-light-border bg-card-light-bg px-5 py-4 group transition-all hover:border-[var(--text-primary)]"
+                  className="flex items-start gap-4 rounded-sm border border-card-light-border bg-card-light-bg px-5 py-4 group transition-all hover:border-[var(--text-primary)]"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold leading-relaxed text-content-text">{item.content}</p>
                     <QuestionAnswerSummary q={fromStaffQuestion(item)} />
                     {(linked.length > 0 || item.assignedToQuiz) && (
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-content-subtle">Trong quiz:</span>
+                        <span className="text-xs font-semibold text-content-subtle">Trong quiz:</span>
                         {linked.length === 0 && (
                           <span className="text-xs text-content-muted">Đã gắn vào quiz</span>
                         )}
                         {linked.map((quiz) => (
                           <span
                             key={quiz.quizId}
-                            className="inline-flex items-center gap-1 rounded-[2px] border border-[var(--border-default)] bg-[var(--status-neutral-bg)] px-2 py-0.5 text-xs text-content-text"
+                            className="inline-flex items-center gap-1 rounded-sm border border-[var(--border-default)] bg-[var(--status-neutral-bg)] px-2 py-0.5 text-xs text-content-text"
                           >
                             {quiz.title}
                             <button
@@ -247,15 +248,15 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-8 w-8 text-content-heading"
+                    <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-content-heading"
                       onClick={() => { setAttachTarget(item); setAttachQuizId(""); }} title="Gắn vào quiz">
                       <Link2 className="h-4 w-4" />
                     </Button>
-                    <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-8 w-8 text-accent-blue"
+                    <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-accent-blue"
                       disabled={editing !== null} onClick={() => setEditing(item)} title="Sửa">
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-8 w-8 text-accent-danger"
+                    <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-accent-danger"
                       onClick={() => setDeleteTarget(item)} title="Xoá">
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -272,11 +273,11 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
               Trang {page + 1} / {totalPages} · {totalItems} câu hỏi
             </p>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon-sm" className="rounded-[2px]"
+              <Button variant="ghost" size="icon-sm" className="rounded-sm"
                 disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon-sm" className="rounded-[2px]"
+              <Button variant="ghost" size="icon-sm" className="rounded-sm"
                 disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -310,12 +311,14 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
         {attachableQuizzes.length === 0 ? (
           <p className="text-sm text-content-muted">Không còn quiz nào để gắn câu hỏi này.</p>
         ) : (
-          <Select value={attachQuizId} onValueChange={setAttachQuizId}>
-            <SelectTrigger className="w-full rounded-[2px]">
+          <Select value={attachQuizId} onValueChange={setAttachQuizId} onOpenChange={quizSearch.onOpenChange}>
+            <SelectTrigger className="w-full rounded-sm">
               <SelectValue placeholder="Chọn quiz..." />
             </SelectTrigger>
-            <SelectContent>
-              {attachableQuizzes.map((quiz) => (
+            <SelectContent className="max-h-80">
+              <SelectSearch value={quizSearch.search} onChange={quizSearch.setSearch} placeholder="Tìm quiz..." />
+              {!attachableQuizzes.some((quiz) => quizSearch.matches(quiz.title)) && <SelectEmpty />}
+              {attachableQuizzes.filter((quiz) => quiz.quizId === attachQuizId || quizSearch.matches(quiz.title)).map((quiz) => (
                 <SelectItem key={quiz.quizId} value={quiz.quizId}>
                   {quiz.title}
                 </SelectItem>

@@ -135,6 +135,8 @@
    ───────────────────────────── */
   --border-default: rgba(17, 17, 17, 0.14);
   --border-strong: rgba(17, 17, 17, 0.32);
+  /* Cards, panels and tables: a quiet hairline so content, not frames, carries the page. */
+  --border-card: rgba(17, 17, 17, 0.12);
 
   /* ─────────────────────────────
       Shadows
@@ -175,9 +177,9 @@
   /* ─────────────────────────────
       Radius
    ───────────────────────────── */
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
 }
 
 .dark {
@@ -269,6 +271,7 @@
 
   --border-default: rgba(237, 234, 227, 0.1);
   --border-strong: rgba(237, 234, 227, 0.2);
+  --border-card: rgba(237, 234, 227, 0.12);
   
   --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
   --shadow-strong: 0 10px 40px -4px rgba(0, 0, 0, 0.7);
@@ -312,9 +315,9 @@
 
 /* ─────────────────────────────
     Sidebar active item (light mode)
-    Paper sidebar; the current page is a solid crimson block.
+    Paper sidebar; the current page is a soft crimson tint with crimson text.
  ───────────────────────────── */
 :root:not(.dark) .sidebar-ink {
-  --accent-gold-active-bg: #B8321F;
-  --sidebar-active-text: #FFFFFF;
+  --accent-gold-active-bg: rgba(184, 50, 31, 0.09);
+  --sidebar-active-text: #9A2A18;
 }

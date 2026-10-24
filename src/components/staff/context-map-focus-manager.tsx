@@ -83,7 +83,7 @@ function FocusForm({
   const set = (patch: Partial<FocusDraft>) => setDraft((d) => ({ ...d, ...patch }));
 
   return (
-    <div className="space-y-3 rounded-[2px] border border-[var(--card-light-border)] bg-[var(--bg-elevated)] p-4">
+    <div className="space-y-3 rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] p-4">
       <div className="grid gap-1.5">
         <StaffFormLabel>Tên điểm *</StaffFormLabel>
         <StaffFormInput value={draft.name} onChange={(e) => set({ name: e.target.value })} placeholder="Vd. Cửa sông Bạch Đằng" />
@@ -159,7 +159,7 @@ export function ContextMapFocusManager({ contextId }: { contextId: string }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--content-heading)]">Điểm camera bản đồ</p>
+          <p className="text-sm font-semibold text-[var(--content-heading)]">Điểm camera bản đồ</p>
           <p className="mt-1 text-xs text-[var(--content-muted)]">Các vị trí bản đồ sẽ bay tới khi xem bối cảnh này, theo thứ tự.</p>
         </div>
         {!adding && (
@@ -186,7 +186,7 @@ export function ContextMapFocusManager({ contextId }: { contextId: string }) {
           <Button type="button" size="sm" variant="outline" onClick={() => void refetch()}>Thử lại</Button>
         </div>
       ) : sorted.length === 0 && !adding ? (
-        <p className="rounded-[2px] border border-dashed border-[var(--card-light-border)] py-6 text-center text-xs text-[var(--content-muted)]">
+        <p className="rounded-sm border border-dashed border-[var(--card-light-border)] py-6 text-center text-xs text-[var(--content-muted)]">
           Chưa có điểm bản đồ nào.
         </p>
       ) : (
@@ -210,7 +210,7 @@ export function ContextMapFocusManager({ contextId }: { contextId: string }) {
               <li
                 key={focus.focusId}
                 className={cn(
-                  "flex items-start gap-3 rounded-[2px] border px-3 py-2.5",
+                  "flex items-start gap-3 rounded-sm border px-3 py-2.5",
                   focus.isActive ? "border-[var(--card-light-border)]" : "border-dashed border-[var(--card-light-border)] opacity-60",
                 )}
               >
@@ -219,11 +219,11 @@ export function ContextMapFocusManager({ contextId }: { contextId: string }) {
                   <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--content-heading)]">
                     {index + 1}. {focus.name}
                     {focus.isDefault && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[var(--accent-gold)]">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--accent-gold)]">
                         <Star className="h-3 w-3" /> Mặc định
                       </span>
                     )}
-                    {!focus.isActive && <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--content-muted)]">Đã ẩn</span>}
+                    {!focus.isActive && <span className="text-xs font-semibold text-[var(--content-muted)]">Đã ẩn</span>}
                   </p>
                   <p className="text-xs tabular-nums text-[var(--content-muted)]">
                     {focus.latitude}, {focus.longitude} · zoom {focus.zoomLevel ?? "—"}

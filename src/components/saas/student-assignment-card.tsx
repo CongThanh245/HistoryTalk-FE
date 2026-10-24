@@ -28,7 +28,7 @@ export const ASSIGNMENT_TYPE_META: Record<
   QUIZ_TEST: { label: "Bài kiểm tra", color: "var(--men-lam)", icon: ClipboardCheck, requirementUnit: null, defaultRequirement: null },
 };
 
-const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold";
+const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold";
 const SUCCESS = "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]";
 const WARNING = "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]";
 const DANGER = "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--accent-danger)]";
@@ -136,7 +136,7 @@ export function AssignmentTypeTile({ type, size = 44 }: { type: AssignmentType; 
   const meta = ASSIGNMENT_TYPE_META[type];
   const Icon = meta.icon;
   return (
-    <span className="grid shrink-0 place-items-center rounded-[2px] text-white" style={{ width: size, height: size, background: meta.color }} aria-hidden="true">
+    <span className="grid shrink-0 place-items-center rounded-sm text-white" style={{ width: size, height: size, background: meta.color }} aria-hidden="true">
       <Icon className="h-5 w-5" strokeWidth={2.4} />
     </span>
   );
@@ -154,7 +154,7 @@ export function SubmissionStatusBadge({ assignment }: { assignment: StudentAssig
 export function ScoreChip({ score, size = "md" }: { score: number; size?: "md" | "lg" }) {
   return (
     <span className="inline-flex items-baseline gap-1 tabular-nums" aria-label={`Điểm ${formatScore(score)} trên 10`}>
-      <strong className={cn("font-display font-extrabold text-[var(--gold-leaf)]", size === "lg" ? "text-5xl" : "text-2xl")}>{formatScore(score)}</strong>
+      <strong className={cn("font-bold tabular-nums text-[var(--gold-leaf)]", size === "lg" ? "text-5xl" : "text-2xl")}>{formatScore(score)}</strong>
       <span className="text-xs font-bold text-content-muted">/ 10</span>
     </span>
   );
@@ -217,7 +217,7 @@ export function StudentAssignmentCard({ assignment: a }: { assignment: StudentAs
   return (
     <Link
       href={ROUTES.MY_ASSIGNMENT_DETAIL(a.assignmentId)}
-      className="group flex gap-3 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4 motion-safe:transition-colors hover:bg-[var(--bg-elevated)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)] sm:gap-4"
+      className="group flex gap-3 rounded-sm border border-border-card bg-[var(--bg-surface)] p-4 motion-safe:transition-colors hover:bg-[var(--bg-elevated)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)] sm:gap-4"
     >
       <AssignmentTypeTile type={a.assignmentType} />
       <div className="min-w-0 flex-1 space-y-2">
@@ -248,7 +248,7 @@ export function AssignmentListSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="space-y-3" aria-busy="true" aria-label="Đang tải bài tập">
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="h-[150px] animate-pulse rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" />
+        <div key={i} className="h-[150px] animate-pulse rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" />
       ))}
     </div>
   );
@@ -256,7 +256,7 @@ export function AssignmentListSkeleton({ count = 3 }: { count?: number }) {
 
 export function AssignmentLoadError({ title = "Không tải được bài tập", message, onRetry }: { title?: string; message: string; onRetry: () => void }) {
   return (
-    <div role="alert" className="flex flex-wrap items-start gap-3 rounded-[2px] border border-[var(--accent-danger)] bg-[var(--bg-surface)] p-4">
+    <div role="alert" className="flex flex-wrap items-start gap-3 rounded-sm border border-[var(--accent-danger)] bg-[var(--bg-surface)] p-4">
       <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-[var(--accent-danger)]" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold text-content-heading">{title}</p>

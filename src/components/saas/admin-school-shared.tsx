@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils/cn";
  * notice blocks, and the School Admin account fields used by the create wizard and the detail page.
  */
 
-const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold";
+const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold";
 
 const STATUS_CLASS: Record<SchoolStatus, string> = {
   ACTIVE: "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]",
@@ -32,7 +32,7 @@ export function PackageCell({ pkg, inline }: { pkg: EnterprisePackage; inline?: 
   const tokens = ENTERPRISE_PACKAGE_TOKENS[pkg];
   return (
     <span className={cn("inline-flex gap-1", inline ? "flex-row flex-wrap items-center gap-2" : "flex-col items-start")}>
-      <span className={cn(PILL, "border-[var(--text-primary)] bg-transparent text-[var(--text-primary)]")}>{PACKAGE_SHORT_LABELS[pkg] ?? pkg}</span>
+      <span className={cn(PILL, "border-border-card bg-transparent text-[var(--text-primary)]")}>{PACKAGE_SHORT_LABELS[pkg] ?? pkg}</span>
       {tokens && <span className="whitespace-nowrap text-xs text-content-muted">{millionTokens(tokens)} token/năm học</span>}
     </span>
   );
@@ -53,7 +53,7 @@ export function ErrorRetry({ title, message, onRetry, retrying }: { title: strin
   return (
     <div
       role="alert"
-      className="flex flex-col items-start gap-3 rounded-[2px] border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-4 text-sm sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col items-start gap-3 rounded-sm border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-4 text-sm sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="flex items-start gap-2">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent-danger)]" aria-hidden="true" />

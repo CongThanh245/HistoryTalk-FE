@@ -22,7 +22,7 @@ const MODULES = [
   },
   {
     icon: Users,
-    title: "Manage Character",
+    title: "Quản lý nhân vật",
     desc: "Quản lý nhân vật: tiểu sử, vai trò, thời kỳ để dùng cho chat/quiz.",
     href: ROUTES.STAFF.CHARACTERS,
     accent: "var(--accent-bronze)",
@@ -46,7 +46,7 @@ export default function StaffPage() {
       accent="var(--accent-gold)"
     >
       <section>
-        <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+        <h2 className="mb-3 text-sm font-semibold text-content-heading">
           Các module quản trị
         </h2>
 
@@ -57,9 +57,9 @@ export default function StaffPage() {
               <Link
                 key={card.href}
                 href={card.href}
-                className="group relative flex flex-col gap-3 rounded-[2px] p-5 border transition-colors duration-200 overflow-hidden bg-[var(--bg-surface)] border-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
+                className="group relative flex flex-col gap-3 rounded-xl p-5 border transition-colors duration-200 overflow-hidden bg-[var(--bg-surface)] border-border-card hover:bg-[var(--bg-elevated)]"
               >
-                <div className="w-10 h-10 rounded-[2px] flex items-center justify-center shrink-0 border border-[var(--border-strong)] bg-[var(--bg-elevated)]">
+                <div className="w-10 h-10 rounded-sm flex items-center justify-center shrink-0 border border-[var(--border-strong)] bg-[var(--bg-elevated)]">
                   <Icon className="w-5 h-5" style={{ color: card.accent }} />
                 </div>
 

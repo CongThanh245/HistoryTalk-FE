@@ -679,7 +679,7 @@ function NoModelPlaceholder({ statusLabel, dotColorClass, shouldAnimate }: {
       </p>
 
       {/* Status dot - same styling as in main component */}
-      <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[var(--accent-gold-soft)]">
+      <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-sm border border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[var(--accent-gold-soft)]">
         <span
           className={cn(
             "h-2 w-2 shrink-0 rounded-full",
@@ -759,7 +759,7 @@ export function FBXCharacterViewer({
   return (
     <div className="relative h-full w-full">
       {/* Status dot */}
-      <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[var(--accent-gold-soft)]">
+      <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-sm border border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[var(--accent-gold-soft)]">
         <span
           className={cn(
             "h-2 w-2 shrink-0 rounded-full",

@@ -100,7 +100,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                   type="text"
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
-                  className="w-full bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-[2px] px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--text-primary)] transition-colors"
+                  className="w-full bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-sm px-3 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--text-primary)] transition-colors"
                 />
                 <User className="absolute right-3 top-3 w-4 h-4 text-[var(--text-muted)]" />
               </div>
@@ -114,7 +114,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                     key={av.id}
                     onClick={() => setSelectedAvatar(av.id)}
                     className={cn(
-                      "flex items-center gap-3.5 p-3.5 rounded-[2px] border transition-colors text-left group",
+                      "flex items-center gap-3.5 p-3.5 rounded-sm border transition-colors text-left group",
                       selectedAvatar === av.id
                         ? "bg-[var(--text-primary)] border-[var(--text-primary)] text-[var(--text-inverse)]"
                         : "bg-[var(--bg-elevated)] border-[var(--border-strong)] text-[var(--text-primary)] hover:border-[var(--text-primary)]"
@@ -161,11 +161,11 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
               <History className="w-4 h-4 text-[var(--accent-gold)] animate-spin-slow" />
               <span className="font-display text-[15px] font-extrabold tracking-[0.04em] uppercase text-[var(--text-primary)]">Bản Đồ Chiến Tích Lịch Sử</span>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-[2px] bg-[var(--bg-elevated)] text-[var(--gold-on-light)] font-mono font-bold border border-[var(--border-strong)]">VIET NAM - 3D</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-sm bg-[var(--bg-elevated)] text-[var(--gold-on-light)] font-mono font-bold border border-[var(--border-strong)]">VIET NAM - 3D</span>
           </div>
 
           {/* Interactive Map Area */}
-          <div className="relative z-10 flex-1 my-4 bg-[var(--bg-elevated)] border border-[var(--text-primary)] rounded-[2px] overflow-hidden flex items-center justify-center">
+          <div className="relative z-10 flex-1 my-4 bg-[var(--bg-elevated)] border border-border-card rounded-sm overflow-hidden flex items-center justify-center">
             {/* Visual map shapes simulating VN */}
             <div className="absolute w-[80%] h-[90%] flex flex-col justify-between items-center py-4">
               {battles.map((bt) => (
@@ -188,7 +188,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                     </span>
                   </span>
                   <span className={cn(
-                    "absolute left-6 -top-1 px-2 py-0.5 rounded-[2px] text-[9px] font-extrabold border whitespace-nowrap transition-opacity",
+                    "absolute left-6 -top-1 px-2 py-0.5 rounded-sm text-[9px] font-extrabold border whitespace-nowrap transition-opacity",
                     selectedBattle === bt.id
                       ? "bg-[var(--text-primary)] border-[var(--text-primary)] text-[var(--text-inverse)] opacity-100"
                       : "bg-[var(--bg-surface)] border-[var(--border-strong)] text-[var(--text-primary)] opacity-70 group-hover:opacity-100"
@@ -200,7 +200,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
             </div>
 
             {/* Bottom Floating Info Drawer */}
-            <div className="absolute bottom-2.5 left-2.5 right-2.5 bg-[var(--bg-surface)] border border-[var(--text-primary)] rounded-[2px] p-3.5 text-left shadow-[var(--shadow-soft)] animate-slideUp">
+            <div className="absolute bottom-2.5 left-2.5 right-2.5 bg-[var(--bg-surface)] border border-border-card rounded-sm p-3.5 text-left shadow-[var(--shadow-soft)] animate-slideUp">
               <div className="flex items-center justify-between mb-1.5">
                 <h4 className="archive-title is-plain text-[17px] text-[var(--gold-on-light)]">{currentBattleInfo.name} ({currentBattleInfo.year})</h4>
                 <span className="text-[10px] text-[var(--text-tertiary)]">Tướng: {currentBattleInfo.commander}</span>
@@ -225,11 +225,11 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
     // STEP 3: LIVE CHAT SIMULATOR
     if (stepIndex === 2) {
       return (
-        <div className="w-full h-full bg-[var(--bg-surface)] border border-[var(--text-primary)] p-5 flex flex-col justify-between text-[var(--text-primary)] animate-fadeIn relative">
+        <div className="w-full h-full bg-[var(--bg-surface)] border border-border-card p-5 flex flex-col justify-between text-[var(--text-primary)] animate-fadeIn relative">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[var(--text-primary)] pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full border border-[var(--text-primary)] bg-[var(--bg-elevated)] flex items-center justify-center text-lg">
+              <div className="w-9 h-9 rounded-full border border-border-card bg-[var(--bg-elevated)] flex items-center justify-center text-lg">
                 ⚔️
               </div>
               <div>
@@ -244,11 +244,11 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
               <button
                 onClick={handleResetChat}
                 title="Tải lại đoạn chat"
-                className="p-1.5 rounded-[2px] border border-transparent hover:border-[var(--text-primary)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                className="p-1.5 rounded-sm border border-transparent hover:border-[var(--text-primary)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
-              <span className="text-[9px] bg-[var(--accent-gold-active-bg)] px-2 py-0.5 rounded-[2px] text-[var(--gold-on-light)] border border-[var(--accent-gold)] font-bold tracking-[0.1em] flex items-center">MÔ PHỎNG AI</span>
+              <span className="text-[9px] bg-[var(--accent-gold-active-bg)] px-2 py-0.5 rounded-sm text-[var(--gold-on-light)] border border-[var(--accent-gold)] font-bold tracking-[0.1em] flex items-center">MÔ PHỎNG AI</span>
             </div>
           </div>
 
@@ -258,7 +258,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
               <div
                 key={idx}
                 className={cn(
-                  "max-w-[85%] rounded-[2px] border p-3 text-[12px] leading-relaxed animate-slideUp",
+                  "max-w-[85%] rounded-sm border p-3 text-[12px] leading-relaxed animate-slideUp",
                   msg.sender === "ai"
                     ? "bg-[var(--bg-elevated)] border-[var(--border-strong)] text-[var(--text-secondary)] self-start"
                     : "bg-[var(--text-primary)] border-[var(--text-primary)] text-[var(--text-inverse)] font-semibold self-end"
@@ -273,7 +273,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
             ))}
 
             {isTyping && (
-              <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-[2px] p-3 self-start max-w-[80%] flex items-center gap-1.5">
+              <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-sm p-3 self-start max-w-[80%] flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] animate-bounce [animation-delay:0ms]"></span>
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] animate-bounce [animation-delay:150ms]"></span>
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] animate-bounce [animation-delay:300ms]"></span>
@@ -287,7 +287,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
               <button
                 onClick={handleSimulateChat}
                 disabled={isTyping}
-                className="w-full bg-transparent hover:bg-[var(--text-primary)] border border-[var(--text-primary)] text-xs text-[var(--text-primary)] hover:text-[var(--text-inverse)] font-bold py-2.5 px-3.5 rounded-[2px] flex items-center justify-center gap-2 transition-colors active:scale-95 disabled:opacity-60"
+                className="w-full bg-transparent hover:bg-[var(--text-primary)] border border-[var(--text-primary)] text-xs text-[var(--text-primary)] hover:text-[var(--text-inverse)] font-bold py-2.5 px-3.5 rounded-sm flex items-center justify-center gap-2 transition-colors active:scale-95 disabled:opacity-60"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>Bấm vào đây để đối thoại với Ngô Quyền!</span>
@@ -340,7 +340,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
               <span className="text-[11px] font-bold tracking-[0.1em] text-[var(--gold-on-light)] flex items-center gap-1.5 uppercase">
                 <HelpCircle className="w-4 h-4" /> Thử Thách Quiz Chớp Nhoáng
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-[2px] bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)] border border-[var(--accent-gold)] font-extrabold">+15 XP</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-sm bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)] border border-[var(--accent-gold)] font-extrabold">+15 XP</span>
             </div>
 
             <p className="text-[12.5px] sm:text-sm leading-relaxed font-bold text-[var(--text-primary)] mb-4">
@@ -372,7 +372,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                     onClick={() => handleOptionClick(idx)}
                     disabled={isQuizSubmitted}
                     className={cn(
-                      "w-full text-left p-3 rounded-[2px] border text-xs sm:text-[13px] leading-relaxed flex items-center justify-between gap-3.5 transition-colors",
+                      "w-full text-left p-3 rounded-sm border text-xs sm:text-[13px] leading-relaxed flex items-center justify-between gap-3.5 transition-colors",
                       !isQuizSubmitted && "hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]",
                       btnStyle
                     )}
@@ -386,7 +386,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
           </div>
 
           {isQuizSubmitted ? (
-            <div className="mt-4 bg-[var(--bg-elevated)] border-[var(--accent-gold)] p-3 rounded-[2px] text-[11px] sm:text-xs leading-relaxed text-[var(--text-secondary)] animate-fadeIn">
+            <div className="mt-4 bg-[var(--bg-elevated)] border-[var(--accent-gold)] p-3 rounded-sm text-[11px] sm:text-xs leading-relaxed text-[var(--text-secondary)] animate-fadeIn">
               <span className="font-bold text-[var(--gold-on-light)] block mb-1">💡 Kiến giải lịch sử:</span>
               <p>{quizQuestion.explanation}</p>
               <button
@@ -409,12 +409,12 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
         <div className="w-full h-full bg-[var(--bg-surface)] p-6 sm:p-8 flex flex-col justify-between text-[var(--text-primary)] animate-fadeIn">
           <div className="space-y-5">
             <div className="flex items-center justify-between border-b border-[var(--text-primary)] pb-3">
-              <span className="text-[11px] font-bold tracking-[0.1em] text-[var(--status-success)] uppercase bg-[var(--status-success-bg)] px-2.5 py-0.5 rounded-[2px] border border-[var(--status-success-border)]">Hoàn Thành!</span>
+              <span className="text-[11px] font-bold tracking-[0.1em] text-[var(--status-success)] uppercase bg-[var(--status-success-bg)] px-2.5 py-0.5 rounded-sm border border-[var(--status-success-border)]">Hoàn Thành!</span>
               <span className="text-xs text-[var(--text-tertiary)]">Hôm nay, 08:30</span>
             </div>
 
             {/* Score Ring & Circle Banner */}
-            <div className="flex items-center gap-5 bg-[var(--bg-elevated)] p-4.5 rounded-[2px] border border-[var(--text-primary)]">
+            <div className="flex items-center gap-5 bg-[var(--bg-elevated)] p-4.5 rounded-sm border border-border-card">
               <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
                 <svg className="absolute w-full h-full transform -rotate-90">
                   <circle cx="32" cy="32" r="28" stroke="var(--border-default)" strokeWidth="5" fill="transparent" />
@@ -435,8 +435,8 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                 </h4>
                 <p className="text-xs text-[var(--text-secondary)]">Nhận: <span className="text-[var(--gold-on-light)] font-bold">+150 XP</span> & <span className="text-[var(--status-warning)] font-bold">+20 Sử Ngọc</span></p>
                 <div className="flex items-center gap-1.5 pt-1.5">
-                  <span className="text-[9px] px-2 py-0.5 rounded-[2px] bg-[var(--status-success-bg)] text-[var(--status-success)] font-bold">100% Khớp</span>
-                  <span className="text-[9px] px-2 py-0.5 rounded-[2px] bg-[var(--text-primary)] text-[var(--text-inverse)] font-semibold">Trạng Nguyên</span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-sm bg-[var(--status-success-bg)] text-[var(--status-success)] font-bold">100% Khớp</span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-sm bg-[var(--text-primary)] text-[var(--text-inverse)] font-semibold">Trạng Nguyên</span>
                 </div>
               </div>
             </div>
@@ -446,7 +446,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
               <p className="text-[10px] uppercase font-bold tracking-[0.1em] text-[var(--text-tertiary)]">Kiểm tra chi tiết</p>
               <div className="grid grid-cols-5 gap-2.5">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                  <div key={num} className="bg-[var(--status-success-bg)] border border-[var(--status-success-border)] text-[var(--status-success)] rounded-[2px] p-1.5 text-center font-bold text-xs flex flex-col items-center justify-center gap-0.5">
+                  <div key={num} className="bg-[var(--status-success-bg)] border border-[var(--status-success-border)] text-[var(--status-success)] rounded-sm p-1.5 text-center font-bold text-xs flex flex-col items-center justify-center gap-0.5">
                     <span>Q{num}</span>
                     <Check className="w-3 h-3 text-[var(--status-success)]" />
                   </div>
@@ -485,11 +485,11 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
           <div className="text-center space-y-4 relative z-10">
             <div className="flex justify-center">
               <div className={cn(
-                "w-22 h-20 rounded-[2px] border border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] flex items-center justify-center relative transition-transform duration-500",
+                "w-22 h-20 rounded-sm border border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] flex items-center justify-center relative transition-transform duration-500",
                 streakClaimed ? "scale-110" : "animate-pulse"
               )}>
                 <Flame className="w-12 h-12 text-[var(--accent-gold)]" />
-                <span className="absolute -bottom-2.5 bg-[var(--accent-gold)] text-white text-[10px] font-extrabold tracking-[0.1em] px-3 py-0.5 rounded-[2px] border-2 border-[var(--bg-surface)]">
+                <span className="absolute -bottom-2.5 bg-[var(--accent-gold)] text-white text-[10px] font-extrabold tracking-[0.1em] px-3 py-0.5 rounded-sm border-2 border-[var(--bg-surface)]">
                   7 NGÀY
                 </span>
               </div>
@@ -506,7 +506,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
                 <div
                   key={idx}
                   className={cn(
-                    "rounded-[2px] p-2 flex flex-col items-center justify-between gap-1 border text-center transition-colors",
+                    "rounded-sm p-2 flex flex-col items-center justify-between gap-1 border text-center transition-colors",
                     day.status === "completed"
                       ? "bg-[var(--accent-gold-active-bg)] border-[var(--accent-gold)] text-[var(--gold-on-light)]"
                       : day.status === "active"
@@ -538,7 +538,7 @@ export function InteractivePreview({ blockIndex, stepIndex }: InteractivePreview
               onClick={() => setStreakClaimed(true)}
               disabled={streakClaimed}
               className={cn(
-                "w-full text-xs font-bold py-3 rounded-[2px] border tracking-wider uppercase transition-colors active:scale-98 flex items-center justify-center gap-1.5",
+                "w-full text-xs font-bold py-3 rounded-sm border tracking-wider uppercase transition-colors active:scale-98 flex items-center justify-center gap-1.5",
                 streakClaimed
                   ? "bg-[var(--bg-elevated)] border-[var(--border-default)] text-[var(--text-muted)] cursor-default"
                   : "bg-[var(--accent-gold)] border-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] hover:border-[var(--accent-bronze)]"

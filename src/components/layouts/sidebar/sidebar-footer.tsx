@@ -24,16 +24,16 @@ function SchoolQuotaCard({ isExpanded }: { isExpanded: boolean }) {
   const fmt = (n: number) => n.toLocaleString("vi-VN");
 
   return (
-    <div className="relative z-10 shrink-0 px-2 py-3 border-t border-border-default">
+    <div className="relative z-10 shrink-0 px-3 py-2 border-border-default">
       <Link
         href="/profile"
         title={`Hạn mức hôm nay: ${fmt(quota.used)} / ${fmt(quota.quota)} token · Reset lúc 00:00`}
         className={cn(
-          "flex items-center gap-2.5 rounded-[2px] border border-border-default px-2.5 py-2 transition-colors hover:bg-[var(--sidebar-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
+          "flex items-center gap-2.5 rounded-sm border border-border-default px-2.5 py-2 transition-colors hover:bg-[var(--sidebar-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
           !isExpanded && "justify-center px-0 border-transparent",
         )}
       >
-        <div className="w-7 h-7 rounded-[2px] flex items-center justify-center shrink-0 border border-[color-mix(in_srgb,var(--gold-leaf)_45%,transparent)] bg-[var(--gold-leaf-bg)]">
+        <div className="w-7 h-7 rounded-sm flex items-center justify-center shrink-0 border border-[color-mix(in_srgb,var(--gold-leaf)_45%,transparent)] bg-[var(--gold-leaf-bg)]">
           <Coins className="w-3.5 h-3.5 text-[var(--gold-leaf)]" />
         </div>
         <div
@@ -42,16 +42,13 @@ function SchoolQuotaCard({ isExpanded }: { isExpanded: boolean }) {
             isExpanded ? "opacity-100 w-full" : "opacity-0 w-0 pointer-events-none",
           )}
         >
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] whitespace-nowrap text-text-muted">
-              Hạn mức hôm nay
-            </span>
-            <span className="text-[11px] font-semibold tabular-nums whitespace-nowrap text-text-secondary">
-              {fmt(quota.used)} / {fmt(quota.quota)}
-            </span>
-          </div>
+          {/* Two lines so the numbers never get clipped by the narrow sidebar. */}
+          <span className="text-xs text-text-muted">Token hôm nay</span>
+          <span className="text-[13px] font-semibold tabular-nums text-text-primary">
+            {fmt(quota.used)} <span className="font-normal text-text-muted">/ {fmt(quota.quota)}</span>
+          </span>
           <div
-            className="h-1 w-full rounded-[2px] bg-[var(--border-default)] overflow-hidden"
+            className="h-1 w-full rounded-sm bg-[var(--border-default)] overflow-hidden"
             role="progressbar"
             aria-label="Hạn mức token hôm nay"
             aria-valuemin={0}
@@ -86,8 +83,8 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
   /* ── Loading: avoid flashing the wrong tier before profile arrives ── */
   if (isLoading) {
     return (
-      <div className="relative z-10 shrink-0 px-2 py-3 border-t border-border-default">
-        <Skeleton className="w-full rounded-[2px] h-[72px]" />
+      <div className="relative z-10 shrink-0 px-3 py-2 border-border-default">
+        <Skeleton className="w-full rounded-sm h-[72px]" />
       </div>
     );
   }
@@ -96,12 +93,12 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
   if (proUser && profile) {
     return (
       <div
-        className="relative z-10 shrink-0 px-2 py-3 border-t border-border-default"
+        className="relative z-10 shrink-0 px-3 py-2 border-border-default"
       >
         <UpgradeProDialog>
         <button
           type="button"
-          className="block rounded-[2px] overflow-hidden relative group transition-colors duration-250 w-full text-left cursor-pointer h-[72px] bg-bg-surface border border-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
+          className="block rounded-sm overflow-hidden relative group transition-colors duration-250 w-full text-left cursor-pointer h-[72px] bg-bg-surface border border-border-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
         >
           {/* Crimson top rule */}
           <div
@@ -111,7 +108,7 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
           <div className="relative z-10 h-full flex items-center px-2.5 gap-2.5">
             {/* Crown icon */}
             <div
-              className="w-7 h-7 rounded-[2px] flex items-center justify-center shrink-0 bg-accent-gold"
+              className="w-7 h-7 rounded-sm flex items-center justify-center shrink-0 bg-accent-gold"
             >
               <Crown className="w-3.5 h-3.5 text-white" fill="currentColor" />
             </div>
@@ -153,77 +150,40 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
     );
   }
 
-  /* ── Free User: Token card + Upgrade button ──────────────── */
+  /* ── Free User: one card with the token balance and the upgrade action ──────────────── */
   return (
-    <div
-      className="relative z-10 shrink-0 px-2 py-3 border-t flex flex-col gap-2 border-border-default"
-    >
-      {/* Token display for free users */}
-      <Link
-        href="/profile?tab=billing"
-        className={cn(
-          "flex items-center gap-2 rounded-[2px] px-2.5 py-2 transition-colors hover:bg-[var(--sidebar-hover-bg)]",
-          !isExpanded && "justify-center"
-        )}
-      >
-        <div
-          className="w-7 h-7 rounded-[2px] flex items-center justify-center shrink-0 bg-bg-main border border-border-strong"
-        >
-          <Coins className="w-3.5 h-3.5 text-text-muted" />
-        </div>
-        <div
-          className={cn(
-            "flex flex-col overflow-hidden transition-all duration-250",
-            isExpanded ? "opacity-100 w-full" : "opacity-0 w-0 pointer-events-none"
-          )}
-        >
-          <span
-            className="text-[11px] font-semibold whitespace-nowrap tabular-nums text-text-secondary"
+    <div className="relative z-10 shrink-0 px-3 py-2">
+      {isExpanded ? (
+        <div className="rounded-xl border border-border-card bg-[var(--bg-elevated)] p-3">
+          <Link
+            href="/profile?tab=billing"
+            className="flex items-center gap-2 rounded-md text-[13px] text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
           >
-            {profile?.token?.toLocaleString("vi-VN") ?? 0} Token
-          </span>
-          <span className="text-[10px] whitespace-nowrap text-text-muted">
-            Còn lại
-          </span>
+            <Coins className="h-4 w-4 shrink-0 text-[var(--gold-leaf)]" aria-hidden="true" />
+            <span className="font-semibold tabular-nums text-text-primary">{profile?.token?.toLocaleString("vi-VN") ?? 0}</span>
+            token còn lại
+          </Link>
+          <UpgradeProDialog>
+            <button
+              type="button"
+              className="mt-2.5 inline-flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-accent-gold text-[13px] font-semibold text-white transition-colors hover:bg-[var(--accent-bronze)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2"
+            >
+              <Zap className="h-3.5 w-3.5" aria-hidden="true" /> Nâng cấp Pro
+            </button>
+          </UpgradeProDialog>
         </div>
-      </Link>
-
-      <UpgradeProDialog>
-        <button
-          type="button"
-          className="rounded-[2px] overflow-hidden relative cursor-pointer group transition-colors duration-250 w-full text-left h-[72px] bg-transparent border border-[var(--text-primary)] hover:bg-[var(--sidebar-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
-        >
-
-          <div className="relative z-10 h-full flex items-center px-2.5 gap-2.5">
-            <div
-              className="w-7 h-7 rounded-[2px] flex items-center justify-center shrink-0 bg-accent-gold"
-            >
-              <Zap className="w-3.5 h-3.5 text-white" />
-            </div>
-
-            <div
-              className={cn(
-                "flex flex-col gap-1.5 overflow-hidden transition-all duration-250",
-                isExpanded ? "opacity-100 w-full" : "opacity-0 w-0 pointer-events-none"
-              )}
-            >
-              <div>
-                <p className="font-display text-sm font-extrabold uppercase leading-[1.3] whitespace-nowrap text-text-primary">
-                  Nâng cấp Pro
-                </p>
-                <p className="text-[11px] whitespace-nowrap text-text-secondary">
-                  Mở khóa toàn bộ tính năng.
-                </p>
-              </div>
-              <span
-                className="block w-full py-1 rounded-[2px] text-[10px] font-bold uppercase tracking-[0.1em] text-center whitespace-nowrap transition-colors duration-150 text-white bg-accent-gold group-hover:bg-[var(--accent-bronze)]"
-              >
-                Upgrade to Pro ✦
-              </span>
-            </div>
-          </div>
-        </button>
-      </UpgradeProDialog>
+      ) : (
+        <UpgradeProDialog>
+          <button
+            type="button"
+            aria-label="Nâng cấp Pro"
+            title="Nâng cấp Pro"
+            className="mx-auto grid h-10 w-10 cursor-pointer place-items-center rounded-lg bg-accent-gold text-white transition-colors hover:bg-[var(--accent-bronze)]"
+          >
+            <Zap className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </UpgradeProDialog>
+      )}
     </div>
   );
 }

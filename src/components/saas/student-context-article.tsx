@@ -11,7 +11,7 @@ export function StudentContextArticle({ context, mapHref }: { context: LocalCont
   const paragraphs = context.body.split(/\n{2,}|\n/).map((p) => p.trim()).filter(Boolean);
 
   return (
-    <article className="space-y-5 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4 sm:p-6">
+    <article className="space-y-5 rounded-sm border border-border-card bg-[var(--bg-surface)] p-4 sm:p-6">
       <header className="space-y-3 border-b border-[var(--border-default)] pb-4">
         <h2 className="archive-title is-plain text-2xl sm:text-3xl">{context.title}</h2>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-content-muted">
@@ -28,7 +28,7 @@ export function StudentContextArticle({ context, mapHref }: { context: LocalCont
 
       {context.imageUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- teacher-provided URL of any host
-        <img src={context.imageUrl} alt="" className="max-h-80 w-full rounded-[2px] border border-[var(--border-default)] object-cover" />
+        <img src={context.imageUrl} alt="" className="max-h-80 w-full rounded-sm border border-[var(--border-default)] object-cover" />
       )}
 
       <p className="border-y border-[var(--border-default)] bg-[color-mix(in_srgb,var(--jade)_7%,transparent)] px-4 py-3 text-[15px] font-semibold leading-relaxed text-content-text">

@@ -54,7 +54,7 @@ function SortHeader({
       type="button"
       onClick={() => onSort(column)}
       className={cn(
-        "-ml-1.5 inline-flex h-8 items-center gap-1 rounded-[2px] px-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]",
+        "-ml-1.5 inline-flex h-8 items-center gap-1 rounded-sm px-1.5 text-[13px] font-semibold transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]",
         active ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]",
       )}
     >
@@ -73,7 +73,7 @@ function SortHeader({
 }
 
 const PlainHeader = ({ children }: { children: React.ReactNode }) => (
-  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{children}</span>
+  <span className="text-[13px] font-semibold text-[var(--text-tertiary)]">{children}</span>
 );
 
 function SchoolsContent() {
@@ -146,7 +146,7 @@ function SchoolsContent() {
           <div className="space-y-3">
             <div
               className={cn(
-                "overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)] transition-opacity",
+                "overflow-x-auto rounded-lg border border-border-card bg-[var(--bg-surface)] transition-opacity",
                 isPlaceholderData && "opacity-60",
               )}
               aria-busy={isFetching}
@@ -154,7 +154,7 @@ function SchoolsContent() {
               <Table className="min-w-max">
                 <caption className="sr-only">Danh sách trường trên gói trường học</caption>
                 <TableHeader>
-                  <TableRow className="border-b border-[var(--border-strong)] hover:bg-transparent">
+                  <TableRow className="border-b border-border-card">
                     <TableHead className={cn("px-3", STICKY, "z-20")} aria-sort={ariaSort("name")}>
                       <SortHeader label="Trường" column="name" {...sortProps} />
                     </TableHead>

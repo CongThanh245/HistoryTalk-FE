@@ -33,7 +33,7 @@ export function MarkdownMessage({ text }: Props) {
     ),
     code: ({ children }) => (
       <code
-        className="px-1 py-0.5 rounded-[2px] text-xs"
+        className="px-1 py-0.5 rounded-sm text-xs"
         style={{ background: "var(--bg-elevated)" }}
       >
         {children}
@@ -41,7 +41,7 @@ export function MarkdownMessage({ text }: Props) {
     ),
     pre: ({ children }) => (
       <pre
-        className="p-2 rounded-[2px] border border-[var(--border-default)] overflow-x-auto text-xs mb-2 last:mb-0"
+        className="p-2 rounded-sm border border-[var(--border-default)] overflow-x-auto text-xs mb-2 last:mb-0"
         style={{ background: "var(--bg-elevated)" }}
       >
         {children}

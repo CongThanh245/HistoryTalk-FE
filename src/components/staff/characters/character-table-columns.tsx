@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { MoreHorizontal, RotateCcw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,7 +65,7 @@ export function createCharacterColumns({
           <StaffImageHoverPreview
             src={row.original.imageUrl}
             alt={row.original.name}
-            thumbClassName="h-9 w-9 rounded-[2px]"
+            thumbClassName="h-9 w-9 rounded-sm"
             previewClassName="h-56 w-40"
             sizes="36px"
             previewSizes="160px"
@@ -91,7 +91,7 @@ export function createCharacterColumns({
         return (
           <span
             className={cn(
-              "inline-flex items-center gap-1 px-2 py-0.5 rounded-[2px] text-[11px] font-semibold border",
+              "inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] font-semibold border",
               isDraft
                 ? "bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)] border-[var(--border-strong)]"
                 : "bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]",
@@ -109,7 +109,7 @@ export function createCharacterColumns({
         <div className="flex min-w-[140px] items-center gap-2">
           <Button
             variant="outline"
-            className="h-8 rounded-[2px] px-3 text-xs font-semibold border-card-light-border text-content-heading hover:bg-[var(--status-neutral-bg)] hover:text-[var(--content-heading)]"
+            className="h-8 rounded-sm px-3 text-xs font-semibold border-card-light-border text-content-heading hover:bg-[var(--status-neutral-bg)] hover:text-[var(--content-heading)]"
             onClick={() => onEdit(row.original)}
           >
             Chỉnh sửa
@@ -118,9 +118,9 @@ export function createCharacterColumns({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="h-8 rounded-[2px] px-3 text-sm font-bold border-card-light-border text-content-heading hover:bg-[var(--status-neutral-bg)] hover:text-[var(--content-heading)]"
-              >
-                ...
+                className="h-8 w-8 rounded-lg p-0 border-card-light-border text-content-heading hover:bg-[var(--status-neutral-bg)] hover:text-[var(--content-heading)]"
+              aria-label="Thao tác khác">
+                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -151,7 +151,7 @@ export function createCharacterColumns({
               <button
                 key={context.contextId}
                 type="button"
-                className="max-w-[140px] truncate rounded-[2px] border border-card-light-border px-2 py-0.5 text-[11px] font-medium text-content-text hover:bg-[var(--status-neutral-bg)]"
+                className="max-w-[140px] truncate rounded-sm border border-card-light-border px-2 py-0.5 text-[11px] font-medium text-content-text hover:bg-[var(--status-neutral-bg)]"
                 onClick={() => onOpenContext(context.contextId)}
                 title={context.name || "Bối cảnh"}
               >
@@ -234,7 +234,7 @@ export function createCharacterTrashColumns({
           <Button
             variant="ghost"
             size="icon-sm"
-            className="rounded-[2px] text-accent-blue"
+            className="rounded-sm text-accent-blue"
             title="Khôi phục"
             onClick={() => onRestore(row.original)}
           >
@@ -243,7 +243,7 @@ export function createCharacterTrashColumns({
           <Button
             variant="ghost"
             size="icon-sm"
-            className="rounded-[2px] text-accent-danger"
+            className="rounded-sm text-accent-danger"
             title="Xóa vĩnh viễn"
             onClick={() => onPermanentDelete(row.original)}
           >

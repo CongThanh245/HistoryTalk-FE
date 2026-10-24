@@ -2,9 +2,10 @@
 
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, SearchIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils/cn"
+import { normalizeText } from "@/lib/utils/normalize-text"
 
 function Select({
   ...props
@@ -37,7 +38,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:border-[var(--text-primary)] flex w-fit cursor-pointer items-center justify-between gap-2 rounded-[2px] border bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--text-primary)] whitespace-nowrap transition-[color,border-color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:border-[var(--text-primary)] flex w-fit cursor-pointer items-center justify-between gap-2 rounded-sm border bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--text-primary)] whitespace-nowrap transition-[color,border-color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}
@@ -62,7 +63,7 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-120 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-[2px] border border-[var(--text-primary)] shadow-[var(--shadow-soft)]",
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-120 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-sm border border-border-card shadow-[var(--shadow-soft)]",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className
@@ -109,7 +110,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "focus:bg-[var(--text-primary)] focus:text-[var(--text-inverse)] [&_svg:not([class*='text-'])]:text-muted-foreground focus:[&_svg:not([class*='text-'])]:text-[var(--text-inverse)] relative flex w-full cursor-pointer items-center gap-2 rounded-[2px] py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "focus:bg-[var(--text-primary)] focus:text-[var(--text-inverse)] [&_svg:not([class*='text-'])]:text-muted-foreground focus:[&_svg:not([class*='text-'])]:text-[var(--text-inverse)] relative flex w-full cursor-pointer items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
       {...props}
@@ -125,6 +126,61 @@ function SelectItem({
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   )
+}
+
+/**
+ * Search box pinned to the top of a SelectContent. Keys stay in the input so Radix typeahead does not
+ * steal them; the caller filters its own SelectItems (keep the selected one so SelectValue keeps its text).
+ */
+function SelectSearch({
+  value,
+  onChange,
+  placeholder = "Tìm...",
+  className,
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  className?: string
+}) {
+  return (
+    <div className={cn("sticky top-0 z-10 -mx-1 -mt-1 mb-1 border-b border-[var(--border-default)] bg-popover p-1.5", className)}>
+      <div className="relative">
+        <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            // Mui ten xuong de vao danh sach, phim khac giu trong o tim kiem.
+            if (e.key !== "ArrowDown" && e.key !== "Escape") e.stopPropagation()
+          }}
+          placeholder={placeholder}
+          aria-label={placeholder}
+          autoFocus
+          className="h-8 w-full rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] pl-8 pr-2 text-sm text-[var(--text-primary)] outline-none focus-visible:border-[var(--text-primary)]"
+        />
+      </div>
+    </div>
+  )
+}
+
+/** State for SelectSearch: pass `onOpenChange` to Select so the query clears when it closes. */
+function useSelectSearch() {
+  const [search, setSearch] = React.useState("")
+  const q = normalizeText(search)
+  return {
+    search,
+    setSearch,
+    query: q,
+    matches: (text: string) => !q || normalizeText(text).includes(q),
+    onOpenChange: (open: boolean) => {
+      if (!open) setSearch("")
+    },
+  }
+}
+
+function SelectEmpty({ children = "Không tìm thấy kết quả" }: { children?: React.ReactNode }) {
+  return <p className="px-2 py-3 text-center text-xs text-muted-foreground">{children}</p>
 }
 
 function SelectSeparator({
@@ -184,6 +240,9 @@ export {
   SelectLabel,
   SelectScrollDownButton,
   SelectScrollUpButton,
+  SelectSearch,
+  SelectEmpty,
+  useSelectSearch,
   SelectSeparator,
   SelectTrigger,
   SelectValue,

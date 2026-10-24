@@ -87,7 +87,7 @@ function syncProfileUser(profile: UserProfile) {
 function ThinkingIndicator() {
   return (
     <div className="flex justify-start py-1">
-      <div className="flex items-center gap-1 rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] bg-gradient-to-br from-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] to-[color-mix(in_srgb,_var(--accent-gold)_5%,_transparent)] px-4 py-2">
+      <div className="flex items-center gap-1 rounded-sm border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] bg-gradient-to-br from-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] to-[color-mix(in_srgb,_var(--accent-gold)_5%,_transparent)] px-4 py-2">
         <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-gold)] animate-[thinkingBounce_0.6s_ease-in-out_infinite]" />
         <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-gold)] animate-[thinkingBounce_0.6s_ease-in-out_infinite] [animation-delay:0.15s]" />
         <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-gold)] animate-[thinkingBounce_0.6s_ease-in-out_infinite] [animation-delay:0.3s]" />
@@ -139,8 +139,8 @@ function TranscriptFeed({
               className={cn(
                 "max-w-[80%] px-3 py-1.5 text-[13px] leading-normal",
                 m.role === "user"
-                  ? "rounded-[2px] bg-white/[0.08] text-white/75"
-                  : "rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] bg-gradient-to-br from-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] to-[color-mix(in_srgb,_var(--accent-gold)_5%,_transparent)] text-white/90",
+                  ? "rounded-sm bg-white/[0.08] text-white/75"
+                  : "rounded-sm border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] bg-gradient-to-br from-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] to-[color-mix(in_srgb,_var(--accent-gold)_5%,_transparent)] text-white/90",
               )}
             >
               {part}
@@ -151,14 +151,14 @@ function TranscriptFeed({
               <button
                 type="button"
                 onClick={() => setExpandedQuotesFor(expandedQuotesFor === i ? null : i)}
-                className="flex items-center gap-1 self-start rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_35%,_transparent)] bg-[color-mix(in_srgb,_var(--accent-gold)_10%,_transparent)] px-2 py-0.5 text-[11px] text-[color-mix(in_srgb,_var(--accent-gold-soft)_90%,_transparent)]"
+                className="flex items-center gap-1 self-start rounded-sm border border-[color-mix(in_srgb,_var(--accent-gold)_35%,_transparent)] bg-[color-mix(in_srgb,_var(--accent-gold)_10%,_transparent)] px-2 py-0.5 text-[11px] text-[color-mix(in_srgb,_var(--accent-gold-soft)_90%,_transparent)]"
               >
                 {m.quotes.length} nguồn trích dẫn
                 {expandedQuotesFor === i ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
               </button>
 
               {expandedQuotesFor === i && (
-                <div className="flex flex-col gap-2 rounded-[2px] border border-white/10 bg-white/[0.04] px-2.5 py-2">
+                <div className="flex flex-col gap-2 rounded-sm border border-white/10 bg-white/[0.04] px-2.5 py-2">
                   {m.quotes.map((quote, qi) => (
                     <div key={qi} className="flex flex-col gap-1">
                       <blockquote className="m-0 border-[color-mix(in_srgb,_var(--accent-gold)_40%,_transparent)] pl-2 text-[11.5px] leading-[1.5] text-white/65">
@@ -184,7 +184,7 @@ function TranscriptFeed({
       {/* Hiển thị text đang nói (real-time) với style italic */}
       {interimText && (
         <div className="flex justify-end">
-          <div className="max-w-[80%] rounded-[2px] border border-dashed border-white/20 bg-white/[0.04] px-3 py-1.5 text-[13px] italic leading-normal text-white/50">
+          <div className="max-w-[80%] rounded-sm border border-dashed border-white/20 bg-white/[0.04] px-3 py-1.5 text-[13px] italic leading-normal text-white/50">
             {interimText}
             <span className="ml-1 inline-block h-3.5 w-0.5 animate-[pulse_0.8s_ease-in-out_infinite] bg-white/50" />
           </div>
@@ -313,7 +313,7 @@ function CallCitationPanel({
             type="button"
             onClick={onClose}
             aria-label="Đóng"
-            className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-[2px] border border-white/[0.12] bg-white/[0.06] text-white/70"
+            className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-white/[0.12] bg-white/[0.06] text-white/70"
           >
             <X size={13} strokeWidth={2.5} />
           </button>
@@ -356,7 +356,7 @@ function CallCitationPanel({
             </>
           ) : (
             <div className="flex flex-col gap-3">
-              <div className="flex items-start gap-2 rounded-[2px] border border-white/[0.12] p-3 text-[13px] text-white/60">
+              <div className="flex items-start gap-2 rounded-sm border border-white/[0.12] p-3 text-[13px] text-white/60">
                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
                 <span>Không tìm thấy vị trí chính xác trong tài liệu. Đây là nội dung AI đã trích dẫn:</span>
               </div>
@@ -1422,7 +1422,7 @@ export function Avatar3DModal({
           {/* ── Header ── */}
           <div className="flex w-full shrink-0 items-center justify-between border-b border-[color-mix(in_srgb,_var(--accent-gold)_12%,_transparent)] px-5 py-3.5">
             {/* Status badge */}
-            <div className="flex items-center gap-1.5 rounded-[2px] border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] bg-[color-mix(in_srgb,_var(--accent-gold)_8%,_transparent)] px-3 py-1 text-xs text-[var(--accent-gold-soft)]">
+            <div className="flex items-center gap-1.5 rounded-sm border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] bg-[color-mix(in_srgb,_var(--accent-gold)_8%,_transparent)] px-3 py-1 text-xs text-[var(--accent-gold-soft)]">
               {(isRecording || isBusy || isListeningStatus) && (
                 <span
                   className={cn(
@@ -1445,7 +1445,7 @@ export function Avatar3DModal({
             <button
               type="button"
               onClick={handleClose}
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[2px] border-none bg-white/[0.06] text-white/50 transition-[background,color] duration-200 hover:bg-white/[0.12] hover:text-white"
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm border-none bg-white/[0.06] text-white/50 transition-[background,color] duration-200 hover:bg-white/[0.12] hover:text-white"
               aria-label="Đóng"
             >
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none">

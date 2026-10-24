@@ -17,7 +17,7 @@ export function MockDataNotice({ className }: { className?: string }) {
       <div
         role="note"
         className={cn(
-          "flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-1.5 text-xs text-[var(--text-secondary)]",
+          "flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-1.5 text-xs text-[var(--text-secondary)]",
           className,
         )}
       >
@@ -30,7 +30,7 @@ export function MockDataNotice({ className }: { className?: string }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-1.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] underline-offset-4 hover:text-[var(--accent-gold)] hover:underline"
+          className="inline-flex items-center gap-1.5 py-1 text-[13px] font-semibold text-[var(--text-primary)] underline-offset-4 hover:text-[var(--accent-gold)] hover:underline"
         >
           <RotateCcw className="h-3 w-3" aria-hidden="true" />
           Khôi phục dữ liệu mẫu

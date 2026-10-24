@@ -6,13 +6,29 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import SidebarHeader from "./sidebar-header";
 import SidebarNav from "./sidebar-nav";
 import SidebarFooter from "./sidebar-footer";
+import SidebarQuickMenu from "./sidebar-quick-menu";
+import SidebarUser from "./sidebar-user";
 import type { CatalogPath } from "./sidebar-nav";
-import { SidebarSection } from "@/routers/sidebar";
+import type { SidebarQuickMenu as QuickMenu, SidebarSection } from "@/routers/sidebar";
 import { useSidebar } from "./sidebar-context";
 
-export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }: { sections: SidebarSection[]; showUpgrade?: boolean; logoHref?: string }) {
+export default function Sidebar({
+  sections,
+  quickMenu,
+  showUpgrade = true,
+  logoHref = "/",
+}: {
+  sections: SidebarSection[];
+  /** "Tạo" / "Bắt đầu" menu above the nav; omitted for roles with nothing to start from here. */
+  quickMenu?: QuickMenu;
+  showUpgrade?: boolean;
+  logoHref?: string;
+}) {
   const [isPinned, setIsPinned] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+  // A menu opened from the hover-expanded sidebar renders in a portal: keep the sidebar open until it closes.
+  const menuOpen = useRef(false);
+  const desktopRef = useRef<HTMLDivElement>(null);
   const [isTablet, setIsTablet] = useState(false);
   const [catalogUrls, setCatalogUrls] = useState<Partial<Record<CatalogPath, string>>>({});
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,7 +75,13 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
   };
 
   const handleMouseLeave = () => {
+    if (menuOpen.current) return;
     hoverTimeout.current = setTimeout(() => setIsHovered(false), 120);
+  };
+
+  const handleMenuOpenChange = (open: boolean) => {
+    menuOpen.current = open;
+    if (!open && !desktopRef.current?.matches(":hover")) setIsHovered(false);
   };
 
   const rememberCatalogUrl = (path: CatalogPath, url: string) => {
@@ -75,8 +97,8 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
   const sidebarContent = (isExpanded: boolean) => (
     <aside
       className={cn(
-        "sidebar-ink relative h-screen flex flex-col transition-all duration-250 ease-in-out select-none shrink-0 border-r z-40 bg-[var(--sidebar-bg)] border-sidebar-border",
-        isExpanded ? "w-64" : "w-16",
+        "sidebar-ink relative h-[100dvh] flex flex-col transition-all duration-250 ease-in-out select-none shrink-0 border-r z-40 bg-[var(--sidebar-bg)] border-sidebar-border",
+        isExpanded ? "w-60" : "w-16",
       )}
     >
       {/* Grain texture */}
@@ -96,13 +118,18 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
         isMobileDrawer={isMobileOpen}
         logoHref={logoHref}
       />
+      {quickMenu && (
+        <SidebarQuickMenu menu={quickMenu} isExpanded={isExpanded} onOpenChange={handleMenuOpenChange} onNavigate={closeMobileSidebar} />
+      )}
       <SidebarNav
         isExpanded={isExpanded}
         sections={sections}
         catalogUrls={catalogUrls}
         onRememberCatalogUrl={rememberCatalogUrl}
+        onNavigate={closeMobileSidebar}
       />
       <SidebarFooter isExpanded={isExpanded} showUpgrade={showUpgrade} />
+      <SidebarUser isExpanded={isExpanded} onOpenChange={handleMenuOpenChange} />
     </aside>
   );
 
@@ -132,6 +159,7 @@ export default function Sidebar({ sections, showUpgrade = true, logoHref = "/" }
 
       {/* ── Desktop sidebar (≥ md) ── */}
       <div
+        ref={desktopRef}
         className="hidden md:block"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}

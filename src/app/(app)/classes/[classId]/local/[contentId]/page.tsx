@@ -111,7 +111,7 @@ function ItemView({ item, back, teacher }: { item: LocalItem; back: React.ReactN
           <h2 className="archive-title is-plain text-3xl">{item.name}</h2>
         ) : (
           <div className="flex items-center gap-4">
-            <span className="grid h-20 w-20 shrink-0 place-items-center rounded-[2px] bg-[var(--accent-gold)] text-white" aria-hidden="true">
+            <span className="grid h-20 w-20 shrink-0 place-items-center rounded-sm bg-[var(--accent-gold)] text-white" aria-hidden="true">
               <UserRound className="h-9 w-9" />
             </span>
             <div className="min-w-0">

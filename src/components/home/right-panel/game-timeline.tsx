@@ -68,7 +68,7 @@ export function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               }}
               onDragEnd={handleDrop}
               onDragOver={(e) => e.preventDefault()}
-              className={`rounded-[2px] border px-[11px] py-2 flex items-center gap-[9px] select-none transition-all duration-100 ${
+              className={`rounded-sm border px-[11px] py-2 flex items-center gap-[9px] select-none transition-all duration-100 ${
                 submitted ? "cursor-default" : "cursor-grab"
               } ${dragging === i ? "opacity-35" : "opacity-100"}`}
               style={{
@@ -102,7 +102,7 @@ export function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
               </div>
               {submitted && (
                 <span
-                  className={`text-[10px] font-extrabold rounded-[2px] px-1.5 py-px border ${
+                  className={`text-[10px] font-extrabold rounded-sm px-1.5 py-px border ${
                     placedOk
                       ? "text-[var(--status-success)] bg-[var(--status-success-bg)] border-[var(--status-success-border)]"
                       : "text-[var(--accent-danger)] bg-[var(--status-danger-bg)] border-[var(--status-danger-border)]"
@@ -111,7 +111,7 @@ export function GameTimeline({ onScore }: { onScore: (c: boolean) => void }) {
                   {item.yearDisplay}
                 </span>
               )}
-              <span className="font-display text-[12px] font-extrabold min-w-[20px] h-[20px] flex items-center justify-center rounded-[2px] border border-[var(--text-primary)] text-[var(--text-primary)] shrink-0">
+              <span className="font-display text-[12px] font-extrabold min-w-[20px] h-[20px] flex items-center justify-center rounded-sm border border-border-card text-[var(--text-primary)] shrink-0">
                 {i + 1}
               </span>
             </div>

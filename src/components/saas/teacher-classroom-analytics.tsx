@@ -39,7 +39,7 @@ function AnalyticsState({
   if (query.isPending) {
     return (
       <div
-        className="h-[132px] animate-pulse rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none"
+        className="h-[132px] animate-pulse rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none"
         aria-busy="true"
       />
     );
@@ -91,7 +91,8 @@ function StudentTable({ students, classId, canGrant }: { students: TeacherClassr
       },
       { accessorKey: "aiMessagesCount", header: "Tin nhắn AI", cell: ({ row }) => num(row.original.aiMessagesCount) },
       {
-        accessorKey: "dailyTokensUsed",
+        // Gop "da dung / han muc" va "con lai" vao mot cot cho bang gon.
+        accessorKey: "currentTokens",
         header: "Token hôm nay",
         cell: ({ row }) => {
           const s = row.original;
@@ -99,18 +100,18 @@ function StudentTable({ students, classId, canGrant }: { students: TeacherClassr
           if (s.dailyTokenLimit == null) return num(s.currentTokens);
           const limit = s.dailyTokenLimit + (s.dailyBonusTokens ?? 0);
           return (
-            <span className="tabular-nums" title={`Còn dùng được ${formatNumber(s.currentTokens)} token hôm nay`}>
+            <span className="tabular-nums">
               {formatNumber(s.dailyTokensUsed ?? 0)} / {formatNumber(limit)}
               {(s.dailyBonusTokens ?? 0) > 0 && <span className="text-xs text-[var(--status-success)]"> (+{formatNumber(s.dailyBonusTokens ?? 0)})</span>}
+              <span className="block text-xs text-content-muted">còn {formatNumber(s.currentTokens)}</span>
             </span>
           );
         },
       },
-      { accessorKey: "currentTokens", header: "Còn lại hôm nay", cell: ({ row }) => num(row.original.currentTokens) },
       ...(canGrant
         ? [
             {
-              id: "grant",
+              id: "actions",
               header: "",
               cell: ({ row }) => (
                 <button
@@ -138,7 +139,7 @@ function StudentTable({ students, classId, canGrant }: { students: TeacherClassr
 /** Tab "Thong ke": KPI lop + bang ket qua tung hoc sinh. */
 type DashboardData = NonNullable<ReturnType<typeof useTeacherClassroomDashboard>["data"]>;
 
-function KpiGrid({ data, classId, compact }: { data: DashboardData; classId: string; compact?: boolean }) {
+function KpiGrid({ data, classId }: { data: DashboardData; classId: string }) {
   // BE chua tinh assignmentRates (luon 0): cong tu so bai nop cua cac bai dang giao trong lop.
   const assignments = useClassroomAssignments(classId, { size: 100 });
   const live = (assignments.data?.items ?? []).filter((a) => a.status !== "CANCELLED");
@@ -150,22 +151,15 @@ function KpiGrid({ data, classId, compact }: { data: DashboardData; classId: str
   const avgScore = attempted.length ? attempted.reduce((sum, s) => sum + s.averageScorePercentage, 0) / attempted.length : null;
   const totalQuizzes = data.students.reduce((sum, s) => sum + s.quizzesAttempted, 0);
   const pending = data.pendingTokenBoostRequests ?? 0;
+  // Chi giu chi so can hanh dong; si so da co o tieu de lop, han muc token la cau hinh nen dat canh bang hoc sinh.
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <KpiTile label="Sĩ số" value={formatNumber(data.studentCount)} />
+      <div className="grid gap-4 sm:grid-cols-3">
         <KpiTile
           label="Điểm TB quiz"
           value={avgScore == null ? "—" : `${avgScore.toFixed(1)}%`}
-          hint={`${attempted.length}/${data.students.length} học sinh đã làm quiz`}
+          hint={`${attempted.length}/${data.students.length} học sinh đã làm · ${formatNumber(totalQuizzes)} lượt`}
           accent="text-[var(--men-lam)]"
-        />
-        <KpiTile label="Lượt làm quiz" value={formatNumber(totalQuizzes)} accent="text-[var(--jade)]" />
-        <KpiTile
-          label="Tin nhắn AI"
-          value={formatNumber(data.totalAiMessages)}
-          hint={`TB ${data.avgAiMessagesPerStudent.toFixed(1)} tin nhắn / học sinh`}
-          accent="text-[var(--gold-leaf)]"
         />
         <KpiTile
           label="Bài đã nộp"
@@ -179,36 +173,22 @@ function KpiGrid({ data, classId, compact }: { data: DashboardData; classId: str
           }
           accent={notDone ? "text-[var(--status-warning)]" : "text-[var(--status-success)]"}
         />
+        <KpiTile
+          label="Tin nhắn AI"
+          value={formatNumber(data.totalAiMessages)}
+          hint={`TB ${data.avgAiMessagesPerStudent.toFixed(1)} tin nhắn / học sinh`}
+          accent="text-[var(--gold-leaf)]"
+        />
       </div>
 
-      {compact
-        ? pending > 0 && (
-            <p className="flex flex-wrap items-center gap-2 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-4 py-2.5 text-sm text-[var(--status-warning)]">
-              <span className="font-semibold">{formatNumber(pending)} yêu cầu xin thêm token đang chờ duyệt.</span>
-              <Link href={ROUTES.TEACHING.TOKEN_REQUESTS} className="archive-link">
-                Xem và duyệt
-              </Link>
-            </p>
-          )
-        : data.dailyTokenLimit != null && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <KpiTile
-                label="Hạn mức token / học sinh / ngày"
-                value={formatNumber(data.dailyTokenLimit)}
-                hint="Do quản trị trường đặt cho lớp hoặc toàn trường. Làm mới lúc 00:00."
-              />
-              <KpiTile
-                label="Yêu cầu xin thêm token"
-                value={formatNumber(pending)}
-                hint={
-                  <Link href={ROUTES.TEACHING.TOKEN_REQUESTS} className="archive-link">
-                    Xem và duyệt
-                  </Link>
-                }
-                accent={pending > 0 ? "text-[var(--status-warning)]" : undefined}
-              />
-            </div>
-          )}
+      {pending > 0 && (
+        <p className="flex flex-wrap items-center gap-2 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-4 py-2.5 text-sm text-[var(--status-warning)]">
+          <span className="font-semibold">{formatNumber(pending)} yêu cầu xin thêm token đang chờ duyệt.</span>
+          <Link href={ROUTES.TEACHING.TOKEN_REQUESTS} className="archive-link">
+            Xem và duyệt
+          </Link>
+        </p>
+      )}
       {data.status === "ARCHIVED" && (
         <p className="text-sm text-content-muted">Lớp thuộc năm học đã kết thúc (đã lưu trữ); số liệu chỉ để tham khảo.</p>
       )}
@@ -216,10 +196,10 @@ function KpiGrid({ data, classId, compact }: { data: DashboardData; classId: str
   );
 }
 
-/** Chi so tong quan cua lop (dau trang giang day). `compact`: chi hien canh bao token khi co yeu cau cho duyet. */
-export function TeacherClassKpis({ classId, compact }: { classId: string; compact?: boolean }) {
+/** Chi so tong quan cua lop (dau trang giang day). */
+export function TeacherClassKpis({ classId }: { classId: string }) {
   const query = useTeacherClassroomDashboard(classId);
-  return <AnalyticsState query={query}>{(data) => <KpiGrid data={data} classId={classId} compact={compact} />}</AnalyticsState>;
+  return <AnalyticsState query={query}>{(data) => <KpiGrid data={data} classId={classId} />}</AnalyticsState>;
 }
 
 /** Bang ket qua tung hoc sinh cua lop. Dung chung query voi TeacherClassKpis (React Query khu trung). */
@@ -240,6 +220,11 @@ export function TeacherClassStats({ classId }: { classId: string }) {
       {(data) => (
         <div className="space-y-6">
           <KpiGrid data={data} classId={classId} />
+          {data.dailyTokenLimit != null && (
+            <p className="text-xs text-content-muted">
+              Hạn mức <span className="font-semibold tabular-nums text-content-heading">{formatNumber(data.dailyTokenLimit)}</span> token / học sinh / ngày, do quản trị trường đặt · làm mới lúc 00:00.
+            </p>
+          )}
           <StudentTable students={data.students} classId={classId} canGrant={data.status !== "ARCHIVED"} />
         </div>
       )}

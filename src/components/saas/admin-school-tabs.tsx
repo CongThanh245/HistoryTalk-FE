@@ -12,7 +12,7 @@ import { SchoolSubscriptionPanel } from "@/components/saas/admin-school-subscrip
 function InfoItem({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1 border-b border-[var(--border-default)] pb-3">
-      <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</dt>
+      <dt className="text-[13px] font-semibold text-[var(--text-tertiary)]">{label}</dt>
       <dd className="text-sm text-content-heading">{children}</dd>
     </div>
   );
@@ -60,8 +60,8 @@ export function SchoolInfoTab({ school }: { school: ApiSchool }) {
 function PoolFigure({ label, value, hint }: { label: string; value: number; hint?: string }) {
   return (
     <div className="space-y-1">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</p>
-      <p className="font-display text-2xl font-extrabold leading-[1.25] tabular-nums text-content-heading">{formatNumber(value)}</p>
+      <p className="text-[13px] font-semibold text-[var(--text-tertiary)]">{label}</p>
+      <p className="text-2xl font-bold leading-[1.25] tabular-nums text-content-heading">{formatNumber(value)}</p>
       {hint && <p className="text-xs text-content-muted">{hint}</p>}
     </div>
   );

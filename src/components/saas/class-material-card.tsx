@@ -53,7 +53,7 @@ export function MaterialCard({ item, task, teacher }: { item: LocalItem; task?: 
     <Link
       href={ROUTES.CLASS_MATERIAL_DETAIL(item.type, item.id)}
       className={cn(
-        "group flex h-full flex-col overflow-hidden rounded-[2px] border bg-[var(--bg-surface)] motion-safe:transition-colors hover:border-[var(--accent-gold)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--accent-gold)]",
+        "group flex h-full flex-col overflow-hidden rounded-sm border bg-[var(--bg-surface)] motion-safe:transition-colors hover:border-[var(--accent-gold)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--accent-gold)]",
         todo ? "border-[var(--accent-gold)]" : "border-[var(--border-strong)]",
       )}
     >
@@ -75,21 +75,21 @@ export function MaterialCard({ item, task, teacher }: { item: LocalItem; task?: 
         )}
         <span className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           {todo && (
-            <span className="rounded-[2px] bg-[var(--accent-gold)] px-2 py-0.5 text-[11px] font-bold text-[#FFFFFF]">
+            <span className="rounded-sm bg-[var(--accent-gold)] px-2 py-0.5 text-[11px] font-bold text-[#FFFFFF]">
               Bài tập · hạn {shortDate(task.assignment.deadline)}
             </span>
           )}
           {task?.done && (
-            <span className="rounded-[2px] bg-[var(--jade)] px-2 py-0.5 text-[11px] font-bold text-[#FFFFFF]">Đã làm bài</span>
+            <span className="rounded-sm bg-[var(--jade)] px-2 py-0.5 text-[11px] font-bold text-[#FFFFFF]">Đã làm bài</span>
           )}
           {isNew && !task && (
-            <span className="rounded-[2px] bg-[var(--text-primary)] px-2 py-0.5 text-[11px] font-bold text-[var(--text-inverse)]">Mới</span>
+            <span className="rounded-sm bg-[var(--text-primary)] px-2 py-0.5 text-[11px] font-bold text-[var(--text-inverse)]">Mới</span>
           )}
         </span>
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 p-4">
-        <span className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-content-muted">
+        <span className="flex flex-wrap items-center gap-2 text-[13px] font-semibold text-content-muted">
           <Icon className="h-3.5 w-3.5" aria-hidden="true" /> {KIND_LABEL[item.type]}
           {teacher && <LocalScopeTag item={item} label={item.contentScope === "SCHOOL_WIDE" ? "Cả trường thấy" : "Lớp được giao thấy"} />}
         </span>

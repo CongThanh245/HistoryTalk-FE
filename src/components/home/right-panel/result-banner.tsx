@@ -15,7 +15,7 @@ export function ResultBanner({
   return (
     <div className="flex flex-col gap-[7px] mt-1">
       <div
-        className={`rounded-[2px] px-3 py-[9px] border ${
+        className={`rounded-sm px-3 py-[9px] border ${
           correct
             ? "bg-[var(--status-success-bg)] border-[var(--status-success)]"
             : "bg-[var(--status-danger-bg)] border-[var(--accent-danger)]"
@@ -35,7 +35,7 @@ export function ResultBanner({
           Xem giải thích →
         </button>
       ) : (
-        <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-[2px] px-3 py-[9px]">
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-sm px-3 py-[9px]">
           <p className="m-0 text-[11.5px] leading-[1.65] text-[var(--text-secondary)]">
             {explanation}
           </p>

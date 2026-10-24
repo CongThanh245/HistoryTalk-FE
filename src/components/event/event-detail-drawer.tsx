@@ -91,7 +91,7 @@ function FakeVideoPlayer({
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
             <button
               onClick={start}
-              className="w-[72px] h-[72px] rounded-[2px] flex items-center justify-center transition-all duration-200 hover:scale-110 cursor-pointer bg-[var(--accent-gold)] hover:bg-[var(--accent-bronze)]"
+              className="w-[72px] h-[72px] rounded-sm flex items-center justify-center transition-all duration-200 hover:scale-110 cursor-pointer bg-[var(--accent-gold)] hover:bg-[var(--accent-bronze)]"
             >
               <Play className="w-8 h-8 text-white ml-1.5 fill-white" />
             </button>
@@ -105,7 +105,7 @@ function FakeVideoPlayer({
         {playing && (
           <button
             onClick={skip}
-            className="absolute top-10 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.1em] cursor-pointer hover:bg-white hover:text-black transition-colors bg-black/60 text-white/90 border border-white/40"
+            className="absolute top-10 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-[11px] font-bold uppercase tracking-[0.1em] cursor-pointer hover:bg-white hover:text-black transition-colors bg-black/60 text-white/90 border border-white/40"
           >
             <SkipForward className="w-3.5 h-3.5" /> Bỏ qua
           </button>
@@ -297,7 +297,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
           <button
             onClick={onClose}
             aria-label="Đóng"
-            className="absolute top-4 right-4 md:top-7 md:right-7 z-50 w-10 h-10 flex items-center justify-center rounded-[2px] transition-colors duration-200 cursor-pointer active:scale-95 group bg-[var(--bg-surface)] border border-[var(--text-primary)] hover:bg-[var(--text-primary)]"
+            className="absolute top-4 right-4 md:top-7 md:right-7 z-50 w-10 h-10 flex items-center justify-center rounded-sm transition-colors duration-200 cursor-pointer active:scale-95 group bg-[var(--bg-surface)] border border-[var(--text-primary)] hover:bg-[var(--text-primary)]"
           >
             <X className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90 text-content-heading group-hover:text-[var(--text-inverse)]" />
           </button>
@@ -358,9 +358,9 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
               <button
                 type="button"
                 onClick={() => router.push(`/quiz?contextId=${event.id}`)}
-                className="group w-full flex items-center gap-3 px-4 py-3 rounded-[2px] border border-[var(--text-primary)] transition-colors duration-200 cursor-pointer hover:bg-[var(--bg-elevated)]"
+                className="group w-full flex items-center gap-3 px-4 py-3 rounded-sm border border-border-card transition-colors duration-200 cursor-pointer hover:bg-[var(--bg-elevated)]"
               >
-                <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-[2px] bg-accent-gold">
+                <div className="w-10 h-10 shrink-0 flex items-center justify-center rounded-sm bg-accent-gold">
                   <Trophy className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 text-left">
@@ -390,9 +390,9 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                       {[1, 2, 3].map((i) => (
                         <div
                           key={i}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[2px] border animate-pulse bg-[var(--bg-surface)] border-[var(--border-strong)]"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-sm border animate-pulse bg-[var(--bg-surface)] border-[var(--border-strong)]"
                         >
-                          <div className="w-8 h-8 rounded-[2px] shrink-0 bg-card-light-border" />
+                          <div className="w-8 h-8 rounded-sm shrink-0 bg-card-light-border" />
                           <div className="flex-1 space-y-1.5">
                             <div className="h-3 w-2/3 rounded bg-card-light-border" />
                             <div className="h-2.5 w-1/2 rounded bg-card-light-border" />

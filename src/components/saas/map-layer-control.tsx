@@ -38,6 +38,8 @@ interface MapLayerControlProps {
   /** Phones: the control is a bottom sheet opened from a button. */
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
+  /** Card title; defaults to "Lớp bản đồ". Without layer rows the "bật x/y" count is hidden. */
+  title?: string;
   className?: string;
 }
 
@@ -67,15 +69,15 @@ export function MapLayerToggle({
       type="button"
       onClick={() => onOpenChange(!open)}
       aria-expanded={open}
-      aria-label={`Lớp bản đồ, đang bật ${visible}/${total}`}
+      aria-label={total ? `Lớp bản đồ, đang bật ${visible}/${total}` : "Mở danh sách"}
       className={cn(
-        "inline-flex h-10 items-center gap-1.5 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] px-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] shadow-[var(--shadow-soft)] md:hidden",
+        "inline-flex h-10 items-center gap-1.5 rounded-sm border border-border-card bg-[var(--bg-surface)] px-2.5 text-[13px] font-semibold text-[var(--text-primary)] shadow-[var(--shadow-soft)] md:hidden",
         open && "bg-[var(--text-primary)] text-[var(--text-inverse)]",
         className,
       )}
     >
       <Layers size={16} aria-hidden="true" />
-      <span className="tabular-nums">{visible}/{total}</span>
+      {total > 0 && <span className="tabular-nums">{visible}/{total}</span>}
     </button>
   );
 }
@@ -100,6 +102,7 @@ export function MapLayerControl({
   children,
   mobileOpen,
   onMobileOpenChange,
+  title = "Lớp bản đồ",
   className,
 }: MapLayerControlProps) {
   const [collapsed, setCollapsed] = React.useState(false);
@@ -118,45 +121,47 @@ export function MapLayerControl({
 
   return (
     <section
-      aria-label="Lớp bản đồ"
+      aria-label={title}
       className={cn(
-        "flex min-h-0 flex-col rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-[var(--shadow-soft)]",
+        "flex min-h-0 flex-col rounded-sm border border-border-card bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-[var(--shadow-soft)]",
         mobileOpen
           ? "map-overlay-sheet max-md:absolute max-md:inset-x-2 max-md:bottom-2 max-md:z-[540] max-md:max-h-[72%]"
           : "max-md:hidden",
         className,
       )}
     >
-      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--text-primary)] px-3 py-2">
+      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--border-default)] px-3 py-2">
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
           aria-expanded={!collapsed}
           aria-controls={bodyId}
-          className="hidden min-w-0 flex-1 items-center gap-2 rounded-[2px] text-left text-[11px] font-bold uppercase tracking-[0.12em] outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] md:inline-flex"
+          className="hidden min-w-0 flex-1 items-center gap-2 rounded-sm text-left text-[13px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] md:inline-flex"
         >
           <Layers size={14} className="shrink-0 text-[var(--accent-gold)]" aria-hidden="true" />
-          <span className="truncate">Lớp bản đồ</span>
-          <span className="font-semibold normal-case tracking-normal text-[var(--text-tertiary)] tabular-nums">
-            · bật {visibleCount}/{rows.length}
-          </span>
+          <span className="truncate">{title}</span>
+          {rows.length > 0 && (
+            <span className="font-semibold normal-case tracking-normal text-[var(--text-tertiary)] tabular-nums">
+              · bật {visibleCount}/{rows.length}
+            </span>
+          )}
           <ChevronDown size={15} className={cn("ml-auto shrink-0 transition-transform motion-reduce:transition-none", collapsed && "-rotate-90")} aria-hidden="true" />
         </button>
-        <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] md:hidden">
-          <Layers size={14} className="text-[var(--accent-gold)]" aria-hidden="true" /> Lớp bản đồ
+        <span className="inline-flex items-center gap-2 text-[13px] font-semibold md:hidden">
+          <Layers size={14} className="text-[var(--accent-gold)]" aria-hidden="true" /> {title}
         </span>
         <button
           type="button"
           onClick={() => onMobileOpenChange(false)}
-          aria-label="Đóng lớp bản đồ"
-          className="grid h-8 w-8 place-items-center rounded-[2px] hover:bg-[var(--sidebar-hover-bg)] md:hidden"
+          aria-label={`Đóng ${title.toLowerCase()}`}
+          className="grid h-8 w-8 place-items-center rounded-sm hover:bg-[var(--sidebar-hover-bg)] md:hidden"
         >
           <X size={16} />
         </button>
       </header>
 
       <div id={bodyId} className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain", collapsed && "md:hidden")}>
-        <ul className="divide-y divide-[var(--border-default)]">
+        {rows.length > 0 && <ul className="divide-y divide-[var(--border-default)]">
           {rows.map((row) => (
             <li key={row.key} className="px-3 py-2">
               <label className={cn("flex items-start gap-2.5", row.locked ? "cursor-default" : "cursor-pointer")}>
@@ -185,7 +190,7 @@ export function MapLayerControl({
                       <select
                         value={classId ?? ""}
                         onChange={(e) => onClassChange(e.target.value)}
-                        className="h-9 w-full appearance-none rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] pl-2.5 pr-8 text-sm font-semibold outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)]"
+                        className="h-9 w-full appearance-none rounded-sm border border-border-card bg-[var(--bg-surface)] pl-2.5 pr-8 text-sm font-semibold outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)]"
                       >
                         {classes.map((c) => (
                           <option key={c.id} value={c.id}>
@@ -230,7 +235,7 @@ export function MapLayerControl({
               )}
             </li>
           ))}
-        </ul>
+        </ul>}
 
         {showLegend && (
           <div className="border-t border-[var(--border-default)] px-3 py-2">
@@ -238,7 +243,7 @@ export function MapLayerControl({
               type="button"
               onClick={() => setLegendOpen((v) => !v)}
               aria-expanded={legendOpen}
-              className="flex w-full items-center justify-between rounded-[2px] text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--text-tertiary)] outline-none hover:text-[var(--text-primary)] focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
+              className="flex w-full items-center justify-between rounded-sm text-xs font-semibold text-[var(--text-tertiary)] outline-none hover:text-[var(--text-primary)] focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
             >
               Chú giải
               <ChevronDown size={13} className={cn("transition-transform motion-reduce:transition-none", !legendOpen && "-rotate-90")} aria-hidden="true" />
@@ -262,7 +267,7 @@ export function MapLayerControl({
           </div>
         )}
 
-        {children && <div className="border-t border-[var(--text-primary)]">{children}</div>}
+        {children && <div className="border-t border-border-card">{children}</div>}
 
         {footnote && (
           <div className="border-t border-[var(--border-default)] px-3 py-2 text-[11px] leading-snug text-[var(--text-tertiary)]">{footnote}</div>

@@ -74,7 +74,7 @@ const STEPS = ["Thông tin trường", "Quản trị trường"] as const;
 
 function StepIndicator({ step }: { step: 0 | 1 }) {
   return (
-    <ol className="grid grid-cols-2 border border-[var(--text-primary)]" aria-label="Các bước tạo trường">
+    <ol className="grid grid-cols-2 border border-border-card" aria-label="Các bước tạo trường">
       {STEPS.map((label, i) => {
         const current = i === step;
         const done = i < step;
@@ -84,13 +84,13 @@ function StepIndicator({ step }: { step: 0 | 1 }) {
             aria-current={current ? "step" : undefined}
             className={cn(
               "flex min-w-0 items-center gap-2 px-3 py-2 text-xs font-bold",
-              i > 0 && "border-l border-[var(--text-primary)]",
+              i > 0 && "border-l border-border-card",
               current ? "bg-[var(--text-primary)] text-[var(--text-inverse)]" : "text-[var(--text-secondary)]",
             )}
           >
             <span
               className={cn(
-                "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-[2px] border text-[11px] tabular-nums",
+                "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border text-[11px] tabular-nums",
                 current ? "border-[var(--text-inverse)]" : "border-[var(--border-strong)]",
                 done && "border-[var(--status-success)] text-[var(--status-success)]",
               )}
@@ -250,7 +250,7 @@ export function CreateSchoolForm() {
         {formError && (
           <p
             role="alert"
-            className="flex items-start gap-2 rounded-[2px] border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] px-3 py-2 text-sm text-[var(--text-secondary)]"
+            className="flex items-start gap-2 rounded-sm border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] px-3 py-2 text-sm text-[var(--text-secondary)]"
           >
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent-danger)]" aria-hidden="true" />
             <span>{formError}</span>
@@ -333,8 +333,8 @@ export function CreateSchoolForm() {
                         <label
                           key={p}
                           className={cn(
-                            "flex cursor-pointer gap-3 rounded-[2px] border p-3 transition-colors focus-within:outline-2 focus-within:outline-[var(--accent-gold)]",
-                            checked ? "border-[var(--text-primary)] bg-[var(--status-neutral-bg)]" : "border-[var(--border-strong)] hover:border-[var(--text-primary)]",
+                            "flex cursor-pointer gap-3 rounded-sm border p-3 transition-colors focus-within:outline-2 focus-within:outline-[var(--accent-gold)]",
+                            checked ? "border-border-card bg-[var(--status-neutral-bg)]" : "border-[var(--border-strong)] hover:border-[var(--text-primary)]",
                           )}
                         >
                           <input
@@ -368,7 +368,7 @@ export function CreateSchoolForm() {
                 <div className="space-y-1.5">
                   <div
                     className={cn(
-                      "flex items-start gap-3 rounded-[2px] border p-3",
+                      "flex items-start gap-3 rounded-sm border p-3",
                       e1("localHistoryPolicyAccepted") ? "border-[var(--accent-danger)]" : "border-[var(--border-strong)]",
                     )}
                   >
@@ -401,7 +401,7 @@ export function CreateSchoolForm() {
                 description="Hệ thống tự sinh tên tài khoản và mật khẩu tạm; người này đăng nhập bằng email."
               />
                 {school && (
-                  <p className="flex items-start gap-2 rounded-[2px] border border-[var(--status-success-border)] bg-[var(--status-success-bg)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+                  <p className="flex items-start gap-2 rounded-sm border border-[var(--status-success-border)] bg-[var(--status-success-bg)] px-3 py-2 text-sm text-[var(--text-secondary)]">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-success)]" aria-hidden="true" />
                     <span>
                       Đã tạo <b className="text-content-heading">{school.name}</b> (mã <span className="font-mono">{school.schoolCode}</span>). Giờ cấp
@@ -423,7 +423,7 @@ export function CreateSchoolForm() {
         </form>
 
         {/* Sticky action bar: the buttons stay in view however long the form is. */}
-        <div className="sticky bottom-0 z-20 -mx-4 border-t border-[var(--text-primary)] bg-[var(--bg-surface)] px-4 py-3 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+        <div className="sticky bottom-0 z-20 -mx-4 border-t border-border-card bg-[var(--bg-surface)] px-4 py-3 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
             <button type="button" className="btn-line w-full sm:w-auto" onClick={close} disabled={busy}>
               {step === 0 ? "Hủy" : "Để sau"}

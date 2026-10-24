@@ -25,8 +25,8 @@ export default function GradesPage() {
     return (
       <SaasShell variant="app" title={TITLE} description="Điểm bài kiểm tra, mức độ hoàn thành bài tập và hoạt động học với AI của bạn.">
         <div className="space-y-10">
-          <StudentPersonalDashboard />
           <StudentGradeBook />
+          <StudentPersonalDashboard />
         </div>
       </SaasShell>
     );

@@ -61,7 +61,7 @@ export function TeacherAssignmentsTab({ data, classroom }: { data: TeachingData;
         </Link>
       </div>
       {rows.length === 0 ? (
-        <p className="rounded-[2px] border border-dashed border-[var(--border-strong)] p-6 text-center text-sm text-content-muted">Lớp chưa có bài tập nào.</p>
+        <p className="rounded-sm border border-dashed border-[var(--border-strong)] p-6 text-center text-sm text-content-muted">Lớp chưa có bài tập nào.</p>
       ) : (
         <TableShell>
           <thead>
@@ -106,12 +106,12 @@ export function TeacherAssignmentsTab({ data, classroom }: { data: TeachingData;
 
 function LocalList({ items, hrefFor, showStatus }: { items: LocalContent[]; hrefFor: (c: LocalContent) => string; showStatus: boolean }) {
   return (
-    <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--text-primary)]">
+    <ul className="divide-y divide-[var(--border-default)] border-y border-border-card">
       {items.map((c) => (
         <li key={c.id}>
           <Link href={hrefFor(c)} className="group flex flex-wrap items-center gap-x-3 gap-y-1 py-3">
             <ContentSourceTag source={c.scope} className="shrink-0" />
-            <span className="w-20 shrink-0 text-xs font-bold uppercase tracking-[0.08em] text-content-muted">{LOCAL_KIND_LABELS[c.kind]}</span>
+            <span className="w-20 shrink-0 text-xs font-semibold text-content-muted">{LOCAL_KIND_LABELS[c.kind]}</span>
             <span className="min-w-0 flex-1 font-semibold text-content-heading group-hover:text-[var(--accent-gold)]">{localTitle(c)}</span>
             {showStatus && <LocalStatusBadge status={c.status} />}
             <ArrowRight className="h-4 w-4 shrink-0 text-content-muted" aria-hidden="true" />
@@ -141,7 +141,7 @@ export function TeacherLocalTab({ data, classroom }: { data: TeachingData; class
         </Link>
       </div>
       {items.length === 0 ? (
-        <p className="rounded-[2px] border border-dashed border-[var(--border-strong)] p-6 text-center text-sm text-content-muted">Chưa có tư liệu nào cho lớp.</p>
+        <p className="rounded-sm border border-dashed border-[var(--border-strong)] p-6 text-center text-sm text-content-muted">Chưa có tư liệu nào cho lớp.</p>
       ) : (
         <LocalList items={items} hrefFor={(c) => ROUTES.TEACHING.LOCAL_EDIT(c.id)} showStatus />
       )}
@@ -198,13 +198,13 @@ export function StudentAssignmentsTab({ data, classroom }: { data: TeachingData;
   const rows = sortedForClass(data, classroom.id).filter(({ state }) => state !== "UPCOMING");
   if (rows.length === 0) {
     return (
-      <p className="flex items-center justify-center gap-2 rounded-[2px] border border-dashed border-[var(--border-strong)] p-6 text-sm text-content-muted">
+      <p className="flex items-center justify-center gap-2 rounded-sm border border-dashed border-[var(--border-strong)] p-6 text-sm text-content-muted">
         <ClipboardList className="h-4 w-4" aria-hidden="true" /> Lớp chưa có bài tập nào.
       </p>
     );
   }
   return (
-    <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--text-primary)]">
+    <ul className="divide-y divide-[var(--border-default)] border-y border-border-card">
       {rows.map(({ a }) => {
         const sub = data.subsByAssignment.get(a.id)?.find((s) => s.studentId === me);
         const status = effectiveStatus(sub, a);
@@ -245,7 +245,7 @@ export function StudentLocalTab({ data, classroom }: { data: TeachingData; class
     )
     .sort((a, b) => a.scope.localeCompare(b.scope) || a.kind.localeCompare(b.kind) || localTitle(a).localeCompare(localTitle(b), "vi"));
   if (items.length === 0) {
-    return <p className="rounded-[2px] border border-dashed border-[var(--border-strong)] p-6 text-center text-sm text-content-muted">Thầy cô và nhà trường chưa chia sẻ tư liệu nào.</p>;
+    return <p className="rounded-sm border border-dashed border-[var(--border-strong)] p-6 text-center text-sm text-content-muted">Thầy cô và nhà trường chưa chia sẻ tư liệu nào.</p>;
   }
   return (
     <div className="space-y-2">

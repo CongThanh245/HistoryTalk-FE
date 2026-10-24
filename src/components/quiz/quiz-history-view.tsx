@@ -78,7 +78,7 @@ function ComparisonBadge({ percentage, previous }: { percentage: number; previou
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-[2px] border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.06em]",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
         delta > 0
           ? "border-[var(--status-success)] text-[var(--status-success)]"
           : delta < 0
@@ -108,17 +108,17 @@ export function QuizHistoryView({
 
   return (
     <>
-      <section className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
-        <div className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-end sm:justify-between border-b border-[var(--text-primary)]">
+      <section className="overflow-hidden rounded-xl border border-border-card bg-[var(--bg-surface)]">
+        <div className="flex flex-col gap-2 border-b border-[var(--border-default)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="archive-title mt-1 text-[24px]">
+            <h2 className="text-lg font-semibold text-content-heading">
               Lịch sử làm bài
             </h2>
-            <p className="mt-1 text-sm text-text-tertiary">
+            <p className="mt-0.5 text-sm text-text-tertiary">
               Xem lại các lần nộp trước đây của bạn.
             </p>
           </div>
-          <span className="rounded-[2px] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] bg-[var(--text-primary)] text-[var(--text-inverse)]">
+          <span className="w-fit rounded-full bg-[var(--status-neutral-bg)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)] tabular-nums">
             {results.length} lần làm
           </span>
         </div>
@@ -129,7 +129,7 @@ export function QuizHistoryView({
           </div>
         ) : results.length === 0 ? (
           <div className="p-10 text-center">
-            <p className="archive-title text-[22px]">
+            <p className="text-base font-semibold text-content-heading">
               Chưa có lịch sử làm bài
             </p>
             <p className="mt-1 text-sm text-content-muted">
@@ -147,12 +147,12 @@ export function QuizHistoryView({
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="archive-title is-plain truncate text-[18px] md:text-[20px]">
+                      <h3 className="truncate text-base font-semibold text-content-heading">
                         {result.quizTitle}
                       </h3>
                       <span
                         className={cn(
-                          "rounded-[2px] border px-2 py-0.5 font-display text-sm font-extrabold",
+                          "rounded-full border px-2 py-0.5 text-[13px] font-semibold tabular-nums",
                           getToneClasses(result.percentage),
                         )}
                       >
@@ -160,7 +160,7 @@ export function QuizHistoryView({
                       </span>
                     </div>
 
-                    <div className="mt-2 flex flex-wrap gap-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">
+                    <div className="mt-1.5 flex flex-wrap gap-4 text-[13px] tabular-nums text-content-muted">
                       <span className="inline-flex items-center gap-1.5">
                         <CalendarDays size={14} />
                         {formatDateTime(result.completedAt)}
@@ -178,14 +178,14 @@ export function QuizHistoryView({
                         setReviewFilter("all");
                         setSelectedSessionId(result.sessionId);
                       }}
-                      className="btn-line min-h-10 px-4 text-xs"
+                      className="btn-line min-h-10 px-4 text-sm"
                     >
                       <Eye size={16} />
                       Xem chi tiết
                     </button>
                     <button
                       onClick={() => onRetake(result.quizId)}
-                      className="btn-ink min-h-10 px-4 text-xs"
+                      className="btn-ink min-h-10 px-4 text-sm"
                     >
                       <RotateCcw size={16} />
                       Làm lại
@@ -204,9 +204,9 @@ export function QuizHistoryView({
           if (!open) setSelectedSessionId(null);
         }}
       >
-        <DialogContent className="max-h-[88vh] overflow-hidden rounded-[2px] p-0 sm:max-w-5xl bg-[var(--bg-surface)] border-[var(--text-primary)]">
-          <DialogHeader className="px-5 py-4 border-b border-[var(--text-primary)]">
-            <DialogTitle className="archive-title text-[22px]">
+        <DialogContent className="max-h-[88vh] overflow-hidden rounded-xl p-0 sm:max-w-5xl bg-[var(--bg-surface)] border-border-card">
+          <DialogHeader className="px-5 py-4 border-b border-[var(--border-default)]">
+            <DialogTitle className="text-lg font-semibold text-content-heading">
               Chi tiết bài làm
             </DialogTitle>
             <DialogDescription className="text-content-muted">
@@ -223,26 +223,26 @@ export function QuizHistoryView({
               <>
                 <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <h3 className="archive-title is-plain mt-1 text-[22px]">
+                    <h3 className="text-lg font-semibold text-content-heading">
                       {detail.quizTitle}
                     </h3>
-                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">
+                    <p className="mt-1 text-[13px] tabular-nums text-content-muted">
                       {formatDateTime(detail.startedAt)} - {formatDateTime(detail.completedAt)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <span
                       className={cn(
-                        "rounded-[2px] border px-3 py-1 font-display text-lg font-extrabold leading-tight",
+                        "rounded-full border px-3 py-0.5 text-base font-bold tabular-nums leading-tight",
                         getToneClasses(detail.percentage),
                       )}
                     >
                       {normalizeQuestionCount(detail.score, detail.totalQuestions)}/{detail.totalQuestions}
                     </span>
-                    <span className="rounded-[2px] border border-[var(--border-strong)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-content-muted">
+                    <span className="rounded-full bg-[var(--status-neutral-bg)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]">
                       {detail.limitedTime ? `Giới hạn ${formatDuration(detail.limitedTime)}` : "Không giới hạn"}
                     </span>
-                    <span className="rounded-[2px] border border-[var(--border-strong)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-content-muted">
+                    <span className="rounded-full bg-[var(--status-neutral-bg)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]">
                       Tổng thời gian {formatDuration(getDurationFromRange(detail.startedAt, detail.completedAt))}
                     </span>
                     {detail.previousAttempt && (
@@ -258,7 +258,7 @@ export function QuizHistoryView({
                       <button
                         onClick={() => setReviewFilter("all")}
                         className={cn(
-                          "rounded-[2px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors border",
+                          "h-8 rounded-full border px-3.5 text-sm font-medium transition-colors",
                           reviewFilter === "all"
                             ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
                             : "bg-transparent text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)]",
@@ -269,7 +269,7 @@ export function QuizHistoryView({
                       <button
                         onClick={() => setReviewFilter("wrong")}
                         className={cn(
-                          "rounded-[2px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors border",
+                          "h-8 rounded-full border px-3.5 text-sm font-medium transition-colors",
                           reviewFilter === "wrong"
                             ? "bg-[var(--accent-danger)] text-[var(--text-inverse)] border-[var(--accent-danger)]"
                             : "bg-transparent text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)]",
@@ -281,7 +281,7 @@ export function QuizHistoryView({
                   ) : null;
                 })()}
 
-                <div className="border-t border-[var(--text-primary)]">
+                <div className="border-t border-[var(--border-default)]">
                   {detail.questions.map((question, index) => {
                     if (reviewFilter === "wrong" && question.correct) return null;
                     return (
@@ -297,7 +297,7 @@ export function QuizHistoryView({
                       <div className="mb-3 flex items-start gap-3">
                         <span
                           className={cn(
-                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-[2px] font-display text-sm font-extrabold",
+                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-sm font-display text-sm font-extrabold",
                             question.correct
                               ? "bg-[var(--status-success)] text-[var(--text-inverse)]"
                               : "bg-[var(--accent-danger)] text-[var(--text-inverse)]",

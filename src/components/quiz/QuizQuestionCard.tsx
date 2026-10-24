@@ -5,13 +5,9 @@ import {
   Bookmark,
   Check,
   CheckCircle2,
-  Circle,
-  Diamond,
   Link2,
   ListChecks,
   PenLine,
-  Square,
-  Triangle,
   X,
   XCircle,
 } from "lucide-react";
@@ -34,17 +30,8 @@ const TYPE_ICON = {
   MATCHING: Link2,
 } as const;
 
-// O dap an kieu Kahoot: moi vi tri co mot mau + mot hinh rieng de de nhan biet.
-const OPTION_TILES = [
-  {
-    color: "[--opt:var(--accent-gold)]",
-    ink: "text-[#FFFFFF]",
-    shape: Triangle,
-  },
-  { color: "[--opt:var(--men-lam)]", ink: "text-[#FFFFFF]", shape: Diamond },
-  { color: "[--opt:var(--gold-leaf)]", ink: "text-[#1F1A14]", shape: Circle },
-  { color: "[--opt:var(--jade)]", ink: "text-[#FFFFFF]", shape: Square },
-];
+// Dap an trung tinh, danh dau A/B/C/D (khong dung mau + hinh rieng tung o nhu Kahoot): mau chi de bao da chon / dung / sai.
+const OPTION_TILES = [{ color: "[--opt:var(--accent-gold)]" }];
 
 interface QuizQuestionCardProps {
   question: QuizQuestion;
@@ -82,37 +69,30 @@ export function QuizQuestionCard({
   return (
     <div
       className={cn(
-        "relative rounded-[4px] border-2 bg-[var(--bg-surface)] transition-[border-color,box-shadow] duration-300",
+        "relative rounded-xl border bg-[var(--bg-surface)] transition-[border-color,box-shadow] duration-300",
         revealed
           ? isCorrect
-            ? "border-[var(--status-success)] shadow-[5px_5px_0_var(--status-success)]"
-            : "quiz-shake border-[var(--accent-danger)] shadow-[5px_5px_0_var(--accent-danger)]"
+            ? "border-[var(--status-success)]"
+            : "quiz-shake border-[var(--accent-danger)]"
           : complete
-            ? "border-[var(--jade)] shadow-[5px_5px_0_var(--jade)]"
-            : "border-[var(--text-primary)] shadow-[5px_5px_0_var(--border-strong)] hover:shadow-[5px_5px_0_var(--accent-gold)]",
+            ? "border-[var(--jade)]"
+            : "border-border-card hover:shadow-[var(--shadow-soft)]",
       )}
     >
       <div className="px-5 pb-4 pt-5">
         <div className="flex items-start gap-4">
           <div
             className={cn(
-              "flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-[4px] transition-colors duration-300",
+              "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold tabular-nums transition-colors duration-300",
               complete
-                ? "quiz-pop bg-[var(--jade)] text-[#FFFFFF]"
-                : "bg-[var(--text-primary)] text-[var(--text-inverse)]",
+                ? "bg-[var(--jade)] text-[#FFFFFF]"
+                : "bg-[var(--status-neutral-bg)] text-content-heading",
             )}
           >
             {complete ? (
-              <Check size={26} strokeWidth={3} aria-label="Đã trả lời" />
+              <Check size={18} strokeWidth={3} aria-label={`Câu ${index + 1}, đã trả lời`} />
             ) : (
-              <>
-                <span className="text-[9px] font-bold uppercase tracking-[0.12em] opacity-70">
-                  Câu
-                </span>
-                <span className="font-display text-[24px] font-extrabold leading-none tabular-nums">
-                  {index + 1}
-                </span>
-              </>
+              <span aria-label={`Câu ${index + 1}`}>{index + 1}</span>
             )}
           </div>
           <div className="min-w-0 flex-1">
@@ -221,8 +201,6 @@ function MultipleChoiceInput({
   return (
     <div className="grid gap-3 px-5 pb-5 sm:grid-cols-2">
       {options.map((option, optIndex) => {
-        const tile = OPTION_TILES[optIndex % OPTION_TILES.length];
-        const Shape = tile.shape;
         const selected = selectedIds.includes(option.id);
         const state: TileState = revealed
           ? correctIds.includes(option.id)
@@ -235,8 +213,6 @@ function MultipleChoiceInput({
             : hasSelection
               ? "dimmed"
               : "idle";
-        const filled =
-          state === "selected" || state === "correct" || state === "wrong";
         return (
           <button
             key={option.id}
@@ -247,54 +223,40 @@ function MultipleChoiceInput({
             disabled={revealed}
             aria-pressed={selected}
             className={cn(
-              "relative flex min-h-[64px] w-full items-center gap-3 rounded-[6px] border-2 px-3 py-3 text-left transition-all duration-200",
-              tile.color,
-              state === "idle" &&
-                "border-[var(--opt)] bg-[color-mix(in_srgb,var(--opt)_9%,var(--bg-surface))] text-content-heading shadow-[0_4px_0_var(--opt)] hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--opt)_18%,var(--bg-surface))] hover:shadow-[0_6px_0_var(--opt)] active:translate-y-1 active:shadow-none",
-              state === "dimmed" &&
-                "border-[var(--opt)] bg-[var(--bg-surface)] text-content-muted opacity-60 shadow-[0_4px_0_var(--opt)] hover:opacity-100 active:translate-y-1 active:shadow-none",
+              "relative flex min-h-[56px] w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-content-heading transition-colors duration-150",
+              (state === "idle" || state === "dimmed") &&
+                "border-[var(--border-default)] bg-[var(--bg-elevated)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)]",
               state === "selected" &&
-                cn(
-                  "quiz-pop border-[var(--opt)] bg-[var(--opt)] font-semibold shadow-[0_4px_0_color-mix(in_srgb,var(--opt)_60%,black)]",
-                  tile.ink,
-                ),
+                "border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] font-semibold",
               state === "correct" &&
-                "quiz-pop cursor-default border-[var(--status-success)] bg-[var(--status-success)] font-semibold text-[#FFFFFF] shadow-[0_4px_0_color-mix(in_srgb,var(--status-success)_60%,black)]",
+                "cursor-default border-[var(--status-success)] bg-[var(--status-success-bg)] font-semibold",
               state === "wrong" &&
-                "cursor-default border-[var(--accent-danger)] bg-[var(--accent-danger)] font-semibold text-[#FFFFFF]",
+                "cursor-default border-[var(--accent-danger)] bg-[var(--status-danger-bg)] font-semibold",
               state === "muted" &&
-                "cursor-default border-[var(--border-default)] bg-[var(--bg-surface)] text-content-muted opacity-50",
+                "cursor-default border-[var(--border-default)] bg-[var(--bg-surface)] text-content-muted opacity-60",
             )}
           >
             <span
               className={cn(
-                "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[4px]",
-                filled
-                  ? "bg-[rgba(255,255,255,0.25)]"
-                  : "bg-[var(--opt)] text-[#FFFFFF]",
+                "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border text-sm font-semibold",
+                state === "selected"
+                  ? "border-[var(--accent-gold)] bg-[var(--accent-gold)] text-[#FFFFFF]"
+                  : state === "correct"
+                    ? "border-[var(--status-success)] bg-[var(--status-success)] text-[#FFFFFF]"
+                    : state === "wrong"
+                      ? "border-[var(--accent-danger)] bg-[var(--accent-danger)] text-[#FFFFFF]"
+                      : "border-[var(--border-strong)] text-[var(--text-secondary)]",
               )}
               aria-hidden="true"
             >
-              <Shape size={18} fill="currentColor" strokeWidth={0} />
+              {optionLabel(optIndex)}
             </span>
             <span className="flex-1 text-[15px] leading-snug">
               <span className="sr-only">{optionLabel(optIndex)}. </span>
               {option.text}
             </span>
-            {(state === "selected" || state === "correct") && (
-              <span className="relative flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#FFFFFF] text-[#1F1A14]">
-                <span
-                  className="quiz-burst absolute inset-0 rounded-full bg-[#FFFFFF]"
-                  aria-hidden="true"
-                />
-                <Check size={16} strokeWidth={3} />
-              </span>
-            )}
-            {state === "wrong" && (
-              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#FFFFFF] text-[var(--accent-danger)]">
-                <X size={16} strokeWidth={3} />
-              </span>
-            )}
+            {state === "correct" && <Check size={18} strokeWidth={3} className="flex-shrink-0 text-[var(--status-success)]" aria-label="Đáp án đúng" />}
+            {state === "wrong" && <X size={18} strokeWidth={3} className="flex-shrink-0 text-[var(--accent-danger)]" aria-label="Bạn chọn sai" />}
           </button>
         );
       })}
@@ -384,7 +346,7 @@ function MatchingInput({
           <div
             key={left.id}
             className={cn(
-              "flex flex-col gap-2 rounded-[6px] border-2 px-3 py-2.5 transition-colors sm:flex-row sm:items-center",
+              "flex flex-col gap-2 rounded-lg border px-3 py-2.5 transition-colors sm:flex-row sm:items-center",
               OPTION_TILES[leftIndex % OPTION_TILES.length].color,
               chosen
                 ? "border-[var(--opt)] bg-[color-mix(in_srgb,var(--opt)_12%,var(--bg-surface))]"
@@ -392,7 +354,7 @@ function MatchingInput({
             )}
           >
             <span className="flex flex-1 items-center gap-2.5 text-[15px] font-semibold text-content-heading">
-              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[4px] bg-[var(--opt)] text-[#FFFFFF]">
+              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-[var(--border-strong)] text-[var(--text-secondary)]">
                 <Link2 size={14} aria-hidden="true" />
               </span>
               {left.text}

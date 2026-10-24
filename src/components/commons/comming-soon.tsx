@@ -169,7 +169,7 @@ export default function ComingSoonPage() {
           {/* Badge */}
           <div className="reveal-2 mb-6">
             <span
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-[2px] text-[11px] font-bold tracking-[0.14em] uppercase"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-sm text-[11px] font-bold tracking-[0.14em] uppercase"
               style={{
                 background: "var(--accent-gold-active-bg)",
                 border: "1px solid var(--accent-gold)",

@@ -18,7 +18,7 @@ export default function ChatHeader() {
         {/* Back button */}
         <button
           onClick={() => router.push("/home")}
-          className="flex items-center justify-center w-9 h-9 rounded-[2px] border border-transparent transition-colors hover:border-[var(--text-primary)] active:scale-95 text-header-text"
+          className="flex items-center justify-center w-9 h-9 rounded-sm border border-transparent transition-colors hover:border-[var(--text-primary)] active:scale-95 text-header-text"
           aria-label="Quay lại trang chủ"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -37,7 +37,7 @@ export default function ChatHeader() {
         ) : (
           <button
             onClick={() => router.push("/login")}
-            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] rounded-[2px] border transition-colors active:scale-95 text-header-text border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] rounded-sm border transition-colors active:scale-95 text-header-text border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
           >
             Đăng nhập
           </button>

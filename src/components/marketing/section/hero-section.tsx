@@ -21,7 +21,7 @@ const Carousel3DVertical = lazy(() =>
 // Simple placeholder cho carousel
 const CarouselPlaceholder = () => (
   <div className="flex items-center justify-center h-full">
-    <div className="h-40 w-28 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-deep)] animate-pulse" />
+    <div className="h-40 w-28 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-deep)] animate-pulse" />
   </div>
 );
 
@@ -49,7 +49,7 @@ function StaticCharacterPreview({
         return (
           <div
             key={character.id}
-            className="absolute h-[198px] w-[136px] overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
+            className="absolute h-[198px] w-[136px] overflow-hidden rounded-sm border border-border-card bg-[var(--bg-surface)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
             style={{
               transform: transforms[index],
               zIndex: 30 - index,
@@ -68,7 +68,7 @@ function StaticCharacterPreview({
               />
             </div>
             <div className="flex h-[35%] flex-col px-3 py-3 text-left sm:px-4">
-              <span className="mb-1 w-fit rounded-[2px] border border-[var(--accent-gold)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--gold-on-light)]">
+              <span className="mb-1 w-fit rounded-sm border border-[var(--accent-gold)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--gold-on-light)]">
                 {character.era ?? ""}
               </span>
               <h3 className="archive-title is-plain line-clamp-1 text-[15px] sm:text-[17px] lg:text-[20px]">
@@ -299,13 +299,13 @@ export function HeroSection({
                   type="button"
                   aria-label="Xem video giới thiệu"
                   onClick={() => setIsVideoOpen(true)}
-                  className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-[2px] border border-[var(--text-primary)] bg-transparent text-[var(--text-primary)] transition-colors duration-150 hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] active:scale-95 lg:h-[58px] lg:w-[58px]"
+                  className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-sm border border-[var(--text-primary)] bg-transparent text-[var(--text-primary)] transition-colors duration-150 hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] active:scale-95 lg:h-[58px] lg:w-[58px]"
                 >
                   <Play className="h-5 w-5 translate-x-0.5 fill-current lg:h-6 lg:w-6" />
                 </button>
                 <MarketingButton
                   href="/home"
-                  className="flex min-w-0 flex-1 rounded-[2px] border-[var(--accent-gold)] bg-[var(--accent-gold)] font-bold uppercase tracking-[0.08em] text-white backdrop-blur-none hover:border-[var(--accent-bronze)] hover:bg-[var(--accent-bronze)] lg:inline-flex lg:w-auto lg:flex-none lg:overflow-visible"
+                  className="flex min-w-0 flex-1 rounded-sm border-[var(--accent-gold)] bg-[var(--accent-gold)] font-bold uppercase tracking-[0.08em] text-white backdrop-blur-none hover:border-[var(--accent-bronze)] hover:bg-[var(--accent-bronze)] lg:inline-flex lg:w-auto lg:flex-none lg:overflow-visible"
                 >
                   TRẢI NGHIỆM NGAY
                 </MarketingButton>
@@ -313,7 +313,7 @@ export function HeroSection({
                   type="button"
                   aria-label="Xem video giới thiệu"
                   onClick={() => setIsVideoOpen(true)}
-                  className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-[2px] border border-[var(--text-primary)] bg-transparent text-[var(--text-primary)] transition-colors duration-150 hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] active:scale-95 lg:h-[58px] lg:w-[58px]"
+                  className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-sm border border-[var(--text-primary)] bg-transparent text-[var(--text-primary)] transition-colors duration-150 hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] active:scale-95 lg:h-[58px] lg:w-[58px]"
                 >
                   <Play className="h-5 w-5 translate-x-0.5 fill-current lg:h-6 lg:w-6" />
                 </button>
@@ -345,12 +345,12 @@ export function HeroSection({
             onClick={() => setIsVideoOpen(false)}
             className="absolute inset-0"
           />
-          <div className="relative z-10 w-full max-w-5xl overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-black shadow-[var(--shadow-soft)]">
+          <div className="relative z-10 w-full max-w-5xl overflow-hidden rounded-sm border border-border-card bg-black shadow-[var(--shadow-soft)]">
             <button
               type="button"
               aria-label="Đóng"
               onClick={() => setIsVideoOpen(false)}
-              className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-[2px] border border-white/30 bg-black/60 text-white transition-colors hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold)]"
+              className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-sm border border-white/30 bg-black/60 text-white transition-colors hover:border-[var(--accent-gold)] hover:bg-[var(--accent-gold)]"
             >
               <X className="h-4 w-4" />
             </button>

@@ -97,7 +97,7 @@ export function SchoolTrendChart({
         </div>
 
         {/* plot */}
-        <div className="relative h-44 border-b border-[var(--text-primary)]" onMouseLeave={() => setHover(null)}>
+        <div className="relative h-44 border-b border-[var(--border-default)]" onMouseLeave={() => setHover(null)}>
           {[0, 0.5].map((t) => (
             <div key={t} className="absolute inset-x-0 border-t border-dashed border-[var(--border-default)]" style={{ top: `${t * 100}%` }} />
           ))}
@@ -150,7 +150,7 @@ export function SchoolTrendChart({
                   )}
                   {active && (
                     <span
-                      className="pointer-events-none absolute z-10 mb-2 whitespace-nowrap rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] px-2 py-1 text-[11px] text-content-heading"
+                      className="pointer-events-none absolute z-10 mb-2 whitespace-nowrap rounded-sm border border-border-card bg-[var(--bg-surface)] px-2 py-1 text-[11px] text-content-heading"
                       style={{
                         bottom: `${Math.min(h, 80)}%`,
                         ...(i < n / 3 ? { left: 0 } : i > (2 * n) / 3 ? { right: 0 } : { left: "50%", transform: "translateX(-50%)" }),

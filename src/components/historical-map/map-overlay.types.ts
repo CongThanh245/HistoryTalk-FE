@@ -122,8 +122,12 @@ export interface MapOverlay {
   /** Header title/subtitle when the page is not the battle map (e.g. "Bản đồ lớp"). */
   title?: string;
   subtitle?: string;
-  /** Hide the battle picker in the header (pages without the global layer). */
+  /** Hide the battle picker (and its header "Ghim vị trí" button) when the side list already picks battles. */
   hideBattlePicker?: boolean;
+  /** No personal study notes on this map (they belong to the HistoryTalk battle map). */
+  disableStudyNotes?: boolean;
+  /** Where editors link characters to a battle (defaults to the Content Admin context page). */
+  characterLinkHref?: (eventId: string) => string;
   /**
    * Battles of this map instead of the HistoryTalk events (e.g. the school's local contexts on the Kho tư liệu map).
    * Map pins, camera focuses and the battle page work the same; only the source differs.

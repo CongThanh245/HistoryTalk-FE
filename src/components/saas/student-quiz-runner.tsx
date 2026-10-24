@@ -154,7 +154,7 @@ export function StudentQuizRunner({
   // ── Intro ──
   if (!run) {
     return (
-      <div className="space-y-4 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4 sm:p-6">
+      <div className="space-y-4 rounded-sm border border-border-card bg-[var(--bg-surface)] p-4 sm:p-6">
         <div className="space-y-1">
           <p className="archive-title is-plain text-2xl">{title}</p>
           <p className="text-[13px] text-content-muted">
@@ -183,7 +183,7 @@ export function StudentQuizRunner({
   const lowTime = remaining !== null && remaining < 60_000;
 
   return (
-    <div className="space-y-4 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4 sm:p-6">
+    <div className="space-y-4 rounded-sm border border-border-card bg-[var(--bg-surface)] p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-default)] pb-3">
         <span className="text-[13px] font-bold text-content-muted">
           Câu {step + 1} / {questions.length} · Đã trả lời {answered}
@@ -191,7 +191,7 @@ export function StudentQuizRunner({
         {remaining !== null && (
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-1 font-display text-lg font-extrabold tabular-nums",
+              "inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-lg font-bold tabular-nums",
               lowTime ? "border-[var(--accent-danger)] text-[var(--accent-danger)]" : "border-[var(--border-strong)] text-[var(--men-lam)]",
             )}
             role="timer"
@@ -212,7 +212,7 @@ export function StudentQuizRunner({
             aria-label={`Câu ${i + 1}${run.answers[i] >= 0 ? ", đã trả lời" : ""}`}
             aria-current={i === step ? "step" : undefined}
             className={cn(
-              "grid h-8 w-8 place-items-center rounded-[2px] border text-[12px] font-bold tabular-nums",
+              "grid h-8 w-8 place-items-center rounded-sm border text-[12px] font-bold tabular-nums",
               i === step
                 ? "border-[var(--men-lam)] bg-[var(--men-lam)] text-white"
                 : run.answers[i] >= 0
@@ -238,7 +238,7 @@ export function StudentQuizRunner({
                 aria-checked={selected}
                 onClick={() => choose(step, oi)}
                 className={cn(
-                  "flex items-center gap-3 rounded-[2px] border px-3 py-2.5 text-left text-[14px] motion-safe:transition-colors",
+                  "flex items-center gap-3 rounded-sm border px-3 py-2.5 text-left text-[14px] motion-safe:transition-colors",
                   selected
                     ? "border-[var(--men-lam)] bg-[color-mix(in_srgb,var(--men-lam)_10%,transparent)] text-content-text"
                     : "border-[var(--border-strong)] text-content-text hover:border-[var(--text-primary)]",
@@ -246,7 +246,7 @@ export function StudentQuizRunner({
               >
                 <span
                   className={cn(
-                    "grid h-7 w-7 shrink-0 place-items-center rounded-[2px] border text-[12px] font-bold",
+                    "grid h-7 w-7 shrink-0 place-items-center rounded-sm border text-[12px] font-bold",
                     selected ? "border-[var(--men-lam)] bg-[var(--men-lam)] text-white" : "border-[var(--border-strong)] text-content-muted",
                   )}
                   aria-hidden="true"
@@ -313,15 +313,15 @@ function QuizResult({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-[2px] border border-[var(--text-primary)] bg-[color-mix(in_srgb,var(--gold-leaf)_9%,var(--bg-surface))] p-4 sm:p-6">
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-sm border border-border-card bg-[color-mix(in_srgb,var(--gold-leaf)_9%,var(--bg-surface))] p-4 sm:p-6">
         <div>
-          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-content-muted">Điểm của bạn</p>
+          <p className="text-[12px] font-semibold text-content-muted">Điểm của bạn</p>
           {score !== null ? <ScoreChip score={score} max={maxScore} size="lg" /> : <p className="text-2xl font-bold">—</p>}
         </div>
         {correct !== null && (
           <div>
-            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-content-muted">Câu đúng</p>
-            <p className="font-display text-4xl font-extrabold tabular-nums" style={{ color: TEST }}>
+            <p className="text-[12px] font-semibold text-content-muted">Câu đúng</p>
+            <p className="text-4xl font-bold tabular-nums" style={{ color: TEST }}>
               {correct}
               <span className="text-base text-content-muted"> / {questions.length}</span>
             </p>
@@ -345,7 +345,7 @@ function QuizResult({
           const chosen = answers?.[i] ?? -1;
           const ok = chosen === q.correctIndex;
           return (
-            <li key={q.id} className="space-y-2 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] p-4">
+            <li key={q.id} className="space-y-2 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] p-4">
               <p className="flex items-start gap-2 text-[14px] font-semibold text-content-text">
                 {answers ? (
                   ok ? (
@@ -366,7 +366,7 @@ function QuizResult({
                     <li
                       key={oi}
                       className={cn(
-                        "flex items-center gap-2 rounded-[2px] border px-3 py-1.5 text-[13px]",
+                        "flex items-center gap-2 rounded-sm border px-3 py-1.5 text-[13px]",
                         isCorrect
                           ? "border-[var(--jade)] bg-[color-mix(in_srgb,var(--jade)_10%,transparent)] font-semibold text-content-text"
                           : isChosen

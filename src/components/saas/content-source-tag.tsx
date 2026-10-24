@@ -16,7 +16,7 @@ export const CONTENT_SOURCE_LABELS: Record<ContentSource, string> = {
 };
 
 const SOURCE_CLASS: Record<ContentSource, string> = {
-  OFFICIAL: "border-[var(--text-primary)] text-[var(--text-primary)]",
+  OFFICIAL: "border-border-card text-[var(--text-primary)]",
   SCHOOL:
     "border-[color-mix(in_srgb,var(--men-lam)_55%,transparent)] bg-[color-mix(in_srgb,var(--men-lam)_10%,transparent)] text-[var(--men-lam)]",
   CLASS:
@@ -39,7 +39,7 @@ export function ContentSourceTag({
   return (
     <span
       className={cn(
-        "inline-flex max-w-full items-center whitespace-nowrap rounded-[2px] border px-1.5 py-0.5 text-[10px] font-bold uppercase leading-[1.3] tracking-[0.08em]",
+        "inline-flex max-w-full items-center whitespace-nowrap rounded-full border px-1.5 py-0.5 text-xs font-semibold leading-[1.3]",
         SOURCE_CLASS[source],
         className,
       )}

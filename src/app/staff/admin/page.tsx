@@ -116,7 +116,7 @@ function formatUptime(uptime: string | number | undefined | null): string {
 function Skeleton({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
   return (
     <div
-      className={`animate-pulse rounded-[2px] bg-[var(--card-light-border)] ${className}`}
+      className={`animate-pulse rounded-sm bg-[var(--card-light-border)] ${className}`}
       style={style}
     />
   );
@@ -128,18 +128,18 @@ function HealthBadge({ status }: { status?: string }) {
   const s = (status ?? "").toUpperCase();
   if (s === "UP" || s === "HEALTHY" || s === "OK")
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-[var(--status-success-bg)] px-3 py-1 text-xs font-bold text-[var(--status-success)]">
+      <span className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--status-success-bg)] px-3 py-1 text-xs font-bold text-[var(--status-success)]">
         <CheckCircle2Icon className="h-3.5 w-3.5" /> Online
       </span>
     );
   if (s === "DOWN" || s === "ERROR")
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-[var(--status-danger-bg)] px-3 py-1 text-xs font-bold text-[var(--accent-danger)]">
+      <span className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--status-danger-bg)] px-3 py-1 text-xs font-bold text-[var(--accent-danger)]">
         <XCircleIcon className="h-3.5 w-3.5" /> Offline
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-[2px] bg-[var(--status-warning-bg)] px-3 py-1 text-xs font-bold text-[var(--status-warning)]">
+    <span className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--status-warning-bg)] px-3 py-1 text-xs font-bold text-[var(--status-warning)]">
       <AlertCircleIcon className="h-3.5 w-3.5" /> {status ?? "Unknown"}
     </span>
   );
@@ -406,7 +406,7 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
               transform: `translate(${(N > 1 ? hoveredIdx / (N - 1) : 0.5) > 0.7 ? "-105%" : "12px"}, -50%)`,
             }}
           >
-            <div className="bg-[var(--bg-surface)] shadow-[var(--shadow-soft)] border border-[var(--card-light-border)] rounded-[2px] py-2 px-3.5 text-[10px] min-w-[155px]">
+            <div className="bg-[var(--bg-surface)] shadow-[var(--shadow-soft)] border border-[var(--card-light-border)] rounded-sm py-2 px-3.5 text-[10px] min-w-[155px]">
               <div className="font-bold border-b border-[var(--border-default)] pb-1 mb-1.5 text-[var(--content-heading)]">
                 {dates[hoveredIdx]}
               </div>
@@ -463,12 +463,11 @@ function KpiCard({
 }) {
   return (
     <Card
-      className="relative overflow-hidden rounded-[2px] border shadow-none transition-colors duration-300 bg-[var(--bg-surface)] border-[var(--text-primary)]"
+      className="relative overflow-hidden rounded-xl border shadow-none transition-colors duration-300 bg-[var(--bg-surface)] border-border-card"
     >
-      <div className="absolute top-0 left-0 h-[3px] w-full" style={{ background: color }} />
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 pt-5">
-        <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{title}</span>
-        <div className="rounded-[2px] p-2" style={{ background: `color-mix(in srgb, ${color} 10%, transparent)`, color }}>
+        <span className="text-[13px] font-medium text-[var(--text-secondary)]">{title}</span>
+        <div className="shrink-0 rounded-lg p-2" style={{ background: `color-mix(in srgb, ${color} 10%, transparent)`, color }}>
           <Icon className="h-4 w-4" />
         </div>
       </CardHeader>
@@ -480,7 +479,7 @@ function KpiCard({
           </>
         ) : (
           <>
-            <div className="font-display text-2xl font-extrabold text-[var(--content-heading)] leading-[1.2] truncate">
+            <div className="text-2xl font-bold tabular-nums text-[var(--content-heading)] leading-[1.2] truncate">
               {value}
             </div>
             {sub && <div className="mt-1.5 text-xs text-[var(--content-muted)]">{sub}</div>}
@@ -724,7 +723,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ── Row 2: Date range selector ── */}
-        <div className="flex flex-wrap items-center gap-3 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3">
           <CalendarIcon className="h-4 w-4 text-[var(--content-muted)] shrink-0" />
           <span className="text-xs font-semibold text-[var(--content-muted)] shrink-0">Khoảng thời gian:</span>
           <div className="flex items-center gap-2">
@@ -733,7 +732,7 @@ export default function AdminDashboardPage() {
               value={from}
               max={to}
               onChange={(e) => setFrom(e.target.value)}
-              className="rounded-[2px] border border-[var(--card-light-border)] bg-transparent px-2 py-1 text-xs text-[var(--content-heading)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-gold)]"
+              className="rounded-sm border border-[var(--card-light-border)] bg-transparent px-2 py-1 text-xs text-[var(--content-heading)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-gold)]"
             />
             <span className="text-xs text-[var(--content-muted)]">→</span>
             <input
@@ -742,7 +741,7 @@ export default function AdminDashboardPage() {
               min={from}
               max={todayISO()}
               onChange={(e) => setTo(e.target.value)}
-              className="rounded-[2px] border border-[var(--card-light-border)] bg-transparent px-2 py-1 text-xs text-[var(--content-heading)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-gold)]"
+              className="rounded-sm border border-[var(--card-light-border)] bg-transparent px-2 py-1 text-xs text-[var(--content-heading)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-gold)]"
             />
           </div>
           <div className="flex items-center gap-1 ml-2">
@@ -751,7 +750,7 @@ export default function AdminDashboardPage() {
                 key={g}
                 onClick={() => setGranularity(g)}
                 className={cn(
-                  "rounded-[2px] px-3 py-1 text-[11px] font-bold transition-all duration-200",
+                  "rounded-sm px-3 py-1 text-[11px] font-bold transition-all duration-200",
                   granularity === g
                     ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
                     : "bg-transparent text-[var(--content-muted)] hover:text-[var(--text-primary)]"
@@ -769,11 +768,11 @@ export default function AdminDashboardPage() {
         {/* ── Row 3: Trend charts ── */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* User trend */}
-          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
+          <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <BarChart3Icon className="h-4 w-4 text-accent-blue" />
-                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
+                <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
                   Xu hướng người dùng
                 </CardTitle>
               </div>
@@ -820,11 +819,11 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Revenue trend */}
-          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
+          <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <TrendingUpIcon className="h-4 w-4 text-[var(--status-warning)]" />
-                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
+                <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
                   Xu hướng Doanh thu & Đơn hàng
                 </CardTitle>
               </div>
@@ -875,11 +874,11 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           
           {/* Revenue by Tier Progress */}
-          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
+          <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CrownIcon className="h-4 w-4 text-[var(--status-warning)]" />
-                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
+                <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
                   Doanh thu theo Gói dịch vụ
                 </CardTitle>
               </div>
@@ -937,11 +936,11 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Tier Subscriptions usage */}
-          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
+          <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <UsersIcon className="h-4 w-4 text-accent-blue" />
-                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
+                <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
                   Phân tích Hội viên
                 </CardTitle>
               </div>
@@ -996,11 +995,11 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Orders status & Details */}
-          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
+          <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CreditCardIcon className="h-4 w-4 text-[var(--quest-quiz)]" />
-                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
+                <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
                   Trạng thái đơn hàng
                 </CardTitle>
               </div>
@@ -1044,11 +1043,11 @@ export default function AdminDashboardPage() {
 
           <div className="flex flex-col gap-6 lg:col-span-2">
             {/* Top nhân vật hot */}
-            <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
+            <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <FlameIcon className="h-4 w-4 text-[var(--accent-gold)]" />
-                  <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
+                  <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
                     Nhân vật Hot nhất
                   </CardTitle>
                 </div>
@@ -1058,7 +1057,7 @@ export default function AdminDashboardPage() {
                 {ovLoading ? (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <Skeleton key={i} className="h-24 w-full rounded-[2px]" />
+                      <Skeleton key={i} className="h-24 w-full rounded-sm" />
                     ))}
                   </div>
                 ) : (overview?.topCharacters ?? []).length > 0 ? (
@@ -1072,11 +1071,11 @@ export default function AdminDashboardPage() {
                       return (
                         <div
                           key={c.characterId}
-                          className="relative flex items-center gap-3 rounded-[2px] border p-3 transition-all duration-300"
+                          className="relative flex items-center gap-3 rounded-sm border p-3 transition-all duration-300"
                           style={{ borderColor: "var(--card-light-border)" }}
                         >
                           <span
-                            className="absolute -top-2 -left-2 flex h-6 w-6 items-center justify-center rounded-[2px] text-[11px] font-extrabold text-white"
+                            className="absolute -top-2 -left-2 flex h-6 w-6 items-center justify-center rounded-sm text-[11px] font-extrabold text-white"
                             style={{ background: rankColor }}
                           >
                             {rank}
@@ -1130,11 +1129,11 @@ export default function AdminDashboardPage() {
             </Card>
 
             {/* Quiz Performance Analytics */}
-            <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
+            <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <TrophyIcon className="h-4 w-4 text-[var(--status-warning)]" />
-                  <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
+                  <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
                     Quiz Đang Hot
                   </CardTitle>
                 </div>
@@ -1148,23 +1147,23 @@ export default function AdminDashboardPage() {
                     {/* Left Column: Stats & Top Quizzes */}
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 rounded-[2px] border border-[var(--card-light-border)] bg-[var(--bg-elevated)]">
-                          <span className="text-[10px] uppercase font-bold text-[var(--content-muted)]">Tổng số Quiz</span>
+                        <div className="p-3 rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)]">
+                          <span className="text-xs font-medium text-[var(--content-muted)]">Tổng số Quiz</span>
                           <div className="text-lg font-bold text-[var(--content-heading)] mt-0.5">{(quiz?.summary.totalQuizzes ?? 0).toLocaleString()}</div>
                           <div className="text-[10px] text-[var(--content-muted)] mt-0.5">Đã xuất bản: {quiz?.summary.publishedQuizzes ?? 0}</div>
                         </div>
-                        <div className="p-3 rounded-[2px] border border-[var(--card-light-border)] bg-[var(--bg-elevated)]">
-                          <span className="text-[10px] uppercase font-bold text-[var(--content-muted)]">Tỷ lệ hoàn thành</span>
+                        <div className="p-3 rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)]">
+                          <span className="text-xs font-medium text-[var(--content-muted)]">Tỷ lệ hoàn thành</span>
                           <div className="text-lg font-bold text-[var(--status-success)] mt-0.5">{(quiz?.summary.completionRate ?? 0).toFixed(1)}%</div>
                           <div className="text-[10px] text-[var(--content-muted)] mt-0.5">Lượt làm bài: {quiz?.summary.completedSessions ?? 0}</div>
                         </div>
                       </div>
 
                       <div>
-                        <h4 className="text-xs font-bold text-[var(--content-heading)] mb-2 uppercase tracking-wider">Top Quizzes Phổ Biến</h4>
+                        <h4 className="text-sm font-semibold text-[var(--content-heading)] mb-2">Bộ đề được làm nhiều nhất</h4>
                         <div className="space-y-2 max-h-[170px] overflow-y-auto pr-1">
                           {(quiz?.topQuizzes ?? []).slice(0, 3).map((q) => (
-                            <div key={q.quizId} className="p-2 rounded-[2px] border border-[var(--card-light-border)] flex items-center justify-between text-xs hover:bg-[var(--card-light-hover)] transition-all">
+                            <div key={q.quizId} className="p-2 rounded-sm border border-[var(--card-light-border)] flex items-center justify-between text-xs hover:bg-[var(--card-light-hover)] transition-all">
                               <div className="truncate max-w-[70%]">
                                 <div className="font-bold text-[var(--content-heading)] truncate" title={q.title}>{q.title}</div>
                                 <span className="text-[10px] text-[var(--content-muted)]">Cấp độ: {q.level === "EASY" ? "Dễ" : q.level === "MEDIUM" ? "Trung bình" : "Khó"}</span>
@@ -1183,11 +1182,11 @@ export default function AdminDashboardPage() {
                     <div className="space-y-3">
                       <div className="flex items-center gap-1.5 mb-1">
                         <HelpCircleIcon className="h-4 w-4 text-[var(--accent-danger)]" />
-                        <h4 className="text-xs font-bold text-[var(--content-heading)] uppercase tracking-wider">Các Câu Hỏi Hay Sai Nhất</h4>
+                        <h4 className="text-sm font-semibold text-[var(--content-heading)]">Câu hỏi hay sai nhất</h4>
                       </div>
                       <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
                         {(quiz?.topWrongQuestions ?? []).slice(0, 3).map((q) => (
-                          <div key={q.questionId} className="p-2.5 rounded-[2px] border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-xs flex flex-col gap-1">
+                          <div key={q.questionId} className="p-2.5 rounded-sm border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-xs flex flex-col gap-1">
                             <div className="font-medium text-[var(--content-heading)] line-clamp-2">
                               {q.questionContent || q.questionId}
                             </div>
@@ -1206,25 +1205,25 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Content summary */}
-          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
+          <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <BookOpenIcon className="h-4 w-4 text-accent-blue" />
-                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
+                <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
                   Kho nội dung
                 </CardTitle>
               </div>
             </CardHeader>
             <CardContent className="border-t border-[var(--border-default)] pt-4 space-y-3">
               {contentLoading ? (
-                Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-[2px]" />)
+                Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-sm" />)
               ) : (
                 <>
                   {/* Historical Contexts */}
-                  <div className="rounded-[2px] p-3 border border-accent-gold/30 bg-[var(--accent-gold-active-bg)]">
+                  <div className="rounded-sm p-3 border border-accent-gold/30 bg-[var(--accent-gold-active-bg)]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold text-[var(--accent-gold)] uppercase tracking-wider">Bối cảnh lịch sử</span>
-                      <span className="font-display text-lg font-extrabold text-[var(--content-heading)]">{(content?.historicalContexts.total ?? 0).toLocaleString()}</span>
+                      <span className="text-[13px] font-semibold text-[var(--accent-gold)]">Bối cảnh lịch sử</span>
+                      <span className="text-lg font-bold tabular-nums text-[var(--content-heading)]">{(content?.historicalContexts.total ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex gap-3 text-[11px] text-[var(--content-muted)]">
                       <span>Xuất bản: <strong className="text-[var(--content-heading)]">{content?.historicalContexts.published ?? 0}</strong></span>
@@ -1233,10 +1232,10 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {/* Characters */}
-                  <div className="rounded-[2px] p-3 border border-[var(--quest-quiz)]/20 bg-[var(--quest-quiz-bg)]">
+                  <div className="rounded-sm p-3 border border-[var(--quest-quiz)]/20 bg-[var(--quest-quiz-bg)]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold text-[var(--quest-quiz)] uppercase tracking-wider">Nhân vật</span>
-                      <span className="font-display text-lg font-extrabold text-[var(--content-heading)]">{(content?.characters.total ?? 0).toLocaleString()}</span>
+                      <span className="text-[13px] font-semibold text-[var(--quest-quiz)]">Nhân vật</span>
+                      <span className="text-lg font-bold tabular-nums text-[var(--content-heading)]">{(content?.characters.total ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex gap-3 text-[11px] text-[var(--content-muted)]">
                       <span>Xuất bản: <strong className="text-[var(--content-heading)]">{content?.characters.published ?? 0}</strong></span>
@@ -1245,10 +1244,10 @@ export default function AdminDashboardPage() {
                   </div>
 
                   {/* Documents */}
-                  <div className="rounded-[2px] p-3 border border-accent-blue/20 bg-accent-blue/10">
+                  <div className="rounded-sm p-3 border border-accent-blue/20 bg-accent-blue/10">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold text-accent-blue uppercase tracking-wider">Tài liệu</span>
-                      <span className="font-display text-lg font-extrabold text-[var(--content-heading)]">{(content?.documents.total ?? 0).toLocaleString()}</span>
+                      <span className="text-[13px] font-semibold text-accent-blue">Tài liệu</span>
+                      <span className="text-lg font-bold tabular-nums text-[var(--content-heading)]">{(content?.documents.total ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="text-[11px] text-[var(--content-muted)]">
                       Hoạt động: <strong className="text-[var(--content-heading)]">{content?.documents.active ?? 0}</strong>
@@ -1264,11 +1263,11 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
           {/* Detailed User analytics */}
-          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
+          <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <UsersIcon className="h-4 w-4 text-[var(--status-success)]" />
-                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
+                <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
                   Chi tiết người dùng
                 </CardTitle>
               </div>
@@ -1317,11 +1316,11 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Chat activity details */}
-          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
+          <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <MessagesSquareIcon className="h-4 w-4 text-[var(--quest-quiz)]" />
-                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
+                <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
                   Thống kê Hội thoại Chat
                 </CardTitle>
               </div>
@@ -1344,11 +1343,11 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Quick nav redirects */}
-          <Card className="rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] shadow-none">
+          <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <ActivityIcon className="h-4 w-4 text-[var(--accent-gold)]" />
-                <CardTitle className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--content-heading)]">
+                <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
                   Lối tắt quản lý
                 </CardTitle>
               </div>
@@ -1357,7 +1356,7 @@ export default function AdminDashboardPage() {
             <CardContent className="space-y-2 border-t border-[var(--card-light-border)] pt-4">
               <Button
                 variant="outline"
-                className="w-full justify-between h-10 rounded-[2px] px-4 hover:bg-[var(--card-light-hover)] border-[var(--card-light-border)] bg-transparent cursor-pointer"
+                className="w-full justify-between h-10 rounded-sm px-4 hover:bg-[var(--card-light-hover)] border-[var(--card-light-border)] bg-transparent cursor-pointer"
                 onClick={() => router.push("/staff/admin/accounts/customer")}
               >
                 <span className="flex items-center gap-2 font-medium text-[var(--content-heading)]">
@@ -1369,7 +1368,7 @@ export default function AdminDashboardPage() {
 
               <Button
                 variant="outline"
-                className="w-full justify-between h-10 rounded-[2px] px-4 hover:bg-[var(--card-light-hover)] border-[var(--card-light-border)] bg-transparent cursor-pointer"
+                className="w-full justify-between h-10 rounded-sm px-4 hover:bg-[var(--card-light-hover)] border-[var(--card-light-border)] bg-transparent cursor-pointer"
                 onClick={() => router.push("/staff/admin/accounts/system-admin")}
               >
                 <span className="flex items-center gap-2 font-medium text-[var(--content-heading)]">

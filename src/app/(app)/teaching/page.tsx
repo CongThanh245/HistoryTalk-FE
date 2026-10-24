@@ -13,6 +13,7 @@ import { StaffFormSelect } from "@/components/staff/staff-form";
 import { ClassCodeCopy, ClassroomCardsSkeleton, ClassroomLoadError, ClassroomStatusPill, classroomMeta } from "@/components/saas/api-classroom-ui";
 import { TeacherClassKpis, TeacherClassStudents } from "@/components/saas/teacher-classroom-analytics";
 import { TeacherClassAssignments } from "@/components/saas/teacher-class-assignments";
+import { TeacherLatestAssignments } from "@/components/saas/teacher-latest-assignments";
 import { formatNumber } from "@/components/saas/saas-ui";
 import { ClassStudentsTokenDialog } from "@/app/school/_components/token-usage";
 import { useTeacherClassesOverview } from "@/features/dashboard/hooks";
@@ -62,12 +63,14 @@ function Dashboard() {
 
   return (
     <div className="space-y-10">
-      <section aria-label="Lớp của tôi" className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
+      <TeacherLatestAssignments classIds={classes.map((c) => c.id)} />
+
+      <section aria-label="Lớp của tôi" className="rounded-sm border border-border-card bg-[var(--bg-surface)]">
         {classes.length > 1 && (
           <div className="flex flex-col gap-2 border-b border-[var(--border-default)] px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
-            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-content-muted">Lớp của tôi</span>
+            <span className="text-sm font-medium text-content-muted">Lớp của tôi</span>
             {classes.length <= MAX_CLASS_TABS ? (
-              <div role="tablist" aria-label="Chọn lớp" className="flex flex-wrap gap-1.5">
+              <div role="tablist" aria-label="Chọn lớp" className="inline-flex flex-wrap gap-0.5 rounded-lg bg-[var(--status-neutral-bg)] p-0.5">
                 {classes.map((c) => {
                   const active = c.id === current.id;
                   return (
@@ -78,15 +81,15 @@ function Dashboard() {
                       aria-selected={active}
                       onClick={() => setClass(c.id)}
                       className={cn(
-                        "rounded-[2px] border px-3 py-1 text-sm font-semibold transition-colors",
+                        "h-8 rounded-md px-3 text-sm transition-colors",
                         active
-                          ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-surface)]"
-                          : "border-[var(--border-strong)] text-content-heading hover:border-[var(--text-primary)]",
+                          ? "bg-[var(--bg-elevated)] font-semibold text-content-heading shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                          : "font-medium text-[var(--text-tertiary)] hover:text-content-heading",
                       )}
                     >
                       {c.className}
                       {tokensOf(c.id) && (
-                        <span className={cn("ml-1.5 text-xs font-normal tabular-nums", active ? "opacity-80" : "text-content-muted")}>
+                        <span className="ml-1.5 text-xs font-normal tabular-nums text-content-subtle">
                           · {formatNumber(tokensOf(c.id)!.tokensUsedTotal)} token
                         </span>
                       )}
@@ -133,7 +136,7 @@ function Dashboard() {
         onOpenChange={(o) => !o && setTokenDialog(false)}
       />
 
-      <TeacherClassKpis classId={current.id} compact />
+      <TeacherClassKpis classId={current.id} />
 
       <TeacherClassAssignments classId={current.id} className={current.className} />
 

@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Search } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Loader2, Search } from "lucide-react";
 import { ArchiveHeading } from "@/components/commons/archive-heading";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,9 @@ export function SaasShell({
   fallback,
   live = true,
   backLink,
+  backHref,
+  backLabel = "Quay lại",
+  actions,
   hideHeading = false,
   children,
 }: {
@@ -36,6 +40,11 @@ export function SaasShell({
   description?: string;
   /** Small "← back" link shown above the page title. */
   backLink?: React.ReactNode;
+  /** Round "←" button left of the title (form and detail pages); preferred over backLink. */
+  backHref?: string;
+  backLabel?: string;
+  /** Primary actions on the title row (e.g. "+ Bài tập mới"). */
+  actions?: React.ReactNode;
   /** "staff" = School Admin / System Admin workspace; "app" = learning app (layout already pads). */
   variant?: "staff" | "app";
   /** Shown until the persisted store has hydrated (defaults to a spinner); e.g. a table skeleton. */
@@ -55,13 +64,25 @@ export function SaasShell({
       {!live && <MockDataNotice />}
       {hideHeading ? (
         <h1 className="sr-only">{title}</h1>
+      ) : backHref ? (
+        <div className="flex items-start gap-3">
+          <Link
+            href={backHref}
+            aria-label={backLabel}
+            title={backLabel}
+            className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full text-content-heading transition-colors hover:bg-[var(--status-neutral-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
+          >
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+          </Link>
+          <ArchiveHeading as="h1" title={title} description={description} actions={actions} className="mb-0 min-w-0 flex-1" />
+        </div>
       ) : backLink ? (
         <div className="space-y-3">
           {backLink}
-          <ArchiveHeading as="h1" title={title} description={description} />
+          <ArchiveHeading as="h1" title={title} description={description} actions={actions} />
         </div>
       ) : (
-        <ArchiveHeading as="h1" title={title} description={description} />
+        <ArchiveHeading as="h1" title={title} description={description} actions={actions} />
       )}
       {hydrated ? (
         children
@@ -80,7 +101,7 @@ export function SaasShell({
 /** Bordered surface used for forms, tables and lists. */
 export function Panel({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <section className={cn("space-y-4 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4 sm:p-6", className)}>
+    <section className={cn("space-y-4 rounded-sm border border-border-card bg-[var(--bg-surface)] p-4 sm:p-6", className)}>
       {children}
     </section>
   );
@@ -127,7 +148,7 @@ export function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="h-10 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] pl-10 text-content-text focus-visible:border-[var(--text-primary)]"
+        className="h-10 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] pl-10 text-content-text focus-visible:border-[var(--text-primary)]"
       />
     </div>
   );
@@ -139,10 +160,13 @@ export function Field({
   hint,
   error,
   htmlFor,
+  count,
   className,
   children,
 }: {
   label: string;
+  /** Characters used / allowed, shown on the label row ("12 / 100"); turns warning-coloured near the limit. */
+  count?: { value: number; max: number };
   required?: boolean;
   hint?: React.ReactNode;
   error?: string | null;
@@ -152,15 +176,28 @@ export function Field({
 }) {
   return (
     <div className={cn("space-y-1.5", className)}>
-      <StaffFormLabel htmlFor={htmlFor}>
-        {label}
-        {required && <span className="text-[var(--accent-danger)]">*</span>}
-      </StaffFormLabel>
+      <div className="flex items-baseline justify-between gap-3">
+        <StaffFormLabel htmlFor={htmlFor}>
+          {label}
+          {required && <span className="text-[var(--accent-gold)]">*</span>}
+        </StaffFormLabel>
+        {count && (
+          <span
+            aria-live="polite"
+            className={cn(
+              "shrink-0 text-xs tabular-nums",
+              count.value >= count.max ? "text-[var(--accent-danger)]" : count.value >= count.max * 0.9 ? "text-[var(--status-warning)]" : "text-content-subtle",
+            )}
+          >
+            {count.value.toLocaleString("vi-VN")} / {count.max.toLocaleString("vi-VN")}
+          </span>
+        )}
+      </div>
       {children}
       {error ? (
-        <p className="text-[11px] text-[var(--accent-danger)]">{error}</p>
+        <p className="text-xs text-[var(--accent-danger)]">{error}</p>
       ) : hint ? (
-        <p className="text-[11px] text-content-muted">{hint}</p>
+        <p className="text-xs leading-relaxed text-content-muted">{hint}</p>
       ) : null}
     </div>
   );
@@ -168,7 +205,7 @@ export function Field({
 
 /** Shared class names for dialogs so every SaaS dialog fits 375px and scrolls when tall. */
 export const DIALOG_CLASS =
-  "staff-theme max-h-[90dvh] overflow-y-auto rounded-[2px] border-[var(--text-primary)] bg-[var(--bg-surface)] text-content-text";
+  "staff-theme max-h-[90dvh] overflow-y-auto rounded-xl border-border-card bg-[var(--bg-surface)] text-content-text";
 export const DIALOG_TITLE_CLASS = "archive-title is-plain text-2xl";
 
 /** Small icon-only table action. */
@@ -198,7 +235,7 @@ export function IconAction({
         onClick();
       }}
       className={cn(
-        "rounded-[2px] hover:bg-[var(--status-neutral-bg)]",
+        "rounded-sm hover:bg-[var(--status-neutral-bg)]",
         tone === "danger" && "text-[var(--accent-danger)]",
         tone === "success" && "text-[var(--status-success)]",
         tone === "default" && "text-[var(--text-secondary)]",
@@ -210,7 +247,7 @@ export function IconAction({
 }
 
 /* ───────────────────────── Badges ───────────────────────── */
-const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold";
+const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold";
 
 const ACCOUNT_STATUS: Record<AccountStatus, { label: string; className: string }> = {
   ACTIVE: {
@@ -248,7 +285,7 @@ export function SchoolStatusBadge({ status }: { status: School["status"] }) {
 
 export function PlanBadge({ plan }: { plan: School["plan"] }) {
   return (
-    <span className={cn(PILL, "border-[var(--text-primary)] bg-transparent text-[var(--text-primary)]")}>{PLAN_LABELS[plan]}</span>
+    <span className={cn(PILL, "border-border-card bg-transparent text-[var(--text-primary)]")}>{PLAN_LABELS[plan]}</span>
   );
 }
 
@@ -267,7 +304,7 @@ export function TokenBar({ used, quota, className }: { used: number; quota: numb
   const fill = ratio >= 1 ? "fill-[var(--accent-danger)]" : ratio >= 0.8 ? "fill-[var(--gold-leaf)]" : "fill-[var(--jade)]";
   return (
     <div
-      className={cn("h-2 w-full overflow-hidden rounded-[2px] bg-[var(--status-neutral-bg)] ring-1 ring-inset ring-[var(--border-default)]", className)}
+      className={cn("h-2 w-full overflow-hidden rounded-sm bg-[var(--status-neutral-bg)] ring-1 ring-inset ring-[var(--border-default)]", className)}
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
@@ -292,15 +329,6 @@ export const formatNumber = (n: number) => n.toLocaleString("vi-VN");
 
 export const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
-/** Lowercase + strip Vietnamese diacritics, for search and header matching. */
-export function normalizeText(v: string) {
-  return v
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .toLowerCase()
-    .trim();
-}
+export { normalizeText } from "@/lib/utils/normalize-text";
 
 export const GRADE_OPTIONS = [6, 7, 8, 9, 10, 11, 12];

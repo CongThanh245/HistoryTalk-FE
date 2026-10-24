@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils/cn";
 
 /* ───────────────────────── Building blocks ───────────────────────── */
 
-const SECTION_LABEL = "text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--text-tertiary)]";
+const SECTION_LABEL = "text-xs font-semibold text-[var(--text-tertiary)]";
 
 function ListHeader({ title, meta, action }: { title: string; meta?: React.ReactNode; action?: React.ReactNode }) {
   return (
@@ -41,7 +41,7 @@ function ListSearch({ value, onChange, placeholder }: { value: string; onChange:
             }
           }}
           placeholder={placeholder}
-          className="h-8 w-full rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-2.5 text-[13px] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)]"
+          className="h-8 w-full rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-2.5 text-[13px] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)]"
         />
       </label>
     </div>
@@ -75,7 +75,7 @@ function FilterChips<T extends string>({
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            "inline-flex h-7 items-center gap-1 rounded-[2px] border px-2 text-[11px] font-bold transition-colors motion-reduce:transition-none",
+            "inline-flex h-7 items-center gap-1 rounded-sm border px-2 text-[11px] font-bold transition-colors motion-reduce:transition-none",
             value === o.value
               ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
               : "border-[var(--border-strong)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]",
@@ -140,7 +140,7 @@ const DUE_CHIP: Record<PinDue["state"], string> = {
 
 export function DueChip({ due, className }: { due: PinDue; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center rounded-[2px] border px-1.5 py-px text-[10.5px] font-bold leading-4", DUE_CHIP[due.state], className)}>
+    <span className={cn("inline-flex items-center rounded-sm border px-1.5 py-px text-[10.5px] font-bold leading-4", DUE_CHIP[due.state], className)}>
       {due.label}
     </span>
   );
@@ -151,7 +151,7 @@ function EmptyNote({ children }: { children: React.ReactNode }) {
 }
 
 const trailingLink =
-  "inline-flex h-7 items-center gap-0.5 rounded-[2px] px-1.5 text-[10.5px] font-bold uppercase tracking-[0.06em] text-[var(--gold-on-light)] outline-none hover:bg-[var(--accent-gold-active-bg)] focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]";
+  "inline-flex h-7 items-center gap-0.5 rounded-sm px-1.5 text-xs font-semibold text-[var(--gold-on-light)] outline-none hover:bg-[var(--accent-gold-active-bg)] focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]";
 
 const formatYear = (year: number) => (year < 0 ? `${Math.abs(year)} TCN` : String(year));
 
@@ -175,9 +175,9 @@ export function ListTabs<T extends string>({
           aria-selected={value === t.value}
           onClick={() => onChange(t.value)}
           className={cn(
-            "flex-1 px-2 py-2 text-[11px] font-bold uppercase tracking-[0.08em] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent-gold)]",
+            "flex-1 px-2 py-2 text-[13px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent-gold)]",
             value === t.value
-              ? "border-b-2 border-[var(--text-primary)] text-[var(--text-primary)]"
+              ? "border-b-2 border-border-card text-[var(--text-primary)]"
               : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]",
           )}
         >
@@ -245,7 +245,7 @@ export function PersonalNotesList({
       {loading ? (
         <EmptyNote>Đang tải ghi chú…</EmptyNote>
       ) : pins.length === 0 ? (
-        <div className="mx-3 mb-3 rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3">
+        <div className="mx-3 mb-3 rounded-sm border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3">
           <p className="flex items-center gap-2 text-[13px] font-semibold text-[var(--text-primary)]">
             <Bookmark size={15} className="text-[var(--jade)]" aria-hidden="true" /> Chưa có ghi chú nào
           </p>
@@ -353,7 +353,7 @@ export function StudyNotesList({
       {loading && notes.length === 0 ? (
         <EmptyNote>Đang tải ghi chú…</EmptyNote>
       ) : notes.length === 0 ? (
-        <div className="mx-3 mb-3 rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3">
+        <div className="mx-3 mb-3 rounded-sm border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3">
           <p className="flex items-center gap-2 text-[13px] font-semibold text-[var(--text-primary)]">
             <Bookmark size={15} className="text-[var(--jade)]" aria-hidden="true" /> Chưa có ghi chú nào
           </p>
@@ -498,7 +498,7 @@ export function ClassMapList({
         <EmptyNote>Đang tải bản đồ tư liệu…</EmptyNote>
       ) : total === 0 ? (
         mode === "manage" ? (
-          <div className="mx-3 mb-3 rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3">
+          <div className="mx-3 mb-3 rounded-sm border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3">
             <p className="text-[13px] font-semibold">Lớp chưa có ghim nào</p>
             <p className="mt-1 text-[12px] leading-5 text-[var(--text-secondary)]">
               Ghim địa danh lịch sử, đặt ghim từ bối cảnh địa phương đã xuất bản, hoặc gắn bài tập có hạn nộp.
@@ -601,7 +601,7 @@ function StatusChip({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[2px] border px-1.5 py-px text-[10.5px] font-bold leading-4",
+        "inline-flex items-center rounded-sm border px-1.5 py-px text-[10.5px] font-bold leading-4",
         ok
           ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]"
           : "border-dashed border-[var(--border-strong)] text-[var(--text-tertiary)]",
@@ -619,6 +619,9 @@ export function BattleOverviewList({
   onRetry,
   selectedId,
   onPick,
+  title = "Tổng quan trận đánh",
+  noun = "trận đánh",
+  intro,
 }: {
   battles: BattleOverviewItem[];
   loading: boolean;
@@ -626,6 +629,11 @@ export function BattleOverviewList({
   onRetry: () => void;
   selectedId: string | null;
   onPick: (id: string) => void;
+  title?: string;
+  /** What the items are called in messages ("trận đánh", "bối cảnh"). */
+  noun?: string;
+  /** Short how-to shown above the list. */
+  intro?: React.ReactNode;
 }) {
   const [filter, setFilter] = React.useState<BattleFilter>("ALL");
   const [query, setQuery] = React.useState("");
@@ -642,12 +650,13 @@ export function BattleOverviewList({
 
   return (
     <div>
-      <ListHeader title="Tổng quan trận đánh" meta={loading ? undefined : battles.length} />
+      <ListHeader title={title} meta={loading ? undefined : battles.length} />
+      {intro}
       {error ? (
-        <div className="mx-3 mb-3 flex items-start gap-2 rounded-[2px] border border-[var(--accent-danger)] p-3 text-[13px]">
+        <div className="mx-3 mb-3 flex items-start gap-2 rounded-sm border border-[var(--accent-danger)] p-3 text-[13px]">
           <AlertCircle size={16} className="mt-0.5 shrink-0 text-[var(--accent-danger)]" aria-hidden="true" />
           <div>
-            <p className="font-semibold">Không tải được danh sách trận đánh</p>
+            <p className="font-semibold">Không tải được danh sách {noun}</p>
             <button type="button" onClick={onRetry} className="btn-line mt-2 h-8 min-h-0 px-2.5 text-xs">
               <RefreshCw size={13} /> Thử lại
             </button>
@@ -656,42 +665,28 @@ export function BattleOverviewList({
       ) : loading ? (
         <ul className="space-y-2 px-3 pb-3" aria-label="Đang tải">
           {[0, 1, 2].map((i) => (
-            <li key={i} className="h-10 animate-pulse rounded-[2px] bg-[var(--bg-main)] motion-reduce:animate-none" />
+            <li key={i} className="h-10 animate-pulse rounded-sm bg-[var(--bg-main)] motion-reduce:animate-none" />
           ))}
         </ul>
       ) : battles.length === 0 ? (
         <EmptyNote>Chưa có bối cảnh lịch sử nào. Tạo bối cảnh trong mục Bối cảnh để ghim lên bản đồ.</EmptyNote>
       ) : (
         <>
-          <dl className="mx-3 mb-2 grid grid-cols-3 divide-x divide-[var(--border-default)] rounded-[2px] border border-[var(--border-default)] text-center">
-            {[
-              ["Đã ghim", pinned],
-              ["Thuyết minh", narrated],
-              ["Lược đồ", mapped],
-            ].map(([label, value]) => (
-              <div key={label} className="px-1 py-1.5">
-                <dt className="text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">{label}</dt>
-                <dd className="text-sm font-bold tabular-nums">
-                  {value}
-                  <span className="text-[11px] font-semibold text-[var(--text-tertiary)]">/{battles.length}</span>
-                </dd>
-              </div>
-            ))}
-          </dl>
           <FilterChips
-            label="Lọc trận đánh"
+            label={`Lọc ${noun}`}
             value={filter}
             onChange={setFilter}
+            // Nhom da xong (0 muc) khong can loc; bo dem thay cho o thong ke rieng.
             options={[
-              { value: "ALL", label: "Tất cả", count: battles.length },
-              { value: "UNPINNED", label: "Chưa ghim", count: battles.length - pinned },
-              { value: "NO_NARRATION", label: "Thiếu thuyết minh", count: battles.length - narrated },
-              { value: "NO_MAP", label: "Thiếu lược đồ", count: battles.length - mapped },
-            ]}
+              { value: "ALL" as const, label: "Tất cả", count: battles.length },
+              { value: "UNPINNED" as const, label: "Chưa ghim", count: battles.length - pinned },
+              { value: "NO_NARRATION" as const, label: "Thiếu thuyết minh", count: battles.length - narrated },
+              { value: "NO_MAP" as const, label: "Thiếu lược đồ", count: battles.length - mapped },
+            ].filter((o) => o.value === "ALL" || o.value === filter || o.count > 0)}
           />
           {battles.length > 6 && <ListSearch value={query} onChange={setQuery} placeholder="Lọc theo tên, năm, địa điểm…" />}
           {shown.length === 0 ? (
-            <EmptyNote>{filter === "ALL" ? "Không có trận đánh khớp từ khóa." : "Tốt lắm — không còn trận đánh nào trong nhóm này."}</EmptyNote>
+            <EmptyNote>{filter === "ALL" ? `Không có ${noun} khớp từ khóa.` : `Tốt lắm — không còn ${noun} nào trong nhóm này.`}</EmptyNote>
           ) : (
             <ul className="pb-1">
               {shown.map((b) => (
@@ -712,10 +707,17 @@ export function BattleOverviewList({
                       <span className="mt-0.5 block text-[11px] leading-snug text-[var(--text-tertiary)]">
                         {[formatYear(b.year), b.location].filter(Boolean).join(" · ")}
                       </span>
+                      {/* Chi neu viec con thieu; du het thi mot nhan "Đã đủ". */}
                       <span className="mt-1 flex flex-wrap gap-1">
-                        <StatusChip ok={Boolean(b.coordinates)} yes="Đã ghim" no="Chưa ghim" />
-                        <StatusChip ok={b.hasNarration} yes="Có thuyết minh" no="Thiếu thuyết minh" />
-                        <StatusChip ok={b.hasBattleMap} yes="Có lược đồ" no="Thiếu lược đồ" />
+                        {b.coordinates && b.hasNarration && b.hasBattleMap ? (
+                          <StatusChip ok yes="Đã đủ" no="" />
+                        ) : (
+                          <>
+                            {!b.coordinates && <StatusChip ok={false} yes="" no="Chưa ghim" />}
+                            {!b.hasNarration && <StatusChip ok={false} yes="" no="Thiếu thuyết minh" />}
+                            {!b.hasBattleMap && <StatusChip ok={false} yes="" no="Thiếu lược đồ" />}
+                          </>
+                        )}
                       </span>
                     </span>
                   </button>

@@ -220,28 +220,28 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-[2px] border border-[var(--text-primary)] shadow-[var(--shadow-soft)] bg-[var(--bg-surface)] text-content-heading">
+      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-sm border border-border-card shadow-[var(--shadow-soft)] bg-[var(--bg-surface)] text-content-heading">
         
         <DialogHeader className="px-8 pt-8 pb-4 relative overflow-hidden">
           <DialogTitle className="text-2xl font-bold tracking-tight text-content-heading">
             Dán nhiều câu trắc nghiệm
           </DialogTitle>
           <DialogDescription className="text-sm mt-1.5 leading-relaxed text-content-muted">
-            Chỉ dùng cho câu <strong>trắc nghiệm 4 phương án</strong>; câu điền chỗ trống và nối cặp hãy thêm bằng thanh “Thêm câu”. Dán nhiều câu cùng lúc theo định dạng chuẩn. Các câu hỏi được phân tách bằng dấu gạch ngang <code className="px-1.5 py-0.5 rounded-[2px] bg-[var(--status-neutral-bg)] font-mono text-xs">---</code> hoặc một dòng trống.
+            Chỉ dùng cho câu <strong>trắc nghiệm 4 phương án</strong>; câu điền chỗ trống và nối cặp hãy thêm bằng thanh “Thêm câu”. Dán nhiều câu cùng lúc theo định dạng chuẩn. Các câu hỏi được phân tách bằng dấu gạch ngang <code className="px-1.5 py-0.5 rounded-sm bg-[var(--status-neutral-bg)] font-mono text-xs">---</code> hoặc một dòng trống.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 px-8 pb-8 overflow-y-auto space-y-6 scrollbar-thin scrollbar-thumb-black/10">
           {/* Format reference section */}
-          <div className="rounded-[2px] border border-card-light-border bg-[var(--status-neutral-bg)] overflow-hidden">
+          <div className="rounded-sm border border-card-light-border bg-[var(--status-neutral-bg)] overflow-hidden">
             <details className="group">
               <summary className="px-5 py-3.5 cursor-pointer font-semibold select-none flex items-center justify-between text-content-text hover:bg-[var(--status-neutral-bg)] transition-colors">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-accent-teal" />
                   <span>Xem định dạng mẫu & Hướng dẫn</span>
                 </div>
-                <div className="text-[10px] px-2 py-0.5 rounded-[2px] bg-[var(--status-neutral-bg)] uppercase tracking-wider group-open:hidden">Xem</div>
-                <div className="text-[10px] px-2 py-0.5 rounded-[2px] bg-[var(--status-neutral-bg)] uppercase tracking-wider hidden group-open:block">Đóng</div>
+                <div className="text-xs px-2 py-0.5 rounded-full bg-[var(--status-neutral-bg)] group-open:hidden">Xem</div>
+                <div className="text-xs px-2 py-0.5 rounded-full bg-[var(--status-neutral-bg)] hidden group-open:block">Đóng</div>
               </summary>
               <div className="px-5 pb-5 pt-1 space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -254,7 +254,7 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
                       <li>Dòng 7: Giải thích (tuỳ chọn, bắt đầu bằng //)</li>
                     </ul>
                   </div>
-                  <pre className="p-4 rounded-[2px] font-mono text-[10px] leading-relaxed overflow-x-auto text-content-muted bg-[var(--bg-elevated)] border border-card-light-border">
+                  <pre className="p-4 rounded-sm font-mono text-[10px] leading-relaxed overflow-x-auto text-content-muted bg-[var(--bg-elevated)] border border-card-light-border">
                     {`Nội dung câu hỏi?\nA. Đáp án A\nB. Đáp án B\nC. Đáp án C\nD. Đáp án D\n*B\n// Giải thích tại đây...`}
                   </pre>
                 </div>
@@ -267,10 +267,10 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
             <div className="flex items-center justify-between">
               <Label className="text-sm font-bold flex items-center gap-2 text-content-heading">
                 Nội dung văn bản
-                <span className="text-[10px] font-normal px-1.5 py-0.25 rounded-[2px] bg-accent-blue/10 text-accent-blue border border-accent-blue/20">Soạn thảo</span>
+                <span className="text-[10px] font-normal px-1.5 py-0.25 rounded-sm bg-accent-blue/10 text-accent-blue border border-accent-blue/20">Soạn thảo</span>
               </Label>
               <button type="button" 
-                className="text-xs font-semibold px-2 py-1 rounded-[2px] text-accent-blue hover:bg-accent-blue/10 transition-all"
+                className="text-xs font-semibold px-2 py-1 rounded-sm text-accent-blue hover:bg-accent-blue/10 transition-all"
                 onClick={() => { setText(FORMAT_EXAMPLE); setError(null); setPreviewCount(null); }}>
                 Dùng ví dụ mẫu
               </button>
@@ -280,7 +280,7 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
                 value={text}
                 onChange={(e) => { setText(e.target.value); setError(null); setPreviewCount(null); }}
                 placeholder={"Dán các nội dung câu hỏi tại đây...\n\nVí dụ:\nLịch sử Việt Nam có bao nhiêu năm văn hiến?\nA. 1000\nB. 2000\nC. 3000\nD. 4000\n*D"}
-                className="min-h-[300px] font-mono text-sm resize-none rounded-[2px] p-6 transition-all border-2 leading-relaxed text-content-text bg-[var(--bg-elevated)] border-card-light-border"
+                className="min-h-[300px] font-mono text-sm resize-none rounded-sm p-6 transition-all border-2 leading-relaxed text-content-text bg-[var(--bg-elevated)] border-card-light-border"
               />
               <div className="absolute bottom-4 right-4 text-[10px] opacity-30 group-hover:opacity-60 pointer-events-none font-mono">
                 {text.length} ký tự
@@ -291,13 +291,13 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
           {/* Feedback Section */}
           <div className="min-h-[40px] animate-in fade-in slide-in-from-top-2 duration-300">
             {error && (
-              <div className="rounded-[2px] px-4 py-3 text-xs font-semibold flex items-center gap-2 border bg-[var(--status-danger-bg)] text-[var(--accent-danger)] border-[var(--status-danger-border)]">
+              <div className="rounded-sm px-4 py-3 text-xs font-semibold flex items-center gap-2 border bg-[var(--status-danger-bg)] text-[var(--accent-danger)] border-[var(--status-danger-border)]">
                 <div className="shrink-0 w-5 h-5 rounded-full bg-accent-danger/20 flex items-center justify-center text-accent-danger">!</div>
                 {error}
               </div>
             )}
             {previewCount !== null && !error && (
-              <div className="rounded-[2px] px-4 py-3 text-xs font-semibold flex items-center gap-2 border bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]">
+              <div className="rounded-sm px-4 py-3 text-xs font-semibold flex items-center gap-2 border bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]">
                 <div className="shrink-0 w-5 h-5 rounded-full bg-[var(--status-success-bg)] flex items-center justify-center text-[var(--status-success)] font-bold">✓</div>
                 Xác nhận: Tìm thấy <strong>{previewCount}</strong> câu hỏi hợp lệ.
               </div>
@@ -307,15 +307,15 @@ function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
 
         <DialogFooter className="px-8 py-6 bg-[var(--status-neutral-bg)] border-t border-card-light-border flex flex-row items-center justify-end gap-3">
           <Button type="button" variant="ghost" onClick={onClose}
-            className="rounded-[2px] font-semibold px-6 text-content-muted hover:bg-[var(--status-neutral-bg)]">Hủy</Button>
+            className="rounded-sm font-semibold px-6 text-content-muted hover:bg-[var(--status-neutral-bg)]">Hủy</Button>
           
           <Button type="button" variant="outline" onClick={handlePreview} disabled={!text.trim()}
-            className="rounded-[2px] font-semibold px-6 border-2 border-card-light-border bg-transparent text-content-text transition-all hover:border-[var(--text-primary)]">
+            className="rounded-sm font-semibold px-6 border-2 border-card-light-border bg-transparent text-content-text transition-all hover:border-[var(--text-primary)]">
             Kiểm tra
           </Button>
 
           <Button type="button" onClick={handleImport} disabled={!text.trim() || error !== null}
-            className="rounded-[2px] font-bold px-8 transition-all text-white active:scale-95 border-none bg-[var(--accent-gold)] hover:bg-[var(--accent-bronze)]">
+            className="rounded-sm font-bold px-8 transition-all text-white active:scale-95 border-none bg-[var(--accent-gold)] hover:bg-[var(--accent-bronze)]">
             Import {previewCount !== null ? `(${previewCount} câu)` : ""}
           </Button>
         </DialogFooter>
@@ -336,8 +336,8 @@ interface QFormProps {
   isSaving?: boolean;
 }
 
-const FIELD_LABEL = "text-xs font-bold uppercase tracking-wider px-1 text-content-subtle";
-const FIELD_INPUT = "h-10 text-sm rounded-[2px] border-2 transition-all bg-[var(--bg-elevated)] border-[var(--border-default)]";
+const FIELD_LABEL = "text-xs font-semibold px-1 text-content-subtle";
+const FIELD_INPUT = "h-10 text-sm rounded-sm border-2 transition-all bg-[var(--bg-elevated)] border-[var(--border-default)]";
 
 export function QuestionForm({ initial, initialType, orderIndex, onSave, onCancel, isSaving = false }: QFormProps) {
   const [draft, setDraft] = React.useState<QuizQuestion>(
@@ -357,7 +357,7 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
   const valid = isQuestionValid(draft);
 
   return (
-    <div ref={ref} className="scroll-mt-24 rounded-[2px] border-2 border-[var(--accent-gold)] p-6 space-y-5 transition-all animate-in zoom-in-95 duration-200 bg-[var(--bg-elevated)]">
+    <div ref={ref} className="scroll-mt-24 rounded-sm border-2 border-[var(--accent-gold)] p-6 space-y-5 transition-all animate-in zoom-in-95 duration-200 bg-[var(--bg-elevated)]">
       <p className="text-sm font-bold text-content-heading">{initial ? `Sửa câu ${orderIndex}` : `Câu hỏi mới (câu ${orderIndex})`}</p>
 
       {/* Question type */}
@@ -369,7 +369,7 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
               onClick={() => setDraft((s) => ({ ...s, questionType: type }))}
               aria-pressed={draft.questionType === type}
               className={cn(
-                "px-3 py-1.5 rounded-[2px] text-left border transition-all",
+                "px-3 py-1.5 rounded-sm text-left border transition-all",
                 draft.questionType === type
                   ? "bg-[var(--accent-gold-active-bg)] border-accent-gold text-content-heading"
                   : "bg-transparent border-card-light-border text-content-muted",
@@ -387,7 +387,7 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
         <Textarea value={draft.content}
           onChange={(e) => setDraft((s) => ({ ...s, content: e.target.value }))}
           placeholder="Nhập nội dung câu hỏi..."
-          className="min-h-[100px] text-sm rounded-[2px] border-2 focus:ring-0 transition-all border-[var(--border-default)] bg-[var(--bg-elevated)]" />
+          className="min-h-[100px] text-sm rounded-sm border-2 focus:ring-0 transition-all border-[var(--border-default)] bg-[var(--bg-elevated)]" />
       </div>
 
       {draft.questionType === "MULTIPLE_CHOICE" && (
@@ -401,7 +401,7 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
                   <button type="button"
                     onClick={() => setDraft((s) => ({ ...s, correctAnswer: idx as 0 | 1 | 2 | 3 }))}
                     className={cn(
-                      "shrink-0 w-9 h-9 rounded-[2px] border-2 flex items-center justify-center transition-all duration-200 active:scale-90",
+                      "shrink-0 w-9 h-9 rounded-sm border-2 flex items-center justify-center transition-all duration-200 active:scale-90",
                       correct
                         ? "border-[var(--status-success)] bg-[var(--status-success)] text-white"
                         : "border-card-light-border bg-[var(--bg-elevated)] text-content-muted",
@@ -428,7 +428,7 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
                 <Input value={ans} onChange={(e) => setAccepted(idx, e.target.value)}
                   placeholder={idx === 0 ? "Vd. Ngô Quyền" : "Cách viết khác (tuỳ chọn)"}
                   className={cn("flex-1", FIELD_INPUT)} />
-                <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-8 w-8 text-accent-danger"
+                <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-accent-danger"
                   disabled={draft.acceptedAnswers.length <= 1}
                   onClick={() => setDraft((s) => ({ ...s, acceptedAnswers: s.acceptedAnswers.filter((_, k) => k !== idx) }))}
                   title="Xóa">
@@ -438,7 +438,7 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
             ))}
           </div>
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-[2px] border-card-light-border bg-transparent text-content-text"
+            <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-sm border-card-light-border bg-transparent text-content-text"
               onClick={() => setDraft((s) => ({ ...s, acceptedAnswers: [...s.acceptedAnswers, ""] }))}>
               <Plus className="h-3.5 w-3.5" /> Thêm cách viết
             </Button>
@@ -463,7 +463,7 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
                 <span className="text-content-subtle">→</span>
                 <Input value={pair.right} onChange={(e) => setPair(idx, "right", e.target.value)}
                   placeholder="Vế phải (vd. Bạch Đằng 938)" className={cn("flex-1", FIELD_INPUT)} />
-                <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-8 w-8 text-accent-danger"
+                <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-accent-danger"
                   disabled={draft.matchingPairs.length <= 2}
                   onClick={() => setDraft((s) => ({ ...s, matchingPairs: s.matchingPairs.filter((_, k) => k !== idx) }))}
                   title="Xóa cặp">
@@ -473,7 +473,7 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
             ))}
           </div>
           <div>
-            <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-[2px] border-card-light-border bg-transparent text-content-text"
+            <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-sm border-card-light-border bg-transparent text-content-text"
               onClick={() => setDraft((s) => ({ ...s, matchingPairs: [...s.matchingPairs, { left: "", right: "" }] }))}>
               <Plus className="h-3.5 w-3.5" /> Thêm cặp
             </Button>
@@ -491,12 +491,12 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
       </div>
 
       <div className="flex gap-2.5 pt-2 border-t border-card-light-border mt-4">
-        <Button type="button" size="sm" className="px-6 rounded-[2px] font-bold transition-all active:scale-95 border-none bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
+        <Button type="button" size="sm" className="px-6 rounded-sm font-bold transition-all active:scale-95 border-none bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
           disabled={!valid || isSaving} onClick={() => valid && onSave({ ...draft })}>
           Lưu câu hỏi
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}
-          className="rounded-[2px] px-4 text-content-muted hover:bg-[var(--status-neutral-bg)]">Hủy bỏ</Button>
+          className="rounded-sm px-4 text-content-muted hover:bg-[var(--status-neutral-bg)]">Hủy bỏ</Button>
       </div>
     </div>
   );
@@ -506,7 +506,7 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
 
 export function QuestionTypeBadge({ type }: { type: QuestionType }) {
   return (
-    <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] bg-[var(--status-neutral-bg)] text-content-muted border border-[var(--border-default)]">
+    <span className="shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[var(--status-neutral-bg)] text-content-muted border border-[var(--border-default)]">
       {QUESTION_TYPE_LABELS[type]}
     </span>
   );
@@ -516,7 +516,7 @@ export function QuestionAnswerSummary({ q }: { q: QuizQuestion }) {
   return (
     <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
       <QuestionTypeBadge type={q.questionType} />
-      <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[2px] bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">Đúng</span>
+      <span className="shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">Đúng</span>
       <p className="text-xs truncate font-medium text-content-muted">{describeAnswer(q)}</p>
     </div>
   );
@@ -527,8 +527,8 @@ function QuestionRow({ q, idx, total, onEdit, onDelete, onMove }: {
   onEdit: () => void; onDelete: () => void; onMove: (d: "up" | "down") => void;
 }) {
   return (
-    <div className="flex items-start gap-4 rounded-[2px] border border-card-light-border bg-card-light-bg px-5 py-4 group transition-all hover:border-[var(--text-primary)]">
-      <div className="shrink-0 w-8 h-8 rounded-[2px] flex items-center justify-center text-xs font-bold bg-accent-blue/10 text-accent-blue">
+    <div className="flex items-start gap-4 rounded-sm border border-card-light-border bg-card-light-bg px-5 py-4 group transition-all hover:border-[var(--text-primary)]">
+      <div className="shrink-0 w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold bg-accent-blue/10 text-accent-blue">
         {idx + 1}
       </div>
       <div className="flex-1 min-w-0">
@@ -536,22 +536,22 @@ function QuestionRow({ q, idx, total, onEdit, onDelete, onMove }: {
         <QuestionAnswerSummary q={q} />
       </div>
       <div className="flex items-center gap-1 shrink-0 opacity-60 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-        <div className="flex items-center gap-0.5 bg-[var(--status-neutral-bg)] p-0.5 rounded-[2px] border border-[var(--border-default)]">
-          <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-7 w-7 hover:bg-[var(--bg-elevated)]"
+        <div className="flex items-center gap-0.5 bg-[var(--status-neutral-bg)] p-0.5 rounded-sm border border-[var(--border-default)]">
+          <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-7 w-7 hover:bg-[var(--bg-elevated)]"
             disabled={idx === 0} onClick={() => onMove("up")} title="Lên">
             <ArrowUp className="h-3.5 w-3.5" />
           </Button>
-          <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-7 w-7 hover:bg-[var(--bg-elevated)]"
+          <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-7 w-7 hover:bg-[var(--bg-elevated)]"
             disabled={idx === total - 1} onClick={() => onMove("down")} title="Xuống">
             <ArrowDown className="h-3.5 w-3.5" />
           </Button>
         </div>
         <div className="w-px h-4 bg-[var(--border-default)] mx-1" />
-        <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-8 w-8 text-accent-blue hover:bg-accent-blue/10"
+        <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-accent-blue hover:bg-accent-blue/10"
           onClick={onEdit} title="Sửa">
           <Pencil className="h-4 w-4" />
         </Button>
-        <Button type="button" variant="ghost" size="icon-sm" className="rounded-[2px] h-8 w-8 text-accent-danger hover:bg-accent-danger/10"
+        <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-accent-danger hover:bg-accent-danger/10"
           onClick={onDelete} title="Xóa">
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -623,14 +623,14 @@ export function QuizQuestionEditor({ questions, onChange, onImportError, onImpor
         </div>
         <div className="flex gap-2 flex-wrap">
           {/* Paste text */}
-          <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-[2px] border-card-light-border bg-transparent text-content-text"
+          <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-sm border-card-light-border bg-transparent text-content-text"
             onClick={() => setPasteOpen(true)}>
             <ClipboardList className="h-3.5 w-3.5" /> Dán nhiều câu trắc nghiệm
           </Button>
 
           {/* File import */}
           <input ref={fileRef} type="file" accept=".json,.csv" className="hidden" onChange={handleFile} />
-          <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-[2px] border-card-light-border bg-transparent text-content-text"
+          <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-sm border-card-light-border bg-transparent text-content-text"
             onClick={() => fileRef.current?.click()}>
             <Upload className="h-3.5 w-3.5" /> Nhập file trắc nghiệm (JSON/CSV)
           </Button>
@@ -659,7 +659,7 @@ export function QuizQuestionEditor({ questions, onChange, onImportError, onImpor
         {/* Luon co thanh them cau o cuoi danh sach (truoc day chi hien khi bo de rong). */}
         {!addingNew && (
           <div className={cn(
-            "rounded-[2px] border-2 border-dashed border-card-light-border px-4",
+            "rounded-sm border-2 border-dashed border-card-light-border px-4",
             questions.length ? "py-4" : "py-10",
           )}>
             {!questions.length && (
@@ -673,7 +673,7 @@ export function QuizQuestionEditor({ questions, onChange, onImportError, onImpor
                 <Button key={type} type="button" size="sm" variant="outline"
                   disabled={editingId !== null}
                   title={QUESTION_TYPE_HINTS[type]}
-                  className="rounded-[2px] border-card-light-border bg-transparent text-content-text"
+                  className="rounded-sm border-card-light-border bg-transparent text-content-text"
                   onClick={() => setAddingNew(type)}>
                   {QUESTION_TYPE_LABELS[type]}
                 </Button>

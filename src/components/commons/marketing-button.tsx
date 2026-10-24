@@ -23,7 +23,7 @@ export function MarketingButton({
 }: MarketingButtonProps) {
   const baseClass = cn(
     "group relative inline-flex items-center justify-center overflow-hidden",
-    "rounded-[2px] border border-[var(--accent-gold)] bg-[var(--accent-gold)]",
+    "rounded-sm border border-[var(--accent-gold)] bg-[var(--accent-gold)]",
     "px-6 py-3.5 text-sm font-bold uppercase tracking-[0.08em] text-white",
     "transition-all duration-300 hover:border-[var(--accent-bronze)] hover:bg-[var(--accent-bronze)] active:scale-[0.98]",
     "lg:px-8 lg:py-4 lg:text-base",

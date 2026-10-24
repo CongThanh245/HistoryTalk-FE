@@ -89,7 +89,7 @@ function MenuRow({
       className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-none border-b border-(--border-default) cursor-pointer transition-colors hover:bg-[var(--text-primary)] text-left"
     >
       <div
-        className="w-7 h-7 rounded-[2px] flex items-center justify-center shrink-0 border border-[var(--border-strong)] text-[var(--text-primary)] group-hover:border-[var(--text-inverse)] group-hover:text-[var(--text-inverse)]"
+        className="w-7 h-7 rounded-sm flex items-center justify-center shrink-0 border border-[var(--border-strong)] text-[var(--text-primary)] group-hover:border-[var(--text-inverse)] group-hover:text-[var(--text-inverse)]"
       >
         {icon}
       </div>
@@ -114,7 +114,7 @@ function SectionHeader({ title, onBack }: { title: string; onBack: () => void })
       <button
         onClick={onBack}
         aria-label="Quay lại"
-        className="w-7 h-7 flex items-center justify-center rounded-[2px] border border-[var(--border-strong)] cursor-pointer transition-colors hover:bg-[var(--text-primary)] hover:border-[var(--text-primary)] hover:text-[var(--text-inverse)] text-content-text"
+        className="w-7 h-7 flex items-center justify-center rounded-sm border border-[var(--border-strong)] cursor-pointer transition-colors hover:bg-[var(--text-primary)] hover:border-[var(--text-primary)] hover:text-[var(--text-inverse)] text-content-text"
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
@@ -140,7 +140,7 @@ function ImageHoverPreview({
     <HoverCard openDelay={150} closeDelay={100}>
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
       <HoverCardContent
-        className="w-56 overflow-hidden p-0 rounded-[2px] border-[var(--text-primary)]"
+        className="w-56 overflow-hidden p-0 rounded-sm border-[var(--text-primary)]"
       >
         <div className="relative w-full aspect-3/4">
           <Image
@@ -175,7 +175,7 @@ function ContextRow({
         className="group w-full flex items-center gap-3 px-1 py-2.5 rounded-none border-b border-(--border-default) text-left cursor-pointer transition-colors duration-150 bg-transparent hover:bg-(--status-neutral-bg)"
       >
         <div
-          className="relative w-11 h-11 rounded-[2px] overflow-hidden shrink-0 border border-[var(--text-primary)] bg-[var(--bg-deep)]"
+          className="relative w-11 h-11 rounded-sm overflow-hidden shrink-0 border border-border-card bg-[var(--bg-deep)]"
         >
           {isLoading ? (
             <div className="w-full h-full animate-pulse" />
@@ -311,7 +311,7 @@ export function ChatRightPanel({
             fit="contain"
           >
             <div
-              className="relative w-14 h-14 rounded-full overflow-hidden shrink-0 cursor-pointer border border-[var(--text-primary)]"
+              className="relative w-14 h-14 rounded-full overflow-hidden shrink-0 cursor-pointer border border-border-card"
             >
               <Image
                 src={isValidUrl(activeCharacter.imageUrl) ? activeCharacter.imageUrl! : "/card.jpg"}
@@ -330,7 +330,7 @@ export function ChatRightPanel({
               </h3>
               {activeCharacter.side && (
                 <span
-                  className="text-[9px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded-[2px] shrink-0 text-[var(--text-primary)] border border-[var(--text-primary)]"
+                  className="text-[9px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded-sm shrink-0 text-[var(--text-primary)] border border-border-card"
                 >
                   {activeCharacter.side}
                 </span>
@@ -359,7 +359,7 @@ export function ChatRightPanel({
           className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-none border-b border-(--border-default) cursor-pointer transition-colors hover:bg-[var(--text-primary)] text-left"
         >
           <div
-            className="w-7 h-7 rounded-[2px] flex items-center justify-center shrink-0 bg-[var(--text-primary)] text-[var(--text-inverse)] group-hover:bg-[var(--text-inverse)] group-hover:text-[var(--text-primary)]"
+            className="w-7 h-7 rounded-sm flex items-center justify-center shrink-0 bg-[var(--text-primary)] text-[var(--text-inverse)] group-hover:bg-[var(--text-inverse)] group-hover:text-[var(--text-primary)]"
           >
             <Plus className="w-4 h-4" />
           </div>
@@ -483,7 +483,7 @@ export function ChatRightPanel({
                     if (softDeleteSession.isPending) return;
                     setDeleteSessionId(session.id);
                   }}
-                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-[2px] opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-(--status-danger-bg) disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70 text-content-subtle"
+                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-sm opacity-0 group-hover:opacity-100 transition-all cursor-pointer hover:bg-(--status-danger-bg) disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70 text-content-subtle"
                 >
                   {softDeleteSession.isPending && deleteSessionId === session.id ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-danger" />
@@ -544,7 +544,7 @@ export function ChatRightPanel({
                   }}
                   className="group w-full flex items-center gap-3 px-1 py-2.5 rounded-none border-b border-(--border-default) text-left cursor-pointer transition-colors duration-150 bg-transparent hover:bg-(--status-neutral-bg)"
                 >
-                  <div className="relative w-11 h-11 rounded-[2px] overflow-hidden shrink-0 border border-[var(--text-primary)] bg-[var(--bg-deep)]">
+                  <div className="relative w-11 h-11 rounded-sm overflow-hidden shrink-0 border border-border-card bg-[var(--bg-deep)]">
                     <Image
                       src={isValidUrl(char.imageUrl) ? char.imageUrl! : "/card.jpg"}
                       alt={char.name}

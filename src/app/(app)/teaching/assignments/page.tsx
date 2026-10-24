@@ -13,6 +13,7 @@ import { StaffFormSelect } from "@/components/staff/staff-form";
 import { SaasShell, SearchInput, normalizeText } from "@/components/saas/saas-ui";
 import { ALL, SegmentedFilter, TD, TH, TR, TableShell } from "@/components/saas/teaching-ui";
 import { ClassroomCardsSkeleton, ClassroomLoadError } from "@/components/saas/api-classroom-ui";
+import { relativeTime } from "@/components/saas/student-assignment-card";
 import {
   ASSIGNMENT_STATUS_META,
   ASSIGNMENT_TYPES,
@@ -20,9 +21,8 @@ import {
   ApiAssignmentTypeBadge,
   AssignmentCounts,
   AssignmentStatusBadge,
-  DeadlineBadge,
-  formatLocalDateTime,
   newAssignmentHref,
+  parseLocalDateTime,
   requirementText,
 } from "@/components/saas/teacher-class-assignments";
 import { ROUTES } from "@/constants/routes";
@@ -41,6 +41,29 @@ const STATUS_FILTERS: { value: AssignmentStatus | typeof ALL; label: string }[] 
   { value: "ARCHIVED", label: ASSIGNMENT_STATUS_META.ARCHIVED.label },
   { value: "CANCELLED", label: ASSIGNMENT_STATUS_META.CANCELLED.label },
 ];
+
+/** Under this much time left an open assignment's deadline turns warning-coloured. */
+const SOON_MS = 48 * 60 * 60 * 1000;
+
+/** Date first (what people scan for), then time and how long is left for open assignments. */
+function DeadlineCell({ deadline, active }: { deadline: string; active: boolean }) {
+  const d = parseLocalDateTime(deadline);
+  if (!d) return <span className="text-content-subtle">—</span>;
+  const left = d.getTime() - Date.now();
+  return (
+    <div className="tabular-nums">
+      <p className="font-medium text-content-heading">
+        {d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })}
+        <span className="ml-1.5 text-xs font-normal text-content-muted">{d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>
+      </p>
+      {active && (
+        <p className={cn("text-xs", left < 0 ? "text-content-muted" : left <= SOON_MS ? "font-semibold text-[var(--status-warning)]" : "text-[var(--text-secondary)]")}>
+          {relativeTime(deadline)}
+        </p>
+      )}
+    </div>
+  );
+}
 
 /** Assignments the teacher gave to their classes (Role Matrix row 16). */
 export default function TeachingAssignmentsPage() {
@@ -69,7 +92,8 @@ function AssignmentList() {
     router.replace(v === ALL ? ROUTES.TEACHING.ASSIGNMENTS : `${ROUTES.TEACHING.ASSIGNMENTS}?classId=${encodeURIComponent(v)}`, { scroll: false });
 
   const targetClasses = classId === ALL ? classes : classes.filter((c) => c.id === classId);
-  const listParams: TeacherAssignmentListParams = { page: 0, size: PER_CLASS, ...(status === ALL ? {} : { status }) };
+  // Moi trang thai tai chung 1 lan, loc o FE: tab trang thai hien duoc so bai cua tung trang thai.
+  const listParams: TeacherAssignmentListParams = { page: 0, size: PER_CLASS };
   const results = useQueries({
     queries: targetClasses.map((c) => ({
       queryKey: assignmentKeys.byClassroom(c.id, listParams),
@@ -93,8 +117,13 @@ function AssignmentList() {
   const all = results.flatMap((r) => r.data?.items ?? []);
   const clipped = results.some((r) => (r.data?.totalElements ?? 0) > (r.data?.items.length ?? 0));
   const q = normalizeText(search);
-  const rows = all
-    .filter((a) => (type === ALL || a.assignmentType === type) && (!q || normalizeText(`${a.title} ${a.targetTitle ?? ""}`).includes(q)))
+  const matching = all.filter((a) => (type === ALL || a.assignmentType === type) && (!q || normalizeText(`${a.title} ${a.targetTitle ?? ""}`).includes(q)));
+  const statusTabs = STATUS_FILTERS.map((f) => ({
+    ...f,
+    count: loading ? undefined : f.value === ALL ? matching.length : matching.filter((a) => a.status === f.value).length,
+  }));
+  const rows = matching
+    .filter((a) => status === ALL || a.status === status)
     // Gop nhieu lop: bai moi tao truoc (giong thu tu mac dinh cua BE).
     .sort((x, y) => (y.createdAt ?? "").localeCompare(x.createdAt ?? ""));
 
@@ -102,6 +131,8 @@ function AssignmentList() {
 
   return (
     <div className="space-y-5">
+      <SegmentedFilter label="Lọc theo trạng thái bài" value={status} onChange={setStatus} options={statusTabs} />
+
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <StaffFormSelect
@@ -123,8 +154,6 @@ function AssignmentList() {
         </Link>
       </div>
 
-      <SegmentedFilter label="Lọc theo trạng thái bài" value={status} onChange={setStatus} options={STATUS_FILTERS} />
-
       {failed.length > 0 && (
         <ClassroomLoadError
           message={`${failed.length} lớp không tải được bài tập: ${apiErrorMessage(failed[0].error, "lỗi không xác định")}`}
@@ -133,7 +162,7 @@ function AssignmentList() {
       )}
 
       {loading && rows.length === 0 ? (
-        <div className="h-40 animate-pulse rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" aria-busy="true" />
+        <div className="h-40 animate-pulse rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" aria-busy="true" />
       ) : rows.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
@@ -149,13 +178,11 @@ function AssignmentList() {
         <TableShell>
           <thead>
             <tr className="border-b border-[var(--border-strong)]">
-              <th className={TH}>Loại</th>
               <th className={TH}>Bài tập</th>
               <th className={TH}>Lớp</th>
               <th className={TH}>Hạn nộp</th>
-              <th className={TH}>Yêu cầu</th>
-              <th className={TH}>Trạng thái</th>
               <th className={TH}>Nộp bài</th>
+              <th className={TH}>Trạng thái</th>
               <th className={cn(TH, "text-right")}>
                 <span className="sr-only">Chi tiết</span>
               </th>
@@ -164,21 +191,16 @@ function AssignmentList() {
           <tbody>
             {rows.map((a) => (
               <tr key={a.assignmentId} className={TR}>
-                <td className={TD}>
-                  <ApiAssignmentTypeBadge type={a.assignmentType} />
-                </td>
-                <td className={cn(TD, "max-w-[270px]")}>
+                <td className={cn(TD, "max-w-[420px]")}>
                   <Link href={ROUTES.TEACHING.ASSIGNMENT_DETAIL(a.assignmentId)} className="font-semibold text-content-heading hover:text-[var(--accent-gold)]">
                     {a.title}
                   </Link>
-                  <p className="truncate text-xs text-content-muted" title={a.targetTitle ?? undefined}>
-                    {ASSIGNMENT_TYPE_META[a.assignmentType]?.target ?? "Nội dung"}: {a.targetTitle || "—"}
-                  </p>
-                  {a.description && (
-                    <p className="truncate text-xs text-[var(--text-secondary)]" title={a.description}>
-                      {a.description}
-                    </p>
-                  )}
+                  <div className="mt-1 flex min-w-0 items-center gap-2">
+                    <ApiAssignmentTypeBadge type={a.assignmentType} />
+                    <span className="truncate text-xs text-content-muted" title={a.targetTitle ?? undefined}>
+                      {a.targetTitle || "—"} · {requirementText(a.assignmentType, a.minRequirement)}
+                    </span>
+                  </div>
                 </td>
                 <td className={cn(TD, "font-medium")}>
                   <Link href={ROUTES.CLASS_DETAIL(a.classroomId)} className="hover:text-[var(--accent-gold)]">
@@ -186,22 +208,18 @@ function AssignmentList() {
                   </Link>
                 </td>
                 <td className={TD}>
-                  <div className="flex flex-col items-start gap-1">
-                    <span className="tabular-nums">{formatLocalDateTime(a.deadline)}</span>
-                    {a.status === "ACTIVE" && <DeadlineBadge deadline={a.deadline} />}
-                  </div>
-                </td>
-                <td className={cn(TD, "text-xs")}>{requirementText(a.assignmentType, a.minRequirement)}</td>
-                <td className={TD}>
-                  <AssignmentStatusBadge status={a.status} />
+                  <DeadlineCell deadline={a.deadline} active={a.status === "ACTIVE"} />
                 </td>
                 <td className={TD}>
                   <AssignmentCounts assignment={a} compact />
                 </td>
+                <td className={TD}>
+                  <AssignmentStatusBadge status={a.status} />
+                </td>
                 <td className={cn(TD, "text-right")}>
                   <Link
                     href={ROUTES.TEACHING.ASSIGNMENT_DETAIL(a.assignmentId)}
-                    className="inline-grid h-8 w-8 place-items-center rounded-[2px] text-content-muted hover:bg-[var(--bg-elevated)] hover:text-[var(--accent-gold)]"
+                    className="inline-grid h-8 w-8 place-items-center rounded-sm text-content-muted hover:bg-[var(--bg-elevated)] hover:text-[var(--accent-gold)]"
                     aria-label={`Chi tiết ${a.title}`}
                     title="Chi tiết"
                   >

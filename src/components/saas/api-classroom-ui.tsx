@@ -19,7 +19,7 @@ const STATUS: Record<ClassroomStatus, { label: string; className: string }> = {
 export function ClassroomStatusPill({ status, className }: { status: ClassroomStatus; className?: string }) {
   const s = STATUS[status] ?? STATUS.ACTIVE;
   return (
-    <span className={cn("inline-flex shrink-0 items-center rounded-[2px] border px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.06em]", s.className, className)}>
+    <span className={cn("inline-flex shrink-0 items-center rounded-full border px-1.5 py-0.5 text-xs font-semibold", s.className, className)}>
       {s.label}
     </span>
   );
@@ -46,7 +46,7 @@ export function ClassCodeCopy({ code, className }: { code: string; className?: s
   };
   return (
     <span className={cn("inline-flex min-w-0 items-center gap-1", className)}>
-      <code className="truncate rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-main)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--text-primary)]">
+      <code className="truncate rounded-sm border border-[var(--border-strong)] bg-[var(--bg-main)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--text-primary)]">
         {code}
       </code>
       <button
@@ -54,7 +54,7 @@ export function ClassCodeCopy({ code, className }: { code: string; className?: s
         onClick={copy}
         aria-label={`Sao chép mã lớp ${code}`}
         title="Sao chép mã lớp"
-        className="grid h-7 w-7 shrink-0 place-items-center rounded-[2px] text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]"
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-sm text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]"
       >
         {copied ? <Check className="h-3.5 w-3.5 text-[var(--jade)]" aria-hidden="true" /> : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
       </button>
@@ -68,7 +68,7 @@ export const classroomMeta = (c: ApiClassroom) => `Khối ${c.gradeLevel} · Nă
 export function ApiClassroomCard({ classroom, role }: { classroom: ApiClassroom; role: "TEACHER" | "SCHOOL_STUDENT" }) {
   const href = ROUTES.CLASS_DETAIL(classroom.id);
   return (
-    <article className="flex flex-col rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] transition-colors hover:border-[var(--accent-gold)]">
+    <article className="flex flex-col rounded-sm border border-border-card bg-[var(--bg-surface)] transition-colors hover:border-[var(--accent-gold)]">
       <div className="flex items-start justify-between gap-3 border-b border-[var(--border-strong)] p-4">
         <div className="min-w-0">
           <h2 className="archive-title is-plain text-2xl">
@@ -108,9 +108,9 @@ export function ApiClassroomCard({ classroom, role }: { classroom: ApiClassroom;
 /** Compact side card of a student's class. */
 export function ApiClassroomSideCard({ classroom }: { classroom: ApiClassroom }) {
   return (
-    <div className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4">
+    <div className="rounded-sm border border-border-card bg-[var(--bg-surface)] p-4">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--jade)]">Lớp của bạn</p>
+        <p className="text-[13px] font-semibold text-[var(--jade)]">Lớp của bạn</p>
         <ClassroomStatusPill status={classroom.status} />
       </div>
       <p className="archive-title is-plain mt-1.5 text-2xl">Lớp {classroom.className}</p>
@@ -131,7 +131,7 @@ export function ClassroomCardsSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-label="Đang tải danh sách lớp">
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="h-[228px] animate-pulse rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" />
+        <div key={i} className="h-[228px] animate-pulse rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" />
       ))}
     </div>
   );
@@ -139,7 +139,7 @@ export function ClassroomCardsSkeleton({ count = 3 }: { count?: number }) {
 
 export function ClassroomLoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div role="alert" className="flex flex-wrap items-start gap-3 rounded-[2px] border border-[var(--accent-danger)] bg-[var(--bg-surface)] p-4">
+    <div role="alert" className="flex flex-wrap items-start gap-3 rounded-sm border border-[var(--accent-danger)] bg-[var(--bg-surface)] p-4">
       <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-[var(--accent-danger)]" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold text-content-heading">Không tải được danh sách lớp</p>
@@ -155,7 +155,7 @@ export function ClassroomLoadError({ message, onRetry }: { message: string; onRe
 /** Honest placeholder for a class feature with no API yet (no sample rows). */
 export function NoDataYet({ title, description, action }: { title: string; description?: string; action?: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-4 rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 rounded-sm border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-5 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <p className="text-sm font-bold text-content-heading">{title}</p>
         <p className="mt-1 text-sm leading-6 text-content-muted">{description ?? "Chưa có dữ liệu cho lớp này."}</p>

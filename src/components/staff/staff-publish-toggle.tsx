@@ -55,7 +55,7 @@ export function StaffPublishToggle({
     <>
       <div
         className={cn(
-          "flex items-center gap-3 rounded-[2px] border transition-colors",
+          "flex items-center gap-3 rounded-sm border transition-colors",
           compact ? "py-1.5 px-3" : "justify-between py-3 px-4",
           isPublished
             ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)]"

@@ -9,11 +9,15 @@ interface EraFilterProps {
   active: EventEra;
   onChange: (era: EventEra) => void;
   counts?: Partial<Record<EventEra, number>>; // TODO: lấy từ API
+  /** "tabs": underlined row (the page's main filter). "chips": rounded pills, for a row under other tabs. */
+  variant?: "tabs" | "chips";
 }
 
-export function EraFilter({ active, onChange, counts }: EraFilterProps) {
+/** Era filter; a count, when known, sits beside the label in a muted tone. */
+export function EraFilter({ active, onChange, counts, variant = "tabs" }: EraFilterProps) {
+  const chips = variant === "chips";
   return (
-    <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
+    <div role="group" aria-label="Lọc theo thời kỳ" className={cn("flex items-center", chips ? "flex-wrap gap-2" : "gap-6")}>
       {ERAS.map(([era, cfg]) => {
         const isActive = active === era;
         const count = counts?.[era];
@@ -21,27 +25,24 @@ export function EraFilter({ active, onChange, counts }: EraFilterProps) {
         return (
           <button
             key={era}
+            type="button"
+            aria-pressed={isActive}
             onClick={() => onChange(era)}
             className={cn(
-              "relative flex items-center gap-1 md:gap-1.5 px-3 md:px-3.5 h-8 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.1em] transition-colors duration-150 cursor-pointer border",
-              isActive
-                ? "bg-[var(--era-filter-active-bg,var(--accent-gold))] text-[var(--era-filter-active-text,var(--text-inverse))] border-[var(--era-filter-active-bg,var(--accent-gold))]"
-                : "bg-transparent border-[var(--border-default)] text-[var(--era-filter-text,var(--content-text))] hover:border-[var(--text-primary)]",
+              chips
+                ? "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
+                : "relative inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 text-[15px] transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
+              chips
+                ? isActive
+                  ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                  : "border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-content-heading"
+                : isActive
+                  ? "border-[var(--accent-gold)] font-semibold text-content-heading"
+                  : "border-transparent font-medium text-[var(--text-tertiary)] hover:text-content-heading",
             )}
           >
             {cfg.label}
-            {count !== undefined && (
-              <span
-                className={cn(
-                  "text-[10px] font-semibold px-1.5 py-0.5 rounded-[2px]",
-                  isActive
-                    ? "bg-[rgba(0,0,0,0.15)] text-[var(--era-filter-active-text,var(--text-inverse))]"
-                    : "bg-[var(--card-light-border)] text-[var(--era-filter-count-text,var(--content-muted))]",
-                )}
-              >
-                {count}
-              </span>
-            )}
+            {count !== undefined && <span className="text-xs font-normal tabular-nums text-content-subtle">{count.toLocaleString("vi-VN")}</span>}
           </button>
         );
       })}

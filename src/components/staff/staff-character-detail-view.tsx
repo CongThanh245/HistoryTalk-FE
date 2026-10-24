@@ -41,8 +41,11 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectEmpty,
+  SelectSearch,
   SelectTrigger,
   SelectValue,
+  useSelectSearch,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -116,6 +119,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
   } = props;
 
   const router = useRouter();
+  const contextSearch = useSelectSearch();
   const {
     draft,
     isEditing,
@@ -251,7 +255,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-content)]">
       {/* ═══════ Header ═══════ */}
       <div
-        className="flex items-center justify-between px-6 py-4 border-b shrink-0 border-[var(--text-primary)]"
+        className="flex items-center justify-between px-6 py-4 border-b shrink-0 border-[var(--border-default)]"
       >
         <div className="flex items-center gap-4">
           <Button
@@ -270,7 +274,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
           </Button>
           <div className="flex items-center gap-3">
             <div
-              className="relative w-10 h-10 overflow-hidden rounded-[2px] shrink-0 bg-[var(--card-light-border)]"
+              className="relative w-10 h-10 overflow-hidden rounded-full shrink-0 bg-[var(--status-neutral-bg)]"
             >
               {isValidUrl(draft.image) && (
                 <Image
@@ -328,7 +332,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-[2px] bg-transparent border-[var(--text-primary)] hover:bg-[var(--status-neutral-bg)] text-[var(--content-heading)] transition-colors"
+                  className="rounded-sm bg-transparent border-border-card hover:bg-[var(--status-neutral-bg)] text-[var(--content-heading)] transition-colors"
                   onClick={() => {
                     if (isDirty) {
                       setCancelDialogOpen(true);
@@ -358,7 +362,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-[2px] bg-transparent border-[var(--text-primary)] hover:bg-[var(--status-neutral-bg)] text-[var(--content-heading)] hover:text-[var(--content-heading)] dark:hover:text-[var(--content-heading)] transition-colors"
+              className="rounded-sm bg-transparent border-border-card hover:bg-[var(--status-neutral-bg)] text-[var(--content-heading)] hover:text-[var(--content-heading)] dark:hover:text-[var(--content-heading)] transition-colors"
               onClick={() => setIsEditing(true)}
             >
               <PencilIcon className="h-4 w-4 mr-1.5" />
@@ -411,18 +415,18 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             <div
               className="px-6 pt-6 pb-4 border-b shrink-0 border-[var(--card-light-border)]"
             >
-              <p className="mb-3 text-xs font-semibold tracking-widest uppercase text-[var(--content-heading)]">
+              <p className="mb-3 text-sm font-semibold text-[var(--content-heading)]">
                 Thông tin nhân vật
               </p>
 
               <TabsList
-                className="grid w-full h-auto grid-cols-5 gap-0 p-0 bg-transparent"
+                className="flex h-10 w-full justify-start gap-5 overflow-x-auto p-0 [scrollbar-width:none]"
               >
                 {FORM_TABS.map((tab) => (
                   <TabsTrigger
                     key={tab.key}
                     value={tab.key}
-                    className="relative text-[11px] px-1 py-2 leading-tight whitespace-normal text-center"
+                    className="relative shrink-0 px-0.5 text-sm"
                   >
                     {tab.label}
                     {tabHasError(tab.key) && (
@@ -490,7 +494,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         placeholder="Năm"
                         disabled={!isEditing}
                       />
-                      <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-[2px] border-[var(--card-light-border)] text-[var(--content-heading)]">
+                      <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-sm border-[var(--card-light-border)] text-[var(--content-heading)]">
                         <Checkbox
                           checked={draft.isBornBc}
                           onCheckedChange={(val) => set("isBornBc")(!!val)}
@@ -530,7 +534,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         placeholder="Năm"
                         disabled={!isEditing}
                       />
-                      <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-[2px] border-[var(--card-light-border)] text-[var(--content-heading)]">
+                      <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-sm border-[var(--card-light-border)] text-[var(--content-heading)]">
                         <Checkbox
                           checked={draft.isDeathBc}
                           onCheckedChange={(val) => set("isDeathBc")(!!val)}
@@ -577,7 +581,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     <img
                       src={pendingImagePreviewUrl}
                       alt="Xem trước ảnh"
-                      className="object-cover w-32 h-32 mt-1 border rounded-[2px] border-[var(--card-light-border)]"
+                      className="object-cover w-32 h-32 mt-1 border rounded-sm border-[var(--card-light-border)]"
                     />
                   )}
                 </MediaSlotField>
@@ -638,13 +642,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <ScrollIcon className="w-4 h-4 text-[var(--accent-blue)]" />
-                    <p className="text-xs font-semibold tracking-widest uppercase text-[var(--content-heading)]">
+                    <p className="text-sm font-semibold text-[var(--content-heading)]">
                       Tài liệu RAG kèm theo
                     </p>
                   </div>
-                  <div className="p-3 border rounded-[2px] border-[var(--card-light-border)]">
+                  <div className="p-3 border rounded-sm border-[var(--card-light-border)]">
                     <div className="flex items-center justify-between gap-3 mb-2">
-                      <p className="text-xs font-semibold tracking-widest uppercase text-[var(--content-heading)]">
+                      <p className="text-sm font-semibold text-[var(--content-heading)]">
                         {mode === "edit" ? "Tài liệu đã import" : "Tài liệu"}
                       </p>
                     </div>
@@ -690,7 +694,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             return (
                               <div
                                 key={documentId ?? `character-document-${index}`}
-                                className="flex items-start gap-2 p-2 border rounded-[2px] border-[var(--card-light-border)] bg-[var(--bg-elevated)]"
+                                className="flex items-start gap-2 p-2 border rounded-sm border-[var(--card-light-border)] bg-[var(--bg-elevated)]"
                               >
                                 <button
                                   type="button"
@@ -711,7 +715,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                       type="button"
                                       variant="ghost"
                                       size="icon-sm"
-                                      className="shrink-0 rounded-[2px] text-accent-gold hover:bg-(--accent-gold)/15"
+                                      className="shrink-0 rounded-sm text-accent-gold hover:bg-(--accent-gold)/15"
                                       disabled={isGetDocumentPdfUrlPending}
                                       onClick={async () => {
                                         if (!documentId) return;
@@ -738,7 +742,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                       type="button"
                                       variant="ghost"
                                       size="icon-sm"
-                                      className="rounded-[2px] shrink-0 text-content-heading"
+                                      className="rounded-sm shrink-0 text-content-heading"
                                       onClick={() => openDocumentEdit(document)}
                                       title="Sửa nội dung"
                                     >
@@ -750,7 +754,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                       type="button"
                                       variant="ghost"
                                       size="icon-sm"
-                                      className="shrink-0 rounded-[2px] text-accent-danger hover:bg-(--accent-danger)/15"
+                                      className="shrink-0 rounded-sm text-accent-danger hover:bg-(--accent-danger)/15"
                                       disabled={isDeleteDocumentPending}
                                       onClick={() => setDeleteDocumentTarget(document)}
                                       title="Xóa tài liệu"
@@ -782,7 +786,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           };
                           return (
                             <div
-                              className="flex items-start gap-2 p-2 border rounded-[2px] border-[var(--card-light-border)] bg-[var(--bg-elevated)]"
+                              className="flex items-start gap-2 p-2 border rounded-sm border-[var(--card-light-border)] bg-[var(--bg-elevated)]"
                             >
                               <button
                                 type="button"
@@ -802,7 +806,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                   type="button"
                                   variant="ghost"
                                   size="icon-sm"
-                                  className="rounded-[2px] shrink-0 text-content-heading"
+                                  className="rounded-sm shrink-0 text-content-heading"
                                   onClick={() => openDocumentEdit(pendingDocument)}
                                   title="Sửa nội dung"
                                 >
@@ -812,7 +816,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                   type="button"
                                   variant="ghost"
                                   size="icon-sm"
-                                  className="shrink-0 rounded-[2px] text-accent-danger hover:bg-(--accent-danger)/15"
+                                  className="shrink-0 rounded-sm text-accent-danger hover:bg-(--accent-danger)/15"
                                   onClick={() => setDeleteDocumentTarget(pendingDocument)}
                                   title="Xóa tài liệu"
                                 >
@@ -837,7 +841,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <LinkIcon className="w-4 h-4 text-[var(--accent-blue)]" />
-                      <p className="text-xs font-semibold tracking-widest uppercase text-[var(--content-heading)]">
+                      <p className="text-sm font-semibold text-[var(--content-heading)]">
                         Liên kết bối cảnh lịch sử
                       </p>
                     </div>
@@ -851,7 +855,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             <div
                               key={ctx.contextId}
                               className={cn(
-                                "flex items-center gap-2 px-3 py-2.5 rounded-[2px] border group",
+                                "flex items-center gap-2 px-3 py-2.5 rounded-sm border group",
                                 isCtxPublished
                                   ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)]"
                                   : "border-[var(--border-strong)] bg-[var(--status-neutral-bg)]"
@@ -872,7 +876,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                 <button
                                   onClick={() => handleRemoveContext(ctx.contextId)}
                                   disabled={isMapContextPending}
-                                  className="p-1 text-[var(--accent-danger)] transition-all rounded-[2px] opacity-0 group-hover:opacity-100 hover:bg-[var(--status-danger-bg)] disabled:opacity-50"
+                                  className="p-1 text-[var(--accent-danger)] transition-all rounded-sm opacity-0 group-hover:opacity-100 hover:bg-[var(--status-danger-bg)] disabled:opacity-50"
                                   title="Gỡ liên kết"
                                 >
                                   <TrashIcon className="h-3.5 w-3.5" />
@@ -889,6 +893,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         <Select
                            value={selectedContextId}
                            onValueChange={setSelectedContextId}
+                           onOpenChange={contextSearch.onOpenChange}
                            disabled={isLoadingEvents || isMapContextPending}
                         >
                            <SelectTrigger>
@@ -896,8 +901,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                placeholder={isLoadingEvents ? "Đang tải..." : "Chọn bối cảnh để liên kết"}
                              />
                            </SelectTrigger>
-                           <SelectContent>
-                             {eventOptions.map((ev) => {
+                           <SelectContent className="max-h-80">
+                             <SelectSearch value={contextSearch.search} onChange={contextSearch.setSearch} placeholder="Tìm bối cảnh..." />
+                             {!eventOptions.some((ev) => contextSearch.matches(ev.title)) && <SelectEmpty />}
+                             {eventOptions.filter((ev) => ev.id === selectedContextId || contextSearch.matches(ev.title)).map((ev) => {
                                const isSelectable = !draft.isPublished || ev.isPublished;
                                return (
                                  <SelectItem key={ev.id} value={ev.id} disabled={!isSelectable}>
@@ -930,13 +937,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     {/* ── Quick-create context — Sheet trigger ── */}
                     <button
                       type="button"
-                      className="w-full mt-2 flex items-center gap-2 px-3 py-2.5 rounded-[2px] text-xs font-semibold transition-all hover:bg-[var(--status-neutral-bg)] border text-[var(--accent-blue)] border-[var(--card-light-border)] bg-transparent"
+                      className="w-full mt-2 flex items-center gap-2 px-3 py-2.5 rounded-sm text-xs font-semibold transition-all hover:bg-[var(--status-neutral-bg)] border text-[var(--accent-blue)] border-[var(--card-light-border)] bg-transparent"
                       onClick={() => setQuickCreateOpen(true)}
                     >
                       <PlusIcon className="h-3.5 w-3.5 shrink-0" />
                       Tạo nhanh bối cảnh mới
                       <span
-                        className="ml-auto text-[10px] font-normal px-1.5 py-0.5 rounded-[2px] text-[var(--accent-blue)] bg-accent-blue/10"
+                        className="ml-auto text-[10px] font-normal px-1.5 py-0.5 rounded-sm text-[var(--accent-blue)] bg-accent-blue/10"
                       >
                         Mới
                       </span>
@@ -954,7 +961,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         >
                           <div className="flex items-center gap-2.5">
                             <div
-                              className="flex items-center justify-center w-8 h-8 rounded-[2px] shrink-0 bg-accent-blue/10"
+                              className="flex items-center justify-center w-8 h-8 rounded-sm shrink-0 bg-accent-blue/10"
                             >
                               <ScrollIcon className="w-4 h-4 text-[var(--accent-blue)]" />
                             </div>
@@ -979,7 +986,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           {/* Section: Nội dung */}
                           <div className="space-y-4">
                             <p
-                              className="text-[10px] font-bold uppercase tracking-widest text-[var(--content-muted)]"
+                              className="text-xs font-semibold text-[var(--content-muted)]"
                             >
                               Nội dung
                             </p>
@@ -1008,7 +1015,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                 onChange={(e) => setQuickContextField("description")(e.target.value)}
                                 placeholder="Bối cảnh lịch sử, ý nghĩa sự kiện..."
                                 rows={4}
-                                className="w-full px-3 py-2 text-sm transition-colors border rounded-[2px] outline-none resize-none focus:ring-1 focus:ring-[var(--accent-gold)] border-[var(--card-light-border)] bg-[var(--bg-content)] text-[var(--content-text)]"
+                                className="w-full px-3 py-2 text-sm transition-colors border rounded-sm outline-none resize-none focus:ring-1 focus:ring-[var(--accent-gold)] border-[var(--card-light-border)] bg-[var(--bg-content)] text-[var(--content-text)]"
                               />
                               <ValidationErrorText message={quickErrors.description} />
                             </div>
@@ -1035,7 +1042,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           {/* Section: Phân loại & Thời gian */}
                           <div className="space-y-4">
                             <p
-                              className="text-[10px] font-bold uppercase tracking-widest text-[var(--content-muted)]"
+                              className="text-xs font-semibold text-[var(--content-muted)]"
                             >
                               Phân loại &amp; Thời gian
                             </p>
@@ -1085,7 +1092,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           {/* Section: Media */}
                           <div className="space-y-4">
                             <p
-                              className="text-[10px] font-bold uppercase tracking-widest text-[var(--content-muted)]"
+                              className="text-xs font-semibold text-[var(--content-muted)]"
                             >
                               Media (tuỳ chọn)
                             </p>
@@ -1126,7 +1133,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                           {/* Section: Trạng thái */}
                           <div
-                            className={`flex items-center justify-between gap-3 px-4 py-3 transition-colors border rounded-[2px] ${quickCtx.isPublished ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)]" : "border-[var(--border-strong)] bg-[var(--status-neutral-bg)]"}`}
+                            className={`flex items-center justify-between gap-3 px-4 py-3 transition-colors border rounded-sm ${quickCtx.isPublished ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)]" : "border-[var(--border-strong)] bg-[var(--status-neutral-bg)]"}`}
                           >
                             <div className="flex-1">
                               <p
@@ -1160,7 +1167,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         >
                           <Button
                             variant="outline"
-                            className="rounded-[2px] bg-transparent border-[var(--text-primary)] hover:bg-[var(--status-neutral-bg)] transition-colors text-[var(--content-heading)]"
+                            className="rounded-sm bg-transparent border-border-card hover:bg-[var(--status-neutral-bg)] transition-colors text-[var(--content-heading)]"
                             onClick={() => {
                               setQuickCreateOpen(false);
                               resetQuickCtx();
@@ -1216,7 +1223,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   </div>
                 ) : (
                   <div
-                    className="px-4 py-8 text-center border border-dashed rounded-[2px] border-[var(--card-light-border)]"
+                    className="px-4 py-8 text-center border border-dashed rounded-sm border-[var(--card-light-border)]"
                   >
                     <LinkIcon className="w-5 h-5 mx-auto mb-2 text-[var(--content-muted)]" />
                     <p className="text-sm text-[var(--content-muted)]">
@@ -1241,19 +1248,19 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             />
           ) : (
             <div className="relative flex flex-col items-center justify-center flex-1 p-12">
-              <div className="w-full max-w-2xl aspect-[4/3] relative rounded-[2px] overflow-hidden border border-[var(--card-light-border)]">
+              <div className="w-full max-w-2xl aspect-[4/3] relative rounded-sm overflow-hidden border border-[var(--card-light-border)]">
                 {/* Blurred mock-up */}
                 <div className="absolute inset-0 bg-[var(--bg-elevated)] opacity-60" />
                 <div className="absolute inset-0 flex flex-col p-8 space-y-6 opacity-20 bg-[var(--bg-deep)]">
-                  <div className="w-48 h-12 bg-[var(--bg-deep)] rounded-[2px]" />
-                  <div className="w-2/3 h-24 bg-[var(--bg-deep)] rounded-[2px]" />
-                  <div className="w-1/2 h-24 ml-auto bg-[var(--bg-deep)] rounded-[2px]" />
-                  <div className="w-3/4 h-24 bg-[var(--bg-deep)] rounded-[2px]" />
+                  <div className="w-48 h-12 bg-[var(--bg-deep)] rounded-sm" />
+                  <div className="w-2/3 h-24 bg-[var(--bg-deep)] rounded-sm" />
+                  <div className="w-1/2 h-24 ml-auto bg-[var(--bg-deep)] rounded-sm" />
+                  <div className="w-3/4 h-24 bg-[var(--bg-deep)] rounded-sm" />
                 </div>
 
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="px-6 space-y-4 text-center">
-                    <div className="w-20 h-20 bg-[var(--bg-elevated)] rounded-[2px] flex items-center justify-center mx-auto border border-[var(--card-light-border)]">
+                    <div className="w-20 h-20 bg-[var(--bg-elevated)] rounded-sm flex items-center justify-center mx-auto border border-[var(--card-light-border)]">
                       <ChatCircleDotsIcon className="w-10 h-10 text-[var(--accent-gold)]" />
                     </div>
                     <div>
@@ -1295,7 +1302,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
         titleBadge={
           viewingDocument?.fileUrl ? (
             <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[2px] text-[10px] font-bold uppercase bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)]"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)]"
             >
               Có PDF gốc
             </span>

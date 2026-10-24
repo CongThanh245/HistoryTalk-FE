@@ -89,7 +89,7 @@ function SchoolDetail({ schoolId }: { schoolId: string }) {
       {school.status !== "ACTIVE" && (
         <p
           role="note"
-          className="flex items-start gap-2 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--text-secondary)]"
+          className="flex items-start gap-2 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--text-secondary)]"
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
           <span>
@@ -123,7 +123,7 @@ function SchoolDetail({ schoolId }: { schoolId: string }) {
   );
 }
 
-const SUMMARY_LABEL = "text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]";
+const SUMMARY_LABEL = "text-xs font-semibold text-[var(--text-tertiary)]";
 
 /** Key facts of the school as a labelled strip: code, package, school-year pool, status. */
 function SchoolSummary({ school }: { school: NonNullable<ReturnType<typeof useApiSchool>["data"]> }) {
@@ -135,7 +135,7 @@ function SchoolSummary({ school }: { school: NonNullable<ReturnType<typeof useAp
     { label: "Trạng thái", value: <SchoolStatusPill status={school.status} /> },
   ];
   return (
-    <dl className="grid grid-cols-2 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] lg:grid-cols-4">
+    <dl className="grid grid-cols-2 rounded-sm border border-border-card bg-[var(--bg-surface)] lg:grid-cols-4">
       {items.map(({ label, value }, i) => (
         <div
           key={label}

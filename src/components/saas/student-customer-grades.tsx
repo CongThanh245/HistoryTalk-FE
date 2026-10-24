@@ -28,13 +28,13 @@ const formatDate = (iso: string) => {
 
 function Tile({ icon: Icon, color, label, value, sub }: { icon: LucideIcon; color: string; label: string; value: string; sub?: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[2px] text-white" style={{ background: color }} aria-hidden="true">
+    <div className="flex items-center gap-3 rounded-sm border border-border-card bg-[var(--bg-surface)] p-4">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-white" style={{ background: color }} aria-hidden="true">
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
         <p className="text-[12px] font-bold text-content-muted">{label}</p>
-        <p className="font-display text-3xl font-extrabold tabular-nums leading-none text-content-text">{value}</p>
+        <p className="text-3xl font-bold tabular-nums leading-none text-content-text">{value}</p>
         {sub && <p className="mt-1 truncate text-[12px] text-content-muted">{sub}</p>}
       </div>
     </div>
@@ -128,7 +128,7 @@ export function CustomerGrades() {
                       {typeof r.score === "number" && r.totalQuestions ? ` · ${r.score}/${r.totalQuestions} câu đúng` : ""}
                     </span>
                   </span>
-                  <span className="font-display text-2xl font-extrabold tabular-nums" style={{ color: scoreColor(r.percentage) }}>
+                  <span className="text-2xl font-bold tabular-nums" style={{ color: scoreColor(r.percentage) }}>
                     {Math.round(r.percentage)}%
                   </span>
                 </li>
@@ -162,7 +162,7 @@ export function CustomerGrades() {
             <SectionHeading title="Token đã sử dụng" description="Mức dùng AI khi trò chuyện với nhân vật." />
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <Sparkles className="h-4 w-4 self-center text-[var(--accent-gold)]" aria-hidden="true" />
-              <span className="font-display text-3xl font-extrabold tabular-nums text-content-text">{formatNumber(aiUsage.totalTokensUsed)}</span>
+              <span className="text-3xl font-bold tabular-nums text-content-text">{formatNumber(aiUsage.totalTokensUsed)}</span>
               <span className="text-[13px] text-content-muted">token tổng cộng</span>
             </div>
             {customer.data && (
@@ -227,7 +227,7 @@ export function CustomerGrades() {
                     </span>
                     <span className="shrink-0 text-right">
                       <span className="block font-bold tabular-nums text-content-text">{formatNumber(p.amount)}đ</span>
-                      <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-content-muted">{p.status}</span>
+                      <span className="block text-[13px] font-semibold text-content-muted">{p.status}</span>
                     </span>
                   </li>
                 ))}

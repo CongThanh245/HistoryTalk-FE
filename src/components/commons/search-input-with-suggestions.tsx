@@ -77,7 +77,7 @@ export function SearchInputWithSuggestions({
   return (
     <div ref={containerRef} className="relative w-full">
       <div
-        className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] transition-colors duration-150 hover:border-[var(--text-primary)] focus-within:border-[var(--accent-gold)]"
+        className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] transition-colors duration-150 hover:border-[var(--text-primary)] focus-within:border-[var(--accent-gold)]"
       >
         <Search className="w-4 h-4 shrink-0 text-content-subtle" />
         <input
@@ -101,7 +101,7 @@ export function SearchInputWithSuggestions({
               setIsOpen(false);
               inputRef.current?.focus();
             }}
-            className="p-0.5 rounded-[2px] cursor-pointer text-content-subtle transition-colors hover:text-[var(--accent-gold)]"
+            className="p-0.5 rounded-sm cursor-pointer text-content-subtle transition-colors hover:text-[var(--accent-gold)]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -111,7 +111,7 @@ export function SearchInputWithSuggestions({
       {/* Suggestions Dropdown */}
       {showDropdown && (
         <div
-          className="absolute top-full left-0 right-0 mt-2 py-2 rounded-[2px] border border-[var(--text-primary)] bg-bg-elevated shadow-[var(--shadow-soft)] z-50 max-h-[320px] overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-2 py-2 rounded-sm border border-border-card bg-bg-elevated shadow-[var(--shadow-soft)] z-50 max-h-[320px] overflow-y-auto"
         >
           {isLoading && (
             <div className="flex items-center justify-center py-4">
@@ -151,7 +151,7 @@ export function SearchInputWithSuggestions({
                         }`}
                       >
                         <div
-                          className="w-8 h-8 rounded-[2px] flex items-center justify-center shrink-0 overflow-hidden bg-bg-deep"
+                          className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0 overflow-hidden bg-bg-deep"
                         >
                           {suggestion.imageUrl ? (
                             <Image
@@ -203,7 +203,7 @@ export function SearchInputWithSuggestions({
                         }`}
                       >
                         <div
-                          className="w-8 h-8 rounded-[2px] flex items-center justify-center shrink-0 overflow-hidden bg-bg-deep"
+                          className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0 overflow-hidden bg-bg-deep"
                         >
                           {suggestion.imageUrl ? (
                             <Image

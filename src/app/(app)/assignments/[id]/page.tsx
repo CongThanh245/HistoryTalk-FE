@@ -608,7 +608,7 @@ function Notice({
 }) {
   return (
     <div
-      className={`flex items-start gap-3 rounded-[2px] border p-4 ${NOTICE_TONE[tone]}`}
+      className={`flex items-start gap-3 rounded-sm border p-4 ${NOTICE_TONE[tone]}`}
     >
       <Icon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
       <div className="space-y-0.5">

@@ -169,7 +169,7 @@ export function MapSearchBox({
           onKeyDown={onKeyDown}
           placeholder={showBattles ? "Tìm trận đánh, ghim…" : "Tìm ghim trên bản đồ…"}
           autoComplete="off"
-          className="h-10 w-full rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] pl-9 pr-9 text-sm text-[var(--text-primary)] shadow-[var(--shadow-soft)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] [&::-webkit-search-cancel-button]:hidden"
+          className="h-10 w-full rounded-sm border border-border-card bg-[var(--bg-surface)] pl-9 pr-9 text-sm text-[var(--text-primary)] shadow-[var(--shadow-soft)] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] [&::-webkit-search-cancel-button]:hidden"
         />
         {query && (
           <button
@@ -179,23 +179,23 @@ export function MapSearchBox({
               inputRef.current?.focus();
             }}
             aria-label="Xóa từ khóa"
-            className="absolute right-1.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-[2px] text-[var(--text-tertiary)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--text-primary)]"
+            className="absolute right-1.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-sm text-[var(--text-tertiary)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--text-primary)]"
           >
             <X size={14} />
           </button>
         )}
       </label>
       {expanded && (
-        <div className="absolute inset-x-0 top-full z-[560] mt-1 max-h-[min(50vh,360px)] overflow-y-auto rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] py-1 shadow-[var(--shadow-soft)]">
+        <div className="absolute inset-x-0 top-full z-[560] mt-1 max-h-[min(50vh,360px)] overflow-y-auto rounded-sm border border-border-card bg-[var(--bg-surface)] py-1 shadow-[var(--shadow-soft)]">
           <ul id={listId} role="listbox" aria-label="Kết quả tìm kiếm">
             {battleResults.length > 0 && (
-              <li role="presentation" className="px-3 pb-1 pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+              <li role="presentation" className="px-3 pb-1 pt-1.5 text-xs font-semibold text-[var(--text-tertiary)]">
                 Trận đánh
               </li>
             )}
             {battleResults.map(renderOption)}
             {pinResults.length > 0 && (
-              <li role="presentation" className="px-3 pb-1 pt-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+              <li role="presentation" className="px-3 pb-1 pt-2 text-xs font-semibold text-[var(--text-tertiary)]">
                 Ghim đang hiển thị
               </li>
             )}

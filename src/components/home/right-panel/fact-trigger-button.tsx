@@ -25,7 +25,7 @@ export function FactTriggerButton({ onClick }: { onClick: () => void }) {
       ref={btnRef}
       onClick={onClick}
       title="Khám phá sự thật lịch sử"
-      className="group fixed bottom-7 right-7 z-[1000] flex items-center gap-2.5 px-5 py-3 rounded-[2px] bg-[var(--text-primary)] border border-[var(--text-primary)] shadow-[var(--shadow-soft)] cursor-pointer text-[var(--text-inverse)] transition-colors duration-[180ms] whitespace-nowrap hover:bg-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--accent-gold)]"
+      className="group fixed bottom-7 right-7 z-[1000] flex items-center gap-2.5 px-5 py-3 rounded-sm bg-[var(--text-primary)] border border-[var(--text-primary)] shadow-[var(--shadow-soft)] cursor-pointer text-[var(--text-inverse)] transition-colors duration-[180ms] whitespace-nowrap hover:bg-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--accent-gold)]"
     >
       <span className="text-xl leading-none text-[var(--accent-on-ink)] group-hover:text-white">
         <HelpCircle />

@@ -30,12 +30,12 @@ function ScoreBadge({
   return (
     <span
       className={cn(
-        "rounded-[2px] border px-2 py-0.5 font-display text-sm font-extrabold",
+        "shrink-0 rounded-full px-2 py-0.5 text-[13px] font-semibold tabular-nums",
         pct >= 80
-          ? "border-[var(--status-success)] text-[var(--status-success)]"
+          ? "bg-[var(--status-success-bg)] text-[var(--status-success)]"
           : pct >= 50
-            ? "border-[var(--accent-gold)] text-[var(--gold-on-light)]"
-            : "border-[var(--accent-danger)] text-accent-danger",
+            ? "bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]"
+            : "bg-[var(--status-danger-bg)] text-accent-danger",
       )}
     >
       {score}/{total}
@@ -49,10 +49,10 @@ export function QuizRecentResults({
   onViewAll,
 }: QuizRecentResultsProps) {
   return (
-    <section className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
-      <div className="flex items-end justify-between gap-3 px-4 py-3 border-b border-[var(--text-primary)]">
+    <section className="overflow-hidden rounded-xl border border-border-card bg-[var(--bg-surface)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[var(--border-default)] px-4 py-3">
         <div>
-          <h3 className="archive-title mt-1 text-[20px]">
+          <h3 className="text-base font-semibold text-content-heading">
             Lịch sử làm bài
           </h3>
           <p className="mt-0.5 text-xs text-text-tertiary">
@@ -62,7 +62,7 @@ export function QuizRecentResults({
         {onViewAll && (
           <button
             onClick={onViewAll}
-            className="archive-link shrink-0 text-[11px]"
+            className="archive-link shrink-0 text-[13px]"
           >
             Xem tất cả
           </button>
@@ -82,12 +82,12 @@ export function QuizRecentResults({
           {results.map((r) => (
             <div key={r.sessionId} className="px-4 py-3 transition-colors hover:bg-[var(--bg-elevated)]">
               <div className="mb-1.5 flex items-start justify-between gap-3">
-                <p className="archive-title is-plain min-w-0 flex-1 truncate text-[16px]">
+                <p className="min-w-0 flex-1 truncate text-sm font-medium text-content-heading">
                   {r.quizTitle}
                 </p>
                 <ScoreBadge score={r.score} total={r.totalQuestions} percentage={r.percentage} />
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
+              <p className="text-xs tabular-nums text-content-muted">
                 {formatDate(r.completedAt)}
               </p>
             </div>

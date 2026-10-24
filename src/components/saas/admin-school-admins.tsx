@@ -84,7 +84,7 @@ type ConfirmKind = "lock" | "unlock" | "reset" | "delete";
 const PAGE_SIZES = [10, 20, 50];
 const COLS = 7;
 const STICKY = "sticky left-0 z-10 bg-[var(--bg-surface)]";
-const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold";
+const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold";
 const LAST_ADMIN_REASON = "Trường cần ít nhất một quản trị đang hoạt động";
 
 const FILTERS: { value: StatusFilter; label: string }[] = [
@@ -250,7 +250,7 @@ export function SchoolAdminsTab({ school }: { school: ApiSchool }) {
       {counts.active === 0 && (counts.total ?? 0) > 0 && (
         <p
           role="note"
-          className="flex items-start gap-2 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--text-secondary)]"
+          className="flex items-start gap-2 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-2 text-sm text-[var(--text-secondary)]"
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
           <span>Trường chưa có quản trị nào đang hoạt động. Mở khóa một tài khoản hoặc thêm quản trị mới để trường tiếp tục quản lý tài khoản.</span>
@@ -270,7 +270,7 @@ export function SchoolAdminsTab({ school }: { school: ApiSchool }) {
                 setPage(0);
               }}
               className={cn(
-                "h-10 flex-1 whitespace-nowrap border border-[var(--text-primary)] px-3 text-xs font-bold transition-colors focus-visible:relative focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] sm:flex-none",
+                "h-10 flex-1 whitespace-nowrap border border-border-card px-3 text-xs font-bold transition-colors focus-visible:relative focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] sm:flex-none",
                 i > 0 && "-ml-px",
                 filter === f.value
                   ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
@@ -300,7 +300,7 @@ export function SchoolAdminsTab({ school }: { school: ApiSchool }) {
         <div className="space-y-3">
           <div
             className={cn(
-              "overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)] transition-opacity",
+              "overflow-x-auto rounded-lg border border-border-card bg-[var(--bg-surface)] transition-opacity",
               isPlaceholderData && "opacity-60",
             )}
             aria-busy={isFetching}
@@ -308,7 +308,7 @@ export function SchoolAdminsTab({ school }: { school: ApiSchool }) {
             <Table className="min-w-max">
               <caption className="sr-only">Quản trị trường của {school.name}</caption>
               <TableHeader>
-                <TableRow className="border-b border-[var(--border-strong)] hover:bg-transparent">
+                <TableRow className="border-b border-border-card">
                   <TableHead className={cn("px-3", STICKY, "z-20")} aria-sort={ariaSort("fullName")}>
                     <SortHeader label="Họ và tên" column="fullName" {...sortProps} />
                   </TableHead>
@@ -371,7 +371,7 @@ export function SchoolAdminsTab({ school }: { school: ApiSchool }) {
                             <button
                               type="button"
                               onClick={() => void copyText(a.userName, "Đã sao chép tên tài khoản")}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-[2px] text-[var(--text-tertiary)] transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-[var(--text-tertiary)] transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]"
                               aria-label={`Sao chép tên tài khoản ${a.userName}`}
                               title="Sao chép tên tài khoản"
                             >
@@ -533,7 +533,7 @@ function SortHeader({
       type="button"
       onClick={() => onSort(column)}
       className={cn(
-        "-ml-1.5 inline-flex h-8 items-center gap-1 rounded-[2px] px-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]",
+        "-ml-1.5 inline-flex h-8 items-center gap-1 rounded-sm px-1.5 text-[13px] font-semibold transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]",
         active ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]",
       )}
     >
@@ -552,7 +552,7 @@ function SortHeader({
 }
 
 const PlainHeader = ({ children }: { children: React.ReactNode }) => (
-  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{children}</span>
+  <span className="text-[13px] font-semibold text-[var(--text-tertiary)]">{children}</span>
 );
 
 interface MenuAction {
@@ -574,7 +574,7 @@ function AdminRowMenu({ label, actions }: { label: string; actions: MenuAction[]
             type="button"
             aria-label={label}
             title={label}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[2px] border border-transparent text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] data-[state=open]:border-[var(--text-primary)] data-[state=open]:text-[var(--text-primary)]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-sm border border-transparent text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] data-[state=open]:border-[var(--text-primary)] data-[state=open]:text-[var(--text-primary)]"
           >
             <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -591,7 +591,7 @@ function AdminRowMenu({ label, actions }: { label: string; actions: MenuAction[]
                   title={a.disabledReason ?? undefined}
                   onSelect={() => a.onSelect()}
                   className={cn(
-                    "items-start rounded-[2px] focus:bg-[var(--status-neutral-bg)]",
+                    "items-start rounded-sm focus:bg-[var(--status-neutral-bg)]",
                     a.tone === "danger" && "text-[var(--accent-danger)] focus:text-[var(--accent-danger)]",
                     a.tone === "success" && "text-[var(--status-success)] focus:text-[var(--status-success)]",
                   )}
@@ -616,7 +616,7 @@ function FormError({ message }: { message: string }) {
   return (
     <p
       role="alert"
-      className="flex items-start gap-2 rounded-[2px] border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] px-3 py-2 text-sm text-[var(--text-secondary)]"
+      className="flex items-start gap-2 rounded-sm border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] px-3 py-2 text-sm text-[var(--text-secondary)]"
     >
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent-danger)]" aria-hidden="true" />
       <span>{message}</span>
@@ -783,7 +783,7 @@ function EditAdminDrawer({ admin, onClose }: { admin: ApiSchoolAdmin | null; onC
             />
           </Field>
           <div className="space-y-1.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Tên tài khoản</p>
+            <p className="text-[13px] font-semibold text-[var(--text-tertiary)]">Tên tài khoản</p>
             <p className="break-all font-mono text-sm text-content-text">{admin.userName}</p>
             <p className="text-[11px] text-content-muted">Do hệ thống cấp, không thay đổi được.</p>
           </div>

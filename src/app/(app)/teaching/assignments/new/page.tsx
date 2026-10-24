@@ -12,11 +12,19 @@ import { ASSIGNMENT_TYPES } from "@/components/saas/teacher-class-assignments";
 import { useRole } from "@/features/auth/usePermission";
 import { apiErrorMessage, useMyApiClassrooms } from "@/features/saas/hooks-api";
 import type { AssignmentType } from "@/services/assignment.service";
+import { ROUTES } from "@/constants/routes";
 
 /** Giao bài tập kèm deadline (Role Matrix row 16). Accepts ?classId= and ?type= to prefill. */
 export default function NewAssignmentPage() {
   return (
-    <SaasShell live variant="app" title="Giao bài tập" description="Chọn lớp, loại bài và nội dung, rồi đặt hạn nộp.">
+    <SaasShell
+      live
+      variant="app"
+      title="Giao bài tập"
+      description="Chọn lớp, loại bài và nội dung, rồi đặt hạn nộp."
+      backHref={ROUTES.TEACHING.ASSIGNMENTS}
+      backLabel="Về Bài tập đã giao"
+    >
       <React.Suspense fallback={null}>
         <NewAssignment />
       </React.Suspense>
@@ -47,7 +55,7 @@ function NewAssignment() {
       classes={classes}
       initialClassId={params.get("classId")}
       initialType={type}
-      initialSource={rawSource === "school" || rawSource === "library" ? rawSource : null}
+      initialSource={rawSource === "mine" || rawSource === "school" || rawSource === "library" ? rawSource : null}
       initialTargetId={params.get("targetId")}
     />
   );

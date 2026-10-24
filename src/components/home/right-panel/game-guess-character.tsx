@@ -25,7 +25,7 @@ export function GameGuessCharacter({
   };
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-[2px] px-3.5 py-3">
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-sm px-3.5 py-3">
         <p className="m-0 mb-2 text-[10px] font-bold tracking-[0.14em] uppercase text-[var(--gold-on-light)]">
           Đây là ai?
         </p>
@@ -39,7 +39,7 @@ export function GameGuessCharacter({
         {!answered && hintsRevealed < q.hints.length && (
           <button
             onClick={() => setHintsRevealed((n) => n + 1)}
-            className="mt-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] bg-transparent border border-[var(--text-primary)] rounded-[2px] px-2 py-1 cursor-pointer transition-colors duration-100 hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+            className="mt-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] bg-transparent border border-[var(--text-primary)] rounded-sm px-2 py-1 cursor-pointer transition-colors duration-100 hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
           >
             + Gợi ý ({q.hints.length - hintsRevealed} còn lại)
           </button>

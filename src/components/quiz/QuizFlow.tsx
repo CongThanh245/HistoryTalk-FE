@@ -229,7 +229,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
         <div
           className={cn(
             "flex-shrink-0 h-full transition-all duration-300 z-50 border-r",
-            "lg:relative absolute left-0 top-0 bottom-0 shadow-[var(--shadow-soft)] lg:shadow-none bg-[var(--bg-content)] overflow-hidden border-[var(--text-primary)]",
+            "lg:relative absolute left-0 top-0 bottom-0 shadow-[var(--shadow-soft)] lg:shadow-none bg-[var(--bg-content)] overflow-hidden border-[var(--border-default)]",
             sidebarOpen
               ? `w-[${sidebarWidth}px] translate-x-0`
               : "w-0 lg:w-0 -translate-x-[260px] lg:translate-x-0 border-none",
@@ -246,15 +246,18 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
       </>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        {/* Sits in the top-left corner; each phase leaves room for it on its first row (back link / progress bar). */}
         <button
+          type="button"
           onClick={() => setSidebarOpen((v) => !v)}
-          className="absolute top-3 left-3 z-30 p-1.5 rounded-[2px] transition-colors text-content-heading bg-[var(--bg-surface)] border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
-          title={sidebarOpen ? "Ẩn danh sách" : "Hiện danh sách"}
+          className="absolute top-2.5 left-3 z-30 grid h-9 w-9 place-items-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-content-heading"
+          title={sidebarOpen ? "Ẩn danh sách đề" : "Hiện danh sách đề"}
+          aria-label={sidebarOpen ? "Ẩn danh sách đề" : "Hiện danh sách đề"}
         >
           {sidebarOpen ? (
-            <PanelLeftClose size={15} />
+            <PanelLeftClose size={16} />
           ) : (
-            <PanelLeftOpen size={15} />
+            <PanelLeftOpen size={16} />
           )}
         </button>
 
@@ -265,7 +268,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
                 size={28}
                 className="animate-spin text-accent-gold"
               />
-              <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-content-muted">
+              <p className="text-sm text-content-muted">
                 Đang chuẩn bị câu hỏi...
               </p>
             </div>

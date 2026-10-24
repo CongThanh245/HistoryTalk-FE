@@ -293,17 +293,17 @@ export function Carousel3DVertical({
               ref={expandedCardRef}
               onPointerMove={moveSpotlight}
               onPointerLeave={resetSpotlight}
-              className="pointer-events-auto relative h-[460px] w-[320px] max-w-[84vw] rounded-[2px] [transform-style:preserve-3d] sm:h-[520px] sm:w-[370px]"
+              className="pointer-events-auto relative h-[460px] w-[320px] max-w-[84vw] rounded-sm [transform-style:preserve-3d] sm:h-[520px] sm:w-[370px]"
             >
               <div
                 ref={expandedCardInnerRef}
-                className="relative h-full w-full overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-6 text-left text-[var(--text-primary)] shadow-[var(--shadow-soft)] [backface-visibility:hidden] [transform-style:preserve-3d]"
+                className="relative h-full w-full overflow-hidden rounded-sm border border-border-card bg-[var(--bg-surface)] p-6 text-left text-[var(--text-primary)] shadow-[var(--shadow-soft)] [backface-visibility:hidden] [transform-style:preserve-3d]"
               >
               <button
                 type="button"
                 aria-label="Đóng"
                 onClick={closeCharacter}
-                className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-[2px] border border-[var(--text-primary)] bg-transparent text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+                className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-sm border border-[var(--text-primary)] bg-transparent text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -352,7 +352,7 @@ export function Carousel3DVertical({
                 onClick={() =>
                   navigateWithAuth(`/chat/${expandedCharacter.character.id}`)
                 }
-                className="absolute inset-x-6 bottom-6 flex items-center justify-center gap-2 rounded-[2px] border border-[var(--accent-gold)] bg-[var(--accent-gold)] py-3.5 text-sm font-bold uppercase tracking-[0.08em] text-white transition-[background-color,border-color,transform] hover:border-[var(--accent-bronze)] hover:bg-[var(--accent-bronze)] active:scale-[0.98] [animation:character-detail-in_600ms_340ms_ease-out_both]"
+                className="absolute inset-x-6 bottom-6 flex items-center justify-center gap-2 rounded-sm border border-[var(--accent-gold)] bg-[var(--accent-gold)] py-3.5 text-sm font-bold uppercase tracking-[0.08em] text-white transition-[background-color,border-color,transform] hover:border-[var(--accent-bronze)] hover:bg-[var(--accent-bronze)] active:scale-[0.98] [animation:character-detail-in_600ms_340ms_ease-out_both]"
               >
                 <MessageCircle className="h-5 w-5 fill-current" />
                 Trò chuyện ngay
@@ -381,7 +381,7 @@ export function Carousel3DVertical({
             {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
               <div
                 key={index}
-                className="absolute h-[198px] w-[136px] animate-pulse overflow-hidden rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-deep)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
+                className="absolute h-[198px] w-[136px] animate-pulse overflow-hidden rounded-sm border border-[var(--border-strong)] bg-[var(--bg-deep)] sm:h-[266px] sm:w-[190px] md:h-[340px] md:w-[240px] lg:h-[400px] lg:w-[280px]"
                 style={{
                   transform: `translateX(${(index - 2) * 120}px) scale(${index === 2 ? 1 : 0.7})`,
                   opacity: index === 2 ? 1 : 0.35,
@@ -418,7 +418,7 @@ export function Carousel3DVertical({
               type="button"
               aria-label="Chọn nhân vật trước"
               onClick={selectPrevious}
-              className="flex h-11 w-11 items-center justify-center rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+              className="flex h-11 w-11 items-center justify-center rounded-sm border border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -429,7 +429,7 @@ export function Carousel3DVertical({
               type="button"
               aria-label="Chọn nhân vật tiếp theo"
               onClick={selectNext}
-              className="flex h-11 w-11 items-center justify-center rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+              className="flex h-11 w-11 items-center justify-center rounded-sm border border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
             >
               <ChevronRight className="h-5 w-5" />
             </button>

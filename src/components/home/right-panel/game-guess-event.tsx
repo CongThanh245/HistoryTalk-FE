@@ -19,7 +19,7 @@ export function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
   };
   return (
     <div className="flex flex-col gap-2.5">
-      <div className="bg-[var(--bg-elevated)] border border-[var(--text-primary)] rounded-[2px] p-3.5 text-center">
+      <div className="bg-[var(--bg-elevated)] border border-border-card rounded-sm p-3.5 text-center">
         <p className="m-0 mb-1 text-[10px] font-bold tracking-[0.14em] uppercase text-[var(--text-tertiary)]">
           Năm xảy ra
         </p>
@@ -30,7 +30,7 @@ export function GameGuessEvent({ onScore }: { onScore: (c: boolean) => void }) {
           {q.clues.map((c, i) => (
             <span
               key={i}
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-[2px] bg-transparent border border-[var(--border-strong)] text-[var(--text-secondary)]"
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-sm bg-transparent border border-[var(--border-strong)] text-[var(--text-secondary)]"
             >
               {c}
             </span>

@@ -41,9 +41,9 @@ export function StudentLocalContentList({ classroom, role }: { classroom: { id: 
               <li key={`${item.type}-${item.id}`}>
                 <Link
                   href={localContentHref(classroom.id, item.id, item.type)}
-                  className="group flex h-full items-center gap-3 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] p-3 motion-safe:transition-colors hover:border-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]"
+                  className="group flex h-full items-center gap-3 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] p-3 motion-safe:transition-colors hover:border-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]"
                 >
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[2px] text-white" style={{ background: meta.color }} aria-hidden="true">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm text-white" style={{ background: meta.color }} aria-hidden="true">
                     <Icon className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">

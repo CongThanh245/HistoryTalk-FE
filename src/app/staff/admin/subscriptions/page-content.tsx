@@ -56,20 +56,20 @@ function getTierStyleClasses(title: string) {
   const lower = title.toLowerCase();
   if (lower.includes("pro") || lower.includes("premium")) {
     return {
-      card: "border-[var(--text-primary)]",
+      card: "border-border-card",
       iconBg: "bg-[var(--accent-gold-active-bg)] border-accent-gold/30",
       icon: "text-[var(--accent-gold)]",
     };
   }
   if (lower.includes("plus") || lower.includes("standard")) {
     return {
-      card: "border-[var(--text-primary)]",
+      card: "border-border-card",
       iconBg: "bg-accent-blue/10 border-accent-blue/25",
       icon: "text-accent-blue",
     };
   }
   return {
-    card: "border-[var(--text-primary)]",
+    card: "border-border-card",
     iconBg: "bg-[var(--status-neutral-bg)] border-[var(--status-neutral-border)]",
     icon: "text-[var(--text-tertiary)]",
   };
@@ -86,13 +86,13 @@ function TierCard({ tier, onEdit }: TierCardProps) {
   const styles = getTierStyleClasses(tier.title);
   return (
     <div
-      className={cn("relative rounded-[2px] border p-6 flex flex-col gap-5 transition-colors duration-200 bg-[var(--bg-surface)]", styles.card)}
+      className={cn("relative rounded-sm border p-6 flex flex-col gap-5 transition-colors duration-200 bg-[var(--bg-surface)]", styles.card)}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div
-            className={cn("w-10 h-10 rounded-[2px] flex items-center justify-center shrink-0 border", styles.iconBg)}
+            className={cn("w-10 h-10 rounded-sm flex items-center justify-center shrink-0 border", styles.iconBg)}
           >
             <CreditCard className={cn("w-5 h-5", styles.icon)} />
           </div>
@@ -105,12 +105,12 @@ function TierCard({ tier, onEdit }: TierCardProps) {
 
         {/* Active badge */}
         {tier.isActive ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-[11px] font-bold shrink-0 bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[11px] font-bold shrink-0 bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-success)] animate-pulse" />
             Hoạt động
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-[11px] font-bold shrink-0 bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)] border border-[var(--status-neutral-border)]">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[11px] font-bold shrink-0 bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)] border border-[var(--status-neutral-border)]">
             <XCircle className="w-3 h-3" />
             Tạm dừng
           </span>
@@ -125,11 +125,11 @@ function TierCard({ tier, onEdit }: TierCardProps) {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1.5">
             <CircleDollarSign className="w-3.5 h-3.5 text-accent-gold" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+            <span className="text-sm font-semibold text-[var(--text-tertiary)]">
               Giá
             </span>
           </div>
-          <p className="font-display text-lg font-extrabold text-content-heading">
+          <p className="text-lg font-bold tabular-nums text-content-heading">
             {tier.amount === 0 ? (
               <span className="text-[var(--status-success)]">Miễn phí</span>
             ) : (
@@ -141,11 +141,11 @@ function TierCard({ tier, onEdit }: TierCardProps) {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-accent-blue" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+            <span className="text-sm font-semibold text-[var(--text-tertiary)]">
               Thời hạn
             </span>
           </div>
-          <p className="font-display text-lg font-extrabold text-content-heading">
+          <p className="text-lg font-bold tabular-nums text-content-heading">
             {tier.noMonth} <span className="text-xs font-normal text-content-muted">tháng</span>
           </p>
         </div>
@@ -153,11 +153,11 @@ function TierCard({ tier, onEdit }: TierCardProps) {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1.5">
             <Coins className="w-3.5 h-3.5 text-accent-gold" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+            <span className="text-sm font-semibold text-[var(--text-tertiary)]">
               Token
             </span>
           </div>
-          <p className="font-display text-lg font-extrabold text-content-heading">
+          <p className="text-lg font-bold tabular-nums text-content-heading">
             {tier.limitedToken.toLocaleString()}
           </p>
         </div>
@@ -168,7 +168,7 @@ function TierCard({ tier, onEdit }: TierCardProps) {
         <Button
           variant="outline"
           size="sm"
-          className="flex-1 rounded-[2px] gap-1.5 text-xs font-semibold border-card-light-border text-content-heading"
+          className="flex-1 rounded-sm gap-1.5 text-xs font-semibold border-card-light-border text-content-heading"
           onClick={() => onEdit(tier)}
         >
           <Pencil className="w-3.5 h-3.5" />
@@ -228,7 +228,7 @@ function TierFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md staff-theme rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] text-content-text">
+      <DialogContent className="max-w-md staff-theme rounded-xl bg-[var(--bg-surface)] border-border-card text-content-text">
         <DialogHeader>
           <DialogTitle className="text-content-heading">
             {isEdit ? "Chỉnh sửa gói dịch vụ" : "Tạo gói dịch vụ mới"}
@@ -250,7 +250,7 @@ function TierFormDialog({
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
               placeholder="VD: Free, Plus, Pro..."
-              className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
+              className="h-10 rounded-sm border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
             />
           </div>
 
@@ -266,7 +266,7 @@ function TierFormDialog({
                 value={form.amount}
                 onChange={(e) => set("amount", Number(e.target.value))}
                 placeholder="0"
-                className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
+                className="h-10 rounded-sm border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
               />
               <p className="text-[11px] text-content-subtle">
                 0 = Miễn phí
@@ -282,7 +282,7 @@ function TierFormDialog({
                 value={form.noMonth}
                 onChange={(e) => set("noMonth", Number(e.target.value))}
                 placeholder="1"
-                className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
+                className="h-10 rounded-sm border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
               />
             </div>
           </div>
@@ -298,7 +298,7 @@ function TierFormDialog({
               value={form.limitedToken}
               onChange={(e) => set("limitedToken", Number(e.target.value))}
               placeholder="VD: 50000"
-              className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
+              className="h-10 rounded-sm border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
             />
           </div>
 
@@ -312,7 +312,7 @@ function TierFormDialog({
                 type="button"
                 onClick={() => set("isActive", true)}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-[2px] border text-sm font-semibold transition-all",
+                  "flex items-center gap-2 px-4 py-2 rounded-sm border text-sm font-semibold transition-all",
                   form.isActive
                     ? "bg-[var(--status-success-bg)] border-[var(--status-success-border)] text-[var(--status-success)]"
                     : "bg-transparent border-card-light-border text-content-muted"
@@ -325,7 +325,7 @@ function TierFormDialog({
                 type="button"
                 onClick={() => set("isActive", false)}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-[2px] border text-sm font-semibold transition-all",
+                  "flex items-center gap-2 px-4 py-2 rounded-sm border text-sm font-semibold transition-all",
                   !form.isActive
                     ? "bg-[var(--status-neutral-bg)] border-[var(--status-neutral-border)] text-[var(--text-tertiary)]"
                     : "bg-transparent border-card-light-border text-content-muted"
@@ -342,14 +342,14 @@ function TierFormDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="rounded-[2px] border-card-light-border"
+            className="rounded-sm border-card-light-border"
           >
             Huỷ
           </Button>
           <Button
             onClick={() => onSave(form)}
             disabled={!isValid || isPending}
-            className="rounded-[2px] border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
+            className="rounded-sm border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
           >
             {isPending ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Tạo gói"}
           </Button>
@@ -429,7 +429,7 @@ export default function AdminSubscriptionsPageContent() {
         )}
 
         {/* Main card */}
-        <section className="rounded-[2px] border p-6 space-y-5 bg-[var(--bg-surface)] border-[var(--text-primary)]">
+        <section className="rounded-xl border p-6 space-y-5 bg-[var(--bg-surface)] border-border-card">
           {/* Header */}
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-0.5">
@@ -457,13 +457,13 @@ export default function AdminSubscriptionsPageContent() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="rounded-[2px] border animate-pulse h-56 bg-card-light-border"
+                  className="rounded-sm border animate-pulse h-56 bg-card-light-border"
                 />
               ))}
             </div>
           ) : tiers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
-              <div className="w-14 h-14 rounded-[2px] flex items-center justify-center bg-accent-gold/10 border border-accent-gold/20">
+              <div className="w-14 h-14 rounded-sm flex items-center justify-center bg-accent-gold/10 border border-accent-gold/20">
                 <Package className="w-7 h-7 text-accent-gold" />
               </div>
               <div className="text-center space-y-1">

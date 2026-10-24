@@ -35,16 +35,16 @@ export function StudyCalendar({ today, open, onOpenChange }: { today: string; op
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-[2px] border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-[var(--shadow-soft)] sm:max-w-[430px]">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-sm border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-[var(--shadow-soft)] sm:max-w-[430px]">
         <DialogHeader className="border-b border-[var(--text-primary)] pb-3">
           <DialogTitle className="archive-title text-[24px]">Chuỗi ngày học</DialogTitle>
           <DialogDescription className="text-[var(--text-tertiary)]">Các ngày đã học được đánh dấu trong lịch.</DialogDescription>
         </DialogHeader>
         <div>
           <div className="flex items-center justify-between gap-3">
-            <button type="button" onClick={() => moveMonth(-1)} disabled={!canGoBack} aria-label="Tháng trước" className="grid h-10 w-10 place-items-center rounded-[2px] border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors hover:enabled:bg-[var(--text-primary)] hover:enabled:text-[var(--text-inverse)] disabled:opacity-40"><ChevronLeft size={18} /></button>
+            <button type="button" onClick={() => moveMonth(-1)} disabled={!canGoBack} aria-label="Tháng trước" className="grid h-10 w-10 place-items-center rounded-sm border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors hover:enabled:bg-[var(--text-primary)] hover:enabled:text-[var(--text-inverse)] disabled:opacity-40"><ChevronLeft size={18} /></button>
             <strong className="font-display text-[18px] font-extrabold uppercase text-[var(--text-primary)]">Tháng {month}/{year}</strong>
-            <button type="button" onClick={() => moveMonth(1)} disabled={!canGoForward} aria-label="Tháng sau" className="grid h-10 w-10 place-items-center rounded-[2px] border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors hover:enabled:bg-[var(--text-primary)] hover:enabled:text-[var(--text-inverse)] disabled:opacity-40"><ChevronRight size={18} /></button>
+            <button type="button" onClick={() => moveMonth(1)} disabled={!canGoForward} aria-label="Tháng sau" className="grid h-10 w-10 place-items-center rounded-sm border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors hover:enabled:bg-[var(--text-primary)] hover:enabled:text-[var(--text-inverse)] disabled:opacity-40"><ChevronRight size={18} /></button>
           </div>
           <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
             {WEEKDAYS.map((day) => <span key={day}>{day}</span>)}
@@ -62,7 +62,7 @@ export function StudyCalendar({ today, open, onOpenChange }: { today: string; op
                   const key = dateKey(year, month, day);
                   const isFuture = key > today;
                   const isStudied = studied.has(key);
-                  return <button key={key} type="button" disabled={isFuture} onClick={() => setSelectedDate(key)} aria-label={`${day}/${month}/${year}: ${isStudied ? "đã học" : isFuture ? "chưa đến" : "chưa ghi nhận học"}`} aria-pressed={selectedDate === key} className={`grid aspect-square min-h-9 place-items-center rounded-[2px] border text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--accent-gold)] ${isStudied ? (key === today ? "border-[var(--accent-gold)] bg-[var(--accent-gold)] text-white" : "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]") : key === today ? "border-2 border-[var(--accent-gold)] bg-[var(--bg-elevated)] text-[var(--gold-on-light)]" : "border-[var(--border-strong)] bg-[var(--bg-elevated)] text-[var(--text-primary)]"} ${selectedDate === key ? "outline-2 outline-[var(--accent-gold)]" : ""} disabled:opacity-35`}>{isStudied ? <Check size={16} strokeWidth={3} /> : day}</button>;
+                  return <button key={key} type="button" disabled={isFuture} onClick={() => setSelectedDate(key)} aria-label={`${day}/${month}/${year}: ${isStudied ? "đã học" : isFuture ? "chưa đến" : "chưa ghi nhận học"}`} aria-pressed={selectedDate === key} className={`grid aspect-square min-h-9 place-items-center rounded-sm border text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--accent-gold)] ${isStudied ? (key === today ? "border-[var(--accent-gold)] bg-[var(--accent-gold)] text-white" : "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]") : key === today ? "border-2 border-[var(--accent-gold)] bg-[var(--bg-elevated)] text-[var(--gold-on-light)]" : "border-[var(--border-strong)] bg-[var(--bg-elevated)] text-[var(--text-primary)]"} ${selectedDate === key ? "outline-2 outline-[var(--accent-gold)]" : ""} disabled:opacity-35`}>{isStudied ? <Check size={16} strokeWidth={3} /> : day}</button>;
                 })}
               </div>
               <p className="mt-3 text-xs text-[var(--text-tertiary)]" aria-live="polite">

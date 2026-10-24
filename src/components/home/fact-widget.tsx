@@ -87,7 +87,7 @@ export function FactWidget() {
         className="w-full h-full relative [transform-style:preserve-3d]"
       >
         {/* ── MẶT TRƯỚC (hiện khi chưa lật) ── */}
-        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] rounded-[2px] overflow-hidden border border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)] flex flex-col items-center justify-center gap-[18px]">
+        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] rounded-sm overflow-hidden border border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)] flex flex-col items-center justify-center gap-[18px]">
           {/* Họa tiết nền */}
           <div
             className="absolute inset-0 pointer-events-none"
@@ -97,12 +97,12 @@ export function FactWidget() {
             }}
           />
           {/* Viền vàng */}
-          <div className="absolute inset-3 rounded-[2px] border border-[var(--accent-gold)] pointer-events-none" />
-          <div className="absolute inset-[18px] rounded-[2px] border border-[var(--text-inverse)] opacity-15 pointer-events-none" />
+          <div className="absolute inset-3 rounded-sm border border-[var(--accent-gold)] pointer-events-none" />
+          <div className="absolute inset-[18px] rounded-sm border border-[var(--text-inverse)] opacity-15 pointer-events-none" />
 
           {/* Emblem */}
           <div className="relative z-[1] text-center">
-            <div className="w-16 h-16 rounded-[2px] border-[1.5px] border-[var(--accent-on-ink)] flex items-center justify-center mx-auto mb-3 text-[28px]">
+            <div className="w-16 h-16 rounded-sm border-[1.5px] border-[var(--accent-on-ink)] flex items-center justify-center mx-auto mb-3 text-[28px]">
               📜
             </div>
             <p className="m-0 font-display text-[22px] font-extrabold leading-[1.1] tracking-[0.04em] uppercase text-[var(--text-inverse)]">
@@ -138,7 +138,7 @@ export function FactWidget() {
         </div>
 
         {/* ── MẶT SAU (hiện sau khi lật) ── */}
-        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2px] overflow-hidden bg-[var(--bg-surface)] border border-[var(--text-primary)] flex flex-col">
+        <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-sm overflow-hidden bg-[var(--bg-surface)] border border-border-card flex flex-col">
           {/* Header */}
           <div className="px-[18px] pt-4 pb-3.5 border-b border-[var(--text-primary)]">
             <div className="flex items-center justify-between mb-2">
@@ -146,14 +146,14 @@ export function FactWidget() {
                 📅 Sự kiện hôm nay
               </span>
               {fact.year && (
-                <span className="font-display text-[13px] font-extrabold text-white bg-[var(--accent-gold)] rounded-[2px] px-2 py-0.5">
+                <span className="font-display text-[13px] font-extrabold text-white bg-[var(--accent-gold)] rounded-sm px-2 py-0.5">
                   {fact.year}
                 </span>
               )}
             </div>
             <div className="flex flex-wrap gap-[5px]">
               {fact.tags.map((tag) => (
-                <span key={tag} className="text-[10px] px-2 py-0.5 rounded-[2px] border border-[var(--border-strong)] text-[var(--text-secondary)] font-semibold">
+                <span key={tag} className="text-[10px] px-2 py-0.5 rounded-sm border border-[var(--border-strong)] text-[var(--text-secondary)] font-semibold">
                   {tag}
                 </span>
               ))}

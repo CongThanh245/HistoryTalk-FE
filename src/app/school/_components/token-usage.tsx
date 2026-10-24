@@ -84,7 +84,7 @@ export function ClassTokenUsagePanel() {
                     </span>
                   </span>
                   <span className="col-span-2 flex items-center gap-2 sm:col-span-1">
-                    <span className="h-2 flex-1 overflow-hidden rounded-[2px] bg-[var(--border-default)]">
+                    <span className="h-2 flex-1 overflow-hidden rounded-sm bg-[var(--border-default)]">
                       <span
                         className="block h-full bg-[var(--accent-gold)]"
                         style={{ width: r.tokensUsedTotal > 0 ? `${Math.max(2, (r.tokensUsedTotal / max) * 100)}%` : "0%" }}
@@ -93,7 +93,7 @@ export function ClassTokenUsagePanel() {
                     <span className="w-12 text-right text-xs tabular-nums text-content-muted">{r.percentageOfSchoolUsage.toFixed(1)}%</span>
                   </span>
                   <span className="text-right">
-                    <span className="block font-display text-lg font-extrabold tabular-nums text-content-heading">{formatNumber(r.tokensUsedTotal)}</span>
+                    <span className="block text-lg font-bold tabular-nums text-content-heading">{formatNumber(r.tokensUsedTotal)}</span>
                     <span className="block text-[11px] text-content-muted">tổng</span>
                   </span>
                   <span className="hidden text-right sm:block">
@@ -150,7 +150,7 @@ export function ClassStudentsTokenDialog({
           ) : (
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-[var(--bg-surface)]">
-                <tr className="border-b border-[var(--border-strong)] text-left text-[11px] uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                <tr className="border-b border-[var(--border-strong)] text-left text-[13px] text-[var(--text-tertiary)]">
                   <th className="py-2 font-semibold">Học sinh</th>
                   <th className="py-2 text-right font-semibold">Tổng</th>
                   <th className="py-2 text-right font-semibold">Hôm nay</th>

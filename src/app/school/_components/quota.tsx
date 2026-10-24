@@ -39,8 +39,8 @@ function QuotaFigure({ label, value, tone, hint }: { label: string; value: numbe
         tone === "gold" ? "border-[var(--gold-leaf)]" : tone === "jade" ? "border-[var(--jade)]" : "border-[var(--border-strong)]",
       )}
     >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</p>
-      <p className="font-display text-2xl font-extrabold tabular-nums text-content-heading">{formatNumber(value)}</p>
+      <p className="text-[13px] font-semibold text-[var(--text-tertiary)]">{label}</p>
+      <p className="text-2xl font-bold tabular-nums text-content-heading">{formatNumber(value)}</p>
       {hint && <p className="text-xs text-content-muted">{hint}</p>}
     </div>
   );
@@ -132,9 +132,9 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
   return (
     <section
       aria-label="Quỹ token năm học"
-      className="overflow-hidden rounded-[2px] border-2 border-[var(--text-primary)] bg-[var(--bg-surface)] shadow-[6px_6px_0_var(--accent-gold)]"
+      className="overflow-hidden rounded-xl border border-border-card bg-[var(--bg-surface)] shadow-[var(--shadow-soft)]"
     >
-      <div className="flex flex-col gap-3 border-b border-[var(--border-strong)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-[var(--border-default)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <SchoolIcon className="h-6 w-6 shrink-0 text-[var(--accent-gold)]" aria-hidden="true" />
           <div className="min-w-0">
@@ -145,7 +145,7 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
         <div className="flex flex-wrap items-center gap-2">
           <PackageBadge packageType={quota.packageType} />
           {dash?.status && (
-            <span className="rounded-[2px] bg-[var(--status-success-bg)] px-2 py-0.5 text-[11px] font-bold text-[var(--status-success)]">
+            <span className="rounded-sm bg-[var(--status-success-bg)] px-2 py-0.5 text-[11px] font-bold text-[var(--status-success)]">
               {SCHOOL_STATUS_LABELS[dash.status] ?? dash.status}
               {left != null && left >= 0 && ` · còn ${formatNumber(left)} ngày`}
             </span>
@@ -155,12 +155,12 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
 
       <div className="grid gap-6 px-5 py-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="space-y-3">
-          <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.1em] text-content-muted">
+          <p className="flex items-center gap-2 text-[12px] font-semibold text-content-muted">
             <Coins className="h-4 w-4 text-[var(--accent-gold)]" aria-hidden="true" /> Token còn lại trong quỹ năm học
           </p>
           <p
             className={cn(
-              "font-display text-[52px] font-extrabold leading-none tabular-nums sm:text-[64px]",
+              "text-[40px] font-bold leading-none tracking-tight tabular-nums sm:text-[48px]",
               level === "danger" ? "text-[var(--accent-danger)]" : level === "warn" ? "text-[var(--status-warning)]" : "text-[var(--jade)]",
             )}
           >
@@ -191,7 +191,7 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
           <Link
             href={ROUTES.SCHOOL.TOKENS}
             className={cn(
-              "flex items-center gap-3 rounded-[2px] border px-3 py-2.5 motion-safe:transition-colors",
+              "flex items-center gap-3 rounded-sm border px-3 py-2.5 motion-safe:transition-colors",
               pending > 0
                 ? "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] hover:border-[var(--status-warning)]"
                 : "border-[var(--border-default)] hover:border-[var(--text-primary)]",
@@ -199,8 +199,8 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
           >
             <Zap className={cn("h-4 w-4 shrink-0", pending > 0 ? "text-[var(--status-warning)]" : "text-content-muted")} aria-hidden="true" />
             <span className="min-w-0 flex-1">
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">Yêu cầu xin thêm token</span>
-              <span className="font-display text-xl font-extrabold tabular-nums text-content-heading">{formatNumber(pending)}</span>
+              <span className="block text-[13px] font-semibold text-content-muted">Yêu cầu xin thêm token</span>
+              <span className="text-xl font-bold tabular-nums text-content-heading">{formatNumber(pending)}</span>
               <span className="ml-1.5 text-xs text-content-muted">{pending > 0 ? "đang chờ duyệt" : "không có yêu cầu"}</span>
             </span>
             {pending > 0 && <span className="text-xs font-bold text-[var(--status-warning)]">Duyệt →</span>}
@@ -208,7 +208,7 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-[var(--border-strong)] bg-[var(--bg-elevated)] px-5 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 border-t border-[var(--border-default)] bg-[var(--bg-elevated)] px-5 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="inline-flex items-center gap-1.5">
             <CalendarRange className="h-4 w-4 text-[var(--accent-gold)]" aria-hidden="true" />
@@ -248,10 +248,10 @@ export function PoolStrip() {
   const total = Math.max(0, q.data.totalSchoolTokenQuota);
   const remaining = Math.max(0, q.data.unallocatedTokenQuota);
   return (
-    <div className="flex flex-col gap-3 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3 sm:flex-row sm:items-center">
+    <div className="flex flex-col gap-3 rounded-lg border border-border-card bg-[var(--bg-surface)] px-4 py-3 sm:flex-row sm:items-center">
       <Coins className="hidden h-5 w-5 shrink-0 text-[var(--accent-gold)] sm:block" aria-hidden="true" />
       <p className="shrink-0 text-sm">
-        Quỹ chung còn <b className="font-display text-lg tabular-nums text-[var(--jade)]">{formatNumber(remaining)}</b>
+        Quỹ chung còn <b className="text-lg font-bold tabular-nums text-[var(--jade)]">{formatNumber(remaining)}</b>
         <span className="text-content-muted"> / {formatNumber(total)} token</span>
       </p>
       <TokenBar used={total - remaining} quota={total} className="h-2 sm:flex-1" />
@@ -264,11 +264,11 @@ export function PoolStrip() {
 
 function MiniStat({ icon: Icon, label, value }: { icon: typeof Coins; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-[2px] border border-[var(--border-default)] px-3 py-2.5">
+    <div className="flex items-center gap-3 rounded-sm border border-[var(--border-default)] px-3 py-2.5">
       <Icon className="h-4 w-4 shrink-0 text-content-muted" aria-hidden="true" />
       <span>
-        <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-content-muted">{label}</span>
-        <span className="font-display text-xl font-extrabold tabular-nums text-content-heading">{value}</span>
+        <span className="block text-[13px] font-semibold text-content-muted">{label}</span>
+        <span className="text-xl font-bold tabular-nums text-content-heading">{value}</span>
       </span>
     </div>
   );
@@ -289,21 +289,21 @@ export function SubscriptionSummary({ data }: { data: SchoolAdminDashboard }) {
     <div className="space-y-3">
       <dl className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-1">
-          <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Năm học của gói</dt>
+          <dt className="text-[13px] font-semibold text-[var(--text-tertiary)]">Năm học của gói</dt>
           <dd className="flex items-center gap-2 font-semibold text-content-heading">
             <CalendarRange className="h-4 w-4 text-[var(--accent-gold)]" aria-hidden="true" />
             {data.subscriptionStartDate && end ? `${formatDate(data.subscriptionStartDate)} – ${formatDate(end)}` : "—"}
           </dd>
         </div>
         <div className="space-y-1">
-          <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Trạng thái</dt>
+          <dt className="text-[13px] font-semibold text-[var(--text-tertiary)]">Trạng thái</dt>
           <dd className="font-semibold text-content-heading">
             {data.status ? SCHOOL_STATUS_LABELS[data.status] ?? data.status : "—"}
             {left != null && left >= 0 && <span className="font-normal text-content-muted"> · còn {formatNumber(left)} ngày</span>}
           </dd>
         </div>
         <div className="space-y-1">
-          <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Năm học tới</dt>
+          <dt className="text-[13px] font-semibold text-[var(--text-tertiary)]">Năm học tới</dt>
           <dd className="font-semibold text-content-heading">
             {data.renewedForNextYear
               ? `Đã gia hạn${data.nextPackageType ? ` · ${PACKAGE_SHORT_LABELS[data.nextPackageType]}` : ""}`

@@ -54,7 +54,7 @@ function DocumentContent({ content, quote }: { content: string; quote?: string |
           <mark
             key={i}
             ref={markRef}
-            className="rounded-[2px] px-0.5 bg-(--accent-gold-glow) text-inherit"
+            className="rounded-sm px-0.5 bg-(--accent-gold-glow) text-inherit"
           >
             {part.text}
           </mark>
@@ -80,7 +80,7 @@ function PanelHeader({ title, onClose }: { title: string; onClose: () => void })
       <button
         onClick={onClose}
         aria-label="Đóng"
-        className="flex items-center justify-center transition-colors border rounded-[2px] cursor-pointer w-7 h-7 shrink-0 active:scale-95 bg-transparent border-[var(--text-primary)] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+        className="flex items-center justify-center transition-colors border rounded-sm cursor-pointer w-7 h-7 shrink-0 active:scale-95 bg-transparent border-[var(--text-primary)] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
       >
         <X size={13} strokeWidth={3} />
       </button>
@@ -196,7 +196,7 @@ export function DocumentCitationDialog({
     return (
       <div className="flex flex-col gap-3 px-5 py-4">
         <div
-          className="flex items-start gap-2 p-3 text-sm border rounded-[2px] border-(--status-warning-border) bg-(--status-warning-bg) text-content-text"
+          className="flex items-start gap-2 p-3 text-sm border rounded-sm border-(--status-warning-border) bg-(--status-warning-bg) text-content-text"
         >
           <AlertTriangle size={16} className="shrink-0 mt-0.5" />
           <span>

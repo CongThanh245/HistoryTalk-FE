@@ -76,10 +76,10 @@ export function HistoricalContextHoverCard({
           {isLoading ? (
             <div className="mt-2 space-y-1.5">
               <div
-                className="h-2.5 w-full animate-pulse rounded-[2px] bg-card-border"
+                className="h-2.5 w-full animate-pulse rounded-sm bg-card-border"
               />
               <div
-                className="h-2.5 w-4/5 animate-pulse rounded-[2px] bg-card-border"
+                className="h-2.5 w-4/5 animate-pulse rounded-sm bg-card-border"
               />
             </div>
           ) : (

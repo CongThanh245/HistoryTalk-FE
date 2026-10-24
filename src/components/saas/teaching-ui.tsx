@@ -20,12 +20,12 @@ import {
 import type { AssignmentType, Classroom, LocalContentStatus, SubmissionStatus } from "@/features/saas/types";
 import { cn } from "@/lib/utils/cn";
 
-const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold";
+const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold";
 const SUCCESS = "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]";
 const WARNING = "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]";
 const DANGER = "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--accent-danger)]";
 const NEUTRAL = "border-[var(--border-strong)] bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]";
-const INK = "border-[var(--text-primary)] bg-transparent text-[var(--text-primary)]";
+const INK = "border-border-card bg-transparent text-[var(--text-primary)]";
 
 /* ───────────────────────── Badges ───────────────────────── */
 
@@ -124,7 +124,7 @@ export function ProgressBar({ done, total, className, label }: { done: number; t
   return (
     <div className={cn("flex min-w-[140px] items-center gap-2", className)}>
       <div
-        className="h-2 flex-1 overflow-hidden rounded-[2px] bg-[var(--status-neutral-bg)] ring-1 ring-inset ring-[var(--border-default)]"
+        className="h-2 flex-1 overflow-hidden rounded-sm bg-[var(--status-neutral-bg)] ring-1 ring-inset ring-[var(--border-default)]"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
@@ -159,12 +159,12 @@ export function KpiTile({
   accent?: string;
 }) {
   return (
-    <div className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4">
+    <div className="rounded-sm border border-border-card bg-[var(--bg-surface)] p-4">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</p>
+        <p className="text-[13px] font-semibold text-[var(--text-tertiary)]">{label}</p>
         {icon}
       </div>
-      <p className={cn("mt-1 font-display text-3xl font-extrabold leading-[1.2] tabular-nums text-content-heading", accent)}>{value}</p>
+      <p className={cn("mt-1 text-3xl font-bold leading-[1.2] tabular-nums text-content-heading", accent)}>{value}</p>
       {hint && <p className="mt-1 text-xs text-content-muted">{hint}</p>}
     </div>
   );
@@ -210,7 +210,7 @@ export function ClassCheckboxList({
 }) {
   if (classes.length === 0) return <p className="text-sm text-content-muted">Bạn chưa được phân công lớp nào.</p>;
   return (
-    <ul className="divide-y divide-[var(--border-default)] rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)]">
+    <ul className="divide-y divide-[var(--border-default)] rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)]">
       {classes.map((c) => {
         const checked = value.includes(c.id);
         return (
@@ -236,20 +236,54 @@ export function ClassCheckboxList({
   );
 }
 
-/** Row of segmented filter buttons. */
+/**
+ * Filter row with a muted count beside each label.
+ * "tabs": underlined, the page's main filter. "pills": segmented control, for a second filter under other tabs.
+ */
 export function SegmentedFilter<T extends string>({
   value,
   onChange,
   options,
   label,
+  variant = "tabs",
+  className,
 }: {
   value: T;
   onChange: (v: T) => void;
   options: { value: T; label: string; count?: number }[];
   label: string;
+  variant?: "tabs" | "pills";
+  className?: string;
 }) {
+  if (variant === "pills") {
+    return (
+      <div role="group" aria-label={label} className={cn("inline-flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-lg bg-[var(--status-neutral-bg)] p-0.5 [scrollbar-width:none]", className)}>
+        {options.map((o) => {
+          const active = o.value === value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onChange(o.value)}
+              className={cn(
+                "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
+                active
+                  ? "bg-[var(--bg-elevated)] font-semibold text-content-heading shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                  : "font-medium text-[var(--text-tertiary)] hover:text-content-heading",
+              )}
+            >
+              {o.label}
+              {o.count != null && <span className="text-xs font-normal tabular-nums text-content-subtle">{o.count}</span>}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap gap-1.5">
+    // The rule is an inset shadow, so the 2px underline of the active tab sits on it without overflowing the scroller.
+    <div role="group" aria-label={label} className={cn("flex gap-6 overflow-x-auto shadow-[inset_0_-1px_0_var(--border-default)] [scrollbar-width:none]", className)}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -259,14 +293,14 @@ export function SegmentedFilter<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              "inline-flex h-8 items-center gap-1.5 rounded-[2px] border px-3 text-xs font-bold transition-colors",
+              "relative inline-flex h-10 shrink-0 items-center gap-1.5 border-b-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
               active
-                ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
-                : "border-[var(--border-strong)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]",
+                ? "border-[var(--accent-gold)] font-semibold text-content-heading"
+                : "border-transparent font-medium text-[var(--text-tertiary)] hover:text-content-heading",
             )}
           >
             {o.label}
-            {o.count != null && <span className="tabular-nums opacity-75">{o.count}</span>}
+            {o.count != null && <span className="text-xs font-normal tabular-nums text-content-subtle">{o.count}</span>}
           </button>
         );
       })}
@@ -274,15 +308,15 @@ export function SegmentedFilter<T extends string>({
   );
 }
 
-/** Plain table shell matching StaffDataTable (ink rules, horizontal scroll on phones). */
+/** Plain table shell matching StaffDataTable (framed, tinted header row, horizontal scroll on phones). */
 export function TableShell({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]", className)}>
+    <div className={cn("overflow-x-auto rounded-lg border border-border-card bg-[var(--bg-surface)] [&_thead_tr]:bg-[var(--bg-deep)] [&_thead_tr]:border-border-card", className)}>
       <table className="w-full min-w-max caption-bottom text-sm">{children}</table>
     </div>
   );
 }
 
-export const TH = "h-10 whitespace-nowrap px-4 text-left align-middle text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]";
-export const TD = "px-4 py-2.5 align-middle";
-export const TR = "border-b border-[var(--border-default)] last:border-b-0 hover:bg-[var(--status-neutral-bg)]";
+export const TH = "h-12 whitespace-nowrap px-4 text-left align-middle text-[13px] font-semibold text-[var(--text-secondary)]";
+export const TD = "px-4 py-3 align-middle";
+export const TR = "border-b border-[var(--border-default)] last:border-b-0 hover:bg-[var(--bg-elevated)]";

@@ -17,7 +17,7 @@ function formatDate(iso: string): string {
 // ── Skeleton ──────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="flex flex-col gap-2 sm:gap-3 p-3 sm:p-4 animate-pulse rounded-[2px] border bg-[var(--bg-surface)] border-[var(--text-primary)]">
+    <div className="flex flex-col gap-2 sm:gap-3 p-3 sm:p-4 animate-pulse rounded-sm border bg-[var(--bg-surface)] border-[var(--text-primary)]">
       <div className="w-10 h-8 bg-card-light-border" />
       <div className="space-y-2">
         <div className="h-3 w-3/4 rounded bg-card-light-border" />
@@ -37,7 +37,7 @@ function RecentQuizCard({ item }: { item: DashboardRecentQuiz }) {
         : "var(--burning-flame)";
 
   return (
-    <div className="flex flex-col gap-2 sm:gap-3 p-3 sm:p-4 rounded-[2px] border bg-[var(--bg-surface)] border-[var(--text-primary)]">
+    <div className="flex flex-col gap-2 sm:gap-3 p-3 sm:p-4 rounded-sm border bg-[var(--bg-surface)] border-[var(--text-primary)]">
       {/* Score + icon */}
       <div className="flex items-start justify-between pb-2 border-b border-[var(--border-default)]">
         <span className="font-display text-3xl sm:text-4xl font-extrabold leading-none" style={{ color }}>

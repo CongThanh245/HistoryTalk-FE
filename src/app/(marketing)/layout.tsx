@@ -8,7 +8,7 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative">
+    <div className="marketing-site min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative">
       {/* Background pattern */}
       <div className="fixed inset-0 pointer-events-none -z-10 opacity-[0.05] bg-[url('/copper_drum_pattern.webp')] bg-no-repeat bg-[length:900px] bg-[position:85%_110%]" />
 

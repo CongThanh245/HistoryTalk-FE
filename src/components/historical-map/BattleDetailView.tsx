@@ -132,6 +132,7 @@ export function BattleDetailView({
     key={pin?.pinId ?? "no-pin"}
     initialValue={savedMap ?? event.battleMap ?? legacyDraft ?? emptyBattleMap()}
     title={event.title}
+    draftId={`event:${event.id}`}
     onClose={onCloseEditor}
     legacyNarration={pin?.description ?? ""}
     onSave={async value => {
@@ -512,7 +513,7 @@ function BattleChat({
             aria-label="Lịch sử trò chuyện"
             aria-expanded={historyOpen}
             className={cn(
-              "grid h-9 w-9 shrink-0 place-items-center rounded-[2px] border transition",
+              "grid h-9 w-9 shrink-0 place-items-center rounded-sm border transition",
               historyOpen
                 ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
                 : "border-[var(--border-strong)] text-[var(--text-secondary)] hover:border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]",
@@ -529,7 +530,7 @@ function BattleChat({
           disabled={busy}
           title="Cuộc trò chuyện mới"
           aria-label="Tạo cuộc trò chuyện mới"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-[2px] border border-[var(--border-strong)] text-[var(--text-secondary)] transition hover:border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] disabled:opacity-40"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-[var(--border-strong)] text-[var(--text-secondary)] transition hover:border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] disabled:opacity-40"
         >
           {createSession.isPending ? (
             <Loader2 size={14} className="animate-spin" />
@@ -543,7 +544,7 @@ function BattleChat({
           onClick={onClose}
           aria-label="Thu gọn trò chuyện"
           title="Thu gọn trò chuyện"
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] text-[var(--text-secondary)] transition hover:border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] text-[var(--text-secondary)] transition hover:border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
         >
           <X size={18} />
         </button>
@@ -564,7 +565,7 @@ function BattleChat({
                     type="button"
                     onClick={() => handleSelectSession(s.id)}
                     className={cn(
-                      "flex w-full items-start gap-2 rounded-[2px] border-b border-[var(--border-default)] px-3 py-2 pr-8 text-left transition-colors",
+                      "flex w-full items-start gap-2 rounded-sm border-b border-[var(--border-default)] px-3 py-2 pr-8 text-left transition-colors",
                       isActive
                         ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
                         : "text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover-bg)]",
@@ -598,7 +599,7 @@ function BattleChat({
                       if (activeSessionId === s.id) setActiveSessionId(null);
                     }}
                     className={cn(
-                      "absolute right-2 top-1/2 -translate-y-1/2 hidden place-items-center rounded-[2px] p-1 transition group-hover:grid",
+                      "absolute right-2 top-1/2 -translate-y-1/2 hidden place-items-center rounded-sm p-1 transition group-hover:grid",
                       isActive
                         ? "text-[var(--text-inverse)] hover:text-[var(--accent-on-ink)]"
                         : "text-[var(--text-tertiary)] hover:bg-[var(--status-danger-bg)] hover:text-[var(--accent-danger)]",
@@ -642,7 +643,7 @@ function BattleChat({
         )}
         {!loading && !loadError && !history.data?.messages.length && !pendingText && (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
-            <div className="grid h-12 w-12 place-items-center rounded-[2px] border border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)]">
+            <div className="grid h-12 w-12 place-items-center rounded-sm border border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)]">
               <MessageCircle size={20} className="text-[var(--gold-on-light)]" />
             </div>
             <p className="text-sm text-[var(--text-secondary)]">
@@ -661,7 +662,7 @@ function BattleChat({
                 <div
                   key={i}
                   className={cn(
-                    "max-w-[90%] min-w-0 overflow-x-auto break-words rounded-[2px] px-3 py-2 text-sm leading-6",
+                    "max-w-[90%] min-w-0 overflow-x-auto break-words rounded-sm px-3 py-2 text-sm leading-6",
                     isUser
                       ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
                       : "border-[var(--accent-gold)] bg-[var(--bg-main)] text-[var(--text-secondary)]",
@@ -676,7 +677,7 @@ function BattleChat({
         {pendingText && (
           <>
             <div className="flex justify-end">
-              <p className="max-w-[90%] break-words rounded-[2px] bg-[var(--text-primary)] px-3 py-2 text-sm text-[var(--text-inverse)]">
+              <p className="max-w-[90%] break-words rounded-sm bg-[var(--text-primary)] px-3 py-2 text-sm text-[var(--text-inverse)]">
                 {pendingText}
               </p>
             </div>
@@ -695,7 +696,7 @@ function BattleChat({
             {error}
           </p>
         )}
-        <div className="flex items-end gap-2 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] p-2 focus-within:border-[var(--accent-gold)]">
+        <div className="flex items-end gap-2 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] p-2 focus-within:border-[var(--accent-gold)]">
           <textarea
             ref={inputRef}
             aria-label="Tin nhắn"
@@ -717,7 +718,7 @@ function BattleChat({
             disabled={!draft.trim() || busy || loading || loadError}
             aria-label="Gửi tin nhắn"
             title="Gửi tin nhắn"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-[2px] bg-[var(--accent-gold)] text-white transition-colors hover:bg-[var(--accent-bronze)] disabled:opacity-40"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-[var(--accent-gold)] text-white transition-colors hover:bg-[var(--accent-bronze)] disabled:opacity-40"
           >
             {busy ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </button>

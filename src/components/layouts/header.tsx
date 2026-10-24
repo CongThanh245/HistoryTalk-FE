@@ -1,82 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils/cn";
 import { SearchInputWithSuggestions } from "@/components/commons/search-input-with-suggestions";
+import Breadcrumbs from "@/components/commons/breadcrumbs";
 import { useAuthStore } from "@/store/auth.store";
-import { GreetingSection } from "../home/greeting-section";
 import { MagneticButton } from "../commons/MagneticButton";
 import { useSidebar } from "./sidebar/sidebar-context";
-import { UserProfileDropdown } from "./user-profile-dropdown";
-import { ThemeToggle } from "./theme-toggle";
 
-export default function Header() {
+/**
+ * One slim bar above the page: where you are (breadcrumbs) on the left, search on the right.
+ * The account menu and theme switch live at the bottom of the sidebar.
+ */
+export default function Header({ showSearch = true }: { showSearch?: boolean }) {
   const user = useAuthStore((s) => s.user);
   const { toggleMobileSidebar } = useSidebar();
-  const [isCompact, setIsCompact] = useState(false);
-
-  useEffect(() => {
-    // The scroll container is the <main> element with overflow-y-auto
-    const scrollEl = document.querySelector("main");
-    if (!scrollEl) return;
-    const onScroll = () => {
-      setIsCompact(scrollEl.scrollTop > 10);
-    };
-    scrollEl.addEventListener("scroll", onScroll, { passive: true });
-    return () => scrollEl.removeEventListener("scroll", onScroll);
-  }, []);
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-50 w-full border-b border-[var(--text-primary)] backdrop-blur-md bg-header-bg transition-[height] duration-200 ease-in-out",
-        isCompact ? "h-12" : "h-16",
-      )}
-    >
-      <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
+    <header className="sticky top-0 z-50 h-14 w-full shrink-0 border-b border-[var(--border-default)] bg-header-bg backdrop-blur-md">
+      <div className="flex h-full items-center gap-3 px-3 md:px-6">
         {/* Mobile hamburger — opens sidebar drawer */}
         <button
           onClick={toggleMobileSidebar}
-          aria-label="Open menu"
-          className="md:hidden flex items-center justify-center w-9 h-9 rounded-[2px] border transition-colors shrink-0 text-header-text-muted border-[var(--border-strong)] bg-transparent hover:border-[var(--text-primary)] hover:text-header-text"
+          aria-label="Mở menu"
+          className="md:hidden flex items-center justify-center w-9 h-9 rounded-sm transition-colors shrink-0 text-header-text-muted hover:bg-[var(--sidebar-hover-bg)] hover:text-header-text"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor">
             <path d="M2 4.5h14M2 9h14M2 13.5h14" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
 
-        {/* Search — hidden on mobile, visible on md+ */}
-        <div className="hidden md:flex flex-1 max-w-md">
-          <SearchInputWithSuggestions
-            placeholder="Tìm kiếm sự kiện, nhân vật..."
-          />
+        <div className="min-w-0 flex-1">
+          <Breadcrumbs inline />
         </div>
 
-        {/* Spacer on mobile so auth section pushes right */}
-        <div className="flex-1 md:hidden" />
+        {showSearch && (
+          <div className="hidden md:flex w-full max-w-sm shrink">
+            <SearchInputWithSuggestions placeholder="Tìm sự kiện, nhân vật..." />
+          </div>
+        )}
 
-        <div className="flex items-center gap-2 shrink-0">
-          <ThemeToggle />
-
-          {user ? (
-            /* --- TRẠNG THÁI ĐÃ ĐĂNG NHẬP --- */
-            <>
-              <GreetingSection />
-
-              <UserProfileDropdown showDiscovery={false} />
-            </>
-          ) : (
-            /* --- TRẠNG THÁI CHƯA ĐĂNG NHẬP --- */
-            <MagneticButton
-              href="/login"
-              variant="header"
-              rounded="full"
-              size="sm"
-            >
-              Đăng nhập
-            </MagneticButton>
-          )}
-        </div>
+        {!user && (
+          <MagneticButton href="/login" variant="header" rounded="full" size="sm">
+            Đăng nhập
+          </MagneticButton>
+        )}
       </div>
     </header>
   );

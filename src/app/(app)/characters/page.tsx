@@ -52,7 +52,6 @@ export default async function CharactersPage({
         label="Nhân vật"
         title="Nhân vật lịch sử"
         description="Trò chuyện với những nhân vật đã làm nên lịch sử Việt Nam"
-        className="mb-0"
       />
       <HydrationBoundary state={dehydrate(queryClient)}>
         <CharactersClient />

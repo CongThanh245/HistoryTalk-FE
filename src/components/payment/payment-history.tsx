@@ -73,6 +73,11 @@ function getStatusConfig(status: string) {
       icon: <Hourglass size={13} />,
       classes: "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]",
     },
+    EXPIRED: {
+      label: "Hết hạn",
+      icon: <Timer size={13} />,
+      classes: "border-[var(--status-neutral-border)] bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]",
+    },
   } as const;
 
   return (
@@ -89,7 +94,7 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 text-[10px] font-bold uppercase tracking-[0.1em] ${cfg.classes}`}
+      className={`inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-xs font-semibold ${cfg.classes}`}
     >
       {cfg.icon}
       {cfg.label}
@@ -103,7 +108,7 @@ const LEDGER_GRID =
 function LedgerHeader() {
   return (
     <div
-      className={`hidden border-b border-[var(--text-primary)] bg-[var(--bg-elevated)] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)] sm:px-5 ${LEDGER_GRID}`}
+      className={`hidden border-b border-[var(--border-default)] bg-[var(--bg-deep)] px-4 py-2.5 text-[13px] font-semibold text-[var(--text-secondary)] sm:px-5 ${LEDGER_GRID}`}
     >
       <span>Đơn hàng</span>
       <span>Thời gian</span>
@@ -125,7 +130,7 @@ function HistoryRow({ item, index }: { item: PaymentHistoryItem; index: number }
       <div className="absolute inset-y-0 left-0 w-[3px] bg-transparent transition-colors group-hover:bg-[var(--accent-gold)]" />
 
       <div className="flex min-w-0 items-center gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-[2px] border border-[var(--border-strong)] text-[var(--gold-on-light)]">
+        <span className="grid size-9 shrink-0 place-items-center rounded-sm border border-[var(--border-strong)] text-[var(--gold-on-light)]">
           <Package size={17} />
         </span>
         <div className="min-w-0">
@@ -163,7 +168,7 @@ function HistoryRow({ item, index }: { item: PaymentHistoryItem; index: number }
       </div>
 
       <div className="mt-3 flex items-end justify-between gap-4 border-t border-dashed border-[var(--border-default)] pt-3 md:mt-0 md:block md:border-t-0 md:pt-0 md:text-right">
-        <p className="font-display text-xl font-extrabold leading-none tabular-nums text-[var(--text-primary)]">
+        <p className="text-xl font-bold leading-none tabular-nums text-[var(--text-primary)]">
           {formatCurrency(item.amount)}
         </p>
         <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
@@ -178,14 +183,14 @@ function SkeletonRow() {
   return (
     <div className="px-4 py-4 sm:px-5">
       <div className="flex animate-pulse gap-4">
-        <div className="size-9 rounded-[2px] bg-[var(--bg-deep)]" />
+        <div className="size-9 rounded-sm bg-[var(--bg-deep)]" />
         <div className="flex-1 space-y-3">
-          <div className="h-4 w-1/3 rounded-[2px] bg-[var(--bg-deep)]" />
-          <div className="h-3 w-1/2 rounded-[2px] bg-[var(--bg-elevated)]" />
+          <div className="h-4 w-1/3 rounded-sm bg-[var(--bg-deep)]" />
+          <div className="h-3 w-1/2 rounded-sm bg-[var(--bg-elevated)]" />
         </div>
         <div className="hidden w-28 space-y-3 sm:block">
-          <div className="h-5 rounded-[2px] bg-[var(--bg-deep)]" />
-          <div className="h-3 rounded-[2px] bg-[var(--bg-elevated)]" />
+          <div className="h-5 rounded-sm bg-[var(--bg-deep)]" />
+          <div className="h-3 rounded-sm bg-[var(--bg-elevated)]" />
         </div>
       </div>
     </div>
@@ -193,7 +198,7 @@ function SkeletonRow() {
 }
 
 const OUTLINE_BUTTON =
-  "rounded-[2px] border-[var(--text-primary)] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]";
+  "rounded-sm border-border-card text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]";
 
 function AdminToolbar({
   search,
@@ -211,9 +216,9 @@ function AdminToolbar({
   total: number;
 }) {
   return (
-    <div className="flex flex-col gap-4 border-b border-[var(--text-primary)] pb-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex flex-col gap-4 border-b border-[var(--border-default)] pb-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="space-y-1">
-        <h2 className="archive-title text-xl">Danh sách giao dịch</h2>
+        <h2 className="text-lg font-semibold text-content-heading">Danh sách giao dịch</h2>
         <p className="text-sm text-[var(--text-tertiary)]">
           Hiển thị {count} giao dịch trên trang này · Tổng {total} giao dịch
           <FetchingBadge active={isFetching} />
@@ -227,7 +232,7 @@ function AdminToolbar({
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Tìm mã đơn, email, người dùng..."
-            className="h-10 rounded-[2px] border pl-10 bg-[var(--bg-main)] border-[var(--border-strong)] text-[var(--text-primary)] focus-visible:border-[var(--text-primary)]"
+            className="h-10 rounded-sm border pl-10 bg-[var(--bg-main)] border-[var(--border-strong)] text-[var(--text-primary)] focus-visible:border-[var(--text-primary)]"
           />
         </div>
         <Button
@@ -266,7 +271,7 @@ function PaginationBar({
 
   return (
     <div className="flex items-center justify-between gap-4 border-t border-[var(--border-default)] pt-4">
-      <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+      <p className="text-[13px] font-semibold text-[var(--text-tertiary)]">
         Trang {page + 1}/{totalPages}
       </p>
       <div className="flex items-center gap-2">
@@ -426,7 +431,7 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
         accessorKey: "amount",
         header: "Giá trị",
         cell: ({ row }) => (
-          <span className="font-display text-base font-extrabold tabular-nums text-[var(--text-primary)]">
+          <span className="text-base font-bold tabular-nums text-[var(--text-primary)]">
             {formatCurrency(row.original.amount)}
           </span>
         ),
@@ -495,12 +500,12 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
           </StaffStatsGrid>
 
           {isError && (
-            <div className="rounded-[2px] border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-4 text-sm font-medium text-[var(--accent-danger)]">
+            <div className="rounded-sm border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-4 text-sm font-medium text-[var(--accent-danger)]">
               Không thể tải lịch sử giao dịch. Vui lòng thử lại sau.
             </div>
           )}
 
-          <section className="space-y-5 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-5 sm:p-6">
+          <section className="space-y-5 rounded-sm border border-border-card bg-[var(--bg-surface)] p-5 sm:p-6">
             <AdminToolbar
               search={search}
               onSearchChange={setSearch}
@@ -564,17 +569,17 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
         </button>
       </header>
 
-      <dl className="grid grid-cols-3 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
+      <dl className="grid grid-cols-3 rounded-sm border border-border-card bg-[var(--bg-surface)]">
         {customerStats.map((stat, i) => (
           <div
             key={stat.label}
             className={`min-w-0 px-3 py-4 sm:px-5 ${i > 0 ? "border-l border-[var(--border-default)]" : ""}`}
           >
-            <dt className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+            <dt className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-tertiary)]">
               <span className={`shrink-0 ${stat.tone}`}>{stat.icon}</span>
               <span className="truncate">{stat.label}</span>
             </dt>
-            <dd className="mt-2 font-display text-3xl font-extrabold leading-none tabular-nums text-[var(--text-primary)]">
+            <dd className="mt-2 text-3xl font-bold leading-none tabular-nums text-[var(--text-primary)]">
               {isLoading ? "--" : stat.value}
             </dd>
           </div>
@@ -582,13 +587,13 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
       </dl>
 
       {isError && (
-        <div className="rounded-[2px] border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-4 text-center text-sm font-medium text-[var(--accent-danger)]">
+        <div className="rounded-sm border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-4 text-center text-sm font-medium text-[var(--accent-danger)]">
           Không thể tải lịch sử đơn hàng. Vui lòng thử lại sau.
         </div>
       )}
 
       {isLoading || items.length > 0 ? (
-        <div className="overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
+        <div className="overflow-hidden rounded-sm border border-border-card bg-[var(--bg-surface)]">
           <LedgerHeader />
           <div className="divide-y divide-[var(--border-default)]">
             {isLoading
@@ -597,22 +602,22 @@ export default function PaymentHistory({ variant = "customer" }: PaymentHistoryP
           </div>
 
           {items.length > 0 && (
-            <div className="flex flex-wrap items-baseline justify-between gap-3 border-t border-[var(--text-primary)] bg-[var(--bg-elevated)] px-4 py-3 sm:px-5">
-              <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+            <div className="flex flex-wrap items-baseline justify-between gap-3 border-t border-border-card bg-[var(--bg-elevated)] px-4 py-3 sm:px-5">
+              <span className="text-[13px] font-semibold text-[var(--text-tertiary)]">
                 Tổng đơn hàng: {summary.total} &nbsp;·&nbsp; Đã thanh toán
               </span>
-              <span className="font-display text-xl font-extrabold tabular-nums text-[var(--text-primary)]">
+              <span className="text-xl font-bold tabular-nums text-[var(--text-primary)]">
                 {formatCurrency(summary.totalPaid)}
               </span>
             </div>
           )}
         </div>
       ) : (
-        <div className="rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-surface)] p-10 text-center">
-          <div className="mx-auto grid size-14 place-items-center rounded-[2px] bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]">
+        <div className="rounded-sm border border-dashed border-[var(--border-strong)] bg-[var(--bg-surface)] p-10 text-center">
+          <div className="mx-auto grid size-14 place-items-center rounded-sm bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]">
             <Receipt size={28} />
           </div>
-          <h2 className="archive-title mt-4 text-xl">Chưa có giao dịch nào</h2>
+          <h2 className="mt-4 text-lg font-semibold text-content-heading">Chưa có giao dịch nào</h2>
           <p className="mt-1 text-sm text-[var(--text-tertiary)]">
             Chưa có giao dịch thanh toán nào trong hệ thống.
           </p>

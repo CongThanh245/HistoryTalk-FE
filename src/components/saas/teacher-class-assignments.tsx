@@ -19,12 +19,12 @@ import { cn } from "@/lib/utils/cn";
 
 /* ───────────────────────── Labels & badges ───────────────────────── */
 
-const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold";
+const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold";
 const SUCCESS = "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]";
 const WARNING = "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]";
 const DANGER = "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--accent-danger)]";
 const NEUTRAL = "border-[var(--border-strong)] bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]";
-const INK = "border-[var(--text-primary)] bg-transparent text-[var(--text-primary)]";
+const INK = "border-border-card bg-transparent text-[var(--text-primary)]";
 
 export const ASSIGNMENT_TYPES: AssignmentType[] = ["CONTEXT_READING", "AI_CHAT_ROLEPLAY", "QUIZ_TEST"];
 
@@ -156,7 +156,7 @@ export function AssignmentCounts({ assignment, className, compact }: { assignmen
         <div
           // Bang min-w-max: svg khong co kich thuoc se mac dinh rong 300px, nen co dinh be ngang khi gon.
           className={cn(
-            "h-2 overflow-hidden rounded-[2px] bg-[var(--status-neutral-bg)] ring-1 ring-inset ring-[var(--border-default)]",
+            "h-2 overflow-hidden rounded-sm bg-[var(--status-neutral-bg)] ring-1 ring-inset ring-[var(--border-default)]",
             compact ? "w-20" : "flex-1",
           )}
           role="progressbar"
@@ -230,7 +230,7 @@ export function TeacherClassAssignments({ classId, className }: { classId: strin
       />
 
       {query.isPending ? (
-        <div className="h-[132px] animate-pulse rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" aria-busy="true" />
+        <div className="h-[132px] animate-pulse rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" aria-busy="true" />
       ) : query.isError ? (
         apiErrorStatus(query.error) === 403 || apiErrorStatus(query.error) === 404 ? (
           <NoDataYet title="Không xem được bài tập của lớp này" description={apiErrorMessage(query.error, "Lớp không tồn tại hoặc bạn không phụ trách lớp này.")} />

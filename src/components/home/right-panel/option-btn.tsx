@@ -37,12 +37,12 @@ export function OptionBtn({
   return (
     <button
       onClick={onClick}
-      className={`rounded-[2px] border px-2.5 py-2 text-xs text-left flex items-center gap-2 w-full transition-colors duration-100 ${tone} ${
+      className={`rounded-sm border px-2.5 py-2 text-xs text-left flex items-center gap-2 w-full transition-colors duration-100 ${tone} ${
         answered ? "cursor-default" : "cursor-pointer"
       }`}
     >
       <span
-        className={`text-[10px] font-extrabold min-w-[20px] h-[20px] flex items-center justify-center rounded-[2px] border shrink-0 transition-colors duration-100 ${letterTone}`}
+        className={`text-[10px] font-extrabold min-w-[20px] h-[20px] flex items-center justify-center rounded-sm border shrink-0 transition-colors duration-100 ${letterTone}`}
       >
         {letters[index]}
       </span>

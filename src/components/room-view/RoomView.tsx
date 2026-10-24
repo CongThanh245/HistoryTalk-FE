@@ -97,7 +97,7 @@ export function RoomView({ room, onBack }: RoomViewProps) {
           <div className="absolute top-0 left-0 right-0 flex items-center gap-3 px-5 py-4 z-20 bg-gradient-to-b from-black/55 to-transparent">
             <button
               onClick={handleBack}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.1em] backdrop-blur-sm transition-colors hover:bg-white hover:text-[#111111] bg-black/45 text-white border border-white/40"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-sm text-[11px] font-bold uppercase tracking-[0.1em] backdrop-blur-sm transition-colors hover:bg-white hover:text-[#111111] bg-black/45 text-white border border-white/40"
             >
               <ArrowLeft size={14} />
               Quay lại
@@ -122,7 +122,7 @@ export function RoomView({ room, onBack }: RoomViewProps) {
           {/* Room action hint */}
           {!chatOpen && room.hotspots.length > 0 && (
             <div
-              className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-[2px] text-xs pointer-events-none bg-black/60 text-[var(--text-on-dark-muted)] backdrop-blur-[8px] border border-white/20"
+              className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-sm text-xs pointer-events-none bg-black/60 text-[var(--text-on-dark-muted)] backdrop-blur-[8px] border border-white/20"
               style={{ animation: "pulse-hint 3s ease-in-out infinite" }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-accent-gold animate-pulse" />

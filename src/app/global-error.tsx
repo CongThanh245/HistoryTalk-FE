@@ -42,7 +42,7 @@ export default function GlobalError({
             </p>
 
             {isDev && (
-              <pre className="mb-8 w-full max-h-[220px] text-left text-xs overflow-auto rounded-[2px] p-4 bg-[var(--bg-surface)] border border-[var(--text-primary)] text-[var(--accent-danger)]">
+              <pre className="mb-8 w-full max-h-[220px] text-left text-xs overflow-auto rounded-sm p-4 bg-[var(--bg-surface)] border border-border-card text-[var(--accent-danger)]">
                 {error.message}
                 {error.digest ? `\n\nDigest: ${error.digest}` : ""}
                 {error.stack ? `\n\n${error.stack}` : ""}

@@ -172,7 +172,7 @@ function AssignmentsBoard() {
         <div
           role="tablist"
           aria-label="Lọc bài tập"
-          className="flex flex-wrap gap-1.5"
+          className="flex min-w-0 flex-1 gap-5 overflow-x-auto shadow-[inset_0_-1px_0_var(--border-default)] [scrollbar-width:none]"
         >
           {TABS.map((t) => {
             const selected = t.id === tab;
@@ -186,10 +186,10 @@ function AssignmentsBoard() {
                 aria-controls="assignment-panel"
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "inline-flex items-center gap-2 rounded-[2px] border px-3 py-1.5 text-[13px] font-semibold motion-safe:transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]",
+                  "inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 text-sm motion-safe:transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]",
                   selected
-                    ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--bg-surface)]"
-                    : "border-[var(--border-strong)] text-content-text hover:border-[var(--text-primary)]",
+                    ? "border-[var(--accent-gold)] font-semibold text-content-heading"
+                    : "border-transparent font-medium text-[var(--text-tertiary)] hover:text-content-heading",
                 )}
               >
                 <span
@@ -200,8 +200,7 @@ function AssignmentsBoard() {
                 {t.label}
                 <span
                   className={cn(
-                    "tabular-nums",
-                    selected ? "opacity-80" : "text-content-muted",
+                    "text-xs font-normal tabular-nums text-content-subtle",
                   )}
                 >
                   {counts[t.id]}
@@ -212,7 +211,7 @@ function AssignmentsBoard() {
         </div>
         <Link
           href={ROUTES.GRADES}
-          className="inline-flex items-center gap-2 rounded-[2px] border border-[var(--border-strong)] px-3 py-1.5 text-[13px] font-semibold text-content-text motion-safe:transition-colors hover:border-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]"
+          className="inline-flex items-center gap-2 rounded-sm border border-[var(--border-strong)] px-3 py-1.5 text-[13px] font-semibold text-content-text motion-safe:transition-colors hover:border-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]"
         >
           <BarChart3 className="h-4 w-4" aria-hidden="true" />
           Xem bảng điểm

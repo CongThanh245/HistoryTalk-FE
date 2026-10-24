@@ -63,7 +63,7 @@ export function ConfirmDialog({
       }}
     >
       <AlertDialogContent
-        className="max-w-[400px] rounded-[2px] border bg-card-bg border-[var(--text-primary)]"
+        className="max-w-[400px] rounded-sm border bg-card-bg border-[var(--text-primary)]"
       >
         <AlertDialogHeader className="space-y-3">
           <AlertDialogTitle
@@ -84,14 +84,14 @@ export function ConfirmDialog({
           <AlertDialogCancel
             disabled={isPending}
             onClick={onCancel}
-            className="flex-1 rounded-[2px] h-11 border text-[13px] font-bold uppercase tracking-[0.08em] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60 bg-transparent border-[var(--text-primary)] text-content-heading"
+            className="flex-1 rounded-sm h-11 border text-[13px] font-bold uppercase tracking-[0.08em] transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60 bg-transparent border-[var(--text-primary)] text-content-heading"
           >
             {cancelLabel}
           </AlertDialogCancel>
           <AlertDialogAction
             disabled={isPending || confirmDisabled}
             className={cn(
-              "flex-1 rounded-[2px] h-11 border-0 text-[13px] font-bold uppercase tracking-[0.08em] transition-[filter,transform] hover:brightness-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-70",
+              "flex-1 rounded-sm h-11 border-0 text-[13px] font-bold uppercase tracking-[0.08em] transition-[filter,transform] hover:brightness-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-70",
             )}
             style={confirmStyles}
             onClick={(e) => {

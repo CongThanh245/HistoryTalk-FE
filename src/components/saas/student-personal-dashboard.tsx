@@ -43,7 +43,7 @@ export function StudentPersonalDashboard() {
   if (isPending) {
     return (
       <div
-        className="h-[132px] animate-pulse rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none"
+        className="h-[132px] animate-pulse rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none"
         aria-busy="true"
       />
     );
@@ -60,6 +60,21 @@ export function StudentPersonalDashboard() {
   return (
     <section className="space-y-6" aria-label="Tổng quan học tập">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {/* Scores first: that is what this page is opened for; tokens are also in the sidebar. */}
+        <KpiTile
+          label="Điểm TB quiz"
+          value={
+            data.totalQuizzesAttempted
+              ? `${data.averageScorePercentage.toFixed(1)}%`
+              : "—"
+          }
+          accent="text-[var(--jade)]"
+        />
+        <KpiTile
+          label="Quiz đã làm"
+          value={formatNumber(data.totalQuizzesAttempted)}
+          accent="text-[var(--men-lam)]"
+        />
         <KpiTile
           label="Token còn dùng hôm nay"
           value={formatNumber(data.currentTokens)}
@@ -78,20 +93,6 @@ export function StudentPersonalDashboard() {
               ? `Gồm ${formatNumber(data.dailyBonusTokens ?? 0)} token thầy cô duyệt thêm`
               : undefined
           }
-        />
-        <KpiTile
-          label="Quiz đã làm"
-          value={formatNumber(data.totalQuizzesAttempted)}
-          accent="text-[var(--men-lam)]"
-        />
-        <KpiTile
-          label="Điểm TB quiz"
-          value={
-            data.totalQuizzesAttempted
-              ? `${data.averageScorePercentage.toFixed(1)}%`
-              : "—"
-          }
-          accent="text-[var(--jade)]"
         />
       </div>
 
@@ -127,7 +128,7 @@ export function StudentPersonalDashboard() {
                     </span>
                   </span>
                   <span
-                    className={`font-display text-2xl font-extrabold tabular-nums ${scoreClass(q.percentage)}`}
+                    className={`text-2xl font-bold tabular-nums ${scoreClass(q.percentage)}`}
                   >
                     {Math.round(q.percentage)}%
                   </span>

@@ -31,7 +31,7 @@ export function StudentWorkspace({ classes }: { classes: ApiClassroom[] }) {
   return (
     <div className="space-y-8">
       <div className="min-w-0 space-y-1">
-        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-content-muted first-letter:uppercase">{dateLabel}</p>
+        <p className="text-[13px] font-semibold text-content-muted first-letter:uppercase">{dateLabel}</p>
         <p className="archive-title is-plain text-2xl sm:text-3xl">
           {greeting(now)}, {firstName}!
         </p>
@@ -64,7 +64,7 @@ export function StudentWorkspace({ classes }: { classes: ApiClassroom[] }) {
           ))}
           <Link
             href={ROUTES.EVENTS}
-            className="group flex items-center gap-3 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-4 motion-safe:transition-colors hover:bg-[var(--bg-elevated)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]"
+            className="group flex items-center gap-3 rounded-sm border border-border-card bg-[var(--bg-surface)] p-4 motion-safe:transition-colors hover:bg-[var(--bg-elevated)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]"
           >
             <LibraryBig className="h-6 w-6 shrink-0 text-[var(--text-primary)]" aria-hidden="true" />
             <span className="min-w-0 flex-1">
@@ -91,7 +91,7 @@ function MaterialsPreview() {
   if (isLoading) return <p className="text-sm text-content-muted">Đang tải tư liệu...</p>;
   if (isError || items.length === 0) {
     return (
-      <p className="rounded-[2px] border border-dashed border-[var(--border-strong)] px-4 py-3 text-sm text-content-muted">
+      <p className="rounded-sm border border-dashed border-[var(--border-strong)] px-4 py-3 text-sm text-content-muted">
         Chưa có tư liệu. Thầy cô đăng tư liệu nào sẽ hiện ở đây.
       </p>
     );

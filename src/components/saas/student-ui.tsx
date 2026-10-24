@@ -13,7 +13,7 @@ export const ASSIGNMENT_TYPE_META: Record<AssignmentType, { label: string; color
   TEST: { label: "Bài kiểm tra", color: "var(--men-lam)", icon: ClipboardCheck },
 };
 
-const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold";
+const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold";
 
 export function AssignmentTypeBadge({ type, className }: { type: AssignmentType; className?: string }) {
   const meta = ASSIGNMENT_TYPE_META[type];
@@ -39,7 +39,7 @@ export function AssignmentTypeTile({ type, size = 44 }: { type: AssignmentType; 
   const Icon = meta.icon;
   return (
     <span
-      className="grid shrink-0 place-items-center rounded-[2px] text-white"
+      className="grid shrink-0 place-items-center rounded-sm text-white"
       style={{ width: size, height: size, background: meta.color }}
       aria-hidden="true"
     >
@@ -70,7 +70,7 @@ export function ScoreChip({ score, max, size = "md" }: { score: number; max?: nu
   return (
     <span className="inline-flex items-baseline gap-1 tabular-nums" aria-label={`Điểm ${formatScore(score)} trên ${max ?? 10}`}>
       <strong
-        className={cn("font-display font-extrabold text-[var(--gold-leaf)]", size === "lg" ? "text-5xl" : "text-2xl")}
+        className={cn("font-bold tabular-nums text-[var(--gold-leaf)]", size === "lg" ? "text-5xl" : "text-2xl")}
       >
         {formatScore(score)}
       </strong>
@@ -86,7 +86,7 @@ export function ProgressMeter({ value, max, color, label }: { value: number; max
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div
-      className="h-2 w-full overflow-hidden rounded-[2px] bg-[var(--status-neutral-bg)] ring-1 ring-inset ring-[var(--border-default)]"
+      className="h-2 w-full overflow-hidden rounded-sm bg-[var(--status-neutral-bg)] ring-1 ring-inset ring-[var(--border-default)]"
       role="progressbar"
       aria-label={label}
       aria-valuemin={0}

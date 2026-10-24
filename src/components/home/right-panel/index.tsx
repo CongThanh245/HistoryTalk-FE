@@ -37,7 +37,7 @@ export function HomeRightPanel() {
       {/* Fixed floating trigger button */}
       {mounted && <FactTriggerButton onClick={() => setShowFact(true)} />}
 
-      <div className="bg-[var(--bg-surface)] border border-[var(--text-primary)] rounded-[2px] overflow-hidden flex flex-col min-h-[480px] max-h-[580px]">
+      <div className="bg-[var(--bg-surface)] border border-border-card rounded-sm overflow-hidden flex flex-col min-h-[480px] max-h-[580px]">
         {/* Header */}
         <div className="px-4 pt-3 pb-2.5 border-b border-[var(--text-primary)] flex items-center justify-between shrink-0 gap-3">
           <div className="min-w-0">
@@ -58,7 +58,7 @@ export function HomeRightPanel() {
                 setMode((m) => randomMode(m));
                 setGameKey((k) => k + 1);
               }}
-              className="text-[10px] font-bold uppercase tracking-[0.1em] cursor-pointer px-2.5 py-1.5 rounded-[2px] bg-transparent border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors duration-100 whitespace-nowrap hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+              className="text-[10px] font-bold uppercase tracking-[0.1em] cursor-pointer px-2.5 py-1.5 rounded-sm bg-transparent border border-[var(--text-primary)] text-[var(--text-primary)] transition-colors duration-100 whitespace-nowrap hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
             >
               Game khác
             </button>

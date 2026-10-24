@@ -79,7 +79,7 @@ function ComparisonBadge({
   return (
     <div
       className={cn(
-        "mt-4 inline-flex items-center gap-1.5 rounded-[2px] border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.06em]",
+        "mt-4 inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.06em]",
         delta > 0
           ? "border-[var(--status-success)] text-[var(--status-success)]"
           : delta < 0
@@ -162,7 +162,7 @@ function RateQuizCard({ quizId }: { quizId: string }) {
   }
 
   return (
-    <section className="mb-6 flex flex-col items-center rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-5">
+    <section className="mb-6 flex flex-col items-center rounded-sm border border-border-card bg-[var(--bg-surface)] p-5">
       <h2 className="archive-title is-plain mt-1 text-[20px]">
         Bạn thấy quiz này thế nào?
       </h2>
@@ -284,10 +284,10 @@ export function QuizResultPage({
   }
 
   return (
-    <main className="min-h-full px-5 py-7 md:px-8 bg-[var(--bg-content)]">
+    <main className="min-h-full px-5 pb-7 pt-14 md:px-8 bg-[var(--bg-content)]">
       {authRequiredDialog}
       <div className="mx-auto max-w-4xl">
-        <section className="mb-6 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
+        <section className="mb-6 rounded-sm border border-border-card bg-[var(--bg-surface)]">
           <div className="grid md:grid-cols-[1fr_240px] md:items-stretch">
             <div className="p-6 md:p-7">
               <h1 className="archive-title is-plain mt-2 text-[28px] md:text-[36px]">
@@ -295,7 +295,7 @@ export function QuizResultPage({
               </h1>
               <span
                 className={cn(
-                  "mt-4 inline-flex rounded-[2px] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] border",
+                  "mt-4 inline-flex rounded-sm px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] border",
                   tier.bgClass,
                   tier.colorClass,
                 )}
@@ -346,7 +346,7 @@ export function QuizResultPage({
         {quiz.quizId && <RateQuizCard quizId={quiz.quizId} />}
 
         {showReviewSection && reviewCharacters.length > 0 && (
-          <section className="mb-6 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-5">
+          <section className="mb-6 rounded-sm border border-border-card bg-[var(--bg-surface)] p-5">
             <h2 className="archive-title mb-1 mt-1 text-[22px]">
               Ôn lại cùng nhân vật
             </h2>
@@ -396,7 +396,7 @@ export function QuizResultPage({
                 <button
                   onClick={() => setReviewFilter("all")}
                   className={cn(
-                    "rounded-[2px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors border",
+                    "rounded-sm px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors border",
                     reviewFilter === "all"
                       ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
                       : "bg-transparent text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)]",
@@ -407,7 +407,7 @@ export function QuizResultPage({
                 <button
                   onClick={() => setReviewFilter("wrong")}
                   className={cn(
-                    "rounded-[2px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors border",
+                    "rounded-sm px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors border",
                     reviewFilter === "wrong"
                       ? "bg-[var(--accent-danger)] text-[var(--text-inverse)] border-[var(--accent-danger)]"
                       : "bg-transparent text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)]",
@@ -444,10 +444,10 @@ export function QuizResultPage({
                   <div className="mb-3 flex items-start gap-3">
                     <span
                       className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-[2px] font-display text-sm font-extrabold",
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-sm font-display text-sm font-extrabold",
                         correct
                           ? "bg-[var(--status-success)] text-[var(--text-inverse)]"
-                          : "border border-[var(--text-primary)] text-content-heading",
+                          : "border border-border-card text-content-heading",
                       )}
                     >
                       {idx + 1}

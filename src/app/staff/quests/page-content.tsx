@@ -96,7 +96,7 @@ function QuestFormDialog({ quest, onOpenChange, onSave, isPending }: QuestFormDi
 
   return (
     <Dialog open={!!quest} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md staff-theme rounded-[2px] bg-[var(--bg-surface)] border-[var(--text-primary)] text-content-text">
+      <DialogContent className="max-w-md staff-theme rounded-xl bg-[var(--bg-surface)] border-border-card text-content-text">
         <DialogHeader>
           <DialogTitle className="text-content-heading">Chỉnh sửa nhiệm vụ</DialogTitle>
           <DialogDescription className="text-content-muted">
@@ -110,7 +110,7 @@ function QuestFormDialog({ quest, onOpenChange, onSave, isPending }: QuestFormDi
             <div className="space-y-1.5">
               <Label className="text-content-heading text-[13px]">Loại hành động</Label>
               <Select value={form.type} onValueChange={(v) => set("type", v as AdminQuestType)}>
-                <SelectTrigger className="h-10 rounded-[2px]">
+                <SelectTrigger className="h-10 rounded-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -132,7 +132,7 @@ function QuestFormDialog({ quest, onOpenChange, onSave, isPending }: QuestFormDi
                 value={form.title}
                 onChange={(e) => set("title", e.target.value)}
                 placeholder="VD: Trò chuyện với một nhân vật lịch sử"
-                className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
+                className="h-10 rounded-sm border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
               />
             </div>
 
@@ -147,7 +147,7 @@ function QuestFormDialog({ quest, onOpenChange, onSave, isPending }: QuestFormDi
                   min={1}
                   value={form.target}
                   onChange={(e) => set("target", Number(e.target.value))}
-                  className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
+                  className="h-10 rounded-sm border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
                 />
               </div>
               <div className="space-y-1.5">
@@ -159,7 +159,7 @@ function QuestFormDialog({ quest, onOpenChange, onSave, isPending }: QuestFormDi
                   min={0}
                   value={form.rewardTokens}
                   onChange={(e) => set("rewardTokens", Number(e.target.value))}
-                  className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
+                  className="h-10 rounded-sm border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
                 />
               </div>
             </div>
@@ -171,7 +171,7 @@ function QuestFormDialog({ quest, onOpenChange, onSave, isPending }: QuestFormDi
                 type="number"
                 value={form.order}
                 onChange={(e) => set("order", Number(e.target.value))}
-                className="h-10 rounded-[2px] border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
+                className="h-10 rounded-sm border bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-heading"
               />
             </div>
 
@@ -183,7 +183,7 @@ function QuestFormDialog({ quest, onOpenChange, onSave, isPending }: QuestFormDi
                   type="button"
                   onClick={() => set("isActive", true)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-[2px] border text-sm font-semibold transition-all",
+                    "flex items-center gap-2 px-4 py-2 rounded-sm border text-sm font-semibold transition-all",
                     form.isActive
                       ? "bg-[var(--status-success-bg)] border-[var(--status-success-border)] text-[var(--status-success)]"
                       : "bg-transparent border-card-light-border text-content-muted"
@@ -196,7 +196,7 @@ function QuestFormDialog({ quest, onOpenChange, onSave, isPending }: QuestFormDi
                   type="button"
                   onClick={() => set("isActive", false)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-[2px] border text-sm font-semibold transition-all",
+                    "flex items-center gap-2 px-4 py-2 rounded-sm border text-sm font-semibold transition-all",
                     !form.isActive
                       ? "bg-[var(--status-neutral-bg)] border-[var(--status-neutral-border)] text-[var(--text-tertiary)]"
                       : "bg-transparent border-card-light-border text-content-muted"
@@ -217,13 +217,13 @@ function QuestFormDialog({ quest, onOpenChange, onSave, isPending }: QuestFormDi
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-[2px] border-card-light-border">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-sm border-card-light-border">
             Huỷ
           </Button>
           <Button
             onClick={() => form && onSave(form)}
             disabled={!isValid || isPending}
-            className="rounded-[2px] border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
+            className="rounded-sm border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
           >
             {isPending ? "Đang lưu..." : "Lưu thay đổi"}
           </Button>
@@ -285,7 +285,7 @@ export default function StaffQuestsPageContent() {
           const Icon = meta.icon;
           return (
             <span
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-[11px] font-bold border"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-bold border"
               style={{ background: `color-mix(in srgb, ${meta.color} 10%, transparent)`, borderColor: `color-mix(in srgb, ${meta.color} 25%, transparent)`, color: meta.color }}
             >
               <Icon className="w-3 h-3" />
@@ -320,12 +320,12 @@ export default function StaffQuestsPageContent() {
         header: "Trạng thái",
         cell: ({ row: r }) =>
           r.original.isActive ? (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-[11px] font-bold bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[11px] font-bold bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-success)] animate-pulse" />
               Hoạt động
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2px] text-[11px] font-bold bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)] border border-[var(--status-neutral-border)]">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-[11px] font-bold bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)] border border-[var(--status-neutral-border)]">
               <XCircle className="w-3 h-3" />
               Tạm dừng
             </span>
@@ -340,7 +340,7 @@ export default function StaffQuestsPageContent() {
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 rounded-[2px] px-3 text-xs font-semibold gap-1.5 border-card-light-border text-content-heading"
+              className="h-8 rounded-sm px-3 text-xs font-semibold gap-1.5 border-card-light-border text-content-heading"
               onClick={() => setEditTarget(r.original)}
             >
               <Pencil className="w-3.5 h-3.5" />
@@ -352,7 +352,7 @@ export default function StaffQuestsPageContent() {
               size="sm"
               disabled={togglingId === r.original.id}
               className={cn(
-                "h-8 rounded-[2px] px-3 text-xs font-semibold gap-1.5",
+                "h-8 rounded-sm px-3 text-xs font-semibold gap-1.5",
                 r.original.isActive
                   ? "border-[var(--status-neutral-border)] text-[var(--text-tertiary)] bg-[var(--status-neutral-bg)]"
                   : "border-[var(--status-success-border)] text-[var(--status-success)] bg-[var(--status-success-bg)]"
@@ -400,7 +400,7 @@ export default function StaffQuestsPageContent() {
           </StaffStatsGrid>
         )}
 
-        <section className="rounded-[2px] border p-6 space-y-5 bg-[var(--bg-surface)] border-[var(--text-primary)]">
+        <section className="rounded-xl border p-6 space-y-5 bg-[var(--bg-surface)] border-border-card">
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-0.5">
               <h2 className="text-base font-semibold text-content-heading">Danh sách nhiệm vụ</h2>

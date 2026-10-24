@@ -120,7 +120,7 @@ export function PdfUploadDialog({
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-card-light-border">
           <div className="flex items-center gap-2">
             <div
-              className="w-8 h-8 rounded-[2px] flex items-center justify-center bg-[var(--accent-gold-active-bg)]"
+              className="w-8 h-8 rounded-sm flex items-center justify-center bg-[var(--accent-gold-active-bg)]"
             >
               <File className="h-4 w-4 text-accent-gold" />
             </div>
@@ -152,7 +152,7 @@ export function PdfUploadDialog({
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               className={cn(
-                "border-2 border-dashed rounded-[2px] p-8 text-center cursor-pointer transition-all border-card-light-border",
+                "border-2 border-dashed rounded-sm p-8 text-center cursor-pointer transition-all border-card-light-border",
                 "hover:border-[var(--accent-gold)]/50 hover:bg-[var(--accent-gold)]/5"
               )}
             >
@@ -173,10 +173,10 @@ export function PdfUploadDialog({
             <div className="space-y-4">
               {/* File info */}
               <div
-                className="flex items-center gap-3 p-3 rounded-[2px] border border-card-light-border bg-[var(--accent-gold-active-bg)]"
+                className="flex items-center gap-3 p-3 rounded-sm border border-card-light-border bg-[var(--accent-gold-active-bg)]"
               >
                 <div
-                  className="w-10 h-10 rounded-[2px] flex items-center justify-center shrink-0 bg-[var(--accent-gold-active-bg)]"
+                  className="w-10 h-10 rounded-sm flex items-center justify-center shrink-0 bg-[var(--accent-gold-active-bg)]"
                 >
                   <File className="h-5 w-5 text-accent-gold" />
                 </div>
@@ -192,7 +192,7 @@ export function PdfUploadDialog({
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  className="shrink-0 rounded-[2px] text-accent-danger"
+                  className="shrink-0 rounded-sm text-accent-danger"
                   onClick={handleRemoveFile}
                   disabled={isUploading}
                 >
@@ -203,11 +203,11 @@ export function PdfUploadDialog({
               {/* PDF Preview */}
               {previewUrl && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-content-heading">
+                  <p className="text-sm font-semibold text-content-heading">
                     Preview PDF
                   </p>
                   <div
-                    className="rounded-[2px] border border-card-light-border overflow-hidden"
+                    className="rounded-sm border border-card-light-border overflow-hidden"
                   >
                     <PdfFrame
                       key={previewUrl}

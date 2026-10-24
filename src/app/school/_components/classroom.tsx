@@ -13,7 +13,7 @@ export function ClassStatusBadge({ status }: { status: ClassroomStatus | string 
   return (
     <span
       className={cn(
-        "inline-flex items-center whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold",
+        "inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
         STATUS_CLASS[known] ?? STATUS_CLASS.ARCHIVED,
       )}
     >

@@ -250,7 +250,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <button
           onClick={() => router.push("/")}
           tabIndex={-1}
-          className="absolute top-6 right-6 rounded-[2px] border border-transparent p-1.5 transition-colors cursor-pointer text-content-muted hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]"
+          className="absolute top-6 right-6 rounded-sm border border-transparent p-1.5 transition-colors cursor-pointer text-content-muted hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]"
         >
           <X className="w-5 h-5" />
         </button>
@@ -297,7 +297,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   type="button"
                   onClick={handleGoogleRedirect}
                   disabled={loading}
-                  className="h-12 w-full rounded-[2px] border text-sm font-semibold shadow-none bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+                  className="h-12 w-full rounded-sm border text-sm font-semibold shadow-none bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
                   variant="outline"
                 >
                   Continue with Google
@@ -308,7 +308,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 <button
                   type="button"
                   disabled
-                  className="h-12 w-full rounded-[2px] border text-sm font-medium opacity-60 bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-text"
+                  className="h-12 w-full rounded-sm border text-sm font-medium opacity-60 bg-[var(--bg-elevated)] border-[var(--border-strong)] text-content-text"
                 >
                   Thiếu NEXT_PUBLIC_GOOGLE_CLIENT_ID
                 </button>
@@ -345,7 +345,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     value={userName}
                     autoFocus={isRegister}
                     onChange={(e) => setUserName(e.target.value)}
-                    className="h-11 text-sm rounded-[2px] shadow-none focus-visible:ring-0 focus-visible:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text placeholder:text-[var(--text-muted)]"
+                    className="h-11 text-sm rounded-sm shadow-none focus-visible:ring-0 focus-visible:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text placeholder:text-[var(--text-muted)]"
                   />
                 </div>
               )}
@@ -365,7 +365,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   value={email}
                   autoFocus={!isRegister}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 text-sm rounded-[2px] shadow-none focus-visible:ring-0 focus-visible:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text placeholder:text-[var(--text-muted)]"
+                  className="h-11 text-sm rounded-sm shadow-none focus-visible:ring-0 focus-visible:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text placeholder:text-[var(--text-muted)]"
                 />
               </div>
 
@@ -395,7 +395,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     placeholder="Nhập mật khẩu của bạn"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-11 text-sm rounded-[2px] pr-10 shadow-none focus-visible:ring-0 focus-visible:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text placeholder:text-[var(--text-muted)]"
+                    className="h-11 text-sm rounded-sm pr-10 shadow-none focus-visible:ring-0 focus-visible:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text placeholder:text-[var(--text-muted)]"
                   />
                   <button
                     type="button"
@@ -433,7 +433,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                       placeholder="Nhập lại mật khẩu của bạn"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="h-11 text-sm rounded-[2px] pr-10 shadow-none focus-visible:ring-0 focus-visible:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text placeholder:text-[var(--text-muted)]"
+                      className="h-11 text-sm rounded-sm pr-10 shadow-none focus-visible:ring-0 focus-visible:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text placeholder:text-[var(--text-muted)]"
                     />
                     <button
                       type="button"
@@ -461,7 +461,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               {/* Submit */}
               <Button
                 type="submit"
-                className="w-full h-11 rounded-[2px] border-0 cursor-pointer mt-2 text-[13px] font-bold uppercase tracking-[0.08em] shadow-none bg-[var(--accent-gold)] text-[#FFFFFF] hover:bg-[var(--accent-bronze)]"
+                className="w-full h-11 rounded-sm border-0 cursor-pointer mt-2 text-[13px] font-bold uppercase tracking-[0.08em] shadow-none bg-[var(--accent-gold)] text-[#FFFFFF] hover:bg-[var(--accent-bronze)]"
                 disabled={loading}
               >
                 {loading ? (

@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
-import { ArrowLeft, EyeOff, FileText, Globe, Loader2, Lock, Pencil, Plus, Save, Send, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, EyeOff, FileText, Globe, ImageIcon, Loader2, Lock, Pencil, Plus, Save, Send, Trash2, Upload, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -12,7 +12,7 @@ import { StaffFormInput, StaffFormSelect, StaffFormTextarea } from "@/components
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
-import { LocalReviewBadge, ReviewNote, reviewState } from "@/components/saas/local-content-ui";
+import { LocalItemPreview, LocalReviewBadge, ReviewNote, reviewState } from "@/components/saas/local-content-ui";
 import { ContextQuizzesPanel, LinkedContextsPanel, LocalBattleMapPanel, LocalMapPanel } from "@/components/saas/local-content-extras";
 import { ROUTES } from "@/constants/routes";
 import { apiErrorMessage, useMyApiClassrooms } from "@/features/saas/hooks-api";
@@ -120,6 +120,11 @@ type Errors = Record<string, string | undefined>;
 
 /** Content Admin's validation, plus the length limits of the teacher API. */
 function validate(kind: LocalKind, f: FormState): Errors {
+  const audience: Errors = f.scope === "CLASS_ONLY" && f.classIds.length === 0 ? { classes: "Chọn ít nhất một lớp được xem nội dung này." } : {};
+  return { ...audience, ...validateContent(kind, f) };
+}
+
+function validateContent(kind: LocalKind, f: FormState): Errors {
   if (kind === "CONTEXT") {
     const c = f.ctx;
     const e: Errors = { ...validateContextDraft(c) };
@@ -145,6 +150,7 @@ const FIELD_TAB: Record<string, Tab> = {
   title: "basic", bornDay: "basic", bornMonth: "basic", bornYear: "basic", deathDay: "basic", deathMonth: "basic", deathYear: "basic",
   imageUrl: "media", videoUrl: "media", image: "media", modelUrl: "media",
   background: "content", personality: "content",
+  classes: "classes",
 };
 
 function contextPayload(f: FormState, isPublished?: boolean): LocalContextPayload {
@@ -194,10 +200,14 @@ function characterPayload(f: FormState, item?: LocalItem, isPublished?: boolean)
 }
 
 
-type Tab = "basic" | "media" | "content" | "rag" | "context" | "battle" | "map" | "quiz";
+type Tab = "basic" | "classes" | "media" | "content" | "rag" | "context" | "battle" | "map" | "quiz";
+
+/** Tabs that need the whole width (maps, lists): the preview column steps aside. */
+const WIDE_TABS: Tab[] = ["map", "battle", "quiz", "rag"];
 
 const TAB_LABEL: Record<Tab, string> = {
   basic: "Cơ bản",
+  classes: "Lớp học",
   media: "Media",
   content: "Nội dung",
   rag: "Tài liệu",
@@ -234,8 +244,8 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   const busy = saving || mutations.setStatus.isPending;
 
   const tabs: Tab[] = kind === "CONTEXT"
-    ? ["basic", "media", ...(item ? (["map", "battle", "quiz", "rag"] as Tab[]) : [])]
-    : ["basic", "media", "content", "context", ...(item ? (["rag"] as Tab[]) : [])];
+    ? ["basic", "classes", "media", ...(item ? (["map", "battle", "quiz", "rag"] as Tab[]) : [])]
+    : ["basic", "classes", "media", "content", "context", ...(item ? (["rag"] as Tab[]) : [])];
 
   const patchCtx = (p: Partial<CtxForm>) => setForm((f) => ({ ...f, ctx: { ...f.ctx, ...p } }));
   const patchChr = (p: Partial<ChrForm>) => setForm((f) => ({ ...f, chr: { ...f.chr, ...p } }));
@@ -260,9 +270,9 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
           ? await mutations.updateCharacter.mutateAsync({ id: item.id, payload: characterPayload(form, item, publish) })
           : await mutations.createCharacter.mutateAsync(characterPayload(form, undefined, !!publish));
       }
-      if (publish) toast.success(`Đã xuất bản “${saved.name}”`, { description: "Học sinh của trường đã thấy nội dung này." });
-      else if (item) toast.success("Đã lưu thay đổi");
-      else toast.success("Đã lưu bản nháp", { description: "Bấm “Xuất bản” khi soạn xong để học sinh thấy." });
+      if (!item) toast.success(`Đã tạo “${saved.name}”`, { description: "Học sinh các lớp bạn chọn đã thấy nội dung này. Có thể bổ sung bản đồ, câu đố, tài liệu ngay bên dưới." });
+      else if (publish) toast.success(`Đã xuất bản “${saved.name}”`, { description: "Học sinh các lớp bạn chọn đã thấy nội dung này." });
+      else toast.success("Đã lưu thay đổi");
       if (!item) router.replace(ROUTES.TEACHING.LOCAL_EDIT(saved.id, kind));
       else setShowErrors(false);
     } catch (error) {
@@ -291,162 +301,195 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
     }
   };
 
+  if (item && readOnly) return <LocalReadOnlyView kind={kind} item={item} myUid={myUid} />;
+
   const contextOptions = [{ value: NONE, label: "Không liên kết" }, ...contexts.map((c) => ({ value: c.id, label: c.name }))];
   const sharingDirty = !!item && (form.scope !== item.contentScope || form.classIds.join() !== (item.classIds ?? []).join());
 
-  return (
-    <div className="space-y-4">
-      {/* Compact header: back link, status and a one-line note; the page title is hidden (the name is in the form). */}
-      <div className="space-y-1.5">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-          <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Soạn tư liệu
-          </Link>
-          {item && (
-            <>
-              <span className="h-4 w-px bg-[var(--border-strong)]" aria-hidden="true" />
-              <LocalReviewBadge item={item} />
-              <span className="text-xs text-content-muted">
-                {LOCAL_KIND_LABELS[kind]} · Cập nhật {formatDate(item.updatedAt)}
-                {!isMine && ` · Soạn bởi ${item.createdBy?.fullName ?? "đồng nghiệp"}`}
-              </span>
-            </>
-          )}
-        </div>
-        {item && readOnly && (
-          <p className="flex items-center gap-1.5 text-xs text-content-muted">
-            <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            Đồng nghiệp chia sẻ cho toàn trường, bạn chỉ xem được.
-          </p>
-        )}
-        {item && isMine && <ReviewNote item={item} />}
-      </div>
+  const label = LOCAL_KIND_LABELS[kind].toLowerCase();
+  const name = kind === "CONTEXT" ? form.ctx.name : form.chr.name;
+  const imageUrl = (kind === "CONTEXT" ? form.ctx.imageUrl : form.chr.imageUrl).trim();
+  const classNames = classes.filter((c) => form.classIds.includes(c.id)).map((c) => c.className);
+  const audience = form.scope === "SCHOOL_WIDE" ? "Toàn trường" : classNames.length ? `Lớp ${classNames.join(", ")}` : "Chưa chọn lớp";
+  const wide = WIDE_TABS.includes(tab);
 
-      {!readOnly && (
-        <SharingPanel
-          scope={form.scope}
-          classIds={form.classIds}
-          classes={classes}
-          lockedClasses={!!item?.classIds?.length}
-          dirty={sharingDirty}
-          onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
-        />
+  const actions = published ? (
+    <>
+      <button type="button" className="btn-line disabled:opacity-60" onClick={hide} disabled={busy}>
+        <EyeOff className="h-4 w-4" aria-hidden="true" /> {mutations.setStatus.isPending ? "Đang ẩn..." : "Ẩn với học sinh"}
+      </button>
+      <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => save()} disabled={busy}>
+        <Save className="h-4 w-4" aria-hidden="true" /> {saving ? "Đang lưu..." : "Lưu thay đổi"}
+      </button>
+    </>
+  ) : !item ? (
+    // No draft step: creating publishes to the classes picked in "Lớp học" (one button, like the Content Admin's "Tạo").
+    <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => save(true)} disabled={busy}>
+      {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
+      {saving ? "Đang tạo..." : `Tạo ${label}`}
+    </button>
+  ) : (
+    <>
+      {/* Hidden items may be edited without showing them again; old drafts just get published. */}
+      {state === "HIDDEN" && (
+        <button type="button" className="btn-line disabled:opacity-60" onClick={() => save()} disabled={busy}>
+          <Save className="h-4 w-4" aria-hidden="true" /> Lưu thay đổi
+        </button>
+      )}
+      <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => save(true)} disabled={busy}>
+        <Send className="h-4 w-4" aria-hidden="true" /> {saving ? "Đang lưu..." : state === "HIDDEN" ? "Lưu & hiện lại" : "Lưu & xuất bản"}
+      </button>
+    </>
+  );
+
+  return (
+    // Same frame as the Content Admin's create / edit screen: header bar, form with tabs on the left, preview on the right.
+    <div className="overflow-hidden rounded-xl border border-border-card bg-[var(--bg-surface)]">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-default)] px-4 py-3 md:px-6 md:py-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            href={ROUTES.TEACHING.LOCAL}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-content-muted transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-content-heading"
+            aria-label="Về Soạn tư liệu"
+          >
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+          </Link>
+          <div className={cn("relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden bg-[var(--status-neutral-bg)] text-content-muted", kind === "CONTEXT" ? "rounded-lg" : "rounded-full")}>
+            {isValidUrl(imageUrl) ? (
+              // eslint-disable-next-line @next/next/no-img-element -- teacher-provided URL of any host
+              <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+            ) : kind === "CONTEXT" ? (
+              <ImageIcon className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <UserRound className="h-4 w-4" aria-hidden="true" />
+            )}
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h1 className="archive-title is-plain truncate text-xl md:text-2xl">{item ? name || item.name : `Soạn ${label} mới`}</h1>
+              {item && <LocalReviewBadge item={item} />}
+            </div>
+            <p className="flex items-center gap-1.5 truncate text-xs text-content-muted">
+              {form.scope === "SCHOOL_WIDE" ? <Globe className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+              Học sinh thấy: {audience}
+              {item && <> · Cập nhật {formatDate(item.updatedAt)}</>}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {item && (
+            <button type="button" className="btn-line text-[var(--accent-danger)]" onClick={() => setDeleteOpen(true)} aria-label={`Xóa ${label}`} title={`Xóa ${label}`}>
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
+          {actions}
+        </div>
+      </header>
+
+      {item?.reviewNote && (
+        <div className="border-b border-[var(--border-default)] px-4 py-3 md:px-6">
+          <ReviewNote item={item} />
+        </div>
       )}
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="gap-4">
-        <TabsList className="h-auto w-full flex-wrap justify-start sm:w-fit">
-          {tabs.map((t) => (
-            <TabsTrigger key={t} value={t} className="relative px-3">
-              {TAB_LABEL[t]}
-              {tabHasError(t) && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-[var(--accent-danger)]" aria-label="Có lỗi" />}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="gap-0">
+        <div className="flex flex-col lg:flex-row">
+          {/* ── Form ── */}
+          <div className={cn("min-w-0 border-[var(--border-default)]", wide ? "flex-1" : "lg:w-[600px] lg:shrink-0 lg:border-r")}>
+            <div className="border-b border-[var(--border-default)] px-4 pt-5 md:px-6">
+              <p className="text-sm font-semibold text-content-heading">Thông tin {label}</p>
+              <TabsList className="mt-2 flex h-10 w-full justify-start gap-5 overflow-x-auto p-0 [scrollbar-width:none]">
+                {tabs.map((t) => (
+                  <TabsTrigger key={t} value={t} className="relative shrink-0 px-0.5 text-sm">
+                    {TAB_LABEL[t]}
+                    {tabHasError(t) && <span className="absolute -right-1.5 top-2 h-1.5 w-1.5 rounded-full bg-[var(--accent-danger)]" aria-label="Có lỗi" />}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
 
-        <fieldset disabled={readOnly} className="min-w-0">
-          <TabsContent value="basic" className="mt-0">
-            <Panel>
-              {kind === "CONTEXT" ? <ContextBasic f={form.ctx} patch={patchCtx} err={err} /> : <CharacterBasic f={form.chr} patch={patchChr} err={err} />}
-            </Panel>
-          </TabsContent>
-
-          <TabsContent value="media" className="mt-0">
-            <Panel>
-              {kind === "CONTEXT" ? (
-                <MediaFields
-                  err={err}
-                  image={{ value: form.ctx.imageUrl, onChange: (imageUrl) => patchCtx({ imageUrl }), errKey: "imageUrl", label: "Ảnh bối cảnh" }}
-                  video={{ value: form.ctx.videoUrl, onChange: (videoUrl) => patchCtx({ videoUrl }), errKey: "videoUrl", label: "Video bối cảnh (URL)" }}
-                />
-              ) : (
-                <MediaFields
-                  err={err}
-                  image={{ value: form.chr.imageUrl, onChange: (imageUrl) => patchChr({ imageUrl }), errKey: "image", label: "Ảnh nhân vật" }}
-                  model={{ value: form.chr.modelUrl, onChange: (modelUrl) => patchChr({ modelUrl }), errKey: "modelUrl", label: "Mô hình 3D" }}
-                  characterId={item?.id}
-                />
-              )}
-            </Panel>
-          </TabsContent>
-
-          {kind === "CHARACTER" && (
-            <>
-              <TabsContent value="content" className="mt-0">
-                <Panel>
-                  <CharacterContent f={form.chr} patch={patchChr} err={err} />
-                </Panel>
+            <div className="p-4 md:p-6">
+              <TabsContent value="basic" className="mt-0">
+                {kind === "CONTEXT" ? <ContextBasic f={form.ctx} patch={patchCtx} err={err} /> : <CharacterBasic f={form.chr} patch={patchChr} err={err} />}
               </TabsContent>
-              <TabsContent value="context" className="mt-0">
-                {item ? (
-                  // Saved character: links are managed one by one through the link API.
-                  <LinkedContextsPanel characterId={item.id} canEdit={isMine} />
+
+              <TabsContent value="classes" className="mt-0">
+                <SharingPanel
+                  scope={form.scope}
+                  classIds={form.classIds}
+                  classes={classes}
+                  lockedClasses={!!item?.classIds?.length}
+                  dirty={sharingDirty}
+                  error={err("classes")}
+                  onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+                />
+              </TabsContent>
+
+              <TabsContent value="media" className="mt-0">
+                {kind === "CONTEXT" ? (
+                  <MediaFields
+                    err={err}
+                    image={{ value: form.ctx.imageUrl, onChange: (imageUrl) => patchCtx({ imageUrl }), errKey: "imageUrl", label: "Ảnh bối cảnh" }}
+                    video={{ value: form.ctx.videoUrl, onChange: (videoUrl) => patchCtx({ videoUrl }), errKey: "videoUrl", label: "Video bối cảnh (URL)" }}
+                  />
                 ) : (
-                  <Panel>
-                    <Field label="Bối cảnh liên kết" hint="Bối cảnh bạn soạn hoặc bối cảnh toàn trường của đồng nghiệp. Lưu nhân vật xong có thể liên kết thêm.">
-                      <StaffFormSelect value={form.chr.contextId} onValueChange={(contextId) => patchChr({ contextId })} options={contextOptions} className="w-full" />
-                    </Field>
-                  </Panel>
+                  <MediaFields
+                    err={err}
+                    image={{ value: form.chr.imageUrl, onChange: (imageUrl) => patchChr({ imageUrl }), errKey: "image", label: "Ảnh nhân vật" }}
+                    model={{ value: form.chr.modelUrl, onChange: (modelUrl) => patchChr({ modelUrl }), errKey: "modelUrl", label: "Mô hình 3D" }}
+                    characterId={item?.id}
+                  />
                 )}
               </TabsContent>
-            </>
+
+              {kind === "CHARACTER" && (
+                <>
+                  <TabsContent value="content" className="mt-0">
+                    <CharacterContent f={form.chr} patch={patchChr} err={err} />
+                  </TabsContent>
+                  <TabsContent value="context" className="mt-0">
+                    {item ? (
+                      // Saved character: links are managed one by one through the link API.
+                      <LinkedContextsPanel characterId={item.id} canEdit={isMine} />
+                    ) : (
+                      <Field label="Bối cảnh liên kết" hint="Bối cảnh bạn soạn hoặc bối cảnh toàn trường của đồng nghiệp. Lưu nhân vật xong có thể liên kết thêm.">
+                        <StaffFormSelect value={form.chr.contextId} onValueChange={(contextId) => patchChr({ contextId })} options={contextOptions} className="w-full" />
+                      </Field>
+                    )}
+                  </TabsContent>
+                </>
+              )}
+
+              {item && kind === "CONTEXT" && (
+                <>
+                  <TabsContent value="map" className="mt-0">
+                    <LocalMapPanel item={item} />
+                  </TabsContent>
+                  <TabsContent value="battle" className="mt-0">
+                    <LocalBattleMapPanel item={item} canEdit={isMine} />
+                  </TabsContent>
+                  <TabsContent value="quiz" className="mt-0">
+                    <ContextQuizzesPanel contextId={item.id} canEdit={isMine} />
+                  </TabsContent>
+                </>
+              )}
+
+              {item && (
+                <TabsContent value="rag" className="mt-0">
+                  <DocumentsPanel kind={kind} itemId={item.id} canEdit={isMine} myUid={myUid} />
+                </TabsContent>
+              )}
+            </div>
+          </div>
+
+          {/* ── Preview ── */}
+          {!wide && (
+            <aside className="min-w-0 flex-1 border-t border-[var(--border-default)] bg-[var(--bg-content)] p-4 md:p-6 lg:border-t-0">
+              <EditorPreview kind={kind} form={form} audience={audience} />
+            </aside>
           )}
-
-        </fieldset>
-
-        {item && kind === "CONTEXT" && (
-          <>
-            <TabsContent value="map" className="mt-0">
-              <LocalMapPanel item={item} />
-            </TabsContent>
-            <TabsContent value="battle" className="mt-0">
-              <LocalBattleMapPanel item={item} canEdit={isMine} />
-            </TabsContent>
-            <TabsContent value="quiz" className="mt-0">
-              <ContextQuizzesPanel contextId={item.id} canEdit={isMine} />
-            </TabsContent>
-          </>
-        )}
-
-        {item && (
-          <TabsContent value="rag" className="mt-0">
-            <DocumentsPanel kind={kind} itemId={item.id} canEdit={isMine} myUid={myUid} />
-          </TabsContent>
-        )}
-      </Tabs>
-
-      {!readOnly && (
-        // Sticky so Lưu / Xuất bản stay reachable without scrolling to the end of a long form.
-        <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border-strong)] bg-[var(--bg-main)] px-1 py-3">
-          <div className="flex flex-wrap items-center gap-2">
-            {item && (
-              <button type="button" className="btn-line text-[var(--accent-danger)]" onClick={() => setDeleteOpen(true)}>
-                <Trash2 className="h-4 w-4" aria-hidden="true" /> Xóa
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {published ? (
-              <>
-                <button type="button" className="btn-line disabled:opacity-60" onClick={hide} disabled={busy}>
-                  <EyeOff className="h-4 w-4" aria-hidden="true" /> {mutations.setStatus.isPending ? "Đang ẩn..." : "Ẩn với học sinh"}
-                </button>
-                <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => save()} disabled={busy}>
-                  <Save className="h-4 w-4" aria-hidden="true" /> {saving ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
-              </>
-            ) : (
-              <>
-                <button type="button" className="btn-line disabled:opacity-60" onClick={() => save(item ? undefined : false)} disabled={busy}>
-                  <Save className="h-4 w-4" aria-hidden="true" /> {item ? "Lưu thay đổi" : "Lưu nháp"}
-                </button>
-                <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => save(true)} disabled={busy}>
-                  <Send className="h-4 w-4" aria-hidden="true" /> {saving ? "Đang lưu..." : state === "HIDDEN" ? "Lưu & xuất bản lại" : "Xuất bản"}
-                </button>
-              </>
-            )}
-          </div>
         </div>
-      )}
+      </Tabs>
 
       {item && (
         <ConfirmDialog
@@ -459,6 +502,72 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
           onConfirm={remove}
         />
       )}
+    </div>
+  );
+}
+
+/* ───────────────────────── Read-only (colleague's content) ───────────────────────── */
+
+type ReadTab = "overview" | "quiz" | "context" | "rag";
+const READ_TAB_LABEL: Record<ReadTab, string> = { overview: "Nội dung", quiz: "Câu đố", context: "Bối cảnh liên kết", rag: "Tài liệu" };
+
+/**
+ * A colleague's school-wide item: shown like the published page (article + the parts worth browsing), with no form
+ * fields, so it does not look editable. Only the author edits it.
+ */
+function LocalReadOnlyView({ kind, item, myUid }: { kind: LocalKind; item: LocalItem; myUid?: string }) {
+  const [tab, setTab] = React.useState<ReadTab>("overview");
+  const tabs: ReadTab[] = kind === "CONTEXT" ? ["overview", "quiz", "rag"] : ["overview", "context", "rag"];
+  const author = item.createdBy?.fullName ?? "đồng nghiệp";
+
+  return (
+    <div className="space-y-5">
+      <Link href={ROUTES.TEACHING.LOCAL} className="archive-link text-sm">
+        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Soạn tư liệu
+      </Link>
+
+      <header className="space-y-2 border-b border-[var(--border-strong)] pb-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <LocalReviewBadge item={item} />
+          <span className="text-xs text-content-muted">
+            {LOCAL_KIND_LABELS[kind]} · Cập nhật {formatDate(item.updatedAt)}
+          </span>
+        </div>
+        <h2 className="archive-title is-plain text-2xl sm:text-3xl">{item.name}</h2>
+        <p className="flex items-start gap-1.5 text-sm text-content-text">
+          <Globe className="mt-0.5 h-4 w-4 shrink-0 text-[var(--men-lam)]" aria-hidden="true" />
+          <span>
+            Tư liệu của <b>{author}</b>, chia sẻ cho toàn trường. Bạn xem và dùng được; chỉ người soạn mới chỉnh sửa.
+          </span>
+        </p>
+      </header>
+
+      <Tabs value={tab} onValueChange={(v) => setTab(v as ReadTab)} className="gap-4">
+        <TabsList className="h-auto w-full flex-wrap justify-start sm:w-fit">
+          {tabs.map((t) => (
+            <TabsTrigger key={t} value={t} className="px-3">
+              {READ_TAB_LABEL[t]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="overview" className="mt-0">
+          <Panel>
+            <LocalItemPreview item={item} />
+          </Panel>
+        </TabsContent>
+        {kind === "CONTEXT" ? (
+          <TabsContent value="quiz" className="mt-0">
+            <ContextQuizzesPanel contextId={item.id} canEdit={false} />
+          </TabsContent>
+        ) : (
+          <TabsContent value="context" className="mt-0">
+            <LinkedContextsPanel characterId={item.id} canEdit={false} />
+          </TabsContent>
+        )}
+        <TabsContent value="rag" className="mt-0">
+          <DocumentsPanel kind={kind} itemId={item.id} canEdit={false} myUid={myUid} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -476,6 +585,7 @@ function SharingPanel({
   classes,
   lockedClasses,
   dirty,
+  error,
   onChange,
 }: {
   scope: LocalScope;
@@ -483,58 +593,142 @@ function SharingPanel({
   classes: { id: string; className: string; classCode: string }[];
   lockedClasses: boolean;
   dirty: boolean;
+  error: string | null;
   onChange: (patch: Partial<Pick<FormState, "scope" | "classIds">>) => void;
 }) {
   const wide = scope === "SCHOOL_WIDE";
   const toggleClass = (id: string, on: boolean) => onChange({ classIds: on ? [...classIds, id] : classIds.filter((c) => c !== id) });
-  const opt = (active: boolean) =>
+  const option = (active: boolean) =>
     cn(
-      "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold motion-safe:transition-colors",
-      active ? "bg-[var(--text-primary)] text-[var(--text-inverse)]" : "text-content-text hover:bg-[var(--bg-elevated)]",
+      "flex items-start gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
+      active ? "border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)]" : "border-[var(--border-default)] hover:border-[var(--border-strong)]",
     );
   return (
-    <section
-      aria-label="Ai thấy nội dung này"
-      className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3"
-    >
-      <span className="text-sm font-semibold text-content-heading">Học sinh thấy:</span>
-      <div role="radiogroup" className="inline-flex overflow-hidden rounded-[2px] border border-[var(--border-strong)]">
-        <button type="button" role="radio" aria-checked={!wide} className={opt(!wide)} onClick={() => onChange({ scope: "CLASS_ONLY" })}>
-          <Lock className="h-3.5 w-3.5" aria-hidden="true" /> Lớp được chọn
-        </button>
-        <button type="button" role="radio" aria-checked={wide} className={opt(wide)} onClick={() => onChange({ scope: "SCHOOL_WIDE" })}>
-          <Globe className="h-3.5 w-3.5" aria-hidden="true" /> Toàn trường
-        </button>
+    <section aria-label="Ai thấy nội dung này" className="space-y-5">
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[13.5px] font-semibold text-content-heading">Học sinh thấy</p>
+          {dirty && <span className="text-xs font-semibold text-[var(--accent-gold)]">Chưa lưu</span>}
+        </div>
+        <div role="radiogroup" aria-label="Học sinh thấy" className="mt-2 grid gap-2 sm:grid-cols-2">
+          <button type="button" role="radio" aria-checked={!wide} className={option(!wide)} onClick={() => onChange({ scope: "CLASS_ONLY" })}>
+            <Lock className="mt-0.5 h-4 w-4 shrink-0 text-content-muted" aria-hidden="true" />
+            <span>
+              <span className="block text-sm font-semibold text-content-heading">Lớp được chọn</span>
+              <span className="block text-xs text-content-muted">Chỉ học sinh các lớp bạn chọn bên dưới</span>
+            </span>
+          </button>
+          <button type="button" role="radio" aria-checked={wide} className={option(wide)} onClick={() => onChange({ scope: "SCHOOL_WIDE" })}>
+            <Globe className="mt-0.5 h-4 w-4 shrink-0 text-[var(--men-lam)]" aria-hidden="true" />
+            <span>
+              <span className="block text-sm font-semibold text-content-heading">Toàn trường</span>
+              <span className="block text-xs text-content-muted">Học sinh và giáo viên cả trường đều thấy</span>
+            </span>
+          </button>
+        </div>
       </div>
 
-      {!wide &&
-        (classes.length === 0 ? (
-          <span className="text-xs text-content-muted">Bạn chưa phụ trách lớp nào.</span>
-        ) : (
-          <div role="group" aria-label="Lớp được xem" className="flex flex-wrap items-center gap-1.5">
-            {classes.map((c) => (
-              <label
-                key={c.id}
-                htmlFor={`cls-${c.id}`}
-                className="flex cursor-pointer items-center gap-2 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-1 text-sm hover:border-[var(--text-primary)]"
-              >
-                <Checkbox
-                  id={`cls-${c.id}`}
-                  checked={classIds.includes(c.id)}
-                  disabled={lockedClasses && classIds.length === 1 && classIds.includes(c.id)}
-                  onCheckedChange={(v) => toggleClass(c.id, !!v)}
-                />
-                <span className="font-medium text-content-heading">{c.className}</span>
-              </label>
-            ))}
-          </div>
-        ))}
-
-      {!wide && classIds.length === 0 && classes.length > 0 && (
-        <span className="text-xs font-semibold text-[var(--status-warning)]">Chọn ít nhất một lớp</span>
+      {!wide && (
+        <div>
+          <p className="text-[13.5px] font-semibold text-content-heading">
+            Lớp được xem <span className="text-[var(--accent-danger)]">*</span>
+          </p>
+          {classes.length === 0 ? (
+            <p className="mt-2 text-sm text-content-muted">Bạn chưa phụ trách lớp nào.</p>
+          ) : (
+            <div role="group" aria-label="Lớp được xem" className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {classes.map((c) => {
+                const on = classIds.includes(c.id);
+                return (
+                  <label
+                    key={c.id}
+                    htmlFor={`cls-${c.id}`}
+                    className={cn(
+                      "flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm transition-colors",
+                      on ? "border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)]" : "border-[var(--border-default)] hover:border-[var(--border-strong)]",
+                    )}
+                  >
+                    <Checkbox
+                      id={`cls-${c.id}`}
+                      checked={on}
+                      disabled={lockedClasses && classIds.length === 1 && on}
+                      onCheckedChange={(v) => toggleClass(c.id, !!v)}
+                    />
+                    <span className="font-medium text-content-heading">Lớp {c.className}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+          {error && <p className="mt-2 text-xs font-medium text-[var(--accent-danger)]" role="alert">{error}</p>}
+          {lockedClasses && <p className="mt-2 text-xs text-content-muted">Nội dung đã gán lớp phải còn ít nhất một lớp.</p>}
+        </div>
       )}
-      {dirty && <span className="ml-auto text-xs font-semibold text-[var(--accent-gold)]">Chưa lưu</span>}
     </section>
+  );
+}
+
+/** Right column: what students will see (cover, video / portrait) and who sees it. */
+function EditorPreview({ kind, form, audience }: { kind: LocalKind; form: FormState; audience: string }) {
+  const img = (kind === "CONTEXT" ? form.ctx.imageUrl : form.chr.imageUrl).trim();
+  const hasImg = isValidUrl(img);
+  const video = form.ctx.videoUrl.trim();
+  const youtube = video ? getYouTubeEmbedUrl(video) : null;
+  const card = "overflow-hidden rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)]";
+  const head = "border-b border-[var(--border-default)] px-3 py-2 text-xs font-semibold text-content-heading";
+  const empty = "flex h-full items-center justify-center px-4 text-center text-xs text-content-muted";
+
+  return (
+    <div className="space-y-4 lg:sticky lg:top-6">
+      {kind === "CONTEXT" ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className={card}>
+            <p className={head}>Xem trước ảnh</p>
+            <div className="relative aspect-video bg-[var(--bg-deep)]">
+              {hasImg ? (
+                // eslint-disable-next-line @next/next/no-img-element -- teacher-provided URL of any host
+                <img src={img} alt={form.ctx.name || "Ảnh bối cảnh"} className="h-full w-full object-contain" />
+              ) : (
+                <div className={empty}>Dán URL ảnh hợp lệ ở tab Media để xem trước</div>
+              )}
+            </div>
+          </div>
+          <div className={card}>
+            <p className={head}>Xem trước video</p>
+            <div className="relative aspect-video bg-[var(--bg-deep)]">
+              {youtube ? (
+                <iframe src={youtube} title="Video bối cảnh" className="h-full w-full bg-black" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+              ) : isValidUrl(video) ? (
+                <video src={video} controls className="h-full w-full bg-black object-contain" />
+              ) : (
+                <div className={empty}>Dán URL video (YouTube hoặc .mp4) ở tab Media để xem trước</div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className={cn(card, "mx-auto max-w-[220px]")}>
+          <p className={head}>Thẻ nhân vật</p>
+          <div className="relative aspect-[3/4] bg-[var(--bg-deep)]">
+            {hasImg ? (
+              // eslint-disable-next-line @next/next/no-img-element -- teacher-provided URL of any host
+              <img src={img} alt={form.chr.name || "Ảnh nhân vật"} className="h-full w-full object-cover" />
+            ) : (
+              <div className={empty}>Dán URL ảnh ở tab Media để xem trước</div>
+            )}
+          </div>
+          <div className="px-3 py-2.5">
+            <p className="truncate font-semibold text-content-heading">{form.chr.name.trim() || "Tên nhân vật"}</p>
+            <p className="truncate text-sm text-[var(--text-secondary)]">{form.chr.title.trim() || "Chức vị"}</p>
+          </div>
+        </div>
+      )}
+
+      <div className={cn(card, "px-3 py-2.5")}>
+        <p className="text-xs text-content-muted">Học sinh thấy</p>
+        <p className="mt-0.5 text-sm font-semibold text-content-heading">{audience}</p>
+      </div>
+    </div>
   );
 }
 
@@ -557,7 +751,7 @@ function BcCheckbox({ id, checked, onChange }: { id: string; checked: boolean; o
 function ContextBasic({ f, patch, err }: { f: CtxForm; patch: (p: Partial<CtxForm>) => void; err: ErrFn }) {
   return (
     <div className="space-y-4">
-      <Field label="Tên bối cảnh" required error={err("name")}>
+      <Field label="Tên bối cảnh" required error={err("name")} count={{ value: f.name.length, max: 100 }}>
         <StaffFormInput value={f.name} onChange={(e) => patch({ name: e.target.value })} maxLength={100} placeholder="VD: Trận Bạch Đằng" />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -577,7 +771,7 @@ function ContextBasic({ f, patch, err }: { f: CtxForm; patch: (p: Partial<CtxFor
           </div>
         </Field>
       </div>
-      <Field label="Mô tả" required error={err("description")} hint={`${f.description.trim().length}/5000 ký tự`}>
+      <Field label="Mô tả" required error={err("description")} count={{ value: f.description.length, max: 5000 }}>
         <StaffFormTextarea
           value={f.description}
           onChange={(e) => patch({ description: e.target.value })}
@@ -586,7 +780,7 @@ function ContextBasic({ f, patch, err }: { f: CtxForm; patch: (p: Partial<CtxFor
           placeholder="Bối cảnh lịch sử..."
         />
       </Field>
-      <Field label="Địa điểm" required error={err("location")}>
+      <Field label="Địa điểm" required error={err("location")} count={{ value: f.location.length, max: 255 }}>
         <StaffFormInput value={f.location} onChange={(e) => patch({ location: e.target.value })} maxLength={255} placeholder="VD: Sông Bạch Đằng, Quảng Ninh" />
       </Field>
       <Field label="Tọa độ trên bản đồ" error={err("coords")} hint="Không bắt buộc. Lấy từ Google Maps: nhấp chuột phải vào vị trí để sao chép.">
@@ -636,10 +830,10 @@ function CharacterBasic({ f, patch, err }: { f: ChrForm; patch: (p: Partial<ChrF
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Tên nhân vật" required error={err("name")}>
+        <Field label="Tên nhân vật" required error={err("name")} count={{ value: f.name.length, max: 100 }}>
           <StaffFormInput value={f.name} onChange={(e) => patch({ name: e.target.value })} maxLength={100} placeholder="VD: Ngô Quyền" />
         </Field>
-        <Field label="Chức vị" required error={err("title")}>
+        <Field label="Chức vị" required error={err("title")} count={{ value: f.title.length, max: 150 }}>
           <StaffFormInput value={f.title} onChange={(e) => patch({ title: e.target.value })} maxLength={150} placeholder="VD: Tiết độ sứ" />
         </Field>
       </div>
@@ -775,7 +969,7 @@ function MediaFields({
       </Field>
       {isValidUrl(image.value.trim()) && (
         // eslint-disable-next-line @next/next/no-img-element -- teacher-provided URL of any host
-        <img src={image.value.trim()} alt="Xem trước ảnh" className="max-h-56 rounded-[2px] border border-[var(--border-default)] object-cover" />
+        <img src={image.value.trim()} alt="Xem trước ảnh" className="max-h-56 rounded-sm border border-[var(--border-default)] object-cover" />
       )}
       {video && (
         <>
@@ -783,10 +977,10 @@ function MediaFields({
             <StaffFormInput type="url" value={video.value} onChange={(e) => video.onChange(e.target.value)} maxLength={500} placeholder="https://.../video.mp4" />
           </Field>
           {embed ? (
-            <iframe src={embed} title="Xem trước video" className="aspect-video w-full max-w-xl rounded-[2px] border border-[var(--border-default)]" allowFullScreen />
+            <iframe src={embed} title="Xem trước video" className="aspect-video w-full max-w-xl rounded-sm border border-[var(--border-default)]" allowFullScreen />
           ) : (
             isValidUrl(video.value.trim()) && (
-              <video src={video.value.trim()} controls className="w-full max-w-xl rounded-[2px] border border-[var(--border-default)]" />
+              <video src={video.value.trim()} controls className="w-full max-w-xl rounded-sm border border-[var(--border-default)]" />
             )
           )}
         </>
@@ -935,7 +1129,7 @@ function DocumentsPanel({ kind, itemId, canEdit, myUid }: { kind: LocalKind; ite
       {open && (
         <Panel className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
-            <Field label="Tiêu đề" required error={titleErr}>
+            <Field label="Tiêu đề" required error={titleErr} count={{ value: title.length, max: 255 }}>
               <StaffFormInput value={title} onChange={(e) => setTitle(e.target.value)} maxLength={255} />
             </Field>
             <Field label="Loại">
@@ -973,7 +1167,7 @@ function DocumentsPanel({ kind, itemId, canEdit, myUid }: { kind: LocalKind; ite
       ) : list.length === 0 ? (
         <p className="text-sm text-content-muted">Chưa có tài liệu nào.</p>
       ) : (
-        <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--text-primary)]">
+        <ul className="divide-y divide-[var(--border-default)] border-y border-border-card">
           {list.map((d) => (
             <li key={d.docId} className="flex items-start gap-3 py-3">
               <FileText className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent-gold)]" aria-hidden="true" />

@@ -126,7 +126,7 @@ export function ProblemSection() {
                       cardsRef.current[i] = el;
                     }}
                     data-motion-card
-                    className="group flex gap-4 rounded-[2px] border border-(--text-primary) bg-(--bg-surface) px-4 py-4 transition-colors duration-200 will-change-transform hover:bg-(--bg-elevated) md:gap-6 md:px-6 md:py-5"
+                    className="group flex gap-4 rounded-sm border border-(--text-primary) bg-(--bg-surface) px-4 py-4 transition-colors duration-200 will-change-transform hover:bg-(--bg-elevated) md:gap-6 md:px-6 md:py-5"
                   >
                     <span className="shrink-0 font-display text-[1.5rem] font-extrabold leading-none text-(--accent-gold) md:text-[2rem]">
                       [{String(problem.id).padStart(2, "0")}]

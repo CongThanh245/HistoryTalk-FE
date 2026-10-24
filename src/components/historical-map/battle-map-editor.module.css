@@ -83,6 +83,13 @@
 .editor .tools button { flex-direction: column; justify-content: flex-start; gap: 3px; min-height: 54px; padding: 6px 2px; color: inherit; }
 .tools button span { font-size: 10px; line-height: 1.2; color: var(--text-primary); text-align: center; }
 .tools svg { width: 34px; height: 17px; flex-shrink: 0; }
+.editor .tools button { position: relative; }
+.toolKey { position: absolute; top: 2px; right: 3px; font: 700 9px/1 var(--font-mono, ui-monospace), monospace; color: var(--text-tertiary); }
+.editor .tools [data-locked] { box-shadow: inset 0 0 0 2px var(--accent-gold); }
+.editor .tools [data-locked] .toolKey { color: var(--gold-on-light); }
+.quickLabel { position: absolute; z-index: 5; transform: translate(-50%, 22px); width: 240px; height: 32px; padding: 0 10px; font: 600 13px/normal inherit; letter-spacing: 0; text-transform: none; border: 2px solid var(--accent-gold); border-radius: 2px; background: var(--bg-elevated); color: var(--text-primary); box-shadow: var(--shadow-soft); outline: none; }
+.draftBanner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 12px; border-radius: 2px; background: var(--accent-gold-active-bg); font-size: 13px; line-height: 1.5; }
+.draftBanner span { flex: 1; min-width: 220px; }
 .editor .tools .toolActive { border-color: var(--accent-gold); background: var(--accent-gold-active-bg); box-shadow: inset 0 0 0 1px var(--accent-gold); }
 
 /* ── Center: workspace ── */
@@ -136,6 +143,10 @@
 .symbol span { font-size: clamp(10px, 1vw, 16px); font-weight: 750; background: #fffffff0; padding: 2px 4px; max-width: 180%; overflow-wrap: anywhere; line-height: 1.3; }
 .stage { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .stage > .viewport { flex: 1; }
+.ambient { position: absolute; inset: -60px; background: center / cover no-repeat; filter: blur(36px) saturate(1.2); opacity: .5; transform: scale(1.08); pointer-events: none; }
+.viewport[data-ambient=true] .frame { box-shadow: 0 12px 48px #0000004d; }
+.viewport[data-pan=true] { cursor: grab; touch-action: none; }
+.viewport[data-pan=true]:active { cursor: grabbing; }
 .tip { position: absolute; z-index: 5; transform: translate(-50%, calc(-100% - 14px)); display: grid; gap: 2px; max-width: 260px; padding: 7px 10px; border-radius: 2px; background: var(--text-primary); color: var(--text-inverse); line-height: 1.35; white-space: normal; pointer-events: none; box-shadow: var(--shadow-soft); }
 .tip strong { font-size: 13px; }
 .tip span { font-size: 11px; opacity: .75; }
@@ -205,9 +216,32 @@
 @keyframes fx-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes fx-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes fx-pulse { 50% { transform: scale(1.18); } }
+
+/* ── Line symbols: SVG paths over the image (1 unit = 1% of its width) ── */
+.lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.pathSymbol { cursor: grab; outline: none; }
+.pathHit { fill: none; stroke: transparent; pointer-events: stroke; }
+.pathHead { pointer-events: visiblePainted; }
+.pathSelected { fill: none; stroke: var(--accent-gold); stroke-opacity: .55; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.pathSymbol:focus-visible .pathSelected, .pathSymbol:focus-visible .pathHit { stroke: var(--accent-gold); stroke-opacity: .35; }
+.pathPreview { opacity: .75; }
+.plane[data-placing=true] .pathSymbol *, .plane[data-drawing=true] .pathSymbol * { pointer-events: none; }
+.pathSymbol[data-dim=true] { opacity: .38; }
+.pathSymbol[data-fx=fade] { animation: fx-fade 650ms ease var(--fx-delay) both; }
+.pathSymbol[data-fx=pop], .pathSymbol[data-fx=pulse] { transform-box: fill-box; transform-origin: center; }
+.pathSymbol[data-fx=pop] { animation: fx-pop 650ms cubic-bezier(.3, 1.6, .5, 1) var(--fx-delay) both; }
+.pathSymbol[data-fx=pulse] { animation: fx-pop 500ms cubic-bezier(.3, 1.6, .5, 1) var(--fx-delay) both, fx-pulse 900ms ease-in-out calc(var(--fx-delay) + 500ms) 3; }
+/* "Vẽ dần": the ink runs along the route, then the arrowhead lands at its end. */
+.traceMask { stroke-dasharray: 1 2; stroke-dashoffset: 1; animation: fx-trace 1100ms cubic-bezier(.45, 0, .25, 1) var(--fx-delay) forwards; }
+.pathSymbol[data-fx=draw] .pathHead { animation: fx-fade 220ms ease calc(var(--fx-delay) + 900ms) both; }
+@keyframes fx-trace { to { stroke-dashoffset: 0; } }
+.vertex, .vertexAdd { position: absolute; z-index: 3; box-sizing: border-box; width: 14px; height: 14px; margin: -7px 0 0 -7px; border: 2px solid var(--accent-gold); border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px #0006; cursor: move; touch-action: none; }
+.vertexAdd { width: 10px; height: 10px; margin: -5px 0 0 -5px; border-color: #FFFFFF; background: var(--accent-gold); opacity: .8; cursor: copy; }
+.vertex:hover, .vertexAdd:hover { transform: scale(1.25); opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   .plane { transition: none; }
-  .plane .symbol[data-fx], .plane .symbol[data-fx] svg, .plane .symbol[data-fx] > span { animation-duration: 1ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; }
+  .plane .symbol[data-fx], .plane .symbol[data-fx] svg, .plane .symbol[data-fx] > span,
+  .pathSymbol[data-fx], .pathSymbol[data-fx] .pathHead, .traceMask { animation-duration: 1ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; }
 }
 
 /* Phase bar above the editor canvas */

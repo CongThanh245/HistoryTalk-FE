@@ -33,7 +33,7 @@ export function LastImportBar({ schoolName }: { schoolName?: string }) {
     <>
       <section
         aria-label="Kết quả nhập gần nhất"
-        className="flex flex-col gap-3 rounded-[2px] border border-[var(--status-warning-border)] border-l-4 border-l-[var(--status-warning)] bg-[var(--status-warning-bg)] px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+        className="flex flex-col gap-3 rounded-sm border border-[var(--status-warning-border)] border-l-4 border-l-[var(--status-warning)] bg-[var(--status-warning-bg)] px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between"
       >
         <div className="flex min-w-0 items-start gap-3">
           <FileCheck2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
@@ -51,7 +51,7 @@ export function LastImportBar({ schoolName }: { schoolName?: string }) {
           </button>
           <button
             type="button"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[2px] text-content-muted transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--accent-danger)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-sm text-content-muted transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--accent-danger)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]"
             onClick={() => setConfirmClear(true)}
             title="Xóa khỏi phiên"
             aria-label="Xóa kết quả nhập khỏi phiên"

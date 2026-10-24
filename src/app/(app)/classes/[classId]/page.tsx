@@ -70,7 +70,7 @@ function ClassDetail({ allowed, role, query }: { allowed: boolean; role: string 
   }
   if (isLoading) {
     return (
-      <div className="h-[72px] animate-pulse rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" aria-busy="true" />
+      <div className="h-[72px] animate-pulse rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] motion-reduce:animate-none" aria-busy="true" />
     );
   }
   if (isError || !classroom) {
@@ -233,7 +233,7 @@ function QuickStat({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3 text-left motion-safe:transition-colors hover:border-[var(--text-primary)]"
+      className="rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3 text-left motion-safe:transition-colors hover:border-[var(--text-primary)]"
     >
       <span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-content-muted">{label}</span>
       <span
@@ -252,7 +252,7 @@ function QuickStat({
 function ClassMaterials({ items, loading }: { items: LocalItem[]; loading: boolean }) {
   const tasks = useAssignmentTasks(true);
   const [kind, setKind] = React.useState<LocalKind | "ALL">("ALL");
-  if (loading) return <div className="h-40 animate-pulse rounded-[2px] bg-[var(--bg-elevated)] motion-reduce:animate-none" aria-busy="true" />;
+  if (loading) return <div className="h-40 animate-pulse rounded-sm bg-[var(--bg-elevated)] motion-reduce:animate-none" aria-busy="true" />;
   if (items.length === 0) {
     return (
       <EmptyState
@@ -275,6 +275,7 @@ function ClassMaterials({ items, loading }: { items: LocalItem[]; loading: boole
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SegmentedFilter
+          variant="pills"
           label="Loại tư liệu"
           value={kind}
           onChange={setKind}

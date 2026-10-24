@@ -25,7 +25,7 @@ export const translateImportMessage = (m: string) => MESSAGE_VI.find(([re]) => r
 
 function Stat({ icon: Icon, label, value, tone }: { icon: typeof CheckCircle2; label: string; value: number; tone?: "ok" | "bad" }) {
   return (
-    <div className="flex items-start gap-3 rounded-[2px] border border-[var(--border-strong)] p-3">
+    <div className="flex items-start gap-3 rounded-sm border border-[var(--border-strong)] p-3">
       <Icon
         className={cn(
           "mt-0.5 h-5 w-5 shrink-0",
@@ -34,8 +34,8 @@ function Stat({ icon: Icon, label, value, tone }: { icon: typeof CheckCircle2; l
         aria-hidden="true"
       />
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</p>
-        <p className="font-display text-xl font-extrabold tabular-nums text-content-heading">{formatNumber(value)}</p>
+        <p className="text-[13px] font-semibold text-[var(--text-tertiary)]">{label}</p>
+        <p className="text-xl font-bold tabular-nums text-content-heading">{formatNumber(value)}</p>
       </div>
     </div>
   );
@@ -51,12 +51,12 @@ export function ImportSummary({ session }: { session: ImportSession }) {
   );
 }
 
-const TH = "px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]";
+const TH = "px-3 py-2 text-left text-[13px] font-semibold text-[var(--text-tertiary)]";
 
 export function ImportErrorsTable({ errors, session }: { errors: StudentImportError[]; session: Pick<ImportSession, "sentLines"> }) {
   if (!errors.length) return null;
   return (
-    <div className="max-h-[40dvh] overflow-auto border-y border-[var(--text-primary)]">
+    <div className="max-h-[40dvh] overflow-auto border-y border-border-card">
       <table className="w-full min-w-[520px] text-sm">
         <caption className="sr-only">Các dòng bị máy chủ từ chối</caption>
         <thead>
@@ -93,7 +93,7 @@ export function ImportAccountsTable({ accounts, maxHeight = "max-h-[50dvh]" }: {
           {reveal ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
         </button>
       </div>
-      <div className={cn("overflow-auto border-y border-[var(--text-primary)]", maxHeight)}>
+      <div className={cn("overflow-auto border-y border-border-card", maxHeight)}>
         <table className="w-full min-w-[720px] text-sm">
           <caption className="sr-only">Tài khoản học sinh đã tạo</caption>
           <thead>

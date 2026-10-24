@@ -75,8 +75,8 @@ export function QuizProgressBar({
         <button
           onClick={onBack}
           className={cn(
-            "inline-flex h-9 flex-shrink-0 items-center gap-1.5 rounded-[2px] px-2 text-[11px] font-bold uppercase tracking-[0.08em] text-content-heading transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] sm:px-3",
-            inset && "ml-8",
+            "inline-flex h-9 flex-shrink-0 items-center gap-1.5 rounded-sm px-2 text-[11px] font-bold uppercase tracking-[0.08em] text-content-heading transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] sm:px-3",
+            inset && "ml-10",
           )}
           title="Quay lại"
           aria-label="Quay lại"
@@ -91,7 +91,7 @@ export function QuizProgressBar({
               {quizTitle}
             </p>
             {practiceMode && (
-              <span className="flex-shrink-0 rounded-[2px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] bg-[var(--accent-gold)] text-[#FFFFFF]">
+              <span className="flex-shrink-0 rounded-sm px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] bg-[var(--accent-gold)] text-[#FFFFFF]">
                 Luyện tập
               </span>
             )}
@@ -104,7 +104,7 @@ export function QuizProgressBar({
         <button
           onClick={() => setPanelOpen((v) => !v)}
           className={cn(
-            "p-1.5 rounded-[2px] border transition-colors flex-shrink-0 relative",
+            "p-1.5 rounded-sm border transition-colors flex-shrink-0 relative",
             panelOpen
               ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
               : "text-content-heading bg-transparent border-[var(--border-strong)] hover:border-[var(--text-primary)]",
@@ -113,7 +113,7 @@ export function QuizProgressBar({
         >
           <LayoutGrid size={16} />
           {answeredCount < totalQuestions && (
-            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-[2px] text-[10px] font-bold flex items-center justify-center bg-accent-gold text-[#FFFFFF]">
+            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-sm text-[10px] font-bold flex items-center justify-center bg-accent-gold text-[#FFFFFF]">
               {totalQuestions - answeredCount}
             </span>
           )}
@@ -121,7 +121,7 @@ export function QuizProgressBar({
 
         <div
           className={cn(
-            "flex min-w-[64px] flex-col items-center rounded-[2px] px-2 py-1 text-xs flex-shrink-0 border sm:min-w-[104px] sm:px-3",
+            "flex min-w-[64px] flex-col items-center rounded-sm px-2 py-1 text-xs flex-shrink-0 border sm:min-w-[104px] sm:px-3",
             timerDanger
               ? "bg-[var(--status-danger-bg)] text-accent-danger border-[var(--accent-danger)]"
               : "bg-[var(--bg-elevated)] text-content-heading border-[var(--text-primary)]",
@@ -140,7 +140,7 @@ export function QuizProgressBar({
         {onGoHome && (
           <button
             onClick={onGoHome}
-            className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-transparent text-content-heading border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] sm:px-3"
+            className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-sm text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-transparent text-content-heading border border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] sm:px-3"
             title="Về trang quiz"
             aria-label="Về trang quiz"
           >
@@ -155,7 +155,7 @@ export function QuizProgressBar({
             onRetry();
           }}
           aria-label="Làm lại"
-          className="inline-flex items-center gap-1.5 px-2 py-1.5 sm:px-3 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-[var(--text-primary)] text-[var(--text-inverse)] border border-[var(--text-primary)] hover:bg-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:text-[#FFFFFF]"
+          className="inline-flex items-center gap-1.5 px-2 py-1.5 sm:px-3 rounded-sm text-[11px] font-bold uppercase tracking-[0.08em] transition-colors flex-shrink-0 bg-[var(--text-primary)] text-[var(--text-inverse)] border border-[var(--text-primary)] hover:bg-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:text-[#FFFFFF]"
           title="Làm lại"
         >
           <RotateCcw size={14} className="sm:hidden" aria-hidden="true" />
@@ -209,7 +209,7 @@ export function QuizProgressBar({
                   key={qId}
                   onClick={() => scrollToQuestion(idx)}
                   className={cn(
-                    "relative w-8 h-8 rounded-[2px] text-xs font-bold transition-colors border tabular-nums",
+                    "relative w-8 h-8 rounded-sm text-xs font-bold transition-colors border tabular-nums",
                     answered
                       ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
                       : "bg-[var(--bg-surface)] text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)]",

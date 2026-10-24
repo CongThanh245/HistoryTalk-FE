@@ -140,7 +140,7 @@ export function TimelineStripCard({
       <button
         onClick={() => onOpenDetail(event)}
         aria-label={`Xem chi tiết sự kiện ${event.title}`}
-        className="group relative w-full flex flex-col md:flex-row text-left rounded-[2px] border overflow-hidden cursor-pointer transition-colors duration-300 bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]"
+        className="group relative w-full flex flex-col md:flex-row text-left rounded-sm border overflow-hidden cursor-pointer transition-colors duration-300 bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]"
       >
         {/* Image */}
         <div className="relative w-full md:w-[460px] lg:w-[500px] h-[170px] sm:h-[230px] md:h-auto md:min-h-[280px] overflow-hidden shrink-0 border-b md:border-b-0 md:border-r border-[var(--text-primary)] bg-[var(--bg-deep)]">
@@ -233,7 +233,7 @@ export function TimelineCardSkeleton({ index }: { index: number }) {
 
 export function TimelineStripCardSkeleton() {
   return (
-    <div className="w-full rounded-[2px] border overflow-hidden animate-pulse flex bg-[var(--bg-surface)] border-[var(--text-primary)] min-h-[220px]">
+    <div className="w-full rounded-sm border overflow-hidden animate-pulse flex bg-[var(--bg-surface)] border-[var(--text-primary)] min-h-[220px]">
       <div className="w-72 shrink-0 bg-card-light-border" />
       <div className="flex-1 p-6 space-y-3">
         <div className="h-12 w-28 bg-card-light-border" />

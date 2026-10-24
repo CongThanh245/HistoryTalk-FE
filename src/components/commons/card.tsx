@@ -49,7 +49,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "group relative rounded-[2px] border overflow-hidden transition-colors duration-200 cursor-pointer",
+        "group relative rounded-sm border overflow-hidden transition-colors duration-200 cursor-pointer",
         "hover:border-[var(--text-primary)]",
         "bg-card-bg border-[var(--border-strong)]",
         isHorizontal ? "flex flex-col md:flex-row" : "flex flex-col",
@@ -60,7 +60,7 @@ export function Card({
       {/* Hover border glow */}
       {accentColor && (
         <div
-          className="absolute inset-0 rounded-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+          className="absolute inset-0 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
           style={{ boxShadow: `inset 0 0 0 1px ${accentColor}`, zIndex: 20 }}
         />
       )}
@@ -111,7 +111,7 @@ export function Card({
         {badge && (
           <div className="absolute top-2.5 right-2.5 z-20">
             <span
-              className="text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-[2px]"
+              className="text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-sm"
               style={{ background: badge.bg, color: badge.color }}
             >
               {badge.label}
@@ -170,7 +170,7 @@ export function DarkCard({
     <div
       className={cn(
         // "relative" bắt buộc phải có để overlay absolute bám đúng chỗ
-        "group relative w-full h-full rounded-[2px] overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col",
+        "group relative w-full h-full rounded-sm overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col",
         "bg-bg-surface border-border-default",
         className,
       )}
@@ -184,7 +184,7 @@ export function DarkCard({
       */}
       <div
         className={cn(
-          "absolute inset-0 pointer-events-none opacity-0 transition-all duration-300 z-50 rounded-[2px] shadow-[inset_0_0_0_1px_var(--accent-gold)]",
+          "absolute inset-0 pointer-events-none opacity-0 transition-all duration-300 z-50 rounded-sm shadow-[inset_0_0_0_1px_var(--accent-gold)]",
           hoverEffects && "group-hover:opacity-100",
         )}
       />
@@ -213,7 +213,7 @@ export function DarkCard({
         />
         {badge && (
           <div
-            className="absolute right-2 top-2 z-10 rounded-[2px] border px-1.5 py-0.5 sm:right-3 sm:top-3 sm:px-2 sm:py-1 bg-text-primary border-text-primary"
+            className="absolute right-2 top-2 z-10 rounded-sm border px-1.5 py-0.5 sm:right-3 sm:top-3 sm:px-2 sm:py-1 bg-text-primary border-text-primary"
           >
             <span
               className="text-[8px] font-bold uppercase tracking-[0.1em] sm:text-[10px] text-accent-gold-soft"

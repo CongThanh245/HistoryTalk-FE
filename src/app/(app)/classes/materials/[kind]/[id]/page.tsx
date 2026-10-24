@@ -84,7 +84,7 @@ function MaterialView({ item, teacher }: { item: LocalItem; teacher?: boolean })
         <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           <Panel className="h-fit">
             <div className="flex items-center gap-4">
-              <span className="grid h-20 w-20 shrink-0 place-items-center rounded-[2px] bg-[var(--accent-gold)] text-white" aria-hidden="true">
+              <span className="grid h-20 w-20 shrink-0 place-items-center rounded-sm bg-[var(--accent-gold)] text-white" aria-hidden="true">
                 <UserRound className="h-9 w-9" />
               </span>
               <div className="min-w-0">

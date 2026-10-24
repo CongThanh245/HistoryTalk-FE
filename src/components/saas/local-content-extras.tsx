@@ -162,7 +162,7 @@ export function LocalBattleMapPanel({ item, canEdit }: { item: LocalItem; canEdi
       {hasMap ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {/* eslint-disable-next-line @next/next/no-img-element -- uploaded battle map image */}
-          <img src={map!.imageUrl} alt="Lược đồ trận đánh" className="max-h-40 w-full max-w-xs rounded-[2px] border border-[var(--border-default)] object-cover" />
+          <img src={map!.imageUrl} alt="Lược đồ trận đánh" className="max-h-40 w-full max-w-xs rounded-sm border border-[var(--border-default)] object-cover" />
           <p className="text-sm text-content-muted">
             {map!.factions.length} phe · {map!.symbols.length} ký hiệu{map!.phases?.length ? ` · ${map!.phases.length} giai đoạn` : ""}
           </p>
@@ -188,6 +188,7 @@ export function LocalBattleMapPanel({ item, canEdit }: { item: LocalItem; canEdi
           <BattleMapEditor
             initialValue={map ?? emptyBattleMap()}
             title={item.name}
+            draftId={`local:${item.id}`}
             onClose={() => setEditing(false)}
             onSave={async (value) => {
               try {
@@ -249,7 +250,7 @@ export function ContextQuizzesPanel({ contextId, canEdit }: { contextId: string;
       ) : rows.length === 0 ? (
         <p className="text-sm text-content-muted">Chưa có bộ đề nào.</p>
       ) : (
-        <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--text-primary)]">
+        <ul className="divide-y divide-[var(--border-default)] border-y border-border-card">
           {rows.map((q) => (
             <li key={q.quizId}>
               <Link href={ROUTES.TEACHING.LOCAL_QUIZ(q.quizId)} className="group flex items-center gap-3 py-3">
@@ -262,7 +263,7 @@ export function ContextQuizzesPanel({ contextId, canEdit }: { contextId: string;
                 </div>
                 <span
                   className={cn(
-                    "rounded-[2px] border px-2 py-0.5 text-[11px] font-bold",
+                    "rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
                     q.isPublished
                       ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]"
                       : "border-[var(--border-strong)] text-[var(--text-secondary)]",

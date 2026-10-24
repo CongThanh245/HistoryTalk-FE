@@ -94,7 +94,7 @@ export function DailyQuotaPolicyPanel({ currentDefault }: { currentDefault?: num
       </div>
 
       <div className="space-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Theo lớp · năm học {academicYearLabel(year)}</p>
+        <p className="text-[13px] font-semibold text-[var(--text-tertiary)]">Theo lớp · năm học {academicYearLabel(year)}</p>
         {classes.isPending ? (
           <p className="text-sm text-content-muted">Đang tải lớp...</p>
         ) : classes.isError ? (
@@ -102,9 +102,9 @@ export function DailyQuotaPolicyPanel({ currentDefault }: { currentDefault?: num
         ) : byGrade.length === 0 ? (
           <p className="text-sm text-content-muted">Chưa có lớp nào trong năm học này.</p>
         ) : (
-          <div className="border-y border-[var(--text-primary)]">
+          <div className="border-y border-border-card">
             {byGrade.map(([grade, rooms]) => (
-              <div key={grade} className="border-b border-[var(--border-strong)] last:border-b-0">
+              <div key={grade} className="border-b border-[var(--border-default)] last:border-b-0">
                 <GradeHeader grade={grade} count={rooms.length} fallback={studentQuota} saving={update.isPending} onApply={saveGrade} />
                 <ul className="divide-y divide-[var(--border-default)]">
                   {rooms.map((c) => (
@@ -142,8 +142,8 @@ function EditableQuota({
   const error = !draft.trim() ? "Nhập số token" : !Number.isInteger(n) || n < min ? `Tối thiểu ${formatNumber(min)} token` : null;
 
   return (
-    <div className="flex flex-col gap-2 rounded-[2px] border border-[var(--border-strong)] px-4 py-3">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</span>
+    <div className="flex flex-col gap-2 rounded-lg border border-border-card px-4 py-3">
+      <span className="text-[13px] font-semibold text-[var(--text-tertiary)]">{label}</span>
       {editing ? (
         <div className="flex flex-wrap items-center gap-2">
           <StaffFormInput
@@ -168,7 +168,7 @@ function EditableQuota({
       ) : (
         <div className="flex items-baseline justify-between gap-3">
           <span>
-            <span className="font-display text-3xl font-extrabold tabular-nums text-content-heading">{formatNumber(value)}</span>
+            <span className="text-3xl font-bold tabular-nums text-content-heading">{formatNumber(value)}</span>
             <span className="ml-1.5 text-sm text-content-muted">token / ngày</span>
           </span>
           <button

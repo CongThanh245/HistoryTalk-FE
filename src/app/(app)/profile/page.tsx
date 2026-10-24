@@ -151,7 +151,7 @@ function statusBadge(status: string) {
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-[2px] border px-2 text-[10px] font-bold uppercase tracking-[0.1em]",
+        "inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-sm border px-2 text-[10px] font-bold uppercase tracking-[0.1em]",
         cfg.classes
       )}
     >
@@ -163,9 +163,9 @@ function statusBadge(status: string) {
 
 const FIELD_LABEL =
   "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary";
-const FIELD_INPUT = "h-10 rounded-[2px] border text-sm focus-visible:border-[var(--text-primary)]";
+const FIELD_INPUT = "h-10 rounded-sm border text-sm focus-visible:border-[var(--text-primary)]";
 const CRIMSON_SUBMIT =
-  "h-[42px] gap-2 rounded-[2px] px-6 text-[13px] font-bold uppercase tracking-[0.08em] bg-[var(--accent-gold)] text-[#FFFFFF] hover:bg-[var(--accent-bronze)]";
+  "h-[42px] gap-2 rounded-sm px-6 text-[13px] font-bold uppercase tracking-[0.08em] bg-[var(--accent-gold)] text-[#FFFFFF] hover:bg-[var(--accent-bronze)]";
 
 // ─────────────────────────────────────────────
 // Sub-components
@@ -177,14 +177,14 @@ function ProfileSkeleton() {
       <div className="flex items-center gap-4">
         <Skeleton className="w-20 h-20 rounded-full" />
         <div className="space-y-2">
-          <Skeleton className="h-5 w-36 rounded-[2px]" />
-          <Skeleton className="h-4 w-24 rounded-[2px]" />
+          <Skeleton className="h-5 w-36 rounded-sm" />
+          <Skeleton className="h-4 w-24 rounded-sm" />
         </div>
       </div>
       {[1, 2, 3, 4].map((i) => (
         <div key={i} className="space-y-1.5">
-          <Skeleton className="h-4 w-20 rounded-[2px]" />
-          <Skeleton className="h-10 w-full rounded-[2px]" />
+          <Skeleton className="h-4 w-20 rounded-sm" />
+          <Skeleton className="h-10 w-full rounded-sm" />
         </div>
       ))}
     </div>
@@ -255,7 +255,7 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8">
-      <aside className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-elevated)] lg:sticky lg:top-6 lg:self-start">
+      <aside className="rounded-sm border border-border-card bg-[var(--bg-elevated)] lg:sticky lg:top-6 lg:self-start">
         <div className="border-b border-[var(--text-primary)] px-4 py-2">
         </div>
 
@@ -278,7 +278,7 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
               onClick={() => avatarInputRef.current?.click()}
               disabled={isAvatarBusy}
               title="Đổi ảnh đại diện"
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-[2px] border-2 border-[var(--bg-elevated)] bg-[var(--accent-gold)] transition-colors hover:bg-[var(--accent-bronze)] disabled:opacity-60"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-sm border-2 border-[var(--bg-elevated)] bg-[var(--accent-gold)] transition-colors hover:bg-[var(--accent-bronze)] disabled:opacity-60"
             >
               <Camera className="h-4 w-4 text-[#FFFFFF]" />
             </button>
@@ -312,17 +312,17 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
           </p>
 
           {isSchoolAccount ? (
-            <span className="mt-3 inline-flex max-w-full items-center gap-1.5 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text-secondary">
+            <span className="mt-3 inline-flex max-w-full items-center gap-1.5 rounded-sm border border-[var(--border-strong)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text-secondary">
               <School className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">Gói của trường: {entitlements.planLabel}</span>
             </span>
           ) : proUser ? (
-            <span className="mt-3 inline-flex items-center gap-1.5 rounded-[2px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] bg-[var(--accent-gold)] text-[#FFFFFF]">
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] bg-[var(--accent-gold)] text-[#FFFFFF]">
               <Crown className="w-3.5 h-3.5 fill-current" />
               {profile?.tierTitle}
             </span>
           ) : (
-            <span className="mt-3 inline-flex items-center gap-1.5 rounded-[2px] border border-[var(--border-strong)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-sm border border-[var(--border-strong)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
               <Sparkles className="w-3.5 h-3.5" />
               Tài khoản cơ bản
             </span>
@@ -407,7 +407,7 @@ function PersonalProfileForm({ profile }: { profile: UserProfile }) {
                 value={form.gender}
                 onValueChange={(v) => setForm({ ...form, gender: normalizeGender(v) })}
               >
-                <SelectTrigger className="h-10 rounded-[2px] border text-sm bg-bg-main border-border-strong text-text-primary">
+                <SelectTrigger className="h-10 rounded-sm border text-sm bg-bg-main border-border-strong text-text-primary">
                   <span data-slot="select-value" className="line-clamp-1">
                     {form.gender ? (
                       GENDER_LABELS[form.gender as "MALE" | "FEMALE" | "OTHER"]
@@ -518,7 +518,7 @@ function BillingTab() {
       {/* Current Tier Card */}
       <div
         className={cn(
-          "rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]",
+          "rounded-sm border border-border-card bg-[var(--bg-surface)]",
           proUser && "border-t-[3px] border-t-[var(--accent-gold)]"
         )}
       >
@@ -526,7 +526,7 @@ function BillingTab() {
           <div className="flex items-center gap-3">
             <div
               className={cn(
-                "w-10 h-10 rounded-[2px] flex items-center justify-center shrink-0",
+                "w-10 h-10 rounded-sm flex items-center justify-center shrink-0",
                 proUser
                   ? "bg-[var(--accent-gold)]"
                   : "border border-[var(--border-strong)]"
@@ -544,11 +544,11 @@ function BillingTab() {
           </div>
           <div className="flex flex-col items-end gap-2 shrink-0">
             {proUser ? (
-              <Badge className="rounded-[2px] font-bold uppercase tracking-[0.1em] text-[10px] px-2 py-1 border-0 bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]">
+              <Badge className="rounded-sm font-bold uppercase tracking-[0.1em] text-[10px] px-2 py-1 border-0 bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]">
                 ✦ PRO
               </Badge>
             ) : (
-              <Badge className="rounded-[2px] font-bold uppercase tracking-[0.1em] text-[10px] px-2 py-1 bg-transparent text-text-tertiary border border-border-strong">
+              <Badge className="rounded-sm font-bold uppercase tracking-[0.1em] text-[10px] px-2 py-1 bg-transparent text-text-tertiary border border-border-strong">
                 Free
               </Badge>
             )}
@@ -566,7 +566,7 @@ function BillingTab() {
         <div className="grid sm:grid-cols-2">
           {/* Token display */}
           {profileLoading ? (
-            <Skeleton className="m-5 h-14 rounded-[2px]" />
+            <Skeleton className="m-5 h-14 rounded-sm" />
           ) : (
             <div className="flex items-center gap-3 p-5">
               <Coins
@@ -585,7 +585,7 @@ function BillingTab() {
 
           {/* Subscription end time display */}
           {profileLoading ? (
-            <Skeleton className="m-5 h-14 rounded-[2px]" />
+            <Skeleton className="m-5 h-14 rounded-sm" />
           ) : profile?.subscriptionEndTime && (
             <div className="flex items-center gap-3 border-t border-[var(--border-default)] p-5 sm:border-l sm:border-t-0">
               <Hourglass
@@ -599,7 +599,7 @@ function BillingTab() {
                   {formatRemainingTime(profile.subscriptionEndTime) && (
                     <span
                       className={cn(
-                        "rounded-[2px] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em]",
+                        "rounded-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em]",
                         proUser
                           ? "bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]"
                           : "border border-border-default text-text-tertiary"
@@ -619,7 +619,7 @@ function BillingTab() {
 
         {/* Token usage breakdown */}
         {dashboardLoading ? (
-          <Skeleton className="mx-5 mb-5 h-20 rounded-[2px]" />
+          <Skeleton className="mx-5 mb-5 h-20 rounded-sm" />
         ) : aiUsage && aiUsage.totalTokensUsed > 0 && (
           <div className="border-t border-[var(--border-default)] px-5 py-4">
             <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.1em] text-text-secondary">
@@ -686,18 +686,18 @@ function BillingTab() {
         {paymentsLoading ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-[2px]" />
+              <Skeleton key={i} className="h-16 w-full rounded-sm" />
             ))}
           </div>
         ) : !payments || payments.length === 0 ? (
-          <div className="rounded-[2px] border border-dashed border-border-strong p-8 text-center">
+          <div className="rounded-sm border border-dashed border-border-strong p-8 text-center">
             <Coins className="w-10 h-10 mx-auto mb-2 text-text-muted" />
             <p className="text-sm text-text-tertiary">
               Chưa có giao dịch nào
             </p>
           </div>
         ) : (
-          <div className="rounded-[2px] border border-[var(--text-primary)]">
+          <div className="rounded-sm border border-border-card">
             <div className="hidden grid-cols-[minmax(0,1fr)_150px_140px] gap-4 border-b border-[var(--text-primary)] bg-bg-elevated px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary sm:grid">
               <span>Gói</span>
               <span>Trạng thái</span>
@@ -712,7 +712,7 @@ function BillingTab() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={cn(
-                        "w-9 h-9 rounded-[2px] flex items-center justify-center shrink-0 border",
+                        "w-9 h-9 rounded-sm flex items-center justify-center shrink-0 border",
                         p.status === "PAID"
                           ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)]"
                           : "border-border-default"
@@ -834,7 +834,7 @@ function SecurityTab() {
               <button
                 type="button"
                 onClick={() => setShowPassword({ ...showPassword, [field]: !showPassword[field] })}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-[2px] transition-colors text-text-muted hover:text-text-primary"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-sm transition-colors text-text-muted hover:text-text-primary"
               >
                 {showPassword[field] ? (
                   <EyeOff className="w-4 h-4" />
@@ -901,12 +901,12 @@ export default function ProfilePage() {
             label="Tài khoản"
             title="Hồ sơ của tôi"
             description="Quản lý thông tin tài khoản & gói dịch vụ"
-            className="mb-0 pr-20 sm:pr-64"
+            className="mb-0 pb-3 pr-20 sm:pr-64"
           />
 
           <div className="absolute bottom-3 right-0 flex items-end gap-4">
             {proUser && profile?.tierTitle && (
-              <div className="hidden sm:flex items-center gap-1.5 rounded-[2px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] bg-[var(--accent-gold)] text-[#FFFFFF]">
+              <div className="hidden sm:flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] bg-[var(--accent-gold)] text-[#FFFFFF]">
                 <Crown className="w-3.5 h-3.5 fill-current" />
                 {profile.tierTitle}
               </div>
@@ -915,7 +915,7 @@ export default function ProfilePage() {
         </div>
 
         {/* ── Tab nav ── */}
-        <div className="flex rounded-[2px] border border-[var(--text-primary)] bg-bg-surface">
+        <div className="flex rounded-sm border border-border-card bg-bg-surface">
           {TABS.map(({ key, label, icon: Icon }, i) => {
             const isActive = activeTab === key;
             return (
@@ -940,7 +940,7 @@ export default function ProfilePage() {
         </div>
 
         {/* ── Tab content ── */}
-        <div className="rounded-[2px] border border-[var(--text-primary)] bg-bg-surface p-5 sm:p-6">
+        <div className="rounded-sm border border-border-card bg-bg-surface p-5 sm:p-6">
           {activeTab === "profile" && <PersonalProfileTab />}
           {activeTab === "billing" && (schoolAccount ? <SchoolQuotaCard role={role} /> : <BillingTab />)}
           {activeTab === "security" && <SecurityTab />}

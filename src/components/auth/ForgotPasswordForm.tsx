@@ -55,9 +55,9 @@ export default function ForgotPasswordForm() {
           Quay lại đăng nhập
         </Link>
 
-        <div className="rounded-[2px] border border-[var(--text-primary)] border-t-[3px] border-t-[var(--accent-gold)] p-6 sm:p-8 bg-[var(--bg-surface)]">
+        <div className="rounded-sm border border-border-card border-t-[3px] border-t-[var(--accent-gold)] p-6 sm:p-8 bg-[var(--bg-surface)]">
           <div className="mb-6 flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[2px] bg-[var(--text-primary)] text-[var(--text-inverse)]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-[var(--text-primary)] text-[var(--text-inverse)]">
               <Mail className="h-5 w-5" />
             </div>
             <div>
@@ -85,14 +85,14 @@ export default function ForgotPasswordForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Nhập địa chỉ email của bạn"
-                className="h-11 rounded-[2px] text-sm shadow-none focus-visible:ring-0 focus-visible:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text placeholder:text-[var(--text-muted)]"
+                className="h-11 rounded-sm text-sm shadow-none focus-visible:ring-0 focus-visible:border-[var(--accent-gold)] bg-[var(--bg-elevated)] border-[var(--text-primary)] text-content-text placeholder:text-[var(--text-muted)]"
               />
             </div>
 
             <Button
               type="submit"
               disabled={forgotPassword.isPending}
-              className="h-11 w-full rounded-[2px] border-0 text-[13px] font-bold uppercase tracking-[0.08em] shadow-none bg-[var(--accent-gold)] text-[#FFFFFF] hover:bg-[var(--accent-bronze)]"
+              className="h-11 w-full rounded-sm border-0 text-[13px] font-bold uppercase tracking-[0.08em] shadow-none bg-[var(--accent-gold)] text-[#FFFFFF] hover:bg-[var(--accent-bronze)]"
             >
               {forgotPassword.isPending ? "Đang gửi..." : "Gửi liên kết"}
             </Button>

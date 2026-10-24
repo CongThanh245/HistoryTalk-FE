@@ -65,7 +65,7 @@ export function CustomPagination({
             }}
             aria-disabled={page === 1}
             className={cn(
-              "w-auto h-8 p-0 justify-center rounded-[2px] transition-colors",
+              "w-auto h-8 p-0 justify-center rounded-sm transition-colors",
               page === 1 ? "opacity-30 cursor-not-allowed" : "cursor-pointer",
               commonClasses,
             )}
@@ -88,7 +88,7 @@ export function CustomPagination({
                   onChange(p as number);
                 }}
                 className={cn(
-                  "w-8 h-8 p-0 flex items-center justify-center rounded-[2px] font-display text-base font-bold transition-colors duration-150 cursor-pointer",
+                  "w-8 h-8 p-0 flex items-center justify-center rounded-sm font-display text-base font-bold transition-colors duration-150 cursor-pointer",
                   page === p ? activeClasses : commonClasses,
                 )}
               >
@@ -108,7 +108,7 @@ export function CustomPagination({
             }}
             aria-disabled={page === totalPages}
             className={cn(
-              "w-auto h-8 p-0 justify-center rounded-[2px] transition-colors",
+              "w-auto h-8 p-0 justify-center rounded-sm transition-colors",
               page === totalPages
                 ? "opacity-30 cursor-not-allowed"
                 : "cursor-pointer",

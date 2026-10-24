@@ -114,11 +114,7 @@ export default function StaffCharactersPage() {
       accent="var(--accent-blue)"
     >
       <section
-        className="rounded-[2px] border p-6 space-y-5"
-        style={{
-          background: "var(--bg-surface)",
-          borderColor: "var(--text-primary)",
-        }}
+        className="rounded-xl border border-border-card bg-[var(--bg-surface)] p-6 space-y-5"
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">

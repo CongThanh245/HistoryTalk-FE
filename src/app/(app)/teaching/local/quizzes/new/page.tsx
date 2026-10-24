@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, Loader2, Plus, Save } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -104,16 +104,17 @@ function Composer({
           ? "Thêm ít nhất 1 câu hỏi."
           : null;
 
-  const save = (publish: boolean) => {
+  // Khong co buoc nhap: tao la xuat ban luon.
+  const save = () => {
     if (blocker) return;
     create.mutate(
-      { contextId, payload: { title: title.trim(), level, isPublished: publish, questions: questions.map(toQuestionPayload) } },
+      { contextId, payload: { title: title.trim(), level, isPublished: true, questions: questions.map(toQuestionPayload) } },
       {
         onSuccess: (q) => {
           // Bo cache danh sach bo de: trang giao bai mount lai se tai moi (khong hien list cu roi moi nhay).
           qc.removeQueries({ queryKey: ["local-content", "quizzes"] });
-          toast.success(publish ? "Đã tạo và xuất bản bộ đề" : "Đã lưu bộ đề nháp", { description: `${questions.length} câu hỏi.` });
-          if (returnTo && publish) router.push(`${returnTo}&targetId=${encodeURIComponent(q.quizId)}`);
+          toast.success("Đã tạo bộ đề", { description: `${questions.length} câu hỏi, giao bài được ngay.` });
+          if (returnTo) router.push(`${returnTo}&targetId=${encodeURIComponent(q.quizId)}`);
           else router.push(`${ROUTES.TEACHING.LOCAL_QUIZ(q.quizId)}${returnTo ? `?returnTo=${encodeURIComponent(`${returnTo}&targetId=${q.quizId}`)}` : ""}`);
         },
         onError: (err) => toast.error(apiErrorMessage(err, "Không tạo được bộ đề.")),
@@ -157,12 +158,9 @@ function Composer({
           {blocker ?? `${questions.length} câu hỏi · sẵn sàng lưu.`}
         </p>
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="btn-line disabled:opacity-50" disabled={!!blocker || create.isPending} onClick={() => save(false)}>
-            <Save className="h-4 w-4" aria-hidden="true" /> Lưu nháp
-          </button>
-          <button type="button" className="btn-crimson disabled:opacity-50" disabled={!!blocker || create.isPending} onClick={() => save(true)}>
+          <button type="button" className="btn-crimson disabled:opacity-50" disabled={!!blocker || create.isPending} onClick={save}>
             {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Check className="h-4 w-4" aria-hidden="true" />}
-            {returnTo ? "Xuất bản & dùng để giao" : "Xuất bản"}
+            {returnTo ? "Tạo & dùng để giao" : "Tạo bộ đề"}
           </button>
         </div>
       </div>

@@ -83,7 +83,7 @@ function StepIndicator({ step }: { step: Step }) {
             <li key={label} className="flex min-w-0 flex-1 items-center gap-2" aria-current={current ? "step" : undefined}>
               <span
                 className={cn(
-                  "grid h-7 w-7 shrink-0 place-items-center rounded-[2px] border text-xs font-bold tabular-nums",
+                  "grid h-7 w-7 shrink-0 place-items-center rounded-sm border text-xs font-bold tabular-nums",
                   current && "border-[var(--accent-gold)] bg-[var(--accent-gold)] text-white",
                   done && "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]",
                   !current && !done && "border-[var(--border-strong)] text-content-muted",
@@ -371,7 +371,7 @@ function UploadStep({
             onFile(e.dataTransfer.files[0]);
           }}
           className={cn(
-            "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[2px] border border-dashed px-4 py-10 text-center transition-colors focus-within:outline-2 focus-within:outline-[var(--accent-gold)]",
+            "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-sm border border-dashed px-4 py-10 text-center transition-colors focus-within:outline-2 focus-within:outline-[var(--accent-gold)]",
             dragOver ? "border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)]" : "border-[var(--border-strong)] hover:border-[var(--text-primary)]",
           )}
         >
@@ -390,7 +390,7 @@ function UploadStep({
         </label>
 
         {fileName && (
-          <div className="space-y-2 rounded-[2px] border border-[var(--border-strong)] px-3 py-2 text-sm">
+          <div className="space-y-2 rounded-sm border border-[var(--border-strong)] px-3 py-2 text-sm">
             <p className="flex min-w-0 items-center gap-2">
               <FileSpreadsheet className="h-4 w-4 shrink-0 text-[var(--accent-gold)]" aria-hidden="true" />
               <span className="truncate font-semibold">{fileName}</span>
@@ -418,7 +418,7 @@ function UploadStep({
         {table && !fileError && (
           <div className="space-y-2">
             <p className="text-sm font-semibold text-content-heading">Xem trước 5 dòng đầu</p>
-            <div className="overflow-x-auto border-y border-[var(--text-primary)]">
+            <div className="overflow-x-auto border-y border-border-card">
               <table className="w-full min-w-[480px] text-xs">
                 <thead>
                   <tr className="border-b border-[var(--border-strong)] text-left">
@@ -463,7 +463,7 @@ function UploadStep({
         <button type="button" className="archive-link" onClick={() => void downloadStudentTemplate()}>
           <Download className="h-3.5 w-3.5" aria-hidden="true" /> Tải file mẫu
         </button>
-        <div className="space-y-1.5 rounded-[2px] border border-[var(--border-default)] p-3 text-xs text-content-muted">
+        <div className="space-y-1.5 rounded-sm border border-[var(--border-default)] p-3 text-xs text-content-muted">
           <p className="flex items-center gap-1.5 font-semibold text-content-heading">
             <Info className="h-3.5 w-3.5" aria-hidden="true" /> Lưu từ Excel đúng cách
           </p>
@@ -510,7 +510,7 @@ function MappingStep({
         Chọn cột trong file tương ứng với từng thông tin. Hệ thống đã tự ghép theo tên cột; dữ liệu sẽ được chuyển sang đúng định dạng máy chủ
         yêu cầu trước khi gửi.
       </p>
-      <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--text-primary)]">
+      <ul className="divide-y divide-[var(--border-default)] border-y border-border-card">
         {STUDENT_IMPORT_FIELDS.map((f) => (
           <li key={f.key} className="grid gap-2 py-3 sm:grid-cols-[minmax(0,1fr)_240px] sm:items-center sm:gap-4">
             <div className="min-w-0">
@@ -588,7 +588,7 @@ function CheckStep({
             aria-selected={filter === t.key}
             onClick={() => setFilter(t.key)}
             className={cn(
-              "rounded-[2px] border px-3 py-1.5 text-xs font-bold",
+              "rounded-sm border px-3 py-1.5 text-xs font-bold",
               filter === t.key
                 ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
                 : "border-[var(--border-strong)] text-content-muted hover:border-[var(--text-primary)]",
@@ -600,7 +600,7 @@ function CheckStep({
       </div>
 
       {errorCount > 0 ? (
-        <p className="flex items-start gap-2 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-2 text-xs text-[var(--text-secondary)]">
+        <p className="flex items-start gap-2 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-2 text-xs text-[var(--text-secondary)]">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
           {errorCount} dòng có lỗi sẽ không được gửi. Sửa file rồi tải lại nếu cần tạo cả những học sinh này.
         </p>
@@ -608,11 +608,11 @@ function CheckStep({
         <p className="text-sm text-[var(--status-success)]">Tất cả {validCount} dòng đều hợp lệ.</p>
       )}
 
-      <div className="max-h-[50dvh] overflow-auto border-y border-[var(--text-primary)]">
+      <div className="max-h-[50dvh] overflow-auto border-y border-border-card">
         <table className="w-full min-w-[760px] text-sm">
           <caption className="sr-only">Kết quả kiểm tra từng dòng</caption>
           <thead className="sticky top-0 bg-[var(--bg-surface)]">
-            <tr className="border-b border-[var(--border-strong)] text-left text-[11px] uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+            <tr className="border-b border-[var(--border-strong)] text-left text-[13px] font-semibold text-[var(--text-tertiary)]">
               <th className="px-2 py-2 font-semibold">Dòng</th>
               {PREVIEW_FIELDS.map((f) => (
                 <th key={f.key} className="px-2 py-2 font-semibold">
@@ -661,7 +661,7 @@ function CheckStep({
 function ConfirmStep({ validCount, skipped, submitError }: { validCount: number; skipped: number; submitError: string | null }) {
   return (
     <div className="space-y-4">
-      <div className="space-y-3 rounded-[2px] border border-[var(--text-primary)] p-4">
+      <div className="space-y-3 rounded-sm border border-border-card p-4">
         <p className="text-sm font-bold text-content-heading">Sẵn sàng tạo {formatNumber(validCount)} tài khoản học sinh</p>
         {skipped > 0 && <p className="text-xs text-content-muted">{skipped} dòng lỗi được bỏ qua.</p>}
         <p className="flex items-start gap-2 text-xs leading-relaxed text-content-muted">

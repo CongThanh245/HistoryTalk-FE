@@ -128,7 +128,7 @@ function ClassesContent() {
           </div>
 
           {rows.length === 0 ? (
-            <div className="rounded-[2px] border border-dashed border-[var(--border-strong)]">
+            <div className="rounded-sm border border-dashed border-[var(--border-strong)]">
               {filtered ? (
                 <NoResults onReset={resetFilters} message="Không có lớp phù hợp với bộ lọc." />
               ) : (
@@ -155,7 +155,7 @@ function ClassesContent() {
             <div className={cn("relative grid gap-4 sm:grid-cols-2 xl:grid-cols-3", classes.isFetching && "opacity-70")}>
               <FetchingBar active={classes.isFetching} />
               {rows.map((c) => (
-                <article key={c.id} className="flex flex-col rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
+                <article key={c.id} className="flex flex-col rounded-sm border border-border-card bg-[var(--bg-surface)]">
                   <div className="flex items-start justify-between gap-3 border-b border-[var(--border-strong)] p-4">
                     <div className="min-w-0 space-y-1.5">
                       <h3 className="archive-title is-plain text-2xl">Lớp {c.className}</h3>

@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowUp, Clapperboard, Copy, Download, Eye, GripVertical, ImageIcon, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, RotateCw, Save, Shapes, Trash2, Upload, Users, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Clapperboard, Copy, Download, Eye, GripVertical, ImageIcon, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Trash2, Undo2, Upload, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { battleMapImageService } from "@/services/media.service";
+import { useAuthStore } from "@/store/auth.store";
 import { BattleMapCanvas, SymbolGlyph, type SymbolView } from "./BattleMapCanvas";
 import { BattlePreview } from "./BattlePreview";
 import {
-  autoEffect, defaultSymbolSize, isNoteSymbol, PHASE_NARRATION_MAX, SYMBOL_EFFECTS, SYMBOL_GROUPS, SYMBOL_LABELS, SYMBOL_SIZE_MAX, SYMBOL_SIZE_MIN,
-  type BattleMap, type BattlePhase, type BattleSymbol, type BattleSymbolType, type SymbolEffect,
+  autoEffect, defaultSymbolSize, isBattleMap, isLineSymbol, isNoteSymbol, moveSymbol, PHASE_NARRATION_MAX, SYMBOL_EFFECTS, SYMBOL_GROUPS, SYMBOL_LABELS, SYMBOL_SIZE_MAX, SYMBOL_SIZE_MIN, withPoints,
+  type BattleMap, type BattlePhase, type BattleSymbol, type BattleSymbolType, type MapPoint, type SymbolEffect,
 } from "./battle-map.types";
+import { LINE_WEIGHT_MAX, LINE_WEIGHT_MIN } from "./battle-path";
 import { sceneDurationMs, splitSentences } from "./useBattlePlayback";
 import styles from "./battle-map-editor.module.css";
 
@@ -22,6 +24,19 @@ const TABS: { id: Tab; label: string; icon: typeof ImageIcon }[] = [
   { id: "phases", label: "Diễn biến", icon: Clapperboard },
 ];
 
+/** Single-key tool shortcuts (Shift + key keeps the tool for placing several symbols). */
+const TOOL_KEYS: Record<string, BattleSymbolType> = {
+  a: "arrow", f: "flank", m: "march", r: "retreat", l: "defenseLine", s: "stakes", p: "ambush",
+  i: "infantry", k: "cavalry", w: "navy", h: "fort", b: "headquarters", x: "clash", v: "victory", t: "label", n: "step",
+};
+const KEY_OF = Object.fromEntries(Object.entries(TOOL_KEYS).map(([key, type]) => [type, key.toUpperCase()])) as Partial<Record<BattleSymbolType, string>>;
+
+/** Short fingerprint of a saved map, to tell whether a local draft was based on it. */
+const fingerprint = (text: string) => {
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = (h * 33 + text.charCodeAt(i)) | 0;
+  return `${text.length}:${h >>> 0}`;
+};
 
 /** New maps start with two editable sides so admins can place symbols right away. */
 function withDefaultFactions(map: BattleMap): BattleMap {
@@ -32,16 +47,40 @@ function withDefaultFactions(map: BattleMap): BattleMap {
   ] };
 }
 
-export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNarration = "" }: {
+export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNarration = "", draftId }: {
   initialValue: BattleMap; title: string; onClose: () => void;
+  /** Identifies the map for the unsaved draft kept in this browser (e.g. the event id); omit to keep no draft. */
+  draftId?: string;
   /** Publishes the map to the server; rejects when the save failed. */
   onSave: (map: BattleMap) => Promise<void>;
   /** Narration from before phases existed (map pin description). Read-only: only seeds the first split. */
   legacyNarration?: string;
 }) {
   const [start] = useState(() => withDefaultFactions(initialValue));
-  const [value, setValue] = useState(start);
+  /** The map plus its undo history. */
+  const [doc, setDoc] = useState(() => ({ value: start, past: [] as BattleMap[], future: [] as BattleMap[], at: 0 }));
+  const value = doc.value;
+  /** Every edit goes through here; a burst of changes (a drag, typing a note) becomes one undo step. */
+  const setValue = (next: (v: BattleMap) => BattleMap) => setDoc(d => {
+    const v = next(d.value);
+    if (v === d.value) return d;
+    const now = Date.now();
+    return { value: v, past: now - d.at > 600 ? [...d.past.slice(-99), d.value] : d.past, future: [], at: now };
+  });
+  const undo = () => setDoc(d => d.past.length ? { value: d.past[d.past.length - 1], past: d.past.slice(0, -1), future: [d.value, ...d.future], at: 0 } : d);
+  const redo = () => setDoc(d => d.future.length ? { value: d.future[0], past: [...d.past, d.value], future: d.future.slice(1), at: 0 } : d);
   const [saved, setSaved] = useState(() => JSON.stringify(start));
+  const uid = useAuthStore(state => state.user?.uid);
+  const draftKey = draftId ? `historytalk:battle-map-draft:v2:${uid ?? "anonymous"}:${draftId}` : null;
+  /** Unsaved work found in this browser from an earlier visit, waiting for "Khôi phục" / "Bỏ". */
+  const [draft, setDraft] = useState<{ map: BattleMap; savedAt: number; stale: boolean } | null>(() => {
+    if (!draftKey || typeof window === "undefined") return null;
+    try {
+      const raw = JSON.parse(localStorage.getItem(draftKey) ?? "null") as { map?: unknown; savedAt?: number; base?: string } | null;
+      if (!raw || !isBattleMap(raw.map) || JSON.stringify(raw.map) === JSON.stringify(start)) return null;
+      return { map: raw.map, savedAt: Number(raw.savedAt) || Date.now(), stale: raw.base !== fingerprint(JSON.stringify(start)) };
+    } catch { return null; }
+  });
   const [hasDraft, setHasDraft] = useState(!!initialValue.imageUrl);
   const [tab, setTab] = useState<Tab>(start.imageUrl ? "symbols" : "image");
   const [imageUrlInput, setImageUrlInput] = useState(start.imageUrl.startsWith("data:") ? "" : start.imageUrl);
@@ -50,6 +89,14 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
   const selectedId = selection.length === 1 ? selection[0] : null;
   const setSelectedId = (id: string | null) => setSelection(id ? [id] : []);
   const [placingType, setPlacingType] = useState<BattleSymbolType | null>(null);
+  /** The tool stays on after placing (double-click a tool or Shift + its key). */
+  const [toolLocked, setToolLocked] = useState(false);
+  /** Symbol just placed: its note is typed right on the map. */
+  const [quickLabel, setQuickLabel] = useState<string | null>(null);
+  const pickTool = (type: BattleSymbolType | null, lock = false) => {
+    setPlacingType(p => (type && p === type && !lock ? null : type));
+    setToolLocked(!!type && lock);
+  };
   const [factionId, setFactionId] = useState(start.factions[0]?.id ?? "");
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState("#15803d");
@@ -96,7 +143,23 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     const symbol = id ? value.symbols.find(s => s.id === id) : undefined;
     if (symbol && phases.length && !sorting) setPhaseId(phaseIndexOf(symbol) === -1 ? null : symbol.phaseId!);
   };
-  const close = () => { if (!dirty || window.confirm("Bỏ các thay đổi chưa lưu trên lược đồ?")) onClose(); };
+  const close = () => {
+    if (dirty && !window.confirm("Bỏ các thay đổi chưa lưu trên lược đồ?")) return;
+    try { if (draftKey && dirty) localStorage.removeItem(draftKey); } catch { /* storage unavailable */ }
+    onClose();
+  };
+
+  // Keeps unsaved work in this browser, so a closed tab or an expired session loses nothing.
+  useEffect(() => {
+    if (!draftKey || draft) return; // a pending draft is kept until the admin restores or drops it
+    const timer = window.setTimeout(() => {
+      try {
+        if (mapDirty) localStorage.setItem(draftKey, JSON.stringify({ map: value, savedAt: Date.now(), base: fingerprint(saved) }));
+        else localStorage.removeItem(draftKey);
+      } catch { /* storage full or unavailable */ }
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [draftKey, draft, value, saved, mapDirty]);
 
   useEffect(() => {
     const beforeUnload = (e: BeforeUnloadEvent) => { if (dirty) e.preventDefault(); };
@@ -104,22 +167,24 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     return () => window.removeEventListener("beforeunload", beforeUnload);
   }, [dirty]);
 
-  const addSymbol = (type: BattleSymbolType, x = 50, y = 50, shape?: { size: number; rotation: number }) => {
+  const addSymbol = (type: BattleSymbolType, x = 50, y = 50, shape?: { points: MapPoint[] }) => {
     if (!canDraw) return;
     const id = crypto.randomUUID();
     // A new symbol reuses the note of the latest same-type symbol of this side, so a legend row covers them all.
     const sameKind = value.symbols.filter(s => s.type === type && s.factionId === factionId);
     const label = type === "label" ? "Chú thích" : type === "step" ? String(value.symbols.filter(s => s.type === "step").length + 1) : sameKind.at(-1)?.label ?? "";
-    update({ symbols: [...value.symbols, { id, type, factionId, label, x, y, size: shape?.size ?? defaultSymbolSize(type), rotation: shape?.rotation ?? 0, ...(activePhase && { phaseId: activePhase.id }) }] });
-    // The tool is one-shot: the new symbol stays selected so its handles can be dragged right away.
+    const symbol: BattleSymbol = { id, type, factionId, label, x, y, size: defaultSymbolSize(type), rotation: 0, ...(activePhase && { phaseId: activePhase.id }) };
+    update({ symbols: [...value.symbols, shape ? withPoints(symbol, shape.points) : symbol] });
+    // The new symbol stays selected so its handles can be dragged right away; its note is typed in place.
     setSelectedId(id);
-    setPlacingType(null);
+    setQuickLabel(id);
+    if (!toolLocked) setPlacingType(null);
   };
 
   const duplicate = (symbol: BattleSymbol) => {
     const id = crypto.randomUUID();
     const copy = {
-      ...symbol, id, x: Math.min(100, symbol.x + 3), y: Math.min(100, symbol.y + 3),
+      ...moveSymbol(symbol, Math.min(100, symbol.x + 3), Math.min(100, symbol.y + 3)), id,
       // A copied symbol whose side was deleted joins the side currently being drawn.
       factionId: value.factions.some(f => f.id === symbol.factionId) ? symbol.factionId : factionId,
     };
@@ -223,7 +288,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
       if (e.key === "Escape") {
         e.preventDefault();
         if (drawingFrame) setDrawingFrame(false);
-        else if (placingType) setPlacingType(null);
+        else if (placingType) pickTool(null);
         else if (selection.length) setSelection([]);
         else close();
         return;
@@ -233,7 +298,15 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
       if (target.closest("input, textarea, select, [contenteditable=true]")) return;
       const mod = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();
-      if (mod && key === "c" && selected) { e.preventDefault(); setClipboard(selected); }
+      if (mod && (key === "z" || key === "y")) { e.preventDefault(); if (key === "y" || e.shiftKey) redo(); else undo(); }
+      else if (!mod && !e.altKey && TOOL_KEYS[key] && canDraw) { e.preventDefault(); setDrawingFrame(false); pickTool(TOOL_KEYS[key], e.shiftKey); }
+      // Q switches the side being drawn.
+      else if (!mod && !e.altKey && key === "q" && value.factions.length > 1) {
+        e.preventDefault();
+        const i = value.factions.findIndex(f => f.id === factionId);
+        setFactionId(value.factions[(i + 1) % value.factions.length].id);
+      }
+      else if (mod && key === "c" && selected) { e.preventDefault(); setClipboard(selected); }
       else if (mod && key === "v" && clipboard) { e.preventDefault(); const pasted = duplicate(clipboard); if (pasted) setClipboard(pasted); }
       else if (mod && key === "d" && selected) { e.preventDefault(); duplicate(selected); }
       else if ((e.key === "Delete" || e.key === "Backspace") && selection.length) { e.preventDefault(); removeSymbols(selection); }
@@ -313,9 +386,11 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
       <span className={cn(styles.saveState, dirty && styles.saveStateDirty)} role="status" title="Lược đồ đã lưu sẽ hiển thị cho người học ở trang trận đánh.">
         {saving ? "Đang lưu…" : uploading ? "Đang tải ảnh lên…" : dirty ? "Có thay đổi chưa lưu" : hasDraft ? "Đã lưu" : "Chưa có lược đồ"}
       </span>
+      <button type="button" onClick={undo} disabled={!doc.past.length} aria-label="Hoàn tác" title="Hoàn tác (Ctrl+Z)"><Undo2 size={16} /></button>
+      <button type="button" onClick={redo} disabled={!doc.future.length} aria-label="Làm lại" title="Làm lại (Ctrl+Shift+Z)"><Redo2 size={16} /></button>
       <button type="button" onClick={exportMap} aria-label="Xuất JSON" title="Tải thiết kế dưới dạng JSON"><Download size={16} /><span>Xuất JSON</span></button>
       <button type="button" aria-label="Xem trước" title="Phát thử như người học sẽ xem (không lưu)" disabled={!value.imageUrl.trim()}
-        onClick={() => { setPlacingType(null); setSelectedId(null); setDrawingFrame(false); setPreviewing(true); }}><Eye size={16} /><span>Xem trước</span></button>
+        onClick={() => { pickTool(null); setSelectedId(null); setDrawingFrame(false); setPreviewing(true); }}><Eye size={16} /><span>Xem trước</span></button>
       <button type="button" className={styles.primary} aria-label="Lưu lược đồ" disabled={!canSave || busy} onClick={() => void save()}>{saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}<span>Lưu</span></button>
     </header>
 
@@ -450,14 +525,17 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
                   <button type="button" className={styles.chip} onClick={() => setTab("factions")}><Plus size={14} />Phe</button>
                 </div>
               </div>
-              <p className={styles.hint}><MousePointerClick size={14} /> Chọn ký hiệu rồi bấm lên lược đồ để đặt. Với mũi tên và phòng tuyến: nhấn giữ rồi kéo để vẽ theo hướng.</p>
+              <p className={styles.hint}><MousePointerClick size={14} /> Chọn ký hiệu rồi bấm lên lược đồ để đặt. Với mũi tên và phòng tuyến: nhấn giữ rồi kéo theo đường đi để vẽ, đường sẽ tự làm mượt.</p>
+              <p className={styles.hint}>Bấm đúp vào ký hiệu (hoặc <kbd>Shift</kbd> + phím tắt) để đặt liên tục, <kbd>Esc</kbd> để thôi · <kbd>Q</kbd> đổi phe · <kbd>Ctrl</kbd> + <kbd>Z</kbd> hoàn tác.</p>
               {SYMBOL_GROUPS.map(group => <div className={styles.group} key={group.title}>
                 <h2>{group.title}</h2>
                 <div className={styles.tools} style={{ color: activeFaction?.color }}>
                   {group.types.map(type => <button key={type} type="button" disabled={!canDraw} draggable={canDraw} aria-pressed={placingType === type}
-                    className={cn(placingType === type && styles.toolActive)}
+                    className={cn(placingType === type && styles.toolActive)} data-locked={placingType === type && toolLocked || undefined}
+                    title={`${SYMBOL_LABELS[type]}${KEY_OF[type] ? ` (phím ${KEY_OF[type]})` : ""} · bấm đúp để đặt liên tục`}
                     onDragStart={e => { e.dataTransfer.setData("application/x-battle-symbol", type); e.dataTransfer.effectAllowed = "copy"; }}
-                    onClick={() => setPlacingType(p => p === type ? null : type)}>
+                    onClick={() => pickTool(type)} onDoubleClick={() => pickTool(type, true)}>
+                    {KEY_OF[type] && <kbd className={styles.toolKey} aria-hidden="true">{KEY_OF[type]}</kbd>}
                     <SymbolGlyph type={type} /><span>{SYMBOL_LABELS[type]}</span>
                   </button>)}
                 </div>
@@ -468,6 +546,12 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
       </aside>
 
       <main className={styles.workspace}>
+        {draft && <div className={styles.draftBanner} role="status">
+          <span>Có bản nháp chưa lưu trên máy này ({new Date(draft.savedAt).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}).
+            {draft.stale && " Lược đồ đã được lưu lại sau thời điểm đó, khôi phục sẽ ghi đè bản mới hơn."}</span>
+          <button type="button" onClick={() => { const map = draft.map; setValue(() => map); setDraft(null); }}>Khôi phục</button>
+          <button type="button" onClick={() => setDraft(null)}>Bỏ bản nháp</button>
+        </div>}
         {error && <p className={styles.error} role="alert">{error}<button type="button" aria-label="Đóng thông báo" onClick={() => setError("")}><X size={14} /></button></p>}
         {phases.length > 0 && <div className={styles.phaseBar}>
           <div className={styles.phaseSteps} role="group" aria-label="Giai đoạn đang soạn">
@@ -491,9 +575,13 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
             changePhase(activePhase.id, { camera: "frame", focus: rect });
             setDrawingFrame(false);
           } : undefined}
-          onSelect={value.mode === "custom" ? selectSymbol : undefined} onMove={(id, x, y) => changeSymbol(id, { x, y })}
+          onSelect={value.mode === "custom" ? selectSymbol : undefined} onMove={(id, x, y) => setValue(v => ({ ...v, symbols: v.symbols.map(s => s.id === id ? moveSymbol(s, x, y) : s) }))}
+          onPointsChange={(id, points) => setValue(v => ({ ...v, symbols: v.symbols.map(s => s.id === id ? withPoints(s, points) : s) }))}
           onTransform={(id, patch) => changeSymbol(id, patch)}
-          onAdd={addSymbol} onDelete={removeSymbol} legendTitle={title} />
+          onAdd={addSymbol} onDelete={removeSymbol} legendTitle={title}
+          quickLabel={quickLabel && value.symbols.some(s => s.id === quickLabel) ? {
+            id: quickLabel, onChange: label => changeSymbol(quickLabel, { label }), onDone: () => setQuickLabel(null),
+          } : undefined} />
       </main>
 
       <aside className={styles.inspector} aria-label={selection.length > 1 ? "Ký hiệu đã chọn" : selected ? "Chỉnh ký hiệu" : activePhase ? "Chỉnh giai đoạn" : "Danh sách ký hiệu"}>
@@ -577,23 +665,40 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
               </span>
             </div>
           </>}
-          <label className={styles.field}>
-            <span className={styles.fieldRow}>Hướng xoay <output>{selected.rotation}°</output></span>
-            <input type="range" min="0" max="359" value={selected.rotation} onChange={e => changeSymbol(selected.id, { rotation: Number(e.target.value) })} />
-          </label>
-          <div className={styles.quickRotate} aria-label="Xoay nhanh">
-            {[0, 90, 180, 270].map(deg => <button key={deg} type="button" aria-pressed={selected.rotation === deg} onClick={() => changeSymbol(selected.id, { rotation: deg })}>
-              {({ 0: "→", 90: "↓", 180: "←", 270: "↑" } as Record<number, string>)[deg]}
-            </button>)}
-          </div>
-          <label className={styles.field}>
-            <span className={styles.fieldRow}>Kích thước <output>{selected.size}%</output></span>
-            <input type="range" min={SYMBOL_SIZE_MIN} max={SYMBOL_SIZE_MAX} value={selected.size} onChange={e => changeSymbol(selected.id, { size: Number(e.target.value) })} />
-          </label>
+          {isLineSymbol(selected.type) ? <>
+            <label className={styles.field}>
+              <span className={styles.fieldRow}>Độ đậm nét <output>{Math.round((selected.weight ?? 1) * 100)}%</output></span>
+              <input type="range" min={LINE_WEIGHT_MIN} max={LINE_WEIGHT_MAX} step=".1" value={selected.weight ?? 1}
+                onChange={e => changeSymbol(selected.id, { weight: Number(e.target.value) === 1 ? undefined : Number(e.target.value) })} />
+            </label>
+            <button type="button" className={styles.applyAll} onClick={() => changeSymbol(selected.id, selected.points
+              ? { points: [...selected.points].reverse() } : { rotation: (selected.rotation + 180) % 360 })}>
+              <ArrowLeftRight size={15} />Đảo chiều
+            </button>
+          </> : <>
+            <label className={styles.field}>
+              <span className={styles.fieldRow}>Hướng xoay <output>{selected.rotation}°</output></span>
+              <input type="range" min="0" max="359" value={selected.rotation} onChange={e => changeSymbol(selected.id, { rotation: Number(e.target.value) })} />
+            </label>
+            <div className={styles.quickRotate} aria-label="Xoay nhanh">
+              {[0, 90, 180, 270].map(deg => <button key={deg} type="button" aria-pressed={selected.rotation === deg} onClick={() => changeSymbol(selected.id, { rotation: deg })}>
+                {({ 0: "→", 90: "↓", 180: "←", 270: "↑" } as Record<number, string>)[deg]}
+              </button>)}
+            </div>
+            <label className={styles.field}>
+              <span className={styles.fieldRow}>Kích thước <output>{selected.size}%</output></span>
+              <input type="range" min={SYMBOL_SIZE_MIN} max={SYMBOL_SIZE_MAX} value={selected.size} onChange={e => changeSymbol(selected.id, { size: Number(e.target.value) })} />
+            </label>
+          </>}
           <ul className={styles.shortcuts}>
             <li><span>Di chuyển</span><em>Kéo ký hiệu, hoặc phím mũi tên</em></li>
-            <li><span>Xoay</span><em>Kéo nút <RotateCw size={13} /> phía trên ký hiệu · giữ Shift để xoay từng 15°</em></li>
-            <li><span>Kích thước</span><em>Kéo nút <MoveHorizontal size={13} /> bên cạnh ký hiệu</em></li>
+            {isLineSymbol(selected.type) ? <>
+              <li><span>Uốn đường</span><em>Kéo các điểm tròn trên đường · kéo điểm nhỏ ở giữa để thêm điểm uốn</em></li>
+              <li><span>Bỏ điểm uốn</span><em>Nhấp đúp vào điểm tròn</em></li>
+            </> : <>
+              <li><span>Xoay</span><em>Kéo nút <RotateCw size={13} /> phía trên ký hiệu · giữ Shift để xoay từng 15°</em></li>
+              <li><span>Kích thước</span><em>Kéo nút <MoveHorizontal size={13} /> bên cạnh ký hiệu</em></li>
+            </>}
             <li><span>Nhân bản</span><em><kbd>Ctrl</kbd> + <kbd>C</kbd> rồi <kbd>Ctrl</kbd> + <kbd>V</kbd>, hoặc <kbd>Ctrl</kbd> + <kbd>D</kbd></em></li>
             <li><span>Xóa</span><em><kbd>Delete</kbd></em></li>
           </ul>

@@ -40,10 +40,10 @@ export interface Character {
 }
 
 const chatCtaClassName =
-  "flex w-full items-center justify-center gap-2 rounded-[2px] border border-accent-gold bg-accent-gold font-bold uppercase tracking-[0.08em] text-white transition-colors duration-200 group-hover:border-[var(--accent-bronze)] group-hover:bg-[var(--accent-bronze)] group-active:translate-y-px";
+  "flex w-full items-center justify-center gap-2 rounded-sm border border-accent-gold bg-accent-gold font-bold uppercase tracking-[0.08em] text-white transition-colors duration-200 group-hover:border-[var(--accent-bronze)] group-hover:bg-[var(--accent-bronze)] group-active:translate-y-px";
 
 const chatCtaIconClassName =
-  "flex size-7 items-center justify-center rounded-[2px] bg-[rgba(0,0,0,0.18)] text-white";
+  "flex size-7 items-center justify-center rounded-sm bg-[rgba(0,0,0,0.18)] text-white";
 
 // ─────────────────────────────────────────────────────────
 // Variant 1: Carousel card — nền tối, dùng trong Carousel3D + CharactersReveal
@@ -85,7 +85,7 @@ export function CharacterCarouselCard({
         onFocus={() => setHovered(true)}
         onBlur={() => setHovered(false)}
         onClick={() => onClick?.(character.id)}
-        className="relative h-full w-full cursor-pointer overflow-hidden rounded-[2px] border border-[var(--text-primary)] text-left transition-colors duration-300 hover:border-accent-gold focus-visible:border-accent-gold"
+        className="relative h-full w-full cursor-pointer overflow-hidden rounded-sm border border-border-card text-left transition-colors duration-300 hover:border-accent-gold focus-visible:border-accent-gold"
       >
         <DarkCard
           imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
@@ -111,7 +111,7 @@ export function CharacterCarouselCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onClick?.(character.id)}
-      className="group relative w-full h-full rounded-[2px] border border-[var(--text-primary)] overflow-hidden cursor-pointer transition-colors duration-300 hover:border-accent-gold"
+      className="group relative w-full h-full rounded-sm border border-border-card overflow-hidden cursor-pointer transition-colors duration-300 hover:border-accent-gold"
     >
       <DarkCard
         imageSrc={isValidUrl(character.imageUrl) ? character.imageUrl! : "/card.jpg"}
@@ -136,7 +136,7 @@ export function CharacterCarouselCard({
         </p>
         {character.side && (
           <span
-            className="inline-block w-fit text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-[2px] mt-1.5 bg-accent-gold-active text-[var(--gold-on-light)]"
+            className="inline-block w-fit text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-sm mt-1.5 bg-accent-gold-active text-[var(--gold-on-light)]"
           >
             {character.side}
           </span>
@@ -270,7 +270,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(character.id)}
-      className="group relative w-full flex flex-col text-left rounded-[2px] border border-[var(--text-primary)] bg-card-bg overflow-hidden transition-colors duration-300 cursor-pointer hover:border-accent-gold focus-visible:border-accent-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
+      className="group relative w-full flex flex-col text-left rounded-sm border border-border-card bg-card-bg overflow-hidden transition-colors duration-300 cursor-pointer hover:border-accent-gold focus-visible:border-accent-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
     >
       {/* Image */}
       <div className="relative z-0 aspect-3/4 w-full shrink-0 overflow-hidden bg-[var(--bg-deep)]">
@@ -297,7 +297,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
       {character.side && (
       <div className="absolute top-2.5 sm:top-3 right-2.5 sm:right-3 z-10">
           <span
-            className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-[2px] bg-accent-gold text-white border border-accent-gold"
+            className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-sm bg-accent-gold text-white border border-accent-gold"
           >
             {character.side}
           </span>
@@ -364,13 +364,13 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         {(lifespan || character.side || contextLabel) && (
           <div className="flex flex-wrap items-center gap-1 mb-2.5 sm:mb-3">
             {lifespan && (
-              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-[2px] bg-text-inverse/10 text-accent-on-ink sm:text-[10px]">
+              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-sm bg-text-inverse/10 text-accent-on-ink sm:text-[10px]">
                 <History className="w-2.5 h-2.5 shrink-0" />
                 {lifespan}
               </span>
             )}
             {character.side && (
-              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-[2px] bg-text-inverse/10 text-text-inverse/80 sm:text-[10px]">
+              <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-sm bg-text-inverse/10 text-text-inverse/80 sm:text-[10px]">
                 {character.side}
               </span>
             )}
@@ -380,7 +380,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
                 contextId={ctx.contextId}
                 fallbackLabel={ctx.name}
               >
-                <span className="inline-flex max-w-full items-center gap-1 rounded-[2px] bg-text-inverse/10 px-1.5 py-0.5 text-[9px] font-semibold text-text-inverse/80 transition-colors hover:bg-text-inverse/20 hover:text-accent-on-ink sm:text-[10px]">
+                <span className="inline-flex max-w-full items-center gap-1 rounded-sm bg-text-inverse/10 px-1.5 py-0.5 text-[9px] font-semibold text-text-inverse/80 transition-colors hover:bg-text-inverse/20 hover:text-accent-on-ink sm:text-[10px]">
                   <Landmark className="w-2.5 h-2.5 shrink-0" />
                   <span className="truncate">{ctx.name}</span>
                 </span>
@@ -407,7 +407,7 @@ export function CharacterPageCard({ character, onClick }: PageCardProps) {
         </div>
       </div>
 
-      <div className="absolute bottom-2 right-2 z-30 flex h-8 w-8 items-center justify-center rounded-[2px] border border-accent-gold bg-accent-gold text-white sm:h-10 sm:w-10 md:hidden">
+      <div className="absolute bottom-2 right-2 z-30 flex h-8 w-8 items-center justify-center rounded-sm border border-accent-gold bg-accent-gold text-white sm:h-10 sm:w-10 md:hidden">
         <MessageSquareText className="h-[18px] w-[18px] fill-current text-white" />
         <span className="sr-only">Trò chuyện ngay</span>
       </div>
@@ -431,11 +431,11 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
   return (
     <button
       onClick={() => onClick(character.id)}
-      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[2px] border border-[var(--border-strong)] bg-card-bg text-left
+      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-sm border border-[var(--border-strong)] bg-card-bg text-left
         transition-colors duration-150 cursor-pointer group hover:border-[var(--text-primary)]"
     >
       <div
-        className="w-8 h-8 rounded-[2px] flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden relative bg-accent-gold text-white"
+        className="w-8 h-8 rounded-sm flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden relative bg-accent-gold text-white"
       >
         {avatarSrc && (
           <Image
@@ -479,7 +479,7 @@ export function CharacterCompactCard({ character, onClick }: CompactCardProps) {
 export function CharacterPageCardSkeleton() {
   return (
     <div
-      className="w-full rounded-[2px] border border-card-border bg-card-bg overflow-hidden animate-pulse"
+      className="w-full rounded-sm border border-card-border bg-card-bg overflow-hidden animate-pulse"
     >
       <div className="aspect-3/4 w-full bg-card-border" />
       <div className="px-2.5 py-3 space-y-2 sm:px-4 sm:pt-3 sm:pb-4">

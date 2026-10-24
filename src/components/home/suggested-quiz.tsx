@@ -51,7 +51,7 @@ function RecentChatRow({ session }: { session: ChatHistorySession }) {
       className="flex items-center justify-between px-2 py-3 border-b border-[var(--border-default)] transition-colors duration-150 group hover:bg-[var(--status-neutral-bg)]"
     >
       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-        <div className="relative w-9 h-9 overflow-hidden shrink-0 border border-[var(--text-primary)]">
+        <div className="relative w-9 h-9 overflow-hidden shrink-0 border border-border-card">
           <Image
             src={isValidUrl(session.characterImage) ? session.characterImage : "/card.jpg"}
             alt={session.characterName}

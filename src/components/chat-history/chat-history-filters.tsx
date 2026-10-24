@@ -15,7 +15,7 @@ export function ChatHistoryFilters({
   onSearchChange,
 }: ChatHistoryFiltersProps) {
   return (
-    <div className="mb-4 md:mb-6">
+    <div className="mb-6 max-w-xl">
       <SearchInput
         value={search}
         onChange={onSearchChange}

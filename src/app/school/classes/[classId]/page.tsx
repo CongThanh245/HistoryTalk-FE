@@ -54,7 +54,7 @@ export default function SchoolClassDetailPage() {
 function InfoItem({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0 space-y-1">
-      <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</dt>
+      <dt className="text-[13px] font-semibold text-[var(--text-tertiary)]">{label}</dt>
       <dd className="min-w-0 text-sm text-content-heading">{children}</dd>
     </div>
   );
@@ -95,7 +95,7 @@ function ClassDetail({ room, onEdit }: { room: ReturnType<typeof useApiClassroom
   return (
     <div className="space-y-8">
       <section aria-label="Thông tin lớp" className="space-y-3">
-        <dl className="grid gap-x-8 gap-y-4 rounded-[2px] border border-[var(--border-default)] bg-[var(--bg-surface)] px-4 py-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
+        <dl className="grid gap-x-8 gap-y-4 rounded-sm border border-[var(--border-default)] bg-[var(--bg-surface)] px-4 py-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
           <InfoItem label="Giáo viên phụ trách">
             {teacher ? (
               <>

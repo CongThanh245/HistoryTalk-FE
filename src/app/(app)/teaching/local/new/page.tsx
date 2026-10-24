@@ -46,7 +46,8 @@ function NewLocalContent() {
       variant="app"
       live
       title={`Soạn ${LOCAL_KIND_LABELS[kind].toLowerCase()} mới`}
-      description="Lưu nháp để soạn tiếp. Xuất bản xong mới giao bài cho lớp được."
+      // The editor has its own header bar (back, title, Tạo), like the Content Admin create screen.
+      hideHeading
     >
       <LocalApiEditor key={kind} kind={kind} />
     </SaasShell>

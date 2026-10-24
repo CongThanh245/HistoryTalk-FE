@@ -17,7 +17,9 @@ import { useProfile } from "@/features/profile/hooks";
 import { isPro } from "@/services/user.service";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
-import { CrownIcon } from "lucide-react";
+import { CrownIcon, LogOut, Moon, Sun, UserRound } from "lucide-react";
+import { useTheme } from "next-themes";
+import type { ReactNode } from "react";
 import { ROLE_LABELS, type Role } from "@/constants/roles";
 import { useEntitlements } from "@/features/saas/entitlements";
 import { useTodayQuota } from "@/features/saas/quota-bonus";
@@ -29,6 +31,9 @@ interface UserProfileDropdownProps {
   showDiscovery?: boolean;
   showPremium?: boolean;
   showBorder?: boolean;
+  /** Replaces the avatar button (e.g. the sidebar user card). Rendered with asChild, so it must be one focusable element. */
+  trigger?: ReactNode;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function UserProfileDropdown({
@@ -38,7 +43,11 @@ export function UserProfileDropdown({
   showDiscovery = true,
   showPremium = true,
   showBorder = true,
+  trigger,
+  onOpenChange,
 }: UserProfileDropdownProps) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const { mutate: logout, isPending } = useLogout();
   const user = useAuthStore((s) => s.user);
   const { data: profile } = useProfile();
@@ -64,9 +73,9 @@ export function UserProfileDropdown({
     : "?";
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
-        <Button
+        {trigger ?? <Button
           variant="ghost"
           className={cn(
             "relative h-9 w-9 rounded-full p-0 cursor-pointer outline-none hover:bg-transparent active:scale-95 transition-all duration-200",
@@ -96,14 +105,14 @@ export function UserProfileDropdown({
               {initials}
             </AvatarFallback>
           </Avatar>
-        </Button>
+        </Button>}
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align={align}
         side={side}
         className={cn(
-          "w-56 border p-1 bg-bg-elevated text-text-primary rounded-[2px] shadow-[var(--shadow-soft)]",
+          "z-[1100] w-56 border p-1 bg-bg-elevated text-text-primary rounded-sm shadow-[var(--shadow-soft)]",
           proUser ? "border-t-2 border-[var(--text-primary)] border-t-accent-gold" : "border-[var(--text-primary)]"
         )}
       >
@@ -126,7 +135,7 @@ export function UserProfileDropdown({
               {user?.email ?? "—"}
             </p>
             {roleLabel && (
-              <span className="mt-1 inline-flex w-fit items-center rounded-[2px] border border-[var(--border-strong)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
+              <span className="mt-1 inline-flex w-fit items-center rounded-sm border border-[var(--border-strong)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-text-tertiary">
                 {roleLabel}
               </span>
             )}
@@ -150,7 +159,7 @@ export function UserProfileDropdown({
             {/* PRO tier label */}
             {proUser && profile?.tierTitle && (
               <span
-                className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] mt-1 px-1.5 py-0.5 rounded-[2px] w-fit text-white bg-accent-gold"
+                className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] mt-1 px-1.5 py-0.5 rounded-sm w-fit text-white bg-accent-gold"
               >
                 ✦ {profile.tierTitle}
               </span>
@@ -164,7 +173,7 @@ export function UserProfileDropdown({
         <div>
           {showDiscovery && (
             <DropdownMenuItem 
-              className="cursor-pointer mx-1 rounded-[2px] px-2 py-2 text-sm font-medium focus:bg-[var(--text-primary)] focus:text-[var(--text-inverse)] transition-colors" 
+              className="cursor-pointer mx-1 rounded-sm px-2 py-2 text-sm font-medium focus:bg-[var(--text-primary)] focus:text-[var(--text-inverse)] transition-colors" 
               asChild
             >
               <Link href="/home" className="flex items-center w-full">
@@ -174,12 +183,24 @@ export function UserProfileDropdown({
           )}
           
           <DropdownMenuItem 
-            className="cursor-pointer mx-1 rounded-[2px] px-2 py-2 text-sm font-medium focus:bg-[var(--text-primary)] focus:text-[var(--text-inverse)] transition-colors" 
+            className="cursor-pointer mx-1 rounded-sm px-2 py-2 text-sm font-medium focus:bg-[var(--text-primary)] focus:text-[var(--text-inverse)] transition-colors" 
             asChild
           >
-            <Link href="/profile" className="flex items-center w-full">
+            <Link href="/profile" className="flex items-center gap-2 w-full">
+              <UserRound className="h-4 w-4" aria-hidden="true" />
               Hồ sơ
             </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            className="cursor-pointer mx-1 rounded-sm px-2 py-2 text-sm font-medium focus:bg-[var(--text-primary)] focus:text-[var(--text-inverse)] transition-colors gap-2"
+            onSelect={(event) => {
+              event.preventDefault();
+              setTheme(isDark ? "light" : "dark");
+            }}
+          >
+            {isDark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
+            {isDark ? "Giao diện sáng" : "Giao diện tối"}
           </DropdownMenuItem>
           
           {/* MVP: Ẩn Cài đặt
@@ -194,10 +215,11 @@ export function UserProfileDropdown({
         />
         
         <DropdownMenuItem
-          className="cursor-pointer mx-1 my-1 rounded-[2px] px-2 py-2 text-sm font-semibold focus:bg-accent-danger focus:!text-white transition-colors text-accent-danger"
+          className="cursor-pointer mx-1 my-1 rounded-sm px-2 py-2 text-sm font-semibold focus:bg-accent-danger focus:!text-white transition-colors text-accent-danger gap-2"
           disabled={isPending}
           onClick={() => logout()}
         >
+          <LogOut className="h-4 w-4" aria-hidden="true" />
           {isPending ? "Đang đăng xuất..." : "Đăng xuất"}
         </DropdownMenuItem>
       </DropdownMenuContent>

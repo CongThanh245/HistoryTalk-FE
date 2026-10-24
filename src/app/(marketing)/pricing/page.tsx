@@ -244,7 +244,7 @@ export default function PricingPage() {
                 <MagneticButton
                   href="/register"
                   size="lg"
-                  className="rounded-[2px] border border-[var(--accent-gold)] text-base font-bold uppercase tracking-[0.08em]"
+                  className="rounded-sm border border-[var(--accent-gold)] text-base font-bold uppercase tracking-[0.08em]"
                 >
                   Bắt đầu ngay
                 </MagneticButton>
@@ -260,13 +260,13 @@ export default function PricingPage() {
           {isLoading ? (
             <PricingSkeleton />
           ) : plans.length === 0 ? (
-            <div className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-8 text-center text-[var(--text-secondary)]">
+            <div className="rounded-sm border border-border-card bg-[var(--bg-surface)] p-8 text-center text-[var(--text-secondary)]">
               Hiện chưa có gói thanh toán đang hoạt động.
             </div>
           ) : (
             <>
               {usingFallback && (
-                <div className="mb-5 rounded-[2px] border border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] p-5 text-left">
+                <div className="mb-5 rounded-sm border border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] p-5 text-left">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                       <h2 className="archive-title is-plain text-[19px]">
@@ -320,7 +320,7 @@ export default function PricingPage() {
                           {String(idx + 1).padStart(2, "0")}
                         </span>
                         {plan.badge && (
-                          <span className="rounded-[2px] bg-[var(--accent-gold)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#FFFFFF]">
+                          <span className="rounded-sm bg-[var(--accent-gold)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#FFFFFF]">
                             {plan.badge}
                           </span>
                         )}
@@ -348,7 +348,7 @@ export default function PricingPage() {
                         size="md"
                         magneticStrength={0.09}
                         className={cn(
-                          "w-full justify-center rounded-[2px] border text-[13px] font-bold uppercase tracking-[0.08em]",
+                          "w-full justify-center rounded-sm border text-[13px] font-bold uppercase tracking-[0.08em]",
                           plan.ctaStyle === "outline" && "border-[var(--text-primary)]",
                           plan.ctaStyle === "primary" && "border-[var(--accent-gold)]",
                           plan.ctaStyle === "gold" && "border-[var(--accent-gold)] [&_span]:text-[var(--text-inverse)]!",

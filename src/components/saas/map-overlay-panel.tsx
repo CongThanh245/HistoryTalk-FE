@@ -51,27 +51,27 @@ export function MapOverlayPanel({
     <section
       aria-label={title}
       className={cn(
-        "map-overlay-sheet absolute z-[530] flex flex-col rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-[var(--shadow-soft)]",
+        "map-overlay-sheet absolute z-[530] flex flex-col rounded-sm border border-border-card bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-[var(--shadow-soft)]",
         "inset-x-2 bottom-2 max-h-[70%] md:inset-x-auto md:bottom-auto md:right-4 md:top-4 md:max-h-[calc(100%-120px)] md:w-[340px]",
         className,
       )}
     >
-      <header className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--text-primary)] px-4 py-3">
+      <header className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--border-default)] px-4 py-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{eyebrow}</p>
+          <p className="text-[13px] font-semibold text-[var(--text-tertiary)]">{eyebrow}</p>
           <h2 className="archive-title is-plain mt-1 text-[19px] leading-[1.25]">{title}</h2>
         </div>
         <button
           type="button"
           onClick={onClose}
           aria-label="Đóng"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] hover:bg-[var(--sidebar-hover-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-sm hover:bg-[var(--sidebar-hover-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-gold)]"
         >
           <X size={17} />
         </button>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">{children}</div>
-      {footer && <div className="shrink-0 border-t border-[var(--text-primary)] px-4 py-3">{footer}</div>}
+      {footer && <div className="shrink-0 border-t border-border-card px-4 py-3">{footer}</div>}
     </section>
   );
 }
@@ -89,16 +89,16 @@ function Tag({ tone, children }: { tone: "class" | "assignment" | "personal" | "
     neutral: "border border-[var(--border-strong)] text-[var(--text-secondary)]",
   } as const;
   return (
-    <span className={cn("inline-flex items-center rounded-[2px] px-2 py-0.5 text-[11px] font-bold tracking-[0.04em]", tones[tone])}>
+    <span className={cn("inline-flex items-center rounded-sm px-2 py-0.5 text-[11px] font-bold tracking-[0.04em]", tones[tone])}>
       {children}
     </span>
   );
 }
 
 const lineBtn =
-  "inline-flex h-9 items-center justify-center gap-1.5 rounded-[2px] border border-[var(--text-primary)] px-2 text-xs font-bold transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] disabled:opacity-45 motion-reduce:transition-none";
+  "inline-flex h-9 items-center justify-center gap-1.5 rounded-sm border border-border-card px-2 text-xs font-bold transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] disabled:opacity-45 motion-reduce:transition-none";
 const dangerBtn =
-  "inline-flex h-9 items-center justify-center gap-1.5 rounded-[2px] border border-[var(--accent-danger)] px-2 text-xs font-bold text-[var(--accent-danger)] hover:bg-[var(--status-danger-bg)]";
+  "inline-flex h-9 items-center justify-center gap-1.5 rounded-sm border border-[var(--accent-danger)] px-2 text-xs font-bold text-[var(--accent-danger)] hover:bg-[var(--status-danger-bg)]";
 
 function EditActions({ onEdit, onMove, onDelete }: { onEdit: () => void; onMove: () => void; onDelete: () => void }) {
   return (
@@ -184,7 +184,7 @@ export function ClassPinDetails({
                 <select
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
-                  className="h-9 w-full rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-2 text-xs font-semibold outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)]"
+                  className="h-9 w-full rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-2 text-xs font-semibold outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)]"
                 >
                   <option value="">— Chọn lớp —</option>
                   {duplicateTargets!.map((c) => (
@@ -206,7 +206,7 @@ export function ClassPinDetails({
               >
                 Nhân bản
               </button>
-              <button type="button" onClick={() => setDuplicating(false)} aria-label="Hủy nhân bản" className="grid h-9 w-9 place-items-center rounded-[2px] hover:bg-[var(--sidebar-hover-bg)]">
+              <button type="button" onClick={() => setDuplicating(false)} aria-label="Hủy nhân bản" className="grid h-9 w-9 place-items-center rounded-sm hover:bg-[var(--sidebar-hover-bg)]">
                 <X size={15} />
               </button>
             </div>
@@ -251,7 +251,7 @@ export function ClassPinDetails({
           <button
             type="button"
             onClick={onCopyLink}
-            className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--gold-on-light)] hover:underline"
+            className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--gold-on-light)] hover:underline"
           >
             <Link2 size={13} /> Sao chép liên kết
           </button>
@@ -295,7 +295,7 @@ export function LocalContextDetails({
         ) : undefined
       }
     >
-      <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--men-lam)]">
+      <p className="text-[13px] font-semibold text-[var(--men-lam)]">
         {[formatYear(context.year), context.location].filter(Boolean).join(" · ")}
       </p>
       {context.summary && <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{context.summary}</p>}
@@ -342,12 +342,12 @@ export function PersonalPinDetails({
 
 /* ───────────────────────── Forms ───────────────────────── */
 const inputClass =
-  "w-full rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 text-sm outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:bg-[var(--bg-deep)] disabled:text-[var(--text-secondary)]";
+  "w-full rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 text-sm outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:bg-[var(--bg-deep)] disabled:text-[var(--text-secondary)]";
 const invalidClass = "border-[var(--accent-danger)]";
 
 function FieldLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
-    <label htmlFor={htmlFor} className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+    <label htmlFor={htmlFor} className="mb-1.5 block text-[13px] font-semibold text-[var(--text-tertiary)]">
       {children}
     </label>
   );
@@ -383,19 +383,19 @@ function PositionField({
     <div>
       <FieldLabel>Vị trí *</FieldLabel>
       {placing || !coordinates ? (
-        <p className="flex items-start gap-2 rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3 text-sm text-[var(--text-secondary)]">
+        <p className="flex items-start gap-2 rounded-sm border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3 text-sm text-[var(--text-secondary)]">
           <LocateFixed size={16} className="mt-0.5 shrink-0 text-[var(--accent-gold)]" aria-hidden="true" />
           {placing ? "Bấm lên bản đồ để đặt ghim. Nhấn Esc để hủy." : "Chưa có vị trí."}
           {!placing && (
-            <button type="button" onClick={onPick} className="ml-auto shrink-0 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--gold-on-light)] hover:underline">
+            <button type="button" onClick={onPick} className="ml-auto shrink-0 text-[13px] font-semibold text-[var(--gold-on-light)] hover:underline">
               Chọn trên bản đồ
             </button>
           )}
         </p>
       ) : (
-        <div className={cn("flex items-center justify-between gap-2 rounded-[2px] border px-3 py-2", error ? invalidClass : "border-[var(--border-default)]")}>
+        <div className={cn("flex items-center justify-between gap-2 rounded-sm border px-3 py-2", error ? invalidClass : "border-[var(--border-default)]")}>
           <span className="text-sm font-semibold tabular-nums">{formatCoords(coordinates)}</span>
-          <button type="button" onClick={onPick} className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--gold-on-light)] hover:underline">
+          <button type="button" onClick={onPick} className="inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--gold-on-light)] hover:underline">
             <LocateFixed size={13} /> Chọn lại
           </button>
         </div>
@@ -409,7 +409,7 @@ function PositionField({
 /** Compact bar replacing the form on phones while the user taps the map. */
 function PlacingBar({ onCancel, text }: { onCancel: () => void; text: string }) {
   return (
-    <div className="map-overlay-sheet absolute inset-x-2 bottom-2 z-[530] flex items-center justify-between gap-3 rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] px-3 py-2 text-sm font-semibold shadow-[var(--shadow-soft)] md:hidden">
+    <div className="map-overlay-sheet absolute inset-x-2 bottom-2 z-[530] flex items-center justify-between gap-3 rounded-sm border border-border-card bg-[var(--bg-surface)] px-3 py-2 text-sm font-semibold shadow-[var(--shadow-soft)] md:hidden">
       <span className="inline-flex items-center gap-2">
         <LocateFixed size={16} className="text-[var(--accent-gold)]" aria-hidden="true" /> {text}
       </span>
@@ -575,7 +575,7 @@ export function ClassPinForm({
             />
 
             <fieldset>
-              <legend className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Loại ghim *</legend>
+              <legend className="mb-1.5 block text-[13px] font-semibold text-[var(--text-tertiary)]">Loại ghim *</legend>
               <div className="grid grid-cols-2 gap-2">
                 {(
                   [
@@ -586,7 +586,7 @@ export function ClassPinForm({
                   <label
                     key={value}
                     className={cn(
-                      "flex h-10 cursor-pointer items-center justify-center gap-2 rounded-[2px] border text-xs font-bold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--accent-gold)]",
+                      "flex h-10 cursor-pointer items-center justify-center gap-2 rounded-sm border text-xs font-bold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--accent-gold)]",
                       kind === value
                         ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
                         : "border-[var(--border-strong)] hover:border-[var(--text-primary)]",
@@ -795,10 +795,10 @@ export function PersonalPinForm({
                 </datalist>
               </div>
               <fieldset>
-                <legend className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Màu</legend>
+                <legend className="mb-1.5 block text-[13px] font-semibold text-[var(--text-tertiary)]">Màu</legend>
                 <div className="flex h-10 items-center gap-1.5">
                   {PERSONAL_PIN_COLORS.map((c) => (
-                    <label key={c.value} title={c.label} className="relative grid h-7 w-7 cursor-pointer place-items-center rounded-[2px] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--accent-gold)]">
+                    <label key={c.value} title={c.label} className="relative grid h-7 w-7 cursor-pointer place-items-center rounded-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--accent-gold)]">
                       <input
                         type="radio"
                         name="personal-pin-color"

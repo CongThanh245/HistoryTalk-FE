@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Star, Timer } from "lucide-react";
+import { ArrowLeft, BookOpen, Star, Timer } from "lucide-react";
 import type { QuizSet } from "@/services/quiz.service";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/store/auth.store";
@@ -63,32 +63,37 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
   }, [customMinutes, selectedTime]);
 
   return (
-    <main className="min-h-full px-5 py-7 md:px-8 bg-[var(--bg-content)]">
-      <div className="mx-auto max-w-4xl">
+    <main className="min-h-full px-5 pb-7 pt-2.5 md:px-8 bg-[var(--bg-content)]">
+      {/* Same row as the list toggle in the top-left corner. */}
+      <div className="mb-4 pl-10">
         <button
+          type="button"
           onClick={() => router.back()}
-          className="archive-link mb-5"
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-content-heading"
         >
+          <ArrowLeft size={16} aria-hidden="true" />
           Quay lại
         </button>
+      </div>
+      <div className="mx-auto max-w-4xl">
 
-        <section className="relative rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-6 md:p-8">
+        <section className="relative rounded-xl border border-border-card bg-[var(--bg-surface)] p-5 md:p-8">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
             <div>
               <div className="mb-4 flex flex-wrap gap-2">
-                <span className="rounded-[2px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] bg-[var(--text-primary)] text-[var(--text-inverse)]">
+                <span className="rounded-full bg-[var(--status-neutral-bg)] px-2.5 py-0.5 text-xs font-medium text-content-heading">
                   {ERA_LABELS[quiz.era] ?? quiz.era}
                 </span>
-                <span className="rounded-[2px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-content-heading border border-[var(--text-primary)]">
+                <span className="rounded-full bg-[var(--status-neutral-bg)] px-2.5 py-0.5 text-xs font-medium text-content-heading">
                   {LEVEL_LABELS[quiz.level] ?? quiz.level}
                 </span>
               </div>
 
-              <h1 className="archive-title is-plain mt-1 text-[32px] md:text-[44px] md:pr-16">
+              <h1 className="archive-title is-plain text-[26px] md:text-[34px]">
                 {quiz.title}
               </h1>
               {quiz.contextTitle && (
-                <p className="mt-3 text-[12px] font-bold uppercase tracking-[0.1em] text-accent-gold">
+                <p className="mt-2 text-sm font-medium text-[var(--gold-on-light)]">
                   {quiz.contextTitle}
                 </p>
               )}
@@ -114,13 +119,13 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                       />
                     ))}
                   </div>
-                  <span className="font-display text-lg font-extrabold leading-none text-content-heading">
+                  <span className="text-sm font-semibold tabular-nums text-content-heading">
                     {quiz.rating.toFixed(1)}/5
                   </span>
                 </div>
               ) : null}
 
-              <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 border-t border-l border-[var(--text-primary)]">
+              <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {[
                   { label: "Lượt làm", value: quiz.playCount.toLocaleString("vi-VN") },
                   { label: "Cấp độ", value: LEVEL_LABELS[quiz.level] ?? quiz.level },
@@ -130,12 +135,12 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="border-r border-b border-[var(--text-primary)] bg-[var(--bg-elevated)] px-4 py-3"
+                    className="rounded-lg border border-border-card bg-[var(--bg-elevated)] px-4 py-3"
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
+                    <p className="text-[13px] text-[var(--text-secondary)]">
                       {item.label}
                     </p>
-                    <p className="mt-1 font-display text-2xl font-extrabold leading-none text-content-heading">
+                    <p className="mt-1 text-lg font-bold leading-tight tabular-nums text-content-heading">
                       {item.value}
                     </p>
                   </div>
@@ -153,8 +158,8 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
               )}
             </div>
 
-            <aside className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-elevated)] p-5 border-t-[3px] border-t-[var(--accent-gold)]">
-              <p className="archive-title text-[22px]">
+            <aside className="rounded-xl border border-border-card bg-[var(--bg-elevated)] p-5 lg:sticky lg:top-6">
+              <p className="text-lg font-semibold text-content-heading">
                 Sẵn sàng luyện tập?
               </p>
               <p className="mt-2 text-sm leading-6 text-content-muted">
@@ -164,56 +169,63 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                 ) : null}
               </p>
 
-              <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
+              <p className="mt-4 text-[13.5px] font-semibold text-content-heading">
                 Chế độ làm bài
               </p>
-              <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+              <div role="group" aria-label="Chế độ làm bài" className="mt-2 grid grid-cols-2 gap-2">
                 <button
+                  type="button"
+                  aria-pressed={mode === "exam"}
                   onClick={() => setMode("exam")}
                   className={cn(
-                    "flex h-9 items-center justify-center gap-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.06em] transition-colors border",
+                    "flex h-10 items-center justify-center gap-1.5 rounded-lg border text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
                     mode === "exam"
-                      ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
-                      : "bg-[var(--bg-surface)] text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)] hover:text-content-heading",
+                      ? "border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] font-semibold text-content-heading"
+                      : "border-[var(--border-default)] bg-[var(--bg-surface)] font-medium text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-content-heading",
                   )}
                 >
-                  <Timer size={13} />
+                  <Timer size={15} aria-hidden="true" />
                   Chế độ thi
                 </button>
                 <button
+                  type="button"
+                  aria-pressed={mode === "practice"}
                   onClick={() => setMode("practice")}
                   className={cn(
-                    "flex h-9 items-center justify-center gap-1.5 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.06em] transition-colors border",
+                    "flex h-10 items-center justify-center gap-1.5 rounded-lg border text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
                     mode === "practice"
-                      ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
-                      : "bg-[var(--bg-surface)] text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)] hover:text-content-heading",
+                      ? "border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] font-semibold text-content-heading"
+                      : "border-[var(--border-default)] bg-[var(--bg-surface)] font-medium text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-content-heading",
                   )}
                 >
-                  <BookOpen size={13} />
+                  <BookOpen size={15} aria-hidden="true" />
                   Luyện tập
                 </button>
               </div>
-              <p className="mt-1.5 text-xs leading-5 text-content-subtle">
+              <p className="mt-2 text-[13px] leading-5 text-content-muted">
                 {mode === "exam"
                   ? "Làm hết bài rồi mới biết đáp án đúng/sai, giống thi thật."
                   : "Biết ngay đúng/sai sau mỗi câu, phù hợp để ôn bài."}
               </p>
 
-              <div className="mt-4 grid grid-cols-2 gap-1.5">
+              <p className="mt-5 text-[13.5px] font-semibold text-content-heading">Thời gian</p>
+              <div role="group" aria-label="Giới hạn thời gian" className="mt-2 grid grid-cols-2 gap-2">
                 {TIME_PRESETS.map((preset) => {
                   const active = selectedTime === preset.seconds && customMinutes.trim() === "";
                   return (
                     <button
                       key={preset.label}
+                      type="button"
+                      aria-pressed={active}
                       onClick={() => {
                         setSelectedTime(preset.seconds);
                         setCustomMinutes("");
                       }}
                       className={cn(
-                        "h-9 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.06em] transition-colors border",
+                        "h-10 rounded-lg border text-sm transition-colors first:col-span-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
                         active
-                          ? "bg-[var(--text-primary)] text-[var(--text-inverse)] border-[var(--text-primary)]"
-                          : "bg-[var(--bg-surface)] text-content-muted border-[var(--border-strong)] hover:border-[var(--text-primary)] hover:text-content-heading",
+                          ? "border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] font-semibold text-content-heading"
+                          : "border-[var(--border-default)] bg-[var(--bg-surface)] font-medium text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-content-heading",
                       )}
                     >
                       {preset.label}
@@ -222,9 +234,9 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                 })}
               </div>
 
-              <label className="mt-4 block">
-                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-content-muted">
-                  Tùy chỉnh theo phút
+              <label className="mt-3 block">
+                <span className="text-[13px] text-[var(--text-secondary)]">
+                  Hoặc nhập số phút
                 </span>
                 <input
                   type="number"
@@ -232,7 +244,7 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                   value={customMinutes}
                   onChange={(event) => setCustomMinutes(event.target.value)}
                   placeholder="Ví dụ: 20"
-                  className="mt-1 h-10 w-full rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 text-sm outline-none text-content-heading transition-colors focus:border-[var(--text-primary)]"
+                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 text-sm text-content-heading outline-none transition-colors focus:border-[var(--accent-gold)] focus:ring-2 focus:ring-[var(--accent-gold)]/20"
                 />
               </label>
 

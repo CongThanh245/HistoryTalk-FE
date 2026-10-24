@@ -63,9 +63,10 @@ export function ChatHistoryShell() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="px-3 py-4 md:px-6 md:py-8">
-        <ChatHistoryHeader totalSessions={totalSessions} />
+        <ChatHistoryHeader totalSessions={isLoading || !isAuthenticated ? null : totalSessions} />
 
-        <ChatHistoryFilters search={search} onSearchChange={setSearch} />
+        {/* Nothing to search until there is at least one conversation. */}
+        {(allGroups.length > 0 || hasFilter) && <ChatHistoryFilters search={search} onSearchChange={setSearch} />}
 
         {!isAuthenticated ? (
           <ChatHistoryEmptyState hasFilter={hasFilter} isNotAuthenticated={true} />

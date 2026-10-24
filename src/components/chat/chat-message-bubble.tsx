@@ -43,7 +43,7 @@ export function MessageBubble({
       <div className="flex justify-end gap-3 px-4 mb-4">
         <div className="max-w-[70%] flex flex-col items-end gap-1.5">
           <div
-            className="px-4 py-2.5 rounded-[2px] text-sm leading-relaxed flex items-center gap-2 bg-accent-gold text-white"
+            className="px-4 py-2.5 rounded-sm text-sm leading-relaxed flex items-center gap-2 bg-accent-gold text-white"
           >
             {message.content}
             {message.messageType === "VOICE" && (
@@ -121,7 +121,7 @@ export function MessageBubble({
               <div
                 key={index}
                 className={cn(
-                  "relative px-4 py-3 rounded-[2px] text-sm leading-relaxed border bg-bg-surface text-content-heading border-(--border-strong)",
+                  "relative px-4 py-3 rounded-sm text-sm leading-relaxed border bg-bg-surface text-content-heading border-(--border-strong)",
                   isLastPart && "pr-9",
                 )}
               >
@@ -198,7 +198,7 @@ export function MessageQuotes({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-1 rounded-[2px] border transition-colors cursor-pointer bg-transparent border-[var(--border-strong)] text-content-text hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]"
+        className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] px-2 py-1 rounded-sm border transition-colors cursor-pointer bg-transparent border-[var(--border-strong)] text-content-text hover:border-[var(--text-primary)] hover:text-[var(--text-primary)]"
       >
         <Quote size={12} className="fill-current" />
         {quotes.length} nguồn trích dẫn
@@ -207,7 +207,7 @@ export function MessageQuotes({
 
       {isOpen && (
         <div
-          className="mt-1.5 flex flex-col divide-y divide-[var(--border-default)] rounded-[2px] border px-3 py-1 bg-bg-elevated border-[var(--border-strong)]"
+          className="mt-1.5 flex flex-col divide-y divide-[var(--border-default)] rounded-sm border px-3 py-1 bg-bg-elevated border-[var(--border-strong)]"
         >
           {quotes.map((quote, i) => (
             <div key={i} className="flex flex-col gap-1 py-2">
@@ -260,7 +260,7 @@ export function TypingIndicator({ character }: { character: ChatCharacter }) {
           {character.name}
         </span>
         <div
-          className="px-4 py-3 rounded-[2px] flex items-center gap-1 bg-bg-surface border border-(--border-strong)"
+          className="px-4 py-3 rounded-sm flex items-center gap-1 bg-bg-surface border border-(--border-strong)"
         >
           {[0, 1, 2].map((i) => (
             <div

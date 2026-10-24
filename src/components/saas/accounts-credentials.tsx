@@ -22,7 +22,7 @@ export function OneTimeWarning({ className, children }: { className?: string; ch
     <p
       role="alert"
       className={cn(
-        "flex items-start gap-2 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]",
+        "flex items-start gap-2 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--text-secondary)]",
         className,
       )}
     >
@@ -44,7 +44,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
     <button
       type="button"
       onClick={() => void copyText(value, `Đã sao chép ${label.toLowerCase()}`)}
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[2px] border border-[var(--border-strong)] text-[var(--text-secondary)] transition-colors hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]"
+      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-[var(--border-strong)] text-[var(--text-secondary)] transition-colors hover:border-[var(--text-primary)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]"
       aria-label={`Sao chép ${label.toLowerCase()}`}
       title={`Sao chép ${label.toLowerCase()}`}
     >
@@ -56,9 +56,9 @@ function CopyButton({ value, label }: { value: string; label: string }) {
 function CredentialLine({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="space-y-1">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</p>
+      <p className="text-[13px] font-semibold text-[var(--text-tertiary)]">{label}</p>
       <div className="flex items-center gap-2">
-        <output className={cn("min-w-0 flex-1 truncate rounded-[2px] border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-content-heading", mono && "font-mono font-bold tracking-wide")}>
+        <output className={cn("min-w-0 flex-1 truncate rounded-sm border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-content-heading", mono && "font-mono font-bold tracking-wide")}>
           {value}
         </output>
         <CopyButton value={value} label={label} />
@@ -73,7 +73,7 @@ export function CredentialCardGrid({ records, schoolName, className }: { records
     <ul className={cn("grid gap-0 sm:grid-cols-2", className)} aria-label="Phiếu tài khoản">
       {records.map((r) => (
         <li key={r.id} className="space-y-1.5 border border-dashed border-[var(--border-strong)] p-3">
-          <p className="flex justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--accent-gold)]">
+          <p className="flex justify-between gap-2 text-xs font-semibold text-[var(--accent-gold)]">
             <span className="truncate">{schoolName ?? "HistoryTalk"}</span>
             <span>{r.roleLabel}</span>
           </p>
@@ -220,10 +220,10 @@ export function CredentialsDialog({
                 {reveal ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               </button>
             </div>
-            <div className="max-h-[38dvh] overflow-auto border-y border-[var(--text-primary)]">
+            <div className="max-h-[38dvh] overflow-auto border-y border-border-card">
               <table className="w-full min-w-[480px] text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--border-strong)] text-left text-[11px] uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                  <tr className="border-b border-[var(--border-strong)] text-left text-[13px] font-semibold text-[var(--text-tertiary)]">
                     <th className="px-3 py-2 font-semibold">Họ và tên</th>
                     <th className="px-3 py-2 font-semibold">{records.some((r) => r.userName) ? "Email đăng nhập" : "Tên đăng nhập"}</th>
                     <th className="px-3 py-2 font-semibold">Mật khẩu tạm</th>

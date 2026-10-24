@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { ArrowLeft, RotateCcw, Trash2 } from "lucide-react";
+import { RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
@@ -25,11 +24,8 @@ export default function LocalTrashPage() {
       live
       title="Thùng rác"
       description="Bối cảnh và nhân vật đã xóa khỏi Kho tư liệu. Khôi phục để dùng lại, hoặc xóa vĩnh viễn."
-      backLink={
-        <Link href={ROUTES.TEACHING.LOCAL} className="archive-link">
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Soạn tư liệu
-        </Link>
-      }
+      backHref={ROUTES.TEACHING.LOCAL}
+      backLabel="Về Soạn tư liệu"
     >
       <div className="space-y-5">
         <Tabs value={kind} onValueChange={(v) => setKind(v as LocalKind)}>

@@ -100,23 +100,23 @@ export function StudentMockChat({
 
   return (
     <section
-      className={cn("flex flex-col rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]", className)}
+      className={cn("flex flex-col rounded-sm border border-border-card bg-[var(--bg-surface)]", className)}
       aria-label={`Trò chuyện với ${character.name}`}
     >
       <header className="flex items-center gap-3 border-b border-[var(--border-default)] px-4 py-3">
         {character.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- teacher-provided URL of any host
-          <img src={character.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-[2px] object-cover" />
+          <img src={character.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-sm object-cover" />
         ) : (
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[2px] bg-[var(--accent-gold)] text-white" aria-hidden="true">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-[var(--accent-gold)] text-white" aria-hidden="true">
             <UserRound className="h-5 w-5" />
           </span>
         )}
         <div className="min-w-0">
-          <p className="truncate font-display text-lg font-extrabold uppercase leading-tight text-content-text">{character.name}</p>
+          <p className="truncate text-lg font-bold leading-tight text-content-text">{character.name}</p>
           <p className="truncate text-[12px] text-content-muted">{character.title}</p>
         </div>
-        <span className="ml-auto shrink-0 rounded-[2px] border border-[var(--border-strong)] px-2 py-0.5 text-[11px] font-bold text-content-muted">
+        <span className="ml-auto shrink-0 rounded-sm border border-[var(--border-strong)] px-2 py-0.5 text-[11px] font-bold text-content-muted">
           Mô phỏng
         </span>
       </header>
@@ -126,7 +126,7 @@ export function StudentMockChat({
           <div key={m.id} className={cn("flex", m.from === "me" ? "justify-end" : "justify-start")}>
             <p
               className={cn(
-                "max-w-[85%] whitespace-pre-wrap rounded-[2px] px-3 py-2 text-[14px] leading-relaxed",
+                "max-w-[85%] whitespace-pre-wrap rounded-sm px-3 py-2 text-[14px] leading-relaxed",
                 m.from === "me"
                   ? "bg-[var(--accent-gold)] text-white"
                   : "border border-[var(--border-default)] bg-[var(--bg-elevated)] text-content-text",
@@ -167,7 +167,7 @@ export function StudentMockChat({
             }
           }}
           placeholder={disabled ? (disabledReason ?? "Không thể gửi tin nhắn") : `Hỏi ${character.name}...`}
-          className="max-h-32 min-h-[42px] flex-1 resize-none rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] px-3 py-2.5 text-[14px] text-content-text outline-none focus-visible:border-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="max-h-32 min-h-[42px] flex-1 resize-none rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] px-3 py-2.5 text-[14px] text-content-text outline-none focus-visible:border-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
         />
         <button type="submit" className="btn-crimson shrink-0 px-4 disabled:cursor-not-allowed disabled:opacity-50" disabled={disabled || typing || !draft.trim()} aria-label="Gửi">
           <SendHorizontal className="h-4 w-4" aria-hidden="true" />

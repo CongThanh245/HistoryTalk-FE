@@ -64,7 +64,7 @@ export function StudentAssignmentWork(props: WorkProps) {
 
 function LockedNotice({ title, text }: { title: string; text: string }) {
   return (
-    <div className="flex items-start gap-3 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-4">
+    <div className="flex items-start gap-3 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-4">
       <Lock className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
       <div>
         <p className="text-[14px] font-bold text-content-text">{title}</p>
@@ -76,7 +76,7 @@ function LockedNotice({ title, text }: { title: string; text: string }) {
 
 function DoneBanner({ assignment: a, submission }: { assignment: Assignment; submission: Submission }) {
   return (
-    <div className="flex items-start gap-3 rounded-[2px] border border-[var(--jade)] bg-[color-mix(in_srgb,var(--jade)_9%,var(--bg-surface))] p-4">
+    <div className="flex items-start gap-3 rounded-sm border border-[var(--jade)] bg-[color-mix(in_srgb,var(--jade)_9%,var(--bg-surface))] p-4">
       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[var(--jade)]" aria-hidden="true" />
       <div className="space-y-0.5">
         <p className="text-[14px] font-bold text-content-text">
@@ -151,7 +151,7 @@ function EventWork({ row, studentId, role }: WorkProps) {
       ) : (
         <Panel>
           <div className="flex flex-wrap items-center gap-4">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[2px] bg-[var(--jade)] text-white" aria-hidden="true">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-sm bg-[var(--jade)] text-white" aria-hidden="true">
               <BookOpen className="h-6 w-6" />
             </span>
             <div className="min-w-0 flex-1">
@@ -167,7 +167,7 @@ function EventWork({ row, studentId, role }: WorkProps) {
       )}
 
       <Panel>
-        <label htmlFor="event-note" className="block font-display text-xl font-extrabold uppercase leading-tight text-content-text">
+        <label htmlFor="event-note" className="block text-xl font-bold leading-tight text-content-text">
           Ghi chú / cảm nhận
         </label>
         <textarea
@@ -178,7 +178,7 @@ function EventWork({ row, studentId, role }: WorkProps) {
           readOnly={done}
           maxLength={2000}
           placeholder="Bạn rút ra được điều gì? Ghi lại ý chính theo yêu cầu của thầy cô..."
-          className="w-full rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] px-3 py-2.5 text-[14px] leading-relaxed text-content-text outline-none focus-visible:border-[var(--text-primary)] read-only:opacity-80"
+          className="w-full rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] px-3 py-2.5 text-[14px] leading-relaxed text-content-text outline-none focus-visible:border-[var(--text-primary)] read-only:opacity-80"
         />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="text-[12px] text-content-muted">Ghi chú được lưu trên máy này.</span>
@@ -225,8 +225,8 @@ function ChatWork({ row, studentId, role }: WorkProps) {
       <Panel>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-content-muted">Tiến độ</p>
-            <p className="font-display text-4xl font-extrabold tabular-nums" style={{ color }}>
+            <p className="text-[12px] font-semibold text-content-muted">Tiến độ</p>
+            <p className="text-4xl font-bold tabular-nums" style={{ color }}>
               {Math.min(count, min)}
               <span className="text-lg text-content-muted"> / {min} tin nhắn</span>
             </p>
@@ -257,7 +257,7 @@ function ChatWork({ row, studentId, role }: WorkProps) {
       ) : (
         <Panel>
           <div className="flex flex-wrap items-center gap-4">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[2px] text-white" style={{ background: color }} aria-hidden="true">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-sm text-white" style={{ background: color }} aria-hidden="true">
               <MessageSquareText className="h-6 w-6" />
             </span>
             <div className="min-w-0 flex-1">

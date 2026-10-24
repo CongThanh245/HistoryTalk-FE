@@ -12,10 +12,11 @@ import { LOCAL_SCOPE_LABEL, localYears, scopeSource } from "@/features/saas/hook
 import { apiErrorMessage } from "@/features/saas/hooks-api";
 import { isHidden, type LocalCategory, type LocalItem } from "@/services/local-content.service";
 import { cn } from "@/lib/utils/cn";
+import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
 
 /* Shared bits for the API-backed local content screens (Sprint 6). */
 
-const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold";
+const PILL = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold";
 const SUCCESS = "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]";
 const DANGER = "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--accent-danger)]";
 const NEUTRAL = "border-[var(--border-strong)] bg-[var(--status-neutral-bg)] text-[var(--text-secondary)]";
@@ -48,10 +49,10 @@ export function LocalReviewBadge({ item }: { item: LocalItem }) {
 export function ReviewNote({ item, className }: { item: Pick<LocalItem, "reviewNote" | "approvedBy">; className?: string }) {
   if (!item.reviewNote?.trim()) return null;
   return (
-    <div className={cn("flex items-start gap-2 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-3 text-sm", className)}>
+    <div className={cn("flex items-start gap-2 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-3 text-sm", className)}>
       <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
       <div className="min-w-0 space-y-0.5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--status-warning)]">Ghi chú của quản trị trường</p>
+        <p className="text-[13px] font-semibold text-[var(--status-warning)]">Ghi chú của quản trị trường</p>
         <p className="whitespace-pre-line break-words text-content-text">{item.reviewNote}</p>
       </div>
     </div>
@@ -140,7 +141,7 @@ function Meta({ items }: { items: [string, React.ReactNode][] }) {
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{title}</h4>
+      <h4 className="text-[13px] font-semibold text-[var(--text-tertiary)]">{title}</h4>
       <div className="whitespace-pre-line text-sm leading-relaxed text-content-text">{children}</div>
     </div>
   );
@@ -158,7 +159,7 @@ export function LocalItemPreview({ item }: { item: LocalItem }) {
     <div className="space-y-4">
       {item.imageUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- teacher-provided URL of any host
-        <img src={item.imageUrl} alt="" className="max-h-64 w-full rounded-[2px] border border-[var(--border-default)] object-cover" />
+        <img src={item.imageUrl} alt="" className="max-h-64 w-full rounded-sm border border-[var(--border-default)] object-cover" />
       )}
       {item.type === "CONTEXT" ? (
         <>
@@ -169,10 +170,10 @@ export function LocalItemPreview({ item }: { item: LocalItem }) {
               ["Năm", localYears(item)],
               ["Địa điểm", item.location],
               ["Tọa độ", item.latitude != null && item.longitude != null ? `${item.latitude}, ${item.longitude}` : null],
-              ["Video", link(item.videoUrl)],
             ]}
           />
           <Block title="Nội dung">{item.description}</Block>
+          {item.videoUrl && <VideoBlock url={item.videoUrl} title={item.name} />}
           <BattleMapBlock item={item} />
         </>
       ) : (
@@ -186,6 +187,27 @@ export function LocalItemPreview({ item }: { item: LocalItem }) {
   );
 }
 
+/** Video of a local context: YouTube embed, or the browser player for a direct file (MP4, WEBM). */
+function VideoBlock({ url, title }: { url: string; title: string }) {
+  const embed = getYouTubeEmbedUrl(url);
+  return (
+    <div className="space-y-2">
+      <h4 className="text-[13px] font-semibold text-[var(--text-tertiary)]">Video</h4>
+      {embed ? (
+        <iframe
+          src={embed}
+          title={`Video ${title}`}
+          className="aspect-video w-full rounded-sm border border-[var(--border-default)]"
+          allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      ) : (
+        <video src={url} controls preload="metadata" className="w-full rounded-sm border border-[var(--border-default)] bg-black" />
+      )}
+    </div>
+  );
+}
+
 /** Battle map of a local context: thumbnail + full-screen playback (same player as the official battles). */
 function BattleMapBlock({ item }: { item: LocalItem }) {
   const [open, setOpen] = React.useState(false);
@@ -193,9 +215,9 @@ function BattleMapBlock({ item }: { item: LocalItem }) {
   if (!map?.imageUrl) return null;
   return (
     <div className="space-y-2">
-      <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Lược đồ trận đánh</h4>
+      <h4 className="text-[13px] font-semibold text-[var(--text-tertiary)]">Lược đồ trận đánh</h4>
       {/* eslint-disable-next-line @next/next/no-img-element -- uploaded battle map image */}
-      <img src={map.imageUrl} alt={`Lược đồ ${item.name}`} className="max-h-56 w-full rounded-[2px] border border-[var(--border-default)] object-cover" />
+      <img src={map.imageUrl} alt={`Lược đồ ${item.name}`} className="max-h-56 w-full rounded-sm border border-[var(--border-default)] object-cover" />
       <button type="button" className="btn-ink" onClick={() => setOpen(true)}>
         <MapIcon className="h-4 w-4" aria-hidden="true" /> Xem diễn biến trận đánh
       </button>

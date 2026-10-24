@@ -29,8 +29,8 @@ export function SchoolQuotaCard({ role }: { role: string | undefined }) {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)]">
-        <div className="flex items-center gap-3 border-b border-[var(--text-primary)] p-5">
+      <div className="rounded-sm border border-border-card bg-[var(--bg-surface)]">
+        <div className="flex items-center gap-3 border-b border-[var(--border-default)] p-5">
           <SchoolIcon className="h-6 w-6 shrink-0 text-[var(--accent-gold)]" aria-hidden="true" />
           <div className="min-w-0">
             <p className="archive-title is-plain text-[20px]">{entitlements.schoolName ?? "Tài khoản trường"}</p>
@@ -94,8 +94,8 @@ function MyBoostHistory() {
   const { data, isPending, isError } = useMyTokenBoosts();
   const rows = (data ?? []).slice(0, 10);
   return (
-    <div className="rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] p-5">
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Yêu cầu xin thêm token</p>
+    <div className="rounded-sm border border-border-card bg-[var(--bg-surface)] p-5">
+      <p className="mb-3 text-[13px] font-semibold text-[var(--text-tertiary)]">Yêu cầu xin thêm token</p>
       {isPending ? (
         <p className="text-sm text-content-muted">Đang tải...</p>
       ) : isError ? (

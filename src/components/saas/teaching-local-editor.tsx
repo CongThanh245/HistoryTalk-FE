@@ -337,7 +337,7 @@ export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKin
       )}
 
       {item?.reviewNote && (
-        <div role="note" className="flex items-start gap-3 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-4">
+        <div role="note" className="flex items-start gap-3 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-4">
           <MessageSquareWarning className="mt-0.5 h-5 w-5 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
           <div>
             <p className="text-sm font-bold text-content-heading">Góp ý của quản trị trường</p>
@@ -381,9 +381,9 @@ export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKin
                     disabled={readOnly}
                     onClick={() => setForm((f) => ({ ...f, scope: o.value }))}
                     className={cn(
-                      "flex flex-col items-start gap-1.5 rounded-[2px] border p-3 text-left transition-colors disabled:cursor-not-allowed",
+                      "flex flex-col items-start gap-1.5 rounded-sm border p-3 text-left transition-colors disabled:cursor-not-allowed",
                       active
-                        ? "border-[var(--text-primary)] bg-[var(--status-neutral-bg)]"
+                        ? "border-border-card bg-[var(--status-neutral-bg)]"
                         : "border-[var(--border-strong)] hover:border-[var(--text-primary)] disabled:opacity-60",
                     )}
                   >
@@ -410,7 +410,7 @@ export function LocalContentEditor({ kind, item, data }: { kind: LocalContentKin
         </Panel>
       </fieldset>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--text-primary)] pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-card pt-4">
         <div className="flex flex-wrap gap-2">
           {item?.status === "DRAFT" && isMine && (
             <button type="button" className="btn-line text-[var(--accent-danger)]" onClick={() => setDeleteOpen(true)}>
@@ -695,7 +695,7 @@ function QuestionBuilder({
                   className="min-h-[64px]"
                 />
                 <fieldset className="space-y-2">
-                  <legend className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                  <legend className="mb-1 text-[13px] font-semibold text-[var(--text-tertiary)]">
                     Phương án · chọn đáp án đúng
                   </legend>
                   {q.options.map((opt, k) => (

@@ -158,12 +158,12 @@ export function AccountsTable<T>({
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]">
+      <div className="overflow-x-auto rounded-lg border border-border-card bg-[var(--bg-surface)]">
         <Table className="min-w-max">
           {caption && <caption className="sr-only">{caption}</caption>}
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id} className="border-b border-[var(--border-strong)] hover:bg-transparent">
+              <TableRow key={hg.id} className="border-b border-border-card bg-[var(--bg-deep)] hover:bg-[var(--bg-deep)]">
                 {selection && (
                   <TableHead className="w-10 px-3">
                     <Checkbox
@@ -188,8 +188,8 @@ export function AccountsTable<T>({
                           type="button"
                           onClick={header.column.getToggleSortingHandler()}
                           className={cn(
-                            "-ml-1.5 inline-flex h-8 items-center gap-1 rounded-[2px] px-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]",
-                            dir ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]",
+                            "-ml-1.5 inline-flex h-8 items-center gap-1 rounded-sm px-1.5 text-[13px] font-semibold transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]",
+                            dir ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
                           )}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
@@ -202,7 +202,7 @@ export function AccountsTable<T>({
                           )}
                         </button>
                       ) : (
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                        <span className="text-[13px] font-semibold text-[var(--text-secondary)]">
                           {flexRender(header.column.columnDef.header, header.getContext())}
                         </span>
                       )}
@@ -282,7 +282,7 @@ function pageWindow(current: number, count: number): (number | "…")[] {
 }
 
 const PAGE_BTN =
-  "inline-flex h-9 min-w-9 items-center justify-center rounded-[2px] border px-2 text-xs font-bold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] disabled:pointer-events-none disabled:opacity-40";
+  "inline-flex h-9 min-w-9 items-center justify-center rounded-sm border px-2 text-xs font-bold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] disabled:pointer-events-none disabled:opacity-40";
 
 export function TablePagination({
   pageIndex,
@@ -392,7 +392,7 @@ export function RowActions({ label, actions }: { label: string; actions: (RowAct
             type="button"
             aria-label={label}
             title={label}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[2px] border border-transparent text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] data-[state=open]:border-[var(--text-primary)] data-[state=open]:text-[var(--text-primary)]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-sm border border-transparent text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] data-[state=open]:border-[var(--text-primary)] data-[state=open]:text-[var(--text-primary)]"
           >
             <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -408,7 +408,7 @@ export function RowActions({ label, actions }: { label: string; actions: (RowAct
                   title={a.disabled ? a.disabledReason : undefined}
                   onSelect={() => a.onSelect()}
                   className={cn(
-                    "rounded-[2px] focus:bg-[var(--status-neutral-bg)]",
+                    "rounded-sm focus:bg-[var(--status-neutral-bg)]",
                     a.tone === "danger" && "text-[var(--accent-danger)] focus:text-[var(--accent-danger)]",
                     a.tone === "success" && "text-[var(--status-success)] focus:text-[var(--status-success)]",
                   )}
@@ -448,7 +448,7 @@ export function BulkActionBar({
     <div
       role="region"
       aria-label="Thao tác hàng loạt"
-      className="flex flex-col gap-3 rounded-[2px] border border-[var(--text-primary)] bg-[var(--status-neutral-bg)] px-3 py-2.5 lg:flex-row lg:items-center lg:justify-between"
+      className="flex flex-col gap-3 rounded-sm border border-border-card bg-[var(--status-neutral-bg)] px-3 py-2.5 lg:flex-row lg:items-center lg:justify-between"
     >
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" aria-live="polite">
         <span>
@@ -487,10 +487,10 @@ export function BulkButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "inline-flex h-9 items-center gap-1.5 rounded-[2px] border bg-[var(--bg-surface)] px-3 text-xs font-bold uppercase tracking-[0.06em] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] disabled:pointer-events-none disabled:opacity-40",
+        "inline-flex h-9 items-center gap-1.5 rounded-sm border bg-[var(--bg-surface)] px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] disabled:pointer-events-none disabled:opacity-40",
         tone === "danger"
           ? "border-[var(--accent-danger)] text-[var(--accent-danger)] hover:bg-[var(--accent-danger)] hover:text-white"
-          : "border-[var(--text-primary)] text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]",
+          : "border-border-card text-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]",
       )}
     >
       {Icon && <Icon className="h-3.5 w-3.5" aria-hidden="true" />}
@@ -553,7 +553,7 @@ export function TableEmpty({
 export function TableSkeleton({ rows = 8, cols = 6 }: { rows?: number; cols?: number }) {
   return (
     <div className="space-y-3" aria-hidden="true">
-      <div className="overflow-hidden border-y border-[var(--text-primary)]">
+      <div className="overflow-hidden border-y border-border-card">
         <div className="flex gap-4 border-b border-[var(--border-strong)] px-3 py-3">
           {Array.from({ length: cols }).map((_, i) => (
             <Skeleton key={i} className="h-3 flex-1" />
@@ -578,14 +578,14 @@ export function AccountsPageSkeleton({ stats = 4, cols = 6 }: { stats?: number; 
       {stats > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: stats }).map((_, i) => (
-            <div key={i} className="space-y-3 rounded-[2px] border border-[var(--border-strong)] p-4">
+            <div key={i} className="space-y-3 rounded-sm border border-[var(--border-strong)] p-4">
               <Skeleton className="h-3 w-24" />
               <Skeleton className="h-8 w-16" />
             </div>
           ))}
         </div>
       )}
-      <div className="space-y-4 rounded-[2px] border border-[var(--border-strong)] p-4 sm:p-6">
+      <div className="space-y-4 rounded-sm border border-[var(--border-strong)] p-4 sm:p-6">
         <div className="flex flex-wrap gap-2">
           <Skeleton className="h-10 w-full sm:w-[280px]" />
           <Skeleton className="h-10 w-full sm:w-40" />

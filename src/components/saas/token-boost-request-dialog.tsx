@@ -86,7 +86,7 @@ export function TokenBoostRequestDialog({ open, onOpenChange }: { open: boolean;
           </DialogHeader>
 
           {pending ? (
-            <p role="status" className="flex items-start gap-2 rounded-[2px] border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-3 text-sm">
+            <p role="status" className="flex items-start gap-2 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-3 text-sm">
               <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
               <span>
                 Bạn đã xin thêm {formatNumber(pending.requestedTokens)} token hôm nay và đang chờ thầy cô duyệt. Mỗi ngày chỉ gửi được một yêu cầu
@@ -113,7 +113,7 @@ export function TokenBoostRequestDialog({ open, onOpenChange }: { open: boolean;
                     onClick={() => setAmount(String(p))}
                     aria-pressed={tokens === p}
                     className={cn(
-                      "h-8 rounded-[2px] border px-2.5 text-xs font-bold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]",
+                      "h-8 rounded-sm border px-2.5 text-xs font-bold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]",
                       tokens === p
                         ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
                         : "border-[var(--border-strong)] text-[var(--text-secondary)] hover:border-[var(--text-primary)]",

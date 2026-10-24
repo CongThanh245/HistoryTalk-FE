@@ -183,7 +183,7 @@ function ContentReview() {
   return (
     <div className="space-y-5">
       {/* Tabs + filters share one solid panel so they stay readable over the page texture. */}
-      <div className="rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-surface)]">
+      <div className="rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)]">
         <div
           role="tablist"
           aria-label="Trạng thái nội dung"
@@ -199,14 +199,14 @@ function ContentReview() {
                 aria-selected={active}
                 onClick={() => changeTab(t)}
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-[13px] font-bold uppercase tracking-[0.06em] transition-colors",
+                  "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3 text-sm transition-colors",
                   active
-                    ? "border-[var(--accent-gold)] text-[var(--text-primary)]"
-                    : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]",
+                    ? "border-[var(--accent-gold)] font-semibold text-[var(--text-primary)]"
+                    : "border-transparent font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)]",
                 )}
               >
                 {REVIEW_STATE_LABELS[t]}
-                <span className="rounded-[2px] bg-[var(--status-neutral-bg)] px-1.5 text-[11px] tabular-nums text-[var(--text-secondary)]">
+                <span className="text-xs font-normal tabular-nums text-content-subtle">
                   {counts[t]}
                 </span>
               </button>
@@ -249,10 +249,10 @@ function ContentReview() {
         {filtered.length === 0 ? (
           <EmptyState title={EMPTY[tab]} description="Đổi bộ lọc hoặc chuyển sang thẻ khác." />
         ) : (
-          <div className="overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]">
+          <div className="overflow-x-auto rounded-lg border border-border-card bg-[var(--bg-surface)]">
             <Table className="min-w-[860px]">
               <TableHeader>
-                <TableRow className="border-b border-[var(--border-strong)] hover:bg-transparent">
+                <TableRow className="border-b border-border-card">
                   {selectable && (
                     <TableHead className="w-10 px-4">
                       <Checkbox
@@ -263,7 +263,7 @@ function ContentReview() {
                     </TableHead>
                   )}
                   {["Loại", "Tên", "Giáo viên soạn", "Phạm vi", "Cập nhật", "Trạng thái"].map((h) => (
-                    <TableHead key={h} className="px-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                    <TableHead key={h} className="px-4 text-[13px] font-semibold text-[var(--text-tertiary)]">
                       {h}
                     </TableHead>
                   ))}
@@ -363,11 +363,11 @@ function ReviewSheet({
     <Sheet open={!!item} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="staff-theme w-full gap-0 border-l border-[var(--text-primary)] bg-[var(--bg-surface)] p-0 text-content-text shadow-none sm:max-w-xl"
+        className="staff-theme w-full gap-0 border-l border-border-card bg-[var(--bg-surface)] p-0 text-content-text shadow-none sm:max-w-xl"
       >
         {item && state && (
           <>
-            <SheetHeader className="space-y-2 border-b border-[var(--text-primary)] p-5 pr-12">
+            <SheetHeader className="space-y-2 border-b border-[var(--border-default)] p-5 pr-12">
               <div className="flex flex-wrap items-center gap-2">
                 <span title={item.contentScope === "SCHOOL_WIDE" ? "Học sinh và giáo viên cả trường đều thấy" : "Chỉ học sinh các lớp được gán thấy"}>
                   <LocalScopeTag item={item} label={scopeLabel} />
@@ -395,7 +395,7 @@ function ReviewSheet({
               <ReviewDocuments item={item} />
             </div>
 
-            <div className="flex flex-col gap-2 border-t border-[var(--text-primary)] p-4 sm:flex-row sm:flex-wrap">
+            <div className="flex flex-col gap-2 border-t border-border-card p-4 sm:flex-row sm:flex-wrap">
               {ACTIONS[state].map((a) => {
                 const meta = ACTION_META[a];
                 const Icon = meta.icon;
@@ -425,7 +425,7 @@ function ReviewDocuments({ item }: { item: LocalItem }) {
   const docs = query.data ?? [];
   return (
     <div className="space-y-2">
-      <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Tài liệu đính kèm ({docs.length})</h4>
+      <h4 className="text-[13px] font-semibold text-[var(--text-tertiary)]">Tài liệu đính kèm ({docs.length})</h4>
       {query.isLoading ? (
         <p className="text-sm text-content-muted">Đang tải tài liệu...</p>
       ) : query.isError ? (

@@ -15,7 +15,7 @@ export type SortDirection = NonNullable<ListParams["sortDirection"]>;
 
 export const PAGE_SIZES = [10, 20, 50];
 
-export const HEAD = "px-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]";
+export const HEAD = "px-3 text-[13px] font-semibold text-[var(--text-secondary)]";
 
 export function SortHeader<C extends string>({
   label,
@@ -38,8 +38,8 @@ export function SortHeader<C extends string>({
       onClick={() => onSort(column)}
       aria-label={`Sắp xếp theo ${label.toLowerCase()}${active ? (direction === "asc" ? " (đang tăng dần)" : " (đang giảm dần)") : ""}`}
       className={cn(
-        "-ml-1.5 inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-[2px] px-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]",
-        active ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]",
+        "-ml-1.5 inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-sm px-1.5 text-[13px] font-semibold transition-colors hover:bg-[var(--status-neutral-bg)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)]",
+        active ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
       )}
     >
       {label}
@@ -83,7 +83,7 @@ export function ActiveFilterTabs({ value, onChange, className }: { value: Active
       role="group"
       aria-label="Lọc theo trạng thái"
       className={cn(
-        "grid h-10 grid-cols-3 gap-0.5 rounded-[2px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] p-0.5 sm:inline-grid sm:w-auto",
+        "grid h-10 grid-cols-3 gap-0.5 rounded-lg bg-[var(--status-neutral-bg)] p-0.5 sm:inline-grid sm:w-auto",
         className,
       )}
     >
@@ -94,10 +94,10 @@ export function ActiveFilterTabs({ value, onChange, className }: { value: Active
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            "whitespace-nowrap rounded-[2px] px-2 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] sm:px-3",
+            "whitespace-nowrap rounded-md px-2 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent-gold)] sm:px-3",
             value === o.value
-              ? "bg-[var(--accent-gold-active-bg)] font-bold text-[var(--text-primary)]"
-              : "font-semibold text-[var(--text-tertiary)] hover:text-[var(--text-primary)]",
+              ? "bg-[var(--bg-elevated)] font-semibold text-[var(--text-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+              : "font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)]",
           )}
         >
           {o.label}

@@ -117,7 +117,7 @@ function InlineFactCard() {
   }, [fading]);
 
   return (
-    <div className="bg-[var(--bg-surface)] border border-[var(--text-primary)] rounded-[2px] overflow-hidden">
+    <div className="bg-[var(--bg-surface)] border border-border-card rounded-sm overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-3.5 pt-[11px] pb-2.5 border-b border-[var(--text-primary)]">
         <div className="flex items-center gap-1.5">
@@ -127,7 +127,7 @@ function InlineFactCard() {
           </span>
         </div>
         {fact.year && (
-          <span className="font-display text-[13px] font-extrabold text-white bg-[var(--accent-gold)] rounded-[2px] px-[7px] py-px">
+          <span className="font-display text-[13px] font-extrabold text-white bg-[var(--accent-gold)] rounded-sm px-[7px] py-px">
             {fact.year}
           </span>
         )}
@@ -142,7 +142,7 @@ function InlineFactCard() {
           {fact.tags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-[3px] text-[10px] px-2 py-0.5 rounded-[2px] border border-[var(--border-strong)] text-[var(--text-secondary)] font-semibold"
+              className="inline-flex items-center gap-[3px] text-[10px] px-2 py-0.5 rounded-sm border border-[var(--border-strong)] text-[var(--text-secondary)] font-semibold"
             >
               <Tag className="w-[9px] h-[9px]" strokeWidth={2.5} />
               {tag}
@@ -179,7 +179,7 @@ function FeatureRow({
     <Link href={href} className="group block no-underline">
       <div className="flex items-center gap-[11px] px-3.5 py-[9px] border-b border-[var(--border-default)] transition-colors duration-150 group-last:border-b-0 group-hover:bg-[var(--text-primary)]">
         {/* Icon bubble */}
-        <div className="w-[34px] h-[34px] rounded-[2px] shrink-0 flex items-center justify-center border border-[var(--border-strong)] bg-[var(--bg-elevated)] text-[var(--accent-gold)] transition-colors duration-150 group-hover:border-[var(--accent-on-ink)] group-hover:bg-transparent group-hover:text-[var(--accent-on-ink)]">
+        <div className="w-[34px] h-[34px] rounded-sm shrink-0 flex items-center justify-center border border-[var(--border-strong)] bg-[var(--bg-elevated)] text-[var(--accent-gold)] transition-colors duration-150 group-hover:border-[var(--accent-on-ink)] group-hover:bg-transparent group-hover:text-[var(--accent-on-ink)]">
           <Icon size={16} />
         </div>
 
@@ -216,7 +216,7 @@ export function ExploreLeftCol() {
       <InlineFactCard />
 
       {/* Feature list */}
-      <div className="bg-[var(--bg-surface)] border border-[var(--text-primary)] rounded-[2px] overflow-hidden">
+      <div className="bg-[var(--bg-surface)] border border-border-card rounded-sm overflow-hidden">
         <div className="flex items-center gap-1.5 px-3.5 pt-[11px] pb-2.5 border-b border-[var(--text-primary)]">
           <span className="font-display text-[17px] font-extrabold leading-[1.1] uppercase text-content-heading">
             Khám phá

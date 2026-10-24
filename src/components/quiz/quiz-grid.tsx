@@ -9,7 +9,7 @@ import { QuizCard } from "./quiz-card";
 
 function QuizCardSkeleton() {
   return (
-    <div className="rounded-[2px] overflow-hidden animate-pulse bg-[var(--bg-surface)] border border-[var(--text-primary)]">
+    <div className="rounded-sm overflow-hidden animate-pulse bg-[var(--bg-surface)] border border-border-card">
       <div className="h-20 sm:h-36 bg-[var(--bg-deep)]" />
       <div className="p-3 sm:p-4 space-y-2">
         <div className="h-4 bg-[var(--border-default)] w-4/5" />
@@ -39,7 +39,7 @@ export function QuizGrid({ quizzes, isLoading, onStart }: QuizGridProps) {
 
   if (quizzes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 rounded-[2px] bg-[var(--bg-surface)] border border-[var(--text-primary)]">
+      <div className="flex flex-col items-center justify-center py-20 rounded-sm bg-[var(--bg-surface)] border border-border-card">
         <div className="text-4xl mb-3">📚</div>
         <p className="archive-title text-[22px]">
           Không tìm thấy bộ câu hỏi

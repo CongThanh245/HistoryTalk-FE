@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils/cn";
  * limit (or escalates to the School Admin when it is used up); the School Admin approves from the school pool.
  */
 
-const PILL = "inline-flex items-center whitespace-nowrap rounded-[2px] border px-2 py-0.5 text-[11px] font-bold";
+const PILL = "inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold";
 
 export const BOOST_STATUS_LABELS: Record<TokenBoostStatus, string> = {
   PENDING: "Chờ giáo viên",
@@ -149,7 +149,7 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
 
   return (
     <div className="space-y-4">
-      <div role="tablist" aria-label="Trạng thái yêu cầu" className="flex flex-wrap gap-2">
+      <div role="tablist" aria-label="Trạng thái yêu cầu" className="flex gap-6 overflow-x-auto shadow-[inset_0_-1px_0_var(--border-default)] [scrollbar-width:none]">
         {TABS[reviewer].map((t) => (
           <button
             key={t}
@@ -161,14 +161,14 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
               setPage(1);
             }}
             className={cn(
-              "h-9 rounded-[2px] border px-3 text-xs font-bold uppercase tracking-[0.06em] transition-colors",
+              "inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
               status === t
-                ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
-                : "border-[var(--border-strong)] text-[var(--text-secondary)] hover:border-[var(--text-primary)]",
+                ? "border-[var(--accent-gold)] font-semibold text-content-heading"
+                : "border-transparent font-medium text-[var(--text-tertiary)] hover:text-content-heading",
             )}
           >
             {BOOST_STATUS_LABELS[t]}
-            {status === t && query.data && <span className="ml-1.5 tabular-nums opacity-80">{query.data.totalElements}</span>}
+            {status === t && query.data && <span className="text-xs font-normal tabular-nums text-content-subtle">{query.data.totalElements}</span>}
           </button>
         ))}
       </div>
@@ -187,7 +187,7 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
       ) : rows.length === 0 ? (
         <EmptyState size="sm" title={status.startsWith("PENDING") ? "Không có yêu cầu nào đang chờ" : "Chưa có yêu cầu nào"} description={scopeHint} />
       ) : (
-        <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--text-primary)]">
+        <ul className="divide-y divide-[var(--border-default)] border-y border-border-card">
           {rows.map((r) => (
             <li key={r.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-start">
               <div className="min-w-0 flex-1 space-y-1">
@@ -318,7 +318,7 @@ function ReviewTrail({ r }: { r: TokenBoostRequest }) {
  */
 export function StudentTodayUsage({ classId, studentUid, boxed }: { classId: string; studentUid: string; boxed?: boolean }) {
   const { data, isPending, isError } = useTeacherClassroomDashboard(classId);
-  const box = boxed ? "rounded-[2px] border border-[var(--border-strong)] bg-[var(--status-neutral-bg)] px-3 py-2" : "";
+  const box = boxed ? "rounded-sm border border-[var(--border-strong)] bg-[var(--status-neutral-bg)] px-3 py-2" : "";
   if (isPending) return <p className={cn("text-xs text-content-muted", box)}>Đang tải mức dùng hôm nay…</p>;
   const s = data?.students.find((x) => x.studentId === studentUid);
   if (isError || !s) return null;
@@ -349,7 +349,7 @@ function TeacherRemaining({ boxed }: { boxed?: boolean }) {
     <p
       className={cn(
         "text-xs tabular-nums text-[var(--text-secondary)]",
-        boxed && "rounded-[2px] border border-[var(--border-strong)] bg-[var(--status-neutral-bg)] px-3 py-2",
+        boxed && "rounded-sm border border-[var(--border-strong)] bg-[var(--status-neutral-bg)] px-3 py-2",
       )}
     >
       Hạn mức của bạn còn khoảng <b>{formatNumber(data.token)}</b> token hôm nay (chat AI và cấp cho học sinh dùng chung).

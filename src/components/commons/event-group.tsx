@@ -1,7 +1,6 @@
 "use client";
 
-import { Sword } from "lucide-react";
-import { SessionCard } from "@/components/commons/session-card";
+import { SESSION_ROW_GRID, SessionCard } from "@/components/commons/session-card";
 import type {
   ChatHistoryGroup,
   ChatHistoryItem,
@@ -14,6 +13,7 @@ interface EventGroupProps {
   deletingSessionId?: string | null;
 }
 
+/** Conversations of one historical context: a heading, then a framed list with column headers on md+. */
 export function EventGroup({
   group,
   onSelectSession,
@@ -21,44 +21,35 @@ export function EventGroup({
   deletingSessionId = null,
 }: EventGroupProps) {
   return (
-    <div className="space-y-2.5 md:space-y-3">
-      {/* Group header */}
-      <div className="flex items-center gap-2.5 md:gap-3">
-        <div
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[2px] md:h-8 md:w-8 bg-[var(--text-primary)]"
-        >
-          <Sword
-            className="h-3.5 w-3.5 text-[var(--accent-on-ink)]"
-          />
-        </div>
-        <div>
-          <h2
-            className="archive-title is-plain text-[17px] md:text-xl"
-          >
-            {group.contextName}
-          </h2>
-          <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.1em] text-content-muted">
-            {group.sessions.length} cuộc trò chuyện
-          </p>
-        </div>
-        {/* Divider */}
-        <div
-          className="flex-1 h-px bg-[var(--text-primary)]"
-        />
+    <section className="space-y-3" aria-label={group.contextName}>
+      <div className="flex items-baseline gap-2">
+        <h2 className="text-lg font-semibold text-content-heading">{group.contextName}</h2>
+        <span className="text-sm tabular-nums text-content-subtle">{group.sessions.length}</span>
       </div>
 
-      {/* Sessions — xếp NGANG, wrap khi hết chỗ */}
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3 md:gap-3">
-        {group.sessions.map((session) => (
-          <SessionCard
-            key={session.id}
-            session={session}
-            onClick={onSelectSession}
-            onDelete={onDeleteSession}
-            isDeleting={deletingSessionId === session.id}
-          />
-        ))}
+      <div className="overflow-hidden rounded-xl border border-border-card bg-[var(--bg-surface)]">
+        <div
+          aria-hidden="true"
+          className={`hidden h-11 border-b border-border-card bg-[var(--bg-deep)] px-4 text-[13px] font-semibold text-[var(--text-secondary)] ${SESSION_ROW_GRID}`}
+        >
+          <span>Nhân vật</span>
+          <span>Cuộc trò chuyện</span>
+          <span>Tin nhắn</span>
+          <span>Lần cuối</span>
+          <span />
+        </div>
+        <ul className="divide-y divide-[var(--border-default)]">
+          {group.sessions.map((session) => (
+            <SessionCard
+              key={session.id}
+              session={session}
+              onClick={onSelectSession}
+              onDelete={onDeleteSession}
+              isDeleting={deletingSessionId === session.id}
+            />
+          ))}
+        </ul>
       </div>
-    </div>
+    </section>
   );
 }

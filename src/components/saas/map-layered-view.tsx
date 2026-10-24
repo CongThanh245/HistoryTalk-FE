@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Globe2 } from "lucide-react";
+import { Eye, EyeOff, Globe2, X } from "lucide-react";
 import { UrlSyncedHistoricalMap } from "@/components/historical-map/UrlSyncedHistoricalMap";
 import { isInsideMapBounds, type MapControlsInfo, type MapCoordinates, type MapOverlay, type OverlayPin } from "@/components/historical-map/map-overlay.types";
 import { STUDY_NOTE_PREFIX, STUDY_NOTE_ROLES } from "@/components/historical-map/StudyNotes";
@@ -24,6 +24,53 @@ type ListTab = "battles" | "notes";
 const formatYear = (year: number) => (year < 0 ? `${Math.abs(year)} TCN` : String(year));
 
 const LOCAL_PREFIX = "local:";
+const GUIDE_KEY = "ht.classMap.guideHidden";
+
+/** Ba buoc dung ban do Kho tu lieu cho giao vien; an duoc, nho theo trinh duyet. */
+function TeacherMapGuide() {
+  const stored = React.useSyncExternalStore(
+    () => () => undefined,
+    () => {
+      try {
+        return window.localStorage.getItem(GUIDE_KEY) === "1";
+      } catch {
+        return false;
+      }
+    },
+    () => true,
+  );
+  const [dismissed, setDismissed] = React.useState(false);
+  if (stored || dismissed) return null;
+  const hide = () => {
+    setDismissed(true);
+    try {
+      window.localStorage.setItem(GUIDE_KEY, "1");
+    } catch {
+      // Private mode: only hidden for this visit.
+    }
+  };
+  return (
+    <div className="relative mx-3 mb-2 rounded-sm border border-[var(--border-default)] bg-[var(--bg-main)] py-2 pl-3 pr-8 text-[12px] leading-5 text-[var(--text-secondary)]">
+      <ol className="list-decimal space-y-0.5 pl-4">
+        <li>Chọn một bối cảnh bên dưới.</li>
+        <li>
+          Bấm <b>Ghim vị trí</b> rồi chạm lên bản đồ.
+        </li>
+        <li>
+          <b>Soạn lược đồ</b> để vẽ diễn biến theo từng giai đoạn.
+        </li>
+      </ol>
+      <button
+        type="button"
+        onClick={hide}
+        aria-label="Ẩn hướng dẫn"
+        className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-sm text-[var(--text-tertiary)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--text-primary)]"
+      >
+        <X size={14} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
 
 /**
  * Local contexts of the viewer's school for the Kho tư liệu map. `contexts`: published ones with coordinates (the
@@ -92,6 +139,7 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
 
   const [adminPreview, setAdminPreview] = React.useState(false);
   const globalEditable = globalEditableRole && !adminPreview;
+  const teacherEditable = teacherEditableRole && !adminPreview;
 
   const [overrides, setOverrides] = React.useState<Partial<Record<MapLayerKey, boolean>>>({});
   const visible = {
@@ -145,13 +193,15 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
       className={adminPreview ? "btn-ink h-10 min-h-0 px-3 text-xs" : "btn-line h-10 min-h-0 px-3 text-xs"}
     >
       {adminPreview ? <EyeOff size={15} /> : <Eye size={15} />}
-      <span className="hidden sm:inline">{adminPreview ? "Thoát xem trước" : "Xem như người học"}</span>
+      <span className="hidden sm:inline">{adminPreview ? "Thoát xem trước" : classMode ? "Xem như học sinh" : "Xem như người học"}</span>
     </button>
   );
 
-  const headerSlot = globalEditableRole ? (
+  const headerSlot = teacherEditableRole ? (
+    previewButton
+  ) : globalEditableRole ? (
     <>
-      <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-[var(--text-primary)] px-2 py-1 text-[11px] font-bold tracking-[0.04em] text-[var(--text-primary)]">
+      <span className="inline-flex items-center gap-1.5 rounded-sm border border-border-card px-2 py-1 text-[11px] font-bold tracking-[0.04em] text-[var(--text-primary)]">
         <Globe2 size={13} className="text-[var(--accent-gold)]" aria-hidden="true" />
         {teacherEditableRole ? "Kho tư liệu — hiển thị cho học sinh của trường" : "Bản đồ chung — hiển thị cho mọi người dùng"}
       </span>
@@ -160,17 +210,9 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
   ) : undefined;
 
   const topSlot = adminPreview ? (
-    <div role="status" className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-[var(--text-primary)] bg-[var(--text-primary)] px-4 py-1.5 text-xs font-semibold text-[var(--text-inverse)] md:px-6">
-      <span className="inline-flex items-center gap-2">
-        <Eye size={14} aria-hidden="true" /> Đang xem như người học — các công cụ chỉnh sửa bản đồ đã ẩn.
-      </span>
-      <button
-        type="button"
-        onClick={() => setAdminPreview(false)}
-        className="py-1 text-[11px] font-bold uppercase tracking-[0.08em] underline-offset-4 hover:underline"
-      >
-        Thoát xem trước
-      </button>
+    // Nut "Thoát xem trước" da o header; thanh nay chi bao trang thai.
+    <div role="status" className="flex items-center gap-2 border-b border-[var(--text-primary)] bg-[var(--text-primary)] px-4 py-1.5 text-xs font-semibold text-[var(--text-inverse)] md:px-6">
+      <Eye size={14} aria-hidden="true" /> Đang xem như {classMode ? "học sinh" : "người học"} — các công cụ chỉnh sửa đã ẩn.
     </div>
   ) : undefined;
 
@@ -188,18 +230,7 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
             locked: globalEditable,
           },
         ];
-    if (local.enabled) {
-      rows.push({
-        key: "local",
-        label: "Kho tư liệu",
-        hint: globalEditable
-          ? "Bạn đang chỉnh sửa ghim và lược đồ · học sinh của trường thấy bối cảnh đã xuất bản"
-          : "Bối cảnh giáo viên soạn, đã xuất bản · nhấp hai lần để mở",
-        count: Math.max(local.contexts.length, info.battleCount),
-        checked: visible.local,
-        locked: globalEditable,
-      });
-    }
+    // Ban do Kho tu lieu chi co mot lop (boi canh cua truong): khong co gi de bat/tat nen khong hien o chon lop.
     if (hasNotesLayer && info.canTakeNotes) {
       rows.push({
         key: "personal",
@@ -251,6 +282,7 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
         {tabs.length > 1 && <ListTabs tabs={tabs} value={activeTab} onChange={setListTab} />}
         {activeTab === "battles" ? (
           <BattleOverviewList
+            {...(teacherEditable && { title: "Bối cảnh của trường", noun: "bối cảnh", intro: <TeacherMapGuide /> })}
             battles={info.battles}
             loading={info.battlesLoading}
             error={info.battlesError}
@@ -277,7 +309,7 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
       </>
     ) : null;
 
-    const showControl = classMode ? rows.length > 0 : rows.length > 1 || Boolean(list);
+    const showControl = classMode ? rows.length > 0 || Boolean(list) : rows.length > 1 || Boolean(list);
 
     return (
       <div className="max-md:contents md:pointer-events-none md:absolute md:bottom-4 md:left-4 md:top-4 md:z-[520] md:flex md:w-[300px] md:flex-col md:gap-2">
@@ -302,19 +334,23 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
               : "max-md:absolute max-md:inset-x-3 max-md:top-3 max-md:z-[525] md:pointer-events-auto md:shrink-0"
           }
         />
+        {/* Ghim tren ban do den tu ca toa do cua boi canh lan ghim rieng (battleCount), nen dem ca hai. */}
+        {classMode && !list && !info.battlesLoading && (
+          <p className="max-md:absolute max-md:inset-x-3 max-md:top-16 max-md:z-[525] rounded-sm border border-border-card bg-[var(--bg-surface)] px-3 py-2 text-xs leading-snug text-[var(--text-secondary)] shadow-[var(--shadow-soft)] md:pointer-events-auto">
+            {info.battleCount + localPins.length === 0
+              ? "Chưa có bối cảnh nào được ghim lên bản đồ."
+              : "Bấm vào một ghim để xem bối cảnh thầy cô soạn."}
+          </p>
+        )}
         {showControl && (
           <MapLayerControl
             className="md:pointer-events-auto"
+            title={rows.length ? undefined : "Bối cảnh"}
             rows={rows}
             onToggle={toggleLayer}
             classes={[]}
             classId={null}
             onClassChange={() => undefined}
-            footnote={
-              classMode && local.contexts.length === 0
-                ? "Chưa có bối cảnh nào của lớp hoặc trường được xuất bản và gắn vị trí trên bản đồ."
-                : undefined
-            }
             onAddPersonalPin={notesOn && info.addStudyNote ? info.addStudyNote : undefined}
             personalAddHint={
               notesOn && !info.addStudyNote ? "Chọn một trận đánh trên bản đồ để thêm ghi chú cho trận đó." : undefined
@@ -343,8 +379,13 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
     previewAsLearner: adminPreview,
     ...(classMode && {
       title: "Bản đồ Kho tư liệu",
-      subtitle: "Bối cảnh lịch sử giáo viên soạn cho lớp và trường.",
-      hideBattlePicker: !teacherEditableRole,
+      subtitle: teacherEditable
+        ? "Ghim bối cảnh lên bản đồ và soạn lược đồ diễn biến. Học sinh của trường thấy bối cảnh đã xuất bản."
+        : "Bối cảnh lịch sử thầy cô soạn cho lớp và trường.",
+      // Danh sach ben trai da chon boi canh; khong can them o chon tren header.
+      hideBattlePicker: true,
+      disableStudyNotes: true,
+      characterLinkHref: (id: string) => ROUTES.TEACHING.LOCAL_EDIT(id, "CONTEXT"),
       events: local.battles.map(toBattleEvent),
       canEdit: teacherEditableRole,
       saveBattleMap: async (eventId: string, map: BattleMap) => {

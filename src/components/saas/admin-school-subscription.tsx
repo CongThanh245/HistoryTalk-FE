@@ -69,7 +69,7 @@ export function SchoolSubscriptionPanel({ school }: { school: ApiSchool }) {
       />
       <dl className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-1">
-          <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Năm học hiện tại</dt>
+          <dt className="text-[13px] font-semibold text-[var(--text-tertiary)]">Năm học hiện tại</dt>
           <dd className="font-semibold text-content-heading">
             {school.subscriptionStartDate && school.subscriptionEndDate
               ? `${formatDate(school.subscriptionStartDate)} – ${formatDate(school.subscriptionEndDate)}`
@@ -77,7 +77,7 @@ export function SchoolSubscriptionPanel({ school }: { school: ApiSchool }) {
           </dd>
         </div>
         <div className="space-y-1">
-          <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Năm học tới</dt>
+          <dt className="text-[13px] font-semibold text-[var(--text-tertiary)]">Năm học tới</dt>
           <dd className="font-semibold text-content-heading">
             {school.renewedForNextYear
               ? `Đã gia hạn${school.nextPackageType ? ` · ${PACKAGE_SHORT_LABELS[school.nextPackageType]}` : ""}`
@@ -85,7 +85,7 @@ export function SchoolSubscriptionPanel({ school }: { school: ApiSchool }) {
           </dd>
         </div>
         <div className="space-y-1">
-          <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Hạn mức mặc định</dt>
+          <dt className="text-[13px] font-semibold text-[var(--text-tertiary)]">Hạn mức mặc định</dt>
           <dd className="font-semibold text-content-heading">
             {school.defaultDailyStudentQuota ? `${formatNumber(school.defaultDailyStudentQuota)} token / học sinh / ngày` : "—"}
           </dd>

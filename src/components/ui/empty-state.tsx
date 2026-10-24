@@ -5,7 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 const emptyStateVariants = cva(
-  "flex flex-col items-center justify-center text-center border border-dashed border-border-strong rounded-[2px] p-8",
+  "flex flex-col items-center justify-center text-center border border-dashed border-border-strong rounded-sm p-8",
   {
     variants: {
       size: {
@@ -49,7 +49,7 @@ export function EmptyState({
       {...props}
     >
       {Icon && (
-        <div className="mb-1 flex size-12 items-center justify-center rounded-[2px] border border-[var(--text-primary)] bg-bg-elevated">
+        <div className="mb-1 flex size-12 items-center justify-center rounded-sm border border-border-card bg-bg-elevated">
           <Icon className="size-6 text-content-muted" strokeWidth={1.5} />
         </div>
       )}

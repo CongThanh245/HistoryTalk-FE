@@ -44,7 +44,7 @@ export function StudentActivityBars({
                     i < 2 ? "left-0" : i > data.length - 3 ? "right-0" : "left-1/2 -translate-x-1/2",
                   )}
                 >
-                  <span className="block rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] px-2 py-1 text-[12px] text-content-text">
+                  <span className="block rounded-sm border border-border-card bg-[var(--bg-surface)] px-2 py-1 text-[12px] text-content-text">
                     <span className="font-bold">{label(d.date)}</span> · {formatNumber(d.messages)} {unit}
                   </span>
                 </span>

@@ -9,6 +9,7 @@ import {
   Search, Plus, Library, MoreHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
@@ -226,6 +227,19 @@ export default function StaffQuizzesPage() {
     setEditorMode("create");
     setView("editor");
   };
+
+  // Sidebar "Tạo → Bộ đề" links to ?create=1: open the editor once, then drop the flag so a refresh shows the list.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const wantsCreate = searchParams.get("create") === "1";
+  React.useEffect(() => {
+    if (!wantsCreate) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opening the editor is the response to the URL flag, once
+    openCreate();
+    router.replace(pathname, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per ?create=1 navigation
+  }, [wantsCreate]);
 
   const openEdit = (q: StaffQuizSet) => {
     setOriginalQuiz(q);
@@ -471,7 +485,7 @@ export default function StaffQuizzesPage() {
         return (
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-[10px] font-bold uppercase tracking-wider border",
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border",
               isPublished
                 ? "bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]"
                 : "bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)] border-[var(--border-strong)]"
@@ -512,7 +526,7 @@ export default function StaffQuizzesPage() {
           <Button
             type="button"
             variant="outline"
-            className="h-8 rounded-[2px] px-3 text-xs font-semibold hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
+            className="h-8 rounded-sm px-3 text-xs font-semibold hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
             onClick={() => openEdit(r.original)}
           >
             Chỉnh sửa
@@ -523,7 +537,7 @@ export default function StaffQuizzesPage() {
                 type="button"
                 variant="outline"
                 aria-label={`Thao tác khác cho ${r.original.title}`}
-                className="h-8 rounded-[2px] px-2 hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
+                className="h-8 rounded-sm px-2 hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -578,14 +592,14 @@ export default function StaffQuizzesPage() {
       cell: ({ row: r }) => (
         <div className="flex items-center justify-end gap-1">
           <Button
-            type="button" variant="ghost" size="icon-sm" className="rounded-[2px] text-accent-blue"
+            type="button" variant="ghost" size="icon-sm" className="rounded-sm text-accent-blue"
             title="Khôi phục"
             onClick={() => setRestoreTarget({ id: r.original.id, title: r.original.title })}
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
           <Button
-            type="button" variant="ghost" size="icon-sm" className="rounded-[2px] text-accent-danger"
+            type="button" variant="ghost" size="icon-sm" className="rounded-sm text-accent-danger"
             title="Xóa vĩnh viễn"
             onClick={() => setPermanentDeleteTarget({ id: r.original.id, title: r.original.title })}
           >
@@ -609,7 +623,7 @@ export default function StaffQuizzesPage() {
           key={opt.value || "all"} type="button"
           onClick={() => { setFilterLevel(opt.value); setPage(0); }}
           className={cn(
-            "px-3 h-8 rounded-[2px] text-xs font-semibold border transition-all",
+            "px-3 h-8 rounded-sm text-xs font-semibold border transition-all",
             filterLevel === opt.value
               ? "bg-[var(--accent-gold-active-bg)] border-accent-gold text-content-heading"
               : "bg-transparent border-card-light-border text-content-muted"
@@ -665,8 +679,8 @@ export default function StaffQuizzesPage() {
 
         <div className="grid gap-6 items-start lg:grid-cols-[340px_1fr]">
           {/* ── Metadata panel ── */}
-          <div className="rounded-[2px] border p-6 space-y-4 lg:sticky lg:top-24 bg-[var(--bg-surface)] border-[var(--text-primary)]">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-content-subtle">
+          <div className="rounded-xl border p-6 space-y-4 lg:sticky lg:top-24 bg-[var(--bg-surface)] border-border-card">
+            <h2 className="text-sm font-semibold text-content-subtle">
               Thông tin bộ đề
             </h2>
 
@@ -750,7 +764,7 @@ export default function StaffQuizzesPage() {
                       type="button"
                       onClick={() => setDraft((s) => ({ ...s, level: opt.value }))}
                       className={cn(
-                        "flex-1 h-9 rounded-[2px] border text-sm font-semibold transition-all",
+                        "flex-1 h-9 rounded-sm border text-sm font-semibold transition-all",
                         isActive
                           ? activeClasses[opt.value]
                           : "bg-transparent border-card-light-border text-content-muted"
@@ -808,7 +822,7 @@ export default function StaffQuizzesPage() {
           </div>
 
           {/* ── Question panel ── */}
-          <div className="rounded-[2px] border p-6 bg-[var(--bg-surface)] border-[var(--text-primary)]">
+          <div className="rounded-xl border p-6 bg-[var(--bg-surface)] border-border-card">
             <QuizQuestionEditor
               questions={draft.questions}
               onChange={(qs) => setDraft((s) => ({ ...s, questions: qs }))}
@@ -888,7 +902,7 @@ export default function StaffQuizzesPage() {
           return (
             <span
               className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-[10px] font-bold uppercase tracking-wider border",
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border",
                 isOpen
                   ? "bg-[var(--status-warning-bg)] text-[var(--status-warning)] border-[var(--status-warning-border)]"
                   : "bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]"
@@ -908,7 +922,7 @@ export default function StaffQuizzesPage() {
               type="button"
               size="sm"
               variant="outline"
-              className="h-8 rounded-[2px] px-3 text-xs font-semibold gap-1.5 border-card-light-border text-content-heading"
+              className="h-8 rounded-sm px-3 text-xs font-semibold gap-1.5 border-card-light-border text-content-heading"
               onClick={() => setResolveTarget(r.original)}
             >
               <CheckCircle className="h-3.5 w-3.5" />
@@ -934,7 +948,7 @@ export default function StaffQuizzesPage() {
           <ArrowLeft className="h-4 w-4" /> Quay lại danh sách bộ đề
         </button>
 
-        <section className="rounded-[2px] border p-6 space-y-5 bg-[var(--bg-surface)] border-[var(--text-primary)]">
+        <section className="rounded-xl border p-6 space-y-5 bg-[var(--bg-surface)] border-border-card">
           <div className="flex items-center gap-1.5 flex-wrap">
             {([
               { value: "OPEN", label: "Chưa xử lý" },
@@ -946,7 +960,7 @@ export default function StaffQuizzesPage() {
                 type="button"
                 onClick={() => { setReportStatusFilter(opt.value); setReportPage(0); }}
                 className={cn(
-                  "px-3 h-8 rounded-[2px] text-xs font-semibold border transition-all",
+                  "px-3 h-8 rounded-sm text-xs font-semibold border transition-all",
                   reportStatusFilter === opt.value
                     ? "bg-[var(--accent-gold-active-bg)] border-accent-gold text-content-heading"
                     : "bg-transparent border-card-light-border text-content-muted"
@@ -971,14 +985,14 @@ export default function StaffQuizzesPage() {
               </p>
               <div className="flex items-center gap-1">
                 <Button
-                  variant="ghost" size="icon-sm" className="rounded-[2px]"
+                  variant="ghost" size="icon-sm" className="rounded-sm"
                   disabled={reportPage === 0}
                   onClick={() => setReportPage((p) => Math.max(0, p - 1))}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant="ghost" size="icon-sm" className="rounded-[2px]"
+                  variant="ghost" size="icon-sm" className="rounded-sm"
                   disabled={reportPage + 1 >= reportTotalPages}
                   onClick={() => setReportPage((p) => p + 1)}
                 >
@@ -1016,7 +1030,7 @@ export default function StaffQuizzesPage() {
       icon={ClipboardList}
       accent="var(--accent-blue)"
     >
-      <section className="rounded-[2px] border p-6 space-y-5 bg-[var(--bg-surface)] border-[var(--text-primary)]">
+      <section className="rounded-xl border p-6 space-y-5 bg-[var(--bg-surface)] border-border-card">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {([
@@ -1028,13 +1042,13 @@ export default function StaffQuizzesPage() {
             return (
               <div
                 key={s.label}
-                className="rounded-[2px] border px-4 py-3 flex items-center gap-3 border-[var(--text-primary)] bg-[var(--bg-surface)]"
+                className="rounded-sm border px-4 py-3 flex items-center gap-3 border-border-card bg-[var(--bg-surface)]"
               >
-                <div className="w-8 h-8 rounded-[2px] flex items-center justify-center shrink-0" style={{ background: `color-mix(in srgb, ${s.color} 10%, transparent)` }}>
+                <div className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0" style={{ background: `color-mix(in srgb, ${s.color} 10%, transparent)` }}>
                   <Icon className="w-4 h-4" style={{ color: s.color }} />
                 </div>
                 <div>
-                  <p className="font-display text-2xl font-extrabold leading-none text-content-heading">{s.value}</p>
+                  <p className="text-2xl font-bold leading-none tabular-nums text-content-heading">{s.value}</p>
                   <p className="text-xs mt-0.5 text-content-muted">{s.label}</p>
                 </div>
               </div>
@@ -1056,13 +1070,13 @@ export default function StaffQuizzesPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm bộ đề..."
-                className="pl-9 h-9 rounded-[2px] border-0 bg-[var(--status-neutral-bg)] placeholder:text-[11px]"
+                className="pl-9 h-9 rounded-sm border-0 bg-[var(--status-neutral-bg)] placeholder:text-[11px]"
               />
             </div>
             {showTrash && (
               <Button
                 variant="outline"
-                className="h-9 rounded-[2px] px-4 font-semibold border-accent-danger text-accent-danger bg-[var(--status-danger-bg)]"
+                className="h-9 rounded-sm px-4 font-semibold border-accent-danger text-accent-danger bg-[var(--status-danger-bg)]"
                 onClick={() => setShowTrash(false)}
               >
                 <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Danh sách
@@ -1071,7 +1085,7 @@ export default function StaffQuizzesPage() {
             {!showTrash && (
               <Button
                 variant="outline"
-                className="h-9 rounded-[2px] px-4 font-semibold border-card-light-border text-content-heading"
+                className="h-9 rounded-sm px-4 font-semibold border-card-light-border text-content-heading"
                 onClick={() => setView("bank")}
               >
                 <Library className="h-3.5 w-3.5 mr-1.5" />
@@ -1082,7 +1096,7 @@ export default function StaffQuizzesPage() {
               <Button
                 variant="outline"
                 className={cn(
-                  "h-9 rounded-[2px] px-4 font-semibold",
+                  "h-9 rounded-sm px-4 font-semibold",
                   openReportsCount?.totalElements
                     ? "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]"
                     : "border-card-light-border text-content-heading",
@@ -1118,7 +1132,7 @@ export default function StaffQuizzesPage() {
                     <Button
                       variant="outline"
                       aria-label="Thao tác khác"
-                      className="h-9 rounded-[2px] px-3 font-semibold gap-1.5 border-card-light-border text-content-heading"
+                      className="h-9 rounded-sm px-3 font-semibold gap-1.5 border-card-light-border text-content-heading"
                       disabled={importCsv.isPending}
                     >
                       <MoreHorizontal className="h-4 w-4" />
@@ -1137,7 +1151,7 @@ export default function StaffQuizzesPage() {
                 </DropdownMenu>
                 <Button
                   size="sm"
-                  className="h-9 rounded-[2px] px-4 font-semibold gap-1.5 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
+                  className="h-9 rounded-sm px-4 font-semibold gap-1.5 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
                   onClick={openCreate}
                 >
                   <Plus className="h-4 w-4" /> Tạo bộ đề
@@ -1181,14 +1195,14 @@ export default function StaffQuizzesPage() {
                   </p>
                   <div className="flex items-center gap-1">
                     <Button
-                      variant="ghost" size="icon-sm" className="rounded-[2px]"
+                      variant="ghost" size="icon-sm" className="rounded-sm"
                       disabled={page === 0}
                       onClick={() => setPage((p) => Math.max(0, p - 1))}
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant="ghost" size="icon-sm" className="rounded-[2px]"
+                      variant="ghost" size="icon-sm" className="rounded-sm"
                       disabled={page + 1 >= totalPages}
                       onClick={() => setPage((p) => p + 1)}
                     >

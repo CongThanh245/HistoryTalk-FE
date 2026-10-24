@@ -42,7 +42,7 @@ import { GrantTokensDialog } from "@/components/saas/token-boost-ui";
  */
 
 const PAGE_SIZES = [10, 20, 50];
-const HEAD = "whitespace-nowrap px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]";
+const HEAD = "whitespace-nowrap px-3 py-2.5 text-[13px] font-semibold text-[var(--text-tertiary)]";
 const CELL = "whitespace-nowrap px-3 py-2.5";
 
 /** class_students.status: the roster only lists ACTIVE rows, removal sets INACTIVE, transfer sets TRANSFERRED. */
@@ -57,7 +57,7 @@ function EnrollStatusBadge({ status }: { status: string | null }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[2px] border px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.06em]",
+        "inline-flex items-center rounded-full border px-1.5 py-0.5 text-xs font-semibold",
         s?.className ?? "border-[var(--border-strong)] text-[var(--text-tertiary)]",
       )}
     >
@@ -68,7 +68,7 @@ function EnrollStatusBadge({ status }: { status: string | null }) {
 
 function LoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div role="alert" className="flex flex-wrap items-start gap-3 rounded-[2px] border border-[var(--accent-danger)] bg-[var(--bg-surface)] p-4">
+    <div role="alert" className="flex flex-wrap items-start gap-3 rounded-sm border border-[var(--accent-danger)] bg-[var(--bg-surface)] p-4">
       <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-[var(--accent-danger)]" aria-hidden="true" />
       <p className="min-w-0 flex-1 text-sm text-content-muted">{message}</p>
       <button type="button" onClick={onRetry} className="btn-ink min-h-0 px-3 py-2 text-xs">
@@ -174,7 +174,7 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
           )}
 
           {rows.length === 0 ? (
-            <div className="rounded-[2px] border border-dashed border-[var(--border-strong)]">
+            <div className="rounded-sm border border-dashed border-[var(--border-strong)]">
               {debounced ? (
                 <NoResults onReset={() => setSearch("")} message="Không có học sinh phù hợp trong lớp." />
               ) : (
@@ -187,12 +187,12 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
               )}
             </div>
           ) : (
-            <div className={cn("relative overflow-x-auto rounded-[2px] border-y border-[var(--text-primary)] bg-[var(--bg-surface)]", students.isFetching && "opacity-70")}>
+            <div className={cn("relative overflow-x-auto rounded-lg border border-border-card bg-[var(--bg-surface)]", students.isFetching && "opacity-70")}>
               <FetchingBar active={students.isFetching} />
               <Table className="min-w-max">
                 <caption className="sr-only">Danh sách học sinh của lớp</caption>
                 <TableHeader>
-                  <TableRow className="border-b border-[var(--border-strong)] hover:bg-transparent">
+                  <TableRow className="border-b border-border-card">
                     {canManage && (
                       <TableHead className="w-10 px-3">
                         <Checkbox
@@ -249,7 +249,7 @@ export function ClassRosterManager({ classId, canManage }: { classId: string; ca
                               <button
                                 type="button"
                                 onClick={() => setGranting({ uid: s.studentId, name: s.fullName, classId })}
-                                className="grid h-7 w-7 place-items-center rounded-[2px] text-[var(--accent-gold)] hover:bg-[var(--accent-gold-active-bg)]"
+                                className="grid h-7 w-7 place-items-center rounded-sm text-[var(--accent-gold)] hover:bg-[var(--accent-gold-active-bg)]"
                                 aria-label={`Cấp token cho ${s.fullName}`}
                                 title="Cấp token"
                               >
@@ -337,9 +337,9 @@ function BatchResultView({ result, title }: { result: BatchEnrollResult; title: 
           ["Bỏ qua", result.alreadyEnrolledCount],
           [`Sĩ số lớp ${result.className}`, result.currentStudentCount],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-[2px] border border-[var(--border-strong)] p-3">
-            <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</dt>
-            <dd className="font-display text-xl font-extrabold tabular-nums text-content-heading">{formatNumber(Number(value))}</dd>
+          <div key={label} className="rounded-sm border border-[var(--border-strong)] p-3">
+            <dt className="text-[13px] font-semibold text-[var(--text-tertiary)]">{label}</dt>
+            <dd className="text-xl font-bold tabular-nums text-content-heading">{formatNumber(Number(value))}</dd>
           </div>
         ))}
       </dl>
@@ -434,7 +434,7 @@ function AddStudentsDialog({ classId, open, onOpenChange }: { classId: string; o
             ) : available.isError ? (
               <LoadError message={apiErrorMessage(available.error, "Không tải được danh sách học sinh.")} onRetry={() => void available.refetch()} />
             ) : (
-              <div className={cn("max-h-[45dvh] overflow-y-auto rounded-[2px] border border-[var(--border-strong)]", available.isFetching && "opacity-70")}>
+              <div className={cn("max-h-[45dvh] overflow-y-auto rounded-sm border border-[var(--border-strong)]", available.isFetching && "opacity-70")}>
                 {items.length === 0 ? (
                   <p className="p-6 text-center text-sm text-content-muted">
                     {debounced ? "Không có học sinh phù hợp." : "Mọi học sinh của trường đều đã có trong lớp."}
@@ -458,7 +458,7 @@ function AddStudentsDialog({ classId, open, onOpenChange }: { classId: string; o
                       />
                       <label
                         htmlFor="roster-available-all"
-                        className="cursor-pointer text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]"
+                        className="cursor-pointer text-[13px] font-semibold text-[var(--text-tertiary)]"
                       >
                         Chọn cả trang ({items.length}/{formatNumber(available.data?.totalElements ?? 0)})
                       </label>
@@ -599,9 +599,9 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
                   ["Tài khoản mới", fresh.length],
                   ["Dòng lỗi", result.failureCount],
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-[2px] border border-[var(--border-strong)] p-3">
-                    <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</dt>
-                    <dd className="font-display text-xl font-extrabold tabular-nums text-content-heading">{formatNumber(Number(value))}</dd>
+                  <div key={label} className="rounded-sm border border-[var(--border-strong)] p-3">
+                    <dt className="text-[13px] font-semibold text-[var(--text-tertiary)]">{label}</dt>
+                    <dd className="text-xl font-bold tabular-nums text-content-heading">{formatNumber(Number(value))}</dd>
                   </div>
                 ))}
               </dl>
@@ -622,10 +622,10 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
                   type="file"
                   accept=".csv,text/csv"
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                  className="h-10 rounded-[2px] border-[var(--border-strong)] bg-[var(--bg-elevated)]"
+                  className="h-10 rounded-sm border-[var(--border-strong)] bg-[var(--bg-elevated)]"
                 />
               </Field>
-              <div className="rounded-[2px] border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3 text-xs leading-5 text-content-muted">
+              <div className="rounded-sm border border-dashed border-[var(--border-strong)] bg-[var(--bg-main)] p-3 text-xs leading-5 text-content-muted">
                 Cột: <code className="font-mono">student_code, full_name, email, dob, gender, phone_number, password</code> (cột additional_token nếu có sẽ được bỏ qua). Học sinh
                 mới bắt buộc có <code className="font-mono">full_name</code> và <code className="font-mono">dob</code> (yyyy-mm-dd); gender là MALE /
                 FEMALE. Học sinh đã có chỉ cần mã HS hoặc email.{" "}

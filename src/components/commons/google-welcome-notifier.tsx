@@ -43,7 +43,7 @@ export function GoogleWelcomeNotifier() {
           <button
             type="button"
             onClick={() => router.push("/profile?tab=security")}
-            className="mt-1 inline-flex items-center gap-1.5 self-start rounded-[2px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors bg-accent-gold text-white hover:bg-[var(--accent-bronze)]"
+            className="mt-1 inline-flex items-center gap-1.5 self-start rounded-sm px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] transition-colors bg-accent-gold text-white hover:bg-[var(--accent-bronze)]"
           >
             Đổi mật khẩu ngay
             <ArrowRight className="size-3" />

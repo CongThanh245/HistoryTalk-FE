@@ -15,7 +15,7 @@ export function FeatureCard({
     <div
       className={`
         bg-[var(--bg-surface)]
-        border rounded-[2px]
+        border rounded-sm
         p-8
         transition-colors duration-200
         group

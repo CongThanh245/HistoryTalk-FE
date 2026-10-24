@@ -241,7 +241,7 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
             e.stopPropagation();
             handleClose();
           }}
-          className="absolute -top-4 -right-4 z-10 w-8 h-8 rounded-[2px] bg-[var(--bg-surface)] border border-[var(--text-primary)] text-[var(--text-primary)] text-base cursor-pointer flex items-center justify-center transition-colors duration-150 hover:bg-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:text-white"
+          className="absolute -top-4 -right-4 z-10 w-8 h-8 rounded-sm bg-[var(--bg-surface)] border border-border-card text-[var(--text-primary)] text-base cursor-pointer flex items-center justify-center transition-colors duration-150 hover:bg-[var(--accent-gold)] hover:border-[var(--accent-gold)] hover:text-white"
         >
           ×
         </button>
@@ -252,7 +252,7 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
           className="w-full h-full relative [transform-style:preserve-3d]"
         >
           {/* ── FRONT (dark) ── */}
-          <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] rounded-[2px] bg-[var(--text-primary)] text-[var(--text-inverse)] border border-[var(--text-primary)] shadow-[var(--shadow-strong)] flex flex-col items-center justify-center gap-4 overflow-hidden">
+          <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] rounded-sm bg-[var(--text-primary)] text-[var(--text-inverse)] border border-[var(--text-primary)] shadow-[var(--shadow-strong)] flex flex-col items-center justify-center gap-4 overflow-hidden">
             {/* Diamond pattern */}
             <div
               className="absolute inset-0 pointer-events-none"
@@ -262,8 +262,8 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
               }}
             />
             {/* Borders */}
-            <div className="absolute inset-3 rounded-[2px] border border-[var(--accent-gold)] pointer-events-none" />
-            <div className="absolute inset-[18px] rounded-[2px] border border-[var(--text-inverse)] opacity-15 pointer-events-none" />
+            <div className="absolute inset-3 rounded-sm border border-[var(--accent-gold)] pointer-events-none" />
+            <div className="absolute inset-[18px] rounded-sm border border-[var(--text-inverse)] opacity-15 pointer-events-none" />
             {/* Corner ornaments */}
             {[
               ["12px", "12px"],
@@ -293,7 +293,7 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
 
             {/* Emblem */}
             <div className="relative z-[1] text-center">
-              <div className="w-[72px] h-[72px] rounded-[2px] mx-auto mb-3.5 border-[1.5px] border-[var(--accent-on-ink)] text-[var(--accent-on-ink)] flex items-center justify-center text-[30px]">
+              <div className="w-[72px] h-[72px] rounded-sm mx-auto mb-3.5 border-[1.5px] border-[var(--accent-on-ink)] text-[var(--accent-on-ink)] flex items-center justify-center text-[30px]">
                 <Lightbulb />
               </div>
               <p className="m-0 font-display text-[22px] font-extrabold leading-[1.1] tracking-[0.04em] uppercase text-[var(--text-inverse)]">
@@ -312,7 +312,7 @@ export function FactCardModal({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* ── BACK (light) ── */}
-          <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[2px] overflow-hidden bg-[var(--bg-surface)] border border-[var(--text-primary)] shadow-[var(--shadow-strong)] flex flex-col">
+          <div className="absolute inset-0 [backface-visibility:hidden] [-webkit-backface-visibility:hidden] [transform:rotateY(180deg)] rounded-sm overflow-hidden bg-[var(--bg-surface)] border border-border-card shadow-[var(--shadow-strong)] flex flex-col">
             {/* Header accent */}
             <div className="px-5 pt-[18px] pb-3.5 border-b border-[var(--text-primary)] shrink-0">
               <p className="m-0 archive-title text-[22px]">

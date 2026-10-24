@@ -62,7 +62,7 @@ export function HowItWorksSection() {
                   </span>
                   <span
                     aria-hidden="true"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[2px] border border-(--border-strong) text-xl grayscale transition-[filter] group-hover:grayscale-0"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-(--border-strong) text-xl grayscale transition-[filter] group-hover:grayscale-0"
                   >
                     {step.icon}
                   </span>

@@ -137,7 +137,7 @@ function TranscriptFeed({
               <div
                 key={partIndex}
                 className={`
-                  max-w-[80%] rounded-[2px] px-3 py-1.5 text-sm leading-snug
+                  max-w-[80%] rounded-sm px-3 py-1.5 text-sm leading-snug
                   ${
                     m.role === "user"
                       ? "bg-white/10 text-white/80"
@@ -164,7 +164,7 @@ function TranscriptFeed({
       {/* Transcript đang nhận dạng (real-time) */}
       {currentTranscript && (
         <div className="flex justify-end">
-          <div className="max-w-[80%] rounded-[2px] px-3 py-1.5 text-sm text-white/50 bg-white/5 italic">
+          <div className="max-w-[80%] rounded-sm px-3 py-1.5 text-sm text-white/50 bg-white/5 italic">
             {currentTranscript}
             <span className="inline-block w-1 h-3 ml-1 bg-white/40 animate-pulse" />
           </div>
@@ -262,7 +262,7 @@ export function VoiceChatModal({
       >
         {/* Card */}
         <div
-          className="relative flex flex-col items-center gap-6 rounded-[2px] p-8 w-[360px] max-w-[94vw] bg-gradient-to-b from-[var(--abyssal-blue)] to-[var(--abyssal-blue)] border border-[color-mix(in_srgb,_var(--accent-gold)_25%,_transparent)] shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
+          className="relative flex flex-col items-center gap-6 rounded-sm p-8 w-[360px] max-w-[94vw] bg-gradient-to-b from-[var(--abyssal-blue)] to-[var(--abyssal-blue)] border border-[color-mix(in_srgb,_var(--accent-gold)_25%,_transparent)] shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
           style={{
             animation: "fadeSlideUp 0.35s ease both",
           }}
@@ -285,7 +285,7 @@ export function VoiceChatModal({
 
           {/* Status badge */}
           <div
-            className="flex items-center gap-2 px-3 py-1 rounded-[2px] text-[11px] font-bold uppercase tracking-[0.1em] bg-[color-mix(in_srgb,_var(--accent-gold)_10%,_transparent)] border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] text-accent-gold"
+            className="flex items-center gap-2 px-3 py-1 rounded-sm text-[11px] font-bold uppercase tracking-[0.1em] bg-[color-mix(in_srgb,_var(--accent-gold)_10%,_transparent)] border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] text-accent-gold"
           >
             {isActive && (
               <span
@@ -470,7 +470,7 @@ export function VoiceChatModal({
                   setErrorMsg(null);
                   startCall();
                 }}
-                className="px-4 py-1.5 rounded-[2px] text-sm transition-all hover:brightness-110 bg-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] border border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] text-accent-gold"
+                className="px-4 py-1.5 rounded-sm text-sm transition-all hover:brightness-110 bg-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] border border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] text-accent-gold"
               >
                 Thử lại
               </button>

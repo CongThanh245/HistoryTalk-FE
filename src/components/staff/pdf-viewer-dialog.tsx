@@ -133,7 +133,7 @@ export function PdfViewerDialog({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div
-                className="w-8 h-8 rounded-[2px] flex items-center justify-center bg-[var(--accent-gold-active-bg)]"
+                className="w-8 h-8 rounded-sm flex items-center justify-center bg-[var(--accent-gold-active-bg)]"
               >
                 <File className="h-4 w-4 text-accent-gold" />
               </div>

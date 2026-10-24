@@ -25,7 +25,8 @@ function TabsList({
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        "text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-[2px] border border-[var(--text-primary)] bg-transparent p-0",
+        // Underlined tab row: the active tab carries a crimson rule, counts sit beside labels in a muted tone.
+        "inline-flex h-10 w-fit items-center justify-start gap-6 border-b border-[var(--border-default)] bg-transparent p-0 text-[var(--text-tertiary)]",
         className
       )}
       {...props}
@@ -41,7 +42,7 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "data-[state=active]:bg-[var(--text-primary)] data-[state=active]:text-[var(--text-inverse)] focus-visible:ring-ring/50 focus-visible:outline-ring text-[var(--text-secondary)] hover:text-[var(--text-primary)] inline-flex h-full flex-1 items-center justify-center gap-1.5 rounded-none border-0 px-3 py-1 text-xs font-bold uppercase tracking-[0.08em] whitespace-nowrap transition-colors focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative -mb-px inline-flex h-full items-center justify-center gap-1.5 rounded-none border-0 border-b-2 border-transparent px-0.5 py-1 text-sm font-medium whitespace-nowrap text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)] data-[state=active]:border-[var(--accent-gold)] data-[state=active]:font-semibold data-[state=active]:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}

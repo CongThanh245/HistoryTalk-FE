@@ -65,7 +65,7 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
   };
 
   const btnBase =
-    "w-7 h-7 md:w-8 md:h-8 shrink-0 rounded-[2px] border flex items-center justify-center transition-all duration-150 " +
+    "w-7 h-7 md:w-8 md:h-8 shrink-0 rounded-sm border flex items-center justify-center transition-all duration-150 " +
     "bg-card-bg border-[var(--text-primary)] text-content-heading " +
     "hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer";
 
@@ -108,7 +108,7 @@ export function TimelineStrip({ items, activeId, onSelect }: TimelineStripProps)
                 onClick={() => onSelect(item.id)}
                 aria-label={`Chọn sự kiện năm ${item.yearLabel}`}
                 aria-current={isActive ? "step" : undefined}
-                className="tl-item flex flex-col items-center relative cursor-pointer group w-[64px] md:w-20 h-16 md:h-[72px] bg-transparent border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-card-bg rounded-[2px]"
+                className="tl-item flex flex-col items-center relative cursor-pointer group w-[64px] md:w-20 h-16 md:h-[72px] bg-transparent border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold focus-visible:ring-offset-2 focus-visible:ring-offset-card-bg rounded-sm"
               >
                 {/* Year label — alternating top/bottom */}
                 <span

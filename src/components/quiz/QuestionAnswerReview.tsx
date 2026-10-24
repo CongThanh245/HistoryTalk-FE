@@ -34,12 +34,12 @@ export function QuestionAnswerReview({ question, answer, correct }: QuestionAnsw
     const accepted = data.acceptedAnswers ?? [];
     return (
       <div className="grid gap-2 text-sm">
-        <div className={cn("rounded-[2px] border px-3 py-2", correct ? CORRECT_CLASSES : WRONG_CLASSES)}>
+        <div className={cn("rounded-sm border px-3 py-2", correct ? CORRECT_CLASSES : WRONG_CLASSES)}>
           <span className="mr-2 text-[10px] uppercase tracking-[0.1em] opacity-80">Bạn trả lời</span>
           {submitted || <em className="font-normal">Chưa trả lời</em>}
         </div>
         {!correct && accepted.length > 0 && (
-          <div className={cn("rounded-[2px] border px-3 py-2", CORRECT_CLASSES)}>
+          <div className={cn("rounded-sm border px-3 py-2", CORRECT_CLASSES)}>
             <span className="mr-2 text-[10px] uppercase tracking-[0.1em] opacity-80">Đáp án đúng</span>
             {accepted.join(" / ")}
           </div>
@@ -62,7 +62,7 @@ export function QuestionAnswerReview({ question, answer, correct }: QuestionAnsw
             <div
               key={left.id}
               className={cn(
-                "flex flex-col gap-1 rounded-[2px] border px-3 py-2 text-sm sm:flex-row sm:items-center sm:gap-3",
+                "flex flex-col gap-1 rounded-sm border px-3 py-2 text-sm sm:flex-row sm:items-center sm:gap-3",
                 pairCorrect ? CORRECT_CLASSES : WRONG_CLASSES,
               )}
             >
@@ -99,13 +99,13 @@ export function QuestionAnswerReview({ question, answer, correct }: QuestionAnsw
           <div
             key={option.id}
             className={cn(
-              "flex items-center gap-2 rounded-[2px] border px-3 py-2 text-sm",
+              "flex items-center gap-2 rounded-sm border px-3 py-2 text-sm",
               showCorrect ? CORRECT_CLASSES : isWrongPick ? WRONG_CLASSES : NEUTRAL_CLASSES,
             )}
           >
             <span
               className={cn(
-                "flex h-5 w-5 shrink-0 items-center justify-center rounded-[2px] text-[11px] font-bold",
+                "flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-[11px] font-bold",
                 showCorrect
                   ? "bg-[var(--status-success)] text-[var(--text-inverse)]"
                   : isWrongPick

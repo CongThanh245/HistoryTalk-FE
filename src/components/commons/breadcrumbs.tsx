@@ -45,6 +45,16 @@ const routeLabels: Record<string, string> = {
   local: "Soạn tư liệu",
   materials: "Kho tư liệu",
   new: "Tạo mới",
+  "token-requests": "Yêu cầu token",
+  // Quan tri HistoryTalk
+  documents: "Tài liệu",
+  quests: "Nhiệm vụ hằng ngày",
+  subscriptions: "Gói dịch vụ",
+  accounts: "Tài khoản",
+  customer: "Khách hàng",
+  "content-admin": "Content Admin",
+  payment: "Thanh toán",
+  history: "Lịch sử giao dịch",
 };
 
 /** Catalogs curated by HistoryTalk; school accounts see where they come from in the trail. */
@@ -54,7 +64,8 @@ const SINGLE_CRUMB: Record<string, string> = { "/map/class": "Bản đồ Kho t�
 
 const inPath = (pathname: string, path: string) => pathname === path || pathname.startsWith(`${path}/`);
 
-export default function Breadcrumbs() {
+/** `inline`: rendered inside the header bar (no bar of its own). */
+export default function Breadcrumbs({ inline = false }: { inline?: boolean }) {
   const pathname = usePathname();
   const role = useRole();
 
@@ -82,7 +93,7 @@ export default function Breadcrumbs() {
   return (
     <nav 
       aria-label="Breadcrumb" 
-      className="px-3 md:px-6 py-2.5 border-b bg-header-bg border-[var(--border-strong)]"
+      className={inline ? "min-w-0" : "px-3 md:px-6 py-2.5 border-b bg-header-bg border-[var(--border-default)]"}
     >
       {["/characters", "/events"].includes(pathname) && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd({
@@ -92,20 +103,20 @@ export default function Breadcrumbs() {
           ],
         }) }} />
       )}
-      <ol className="flex items-center space-x-2 text-[11px] font-bold uppercase tracking-[0.1em] text-header-text-muted">
-        <li className="flex items-center">
+      <ol className="flex min-w-0 items-center gap-0.5 overflow-hidden whitespace-nowrap text-[13px] font-medium text-header-text-muted">
+        <li className="flex min-w-0 items-center">
           <Link
             href="/home"
             className="hover:text-[var(--accent-gold)] transition-colors flex items-center gap-1.5 text-header-text"
           >
-            <House size={16} fill="currentColor" />
+            <House size={16} />
             <span className="sr-only">Trang chủ</span>
           </Link>
         </li>
 
         {fromHistoryTalk && (
-          <li className="flex items-center">
-            <ChevronRight size={12} className="mx-1 opacity-40" />
+          <li className="flex min-w-0 items-center">
+            <ChevronRight size={14} className="mx-1 shrink-0 opacity-40" />
             <span className="flex items-center gap-1.5 text-header-text">
               <Image src="/solo-logo.png" alt="" width={14} height={14} unoptimized className="h-3.5 w-3.5 object-contain" />
               HistoryTalk
@@ -114,9 +125,9 @@ export default function Breadcrumbs() {
         )}
 
         {singleCrumb ? (
-          <li className="flex items-center">
-            <ChevronRight size={12} className="mx-1 opacity-40" />
-            <span className="truncate max-w-[250px] text-accent-gold">{SINGLE_CRUMB[singleCrumb]}</span>
+          <li className="flex min-w-0 items-center">
+            <ChevronRight size={14} className="mx-1 shrink-0 opacity-40" />
+            <span className="truncate max-w-[280px] font-semibold text-header-text">{SINGLE_CRUMB[singleCrumb]}</span>
           </li>
         ) : pathSegments.map((segment, index) => {
           const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
@@ -125,18 +136,18 @@ export default function Breadcrumbs() {
 
           return (
             <React.Fragment key={href}>
-              <li className="flex items-center">
-                <ChevronRight size={12} className="mx-1 opacity-40" />
+              <li className="flex min-w-0 items-center">
+                <ChevronRight size={14} className="mx-1 shrink-0 opacity-40" />
                 {isLast ? (
                   <span 
-                    className="truncate max-w-[250px] text-accent-gold"
+                    className="truncate max-w-[280px] font-semibold text-header-text"
                   >
                     <BreadcrumbLabel segment={segment} parentSegment={parentSegment} />
                   </span>
                 ) : (
                   <Link
                     href={segment === "chat" ? "/characters" : href}
-                    className="hover:text-[var(--accent-gold)] transition-colors truncate max-w-[200px] text-header-text"
+                    className="hover:text-[var(--accent-gold)] transition-colors truncate max-w-[200px] text-header-text-muted"
                   >
                     <BreadcrumbLabel segment={segment} parentSegment={parentSegment} />
                   </Link>

@@ -208,15 +208,15 @@ export default function PaymentResult() {
   if (status !== "success") {
     return (
       <div className="flex min-h-full items-center justify-center px-4 py-8 md:py-12">
-        <section className="w-full max-w-3xl overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] animate-in fade-in zoom-in-95 duration-500">
-          <div className="flex items-center justify-between gap-3 border-b border-[var(--text-primary)] bg-[var(--bg-elevated)] px-5 py-2.5 sm:px-8">
+        <section className="w-full max-w-3xl overflow-hidden rounded-sm border border-border-card bg-[var(--bg-surface)] animate-in fade-in zoom-in-95 duration-500">
+          <div className="flex items-center justify-between gap-3 border-b border-[var(--border-default)] bg-[var(--bg-elevated)] px-5 py-2.5 sm:px-8">
             {orderCode && (
               <span className="font-mono text-xs font-semibold text-[var(--text-tertiary)]">#{orderCode}</span>
             )}
           </div>
 
           <div className="p-6 sm:p-8">
-            <div className={`rounded-[2px] border p-5 ${cfg.panelClassName}`}>
+            <div className={`rounded-sm border p-5 ${cfg.panelClassName}`}>
               <div className="flex items-start gap-3">
                 <span className={`mt-1 shrink-0 ${cfg.iconClassName}`}>
                   {cfg.icon}
@@ -264,8 +264,8 @@ export default function PaymentResult() {
         className="-z-10 object-cover opacity-[0.07] grayscale"
       />
 
-      <section className="mx-auto grid w-full max-w-5xl items-stretch gap-0 overflow-hidden rounded-[2px] border border-[var(--text-primary)] bg-[var(--bg-surface)] animate-in fade-in zoom-in-95 duration-500 lg:grid-cols-[0.72fr_1.28fr]">
-        <aside className="flex flex-col border-b border-[var(--text-primary)] bg-[var(--bg-deep)] lg:border-b-0 lg:border-r">
+      <section className="mx-auto grid w-full max-w-5xl items-stretch gap-0 overflow-hidden rounded-sm border border-border-card bg-[var(--bg-surface)] animate-in fade-in zoom-in-95 duration-500 lg:grid-cols-[0.72fr_1.28fr]">
+        <aside className="flex flex-col border-b border-[var(--border-default)] bg-[var(--bg-deep)] lg:border-b-0 lg:border-r">
           <div className="relative min-h-[240px] flex-1 overflow-hidden">
             <Image
               src="/ngo-quyen-chan-dung.png"
@@ -277,7 +277,7 @@ export default function PaymentResult() {
             />
           </div>
           <div className="bg-[var(--text-primary)] p-5 text-[var(--text-inverse)]">
-            <div className="inline-flex items-center rounded-[2px] border border-[var(--accent-on-ink)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--accent-on-ink)]">
+            <div className="inline-flex items-center rounded-full border border-[var(--accent-on-ink)] px-2 py-0.5 text-xs font-semibold text-[var(--accent-on-ink)]">
               Đã xác nhận bởi PayOS
             </div>
             <h2 className="archive-title is-plain mt-3 max-w-sm text-[20px] text-[var(--text-inverse)]">
@@ -290,9 +290,9 @@ export default function PaymentResult() {
         </aside>
 
         <div className="p-5 sm:p-6">
-          <div className="flex items-start justify-between gap-4 border-b border-[var(--text-primary)] pb-4">
+          <div className="flex items-start justify-between gap-4 border-b border-[var(--border-default)] pb-4">
             <div className="flex items-start gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-[2px] bg-[var(--accent-gold)] text-[#FFFFFF]">
+              <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-[var(--accent-gold)] text-[#FFFFFF]">
                 {cfg.icon}
               </span>
               <div>
@@ -304,9 +304,9 @@ export default function PaymentResult() {
             </div>
           </div>
 
-          <dl className="mt-4 grid rounded-[2px] border border-[var(--text-primary)] sm:grid-cols-3">
+          <dl className="mt-4 grid rounded-sm border border-border-card sm:grid-cols-3">
             <div className="p-3">
-              <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+              <dt className="text-xs font-semibold text-[var(--text-tertiary)]">
                 Thời gian
               </dt>
               <dd className="mt-1 text-sm font-bold leading-5 text-[var(--text-primary)]">
@@ -314,13 +314,13 @@ export default function PaymentResult() {
               </dd>
             </div>
             <div className="border-t border-[var(--border-default)] p-3 sm:border-l sm:border-t-0">
-              <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+              <dt className="text-xs font-semibold text-[var(--text-tertiary)]">
                 Gói thanh toán
               </dt>
               <dd className="mt-1 text-sm font-bold leading-5 text-[var(--text-primary)]">{packageName}</dd>
             </div>
             <div className="border-t border-[var(--border-default)] p-3 sm:border-l sm:border-t-0">
-              <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+              <dt className="text-xs font-semibold text-[var(--text-tertiary)]">
                 Số tiền
               </dt>
               <dd className="mt-1 font-display text-xl font-extrabold leading-6 tabular-nums text-[var(--text-primary)]">
@@ -330,7 +330,7 @@ export default function PaymentResult() {
           </dl>
 
           <div className="mt-4">
-            <div className="mb-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+            <div className="mb-1 text-[13px] font-semibold text-[var(--text-tertiary)]">
               Chi tiết giao dịch
             </div>
             <div className="divide-y divide-[var(--border-default)] border-y border-[var(--border-strong)] text-sm">
@@ -342,7 +342,7 @@ export default function PaymentResult() {
               </div>
               <div className="flex items-center justify-between gap-2 py-2">
                 <span className="text-[var(--text-secondary)]">Trạng thái</span>
-                <span className="inline-flex h-6 items-center gap-1.5 rounded-[2px] border border-[var(--status-success-border)] bg-[var(--status-success-bg)] px-2 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--status-success)]">
+                <span className="inline-flex h-6 items-center gap-1.5 rounded-sm border border-[var(--status-success-border)] bg-[var(--status-success-bg)] px-2 text-xs font-semibold text-[var(--status-success)]">
                   <CheckCircle2 size={12} />
                   Đã thanh toán
                 </span>

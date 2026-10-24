@@ -71,7 +71,7 @@ const toForm = (s: ApiStudent): Form => ({
 function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0 space-y-0.5">
-      <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">{label}</dt>
+      <dt className="text-[13px] font-semibold text-[var(--text-tertiary)]">{label}</dt>
       <dd className="break-all text-sm text-content-heading">{children}</dd>
     </div>
   );
