@@ -309,6 +309,37 @@ export const localContentService = {
     if (!url) throw new Error(res.data.message ?? "Tải ảnh thất bại");
     return url;
   },
+  /** Video (MP4 / WebM / Ogg / MOV ≤ 50 MB) before the context exists; returns a public URL for videoUrl (contract v5, 27b). */
+  uploadVideo: async (file: File, onProgress?: (percent: number) => void): Promise<string> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await axiosClient.post("/teacher/local-contents/media/upload-video", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 300_000,
+      onUploadProgress: (e) => onProgress && e.total && onProgress(Math.round((e.loaded / e.total) * 100)),
+    });
+    const url = res.data.data?.url;
+    if (!url) throw new Error(res.data.message ?? "Tải video thất bại");
+    return url;
+  },
+  /** Video for a saved context: the backend stores it, replaces the old one and updates videoUrl (contract v5, 28). */
+  uploadContextVideo: async (contextId: string, file: File, onProgress?: (percent: number) => void): Promise<string> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await axiosClient.post(`/teacher/local-contents/contexts/${contextId}/media/upload-direct`, form, {
+      params: { mediaType: "VIDEO" },
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 300_000,
+      onUploadProgress: (e) => onProgress && e.total && onProgress(Math.round((e.loaded / e.total) * 100)),
+    });
+    const url = res.data.data?.publicUrl;
+    if (!url) throw new Error(res.data.message ?? "Tải video thất bại");
+    return url;
+  },
+  /** Removes only one kind of media (e.g. the video, keeping the cover) and clears its URL (contract v5, 29). */
+  deleteContextMedia: async (contextId: string, mediaType: "IMAGE_2D" | "VIDEO"): Promise<void> => {
+    await axiosClient.delete(`/teacher/local-contents/contexts/${contextId}/media`, { params: { mediaType } });
+  },
   /** 3D model (.glb / .gltf, ≤ 100 MB) for a saved character; returns its URL. */
   uploadCharacterModel: async (characterId: string, file: File, onProgress?: (percent: number) => void): Promise<string> => {
     const form = new FormData();

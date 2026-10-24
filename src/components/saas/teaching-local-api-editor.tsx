@@ -41,7 +41,7 @@ import { useAuthStore } from "@/store/auth.store";
 /*
  * Teacher-authored contexts / characters (Sprint 6 API). Same content as the Content Admin's contexts and
  * characters — only the author differs — so the form follows the staff form: same tabs, fields and validation.
- * Media are URLs because the upload endpoints are Content Admin only.
+ * Media: image and video upload to the school storage (or a pasted URL); 3D models once the character is saved.
  */
 
 /* ───────────────────────── Form state ───────────────────────── */
@@ -430,7 +430,8 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
                   <MediaFields
                     err={err}
                     image={{ value: form.ctx.imageUrl, onChange: (imageUrl) => patchCtx({ imageUrl }), errKey: "imageUrl", label: "Ảnh bối cảnh" }}
-                    video={{ value: form.ctx.videoUrl, onChange: (videoUrl) => patchCtx({ videoUrl }), errKey: "videoUrl", label: "Video bối cảnh (URL)" }}
+                    video={{ value: form.ctx.videoUrl, onChange: (videoUrl) => patchCtx({ videoUrl }), errKey: "videoUrl", label: "Video bối cảnh" }}
+                    contextId={item?.id}
                   />
                 ) : (
                   <MediaFields
@@ -701,7 +702,7 @@ function EditorPreview({ kind, form, audience }: { kind: LocalKind; form: FormSt
               ) : isValidUrl(video) ? (
                 <video src={video} controls className="h-full w-full bg-black object-contain" />
               ) : (
-                <div className={empty}>Dán URL video (YouTube hoặc .mp4) ở tab Media để xem trước</div>
+                <div className={empty}>Tải video lên hoặc dán link ở tab Media để xem trước</div>
               )}
             </div>
           </div>
@@ -871,6 +872,7 @@ type UrlSlot = { value: string; onChange: (v: string) => void; errKey: string; l
 const IMAGE_MAX_MB = 2;
 /** The contract says 100 MB, but the backend multipart limit is 50 MB. */
 const MODEL_MAX_MB = 50;
+const VIDEO_MAX_MB = 50;
 
 /**
  * Upload button next to a URL input. The returned URL fills the field; it is saved with the rest of the form.
@@ -943,6 +945,7 @@ function MediaFields({
   video,
   model,
   characterId,
+  contextId,
   err,
 }: {
   image: UrlSlot;
@@ -950,9 +953,27 @@ function MediaFields({
   model?: UrlSlot;
   /** Saved character, required to upload a 3D model. */
   characterId?: string;
+  /** Saved context: its video goes straight to the context (old file replaced); before that it is uploaded on its own. */
+  contextId?: string;
   err: ErrFn;
 }) {
   const embed = video ? getYouTubeEmbedUrl(video.value) : null;
+  const [removingVideo, setRemovingVideo] = React.useState(false);
+  const removeVideo = async () => {
+    if (!video) return;
+    if (!contextId) return video.onChange("");
+    setRemovingVideo(true);
+    try {
+      // Only the video: the cover image stays (mediaType=VIDEO).
+      await localContentService.deleteContextMedia(contextId, "VIDEO");
+      video.onChange("");
+      toast.success("Đã xóa video");
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Không xóa được video. Vui lòng thử lại."));
+    } finally {
+      setRemovingVideo(false);
+    }
+  };
   return (
     <div className="space-y-5">
       <Field label={image.label} error={err(image.errKey)} hint={`Tải ảnh PNG, JPG, WEBP (tối đa ${IMAGE_MAX_MB} MB) hoặc dán đường dẫn ảnh.`}>
@@ -973,8 +994,24 @@ function MediaFields({
       )}
       {video && (
         <>
-          <Field label={video.label} error={err(video.errKey)} hint="Dán link YouTube hoặc video trực tiếp (MP4, WEBM). Hệ thống chưa hỗ trợ tải video lên.">
-            <StaffFormInput type="url" value={video.value} onChange={(e) => video.onChange(e.target.value)} maxLength={500} placeholder="https://.../video.mp4" />
+          <Field label={video.label} error={err(video.errKey)} hint={`Tải video MP4, WEBM, OGG, MOV (tối đa ${VIDEO_MAX_MB} MB) hoặc dán link YouTube / video trực tiếp.`}>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <StaffFormInput type="url" value={video.value} onChange={(e) => video.onChange(e.target.value)} maxLength={500} placeholder="https://.../video.mp4" />
+              <UploadButton
+                label="Tải video lên"
+                accept="video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.webm,.ogg,.mov"
+                maxMb={VIDEO_MAX_MB}
+                upload={(file, onProgress) =>
+                  contextId ? localContentService.uploadContextVideo(contextId, file, onProgress) : localContentService.uploadVideo(file, onProgress)
+                }
+                onUploaded={video.onChange}
+              />
+              {video.value.trim() && (
+                <button type="button" className="btn-line shrink-0 text-[var(--accent-danger)] disabled:opacity-60" onClick={removeVideo} disabled={removingVideo}>
+                  <Trash2 className="h-4 w-4" aria-hidden="true" /> {removingVideo ? "Đang xóa..." : "Xóa video"}
+                </button>
+              )}
+            </div>
           </Field>
           {embed ? (
             <iframe src={embed} title="Xem trước video" className="aspect-video w-full max-w-xl rounded-sm border border-[var(--border-default)]" allowFullScreen />
