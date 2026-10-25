@@ -23,7 +23,8 @@ export const ROUTES = {
   CHAT_HISTORY: "/chat-history",
 
   EVENTS: "/events",
-  EVENT_DETAIL: (id: string) => `/events/${id}`,
+  /** Events open as a drawer on the catalog page, there is no /events/:id page. */
+  EVENT_DETAIL: (id: string) => `/events?event=${encodeURIComponent(id)}`,
 
   QUIZ: "/quiz",
   QUIZ_DETAIL: (id: string) => `/quiz/${id}`,

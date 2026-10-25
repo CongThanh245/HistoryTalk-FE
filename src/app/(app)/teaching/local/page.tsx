@@ -28,6 +28,7 @@ import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
 import type { LocalItem, LocalKind } from "@/services/local-content.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useEvents } from "@/features/events/hooks";
+import { ERA_CONFIG, type EventEra } from "@/services/event.service";
 import { useCharacters } from "@/features/characters/hooks";
 
 const STATES: LocalReviewState[] = ["DRAFT", "PUBLISHED", "HIDDEN"];
@@ -295,52 +296,138 @@ function HistoryTalkList({ kind, search }: { kind: LocalKind; search: string }) 
   const characters = useCharacters(LIBRARY_PARAMS, undefined, { enabled: kind === "CHARACTER" });
   const query = kind === "CONTEXT" ? events : characters;
   const q = normalizeText(search);
-  const rows =
-    kind === "CONTEXT"
-      ? (events.data?.content ?? []).map((e) => ({
-          id: e.id,
-          name: e.title,
-          meta: [e.yearLabel ?? yearText(e.year), e.location].filter(Boolean).join(" · "),
-          href: ROUTES.EVENT_DETAIL(e.id),
-        }))
-      : (characters.data?.content ?? []).map((c) => ({
-          id: c.id,
-          name: c.name,
-          meta: [c.title, c.era].filter(Boolean).join(" · "),
-          href: ROUTES.CHAT(c.id),
-        }));
-  const shown = rows.filter((r) => !q || normalizeText(`${r.name} ${r.meta}`).includes(q));
   const assignType = kind === "CONTEXT" ? "CONTEXT_READING" : "AI_CHAT_ROLEPLAY";
+  const assignHref = (id: string) => `${ROUTES.TEACHING.ASSIGNMENT_NEW}?type=${assignType}&source=library&targetId=${encodeURIComponent(id)}`;
+  const shownEvents = (events.data?.content ?? []).filter((e) => !q || normalizeText(`${e.title} ${e.location ?? ""}`).includes(q));
+  const shownCharacters = (characters.data?.content ?? []).filter((c) => !q || normalizeText(`${c.name} ${c.title ?? ""}`).includes(q));
+  const empty = kind === "CONTEXT" ? shownEvents.length === 0 : shownCharacters.length === 0;
+
+  // Same columns as "Chỉ mình tôi" / "Trường của tôi"; status and class are fixed for the official library.
+  const source = (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--status-info-border,var(--border-default))] bg-[var(--status-neutral-bg)] px-2.5 py-0.5 text-xs font-semibold text-[var(--men-lam)]">
+      <Globe className="h-3 w-3" aria-hidden="true" /> Thư viện
+    </span>
+  );
+  const everyClass = (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] text-content-text" title="Mọi học sinh trên HistoryTalk đều thấy">
+      <Globe className="h-3.5 w-3.5 shrink-0 text-[var(--men-lam)]" aria-hidden="true" /> Mọi lớp
+    </span>
+  );
+  const actions = (id: string, viewHref: string) => (
+    <div className="flex items-center gap-1.5">
+      <Link
+        href={assignHref(id)}
+        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 text-[13px] font-semibold text-content-heading transition-colors hover:border-[var(--border-strong)]"
+      >
+        <NotebookPen className="h-3.5 w-3.5" aria-hidden="true" /> Giao bài
+      </Link>
+      <Link
+        href={viewHref}
+        className="grid h-8 w-8 place-items-center rounded-lg text-content-muted transition-colors hover:bg-[var(--bg-elevated)] hover:text-content-heading"
+        aria-label="Xem trong thư viện"
+        title="Xem trong thư viện"
+      >
+        <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+      </Link>
+    </div>
+  );
+  const thumb = (src: string | null | undefined, alt: string) => (
+    <StaffImageHoverPreview
+      src={src}
+      alt={alt}
+      thumbClassName={kind === "CONTEXT" ? "h-11 w-16 rounded-md border" : "h-10 w-10 rounded-full border"}
+      previewClassName={kind === "CONTEXT" ? "h-48 w-72" : "h-64 w-48"}
+      sizes="80px"
+      previewSizes="288px"
+      fallback={kind === "CONTEXT" ? <ImageIcon className="h-5 w-5" /> : <UserRound className="h-5 w-5" />}
+    />
+  );
 
   return (
     <QueryState isLoading={query.isLoading} isError={query.isError} error={query.error} onRetry={() => void query.refetch()}>
-      {shown.length === 0 ? (
+      {empty ? (
         <EmptyState icon={BookMarked} title="Không có mục phù hợp" description="Thử từ khóa khác." />
       ) : (
-        <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--border-default)]">
-          {shown.map((r) => (
-            <li key={r.id} className="group relative flex items-center gap-4 py-3 pr-1 hover:bg-[var(--status-neutral-bg)]">
-              <div className="min-w-0 flex-1 pl-1">
-                <Link href={r.href} className="font-semibold text-content-heading after:absolute after:inset-0 group-hover:text-[var(--accent-gold)]">
-                  {r.name}
-                </Link>
-                {r.meta && <p className="truncate text-xs text-content-muted">{r.meta}</p>}
-              </div>
-              <span className="hidden shrink-0 items-center gap-1.5 text-sm text-content-text sm:inline-flex" title="Mọi học sinh trên HistoryTalk đều thấy">
-                <Globe className="h-3.5 w-3.5 shrink-0 text-[var(--men-lam)]" aria-hidden="true" /> Thư viện HistoryTalk
-              </span>
-              <Link
-                href={`${ROUTES.TEACHING.ASSIGNMENT_NEW}?type=${assignType}&source=library&targetId=${encodeURIComponent(r.id)}`}
-                className="relative z-10 inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 text-[13px] font-semibold text-content-heading transition-colors hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
-              >
-                <NotebookPen className="h-3.5 w-3.5" aria-hidden="true" /> Giao bài
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <TableShell className="[&_td]:px-3 [&_th]:px-3">
+          <thead>
+            <tr>
+              <th className={TH}>{kind === "CONTEXT" ? "Ảnh" : "Nhân vật"}</th>
+              {kind === "CONTEXT" && <th className={TH}>Tiêu đề</th>}
+              <th className={TH}>Trạng thái</th>
+              <th className={TH}>Thao tác</th>
+              <th className={TH}>Lớp</th>
+              {kind === "CONTEXT" ? (
+                <>
+                  <th className={TH}>Thời đại</th>
+                  <th className={TH}>Năm</th>
+                  <th className={TH}>Địa điểm</th>
+                </>
+              ) : (
+                <>
+                  <th className={TH}>Bối cảnh</th>
+                  <th className={TH}>Thời gian sống</th>
+                </>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {kind === "CONTEXT"
+              ? shownEvents.map((e) => (
+                  <tr key={e.id} className={TR}>
+                    <td className={TD}>{thumb(e.imageUrl, e.title)}</td>
+                    <td className={TD}>
+                      <Link href={ROUTES.EVENT_DETAIL(e.id)} className="block w-[190px] truncate font-semibold text-content-heading hover:text-[var(--accent-gold)]" title={e.title}>
+                        {e.title}
+                      </Link>
+                      <p className="mt-0.5 w-[190px] truncate text-xs text-content-muted" title={e.summary}>{e.summary || "—"}</p>
+                    </td>
+                    <td className={TD}>{source}</td>
+                    <td className={TD}>{actions(e.id, ROUTES.EVENT_DETAIL(e.id))}</td>
+                    <td className={TD}>{everyClass}</td>
+                    <td className={cn(TD, "text-[13px] text-content-text")}>{eraLabel(e.era)}</td>
+                    <td className={cn(TD, "whitespace-nowrap text-[13px] tabular-nums text-content-muted")}>{e.yearLabel ?? yearText(e.year) ?? "—"}</td>
+                    <td className={TD}>
+                      <span className="block max-w-[120px] truncate text-[13px] text-content-muted" title={e.location}>{e.location || "—"}</span>
+                    </td>
+                  </tr>
+                ))
+              : shownCharacters.map((c) => {
+                  const ctx = (c.contexts?.map((x) => x.name) ?? c.events?.map((x) => x.title) ?? []).filter(Boolean);
+                  return (
+                    <tr key={c.id} className={TR}>
+                      <td className={TD}>
+                        <div className="flex items-center gap-3">
+                          {thumb(c.imageUrl ?? c.avatarUrl, c.name)}
+                          <div className="w-[180px] min-w-0">
+                            <Link href={ROUTES.CHAT(c.id)} className="block truncate font-semibold text-content-heading hover:text-[var(--accent-gold)]" title={c.name}>
+                              {c.name}
+                            </Link>
+                            <p className="mt-0.5 truncate text-xs text-content-muted">{c.title || "—"}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={TD}>{source}</td>
+                      <td className={TD}>{actions(c.id, ROUTES.CHAT(c.id))}</td>
+                      <td className={TD}>{everyClass}</td>
+                      <td className={TD}>
+                        <span className="block max-w-[170px] truncate text-[13px] text-content-text" title={ctx.join(", ")}>{ctx.length ? ctx.join(", ") : "—"}</span>
+                      </td>
+                      <td className={cn(TD, "whitespace-nowrap text-[13px] tabular-nums text-content-muted")}>{lifeYears(c) ?? "—"}</td>
+                    </tr>
+                  );
+                })}
+          </tbody>
+        </TableShell>
       )}
     </QueryState>
   );
+}
+
+/** Era of an official event / character ("MEDIEVAL" or "medieval") as its Vietnamese label. */
+function eraLabel(raw: string | null | undefined) {
+  if (!raw) return "—";
+  const key = raw.toLowerCase() as EventEra;
+  return key in ERA_CONFIG ? ERA_CONFIG[key].label : raw;
 }
 
 /**

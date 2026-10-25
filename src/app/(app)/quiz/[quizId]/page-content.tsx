@@ -5,6 +5,7 @@ import { useQuizDetail } from "@/features/quiz/hooks";
 import { QuizFlow } from "@/components/quiz/QuizFlow";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "@/constants/routes";
 
 interface Props {
   params: Promise<{ quizId: string }>;
@@ -35,7 +36,7 @@ export default function QuizDetailRoute({ params }: Props) {
           Không tìm thấy bộ câu hỏi
         </p>
         <button
-          onClick={() => router.push("/trac-nghiem")}
+          onClick={() => router.push(ROUTES.QUIZ)}
           className="btn-crimson"
         >
           Quay lại
