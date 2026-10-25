@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/store/auth.store";
 import { useMyQuizResults } from "@/features/quiz/hooks";
 import { QuizHistoryView } from "./quiz-history-view";
+import { Mascot } from "@/components/mascot/Mascot";
 
 const ERA_LABELS: Record<QuizSet["era"], string> = {
   ALL: "Tổng hợp",
@@ -159,9 +160,12 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
             </div>
 
             <aside className="rounded-xl border border-border-card bg-[var(--bg-elevated)] p-5 lg:sticky lg:top-6">
-              <p className="text-lg font-semibold text-content-heading">
-                Sẵn sàng luyện tập?
-              </p>
+              <div className="flex items-center gap-3">
+                <Mascot mood="happy" size={52} />
+                <p className="text-lg font-semibold text-content-heading">
+                  Sẵn sàng luyện tập?
+                </p>
+              </div>
               <p className="mt-2 text-sm leading-6 text-content-muted">
                 Chọn giới hạn thời gian nếu muốn làm bài theo đồng hồ đếm ngược.
                 {quiz.durationSeconds ? (

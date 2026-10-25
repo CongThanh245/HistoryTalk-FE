@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { History, ListChecks, Search } from "lucide-react";
 import { useQuizSets, useMyQuizResults } from "@/features/quiz/hooks";
-import { useEvents } from "@/features/events/hooks";
 import { useAuthStore } from "@/store/auth.store";
 import { type QuizEra, type QuizResult } from "@/services/quiz.service";
 import { cn } from "@/lib/utils/cn";
@@ -22,6 +21,9 @@ import { QuizStatsBar } from "./quiz-stats-bar";
 import { QuizRecentResults } from "./quiz-recent-result";
 import { QuizHistoryView } from "./quiz-history-view";
 import { QuizCard } from "./quiz-card";
+import { Mascot } from "@/components/mascot/Mascot";
+import { DrumDivider } from "@/components/decor/DrumDivider";
+import { LacBirdFlight } from "@/components/decor/LacBird";
 
 type EraFilter = "ALL" | Exclude<QuizEra, "ALL">;
 type QuizView = "list" | "history";
@@ -72,14 +74,6 @@ export function QuizPageClient() {
       .map(([value, label]) => ({ value, label }));
   }, [allQuizzes]);
 
-  // Quizzes have no cover of their own: reuse the historical context's image (same query the events page caches).
-  const { data: eventsData } = useEvents({ page: 1, limit: 100 });
-  const contextImages = useMemo(() => {
-    const map = new Map<string, string | null | undefined>();
-    for (const event of eventsData?.content ?? []) map.set(event.id, event.imageUrl);
-    return map;
-  }, [eventsData?.content]);
-
   const { data: resultsData, isLoading: resultsLoading } = useMyQuizResults(
     { page: 0, size: 50 },
     isAuthenticated,
@@ -128,7 +122,8 @@ export function QuizPageClient() {
   return (
     <main className="min-h-screen bg-[var(--bg-content)]">
       <div className="mx-auto max-w-7xl">
-        <section className="archive-heading mb-4 flex-col items-stretch md:mb-5 md:flex-row md:items-end">
+        <section className="archive-heading relative mb-3 flex-col items-stretch md:flex-row md:items-end">
+          <LacBirdFlight className="-top-2" />
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between w-full">
             <div className="max-w-2xl min-w-0">
               <h1 className="archive-title">
@@ -167,6 +162,8 @@ export function QuizPageClient() {
             </div>
           </div>
         </section>
+
+        <DrumDivider className="mb-4 md:mb-5" />
 
         {hasHistory && (
           <QuizStatsBar
@@ -257,17 +254,20 @@ export function QuizPageClient() {
               {quizzesLoading ? (
                 <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4", hasHistory ? "xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4")} aria-busy="true" aria-label="Đang tải bộ đề">
                   {Array.from({ length: 6 }, (_, i) => (
-                    <div key={i} className="overflow-hidden rounded-xl border border-border-card bg-[var(--bg-surface)]">
-                      <div className="aspect-[16/9] animate-pulse bg-[var(--bg-deep)]" />
-                      <div className="space-y-2 p-4">
-                        <div className="h-3 w-1/3 animate-pulse rounded bg-[var(--bg-deep)]" />
-                        <div className="h-4 w-4/5 animate-pulse rounded bg-[var(--bg-deep)]" />
+                    <div key={i} className="space-y-3 rounded-xl border border-border-card bg-[var(--bg-surface)] p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-9 w-9 animate-pulse rounded-lg bg-[var(--bg-deep)]" />
+                        <div className="h-3 w-1/4 animate-pulse rounded bg-[var(--bg-deep)]" />
                       </div>
+                      <div className="h-3 w-1/3 animate-pulse rounded bg-[var(--bg-deep)]" />
+                      <div className="h-4 w-4/5 animate-pulse rounded bg-[var(--bg-deep)]" />
+                      <div className="h-8 animate-pulse rounded bg-[var(--bg-deep)]" />
                     </div>
                   ))}
                 </div>
               ) : filteredQuizzes.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--bg-surface)] px-6 py-16 text-center">
+                <div className="flex flex-col items-center rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--bg-surface)] px-6 py-12 text-center">
+                  <Mascot mood="thinking" size={80} className="mb-4" />
                   <p className="text-base font-semibold text-content-heading">
                     Không tìm thấy bộ đề
                   </p>
@@ -277,23 +277,15 @@ export function QuizPageClient() {
                 </div>
               ) : (
                 <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4", hasHistory ? "xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4")}>
-                  {filteredQuizzes.map((quiz, index) => {
-                    const featured = index === 0 && filteredQuizzes.length > 2;
-                    return (
-                      <div
-                        key={quiz.quizId}
-                        className={cn("animate-[quiz-card-in_260ms_ease-out_both]", featured && "sm:col-span-2")}
-                        style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
-                      >
-                        <QuizCard
-                          quiz={quiz}
-                          onStart={handleStartQuiz}
-                          featured={featured}
-                          imageUrl={quiz.contextId ? contextImages.get(quiz.contextId) : undefined}
-                        />
-                      </div>
-                    );
-                  })}
+                  {filteredQuizzes.map((quiz, index) => (
+                    <div
+                      key={quiz.quizId}
+                      className="animate-[quiz-card-in_260ms_ease-out_both]"
+                      style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
+                    >
+                      <QuizCard quiz={quiz} onStart={handleStartQuiz} />
+                    </div>
+                  ))}
                 </div>
               )}
             </section>

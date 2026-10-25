@@ -18,6 +18,7 @@ import { useClaimQuest, useGamificationToday } from "@/features/gamification/hoo
 import type { DailyQuest, QuestType } from "@/services/gamification.service";
 import { useEntitlements } from "@/features/saas/entitlements";
 import { StudyCalendar } from "./study-calendar";
+import { celebrate, flyCoins } from "@/lib/celebrate";
 
 /**
  * Thẻ "Hôm nay" trên trang chủ web — đối chiếu 1:1 với DailyQuestsCard trên mobile:
@@ -66,7 +67,8 @@ function DailyQuestsSkeleton() {
   );
 }
 
-export function DailyQuestsCard() {
+/** `compact` = the header popover version (smaller streak band). */
+export function DailyQuestsCard({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const entitlements = useEntitlements();
@@ -88,12 +90,18 @@ export function DailyQuestsCard() {
   if (isLoading) return <DailyQuestsSkeleton />;
   if (isError || !data) return null;
 
-  async function handleClaim(quest: DailyQuest) {
+  async function handleClaim(quest: DailyQuest, from: Element) {
     if (claiming) return;
     setClaimingId(quest.id);
     try {
       await claim(quest.id);
       setJustClaimed(quest.id);
+      void flyCoins(from);
+      const allClaimed = quests.every((q) => q.id === quest.id || q.claimed);
+      celebrate({
+        text: allClaimed ? `Xong hết nhiệm vụ hôm nay! +${quest.rewardTokens} token 🎉` : `+${quest.rewardTokens} token! Làm tốt lắm 💰`,
+        confetti: allClaimed,
+      });
     } catch {
       // Lỗi (đã nhận rồi / chưa xong) — invalidate của hook sẽ tự đồng bộ lại UI
     } finally {
@@ -117,7 +125,7 @@ export function DailyQuestsCard() {
   };
 
   return (
-    <section className="home-quest-ledger" aria-label="Chuỗi ngày học và nhiệm vụ hôm nay">
+    <section className={`home-quest-ledger ${compact ? "is-compact" : ""}`} aria-label="Chuỗi ngày học và nhiệm vụ hôm nay">
       <div className="home-quest-ledger-inner">
       {/* ── Khối streak ── */}
       <button type="button" onClick={() => setCalendarOpen(true)} aria-haspopup="dialog" className="home-quest-hero focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--accent-gold)]">
@@ -248,13 +256,13 @@ export function DailyQuestsCard() {
                   tabIndex={0}
                   onClick={(e) => {
                     e.stopPropagation();
-                    void handleClaim(q);
+                    void handleClaim(q, e.currentTarget);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.stopPropagation();
                       e.preventDefault();
-                      void handleClaim(q);
+                      void handleClaim(q, e.currentTarget);
                     }
                   }}
                   aria-label={undefined}

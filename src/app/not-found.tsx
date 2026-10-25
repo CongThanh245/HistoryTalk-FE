@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { Mascot } from "@/components/mascot/Mascot";
 
 // ────────────────────────────────────────────────────────────
 //  Glitch letters
@@ -63,13 +63,6 @@ export default function NotFoundPage() {
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes monkeyShake {
-          0%, 100% { transform: rotate(-3deg) translateY(0); }
-          25%       { transform: rotate(3deg) translateY(-8px); }
-          50%       { transform: rotate(-2deg) translateY(-4px); }
-          75%       { transform: rotate(2deg) translateY(-10px); }
-        }
-
         @keyframes scanline {
           0%   { top: -10%; }
           100% { top: 110%; }
@@ -91,8 +84,6 @@ export default function NotFoundPage() {
         .r3 { animation: revealUp 0.65s ease both 0.35s; }
         .r4 { animation: revealUp 0.65s ease both 0.5s; }
         .r5 { animation: revealUp 0.65s ease both 0.65s; }
-
-        .monkey-shake { animation: monkeyShake 2.4s ease-in-out infinite; }
 
         .scanline {
           position: absolute;
@@ -117,16 +108,9 @@ export default function NotFoundPage() {
 
         {/* ── Content ── */}
         <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-xl mx-auto">
-          {/* Monkey — sad/confused */}
-          <div className="r1 monkey-shake mb-6">
-            <div className="relative w-30 h-30 mx-auto">
-              <Image
-                src="/monkey.png"
-                alt="Lost monkey"
-                fill
-                className="object-cover"
-              />
-            </div>
+          {/* Mascot — lost in time */}
+          <div className="r1 mb-4">
+            <Mascot mood="thinking" size={120} />
           </div>
 
           {/* 404 scramble */}

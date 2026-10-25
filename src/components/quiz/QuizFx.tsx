@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { cn } from "@/lib/utils/cn";
+import { Mascot, type MascotMood } from "@/components/mascot/Mascot";
 
 const CONFETTI_COLORS = [
   "var(--accent-gold)",
@@ -65,6 +66,8 @@ const CHEER_TONE: Record<CheerTone, string> = {
   info: "bg-[var(--text-primary)] text-[var(--text-inverse)]",
 };
 
+const CHEER_MOOD: Record<CheerTone, MascotMood> = { good: "happy", bad: "sad", info: "idle" };
+
 /** Loi co vu bat len o giua day man hinh roi tu bien mat. */
 export function QuizCheer({ cheer }: { cheer: Cheer | null }) {
   if (!cheer) return null;
@@ -72,10 +75,11 @@ export function QuizCheer({ cheer }: { cheer: Cheer | null }) {
     <div
       role="status"
       className={cn(
-        "quiz-cheer rounded-full px-6 py-3 font-display text-[20px] font-extrabold shadow-[0_6px_0_rgba(0,0,0,0.25)]",
+        "quiz-cheer flex items-center gap-2 rounded-full py-2 pl-3 pr-6 font-display text-[20px] font-extrabold shadow-[0_6px_0_rgba(0,0,0,0.25)]",
         CHEER_TONE[cheer.tone],
       )}
     >
+      <Mascot mood={CHEER_MOOD[cheer.tone]} size={40} arms={false} />
       {cheer.text}
     </div>
   );

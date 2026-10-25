@@ -159,7 +159,7 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
             href="/profile?tab=billing"
             className="flex items-center gap-2 rounded-md text-[13px] text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
           >
-            <Coins className="h-4 w-4 shrink-0 text-[var(--gold-leaf)]" aria-hidden="true" />
+            <Coins data-coin-target className="h-4 w-4 shrink-0 text-[var(--gold-leaf)]" aria-hidden="true" />
             <span className="font-semibold tabular-nums text-text-primary">{profile?.token?.toLocaleString("vi-VN") ?? 0}</span>
             token còn lại
           </Link>

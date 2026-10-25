@@ -28,6 +28,8 @@ import {
   useReportQuestion,
 } from "@/features/quiz/hooks";
 import { QuestionAnswerReview } from "./QuestionAnswerReview";
+import { Mascot, type MascotMood } from "@/components/mascot/Mascot";
+import { CountUp } from "@/components/ui/count-up";
 
 interface SubmitResult {
   score: number;
@@ -268,14 +270,14 @@ export function QuizResultPage({
     select: (data) => data.slice(0, 3),
   });
 
-  const tier =
+  const tier: { label: string; colorClass: string; bgClass: string; mood: MascotMood; line: string } =
     percentage >= 90
-      ? { label: "Xuất sắc", colorClass: "text-accent-gold", bgClass: "border-[var(--accent-gold)]" }
+      ? { label: "Xuất sắc", colorClass: "text-accent-gold", bgClass: "border-[var(--accent-gold)]", mood: "happy", line: "Quá đỉnh! Bạn nắm rất chắc giai đoạn này." }
       : percentage >= 70
-        ? { label: "Khá tốt", colorClass: "text-[var(--status-success)]", bgClass: "border-[var(--status-success)]" }
+        ? { label: "Khá tốt", colorClass: "text-[var(--status-success)]", bgClass: "border-[var(--status-success)]", mood: "happy", line: "Làm tốt lắm! Chỉ còn vài chỗ cần xem lại." }
         : percentage >= 50
-          ? { label: "Ổn định", colorClass: "text-content-heading", bgClass: "border-[var(--text-primary)]" }
-          : { label: "Cần ôn lại", colorClass: "text-accent-danger", bgClass: "border-[var(--accent-danger)]" };
+          ? { label: "Ổn định", colorClass: "text-content-heading", bgClass: "border-[var(--text-primary)]", mood: "idle", line: "Nền tảng ổn rồi, ôn thêm chút là lên hạng." }
+          : { label: "Cần ôn lại", colorClass: "text-accent-danger", bgClass: "border-[var(--accent-danger)]", mood: "sad", line: "Không sao, lật đồng hồ và thử lại nhé!" };
 
   function isCorrect(q: QuizQuestion, idx: number): boolean {
     const detail = reviewQuestions.get(q.questionId);
@@ -289,19 +291,25 @@ export function QuizResultPage({
       <div className="mx-auto max-w-4xl">
         <section className="mb-6 rounded-sm border border-border-card bg-[var(--bg-surface)]">
           <div className="grid md:grid-cols-[1fr_240px] md:items-stretch">
-            <div className="p-6 md:p-7">
-              <h1 className="archive-title is-plain mt-2 text-[28px] md:text-[36px]">
-                {quiz.title}
-              </h1>
-              <span
-                className={cn(
-                  "mt-4 inline-flex rounded-sm px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] border",
-                  tier.bgClass,
-                  tier.colorClass,
-                )}
-              >
-                {tier.label}
-              </span>
+            <div className="flex items-center gap-5 p-6 md:p-7">
+              <Mascot mood={tier.mood} size={92} label={tier.label} className="hidden sm:block" />
+              <div className="min-w-0">
+                <h1 className="archive-title is-plain mt-2 text-[28px] md:text-[36px]">
+                  {quiz.title}
+                </h1>
+                <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <span
+                    className={cn(
+                      "inline-flex rounded-sm px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] border",
+                      tier.bgClass,
+                      tier.colorClass,
+                    )}
+                  >
+                    {tier.label}
+                  </span>
+                  <p className="text-sm text-content-muted">{tier.line}</p>
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-[var(--text-primary)] bg-[var(--bg-elevated)] p-5 text-center">
@@ -309,7 +317,7 @@ export function QuizResultPage({
                 Điểm
               </p>
               <p className={cn("mt-2 font-display text-[84px] font-extrabold leading-[0.9] tabular-nums", tier.colorClass)}>
-                {correctCount}
+                <CountUp value={correctCount} duration={1100} />
                 <span className="text-[36px] text-content-muted">/{totalQuestions}</span>
               </p>
             </div>

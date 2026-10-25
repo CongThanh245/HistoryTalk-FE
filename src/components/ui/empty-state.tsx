@@ -3,6 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils/cn";
+import { Mascot, type MascotMood } from "@/components/mascot/Mascot";
 
 const emptyStateVariants = cva(
   "flex flex-col items-center justify-center text-center border border-dashed border-border-strong rounded-sm p-8",
@@ -31,13 +32,18 @@ export interface EmptyStateProps
   description?: string;
   /** Optional action element (e.g. a Button) */
   action?: React.ReactNode;
+  /** Show the hourglass mascot in this mood instead of the icon (student-facing screens). */
+  mascot?: MascotMood;
 }
+
+const MASCOT_SIZE = { sm: 56, md: 72, lg: 96 } as const;
 
 export function EmptyState({
   icon: Icon,
   title,
   description,
   action,
+  mascot,
   size,
   className,
   ...props
@@ -48,7 +54,9 @@ export function EmptyState({
       className={cn(emptyStateVariants({ size }), className)}
       {...props}
     >
-      {Icon && (
+      {mascot ? (
+        <Mascot mood={mascot} size={MASCOT_SIZE[size ?? "md"]} className="mb-1" />
+      ) : Icon && (
         <div className="mb-1 flex size-12 items-center justify-center rounded-sm border border-border-card bg-bg-elevated">
           <Icon className="size-6 text-content-muted" strokeWidth={1.5} />
         </div>

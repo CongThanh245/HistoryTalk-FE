@@ -1,4 +1,5 @@
 import React from "react";
+import { CountUp } from "@/components/ui/count-up";
 
 interface QuizStatsBarProps {
   totalQuizzes: number;
@@ -28,7 +29,7 @@ export function QuizStatsBar({
             {s.label}
           </p>
           <p className="mt-1.5 text-xl font-bold leading-none tabular-nums text-content-heading md:text-[28px]">
-            {s.value}
+            {typeof s.value === "number" ? <CountUp value={s.value} /> : s.value}
             <span className="text-sm font-semibold text-[var(--gold-on-light)]">
               {s.suffix}
             </span>

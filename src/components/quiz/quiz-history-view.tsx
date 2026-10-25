@@ -6,6 +6,7 @@ import { useQuizSessionDetail } from "@/features/quiz/hooks";
 import type { QuizResult } from "@/services/quiz.service";
 import { QuestionAnswerReview } from "./QuestionAnswerReview";
 import { cn } from "@/lib/utils/cn";
+import { Mascot } from "@/components/mascot/Mascot";
 import {
   Dialog,
   DialogContent,
@@ -124,11 +125,13 @@ export function QuizHistoryView({
         </div>
 
         {isLoading ? (
-          <div className="p-10 text-center text-sm text-content-muted">
+          <div className="flex items-center justify-center gap-2 p-10 text-sm text-content-muted">
+            <Mascot mood="thinking" size={26} arms={false} />
             Đang tải lịch sử...
           </div>
         ) : results.length === 0 ? (
-          <div className="p-10 text-center">
+          <div className="flex flex-col items-center p-10 text-center">
+            <Mascot mood="idle" size={72} className="mb-3" />
             <p className="text-base font-semibold text-content-heading">
               Chưa có lịch sử làm bài
             </p>

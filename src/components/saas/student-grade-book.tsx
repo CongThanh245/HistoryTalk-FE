@@ -96,7 +96,7 @@ export function StudentGradeBook() {
     );
   }
   if (!isLoading && all.length === 0) {
-    return <EmptyState icon={ClipboardList} title="Chưa có bài tập nào" description="Khi thầy cô giao bài cho lớp của bạn, điểm sẽ hiện ở đây." />;
+    return <EmptyState mascot="idle" title="Chưa có bài tập nào" description="Khi thầy cô giao bài cho lớp của bạn, điểm sẽ hiện ở đây." />;
   }
 
   return (

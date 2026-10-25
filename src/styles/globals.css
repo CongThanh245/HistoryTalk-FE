@@ -774,6 +774,16 @@ main:has(.map-page) > div {
   .home-quest-ledger-stats { grid-template-columns: 1fr; }
 }
 
+/* Header popover: same card, quieter streak band. */
+.home-quest-ledger.is-compact { border-color: var(--border-strong); }
+.home-quest-ledger.is-compact .home-quest-hero { padding: 14px 16px; gap: 12px; border-bottom-color: var(--border-default); }
+.home-quest-ledger.is-compact .home-quest-flame { width: 40px; height: 40px; }
+.home-quest-ledger.is-compact .home-quest-hero-text h2 { font-size: 17px; }
+.home-quest-ledger.is-compact .home-quest-hero-text p { font-size: 12px; }
+.home-quest-ledger.is-compact .home-quest-count strong { font-size: 36px; }
+.home-quest-ledger.is-compact .home-quest-body { padding: 14px 16px 0; }
+.home-quest-ledger.is-compact .home-quest-day-tile { height: 34px; font-size: 14px; }
+
 body {
   font-family: var(--font-body), system-ui, sans-serif;
 }
@@ -2026,4 +2036,128 @@ div[style*="--palladian"] input::placeholder {
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================
+   Lively layer: companion, celebrations, Đông Sơn decor, page turns.
+   Everything that moves sits behind prefers-reduced-motion (static fallbacks below).
+   ================================ */
+
+/* Companion speech bubble */
+@keyframes companion-bubble-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.companion-bubble { transform-origin: 85% 100%; animation: companion-bubble-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.companion-mascot:hover { transform: translateY(-3px); }
+.companion-mascot:active { transform: translateY(0) scale(0.94); }
+/* Tucked: slides behind the right edge, leaning out so only the face peeks. */
+.companion-mascot { transition-property: transform, translate, rotate, opacity; }
+.companion-mascot.is-tucked { translate: 56px 0; rotate: -14deg; opacity: 0.85; }
+.companion-mascot.is-tucked:hover { translate: 44px 0; opacity: 1; }
+@media (min-width: 768px) {
+  .companion-mascot.is-tucked { translate: 64px 0; }
+  .companion-mascot.is-tucked:hover { translate: 52px 0; }
+}
+
+/* Coins flying to the token balance */
+.fly-coin {
+  position: fixed;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 30%, #FFF1B8 0%, #FFC83D 45%, #C98A00 100%);
+  box-shadow: inset 0 0 0 1.5px #A86F00, 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* Header streak chip bursting when today's study is recorded */
+@keyframes streak-burst {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-gold) 55%, transparent); transform: scale(1); }
+  30% { transform: scale(1.12); }
+  60% { transform: scale(0.97); }
+  100% { box-shadow: 0 0 0 14px transparent; transform: scale(1); }
+}
+.streak-burst { animation: streak-burst 900ms ease-out 2; }
+
+/* Đông Sơn drum divider */
+.drum-band-fade-l { mask-image: linear-gradient(90deg, transparent, #000 40%); }
+.drum-band-fade-r { mask-image: linear-gradient(270deg, transparent, #000 40%); }
+.drum-divider { opacity: 0.55; }
+@keyframes drum-sun-spin { to { transform: rotate(360deg); } }
+
+/* Lạc bird glide: crosses in the first ~40% of a 28s loop, then rests off-screen */
+@keyframes lac-glide {
+  0% { transform: translate(-90px, 14px); opacity: 0; }
+  3% { opacity: 1; }
+  20% { transform: translate(45vw, 2px); }
+  37% { opacity: 1; }
+  40%, 100% { transform: translate(105vw, 12px); opacity: 0; }
+}
+@keyframes lac-flap {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(-0.55); }
+}
+.lac-flight-path { position: absolute; left: 0; top: 0; opacity: 0; }
+.lac-wing { transform-box: fill-box; transform-origin: 30% 100%; }
+
+/* Page turn: fade in under a sand sweep across the top of the content */
+@keyframes route-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes route-sand-sweep {
+  0% { transform: scaleX(0); opacity: 1; }
+  70% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+.route-sand-sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 20;
+  height: 2px;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, transparent, var(--gold-leaf) 20%, #FFB000 60%, var(--accent-gold));
+}
+
+/* Quiz progress as flowing sand */
+@keyframes sand-flow { to { background-position: 24px 0; } }
+.sand-progress {
+  background-image:
+    radial-gradient(circle at 3px 50%, rgba(255, 255, 255, 0.55) 0 1px, transparent 1.5px),
+    linear-gradient(90deg, #E9A21F, #FFC83D);
+  background-size: 8px 100%, 100% 100%;
+}
+
+/* Scroll reveal for sections (browsers with scroll-driven animations only) */
+@keyframes reveal-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .route-enter { animation: route-enter 280ms ease-out both; }
+  .route-sand-sweep { animation: route-sand-sweep 650ms cubic-bezier(0.65, 0, 0.35, 1) both; }
+  .drum-divider-sun { animation: drum-sun-spin 40s linear infinite; }
+  .lac-flight-path { animation: lac-glide 28s linear 3s infinite; }
+  .lac-wing { animation: lac-flap 0.5s ease-in-out infinite; }
+  .sand-progress { animation: sand-flow 0.8s linear infinite; }
+
+  /* Press feedback on primary controls and clickable cards */
+  .btn-crimson, .btn-line, [role="button"].group { transition: transform 120ms ease, background-color 150ms, color 150ms, border-color 150ms, box-shadow 150ms; }
+  .btn-crimson:active, .btn-line:active, [role="button"].group:active { transform: translateY(1px) scale(0.985); }
+
+  @supports (animation-timeline: view()) {
+    .reveal-in {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lac-flight, .companion-bubble { animation: none; }
+  .lac-flight { display: none; }
+  .streak-burst { animation: none; }
 }

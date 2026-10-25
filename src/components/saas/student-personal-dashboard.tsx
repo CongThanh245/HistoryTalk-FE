@@ -103,7 +103,7 @@ export function StudentPersonalDashboard() {
             description="Các lần làm quiz mới nhất của bạn."
           />
           {data.recentQuizzes.length === 0 ? (
-            <EmptyState
+            <EmptyState mascot="idle"
               size="sm"
               title="Chưa làm quiz nào"
               action={
@@ -141,7 +141,7 @@ export function StudentPersonalDashboard() {
         <Panel>
           <SectionHeading title="Bài tập sắp đến hạn" />
           {upcoming.length === 0 ? (
-            <EmptyState size="sm" title="Không có bài tập sắp đến hạn" />
+            <EmptyState mascot="happy" size="sm" title="Không có bài tập sắp đến hạn" />
           ) : (
             <ul className="divide-y divide-[var(--border-default)] border-y border-[var(--border-default)]">
               {upcoming.map((a) => (

@@ -197,7 +197,7 @@ export function QuizFlow({ quiz: initialQuiz }: QuizFlowProps) {
   const sidebarWidth = 260;
 
   return (
-    <div className="flex h-full overflow-hidden bg-[var(--bg-content)]">
+    <div className="quiz-flow-page flex h-full overflow-hidden bg-[var(--bg-content)]">
       {authRequiredDialog}
 
       <ConfirmDialog

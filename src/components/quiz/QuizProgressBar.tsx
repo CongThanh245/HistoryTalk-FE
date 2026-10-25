@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, House, LayoutGrid, RotateCcw, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { Mascot } from "@/components/mascot/Mascot";
 
 interface QuizProgressBarProps {
   quizTitle: string;
@@ -121,17 +122,20 @@ export function QuizProgressBar({
 
         <div
           className={cn(
-            "flex min-w-[64px] flex-col items-center rounded-sm px-2 py-1 text-xs flex-shrink-0 border sm:min-w-[104px] sm:px-3",
+            "flex min-w-[64px] items-center gap-1.5 rounded-sm px-2 py-1 text-xs flex-shrink-0 border sm:min-w-[104px] sm:px-3",
             timerDanger
               ? "bg-[var(--status-danger-bg)] text-accent-danger border-[var(--accent-danger)]"
               : "bg-[var(--bg-elevated)] text-content-heading border-[var(--text-primary)]",
           )}
         >
-          <span className="hidden text-[9px] font-bold uppercase tracking-[0.12em] leading-none opacity-75 sm:block">
-            {hasTimeLimit ? "Còn lại" : "Thời gian"}
-          </span>
-          <span className="font-display text-lg font-extrabold leading-5 tabular-nums">
-            {formatTime(hasTimeLimit ? remainingSeconds : elapsedSeconds)}
+          <Mascot mood={timerDanger ? "timeout" : "idle"} size={22} arms={false} className="hidden sm:block" />
+          <span className="flex flex-col items-center">
+            <span className="hidden text-[9px] font-bold uppercase tracking-[0.12em] leading-none opacity-75 sm:block">
+              {hasTimeLimit ? "Còn lại" : "Thời gian"}
+            </span>
+            <span className="font-display text-lg font-extrabold leading-5 tabular-nums">
+              {formatTime(hasTimeLimit ? remainingSeconds : elapsedSeconds)}
+            </span>
           </span>
         </div>
 
@@ -167,7 +171,7 @@ export function QuizProgressBar({
         <div
           className={cn(
             "h-full transition-all duration-500",
-            pct === 100 ? "bg-[var(--status-success)]" : "bg-accent-gold",
+            pct === 100 ? "bg-[var(--status-success)]" : "sand-progress",
           )}
           style={{ width: `${pct}%` }}
         />

@@ -133,9 +133,8 @@ function Materials() {
           )}
 
           {filtering && shown.length === 0 ? (
-            <EmptyState
+            <EmptyState mascot="thinking"
               size="sm"
-              icon={SearchX}
               title="Không tìm thấy tư liệu"
               description="Thử từ khoá khác hoặc chọn lại loại tư liệu."
               action={

@@ -56,7 +56,7 @@ export function CustomerGrades() {
   }
   if (isError || !data) {
     return (
-      <EmptyState
+      <EmptyState mascot="sad"
         title="Không tải được tiến độ học tập"
         description="Vui lòng thử lại sau ít phút."
         action={
@@ -107,7 +107,7 @@ export function CustomerGrades() {
         <Panel>
           <SectionHeading title="Kết quả gần đây" description="Các lần làm quiz mới nhất của bạn." />
           {recent.length === 0 ? (
-            <EmptyState
+            <EmptyState mascot="idle"
               size="sm"
               title="Chưa có kết quả"
               description="Làm thử một bộ câu đố để bắt đầu theo dõi tiến độ."

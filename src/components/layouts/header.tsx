@@ -5,9 +5,10 @@ import Breadcrumbs from "@/components/commons/breadcrumbs";
 import { useAuthStore } from "@/store/auth.store";
 import { MagneticButton } from "../commons/MagneticButton";
 import { useSidebar } from "./sidebar/sidebar-context";
+import { HeaderStreak } from "./header-streak";
 
 /**
- * One slim bar above the page: where you are (breadcrumbs) on the left, search on the right.
+ * One slim bar above the page: where you are (breadcrumbs) on the left, search + streak chip on the right.
  * The account menu and theme switch live at the bottom of the sidebar.
  */
 export default function Header({ showSearch = true }: { showSearch?: boolean }) {
@@ -37,6 +38,8 @@ export default function Header({ showSearch = true }: { showSearch?: boolean }) 
             <SearchInputWithSuggestions placeholder="Tìm sự kiện, nhân vật..." />
           </div>
         )}
+
+        <HeaderStreak />
 
         {!user && (
           <MagneticButton href="/login" variant="header" rounded="full" size="sm">

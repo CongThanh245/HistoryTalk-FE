@@ -150,8 +150,7 @@ function AssignmentsBoard() {
   }
   if (rows.length === 0) {
     return (
-      <EmptyState
-        icon={ClipboardList}
+      <EmptyState mascot="idle"
         title="Chưa có bài tập nào"
         description="Khi thầy cô giao bài cho lớp của bạn, bài sẽ hiện ở đây."
         action={

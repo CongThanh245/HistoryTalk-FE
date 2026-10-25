@@ -1,11 +1,9 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { ArrowRight, Clock, Star, Users } from "lucide-react";
 import type { QuizSet } from "@/services/quiz.service";
 import { cn } from "@/lib/utils/cn";
-import { isValidUrl } from "@/lib/utils/url";
 
 const ERA_LABELS: Record<QuizSet["era"], string> = {
   ALL: "Tổng hợp",
@@ -28,17 +26,11 @@ const LEVEL_METER: Record<QuizSet["level"], { steps: number; color: string; text
   HARD: { steps: 3, color: "bg-[var(--accent-danger)]", text: "text-accent-danger" },
 };
 
-const FALLBACK_IMAGE = "/war.jpg";
-
 interface QuizCardProps {
   quiz: QuizSet;
   isActive?: boolean;
   onStart: (quizId: string) => void;
   compact?: boolean;
-  /** Cover image, usually the historical context's image. */
-  imageUrl?: string | null;
-  /** Wide horizontal layout used for the lead card of the grid. */
-  featured?: boolean;
 }
 
 function LevelMeter({ level }: { level: QuizSet["level"] }) {
@@ -64,7 +56,7 @@ function LevelMeter({ level }: { level: QuizSet["level"] }) {
   );
 }
 
-export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured }: QuizCardProps) {
+export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
   if (compact) {
     return (
       <button
@@ -93,8 +85,8 @@ export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured 
     );
   }
 
-  const cover = imageUrl && isValidUrl(imageUrl) ? imageUrl : FALLBACK_IMAGE;
   const minutes = quiz.durationSeconds ? Math.max(1, Math.round(quiz.durationSeconds / 60)) : null;
+  const eyebrow = [ERA_LABELS[quiz.era] ?? quiz.era, quiz.contextTitle].filter(Boolean).join(" · ");
 
   return (
     <article
@@ -109,83 +101,42 @@ export function QuizCard({ quiz, isActive, onStart, compact, imageUrl, featured 
         }
       }}
       className={cn(
-        "group relative flex h-full cursor-pointer overflow-hidden rounded-xl border transition-[border-color,box-shadow] duration-200",
-        "border-border-card hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]",
-        featured ? "flex-col md:flex-row" : "flex-col",
+        "group flex h-full cursor-pointer flex-col rounded-xl border p-4 transition-colors duration-150",
+        "border-border-card hover:border-[var(--border-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-main)]",
         isActive ? "bg-[var(--accent-gold-active-bg)]" : "bg-[var(--bg-surface)]",
       )}
     >
-      {/* Cover */}
-      <div
-        className={cn(
-          "relative shrink-0 overflow-hidden bg-[var(--bg-deep)]",
-          featured ? "aspect-[16/9] md:aspect-auto md:w-[55%]" : "aspect-[16/9]",
-        )}
-      >
-        <Image
-          src={cover}
-          alt=""
-          fill
-          sizes={featured ? "(max-width: 768px) 100vw, 40vw" : "(max-width: 768px) 50vw, 25vw"}
-          className="archive-photo object-cover group-hover:scale-[1.04]"
-        />
-        <span className="absolute left-2.5 top-2.5 rounded-full bg-black/60 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-          {ERA_LABELS[quiz.era] ?? quiz.era}
-        </span>
-        {featured && (
-          <span className="absolute right-2.5 top-2.5 rounded-full bg-[var(--accent-gold)] px-2.5 py-0.5 text-xs font-semibold text-white">
-            Đề nổi bật
-          </span>
-        )}
-      </div>
+      <p className="line-clamp-1 text-[13px] text-content-muted">{eyebrow}</p>
 
-      {/* Body */}
-      <div className={cn("flex min-w-0 flex-1 flex-col", featured ? "p-4 md:p-6" : "p-3 md:p-4")}>
-        {quiz.contextTitle && (
-          <p className="line-clamp-1 text-[13px] font-medium text-[var(--gold-on-light)]">
-            {quiz.contextTitle}
-          </p>
-        )}
+      <h3 className="archive-title is-plain mt-1 line-clamp-3 text-[17px] md:text-lg">
+        {quiz.title}
+      </h3>
 
-        <h3
-          className={cn(
-            "archive-title is-plain mt-1",
-            featured ? "line-clamp-4 text-[22px] md:text-2xl" : "line-clamp-2 text-[17px] md:text-lg",
-          )}
-        >
-          {quiz.title}
-        </h3>
-
-        <div className="mt-auto pt-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-            <LevelMeter level={quiz.level} />
-            {minutes && (
-              <span className="inline-flex items-center gap-1 text-[13px] text-content-muted">
-                <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {minutes} phút
-              </span>
-            )}
-            {quiz.playCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[13px] text-content-muted" title="Lượt làm">
-                <Users className="h-3.5 w-3.5" aria-hidden="true" /> {quiz.playCount.toLocaleString("vi-VN")}
-              </span>
-            )}
-            {quiz.rating ? (
-              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-content-text">
-                <Star size={12} fill="var(--accent-gold)" color="var(--accent-gold)" strokeWidth={0} />
-                {quiz.rating.toFixed(1)}
-              </span>
-            ) : null}
-          </div>
-
-          <div className="mt-3 flex items-center justify-end border-t border-[var(--border-default)] pt-2.5">
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-content-heading transition-colors group-hover:text-[var(--accent-gold)]">
-              Làm bài
-              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
+      <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          <LevelMeter level={quiz.level} />
+          {minutes && (
+            <span className="inline-flex items-center gap-1 text-[13px] text-content-muted">
+              <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {minutes} phút
             </span>
-          </div>
+          )}
+          {quiz.playCount > 0 && (
+            <span className="inline-flex items-center gap-1 text-[13px] text-content-muted" title="Lượt làm">
+              <Users className="h-3.5 w-3.5" aria-hidden="true" /> {quiz.playCount.toLocaleString("vi-VN")}
+            </span>
+          )}
+          {quiz.rating ? (
+            <span className="inline-flex items-center gap-1 text-[13px] text-content-muted">
+              <Star size={12} fill="currentColor" strokeWidth={0} />
+              {quiz.rating.toFixed(1)}
+            </span>
+          ) : null}
         </div>
+        <ArrowRight
+          className="h-4 w-4 shrink-0 text-content-subtle transition-[color,transform] duration-150 group-hover:translate-x-0.5 group-hover:text-content-heading"
+          aria-hidden="true"
+        />
       </div>
-
     </article>
   );
 }
