@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StaffFormInput, StaffFormLabel, StaffFormTextarea } from "@/components/staff/staff-form";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
+import { MapFocusPicker, VIETNAM_VIEW, type MapView } from "@/components/staff/map-focus-picker";
 import { apiErrorMessage } from "@/features/saas/hooks-api";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -47,8 +48,8 @@ function draftError(d: FocusDraft): string | null {
   if (!d.name.trim()) return "Nhập tên điểm.";
   const lat = Number(d.latitude);
   const lng = Number(d.longitude);
-  if (d.latitude.trim() === "" || !Number.isFinite(lat) || lat < -90 || lat > 90) return "Vĩ độ phải trong khoảng -90 đến 90.";
-  if (d.longitude.trim() === "" || !Number.isFinite(lng) || lng < -180 || lng > 180) return "Kinh độ phải trong khoảng -180 đến 180.";
+  if (d.latitude.trim() === "" || !Number.isFinite(lat) || lat < -90 || lat > 90) return "Chọn vị trí trên bản đồ.";
+  if (d.longitude.trim() === "" || !Number.isFinite(lng) || lng < -180 || lng > 180) return "Chọn vị trí trên bản đồ.";
   if (d.zoomLevel.trim() !== "") {
     const z = Number(d.zoomLevel);
     if (!Number.isFinite(z) || z < 1 || z > 20) return "Zoom phải trong khoảng 1 đến 20.";
@@ -69,16 +70,28 @@ function toPayload(d: FocusDraft): CreateMapFocusPayload {
 
 function FocusForm({
   initial,
+  fallbackView,
   onSubmit,
   onCancel,
   isPending,
 }: {
   initial: FocusDraft;
+  /** Where the picker opens for a new point (an existing point opens on itself). */
+  fallbackView: MapView;
   onSubmit: (d: FocusDraft) => void;
   onCancel: () => void;
   isPending: boolean;
 }) {
   const [draft, setDraft] = React.useState(initial);
+  const [startView] = React.useState<MapView>(() =>
+    initial.latitude && initial.longitude
+      ? {
+          latitude: Number(initial.latitude),
+          longitude: Number(initial.longitude),
+          zoom: initial.zoomLevel ? Number(initial.zoomLevel) : fallbackView.zoom,
+        }
+      : fallbackView,
+  );
   const error = draftError(draft);
   const set = (patch: Partial<FocusDraft>) => setDraft((d) => ({ ...d, ...patch }));
 
@@ -92,19 +105,22 @@ function FocusForm({
         <StaffFormLabel>Mô tả</StaffFormLabel>
         <StaffFormTextarea value={draft.description} onChange={(e) => set({ description: e.target.value })} rows={2} />
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        <div className="grid gap-1.5">
-          <StaffFormLabel>Vĩ độ *</StaffFormLabel>
-          <StaffFormInput inputMode="decimal" value={draft.latitude} onChange={(e) => set({ latitude: e.target.value })} placeholder="20.93" />
-        </div>
-        <div className="grid gap-1.5">
-          <StaffFormLabel>Kinh độ *</StaffFormLabel>
-          <StaffFormInput inputMode="decimal" value={draft.longitude} onChange={(e) => set({ longitude: e.target.value })} placeholder="106.78" />
-        </div>
-        <div className="grid gap-1.5">
-          <StaffFormLabel>Zoom (1–20)</StaffFormLabel>
-          <StaffFormInput inputMode="decimal" value={draft.zoomLevel} onChange={(e) => set({ zoomLevel: e.target.value })} placeholder="10" />
-        </div>
+      <div className="grid gap-1.5">
+        <StaffFormLabel>Vị trí trên bản đồ *</StaffFormLabel>
+        <p className="text-xs text-[var(--content-muted)]">
+          Kéo và phóng to bản đồ đến đúng khung hình người xem sẽ thấy. Dấu ngắm ở giữa là vị trí của điểm.
+        </p>
+        <MapFocusPicker
+          initial={startView}
+          onChange={(view) =>
+            set({ latitude: String(view.latitude), longitude: String(view.longitude), zoomLevel: String(view.zoom) })
+          }
+        />
+        {draft.latitude && (
+          <p className="text-[11px] tabular-nums text-[var(--content-muted)]">
+            {draft.latitude}, {draft.longitude} · zoom {draft.zoomLevel}
+          </p>
+        )}
       </div>
       <label className="flex cursor-pointer items-center gap-2 text-xs text-[var(--content-text)]">
         <input type="checkbox" checked={draft.isDefault} onChange={(e) => set({ isDefault: e.target.checked })} />
@@ -130,6 +146,11 @@ export function ContextMapFocusManager({ contextId }: { contextId: string }) {
     queryFn: () => mapFocusService.list(contextId),
   });
   const sorted = React.useMemo(() => [...focuses].sort((a, b) => a.orderIndex - b.orderIndex), [focuses]);
+  // New points start where this context already is on the map, not at the whole-country view.
+  const anchor = sorted.find((f) => f.isDefault) ?? sorted[0];
+  const fallbackView: MapView = anchor
+    ? { latitude: anchor.latitude, longitude: anchor.longitude, zoom: anchor.zoomLevel ?? 9 }
+    : VIETNAM_VIEW;
 
   const refresh = () => qc.invalidateQueries({ queryKey: focusKey(contextId) });
   const onError = (err: unknown) => toast.error(apiErrorMessage(err, "Thao tác thất bại. Vui lòng thử lại."));
@@ -172,6 +193,7 @@ export function ContextMapFocusManager({ contextId }: { contextId: string }) {
       {adding && (
         <FocusForm
           initial={EMPTY_DRAFT}
+          fallbackView={fallbackView}
           isPending={create.isPending}
           onCancel={() => setAdding(false)}
           onSubmit={(d) => create.mutate(toPayload(d), { onSuccess: () => { setAdding(false); toast.success("Đã thêm điểm bản đồ."); } })}
@@ -196,6 +218,7 @@ export function ContextMapFocusManager({ contextId }: { contextId: string }) {
               <li key={focus.focusId}>
                 <FocusForm
                   initial={toDraft(focus)}
+                  fallbackView={fallbackView}
                   isPending={update.isPending}
                   onCancel={() => setEditingId(null)}
                   onSubmit={(d) =>
