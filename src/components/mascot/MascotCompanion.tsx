@@ -10,6 +10,8 @@ import { formatDayMonth, getOnThisDay } from "@/data/on-this-day";
 import { getSeason, SEASON_GREETING, type Season } from "@/lib/season";
 import { onCelebrate } from "@/lib/celebrate";
 import { cn } from "@/lib/utils/cn";
+import { Role } from "@/constants/roles";
+import { useAuthStore } from "@/store/auth.store";
 
 const SEASON_ACCESSORY: Record<Season, MascotAccessory> = {
   tet: "mai",
@@ -29,6 +31,14 @@ const TIPS: { match: RegExp; text: string }[] = [
   { match: /^\/quiz/, text: "Chế độ luyện tập cho biết đúng/sai ngay sau mỗi câu — hợp để ôn bài." },
 ];
 const DEFAULT_TIP = "Làm đủ nhiệm vụ mỗi ngày để giữ chuỗi ngày học nhé!";
+
+// Teachers have no streak or quests; their tips point at the teaching tools instead.
+const TEACHER_TIPS: { match: RegExp; text: string }[] = [
+  { match: /^\/teaching\/assignments/, text: "Bài tập có thể là đọc bối cảnh, trò chuyện với nhân vật hoặc làm kiểm tra — đặt hạn nộp để học sinh thấy ngay." },
+  { match: /^\/teaching\/local/, text: "Tư liệu riêng của bạn chỉ học sinh trường mình thấy; xuất bản rồi mới giao được cho lớp." },
+  { match: /^\/classes/, text: "Mở một lớp để xem tiến độ từng học sinh và cấp thêm token khi các em cần." },
+];
+const TEACHER_DEFAULT_TIP = "Mẩu “ngày này năm xưa” ở trên có thể dùng làm câu mở đầu cho tiết học hôm nay.";
 
 const SEEN_KEY = "ht-companion-seen";
 const TUCKED_KEY = "ht-companion-tucked";
@@ -65,7 +75,10 @@ export function MascotCompanion() {
 
   const season = useMemo(() => (mounted ? getSeason() : null), [mounted]);
   const onThisDay = useMemo(() => getOnThisDay(), []);
-  const tip = TIPS.find((t) => t.match.test(pathname))?.text ?? DEFAULT_TIP;
+  const isTeacher = useAuthStore((s) => s.user?.role) === Role.TEACHER;
+  const tip = isTeacher
+    ? (TEACHER_TIPS.find((t) => t.match.test(pathname))?.text ?? TEACHER_DEFAULT_TIP)
+    : (TIPS.find((t) => t.match.test(pathname))?.text ?? DEFAULT_TIP);
   const offPage = HIDDEN_ON.some((re) => re.test(pathname));
 
   // Greet once a day, a moment after the page settles.
