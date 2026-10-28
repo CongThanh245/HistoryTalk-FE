@@ -60,7 +60,7 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
     size: PAGE_SIZE,
   }), [search, typeFilter, page]);
 
-  const { data, isLoading } = useQuestionBank(params);
+  const { data, isLoading, isError, refetch } = useQuestionBank(params);
   // BE chi tra co `assignedToQuiz`; tim quiz chua cau hoi qua danh sach quiz (co kem questions).
   const { data: quizData } = useStaffQuizzes({ page: 0, size: 200 });
   const quizzes = React.useMemo(
@@ -195,6 +195,14 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
 
         {isLoading ? (
           <p className="py-10 text-center text-sm text-content-muted">Đang tải câu hỏi...</p>
+        ) : isError ? (
+          // A failed request must not look like an empty bank.
+          <div className="py-10 text-center text-sm text-accent-danger">
+            <p>Không tải được ngân hàng câu hỏi.</p>
+            <Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => void refetch()}>
+              Thử lại
+            </Button>
+          </div>
         ) : items.length === 0 ? (
           <p className="py-10 text-center text-sm text-content-muted">Chưa có câu hỏi nào trong ngân hàng.</p>
         ) : (

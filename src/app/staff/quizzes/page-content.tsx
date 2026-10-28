@@ -4,7 +4,7 @@ import * as React from "react";
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import {
   ClipboardList, Trash2, ArrowLeft,
-  Gamepad2, Eye, EyeOff, RotateCcw,
+  Pencil, Eye, EyeOff, RotateCcw,
   ChevronLeft, ChevronRight, Upload,
   Search, Plus, Library, MoreHorizontal,
 } from "lucide-react";
@@ -157,7 +157,7 @@ export default function StaffQuizzesPage() {
     ...(search.trim() && { search: search.trim() }),
     ...(filterLevel && { level: filterLevel }),
     page,
-    size: 20,
+    size: 10,
   }), [search, filterLevel, page]);
 
   const { data, isLoading, isError, refetch: refetchQuizzes } = useStaffQuizzes(params);
@@ -396,15 +396,23 @@ export default function StaffQuizzesPage() {
       accessorKey: "title",
       header: "Bộ đề",
       cell: ({ row: r }) => (
-        <div className="min-w-[240px]">
+        // Stats ride under the title instead of taking their own column, so the table fits without side-scrolling.
+        <div className="min-w-[220px] max-w-[420px]">
           <p className="text-sm font-semibold text-content-heading">
             {r.original.title}
           </p>
           {r.original.contextTitle && (
-            <p className="text-xs mt-0.5 truncate max-w-[260px] text-content-muted">
+            <p className="text-xs mt-0.5 truncate text-content-muted">
               {r.original.contextTitle}
             </p>
           )}
+          <p className="mt-0.5 text-[11px] text-content-subtle">
+            {r.original.questions.length} câu hỏi · {r.original.playCount.toLocaleString()} lần làm
+            {(() => {
+              const types = new Set(r.original.questions.map((q) => q.questionType));
+              return types.size > 1 ? ` · ${[...types].map((t) => QUESTION_TYPE_LABELS[t]).join(", ")}` : "";
+            })()}
+          </p>
         </div>
       ),
     },
@@ -420,28 +428,6 @@ export default function StaffQuizzesPage() {
       header: "Thời kỳ",
       cell: ({ row: r }) => (
         <EraBadge value={r.original.era as EraKey} />
-      ),
-    },
-    {
-      id: "stats",
-      header: "Thống kê",
-      cell: ({ row: r }) => (
-        <div>
-          <p className="text-xs text-content-text">
-            {r.original.questions.length} câu hỏi
-          </p>
-          {(() => {
-            const types = new Set(r.original.questions.map((q) => q.questionType));
-            return types.size > 1 ? (
-              <p className="text-[11px] text-content-subtle">
-                {[...types].map((t) => QUESTION_TYPE_LABELS[t]).join(" · ")}
-              </p>
-            ) : null;
-          })()}
-          <p className="text-xs text-content-muted">
-            {r.original.playCount.toLocaleString()} lần làm
-          </p>
-        </div>
       ),
     },
     {
@@ -471,43 +457,36 @@ export default function StaffQuizzesPage() {
       accessorKey: "updatedDate",
       header: "Cập nhật",
       cell: ({ row: r }) => (
-        <div className="text-xs text-content-muted">
+        <div className="whitespace-nowrap text-xs text-content-muted">
           <p>{r.original.updatedDate ? <FormattedDate date={r.original.updatedDate} /> : "—"}</p>
-          <p className="mt-0.5 opacity-70">
-            Tạo: {r.original.createdDate ? <FormattedDate date={r.original.createdDate} /> : "—"}
-          </p>
+          <p className="mt-0.5 opacity-70">bởi {getCreatorName(r.original.createdBy)}</p>
         </div>
       ),
     },
     {
-      accessorKey: "createdBy",
-      header: "Người tạo",
-      cell: ({ row: r }) => (
-        <span className="text-xs text-content-muted">
-          {getCreatorName(r.original.createdBy)}
-        </span>
-      ),
-    },
-    {
       id: "actions",
-      header: "Thao tác",
+      header: "",
       cell: ({ row: r }) => (
-        <div className="flex min-w-[140px] items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button
             type="button"
             variant="outline"
-            className="h-8 rounded-sm px-3 text-xs font-semibold hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
+            size="icon-sm"
+            title="Chỉnh sửa"
+            aria-label={`Chỉnh sửa ${r.original.title}`}
+            className="rounded-sm hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
             onClick={() => openEdit(r.original)}
           >
-            Chỉnh sửa
+            <Pencil className="h-3.5 w-3.5" />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 type="button"
                 variant="outline"
+                size="icon-sm"
                 aria-label={`Thao tác khác cho ${r.original.title}`}
-                className="h-8 rounded-sm px-2 hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
+                className="rounded-sm hover:bg-[var(--status-neutral-bg)] hover:text-content-heading border-card-light-border text-content-heading"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -823,8 +802,6 @@ export default function StaffQuizzesPage() {
 
   // ═══ LIST VIEW ═══════════════════════════════════════════════════════════
   const totalItems = data?.totalElements ?? 0;
-  const totalPlays = allItems.reduce((a, x) => a + x.playCount, 0);
-  const totalQues = allItems.reduce((a, x) => a + x.questions.length, 0);
 
   return (
     <StaffShell
@@ -835,35 +812,14 @@ export default function StaffQuizzesPage() {
       accent="var(--accent-blue)"
     >
       <section className="rounded-xl border p-6 space-y-5 bg-[var(--bg-surface)] border-border-card">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          {([
-            { label: filterLevel ? "Bộ đề (theo bộ lọc)" : "Tổng bộ đề", value: totalItems, icon: ClipboardList, color: "var(--accent-blue)" },
-            { label: totalPages > 1 ? "Câu hỏi (trang này)" : "Tổng câu hỏi", value: totalQues, icon: ClipboardList, color: "var(--accent-teal)" },
-            { label: totalPages > 1 ? "Lần làm (trang này)" : "Tổng lần làm", value: totalPlays.toLocaleString(), icon: Gamepad2, color: "var(--accent-blue)" },
-          ] as const).map((s) => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={s.label}
-                className="rounded-sm border px-4 py-3 flex items-center gap-3 border-border-card bg-[var(--bg-surface)]"
-              >
-                <div className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0" style={{ background: `color-mix(in srgb, ${s.color} 10%, transparent)` }}>
-                  <Icon className="w-4 h-4" style={{ color: s.color }} />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold leading-none tabular-nums text-content-heading">{s.value}</p>
-                  <p className="text-xs mt-0.5 text-content-muted">{s.label}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
+        {/* No stat cards: the other staff lists don't have them, and per-page totals were misleading. Totals live on "Tổng quan". */}
         <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between px-1">
           <div className="flex items-center gap-3">
             <h2 className="text-base font-semibold text-content-heading">
               {showTrash ? "Thùng rác bộ đề" : "Danh sách bộ đề"}
+              {!showTrash && totalItems > 0 && (
+                <span className="ml-2 text-sm font-normal text-content-muted">{totalItems}</span>
+              )}
             </h2>
           </div>
 
