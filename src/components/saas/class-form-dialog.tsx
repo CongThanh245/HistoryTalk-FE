@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -100,6 +100,8 @@ export function ClassFormDialog({
 
   const [form, setForm] = React.useState<FormState>(() => fromClassroom(editing));
   const [touched, setTouched] = React.useState(false);
+  // Token limit and description are rarely set: folded away unless the class already uses them.
+  const [showMore, setShowMore] = React.useState(() => !!(editing?.dailyTokenQuota || editing?.description));
   const [serverErrors, setServerErrors] = React.useState<Errors>({});
   const [formError, setFormError] = React.useState<string | null>(null);
 
@@ -109,6 +111,7 @@ export function ClassFormDialog({
     setLastOpen(open);
     if (open) {
       setForm(fromClassroom(editing));
+      setShowMore(!!(editing?.dailyTokenQuota || editing?.description));
       setTouched(false);
       setServerErrors({});
       setFormError(null);
@@ -127,6 +130,15 @@ export function ClassFormDialog({
   const nameGrade = gradeInName(name);
   const gradeMismatch = nameGrade !== null && CLASS_GRADES.includes(nameGrade) && nameGrade !== Number(form.gradeLevel);
   const shown: Errors = touched ? { ...serverErrors, ...errors } : serverErrors;
+  const optionalOpen = showMore || !!shown.dailyTokenQuota || !!shown.description;
+
+  // A pick list of school years instead of a typed "2026" with "2026–2027" spelled out underneath.
+  const yearOptions = React.useMemo(() => {
+    const now = currentAcademicYear();
+    const years = [now - 1, now, now + 1];
+    if (editing && !years.includes(editing.academicYear)) years.unshift(editing.academicYear);
+    return years.map((y) => ({ value: String(y), label: academicYearLabel(y) }));
+  }, [editing]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -196,16 +208,18 @@ export function ClassFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !pending && onOpenChange(o)}>
-      <DialogContent className={cn(DIALOG_CLASS, "sm:max-w-lg")}>
-        <form onSubmit={save} noValidate className="space-y-4">
-          <DialogHeader>
+      {/* Header and footer stay put and only the fields scroll, so "Tạo lớp" is always on screen. */}
+      <DialogContent className={cn(DIALOG_CLASS, "flex flex-col gap-0 overflow-hidden p-0 sm:max-w-lg")}>
+        <form onSubmit={save} noValidate className="flex min-h-0 flex-1 flex-col">
+          <DialogHeader className="shrink-0 px-6 pt-6 pb-4">
             <DialogTitle className={DIALOG_TITLE_CLASS}>{editing ? `Sửa lớp ${editing.className}` : "Tạo lớp mới"}</DialogTitle>
             <DialogDescription className="text-content-muted">
               {editing ? "Mã lớp giữ nguyên khi đổi thông tin." : "Mã lớp (ví dụ CVA-10A1-2026) được hệ thống tạo tự động."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 pb-5">
+          <div className="grid gap-4 sm:grid-cols-[1.3fr_1fr_1.2fr]">
             <Field
               label="Tên lớp"
               required
@@ -226,22 +240,17 @@ export function ClassFormDialog({
                 value={form.gradeLevel}
                 onValueChange={(v) => set("gradeLevel", v)}
                 options={CLASS_GRADES.map((g) => ({ value: String(g), label: `Khối ${g}` }))}
+                searchable={false}
                 className="w-full"
               />
             </Field>
-            <Field
-              label="Năm học"
-              required
-              error={shown.academicYear}
-              hint={/^\d{4}$/.test(form.academicYear) ? academicYearLabel(year) : undefined}
-              htmlFor="class-year"
-            >
-              <StaffFormInput
-                id="class-year"
-                inputMode="numeric"
+            <Field label="Năm học" required error={shown.academicYear}>
+              <StaffFormSelect
                 value={form.academicYear}
-                aria-invalid={!!shown.academicYear}
-                onChange={(e) => set("academicYear", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                onValueChange={(v) => set("academicYear", v)}
+                options={yearOptions}
+                searchable={false}
+                className="w-full"
               />
             </Field>
           </div>
@@ -277,39 +286,53 @@ export function ClassFormDialog({
             </Field>
           )}
 
-          <Field
-            label="Hạn mức token AI / học sinh / ngày"
-            error={shown.dailyTokenQuota}
-            hint="Để trống để dùng mức mặc định của trường (cài ở trang Hạn mức token)."
-            htmlFor="class-quota"
-          >
-            <StaffFormInput
-              id="class-quota"
-              inputMode="numeric"
-              value={form.dailyTokenQuota}
-              placeholder="Mặc định của trường"
-              aria-invalid={!!shown.dailyTokenQuota}
-              onChange={(e) => set("dailyTokenQuota", e.target.value.replace(/\D/g, "").slice(0, 7))}
-            />
-          </Field>
+          {!optionalOpen ? (
+            <button
+              type="button"
+              onClick={() => setShowMore(true)}
+              className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--accent-gold)] hover:underline"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" /> Hạn mức token riêng, mô tả
+            </button>
+          ) : (
+            <div className="space-y-4 border-t pt-4 border-[var(--border-default)]">
+              <Field
+                label="Hạn mức token AI / học sinh / ngày"
+                error={shown.dailyTokenQuota}
+                hint="Để trống để dùng mức mặc định của trường."
+                htmlFor="class-quota"
+              >
+                <StaffFormInput
+                  id="class-quota"
+                  inputMode="numeric"
+                  value={form.dailyTokenQuota}
+                  placeholder="Mặc định của trường"
+                  aria-invalid={!!shown.dailyTokenQuota}
+                  onChange={(e) => set("dailyTokenQuota", e.target.value.replace(/\D/g, "").slice(0, 7))}
+                />
+              </Field>
 
-          <Field label="Mô tả" error={shown.description} hint={`${form.description.length}/500`} htmlFor="class-description">
-            <StaffFormTextarea
-              id="class-description"
-              rows={3}
-              value={form.description}
-              placeholder="Ghi chú cho lớp (không bắt buộc)"
-              onChange={(e) => set("description", e.target.value)}
-            />
-          </Field>
+              <Field label="Mô tả" error={shown.description} hint={`${form.description.length}/500`} htmlFor="class-description">
+                <StaffFormTextarea
+                  id="class-description"
+                  rows={2}
+                  value={form.description}
+                  placeholder="Ghi chú cho lớp (không bắt buộc)"
+                  className="min-h-[72px]"
+                  onChange={(e) => set("description", e.target.value)}
+                />
+              </Field>
+            </div>
+          )}
 
           {formError && (
             <p role="alert" className="text-sm text-[var(--accent-danger)]">
               {formError}
             </p>
           )}
+          </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="shrink-0 gap-2 border-t px-6 py-4 border-[var(--border-default)]">
             <button type="button" className="btn-line" disabled={pending} onClick={() => onOpenChange(false)}>
               Hủy
             </button>

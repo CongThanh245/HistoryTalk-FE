@@ -357,8 +357,9 @@ function UploadStep({
   onFile: (f: File | undefined) => void;
 }) {
   return (
-    <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
-      <div className="space-y-4">
+    // min-w-0 + a fixed guide column: a wide CSV must not push the guide off-screen or make the dialog scroll sideways.
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="min-w-0 space-y-4">
         <label
           onDragOver={(e) => {
             e.preventDefault();
@@ -418,12 +419,13 @@ function UploadStep({
         {table && !fileError && (
           <div className="space-y-2">
             <p className="text-sm font-semibold text-content-heading">Xem trước 5 dòng đầu</p>
-            <div className="overflow-x-auto border-y border-border-card">
-              <table className="w-full min-w-[480px] text-xs">
+            {/* Fixed layout with one-line cells: the preview fits the column instead of scrolling sideways; hover shows the full value. */}
+            <div className="border-y border-border-card">
+              <table className="w-full table-fixed text-xs">
                 <thead>
                   <tr className="border-b border-[var(--border-strong)] text-left">
                     {table.headers.map((h, i) => (
-                      <th key={i} className="px-2 py-1.5 font-semibold text-[var(--text-tertiary)]">
+                      <th key={i} title={h} className="truncate px-2 py-1.5 font-semibold text-[var(--text-tertiary)]">
                         {h}
                       </th>
                     ))}
@@ -433,7 +435,7 @@ function UploadStep({
                   {table.rows.slice(0, 5).map((r, k) => (
                     <tr key={k} className="border-b border-[var(--border-default)] last:border-b-0">
                       {r.map((c, i) => (
-                        <td key={i} className="px-2 py-1.5">
+                        <td key={i} title={c || undefined} className="truncate px-2 py-1.5">
                           {c || <span className="text-content-subtle">—</span>}
                         </td>
                       ))}
@@ -457,8 +459,16 @@ function UploadStep({
             <li>Học sinh đăng nhập bằng email; nếu bỏ trống email, hệ thống cấp email dạng …@saas.historytalk.vn.</li>
           </ul>
         </div>
-        <div className="overflow-x-auto border-y border-[var(--border-strong)]">
-          <p className="px-2 py-1.5 font-mono text-[11px] text-content-muted">{BACKEND_IMPORT_COLUMNS.join(",")}</p>
+        <div className="border-y border-[var(--border-strong)]">
+          {/* Break after each comma so the header line wraps inside the column instead of scrolling. */}
+          <p className="px-2 py-1.5 font-mono text-[11px] leading-5 text-content-muted">
+            {BACKEND_IMPORT_COLUMNS.map((col, i) => (
+              <React.Fragment key={col}>
+                {col}
+                {i < BACKEND_IMPORT_COLUMNS.length - 1 && <>,<wbr /></>}
+              </React.Fragment>
+            ))}
+          </p>
         </div>
         <button type="button" className="archive-link" onClick={() => void downloadStudentTemplate()}>
           <Download className="h-3.5 w-3.5" aria-hidden="true" /> Tải file mẫu
