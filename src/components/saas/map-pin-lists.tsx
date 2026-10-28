@@ -595,19 +595,20 @@ export function ClassMapList({
 
 /* ───────────────────────── Battle overview (Content Admin) ───────────────────────── */
 
-type BattleFilter = "ALL" | "UNPINNED" | "NO_NARRATION" | "NO_MAP";
+type BattleFilter = "ALL" | "UNPINNED" | "INCOMPLETE";
 
-function StatusChip({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
+/** One step of a battle's setup as a dot + word: filled when done, hollow when still to do. */
+function StatusDot({ ok, label }: { ok: boolean; label: string }) {
   return (
     <span
-      className={cn(
-        "inline-flex items-center rounded-sm border px-1.5 py-px text-[10.5px] font-bold leading-4",
-        ok
-          ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)] text-[var(--status-success)]"
-          : "border-dashed border-[var(--border-strong)] text-[var(--text-tertiary)]",
-      )}
+      className={cn("inline-flex items-center gap-1", ok ? "text-[var(--status-success)]" : "text-[var(--text-tertiary)]")}
+      title={`${label}: ${ok ? "đã có" : "chưa có"}`}
     >
-      {ok ? yes : no}
+      <span
+        aria-hidden="true"
+        className={cn("h-1.5 w-1.5 rounded-full", ok ? "bg-[var(--status-success)]" : "border border-[var(--border-strong)]")}
+      />
+      <span className="sr-only">{ok ? "Đã có" : "Chưa có"}</span> {label}
     </span>
   );
 }
@@ -638,12 +639,12 @@ export function BattleOverviewList({
   const [filter, setFilter] = React.useState<BattleFilter>("ALL");
   const [query, setQuery] = React.useState("");
   const pinned = battles.filter((b) => b.coordinates).length;
-  const narrated = battles.filter((b) => b.hasNarration).length;
-  const mapped = battles.filter((b) => b.hasBattleMap).length;
+  // Narration and the battle map are both "content to write", so they share one filter.
+  const incomplete = battles.filter((b) => !b.hasNarration || !b.hasBattleMap).length;
 
   const shown = battles
     .filter((b) =>
-      filter === "UNPINNED" ? !b.coordinates : filter === "NO_NARRATION" ? !b.hasNarration : filter === "NO_MAP" ? !b.hasBattleMap : true,
+      filter === "UNPINNED" ? !b.coordinates : filter === "INCOMPLETE" ? !b.hasNarration || !b.hasBattleMap : true,
     )
     .filter((b) => matchesQuery(query, b.title, b.location, String(b.year)))
     .sort((a, b) => a.year - b.year);
@@ -680,8 +681,7 @@ export function BattleOverviewList({
             options={[
               { value: "ALL" as const, label: "Tất cả", count: battles.length },
               { value: "UNPINNED" as const, label: "Chưa ghim", count: battles.length - pinned },
-              { value: "NO_NARRATION" as const, label: "Thiếu thuyết minh", count: battles.length - narrated },
-              { value: "NO_MAP" as const, label: "Thiếu lược đồ", count: battles.length - mapped },
+              { value: "INCOMPLETE" as const, label: "Thiếu nội dung", count: incomplete },
             ].filter((o) => o.value === "ALL" || o.value === filter || o.count > 0)}
           />
           {battles.length > 6 && <ListSearch value={query} onChange={setQuery} placeholder="Lọc theo tên, năm, địa điểm…" />}
@@ -707,17 +707,11 @@ export function BattleOverviewList({
                       <span className="mt-0.5 block text-[11px] leading-snug text-[var(--text-tertiary)]">
                         {[formatYear(b.year), b.location].filter(Boolean).join(" · ")}
                       </span>
-                      {/* Chi neu viec con thieu; du het thi mot nhan "Đã đủ". */}
-                      <span className="mt-1 flex flex-wrap gap-1">
-                        {b.coordinates && b.hasNarration && b.hasBattleMap ? (
-                          <StatusChip ok yes="Đã đủ" no="" />
-                        ) : (
-                          <>
-                            {!b.coordinates && <StatusChip ok={false} yes="" no="Chưa ghim" />}
-                            {!b.hasNarration && <StatusChip ok={false} yes="" no="Thiếu thuyết minh" />}
-                            {!b.hasBattleMap && <StatusChip ok={false} yes="" no="Thiếu lược đồ" />}
-                          </>
-                        )}
+                      {/* Mot dong cham trang thai thay cho ba nhan: day = da co, rong = con thieu. */}
+                      <span className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10.5px] font-semibold leading-4">
+                        <StatusDot ok={!!b.coordinates} label="Ghim" />
+                        <StatusDot ok={b.hasNarration} label="Thuyết minh" />
+                        <StatusDot ok={b.hasBattleMap} label="Lược đồ" />
                       </span>
                     </span>
                   </button>

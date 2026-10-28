@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Globe2, X } from "lucide-react";
+import { Eye, EyeOff, X } from "lucide-react";
 import { UrlSyncedHistoricalMap } from "@/components/historical-map/UrlSyncedHistoricalMap";
 import { isInsideMapBounds, type MapControlsInfo, type MapCoordinates, type MapOverlay, type OverlayPin } from "@/components/historical-map/map-overlay.types";
 import { STUDY_NOTE_PREFIX, STUDY_NOTE_ROLES } from "@/components/historical-map/StudyNotes";
@@ -197,17 +197,8 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
     </button>
   );
 
-  const headerSlot = teacherEditableRole ? (
-    previewButton
-  ) : globalEditableRole ? (
-    <>
-      <span className="inline-flex items-center gap-1.5 rounded-sm border border-border-card px-2 py-1 text-[11px] font-bold tracking-[0.04em] text-[var(--text-primary)]">
-        <Globe2 size={13} className="text-[var(--accent-gold)]" aria-hidden="true" />
-        {teacherEditableRole ? "Kho tư liệu — hiển thị cho học sinh của trường" : "Bản đồ chung — hiển thị cho mọi người dùng"}
-      </span>
-      {previewButton}
-    </>
-  ) : undefined;
+  // Who sees the edits is said once, in the subtitle (see `overlay` below), instead of a separate header badge.
+  const headerSlot = teacherEditableRole || globalEditableRole ? previewButton : undefined;
 
   const topSlot = adminPreview ? (
     // Nut "Thoát xem trước" da o header; thanh nay chi bao trang thai.
@@ -218,7 +209,8 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
 
   const renderControls = (info: MapControlsInfo) => {
     const notesOn = hasNotesLayer && info.canTakeNotes && visible.personal;
-    const rows: MapLayerRow[] = classMode
+    // An editor's only layer is the locked "Bản đồ chung": nothing to toggle, so no layer row (the list stays).
+    const rows: MapLayerRow[] = classMode || globalEditable
       ? []
       : [
           {
@@ -322,18 +314,21 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
             className="absolute left-3 top-3 z-[525]"
           />
         )}
-        <MapSearchBox
-          battles={info.battles}
-          pins={[...localPins, ...notePins]}
-          showBattles={visible.global}
-          onPickBattle={pickBattle}
-          onPickPin={pickNote}
-          className={
-            showControl
-              ? "max-md:absolute max-md:left-[60px] max-md:right-3 max-md:top-3 max-md:z-[525] md:pointer-events-auto md:shrink-0"
-              : "max-md:absolute max-md:inset-x-3 max-md:top-3 max-md:z-[525] md:pointer-events-auto md:shrink-0"
-          }
-        />
+        {/* The battle list has its own filter box; a second search box would only search the same battles. */}
+        {!(activeTab === "battles" && localPins.length === 0 && notePins.length === 0) && (
+          <MapSearchBox
+            battles={info.battles}
+            pins={[...localPins, ...notePins]}
+            showBattles={visible.global}
+            onPickBattle={pickBattle}
+            onPickPin={pickNote}
+            className={
+              showControl
+                ? "max-md:absolute max-md:left-[60px] max-md:right-3 max-md:top-3 max-md:z-[525] md:pointer-events-auto md:shrink-0"
+                : "max-md:absolute max-md:inset-x-3 max-md:top-3 max-md:z-[525] md:pointer-events-auto md:shrink-0"
+            }
+          />
+        )}
         {/* Ghim tren ban do den tu ca toa do cua boi canh lan ghim rieng (battleCount), nen dem ca hai. */}
         {classMode && !list && !info.battlesLoading && (
           <p className="max-md:absolute max-md:inset-x-3 max-md:top-16 max-md:z-[525] rounded-sm border border-border-card bg-[var(--bg-surface)] px-3 py-2 text-xs leading-snug text-[var(--text-secondary)] shadow-[var(--shadow-soft)] md:pointer-events-auto">
@@ -345,7 +340,7 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
         {showControl && (
           <MapLayerControl
             className="md:pointer-events-auto"
-            title={rows.length ? undefined : "Bối cảnh"}
+            title={rows.length ? undefined : classMode ? "Bối cảnh" : "Trận đánh"}
             rows={rows}
             onToggle={toggleLayer}
             classes={[]}
@@ -377,6 +372,11 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
     hideBattlePins: classMode ? !visible.local : !visible.global,
     hideStudyNotes: !visible.personal,
     previewAsLearner: adminPreview,
+    // Content Admin: the side list picks battles and the battle panel holds the pin actions, like the teacher map.
+    ...(!classMode && globalEditable && {
+      subtitle: "Bạn đang chỉnh sửa bản đồ chung · mọi người dùng đều thấy thay đổi",
+      hideBattlePicker: true,
+    }),
     ...(classMode && {
       title: "Bản đồ Kho tư liệu",
       subtitle: teacherEditable

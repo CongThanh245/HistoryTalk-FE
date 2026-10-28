@@ -547,7 +547,8 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
 
       <div className={cn(
         "grid min-h-0 flex-1 gap-0 overflow-y-auto bg-bg-main",
-        panelDismissed
+        // Placing a pin floats a small card over the map instead of opening the side column, so the map keeps its width.
+        panelDismissed || isAdding
           ? "grid-rows-1 lg:grid-cols-1 lg:grid-rows-1 lg:overflow-hidden"
           : "grid-rows-[minmax(200px,35%)_1fr] lg:grid-cols-[minmax(0,1fr)_390px] lg:grid-rows-1 lg:overflow-hidden",
       )}>
@@ -625,10 +626,22 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
             </StatusPill>
           )}
 
-          {isAdding && !draftCoordinates && (
-            <StatusPill className="left-1/2 top-4 -translate-x-1/2 bg-text-primary text-text-inverse">
-              <LocateFixed size={16} /> Chọn một vị trí trên bản đồ
-            </StatusPill>
+          {isAdding && (
+            <div className="absolute z-[530] max-lg:inset-x-3 max-lg:bottom-3 lg:right-4 lg:top-4 lg:w-[340px]">
+              <CreatePinPanel
+                key={activeContextId}
+                battleTitle={activeEvent?.title ?? ""}
+                initialPin={mainPin}
+                coordinates={draftCoordinates}
+                year={activeYear}
+                isSubmitting={createPin.isPending || deletePin.isPending || updatePin.isPending}
+                onCancel={() => {
+                  setIsAdding(false);
+                  setDraftCoordinates(null);
+                }}
+                onSubmit={handleCreate}
+              />
+            </div>
           )}
 
           {(eventsError || pinsError) && (
@@ -659,23 +672,9 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
           )}
         </main>
 
-        {!panelDismissed && (
+        {!panelDismissed && !isAdding && (
           <aside className="min-h-0 overflow-y-auto bg-[var(--bg-surface)]">
-            {isAdding ? (
-              <CreatePinPanel
-                key={activeContextId}
-                battleTitle={activeEvent?.title ?? ""}
-                initialPin={mainPin}
-                coordinates={draftCoordinates}
-                year={activeYear}
-                isSubmitting={createPin.isPending || deletePin.isPending || updatePin.isPending}
-                onCancel={() => {
-                  setIsAdding(false);
-                  setDraftCoordinates(null);
-                }}
-                onSubmit={handleCreate}
-              />
-            ) : noteEditor ? (
+            {noteEditor ? (
               <StudyNoteForm
                 key={noteEditor.pin?.pinId ?? "new"}
                 battleTitle={activeEvent?.title ?? ""}
@@ -1022,53 +1021,46 @@ function CreatePinPanel({ battleTitle, initialPin, coordinates, year, isSubmitti
   };
 
   return (
-    <form onSubmit={submit} className="flex min-h-full flex-col">
-      <div className="border-b border-[var(--text-primary)] p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="archive-title text-[22px]">Ghim vị trí</h2>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--text-tertiary)]">
-              {coordinates ? `${coordinates.latitude.toFixed(5)}, ${coordinates.longitude.toFixed(5)} · ${formatYear(year)}` : "Chưa chọn vị trí"}
-            </p>
-          </div>
-          <button type="button" onClick={onCancel} className="grid h-8 w-8 shrink-0 place-items-center rounded-sm hover:bg-[var(--sidebar-hover-bg)]" aria-label="Hủy">
-            <X size={17} />
-          </button>
+    // A floating card over the map: one line of guidance, the label, and Save — the map stays the workspace.
+    <form
+      onSubmit={submit}
+      className="rounded-md border border-border-card bg-[var(--bg-surface)] shadow-[var(--shadow-strong)]"
+    >
+      <div className="flex items-start justify-between gap-3 px-4 pt-3">
+        <div className="min-w-0">
+          <h2 className="truncate text-[15px] font-semibold">
+            {initialPin ? "Đổi vị trí" : "Ghim vị trí"}: {battleTitle}
+          </h2>
+          <p className={cn("mt-0.5 flex items-center gap-1.5 text-xs", coordinates ? "text-[var(--text-tertiary)]" : "font-semibold text-[var(--accent-gold)]")}>
+            <LocateFixed size={13} className="shrink-0" aria-hidden="true" />
+            {coordinates
+              ? `${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)} · ${formatYear(year)} — bấm chỗ khác để đổi`
+              : "Bấm lên bản đồ tại nơi diễn ra sự kiện"}
+          </p>
         </div>
+        <button type="button" onClick={onCancel} className="grid h-7 w-7 shrink-0 place-items-center rounded-sm hover:bg-[var(--sidebar-hover-bg)]" aria-label="Hủy">
+          <X size={16} />
+        </button>
       </div>
 
-      <div className="flex-1 space-y-5 p-5">
-        {!coordinates && (
-          <div className="flex items-start gap-3 rounded-sm border-[var(--accent-gold)] bg-[var(--accent-gold-active-bg)] p-4 text-sm text-[var(--gold-on-light)]">
-            <LocateFixed className="mt-0.5 shrink-0" size={18} />
-            <span>Bấm lên bản đồ để chọn nơi diễn ra sự kiện.</span>
-          </div>
-        )}
+      <label className="block px-4 pt-3">
+        <span className="mb-1.5 block text-xs font-semibold text-[var(--text-secondary)]">Tên hiển thị</span>
+        <input
+          value={label}
+          onChange={(event) => setLabel(event.target.value)}
+          maxLength={200}
+          required
+          placeholder="Ví dụ: Trung tâm trận Bạch Đằng"
+          className="h-10 w-full rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] px-3 text-sm outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)]"
+        />
+      </label>
 
-        <label className="block">
-          <span className="mb-2 block text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">Tên hiển thị *</span>
-          <input
-            value={label}
-            onChange={(event) => setLabel(event.target.value)}
-            maxLength={200}
-            required
-            disabled={!coordinates}
-            placeholder="Ví dụ: Trung tâm trận Bạch Đằng"
-            className="h-11 w-full rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 text-base outline-none focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] disabled:bg-[var(--bg-deep)]"
-          />
-        </label>
-
-        <p className="text-xs leading-relaxed text-[var(--text-secondary)]">
-          Thuyết minh diễn biến soạn theo từng giai đoạn trong «Soạn lược đồ diễn biến».
-        </p>
-      </div>
-
-      <div className="flex gap-2 border-t border-[var(--text-primary)] p-4">
-        <button type="button" onClick={onCancel} className="btn-line h-10 min-h-0 flex-1 px-3 text-xs">
+      <div className="flex justify-end gap-2 px-4 pb-3 pt-3">
+        <button type="button" onClick={onCancel} className="btn-line h-9 min-h-0 px-3 text-xs">
           Hủy
         </button>
-        <button type="submit" disabled={!coordinates || !label.trim() || isSubmitting} className="btn-crimson h-10 min-h-0 flex-[1.4] px-3 text-xs disabled:opacity-45">
-          {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />} Lưu vị trí
+        <button type="submit" disabled={!coordinates || !label.trim() || isSubmitting} className="btn-crimson h-9 min-h-0 px-4 text-xs disabled:opacity-45">
+          {isSubmitting ? <Loader2 className="animate-spin" size={15} /> : <Plus size={15} />} Lưu vị trí
         </button>
       </div>
     </form>
