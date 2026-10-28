@@ -17,10 +17,11 @@ import { useProfile } from "@/features/profile/hooks";
 import { isPro } from "@/services/user.service";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
-import { CrownIcon, LogOut, Moon, Sun, UserRound } from "lucide-react";
+import { CrownIcon, KeyRound, LogOut, Moon, Sun, UserRound } from "lucide-react";
 import { useTheme } from "next-themes";
-import type { ReactNode } from "react";
-import { ROLE_LABELS, type Role } from "@/constants/roles";
+import { useState, type ReactNode } from "react";
+import { ROLE_LABELS, isAdminRole, isSchoolAdmin, type Role } from "@/constants/roles";
+import { ChangePasswordDialog } from "./change-password-dialog";
 import { useEntitlements } from "@/features/saas/entitlements";
 import { useTodayQuota } from "@/features/saas/quota-bonus";
 
@@ -58,6 +59,9 @@ export function UserProfileDropdown({
   const todayQuota = useTodayQuota();
   const proUser = entitlements.canPurchase && isPro(profile ?? null);
   const roleLabel = user?.role ? (ROLE_LABELS[user.role as Role] ?? user.role) : null;
+  // Mirrors the route guard: these roles are redirected away from /profile.
+  const hasProfilePage = !(isAdminRole(user?.role) || isSchoolAdmin(user?.role));
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   if (!user) return null;
 
@@ -73,6 +77,7 @@ export function UserProfileDropdown({
     : "?";
 
   return (
+    <>
     <DropdownMenu onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
         {trigger ?? <Button
@@ -182,15 +187,26 @@ export function UserProfileDropdown({
             </DropdownMenuItem>
           )}
           
-          <DropdownMenuItem 
-            className="cursor-pointer mx-1 rounded-sm px-2 py-2 text-sm font-medium focus:bg-[var(--text-primary)] focus:text-[var(--text-inverse)] transition-colors" 
-            asChild
-          >
-            <Link href="/profile" className="flex items-center gap-2 w-full">
-              <UserRound className="h-4 w-4" aria-hidden="true" />
-              Hồ sơ
-            </Link>
-          </DropdownMenuItem>
+          {hasProfilePage ? (
+            <DropdownMenuItem
+              className="cursor-pointer mx-1 rounded-sm px-2 py-2 text-sm font-medium focus:bg-[var(--text-primary)] focus:text-[var(--text-inverse)] transition-colors"
+              asChild
+            >
+              <Link href="/profile" className="flex items-center gap-2 w-full">
+                <UserRound className="h-4 w-4 text-current" aria-hidden="true" />
+                Hồ sơ
+              </Link>
+            </DropdownMenuItem>
+          ) : (
+            // Staff and school admins are routed away from /profile, so password change opens in place.
+            <DropdownMenuItem
+              className="cursor-pointer mx-1 rounded-sm px-2 py-2 text-sm font-medium focus:bg-[var(--text-primary)] focus:text-[var(--text-inverse)] transition-colors gap-2"
+              onSelect={() => setPasswordOpen(true)}
+            >
+              <KeyRound className="h-4 w-4 text-current" aria-hidden="true" />
+              Đổi mật khẩu
+            </DropdownMenuItem>
+          )}
 
           <DropdownMenuItem
             className="cursor-pointer mx-1 rounded-sm px-2 py-2 text-sm font-medium focus:bg-[var(--text-primary)] focus:text-[var(--text-inverse)] transition-colors gap-2"
@@ -199,7 +215,8 @@ export function UserProfileDropdown({
               setTheme(isDark ? "light" : "dark");
             }}
           >
-            {isDark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
+            {/* text-current: icons follow the item's text colour, so they stay visible on the dark hover background. */}
+            {isDark ? <Sun className="h-4 w-4 text-current" aria-hidden="true" /> : <Moon className="h-4 w-4 text-current" aria-hidden="true" />}
             {isDark ? "Giao diện sáng" : "Giao diện tối"}
           </DropdownMenuItem>
           
@@ -224,5 +241,7 @@ export function UserProfileDropdown({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    {!hasProfilePage && <ChangePasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />}
+    </>
   );
 }

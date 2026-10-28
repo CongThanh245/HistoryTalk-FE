@@ -8,6 +8,7 @@ import { useGamificationToday } from "@/features/gamification/hooks";
 import { useEntitlements } from "@/features/saas/entitlements";
 import { DailyQuestsCard } from "@/components/home/daily-quests-card";
 import { cn } from "@/lib/utils/cn";
+import { Role } from "@/constants/roles";
 import { celebrate } from "@/lib/celebrate";
 
 const CELEBRATED_KEY = "ht-streak-celebrated";
@@ -16,9 +17,12 @@ const MILESTONES = [3, 7, 14, 30, 50, 100, 200, 365];
 /** Streak + today's quests as a header chip; the full card opens in a popover from any page. */
 export function HeaderStreak() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  // Streaks and quests are for learners only: staff, school admins and teachers don't study here.
+  const role = useAuthStore((s) => s.user?.role);
+  const isLearner = role === Role.CUSTOMER || role === Role.SCHOOL_STUDENT;
   // Gamification is customer-only — school accounts get a 403, so hide it like the card does.
   const isSchoolAccount = useEntitlements().mode === "B2B";
-  const { data } = useGamificationToday({ enabled: !isSchoolAccount });
+  const { data } = useGamificationToday({ enabled: !isSchoolAccount && isLearner });
   const chipRef = useRef<HTMLButtonElement>(null);
 
   // The first time today's study is recorded, the chip bursts and the companion cheers (once per day).
@@ -44,7 +48,7 @@ export function HeaderStreak() {
     chip.classList.add("streak-burst");
   }, [data?.studiedToday, data?.date, data?.streakCount]);
 
-  if (!isAuthenticated || isSchoolAccount || !data) return null;
+  if (!isAuthenticated || isSchoolAccount || !isLearner || !data) return null;
 
   const quests = Array.isArray(data.quests) ? data.quests : [];
   const doneCount = quests.filter((q) => q.completed).length;
