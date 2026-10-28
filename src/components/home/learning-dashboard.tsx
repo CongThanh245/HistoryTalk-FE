@@ -1,262 +1,192 @@
 "use client";
 
-import { Coins, Sparkles, Trophy } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useMemo, type ReactNode } from "react";
+import { ArrowRight, CheckCircle2, Flame, MessagesSquare, Trophy } from "lucide-react";
 import { ArchiveHeading } from "@/components/commons/archive-heading";
+import { ROUTES } from "@/constants/routes";
+import { useChatHistory } from "@/features/chat/hooks";
 import { useMyDashboard } from "@/features/dashboard/hooks";
-import { useAuthStore } from "@/store/auth.store";
+import { useGamificationToday } from "@/features/gamification/hooks";
 import { useEntitlements } from "@/features/saas/entitlements";
-import { useTodayQuota } from "@/features/saas/quota-bonus";
-import { mapEraLabel } from "@/constants/eras";
-import type { DashboardTopCharacter } from "@/services/dashboard.service";
+import { isValidUrl } from "@/lib/utils/url";
+import type { QuestType } from "@/services/gamification.service";
+import { useAuthStore } from "@/store/auth.store";
 
-// ── Skeleton ──────────────────────────────────────────────
-function DashboardSkeleton() {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-8 animate-pulse">
-      {[0, 1].map((i) => (
-        <div
-          key={i}
-          className="h-56 rounded-sm border bg-[var(--bg-surface)] border-[var(--text-primary)]"
-        />
-      ))}
-    </div>
-  );
+// Below this many quizzes an average score says more about luck than progress, so we don't show it.
+const MIN_QUIZZES_FOR_SCORE = 3;
+
+const QUEST_ROUTE: Record<QuestType, string> = {
+  CHAT: "/characters",
+  QUIZ: "/quiz",
+  READ_CONTEXT: "/events",
+};
+
+function TileSkeleton() {
+  return <div className="h-[104px] rounded-sm border border-border-card bg-[var(--bg-surface)] animate-pulse" />;
 }
 
-const numberFormat = (value: number) => value.toLocaleString("vi-VN");
-
-// Thứ tự thời gian cố định — quyết định độ đậm nhạt của dải màu (ordinal ramp),
-// không phụ thuộc vào thứ tự xuất hiện trong dữ liệu trả về.
-const ERA_ORDER = ["ANCIENT", "MEDIEVAL", "MODERN", "CONTEMPORARY"];
-const ERA_RAMP_STEPS = [42, 61, 80, 100];
-
-function eraColor(era: string): string {
-  const idx = ERA_ORDER.indexOf(era.toUpperCase());
-  const pct = ERA_RAMP_STEPS[idx] ?? 100;
-  return `color-mix(in srgb, var(--gold-on-light) ${pct}%, var(--card-light-border))`;
-}
-
-// ── Score meter (radial) ────────────────────────────────────
-function ScoreMeter({ percentage, totalQuizzes }: { percentage: number; totalQuizzes: number }) {
-  const color =
-    percentage >= 70
-      ? "var(--status-success)"
-      : percentage >= 40
-        ? "var(--status-warning)"
-        : "var(--accent-danger)";
-  const label = percentage >= 70 ? "Tốt" : percentage >= 40 ? "Khá" : "Cần cố gắng";
-
-  return (
-    <div className="flex items-center gap-4 mb-4">
-      <div
-        className="relative shrink-0 rounded-full w-[84px] h-[84px]"
-        style={{
-          background: `conic-gradient(${color} ${percentage * 3.6}deg, var(--card-light-border) 0deg)`,
-        }}
-      >
-        <div className="absolute inset-2.25 rounded-full flex items-center justify-center bg-[var(--bg-surface)]">
-          <span className="font-display text-2xl font-extrabold text-content-text">
-            {percentage}%
-          </span>
+/** One "pick up where you left off" tile: what it is, one line of status, one action. */
+function Tile({
+  icon,
+  eyebrow,
+  title,
+  meta,
+  href,
+  cta,
+}: {
+  icon: ReactNode;
+  eyebrow: string;
+  title: string;
+  meta: string;
+  href?: string;
+  cta?: string;
+}) {
+  const body = (
+    <>
+      <div className="flex items-center gap-3 min-w-0">
+        {icon}
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-content-muted">{eyebrow}</p>
+          <p className="mt-0.5 truncate text-[15px] font-semibold text-content-heading">{title}</p>
+          <p className="truncate text-xs text-content-muted">{meta}</p>
         </div>
       </div>
-      <div>
-        <span
-          className="inline-flex items-center text-[11px] font-bold uppercase tracking-[0.1em] px-2 py-0.5 rounded-sm"
-          style={{ background: `color-mix(in srgb, ${color} 15%, transparent)`, color }}
-        >
-          {label}
+      {href && cta && (
+        <span className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--accent-gold)]">
+          {cta}
+          <ArrowRight className="h-3.5 w-3.5 transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden="true" />
         </span>
-        <p className="text-xs mt-1.5 text-content-muted">
-          Điểm trung bình · {totalQuizzes} bài đã làm
-        </p>
-      </div>
-    </div>
+      )}
+    </>
+  );
+
+  const className =
+    "group flex min-w-0 flex-col justify-between rounded-sm border border-border-card bg-[var(--bg-surface)] p-4 transition-colors duration-150";
+
+  return href ? (
+    <Link href={href} className={`${className} hover:border-[var(--border-strong)] hover:bg-[var(--bg-elevated)]`}>
+      {body}
+    </Link>
+  ) : (
+    <div className={className}>{body}</div>
   );
 }
 
-// ── Segmented part-to-whole bar ─────────────────────────────
-function SegmentBar({ segments }: { segments: { label: string; value: number; color: string }[] }) {
-  const shown = segments.filter((s) => s.value > 0);
-  const total = shown.reduce((sum, s) => sum + s.value, 0) || 1;
-
+function IconBadge({ children }: { children: ReactNode }) {
   return (
-    <div>
-      <div className="flex h-2.5 w-full overflow-hidden gap-0.5 bg-[var(--bg-surface)]">
-        {shown.map((s) => (
-          <div key={s.label} style={{ width: `${(s.value / total) * 100}%`, background: s.color }} />
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
-        {shown.map((s) => (
-          <div key={s.label} className="flex items-center gap-1.5">
-            <span className="w-2 h-2 shrink-0" style={{ background: s.color }} />
-            <span className="text-[11px] text-content-muted">
-              {s.label}{" "}
-              <span className="font-semibold text-content-text">
-                {numberFormat(s.value)}
-              </span>
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-[var(--accent-gold-active-bg)] text-[var(--accent-gold)]">
+      {children}
+    </span>
   );
 }
 
-// ── Ranked bar list ──────────────────────────────────────────
-function RankedBars({ items }: { items: DashboardTopCharacter[] }) {
-  const max = Math.max(1, ...items.map((c) => c.messageCount));
-
-  return (
-    <div className="space-y-2.5">
-      {items.map((character, i) => (
-        <div key={character.characterId} className="flex items-center gap-2.5">
-          <span
-            className={`w-5 h-5 shrink-0 rounded-sm flex items-center justify-center text-micro font-bold ${
-              i === 0 ? "bg-[var(--text-primary)] text-[var(--text-inverse)]" : "bg-card-light-border text-content-muted"
-            }`}
-          >
-            {i + 1}
-          </span>
-          <span className="text-xs w-20 shrink-0 truncate text-content-text">
-            {character.name}
-          </span>
-          <div className="flex-1 h-2 overflow-hidden bg-card-light-border">
-            <div
-              className="h-full bg-gold-on-light"
-              style={{ width: `${(character.messageCount / max) * 100}%` }}
-            />
-          </div>
-          <span className="text-[11px] w-8 text-right shrink-0 text-content-muted">
-            {character.messageCount}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Main component ────────────────────────────────────────
 export function LearningDashboard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const { data, isLoading } = useMyDashboard();
-  // School accounts have no personal tier / wallet: show today's school quota instead.
-  const { mode } = useEntitlements();
-  const todayQuota = useTodayQuota();
-  const isSchoolAccount = mode === "B2B";
+  // Gamification is customer-only — school accounts get a 403, so they don't get the quest tile.
+  const isSchoolAccount = useEntitlements().mode === "B2B";
+  const { data: dashboard, isLoading: dashboardLoading } = useMyDashboard();
+  const { data: chatGroups = [], isLoading: chatLoading } = useChatHistory();
+  const { data: today } = useGamificationToday({ enabled: !isSchoolAccount });
+
+  const lastSession = useMemo(
+    () =>
+      chatGroups
+        .flatMap((group) => group.sessions)
+        .sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())[0],
+    [chatGroups],
+  );
 
   if (!isAuthenticated) return null;
-  if (isLoading || !data) return <DashboardSkeleton />;
 
-  const { learning, aiUsage } = data;
-  const hasQuizData = learning.totalQuizzesAttempted > 0;
-  const eraEntries = Object.entries(learning.eraDistribution).sort(
-    ([a], [b]) => ERA_ORDER.indexOf(a.toUpperCase()) - ERA_ORDER.indexOf(b.toUpperCase()),
-  );
-  const hasLearningCard = hasQuizData || eraEntries.length > 0;
-  const hasTokenUsage = aiUsage.totalTokensUsed > 0;
-  const hasTopCharacters = aiUsage.topCharacters.length > 0;
+  if (dashboardLoading || chatLoading) {
+    return (
+      <section>
+        <ArchiveHeading title="Tiếp tục hành trình" />
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+          {[0, 1, 2].map((i) => <TileSkeleton key={i} />)}
+        </div>
+      </section>
+    );
+  }
 
-  if (!hasLearningCard && !hasTokenUsage && !hasTopCharacters && aiUsage.currentBalance === 0) return null;
+  const quizCount = dashboard?.learning.totalQuizzesAttempted ?? 0;
+
+  // Brand-new users have nothing to continue yet: the banner above is their starting point.
+  if (!lastSession && quizCount === 0) return null;
+
+  const quests = Array.isArray(today?.quests) ? today.quests : [];
+  const doneCount = quests.filter((q) => q.completed).length;
+  const nextQuest = quests.find((q) => !q.completed);
+  const showQuestTile = !isSchoolAccount && quests.length > 0;
 
   return (
     <section>
-      <ArchiveHeading label="Hoạt động" title="Hoạt động của bạn" />
+      <ArchiveHeading title="Tiếp tục hành trình" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-8 items-start">
-        {/* Learning card */}
-        {hasLearningCard && (
-          <div className="p-4 md:p-5 rounded-sm border bg-[var(--bg-surface)] border-[var(--text-primary)]">
-            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[var(--border-default)]">
-              <Trophy className="w-4 h-4 text-gold-on-light" />
-              <h3 className="font-display text-xl font-extrabold uppercase text-content-heading">
-                Kết quả học tập
-              </h3>
-            </div>
-
-            {hasQuizData && (
-              <ScoreMeter percentage={learning.averageScorePercentage} totalQuizzes={learning.totalQuizzesAttempted} />
-            )}
-
-            {eraEntries.length > 0 && (
-              <div>
-                <p className="text-xs font-medium mb-2 text-content-muted">
-                  Phân bố theo thời kỳ
-                </p>
-                <SegmentBar
-                  segments={eraEntries.map(([era, count]) => ({
-                    label: mapEraLabel(era),
-                    value: count,
-                    color: eraColor(era),
-                  }))}
+      <div className={`grid grid-cols-1 gap-3 md:gap-4 ${showQuestTile ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+        {lastSession ? (
+          <Tile
+            icon={
+              <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-sm bg-[var(--bg-deep)]">
+                <Image
+                  src={isValidUrl(lastSession.characterImage) ? lastSession.characterImage : "/card.jpg"}
+                  alt=""
+                  fill
+                  sizes="40px"
+                  className="object-cover object-top"
                 />
-              </div>
-            )}
-          </div>
+              </span>
+            }
+            eyebrow="Trò chuyện gần nhất"
+            title={lastSession.characterName}
+            meta={`${lastSession.messageCount} tin nhắn · ${lastSession.contextName}`}
+            href={`/chat/${lastSession.characterId}?contextId=${lastSession.contextId}&sessionId=${lastSession.id}`}
+            cta="Trò chuyện tiếp"
+          />
+        ) : (
+          <Tile
+            icon={<IconBadge><MessagesSquare className="h-5 w-5" aria-hidden="true" /></IconBadge>}
+            eyebrow="Trò chuyện"
+            title="Chưa có cuộc trò chuyện"
+            meta="Gặp một nhân vật để bắt đầu"
+            href="/characters"
+            cta="Chọn nhân vật"
+          />
         )}
 
-        {/* AI usage card */}
-        <div
-          className={`p-4 md:p-5 rounded-sm border bg-[var(--bg-surface)] border-[var(--text-primary)] ${!hasLearningCard ? "lg:col-span-2" : ""}`}
-        >
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[var(--border-default)]">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[var(--accent-teal)]" />
-              <h3 className="font-display text-xl font-extrabold uppercase text-content-heading">
-                Token đã sử dụng
-              </h3>
-            </div>
-            {!isSchoolAccount && aiUsage.tier && (
-              <span className="text-[11px] font-bold tracking-[0.1em] px-2 py-0.5 rounded-sm uppercase bg-[var(--text-primary)] text-[var(--text-inverse)]">
-                {aiUsage.tier}
-              </span>
-            )}
-          </div>
+        <Tile
+          icon={<IconBadge><Trophy className="h-5 w-5" aria-hidden="true" /></IconBadge>}
+          eyebrow="Câu đố"
+          title={quizCount > 0 ? `${quizCount} bài đã làm` : "Chưa làm bài nào"}
+          meta={
+            quizCount >= MIN_QUIZZES_FOR_SCORE
+              ? `Điểm trung bình ${dashboard?.learning.averageScorePercentage ?? 0}%`
+              : "Làm thêm vài bài để xem tiến độ"
+          }
+          href={quizCount >= MIN_QUIZZES_FOR_SCORE ? ROUTES.GRADES : "/quiz"}
+          cta={quizCount >= MIN_QUIZZES_FOR_SCORE ? "Xem tiến độ" : "Làm câu đố"}
+        />
 
-          <div className="flex items-center gap-2 mb-4">
-            <Coins className="w-5 h-5 shrink-0 text-gold-on-light" />
-            <div>
-              <p className="font-display text-3xl font-extrabold leading-none text-content-text">
-                {isSchoolAccount && todayQuota
-                  ? numberFormat(todayQuota.remaining)
-                  : numberFormat(aiUsage.currentBalance)}
-              </p>
-              <p className="text-[11px] text-content-muted">
-                {isSchoolAccount && todayQuota
-                  ? `Hạn mức hôm nay còn lại / ${numberFormat(todayQuota.quota)} · reset 00:00`
-                  : "Token còn lại"}
-              </p>
-            </div>
-          </div>
-
-          {hasTokenUsage && (
-            <div className="mb-4">
-              <p className="text-xs font-medium mb-2 text-content-muted">
-                Prompt / Completion
-              </p>
-              <SegmentBar
-                segments={[
-                  {
-                    label: "Prompt",
-                    value: aiUsage.promptTokens,
-                    color: "color-mix(in srgb, var(--gold-on-light) 55%, var(--card-light-border))",
-                  },
-                  { label: "Completion", value: aiUsage.completionTokens, color: "var(--gold-on-light)" },
-                ]}
-              />
-            </div>
-          )}
-
-          {hasTopCharacters && (
-            <div>
-              <p className="text-xs font-medium mb-2 text-content-muted">
-                Nhân vật trò chuyện nhiều nhất
-              </p>
-              <RankedBars items={aiUsage.topCharacters.slice(0, 3)} />
-            </div>
-          )}
-        </div>
+        {showQuestTile && (
+          <Tile
+            icon={
+              <IconBadge>
+                {nextQuest ? <Flame className="h-5 w-5" aria-hidden="true" /> : <CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
+              </IconBadge>
+            }
+            eyebrow={`Nhiệm vụ hôm nay · ${doneCount}/${quests.length}`}
+            title={nextQuest ? nextQuest.title : "Đã hoàn thành hết"}
+            meta={
+              nextQuest
+                ? `${nextQuest.progress}/${nextQuest.target} · chuỗi ${today?.streakCount ?? 0} ngày`
+                : `Chuỗi ${today?.streakCount ?? 0} ngày · nhận thưởng ở biểu tượng 🔥`
+            }
+            href={nextQuest ? QUEST_ROUTE[nextQuest.type] : undefined}
+            cta={nextQuest ? "Làm ngay" : undefined}
+          />
+        )}
       </div>
     </section>
   );

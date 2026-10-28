@@ -31,7 +31,6 @@ export function HomeBanner() {
 
   return (
     <section className="home-banner-stage" aria-label="Khám phá HistoryTalk">
-      <div className="home-banner-ornament" aria-hidden="true" />
       <div className="home-banner-inner">
 
         <div className="home-banner-content">
@@ -62,7 +61,7 @@ export function HomeBanner() {
               <div className="home-banner-heroes">
                 {heroes.map((hero, index) => (
                   <button type="button" key={hero.src} className={`home-banner-hero ${index === activeIndex ? "is-active" : ""}`} aria-label={`Chọn ${hero.name}`} aria-pressed={index === activeIndex} onClick={() => setActiveIndex(index)}>
-                    <span className="home-banner-hero-image"><Image src={hero.src} alt="" width={84} height={99} sizes="(max-width: 640px) 64px, 84px" className="home-banner-hero-thumbnail archive-photo" /></span>
+                    <span className="home-banner-hero-image"><Image src={hero.src} alt="" width={120} height={141} sizes="(max-width: 640px) 90px, 120px" loading="eager" className="home-banner-hero-thumbnail archive-photo" /></span>
                     <span className="home-banner-hero-name">{hero.name}</span>
                   </button>
                 ))}
