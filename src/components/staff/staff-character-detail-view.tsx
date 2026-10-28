@@ -15,6 +15,8 @@ import {
   Image as ImageIcon,
   Video as VideoIcon,
   Box as CubeIcon,
+  CircleCheck as CheckIcon,
+  CircleAlert as AlertIcon,
 } from "lucide-react";
 import {
   Sheet,
@@ -59,7 +61,7 @@ import type { EventEraBackend } from "@/services/event.service";
 import { toast } from "sonner";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import { hasValidationErrors, validateContextDraft } from "@/lib/utils/content-validation";
-import { FORM_TABS, type StaffCharacterDetailViewProps } from "./staff-character-detail-view.types";
+import { FORM_TABS, type FormTabKey, type StaffCharacterDetailViewProps } from "./staff-character-detail-view.types";
 import { useStaffCharacterDetailView } from "./use-staff-character-detail-view";
 
 export type { CharacterDraft } from "./staff-character-detail-view.types";
@@ -84,6 +86,12 @@ function ValidationErrorText({ message }: { message?: string }) {
       {message}
     </p>
   ) : null;
+}
+
+/** "10/9/1385", "1385 TCN", or "" — whatever parts of the date are known. */
+function formatLifeDate(day: string, month: string, year: string, isBc: boolean) {
+  if (!year) return "";
+  return [day, month, year].filter(Boolean).join("/") + (isBc ? " TCN" : "");
 }
 
 /* ------------------------------------------------------------------ */
@@ -251,8 +259,34 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     }
   };
 
+  const bornText = formatLifeDate(draft.bornDay, draft.bornMonth, draft.bornYear, draft.isBornBc);
+  const deathText = formatLifeDate(draft.deathDay, draft.deathMonth, draft.deathYear, draft.isDeathBc);
+  const lifeSpan = bornText || deathText ? `${bornText || "?"} – ${deathText || "?"}` : "";
+  const lifeSpanYears =
+    draft.bornYear || draft.deathYear
+      ? `${draft.bornYear || "?"}${draft.isBornBc ? " TCN" : ""} – ${draft.deathYear || "?"}${draft.isDeathBc ? " TCN" : ""}`
+      : "";
+
+  // Counts on the tabs let staff see how complete a character is without opening each tab.
+  const tabCounts: Partial<Record<FormTabKey, number>> =
+    mode === "edit" && !isLoadingDocuments ? { rag: documents.length, context: mappedContexts.length } : {};
+
+  const documentCount = mode === "edit" ? documents.length : draft.documentContent?.trim() ? 1 : 0;
+  const checklist: { label: string; done: boolean; tab: FormTabKey }[] = [
+    { label: "Ảnh nhân vật", done: !!draft.image || !!pendingImageFile, tab: "media" },
+    { label: "Mô hình 3D", done: !!draft.modelUrl || !!pendingModelFile, tab: "media" },
+    { label: "Tiểu sử", done: !!draft.background.trim(), tab: "content" },
+    { label: "Tính cách", done: !!draft.personality.trim(), tab: "content" },
+    { label: documentCount ? `${documentCount} tài liệu` : "Chưa có tài liệu", done: documentCount > 0, tab: "rag" },
+    {
+      label: mappedContexts.length ? `${mappedContexts.length} bối cảnh` : "Chưa liên kết bối cảnh",
+      done: mappedContexts.length > 0,
+      tab: "context",
+    },
+  ];
+
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-content)]">
+    <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-main)]">
       {/* ═══════ Header ═══════ */}
       <div
         className="flex items-center justify-between px-6 py-4 border-b shrink-0 border-[var(--border-default)]"
@@ -318,46 +352,14 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               </div>
               <p className="text-xs text-[var(--content-muted)]">
                 {mode === "create" && !isCreated
-                  ? "Điền thông tin bên trái, xem preview chat bên phải"
-                  : draft.title}
+                  ? "Điền thông tin bên trái, thử trò chuyện bên phải sau khi tạo"
+                  : [draft.title, lifeSpanYears].filter(Boolean).join(" · ")}
               </p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {isEditing && (
-            <>
-              {isCreated && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-sm bg-transparent border-border-card hover:bg-[var(--status-neutral-bg)] text-[var(--content-heading)] transition-colors"
-                  onClick={() => {
-                    if (isDirty) {
-                      setCancelDialogOpen(true);
-                    } else {
-                      setIsEditing(false);
-                    }
-                  }}
-                >
-                  Hủy chỉnh sửa
-                </Button>
-              )}
-              <Button
-                size="sm"
-                onClick={handleSaveClick}
-                disabled={!canSave}
-                className="border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] font-semibold transition-all duration-200 cursor-pointer"
-              >
-                {isPending
-                  ? "Đang lưu..."
-                  : isCreated
-                    ? "Lưu thay đổi"
-                    : "Tạo nhân vật"}
-              </Button>
-            </>
-          )}
           {isCreated && !isEditing && (
             <Button
               variant="outline"
@@ -412,15 +414,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             onValueChange={(v) => setActiveTab(v as typeof activeTab)}
             className="flex flex-col h-full min-h-0 gap-0"
           >
-            <div
-              className="px-6 pt-6 pb-4 border-b shrink-0 border-[var(--card-light-border)]"
-            >
-              <p className="mb-3 text-sm font-semibold text-[var(--content-heading)]">
-                Thông tin nhân vật
-              </p>
-
+            <div className="px-6 border-b shrink-0 border-[var(--card-light-border)]">
               <TabsList
-                className="flex h-10 w-full justify-start gap-5 overflow-x-auto p-0 [scrollbar-width:none]"
+                className="flex h-11 w-full justify-start gap-5 overflow-x-auto py-0 px-0 [scrollbar-width:none]"
               >
                 {FORM_TABS.map((tab) => (
                   <TabsTrigger
@@ -429,9 +425,12 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     className="relative shrink-0 px-0.5 text-sm"
                   >
                     {tab.label}
+                    {tabCounts[tab.key] != null && (
+                      <span className="ml-1 text-xs font-normal text-[var(--content-muted)]">({tabCounts[tab.key]})</span>
+                    )}
                     {tabHasError(tab.key) && (
                       <span
-                        className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full bg-[var(--accent-danger)]"
+                        className="absolute top-1 -right-1.5 h-1.5 w-1.5 rounded-full bg-[var(--accent-danger)]"
                       />
                     )}
                   </TabsTrigger>
@@ -441,6 +440,21 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
             <div className="flex-1 px-6 py-6 space-y-5 overflow-y-auto">
               <TabsContent value="basic" className="mt-0 space-y-5">
+                {!isEditing ? (
+                  // View mode reads as plain text — disabled inputs looked broken and were hard to read.
+                  <dl className="grid gap-5 sm:grid-cols-2">
+                    {[
+                      { label: "Chức vị", value: draft.title },
+                      { label: "Sinh – mất", value: lifeSpan },
+                    ].map((item) => (
+                      <div key={item.label} className="min-w-0">
+                        <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--content-muted)]">{item.label}</dt>
+                        <dd className="mt-1 text-[15px] font-medium text-[var(--content-heading)]">{item.value || "—"}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : (
+              <div className="space-y-5">
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
@@ -546,6 +560,34 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     <ValidationErrorText message={errors.deathDay || errors.deathMonth || errors.deathYear} />
                   </div>
                 </div>
+              </div>
+                )}
+
+                <div className="border-t pt-5 border-[var(--card-light-border)]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--content-muted)]">
+                    Tình trạng nội dung
+                  </p>
+                  <ul className="mt-3 grid gap-1 sm:grid-cols-2">
+                    {checklist.map((item) => (
+                      <li key={item.label + item.tab}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab(item.tab)}
+                          className="flex w-full items-center gap-2 rounded-sm px-1.5 py-1 text-left text-sm transition-colors hover:bg-[var(--status-neutral-bg)]"
+                        >
+                          {item.done ? (
+                            <CheckIcon className="h-4 w-4 shrink-0 text-[var(--status-success)]" aria-label="Đã có" />
+                          ) : (
+                            <AlertIcon className="h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-label="Còn thiếu" />
+                          )}
+                          <span className={item.done ? "text-[var(--content-heading)]" : "text-[var(--content-muted)]"}>
+                            {item.label}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </TabsContent>
 
               <TabsContent value="media" className="mt-0 space-y-5">
@@ -613,6 +655,22 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               </TabsContent>
 
               <TabsContent value="content" className="mt-0 space-y-5">
+                {!isEditing ? (
+                  <dl className="space-y-6">
+                    {[
+                      { label: "Tiểu sử / Bối cảnh", value: draft.background },
+                      { label: "Tính cách", value: draft.personality },
+                    ].map((item) => (
+                      <div key={item.label}>
+                        <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--content-muted)]">{item.label}</dt>
+                        <dd className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-[var(--content-heading)]">
+                          {item.value || "—"}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : (
+              <div className="space-y-5">
                 <div className="grid gap-1.5">
                   <StaffFormLabel>Tiểu sử / Bối cảnh *</StaffFormLabel>
                   <StaffFormTextarea
@@ -636,6 +694,8 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   />
                   <ValidationErrorText message={errors.personality} />
                 </div>
+              </div>
+                )}
               </TabsContent>
 
               <TabsContent value="rag" className="mt-0 space-y-3">
@@ -1233,11 +1293,51 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 )}
               </TabsContent>
             </div>
+
+            {/* Save bar — pinned to the bottom of the form column, so Save is always in reach while editing. */}
+            {isEditing && (
+              <div className="flex shrink-0 items-center justify-between gap-3 border-t px-6 py-3 border-[var(--border-default)] bg-[var(--bg-main)]">
+                <p className="text-sm text-[var(--content-muted)]">
+                  {isDirty ? "Có thay đổi chưa lưu" : isCreated ? "Đang chỉnh sửa" : "Điền thông tin để tạo nhân vật"}
+                </p>
+                <div className="flex items-center gap-2">
+                  {isCreated && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-sm bg-transparent border-border-card hover:bg-[var(--status-neutral-bg)] hover:text-[var(--content-heading)] text-[var(--content-heading)] transition-colors"
+                      onClick={() => {
+                        if (isDirty) {
+                          setCancelDialogOpen(true);
+                        } else {
+                          setIsEditing(false);
+                        }
+                      }}
+                    >
+                      Hủy
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={handleSaveClick}
+                    disabled={!canSave}
+                    className="border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] font-semibold transition-all duration-200 cursor-pointer"
+                  >
+                    {isPending ? "Đang lưu..." : isCreated ? "Lưu thay đổi" : "Tạo nhân vật"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </Tabs>
         </div>
 
-        {/* ── Right Panel: Chat Preview ── */}
+        {/* ── Right Panel: test chat ── */}
         <div className="flex-1 flex flex-col min-w-0 relative bg-[var(--bg-app)]">
+          <div className="flex shrink-0 items-center gap-2 border-b px-6 py-2.5 border-[var(--border-default)] bg-[var(--bg-main)]">
+            <ChatCircleDotsIcon className="h-4 w-4 text-[var(--accent-gold)]" aria-hidden="true" />
+            <p className="text-sm font-semibold text-[var(--content-heading)]">Thử trò chuyện</p>
+            <p className="truncate text-xs text-[var(--content-muted)]">· Kiểm tra cách nhân vật trả lời theo nội dung đã lưu</p>
+          </div>
           {canStartChat ? (
             <ChatMain
               character={chatCharacter}

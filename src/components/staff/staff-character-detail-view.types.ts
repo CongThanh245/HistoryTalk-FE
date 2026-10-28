@@ -130,7 +130,7 @@ export const FORM_TABS: { key: FormTabKey; label: string }[] = [
   { key: "media", label: "Media" },
   { key: "content", label: "Nội dung" },
   { key: "rag", label: "Tài liệu" },
-  { key: "context", label: "Liên kết bối cảnh" },
+  { key: "context", label: "Bối cảnh" },
 ];
 
 export const TAB_ERROR_FIELDS: Record<FormTabKey, CharacterValidationField[]> = {

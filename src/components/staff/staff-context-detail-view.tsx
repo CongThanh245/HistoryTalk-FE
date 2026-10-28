@@ -15,6 +15,8 @@ import {
   Unlink as LinkBreakIcon,
   Search as MagnifyingGlassIcon,
   ScrollText as ScrollIcon,
+  CircleCheck as CheckIcon,
+  CircleAlert as AlertIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,7 +37,7 @@ import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import { isValidUrl } from "@/lib/utils/url";
 import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
 import { toast } from "sonner";
-import { FORM_TABS, type StaffContextDetailViewProps } from "./staff-context-detail-view.types";
+import { FORM_TABS, type FormTabKey, type StaffContextDetailViewProps } from "./staff-context-detail-view.types";
 import { useStaffContextDetailView } from "./use-staff-context-detail-view";
 
 export type { ContextDraft } from "./staff-context-detail-view.types";
@@ -233,13 +235,43 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     (tab) => (tab.key !== "characters" && tab.key !== "map") || mode === "edit",
   );
 
+  const eraLabel = ERA_OPTIONS.find((option) => option.value === draft.era)?.label;
+  const subtitle =
+    mode === "create" && !isCreated
+      ? "Điền thông tin cơ bản, thêm ảnh/video ở tab Media"
+      : [draft.location, eraLabel, draft.year].filter(Boolean).join(" · ") || "—";
+
+  // Counts on the tabs let staff see how complete a context is without opening each tab.
+  const tabCounts: Partial<Record<FormTabKey, number>> =
+    mode === "edit" && !isLoadingDocuments && !isLoadingCharactersInContext
+      ? { rag: documents.length, characters: charactersInContext.length }
+      : {};
+
+  const documentCount = mode === "edit" ? documents.length : draft.documentContent.trim() ? 1 : 0;
+  const checklist: { label: string; done: boolean; tab: FormTabKey }[] = [
+    { label: "Mô tả", done: draft.description.trim().length > 0, tab: "basic" },
+    { label: "Ảnh bìa", done: !!draft.imageUrl || !!pendingImageFile, tab: "media" },
+    { label: "Video", done: !!draft.videoUrl || !!pendingVideoFile, tab: "media" },
+    { label: documentCount ? `${documentCount} tài liệu` : "Chưa có tài liệu", done: documentCount > 0, tab: "rag" },
+    ...(mode === "edit"
+      ? [{
+          label: charactersInContext.length ? `${charactersInContext.length} nhân vật` : "Chưa gắn nhân vật",
+          done: charactersInContext.length > 0,
+          tab: "characters" as const,
+        }]
+      : []),
+  ];
+
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-content)]">
-      {/* ═══════ Header ═══════ */}
-      <div
-        className="flex items-center justify-between px-6 py-4 border-b shrink-0 border-[var(--border-default)]"
-      >
-        <div className="flex items-center gap-4">
+    <Tabs
+      value={activeTab}
+      onValueChange={(v) => setActiveTab(v as typeof activeTab)}
+      className="flex min-h-full flex-col gap-0 bg-[var(--bg-main)]"
+    >
+      {/* ═══════ Header + tabs — pinned while the page itself scrolls (one scrollbar, no nested panes) ═══════ */}
+      <div className="sticky top-0 z-20 border-b border-[var(--border-default)] bg-[var(--bg-main)]">
+      <div className="flex items-center justify-between gap-4 px-6 pt-4 pb-2">
+        <div className="flex min-w-0 items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
@@ -289,44 +321,12 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   />
                 )}
               </div>
-              <p className="text-xs text-[var(--content-muted)]">
-                {mode === "create" && !isCreated
-                  ? "Điền thông tin bên trái, xem preview ảnh/video bên phải"
-                  : draft.location || "—"}
-              </p>
+              <p className="truncate text-xs text-[var(--content-muted)]">{subtitle}</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {isEditing && (
-            <>
-              {isCreated && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-sm bg-transparent border-border-card hover:bg-[var(--status-neutral-bg)] text-[var(--content-heading)] transition-colors"
-                  onClick={() => {
-                    if (isDirty) {
-                      setCancelDialogOpen(true);
-                    } else {
-                      setIsEditing(false);
-                    }
-                  }}
-                >
-                  Hủy chỉnh sửa
-                </Button>
-              )}
-              <Button
-                size="sm"
-                onClick={handleSaveClick}
-                disabled={!canSave}
-                className="border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] font-semibold transition-all duration-200 cursor-pointer"
-              >
-                {isPending ? pendingLabel || "Đang lưu..." : isCreated ? "Lưu thay đổi" : "Tạo bối cảnh"}
-              </Button>
-            </>
-          )}
+        <div className="flex shrink-0 items-center gap-2">
           {isCreated && !isEditing && (
             <Button
               variant="outline"
@@ -339,6 +339,21 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             </Button>
           )}
         </div>
+      </div>
+
+      <TabsList className="flex h-11 w-full justify-start gap-6 overflow-x-auto px-6 py-0 [scrollbar-width:none]">
+        {visibleTabs.map((tab) => (
+          <TabsTrigger key={tab.key} value={tab.key} className="relative shrink-0 px-0.5 text-sm">
+            {tab.label}
+            {tabCounts[tab.key] != null && (
+              <span className="ml-1 text-xs font-normal text-[var(--content-muted)]">({tabCounts[tab.key]})</span>
+            )}
+            {tabHasError(tab.key) && (
+              <span className="absolute top-1 -right-1.5 h-1.5 w-1.5 rounded-full bg-[var(--accent-danger)]" />
+            )}
+          </TabsTrigger>
+        ))}
+      </TabsList>
       </div>
 
       <ConfirmDialog
@@ -369,46 +384,34 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         }}
       />
 
-      {/* ═══════ Body — two columns ═══════ */}
-      <div className="flex-1 flex min-h-0">
-        {/* ── Left Panel: Form ── */}
-        <div
-          className="w-[600px] shrink-0 border-r overflow-hidden flex flex-col border-[var(--card-light-border)]"
-        >
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as typeof activeTab)}
-            className="flex flex-col h-full min-h-0 gap-0"
-          >
-            <div
-              className="px-6 pt-6 pb-4 shrink-0 border-b border-[var(--card-light-border)]"
-            >
-              <p className="text-sm font-semibold mb-3 text-[var(--content-heading)]">
-                Thông tin bối cảnh
-              </p>
-
-              <TabsList
-                className="flex h-10 w-full justify-start gap-5 overflow-x-auto p-0 [scrollbar-width:none]"
-              >
-                {visibleTabs.map((tab) => (
-                  <TabsTrigger
-                    key={tab.key}
-                    value={tab.key}
-                    className="relative shrink-0 px-0.5 text-sm"
-                  >
-                    {tab.label}
-                    {tabHasError(tab.key) && (
-                      <span
-                        className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full bg-[var(--accent-danger)]"
-                      />
-                    )}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-              <TabsContent value="basic" className="space-y-4 mt-0">
+      {/* ═══════ Body — content on the left, a pinned summary on the right ═══════ */}
+      <div className="mx-auto grid w-full max-w-[1280px] flex-1 items-start gap-6 px-6 py-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="min-w-0 rounded-sm border border-border-card bg-[var(--bg-surface)] p-5 md:p-6">
+              <TabsContent value="basic" className="mt-0">
+                {!isEditing ? (
+                  // View mode reads as plain text — disabled inputs looked broken and were hard to read.
+                  <dl className="space-y-6">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--content-muted)]">Mô tả</dt>
+                      <dd className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-[var(--content-heading)]">
+                        {draft.description || "—"}
+                      </dd>
+                    </div>
+                    <div className="grid gap-5 border-t border-[var(--card-light-border)] pt-5 sm:grid-cols-[1fr_1fr_2fr]">
+                      {[
+                        { label: "Thời đại", value: eraLabel },
+                        { label: "Năm", value: draft.year },
+                        { label: "Địa điểm", value: draft.location },
+                      ].map((item) => (
+                        <div key={item.label} className="min-w-0">
+                          <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--content-muted)]">{item.label}</dt>
+                          <dd className="mt-1 text-sm font-medium text-[var(--content-heading)]">{item.value || "—"}</dd>
+                        </div>
+                      ))}
+                    </div>
+                  </dl>
+                ) : (
+              <div className="space-y-4">
                 <div className="grid gap-1.5">
                   <StaffFormLabel>Tên bối cảnh *</StaffFormLabel>
                   <StaffFormInput
@@ -429,6 +432,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                       placeholder="Chọn thời đại"
                       options={ERA_OPTIONS}
                       disabled={!isEditing}
+                      className="w-full"
                     />
                     <ValidationErrorText message={errors.era} />
                   </div>
@@ -467,6 +471,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   />
                   <ValidationErrorText message={errors.location} />
                 </div>
+              </div>
+                )}
               </TabsContent>
 
               <TabsContent value="media" className="space-y-4 mt-0">
@@ -551,9 +557,65 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   )}
                 </MediaSlotField>
 
-                <p className="text-xs text-[var(--content-muted)]">
-                  Xem preview trực tiếp ở khung bên phải.
-                </p>
+                <div className="grid gap-4 border-t pt-4 border-[var(--card-light-border)] sm:grid-cols-2">
+                  <div className="min-w-0 overflow-hidden rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)]">
+                    <p className="border-b px-3 py-2 text-xs font-semibold border-[var(--card-light-border)] text-[var(--content-heading)]">
+                      Xem trước ảnh
+                    </p>
+                    <div className="group relative aspect-video bg-[var(--bg-deep)]">
+                      {isValidUrl(draft.imageUrl) ? (
+                        <>
+                          <Image src={draft.imageUrl} alt={draft.name || "Ảnh bối cảnh"} fill className="object-cover" sizes="400px" />
+                          <button
+                            type="button"
+                            onClick={() => setImageLightboxOpen(true)}
+                            className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+                            title="Xem đầy đủ ảnh"
+                          >
+                            <ArrowsOutIcon className="h-4 w-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <div className="flex h-full items-center justify-center px-4 text-center text-xs text-[var(--content-muted)]">
+                          Chưa có ảnh
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 overflow-hidden rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)]">
+                    <p className="border-b px-3 py-2 text-xs font-semibold border-[var(--card-light-border)] text-[var(--content-heading)]">
+                      Xem trước video
+                    </p>
+                    <div className="group relative aspect-video">
+                      {hasVideo && (
+                        <button
+                          type="button"
+                          onClick={() => setVideoLightboxOpen(true)}
+                          className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+                          title="Xem đầy đủ video"
+                        >
+                          <ArrowsOutIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                      {youtubeVideoEmbedUrl ? (
+                        <iframe
+                          src={youtubeVideoEmbedUrl}
+                          title="Video boi canh"
+                          className="h-full w-full bg-black"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      ) : draft.videoUrl ? (
+                        <video src={draft.videoUrl} controls className="h-full w-full object-contain bg-black" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center px-4 text-center text-xs text-[var(--content-muted)] bg-[var(--bg-deep)]">
+                          Chưa có video
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="rag" className="space-y-3 mt-0">
@@ -887,90 +949,108 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                 </div>
               </TabsContent>
             </div>
-          </Tabs>
-        </div>
 
-        {/* ── Right Panel: Media preview ── */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto p-6 gap-4 bg-[var(--bg-app)]">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div
-              className="flex-1 min-w-0 overflow-hidden rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)]"
-            >
-              <div className="border-b px-3 py-2 border-[var(--card-light-border)]">
-                <p className="text-xs font-semibold text-[var(--content-heading)]">
-                  Xem trước ảnh
-                </p>
-              </div>
-              <div className="group relative aspect-video max-h-48 bg-[var(--bg-deep)]">
-                {isValidUrl(draft.imageUrl) ? (
-                  <>
-                    <Image src={draft.imageUrl} alt={draft.name || "Ảnh bối cảnh"} fill className="object-contain" sizes="300px" />
-                    <button
-                      type="button"
-                      onClick={() => setImageLightboxOpen(true)}
-                      className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
-                      title="Xem đầy đủ ảnh"
-                    >
-                      <ArrowsOutIcon className="h-4 w-4" />
-                    </button>
-                  </>
-                ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-center px-4 text-[var(--content-muted)]">
-                    Dán URL ảnh hợp lệ ở tab Media để xem trước
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* ── Right: cover + content checklist, pinned under the sticky header ── */}
+        <aside className="space-y-4 lg:sticky lg:top-[124px]">
+          <div className="group relative aspect-video overflow-hidden rounded-sm bg-[var(--bg-deep)]">
+            {isValidUrl(draft.imageUrl) ? (
+              <button
+                type="button"
+                onClick={() => setImageLightboxOpen(true)}
+                className="absolute inset-0 cursor-zoom-in"
+                title="Xem đầy đủ ảnh"
+              >
+                <Image src={draft.imageUrl} alt={draft.name || "Ảnh bối cảnh"} fill className="object-cover" sizes="300px" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setActiveTab("media")}
+                className="flex h-full w-full items-center justify-center gap-1.5 text-xs text-[var(--content-muted)]"
+              >
+                <ImageIcon className="h-4 w-4" /> Chưa có ảnh bìa
+              </button>
+            )}
+          </div>
 
-            <div
-              className="flex-1 min-w-0 overflow-hidden rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)]"
-            >
-              <div className="border-b px-3 py-2 border-[var(--card-light-border)]">
-                <p className="text-xs font-semibold text-[var(--content-heading)]">
-                  Xem trước video
-                </p>
-              </div>
-              <div className="group relative aspect-video max-h-48">
-                {hasVideo && (
+          <div className="rounded-sm border border-border-card bg-[var(--bg-surface)] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--content-muted)]">
+              Tình trạng nội dung
+            </p>
+            <ul className="mt-3 space-y-1">
+              {checklist.map((item) => (
+                <li key={item.label + item.tab}>
                   <button
                     type="button"
-                    onClick={() => setVideoLightboxOpen(true)}
-                    className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
-                    title="Xem đầy đủ video"
+                    onClick={() => setActiveTab(item.tab)}
+                    className="flex w-full items-center gap-2 rounded-sm px-1.5 py-1 text-left text-sm transition-colors hover:bg-[var(--status-neutral-bg)]"
                   >
-                    <ArrowsOutIcon className="h-4 w-4" />
+                    {item.done ? (
+                      <CheckIcon className="h-4 w-4 shrink-0 text-[var(--status-success)]" aria-label="Đã có" />
+                    ) : (
+                      <AlertIcon className="h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-label="Còn thiếu" />
+                    )}
+                    <span className={item.done ? "text-[var(--content-heading)]" : "text-[var(--content-muted)]"}>
+                      {item.label}
+                    </span>
                   </button>
-                )}
-                {youtubeVideoEmbedUrl ? (
-                  <iframe
-                    src={youtubeVideoEmbedUrl}
-                    title="Video boi canh"
-                    className="h-full w-full bg-black"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                  />
-                ) : draft.videoUrl ? (
-                  <video src={draft.videoUrl} controls className="h-full w-full object-contain bg-black" />
-                ) : (
-                  <div className="flex h-full items-center justify-center px-4 text-center text-xs text-[var(--content-muted)]">
-                    Tải lên file video (.mp4) ở tab Media để xem trước
-                  </div>
-                )}
-              </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      {/* ═══════ Save bar — always in reach while editing, however long the tab is ═══════ */}
+      {isEditing && (
+        <div className="sticky bottom-0 z-20 border-t border-[var(--border-default)] bg-[var(--bg-main)]">
+          <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between gap-3 px-6 py-3">
+            <p className="text-sm text-[var(--content-muted)]">
+              {isDirty ? "Có thay đổi chưa lưu" : isCreated ? "Đang chỉnh sửa" : "Điền thông tin để tạo bối cảnh"}
+            </p>
+            <div className="flex items-center gap-2">
+              {isCreated && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-sm bg-transparent border-border-card hover:bg-[var(--status-neutral-bg)] text-[var(--content-heading)] transition-colors"
+                  onClick={() => {
+                    if (isDirty) {
+                      setCancelDialogOpen(true);
+                    } else {
+                      setIsEditing(false);
+                    }
+                  }}
+                >
+                  Hủy
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={handleSaveClick}
+                disabled={!canSave}
+                className="border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] font-semibold transition-all duration-200 cursor-pointer"
+              >
+                {isPending ? pendingLabel || "Đang lưu..." : isCreated ? "Lưu thay đổi" : "Tạo bối cảnh"}
+              </Button>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Image lightbox */}
       <Dialog open={imageLightboxOpen} onOpenChange={setImageLightboxOpen}>
-        <DialogContent className="max-w-5xl! w-[92vw] max-h-[90vh] overflow-hidden border-none bg-black p-0">
+        {/* Dialog shrinks to the image itself, so no modal surface shows around a non-16:9 picture. */}
+        <DialogContent className="w-auto! max-w-[92vw]! overflow-hidden border-none p-0">
           <DialogTitle className="sr-only">Xem đầy đủ ảnh bối cảnh</DialogTitle>
-          <div className="relative aspect-video w-full">
-            {isValidUrl(draft.imageUrl) && (
-              <Image src={draft.imageUrl} alt={draft.name || "Ảnh bối cảnh"} fill className="object-contain" sizes="92vw" />
-            )}
-          </div>
+          {isValidUrl(draft.imageUrl) && (
+            // eslint-disable-next-line @next/next/no-img-element -- intrinsic size is unknown; the box must hug the image
+            <img
+              src={draft.imageUrl}
+              alt={draft.name || "Ảnh bối cảnh"}
+              className="block h-auto max-h-[88vh] w-auto max-w-[92vw]"
+            />
+          )}
         </DialogContent>
       </Dialog>
 
@@ -1119,6 +1199,6 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
           setDeleteDocumentTarget(null);
         }}
       />
-    </div>
+    </Tabs>
   );
 }
