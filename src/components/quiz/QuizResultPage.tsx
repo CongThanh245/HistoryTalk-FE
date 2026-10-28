@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Flag, Minus, Star, TrendingDown, TrendingUp } from "lucide-react";
+import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import type { QuizSet, QuizQuestion } from "@/services/quiz.service";
 import type { AnswerData } from "@/features/quiz/question-data";
 import { characterService } from "@/services/character.service";
@@ -12,21 +12,7 @@ import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
 import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
 import { cn } from "@/lib/utils/cn";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  useMyQuizRating,
-  useQuizSessionDetail,
-  useRateQuiz,
-  useReportQuestion,
-} from "@/features/quiz/hooks";
+import { useQuizSessionDetail } from "@/features/quiz/hooks";
 import { QuestionAnswerReview } from "./QuestionAnswerReview";
 import { Mascot, type MascotMood } from "@/components/mascot/Mascot";
 import { CountUp } from "@/components/ui/count-up";
@@ -95,105 +81,6 @@ function ComparisonBadge({
   );
 }
 
-// Cho phep nguoi dung mo ta ngan gon van de gap phai truoc khi gui report —
-// giup staff hieu ro hon la chi biet "co report" ma khong ro ly do.
-function ReportQuestionDialog({
-  open,
-  onOpenChange,
-  onSubmit,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (reason: string) => void;
-}) {
-  const [text, setText] = useState("");
-
-  function submit() {
-    onSubmit(text.trim());
-    setText("");
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Câu này có vấn đề?</DialogTitle>
-          <DialogDescription>
-            Mô tả ngắn gọn vấn đề bạn gặp phải để đội ngũ hỗ trợ xem lại chính xác hơn (không bắt buộc).
-          </DialogDescription>
-        </DialogHeader>
-        <Textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Ví dụ: đáp án đúng đang bị sai, câu hỏi khó hiểu..."
-          rows={4}
-        />
-        <DialogFooter>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="btn-line min-h-10 px-4"
-          >
-            Huỷ
-          </button>
-          <button
-            onClick={submit}
-            className="btn-ink min-h-10 px-4"
-          >
-            Gửi báo cáo
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// Cho phep nguoi dung danh gia quiz (1-5 sao) ngay sau khi xem ket qua, de
-// tinh nang rating trung binh (QuizSet.rating) co du lieu thuc.
-function RateQuizCard({ quizId }: { quizId: string }) {
-  const { data: myRatingData } = useMyQuizRating(quizId);
-  const { mutate: rate, isPending } = useRateQuiz(quizId);
-  const [localValue, setLocalValue] = useState<number | null>(null);
-  const [justRated, setJustRated] = useState(false);
-
-  const value = localValue ?? myRatingData?.myRating ?? 0;
-
-  function handleClick(star: number) {
-    setLocalValue(star);
-    setJustRated(false);
-    rate(star, { onSuccess: () => setJustRated(true) });
-  }
-
-  return (
-    <section className="mb-6 flex flex-col items-center rounded-sm border border-border-card bg-[var(--bg-surface)] p-5">
-      <h2 className="archive-title is-plain mt-1 text-[20px]">
-        Bạn thấy quiz này thế nào?
-      </h2>
-      <div className="mt-3 flex gap-1.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            onClick={() => handleClick(star)}
-            disabled={isPending}
-            className="transition-transform hover:scale-110 disabled:opacity-60"
-          >
-            <Star
-              size={28}
-              color={star <= value ? "var(--accent-gold)" : "var(--border-strong)"}
-              fill={star <= value ? "var(--accent-gold)" : "none"}
-              strokeWidth={1.5}
-            />
-          </button>
-        ))}
-      </div>
-      {justRated && (
-        <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--status-success)]">
-          Cảm ơn bạn đã đánh giá!
-        </p>
-      )}
-    </section>
-  );
-}
-
 export function QuizResultPage({
   quiz,
   questions,
@@ -211,33 +98,6 @@ export function QuizResultPage({
   // previousAttempt + questionData day du (co dap an) de hien phan xem lai.
   const { data: sessionDetail } = useQuizSessionDetail(sessionId ?? null);
   const previousAttempt = sessionDetail?.previousAttempt;
-
-  const { mutate: reportQuestion } = useReportQuestion();
-  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
-  const [reportTarget, setReportTarget] = useState<string | null>(null);
-
-  function handleReportPress(questionId: string) {
-    if (reportedIds.has(questionId)) return;
-    setReportTarget(questionId);
-  }
-
-  function submitReport(reason: string) {
-    const questionId = reportTarget;
-    if (!questionId) return;
-    setReportTarget(null);
-    setReportedIds((prev) => new Set(prev).add(questionId));
-    reportQuestion(
-      { questionId, reason: reason || undefined },
-      {
-        onError: () =>
-          setReportedIds((prev) => {
-            const next = new Set(prev);
-            next.delete(questionId);
-            return next;
-          }),
-      },
-    );
-  }
 
   // Luc lam bai BE luoc dap an; chi tiet phien (sau khi nop) co questionData day du.
   const reviewQuestions = new Map(
@@ -350,8 +210,6 @@ export function QuizResultPage({
             </div>
           )}
         </section>
-
-        {quiz.quizId && <RateQuizCard quizId={quiz.quizId} />}
 
         {showReviewSection && reviewCharacters.length > 0 && (
           <section className="mb-6 rounded-sm border border-border-card bg-[var(--bg-surface)] p-5">
@@ -476,18 +334,6 @@ export function QuizResultPage({
                       {q.explanation}
                     </p>
                   )}
-
-                  <button
-                    onClick={() => handleReportPress(q.questionId)}
-                    disabled={reportedIds.has(q.questionId)}
-                    className={cn(
-                      "mt-3 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] transition-colors disabled:cursor-default",
-                      reportedIds.has(q.questionId) ? "text-[var(--status-success)]" : "text-content-subtle hover:text-accent-gold",
-                    )}
-                  >
-                    <Flag size={12} />
-                    {reportedIds.has(q.questionId) ? "Đã gửi báo cáo, cảm ơn bạn!" : "Câu này có vấn đề?"}
-                  </button>
                 </article>
               );
             })}
@@ -515,14 +361,6 @@ export function QuizResultPage({
           </button>
         </div>
       </div>
-
-      <ReportQuestionDialog
-        open={!!reportTarget}
-        onOpenChange={(open) => {
-          if (!open) setReportTarget(null);
-        }}
-        onSubmit={submitReport}
-      />
     </main>
   );
 }

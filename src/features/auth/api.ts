@@ -129,10 +129,11 @@ export const authApi = {
     return unwrapMessageResponse(res, "Không thể đặt lại mật khẩu");
   },
 
-  logout: async (accessToken?: string): Promise<void> => {
+  // Gửi kèm refresh token để BE thu hồi (BE xoay vòng refresh token, không còn blacklist access token).
+  logout: async (accessToken?: string, refreshToken?: string): Promise<void> => {
     await axiosClient.post(
       "/auth/logout",
-      undefined,
+      refreshToken ? { refreshToken } : undefined,
       accessToken
         ? ({
             headers: { Authorization: `Bearer ${accessToken}` },

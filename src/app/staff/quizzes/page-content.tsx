@@ -5,7 +5,7 @@ import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import {
   ClipboardList, Trash2, ArrowLeft,
   Gamepad2, Eye, EyeOff, RotateCcw,
-  ChevronLeft, ChevronRight, Upload, Flag, CheckCircle,
+  ChevronLeft, ChevronRight, Upload,
   Search, Plus, Library, MoreHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -49,8 +49,6 @@ import {
   useUpdateStaffQuiz,
   useSoftDeleteStaffQuiz,
   useImportQuizzesFromCsv,
-  useQuestionReports,
-  useResolveQuestionReport,
 } from "@/features/staff/quiz/hooks";
 import {
   useTrashList,
@@ -58,7 +56,7 @@ import {
   useTrashPermanentDelete,
 } from "@/features/trash/hooks";
 import { useEvents } from "@/features/events/hooks";
-import { staffQuizService, type StaffQuizSet, type QuestionReport } from "@/services/staff.quiz.service";
+import { staffQuizService, type StaffQuizSet } from "@/services/staff.quiz.service";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { cn } from "@/lib/utils/cn";
 
@@ -134,9 +132,7 @@ export default function StaffQuizzesPage() {
   const [page, setPage] = React.useState(0);
 
   // ── View / editor state ───────────────────────────────────
-  const [view, setView] = React.useState<"list" | "editor" | "reports" | "bank">("list");
-  const [reportStatusFilter, setReportStatusFilter] = React.useState<"OPEN" | "RESOLVED" | "">("OPEN");
-  const [reportPage, setReportPage] = React.useState(0);
+  const [view, setView] = React.useState<"list" | "editor" | "bank">("list");
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
   const [draft, setDraft] = React.useState<QuizDraft>(emptyDraft());
   const [originalQuiz, setOriginalQuiz] = React.useState<StaffQuizSet | null>(null);
@@ -175,32 +171,6 @@ export default function StaffQuizzesPage() {
 
   // Load toàn bộ contexts để chọn trong dropdown
   const { data: contextsData } = useEvents({ page: 1, limit: 200 });
-
-  // ── Question reports ("Câu này có vấn đề?") ────────────────
-  const reportParams = React.useMemo(() => ({
-    ...(reportStatusFilter && { status: reportStatusFilter }),
-    page: reportPage,
-    size: 20,
-  }), [reportStatusFilter, reportPage]);
-  const { data: reportsData, isLoading: isReportsLoading, refetch: refetchReports } = useQuestionReports(reportParams);
-  // Badge đếm số báo cáo chưa xử lý — luôn tải nhẹ (size:1) bất kể đang xem view nào.
-  const { data: openReportsCount } = useQuestionReports({ status: "OPEN", page: 0, size: 1 });
-  const resolveReport = useResolveQuestionReport();
-  const [resolveTarget, setResolveTarget] = React.useState<QuestionReport | null>(null);
-
-  const handleResolveReport = () => {
-    if (!resolveTarget) return;
-    resolveReport.mutate(resolveTarget.reportId, {
-      onSuccess: () => {
-        toast.success("Đã đánh dấu báo cáo là đã xử lý.");
-        refetchReports();
-        setResolveTarget(null);
-      },
-      onError: (error) => {
-        toast.error(getApiErrorMessage(error, "Cập nhật thất bại. Vui lòng thử lại."));
-      },
-    });
-  };
 
   const allItems = React.useMemo(
     () =>
@@ -851,172 +821,6 @@ export default function StaffQuizzesPage() {
     return <QuestionBankView onBack={() => setView("list")} />;
   }
 
-  if (view === "reports") {
-    const reportItems = reportsData?.content ?? [];
-    const reportTotalPages = reportsData?.totalPages ?? 1;
-    const reportTotalItems = reportsData?.totalElements ?? 0;
-
-    const reportColumns: ColumnDef<QuestionReport>[] = [
-      {
-        accessorKey: "questionContent",
-        header: "Câu hỏi",
-        cell: ({ row: r }) => (
-          <div className="min-w-[280px]">
-            <p className="text-sm font-semibold line-clamp-2 text-content-heading">
-              {r.original.questionContent || "(Câu hỏi đã bị xóa)"}
-            </p>
-            <p className="text-xs mt-0.5 truncate max-w-[280px] text-content-muted">
-              {r.original.quizTitle}
-            </p>
-          </div>
-        ),
-      },
-      {
-        accessorKey: "reason",
-        header: "Mô tả vấn đề",
-        cell: ({ row: r }) => (
-          <p className={cn("text-sm max-w-[260px]", r.original.reason ? "text-content-text" : "text-content-subtle")}>
-            {r.original.reason || "(Không có mô tả)"}
-          </p>
-        ),
-      },
-      {
-        accessorKey: "reportedBy",
-        header: "Người báo cáo",
-        cell: ({ row: r }) => (
-          <span className="text-xs text-content-muted">
-            {r.original.reportedBy || "—"}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "createdAt",
-        header: "Thời gian",
-        cell: ({ row: r }) => <FormattedDate date={r.original.createdAt} />,
-      },
-      {
-        accessorKey: "status",
-        header: "Trạng thái",
-        cell: ({ row: r }) => {
-          const isOpen = r.original.status === "OPEN";
-          return (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border",
-                isOpen
-                  ? "bg-[var(--status-warning-bg)] text-[var(--status-warning)] border-[var(--status-warning-border)]"
-                  : "bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]"
-              )}
-            >
-              {isOpen ? "Chưa xử lý" : "Đã xử lý"}
-            </span>
-          );
-        },
-      },
-      {
-        id: "actions",
-        header: "Thao tác",
-        cell: ({ row: r }) =>
-          r.original.status === "OPEN" ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-8 rounded-sm px-3 text-xs font-semibold gap-1.5 border-card-light-border text-content-heading"
-              onClick={() => setResolveTarget(r.original)}
-            >
-              <CheckCircle className="h-3.5 w-3.5" />
-              Đánh dấu đã xử lý
-            </Button>
-          ) : null,
-      },
-    ];
-
-    return (
-      <StaffShell
-        title="Báo cáo câu hỏi"
-        label="Kiểm duyệt"
-        description={'Danh sách câu hỏi bị người dùng báo cáo có vấn đề ("Câu này có vấn đề?").'}
-        icon={Flag}
-        accent="var(--accent-danger)"
-      >
-        <button
-          type="button"
-          onClick={() => setView("list")}
-          className="flex items-center gap-1.5 text-sm mb-6 hover:opacity-70 transition-opacity text-content-muted"
-        >
-          <ArrowLeft className="h-4 w-4" /> Quay lại danh sách bộ đề
-        </button>
-
-        <section className="rounded-xl border p-6 space-y-5 bg-[var(--bg-surface)] border-border-card">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {([
-              { value: "OPEN", label: "Chưa xử lý" },
-              { value: "RESOLVED", label: "Đã xử lý" },
-              { value: "", label: "Tất cả" },
-            ] as const).map((opt) => (
-              <button
-                key={opt.value || "all"}
-                type="button"
-                onClick={() => { setReportStatusFilter(opt.value); setReportPage(0); }}
-                className={cn(
-                  "px-3 h-8 rounded-sm text-xs font-semibold border transition-all",
-                  reportStatusFilter === opt.value
-                    ? "bg-[var(--accent-gold-active-bg)] border-accent-gold text-content-heading"
-                    : "bg-transparent border-card-light-border text-content-muted"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          <StaffDataTable
-            columns={reportColumns}
-            data={reportItems}
-            emptyMessage="Không có báo cáo nào."
-            isLoading={isReportsLoading}
-          />
-
-          {reportTotalPages > 1 && (
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-content-subtle">
-                Trang {reportPage + 1} / {reportTotalPages} · {reportTotalItems} báo cáo
-              </p>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost" size="icon-sm" className="rounded-sm"
-                  disabled={reportPage === 0}
-                  onClick={() => setReportPage((p) => Math.max(0, p - 1))}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost" size="icon-sm" className="rounded-sm"
-                  disabled={reportPage + 1 >= reportTotalPages}
-                  onClick={() => setReportPage((p) => p + 1)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </section>
-
-        <ConfirmDialog
-          open={!!resolveTarget}
-          onOpenChange={(o) => !o && setResolveTarget(null)}
-          title="Đánh dấu báo cáo đã xử lý?"
-          description="Báo cáo này sẽ được chuyển sang trạng thái Đã xử lý."
-          isPending={resolveReport.isPending}
-          confirmLabel="Đánh dấu đã xử lý"
-          variant="warning"
-          onConfirm={handleResolveReport}
-        />
-      </StaffShell>
-    );
-  }
-
   // ═══ LIST VIEW ═══════════════════════════════════════════════════════════
   const totalItems = data?.totalElements ?? 0;
   const totalPlays = allItems.reduce((a, x) => a + x.playCount, 0);
@@ -1090,21 +894,6 @@ export default function StaffQuizzesPage() {
               >
                 <Library className="h-3.5 w-3.5 mr-1.5" />
                 Ngân hàng câu hỏi
-              </Button>
-            )}
-            {!showTrash && (
-              <Button
-                variant="outline"
-                className={cn(
-                  "h-9 rounded-sm px-4 font-semibold",
-                  openReportsCount?.totalElements
-                    ? "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)]"
-                    : "border-card-light-border text-content-heading",
-                )}
-                onClick={() => setView("reports")}
-              >
-                <Flag className="h-3.5 w-3.5 mr-1.5" />
-                Báo cáo câu hỏi {!!openReportsCount?.totalElements && `(${openReportsCount.totalElements} chưa xử lý)`}
               </Button>
             )}
             {!showTrash && (

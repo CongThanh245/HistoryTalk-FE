@@ -70,35 +70,6 @@ export interface GetStaffQuizzesResponse {
   hasPrevious: boolean;
 }
 
-// ── Question Reports ("Câu này có vấn đề?") ────────────────
-
-export interface QuestionReport {
-  reportId: string;
-  questionId: string;
-  questionContent: string;
-  quizId: string;
-  quizTitle: string;
-  reportedBy: string;
-  reason: string;
-  status: "OPEN" | "RESOLVED";
-  createdAt: string;
-}
-
-export interface GetQuestionReportsParams {
-  status?: "OPEN" | "RESOLVED";
-  page?: number;
-  size?: number;
-}
-
-export interface GetQuestionReportsResponse {
-  content: QuestionReport[];
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-}
 
 // ── Payloads ───────────────────────────────────────────────
 
@@ -298,18 +269,6 @@ export const staffQuizService = {
     };
   },
 
-  // GET /staff/quizzes/reports?status=&page=&size=
-  getQuestionReports: async (
-    params?: GetQuestionReportsParams,
-  ): Promise<GetQuestionReportsResponse> => {
-    const res = await axiosClient.get("/staff/quizzes/reports", { params });
-    return res.data.data;
-  },
-
-  // PATCH /staff/quizzes/reports/:reportId/resolve
-  resolveQuestionReport: async (reportId: string): Promise<void> => {
-    await axiosClient.patch(`/staff/quizzes/reports/${reportId}/resolve`);
-  },
 
   // ── Question Bank ───────────────────────────────────────
 

@@ -8,7 +8,6 @@ import {
   type UpdateQuizPayload,
   type UpdateQuestionPayload,
   type ImportQuizFromCsvResponse,
-  type GetQuestionReportsParams,
   type GetQuestionBankParams,
 } from "@/services/staff.quiz.service";
 import { toast } from "sonner";
@@ -180,26 +179,6 @@ export function useImportQuizzesFromCsv() {
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "Import CSV thất bại"));
-    },
-  });
-}
-
-// GET /staff/quizzes/reports — danh sách báo cáo câu hỏi ("Câu này có vấn đề?")
-export function useQuestionReports(params?: GetQuestionReportsParams) {
-  return useQuery({
-    queryKey: queryKeys.staffQuizzes.questionReports(params),
-    queryFn: () => staffQuizService.getQuestionReports(params),
-    placeholderData: (prev) => prev,
-  });
-}
-
-// PATCH /staff/quizzes/reports/{reportId}/resolve — đánh dấu đã xử lý
-export function useResolveQuestionReport() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (reportId: string) => staffQuizService.resolveQuestionReport(reportId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
     },
   });
 }

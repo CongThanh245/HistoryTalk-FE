@@ -80,8 +80,8 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      const accessToken = useAuthStore.getState().tokens?.accessToken;
-      await authApi.logout(accessToken).catch(() => undefined);
+      const tokens = useAuthStore.getState().tokens;
+      await authApi.logout(tokens?.accessToken, tokens?.refreshToken).catch(() => undefined);
     },
     onSettled: () => {
       resetClientAuth();
