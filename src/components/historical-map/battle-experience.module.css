@@ -4,7 +4,14 @@
   letter-spacing: 0;
 }
 
-.mapPage :is(h1, h2, h3),
+/* The map page is a working screen: its headings use the title sans. The condensed display face stays on the
+   battle experience scenes, where it is a large uppercase headline. */
+.mapPage :is(h1, h2, h3) {
+  font-family: var(--font-title), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
 .experience :is(h1, h2, h3) {
   font-family: var(--font-display), var(--font-title), system-ui, sans-serif;
   font-weight: 700;

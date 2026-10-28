@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { pageMetadata, siteUrl } from "@/lib/seo";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
-import { Big_Shoulders, Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Be_Vietnam_Pro, Big_Shoulders } from "next/font/google";
 import "../styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProviders from "@/components/context/query-client-provider";
@@ -14,15 +14,10 @@ import { SessionExpiredDialog } from "@/components/session-expired-dialog";
 import { UserLockedDialog } from "@/components/user-locked-dialog";
 import { SchoolLockDialog } from "@/components/school-lock-dialog";
 
-const inter = Inter({
+// Single sans face for body and titles; designed for Vietnamese diacritics.
+const beVietnam = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
-  variable: "--font-body",
-  display: "swap",
-});
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin", "vietnamese"],
-  variable: "--font-title",
+  variable: "--font-sans-face",
   display: "swap",
   weight: ["400", "500", "600", "700", "800"],
 });
@@ -60,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={bigShoulders.variable} suppressHydrationWarning>
+    <html lang="vi" className={`${beVietnam.variable} ${bigShoulders.variable}`} suppressHydrationWarning>
       <head>
         <style
           dangerouslySetInnerHTML={{
@@ -159,7 +154,7 @@ export default function RootLayout({
         )}
       </head>
       <body
-        className={`${inter.variable} ${jakarta.variable} antialiased`}
+        className="antialiased"
       >
         <WelcomeScreen />
         <ThemeProvider>

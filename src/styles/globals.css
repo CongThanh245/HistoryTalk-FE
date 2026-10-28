@@ -121,8 +121,8 @@ main:has(.map-page) > div {
   --color-border-card: var(--border-card);
 
   /* ─── Font families ─── */
-  --font-body: "Inter", system-ui, sans-serif;
-  --font-title: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: var(--font-sans-face), "Be Vietnam Pro", system-ui, sans-serif;
+  --font-title: var(--font-body);
   --font-display: var(--font-display-face), "Arial Narrow", sans-serif;
 
   /* ─── Typography Scale ─── */

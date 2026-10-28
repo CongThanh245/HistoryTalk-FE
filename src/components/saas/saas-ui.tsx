@@ -206,7 +206,7 @@ export function Field({
 /** Shared class names for dialogs so every SaaS dialog fits 375px and scrolls when tall. */
 export const DIALOG_CLASS =
   "staff-theme max-h-[90dvh] overflow-y-auto rounded-xl border-border-card bg-[var(--bg-surface)] text-content-text";
-export const DIALOG_TITLE_CLASS = "archive-title is-plain text-2xl";
+export const DIALOG_TITLE_CLASS = "text-xl font-semibold text-content-heading";
 
 /** Small icon-only table action. */
 export function IconAction({
