@@ -144,7 +144,8 @@ function SelectSearch({
   className?: string
 }) {
   return (
-    <div className={cn("sticky top-0 z-10 -mx-1 -mt-1 mb-1 border-b border-[var(--border-default)] bg-popover p-1.5", className)}>
+    // `-top-1` cancels the viewport's p-1: with top-0 the box stuck 4px low and scrolled items showed above it.
+    <div className={cn("sticky -top-1 z-10 -mx-1 -mt-1 mb-1 border-b border-[var(--border-default)] bg-popover p-1.5", className)}>
       <div className="relative">
         <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         <input
