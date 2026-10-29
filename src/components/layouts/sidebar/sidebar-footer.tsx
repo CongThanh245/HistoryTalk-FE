@@ -100,11 +100,6 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
           type="button"
           className="block rounded-sm overflow-hidden relative group transition-colors duration-250 w-full text-left cursor-pointer h-[72px] bg-bg-surface border border-border-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
         >
-          {/* Crimson top rule */}
-          <div
-            className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none bg-accent-gold"
-          />
-
           <div className="relative z-10 h-full flex items-center px-2.5 gap-2.5">
             {/* Crown icon */}
             <div
