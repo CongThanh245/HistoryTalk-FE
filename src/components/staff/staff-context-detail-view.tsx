@@ -228,8 +228,11 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
   const [unmapTarget, setUnmapTarget] = React.useState<{ characterId: string; name: string } | null>(null);
   const [imageLightboxOpen, setImageLightboxOpen] = React.useState(false);
   const [videoLightboxOpen, setVideoLightboxOpen] = React.useState(false);
-  const hasVideo = !!draft.videoUrl;
+  const hasVideo = !!draft.videoUrl || !!pendingVideoPreviewUrl;
   const youtubeVideoEmbedUrl = getYouTubeEmbedUrl(draft.videoUrl);
+  // A file picked on the create page is not uploaded until the context exists, so preview its local blob first.
+  const imagePreviewSrc = pendingImagePreviewUrl ?? (isValidUrl(draft.imageUrl) ? draft.imageUrl : null);
+  const videoPreviewSrc = pendingVideoPreviewUrl ?? (draft.videoUrl || null);
 
   const visibleTabs = FORM_TABS.filter(
     (tab) => (tab.key !== "characters" && tab.key !== "map") || mode === "edit",
@@ -505,16 +508,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     )
                   }
                   errorMessage={errors.imageUrl}
-                >
-                  {pendingImagePreviewUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element -- local blob preview, not an optimizable remote asset
-                    <img
-                      src={pendingImagePreviewUrl}
-                      alt="Xem trước ảnh"
-                      className="mt-1 h-32 w-32 rounded-sm border object-cover border-[var(--card-light-border)]"
-                    />
-                  )}
-                </MediaSlotField>
+                />
 
                 <MediaSlotField
                   label="Video bối cảnh"
@@ -547,15 +541,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                       setPendingVideoPreviewUrl,
                     )
                   }
-                >
-                  {pendingVideoPreviewUrl && (
-                    <video
-                      src={pendingVideoPreviewUrl}
-                      controls
-                      className="mt-1 h-32 w-full max-w-xs rounded-sm border object-cover border-[var(--card-light-border)]"
-                    />
-                  )}
-                </MediaSlotField>
+                />
 
                 <div className="grid gap-4 border-t pt-4 border-[var(--card-light-border)] sm:grid-cols-2">
                   <div className="min-w-0 overflow-hidden rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)]">
@@ -563,9 +549,10 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                       Xem trước ảnh
                     </p>
                     <div className="group relative aspect-video bg-[var(--bg-deep)]">
-                      {isValidUrl(draft.imageUrl) ? (
+                      {imagePreviewSrc ? (
                         <>
-                          <Image src={draft.imageUrl} alt={draft.name || "Ảnh bối cảnh"} fill className="object-cover" sizes="400px" />
+                          {/* eslint-disable-next-line @next/next/no-img-element -- may be a local blob of a not-yet-uploaded file */}
+                          <img src={imagePreviewSrc} alt={draft.name || "Ảnh bối cảnh"} className="absolute inset-0 h-full w-full object-cover" />
                           <button
                             type="button"
                             onClick={() => setImageLightboxOpen(true)}
@@ -606,8 +593,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                           allowFullScreen
                         />
-                      ) : draft.videoUrl ? (
-                        <video src={draft.videoUrl} controls className="h-full w-full object-contain bg-black" />
+                      ) : videoPreviewSrc ? (
+                        <video src={videoPreviewSrc} controls className="h-full w-full object-contain bg-black" />
                       ) : (
                         <div className="flex h-full items-center justify-center px-4 text-center text-xs text-[var(--content-muted)] bg-[var(--bg-deep)]">
                           Chưa có video
@@ -953,14 +940,15 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         {/* ── Right: cover + content checklist, pinned under the sticky header ── */}
         <aside className="space-y-4 lg:sticky lg:top-[124px]">
           <div className="group relative aspect-video overflow-hidden rounded-sm bg-[var(--bg-deep)]">
-            {isValidUrl(draft.imageUrl) ? (
+            {imagePreviewSrc ? (
               <button
                 type="button"
                 onClick={() => setImageLightboxOpen(true)}
                 className="absolute inset-0 cursor-zoom-in"
                 title="Xem đầy đủ ảnh"
               >
-                <Image src={draft.imageUrl} alt={draft.name || "Ảnh bối cảnh"} fill className="object-cover" sizes="300px" />
+                {/* eslint-disable-next-line @next/next/no-img-element -- may be a local blob of a not-yet-uploaded file */}
+                <img src={imagePreviewSrc} alt={draft.name || "Ảnh bối cảnh"} className="h-full w-full object-cover" />
               </button>
             ) : (
               <button
@@ -1043,10 +1031,10 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         {/* Dialog shrinks to the image itself, so no modal surface shows around a non-16:9 picture. */}
         <DialogContent className="w-auto! max-w-[92vw]! overflow-hidden border-none p-0">
           <DialogTitle className="sr-only">Xem đầy đủ ảnh bối cảnh</DialogTitle>
-          {isValidUrl(draft.imageUrl) && (
+          {imagePreviewSrc && (
             // eslint-disable-next-line @next/next/no-img-element -- intrinsic size is unknown; the box must hug the image
             <img
-              src={draft.imageUrl}
+              src={imagePreviewSrc}
               alt={draft.name || "Ảnh bối cảnh"}
               className="block h-auto max-h-[88vh] w-auto max-w-[92vw]"
             />
@@ -1067,8 +1055,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
               />
-            ) : videoLightboxOpen && draft.videoUrl ? (
-              <video src={draft.videoUrl} controls autoPlay className="h-full w-full object-contain bg-black" />
+            ) : videoLightboxOpen && videoPreviewSrc ? (
+              <video src={videoPreviewSrc} controls autoPlay className="h-full w-full object-contain bg-black" />
             ) : null}
           </div>
         </DialogContent>
