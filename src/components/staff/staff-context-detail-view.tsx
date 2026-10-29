@@ -104,7 +104,6 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     isMapCharacterPending = false,
     onUnmapCharacter,
     isUnmapCharacterPending = false,
-    mapFocusSlot,
   } = props;
 
   const router = useRouter();
@@ -235,7 +234,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
   const videoPreviewSrc = pendingVideoPreviewUrl ?? (draft.videoUrl || null);
 
   const visibleTabs = FORM_TABS.filter(
-    (tab) => (tab.key !== "characters" && tab.key !== "map") || mode === "edit",
+    (tab) => tab.key !== "characters" || mode === "edit",
   );
 
   const eraLabel = ERA_OPTIONS.find((option) => option.value === draft.era)?.label;
@@ -807,11 +806,6 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                 </div>
               </TabsContent>
 
-              {mode === "edit" && (
-                <TabsContent value="map" className="space-y-4 mt-0">
-                  {mapFocusSlot}
-                </TabsContent>
-              )}
 
               <TabsContent value="characters" className="space-y-4 mt-0">
                 <div>
