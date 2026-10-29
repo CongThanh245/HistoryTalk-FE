@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { X, Play, SkipForward, MapPin, FileText, ChevronDown, ChevronUp, Trophy, ChevronRight } from "lucide-react";
@@ -267,7 +268,8 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   // Tài liệu tham khảo của bối cảnh — không phải context nào cũng có, nên chỉ hiện khi có dữ liệu
   const { data: documents = [] } = usePublicContextDocuments(event?.id);
 
-  if (!event) return null;
+  // createPortal needs the DOM; on the server (deep link to an event) render nothing until hydration.
+  if (!event || typeof document === "undefined") return null;
 
   const videoFinished = finishedEventId === event.id;
   const yearLabel =
@@ -283,15 +285,17 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
     navigateWithAuth(`/chat/${charId}?contextId=${event.id}`);
   };
 
-  return (
+  // Portalled to <body>: the page wrapper animates with a transform, which turns "fixed" into "relative to the page"
+  // — the drawer then sat inside the content area, under the site header, with its top (year, Skip, Close) cut off.
+  return createPortal(
     <>
       {authRequiredDialog}
       <div
-        className="fixed inset-0 z-40 bg-black/70"
+        className="fixed inset-0 z-[60] bg-black/70"
         onClick={onClose}
       />
 
-      <div className="fixed inset-0 z-50 flex overflow-hidden">
+      <div className="fixed inset-0 z-[61] flex overflow-hidden">
         <div className="relative flex flex-col md:flex-row w-full h-full">
           {/* Close */}
           <button
@@ -430,6 +434,7 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
