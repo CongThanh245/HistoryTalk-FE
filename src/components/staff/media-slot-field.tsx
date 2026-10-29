@@ -103,8 +103,9 @@ export function MediaSlotField({
               style={{ width: `${progress}%`, background: "var(--accent-blue)" }}
             />
           </div>
+          {/* At 100% the bytes are sent but the server is still storing/transcoding: say so instead of a frozen 100%. */}
           <span className="text-[11px] tabular-nums" style={{ color: "var(--content-muted)" }}>
-            {progress}%
+            {progress >= 100 ? "Đang xử lý…" : `${progress}%`}
           </span>
         </div>
       )}

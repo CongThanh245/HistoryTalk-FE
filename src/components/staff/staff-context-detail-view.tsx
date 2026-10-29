@@ -76,6 +76,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     mode,
     isPending,
     pendingLabel,
+    pendingMediaProgress,
     documents = [],
     isLoadingDocuments = false,
     onDeleteDocument,
@@ -229,6 +230,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
   const [videoLightboxOpen, setVideoLightboxOpen] = React.useState(false);
   const hasVideo = !!draft.videoUrl || !!pendingVideoPreviewUrl;
   const youtubeVideoEmbedUrl = getYouTubeEmbedUrl(draft.videoUrl);
+  // Upload progress shows on the slot itself: live uploads (edit) or the post-create uploads reported by the create page.
+  const imageProgress = imageUploadProgress ?? pendingMediaProgress?.IMAGE_2D ?? null;
+  const videoProgress = videoUploadProgress ?? pendingMediaProgress?.VIDEO ?? null;
   // A file picked on the create page is not uploaded until the context exists, so preview its local blob first.
   const imagePreviewSrc = pendingImagePreviewUrl ?? (isValidUrl(draft.imageUrl) ? draft.imageUrl : null);
   const videoPreviewSrc = pendingVideoPreviewUrl ?? (draft.videoUrl || null);
@@ -485,8 +489,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   icon={<ImageIcon className="h-3.5 w-3.5" />}
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   disabled={!isEditing}
-                  isBusy={isUploadMediaPending || isDeleteMediaPending}
-                  progress={imageUploadProgress}
+                  isBusy={isUploadMediaPending || isDeleteMediaPending || imageProgress != null}
+                  progress={imageProgress}
                   hasValue={!!draft.imageUrl || !!pendingImageFile}
                   hint={`JPEG, PNG, WEBP, GIF · ${MEDIA_SIZE_HINT}`}
                   caption={
@@ -516,8 +520,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   icon={<VideoIcon className="h-3.5 w-3.5" />}
                   accept="video/mp4,video/webm,video/quicktime"
                   disabled={!isEditing}
-                  isBusy={isUploadMediaPending || isDeleteMediaPending}
-                  progress={videoUploadProgress}
+                  isBusy={isUploadMediaPending || isDeleteMediaPending || videoProgress != null}
+                  progress={videoProgress}
                   hasValue={!!draft.videoUrl || !!pendingVideoFile}
                   hint={`MP4, WEBM, MOV · ${MEDIA_SIZE_HINT}`}
                   caption={
@@ -525,8 +529,8 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                       ? `Đã chọn: ${pendingVideoFile.name} (sẽ tải lên sau khi lưu)`
                       : draft.videoUrl
                         ? "Đã có video"
-                        : videoUploadProgress != null
-                          ? `Đang tải video lên... ${videoUploadProgress}%`
+                        : videoProgress != null
+                          ? "Đang tải video lên..."
                           : "Chưa có video"
                   }
                   errorMessage={errors.videoUrl}

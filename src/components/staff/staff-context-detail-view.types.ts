@@ -51,8 +51,10 @@ export interface StaffContextDetailViewProps {
   /** Resolve to `false` when the save failed: the form then stays editable so the user can fix it and retry. */
   onSave: (draft: ContextDraft) => void | Promise<boolean | void>;
   isPending: boolean;
-  /** Overrides the default "Đang lưu..." save-button label while isPending, e.g. "Đang tải video lên... 42%" */
+  /** Overrides the default "Đang lưu..." save-button label while isPending, e.g. "Đang tạo bối cảnh..." */
   pendingLabel?: string | null;
+  /** Create mode: progress (0-100) of media picked before the context existed, uploaded right after it is created. Shown on its own slot. */
+  pendingMediaProgress?: { IMAGE_2D?: number | null; VIDEO?: number | null };
   /** If true, start in editing mode immediately (e.g. navigated from Edit button) */
   initialEditing?: boolean;
   /** Tab to show first, e.g. "characters" when linking characters from the battle map */

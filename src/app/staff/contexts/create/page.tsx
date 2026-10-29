@@ -20,6 +20,8 @@ export default function CreateContextPage() {
   // upload media → create doc → upload PDF) show what's actually happening
   // instead of a flat "Đang lưu..." for the whole duration.
   const [saveStep, setSaveStep] = React.useState<string | null>(null);
+  // Per-file upload progress, drawn on the image/video slot rather than squeezed into the Save button label.
+  const [mediaProgress, setMediaProgress] = React.useState<{ IMAGE_2D?: number | null; VIDEO?: number | null }>({});
 
   const handleSave = async (draft: ContextDraft) => {
     const payload = {
@@ -44,15 +46,18 @@ export default function CreateContextPage() {
       ];
       for (const { file, mediaType, label } of pendingMedia) {
         try {
-          setSaveStep(`Đang tải ${label} lên... 0%`);
+          setSaveStep("Đang lưu...");
+          setMediaProgress((p) => ({ ...p, [mediaType]: 0 }));
           await uploadContextMedia.mutateAsync({
             contextId: newContext.id,
             file,
             mediaType,
-            onProgress: (percent) => setSaveStep(`Đang tải ${label} lên... ${percent}%`),
+            onProgress: (percent) => setMediaProgress((p) => ({ ...p, [mediaType]: percent })),
           });
         } catch {
-          toast.warning("Bối cảnh đã tạo, nhưng tải lên media chưa thành công");
+          toast.warning(`Bối cảnh đã tạo, nhưng tải ${label} lên chưa thành công`);
+        } finally {
+          setMediaProgress((p) => ({ ...p, [mediaType]: null }));
         }
       }
 
@@ -92,6 +97,7 @@ export default function CreateContextPage() {
       onSave={handleSave}
       isPending={createEvent.isPending || createHistoricalDocument.isPending || uploadContextMedia.isPending}
       pendingLabel={saveStep}
+      pendingMediaProgress={mediaProgress}
       onExtractPdfDocument={async (file, onProgress, signal) => extractPdf.mutateAsync({ file, entityType: "context", onProgress, signal })}
       isExtractPdfDocumentPending={extractPdf.isPending}
     />
