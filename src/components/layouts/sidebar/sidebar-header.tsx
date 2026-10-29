@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsLeft, ChevronsRight, X } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -20,7 +20,6 @@ interface SidebarHeaderProps {
 
 export default function SidebarHeader({
   isExpanded,
-  isPinned,
   onTogglePin,
   onClose,
   isMobileDrawer = false,
@@ -29,9 +28,10 @@ export default function SidebarHeader({
   return (
     <div
       className={cn(
-        "group relative z-10 h-16 flex items-center shrink-0 overflow-hidden",
-        // Logo centred on the whole width; the collapse / close button sits on the right edge so it does not push the logo aside.
-        isExpanded ? "justify-center px-11" : "justify-center",
+        "relative z-10 flex items-center shrink-0 overflow-hidden",
+        // Expanded: logo centred, the collapse button on the right edge so it does not push the logo aside.
+        // Collapsed: logo with the expand button right under it, both always visible.
+        isExpanded ? "h-16 justify-center px-11" : "flex-col justify-center gap-1 pt-3 pb-2",
       )}
     >
       {/* Logo + Brand name */}
@@ -39,8 +39,7 @@ export default function SidebarHeader({
         href={logoHref}
         className={cn(
           "flex items-center justify-center outline-none transition-opacity hover:opacity-80",
-          // Collapsed on desktop the logo makes room for the expand button on hover.
-          !isExpanded && !isMobileDrawer && "lg:group-hover:opacity-0 lg:group-focus-within:opacity-0",
+          !isExpanded && "h-10",
         )}
       >
         <BrandLogo
@@ -60,17 +59,17 @@ export default function SidebarHeader({
         </button>
       )}
 
-      {/* Desktop, collapsed: the only way back to the full sidebar (it no longer expands on hover). Shown in place of
-          the logo while the header is hovered or focused; hidden on tablet, which is always icon-only. */}
+      {/* Desktop, collapsed: an always-visible open/close toggle (the sidebar no longer expands on hover).
+          Hidden on tablet, which is always icon-only. */}
       {!isExpanded && !isMobileDrawer && (
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={onTogglePin}
               aria-label="Mở rộng thanh bên"
-              className="absolute inset-0 m-auto hidden h-10 w-10 items-center justify-center rounded-md opacity-0 transition-opacity duration-150 cursor-pointer text-[var(--text-primary)] hover:bg-[var(--sidebar-hover-bg)] focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] group-hover:opacity-100 lg:flex"
+              className="hidden h-8 w-8 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer text-[var(--text-muted)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] lg:flex"
             >
-              <ChevronsRight className="w-[18px] h-[18px]" />
+              <PanelLeftOpen className="w-[18px] h-[18px]" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right" className="bg-bg-elevated border border-border-default text-text-primary text-xs">
@@ -85,17 +84,17 @@ export default function SidebarHeader({
           <TooltipTrigger asChild>
             <button
               onClick={onTogglePin}
-              aria-label={isPinned ? "Thu gọn thanh bên" : "Giữ thanh bên mở"}
+              aria-label="Thu gọn thanh bên"
               className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-md transition-colors duration-150 cursor-pointer text-[var(--text-muted)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
             >
-              {isPinned ? <ChevronsLeft className="w-[18px] h-[18px]" /> : <ChevronsRight className="w-[18px] h-[18px]" />}
+              <PanelLeftClose className="w-[18px] h-[18px]" />
             </button>
           </TooltipTrigger>
           <TooltipContent
             side="bottom"
             className="bg-bg-elevated border border-border-default text-text-primary text-xs"
           >
-            {isPinned ? "Thu gọn thanh bên" : "Giữ thanh bên mở"}
+            Thu gọn thanh bên
           </TooltipContent>
         </Tooltip>
       )}
