@@ -526,7 +526,8 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
                 </div>
               </div>
               <p className={styles.hint}><MousePointerClick size={14} /> Chọn ký hiệu rồi bấm lên lược đồ để đặt. Với mũi tên và phòng tuyến: nhấn giữ rồi kéo theo đường đi để vẽ, đường sẽ tự làm mượt.</p>
-              <p className={styles.hint}>Bấm đúp vào ký hiệu (hoặc <kbd>Shift</kbd> + phím tắt) để đặt liên tục, <kbd>Esc</kbd> để thôi · <kbd>Q</kbd> đổi phe · <kbd>Ctrl</kbd> + <kbd>Z</kbd> hoàn tác.</p>
+              {/* .hint is a flex row (icon + text): the text needs one wrapper or every word and <kbd> becomes its own column. */}
+                <p className={styles.hint}><span>Bấm đúp vào ký hiệu (hoặc <kbd>Shift</kbd> + phím tắt) để đặt liên tục, <kbd>Esc</kbd> để thôi · <kbd>Q</kbd> đổi phe · <kbd>Ctrl</kbd> + <kbd>Z</kbd> hoàn tác.</span></p>
               {SYMBOL_GROUPS.map(group => <div className={styles.group} key={group.title}>
                 <h2>{group.title}</h2>
                 <div className={styles.tools} style={{ color: activeFaction?.color }}>
@@ -598,7 +599,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
               <button type="button" className={styles.phaseStepWide} onClick={() => assignPhase(selection, "new")}><Plus size={14} />Giai đoạn mới</button>
             </div>
           </div>
-          {phases.length > 0 && <p className={styles.hint}>Hoặc bấm phím <kbd>1</kbd>–<kbd>{Math.min(9, phases.length)}</kbd>, phím <kbd>0</kbd> để đưa về «Luôn hiện».</p>}
+          {phases.length > 0 && <p className={styles.hint}><span>Hoặc bấm phím <kbd>1</kbd>–<kbd>{Math.min(9, phases.length)}</kbd>, phím <kbd>0</kbd> để đưa về «Luôn hiện».</span></p>}
           <ul className={styles.layerList}>
             {value.symbols.filter(s => selection.includes(s.id)).map(s => {
               const faction = value.factions.find(f => f.id === s.factionId);
