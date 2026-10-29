@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, CircleHelp, Clapperboard, Copy, Download, Eye, GripVertical, ImageIcon, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Trash2, Undo2, Upload, Users, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, CircleHelp, PenLine, Clapperboard, Copy, Download, Eye, GripVertical, ImageIcon, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Trash2, Undo2, Upload, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { battleMapImageService } from "@/services/media.service";
@@ -338,7 +338,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     {
       target: '[data-tour="inspector"]',
       title: "4. Viết lời thuyết minh",
-      body: <>Mỗi giai đoạn có tên và lời thuyết minh ở cột này. Khi phát, ký hiệu của giai đoạn hiện dần theo giọng đọc.</>,
+      body: <>Mỗi giai đoạn có tên và lời thuyết minh ở cột này. Bấm <b>Thuyết minh</b> cạnh tên giai đoạn để mở ô viết (khi đang chọn ký hiệu, cột này hiện cài đặt của ký hiệu). Khi phát, ký hiệu của giai đoạn hiện dần theo giọng đọc.</>,
     },
     {
       target: '[data-tour="preview"]',
@@ -346,6 +346,11 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
       body: <>Phát thử đúng như người học sẽ xem, trước khi bấm Lưu. Mở lại hướng dẫn này bất cứ lúc nào bằng nút <b>?</b>.</>,
     },
   ];
+  /** Clears the selection so the right column shows the active phase, then puts the caret in its narration. */
+  const openNarration = () => {
+    setSelection([]); setDrawingFrame(false);
+    requestAnimationFrame(() => document.getElementById("phase-narration")?.focus());
+  };
   const pickPhase = (id: string | null) => { setPhaseId(id); setSelectedId(null); setDrawingFrame(false); };
   const setCamera = (phase: BattlePhase, camera: BattlePhase["camera"]) => {
     changePhase(phase.id, { camera });
@@ -638,6 +643,8 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
             <button type="button" aria-label="Thêm giai đoạn" title="Thêm giai đoạn" onClick={addPhase}><Plus size={15} /></button>
           </div>
           <strong className={styles.phaseCurrent}>{activePhase ? activePhase.title || "Chưa đặt tên" : "Lớp luôn hiện"}</strong>
+          {/* The phase's narration lives in the right column, which only shows it with nothing selected: this jumps there. */}
+          {activePhase && <button type="button" className={styles.narrationJump} onClick={openNarration}><PenLine size={14} />Thuyết minh</button>}
           {drawingFrame && <span className={styles.drawHint}>Kéo trên lược đồ để khoanh vùng camera · Esc để hủy</span>}
           {value.mode === "custom" && <button type="button" className={styles.sortToggle} aria-pressed={sorting} title="Hiện mọi ký hiệu kèm số giai đoạn để gom nhóm"
             onClick={() => { setSorting(s => !s); setDrawingFrame(false); }}><ListTree size={15} />Phân giai đoạn</button>}
@@ -796,7 +803,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
               <input value={activePhase.title} maxLength={120} placeholder="Ví dụ: Nhử địch vào bãi cọc" onChange={e => changePhase(activePhase.id, { title: e.target.value })} />
             </label>
             <label className={styles.field}>Lời thuyết minh
-              <textarea className={cn(styles.narration, styles.phaseNarration)} value={activePhase.narration} maxLength={PHASE_NARRATION_MAX} rows={6}
+              <textarea id="phase-narration" className={cn(styles.narration, styles.phaseNarration)} value={activePhase.narration} maxLength={PHASE_NARRATION_MAX} rows={6}
                 placeholder="Viết câu ngắn. Mỗi câu được đọc và hiện phụ đề riêng."
                 onChange={e => changePhase(activePhase.id, { narration: e.target.value })} />
             </label>
