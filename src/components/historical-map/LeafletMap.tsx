@@ -555,6 +555,8 @@ async function drawVietnamBasemap(
   addMapLabel(L, layer, [10.4, 106.1], "Nam Bộ", "region");
   addMapLabel(L, layer, [17.05, 112.95], "Hoàng Sa");
   addMapLabel(L, layer, [10.85, 114.75], "Trường Sa");
+  // Phú Quốc is in the boundary data, but unlabelled at the country zoom it read as missing; name it like the archipelagos.
+  addMapLabel(L, layer, [9.82, 103.97], "Phú Quốc");
   addMapLabel(L, layer, [13.5, 112.1], "Biển Đông", "sea");
 
   return layer;
