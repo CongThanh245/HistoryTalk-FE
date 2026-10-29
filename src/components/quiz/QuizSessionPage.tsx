@@ -554,7 +554,8 @@ export function QuizSessionPage({
       {progressBar}
 
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Wider column: at max-w-2xl the questions sat in a narrow strip with large empty margins either side. */}
+        <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
           {questionList}
           <div className="h-8" />
         </div>

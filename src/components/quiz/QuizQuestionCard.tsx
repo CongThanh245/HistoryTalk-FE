@@ -290,7 +290,7 @@ function FillInBlankInput({
             onAnswer(question.questionId, { answers: [event.target.value] })
           }
           placeholder="Nhập câu trả lời của bạn..."
-          className="h-14 w-full rounded-[6px] border-2 border-[var(--men-lam)] bg-[color-mix(in_srgb,var(--men-lam)_6%,var(--bg-surface))] pl-11 pr-4 text-[16px] font-semibold text-content-heading shadow-[0_4px_0_var(--men-lam)] outline-none transition-shadow placeholder:font-normal focus:shadow-[0_4px_0_var(--men-lam),0_0_0_4px_color-mix(in_srgb,var(--men-lam)_20%,transparent)]"
+          className="h-12 w-full rounded-[6px] border border-[var(--border-strong)] bg-[var(--bg-elevated)] pl-11 pr-4 text-[16px] font-semibold text-content-heading outline-none transition-[border-color,box-shadow] placeholder:font-normal focus:border-[var(--men-lam)] focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--men-lam)_20%,transparent)]"
         />
       </div>
     </div>
