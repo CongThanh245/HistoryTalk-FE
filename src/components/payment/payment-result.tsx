@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -10,6 +9,7 @@ import {
   CheckCircle2,
   Home,
   Hourglass,
+  MessagesSquare,
   Receipt,
   RotateCcw,
   Sparkles,
@@ -125,26 +125,15 @@ export default function PaymentResult() {
   const [tier, setTier] = useState<PaymentTier | null>(null);
 
   const paymentTime = historyItem?.paidAt ?? (status === "success" ? new Date().toISOString() : null);
-  const packageName = historyItem?.tierTitle ?? tier?.title ?? (status === "success" ? "Gói HistoryTalk" : "Đang cập nhật");
+  const rawPackageName = historyItem?.tierTitle ?? tier?.title ?? (status === "success" ? "HistoryTalk" : "Đang cập nhật");
+  // Tier codes come lowercase from the API ("plus"); show them as a name.
+  const packageName = rawPackageName.charAt(0).toUpperCase() + rawPackageName.slice(1);
   const displayedAmount = historyItem?.amount ?? tier?.amount ?? amount;
 
+  // Only what the plan actually adds, as short chips; shown once the tier has loaded.
   const features = useMemo(() => {
-    if (status !== "success") return [];
-
-    return [
-      {
-        title: formatTokens(tier?.limitedToken),
-        desc: "Dùng cho các phiên trò chuyện, hỏi đáp và khám phá nhân vật lịch sử.",
-      },
-      {
-        title: formatDuration(tier?.noMonth),
-        desc: "Quyền lợi được gắn với tài khoản ngay sau khi hệ thống xác nhận giao dịch.",
-      },
-      {
-        title: "Mở trải nghiệm học tập nâng cao",
-        desc: "Tiếp tục trò chuyện với nhân vật, luyện quiz và theo dõi tiến độ học tập.",
-      },
-    ];
+    if (status !== "success" || !tier) return [];
+    return [formatTokens(tier.limitedToken), formatDuration(tier.noMonth)];
   }, [status, tier]);
 
   useEffect(() => {
@@ -252,136 +241,56 @@ export default function PaymentResult() {
   }
 
   return (
-    <div className="relative isolate min-h-full overflow-hidden bg-[var(--bg-main)] px-4 py-5 md:py-6">
-      <Image
-        src="/quang_trung_2D.jpg"
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="-z-10 object-cover opacity-[0.07] grayscale"
-      />
+    // A receipt, not a poster: one centred card saying what was bought, then the way into using it.
+    <div className="flex min-h-full items-center justify-center px-4 py-8 md:py-12">
+      <section className="w-full max-w-md rounded-md border border-border-card bg-[var(--bg-surface)] p-6 shadow-[var(--shadow-soft)] animate-in fade-in zoom-in-95 duration-500 sm:p-8">
+        <div className="text-center">
+          <span className={`mx-auto grid h-14 w-14 place-items-center rounded-full border ${cfg.panelClassName} ${cfg.iconClassName}`}>
+            {cfg.icon}
+          </span>
+          <h1 className="mt-4 text-xl font-semibold text-[var(--text-primary)]">{cfg.title}</h1>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+            Gói <b className="font-semibold text-[var(--text-primary)]">{packageName}</b> đã được kích hoạt cho tài khoản của bạn.
+          </p>
+        </div>
 
-      <section className="mx-auto grid w-full max-w-5xl items-stretch gap-0 overflow-hidden rounded-sm border border-border-card bg-[var(--bg-surface)] animate-in fade-in zoom-in-95 duration-500 lg:grid-cols-[0.72fr_1.28fr]">
-        <aside className="flex flex-col border-b border-[var(--border-default)] bg-[var(--bg-deep)] lg:border-b-0 lg:border-r">
-          <div className="relative min-h-[240px] flex-1 overflow-hidden">
-            <Image
-              src="/ngo-quyen-chan-dung.png"
-              alt="Nhân vật lịch sử HistoryTalk"
-              fill
-              priority
-              sizes="(min-width: 1024px) 420px, 100vw"
-              className="object-cover object-top"
-            />
-          </div>
-          <div className="bg-[var(--text-primary)] p-5 text-[var(--text-inverse)]">
-            <div className="inline-flex items-center rounded-full border border-[var(--accent-on-ink)] px-2 py-0.5 text-xs font-semibold text-[var(--accent-on-ink)]">
-              Đã xác nhận bởi PayOS
-            </div>
-            <h2 className="archive-title is-plain mt-3 max-w-sm text-[20px] text-[var(--text-inverse)]">
-              Hành trình lịch sử của bạn đã được mở khóa
-            </h2>
-            <p className="mt-2 max-w-sm text-xs leading-5 opacity-75">
-              Tiếp tục trò chuyện với các nhân vật, luyện tập quiz và khám phá nội dung nâng cao trong tài khoản của bạn.
-            </p>
-          </div>
-        </aside>
+        {features.length > 0 && (
+          <ul className="mt-5 flex flex-wrap justify-center gap-2">
+            {features.map((feature) => (
+              <li
+                key={feature}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--status-success-border)] bg-[var(--status-success-bg)] px-3 py-1 text-xs font-semibold text-[var(--status-success)]"
+              >
+                <CheckCircle2 size={13} aria-hidden="true" /> {feature}
+              </li>
+            ))}
+          </ul>
+        )}
 
-        <div className="p-5 sm:p-6">
-          <div className="flex items-start justify-between gap-4 border-b border-[var(--border-default)] pb-4">
-            <div className="flex items-start gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-[var(--accent-gold)] text-[#FFFFFF]">
-                {cfg.icon}
-              </span>
-              <div>
-                <h1 className="archive-title mt-1 text-[26px] sm:text-[32px]">
-                  Cảm ơn bạn đã thanh toán
-                </h1>
-                <p className="mt-1 max-w-2xl text-sm leading-5 text-[var(--text-secondary)]">{cfg.desc}</p>
-              </div>
-            </div>
-          </div>
-
-          <dl className="mt-4 grid rounded-sm border border-border-card sm:grid-cols-3">
-            <div className="p-3">
-              <dt className="text-xs font-semibold text-[var(--text-tertiary)]">
-                Thời gian
-              </dt>
-              <dd className="mt-1 text-sm font-bold leading-5 text-[var(--text-primary)]">
-                {formatDateTime(paymentTime)}
+        <dl className="mt-6 divide-y divide-[var(--border-default)] border-y border-[var(--border-default)] text-sm">
+          {[
+            { label: "Số tiền", value: formatCurrency(displayedAmount) },
+            { label: "Thời gian", value: formatDateTime(paymentTime) },
+            { label: "Mã đơn", value: orderCode ? `#${orderCode}` : "Đang cập nhật", mono: true },
+          ].map((row) => (
+            <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
+              <dt className="text-[var(--text-tertiary)]">{row.label}</dt>
+              <dd className={row.mono ? "break-all text-right font-mono text-xs text-[var(--text-secondary)]" : "font-semibold tabular-nums text-[var(--text-primary)]"}>
+                {row.value}
               </dd>
             </div>
-            <div className="border-t border-[var(--border-default)] p-3 sm:border-l sm:border-t-0">
-              <dt className="text-xs font-semibold text-[var(--text-tertiary)]">
-                Gói thanh toán
-              </dt>
-              <dd className="mt-1 text-sm font-bold leading-5 text-[var(--text-primary)]">{packageName}</dd>
-            </div>
-            <div className="border-t border-[var(--border-default)] p-3 sm:border-l sm:border-t-0">
-              <dt className="text-xs font-semibold text-[var(--text-tertiary)]">
-                Số tiền
-              </dt>
-              <dd className="mt-1 font-display text-xl font-extrabold leading-6 tabular-nums text-[var(--text-primary)]">
-                {formatCurrency(displayedAmount)}
-              </dd>
-            </div>
-          </dl>
+          ))}
+        </dl>
 
-          <div className="mt-4">
-            <div className="mb-1 text-[13px] font-semibold text-[var(--text-tertiary)]">
-              Chi tiết giao dịch
-            </div>
-            <div className="divide-y divide-[var(--border-default)] border-y border-[var(--border-strong)] text-sm">
-              <div className="flex items-center justify-between gap-2 py-2">
-                <span className="text-[var(--text-secondary)]">Mã đơn hàng</span>
-                <span className="break-all text-right font-mono text-xs font-bold text-[var(--text-primary)]">
-                  {orderCode ? `#${orderCode}` : "Đang cập nhật"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2 py-2">
-                <span className="text-[var(--text-secondary)]">Trạng thái</span>
-                <span className="inline-flex h-6 items-center gap-1.5 rounded-sm border border-[var(--status-success-border)] bg-[var(--status-success-bg)] px-2 text-xs font-semibold text-[var(--status-success)]">
-                  <CheckCircle2 size={12} />
-                  Đã thanh toán
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <h2 className="archive-title text-lg">Quyền lợi của gói</h2>
-            <ol className="mt-2 divide-y divide-[var(--border-default)] border-y border-[var(--border-strong)]">
-              {features.map((feature, i) => (
-                <li key={feature.title} className="flex gap-3 py-2.5">
-                  <span className="font-display text-sm font-extrabold tabular-nums text-[var(--gold-on-light)]">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-bold text-[var(--text-primary)]">{feature.title}</h3>
-                    <p className="text-xs leading-4 text-[var(--text-tertiary)]">{feature.desc}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <div className="mt-5 grid gap-2 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => router.push("/home")}
-              className="btn-crimson h-10"
-            >
-              Về trang chủ
-            </button>
-
-            <button
-              type="button"
-              onClick={() => router.push("/profile")}
-              className="btn-line h-10"
-            >
-              Xem tài khoản
-            </button>
-          </div>
+        <div className="mt-6 flex flex-col gap-2">
+          <button type="button" onClick={() => router.push("/characters")} className="btn-crimson h-11 w-full">
+            <MessagesSquare size={16} />
+            Bắt đầu trò chuyện
+          </button>
+          <button type="button" onClick={() => router.push("/home")} className="btn-line h-11 w-full">
+            <Home size={16} />
+            Về trang chủ
+          </button>
         </div>
       </section>
     </div>
