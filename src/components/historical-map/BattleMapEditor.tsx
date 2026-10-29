@@ -29,6 +29,7 @@ const TOOL_KEYS: Record<string, BattleSymbolType> = {
   a: "arrow", f: "flank", m: "march", r: "retreat", l: "defenseLine", s: "stakes", p: "ambush",
   i: "infantry", k: "cavalry", w: "navy", h: "fort", b: "headquarters", x: "clash", v: "victory", t: "label", n: "step",
 };
+const PHASE_HINT_KEY = "ht.battleEditor.phaseHintHidden";
 const KEY_OF = Object.fromEntries(Object.entries(TOOL_KEYS).map(([key, type]) => [type, key.toUpperCase()])) as Partial<Record<BattleSymbolType, string>>;
 
 /** Short fingerprint of a saved map, to tell whether a local draft was based on it. */
@@ -109,6 +110,10 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
   const [showPast, setShowPast] = useState(true);
   /** "Phân giai đoạn": every symbol shown with its phase number, for grouping after placing them all. */
   const [sorting, setSorting] = useState(false);
+  /** First-run tip on grouping symbols into phases; dismissed once per browser. */
+  const [phaseHintHidden, setPhaseHintHidden] = useState(() => {
+    try { return localStorage.getItem(PHASE_HINT_KEY) === "1"; } catch { return false; }
+  });
   /** List row being dragged, and where it would land (row id + side, or a phase button). */
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropAt, setDropAt] = useState<{ id: string; after: boolean } | null>(null);
@@ -272,7 +277,28 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     return i < activeIndex && showPast ? { dim: true } : { hidden: true };
   };
   const listedSymbols = phases.length ? value.symbols.filter(s => phaseIndexOf(s) === activeIndex) : value.symbols;
-  const phaseBadge = sorting ? (s: BattleSymbol) => { const i = phaseIndexOf(s); return i === -1 ? undefined : String(i + 1); } : undefined;
+  // Every placed symbol carries its phase number once phases exist, so the grouping is visible without a special mode.
+  const phaseBadge = phases.length ? (s: BattleSymbol) => { const i = phaseIndexOf(s); return i === -1 ? undefined : String(i + 1); } : undefined;
+  /** Phase shared by the whole selection (null = background), undefined when it is mixed. */
+  const selectionPhase = (() => {
+    const owners = new Set(value.symbols.filter(s => selection.includes(s.id)).map(s => s.phaseId ?? null));
+    return owners.size === 1 ? [...owners][0] : undefined;
+  })();
+  // Phase picker floated at the selection: a multi-selection always, a single symbol once there are phases to choose from.
+  const selectionToolbar = value.mode === "custom" && !drawingFrame && (selection.length > 1 || (selection.length === 1 && phases.length > 0)) ? (
+    <div className={styles.selectionBar} role="toolbar" aria-label="Đưa ký hiệu đã chọn vào giai đoạn">
+      <span>{selection.length > 1 ? `${selection.length} ký hiệu · giai đoạn` : "Giai đoạn"}</span>
+      {phases.length > 0 && <button type="button" aria-pressed={selectionPhase === null} title="Hiện suốt trận" onClick={() => assignPhase(selection, null)}>Luôn hiện</button>}
+      {phases.map((p, i) => <button key={p.id} type="button" aria-pressed={selectionPhase === p.id} title={p.title} onClick={() => assignPhase(selection, p.id)}>{i + 1}</button>)}
+      <button type="button" onClick={() => assignPhase(selection, "new")}><Plus size={13} />{phases.length ? "Mới" : "Tạo giai đoạn"}</button>
+    </div>
+  ) : undefined;
+  const unassignedCount = value.symbols.filter(s => phaseIndexOf(s) === -1).length;
+  const showPhaseHint = value.mode === "custom" && !sorting && !phaseHintHidden && selection.length === 0 && value.symbols.length >= 2 && unassignedCount > 0;
+  const hidePhaseHint = () => {
+    setPhaseHintHidden(true);
+    try { localStorage.setItem(PHASE_HINT_KEY, "1"); } catch { /* storage unavailable: hidden for this visit */ }
+  };
   const pickPhase = (id: string | null) => { setPhaseId(id); setSelectedId(null); setDrawingFrame(false); };
   const setCamera = (phase: BattlePhase, camera: BattlePhase["camera"]) => {
     changePhase(phase.id, { camera });
@@ -567,9 +593,18 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
             onClick={() => { setSorting(s => !s); setDrawingFrame(false); }}><ListTree size={15} />Phân giai đoạn</button>}
           {!drawingFrame && !sorting && value.mode === "custom" && activePhase && activeIndex > 0 && <label className={styles.phaseToggle}><input type="checkbox" checked={showPast} onChange={e => setShowPast(e.target.checked)} />Hiện mờ giai đoạn trước</label>}
         </div>}
+        {showPhaseHint && <p className={styles.phaseHint}>
+          <span>
+            {phases.length === 0
+              ? <>Đặt xong ký hiệu? <b>Kéo chuột khoanh vùng</b> trên lược đồ (hoặc giữ <kbd>Shift</kbd> và bấm từng ký hiệu) để chọn nhiều, rồi bấm <b>Tạo giai đoạn</b> để chia diễn biến theo bước.</>
+              : <>{unassignedCount} ký hiệu đang ở «Luôn hiện». <b>Kéo chuột khoanh vùng</b> (hoặc <kbd>Shift</kbd> + bấm) để chọn, rồi chọn số giai đoạn trên thanh hiện ngay cạnh.</>}
+            {placingType && <> Bấm <kbd>Esc</kbd> để thôi đặt ký hiệu trước khi khoanh.</>}
+          </span>
+          <button type="button" aria-label="Ẩn gợi ý" title="Ẩn gợi ý" onClick={hidePhaseHint}><X size={14} /></button>
+        </p>}
         {sorting && <p className={styles.sortHint}>Chọn ký hiệu (giữ <kbd>Shift</kbd> để chọn thêm, hoặc kéo khung trên vùng trống), rồi bấm phím <kbd>1</kbd>–<kbd>9</kbd> để đưa vào giai đoạn, <kbd>0</kbd> để đưa về «Luôn hiện».</p>}
         <BattleMapCanvas value={value} title={title} selectedId={selectedId} selectedIds={selection} placingType={placingType} placingColor={activeFaction?.color}
-          symbolView={symbolView} phaseBadge={phaseBadge}
+          symbolView={symbolView} phaseBadge={phaseBadge} selectionToolbar={selectionToolbar}
           onMarquee={value.mode === "custom" ? (ids, additive) => setSelection(sel => additive ? [...new Set([...sel, ...ids])] : ids) : undefined}
           cameraFrame={activePhase?.camera === "frame" ? activePhase.focus ?? null : null}
           onDrawFrame={drawingFrame && activePhase ? rect => {

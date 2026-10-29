@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp, Expand, Map, Minus, MoveHorizontal, Plus, RotateCcw, RotateCw } from "lucide-react";
 import { clampPercent, isLineSymbol, isNoteSymbol, resolveEffect, SYMBOL_LABELS, SYMBOL_SIZE_MAX, SYMBOL_SIZE_MIN, type BattleMap, type BattleSymbol, type BattleSymbolType, type CameraRect, type MapPoint } from "./battle-map.types";
 import { controlPoints, lineGeometry, pointsRect, simplify } from "./battle-path";
@@ -102,7 +102,7 @@ const rectBetween = (a: { x: number; y: number }, b: { x: number; y: number }): 
   ({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) });
 const rectStyle = (r: CameraRect) => ({ left: `${r.x}%`, top: `${r.y}%`, width: `${r.w}%`, height: `${r.h}%` });
 
-export function BattleMapCanvas({ value, title, selectedId, selectedIds, placingType, placingColor, onSelect, onMove, onTransform, onAdd, onPointsChange, onDelete, legendTitle, symbolView, focus, spotlight, cameraFrame, onDrawFrame, onMarquee, phaseBadge, quickLabel }: {
+export function BattleMapCanvas({ value, title, selectedId, selectedIds, placingType, placingColor, onSelect, onMove, onTransform, onAdd, onPointsChange, onDelete, legendTitle, symbolView, focus, spotlight, cameraFrame, onDrawFrame, onMarquee, phaseBadge, quickLabel, selectionToolbar }: {
   value: BattleMap; title: string;
   /** Symbol with rotate/resize handles (single selection). */
   selectedId?: string | null;
@@ -140,6 +140,8 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
   quickLabel?: { id: string; onChange: (label: string) => void; onDone: () => void };
   /** Editor: small tag next to each symbol, e.g. its phase number. */
   phaseBadge?: (symbol: BattleSymbol) => string | undefined;
+  /** Editor: actions for the current selection, floated just above the selected symbols. */
+  selectionToolbar?: ReactNode;
 }) {
   const [zoom, setZoom] = useState(1);
   const [imageState, setImageState] = useState({ src: "", status: "loading" });
@@ -484,6 +486,17 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
             return badge ? <span key={`badge:${s.id}`} className={styles.phaseBadge} aria-hidden="true"
               style={{ left: `${Math.min(99, s.x + s.size * .4)}%`, top: `${s.y}%` }}>{badge}</span> : null;
           })}
+          {showSymbols && selectionToolbar && aspect && (() => {
+            // Anchored to the selection itself, so the next step sits where the user just dragged or clicked.
+            const area = symbolsRect(value.symbols.filter(s => isSelected(s.id) && !symbolView?.(s).hidden), aspect);
+            if (!area) return null;
+            const below = area.y < 8;
+            return <div className={styles.selectionAnchor} data-below={below || undefined}
+              style={{ left: `${Math.min(88, Math.max(12, area.x + area.w / 2))}%`, top: `${below ? area.y + area.h : area.y}%` }}
+              onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+              {selectionToolbar}
+            </div>;
+          })()}
           {showSymbols && quickLabel && (() => {
             const symbol = value.symbols.find(s => s.id === quickLabel.id);
             if (!symbol) return null;
