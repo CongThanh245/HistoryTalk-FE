@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useMemo,
 } from "react";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -316,6 +317,25 @@ export function QuizSessionPage({
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
     void submitOnce(answers, elapsed);
   };
+
+  // A quiz whose questions were all removed still starts a session with none: say so instead of cheering
+  // "bạn đã trả lời cả 0 câu" and letting a submit the API rejects ("answers không được để trống").
+  if (questions.length === 0) {
+    return (
+      <div className="flex min-h-full items-center justify-center px-4 py-12">
+        <EmptyState
+          mascot="sad"
+          title="Bộ đề này chưa có câu hỏi"
+          description="Có thể câu hỏi đang được cập nhật. Bạn thử bộ đề khác nhé."
+          action={
+            <button type="button" className="btn-line" onClick={onBack}>
+              Quay lại danh sách
+            </button>
+          }
+        />
+      </div>
+    );
+  }
 
   const progressBar = (
     <QuizProgressBar
