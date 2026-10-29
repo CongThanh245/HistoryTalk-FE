@@ -54,6 +54,8 @@ const routeLabels: Record<string, string> = {
   customer: "Khách hàng",
   "content-admin": "Content Admin",
   payment: "Thanh toán",
+  cancel: "Đã hủy",
+  success: "Thành công",
   history: "Lịch sử giao dịch",
 };
 

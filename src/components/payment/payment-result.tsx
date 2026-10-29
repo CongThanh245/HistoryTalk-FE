@@ -7,14 +7,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { paymentService, type PaymentHistoryItem, type PaymentTier } from "@/services/payment.service";
 import {
-  ArrowLeft,
   CheckCircle2,
   Home,
   Hourglass,
+  Receipt,
+  RotateCcw,
   Sparkles,
   Timer,
   XCircle,
 } from "lucide-react";
+import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
 
 type PaymentStatus = "success" | "cancelled" | "pending" | "unknown";
 
@@ -89,10 +91,11 @@ const CONFIG: Record<
   },
   cancelled: {
     icon: <XCircle size={26} />,
-    title: "Giao dịch đã bị hủy",
-    desc: "Không có khoản thanh toán nào được ghi nhận. Bạn có thể quay lại và chọn gói phù hợp khi sẵn sàng.",
-    panelClassName: "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)]",
-    iconClassName: "text-[var(--accent-danger)]",
+    title: "Bạn đã hủy thanh toán",
+    desc: "Chưa có khoản tiền nào bị trừ. Bạn có thể chọn lại gói bất cứ lúc nào.",
+    // The learner cancelled on purpose: a calm neutral tone, not an error colour.
+    panelClassName: "border-[var(--status-neutral-border)] bg-[var(--status-neutral-bg)]",
+    iconClassName: "text-[var(--text-tertiary)]",
   },
   pending: {
     icon: <Hourglass size={26} />,
@@ -206,48 +209,43 @@ export default function PaymentResult() {
   }, [status]);
 
   if (status !== "success") {
+    // Cancelled/unknown: the next step is picking a plan again. Pending: wait and check the order history.
+    const canRetry = status === "cancelled" || status === "unknown";
     return (
       <div className="flex min-h-full items-center justify-center px-4 py-8 md:py-12">
-        <section className="w-full max-w-3xl overflow-hidden rounded-sm border border-border-card bg-[var(--bg-surface)] animate-in fade-in zoom-in-95 duration-500">
-          <div className="flex items-center justify-between gap-3 border-b border-[var(--border-default)] bg-[var(--bg-elevated)] px-5 py-2.5 sm:px-8">
-            {orderCode && (
-              <span className="font-mono text-xs font-semibold text-[var(--text-tertiary)]">#{orderCode}</span>
+        <section className="w-full max-w-md rounded-md border border-border-card bg-[var(--bg-surface)] p-6 text-center shadow-[var(--shadow-soft)] animate-in fade-in zoom-in-95 duration-500 sm:p-8">
+          <span className={`mx-auto grid h-14 w-14 place-items-center rounded-full border ${cfg.panelClassName} ${cfg.iconClassName}`}>
+            {cfg.icon}
+          </span>
+          <h1 className="mt-4 text-xl font-semibold text-[var(--text-primary)]">{cfg.title}</h1>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{cfg.desc}</p>
+
+          <div className="mt-6 flex flex-col gap-2">
+            {canRetry ? (
+              <UpgradeProDialog>
+                <button type="button" className="btn-crimson h-11 w-full">
+                  <RotateCcw size={16} />
+                  Chọn lại gói
+                </button>
+              </UpgradeProDialog>
+            ) : (
+              <button type="button" onClick={() => router.push("/payment/history")} className="btn-crimson h-11 w-full">
+                <Receipt size={16} />
+                Xem lịch sử giao dịch
+              </button>
             )}
+            <button type="button" onClick={() => router.push("/home")} className="btn-line h-11 w-full">
+              <Home size={16} />
+              Về trang chủ
+            </button>
           </div>
 
-          <div className="p-6 sm:p-8">
-            <div className={`rounded-sm border p-5 ${cfg.panelClassName}`}>
-              <div className="flex items-start gap-3">
-                <span className={`mt-1 shrink-0 ${cfg.iconClassName}`}>
-                  {cfg.icon}
-                </span>
-                <div>
-                  <h1 className="archive-title text-[26px] sm:text-[30px]">{cfg.title}</h1>
-                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{cfg.desc}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => router.push("/home")}
-                className="btn-ink h-11"
-              >
-                <Home size={16} />
-                Về trang chủ
-              </button>
-
-              <button
-                type="button"
-                onClick={() => router.push("/home")}
-                className="btn-line h-11"
-              >
-                <ArrowLeft size={16} />
-                Quay lại
-              </button>
-            </div>
-          </div>
+          {/* Kept for support requests, but no longer the first thing on the card. */}
+          {orderCode && (
+            <p className="mt-5 text-xs text-[var(--text-tertiary)]">
+              Mã đơn <span className="font-mono">#{orderCode}</span>
+            </p>
+          )}
         </section>
       </div>
     );
