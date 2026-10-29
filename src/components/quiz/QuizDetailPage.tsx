@@ -50,9 +50,11 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
     { quizId: quiz.quizId, size: 20 },
     isAuthenticated,
   );
+  // Filtered here too: a backend that ignores ?quizId returns every attempt, which showed other quizzes' results
+  // (e.g. "10 Câu Hỏi Về Điện Biên…") in this quiz's history.
   const quizHistory = useMemo(
-    () => historyData?.content ?? [],
-    [historyData?.content],
+    () => (historyData?.content ?? []).filter((r) => r.quizId === quiz.quizId),
+    [historyData?.content, quiz.quizId],
   );
 
   const resolvedLimitedTime = useMemo(() => {
