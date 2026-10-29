@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Clapperboard, Copy, Download, Eye, GripVertical, ImageIcon, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Trash2, Undo2, Upload, Users, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, CircleHelp, Clapperboard, Copy, Download, Eye, GripVertical, ImageIcon, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Trash2, Undo2, Upload, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { battleMapImageService } from "@/services/media.service";
@@ -15,6 +15,7 @@ import {
 import { LINE_WEIGHT_MAX, LINE_WEIGHT_MIN } from "./battle-path";
 import { sceneDurationMs, splitSentences } from "./useBattlePlayback";
 import styles from "./battle-map-editor.module.css";
+import { SpotlightTour, type TourStep } from "@/components/commons/spotlight-tour";
 
 type Tab = "image" | "factions" | "symbols" | "phases";
 const TABS: { id: Tab; label: string; icon: typeof ImageIcon }[] = [
@@ -29,7 +30,12 @@ const TOOL_KEYS: Record<string, BattleSymbolType> = {
   a: "arrow", f: "flank", m: "march", r: "retreat", l: "defenseLine", s: "stakes", p: "ambush",
   i: "infantry", k: "cavalry", w: "navy", h: "fort", b: "headquarters", x: "clash", v: "victory", t: "label", n: "step",
 };
-const PHASE_HINT_KEY = "ht.battleEditor.phaseHintHidden";
+/** Guided tour state per browser: "done" (finished) or "skipped". */
+const TOUR_KEY = "ht.battleEditor.tour";
+/** One-step spotlight on the phase bar, shown once to people who skipped the tour. */
+const PHASE_COACH_KEY = "ht.battleEditor.phaseCoach";
+const readStore = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
+const writeStore = (key: string, v: string) => { try { localStorage.setItem(key, v); } catch { /* storage unavailable */ } };
 const KEY_OF = Object.fromEntries(Object.entries(TOOL_KEYS).map(([key, type]) => [type, key.toUpperCase()])) as Partial<Record<BattleSymbolType, string>>;
 
 /** Short fingerprint of a saved map, to tell whether a local draft was based on it. */
@@ -110,10 +116,23 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
   const [showPast, setShowPast] = useState(true);
   /** "Phân giai đoạn": every symbol shown with its phase number, for grouping after placing them all. */
   const [sorting, setSorting] = useState(false);
-  /** First-run tip on grouping symbols into phases; dismissed once per browser. */
-  const [phaseHintHidden, setPhaseHintHidden] = useState(() => {
-    try { return localStorage.getItem(PHASE_HINT_KEY) === "1"; } catch { return false; }
-  });
+  /** Spotlight tour on screen: the full first-visit walkthrough, or the single phase-bar step. */
+  const [tour, setTour] = useState<"full" | "phase" | null>(null);
+  // First visit: walk through drawing → grouping into phases → narration → preview (skippable).
+  useEffect(() => {
+    if (readStore(TOUR_KEY)) return;
+    const t = window.setTimeout(() => setTour("full"), 700);
+    return () => window.clearTimeout(t);
+  }, []);
+  /** After skipping the tour, the first phase created gets one spotlight on the phase bar instead. */
+  const coachFirstPhase = () => {
+    if (readStore(TOUR_KEY) === "skipped" && !readStore(PHASE_COACH_KEY)) setTour("phase");
+  };
+  const closeTour = (finished: boolean) => {
+    if (tour === "full") writeStore(TOUR_KEY, finished ? "done" : "skipped");
+    else writeStore(PHASE_COACH_KEY, "1");
+    setTour(null);
+  };
   /** List row being dragged, and where it would land (row id + side, or a phase button). */
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropAt, setDropAt] = useState<{ id: string; after: boolean } | null>(null);
@@ -205,12 +224,14 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
   const addPhase = () => {
     const phase = newPhase();
     update({ phases: [...phases, phase] });
+    if (phases.length === 0) coachFirstPhase();
     setPhaseId(phase.id); setSelectedId(null);
   };
   /** Moves symbols into a phase (null = background, "new" = a phase created for them). */
   const assignPhase = (ids: string[], target: string | null | "new") => {
     if (!ids.length) return;
     const created = target === "new" ? newPhase() : null;
+    if (created && phases.length === 0) coachFirstPhase();
     const id = created ? created.id : target;
     update({
       ...(created && { phases: [...phases, created] }),
@@ -266,6 +287,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     update({ phases: next });
     setPhaseId(next[0].id);
     setTab("symbols");
+    coachFirstPhase();
   };
   const activeIndex = activePhase ? phases.indexOf(activePhase) : -1;
   // Onion skin: the phase being edited is solid, earlier phases faint, later ones hidden (toggles).
@@ -293,12 +315,37 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
       <button type="button" onClick={() => assignPhase(selection, "new")}><Plus size={13} />{phases.length ? "Mới" : "Tạo giai đoạn"}</button>
     </div>
   ) : undefined;
-  const unassignedCount = value.symbols.filter(s => phaseIndexOf(s) === -1).length;
-  const showPhaseHint = value.mode === "custom" && !sorting && !phaseHintHidden && selection.length === 0 && value.symbols.length >= 2 && unassignedCount > 0;
-  const hidePhaseHint = () => {
-    setPhaseHintHidden(true);
-    try { localStorage.setItem(PHASE_HINT_KEY, "1"); } catch { /* storage unavailable: hidden for this visit */ }
-  };
+  const tourSteps: TourStep[] = tour === "phase" ? [{
+    target: '[data-tour="phase-bar"]',
+    title: "Thanh giai đoạn",
+    body: <>Bấm số để soạn từng giai đoạn. Muốn đưa ký hiệu vào giai đoạn: <b>kéo chuột khoanh vùng</b> (hoặc <kbd>Shift</kbd> + bấm) trên lược đồ, rồi chọn số trên thanh nhỏ hiện ngay cạnh. Nhãn ①② cho biết ký hiệu thuộc bước nào.</>,
+  }] : [
+    {
+      target: '[data-tour="settings"]', before: () => setTab("symbols"),
+      title: "1. Đặt ký hiệu",
+      body: <>Chọn phe và một ký hiệu (quân, mũi tên tiến công…) rồi bấm lên lược đồ. Với mũi tên: nhấn giữ và kéo theo đường đi.</>,
+    },
+    {
+      target: '[data-tour="canvas"]',
+      title: "2. Vẽ hết diễn biến trước",
+      body: <>Cứ đặt toàn bộ ký hiệu của trận, chưa cần nghĩ tới thứ tự. Ký hiệu chưa chia sẽ hiện suốt trận («Luôn hiện»).</>,
+    },
+    {
+      target: '[data-tour="canvas"]',
+      title: "3. Gom thành giai đoạn",
+      body: <><b>Kéo chuột khoanh vùng</b> (hoặc <kbd>Shift</kbd> + bấm) các ký hiệu cùng một bước. Một thanh nhỏ hiện ngay cạnh: bấm <b>Tạo giai đoạn</b> hoặc số giai đoạn. Ký hiệu sẽ mang nhãn ①②.</>,
+    },
+    {
+      target: '[data-tour="inspector"]',
+      title: "4. Viết lời thuyết minh",
+      body: <>Mỗi giai đoạn có tên và lời thuyết minh ở cột này. Khi phát, ký hiệu của giai đoạn hiện dần theo giọng đọc.</>,
+    },
+    {
+      target: '[data-tour="preview"]',
+      title: "5. Xem trước",
+      body: <>Phát thử đúng như người học sẽ xem, trước khi bấm Lưu. Mở lại hướng dẫn này bất cứ lúc nào bằng nút <b>?</b>.</>,
+    },
+  ];
   const pickPhase = (id: string | null) => { setPhaseId(id); setSelectedId(null); setDrawingFrame(false); };
   const setCamera = (phase: BattlePhase, camera: BattlePhase["camera"]) => {
     changePhase(phase.id, { camera });
@@ -414,8 +461,9 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
       </span>
       <button type="button" onClick={undo} disabled={!doc.past.length} aria-label="Hoàn tác" title="Hoàn tác (Ctrl+Z)"><Undo2 size={16} /></button>
       <button type="button" onClick={redo} disabled={!doc.future.length} aria-label="Làm lại" title="Làm lại (Ctrl+Shift+Z)"><Redo2 size={16} /></button>
+      <button type="button" onClick={() => setTour("full")} aria-label="Xem hướng dẫn" title="Xem hướng dẫn"><CircleHelp size={16} /></button>
       <button type="button" onClick={exportMap} aria-label="Xuất JSON" title="Tải thiết kế dưới dạng JSON"><Download size={16} /><span>Xuất JSON</span></button>
-      <button type="button" aria-label="Xem trước" title="Phát thử như người học sẽ xem (không lưu)" disabled={!value.imageUrl.trim()}
+      <button type="button" data-tour="preview" aria-label="Xem trước" title="Phát thử như người học sẽ xem (không lưu)" disabled={!value.imageUrl.trim()}
         onClick={() => { pickTool(null); setSelectedId(null); setDrawingFrame(false); setPreviewing(true); }}><Eye size={16} /><span>Xem trước</span></button>
       <button type="button" className={styles.primary} aria-label="Lưu lược đồ" disabled={!canSave || busy} onClick={() => void save()}>{saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}<span>Lưu</span></button>
     </header>
@@ -424,7 +472,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
       startScene={Math.max(0, activeIndex)} onClose={() => setPreviewing(false)} />}
 
     <div className={styles.layout}>
-      <aside className={styles.settings}>
+      <aside className={styles.settings} data-tour="settings">
         <div className={styles.tabs} role="tablist" aria-label="Nhóm thiết lập">
           {TABS.map(t => <button key={t.id} type="button" role="tab" id={`map-tab-${t.id}`} aria-selected={tab === t.id} aria-controls="map-tab-panel"
             className={cn(styles.tab, tab === t.id && styles.tabActive)} onClick={() => setTab(t.id)}>
@@ -523,9 +571,10 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
           {tab === "phases" && phases.length === 0 && <div className={styles.group}>
             <h2>Diễn biến theo giai đoạn</h2>
             <div className={styles.callout}>
-              <span>Chia trận đánh thành các giai đoạn: mỗi giai đoạn có lời thuyết minh riêng, và ký hiệu của giai đoạn đó hiện dần khi giọng đọc tới.</span>
+              {/* The walkthrough explains phases; this block only offers the next step. */}
+              <span>Chưa có giai đoạn nào.</span>
               <button type="button" className={styles.nextStep} onClick={splitIntoPhases}><Clapperboard size={16} />{legacyNarration.trim() ? "Chia thành giai đoạn" : "Tạo giai đoạn đầu tiên"}</button>
-              <small>{legacyNarration.trim() ? "Mỗi đoạn văn của thuyết minh cũ bên dưới sẽ thành một giai đoạn." : "Lời thuyết minh viết ở cột bên phải."} Ký hiệu đã đặt giữ nguyên ở lớp «Luôn hiện».</small>
+              <button type="button" className={styles.tourLink} onClick={() => setTour("full")}><CircleHelp size={14} />Xem hướng dẫn</button>
             </div>
             {legacyNarration.trim() && <div className={styles.group}>
               <h2>Thuyết minh cũ</h2>
@@ -572,7 +621,8 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
         </div>
       </aside>
 
-      <main className={styles.workspace}>
+      <SpotlightTour steps={tourSteps} open={tour !== null} onClose={closeTour} />
+      <main className={styles.workspace} data-tour="canvas">
         {draft && <div className={styles.draftBanner} role="status">
           <span>Có bản nháp chưa lưu trên máy này ({new Date(draft.savedAt).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}).
             {draft.stale && " Lược đồ đã được lưu lại sau thời điểm đó, khôi phục sẽ ghi đè bản mới hơn."}</span>
@@ -580,7 +630,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
           <button type="button" onClick={() => setDraft(null)}>Bỏ bản nháp</button>
         </div>}
         {error && <p className={styles.error} role="alert">{error}<button type="button" aria-label="Đóng thông báo" onClick={() => setError("")}><X size={14} /></button></p>}
-        {phases.length > 0 && <div className={styles.phaseBar}>
+        {phases.length > 0 && <div className={styles.phaseBar} data-tour="phase-bar">
           <div className={styles.phaseSteps} role="group" aria-label="Giai đoạn đang soạn">
             <button type="button" className={styles.phaseStepWide} aria-pressed={!activePhase} title="Ký hiệu hiện suốt trận (địa danh, thành lũy…)" onClick={() => pickPhase(null)} {...phaseDropProps(null)}>Luôn hiện</button>
             {phases.map((p, i) => <button key={p.id} type="button" aria-pressed={p.id === phaseId} aria-label={`Giai đoạn ${i + 1}: ${p.title}`} title={p.title}
@@ -593,15 +643,6 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
             onClick={() => { setSorting(s => !s); setDrawingFrame(false); }}><ListTree size={15} />Phân giai đoạn</button>}
           {!drawingFrame && !sorting && value.mode === "custom" && activePhase && activeIndex > 0 && <label className={styles.phaseToggle}><input type="checkbox" checked={showPast} onChange={e => setShowPast(e.target.checked)} />Hiện mờ giai đoạn trước</label>}
         </div>}
-        {showPhaseHint && <p className={styles.phaseHint}>
-          <span>
-            {phases.length === 0
-              ? <>Đặt xong ký hiệu? <b>Kéo chuột khoanh vùng</b> trên lược đồ (hoặc giữ <kbd>Shift</kbd> và bấm từng ký hiệu) để chọn nhiều, rồi bấm <b>Tạo giai đoạn</b> để chia diễn biến theo bước.</>
-              : <>{unassignedCount} ký hiệu đang ở «Luôn hiện». <b>Kéo chuột khoanh vùng</b> (hoặc <kbd>Shift</kbd> + bấm) để chọn, rồi chọn số giai đoạn trên thanh hiện ngay cạnh.</>}
-            {placingType && <> Bấm <kbd>Esc</kbd> để thôi đặt ký hiệu trước khi khoanh.</>}
-          </span>
-          <button type="button" aria-label="Ẩn gợi ý" title="Ẩn gợi ý" onClick={hidePhaseHint}><X size={14} /></button>
-        </p>}
         {sorting && <p className={styles.sortHint}>Chọn ký hiệu (giữ <kbd>Shift</kbd> để chọn thêm, hoặc kéo khung trên vùng trống), rồi bấm phím <kbd>1</kbd>–<kbd>9</kbd> để đưa vào giai đoạn, <kbd>0</kbd> để đưa về «Luôn hiện».</p>}
         <BattleMapCanvas value={value} title={title} selectedId={selectedId} selectedIds={selection} placingType={placingType} placingColor={activeFaction?.color}
           symbolView={symbolView} phaseBadge={phaseBadge} selectionToolbar={selectionToolbar}
@@ -620,7 +661,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
           } : undefined} />
       </main>
 
-      <aside className={styles.inspector} aria-label={selection.length > 1 ? "Ký hiệu đã chọn" : selected ? "Chỉnh ký hiệu" : activePhase ? "Chỉnh giai đoạn" : "Danh sách ký hiệu"}>
+      <aside className={styles.inspector} data-tour="inspector" aria-label={selection.length > 1 ? "Ký hiệu đã chọn" : selected ? "Chỉnh ký hiệu" : activePhase ? "Chỉnh giai đoạn" : "Danh sách ký hiệu"}>
         {selection.length > 1 ? <>
           <div className={styles.inspectorHead}>
             <Layers size={17} />
