@@ -71,8 +71,10 @@ export default function EditContextPage() {
 
     try {
       await updateEvent.mutateAsync({ id, data: payload });
+      return true;
     } catch {
-      // useUpdateEvent already shows the API error toast.
+      // useUpdateEvent already shows the API error toast; keep the form open so the edit can be fixed.
+      return false;
     }
   };
 

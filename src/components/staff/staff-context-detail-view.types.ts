@@ -48,7 +48,8 @@ export const EMPTY_CONTEXT_DRAFT: ContextDraft = {
 export interface StaffContextDetailViewProps {
   mode: "create" | "edit";
   initialDraft?: ContextDraft;
-  onSave: (draft: ContextDraft) => void;
+  /** Resolve to `false` when the save failed: the form then stays editable so the user can fix it and retry. */
+  onSave: (draft: ContextDraft) => void | Promise<boolean | void>;
   isPending: boolean;
   /** Overrides the default "Đang lưu..." save-button label while isPending, e.g. "Đang tải video lên... 42%" */
   pendingLabel?: string | null;

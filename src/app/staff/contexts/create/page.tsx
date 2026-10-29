@@ -77,8 +77,10 @@ export default function CreateContextPage() {
       }
 
       router.push(`/staff/contexts/${newContext.id}`);
+      return true;
     } catch {
-      // useCreateEvent already shows the API error toast.
+      // useCreateEvent already shows the API error toast (e.g. duplicate name); the form stays editable.
+      return false;
     } finally {
       setSaveStep(null);
     }

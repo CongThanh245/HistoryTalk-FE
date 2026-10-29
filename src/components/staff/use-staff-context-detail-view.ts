@@ -190,16 +190,7 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     toast.error("Vui lòng kiểm tra các trường bắt buộc và định dạng năm/URL.");
   };
 
-  // Auto-exit editing mode once a save completes successfully.
-  const prevPendingRef = React.useRef(false);
-  React.useEffect(() => {
-    if (prevPendingRef.current && !isPending) {
-      setIsEditing(false);
-    }
-    prevPendingRef.current = isPending;
-  }, [isPending]);
-
-  const handleSaveClick = () => {
+  const handleSaveClick = async () => {
     if (hasDraftErrors) {
       showValidationErrors();
       return;
@@ -209,7 +200,10 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
     // state (not in `draft`) so their pickers can reset independently of
     // form fields — they have to be merged back in here or the selected
     // files never reach onSave.
-    onSave({ ...draft, pendingPdfFile, pendingPdfFileUrl, pendingImageFile, pendingVideoFile });
+    const saved = await onSave({ ...draft, pendingPdfFile, pendingPdfFileUrl, pendingImageFile, pendingVideoFile });
+    // Leave editing only on success. Watching isPending used to exit on failures too, which locked a failed
+    // create form (no Save, no Edit) and dropped unsaved edits after a failed update (e.g. a duplicate name).
+    if (saved !== false && mode === "edit") setIsEditing(false);
   };
 
   return {
