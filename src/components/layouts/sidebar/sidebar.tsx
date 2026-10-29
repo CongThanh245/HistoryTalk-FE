@@ -159,13 +159,17 @@ export default function Sidebar({
       </div>
 
       {/* ── Desktop sidebar (≥ md) ── */}
+      {/* Unpinned, the slot stays icon-wide and the hover expansion floats over the page instead of pushing it:
+          widening in the flow re-laid out every page (chat, voice call…) each time the pointer brushed past. */}
       <div
         ref={desktopRef}
-        className="hidden md:block"
+        className={cn("hidden md:block", !isPinned && !isTablet && "md:relative md:w-16 md:shrink-0")}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {sidebarContent(isDesktopExpanded)}
+        <div className={cn(!isPinned && !isTablet && "absolute inset-y-0 left-0 z-[55]", !isPinned && isHovered && "shadow-[var(--shadow-strong)]")}>
+          {sidebarContent(isDesktopExpanded)}
+        </div>
       </div>
     </TooltipProvider>
   );
