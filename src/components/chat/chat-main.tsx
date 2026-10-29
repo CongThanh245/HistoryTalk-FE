@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Phone, ScrollText, Menu, Info, Coins, PhoneCall, Video, Lock, AlertTriangle, X } from "lucide-react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Phone, ScrollText, Menu, Info, Coins, PhoneCall, Video, Lock, AlertTriangle, X, RotateCcw } from "lucide-react";
 import type {
   ChatCharacter,
   ChatMessage,
@@ -72,6 +72,27 @@ const formatVietnamTime = (value: string) =>
     minute: "2-digit",
     timeZone: "Asia/Ho_Chi_Minh",
   });
+
+const vietnamDayKey = (value: string) =>
+  parseApiDate(value).toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
+
+/** "Hôm nay" / "Hôm qua" / "Thứ Hai, 27/10/2026" for the separator between days. */
+const formatDayLabel = (value: string) => {
+  const key = vietnamDayKey(value);
+  const today = vietnamDayKey(new Date().toISOString());
+  const yesterday = vietnamDayKey(new Date(Date.now() - 86_400_000).toISOString());
+  if (key === today) return "Hôm nay";
+  if (key === yesterday) return "Hôm qua";
+  return parseApiDate(value).toLocaleDateString("vi-VN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
+};
+
+const displayItemDate = (item: ChatDisplayItem) => (item.type === "voice-call" ? item.call.startedAt : item.message.createdAt);
 
 const groupChatDisplayItems = (messages: ChatMessage[]): ChatDisplayItem[] => {
   const items: ChatDisplayItem[] = [];
@@ -345,6 +366,20 @@ export function ChatMain({
     [data?.messages, voiceCallDraftMessages, optimisticMessages],
   );
   const displayItems = useMemo(() => groupChatDisplayItems(messages), [messages]);
+  // Questions the character never answered (the AI failed and the backend kept an empty reply, or none). Without a
+  // marker they just sat there, looking like the chat ignored the learner.
+  const unansweredIds = useMemo(() => {
+    const ids = new Set<string>();
+    const text = messages.filter((m) => !isVoiceMessage(m));
+    text.forEach((message, index) => {
+      if (message.role !== "USER" || message.id.startsWith("temp-")) return;
+      const next = text[index + 1];
+      if (next?.role === "ASSISTANT") return;
+      if (!next && isStreaming) return;
+      ids.add(message.id);
+    });
+    return ids;
+  }, [messages, isStreaming]);
   const lastItem = displayItems[displayItems.length - 1];
   const showSuggestions =
     suggestedQuestions.length > 0 && !isStreaming && lastItem?.type !== "voice-call" && lastItem?.message.role === "ASSISTANT";
@@ -974,8 +1009,21 @@ export function ChatMain({
           </>
         ) : (
           <>
-            {displayItems.map((item) =>
-              item.type === "voice-call" ? (
+            {displayItems.map((item, index) => {
+              const at = displayItemDate(item);
+              const newDay = index === 0 || vietnamDayKey(at) !== vietnamDayKey(displayItemDate(displayItems[index - 1]));
+              const unanswered = item.type === "message" && unansweredIds.has(item.message.id);
+              const isLast = index === displayItems.length - 1;
+              return (
+                <Fragment key={item.type === "voice-call" ? item.call.id : item.message.id}>
+                  {newDay && (
+                    <div className="flex items-center gap-3 px-4 py-1" role="separator" aria-label={formatDayLabel(at)}>
+                      <span className="h-px flex-1 bg-[var(--border-default)]" />
+                      <span className="text-[11px] font-semibold text-content-muted first-letter:uppercase">{formatDayLabel(at)}</span>
+                      <span className="h-px flex-1 bg-[var(--border-default)]" />
+                    </div>
+                  )}
+              {item.type === "voice-call" ? (
                 <VoiceCallBubble
                   key={item.call.id}
                   call={item.call}
@@ -993,8 +1041,25 @@ export function ChatMain({
                     item.message.role === "ASSISTANT" ? onOpenCitation : undefined
                   }
                 />
-              ),
-            )}
+              )}
+                  {unanswered && (
+                    <p className="-mt-2 flex items-center justify-end gap-2 pr-16 text-[11px] text-[var(--status-warning)]">
+                      <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      {character.name} chưa trả lời được câu này.
+                      {isLast && !isStreaming && item.type === "message" && (
+                        <button
+                          type="button"
+                          onClick={() => handleSend(item.message.content)}
+                          className="inline-flex items-center gap-1 font-semibold text-content-text underline-offset-2 hover:underline"
+                        >
+                          <RotateCcw className="h-3 w-3" aria-hidden="true" /> Hỏi lại
+                        </button>
+                      )}
+                    </p>
+                  )}
+                </Fragment>
+              );
+            })}
             {/* Follow-up suggestions answer the character, so they sit right under its latest reply (aligned with the
                 bubble, past the avatar) and only while that reply is the last message — not under a question of the
                 user's that is still waiting for, or never got, an answer. */}
