@@ -12,8 +12,12 @@ import { useAuthStore } from "@/store/auth.store";
  * context) — not on login — so the streak counts study days.
  */
 
-/** Roles the backend accepts on /users/me/daily-check-in (school roles are not enabled there yet). */
-const CHECK_IN_ROLES = new Set(["CUSTOMER", "CONTENT_ADMIN", "SYSTEM_ADMIN"]);
+/**
+ * Learners whose study days count. The backend also accepts staff on /users/me/daily-check-in, but a Content
+ * Admin test-chatting a character is not studying: it showed them "Chuỗi 1 ngày học" and paid check-in tokens.
+ * School roles are not enabled on that endpoint yet.
+ */
+const CHECK_IN_ROLES = new Set(["CUSTOMER"]);
 
 let inFlight: Promise<void> | null = null;
 
