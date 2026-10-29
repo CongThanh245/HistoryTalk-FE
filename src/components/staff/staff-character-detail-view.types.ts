@@ -116,7 +116,7 @@ export interface StaffCharacterDetailViewProps {
   ) => Promise<{ fileUrl: string; rawText: string; pageCount: number }>;
   isExtractPdfDocumentPending?: boolean;
   /** Create a brand-new PDF document in one call, using content + fileUrl already produced by onExtractPdfDocument (edit mode only) */
-  onCreatePdfDocument?: (data: { title: string; content: string; fileUrl: string }) => Promise<void>;
+  onCreatePdfDocument?: (data: { title: string; content: string; fileUrl: string; file: File }) => Promise<void>;
   isCreatePdfDocumentPending?: boolean;
   /** Update an existing document's title/content independently of the entity's Save button (edit mode only) */
   onUpdateDocument?: (docId: string, data: { title: string; content: string }) => Promise<void>;

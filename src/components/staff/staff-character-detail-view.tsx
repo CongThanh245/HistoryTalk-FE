@@ -173,6 +173,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     viewerLoading,
     setViewerLoading,
     setPendingPdfFileUrl,
+    setPendingPdfFile,
     pendingImageFile,
     setPendingImageFile,
     pendingModelFile,
@@ -724,6 +725,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           set("documentTitle")(doc?.title ?? "");
                           set("documentContent")(doc?.content ?? "");
                           setPendingPdfFileUrl(doc?.fileUrl ?? null);
+                          setPendingPdfFile(doc?.file ?? null);
                         }}
                         disabled={!isEditing}
                         onCreateText={async (data) => {
@@ -747,6 +749,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             set("documentTitle")(data.title);
                             set("documentContent")(data.content);
                             setPendingPdfFileUrl(data.fileUrl);
+                            setPendingPdfFile(data.file);
                           }
                         }}
                         isCreatePdfPending={isCreatePdfDocumentPending}
@@ -1438,6 +1441,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             set("documentTitle")("");
             set("documentContent")("");
             setPendingPdfFileUrl(null);
+            setPendingPdfFile(null);
             setDeleteDocumentTarget(null);
             return;
           }

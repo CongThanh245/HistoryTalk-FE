@@ -59,6 +59,7 @@ import type { Character } from "@/services/character.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
+import { PDF_UPLOAD_FAILED } from "@/features/documents/hooks";
 import { cn } from "@/lib/utils/cn";
 
 type DocumentOwnerType = "character" | "context";
@@ -78,6 +79,7 @@ type CharacterDocumentForm = {
   title: string;
   content: string;
   fileUrl?: string;
+  pdfFile?: File;
 };
 
 const EMPTY_CHARACTER_DOCUMENT_FORM: CharacterDocumentForm = {
@@ -164,10 +166,12 @@ export default function StaffDocumentsPage() {
         title: data.title,
         content: data.content,
         fileUrl: data.fileUrl,
+        pdfFile: data.pdfFile,
       }),
-    onSuccess: (_document, data) => {
+    onSuccess: (document, data) => {
       invalidateCharacterDocuments(data.ownerId);
       toast.success("Đã tạo tài liệu nhân vật");
+      if (document.pdfUploadFailed) toast.warning(PDF_UPLOAD_FAILED);
       setFormOpen(false);
       setDocumentForm(EMPTY_CHARACTER_DOCUMENT_FORM);
     },
@@ -225,8 +229,10 @@ export default function StaffDocumentsPage() {
         title: data.title,
         content: data.content,
         fileUrl: data.fileUrl,
+        pdfFile: data.pdfFile,
       }),
-    onSuccess: (_document, data) => {
+    onSuccess: (document, data) => {
+      if (document.pdfUploadFailed) toast.warning(PDF_UPLOAD_FAILED);
       queryClient.invalidateQueries({ queryKey: queryKeys.documents.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.documents.historicalByContext(data.ownerId),
@@ -920,7 +926,7 @@ export default function StaffDocumentsPage() {
                     });
                   }}
                   isExtractPdfPending={extractPdf.isPending}
-                  onCreatePdf={async ({ title, content, fileUrl }) => {
+                  onCreatePdf={async ({ title, content, fileUrl, file }) => {
                     if (!documentForm.ownerId) {
                       toast.error("Vui lòng chọn đối tượng liên kết");
                       return;
@@ -931,6 +937,7 @@ export default function StaffDocumentsPage() {
                         title,
                         content,
                         fileUrl,
+                        pdfFile: file,
                       });
                     } else {
                       await createHistoricalDocument.mutateAsync({
@@ -938,6 +945,7 @@ export default function StaffDocumentsPage() {
                         title,
                         content,
                         fileUrl,
+                        pdfFile: file,
                       });
                     }
                   }}

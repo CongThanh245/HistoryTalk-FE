@@ -75,6 +75,7 @@ export default function CreateContextPage() {
             title: draft.documentTitle.trim() || payload.name,
             content: documentContent,
             fileUrl: draft.pendingPdfFileUrl || undefined,
+            pdfFile: draft.pendingPdfFileUrl ? draft.pendingPdfFile : null,
           });
         } catch {
           toast.warning("Bối cảnh đã tạo, nhưng import tài liệu chưa thành công");

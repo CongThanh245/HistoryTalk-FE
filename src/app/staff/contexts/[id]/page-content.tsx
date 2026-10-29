@@ -83,7 +83,7 @@ export default function EditContextPage() {
           contextId: id,
           title: draft.documentTitle.trim() || payload.name,
           content: documentContent,
-          ...(draft.pendingPdfFileUrl ? { fileUrl: draft.pendingPdfFileUrl } : { type: "TEXT" as const }),
+          ...(draft.pendingPdfFileUrl ? { fileUrl: draft.pendingPdfFileUrl, pdfFile: draft.pendingPdfFile } : { type: "TEXT" as const }),
         });
       } catch {
         // The hook toasts the error; stay in editing so the document is not lost and can be retried.
@@ -154,8 +154,8 @@ export default function EditContextPage() {
         extractPdf.mutateAsync({ file, entityType: "context", entityId: id, onProgress, signal })
       }
       isExtractPdfDocumentPending={extractPdf.isPending}
-      onCreatePdfDocument={async ({ title, content, fileUrl }) => {
-        await createHistoricalDocument.mutateAsync({ contextId: id, title, content, fileUrl });
+      onCreatePdfDocument={async ({ title, content, fileUrl, file }) => {
+        await createHistoricalDocument.mutateAsync({ contextId: id, title, content, fileUrl, pdfFile: file });
       }}
       isCreatePdfDocumentPending={createHistoricalDocument.isPending}
       onUpdateDocument={async (docId, data) => {

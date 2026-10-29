@@ -101,7 +101,7 @@ export default function EditCharacterPage() {
           characterId: id,
           title: draft.documentTitle.trim() || payload.name,
           content: documentContent,
-          ...(draft.pendingPdfFileUrl ? { fileUrl: draft.pendingPdfFileUrl } : { type: "TEXT" as const }),
+          ...(draft.pendingPdfFileUrl ? { fileUrl: draft.pendingPdfFileUrl, pdfFile: draft.pendingPdfFile } : { type: "TEXT" as const }),
         });
       } catch {
         // The hook toasts the error.
@@ -180,8 +180,8 @@ export default function EditCharacterPage() {
         extractPdf.mutateAsync({ file, entityType: "character", entityId: id, onProgress, signal })
       }
       isExtractPdfDocumentPending={extractPdf.isPending}
-      onCreatePdfDocument={async ({ title, content, fileUrl }) => {
-        await createCharacterDocument.mutateAsync({ characterId: id, title, content, fileUrl });
+      onCreatePdfDocument={async ({ title, content, fileUrl, file }) => {
+        await createCharacterDocument.mutateAsync({ characterId: id, title, content, fileUrl, pdfFile: file });
       }}
       isCreatePdfDocumentPending={createCharacterDocument.isPending}
       onUpdateDocument={async (docId, data) => {

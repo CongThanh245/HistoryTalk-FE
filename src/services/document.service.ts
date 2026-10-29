@@ -19,11 +19,20 @@ export interface DocumentPayload {
   type?: DocumentType;
 }
 
-export interface CreateHistoricalDocumentRequest extends DocumentPayload {
+/**
+ * upload-and-extract only returns the text and the original file name as fileUrl; it does not store the file. Passing
+ * the picked PDF here uploads it with POST /documents/{id}/upload-pdf right after the document is created, so
+ * "Xem PDF gốc" works.
+ */
+interface WithPdfFile {
+  pdfFile?: File | null;
+}
+
+export interface CreateHistoricalDocumentRequest extends DocumentPayload, WithPdfFile {
   contextId: string;
 }
 
-export interface CreateCharacterDocumentRequest extends DocumentPayload {
+export interface CreateCharacterDocumentRequest extends DocumentPayload, WithPdfFile {
   characterId: string;
 }
 
@@ -34,6 +43,8 @@ export interface RagDocument {
   content: string;
   type: DocumentType;
   fileUrl?: string;
+  /** Set by create*Document when the document was saved but storing the original PDF failed. */
+  pdfUploadFailed?: boolean;
   createdAt?: string;
   updatedAt?: string;
   /** Chủ sở hữu tài liệu (character hoặc historical context). */
@@ -83,6 +94,22 @@ function normalizeDocument(raw: unknown): RagDocument {
     contextId: value.contextId,
     deletedAt: value.deletedAt ?? null,
   };
+}
+
+/** Stores the original PDF of a just-created document. A failure keeps the document (no re-create on retry) and is flagged. */
+async function attachPdf(doc: RagDocument, file: File | null | undefined): Promise<RagDocument> {
+  if (!file || !doc.id) return doc;
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await axiosClient.post(`/documents/${doc.id}/upload-pdf`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 15 * 60 * 1000,
+    });
+    return { ...doc, ...normalizeDocument(res.data.data) };
+  } catch {
+    return { ...doc, pdfUploadFailed: true };
+  }
 }
 
 function normalizeDocumentList(raw: unknown): RagDocument[] {
@@ -139,23 +166,23 @@ export const documentService = {
   },
 
   createHistoricalDocument: async (
-    data: CreateHistoricalDocumentRequest,
+    { pdfFile, ...data }: CreateHistoricalDocumentRequest,
   ): Promise<RagDocument> => {
     const res = await axiosClient.post("/historical-documents", {
       ...data,
       type: data.type ?? "TEXT",
     });
-    return normalizeDocument(res.data.data);
+    return attachPdf(normalizeDocument(res.data.data), pdfFile);
   },
 
   createCharacterDocument: async (
-    data: CreateCharacterDocumentRequest,
+    { pdfFile, ...data }: CreateCharacterDocumentRequest,
   ): Promise<RagDocument> => {
     const res = await axiosClient.post("/character-documents", {
       ...data,
       type: data.type ?? "TEXT",
     });
-    return normalizeDocument(res.data.data);
+    return attachPdf(normalizeDocument(res.data.data), pdfFile);
   },
 
   updateHistoricalDocument: async (

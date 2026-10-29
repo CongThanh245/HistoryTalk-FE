@@ -148,6 +148,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     viewerLoading,
     setViewerLoading,
     setPendingPdfFileUrl,
+    setPendingPdfFile,
     pendingImageFile,
     setPendingImageFile,
     pendingVideoFile,
@@ -657,6 +658,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                           set("documentTitle")(data.title);
                           set("documentContent")(data.content);
                           setPendingPdfFileUrl(data.fileUrl);
+                          setPendingPdfFile(data.file);
                         }
                       }}
                       isCreatePdfPending={isCreatePdfDocumentPending}
@@ -666,6 +668,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                         set("documentTitle")(doc?.title ?? "");
                         set("documentContent")(doc?.content ?? "");
                         setPendingPdfFileUrl(doc?.fileUrl ?? null);
+                        setPendingPdfFile(doc?.file ?? null);
                       }}
                     />
                   </div>
@@ -1132,6 +1135,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             set("documentTitle")("");
             set("documentContent")("");
             setPendingPdfFileUrl(null);
+            setPendingPdfFile(null);
             setDeleteDocumentTarget(null);
             return;
           }

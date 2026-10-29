@@ -25,14 +25,14 @@ interface NewDocumentPanelProps {
   ) => Promise<ExtractedPdf>;
   isExtractPdfPending?: boolean;
   /** Create the document using the (possibly edited) extracted text + the fileUrl from onExtractPdf. */
-  onCreatePdf: (data: { title: string; content: string; fileUrl: string }) => Promise<void>;
+  onCreatePdf: (data: { title: string; content: string; fileUrl: string; file: File }) => Promise<void>;
   isCreatePdfPending?: boolean;
   /**
    * Create pages: the document has no button of its own. Whatever is being written / was extracted is reported
    * through onDraftChange (null when cleared) and saved by the page's main Create button.
    */
   deferred?: boolean;
-  onDraftChange?: (doc: { title: string; content: string; fileUrl?: string } | null) => void;
+  onDraftChange?: (doc: { title: string; content: string; fileUrl?: string; file?: File } | null) => void;
 }
 
 type Step = "closed" | "choose" | "text" | "pdf";
@@ -85,9 +85,9 @@ export function NewDocumentPanel({
     const report = onDraftChangeRef.current;
     if (step === "text" && content.trim()) report?.({ title: title.trim(), content: content.trim() });
     else if (step === "pdf" && pdfPhase === "review" && extracted && content.trim())
-      report?.({ title: title.trim(), content: content.trim(), fileUrl: extracted.fileUrl });
+      report?.({ title: title.trim(), content: content.trim(), fileUrl: extracted.fileUrl, file: file ?? undefined });
     else report?.(null);
-  }, [deferred, step, pdfPhase, title, content, extracted]);
+  }, [deferred, step, pdfPhase, title, content, extracted, file]);
 
   const isBusy = !!isCreateTextPending || !!isCreatePdfPending || pdfPhase === "extracting" || !!isExtractPdfPending;
 
@@ -375,8 +375,8 @@ export function NewDocumentPanel({
             try {
               if (step === "text") {
                 await onCreateText({ title: title.trim(), content: content.trim() });
-              } else if (extracted) {
-                await onCreatePdf({ title: title.trim(), content: content.trim(), fileUrl: extracted.fileUrl });
+              } else if (extracted && file) {
+                await onCreatePdf({ title: title.trim(), content: content.trim(), fileUrl: extracted.fileUrl, file });
               }
               reset();
             } catch {

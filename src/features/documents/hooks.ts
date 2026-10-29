@@ -106,17 +106,20 @@ export function useSearchCharacterDocuments(keyword?: string) {
   });
 }
 
+export const PDF_UPLOAD_FAILED = "Đã lưu nội dung tài liệu nhưng chưa lưu được file PDF gốc. Mở tài liệu và tải PDF lên lại.";
+
 export function useCreateHistoricalDocument() {
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: (data: CreateHistoricalDocumentRequest) =>
       documentService.createHistoricalDocument(data),
-    onSuccess: (_doc, data) => {
+    onSuccess: (doc, data) => {
       qc.invalidateQueries({
         queryKey: queryKeys.documents.historicalByContext(data.contextId),
       });
       toast.success("Đã import tài liệu cho bối cảnh");
+      if (doc.pdfUploadFailed) toast.warning(PDF_UPLOAD_FAILED);
     },
     onError: (err: unknown) => {
       toast.error(getErrorMessage(err, "Import tài liệu thất bại"));
@@ -130,7 +133,8 @@ export function useCreateCharacterDocument() {
   return useMutation({
     mutationFn: (data: CreateCharacterDocumentRequest) =>
       documentService.createCharacterDocument(data),
-    onSuccess: (_doc, data) => {
+    onSuccess: (doc, data) => {
+      if (doc.pdfUploadFailed) toast.warning(PDF_UPLOAD_FAILED);
       qc.invalidateQueries({ queryKey: queryKeys.documents.characterAll });
       qc.invalidateQueries({
         queryKey: queryKeys.documents.characterByCharacter(data.characterId),

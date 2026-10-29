@@ -83,6 +83,7 @@ export default function CreateCharacterPage() {
             title: draft.documentTitle.trim() || draft.name.trim(),
             content: documentContent,
             fileUrl: draft.pendingPdfFileUrl || undefined,
+            pdfFile: draft.pendingPdfFileUrl ? draft.pendingPdfFile : null,
           });
         } catch {
           toast.warning("Nhân vật đã tạo, nhưng import tài liệu chưa thành công");
