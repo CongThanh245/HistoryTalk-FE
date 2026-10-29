@@ -151,7 +151,7 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
       "name", "title", "background", "image", "modelUrl", "personality",
       "bornYear", "bornMonth", "bornDay", "isBornBc",
       "deathYear", "deathMonth", "deathDay", "isDeathBc",
-      "isActive", "isPublished"
+      "isActive", "isPublished", "documentContent",
     ];
 
     return keys.some(key => {

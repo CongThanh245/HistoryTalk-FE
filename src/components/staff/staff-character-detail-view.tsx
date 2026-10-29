@@ -172,7 +172,6 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     setViewerUrl,
     viewerLoading,
     setViewerLoading,
-    pendingPdfFileUrl,
     setPendingPdfFileUrl,
     pendingImageFile,
     setPendingImageFile,
@@ -716,7 +715,16 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     </div>
 
                     <div className="mb-3">
+                      {/* Deferred: the document is saved by the page's Tạo / Lưu thay đổi, not a second button. Remounts
+                          (empty) once a saved document shows up in the list, so it is not saved twice. */}
                       <NewDocumentPanel
+                        key={`doc-panel-${documents.length}`}
+                        deferred
+                        onDraftChange={(doc) => {
+                          set("documentTitle")(doc?.title ?? "");
+                          set("documentContent")(doc?.content ?? "");
+                          setPendingPdfFileUrl(doc?.fileUrl ?? null);
+                        }}
                         disabled={!isEditing}
                         onCreateText={async (data) => {
                           if (mode === "edit") {
@@ -832,66 +840,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                       ) : (
                         <p className="text-xs text-[var(--content-muted)]">Chưa có tài liệu nào.</p>
                       )
-                    ) : draft.documentContent.trim() ? (
-                      // The not-yet-created document lives entirely in the draft
-                      // (no real id until the character is saved) — reuse the
-                      // same row markup, and the view/edit/delete dialogs below,
-                      // via a sentinel "pending" id.
-                      <div className="space-y-2">
-                        {(() => {
-                          const pendingDocument = {
-                            id: PENDING_DOCUMENT_ID,
-                            title: draft.documentTitle,
-                            content: draft.documentContent,
-                            type: "TEXT" as const,
-                            fileUrl: pendingPdfFileUrl || undefined,
-                          };
-                          return (
-                            <div
-                              className="flex items-start gap-2 p-2 border rounded-sm border-[var(--card-light-border)] bg-[var(--bg-elevated)]"
-                            >
-                              <button
-                                type="button"
-                                className="flex-1 min-w-0 text-left cursor-pointer"
-                                onClick={() => setViewingDocument(pendingDocument)}
-                                title="Xem chi tiết tài liệu này"
-                              >
-                                <p className="text-sm font-semibold truncate text-[var(--content-heading)]">
-                                  {pendingDocument.title || "Tài liệu chưa đặt tên"}
-                                </p>
-                                <p className="mt-0.5 line-clamp-2 text-xs text-[var(--content-muted)]">
-                                  {pendingDocument.content || "Chưa có nội dung"}
-                                </p>
-                              </button>
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  className="rounded-sm shrink-0 text-content-heading"
-                                  onClick={() => openDocumentEdit(pendingDocument)}
-                                  title="Sửa nội dung"
-                                >
-                                  <PencilIcon className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  className="shrink-0 rounded-sm text-accent-danger hover:bg-(--accent-danger)/15"
-                                  onClick={() => setDeleteDocumentTarget(pendingDocument)}
-                                  title="Xóa tài liệu"
-                                >
-                                  <TrashIcon className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    ) : (
+                    ) : !draft.documentContent.trim() && (
                       <p className="text-xs text-[var(--content-muted)]">
-                        Chưa có tài liệu nào. Tài liệu sẽ được tạo cùng lúc khi bạn tạo nhân vật.
+                        Chưa có tài liệu nào. Bấm «Tài liệu mới» để đính kèm; tài liệu được tạo cùng nhân vật.
                       </p>
                     )}
                   </div>

@@ -90,6 +90,22 @@ export default function EditCharacterPage() {
       await updateCharacter.mutateAsync({ id, data: payload });
     } catch {
       // useUpdateCharacter already shows the API error toast.
+      return;
+    }
+
+    // A document written/extracted in the Tài liệu tab is saved by this same "Lưu thay đổi" (no separate button).
+    const documentContent = draft.documentContent.trim();
+    if (documentContent) {
+      try {
+        await createCharacterDocument.mutateAsync({
+          characterId: id,
+          title: draft.documentTitle.trim() || payload.name,
+          content: documentContent,
+          ...(draft.pendingPdfFileUrl ? { fileUrl: draft.pendingPdfFileUrl } : { type: "TEXT" as const }),
+        });
+      } catch {
+        // The hook toasts the error.
+      }
     }
   };
 
@@ -139,7 +155,7 @@ export default function EditCharacterPage() {
       mode="edit"
       initialDraft={initialDraft}
       onSave={handleSave}
-      isPending={updateCharacter.isPending}
+      isPending={updateCharacter.isPending || createCharacterDocument.isPending}
       documents={characterDocuments.data ?? []}
       isLoadingDocuments={characterDocuments.isLoading}
       onDeleteDocument={(docId) => deleteCharacterDocument.mutate(docId)}
