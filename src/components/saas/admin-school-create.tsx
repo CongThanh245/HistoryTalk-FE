@@ -22,7 +22,6 @@ import { Field, Panel, SectionHeading, formatNumber, isValidEmail } from "@/comp
 import { ROUTES } from "@/constants/routes";
 import { useCreateApiSchool, useCreateApiSchoolAdmin } from "@/features/saas/hooks-api";
 import {
-  SCHOOL_CODE_PATTERN,
   PACKAGE_ORDER,
   PACKAGE_SHORT_LABELS,
   adminCredentialRecord,
@@ -44,7 +43,6 @@ const PACKAGE_HINTS: Record<EnterprisePackage, string> = {
 
 const emptySchool = () => ({
   name: "",
-  schoolCode: "",
   address: "",
   contactEmail: "",
   contactPhone: "",
@@ -58,10 +56,8 @@ const ADMIN_PREFIX = "lcs-admin";
 
 function schoolErrors(f: SchoolForm): Record<SchoolFormField, string | null> {
   const name = f.name.trim();
-  const code = f.schoolCode.trim();
   return {
     name: !name ? "Nhập tên trường" : name.length < 3 ? "Tên trường tối thiểu 3 ký tự" : null,
-    schoolCode: code && !SCHOOL_CODE_PATTERN.test(code) ? "2–30 ký tự: chữ không dấu, số, dấu gạch ngang (-) hoặc gạch dưới (_)" : null,
     address: null,
     contactEmail: !f.contactEmail.trim() ? "Nhập email liên hệ" : isValidEmail(f.contactEmail) ? null : "Email không hợp lệ",
     contactPhone: f.contactPhone.trim() && !LOOSE_PHONE_PATTERN.test(f.contactPhone.trim()) ? "Số điện thoại không hợp lệ" : null,
@@ -165,7 +161,6 @@ export function CreateSchoolForm() {
     createSchool.mutate(
       {
         name: form.name.trim(),
-        schoolCode: form.schoolCode.trim() || undefined,
         address: form.address.trim() || undefined,
         contactEmail: form.contactEmail.trim().toLowerCase(),
         contactPhone: form.contactPhone.trim() ? compactPhone(form.contactPhone.trim()) : undefined,
@@ -261,32 +256,19 @@ export function CreateSchoolForm() {
           {step === 0 ? (
             <>
               <Panel>
-                <SectionHeading title="Thông tin trường" description="Tên, mã và thông tin liên hệ của trường." />
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <Field label="Tên trường" required error={e1("name")} htmlFor={ID("name")} className="sm:col-span-2">
-                    <StaffFormInput
-                      id={ID("name")}
-                      autoFocus
-                      maxLength={255}
-                      value={form.name}
-                      onChange={(e) => set("name", e.target.value)}
-                      placeholder="Trường THPT Lê Hồng Phong"
-                      aria-invalid={!!e1("name")}
-                    />
-                  </Field>
-                  <Field label="Mã trường" error={e1("schoolCode")} htmlFor={ID("schoolCode")} hint="Để trống để hệ thống tự sinh (VD: LHP-HCM).">
-                    <StaffFormInput
-                      id={ID("schoolCode")}
-                      value={form.schoolCode}
-                      onChange={(e) => set("schoolCode", e.target.value.toUpperCase().replace(/\s+/g, ""))}
-                      placeholder="Tự sinh"
-                      maxLength={30}
-                      className="font-mono"
-                      aria-invalid={!!e1("schoolCode")}
-                    />
-                  </Field>
-                </div>
-                <Field label="Địa chỉ" htmlFor={ID("address")} hint="Ghi rõ tỉnh / thành: hệ thống dùng để sinh mã trường.">
+                <SectionHeading title="Thông tin trường" description="Tên, địa chỉ và thông tin liên hệ của trường." />
+                <Field label="Tên trường" required error={e1("name")} htmlFor={ID("name")}>
+                  <StaffFormInput
+                    id={ID("name")}
+                    autoFocus
+                    maxLength={255}
+                    value={form.name}
+                    onChange={(e) => set("name", e.target.value)}
+                    placeholder="Trường THPT Lê Hồng Phong"
+                    aria-invalid={!!e1("name")}
+                  />
+                </Field>
+                <Field label="Địa chỉ" htmlFor={ID("address")} hint="Ghi rõ tỉnh / thành: mã trường được hệ thống tự sinh từ tên trường và tỉnh / thành.">
                   <StaffFormInput
                     id={ID("address")}
                     maxLength={500}

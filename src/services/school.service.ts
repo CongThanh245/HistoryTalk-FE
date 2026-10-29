@@ -128,8 +128,6 @@ export interface ApiSchool {
 
 export interface CreateSchoolPayload {
   name: string;
-  /** Leave empty to let the backend derive it from the name + province (e.g. "LHP-HCM"). */
-  schoolCode?: string;
   address?: string;
   contactEmail: string;
   contactPhone?: string;
@@ -367,10 +365,8 @@ export const schoolService = {
     return res.data.data;
   },
   createSchool: async (payload: CreateSchoolPayload): Promise<ApiSchool> => {
-    const res = await axiosClient.post("/admin/schools", {
-      ...payload,
-      schoolCode: payload.schoolCode?.trim() || null,
-    });
+    // schoolCode is omitted: the backend derives it from the name + province (e.g. "LHP-HCM").
+    const res = await axiosClient.post("/admin/schools", payload);
     return res.data.data;
   },
   createSchoolAdmin: async (payload: CreateSchoolAdminPayload): Promise<ApiSchoolAdmin> => {

@@ -35,9 +35,6 @@ export const SCHOOL_STATUS_LABELS: Record<SchoolStatus, string> = {
   EXPIRED: "Hết hạn gói",
 };
 
-/** Same rule as the backend (`^[A-Za-z0-9_-]{2,30}$`); the backend stores it upper-case. */
-export const SCHOOL_CODE_PATTERN = /^[A-Za-z0-9_-]{2,30}$/;
-
 /** Shared token pool of a school year: total, still in the pool, and already spent by students. */
 export function schoolPool(s: Pick<ApiSchool, "totalSchoolTokenQuota" | "unallocatedTokenQuota">) {
   const total = Math.max(0, s.totalSchoolTokenQuota ?? 0);
@@ -55,7 +52,7 @@ export function formatDateTime(value: string | null | undefined) {
 }
 
 /* ───────────────────────── Errors ───────────────────────── */
-export type SchoolFormField = "name" | "schoolCode" | "address" | "contactEmail" | "contactPhone" | "packageType" | "localHistoryPolicyAccepted";
+export type SchoolFormField = "name" | "address" | "contactEmail" | "contactPhone" | "packageType" | "localHistoryPolicyAccepted";
 export type AdminFormField = "fullName" | "email" | "phoneNumber";
 
 const FIELD_ERRORS = (error: unknown): Record<string, string> | undefined => {
@@ -76,8 +73,6 @@ function rawMessage(error: unknown) {
 /** Vietnamese copy for the backend's known English messages; anything else is shown as sent. */
 function translate(message: string): string {
   const m = message.toLowerCase();
-  if (m.includes("school code") && m.includes("already exists")) return "Mã trường đã được dùng cho trường khác. Chọn mã khác hoặc để trống để hệ thống tự sinh.";
-  if (m.includes("school code must contain")) return "Mã trường gồm 2–30 ký tự: chữ, số, dấu gạch ngang hoặc gạch dưới.";
   if (m.includes("email") && m.includes("already in use")) return "Email này đã được dùng cho một tài khoản khác.";
   if (m.includes("local history")) return "Trường phải đồng ý cam kết nội dung lịch sử địa phương.";
   if (m.includes("school admin not found") || m.includes("not a school admin"))
@@ -107,8 +102,7 @@ export function schoolCreateError(error: unknown): MappedError<SchoolFormField> 
   }
   const lower = raw.toLowerCase();
   let field: SchoolFormField | null = null;
-  if (lower.includes("school code")) field = "schoolCode";
-  else if (lower.includes("tên trường") || lower.includes("school name")) field = "name";
+  if (lower.includes("tên trường") || lower.includes("school name")) field = "name";
   else if (lower.includes("email")) field = "contactEmail";
   else if (lower.includes("local history")) field = "localHistoryPolicyAccepted";
   return {
