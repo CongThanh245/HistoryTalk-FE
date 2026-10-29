@@ -147,7 +147,6 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     setViewerUrl,
     viewerLoading,
     setViewerLoading,
-    pendingPdfFileUrl,
     setPendingPdfFileUrl,
     pendingImageFile,
     setPendingImageFile,
@@ -659,6 +658,13 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                         }
                       }}
                       isCreatePdfPending={isCreatePdfDocumentPending}
+                      // Create page: the document rides on "Tạo bối cảnh" — no second Create button to miss.
+                      deferred={mode === "create"}
+                      onDraftChange={(doc) => {
+                        set("documentTitle")(doc?.title ?? "");
+                        set("documentContent")(doc?.content ?? "");
+                        setPendingPdfFileUrl(doc?.fileUrl ?? null);
+                      }}
                     />
                   </div>
 
@@ -747,66 +753,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     ) : (
                       <p className="text-xs text-[var(--content-muted)]">Chưa có tài liệu nào.</p>
                     )
-                  ) : draft.documentContent.trim() ? (
-                    // The not-yet-created document lives entirely in the draft
-                    // (no real id until the context is saved) — reuse the same
-                    // row markup, and the view/edit/delete dialogs below, via a
-                    // sentinel "pending" id.
-                    <div className="space-y-2">
-                      {(() => {
-                        const pendingDocument = {
-                          id: PENDING_DOCUMENT_ID,
-                          title: draft.documentTitle,
-                          content: draft.documentContent,
-                          type: "TEXT" as const,
-                          fileUrl: pendingPdfFileUrl || undefined,
-                        };
-                        return (
-                          <div
-                            className="flex items-start gap-2 rounded-sm border p-2 border-[var(--card-light-border)] bg-[var(--bg-elevated)]"
-                          >
-                            <button
-                              type="button"
-                              className="min-w-0 flex-1 text-left"
-                              onClick={() => setViewingDocument(pendingDocument)}
-                              title="Xem chi tiết tài liệu này"
-                            >
-                              <p className="truncate text-sm font-semibold text-[var(--content-heading)]">
-                                {pendingDocument.title || "Tài liệu chưa đặt tên"}
-                              </p>
-                              <p className="mt-0.5 line-clamp-2 text-xs text-[var(--content-muted)]">
-                                {pendingDocument.content || "Chưa có nội dung"}
-                              </p>
-                            </button>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                className="shrink-0 rounded-sm text-content-heading"
-                                onClick={() => openDocumentEdit(pendingDocument)}
-                                title="Sửa nội dung"
-                              >
-                                <PencilIcon className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                className="shrink-0 rounded-sm text-accent-danger"
-                                onClick={() => setDeleteDocumentTarget(pendingDocument)}
-                                title="Xóa tài liệu"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  ) : (
+                  ) : !draft.documentContent.trim() && (
                     <p className="text-xs text-[var(--content-muted)]">
-                      Chưa có tài liệu nào. Tài liệu sẽ được tạo cùng lúc khi bạn tạo bối cảnh.
+                      Chưa có tài liệu nào. Bấm «Tài liệu mới» để đính kèm; tài liệu được tạo cùng bối cảnh.
                     </p>
                   )}
                 </div>

@@ -27,6 +27,12 @@ interface NewDocumentPanelProps {
   /** Create the document using the (possibly edited) extracted text + the fileUrl from onExtractPdf. */
   onCreatePdf: (data: { title: string; content: string; fileUrl: string }) => Promise<void>;
   isCreatePdfPending?: boolean;
+  /**
+   * Create pages: the document has no button of its own. Whatever is being written / was extracted is reported
+   * through onDraftChange (null when cleared) and saved by the page's main Create button.
+   */
+  deferred?: boolean;
+  onDraftChange?: (doc: { title: string; content: string; fileUrl?: string } | null) => void;
 }
 
 type Step = "closed" | "choose" | "text" | "pdf";
@@ -52,6 +58,8 @@ export function NewDocumentPanel({
   isExtractPdfPending,
   onCreatePdf,
   isCreatePdfPending,
+  deferred = false,
+  onDraftChange,
 }: NewDocumentPanelProps) {
   const [step, setStep] = React.useState<Step>("closed");
   const [pdfPhase, setPdfPhase] = React.useState<PdfPhase>("pick");
@@ -65,6 +73,21 @@ export function NewDocumentPanel({
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const replaceInputRef = React.useRef<HTMLInputElement>(null);
   const abortControllerRef = React.useRef<AbortController | null>(null);
+
+  // Deferred mode: keep the page's draft in step with the panel. The callback goes through a ref because pages
+  // pass a new function every render, and reporting back re-renders them.
+  const onDraftChangeRef = React.useRef(onDraftChange);
+  React.useEffect(() => {
+    onDraftChangeRef.current = onDraftChange;
+  });
+  React.useEffect(() => {
+    if (!deferred) return;
+    const report = onDraftChangeRef.current;
+    if (step === "text" && content.trim()) report?.({ title: title.trim(), content: content.trim() });
+    else if (step === "pdf" && pdfPhase === "review" && extracted && content.trim())
+      report?.({ title: title.trim(), content: content.trim(), fileUrl: extracted.fileUrl });
+    else report?.(null);
+  }, [deferred, step, pdfPhase, title, content, extracted]);
 
   const isBusy = !!isCreateTextPending || !!isCreatePdfPending || pdfPhase === "extracting" || !!isExtractPdfPending;
 
@@ -328,6 +351,15 @@ export function NewDocumentPanel({
       {/* Sticky within the page's own scroll (not a second scroll region —
           that produced a confusing nested scrollbar) so the submit button
           stays reachable without hunting for it below a long PDF preview. */}
+      {deferred ? (
+        // No second Create button on create pages: the document goes out with the page's own one.
+        <div className="-mx-3 -mb-3 flex items-center justify-between gap-2 border-t px-3 py-2.5 text-xs text-content-muted border-card-light-border">
+          <span>{canSubmit ? "Tài liệu sẽ được tạo cùng lúc khi bấm nút Tạo của trang." : "Điền tiêu đề và nội dung để đính kèm tài liệu."}</span>
+          <Button type="button" size="sm" variant="ghost" onClick={reset} disabled={isBusy}>
+            Bỏ tài liệu
+          </Button>
+        </div>
+      ) : (
       <div
         className="sticky bottom-0 -mx-3 -mb-3 flex justify-end gap-2 border-t px-3 py-2.5"
         style={{ borderColor: "var(--card-light-border)", background: "var(--bg-elevated)" }}
@@ -356,6 +388,7 @@ export function NewDocumentPanel({
           {isBusy ? "Đang tạo..." : step === "text" ? "Tạo tài liệu" : "Tạo tài liệu PDF"}
         </Button>
       </div>
+      )}
     </div>
   );
 }
