@@ -175,7 +175,9 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
   // Blocked while a PDF pick is still being extracted so Save can't fire
   // before pendingPdfFileUrl/documentContent are actually populated — the
   // pending file would otherwise silently get dropped from the create call.
-  const canSave = !hasDraftErrors && !isPending && !isExtractPdfDocumentPending;
+  // Field errors don't disable Save: clicking it runs showValidationErrors, which marks every invalid field and
+  // jumps to its tab. A silently disabled button left staff guessing which required field was missing.
+  const canSave = !isPending && !isExtractPdfDocumentPending;
   const canPublish = !isEditing || !hasDraftErrors;
   const publishBlockedMessage = "⚠ Cần hoàn tất các trường bắt buộc trước khi xuất bản.";
 

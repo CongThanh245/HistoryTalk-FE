@@ -26,6 +26,20 @@ function validateRequired(
   }
 }
 
+/** Length bounds mirrored from the backend DTO (@Size), so the form fails before the API returns 400. */
+function validateLength(
+  errors: ValidationErrors<string>,
+  field: string,
+  value: string | null | undefined,
+  label: string,
+  { min, max }: { min?: number; max: number },
+) {
+  if (errors[field] || isBlank(value)) return;
+  const length = value!.trim().length;
+  if (min !== undefined && length < min) errors[field] = `${label} phải có ít nhất ${min} ký tự.`;
+  else if (length > max) errors[field] = `${label} tối đa ${max} ký tự.`;
+}
+
 function validateYear(
   errors: ValidationErrors<string>,
   field: string,
@@ -188,6 +202,12 @@ export function validateContextDraft(
   validateRequired(errors, "era", draft.era, "Thời đại");
   validateRequired(errors, "location", draft.location, "Địa điểm");
   validateYear(errors, "year", draft.year, "Năm");
+  // CreateHistoricalContextRequest: name 3–100, description 10–5000, location ≤ 255, URLs ≤ 500.
+  validateLength(errors, "name", draft.name, "Tên bối cảnh", { min: 3, max: 100 });
+  validateLength(errors, "description", draft.description, "Mô tả", { min: 10, max: 5000 });
+  validateLength(errors, "location", draft.location, "Địa điểm", { max: 255 });
+  validateLength(errors, "imageUrl", draft.imageUrl, "URL hình ảnh", { max: 500 });
+  validateLength(errors, "videoUrl", draft.videoUrl, "URL video", { max: 500 });
 
   // Catches obvious placeholder/test data (e.g. "2121212") — a real
   // location name always has at least one letter.
