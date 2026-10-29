@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Crown, Gem, Sparkles, Zap } from "lucide-react";
 import { Container } from "@/components/marketing/container";
@@ -8,6 +8,15 @@ import { MagneticButton } from "@/components/commons/MagneticButton";
 import { cn } from "@/lib/utils/cn";
 import { queryKeys } from "@/shared/query-key";
 import { paymentService, type PaymentTier } from "@/services/payment.service";
+import {
+  formatVnd,
+  groupTierPlans,
+  hasYearlyPlans,
+  tierForCycle,
+  yearlySavingPercent,
+  type BillingCycle,
+  type TierPlan,
+} from "@/features/payment/tier-plans";
 
 interface PlanFeature {
   text: string;
@@ -21,6 +30,7 @@ interface DisplayPlan {
   description: string;
   price: string;
   priceSuffix: string;
+  periodNote: string;
   ctaLabel: string;
   ctaHref: string;
   ctaStyle: "outline" | "primary" | "gold";
@@ -44,45 +54,12 @@ const planIcons = [
 ];
 
 const fallbackTiers: PaymentTier[] = [
-  {
-    tierId: "fallback-free",
-    title: "Free",
-    amount: 0,
-    noMonth: 1,
-    limitedToken: 50,
-    isActive: true,
-  },
-  {
-    tierId: "fallback-plus",
-    title: "Plus",
-    amount: 99000,
-    noMonth: 1,
-    limitedToken: 500,
-    isActive: true,
-  },
-  {
-    tierId: "fallback-pro",
-    title: "Pro",
-    amount: 199000,
-    noMonth: 1,
-    limitedToken: 2000,
-    isActive: true,
-  },
+  { tierId: "fallback-free", title: "Free", amount: 0, noMonth: 1, limitedToken: 1500, isActive: true },
+  { tierId: "fallback-plus", title: "Plus", amount: 49000, noMonth: 1, limitedToken: 5000, isActive: true },
+  { tierId: "fallback-pro", title: "Pro", amount: 99000, noMonth: 1, limitedToken: 10000, isActive: true },
+  { tierId: "fallback-plus-year", title: "Plus", amount: 499000, noMonth: 12, limitedToken: 5000, isActive: true },
+  { tierId: "fallback-pro-year", title: "Pro", amount: 999000, noMonth: 12, limitedToken: 10000, isActive: true },
 ];
-
-function formatCurrency(amount: number) {
-  if (amount <= 0) return "0đ";
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function formatDuration(noMonth: number) {
-  if (!noMonth || noMonth <= 1) return "tháng";
-  return `${noMonth} tháng`;
-}
 
 function normalizeTierTitle(title: string) {
   const trimmed = title.trim();
@@ -90,29 +67,36 @@ function normalizeTierTitle(title: string) {
   return trimmed.length <= 8 ? `HistoryTalk ${trimmed}` : trimmed;
 }
 
-function tierToPlan(tier: PaymentTier, index: number, paidTierCount: number): DisplayPlan {
-  const isFree = tier.amount <= 0;
-  const isPopular = !isFree && index === Math.max(1, Math.ceil(paidTierCount / 2));
-  const duration = formatDuration(tier.noMonth);
-  const tokenText = tier.limitedToken > 0
-    ? `${tier.limitedToken.toLocaleString("vi-VN")} token AI`
+function planToDisplay(plan: TierPlan, index: number, paidPlanCount: number, cycle: BillingCycle): DisplayPlan {
+  const tier = tierForCycle(plan, cycle)!;
+  const isFree = plan.isFree;
+  const isPopular = !isFree && index === Math.max(1, Math.ceil(paidPlanCount / 2));
+  const isYearly = tier.noMonth >= 12;
+  const saving = isYearly ? yearlySavingPercent(plan) : null;
+  const tokenText = plan.dailyTokens > 0
+    ? `${plan.dailyTokens.toLocaleString("vi-VN")} token AI mỗi ngày`
     : "Token AI theo cấu hình gói";
 
   return {
-    id: tier.tierId,
-    name: normalizeTierTitle(tier.title),
+    id: plan.key,
+    name: normalizeTierTitle(plan.title),
     badge: isPopular ? "Phổ biến" : undefined,
     description: planDescriptions[index] ?? "Gói học lịch sử với quyền truy cập và tài nguyên được mở rộng.",
-    price: isFree ? "Miễn phí" : formatCurrency(tier.amount),
-    priceSuffix: isFree ? "" : `/${duration}`,
+    price: isFree ? "0đ" : formatVnd(tier.amount),
+    priceSuffix: isFree ? "" : isYearly ? "/năm" : "/tháng",
+    periodNote: isFree
+      ? "Miễn phí"
+      : saving
+        ? `Tiết kiệm ${saving}% so với trả theo tháng`
+        : isYearly ? "12 tháng sử dụng" : `${tier.noMonth} tháng sử dụng`,
     ctaLabel: isFree ? "Bắt đầu" : "Chọn gói",
     ctaHref: isFree ? "/register" : `/register?plan=${encodeURIComponent(tier.tierId)}`,
     ctaStyle: isFree ? "outline" : isPopular ? "gold" : "primary",
     icon: planIcons[index] ?? planIcons[planIcons.length - 1],
     popular: isPopular,
     features: [
-      { text: `${duration[0].toUpperCase()}${duration.slice(1)} sử dụng`, highlight: true },
-      { text: tokenText, highlight: tier.limitedToken > 0 },
+      { text: isFree ? "Dùng miễn phí" : isYearly ? "12 tháng sử dụng" : `${tier.noMonth} tháng sử dụng`, highlight: true },
+      { text: tokenText, highlight: plan.dailyTokens > 0 },
       { text: "Trò chuyện với nhân vật lịch sử bằng AI" },
       { text: "Khám phá bối cảnh sự kiện theo mạch học" },
       { text: "Làm quiz ôn tập sau hành trình" },
@@ -150,17 +134,19 @@ export default function PricingPage() {
 
   const usingFallback = isError;
 
-  const activeTiers = useMemo(
-    () => (usingFallback ? fallbackTiers : data ?? [])
-      .filter((tier) => tier.isActive)
-      .sort((a, b) => a.amount - b.amount),
+  const [cycle, setCycle] = useState<BillingCycle>("month");
+
+  const tierPlans = useMemo(
+    () => groupTierPlans(usingFallback ? fallbackTiers : data ?? []),
     [data, usingFallback],
   );
+  const showCycleToggle = hasYearlyPlans(tierPlans);
 
   const plans = useMemo(() => {
-    const paidTierCount = activeTiers.filter((tier) => tier.amount > 0).length;
-    return activeTiers.map((tier, index) => tierToPlan(tier, index, paidTierCount));
-  }, [activeTiers]);
+    const paidPlanCount = tierPlans.filter((plan) => !plan.isFree).length;
+    return tierPlans.map((plan, index) => planToDisplay(plan, index, paidPlanCount, cycle));
+  }, [tierPlans, cycle]);
+  const maxSaving = Math.max(0, ...tierPlans.map((plan) => yearlySavingPercent(plan) ?? 0));
 
   useEffect(() => {
     let ctx: ReturnType<typeof import("gsap").gsap.context> | null = null;
@@ -287,6 +273,33 @@ export default function PricingPage() {
                 </div>
               )}
 
+              {showCycleToggle && (
+                <div className="mb-6 flex justify-center">
+                  <div role="radiogroup" aria-label="Chu kỳ thanh toán" className="inline-flex border border-[var(--text-primary)]">
+                    {([
+                      ["month", "Theo tháng"],
+                      ["year", maxSaving > 0 ? `Theo năm · tiết kiệm đến ${maxSaving}%` : "Theo năm"],
+                    ] as const).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        role="radio"
+                        aria-checked={cycle === value}
+                        onClick={() => setCycle(value)}
+                        className={cn(
+                          "px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.08em] transition-colors",
+                          cycle === value
+                            ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                            : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]",
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Ruled columns: the grid draws the top/left rules, each plan its right/bottom ones. */}
               <div
                 data-pricing-grid
@@ -299,7 +312,6 @@ export default function PricingPage() {
                 )}
               >
                 {plans.map((plan, idx) => {
-                  const tier = activeTiers[idx];
                   const isInk = !!plan.popular;
 
                   return (
@@ -339,7 +351,7 @@ export default function PricingPage() {
                           {plan.priceSuffix && <span className={cn("text-sm", isInk ? "text-[var(--text-inverse)] opacity-70" : "text-[var(--text-muted)]")}>{plan.priceSuffix}</span>}
                         </div>
                         <p className={cn("mt-2 text-[10px] font-bold uppercase tracking-[0.1em]", isInk ? "text-[var(--accent-on-ink)]" : "text-[var(--text-muted)]")}>
-                          {tier.noMonth > 0 ? `${tier.noMonth} tháng sử dụng` : "Gói dùng thử"}
+                          {plan.periodNote}
                         </p>
                       </div>
 

@@ -5,51 +5,58 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { CheckIcon, CrownIcon, SparklesIcon, XIcon } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
-import { paymentService, type PaymentTier } from "@/services/payment.service";
+import { paymentService } from "@/services/payment.service";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/features/profile/hooks";
 import { useEntitlements } from "@/features/saas/entitlements";
+import {
+  formatVnd,
+  groupTierPlans,
+  hasYearlyPlans,
+  tierForCycle,
+  yearlySavingPercent,
+  type BillingCycle,
+  type TierPlan,
+} from "@/features/payment/tier-plans";
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function getTierFeatureSummary(tier: PaymentTier): string {
-  const value = `${tier.tierId} ${tier.title}`.toLowerCase();
-
-  if (value.includes("pro")) return "Nội dung, chat, call, video call, quiz";
-  if (value.includes("plus")) return "Nội dung, chat, call, quiz";
+function getTierFeatureSummary(planKey: string): string {
+  if (planKey.includes("pro")) return "Nội dung, chat, call, video call, quiz";
+  if (planKey.includes("plus")) return "Nội dung, chat, call, quiz";
   return "Nội dung, chat, quiz";
 }
 
 function TierCard({
-  tier,
+  plan,
+  cycle,
   index,
   onCheckout,
   loadingId,
   currentTierId,
 }: {
-  tier: PaymentTier;
+  plan: TierPlan;
+  cycle: BillingCycle;
   index: number;
   onCheckout: (tierId: string) => void;
   loadingId: string | null;
   currentTierId: string | null;
 }) {
+  const tier = tierForCycle(plan, cycle)!;
   const isFeatured = index === 0;
   const isLoading = loadingId === tier.tierId;
-  const isFree = tier.amount === 0;
-  const isCurrent = currentTierId ? tier.tierId === currentTierId : isFree;
+  const isFree = plan.isFree;
+  const isYearly = tier.noMonth >= 12;
+  const saving = isYearly ? yearlySavingPercent(plan) : null;
+  // The account's subscription may be either the monthly or the yearly row of this plan.
+  const isCurrent = currentTierId
+    ? currentTierId === plan.monthly?.tierId || currentTierId === plan.yearly?.tierId
+    : isFree;
 
   const features: [string, string][] = [
-    ["Thời hạn", `${tier.noMonth} tháng`],
-    ["Token AI", tier.limitedToken.toLocaleString("vi-VN")],
-    ["Tính năng", getTierFeatureSummary(tier)],
+    ["Thời hạn", isFree ? "Miễn phí" : `${tier.noMonth} tháng`],
+    ["Token AI", `${plan.dailyTokens.toLocaleString("vi-VN")}/ngày`],
+    ["Tính năng", getTierFeatureSummary(plan.key)],
   ];
 
   return (
@@ -59,14 +66,14 @@ function TierCard({
       <div className="upgrade-pro-card-head">
         <CrownIcon className="size-5" />
         <div>
-          <h3>{tier.title}</h3>
-          <p>{tier.noMonth} tháng sử dụng</p>
+          <h3>{plan.title}</h3>
+          <p>{isFree ? "Miễn phí" : saving ? `Tiết kiệm ${saving}% so với trả theo tháng` : `${tier.noMonth} tháng sử dụng`}</p>
         </div>
       </div>
 
       <div className="upgrade-pro-price">
-        <span>{isFree ? "Miễn phí" : formatCurrency(tier.amount)}</span>
-        {!isFree && <small>/{tier.noMonth} tháng</small>}
+        <span>{formatVnd(tier.amount)}</span>
+        {!isFree && <small>{isYearly ? "/năm" : "/tháng"}</small>}
       </div>
 
       {isCurrent ? (
@@ -133,6 +140,7 @@ export function UpgradeProDialog({
   onOpenChange: controlledOnOpenChange,
 }: UpgradeProDialogProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [cycle, setCycle] = useState<BillingCycle>("month");
   const [localOpen, setLocalOpen] = useState(false);
   // School accounts never buy plans: the dialog stays closed and the trigger explains who to ask.
   const entitlements = useEntitlements();
@@ -182,7 +190,7 @@ export function UpgradeProDialog({
     checkoutMutation.mutate(tierId);
   };
 
-  const activeTiers = tiers?.filter((t) => t.isActive).sort((a, b) => a.amount - b.amount) ?? [];
+  const plans = groupTierPlans(tiers ?? []);
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
@@ -205,13 +213,38 @@ export function UpgradeProDialog({
             <XIcon className="size-5" />
           </DialogPrimitive.Close>
 
-          <div className="upgrade-pro-grid mt-[60px]">
+          {hasYearlyPlans(plans) && (
+            <div role="radiogroup" aria-label="Chu kỳ thanh toán" className="mx-auto mt-[60px] flex w-fit border border-[var(--border-strong)]">
+              {([
+                ["month", "Theo tháng"],
+                ["year", "Theo năm"],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={cycle === value}
+                  onClick={() => setCycle(value)}
+                  className={`px-4 py-2 text-xs font-bold uppercase tracking-[0.08em] transition-colors ${
+                    cycle === value
+                      ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className={`upgrade-pro-grid ${hasYearlyPlans(plans) ? "mt-6" : "mt-[60px]"}`}>
             {isLoading
               ? [0, 1, 2].map((i) => <SkeletonCard key={i} index={i} />)
-              : activeTiers.map((tier, index) => (
+              : plans.map((plan, index) => (
                   <TierCard
-                    key={tier.tierId}
-                    tier={tier}
+                    key={plan.key}
+                    plan={plan}
+                    cycle={cycle}
                     index={index}
                     onCheckout={handleCheckout}
                     loadingId={loadingId}

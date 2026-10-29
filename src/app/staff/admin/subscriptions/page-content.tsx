@@ -154,7 +154,7 @@ function TierCard({ tier, onEdit }: TierCardProps) {
           <div className="flex items-center gap-1.5">
             <Coins className="w-3.5 h-3.5 text-accent-gold" />
             <span className="text-sm font-semibold text-[var(--text-tertiary)]">
-              Token
+              Token/ngày
             </span>
           </div>
           <p className="text-lg font-bold tabular-nums text-content-heading">
@@ -290,7 +290,7 @@ function TierFormDialog({
           {/* Limited token */}
           <div className="space-y-1.5">
             <Label className="text-content-heading text-[13px]">
-              Giới hạn token <span className="text-destructive">*</span>
+              Token mỗi ngày <span className="text-destructive">*</span>
             </Label>
             <Input
               type="number"

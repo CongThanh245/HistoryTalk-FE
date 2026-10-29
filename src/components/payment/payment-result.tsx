@@ -69,7 +69,7 @@ function formatDuration(months?: number) {
 
 function formatTokens(tokens?: number) {
   if (!tokens) return "Mở rộng lượt trò chuyện AI";
-  return `${new Intl.NumberFormat("vi-VN").format(tokens)} token AI`;
+  return `${new Intl.NumberFormat("vi-VN").format(tokens)} token AI mỗi ngày`;
 }
 
 const CONFIG: Record<
