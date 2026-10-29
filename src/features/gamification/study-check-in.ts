@@ -13,11 +13,12 @@ import { useAuthStore } from "@/store/auth.store";
  */
 
 /**
- * Learners whose study days count. The backend also accepts staff on /users/me/daily-check-in, but a Content
- * Admin test-chatting a character is not studying: it showed them "Chuỗi 1 ngày học" and paid check-in tokens.
- * School roles are not enabled on that endpoint yet.
+ * Learners whose study days count. /users/me/daily-check-in accepts any signed-in user, but a Content Admin
+ * test-chatting a character is not studying: it showed them "Chuỗi 1 ngày học" and paid check-in tokens.
  */
-const CHECK_IN_ROLES = new Set(["CUSTOMER"]);
+const CHECK_IN_ROLES = new Set(["CUSTOMER", "SCHOOL_STUDENT"]);
+/** The check-in reward lands in the personal token wallet, which only customers spend (students use the school quota). */
+const WALLET_ROLES = new Set(["CUSTOMER"]);
 
 let inFlight: Promise<void> | null = null;
 
@@ -55,10 +56,11 @@ export function recordStudyActivity(queryClient: QueryClient) {
     .then((result) => {
       markDoneToday(user.uid);
       if (!result.alreadyCheckedInToday) {
+        const usesWallet = WALLET_ROLES.has(user.role);
         toast.success(`Chuỗi ${result.streakCount} ngày học`, {
-          description: result.rewardTokens > 0 ? `+${result.rewardTokens.toLocaleString("vi-VN")} token thưởng điểm danh hôm nay` : undefined,
+          description: usesWallet && result.rewardTokens > 0 ? `+${result.rewardTokens.toLocaleString("vi-VN")} token thưởng điểm danh hôm nay` : undefined,
         });
-        updateUser({ token: result.tokenBalance });
+        if (usesWallet) updateUser({ token: result.tokenBalance });
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.gamification.today });
       queryClient.invalidateQueries({ queryKey: ["gamification", "study-days"] });
