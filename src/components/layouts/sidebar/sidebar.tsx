@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils/cn";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import SidebarHeader from "./sidebar-header";
@@ -25,15 +25,12 @@ export default function Sidebar({
   logoHref?: string;
 }) {
   const [isPinned, setIsPinned] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
-  // A menu opened from the hover-expanded sidebar renders in a portal: keep the sidebar open until it closes.
-  const menuOpen = useRef(false);
-  const desktopRef = useRef<HTMLDivElement>(null);
   const [isTablet, setIsTablet] = useState(false);
   const [catalogUrls, setCatalogUrls] = useState<Partial<Record<CatalogPath, string>>>({});
-  const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // On tablet (md–lg) force icon-only; on desktop respect pin/hover
-  const isDesktopExpanded = isTablet ? false : (isPinned || isHovered);
+  // Collapsed means collapsed: no hover expansion. Expanding on hover either shoved the page sideways or, as an
+  // overlay, covered its left edge whenever the pointer brushed past. Icons carry tooltips; » expands for good.
+  // On tablet (md–lg) always icon-only.
+  const isDesktopExpanded = isTablet ? false : isPinned;
 
   // Mobile drawer state from context
   const { isMobileOpen, closeMobileSidebar } = useSidebar();
@@ -69,30 +66,9 @@ export default function Sidebar({
     } catch {}
   };
 
-  const handleMouseEnter = () => {
-    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    if (menuOpen.current) return;
-    hoverTimeout.current = setTimeout(() => setIsHovered(false), 120);
-  };
-
-  const handleMenuOpenChange = (open: boolean) => {
-    menuOpen.current = open;
-    if (!open && !desktopRef.current?.matches(":hover")) setIsHovered(false);
-  };
-
   const rememberCatalogUrl = (path: CatalogPath, url: string) => {
     setCatalogUrls((current) => current[path] === url ? current : { ...current, [path]: url });
   };
-
-  useEffect(() => {
-    return () => {
-      if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
-    };
-  }, []);
 
   const sidebarContent = (isExpanded: boolean) => (
     <aside
@@ -119,7 +95,7 @@ export default function Sidebar({
         logoHref={logoHref}
       />
       {quickMenu && (
-        <SidebarQuickMenu menu={quickMenu} isExpanded={isExpanded} onOpenChange={handleMenuOpenChange} onNavigate={closeMobileSidebar} />
+        <SidebarQuickMenu menu={quickMenu} isExpanded={isExpanded} onNavigate={closeMobileSidebar} />
       )}
       <SidebarNav
         isExpanded={isExpanded}
@@ -129,7 +105,7 @@ export default function Sidebar({
         onNavigate={closeMobileSidebar}
       />
       <SidebarFooter isExpanded={isExpanded} showUpgrade={showUpgrade} />
-      <SidebarUser isExpanded={isExpanded} onOpenChange={handleMenuOpenChange} />
+      <SidebarUser isExpanded={isExpanded} />
     </aside>
   );
 
@@ -159,18 +135,7 @@ export default function Sidebar({
       </div>
 
       {/* ── Desktop sidebar (≥ md) ── */}
-      {/* Unpinned, the slot stays icon-wide and the hover expansion floats over the page instead of pushing it:
-          widening in the flow re-laid out every page (chat, voice call…) each time the pointer brushed past. */}
-      <div
-        ref={desktopRef}
-        className={cn("hidden md:block", !isPinned && !isTablet && "md:relative md:w-16 md:shrink-0")}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div className={cn(!isPinned && !isTablet && "absolute inset-y-0 left-0 z-[55]", !isPinned && isHovered && "shadow-[var(--shadow-strong)]")}>
-          {sidebarContent(isDesktopExpanded)}
-        </div>
-      </div>
+      <div className="hidden md:block">{sidebarContent(isDesktopExpanded)}</div>
     </TooltipProvider>
   );
 }
