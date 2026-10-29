@@ -29,7 +29,7 @@ export default function SidebarHeader({
   return (
     <div
       className={cn(
-        "relative z-10 h-16 flex items-center shrink-0 overflow-hidden",
+        "group relative z-10 h-16 flex items-center shrink-0 overflow-hidden",
         // Logo centred on the whole width; the collapse / close button sits on the right edge so it does not push the logo aside.
         isExpanded ? "justify-center px-11" : "justify-center",
       )}
@@ -39,6 +39,8 @@ export default function SidebarHeader({
         href={logoHref}
         className={cn(
           "flex items-center justify-center outline-none transition-opacity hover:opacity-80",
+          // Collapsed on desktop the logo makes room for the expand button on hover.
+          !isExpanded && !isMobileDrawer && "lg:group-hover:opacity-0 lg:group-focus-within:opacity-0",
         )}
       >
         <BrandLogo
@@ -58,7 +60,26 @@ export default function SidebarHeader({
         </button>
       )}
 
-      {/* Desktop: collapse (pinned open) / keep open (hover-expanded). Only when expanded and not in the mobile drawer. */}
+      {/* Desktop, collapsed: the only way back to the full sidebar (it no longer expands on hover). Shown in place of
+          the logo while the header is hovered or focused; hidden on tablet, which is always icon-only. */}
+      {!isExpanded && !isMobileDrawer && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onTogglePin}
+              aria-label="Mở rộng thanh bên"
+              className="absolute inset-0 m-auto hidden h-10 w-10 items-center justify-center rounded-md opacity-0 transition-opacity duration-150 cursor-pointer text-[var(--text-primary)] hover:bg-[var(--sidebar-hover-bg)] focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] group-hover:opacity-100 lg:flex"
+            >
+              <ChevronsRight className="w-[18px] h-[18px]" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="bg-bg-elevated border border-border-default text-text-primary text-xs">
+            Mở rộng thanh bên
+          </TooltipContent>
+        </Tooltip>
+      )}
+
+      {/* Desktop, expanded: collapse it. Not in the mobile drawer. */}
       {isExpanded && !isMobileDrawer && (
         <Tooltip>
           <TooltipTrigger asChild>
