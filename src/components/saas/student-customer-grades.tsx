@@ -26,10 +26,24 @@ const formatDate = (iso: string) => {
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
+/** PayOS statuses in words a learner reads. */
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  PAID: "Đã thanh toán",
+  PENDING: "Đang xử lý",
+  CANCELLED: "Đã hủy",
+  FAILED: "Thất bại",
+  EXPIRED: "Hết hạn",
+};
+
 function Tile({ icon: Icon, color, label, value, sub }: { icon: LucideIcon; color: string; label: string; value: string; sub?: string }) {
   return (
     <div className="flex items-center gap-3 rounded-sm border border-border-card bg-[var(--bg-surface)] p-4">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-white" style={{ background: color }} aria-hidden="true">
+      {/* A tinted badge instead of a solid colour block keeps three tiles from shouting at once. */}
+      <span
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-sm"
+        style={{ color, background: `color-mix(in srgb, ${color} 12%, transparent)` }}
+        aria-hidden="true"
+      >
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
@@ -84,7 +98,7 @@ export function CustomerGrades() {
           color="var(--gold-leaf)"
           label="Điểm trung bình"
           value={learning.totalQuizzesAttempted ? `${Math.round(learning.averageScorePercentage)}%` : "—"}
-          sub="Trên tất cả bài quiz đã làm"
+          sub={learning.totalQuizzesAttempted ? "Trên tất cả bài quiz đã làm" : "Làm bài đầu tiên để có điểm"}
         />
         <Tile icon={Trophy} color="var(--men-lam)" label="Bài quiz đã làm" value={formatNumber(learning.totalQuizzesAttempted)} />
         <Tile
@@ -135,17 +149,19 @@ export function CustomerGrades() {
               ))}
             </ul>
           )}
-          <Link href={ROUTES.QUIZ} className="archive-link">
-            Luyện thêm quiz
-          </Link>
+          {/* The empty state already has its own "Làm quiz" button. */}
+          {recent.length > 0 && (
+            <Link href={ROUTES.QUIZ} className="archive-link">
+              Luyện thêm quiz
+            </Link>
+          )}
         </Panel>
 
         <div className="space-y-6">
+          {/* Nothing to break down before the first quiz, so the panel waits for data. */}
+          {eras.length > 0 && (
           <Panel>
             <SectionHeading title="Phân bố theo thời kỳ" description="Số bài quiz bạn đã làm ở từng thời kỳ lịch sử." />
-            {eras.length === 0 ? (
-              <p className="text-[13px] text-content-muted">Chưa có dữ liệu.</p>
-            ) : (
               <ul className="space-y-3">
                 {eras.map(([era, n]) => (
                   <li key={era} className="grid grid-cols-[96px_1fr_36px] items-center gap-3">
@@ -155,8 +171,8 @@ export function CustomerGrades() {
                   </li>
                 ))}
               </ul>
-            )}
           </Panel>
+          )}
 
           <Panel>
             <SectionHeading title="Token đã sử dụng" description="Mức dùng AI khi trò chuyện với nhân vật." />
@@ -170,24 +186,7 @@ export function CustomerGrades() {
                 <span className="font-bold tabular-nums text-content-text">{formatNumber(customer.data.totalAiMessages)}</span> tin nhắn đã gửi cho nhân vật
               </p>
             )}
-            {aiUsage.totalTokensUsed > 0 && (
-              <dl className="grid grid-cols-2 gap-3 text-[13px]">
-                <div className="space-y-1">
-                  <dt className="text-content-muted">Prompt</dt>
-                  <dd className="space-y-1 font-bold tabular-nums text-content-text">
-                    {formatNumber(aiUsage.promptTokens)}
-                    <ProgressMeter value={aiUsage.promptTokens} max={aiUsage.totalTokensUsed} color="var(--gold-leaf)" label="Tỉ lệ token prompt" />
-                  </dd>
-                </div>
-                <div className="space-y-1">
-                  <dt className="text-content-muted">Completion</dt>
-                  <dd className="space-y-1 font-bold tabular-nums text-content-text">
-                    {formatNumber(aiUsage.completionTokens)}
-                    <ProgressMeter value={aiUsage.completionTokens} max={aiUsage.totalTokensUsed} color="var(--accent-gold)" label="Tỉ lệ token completion" />
-                  </dd>
-                </div>
-              </dl>
-            )}
+            {/* Prompt/completion split is an AI-billing detail, not something a learner acts on — left out. */}
             {aiUsage.topCharacters.length > 0 && (
               <div className="space-y-2 border-t border-[var(--border-default)] pt-3">
                 <p className="text-[12px] font-bold text-content-muted">Nhân vật trò chuyện nhiều nhất</p>
@@ -198,7 +197,9 @@ export function CustomerGrades() {
                         {c.name}
                       </Link>
                       <span className="shrink-0 tabular-nums text-content-muted">
-                        {formatNumber(c.messageCount)} tin nhắn · {formatNumber(c.tokenUsed)} token
+                        {formatNumber(c.messageCount)} tin nhắn
+                        {/* Per-character tokens are 0 for chats recorded before token tracking; showing "0 token" read as a bug. */}
+                        {c.tokenUsed > 0 && ` · ${formatNumber(c.tokenUsed)} token`}
                       </span>
                     </li>
                   ))}
@@ -227,7 +228,9 @@ export function CustomerGrades() {
                     </span>
                     <span className="shrink-0 text-right">
                       <span className="block font-bold tabular-nums text-content-text">{formatNumber(p.amount)}đ</span>
-                      <span className="block text-[13px] font-semibold text-content-muted">{p.status}</span>
+                      <span className="block text-[13px] font-semibold text-content-muted">
+                        {PAYMENT_STATUS_LABELS[p.status?.toUpperCase()] ?? p.status}
+                      </span>
                     </span>
                   </li>
                 ))}
