@@ -6,7 +6,7 @@ import {
   ClipboardList, Trash2, ArrowLeft,
   Pencil, Eye, EyeOff, RotateCcw,
   ChevronLeft, ChevronRight, Upload,
-  Search, Plus, Library, MoreHorizontal,
+  Search, Plus, Library, MoreHorizontal, Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -887,6 +887,25 @@ export default function StaffQuizzesPage() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
                       <Upload className="h-4 w-4" /> Nhập bộ đề từ CSV
+                    </DropdownMenuItem>
+                    {/* The importer's own template: right columns, BOM for Excel, one example per question type. */}
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        try {
+                          const blob = await staffQuizService.downloadImportTemplate();
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = "quiz-import-template.csv";
+                          a.click();
+                          window.setTimeout(() => URL.revokeObjectURL(url), 0);
+                          toast.info("Thay contextId bằng mã bối cảnh thật trước khi nhập (xem ở trang Bối cảnh).");
+                        } catch {
+                          toast.error("Không tải được file mẫu. Vui lòng thử lại.");
+                        }
+                      }}
+                    >
+                      <Download className="h-4 w-4" /> Tải file mẫu CSV
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setShowTrash(true)}>

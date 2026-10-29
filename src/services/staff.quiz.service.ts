@@ -250,6 +250,13 @@ export const staffQuizService = {
     );
   },
 
+  // GET /staff/quizzes/import/template — UTF-8 (BOM) sample with one row per question type, straight from the backend
+  // so the columns always match what the importer accepts.
+  downloadImportTemplate: async (): Promise<Blob> => {
+    const res = await axiosClient.get("/staff/quizzes/import/template", { responseType: "blob" });
+    return res.data as Blob;
+  },
+
   // POST /staff/quizzes/import
   importFromCsv: async (file: File): Promise<ImportQuizFromCsvResponse> => {
     const formData = new FormData();
