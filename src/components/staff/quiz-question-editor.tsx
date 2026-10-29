@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   ArrowUp, ArrowDown, Pencil, Trash2,
-  Plus, Upload, CheckCircle2, ClipboardList,
+  Plus, Upload, CheckCircle2, ClipboardList, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
@@ -41,9 +41,9 @@ export interface QuizQuestion {
   orderIndex: number;
   content: string;
   questionType: QuestionType;
-  // MULTIPLE_CHOICE
-  options: [string, string, string, string];
-  correctAnswer: 0 | 1 | 2 | 3;
+  // MULTIPLE_CHOICE: 2–6 options, one or more correct (0-based indices) — same as the backend's questionData.
+  options: string[];
+  correctAnswers: number[];
   // FILL_IN_BLANK
   acceptedAnswers: string[];
   caseSensitive: boolean;
@@ -61,17 +61,19 @@ interface QuizQuestionEditorProps {
   onEditingChange?: (editing: boolean) => void;
 }
 
-const LABELS = ["A", "B", "C", "D"] as const;
+const LABELS = ["A", "B", "C", "D", "E", "F"] as const;
+const MIN_OPTIONS = 2;
+const MAX_OPTIONS = 6;
 const QUESTION_TYPES: QuestionType[] = ["MULTIPLE_CHOICE", "FILL_IN_BLANK", "MATCHING"];
 export const QUESTION_TYPE_HINTS: Record<QuestionType, string> = {
-  MULTIPLE_CHOICE: "4 phương án, chọn 1 đáp án đúng",
+  MULTIPLE_CHOICE: "2–6 phương án, một hoặc nhiều đáp án đúng",
   FILL_IN_BLANK: "Người học gõ câu trả lời",
   MATCHING: "Nối vế trái với vế phải",
 };
 const EMPTY_TYPE_FIELDS = {
   questionType: "MULTIPLE_CHOICE" as QuestionType,
-  options: ["", "", "", ""] as [string, string, string, string],
-  correctAnswer: 0 as const,
+  options: ["", "", "", ""],
+  correctAnswers: [0],
   acceptedAnswers: [""],
   caseSensitive: false,
   matchingPairs: [{ left: "", right: "" }, { left: "", right: "" }],
@@ -84,8 +86,14 @@ const reindex = (qs: QuizQuestion[]) => qs.map((q, i) => ({ ...q, orderIndex: i 
 
 function toQuizQuestion(q: ImportedQuestion): QuizQuestion {
   return {
-    ...makeEmpty(), orderIndex: q.orderIndex, content: q.content,
-    options: q.options, correctAnswer: q.correctAnswer, explanation: q.explanation,
+    ...makeEmpty(),
+    orderIndex: q.orderIndex,
+    questionType: q.questionType,
+    content: q.content,
+    explanation: q.explanation,
+    ...(q.options && { options: q.options, correctAnswers: q.correctAnswers?.length ? q.correctAnswers : [0] }),
+    ...(q.acceptedAnswers && { acceptedAnswers: q.acceptedAnswers, caseSensitive: q.caseSensitive ?? false }),
+    ...(q.matchingPairs && { matchingPairs: q.matchingPairs }),
   };
 }
 
@@ -125,7 +133,7 @@ export function toQuestionPayload(q: QuizQuestion): CreateQuestionPayload {
     questionType: "MULTIPLE_CHOICE",
     questionData: {
       options: q.options.map((text, i) => ({ id: String(i), text: text.trim() })),
-      correctOptionIds: [String(q.correctAnswer)],
+      correctOptionIds: [...q.correctAnswers].sort((a, b) => a - b).map(String),
     },
   };
 }
@@ -151,11 +159,13 @@ export function fromStaffQuestion(q: StaffQuizQuestion): QuizQuestion {
     }));
     draft.matchingPairs = pairs.length ? pairs : EMPTY_TYPE_FIELDS.matchingPairs;
   } else {
+    // Keep every option and every correct one: truncating to 4 / the first correct answer rewrote
+    // imported questions (5 options, "0|1|3") the next time the quiz was saved.
     const opts = (data.options ?? []).map((o) => o.text);
-    while (opts.length < 4) opts.push("");
-    draft.options = opts.slice(0, 4) as [string, string, string, string];
-    const correctIdx = (data.options ?? []).findIndex((o) => data.correctOptionIds?.includes(o.id));
-    draft.correctAnswer = Math.min(Math.max(correctIdx, 0), 3) as 0 | 1 | 2 | 3;
+    while (opts.length < MIN_OPTIONS) opts.push("");
+    draft.options = opts;
+    const correct = (data.options ?? []).flatMap((o, i) => (data.correctOptionIds?.includes(o.id) ? [i] : []));
+    draft.correctAnswers = correct.length ? correct : [0];
   }
   return draft;
 }
@@ -166,13 +176,16 @@ function isQuestionValid(q: QuizQuestion): boolean {
   if (q.questionType === "MATCHING") {
     return q.matchingPairs.length >= 2 && q.matchingPairs.every((p) => p.left.trim() && p.right.trim());
   }
-  return q.options.every((o) => o.trim());
+  return (
+    q.options.length >= MIN_OPTIONS && q.options.length <= MAX_OPTIONS && q.options.every((o) => o.trim()) &&
+    q.correctAnswers.length > 0 && q.correctAnswers.every((i) => i >= 0 && i < q.options.length)
+  );
 }
 
 function describeAnswer(q: QuizQuestion): string {
   if (q.questionType === "FILL_IN_BLANK") return q.acceptedAnswers.filter((a) => a.trim()).join(" / ");
   if (q.questionType === "MATCHING") return q.matchingPairs.map((p) => `${p.left} → ${p.right}`).join("; ");
-  return `${LABELS[q.correctAnswer]}. ${q.options[q.correctAnswer]}`;
+  return q.correctAnswers.map((i) => `${LABELS[i]}. ${q.options[i]}`).join("; ");
 }
 
 // ─── Paste Dialog ─────────────────────────────────────────────────────────────
@@ -349,7 +362,20 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
     ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
   const setOpt = (i: number, v: string) =>
-    setDraft((s) => { const o = [...s.options] as [string, string, string, string]; o[i] = v; return { ...s, options: o }; });
+    setDraft((s) => ({ ...s, options: s.options.map((o, k) => (k === i ? v : o)) }));
+  const toggleCorrect = (i: number) =>
+    setDraft((s) => ({
+      ...s,
+      correctAnswers: s.correctAnswers.includes(i) ? s.correctAnswers.filter((k) => k !== i) : [...s.correctAnswers, i],
+    }));
+  const addOption = () => setDraft((s) => (s.options.length >= MAX_OPTIONS ? s : { ...s, options: [...s.options, ""] }));
+  // Removing an option shifts the indices after it, so the correct-answer marks follow their options.
+  const removeOption = (i: number) =>
+    setDraft((s) => s.options.length <= MIN_OPTIONS ? s : {
+      ...s,
+      options: s.options.filter((_, k) => k !== i),
+      correctAnswers: s.correctAnswers.filter((k) => k !== i).map((k) => (k > i ? k - 1 : k)),
+    });
   const setAccepted = (i: number, v: string) =>
     setDraft((s) => ({ ...s, acceptedAnswers: s.acceptedAnswers.map((a, k) => (k === i ? v : a)) }));
   const setPair = (i: number, side: keyof MatchingDraftPair, v: string) =>
@@ -392,14 +418,16 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
 
       {draft.questionType === "MULTIPLE_CHOICE" && (
         <div className="grid gap-3">
-          <Label className={FIELD_LABEL}>Đáp án & Đáp án đúng ✓</Label>
+          <Label className={FIELD_LABEL}>Đáp án & Đáp án đúng ✓ <span className="font-normal normal-case">(bấm chữ cái để đánh dấu, chọn được nhiều)</span></Label>
           <div className="grid gap-2.5">
-            {LABELS.map((lbl, idx) => {
-              const correct = draft.correctAnswer === idx;
+            {draft.options.map((option, idx) => {
+              const lbl = LABELS[idx];
+              const correct = draft.correctAnswers.includes(idx);
               return (
-                <div key={lbl} className="flex items-center gap-3">
+                <div key={idx} className="flex items-center gap-3">
                   <button type="button"
-                    onClick={() => setDraft((s) => ({ ...s, correctAnswer: idx as 0 | 1 | 2 | 3 }))}
+                    onClick={() => toggleCorrect(idx)}
+                    aria-pressed={correct}
                     className={cn(
                       "shrink-0 w-9 h-9 rounded-sm border-2 flex items-center justify-center transition-all duration-200 active:scale-90",
                       correct
@@ -409,13 +437,25 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
                     title="Đánh dấu đáp án đúng">
                     {correct ? <CheckCircle2 className="w-5 h-5" /> : <span className="text-sm font-bold">{lbl}</span>}
                   </button>
-                  <Input value={draft.options[idx]} onChange={(e) => setOpt(idx, e.target.value)}
+                  <Input value={option} onChange={(e) => setOpt(idx, e.target.value)}
                     placeholder={`Đáp án ${lbl}...`}
                     className={cn("flex-1", FIELD_INPUT, correct && "border-[var(--status-success-border)]")} />
+                  {draft.options.length > MIN_OPTIONS && (
+                    <button type="button" onClick={() => removeOption(idx)} aria-label={`Xóa đáp án ${lbl}`} title="Xóa đáp án"
+                      className="shrink-0 rounded-sm p-1.5 text-content-muted hover:bg-[var(--status-neutral-bg)] hover:text-[var(--accent-danger)]">
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               );
             })}
           </div>
+          {draft.options.length < MAX_OPTIONS && (
+            <button type="button" onClick={addOption} className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-[var(--accent-gold)] hover:underline">
+              <Plus className="h-4 w-4" /> Thêm đáp án
+            </button>
+          )}
+          {draft.correctAnswers.length === 0 && <p className="text-xs text-[var(--accent-danger)]">Đánh dấu ít nhất một đáp án đúng.</p>}
         </div>
       )}
 
