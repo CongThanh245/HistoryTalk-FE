@@ -6,23 +6,26 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Pencil,
   Download,
   FileSpreadsheet,
   Info,
   Loader2,
   RotateCcw,
   Upload,
+  X,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StaffFormInput, StaffFormSelect } from "@/components/staff/staff-form";
 import { CredentialExportActions, OneTimeWarning } from "@/components/saas/accounts-credentials";
 import { todayStamp } from "@/components/saas/accounts-utils";
-import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, formatNumber } from "@/components/saas/saas-ui";
-import { apiErrorMessage, apiErrorStatus, useApiTokenQuota, useImportApiStudents } from "@/features/saas/hooks-api";
+import { DIALOG_CLASS, DIALOG_TITLE_CLASS } from "@/components/saas/saas-ui";
+import { apiErrorMessage, useApiTokenQuota, useImportApiStudents } from "@/features/saas/hooks-api";
 import {
   BACKEND_IMPORT_COLUMNS,
   STUDENT_IMPORT_FIELDS,
@@ -65,9 +68,16 @@ export async function downloadStudentTemplate() {
   }
 }
 
-const STEPS = ["Tải file", "Ghép cột", "Kiểm tra", "Xác nhận", "Kết quả"] as const;
-type Step = 0 | 1 | 2 | 3 | 4;
+// Cot duoc tu nhan theo ten; bang ghep cot chi hien o buoc tai file khi khong nhan ra cot bat buoc.
+const STEPS = ["Tải file", "Xem trước & chọn", "Kết quả"] as const;
+type Step = 0 | 1 | 2;
 type RowFilter = "ALL" | "VALID" | "ERROR";
+
+// The preview works on rows re-laid out in backend column order, so an edit is one cell and the checker re-runs on it.
+const NORMALIZED_HEADERS = STUDENT_IMPORT_FIELDS.map((f) => f.column as string);
+const NORMALIZED_MAPPING = Object.fromEntries(STUDENT_IMPORT_FIELDS.map((f, i) => [f.key, i])) as StudentColumnMapping;
+const normalizeRows = (table: ImportTable, mapping: StudentColumnMapping) =>
+  table.rows.map((r) => STUDENT_IMPORT_FIELDS.map((f) => (mapping[f.key] >= 0 ? (r[mapping[f.key]] ?? "") : "")));
 
 function StepIndicator({ step }: { step: Step }) {
   return (
@@ -103,8 +113,8 @@ function StepIndicator({ step }: { step: Step }) {
 }
 
 /**
- * Bulk import of student accounts (POST /school-admin/students/import-excel): upload → map columns → client-side check →
- * confirm → result. No tokens are handed out (Sprint 7 shared pool + daily limit), so `defaultInitialToken` is 0. The rows are re-written into a normalized UTF-8 CSV with the backend header before sending.
+ * Bulk import of student accounts (POST /school-admin/students/import-excel): upload (columns auto-mapped) → preview and
+ * pick the rows to create → result. No tokens are handed out (Sprint 7 shared pool + daily limit), so `defaultInitialToken` is 0. The rows are re-written into a normalized UTF-8 CSV with the backend header before sending.
  */
 export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const quota = useApiTokenQuota(open);
@@ -119,6 +129,9 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
   const [dragOver, setDragOver] = React.useState(false);
   const [mapping, setMapping] = React.useState<StudentColumnMapping | null>(null);
   const [filter, setFilter] = React.useState<RowFilter>("ALL");
+  // Line numbers of the rows to create; every valid row is ticked when the preview opens.
+  const [selected, setSelected] = React.useState<Set<number>>(new Set());
+  const [rows, setRows] = React.useState<string[][]>([]);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [session, setSession] = React.useState<ImportSession | null>(null);
   const [exported, setExported] = React.useState(false);
@@ -132,6 +145,8 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
     setFileError(null);
     setMapping(null);
     setFilter("ALL");
+    setSelected(new Set());
+    setRows([]);
     setSubmitError(null);
     setSession(null);
     setExported(false);
@@ -143,8 +158,8 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
   };
   const requestClose = () => {
     if (importStudents.isPending) return;
-    const hasPasswords = step === 4 && !!session?.result.successCount && !exported;
-    if ((step >= 1 && step <= 3) || hasPasswords) setConfirmClose(true);
+    const hasPasswords = step === 2 && !!session?.result.successCount && !exported;
+    if (step === 1 || hasPasswords) setConfirmClose(true);
     else close();
   };
 
@@ -172,7 +187,7 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
     setMapping(parsed.table ? autoMapStudentColumns(parsed.table.headers) : null);
   }
 
-  /* ── Step 2: mapping ── */
+  /* ── Column mapping (only shown when auto-mapping misses a required column) ── */
   const mappingErrors = React.useMemo(() => {
     if (!mapping) return [] as string[];
     const errs: string[] = [];
@@ -182,18 +197,19 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
     return errs;
   }, [mapping]);
 
-  /* ── Step 3: check ── */
-  const checked = React.useMemo(() => (table && mapping && mappingErrors.length === 0 ? checkStudentRows(table, mapping) : []), [table, mapping, mappingErrors]);
+  /* ── Step 2: preview & pick ── */
+  const checked = React.useMemo(() => checkStudentRows({ headers: NORMALIZED_HEADERS, rows }, NORMALIZED_MAPPING), [rows]);
   const validRows = React.useMemo(() => checked.filter((r) => Object.keys(r.errors).length === 0), [checked]);
   const errorCount = checked.length - validRows.length;
+  const pickedRows = React.useMemo(() => validRows.filter((r) => selected.has(r.line)), [validRows, selected]);
 
   function submit() {
-    if (validRows.length === 0) return;
+    if (pickedRows.length === 0) return;
     setSubmitError(null);
-    const csv = buildBackendCsv(validRows.map((r) => r.values));
+    const csv = buildBackendCsv(pickedRows.map((r) => r.values));
     const base = (fileName ?? "hoc-sinh").replace(/\.[^.]+$/, "");
     const file = new File([csv], `${base}-chuan-hoa.csv`, { type: "text/csv" });
-    const sentLines = validRows.map((r) => r.line);
+    const sentLines = pickedRows.map((r) => r.line);
     importStudents.mutate(
       { file },
       {
@@ -208,7 +224,7 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
           };
           setSession(s);
           setLast(s);
-          setStep(4);
+          setStep(2);
           if (result.successCount) toast.success(`Đã tạo ${result.successCount} tài khoản học sinh`);
           else toast.error("Không có tài khoản nào được tạo. Xem các dòng lỗi.");
         },
@@ -217,12 +233,36 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
     );
   }
 
+  function saveRow(line: number, values: Partial<Record<StudentImportField, string>>) {
+    const nextRows = rows.map((r, k) =>
+      k + 2 === line ? STUDENT_IMPORT_FIELDS.map((f, i) => (f.key in values ? (values[f.key] ?? "") : r[i])) : r,
+    );
+    setRows(nextRows);
+    const row = checkStudentRows({ headers: NORMALIZED_HEADERS, rows: nextRows }, NORMALIZED_MAPPING).find((r) => r.line === line);
+    const nextSelected = new Set(selected);
+    if (row && Object.keys(row.errors).length === 0) nextSelected.add(line);
+    else nextSelected.delete(line);
+    setSelected(nextSelected);
+  }
+
+  function removeFile() {
+    setFileName(null);
+    setEncoding("utf-8");
+    setTable(null);
+    setFileError(null);
+    setMapping(null);
+  }
+
   /* ── Navigation ── */
-  const canNext = step === 0 ? !!table && !fileError : step === 1 ? mappingErrors.length === 0 : step === 2 ? validRows.length > 0 : false;
+  const canNext = step === 0 && !!table && !fileError && mappingErrors.length === 0;
   const next = () => {
-    if (!canNext) return;
-    if (step === 1) setFilter(errorCount ? "ERROR" : "ALL");
-    setStep((s) => (s + 1) as Step);
+    if (!canNext || !table || !mapping) return;
+    const normalized = normalizeRows(table, mapping);
+    const initial = checkStudentRows({ headers: NORMALIZED_HEADERS, rows: normalized }, NORMALIZED_MAPPING);
+    setRows(normalized);
+    setSelected(new Set(initial.filter((r) => Object.keys(r.errors).length === 0).map((r) => r.line)));
+    setFilter("ALL");
+    setStep(1);
   };
 
   return (
@@ -231,6 +271,10 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
         <DialogContent
           className={cn(DIALOG_CLASS, "flex max-h-[92dvh] flex-col gap-4 overflow-hidden p-4 sm:max-w-5xl sm:p-6")}
           onInteractOutside={(e) => e.preventDefault()}
+          // Esc inside a row being edited only cancels that edit.
+          onEscapeKeyDown={(e) => {
+            if ((e.target as HTMLElement | null)?.closest?.("[data-row-editor]")) e.preventDefault();
+          }}
         >
           <DialogHeader className="pr-8">
             <DialogTitle className={DIALOG_TITLE_CLASS}>Nhập học sinh hàng loạt</DialogTitle>
@@ -253,18 +297,33 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
                 dragOver={dragOver}
                 setDragOver={setDragOver}
                 onFile={(f) => void handleFile(f)}
+                onRemove={removeFile}
+                mappingSlot={
+                  table && mapping && mappingErrors.length > 0 ? (
+                    <MappingStep table={table} mapping={mapping} onChange={setMapping} errors={mappingErrors} />
+                  ) : null
+                }
               />
             )}
-            {step === 1 && table && mapping && <MappingStep table={table} mapping={mapping} onChange={setMapping} errors={mappingErrors} />}
-            {step === 2 && <CheckStep rows={checked} filter={filter} setFilter={setFilter} validCount={validRows.length} errorCount={errorCount} />}
-            {step === 3 && (
-              <ConfirmStep validCount={validRows.length} skipped={errorCount} submitError={submitError} />
+            {step === 1 && (
+              <PreviewStep
+                rows={checked}
+                filter={filter}
+                setFilter={setFilter}
+                validCount={validRows.length}
+                errorCount={errorCount}
+                selected={selected}
+                setSelected={setSelected}
+                rawRow={(line) => rows[line - 2] ?? []}
+                onSaveRow={saveRow}
+                submitError={submitError}
+              />
             )}
-            {step === 4 && session && <ResultStep session={session} schoolName={quota.data?.schoolName} onExported={() => setExported(true)} />}
+            {step === 2 && session && <ResultStep session={session} schoolName={quota.data?.schoolName} onExported={() => setExported(true)} />}
           </div>
 
           <footer className="flex flex-col-reverse gap-2 border-t border-[var(--border-default)] pt-4 sm:flex-row sm:items-center sm:justify-between">
-            {step === 4 ? (
+            {step === 2 ? (
               <>
                 <button
                   type="button"
@@ -297,7 +356,7 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
                     </button>
                   )}
                 </div>
-                {step < 3 ? (
+                {step === 0 ? (
                   <button type="button" className="btn-crimson w-full disabled:opacity-50 sm:w-auto" disabled={!canNext} onClick={next}>
                     Tiếp tục <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -305,11 +364,11 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
                   <button
                     type="button"
                     className="btn-crimson w-full disabled:opacity-50 sm:w-auto"
-                    disabled={validRows.length === 0 || importStudents.isPending}
+                    disabled={pickedRows.length === 0 || importStudents.isPending}
                     onClick={submit}
                   >
                     {importStudents.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                    {importStudents.isPending ? "Đang tạo tài khoản…" : `Tạo ${validRows.length} tài khoản`}
+                    {importStudents.isPending ? "Đang tạo tài khoản…" : `Tạo ${pickedRows.length} tài khoản`}
                   </button>
                 )}
               </>
@@ -321,13 +380,13 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
       <ConfirmDialog
         open={confirmClose}
         onOpenChange={setConfirmClose}
-        title={step === 4 ? "Đóng khi chưa lưu mật khẩu?" : "Hủy nhập học sinh?"}
+        title={step === 2 ? "Đóng khi chưa lưu mật khẩu?" : "Hủy nhập học sinh?"}
         description={
-          step === 4
+          step === 2
             ? "Bạn chưa tải danh sách tài khoản hoặc in phiếu. Kết quả vẫn xem lại được ở mục “Kết quả nhập gần nhất” cho tới khi tải lại trang."
             : "File đã tải lên trong lần nhập này sẽ bị bỏ."
         }
-        confirmLabel={step === 4 ? "Vẫn đóng" : "Hủy nhập"}
+        confirmLabel={step === 2 ? "Vẫn đóng" : "Hủy nhập"}
         variant="warning"
         onConfirm={() => {
           setConfirmClose(false);
@@ -347,6 +406,8 @@ function UploadStep({
   dragOver,
   setDragOver,
   onFile,
+  onRemove,
+  mappingSlot,
 }: {
   fileName: string | null;
   fileError: string | null;
@@ -355,6 +416,8 @@ function UploadStep({
   dragOver: boolean;
   setDragOver: (v: boolean) => void;
   onFile: (f: File | undefined) => void;
+  onRemove: () => void;
+  mappingSlot: React.ReactNode;
 }) {
   return (
     // min-w-0 + a fixed guide column: a wide CSV must not push the guide off-screen or make the dialog scroll sideways.
@@ -400,52 +463,40 @@ function UploadStep({
                   {table.rows.length} dòng · {table.headers.length} cột
                 </span>
               )}
+              <button
+                type="button"
+                onClick={onRemove}
+                className={cn(
+                  "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm text-content-muted hover:bg-[var(--bg-elevated)] hover:text-content-heading",
+                  !table && "ml-auto",
+                )}
+                aria-label="Bỏ file"
+                title="Bỏ file"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
             </p>
             {fileError && (
               <p role="alert" className="flex items-start gap-2 text-[var(--accent-danger)]">
                 <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> {fileError}
               </p>
             )}
+            {table && !fileError && !mappingSlot && (
+              <p className="flex items-center gap-2 text-xs text-[var(--status-success)]">
+                <Check className="h-4 w-4 shrink-0" aria-hidden="true" /> Đã nhận đủ cột. Bấm “Tiếp tục” để xem danh sách và chọn học sinh cần tạo.
+              </p>
+            )}
             {encoding === "windows-1258" && !fileError && (
               <p className="flex items-start gap-2 text-xs text-[var(--status-warning)]">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 File không phải UTF-8, đã đọc theo bảng mã Windows-1258 và sẽ được gửi lên dưới dạng UTF-8. Hãy kiểm tra dấu tiếng Việt ở bước
-                kiểm tra.
+                xem trước.
               </p>
             )}
           </div>
         )}
 
-        {table && !fileError && (
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-content-heading">Xem trước 5 dòng đầu</p>
-            {/* Fixed layout with one-line cells: the preview fits the column instead of scrolling sideways; hover shows the full value. */}
-            <div className="border-y border-border-card">
-              <table className="w-full table-fixed text-xs">
-                <thead>
-                  <tr className="border-b border-[var(--border-strong)] text-left">
-                    {table.headers.map((h, i) => (
-                      <th key={i} title={h} className="truncate px-2 py-1.5 font-semibold text-[var(--text-tertiary)]">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {table.rows.slice(0, 5).map((r, k) => (
-                    <tr key={k} className="border-b border-[var(--border-default)] last:border-b-0">
-                      {r.map((c, i) => (
-                        <td key={i} title={c || undefined} className="truncate px-2 py-1.5">
-                          {c || <span className="text-content-subtle">—</span>}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {table && !fileError && mappingSlot}
       </div>
 
       <aside className="space-y-4 text-sm">
@@ -517,8 +568,7 @@ function MappingStep({
   return (
     <div className="space-y-4">
       <p className="text-sm text-content-muted">
-        Chọn cột trong file tương ứng với từng thông tin. Hệ thống đã tự ghép theo tên cột; dữ liệu sẽ được chuyển sang đúng định dạng máy chủ
-        yêu cầu trước khi gửi.
+        Không nhận ra một số cột trong file (tên cột khác file mẫu). Chọn cột tương ứng bên dưới, hoặc dùng file mẫu cho nhanh.
       </p>
       <ul className="divide-y divide-[var(--border-default)] border-y border-border-card">
         {STUDENT_IMPORT_FIELDS.map((f) => (
@@ -554,7 +604,7 @@ function MappingStep({
   );
 }
 
-/* ───────────────────────── Step 3 ───────────────────────── */
+/* ───────────────────────── Step 2 ───────────────────────── */
 const PREVIEW_FIELDS: { key: StudentImportField; label: string }[] = [
   { key: "fullName", label: "Họ và tên" },
   { key: "studentCode", label: "Mã HS" },
@@ -564,19 +614,39 @@ const PREVIEW_FIELDS: { key: StudentImportField; label: string }[] = [
 ];
 const GENDER_VI: Record<string, string> = { MALE: "Nam", FEMALE: "Nữ" };
 
-function CheckStep({
+function PreviewStep({
   rows,
   filter,
   setFilter,
   validCount,
   errorCount,
+  selected,
+  setSelected,
+  rawRow,
+  onSaveRow,
+  submitError,
 }: {
   rows: CheckedStudentRow[];
   filter: RowFilter;
   setFilter: (f: RowFilter) => void;
   validCount: number;
   errorCount: number;
+  selected: Set<number>;
+  setSelected: (s: Set<number>) => void;
+  rawRow: (line: number) => string[];
+  onSaveRow: (line: number, values: Partial<Record<StudentImportField, string>>) => void;
+  submitError: string | null;
 }) {
+  const [editing, setEditing] = React.useState<{ line: number; values: Record<StudentImportField, string> } | null>(null);
+  const startEdit = (line: number) => {
+    const raw = rawRow(line);
+    setEditing({ line, values: Object.fromEntries(STUDENT_IMPORT_FIELDS.map((f, i) => [f.key, raw[i] ?? ""])) as Record<StudentImportField, string> });
+  };
+  const finishEdit = () => {
+    if (!editing) return;
+    onSaveRow(editing.line, editing.values);
+    setEditing(null);
+  };
   const visible = rows.filter((r) => {
     const bad = Object.keys(r.errors).length > 0;
     return filter === "ALL" || (filter === "ERROR" ? bad : !bad);
@@ -586,6 +656,24 @@ function CheckStep({
     { key: "VALID", label: "Hợp lệ", count: validCount },
     { key: "ERROR", label: "Có lỗi", count: errorCount },
   ];
+  const isValid = (r: CheckedStudentRow) => Object.keys(r.errors).length === 0;
+  const pickable = visible.filter(isValid);
+  const pickedVisible = pickable.filter((r) => selected.has(r.line)).length;
+  const allPicked = pickable.length > 0 && pickedVisible === pickable.length;
+  const toggleAll = () => {
+    const next = new Set(selected);
+    for (const r of pickable) {
+      if (allPicked) next.delete(r.line);
+      else next.add(r.line);
+    }
+    setSelected(next);
+  };
+  const toggle = (line: number) => {
+    const next = new Set(selected);
+    if (next.has(line)) next.delete(line);
+    else next.add(line);
+    setSelected(next);
+  };
 
   return (
     <div className="space-y-4">
@@ -609,13 +697,15 @@ function CheckStep({
         ))}
       </div>
 
-      {errorCount > 0 ? (
+      <p className="text-sm text-content-muted">
+        Đã chọn <b className="text-content-heading tabular-nums">{selected.size}</b>/{validCount} học sinh hợp lệ. Bỏ tick những học sinh chưa muốn
+        tạo tài khoản, bấm bút để sửa thông tin.
+      </p>
+      {errorCount > 0 && (
         <p className="flex items-start gap-2 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-2 text-xs text-[var(--text-secondary)]">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
-          {errorCount} dòng có lỗi sẽ không được gửi. Sửa file rồi tải lại nếu cần tạo cả những học sinh này.
+          {errorCount} dòng có lỗi chưa chọn được. Bấm biểu tượng bút ở cuối dòng để sửa trực tiếp; sửa xong dòng sẽ tự được chọn.
         </p>
-      ) : (
-        <p className="text-sm text-[var(--status-success)]">Tất cả {validCount} dòng đều hợp lệ.</p>
       )}
 
       <div className="max-h-[50dvh] overflow-auto border-y border-border-card">
@@ -623,19 +713,90 @@ function CheckStep({
           <caption className="sr-only">Kết quả kiểm tra từng dòng</caption>
           <thead className="sticky top-0 bg-[var(--bg-surface)]">
             <tr className="border-b border-[var(--border-strong)] text-left text-[13px] font-semibold text-[var(--text-tertiary)]">
+              <th className="w-9 px-2 py-2">
+                <Checkbox
+                  checked={allPicked ? true : pickedVisible > 0 ? "indeterminate" : false}
+                  disabled={pickable.length === 0}
+                  onCheckedChange={toggleAll}
+                  aria-label="Chọn tất cả học sinh hợp lệ"
+                />
+              </th>
               <th className="px-2 py-2 font-semibold">Dòng</th>
               {PREVIEW_FIELDS.map((f) => (
                 <th key={f.key} className="px-2 py-2 font-semibold">
                   {f.label}
                 </th>
               ))}
+              <th className="w-10 px-2 py-2">
+                <span className="sr-only">Sửa</span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {visible.map((r) => {
               const bad = Object.keys(r.errors).length > 0;
+              if (editing?.line === r.line) {
+                return (
+                  <tr key={r.line} data-row-editor className="border-b border-[var(--border-default)] bg-[var(--bg-elevated)] align-top last:border-b-0">
+                    <td className="px-2 py-2" />
+                    <td className="px-2 py-2 tabular-nums text-content-muted">{r.line}</td>
+                    {PREVIEW_FIELDS.map((f) => (
+                      <td key={f.key} className="px-1 py-1.5">
+                        <StaffFormInput
+                          autoFocus={f.key === (Object.keys(r.errors)[0] ?? "fullName")}
+                          value={editing.values[f.key]}
+                          onChange={(e) => setEditing({ ...editing, values: { ...editing.values, [f.key]: e.target.value } })}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              finishEdit();
+                            }
+                            if (e.key === "Escape") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setEditing(null);
+                            }
+                          }}
+                          placeholder={f.key === "dob" ? "dd/mm/yyyy" : f.key === "gender" ? "Nam / Nữ" : undefined}
+                          aria-label={f.label}
+                          aria-invalid={!!r.errors[f.key]}
+                          className="h-8 px-2 text-sm"
+                        />
+                        {r.errors[f.key] && <span className="block text-[11px] text-[var(--accent-danger)]">{r.errors[f.key]}</span>}
+                      </td>
+                    ))}
+                    <td className="px-1 py-1.5">
+                      <button
+                        type="button"
+                        onClick={finishEdit}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-sm bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                        aria-label="Lưu dòng"
+                        title="Lưu (Enter)"
+                      >
+                        <Check className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              }
               return (
-                <tr key={r.line} className={cn("border-b border-[var(--border-default)] align-top last:border-b-0", bad && "bg-[var(--status-danger-bg)]")}>
+                <tr
+                  key={r.line}
+                  onClick={bad ? undefined : () => toggle(r.line)}
+                  className={cn(
+                    "border-b border-[var(--border-default)] align-top last:border-b-0",
+                    bad ? "bg-[var(--status-danger-bg)]" : "cursor-pointer hover:bg-[var(--bg-elevated)]",
+                    !bad && !selected.has(r.line) && "text-content-muted",
+                  )}
+                >
+                  <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={!bad && selected.has(r.line)}
+                      disabled={bad}
+                      onCheckedChange={() => toggle(r.line)}
+                      aria-label={`Chọn ${r.values.fullName || `dòng ${r.line}`}`}
+                    />
+                  </td>
                   <td className="px-2 py-2 tabular-nums text-content-muted">{r.line}</td>
                   {PREVIEW_FIELDS.map((f) => {
                     const err = r.errors[f.key];
@@ -650,12 +811,26 @@ function CheckStep({
                       </td>
                     );
                   })}
+                  <td className="px-1 py-1.5" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => startEdit(r.line)}
+                      className={cn(
+                        "inline-flex h-8 w-8 items-center justify-center rounded-sm hover:bg-[var(--bg-surface)] hover:text-content-heading",
+                        bad ? "text-[var(--accent-danger)]" : "text-content-muted",
+                      )}
+                      aria-label={`Sửa dòng ${r.line}`}
+                      title="Sửa"
+                    >
+                      <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </td>
                 </tr>
               );
             })}
             {visible.length === 0 && (
               <tr>
-                <td colSpan={PREVIEW_FIELDS.length + 1} className="px-3 py-8 text-center text-sm text-content-muted">
+                <td colSpan={PREVIEW_FIELDS.length + 3} className="px-3 py-8 text-center text-sm text-content-muted">
                   Không có dòng nào.
                 </td>
               </tr>
@@ -663,27 +838,12 @@ function CheckStep({
           </tbody>
         </table>
       </div>
-    </div>
-  );
-}
 
-/* ───────────────────────── Step 4 ───────────────────────── */
-function ConfirmStep({ validCount, skipped, submitError }: { validCount: number; skipped: number; submitError: string | null }) {
-  return (
-    <div className="space-y-4">
-      <div className="space-y-3 rounded-sm border border-border-card p-4">
-        <p className="text-sm font-bold text-content-heading">Sẵn sàng tạo {formatNumber(validCount)} tài khoản học sinh</p>
-        {skipped > 0 && <p className="text-xs text-content-muted">{skipped} dòng lỗi được bỏ qua.</p>}
-        <p className="flex items-start gap-2 text-xs leading-relaxed text-content-muted">
-          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          Không cần cấp token cho từng học sinh: mọi học sinh dùng quỹ token chung của trường, tối đa theo hạn mức mỗi ngày (cài ở trang Hạn mức
-          token).
-        </p>
-        <p className="flex items-start gap-2 text-xs leading-relaxed text-content-muted">
-          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          Xếp học sinh vào lớp khi nhập chưa được máy chủ hỗ trợ; tài khoản được tạo ở cấp trường.
-        </p>
-      </div>
+      <p className="flex items-start gap-2 text-xs leading-relaxed text-content-muted">
+        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        Học sinh dùng quỹ token chung của trường theo hạn mức mỗi ngày, không cần cấp token riêng. Tài khoản được tạo ở cấp trường; xếp lớp sau ở
+        trang Lớp học.
+      </p>
 
       {submitError && (
         <p role="alert" className="flex items-start gap-2 text-sm text-[var(--accent-danger)]">
@@ -694,7 +854,7 @@ function ConfirmStep({ validCount, skipped, submitError }: { validCount: number;
   );
 }
 
-/* ───────────────────────── Step 5 ───────────────────────── */
+/* ───────────────────────── Step 3 ───────────────────────── */
 function ResultStep({ session, schoolName, onExported }: { session: ImportSession; schoolName?: string; onExported: () => void }) {
   const r = session.result;
   const records = studentCredentials(r.successfulAccounts);
