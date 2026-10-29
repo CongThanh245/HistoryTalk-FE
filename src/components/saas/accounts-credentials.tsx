@@ -17,7 +17,7 @@ import {
 import { cn } from "@/lib/utils/cn";
 
 /** Yellow "shown once" warning used wherever temp passwords are revealed. */
-export function OneTimeWarning({ className, children }: { className?: string; children?: React.ReactNode }) {
+export function OneTimeWarning({ className, children, printable = true }: { className?: string; children?: React.ReactNode; printable?: boolean }) {
   return (
     <p
       role="alert"
@@ -30,7 +30,7 @@ export function OneTimeWarning({ className, children }: { className?: string; ch
       <span>
         {children ?? (
           <>
-            <b className="text-content-heading">Mật khẩu tạm chỉ hiển thị một lần.</b> Hãy sao chép, tải file hoặc in phiếu trước khi đóng.
+            <b className="text-content-heading">Mật khẩu tạm chỉ hiển thị một lần.</b> Hãy sao chép, tải file{printable ? " hoặc in phiếu" : ""} trước khi đóng.
             Người dùng sẽ phải đổi mật khẩu ở lần đăng nhập đầu tiên.
           </>
         )}
@@ -110,6 +110,7 @@ export function CredentialExportActions({
   sheetTitle,
   schoolName,
   compact,
+  printable = true,
   className,
 }: {
   records: CredentialRecord[];
@@ -118,10 +119,12 @@ export function CredentialExportActions({
   schoolName?: string;
   /** Two equal short buttons, for narrow dialogs. */
   compact?: boolean;
+  /** Cut-out paper slips suit a class handing out many accounts; a single adult account just needs copy/CSV. */
+  printable?: boolean;
   className?: string;
 }) {
   return (
-    <div className={cn(compact ? "grid grid-cols-2 gap-2" : "flex flex-col gap-2 sm:flex-row sm:flex-wrap", className)}>
+    <div className={cn(compact ? cn("grid gap-2", printable && "grid-cols-2") : "flex flex-col gap-2 sm:flex-row sm:flex-wrap", className)}>
       <button
         type="button"
         className={cn("btn-line whitespace-nowrap", compact ? "w-full px-3" : "w-full sm:w-auto")}
@@ -129,13 +132,15 @@ export function CredentialExportActions({
       >
         <Download className="h-4 w-4" aria-hidden="true" /> {compact ? "Tải CSV" : "Tải danh sách tài khoản (.csv)"}
       </button>
-      <button
-        type="button"
-        className={cn("btn-line whitespace-nowrap", compact ? "w-full px-3" : "w-full sm:w-auto")}
-        onClick={() => printCredentialSheet({ title: sheetTitle, schoolName, records })}
-      >
-        <Printer className="h-4 w-4" aria-hidden="true" /> {compact ? "In phiếu" : "In phiếu tài khoản"}
-      </button>
+      {printable && (
+        <button
+          type="button"
+          className={cn("btn-line whitespace-nowrap", compact ? "w-full px-3" : "w-full sm:w-auto")}
+          onClick={() => printCredentialSheet({ title: sheetTitle, schoolName, records })}
+        >
+          <Printer className="h-4 w-4" aria-hidden="true" /> {compact ? "In phiếu" : "In phiếu tài khoản"}
+        </button>
+      )}
     </div>
   );
 }
@@ -152,6 +157,7 @@ export function CredentialsDialog({
   records,
   schoolName,
   fileName,
+  printable = true,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -160,6 +166,8 @@ export function CredentialsDialog({
   records: CredentialRecord[];
   schoolName?: string;
   fileName?: string;
+  /** false hides "In phiếu" (e.g. school admin accounts). */
+  printable?: boolean;
 }) {
   const [reveal, setReveal] = React.useState(false);
   const single = records.length === 1 ? records[0] : null;
@@ -187,7 +195,7 @@ export function CredentialsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <OneTimeWarning />
+        <OneTimeWarning printable={printable} />
 
         {single ? (
           <div className="space-y-3">
@@ -250,7 +258,7 @@ export function CredentialsDialog({
         )}
 
         <DialogFooter className="flex-col gap-2 border-t border-[var(--border-default)] pt-4 sm:flex-col sm:justify-start">
-          <CredentialExportActions records={records} fileName={csvName} sheetTitle={title} schoolName={schoolName} compact />
+          <CredentialExportActions records={records} fileName={csvName} sheetTitle={title} schoolName={schoolName} printable={printable} compact />
           <button type="button" className="btn-crimson w-full whitespace-nowrap" onClick={() => onOpenChange(false)}>
             Đã lưu, đóng
           </button>

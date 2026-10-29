@@ -442,6 +442,7 @@ export function CreateSchoolForm() {
           title="Tài khoản quản trị trường"
           description={`${credentials.school.name} đã sẵn sàng. Gửi thông tin đăng nhập cho ${credentials.record.fullName} qua kênh an toàn; sau khi đóng, bạn sẽ chuyển tới trang của trường.`}
           records={[credentials.record]}
+          printable={false}
           schoolName={credentials.school.name}
           fileName={`quan-tri-${codeSlug(credentials.school.schoolCode)}-${todayStamp()}.csv`}
         />

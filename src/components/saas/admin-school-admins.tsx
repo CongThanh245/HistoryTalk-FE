@@ -459,6 +459,7 @@ export function SchoolAdminsTab({ school }: { school: ApiSchool }) {
               : undefined
           }
           records={[credentials.record]}
+          printable={false}
           schoolName={school.name}
           fileName={`quan-tri-${codeSlug(school.schoolCode)}-${todayStamp()}.csv`}
         />
