@@ -31,6 +31,12 @@ export const CLASSROOM_STATUS_LABELS: Record<ClassroomStatus, string> = {
   ARCHIVED: "Đã lưu trữ",
 };
 
+/**
+ * Statuses offered in the form. "Tạm ngưng" (INACTIVE) is not offered: the backend attaches no behaviour to it, so it only
+ * confused staff; a class that still has it keeps the option until it is changed. Its label stays for display.
+ */
+const SELECTABLE_CLASS_STATUSES: ClassroomStatus[] = ["ACTIVE", "ARCHIVED"];
+
 /** Vietnamese school year starts in August/September: Oct 2026 → 2026 (2026–2027). */
 export function currentAcademicYear(now = new Date()) {
   return now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
@@ -276,11 +282,14 @@ export function ClassFormDialog({
           </Field>
 
           {editing && (
-            <Field label="Trạng thái">
+            <Field label="Trạng thái" hint="Đã lưu trữ: lớp của năm học đã kết thúc, giữ lại để xem bài tập, điểm và lịch sử.">
               <StaffFormSelect
                 value={form.status}
                 onValueChange={(v) => set("status", v)}
-                options={(Object.keys(CLASSROOM_STATUS_LABELS) as ClassroomStatus[]).map((s) => ({ value: s, label: CLASSROOM_STATUS_LABELS[s] }))}
+                options={(SELECTABLE_CLASS_STATUSES.includes(form.status) ? SELECTABLE_CLASS_STATUSES : [form.status, ...SELECTABLE_CLASS_STATUSES]).map((s) => ({
+                  value: s,
+                  label: CLASSROOM_STATUS_LABELS[s],
+                }))}
                 className="w-full"
               />
             </Field>
