@@ -345,6 +345,9 @@ export function ChatMain({
     [data?.messages, voiceCallDraftMessages, optimisticMessages],
   );
   const displayItems = useMemo(() => groupChatDisplayItems(messages), [messages]);
+  const lastItem = displayItems[displayItems.length - 1];
+  const showSuggestions =
+    suggestedQuestions.length > 0 && !isStreaming && lastItem?.type !== "voice-call" && lastItem?.message.role === "ASSISTANT";
   const userTextMessageCount = useMemo(
     () =>
       messages.filter(
@@ -992,6 +995,22 @@ export function ChatMain({
                 />
               ),
             )}
+            {/* Follow-up suggestions answer the character, so they sit right under its latest reply (aligned with the
+                bubble, past the avatar) and only while that reply is the last message — not under a question of the
+                user's that is still waiting for, or never got, an answer. */}
+            {showSuggestions && (
+              <div className="-mt-2 mb-4 flex flex-wrap gap-2 pl-16 pr-4">
+                {suggestedQuestions.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSend(q)}
+                    className="text-xs text-left px-3 py-1.5 rounded-sm border cursor-pointer transition-colors bg-transparent border-[var(--border-strong)] text-content-text hover:bg-[var(--text-primary)] hover:border-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
             {isStreaming && streamingMessage && streamingMessageType !== "VOICE" && (
               <MessageBubble
                 key="streaming-bubble"
@@ -1012,19 +1031,6 @@ export function ChatMain({
           </>
         )}
 
-        {suggestedQuestions.length > 0 && !isStreaming && (
-          <div className="px-4 flex flex-wrap gap-2">
-            {suggestedQuestions.map((q, i) => (
-              <button
-                key={i}
-                onClick={() => handleSend(q)}
-                className="text-xs text-left px-3 py-1.5 rounded-sm border cursor-pointer transition-colors bg-transparent border-[var(--border-strong)] text-content-text hover:bg-[var(--text-primary)] hover:border-[var(--text-primary)] hover:text-[var(--text-inverse)]"
-              >
-                {q}
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* Token usage display */}
         {lastTokenUsage && !isStreaming && (
