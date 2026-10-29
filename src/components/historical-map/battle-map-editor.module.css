@@ -39,7 +39,8 @@
 .field { display: grid; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--text-tertiary); }
 .fieldRow { display: flex; justify-content: space-between; }
 .fieldRow output { font-weight: 700; color: var(--text-primary); }
-.editor input:not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=checkbox]) { min-width: 0; width: 100%; height: 38px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 2px; background: var(--bg-elevated); color: var(--text-primary); font: inherit; font-size: 13px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+/* The floating quick-label box keeps its own 240px size; this full-width form-field rule outranked it. */
+.editor input:not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=checkbox]):not(.quickLabel) { min-width: 0; width: 100%; height: 38px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 2px; background: var(--bg-elevated); color: var(--text-primary); font: inherit; font-size: 13px; font-weight: 500; letter-spacing: 0; text-transform: none; }
 .editor input:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 1px; }
 .editor input[type=range], .editor input[type=radio] { accent-color: var(--accent-gold); width: 100%; }
 .editor input[type=color] { width: 34px; height: 34px; padding: 2px; flex-shrink: 0; border: 1px solid var(--border-strong); border-radius: 2px; background: var(--bg-elevated); cursor: pointer; }
