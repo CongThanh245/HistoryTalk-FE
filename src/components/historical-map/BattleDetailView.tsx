@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -128,7 +129,11 @@ export function BattleDetailView({
     return () => window.removeEventListener("keydown", h, true);
   }, [chatOpen, editingMap, onBack]);
 
-  if (editingMap) return <BattleMapEditor
+  // Portalled to <body>: inside the app shell the full-screen views sat under the sidebar and header (their stacking
+  // context), so the map edges, zoom bar and narration card were cut off.
+  if (typeof document === "undefined") return null;
+
+  if (editingMap) return createPortal(<BattleMapEditor
     key={pin?.pinId ?? "no-pin"}
     initialValue={savedMap ?? event.battleMap ?? legacyDraft ?? emptyBattleMap()}
     title={event.title}
@@ -143,9 +148,9 @@ export function BattleDetailView({
       try { localStorage.removeItem(legacyDraftKey); } catch { /* storage unavailable */ }
       toast.success("Đã lưu lược đồ trận đánh");
     }}
-  />;
+  />, document.body);
 
-  return (
+  return createPortal(
     <div className={cn(styles.immersive, chatOpen && styles.immersiveChatShown)}>
       {/* ── Top navigation bar ── */}
       <header className={styles.immersiveBar}>
@@ -339,7 +344,8 @@ export function BattleDetailView({
           />
         </aside>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }
 
