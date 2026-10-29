@@ -63,6 +63,7 @@ export function NewDocumentPanel({
   const [extracted, setExtracted] = React.useState<ExtractedPdf | null>(null);
   const [ocrProgress, setOcrProgress] = React.useState<{ page: number; total: number } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const replaceInputRef = React.useRef<HTMLInputElement>(null);
   const abortControllerRef = React.useRef<AbortController | null>(null);
 
   const isBusy = !!isCreateTextPending || !!isCreatePdfPending || pdfPhase === "extracting" || !!isExtractPdfPending;
@@ -98,8 +99,12 @@ export function NewDocumentPanel({
       toast.error(`Tối đa ${PDF_MAX_UPLOAD_MB}MB. File đã chọn nặng ${(picked.size / 1024 / 1024).toFixed(1)}MB.`);
       return;
     }
+    // When swapping an already-extracted file, keep it until the new one succeeds so a failed or cancelled
+    // swap puts the previous file (and any edits to its text) back instead of leaving nothing.
+    const previous = file && extracted ? { file, previewUrl, extracted, content } : null;
+    const newPreviewUrl = URL.createObjectURL(picked);
     setFile(picked);
-    setPreviewUrl(URL.createObjectURL(picked));
+    setPreviewUrl(newPreviewUrl);
     setPdfPhase("extracting");
     setOcrProgress(null);
     const controller = new AbortController();
@@ -110,11 +115,30 @@ export function NewDocumentPanel({
       setContent(result.rawText);
       setTitle((current) => current.trim() || picked.name.replace(/\.pdf$/i, ""));
       setPdfPhase("review");
+      if (previous?.previewUrl) {
+        const oldUrl = previous.previewUrl;
+        window.setTimeout(() => URL.revokeObjectURL(oldUrl), 0);
+      }
     } catch {
-      // A user-initiated cancel isn't an error — just drop the file silently.
-      // Any other failure already gets a toast from onExtractPdf's hook.
-      clearFile();
+      // A user-initiated cancel isn't an error. Any other failure already gets a toast from onExtractPdf's hook.
+      if (previous) {
+        window.setTimeout(() => URL.revokeObjectURL(newPreviewUrl), 0);
+        setFile(previous.file);
+        setPreviewUrl(previous.previewUrl);
+        setExtracted(previous.extracted);
+        setContent(previous.content);
+        setOcrProgress(null);
+        setPdfPhase("review");
+      } else {
+        clearFile();
+      }
     }
+  };
+
+  const onPdfInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.files?.[0];
+    e.target.value = "";
+    if (picked && picked.type === "application/pdf") void handlePickPdf(picked);
   };
 
   if (step === "closed") {
@@ -229,13 +253,7 @@ export function NewDocumentPanel({
                 type="file"
                 accept=".pdf,application/pdf"
                 className="hidden"
-                onChange={(e) => {
-                  const picked = e.target.files?.[0];
-                  e.target.value = "";
-                  if (picked && picked.type === "application/pdf") {
-                    void handlePickPdf(picked);
-                  }
-                }}
+                onChange={onPdfInputChange}
               />
             </div>
 
@@ -268,17 +286,25 @@ export function NewDocumentPanel({
                 <Eye className="h-3.5 w-3.5 mr-1" />
                 Xem trước
               </Button>
+              {/* Opens the file picker straight away; the current file stays until a new one is extracted. */}
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={clearFile}
+                onClick={() => replaceInputRef.current?.click()}
                 disabled={isBusy}
                 title="Đổi file khác"
               >
                 <RotateCcw className="h-3.5 w-3.5 mr-1" />
                 Đổi file
               </Button>
+              <input
+                ref={replaceInputRef}
+                type="file"
+                accept=".pdf,application/pdf"
+                className="hidden"
+                onChange={onPdfInputChange}
+              />
             </div>
           </div>
         </div>
