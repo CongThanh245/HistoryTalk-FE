@@ -610,7 +610,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                 </div>
               </TabsContent>
 
-              <TabsContent value="rag" className="space-y-3 mt-0">
+              {/* Kept mounted (hidden when inactive): a PDF picked and extracted here but not yet added must survive
+                  switching tabs, e.g. to fix a duplicate name after a failed create. */}
+              <TabsContent value="rag" forceMount className="data-[state=inactive]:hidden space-y-3 mt-0">
                 <div className="flex items-center gap-2">
                   <ScrollIcon className="h-4 w-4 text-[var(--accent-blue)]" />
                   <p className="text-sm font-semibold text-[var(--content-heading)]">

@@ -698,7 +698,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 )}
               </TabsContent>
 
-              <TabsContent value="rag" className="mt-0 space-y-3">
+              {/* Kept mounted (hidden when inactive): a PDF picked and extracted here but not yet added must survive
+                  switching tabs, e.g. to fix a duplicate name after a failed create. */}
+              <TabsContent value="rag" forceMount className="data-[state=inactive]:hidden mt-0 space-y-3">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <ScrollIcon className="w-4 h-4 text-[var(--accent-blue)]" />
