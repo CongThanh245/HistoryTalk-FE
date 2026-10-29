@@ -344,7 +344,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
         </div>
       </div>
 
-      <TabsList className="flex h-11 w-full justify-start gap-6 overflow-x-auto px-6 py-0 [scrollbar-width:none]">
+      {/* overflow-y-hidden: with only overflow-x-auto the 1px active underline made the row scroll vertically,
+          drawing a stray ▲●▼ scrollbar at the right edge. */}
+      <TabsList className="flex h-11 w-full justify-start gap-6 overflow-x-auto overflow-y-hidden px-6 py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {visibleTabs.map((tab) => (
           <TabsTrigger key={tab.key} value={tab.key} className="relative shrink-0 px-0.5 text-sm">
             {tab.label}

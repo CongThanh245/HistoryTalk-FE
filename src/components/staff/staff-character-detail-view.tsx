@@ -416,7 +416,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
           >
             <div className="px-6 border-b shrink-0 border-[var(--card-light-border)]">
               <TabsList
-                className="flex h-11 w-full justify-start gap-5 overflow-x-auto py-0 px-0 [scrollbar-width:none]"
+                className="flex h-11 w-full justify-start gap-5 overflow-x-auto overflow-y-hidden py-0 px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {FORM_TABS.map((tab) => (
                   <TabsTrigger
