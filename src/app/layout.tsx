@@ -164,6 +164,9 @@ export default function RootLayout({
           <SchoolLockDialog />
           <Toaster
             position="bottom-right"
+            // Lifted above the sticky save bars and the chat input so an error toast does not cover "Tạo / Lưu".
+            offset={{ bottom: 88, right: 24 }}
+            mobileOffset={{ bottom: 88 }}
             duration={4000}
             visibleToasts={3}
             closeButton

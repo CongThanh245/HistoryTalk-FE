@@ -20,9 +20,22 @@ interface MediaSlotFieldProps {
   /** Always-visible constraint hint (format/size limit), shown regardless of state so it's known before picking a file */
   hint?: string;
   onPick: (file: File) => void;
+  /** Largest file the backend accepts for this slot; bigger picks are refused here instead of failing with 413. */
+  maxMb?: number;
   onClear?: () => void;
   errorMessage?: string;
   children?: React.ReactNode;
+}
+
+/** Whether a file matches an input's accept list (".glb", "image/png", "video/*"). The OS picker can be switched to "All files". */
+export function matchesAccept(file: File, accept: string) {
+  const name = file.name.toLowerCase();
+  const type = file.type.toLowerCase();
+  return accept
+    .split(",")
+    .map((a) => a.trim().toLowerCase())
+    .filter(Boolean)
+    .some((a) => (a.startsWith(".") ? name.endsWith(a) : a.endsWith("/*") ? type.startsWith(a.slice(0, -1)) : type === a));
 }
 
 /**
@@ -41,11 +54,26 @@ export function MediaSlotField({
   caption,
   hint,
   onPick,
+  maxMb,
   onClear,
   errorMessage,
   children,
 }: MediaSlotFieldProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const [pickError, setPickError] = React.useState<string | null>(null);
+
+  const pick = (file: File) => {
+    if (!matchesAccept(file, accept)) {
+      setPickError(`“${file.name}” không đúng định dạng.${hint ? ` Chỉ nhận ${hint.split(" · ")[0]}.` : ""}`);
+      return;
+    }
+    if (maxMb && file.size > maxMb * 1024 * 1024) {
+      setPickError(`“${file.name}” nặng ${(file.size / 1024 / 1024).toFixed(1)}MB, vượt giới hạn ${maxMb}MB.`);
+      return;
+    }
+    setPickError(null);
+    onPick(file);
+  };
   const showProgressBar = isBusy && typeof progress === "number";
 
   return (
@@ -88,7 +116,7 @@ export function MediaSlotField({
           onChange={(e) => {
             const file = e.target.files?.[0];
             e.target.value = "";
-            if (file) onPick(file);
+            if (file) pick(file);
           }}
         />
       </div>
@@ -119,9 +147,9 @@ export function MediaSlotField({
           {caption}
         </p>
       )}
-      {errorMessage && (
-        <p className="text-[11px] font-medium text-accent-danger">
-          {errorMessage}
+      {(pickError || errorMessage) && (
+        <p role="alert" className="text-[11px] font-medium text-accent-danger">
+          {pickError ?? errorMessage}
         </p>
       )}
       {children}

@@ -5,7 +5,6 @@ import { FileText, File, Plus, X, Upload, Eye, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StaffFormLabel, StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
-import { toast } from "sonner";
 
 interface ExtractedPdf {
   fileUrl: string;
@@ -38,8 +37,8 @@ interface NewDocumentPanelProps {
 type Step = "closed" | "choose" | "text" | "pdf";
 type PdfPhase = "pick" | "extracting" | "review";
 
-// Mirrors the backend's uploadPdf multer limit (wdp301-backend/src/middlewares/upload.middleware.ts).
-const PDF_MAX_UPLOAD_MB = 100;
+// Mirrors the backend: PdfExtractionServiceImpl / SupabaseDocumentStorageService MAX_FILE_BYTES and the 50MB multipart cap.
+const PDF_MAX_UPLOAD_MB = 50;
 const PDF_MAX_UPLOAD_BYTES = PDF_MAX_UPLOAD_MB * 1024 * 1024;
 
 /**
@@ -66,6 +65,7 @@ export function NewDocumentPanel({
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
   const [file, setFile] = React.useState<File | null>(null);
+  const [pickError, setPickError] = React.useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [extracted, setExtracted] = React.useState<ExtractedPdf | null>(null);
@@ -107,6 +107,7 @@ export function NewDocumentPanel({
   };
 
   const reset = () => {
+    setPickError(null);
     setStep("closed");
     setTitle("");
     setContent("");
@@ -119,9 +120,10 @@ export function NewDocumentPanel({
 
   const handlePickPdf = async (picked: File) => {
     if (picked.size > PDF_MAX_UPLOAD_BYTES) {
-      toast.error(`Tối đa ${PDF_MAX_UPLOAD_MB}MB. File đã chọn nặng ${(picked.size / 1024 / 1024).toFixed(1)}MB.`);
+      setPickError(`“${picked.name}” nặng ${(picked.size / 1024 / 1024).toFixed(1)}MB, vượt giới hạn ${PDF_MAX_UPLOAD_MB}MB.`);
       return;
     }
+    setPickError(null);
     // When swapping an already-extracted file, keep it until the new one succeeds so a failed or cancelled
     // swap puts the previous file (and any edits to its text) back instead of leaving nothing.
     const previous = file && extracted ? { file, previewUrl, extracted, content } : null;
@@ -161,7 +163,12 @@ export function NewDocumentPanel({
   const onPdfInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = e.target.files?.[0];
     e.target.value = "";
-    if (picked && picked.type === "application/pdf") void handlePickPdf(picked);
+    if (!picked) return;
+    if (picked.type !== "application/pdf" && !/\.pdf$/i.test(picked.name)) {
+      setPickError(`“${picked.name}” không phải file PDF. Chỉ nhận file .pdf.`);
+      return;
+    }
+    void handlePickPdf(picked);
   };
 
   if (step === "closed") {
@@ -279,6 +286,11 @@ export function NewDocumentPanel({
                 onChange={onPdfInputChange}
               />
             </div>
+          )}
+          {pickError && pdfPhase === "pick" && (
+            <p role="alert" className="text-[11px] font-medium text-accent-danger">
+              {pickError}
+            </p>
 
           )}
         </div>
@@ -330,6 +342,11 @@ export function NewDocumentPanel({
               />
             </div>
           </div>
+          {pickError && (
+            <p role="alert" className="text-[11px] font-medium text-accent-danger">
+              {pickError}
+            </p>
+          )}
         </div>
       ) : null}
 

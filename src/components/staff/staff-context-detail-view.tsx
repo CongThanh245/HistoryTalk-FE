@@ -59,6 +59,8 @@ const ERA_OPTIONS = [
 const MEDIA_MAX_UPLOAD_MB = 50;
 const MEDIA_MAX_UPLOAD_BYTES = MEDIA_MAX_UPLOAD_MB * 1024 * 1024;
 const MEDIA_SIZE_HINT = `Tối đa ${MEDIA_MAX_UPLOAD_MB}MB`;
+// Backend: 2D images up to 10MB (DirectBinaryUploadStrategy), videos up to 50MB (also the multipart cap).
+const IMAGE_MAX_UPLOAD_MB = 10;
 
 /** Sentinel id for the not-yet-created document being composed in create mode — it reuses the same view/edit/delete dialogs as a real, already-imported RagDocument. */
 const PENDING_DOCUMENT_ID = "pending";
@@ -488,11 +490,12 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   label="Ảnh bối cảnh"
                   icon={<ImageIcon className="h-3.5 w-3.5" />}
                   accept="image/jpeg,image/png,image/webp,image/gif"
+                  maxMb={IMAGE_MAX_UPLOAD_MB}
                   disabled={!isEditing}
                   isBusy={isUploadMediaPending || isDeleteMediaPending || imageProgress != null}
                   progress={imageProgress}
                   hasValue={!!draft.imageUrl || !!pendingImageFile}
-                  hint={`JPEG, PNG, WEBP, GIF · ${MEDIA_SIZE_HINT}`}
+                  hint={`JPEG, PNG, WEBP, GIF · Tối đa ${IMAGE_MAX_UPLOAD_MB}MB`}
                   caption={
                     pendingImageFile
                       ? `Đã chọn: ${pendingImageFile.name} (sẽ tải lên sau khi lưu)`
@@ -519,6 +522,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   label="Video bối cảnh"
                   icon={<VideoIcon className="h-3.5 w-3.5" />}
                   accept="video/mp4,video/webm,video/quicktime"
+                  maxMb={MEDIA_MAX_UPLOAD_MB}
                   disabled={!isEditing}
                   isBusy={isUploadMediaPending || isDeleteMediaPending || videoProgress != null}
                   progress={videoProgress}

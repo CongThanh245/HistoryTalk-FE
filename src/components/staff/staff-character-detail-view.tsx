@@ -76,6 +76,8 @@ export { EMPTY_CHARACTER_DRAFT } from "./staff-character-detail-view.types";
 const MEDIA_MAX_UPLOAD_MB = 50;
 const MEDIA_MAX_UPLOAD_BYTES = MEDIA_MAX_UPLOAD_MB * 1024 * 1024;
 const MEDIA_SIZE_HINT = `Tối đa ${MEDIA_MAX_UPLOAD_MB}MB`;
+// Backend: 2D images up to 10MB (DirectBinaryUploadStrategy); 3D models are bounded by the 50MB multipart cap.
+const IMAGE_MAX_UPLOAD_MB = 10;
 
 /** Sentinel id for the not-yet-created document being composed in create mode — it reuses the same view/edit/delete dialogs as a real, already-imported RagDocument. */
 const PENDING_DOCUMENT_ID = "pending";
@@ -595,10 +597,11 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   label="Ảnh nhân vật"
                   icon={<ImageIcon className="h-3.5 w-3.5" />}
                   accept="image/jpeg,image/png,image/webp,image/gif"
+                  maxMb={IMAGE_MAX_UPLOAD_MB}
                   disabled={!isEditing}
                   isBusy={isUploadMediaPending || isDeleteMediaPending}
                   hasValue={!!draft.image || !!pendingImageFile}
-                  hint={`JPEG, PNG, WEBP, GIF · ${MEDIA_SIZE_HINT}`}
+                  hint={`JPEG, PNG, WEBP, GIF · Tối đa ${IMAGE_MAX_UPLOAD_MB}MB`}
                   caption={
                     pendingImageFile
                       ? `Đã chọn: ${pendingImageFile.name} (sẽ tải lên sau khi lưu)`
@@ -632,6 +635,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   label="Mô hình 3D (.glb)"
                   icon={<CubeIcon className="h-3.5 w-3.5" />}
                   accept=".glb,.fbx,model/gltf-binary"
+                  maxMb={MEDIA_MAX_UPLOAD_MB}
                   disabled={!isEditing}
                   isBusy={isUploadMediaPending || isDeleteMediaPending}
                   hasValue={!!draft.modelUrl || !!pendingModelFile}
