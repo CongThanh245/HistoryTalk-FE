@@ -197,7 +197,12 @@ export interface CheckedStudentRow {
 
 const STUDENT_CODE_PATTERN = /^[A-Za-z0-9_-]{2,30}$/;
 
-export function checkStudentRows(table: ImportTable, mapping: StudentColumnMapping): CheckedStudentRow[] {
+export interface CheckStudentOptions {
+  /** Class roster import: a row with a student code or email may be an existing student, so name and birth date are optional. */
+  existingAllowed?: boolean;
+}
+
+export function checkStudentRows(table: ImportTable, mapping: StudentColumnMapping, options: CheckStudentOptions = {}): CheckedStudentRow[] {
   const get = (r: string[], i: number) => (i >= 0 ? (r[i] ?? "").trim() : "");
   const codeLine = new Map<string, number>();
   const emailLine = new Map<string, number>();
@@ -209,7 +214,8 @@ export function checkStudentRows(table: ImportTable, mapping: StudentColumnMappi
     const raw = Object.fromEntries(STUDENT_IMPORT_FIELDS.map((f) => [f.key, get(r, mapping[f.key])])) as StudentRowValues;
     const values: StudentRowValues = { ...raw, fullName: raw.fullName.replace(/\s+/g, " ") };
 
-    if (!values.fullName) errors.fullName = "Thiếu họ và tên";
+    const maybeExisting = !!options.existingAllowed && !!(raw.studentCode || raw.email);
+    if (!values.fullName && !maybeExisting) errors.fullName = options.existingAllowed ? "Cần họ tên, hoặc mã HS / email của học sinh đã có" : "Thiếu họ và tên";
     else if (values.fullName.length > 150) errors.fullName = "Họ tên tối đa 150 ký tự";
 
     if (values.studentCode) {
@@ -219,7 +225,10 @@ export function checkStudentRows(table: ImportTable, mapping: StudentColumnMappi
       else codeLine.set(key, line);
     }
 
-    if (!raw.dob) errors.dob = "Thiếu ngày sinh (máy chủ bắt buộc)";
+    if (!raw.dob) {
+      if (maybeExisting) warnings.push("Chỉ thêm được nếu học sinh đã có trong trường (thiếu ngày sinh để tạo mới)");
+      else errors.dob = "Thiếu ngày sinh (máy chủ bắt buộc)";
+    }
     else {
       const parsed = parseDobLoose(raw.dob);
       if (!parsed) errors.dob = "Ngày sinh không hợp lệ (dd/mm/yyyy)";

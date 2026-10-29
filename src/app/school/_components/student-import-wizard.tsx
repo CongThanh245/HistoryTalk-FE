@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  Pencil,
   Download,
   FileSpreadsheet,
   Info,
@@ -19,9 +18,8 @@ import {
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { StaffFormInput, StaffFormSelect } from "@/components/staff/staff-form";
+import { StaffFormSelect } from "@/components/staff/staff-form";
 import { CredentialExportActions, OneTimeWarning } from "@/components/saas/accounts-credentials";
 import { todayStamp } from "@/components/saas/accounts-utils";
 import { DIALOG_CLASS, DIALOG_TITLE_CLASS } from "@/components/saas/saas-ui";
@@ -32,17 +30,16 @@ import {
   autoMapStudentColumns,
   buildBackendCsv,
   buildBackendTemplateCsv,
-  checkStudentRows,
   decodeImportFile,
   downloadTextFile,
   readTable,
   type ImportTable,
-  type CheckedStudentRow,
   type StudentColumnMapping,
   type StudentImportField,
 } from "@/features/saas/student-import";
 import { schoolService } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
+import { ImportPreviewTable, useImportRows } from "@/components/saas/student-import-preview";
 import { ImportAccountsTable, ImportErrorsTable, ImportSummary } from "./import-result";
 import { studentCredentials, useImportSession, type ImportSession } from "./import-session";
 
@@ -71,14 +68,6 @@ export async function downloadStudentTemplate() {
 // Cot duoc tu nhan theo ten; bang ghep cot chi hien o buoc tai file khi khong nhan ra cot bat buoc.
 const STEPS = ["Tải file", "Xem trước & chọn", "Kết quả"] as const;
 type Step = 0 | 1 | 2;
-type RowFilter = "ALL" | "VALID" | "ERROR";
-
-// The preview works on rows re-laid out in backend column order, so an edit is one cell and the checker re-runs on it.
-const NORMALIZED_HEADERS = STUDENT_IMPORT_FIELDS.map((f) => f.column as string);
-const NORMALIZED_MAPPING = Object.fromEntries(STUDENT_IMPORT_FIELDS.map((f, i) => [f.key, i])) as StudentColumnMapping;
-const normalizeRows = (table: ImportTable, mapping: StudentColumnMapping) =>
-  table.rows.map((r) => STUDENT_IMPORT_FIELDS.map((f) => (mapping[f.key] >= 0 ? (r[mapping[f.key]] ?? "") : "")));
-
 function StepIndicator({ step }: { step: Step }) {
   return (
     <nav aria-label="Các bước nhập học sinh">
@@ -128,10 +117,7 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
   const [fileError, setFileError] = React.useState<string | null>(null);
   const [dragOver, setDragOver] = React.useState(false);
   const [mapping, setMapping] = React.useState<StudentColumnMapping | null>(null);
-  const [filter, setFilter] = React.useState<RowFilter>("ALL");
-  // Line numbers of the rows to create; every valid row is ticked when the preview opens.
-  const [selected, setSelected] = React.useState<Set<number>>(new Set());
-  const [rows, setRows] = React.useState<string[][]>([]);
+  const preview = useImportRows();
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [session, setSession] = React.useState<ImportSession | null>(null);
   const [exported, setExported] = React.useState(false);
@@ -144,9 +130,7 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
     setTable(null);
     setFileError(null);
     setMapping(null);
-    setFilter("ALL");
-    setSelected(new Set());
-    setRows([]);
+    preview.clear();
     setSubmitError(null);
     setSession(null);
     setExported(false);
@@ -198,10 +182,7 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
   }, [mapping]);
 
   /* ── Step 2: preview & pick ── */
-  const checked = React.useMemo(() => checkStudentRows({ headers: NORMALIZED_HEADERS, rows }, NORMALIZED_MAPPING), [rows]);
-  const validRows = React.useMemo(() => checked.filter((r) => Object.keys(r.errors).length === 0), [checked]);
-  const errorCount = checked.length - validRows.length;
-  const pickedRows = React.useMemo(() => validRows.filter((r) => selected.has(r.line)), [validRows, selected]);
+  const { pickedRows, errorCount } = preview;
 
   function submit() {
     if (pickedRows.length === 0) return;
@@ -233,18 +214,6 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
     );
   }
 
-  function saveRow(line: number, values: Partial<Record<StudentImportField, string>>) {
-    const nextRows = rows.map((r, k) =>
-      k + 2 === line ? STUDENT_IMPORT_FIELDS.map((f, i) => (f.key in values ? (values[f.key] ?? "") : r[i])) : r,
-    );
-    setRows(nextRows);
-    const row = checkStudentRows({ headers: NORMALIZED_HEADERS, rows: nextRows }, NORMALIZED_MAPPING).find((r) => r.line === line);
-    const nextSelected = new Set(selected);
-    if (row && Object.keys(row.errors).length === 0) nextSelected.add(line);
-    else nextSelected.delete(line);
-    setSelected(nextSelected);
-  }
-
   function removeFile() {
     setFileName(null);
     setEncoding("utf-8");
@@ -257,11 +226,7 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
   const canNext = step === 0 && !!table && !fileError && mappingErrors.length === 0;
   const next = () => {
     if (!canNext || !table || !mapping) return;
-    const normalized = normalizeRows(table, mapping);
-    const initial = checkStudentRows({ headers: NORMALIZED_HEADERS, rows: normalized }, NORMALIZED_MAPPING);
-    setRows(normalized);
-    setSelected(new Set(initial.filter((r) => Object.keys(r.errors).length === 0).map((r) => r.line)));
-    setFilter("ALL");
+    preview.load(table, mapping);
     setStep(1);
   };
 
@@ -306,16 +271,17 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
               />
             )}
             {step === 1 && (
-              <PreviewStep
-                rows={checked}
-                filter={filter}
-                setFilter={setFilter}
-                validCount={validRows.length}
+              <ImportPreviewTable
+                rows={preview.checked}
+                filter={preview.filter}
+                setFilter={preview.setFilter}
+                validCount={preview.validRows.length}
                 errorCount={errorCount}
-                selected={selected}
-                setSelected={setSelected}
-                rawRow={(line) => rows[line - 2] ?? []}
-                onSaveRow={saveRow}
+                selected={preview.selected}
+                setSelected={preview.setSelected}
+                rawRow={preview.rawRow}
+                onSaveRow={preview.saveRow}
+                note="Học sinh dùng quỹ token chung của trường theo hạn mức mỗi ngày, không cần cấp token riêng. Tài khoản được tạo ở cấp trường; xếp lớp sau ở trang Lớp học."
                 submitError={submitError}
               />
             )}
@@ -599,256 +565,6 @@ function MappingStep({
             </li>
           ))}
         </ul>
-      )}
-    </div>
-  );
-}
-
-/* ───────────────────────── Step 2 ───────────────────────── */
-const PREVIEW_FIELDS: { key: StudentImportField; label: string }[] = [
-  { key: "fullName", label: "Họ và tên" },
-  { key: "studentCode", label: "Mã HS" },
-  { key: "dob", label: "Ngày sinh" },
-  { key: "email", label: "Email" },
-  { key: "gender", label: "Giới tính" },
-];
-const GENDER_VI: Record<string, string> = { MALE: "Nam", FEMALE: "Nữ" };
-
-function PreviewStep({
-  rows,
-  filter,
-  setFilter,
-  validCount,
-  errorCount,
-  selected,
-  setSelected,
-  rawRow,
-  onSaveRow,
-  submitError,
-}: {
-  rows: CheckedStudentRow[];
-  filter: RowFilter;
-  setFilter: (f: RowFilter) => void;
-  validCount: number;
-  errorCount: number;
-  selected: Set<number>;
-  setSelected: (s: Set<number>) => void;
-  rawRow: (line: number) => string[];
-  onSaveRow: (line: number, values: Partial<Record<StudentImportField, string>>) => void;
-  submitError: string | null;
-}) {
-  const [editing, setEditing] = React.useState<{ line: number; values: Record<StudentImportField, string> } | null>(null);
-  const startEdit = (line: number) => {
-    const raw = rawRow(line);
-    setEditing({ line, values: Object.fromEntries(STUDENT_IMPORT_FIELDS.map((f, i) => [f.key, raw[i] ?? ""])) as Record<StudentImportField, string> });
-  };
-  const finishEdit = () => {
-    if (!editing) return;
-    onSaveRow(editing.line, editing.values);
-    setEditing(null);
-  };
-  const visible = rows.filter((r) => {
-    const bad = Object.keys(r.errors).length > 0;
-    return filter === "ALL" || (filter === "ERROR" ? bad : !bad);
-  });
-  const tabs: { key: RowFilter; label: string; count: number }[] = [
-    { key: "ALL", label: "Tất cả", count: rows.length },
-    { key: "VALID", label: "Hợp lệ", count: validCount },
-    { key: "ERROR", label: "Có lỗi", count: errorCount },
-  ];
-  const isValid = (r: CheckedStudentRow) => Object.keys(r.errors).length === 0;
-  const pickable = visible.filter(isValid);
-  const pickedVisible = pickable.filter((r) => selected.has(r.line)).length;
-  const allPicked = pickable.length > 0 && pickedVisible === pickable.length;
-  const toggleAll = () => {
-    const next = new Set(selected);
-    for (const r of pickable) {
-      if (allPicked) next.delete(r.line);
-      else next.add(r.line);
-    }
-    setSelected(next);
-  };
-  const toggle = (line: number) => {
-    const next = new Set(selected);
-    if (next.has(line)) next.delete(line);
-    else next.add(line);
-    setSelected(next);
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Lọc dòng">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            role="tab"
-            aria-selected={filter === t.key}
-            onClick={() => setFilter(t.key)}
-            className={cn(
-              "rounded-sm border px-3 py-1.5 text-xs font-bold",
-              filter === t.key
-                ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
-                : "border-[var(--border-strong)] text-content-muted hover:border-[var(--text-primary)]",
-            )}
-          >
-            {t.label} <span className="tabular-nums">({t.count})</span>
-          </button>
-        ))}
-      </div>
-
-      <p className="text-sm text-content-muted">
-        Đã chọn <b className="text-content-heading tabular-nums">{selected.size}</b>/{validCount} học sinh hợp lệ. Bỏ tick những học sinh chưa muốn
-        tạo tài khoản, bấm bút để sửa thông tin.
-      </p>
-      {errorCount > 0 && (
-        <p className="flex items-start gap-2 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] px-3 py-2 text-xs text-[var(--text-secondary)]">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
-          {errorCount} dòng có lỗi chưa chọn được. Bấm biểu tượng bút ở cuối dòng để sửa trực tiếp; sửa xong dòng sẽ tự được chọn.
-        </p>
-      )}
-
-      <div className="max-h-[50dvh] overflow-auto border-y border-border-card">
-        <table className="w-full min-w-[760px] text-sm">
-          <caption className="sr-only">Kết quả kiểm tra từng dòng</caption>
-          <thead className="sticky top-0 bg-[var(--bg-surface)]">
-            <tr className="border-b border-[var(--border-strong)] text-left text-[13px] font-semibold text-[var(--text-tertiary)]">
-              <th className="w-9 px-2 py-2">
-                <Checkbox
-                  checked={allPicked ? true : pickedVisible > 0 ? "indeterminate" : false}
-                  disabled={pickable.length === 0}
-                  onCheckedChange={toggleAll}
-                  aria-label="Chọn tất cả học sinh hợp lệ"
-                />
-              </th>
-              <th className="px-2 py-2 font-semibold">Dòng</th>
-              {PREVIEW_FIELDS.map((f) => (
-                <th key={f.key} className="px-2 py-2 font-semibold">
-                  {f.label}
-                </th>
-              ))}
-              <th className="w-10 px-2 py-2">
-                <span className="sr-only">Sửa</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((r) => {
-              const bad = Object.keys(r.errors).length > 0;
-              if (editing?.line === r.line) {
-                return (
-                  <tr key={r.line} data-row-editor className="border-b border-[var(--border-default)] bg-[var(--bg-elevated)] align-top last:border-b-0">
-                    <td className="px-2 py-2" />
-                    <td className="px-2 py-2 tabular-nums text-content-muted">{r.line}</td>
-                    {PREVIEW_FIELDS.map((f) => (
-                      <td key={f.key} className="px-1 py-1.5">
-                        <StaffFormInput
-                          autoFocus={f.key === (Object.keys(r.errors)[0] ?? "fullName")}
-                          value={editing.values[f.key]}
-                          onChange={(e) => setEditing({ ...editing, values: { ...editing.values, [f.key]: e.target.value } })}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              finishEdit();
-                            }
-                            if (e.key === "Escape") {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setEditing(null);
-                            }
-                          }}
-                          placeholder={f.key === "dob" ? "dd/mm/yyyy" : f.key === "gender" ? "Nam / Nữ" : undefined}
-                          aria-label={f.label}
-                          aria-invalid={!!r.errors[f.key]}
-                          className="h-8 px-2 text-sm"
-                        />
-                        {r.errors[f.key] && <span className="block text-[11px] text-[var(--accent-danger)]">{r.errors[f.key]}</span>}
-                      </td>
-                    ))}
-                    <td className="px-1 py-1.5">
-                      <button
-                        type="button"
-                        onClick={finishEdit}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-sm bg-[var(--text-primary)] text-[var(--text-inverse)]"
-                        aria-label="Lưu dòng"
-                        title="Lưu (Enter)"
-                      >
-                        <Check className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              }
-              return (
-                <tr
-                  key={r.line}
-                  onClick={bad ? undefined : () => toggle(r.line)}
-                  className={cn(
-                    "border-b border-[var(--border-default)] align-top last:border-b-0",
-                    bad ? "bg-[var(--status-danger-bg)]" : "cursor-pointer hover:bg-[var(--bg-elevated)]",
-                    !bad && !selected.has(r.line) && "text-content-muted",
-                  )}
-                >
-                  <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      checked={!bad && selected.has(r.line)}
-                      disabled={bad}
-                      onCheckedChange={() => toggle(r.line)}
-                      aria-label={`Chọn ${r.values.fullName || `dòng ${r.line}`}`}
-                    />
-                  </td>
-                  <td className="px-2 py-2 tabular-nums text-content-muted">{r.line}</td>
-                  {PREVIEW_FIELDS.map((f) => {
-                    const err = r.errors[f.key];
-                    const v = f.key === "gender" ? (GENDER_VI[r.values.gender] ?? r.values.gender) : r.values[f.key];
-                    return (
-                      <td key={f.key} className="px-2 py-2">
-                        <span className={cn("break-words", f.key === "fullName" && "font-medium text-content-heading")}>
-                          {v || <span className="text-content-subtle">—</span>}
-                        </span>
-                        {err && <span className="block text-[11px] text-[var(--accent-danger)]">{err}</span>}
-                        {f.key === "fullName" && r.warnings.map((w) => <span key={w} className="block text-[11px] text-[var(--status-warning)]">{w}</span>)}
-                      </td>
-                    );
-                  })}
-                  <td className="px-1 py-1.5" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => startEdit(r.line)}
-                      className={cn(
-                        "inline-flex h-8 w-8 items-center justify-center rounded-sm hover:bg-[var(--bg-surface)] hover:text-content-heading",
-                        bad ? "text-[var(--accent-danger)]" : "text-content-muted",
-                      )}
-                      aria-label={`Sửa dòng ${r.line}`}
-                      title="Sửa"
-                    >
-                      <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {visible.length === 0 && (
-              <tr>
-                <td colSpan={PREVIEW_FIELDS.length + 3} className="px-3 py-8 text-center text-sm text-content-muted">
-                  Không có dòng nào.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <p className="flex items-start gap-2 text-xs leading-relaxed text-content-muted">
-        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        Học sinh dùng quỹ token chung của trường theo hạn mức mỗi ngày, không cần cấp token riêng. Tài khoản được tạo ở cấp trường; xếp lớp sau ở
-        trang Lớp học.
-      </p>
-
-      {submitError && (
-        <p role="alert" className="flex items-start gap-2 text-sm text-[var(--accent-danger)]">
-          <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> {submitError}
-        </p>
       )}
     </div>
   );
