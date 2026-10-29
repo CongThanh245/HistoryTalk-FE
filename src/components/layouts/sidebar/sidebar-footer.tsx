@@ -98,9 +98,13 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
         <UpgradeProDialog>
         <button
           type="button"
-          className="block rounded-sm overflow-hidden relative group transition-colors duration-250 w-full text-left cursor-pointer h-[72px] bg-bg-surface border border-border-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
+          className={cn(
+            "block rounded-sm overflow-hidden relative group transition-colors duration-250 w-full text-left cursor-pointer bg-bg-surface border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
+            // Collapsed: an icon-sized tile with the crown centred, lined up with the nav icons above.
+            isExpanded ? "h-[72px] border-border-card" : "mx-auto h-10 w-10 border-transparent bg-transparent",
+          )}
         >
-          <div className="relative z-10 h-full flex items-center px-2.5 gap-2.5">
+          <div className={cn("relative z-10 h-full flex items-center", isExpanded ? "px-2.5 gap-2.5" : "justify-center")}>
             {/* Crown icon */}
             <div
               className="w-7 h-7 rounded-sm flex items-center justify-center shrink-0 bg-accent-gold"
@@ -111,7 +115,7 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
             <div
               className={cn(
                 "flex flex-col gap-1 overflow-hidden transition-all duration-250",
-                isExpanded ? "opacity-100 w-full" : "opacity-0 w-0 pointer-events-none"
+                isExpanded ? "opacity-100 w-full" : "hidden"
               )}
             >
               {/* Title */}
@@ -135,7 +139,7 @@ export default function SidebarFooter({ isExpanded, showUpgrade = true }: Sideba
             <ChevronRight
               className={cn(
                 "w-3.5 h-3.5 shrink-0 transition-opacity duration-250 text-accent-gold",
-                isExpanded ? "opacity-40 group-hover:opacity-80" : "opacity-0 w-0"
+                isExpanded ? "opacity-40 group-hover:opacity-80" : "hidden"
               )}
             />
           </div>
