@@ -70,11 +70,27 @@ export default function EditContextPage() {
 
     try {
       await updateEvent.mutateAsync({ id, data: payload });
-      return true;
     } catch {
       // useUpdateEvent already shows the API error toast; keep the form open so the edit can be fixed.
       return false;
     }
+
+    // A document written/extracted in the Tài liệu tab is saved by this same "Lưu thay đổi" (no separate button).
+    const documentContent = draft.documentContent.trim();
+    if (documentContent) {
+      try {
+        await createHistoricalDocument.mutateAsync({
+          contextId: id,
+          title: draft.documentTitle.trim() || payload.name,
+          content: documentContent,
+          ...(draft.pendingPdfFileUrl ? { fileUrl: draft.pendingPdfFileUrl } : { type: "TEXT" as const }),
+        });
+      } catch {
+        // The hook toasts the error; stay in editing so the document is not lost and can be retried.
+        return false;
+      }
+    }
+    return true;
   };
 
   if (isLoadingContext) {

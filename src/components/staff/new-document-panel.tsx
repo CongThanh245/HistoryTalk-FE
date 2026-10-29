@@ -354,7 +354,7 @@ export function NewDocumentPanel({
       {deferred ? (
         // No second Create button on create pages: the document goes out with the page's own one.
         <div className="-mx-3 -mb-3 flex items-center justify-between gap-2 border-t px-3 py-2.5 text-xs text-content-muted border-card-light-border">
-          <span>{canSubmit ? "Tài liệu sẽ được tạo cùng lúc khi bấm nút Tạo của trang." : "Điền tiêu đề và nội dung để đính kèm tài liệu."}</span>
+          <span>{canSubmit ? "Tài liệu sẽ được lưu cùng lúc khi bấm nút Tạo / Lưu thay đổi của trang." : "Điền tiêu đề và nội dung để đính kèm tài liệu."}</span>
           <Button type="button" size="sm" variant="ghost" onClick={reset} disabled={isBusy}>
             Bỏ tài liệu
           </Button>

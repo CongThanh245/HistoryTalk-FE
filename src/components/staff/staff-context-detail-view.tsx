@@ -632,7 +632,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   </div>
 
                   <div className="mb-3">
+                    {/* Remounts (empty) once a saved document shows up in the list, so it is not saved twice. */}
                     <NewDocumentPanel
+                      key={`doc-panel-${documents.length}`}
                       disabled={!isEditing}
                       onCreateText={async (data) => {
                         if (mode === "edit") {
@@ -659,7 +661,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                       }}
                       isCreatePdfPending={isCreatePdfDocumentPending}
                       // Create page: the document rides on "Tạo bối cảnh" — no second Create button to miss.
-                      deferred={mode === "create"}
+                      deferred
                       onDraftChange={(doc) => {
                         set("documentTitle")(doc?.title ?? "");
                         set("documentContent")(doc?.content ?? "");

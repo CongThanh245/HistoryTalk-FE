@@ -87,7 +87,7 @@ export function useStaffContextDetailView(props: StaffContextDetailViewProps) {
 
     const keys: (keyof ContextDraft)[] = [
       "name", "description", "era", "year", "location", "imageUrl", "videoUrl",
-      "isPublished",
+      "isPublished", "documentContent",
     ];
 
     return keys.some((key) => (draft[key] ?? "") !== (initialDraft[key] ?? ""));
