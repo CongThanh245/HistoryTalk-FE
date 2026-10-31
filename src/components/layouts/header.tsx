@@ -6,10 +6,12 @@ import { useAuthStore } from "@/store/auth.store";
 import { MagneticButton } from "../commons/MagneticButton";
 import { useSidebar } from "./sidebar/sidebar-context";
 import { HeaderStreak } from "./header-streak";
+import { ThemeToggle } from "./theme-toggle";
 
 /**
  * One slim bar above the page: where you are (breadcrumbs) on the left, search + streak chip on the right.
- * The account menu and theme switch live at the bottom of the sidebar.
+ * The account menu and theme switch live at the bottom of the sidebar; guests have no account menu,
+ * so the theme switch sits next to the login button instead.
  */
 export default function Header({ showSearch = true }: { showSearch?: boolean }) {
   const user = useAuthStore((s) => s.user);
@@ -42,9 +44,12 @@ export default function Header({ showSearch = true }: { showSearch?: boolean }) 
         <HeaderStreak />
 
         {!user && (
-          <MagneticButton href="/login" variant="header" rounded="full" size="sm">
-            Đăng nhập
-          </MagneticButton>
+          <>
+            <ThemeToggle />
+            <MagneticButton href="/login" variant="header" rounded="full" size="sm">
+              Đăng nhập
+            </MagneticButton>
+          </>
         )}
       </div>
     </header>
