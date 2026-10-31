@@ -20,7 +20,6 @@ import {
   useLocalContentMutations,
   useTeacherLocalContent,
 } from "@/features/saas/hooks-local-content";
-import { LEVEL_LABELS } from "@/features/saas/hooks-teaching";
 import type { LocalItem } from "@/services/local-content.service";
 import { cn } from "@/lib/utils/cn";
 
@@ -257,7 +256,7 @@ export function ContextQuizzesPanel({ contextId, canEdit }: { contextId: string;
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-content-heading group-hover:text-[var(--accent-gold)]">{q.title}</p>
                   <p className="text-xs text-content-muted">
-                    {LEVEL_LABELS[q.level] ?? q.level} · {q.questions.length} câu hỏi
+                    {q.questions.length} câu hỏi
                     {q.updatedDate ? ` · cập nhật ${formatDate(q.updatedDate)}` : ""}
                   </p>
                 </div>

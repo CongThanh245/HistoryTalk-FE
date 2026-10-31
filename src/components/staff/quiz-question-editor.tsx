@@ -19,7 +19,7 @@ import {
   QUESTION_TYPE_LABELS,
   type QuestionType,
 } from "@/features/quiz/question-data";
-import type { CreateQuestionPayload, StaffQuizQuestion } from "@/services/staff.quiz.service";
+import type { CreateQuestionPayload, QuestionDifficulty, StaffQuizQuestion } from "@/services/staff.quiz.service";
 import {
   parseJsonQuestions, parseCsvQuestions, parsePlainTextQuestions,
   type ImportedQuestion,
@@ -50,6 +50,7 @@ export interface QuizQuestion {
   // MATCHING
   matchingPairs: MatchingDraftPair[];
   explanation?: string;
+  difficulty: QuestionDifficulty;
 }
 
 interface QuizQuestionEditorProps {
@@ -70,6 +71,10 @@ export const QUESTION_TYPE_HINTS: Record<QuestionType, string> = {
   FILL_IN_BLANK: "Người học gõ câu trả lời",
   MATCHING: "Nối vế trái với vế phải",
 };
+export const DIFFICULTY_LABELS: Record<QuestionDifficulty, string> = { EASY: "Dễ", MEDIUM: "Trung bình", HARD: "Khó" };
+const DIFFICULTIES: QuestionDifficulty[] = ["EASY", "MEDIUM", "HARD"];
+// Cau moi ke thua do kho cua cau vua soan trong phien nay, nen bo de cung muc do khong phai chon lai tung cau.
+let lastDifficulty: QuestionDifficulty = "MEDIUM";
 const EMPTY_TYPE_FIELDS = {
   questionType: "MULTIPLE_CHOICE" as QuestionType,
   options: ["", "", "", ""],
@@ -79,7 +84,7 @@ const EMPTY_TYPE_FIELDS = {
   matchingPairs: [{ left: "", right: "" }, { left: "", right: "" }],
 };
 const makeEmpty = (): QuizQuestion => ({
-  questionId: newId(), orderIndex: 0, content: "", explanation: "",
+  questionId: newId(), orderIndex: 0, content: "", explanation: "", difficulty: lastDifficulty,
   ...EMPTY_TYPE_FIELDS,
 });
 const reindex = (qs: QuizQuestion[]) => qs.map((q, i) => ({ ...q, orderIndex: i + 1 }));
@@ -101,7 +106,7 @@ function toQuizQuestion(q: ImportedQuestion): QuizQuestion {
 
 /** Draft editor → payload POST/PUT cau hoi (questionType + questionData). */
 export function toQuestionPayload(q: QuizQuestion): CreateQuestionPayload {
-  const base = { content: q.content.trim(), explanation: q.explanation?.trim() || undefined };
+  const base = { content: q.content.trim(), explanation: q.explanation?.trim() || undefined, difficulty: q.difficulty };
   if (q.questionType === "FILL_IN_BLANK") {
     return {
       ...base,
@@ -147,6 +152,7 @@ export function fromStaffQuestion(q: StaffQuizQuestion): QuizQuestion {
     content: q.content,
     questionType: q.questionType,
     explanation: q.explanation ?? "",
+    difficulty: q.difficulty ?? "MEDIUM",
   };
   if (q.questionType === "FILL_IN_BLANK") {
     draft.acceptedAnswers = data.acceptedAnswers?.length ? [...data.acceptedAnswers] : [""];
@@ -407,6 +413,26 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
         </div>
       </div>
 
+      {/* Difficulty: preselected, one tap to change */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Label className={FIELD_LABEL}>Độ khó</Label>
+        <div className="inline-flex overflow-hidden rounded-sm border border-card-light-border">
+          {DIFFICULTIES.map((d) => (
+            <button key={d} type="button"
+              onClick={() => setDraft((s) => ({ ...s, difficulty: d }))}
+              aria-pressed={draft.difficulty === d}
+              className={cn(
+                "px-3 py-1 text-xs font-semibold transition-all",
+                draft.difficulty === d
+                  ? "bg-[var(--accent-gold-active-bg)] text-content-heading"
+                  : "bg-transparent text-content-muted hover:bg-[var(--status-neutral-bg)]",
+              )}>
+              {DIFFICULTY_LABELS[d]}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Content */}
       <div className="grid gap-2">
         <Label className={FIELD_LABEL}>Nội dung câu hỏi *</Label>
@@ -532,7 +558,7 @@ export function QuestionForm({ initial, initialType, orderIndex, onSave, onCance
 
       <div className="flex gap-2.5 pt-2 border-t border-card-light-border mt-4">
         <Button type="button" size="sm" className="px-6 rounded-sm font-bold transition-all active:scale-95 border-none bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
-          disabled={!valid || isSaving} onClick={() => valid && onSave({ ...draft })}>
+          disabled={!valid || isSaving} onClick={() => { if (!valid) return; lastDifficulty = draft.difficulty; onSave({ ...draft }); }}>
           Lưu câu hỏi
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}
@@ -556,6 +582,7 @@ export function QuestionAnswerSummary({ q }: { q: QuizQuestion }) {
   return (
     <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
       <QuestionTypeBadge type={q.questionType} />
+      <span className="shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[var(--status-neutral-bg)] text-content-muted border border-[var(--border-default)]">{DIFFICULTY_LABELS[q.difficulty]}</span>
       <span className="shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">Đúng</span>
       <p className="text-xs truncate font-medium text-content-muted">{describeAnswer(q)}</p>
     </div>

@@ -15,8 +15,8 @@ import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import {
-  DifficultyBadge, EraBadge,
-  type DifficultyKey, type EraKey,
+  EraBadge,
+  type EraKey,
 } from "@/components/staff/staff-badge";
 import {
   QuizQuestionEditor,
@@ -67,24 +67,16 @@ interface QuizDraft {
   quizId?: string;          // chỉ có khi edit
   title: string;
   contextId: string;
-  level: "EASY" | "MEDIUM" | "HARD";
   questions: QuizQuestion[];
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
-
-const LEVEL_OPTIONS: { value: "EASY" | "MEDIUM" | "HARD"; label: string }[] = [
-  { value: "EASY", label: "Dễ" },
-  { value: "MEDIUM", label: "Trung bình" },
-  { value: "HARD", label: "Khó" },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const emptyDraft = (): QuizDraft => ({
   title: "",
   contextId: "",
-  level: "MEDIUM",
   questions: [],
 });
 
@@ -128,7 +120,6 @@ export default function StaffQuizzesPage() {
 
   // ── Filter state ──────────────────────────────────────────
   const [search, setSearch] = React.useState("");
-  const [filterLevel, setFilterLevel] = React.useState<"" | "EASY" | "MEDIUM" | "HARD">("");
   const [page, setPage] = React.useState(0);
 
   // ── View / editor state ───────────────────────────────────
@@ -155,10 +146,9 @@ export default function StaffQuizzesPage() {
   // ── API hooks ─────────────────────────────────────────────
   const params = React.useMemo(() => ({
     ...(search.trim() && { search: search.trim() }),
-    ...(filterLevel && { level: filterLevel }),
     page,
     size: 10,
-  }), [search, filterLevel, page]);
+  }), [search, page]);
 
   const { data, isLoading, isError, refetch: refetchQuizzes } = useStaffQuizzes(params);
   const createQuiz = useCreateStaffQuiz();
@@ -182,9 +172,6 @@ export default function StaffQuizzesPage() {
       }),
     [data?.content, publishedOverrides],
   );
-
-  // BE (StaffQuizController) chua doc `level` nen van loc them o FE; khi BE ho tro, param da gui san.
-  const filteredItems = filterLevel ? allItems.filter((q) => q.level === filterLevel) : allItems;
 
   const totalPages = data?.totalPages ?? 1;
 
@@ -217,7 +204,6 @@ export default function StaffQuizzesPage() {
       quizId: q.quizId,
       title: q.title,
       contextId: q.contextId,
-      level: q.level,
       questions: q.questions.map(fromStaffQuestion),
     };
     setDraft(next);
@@ -235,7 +221,6 @@ export default function StaffQuizzesPage() {
         {
           title,
           contextId: draft.contextId.trim(),
-          level: draft.level,
           questions: draft.questions.map(toQuestionPayload),
         },
         {
@@ -258,16 +243,14 @@ export default function StaffQuizzesPage() {
 
         const isMetadataChanged =
           title !== originalQuiz.title ||
-          draft.contextId !== originalQuiz.contextId ||
-          draft.level !== originalQuiz.level;
+          draft.contextId !== originalQuiz.contextId;
 
         if (isMetadataChanged) {
           promises.push(
             staffQuizService.updateQuiz(quizId, {
               title,
               contextId: draft.contextId,
-              level: draft.level,
-            })
+                })
           );
         }
 
@@ -417,13 +400,6 @@ export default function StaffQuizzesPage() {
       ),
     },
     {
-      accessorKey: "level",
-      header: "Độ khó",
-      cell: ({ row: r }) => (
-        <DifficultyBadge value={r.original.level as DifficultyKey} />
-      ),
-    },
-    {
       accessorKey: "era",
       header: "Thời kỳ",
       cell: ({ row: r }) => (
@@ -559,31 +535,6 @@ export default function StaffQuizzesPage() {
     },
   ], []);
 
-  // ── Filter chips (level) ───────────────────────────────────
-  const filterChips = (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      {([
-        { value: "", label: "Tất cả" },
-        { value: "EASY", label: "Dễ" },
-        { value: "MEDIUM", label: "Trung bình" },
-        { value: "HARD", label: "Khó" },
-      ] as const).map((opt) => (
-        <button
-          key={opt.value || "all"} type="button"
-          onClick={() => { setFilterLevel(opt.value); setPage(0); }}
-          className={cn(
-            "px-3 h-8 rounded-sm text-xs font-semibold border transition-all",
-            filterLevel === opt.value
-              ? "bg-[var(--accent-gold-active-bg)] border-accent-gold text-content-heading"
-              : "bg-transparent border-card-light-border text-content-muted"
-          )}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  );
-
   // ═══ EDITOR VIEW ══════════════════════════════════════════════════════════
   if (view === "editor") {
     const isDirty = JSON.stringify(draft) !== draftSnapshot;
@@ -696,34 +647,6 @@ export default function StaffQuizzesPage() {
                   </Select>
                 );
               })()}
-            </Field>
-
-            <Field label="Độ khó">
-              <div className="flex gap-2">
-                {LEVEL_OPTIONS.map((opt) => {
-                  const isActive = draft.level === opt.value;
-                  const activeClasses: Record<string, string> = {
-                    EASY: "bg-accent-teal/10 border-accent-teal text-accent-teal",
-                    MEDIUM: "bg-[var(--accent-gold-active-bg)] border-accent-gold text-accent-gold",
-                    HARD: "bg-[var(--status-danger-bg)] border-accent-danger text-accent-danger",
-                  };
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setDraft((s) => ({ ...s, level: opt.value }))}
-                      className={cn(
-                        "flex-1 h-9 rounded-sm border text-sm font-semibold transition-all",
-                        isActive
-                          ? activeClasses[opt.value]
-                          : "bg-transparent border-card-light-border text-content-muted"
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
             </Field>
 
             {editorMode === "edit" && originalQuiz && (() => {
@@ -925,12 +848,6 @@ export default function StaffQuizzesPage() {
           </div>
         </div>
 
-        {!showTrash && (
-          <div className="pb-2">
-            {filterChips}
-          </div>
-        )}
-
         <div className="space-y-2">
           {isError && (
             <p className="text-sm text-center py-6 text-accent-danger">
@@ -948,7 +865,7 @@ export default function StaffQuizzesPage() {
             <>
               <StaffDataTable
                 columns={columns}
-                data={filteredItems}
+                data={allItems}
                 emptyMessage="Không tìm thấy bộ đề phù hợp."
                 isLoading={isLoading}
               />
@@ -977,7 +894,7 @@ export default function StaffQuizzesPage() {
               )}
               {totalPages <= 1 && (
                 <p className="text-xs text-content-subtle">
-                  Hiển thị {filteredItems.length} / {totalItems} bộ đề
+                  Hiển thị {allItems.length} / {totalItems} bộ đề
                 </p>
               )}
             </>

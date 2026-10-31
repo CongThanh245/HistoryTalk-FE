@@ -45,7 +45,6 @@ const DEFAULT_MIN: Record<AssignmentType, number | null> = {
   QUIZ_TEST: null,
 };
 
-const LEVEL_LABELS = { EASY: "Dễ", MEDIUM: "Trung bình", HARD: "Khó" } as const;
 
 const defaultDeadline = () => {
   const d = new Date();
@@ -534,7 +533,7 @@ function SchoolQuizPicker({
   const options: Target[] = published.map((z) => ({
     id: z.quizId,
     title: z.title,
-    meta: [LEVEL_LABELS[z.level], `${z.questions.length} câu`, z.contextTitle].filter(Boolean).join(" · "),
+    meta: [`${z.questions.length} câu`, z.contextTitle].filter(Boolean).join(" · "),
     preview: { kind: "localQuiz", quiz: z },
   }));
 
@@ -643,7 +642,7 @@ function QuizPicker({ selected, onSelect }: PickerProps) {
   const options: Target[] = (q.data?.content ?? []).map((z) => ({
     id: z.quizId,
     title: z.title,
-    meta: [LEVEL_LABELS[z.level], z.contextTitle].filter(Boolean).join(" · "),
+    meta: [z.contextTitle].filter(Boolean).join(" · "),
     preview: { kind: "quiz", quiz: z },
   }));
   return (

@@ -30,7 +30,7 @@ import {
   useUpdateBankQuestion,
 } from "@/features/staff/quiz/hooks";
 import { QUESTION_TYPE_LABELS, type QuestionType } from "@/features/quiz/question-data";
-import type { QuestionBankItem } from "@/services/staff.quiz.service";
+import type { QuestionBankItem, QuestionDifficulty } from "@/services/staff.quiz.service";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { cn } from "@/lib/utils/cn";
 
@@ -46,6 +46,7 @@ const TYPE_FILTERS: { value: QuestionType | ""; label: string }[] = [
 export function QuestionBankView({ onBack }: { onBack: () => void }) {
   const [search, setSearch] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState<QuestionType | "">("");
+  const [difficultyFilter, setDifficultyFilter] = React.useState<QuestionDifficulty | "">("");
   const [page, setPage] = React.useState(0);
   const [editing, setEditing] = React.useState<QuestionBankItem | "new" | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<QuestionBankItem | null>(null);
@@ -56,9 +57,10 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
   const params = React.useMemo(() => ({
     ...(search.trim() && { search: search.trim() }),
     ...(typeFilter && { questionType: typeFilter }),
+    ...(difficultyFilter && { difficulty: difficultyFilter }),
     page,
     size: PAGE_SIZE,
-  }), [search, typeFilter, page]);
+  }), [search, typeFilter, difficultyFilter, page]);
 
   const { data, isLoading, isError, refetch } = useQuestionBank(params);
   // BE chi tra co `assignedToQuiz`; tim quiz chua cau hoi qua danh sach quiz (co kem questions).
@@ -160,6 +162,22 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
                 )}
               >
                 {opt.label}
+              </button>
+            ))}
+            <span className="mx-1 h-5 w-px bg-[var(--border-default)]" aria-hidden="true" />
+            {([["", "Mọi độ khó"], ["EASY", "Dễ"], ["MEDIUM", "Trung bình"], ["HARD", "Khó"]] as const).map(([value, label]) => (
+              <button
+                key={value || "all-difficulty"}
+                type="button"
+                onClick={() => { setDifficultyFilter(value); setPage(0); }}
+                className={cn(
+                  "px-3 h-8 rounded-sm text-xs font-semibold border transition-all",
+                  difficultyFilter === value
+                    ? "bg-[var(--accent-gold-active-bg)] border-accent-gold text-content-heading"
+                    : "bg-transparent border-card-light-border text-content-muted",
+                )}
+              >
+                {label}
               </button>
             ))}
           </div>

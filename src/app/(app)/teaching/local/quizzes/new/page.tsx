@@ -17,10 +17,7 @@ import { ROUTES } from "@/constants/routes";
 import { useRole } from "@/features/auth/usePermission";
 import { apiErrorMessage } from "@/features/saas/hooks-api";
 import { useLocalQuizMutations, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
-import { LEVEL_LABELS } from "@/features/saas/hooks-teaching";
-import type { StaffQuizLevel } from "@/services/staff.quiz.service";
 
-const LEVEL_OPTIONS = (Object.keys(LEVEL_LABELS) as StaffQuizLevel[]).map((l) => ({ value: l, label: LEVEL_LABELS[l] }));
 
 /**
  * Teacher: soan bo de moi cho mot boi canh cua truong. BE bat buoc >= 1 cau hoi khi tao
@@ -87,7 +84,6 @@ function Composer({
   const [contextId, setContextId] = React.useState(
     initialContextId && contexts.some((c) => c.value === initialContextId) ? initialContextId : contexts.length === 1 ? contexts[0].value : "",
   );
-  const [level, setLevel] = React.useState<StaffQuizLevel>("MEDIUM");
   const [questions, setQuestions] = React.useState<QuizQuestion[]>([]);
   const [formOpen, setFormOpen] = React.useState(false);
   const [leaveOpen, setLeaveOpen] = React.useState(false);
@@ -108,7 +104,7 @@ function Composer({
   const save = () => {
     if (blocker) return;
     create.mutate(
-      { contextId, payload: { title: title.trim(), level, isPublished: true, questions: questions.map(toQuestionPayload) } },
+      { contextId, payload: { title: title.trim(), isPublished: true, questions: questions.map(toQuestionPayload) } },
       {
         onSuccess: (q) => {
           // Bo cache danh sach bo de: trang giao bai mount lai se tai moi (khong hien list cu roi moi nhay).
@@ -129,15 +125,12 @@ function Composer({
       </button>
 
       <Panel>
-        <div className="grid gap-4 sm:grid-cols-[1fr_1fr_180px]">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Tên bộ đề" required htmlFor="nq-title">
             <StaffFormInput id="nq-title" value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Ôn tập Khởi nghĩa Hai Bà Trưng" />
           </Field>
           <Field label="Gắn với bối cảnh của trường" required>
             <StaffFormSelect value={contextId} onValueChange={setContextId} placeholder="Chọn bối cảnh" options={contexts} className="w-full" />
-          </Field>
-          <Field label="Mức độ">
-            <StaffFormSelect value={level} onValueChange={setLevel} options={LEVEL_OPTIONS} className="w-full" />
           </Field>
         </div>
       </Panel>

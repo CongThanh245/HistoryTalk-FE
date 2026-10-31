@@ -12,7 +12,7 @@ export type StaffQuizEra =
   | "MODERN"
   | "CONTEMPORARY";
 
-export type StaffQuizLevel = "EASY" | "MEDIUM" | "HARD";
+export type QuestionDifficulty = "EASY" | "MEDIUM" | "HARD";
 
 // ── Question ───────────────────────────────────────────────
 
@@ -23,6 +23,7 @@ export interface StaffQuizQuestion {
   /** Staff luon nhan questionData day du (co dap an). */
   questionData: QuestionData;
   explanation?: string;
+  difficulty?: QuestionDifficulty;
 }
 
 export interface CreateQuestionPayload {
@@ -30,6 +31,8 @@ export interface CreateQuestionPayload {
   questionType: QuestionType;
   questionData: QuestionData;
   explanation?: string;
+  /** Do kho cua tung cau hoi; BE bat buoc khi tao, FE mac dinh MEDIUM neu khong truyen. */
+  difficulty?: QuestionDifficulty;
 }
 
 // ── QuizSet ────────────────────────────────────────────────
@@ -38,7 +41,6 @@ export interface StaffQuizSet {
   quizId: string;
   title: string;
   era: StaffQuizEra;
-  level: StaffQuizLevel;
   playCount: number;
   contextId: string;
   contextTitle: string;
@@ -55,7 +57,6 @@ export interface StaffQuizSet {
 export interface GetStaffQuizzesParams {
   search?: string;
   era?: StaffQuizEra;
-  level?: "EASY" | "MEDIUM" | "HARD";
   page?: number;
   size?: number;
 }
@@ -76,7 +77,6 @@ export interface GetStaffQuizzesResponse {
 export interface CreateQuizPayload {
   title: string;
   contextId: string;
-  level: string;
   questions: CreateQuestionPayload[];
   isPublished?: boolean;
 }
@@ -84,7 +84,6 @@ export interface CreateQuizPayload {
 export interface UpdateQuizPayload {
   title?: string;
   contextId?: string;
-  level?: string;
   isPublished?: boolean;
 }
 
@@ -99,6 +98,7 @@ export interface QuestionBankItem extends StaffQuizQuestion {
 
 export interface GetQuestionBankParams {
   questionType?: QuestionType;
+  difficulty?: QuestionDifficulty;
   search?: string;
   page?: number;
   size?: number;
@@ -132,6 +132,10 @@ type RawStaffQuizSet = Partial<Omit<StaffQuizSet, "questions">> & {
 
 // ── Map functions ──────────────────────────────────────────
 
+function parseDifficulty(value: unknown): QuestionDifficulty | undefined {
+  return value === "EASY" || value === "MEDIUM" || value === "HARD" ? value : undefined;
+}
+
 export function mapStaffQuestion(raw: RawStaffQuizQuestion): StaffQuizQuestion {
   return {
     questionId: typeof raw.questionId === "string" ? raw.questionId : "",
@@ -139,6 +143,7 @@ export function mapStaffQuestion(raw: RawStaffQuizQuestion): StaffQuizQuestion {
     questionType: parseQuestionType(raw.questionType),
     questionData: parseQuestionData(raw),
     explanation: typeof raw.explanation === "string" ? raw.explanation : undefined,
+    difficulty: parseDifficulty(raw.difficulty),
   };
 }
 
@@ -154,7 +159,6 @@ export function mapStaffQuizSet(raw: RawStaffQuizSet): StaffQuizSet {
     quizId: raw.quizId ?? "",
     title: raw.title ?? "",
     era: raw.era as StaffQuizEra,
-    level: (raw.level as StaffQuizLevel) ?? "MEDIUM",
     playCount: raw.playCount ?? 0,
     contextId: raw.contextId ?? "",
     contextTitle: raw.contextTitle ?? "",
@@ -223,7 +227,7 @@ export const staffQuizService = {
   ): Promise<StaffQuizQuestion> => {
     const res = await axiosClient.post(
       `/staff/quizzes/${quizId}/questions`,
-      toContractQuestionPayload(payload),
+      toContractQuestionPayload({ difficulty: "MEDIUM", ...payload }),
     );
     return mapStaffQuestion(res.data.data);
   },
@@ -295,7 +299,7 @@ export const staffQuizService = {
   createBankQuestion: async (payload: CreateQuestionPayload): Promise<QuestionBankItem> => {
     const res = await axiosClient.post(
       "/staff/question-bank",
-      toContractQuestionPayload(payload),
+      toContractQuestionPayload({ difficulty: "MEDIUM", ...payload }),
     );
     return mapQuestionBankItem(res.data.data);
   },
@@ -336,6 +340,7 @@ export function toContractQuestionPayload(question: UpdateQuestionPayload) {
     ...(question.questionType !== undefined && { questionType: question.questionType }),
     ...(question.questionData !== undefined && { questionData: question.questionData }),
     ...(question.explanation !== undefined && { explanation: question.explanation }),
+    ...(question.difficulty !== undefined && { difficulty: question.difficulty }),
   };
 }
 
@@ -343,10 +348,9 @@ export function toContractQuizPayload(payload: CreateQuizPayload | UpdateQuizPay
   return {
     ...(payload.title !== undefined && { title: payload.title }),
     ...(payload.contextId !== undefined && { contextId: payload.contextId }),
-    ...(payload.level !== undefined && { level: payload.level }),
     ...(payload.isPublished !== undefined && { isPublished: payload.isPublished }),
     ...("questions" in payload && {
-      questions: payload.questions.map(toContractQuestionPayload),
+      questions: payload.questions.map((q) => toContractQuestionPayload({ difficulty: "MEDIUM", ...q })),
     }),
   };
 }

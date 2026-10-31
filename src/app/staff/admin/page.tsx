@@ -1166,7 +1166,6 @@ export default function AdminDashboardPage() {
                             <div key={q.quizId} className="p-2 rounded-sm border border-[var(--card-light-border)] flex items-center justify-between text-xs hover:bg-[var(--card-light-hover)] transition-all">
                               <div className="truncate max-w-[70%]">
                                 <div className="font-bold text-[var(--content-heading)] truncate" title={q.title}>{q.title}</div>
-                                <span className="text-[10px] text-[var(--content-muted)]">Cấp độ: {q.level === "EASY" ? "Dễ" : q.level === "MEDIUM" ? "Trung bình" : "Khó"}</span>
                               </div>
                               <div className="text-right text-[10px]">
                                 <div>Lượt làm: <strong className="text-[var(--content-heading)]">{q.startedSessions}</strong></div>

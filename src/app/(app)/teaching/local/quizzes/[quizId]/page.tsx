@@ -8,18 +8,15 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { StaffFormInput, StaffFormSelect } from "@/components/staff/staff-form";
+import { StaffFormInput } from "@/components/staff/staff-form";
 import { QuestionAnswerSummary, QuestionForm, fromStaffQuestion, toQuestionPayload, type QuizQuestion } from "@/components/staff/quiz-question-editor";
 import { QueryState } from "@/components/saas/local-content-ui";
 import { Field, IconAction, Panel, SaasShell, SectionHeading } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
 import { apiErrorMessage, apiErrorStatus } from "@/features/saas/hooks-api";
 import { useLocalQuiz, useLocalQuizMutations } from "@/features/saas/hooks-local-content";
-import { LEVEL_LABELS } from "@/features/saas/hooks-teaching";
 import type { LocalQuiz } from "@/services/local-quiz.service";
-import type { StaffQuizLevel } from "@/services/staff.quiz.service";
 
-const LEVEL_OPTIONS = (Object.keys(LEVEL_LABELS) as StaffQuizLevel[]).map((l) => ({ value: l, label: LEVEL_LABELS[l] }));
 
 /** Teacher: questions of a quiz written for a local context (Sprint 7, /teacher/local-contents/quizzes/**). */
 export default function LocalQuizPage() {
@@ -59,14 +56,13 @@ function QuizEditor({ quiz, returnTo }: { quiz: LocalQuiz; returnTo: string | nu
   const router = useRouter();
   const m = useLocalQuizMutations();
   const [title, setTitle] = React.useState(quiz.title);
-  const [level, setLevel] = React.useState<StaffQuizLevel>(quiz.level);
   const [adding, setAdding] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [deleteQuiz, setDeleteQuiz] = React.useState(false);
   const [deleteQuestion, setDeleteQuestion] = React.useState<QuizQuestion | null>(null);
 
   const questions = quiz.questions.map((q, i) => ({ ...fromStaffQuestion(q), orderIndex: i }));
-  const dirty = title.trim() !== quiz.title || level !== quiz.level;
+  const dirty = title.trim() !== quiz.title;
   const fail = (fallback: string) => (e: unknown) => toast.error(apiErrorMessage(e, fallback));
 
   const saveInfo = () => {
@@ -75,7 +71,7 @@ function QuizEditor({ quiz, returnTo }: { quiz: LocalQuiz; returnTo: string | nu
       return;
     }
     m.update.mutate(
-      { quizId: quiz.quizId, payload: { title: title.trim(), level } },
+      { quizId: quiz.quizId, payload: { title: title.trim() } },
       { onSuccess: () => toast.success("Đã lưu thông tin bộ đề"), onError: fail("Không lưu được bộ đề.") },
     );
   };
@@ -145,12 +141,9 @@ function QuizEditor({ quiz, returnTo }: { quiz: LocalQuiz; returnTo: string | nu
         </div>
       )}
       <Panel>
-        <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
+        <div className="grid gap-4 sm:grid-cols-1">
           <Field label="Tên bộ đề" required htmlFor="lq-title">
             <StaffFormInput id="lq-title" value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} />
-          </Field>
-          <Field label="Mức độ">
-            <StaffFormSelect value={level} onValueChange={setLevel} options={LEVEL_OPTIONS} className="w-full" />
           </Field>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">

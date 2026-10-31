@@ -13,47 +13,11 @@ const ERA_LABELS: Record<QuizSet["era"], string> = {
   CONTEMPORARY: "Hiện đại",
 };
 
-const LEVEL_LABELS: Record<QuizSet["level"], string> = {
-  EASY: "Dễ",
-  MEDIUM: "Trung bình",
-  HARD: "Khó",
-};
-
-/** Difficulty as a 3-step meter: filled steps + colour read at a glance. */
-const LEVEL_METER: Record<QuizSet["level"], { steps: number; color: string; text: string }> = {
-  EASY: { steps: 1, color: "bg-[var(--status-success)]", text: "text-[var(--status-success)]" },
-  MEDIUM: { steps: 2, color: "bg-[var(--accent-gold)]", text: "text-[var(--gold-on-light)]" },
-  HARD: { steps: 3, color: "bg-[var(--accent-danger)]", text: "text-accent-danger" },
-};
-
 interface QuizCardProps {
   quiz: QuizSet;
   isActive?: boolean;
   onStart: (quizId: string) => void;
   compact?: boolean;
-}
-
-function LevelMeter({ level }: { level: QuizSet["level"] }) {
-  const meter = LEVEL_METER[level] ?? LEVEL_METER.MEDIUM;
-  return (
-    <span className="inline-flex items-center gap-2" title={`Độ khó: ${LEVEL_LABELS[level] ?? level}`}>
-      <span className="flex items-end gap-[3px]" aria-hidden="true">
-        {[1, 2, 3].map((step) => (
-          <span
-            key={step}
-            className={cn(
-              "w-[5px] rounded-[1px]",
-              step === 1 ? "h-[7px]" : step === 2 ? "h-[10px]" : "h-[13px]",
-              step <= meter.steps ? meter.color : "bg-[var(--border-strong)]",
-            )}
-          />
-        ))}
-      </span>
-      <span className={cn("text-[13px] font-semibold", meter.text)}>
-        {LEVEL_LABELS[level] ?? level}
-      </span>
-    </span>
-  );
 }
 
 export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
@@ -114,7 +78,6 @@ export function QuizCard({ quiz, isActive, onStart, compact }: QuizCardProps) {
 
       <div className="mt-auto flex items-center justify-between gap-3 pt-4">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-          <LevelMeter level={quiz.level} />
           {minutes && (
             <span className="inline-flex items-center gap-1 text-[13px] text-content-muted">
               <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {minutes} phút

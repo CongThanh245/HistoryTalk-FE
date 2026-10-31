@@ -11,7 +11,6 @@ import {
   toContractQuestionPayload,
   toContractQuizPayload,
   type CreateQuestionPayload,
-  type StaffQuizLevel,
   type StaffQuizQuestion,
   type StaffQuizSet,
   type UpdateQuestionPayload,
@@ -23,7 +22,6 @@ export type LocalQuizQuestion = StaffQuizQuestion;
 
 export interface CreateLocalQuizPayload {
   title: string;
-  level: StaffQuizLevel;
   isPublished?: boolean;
   /** BE bat buoc it nhat 1 cau hoi khi tao (CreateQuizRequest: "Yêu cầu ít nhất một câu hỏi"). */
   questions: CreateQuestionPayload[];

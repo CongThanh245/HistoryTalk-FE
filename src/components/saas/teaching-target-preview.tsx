@@ -33,7 +33,6 @@ export interface PreviewTarget {
   preview?: TargetPreview;
 }
 
-const LEVEL_LABELS = { EASY: "Dễ", MEDIUM: "Trung bình", HARD: "Khó" } as const;
 const SCOPE_LABELS = { CLASS_ONLY: "Chỉ mình tôi", SCHOOL_WIDE: "Toàn trường" } as const;
 
 export const yearText = (year?: number | null, bc?: boolean | null) =>
@@ -306,7 +305,6 @@ function LocalQuizPreview({ quiz }: { quiz: LocalQuiz }) {
     <>
       <Facts
         items={[
-          ["Độ khó", LEVEL_LABELS[quiz.level]],
           ["Số câu", `${quiz.questions.length} câu`],
           ["Bối cảnh", quiz.contextTitle],
           ["Người soạn", typeof quiz.createdBy === "string" ? quiz.createdBy : quiz.createdBy?.userName],
@@ -338,7 +336,6 @@ function LibraryQuizPreview({ quiz }: { quiz: QuizSet }) {
     <>
       <Facts
         items={[
-          ["Độ khó", LEVEL_LABELS[quiz.level]],
           ["Bối cảnh", quiz.contextTitle],
           ["Lớp", quiz.grade ? `Lớp ${quiz.grade}` : null],
           ["Bài", quiz.chapterTitle ? `${quiz.chapterNumber ? `Bài ${quiz.chapterNumber}: ` : ""}${quiz.chapterTitle}` : null],

@@ -215,7 +215,6 @@ export interface QuizAnalyticsData {
   topQuizzes: {
     quizId: string;
     title: string;
-    level: string;
     startedSessions: number;
     completedSessions: number;
     averageScorePercentage: number;

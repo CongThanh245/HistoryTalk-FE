@@ -38,7 +38,6 @@ export interface QuizSessionQuestion extends QuizQuestion {
 export interface QuizSet {
   quizId: string;
   title: string;
-  level: "EASY" | "MEDIUM" | "HARD";
   era: QuizEra;
   playCount: number;
   contextTitle?: string;
@@ -171,7 +170,6 @@ export function mapQuizSet(rawValue: unknown): QuizSet {
   return {
     quizId: asString(raw.quizId),
     title: asString(raw.title),
-    level: (raw.level as QuizSet["level"]) ?? "MEDIUM",
     era: (raw.era as QuizEra) ?? "ALL",
     playCount: asNumber(raw.playCount),
     contextTitle: asOptionalString(raw.contextTitle),

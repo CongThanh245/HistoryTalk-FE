@@ -18,12 +18,6 @@ const ERA_LABELS: Record<QuizSet["era"], string> = {
   CONTEMPORARY: "Hiện đại",
 };
 
-const LEVEL_LABELS: Record<QuizSet["level"], string> = {
-  EASY: "Dễ",
-  MEDIUM: "Trung bình",
-  HARD: "Khó",
-};
-
 const TIME_PRESETS = [
   { label: "Không giới hạn", seconds: undefined },
   { label: "5 phút", seconds: 5 * 60 },
@@ -87,9 +81,6 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
                 <span className="rounded-full bg-[var(--status-neutral-bg)] px-2.5 py-0.5 text-xs font-medium text-content-heading">
                   {ERA_LABELS[quiz.era] ?? quiz.era}
                 </span>
-                <span className="rounded-full bg-[var(--status-neutral-bg)] px-2.5 py-0.5 text-xs font-medium text-content-heading">
-                  {LEVEL_LABELS[quiz.level] ?? quiz.level}
-                </span>
               </div>
 
               <h1 className="archive-title is-plain text-[26px] md:text-[34px]">
@@ -131,7 +122,6 @@ export function QuizDetailPage({ quiz, onStart }: QuizDetailPageProps) {
               <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {[
                   { label: "Lượt làm", value: quiz.playCount.toLocaleString("vi-VN") },
-                  { label: "Cấp độ", value: LEVEL_LABELS[quiz.level] ?? quiz.level },
                   ...(quiz.userPlayCount
                     ? [{ label: "Bạn đã làm", value: `${quiz.userPlayCount} lần` }]
                     : []),
