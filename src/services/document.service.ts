@@ -250,20 +250,7 @@ export const documentService = {
     entityId?: string,
     signal?: AbortSignal,
   ): Promise<ExtractedPdf> => {
-    const formData = new FormData();
-    formData.append("file", file);
-    if (entityType) formData.append("entityType", entityType);
-    if (entityId) formData.append("entityId", entityId);
-    const res = await axiosClient.post("/documents/pdf/upload-and-extract", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      signal,
-      // Xem chu thich o uploadPdf ben tren — file scan nhieu trang can OCR
-      // co the mat toi 9-10 phut, vuot xa timeout mac dinh 90s.
-      timeout: 15 * 60 * 1000,
-    });
-    return res.data.data;
+    return documentService.uploadAndExtractPdfStream(file, entityType, entityId, undefined, signal);
   },
 
   // POST /documents/pdf/upload-and-extract/stream - Same as uploadAndExtractPdf
@@ -283,7 +270,7 @@ export const documentService = {
   ): Promise<ExtractedPdf> => {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
     const basePath = process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
-    const url = `${baseUrl}${basePath}/documents/pdf/upload-and-extract/stream`;
+    const url = `${baseUrl}${basePath}/documents/pdf/upload-and-extract`;
 
     const buildFormData = () => {
       const formData = new FormData();
