@@ -196,44 +196,52 @@ export const chatService = {
       let fullContent = "";
       let streamError: string | null = null;
 
+      const handleLine = (line: string) => {
+        if (!line.startsWith("data:")) return;
+        try {
+          const dataStr = line.substring(line.indexOf(":") + 1).trim();
+          if (!dataStr) return;
+          const parsed = JSON.parse(dataStr);
+
+          if (parsed.type === "text") {
+            fullContent += parsed.data;
+            onData(parsed.data);
+          } else if (parsed.type === "metadata") {
+            suggestedQuestions = parsed.data?.suggestedQuestions;
+            promptTokens = parsed.data?.promptTokens;
+            completionTokens = parsed.data?.completionTokens;
+            quotesUsed = parsed.data?.quotes_used;
+          } else if (parsed.type === "error") {
+            // AI loi giua chung: BE van tra 200 + su kien "error" roi "done".
+            streamError = typeof parsed.message === "string" ? parsed.message : "AI error";
+          } else if (parsed.type === "done") {
+            remainingTokens = parsed.remainingTokens;
+            if (parsed.messageType) {
+              messageType = parsed.messageType;
+            }
+          }
+        } catch {
+          console.warn("Failed to parse SSE data line", line);
+        }
+      };
+
+      // Mot lan doc co the cat ngang mot dong, nen phan chua co "\n" duoc giu lai cho lan doc sau.
+      let pendingLine = "";
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         if (value) {
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
-          for (const line of lines) {
-            if (line.startsWith("data:")) {
-              try {
-                const dataStr = line.substring(line.indexOf(":") + 1).trim();
-                if (!dataStr) continue;
-                const parsed = JSON.parse(dataStr);
-                
-                if (parsed.type === "text") {
-                  fullContent += parsed.data;
-                  onData(parsed.data);
-                } else if (parsed.type === "metadata") {
-                   suggestedQuestions = parsed.data?.suggestedQuestions;
-                   promptTokens = parsed.data?.promptTokens;
-                   completionTokens = parsed.data?.completionTokens;
-                   quotesUsed = parsed.data?.quotes_used;
-                } else if (parsed.type === "error") {
-                   // AI loi giua chung: BE van tra 200 + su kien "error" roi "done".
-                   streamError = typeof parsed.message === "string" ? parsed.message : "AI error";
-                } else if (parsed.type === "done") {
-                   remainingTokens = parsed.remainingTokens;
-                   if (parsed.messageType) {
-                     messageType = parsed.messageType;
-                   }
-                }
-              } catch {
-                console.warn("Failed to parse SSE data line", line);
-              }
-            }
-          }
+          pendingLine += decoder.decode(value, { stream: true });
+          const lines = pendingLine.split("\n");
+          pendingLine = lines.pop() ?? "";
+          lines.forEach(handleLine);
         }
       }
-      if (streamError && !fullContent.trim()) {
+      pendingLine += decoder.decode();
+      if (pendingLine) handleLine(pendingLine);
+
+      // BE khong luu cau tra loi loi, nen ca khi da nhan mot phan chu cung phai bao loi.
+      if (streamError) {
         const error: Error & { response?: { status: number; data: unknown }; aiUnavailable?: boolean } = new Error(streamError);
         error.response = { status: 503, data: { message: streamError } };
         error.aiUnavailable = true;
