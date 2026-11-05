@@ -109,7 +109,7 @@ export function QuizHistoryView({
 
   return (
     <>
-      <section className="overflow-hidden rounded-xl border border-border-card bg-[var(--bg-surface)]">
+      <section className="@container overflow-hidden rounded-xl border border-border-card bg-[var(--bg-surface)]">
         <div className="flex flex-col gap-2 border-b border-[var(--border-default)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-content-heading">
@@ -146,7 +146,7 @@ export function QuizHistoryView({
               return (
                 <article
                   key={result.sessionId}
-                  className="grid gap-4 px-5 py-4 transition-colors hover:bg-[var(--bg-elevated)] md:grid-cols-[minmax(0,1fr)_auto]"
+                  className="grid gap-4 px-5 py-4 transition-colors hover:bg-[var(--bg-elevated)] @xl:grid-cols-[minmax(0,1fr)_auto]"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -175,7 +175,7 @@ export function QuizHistoryView({
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 md:justify-end">
+                  <div className="flex flex-wrap gap-2 @xl:justify-end">
                     <button
                       onClick={() => {
                         setReviewFilter("all");

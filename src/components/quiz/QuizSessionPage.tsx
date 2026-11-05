@@ -226,15 +226,8 @@ export function QuizSessionPage({
         done === Math.ceil(questions.length / 2)
       ) {
         show("Đã đi được nửa chặng! 💪", "info");
-      } else if (q.questionType !== "FILL_IN_BLANK") {
-        // Cau dien chu "xong" ngay tu ky tu dau tien, khong reo len giua luc dang go.
-        show(
-          streakRef.current >= 3
-            ? `🔥 Combo x${streakRef.current}!`
-            : pickCheer(),
-          "good",
-        );
       }
+      // Che do thi khong bao gi ve dung/sai, nen khong reo khen moi lan chon de tranh nguoi dung tuong chon dung.
     },
     [questions, practiceMode],
   );
