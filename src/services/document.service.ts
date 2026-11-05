@@ -248,6 +248,7 @@ export const documentService = {
     file: File,
     entityType?: DocumentEntityType,
     entityId?: string,
+    signal?: AbortSignal,
   ): Promise<ExtractedPdf> => {
     const formData = new FormData();
     formData.append("file", file);
@@ -257,6 +258,7 @@ export const documentService = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
+      signal,
       // Xem chu thich o uploadPdf ben tren — file scan nhieu trang can OCR
       // co the mat toi 9-10 phut, vuot xa timeout mac dinh 90s.
       timeout: 15 * 60 * 1000,

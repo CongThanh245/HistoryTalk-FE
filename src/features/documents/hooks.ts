@@ -1,4 +1,5 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import {
   documentService,
   type CreateCharacterDocumentRequest,
@@ -273,10 +274,15 @@ export function useUploadAndExtractPdf() {
       onProgress?: (page: number, total: number) => void;
       /** Lets a "Hủy" button cancel a long-running OCR extraction. */
       signal?: AbortSignal;
-    }) => documentService.uploadAndExtractPdfStream(file, entityType, entityId, onProgress, signal),
+    }) => {
+      // Plain upload-and-extract (no SSE stream), so there is no per-page progress to report.
+      void onProgress;
+      return documentService.uploadAndExtractPdf(file, entityType, entityId, signal);
+    },
     onError: (err: unknown) => {
       // A user-initiated cancel (AbortController.abort()) isn't a failure — skip the toast.
       if (err instanceof DOMException && err.name === "AbortError") return;
+      if (axios.isCancel(err)) return;
       toast.error(getErrorMessage(err, "Không thể trích xuất nội dung từ PDF"));
     },
   });
