@@ -66,8 +66,10 @@ export default function EditCharacterPage() {
 
   const handleSave = async (draft: CharacterDraft) => {
     const imageUrl = isValidUrl(draft.image.trim()) ? draft.image.trim() : undefined;
+    // Backend re-checks name uniqueness whenever a name is sent, so omit it when untouched (e.g. only the document changed).
+    const nameChanged = draft.name.trim() !== (character?.name ?? "").trim();
     const payload = {
-      name: draft.name.trim(),
+      ...(nameChanged ? { name: draft.name.trim() } : {}),
       title: draft.title.trim(),
       background: draft.background.trim() || undefined,
       image: imageUrl,
@@ -99,7 +101,7 @@ export default function EditCharacterPage() {
       try {
         await createCharacterDocument.mutateAsync({
           characterId: id,
-          title: draft.documentTitle.trim() || payload.name,
+          title: draft.documentTitle.trim() || draft.name.trim(),
           content: documentContent,
           ...(draft.pendingPdfFileUrl ? { fileUrl: draft.pendingPdfFileUrl, pdfFile: draft.pendingPdfFile } : { type: "TEXT" as const }),
         });
