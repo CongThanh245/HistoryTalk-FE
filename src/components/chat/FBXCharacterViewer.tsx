@@ -7,6 +7,7 @@ import * as THREE from "three";
 import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { cn } from "@/lib/utils/cn";
+import { addEstimatedMouthMorph } from "./estimated-mouth-morph";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -239,6 +240,19 @@ function useLipSyncFrame(
 // GLB model component
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Unlit material and an estimated mouth morph for AI-generated (unrigged) models. */
+function prepareGeneratedModel(scene: THREE.Group) {
+  // AI-generated GLBs have no normals and their lighting is baked into the
+  // texture, so scene lights and tone mapping only darken it: show it unlit.
+  scene.traverse((object) => {
+    const mesh = object as THREE.Mesh;
+    if (!mesh.isMesh || mesh.geometry.attributes.normal) return;
+    const source = mesh.material as THREE.MeshStandardMaterial;
+    mesh.material = new THREE.MeshBasicMaterial({ map: source.map, color: source.color, toneMapped: false });
+  });
+  addEstimatedMouthMorph(scene);
+}
+
 function GLBCharacterModel({
   url,
   isSpeaking,
@@ -265,11 +279,13 @@ function GLBCharacterModel({
   // Clone scene + animations so each mount has its own independent objects.
   // useGLTF returns cached shared objects — attaching them directly causes
   // the scene to be "stolen" from any previous render, making every 2nd open fail.
-  const clonedScene = React.useMemo(
-    () => SkeletonUtils.clone(gltf.scene) as THREE.Group,
-     
-    [gltf.scene],
-  );
+  const clonedScene = React.useMemo(() => {
+    const scene = SkeletonUtils.clone(gltf.scene) as THREE.Group;
+    // Done here, before the first frame renders: a mesh drawn with morph data
+    // but no morphTargetInfluences crashes three.js.
+    prepareGeneratedModel(scene);
+    return scene;
+  }, [gltf.scene]);
   const clonedAnimations = React.useMemo(
     () => gltf.animations.map((clip) => clip.clone()),
      
