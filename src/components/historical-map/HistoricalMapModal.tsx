@@ -105,9 +105,8 @@ function formatYear(year: number) {
 export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, onRouteChange, overlay }: HistoricalMapModalProps) {
   const user = useAuthStore((state) => state.user);
   // "Xem như người học": a Content Admin sees the learner screen, without any editing control.
-  // Pages with their own battles (overlay.events) decide who edits; otherwise Content / System Admins.
-  const isAdmin =
-    (overlay?.canEdit ?? (user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN")) && !overlay?.previewAsLearner;
+  // Pages with their own battles (overlay.events) decide who edits; otherwise Content Admins only (Sprint 9).
+  const isAdmin = (overlay?.canEdit ?? user?.role === "CONTENT_ADMIN") && !overlay?.previewAsLearner;
   const authHydrated = useAuthStore((state) => state.hasHydrated);
   // Personal study notes (USER pins): learners only — never in the admin "Xem như người học" preview.
   const canTakeNotes =

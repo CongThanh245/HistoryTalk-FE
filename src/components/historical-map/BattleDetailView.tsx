@@ -78,7 +78,8 @@ export function BattleDetailView({
   const [chatDraft, setChatDraft] = useState("");
   const [muted, setMuted] = useState(false);
   const user = useAuthStore(state => state.user);
-  const isAdmin = (canEdit ?? (user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN")) && !previewAsLearner;
+  // Sprint 9: only Content Admins edit official battles; System Admins are read-only.
+  const isAdmin = (canEdit ?? user?.role === "CONTENT_ADMIN") && !previewAsLearner;
   const editingMap = editing && isAdmin;
   const updateEvent = useUpdateEvent();
   // Before the server stored lược đồ, the editor kept drafts in localStorage; offer one only while the server has none.
