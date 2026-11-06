@@ -11,7 +11,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EXAM_QUESTION_COUNT } from "@/services/chat.service";
+import { hasPlusAccess } from "@/services/user.service";
+import { useAuthStore } from "@/store/auth.store";
 import { cn } from "@/lib/utils/cn";
+
+/** The backend caps exam sessions of Free customers at this many questions. */
+const FREE_EXAM_QUESTIONS = 2;
 
 const COUNTS = Array.from(
   { length: EXAM_QUESTION_COUNT.max - EXAM_QUESTION_COUNT.min + 1 },
@@ -31,6 +36,9 @@ export function ExamStartDialog({
   onStart: (questionCount: number) => void;
 }) {
   const [count, setCount] = useState<number>(EXAM_QUESTION_COUNT.default);
+  const user = useAuthStore((s) => s.user);
+  const isFreeCustomer =
+    user?.role === "CUSTOMER" && !hasPlusAccess({ tierId: user.tierId ?? null, tierTitle: user.tierTitle ?? null });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,6 +54,12 @@ export function ExamStartDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {isFreeCustomer ? (
+          <p className="border border-[var(--border-strong)] px-3 py-2 text-sm text-content-text">
+            Gói Free được hỏi tối đa {FREE_EXAM_QUESTIONS} câu mỗi buổi vấn đáp. Nâng cấp Plus hoặc Pro để chọn từ{" "}
+            {EXAM_QUESTION_COUNT.min} đến {EXAM_QUESTION_COUNT.max} câu.
+          </p>
+        ) : (
         <fieldset className="grid gap-2">
           <legend className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-content-muted">Số câu hỏi</legend>
           <div className="flex flex-wrap gap-1.5">
@@ -67,6 +81,7 @@ export function ExamStartDialog({
             ))}
           </div>
         </fieldset>
+        )}
 
         <DialogFooter>
           <button
