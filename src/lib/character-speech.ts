@@ -7,8 +7,11 @@ import { useAuthStore } from "@/store/auth.store";
  */
 
 const DEFAULT_SAMPLE_RATE = 24000;
-/** Gom tối thiểu ngần này âm thanh trước khi bắt đầu một câu, để không bị ngắt khi mạng chậm. */
-const PREBUFFER_SECONDS = 0.3;
+/**
+ * Gom tối thiểu ngần này âm thanh trước khi bắt đầu một câu. Khi LLM đang sinh chữ, TTS trên CPU
+ * có lúc chậm hơn tốc độ đọc, phần gom trước bù khoảng chậm đó để giọng không bị khựng.
+ */
+const PREBUFFER_SECONDS = 0.8;
 /** Sau khi đã phát, mỗi đoạn lên lịch ít nhất ngần này để không tạo quá nhiều node âm thanh. */
 const MIN_CHUNK_SECONDS = 0.1;
 const START_DELAY_SECONDS = 0.05;
