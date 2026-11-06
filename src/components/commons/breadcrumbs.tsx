@@ -34,6 +34,7 @@ const routeLabels: Record<string, string> = {
   // Gói trường học
   school: "Trường học",
   schools: "Trường học",
+  "b2b-quotes": "Yêu cầu báo giá",
   classes: "Lớp học",
   teachers: "Giáo viên",
   students: "Học sinh",
