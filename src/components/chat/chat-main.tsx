@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createSpeechQueue, splitSpeechSegments, synthesizeCharacterSpeech } from "@/lib/character-speech";
 import { Phone, ScrollText, Menu, Info, Coins, PhoneCall, Video, Lock, AlertTriangle, X, RotateCcw } from "lucide-react";
 import type {
   ChatCharacter,
@@ -215,119 +216,71 @@ export function ChatMain({
 
   const { data, isLoading } = useChatMessages(sessionId);
   const createSession = useCreateSession();
-  const stopSpeech = useCallback(() => {
-    speechSynthesis.cancel();
-    speechSourceRef.current?.stop();
-    speechSourceRef.current = null;
-    setSpeakingMessageId(null);
+  const getSpeechContext = useCallback(async (): Promise<AudioContext> => {
+    if (!speechAudioCtxRef.current || speechAudioCtxRef.current.state === "closed") {
+      const AudioContextCtor = window.AudioContext || (window as typeof window & {
+        webkitAudioContext?: typeof AudioContext;
+      }).webkitAudioContext;
+
+      if (!AudioContextCtor) {
+        throw new Error("AudioContext khong kha dung");
+      }
+
+      speechAudioCtxRef.current = new AudioContextCtor();
+    }
+
+    const audioContext = speechAudioCtxRef.current;
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+    return audioContext;
   }, []);
 
-  const playAzureSpeech = useCallback(
-    async (text: string): Promise<void> => {
-      const res = await fetch("/api/voice/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, characterId: character.id }),
-      });
+  const playSpeechAudio = useCallback(
+    async (audio: ArrayBuffer): Promise<void> => {
+      const audioContext = await getSpeechContext();
+      const decodedAudio = await audioContext.decodeAudioData(audio.slice(0));
 
-      if (!res.ok) {
-        const message = await res.text();
-        throw new Error(message || `Azure TTS failed: ${res.status}`);
-      }
-
-      const audioBuffer = await res.arrayBuffer();
-      if (!audioBuffer.byteLength) {
-        throw new Error("Azure TTS khong tra ve audio");
-      }
-
-      if (!speechAudioCtxRef.current || speechAudioCtxRef.current.state === "closed") {
-        const AudioContextCtor = window.AudioContext || (window as typeof window & {
-          webkitAudioContext?: typeof AudioContext;
-        }).webkitAudioContext;
-
-        if (!AudioContextCtor) {
-          throw new Error("AudioContext khong kha dung");
-        }
-
-        speechAudioCtxRef.current = new AudioContextCtor();
-      }
-
-      const audioContext = speechAudioCtxRef.current;
-      if (audioContext.state === "suspended") {
-        await audioContext.resume();
-      }
-
-      const decodedAudio = await audioContext.decodeAudioData(audioBuffer.slice(0));
-
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve) => {
         const source = audioContext.createBufferSource();
         source.buffer = decodedAudio;
-        source.playbackRate.value = 1.25;
         source.connect(audioContext.destination);
         speechSourceRef.current = source;
         source.onended = () => {
           if (speechSourceRef.current === source) {
             speechSourceRef.current = null;
           }
-          setTimeout(() => {
-            if (!speechSynthesis.speaking && !speechSourceRef.current) {
-              setSpeakingMessageId(null);
-            }
-          }, 100);
           resolve();
         };
-        source.addEventListener("error", () => {
-          setTimeout(() => {
-            if (!speechSynthesis.speaking && !speechSourceRef.current) {
-              setSpeakingMessageId(null);
-            }
-          }, 100);
-          reject(new Error("Khong phat duoc audio Azure TTS"));
-        });
         source.start();
       });
     },
-    [character.id],
+    [getSpeechContext],
   );
 
-  const speakWebSpeech = useCallback((text: string) => {
-    const voices = speechSynthesis.getVoices();
-    const vietnameseVoice = voices.find((v) => v.name.includes("Vietnamese"));
-    const utterance = new SpeechSynthesisUtterance(text);
-    if (vietnameseVoice) utterance.voice = vietnameseVoice;
-    utterance.lang = "vi-VN";
-    utterance.rate = 1.25;
-    utterance.onend = () => {
-      setTimeout(() => {
-        if (!speechSynthesis.speaking && !speechSourceRef.current) {
-          setSpeakingMessageId(null);
-        }
-      }, 100);
-    };
-    utterance.onerror = () => {
-      setTimeout(() => {
-        if (!speechSynthesis.speaking && !speechSourceRef.current) {
-          setSpeakingMessageId(null);
-        }
-      }, 100);
-    };
-    speechSynthesis.speak(utterance);
-  }, []);
+  const speechQueue = useMemo(
+    () => createSpeechQueue((text) => synthesizeCharacterSpeech(character.id, text), playSpeechAudio),
+    [character.id, playSpeechAudio],
+  );
 
-  const speakWithFallback = useCallback(
+  const stopSpeech = useCallback(() => {
+    speechQueue.cancel();
+    speechSourceRef.current?.stop();
+    speechSourceRef.current = null;
+    setSpeakingMessageId(null);
+  }, [speechQueue]);
+
+  /** Đọc lại một tin nhắn: từng câu được đọc ngay khi có âm thanh, giọng giống trên mọi thiết bị. */
+  const speakMessage = useCallback(
     async (text: string, messageId: string): Promise<void> => {
       stopSpeech();
       setSpeakingMessageId(messageId);
-      try {
-        await playAzureSpeech(text);
-        return;
-      } catch (err) {
-        console.warn("[ChatMain] Azure TTS failed, using Web Speech:", err);
-      }
-
-      speakWebSpeech(text);
+      const segments = splitSpeechSegments(text);
+      const finished = segments.map((segment) => speechQueue.enqueue(segment));
+      await Promise.all(finished);
+      setSpeakingMessageId((current) => (current === messageId ? null : current));
     },
-    [playAzureSpeech, speakWebSpeech, stopSpeech],
+    [speechQueue, stopSpeech],
   );
 
   const speak = useCallback((text: string, messageId: string) => {
@@ -335,8 +288,8 @@ export function ChatMain({
       stopSpeech();
       return;
     }
-    void speakWithFallback(text, messageId);
-  }, [speakingMessageId, speakWithFallback, stopSpeech]);
+    void speakMessage(text, messageId);
+  }, [speakingMessageId, speakMessage, stopSpeech]);
 
   useEffect(() => {
     return () => {
@@ -579,12 +532,16 @@ export function ChatMain({
   ]);
 
   const enqueueSpeech = (text: string) => {
-    speakWebSpeech(text);
+    for (const segment of splitSpeechSegments(text)) {
+      void speechQueue.enqueue(segment);
+    }
   };
 
   const handleSend = async (content: string, type?: "TEXT" | "VOICE") => {
     // Cancel any ongoing speech when starting a new message
     stopSpeech();
+    // Mở khóa âm thanh ngay trong thao tác của người dùng, vì trình duyệt chặn phát tự động.
+    void getSpeechContext().catch(() => {});
     
     // If not specified, default to VOICE if the 3D avatar modal is open, else TEXT
     const msgType = type || (isVoice3DOpen ? "VOICE" : "TEXT");
@@ -702,7 +659,7 @@ export function ChatMain({
           quotes: resData.quotesUsed,
         };
 
-        if (speechSynthesis.speaking || speechSourceRef.current) {
+        if (speechSourceRef.current) {
           setSpeakingMessageId(newAssistantMsg.id);
         }
 

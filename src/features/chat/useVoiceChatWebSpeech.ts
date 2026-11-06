@@ -17,6 +17,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { createSpeechQueue, splitSpeechSegments, synthesizeCharacterSpeech } from "@/lib/character-speech";
 import { useAuthStore } from "@/store/auth.store";
 import { getWebSpeechTTS, WebSpeechTTS } from "@/lib/web-speech-tts";
 import { getWebSpeechSTT, WebSpeechSTT } from "@/lib/web-speech-stt";
@@ -135,25 +136,8 @@ export function useVoiceChatWebSpeech({
     return audioCtxRef.current;
   }, []);
 
-  const playAzureTts = useCallback(
-    async (text: string, signal?: AbortSignal): Promise<void> => {
-      const res = await fetch("/api/voice/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, characterId }),
-        signal,
-      });
-
-      if (!res.ok) {
-        const message = await res.text();
-        throw new Error(message || `Azure TTS failed: ${res.status}`);
-      }
-
-      const audioBuffer = await res.arrayBuffer();
-      if (!audioBuffer.byteLength) {
-        throw new Error("Azure TTS khong tra ve audio");
-      }
-
+  const playCharacterAudio = useCallback(
+    async (audio: ArrayBuffer): Promise<void> => {
       // Cuộc gọi đã bị hủy hoặc bị ngắt lời (barge-in) trong lúc tải/giải mã audio — đừng phát nữa.
       if (abortRef.current || bargeInRef.current) return;
 
@@ -162,14 +146,13 @@ export function useVoiceChatWebSpeech({
         await audioContext.resume();
       }
 
-      const decodedAudio = await audioContext.decodeAudioData(audioBuffer.slice(0));
+      const decodedAudio = await audioContext.decodeAudioData(audio.slice(0));
 
       if (abortRef.current || bargeInRef.current) return;
 
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve) => {
         const source = audioContext.createBufferSource();
         source.buffer = decodedAudio;
-        source.playbackRate.value = 1.25;
         source.connect(ttsAnalyserRef.current ?? audioContext.destination);
         azureSourceRef.current = source;
         activeTtsAnalyserRef.current = ttsAnalyserRef.current;
@@ -182,42 +165,27 @@ export function useVoiceChatWebSpeech({
         source.start();
       });
     },
-    [characterId, ensureAudioContext],
+    [ensureAudioContext],
   );
 
-  const speakWithAzureFallback = useCallback(
+  /**
+   * Đọc câu trả lời bằng giọng của nhân vật do BE tạo. Câu sau được tạo âm thanh
+   * trong lúc câu trước đang phát, nên câu đầu được nghe sớm và không bị ngắt giữa chừng.
+   */
+  const speakCharacterReply = useCallback(
     async (text: string, signal?: AbortSignal): Promise<void> => {
+      const queue = createSpeechQueue(
+        (segment) => synthesizeCharacterSpeech(characterId, segment, signal),
+        playCharacterAudio,
+      );
+      const finished = splitSpeechSegments(text).map((segment) => queue.enqueue(segment));
       try {
-        await playAzureTts(text, signal);
-        return;
-      } catch (err) {
-        if (abortRef.current || bargeInRef.current) return;
-        console.warn("[VoiceChatWebSpeech] Azure TTS failed, using Web Speech:", err);
-      }
-
-      if (abortRef.current || bargeInRef.current) return;
-
-      if (!ttsRef.current) {
-        ttsRef.current = getWebSpeechTTS();
-      }
-
-      if (!ttsRef.current?.isSupported()) {
-        throw new Error("Web Speech API khong kha dung");
-      }
-
-      activeTtsAnalyserRef.current = simulatedAnalyserRef.current;
-      simulatedAnalyserRef.current?.start(text, 4.5);
-      try {
-        await ttsRef.current.speak(text, {
-          rate: 1.25,
-          pitch: 1,
-          volume: 1,
-        });
+        await Promise.all(finished);
       } finally {
-        simulatedAnalyserRef.current?.stop();
+        queue.cancel();
       }
     },
-    [playAzureTts],
+    [characterId, playCharacterAudio],
   );
 
   /** Dừng ngay audio TTS đang phát (Azure buffer source + Web Speech synth + lip-sync giả lập). */
@@ -481,9 +449,8 @@ export function useVoiceChatWebSpeech({
 
       if (abortRef.current) return;
 
-      // TTS with Azure first, then Web Speech fallback.
       setStatus("speaking");
-      await speakWithAzureFallback(aiResponse, controller.signal);
+      await speakCharacterReply(aiResponse, controller.signal);
       // Nếu bị ngắt lời (barge-in), startListening đã tự chuyển sang "listening" —
       // đừng ghi đè lại thành "idle".
       if (abortRef.current || bargeInRef.current) return;
@@ -502,7 +469,7 @@ export function useVoiceChatWebSpeech({
         abortControllerRef.current = null;
       }
     }
-  }, [sessionId, onError, onProfileRefresh, onTokenUpdate, speakWithAzureFallback]);
+  }, [sessionId, onError, onProfileRefresh, onTokenUpdate, speakCharacterReply]);
 
   useEffect(() => {
     sendTextToChatRef.current = sendTextToChat;
