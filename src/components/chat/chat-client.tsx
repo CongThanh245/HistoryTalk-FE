@@ -152,6 +152,34 @@ export function ChatClient({
       });
   }, [characterId, contextId, isTokenExhausted, tokenExhaustionKey, createSession]);
 
+  // Creating an exam session asks question 1 straight away, which takes a few seconds.
+  const [isStartingExam, setIsStartingExam] = useState(false);
+  const handleStartExamSession = useCallback(
+    (questionCount: number) => {
+      if (!characterId || !contextId) return;
+      if (isTokenExhausted) return;
+
+      const previousSessionId = activeSessionId;
+      sessionInitialized.current = true;
+      setActiveSessionId(null);
+      setIsRightPanelOpen(false);
+      setIsStartingExam(true);
+      createSession
+        .mutateAsync({ characterId, contextId, exam: { questionCount } })
+        .then((session) => setActiveSessionId(session.id))
+        .catch((error) => {
+          if (isTokenExhaustionError(error)) {
+            setTokenExhaustedFor(tokenExhaustionKey);
+            return;
+          }
+          // e.g. the character has too few documents: go back to the conversation the learner was in.
+          setActiveSessionId(previousSessionId);
+        })
+        .finally(() => setIsStartingExam(false));
+    },
+    [activeSessionId, characterId, contextId, isTokenExhausted, tokenExhaustionKey, createSession],
+  );
+
   if (isLoadingCharacter || !activeCharacter) {
     return (
       <div className="flex items-center justify-center w-full h-full">
@@ -167,6 +195,7 @@ export function ChatClient({
         contextId={contextId}
         sessionId={activeSessionId}
         onSessionCreated={handleSessionCreated}
+        initializingLabel={isStartingExam ? `${activeCharacter.name} đang chuẩn bị câu hỏi vấn đáp...` : undefined}
         toggleRightPanel={() => setIsRightPanelOpen(!isRightPanelOpen)}
         isRightOpen={isRightPanelOpen}
         onOpenCitation={(quote) => setCitationRequest({ quote })}
@@ -185,6 +214,7 @@ export function ChatClient({
         activeSessionId={activeSessionId}
         onSelectSession={setActiveSessionId}
         onNewSession={handleStartNewSession}
+        onNewExamSession={handleStartExamSession}
         onDeleteSession={handleDeleteSession}
         onOpenDocument={(documentId) => setCitationRequest({ documentId })}
       />

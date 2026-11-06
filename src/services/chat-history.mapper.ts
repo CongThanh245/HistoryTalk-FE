@@ -45,6 +45,7 @@ export const normalizeChatHistoryGroups = (value: unknown): ChatHistoryGroup[] =
           lastMessageAt: asString(session.lastMessageAt),
           messageCount:
             typeof session.messageCount === "number" ? session.messageCount : 0,
+          mode: session.mode === "EXAM" ? "EXAM" : "CHAT",
         });
       });
 

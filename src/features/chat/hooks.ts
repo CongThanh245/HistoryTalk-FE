@@ -4,7 +4,7 @@ import { chatService, type ChatHistoryGroup } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
-import { isTokenExhaustionError } from "@/lib/utils/api-error";
+import { getApiErrorMessage, isTokenExhaustionError } from "@/lib/utils/api-error";
 
 export function useChatSessions(
   characterId: string,
@@ -41,20 +41,32 @@ export function useCreateSession() {
     mutationFn: ({
       characterId,
       contextId,
+      exam,
     }: {
       characterId: string;
       contextId: string;
-    }) => chatService.createSession(characterId, contextId),
+      /** Set to start an exam session instead of a chat. */
+      exam?: { questionCount: number };
+    }) => chatService.createSession(characterId, contextId, exam),
     onSuccess: (_, { characterId, contextId }) => {
       qc.invalidateQueries({
         queryKey: queryKeys.chat.sessions(characterId, contextId),
       });
     },
-    onError: (error: unknown) => {
+    onError: (error: unknown, { exam }) => {
       if (isTokenExhaustionError(error)) {
         toast.error("Bạn đã hết token. Vui lòng nạp thêm để tiếp tục chat.", {
           duration: 8000,
         });
+        return;
+      }
+
+      if (exam) {
+        // e.g. "Nhân vật này chưa có đủ tư liệu để vấn đáp."
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        toast.error(
+          status === 400 ? getApiErrorMessage(error, "Không thể bắt đầu vấn đáp") : "Không thể bắt đầu vấn đáp. Vui lòng thử lại.",
+        );
         return;
       }
 

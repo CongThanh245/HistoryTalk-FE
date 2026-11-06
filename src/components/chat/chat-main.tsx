@@ -11,6 +11,7 @@ import { Phone, ScrollText, Menu, Info, Coins, PhoneCall, Video, Lock, AlertTria
 import type {
   ChatCharacter,
   ChatMessage,
+  ExamVerdict,
   GetMessagesResponse,
 } from "@/services/chat.service";
 import { MessageBubble, MessageQuotes, TypingIndicator } from "./chat-message-bubble";
@@ -33,7 +34,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { useEntitlements } from "@/features/saas/entitlements";
 import { hasPlusAccess, hasProAccess } from "@/services/user.service";
-import { isTokenExhaustionError } from "@/lib/utils/api-error";
+import { getApiErrorMessage, isTokenExhaustionError } from "@/lib/utils/api-error";
 import { handlePlatformLockError } from "@/lib/utils/school-lock";
 import { TokenBoostRequestDialog } from "@/components/saas/token-boost-request-dialog";
 import { TeacherTicketDialog } from "@/components/saas/token-boost-ui";
@@ -50,6 +51,15 @@ import { ContentWarningDialog } from "./content-warning-dialog";
 
 const AI_FEEDBACK_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSeRil6ykImcwwFkgnV0lzFHWo8NLgOrOKNjTHNqq8Tt0-XMEQ/viewform?usp=dialog";
+
+const EXAM_VERDICT_LABELS: Record<ExamVerdict, { label: string; className: string }> = {
+  CORRECT: { label: "Đúng", className: "text-(--status-success) border-(--status-success)" },
+  PARTIAL: { label: "Đúng một phần", className: "text-(--status-warning) border-(--status-warning)" },
+  INCORRECT: { label: "Chưa đúng", className: "text-accent-danger border-accent-danger" },
+};
+
+/** Exam replies put feedback and the next question either side of "---"; it should not be read aloud. */
+const stripExamSeparator = (text: string) => text.replace(/\s*\n?-{3,}\n?\s*/g, "\n");
 
 const isVoiceMessage = (message: ChatMessage) =>
   message.messageType?.toUpperCase() === "VOICE";
@@ -322,8 +332,12 @@ export function ChatMain({
     return ids;
   }, [messages, isStreaming]);
   const lastItem = displayItems[displayItems.length - 1];
+  // Exam sessions: the character asks and grades, so there are no suggestions and no calls.
+  const exam = data?.exam;
+  const isExam = !!exam;
+  const isExamFinished = !!exam?.finished;
   const showSuggestions =
-    suggestedQuestions.length > 0 && !isStreaming && lastItem?.type !== "voice-call" && lastItem?.message.role === "ASSISTANT";
+    !isExam && suggestedQuestions.length > 0 && !isStreaming && lastItem?.type !== "voice-call" && lastItem?.message.role === "ASSISTANT";
   const userTextMessageCount = useMemo(
     () =>
       messages.filter(
@@ -525,6 +539,78 @@ export function ChatMain({
     }
   };
 
+  /**
+   * Exam answers use the non-stream API: the reply comes back in one piece anyway and carries the grade and
+   * progress. Resolves false when the answer was not graded; the toast then offers to send it again.
+   */
+  const sendExamAnswer = async (examSessionId: string, content: string): Promise<boolean> => {
+    const tempUserMsg: ChatMessage = {
+      id: `temp-${Date.now()}`,
+      sessionId: examSessionId,
+      role: "USER",
+      content,
+      messageType: "TEXT",
+      createdAt: new Date().toISOString(),
+    };
+    setOptimisticMessages((prev) => [...prev, tempUserMsg]);
+    setStreamingMessageType("TEXT");
+    setStreamingMessage("");
+    setIsStreaming(true);
+
+    try {
+      const res = await chatService.sendMessage(examSessionId, content);
+      qc.setQueryData(
+        queryKeys.chat.messages(examSessionId),
+        (old: GetMessagesResponse | undefined) => ({
+          messages: [...(old?.messages ?? []), res.userMessage, res.assistantMessage],
+          suggestedQuestions: [],
+          exam: res.exam ?? old?.exam,
+        }),
+      );
+      setOptimisticMessages([]);
+      setLastTokenUsage({
+        remainingTokens: res.remainingTokens,
+        promptTokens: res.promptTokens || 0,
+        completionTokens: res.completionTokens || 0,
+        messageType: "TEXT",
+      });
+      recordStudyActivity(qc);
+      qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+      void speakMessage(stripExamSeparator(res.assistantMessage.content), res.assistantMessage.id);
+      return true;
+    } catch (err) {
+      setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
+      if (handlePlatformLockError(err)) return false;
+
+      const blocked = inappropriateMessageFromError(err);
+      if (blocked) {
+        setContentWarning(blocked);
+        return false;
+      }
+      if (isTokenExhaustionError(err)) {
+        setIsLocalTokenExhausted(true);
+        onTokenExhausted?.();
+        toast.error("Bạn đã hết token, chưa gửi được câu trả lời.", { duration: 8000 });
+        return false;
+      }
+      const status = (err as { response?: { status?: number } }).response?.status;
+      if (status === 400) {
+        // "Buổi vấn đáp này đã kết thúc." Reload the progress so the input locks.
+        toast.error(getApiErrorMessage(err, "Không gửi được câu trả lời"));
+        qc.invalidateQueries({ queryKey: queryKeys.chat.messages(examSessionId) });
+        return false;
+      }
+      // The backend saves nothing when grading fails, so the answer can simply be sent again.
+      toast.error(`${character.name} chưa chấm được câu trả lời vì dịch vụ AI đang gặp sự cố.`, {
+        action: { label: "Gửi lại", onClick: () => void sendExamAnswer(examSessionId, content) },
+        duration: 8000,
+      });
+      return false;
+    } finally {
+      setIsStreaming(false);
+    }
+  };
+
   /** Resolves false when the message was not sent and its text should stay in the input box. */
   const handleSend = async (content: string, type?: "TEXT" | "VOICE"): Promise<boolean> => {
     // Cancel any ongoing speech when starting a new message
@@ -562,6 +648,11 @@ export function ChatMain({
 
         return false;
       }
+    }
+
+    if (isExam) {
+      void sendExamAnswer(currentSessionId, content);
+      return true;
     }
 
     const tempUserMsg: ChatMessage = {
@@ -863,7 +954,7 @@ export function ChatMain({
         {/* ── Nút Voice Call ── */}
         <button
           onClick={handleOpenVoice2DCall}
-          disabled={isConversationInitializing || (canUseVoiceCall && isTokenExhausted)}
+          disabled={isConversationInitializing || isExam || (canUseVoiceCall && isTokenExhausted)}
           aria-label={
             canUseVoiceCall
               ? `Gọi thoại với ${character.name}`
@@ -872,7 +963,9 @@ export function ChatMain({
                 : "Mở nâng cấp gói Plus"
           }
           title={
-            !canUseVoiceCall
+            isExam
+              ? "Không gọi được trong buổi vấn đáp"
+              : !canUseVoiceCall
               ? isSchoolAccount
                 ? "Gọi thoại chưa có trong gói của trường. Bấm để xem hướng dẫn."
                 : "Gọi thoại có trong gói Plus. Bấm để xem các gói nâng cấp."
@@ -902,7 +995,7 @@ export function ChatMain({
 
         <button
           onClick={handleOpenVoice3DCall}
-          disabled={isConversationInitializing || (canUseVideoCall && isTokenExhausted)}
+          disabled={isConversationInitializing || isExam || (canUseVideoCall && isTokenExhausted)}
           aria-label={
             canUseVideoCall
               ? `Video call 3D với ${character.name}`
@@ -911,7 +1004,9 @@ export function ChatMain({
                 : "Mở nâng cấp gói Pro"
           }
           title={
-            !canUseVideoCall
+            isExam
+              ? "Không gọi được trong buổi vấn đáp"
+              : !canUseVideoCall
               ? isSchoolAccount
                 ? "Video call 3D chưa có trong gói của trường. Bấm để xem hướng dẫn."
                 : "Video call có trong gói Pro. Bấm để xem các gói nâng cấp."
@@ -953,6 +1048,23 @@ export function ChatMain({
           </button>
         )}
       </div>
+
+      {exam && sessionId && (
+        <div className="px-4 md:px-6 py-2 border-b border-(--border-default) flex flex-wrap items-center gap-x-4 gap-y-1 shrink-0 text-[11px] bg-bg-main">
+          <span className="font-bold uppercase tracking-[0.08em] text-[var(--text-primary)]">Vấn đáp</span>
+          <span className="tabular-nums text-content-text">
+            {exam.finished
+              ? `Đã trả lời ${exam.answeredQuestions}/${exam.totalQuestions} câu`
+              : `Câu ${Math.min(exam.answeredQuestions + 1, exam.totalQuestions)}/${exam.totalQuestions}`}
+          </span>
+          <span className="tabular-nums text-content-text">
+            Điểm <strong className="text-content-heading">{exam.score.toLocaleString("vi-VN")}</strong>/10
+          </span>
+          <span className="tabular-nums text-content-muted">
+            Đúng {exam.correctCount} · Một phần {exam.partialCount} · Sai {exam.incorrectCount}
+          </span>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-5 pb-28 md:pb-6 space-y-4">
@@ -1008,6 +1120,18 @@ export function ChatMain({
                   }
                 />
               )}
+                  {item.type === "message" && item.message.examVerdict && EXAM_VERDICT_LABELS[item.message.examVerdict] && (
+                    <p className="-mt-2 pl-16 pr-4">
+                      <span
+                        className={cn(
+                          "inline-block rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em]",
+                          EXAM_VERDICT_LABELS[item.message.examVerdict].className,
+                        )}
+                      >
+                        Câu trả lời trước: {EXAM_VERDICT_LABELS[item.message.examVerdict].label}
+                      </span>
+                    </p>
+                  )}
                   {unanswered && (
                     <p className="-mt-2 flex items-center justify-end gap-2 pr-16 text-[11px] text-[var(--status-warning)]">
                       <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />
@@ -1057,7 +1181,12 @@ export function ChatMain({
               />
             )}
             {(isStreaming && !streamingMessage && streamingMessageType !== "VOICE") && (
-              <TypingIndicator character={character} />
+              <>
+                {isExam && (
+                  <p className="px-4 pl-16 text-[11px] text-content-muted">{character.name} đang chấm bài...</p>
+                )}
+                <TypingIndicator character={character} />
+              </>
             )}
           </>
         )}
@@ -1125,10 +1254,22 @@ export function ChatMain({
         </div>
       )}
 
+      {isExamFinished && exam && (
+        <div className="px-4 py-3 border-t border-[var(--text-primary)] shrink-0 bg-(--accent-gold-active-bg)">
+          <p className="text-sm font-bold text-content-heading">
+            Buổi vấn đáp đã kết thúc: {exam.score.toLocaleString("vi-VN")}/10 điểm
+          </p>
+          <p className="mt-0.5 text-xs text-content-text">
+            Đúng {exam.correctCount}, đúng một phần {exam.partialCount}, chưa đúng {exam.incorrectCount} trên{" "}
+            {exam.totalQuestions} câu. Mở bảng bên phải để vấn đáp lại hoặc trò chuyện tiếp.
+          </p>
+        </div>
+      )}
+
       <ChatInput
         onSend={handleSend}
         isLoading={isStreaming}
-        disabled={isStreaming || isTokenExhausted || isConversationInitializing}
+        disabled={isStreaming || isTokenExhausted || isConversationInitializing || isExamFinished}
         characterName={character.name}
         isTokenExhausted={isTokenExhausted}
       />

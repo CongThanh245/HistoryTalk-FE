@@ -5,6 +5,11 @@ import { inappropriateMessageFromError } from "@/lib/utils/content-policy";
 
 // ── Types theo API response ───────────────────────────────
 
+/** EXAM: the character asks and grades, the learner answers (chat_exam_mode_api_contract.md). */
+export type ChatSessionMode = "CHAT" | "EXAM";
+
+export const EXAM_QUESTION_COUNT = { min: 3, max: 10, default: 5 } as const;
+
 export interface ChatSession {
   id: string;
   characterId: string;
@@ -13,6 +18,25 @@ export interface ChatSession {
   lastMessage: string;
   lastMessageAt: string;
   messageCount: number;
+  mode?: ChatSessionMode;
+  /** Only on EXAM sessions. */
+  examQuestionCount?: number;
+}
+
+/** Grade of the answer just given. */
+export type ExamVerdict = "CORRECT" | "PARTIAL" | "INCORRECT";
+
+/** Progress of an exam session. Only present on EXAM sessions. */
+export interface ExamProgress {
+  totalQuestions: number;
+  answeredQuestions: number;
+  correctCount: number;
+  partialCount: number;
+  incorrectCount: number;
+  /** Out of 10, rounded to one decimal. */
+  score: number;
+  /** All questions answered: the input is locked and the last reply is a summary. */
+  finished: boolean;
 }
 
 export type MessageType = "TEXT" | "VOICE";
@@ -26,6 +50,8 @@ export interface ChatMessage {
   createdAt: string;
   /** Đoạn trích nguồn AI dựa vào để trả lời. Chỉ có ở message tạo qua /messages/stream. */
   quotes?: string[];
+  /** Exam sessions: grade of the answer this reply responds to. */
+  examVerdict?: ExamVerdict;
 }
 
 export interface SendMessageResponse {
@@ -35,11 +61,13 @@ export interface SendMessageResponse {
   remainingTokens: number;
   promptTokens: number;
   completionTokens: number;
+  exam?: ExamProgress;
 }
 
 export interface GetMessagesResponse {
   messages: ChatMessage[];
   suggestedQuestions: string[];
+  exam?: ExamProgress;
 }
 
 // History types
@@ -55,6 +83,7 @@ export interface ChatHistorySession {
   lastMessage: string;
   lastMessageAt: string;
   messageCount: number;
+  mode?: ChatSessionMode;
 }
 
 export interface ChatHistoryGroup {
@@ -91,12 +120,15 @@ export const chatService = {
   createSession: async (
     characterId: string,
     contextId: string,
+    exam?: { questionCount: number },
   ): Promise<ChatSession> => {
     const res = await axiosClient.post(
       "/chat/sessions",
       {
         characterId,
         contextId,
+        // An exam session opens with question 1 already asked, so creating it calls the AI.
+        ...(exam ? { mode: "EXAM", examQuestionCount: exam.questionCount } : {}),
       },
       {
         timeout: 90000,

@@ -17,6 +17,7 @@ import {
   Trash2,
   Loader2,
   FileText,
+  GraduationCap,
 } from "lucide-react";
 import type { ChatCharacter, ChatSession } from "@/services/chat.service";
 import { characterService } from "@/services/character.service";
@@ -44,6 +45,7 @@ import {
 } from "@/components/ui/hover-card";
 
 import { cn } from "@/lib/utils/cn";
+import { ExamStartDialog } from "./exam-start-dialog";
 
 type PanelSection = "menu" | "history" | "characters" | "quiz" | "contexts" | "documents";
 type DetailSection = Exclude<PanelSection, "menu">;
@@ -60,6 +62,8 @@ interface ChatRightPanelProps {
   activeSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
   onNewSession: () => void;
+  /** Starts an exam session where the character asks questionCount questions. */
+  onNewExamSession?: (questionCount: number) => void;
   onDeleteSession?: (sessionId: string) => void;
   onOpenDocument?: (documentId: string) => void;
 }
@@ -217,9 +221,11 @@ export function ChatRightPanel({
   activeSessionId,
   onSelectSession,
   onNewSession,
+  onNewExamSession,
   onDeleteSession,
   onOpenDocument,
 }: ChatRightPanelProps) {
+  const [isExamDialogOpen, setIsExamDialogOpen] = useState(false);
   const [section, setSection] = useState<PanelSection>("menu");
   const [lastDetailSection, setLastDetailSection] = useState<DetailSection>("history");
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
@@ -368,6 +374,25 @@ export function ChatRightPanel({
           </span>
         </button>
 
+        {onNewExamSession && (
+          <button
+            onClick={() => characterId && contextId && setIsExamDialogOpen(true)}
+            className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-none border-b border-(--border-default) cursor-pointer transition-colors hover:bg-[var(--text-primary)] text-left"
+          >
+            <div className="w-7 h-7 rounded-sm flex items-center justify-center shrink-0 border border-[var(--text-primary)] text-[var(--text-primary)] group-hover:border-[var(--text-inverse)] group-hover:text-[var(--text-inverse)]">
+              <GraduationCap className="w-4 h-4" />
+            </div>
+            <span className="flex-1 min-w-0">
+              <span className="block text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] group-hover:text-[var(--text-inverse)]">
+                Vấn đáp
+              </span>
+              <span className="block text-[11px] text-content-muted group-hover:text-[var(--text-inverse)]">
+                {activeCharacter.name} hỏi, bạn trả lời và được chấm điểm
+              </span>
+            </span>
+          </button>
+        )}
+
         <MenuRow
           icon={<History className="w-4 h-4" />}
           label="Lịch sử trò chuyện"
@@ -457,6 +482,11 @@ export function ChatRightPanel({
                           : "text-content-heading",
                       )}
                     >
+                      {session.mode === "EXAM" && (
+                        <span className="mr-1.5 inline-block rounded-sm border border-[var(--text-primary)] px-1 py-px align-[1px] text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)]">
+                          Vấn đáp
+                        </span>
+                      )}
                       {session.title || "Cuộc trò chuyện"}
                     </p>
                     <p
@@ -760,6 +790,18 @@ export function ChatRightPanel({
           }
         }}
       />
+
+      {onNewExamSession && (
+        <ExamStartDialog
+          open={isExamDialogOpen}
+          characterName={activeCharacter.name}
+          onOpenChange={setIsExamDialogOpen}
+          onStart={(questionCount) => {
+            onNewExamSession(questionCount);
+            setIsOpen(false);
+          }}
+        />
+      )}
     </>
   );
 }

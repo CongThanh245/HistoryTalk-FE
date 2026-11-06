@@ -81,7 +81,16 @@ export function SessionCard({
 
       {/* Summary */}
       <div className="hidden min-w-0 md:block">
-        {session.sessionTitle && <p className="truncate text-[13px] font-medium text-content-heading">{session.sessionTitle}</p>}
+        {(session.sessionTitle || session.mode === "EXAM") && (
+          <p className="truncate text-[13px] font-medium text-content-heading">
+            {session.mode === "EXAM" && (
+              <span className="mr-1.5 inline-block rounded-sm border border-[var(--text-primary)] px-1 py-px align-[1px] text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)]">
+                Vấn đáp
+              </span>
+            )}
+            {session.sessionTitle}
+          </p>
+        )}
         <p className="truncate text-[13px] text-[var(--text-tertiary)]">{session.lastMessage}</p>
       </div>
 
