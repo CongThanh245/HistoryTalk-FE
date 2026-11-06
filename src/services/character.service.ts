@@ -37,6 +37,9 @@ type RawCharacter = {
   modelUrl?: string | null;
   videoUrl?: string | null;
   personality?: string;
+  voiceId?: string | null;
+  selfPronoun?: string | null;
+  addressPronoun?: string | null;
   bornYear?: number | null;
   bornMonth?: number | null;
   bornDay?: number | null;
@@ -70,6 +73,12 @@ export interface Character {
   description?: string;
   imageUrl?: string | null;
   personality?: string;
+  /** TTS voice; null = default voice (Thiện Minh, male). */
+  voiceId?: string | null;
+  /** How the character refers to itself; null = "ta". */
+  selfPronoun?: string | null;
+  /** How the character addresses the learner; null = "ngươi". */
+  addressPronoun?: string | null;
   bornYear?: number | null;
   bornMonth?: number | null;
   bornDay?: number | null;
@@ -121,6 +130,12 @@ export interface CreateCharacterRequest {
   imageUrl?: string | null;
   modelUrl?: string | null;
   personality?: string;
+  /** An id from GET /voices; "" = default voice. Omitted on update = unchanged. */
+  voiceId?: string;
+  /** Letters and spaces, max 30; "" = default ("ta"). Omitted on update = unchanged. */
+  selfPronoun?: string;
+  /** Letters and spaces, max 30; "" = default ("ngươi"). Omitted on update = unchanged. */
+  addressPronoun?: string;
   bornYear?: number | null;
   bornMonth?: number | null;
   bornDay?: number | null;
@@ -157,6 +172,9 @@ export function mapCharacter(raw: RawCharacter): Character {
     modelUrl: raw.modelUrl ?? null,
     videoUrl: raw.videoUrl ?? null,
     personality: raw.personality,
+    voiceId: raw.voiceId ?? null,
+    selfPronoun: raw.selfPronoun ?? null,
+    addressPronoun: raw.addressPronoun ?? null,
     bornYear: raw.bornYear ?? null,
     bornMonth: raw.bornMonth ?? null,
     bornDay: raw.bornDay ?? null,

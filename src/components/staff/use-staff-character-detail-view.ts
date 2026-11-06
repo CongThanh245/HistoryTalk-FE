@@ -45,7 +45,7 @@ function getCharacterRelatedValidationFields(
   }
 
   if (
-    ["name", "title", "background", "personality", "image", "modelUrl"].includes(
+    ["name", "title", "background", "personality", "image", "modelUrl", "selfPronoun", "addressPronoun"].includes(
       field,
     )
   ) {
@@ -63,6 +63,8 @@ const CHAT_RELEVANT_FIELDS: (keyof CharacterDraft)[] = [
   "title",
   "background",
   "personality",
+  "selfPronoun",
+  "addressPronoun",
   "image",
   "modelUrl",
   "documentTitle",
@@ -149,6 +151,7 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     // Deep comparison of relevant fields
     const keys: (keyof CharacterDraft)[] = [
       "name", "title", "background", "image", "modelUrl", "personality",
+      "voiceId", "selfPronoun", "addressPronoun",
       "bornYear", "bornMonth", "bornDay", "isBornBc",
       "deathYear", "deathMonth", "deathDay", "isDeathBc",
       "isActive", "isPublished", "documentContent",

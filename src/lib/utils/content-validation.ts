@@ -121,7 +121,9 @@ export type CharacterValidationField =
   | "bornYear"
   | "deathDay"
   | "deathMonth"
-  | "deathYear";
+  | "deathYear"
+  | "selfPronoun"
+  | "addressPronoun";
 
 export type CharacterValidationInput = {
   name: string;
@@ -138,7 +140,12 @@ export type CharacterValidationInput = {
   deathMonth: string;
   deathYear: string;
   isDeathBc: boolean;
+  selfPronoun?: string;
+  addressPronoun?: string;
 };
+
+const PRONOUN_PATTERN = /^[\p{L} ]{0,30}$/u;
+const PRONOUN_ERROR = "Cách xưng hô chỉ gồm chữ cái, tối đa 30 ký tự";
 
 export function validateCharacterDraft(
   draft: CharacterValidationInput,
@@ -162,6 +169,13 @@ export function validateCharacterDraft(
   }
   if (!isBlank(draft.modelUrl) && !isValidUrl(draft.modelUrl.trim())) {
     errors.modelUrl = "URL mô hình 3D không hợp lệ.";
+  }
+
+  if (draft.selfPronoun && !PRONOUN_PATTERN.test(draft.selfPronoun.trim())) {
+    errors.selfPronoun = PRONOUN_ERROR;
+  }
+  if (draft.addressPronoun && !PRONOUN_PATTERN.test(draft.addressPronoun.trim())) {
+    errors.addressPronoun = PRONOUN_ERROR;
   }
 
   const born = signedYear(draft.bornYear, draft.isBornBc);

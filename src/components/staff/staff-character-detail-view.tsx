@@ -54,6 +54,7 @@ import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { ChatMain } from "@/components/chat/chat-main";
 import { StaffCharacterMediaPreview } from "@/components/staff/staff-media-preview";
 import { MediaSlotField } from "@/components/staff/media-slot-field";
+import { CharacterVoiceFields } from "@/components/staff/character-voice-fields";
 import { NewDocumentPanel } from "@/components/staff/new-document-panel";
 import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
@@ -664,6 +665,11 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     {[
                       { label: "Tiểu sử / Bối cảnh", value: draft.background },
                       { label: "Tính cách", value: draft.personality },
+                      { label: "Giọng đọc", value: draft.voiceId || "Mặc định (Thiện Minh, nam)" },
+                      {
+                        label: "Cách xưng hô",
+                        value: `Tự xưng "${draft.selfPronoun || "ta"}", gọi người học "${draft.addressPronoun || "ngươi"}"`,
+                      },
                     ].map((item) => (
                       <div key={item.label}>
                         <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--content-muted)]">{item.label}</dt>
@@ -698,6 +704,15 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   />
                   <ValidationErrorText message={errors.personality} />
                 </div>
+
+                <CharacterVoiceFields
+                  value={{ voiceId: draft.voiceId, selfPronoun: draft.selfPronoun, addressPronoun: draft.addressPronoun }}
+                  onChange={(patch) =>
+                    (Object.entries(patch) as [keyof typeof patch, string][]).forEach(([field, value]) => set(field)(value))
+                  }
+                  disabled={!isEditing}
+                  errors={{ selfPronoun: errors.selfPronoun, addressPronoun: errors.addressPronoun }}
+                />
               </div>
                 )}
               </TabsContent>
