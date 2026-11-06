@@ -11,6 +11,7 @@ import {
   Loader2,
   MessageCircle,
   Pause,
+  PenTool,
   Play,
   RotateCcw,
   Send,
@@ -34,7 +35,10 @@ import type { HistoricalEvent } from "@/services/event.service";
 import type { MapPin } from "@/services/map-pin.service";
 import { useAuthStore } from "@/store/auth.store";
 import { BattleMapCanvas } from "./BattleMapCanvas";
-import { BattleMapEditor } from "./BattleMapEditor";
+import { BattleMapEditor, battleMapDraftKey } from "./BattleMapEditor";
+import { BattleMapCompareView } from "./BattleMapCompareView";
+import { toPracticeMap } from "./battle-map-practice";
+import { isGradableMap, scoreBattleMap, type BattleMapScore } from "./battle-map-scoring";
 import { emptyBattleMap, isBattleMap, type BattleMap } from "./battle-map.types";
 import { useBattleStory } from "./useBattlePlayback";
 import { toast } from "sonner";
@@ -50,6 +54,9 @@ export function BattleDetailView({
   editing = false,
   onOpenEditor,
   onCloseEditor,
+  practicing = false,
+  onOpenPractice,
+  onClosePractice,
   previewAsLearner = false,
   canEdit,
   onSaveBattleMap,
@@ -64,6 +71,10 @@ export function BattleDetailView({
   editing?: boolean;
   onOpenEditor: () => void;
   onCloseEditor: () => void;
+  /** Show the "Tự vẽ lược đồ" practice editor (any role) instead of the battle page. */
+  practicing?: boolean;
+  onOpenPractice?: () => void;
+  onClosePractice?: () => void;
   /** Content Admin previews the page as a learner: no editor entry point. */
   previewAsLearner?: boolean;
   /** Who may edit the battle map (defaults to Content / System Admins). */
@@ -94,6 +105,35 @@ export function BattleDetailView({
   /** Last map saved in this view, shown until the refetched event list catches up. */
   const [savedMap, setSavedMap] = useState<BattleMap | null>(null);
   const battleMap = savedMap ?? event.battleMap ?? emptyBattleMap();
+  // Learners redraw the map and compare it with this one; graded in the browser, nothing is stored on the server.
+  const canPractice = isGradableMap(battleMap) && !!onOpenPractice;
+  const practiceMap = practicing && canPractice && !editingMap;
+  const practiceDraftId = `practice:${event.id}`;
+  const [practiceRun, setPracticeRun] = useState(0);
+  const [practiceResult, setPracticeResult] = useState<{ attempt: BattleMap; score: BattleMapScore } | null>(null);
+  /** Width / height of the background, so vertical distances count like horizontal ones. */
+  const imageAspect = useRef<{ url: string; value: number } | null>(null);
+  const loadAspect = (url: string) => new Promise<number>(resolve => {
+    if (imageAspect.current?.url === url) { resolve(imageAspect.current.value); return; }
+    const image = new window.Image();
+    const done = (value: number) => { imageAspect.current = { url, value }; resolve(value); };
+    image.onload = () => done(image.naturalWidth > 0 && image.naturalHeight > 0 ? image.naturalWidth / image.naturalHeight : 1);
+    image.onerror = () => done(1);
+    image.src = url;
+  });
+  const comparePractice = async (attempt: BattleMap) => {
+    const aspect = await loadAspect(battleMap.imageUrl);
+    setPracticeResult({ attempt, score: scoreBattleMap(battleMap, attempt, aspect) });
+  };
+  const restartPractice = () => {
+    try { localStorage.removeItem(battleMapDraftKey(user?.uid, practiceDraftId)); } catch { /* storage unavailable */ }
+    setPracticeResult(null);
+    setPracticeRun(n => n + 1);
+  };
+  const closePractice = () => {
+    setPracticeResult(null);
+    onClosePractice?.();
+  };
   const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
   const character = characters.find((item) => item.id === characterId) ?? characters[0];
@@ -120,7 +160,8 @@ export function BattleDetailView({
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !editingMap) {
+      // The editors handle Esc themselves.
+      if (e.key === "Escape" && !editingMap && !practiceMap) {
         e.stopImmediatePropagation();
         if (chatOpen) setChatOpen(false);
         else onBack();
@@ -128,11 +169,32 @@ export function BattleDetailView({
     };
     window.addEventListener("keydown", h, true);
     return () => window.removeEventListener("keydown", h, true);
-  }, [chatOpen, editingMap, onBack]);
+  }, [chatOpen, editingMap, practiceMap, onBack]);
 
   // Portalled to <body>: inside the app shell the full-screen views sat under the sidebar and header (their stacking
   // context), so the map edges, zoom bar and narration card were cut off.
   if (typeof document === "undefined") return null;
+
+  if (practiceMap) return createPortal(<>
+    <BattleMapEditor
+      key={practiceRun}
+      mode="practice"
+      initialValue={toPracticeMap(battleMap)}
+      title={`Tự vẽ: ${event.title}`}
+      draftId={practiceDraftId}
+      onClose={closePractice}
+      onSave={comparePractice}
+    />
+    {practiceResult && <BattleMapCompareView
+      title={event.title}
+      answer={battleMap}
+      attempt={practiceResult.attempt}
+      score={practiceResult.score}
+      onContinue={() => setPracticeResult(null)}
+      onRestart={restartPractice}
+      onClose={closePractice}
+    />}
+  </>, document.body);
 
   if (editingMap) return createPortal(<BattleMapEditor
     key={pin?.pinId ?? "no-pin"}
@@ -172,6 +234,10 @@ export function BattleDetailView({
           </p>
         </div>
 
+        {canPractice && <button type="button" className={styles.mapEditButton} title="Vẽ lại lược đồ trên ảnh nền rồi so sánh với lược đồ gốc"
+          onClick={() => { narration.pause(); onOpenPractice?.(); }}>
+          <PenTool size={16} /> Tự vẽ lược đồ
+        </button>}
         {isAdmin && <button type="button" className={styles.mapEditButton} onClick={() => { narration.pause(); onOpenEditor(); }}>
           <SquarePen size={16} /> Chỉnh sửa lược đồ
         </button>}

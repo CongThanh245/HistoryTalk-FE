@@ -1,5 +1,5 @@
 import { CORRECT_SCORE, isScoredSymbol, type BattleMapScore } from "./battle-map-scoring";
-import type { BattleFaction, BattleMap } from "./battle-map.types";
+import { isNoteSymbol, type BattleFaction, type BattleMap, type BattleSymbol } from "./battle-map.types";
 
 /** The result map draws each match status as its own "side", so the canvas colours it. */
 export const COMPARE_FACTIONS: BattleFaction[] = [
@@ -28,11 +28,13 @@ export function toPracticeMap(answer: BattleMap): BattleMap {
 /**
  * One map showing the result: the learner's symbols coloured by status (correct, partial, extra), the answer
  * symbols they missed in red, and the rest of the answer (matched symbols, text, steps) faded as context.
- * The learner's own text and step numbers are not graded, so they are left out.
+ * The learner's own text and step numbers are not graded, so they are left out. Legend notes are cleared, so
+ * the legend reads "type (status)" instead of repeating the admin's notes.
  */
 export function buildCompareMap(answer: BattleMap, attempt: BattleMap, score: BattleMapScore): BattleMap {
   const matchOf = new Map(score.matches.map(m => [m.attemptId, m]));
   const missed = new Set(score.missedIds);
+  const withoutNote = (s: BattleSymbol) => (isNoteSymbol(s.type) ? { ...s, label: "" } : s);
   return {
     version: 1,
     mode: "custom",
@@ -41,7 +43,7 @@ export function buildCompareMap(answer: BattleMap, attempt: BattleMap, score: Ba
     factions: COMPARE_FACTIONS,
     symbols: [
       ...answer.symbols.map(s => ({
-        ...s,
+        ...withoutNote(s),
         id: ANSWER_PREFIX + s.id,
         factionId: missed.has(s.id) ? "cmp-missed" : "cmp-answer",
         phaseId: undefined,
@@ -49,7 +51,7 @@ export function buildCompareMap(answer: BattleMap, attempt: BattleMap, score: Ba
       ...attempt.symbols.filter(isScoredSymbol).map(s => {
         const match = matchOf.get(s.id);
         return {
-          ...s,
+          ...withoutNote(s),
           id: ATTEMPT_PREFIX + s.id,
           factionId: !match ? "cmp-extra" : match.score >= CORRECT_SCORE ? "cmp-correct" : "cmp-partial",
           phaseId: undefined,

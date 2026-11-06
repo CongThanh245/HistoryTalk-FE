@@ -66,6 +66,15 @@ describe("buildCompareMap", () => {
   });
 });
 
+test("buildCompareMap_clearsLegendNotesButKeepsMapText", () => {
+  const answer = map([{ ...pt("A1", "infantry", 50, 50), label: "Quân Tống" }, { ...pt("L", "label", 10, 10), label: "Sông Cầu" }]);
+  const attempt = map([{ ...pt("U1", "infantry", 50, 50), label: "Quân ta" }]);
+  const result = buildCompareMap(answer, attempt, scoreBattleMap(answer, attempt));
+  expect(result.symbols.find(s => s.id === "ans:A1")?.label).toBe("");
+  expect(result.symbols.find(s => s.id === "you:U1")?.label).toBe("");
+  expect(result.symbols.find(s => s.id === "ans:L")?.label).toBe("Sông Cầu");
+});
+
 test("compareFactions_validColours", () => {
   for (const f of COMPARE_FACTIONS) expect(f.color).toMatch(/^#[0-9a-f]{6}$/i);
 });

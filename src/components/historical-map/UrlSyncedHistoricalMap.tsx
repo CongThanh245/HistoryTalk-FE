@@ -26,7 +26,7 @@ export function UrlSyncedHistoricalMap({ onClose, overlay }: { onClose: () => vo
   const view = params.get("view");
   const route: MapRoute = {
     battle: params.get("battle"),
-    view: view === "detail" || view === "edit" ? view : "map",
+    view: view === "detail" || view === "edit" || view === "practice" ? view : "map",
   };
 
   const onRouteChange = (next: MapRoute, how: MapRouteNavigation) => {
