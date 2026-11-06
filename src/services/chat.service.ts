@@ -1,6 +1,7 @@
 import { axiosClient, refreshAccessToken } from "@/configs/axios.client";
 import { useAuthStore } from "@/store/auth.store";
 import { normalizeChatHistoryGroups } from "./chat-history.mapper";
+import { inappropriateMessageFromError } from "@/lib/utils/content-policy";
 
 // ── Types theo API response ───────────────────────────────
 
@@ -114,6 +115,20 @@ export const chatService = {
   getMessages: async (sessionId: string): Promise<GetMessagesResponse> => {
     const res = await axiosClient.get(`/chat/sessions/${sessionId}/messages`);
     return res.data.data;
+  },
+
+  /**
+   * POST /chat/messages/check: checks wording before the message is shown. Saves nothing and costs no tokens.
+   * Resolves the warning to show when blocked, or null when the message may be sent. A network or server
+   * error also resolves null, since the send APIs check again.
+   */
+  checkContent: async (content: string): Promise<string | null> => {
+    try {
+      await axiosClient.post("/chat/messages/check", { content }, { timeout: 8000 });
+      return null;
+    } catch (error) {
+      return inappropriateMessageFromError(error);
+    }
   },
 
   sendMessage: async (

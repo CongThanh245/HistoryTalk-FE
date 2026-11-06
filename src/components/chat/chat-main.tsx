@@ -45,6 +45,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { inappropriateMessageFromError } from "@/lib/utils/content-policy";
+import { ContentWarningDialog } from "./content-warning-dialog";
 
 const AI_FEEDBACK_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSeRil6ykImcwwFkgnV0lzFHWo8NLgOrOKNjTHNqq8Tt0-XMEQ/viewform?usp=dialog";
@@ -217,6 +219,7 @@ export function ChatMain({
   }, [character.imageUrl]);
 
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [contentWarning, setContentWarning] = useState<string | null>(null);
 
   const { data, isLoading } = useChatMessages(sessionId);
   const createSession = useCreateSession();
@@ -522,11 +525,19 @@ export function ChatMain({
     }
   };
 
-  const handleSend = async (content: string, type?: "TEXT" | "VOICE") => {
+  /** Resolves false when the message was not sent and its text should stay in the input box. */
+  const handleSend = async (content: string, type?: "TEXT" | "VOICE"): Promise<boolean> => {
     // Cancel any ongoing speech when starting a new message
     stopSpeech();
     // Mở khóa âm thanh ngay trong thao tác của người dùng, vì trình duyệt chặn phát tự động.
     void getSpeechContext().catch(() => {});
+
+    // Wording is checked before the message enters the chat, so a blocked message never shows up there.
+    const contentWarning = await chatService.checkContent(content);
+    if (contentWarning) {
+      setContentWarning(contentWarning);
+      return false;
+    }
     
     // If not specified, default to VOICE if the 3D avatar modal is open, else TEXT
     const msgType = type || (isVoice3DOpen ? "VOICE" : "TEXT");
@@ -535,7 +546,7 @@ export function ChatMain({
     let currentSessionId = sessionId;
 
     if (!currentSessionId) {
-      if (!contextId) return;
+      if (!contextId) return false;
       try {
         const newSession = await createSession.mutateAsync({
           characterId: character.id,
@@ -549,7 +560,7 @@ export function ChatMain({
           onTokenExhausted?.();
         }
 
-        return;
+        return false;
       }
     }
 
@@ -697,6 +708,13 @@ export function ChatMain({
         // The stream uses fetch(), so the axios interceptor never sees the whole-school lock.
         if (handlePlatformLockError(err)) return;
 
+        // The send API checks wording again, in case the check before sending was skipped or failed.
+        const blocked = inappropriateMessageFromError(err);
+        if (blocked) {
+          setContentWarning(blocked);
+          return;
+        }
+
         if (isTokenExhaustionError(err)) {
           setIsLocalTokenExhausted(true);
           onTokenExhausted?.();
@@ -734,6 +752,7 @@ export function ChatMain({
       },
       msgType
     );
+    return true;
   };
 
   return (
@@ -1113,6 +1132,7 @@ export function ChatMain({
         characterName={character.name}
         isTokenExhausted={isTokenExhausted}
       />
+      <ContentWarningDialog message={contentWarning} onClose={() => setContentWarning(null)} />
 
       <style>{`
         .voice-call-nudge {

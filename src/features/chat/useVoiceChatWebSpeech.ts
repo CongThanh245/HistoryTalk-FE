@@ -24,6 +24,8 @@ import {
   type StreamingSpeechPlayer,
 } from "@/lib/character-speech";
 import { useAuthStore } from "@/store/auth.store";
+import { chatService } from "@/services/chat.service";
+import { inappropriateMessageFrom } from "@/lib/utils/content-policy";
 import { getWebSpeechTTS, WebSpeechTTS } from "@/lib/web-speech-tts";
 import { getWebSpeechSTT, WebSpeechSTT } from "@/lib/web-speech-stt";
 import { SimulatedAnalyserNode, createSimulatedAnalyser } from "@/lib/text-lipsync";
@@ -364,6 +366,15 @@ export function useVoiceChatWebSpeech({
     abortControllerRef.current = controller;
 
     try {
+      // Spoken words are checked like typed ones. A blocked turn is dropped and never sent.
+      const contentWarning = await chatService.checkContent(text);
+      if (abortRef.current) return;
+      if (contentWarning) {
+        onError?.(contentWarning);
+        setStatus("idle");
+        return;
+      }
+
       const token = useAuthStore.getState().tokens?.accessToken;
 
       // BE chỉ cần sessionId và content
@@ -404,6 +415,8 @@ export function useVoiceChatWebSpeech({
             userFriendlyError = "Quá nhiều yêu cầu. Vui lòng đợi một chút.";
           } else if (res.status === 401) {
             userFriendlyError = "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
+          } else if (inappropriateMessageFrom(beMessage)) {
+            userFriendlyError = inappropriateMessageFrom(beMessage)!;
           } else if (beMessage) {
             userFriendlyError = beMessage;
           }
