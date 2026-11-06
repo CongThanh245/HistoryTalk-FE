@@ -1,7 +1,12 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createSpeechQueue, splitSpeechSegments, synthesizeCharacterSpeech } from "@/lib/character-speech";
+import {
+  createStreamingSpeechPlayer,
+  findEarlyBreak,
+  openCharacterSpeechStream,
+  splitSpeechSegments,
+} from "@/lib/character-speech";
 import { Phone, ScrollText, Menu, Info, Coins, PhoneCall, Video, Lock, AlertTriangle, X, RotateCcw } from "lucide-react";
 import type {
   ChatCharacter,
@@ -205,7 +210,6 @@ export function ChatMain({
     messageType?: "TEXT" | "VOICE";
   } | null>(null);
   const speechAudioCtxRef = useRef<AudioContext | null>(null);
-  const speechSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const [headerAvatarBroken, setHeaderAvatarBroken] = useState(false);
 
   useEffect(() => {
@@ -236,51 +240,32 @@ export function ChatMain({
     return audioContext;
   }, []);
 
-  const playSpeechAudio = useCallback(
-    async (audio: ArrayBuffer): Promise<void> => {
-      const audioContext = await getSpeechContext();
-      const decodedAudio = await audioContext.decodeAudioData(audio.slice(0));
-
-      await new Promise<void>((resolve) => {
-        const source = audioContext.createBufferSource();
-        source.buffer = decodedAudio;
-        source.connect(audioContext.destination);
-        speechSourceRef.current = source;
-        source.onended = () => {
-          if (speechSourceRef.current === source) {
-            speechSourceRef.current = null;
-          }
-          resolve();
-        };
-        source.start();
-      });
-    },
-    [getSpeechContext],
-  );
-
-  const speechQueue = useMemo(
-    () => createSpeechQueue((text) => synthesizeCharacterSpeech(character.id, text), playSpeechAudio),
-    [character.id, playSpeechAudio],
+  const speechPlayer = useMemo(
+    () =>
+      createStreamingSpeechPlayer({
+        getContext: getSpeechContext,
+        getDestination: (context) => context.destination,
+        open: (text, signal) => openCharacterSpeechStream(character.id, text, signal),
+      }),
+    [character.id, getSpeechContext],
   );
 
   const stopSpeech = useCallback(() => {
-    speechQueue.cancel();
-    speechSourceRef.current?.stop();
-    speechSourceRef.current = null;
+    speechPlayer.stop();
     setSpeakingMessageId(null);
-  }, [speechQueue]);
+  }, [speechPlayer]);
 
   /** Đọc lại một tin nhắn: từng câu được đọc ngay khi có âm thanh, giọng giống trên mọi thiết bị. */
   const speakMessage = useCallback(
     async (text: string, messageId: string): Promise<void> => {
       stopSpeech();
       setSpeakingMessageId(messageId);
-      const segments = splitSpeechSegments(text);
-      const finished = segments.map((segment) => speechQueue.enqueue(segment));
+      const segments = splitSpeechSegments(text, { earlyFirst: true });
+      const finished = segments.map((segment) => speechPlayer.enqueue(segment));
       await Promise.all(finished);
       setSpeakingMessageId((current) => (current === messageId ? null : current));
     },
-    [speechQueue, stopSpeech],
+    [speechPlayer, stopSpeech],
   );
 
   const speak = useCallback((text: string, messageId: string) => {
@@ -533,7 +518,7 @@ export function ChatMain({
 
   const enqueueSpeech = (text: string) => {
     for (const segment of splitSpeechSegments(text)) {
-      void speechQueue.enqueue(segment);
+      void speechPlayer.enqueue(segment);
     }
   };
 
@@ -587,6 +572,8 @@ export function ChatMain({
 
     // Buffer for streaming speech chunk-by-chunk
     let sentenceBuffer = "";
+    // Cụm đầu được đọc ngay ở dấu phẩy, không chờ hết câu
+    let spokeFirstPhrase = false;
     // Only split on sentence endings (. ! ? \n) to avoid unnatural TTS pauses between commas
     const punctuationRegex = /([.!?\n]+)/;
 
@@ -618,11 +605,14 @@ export function ChatMain({
         // Streaming voice logic: speak phrases as soon as punctuation is detected
         sentenceBuffer += chunk;
         const match = sentenceBuffer.match(punctuationRegex);
-        if (match && match.index !== undefined) {
-          const splitIndex = match.index + match[0].length;
+        const earlyBreak = spokeFirstPhrase ? -1 : findEarlyBreak(sentenceBuffer);
+        const splitIndex =
+          match && match.index !== undefined ? match.index + match[0].length : earlyBreak;
+        if (splitIndex > 0) {
           const phraseToSpeak = sentenceBuffer.slice(0, splitIndex).trim();
           sentenceBuffer = sentenceBuffer.slice(splitIndex);
           if (phraseToSpeak.length > 1) { // Avoid speaking stray punctuation
+            spokeFirstPhrase = true;
             enqueueSpeech(phraseToSpeak);
           }
         }
@@ -659,7 +649,7 @@ export function ChatMain({
           quotes: resData.quotesUsed,
         };
 
-        if (speechSourceRef.current) {
+        if (speechPlayer.isPlaying()) {
           setSpeakingMessageId(newAssistantMsg.id);
         }
 

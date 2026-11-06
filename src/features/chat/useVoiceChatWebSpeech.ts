@@ -17,7 +17,12 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { createSpeechQueue, splitSpeechSegments, synthesizeCharacterSpeech } from "@/lib/character-speech";
+import {
+  createStreamingSpeechPlayer,
+  openCharacterSpeechStream,
+  splitSpeechSegments,
+  type StreamingSpeechPlayer,
+} from "@/lib/character-speech";
 import { useAuthStore } from "@/store/auth.store";
 import { getWebSpeechTTS, WebSpeechTTS } from "@/lib/web-speech-tts";
 import { getWebSpeechSTT, WebSpeechSTT } from "@/lib/web-speech-stt";
@@ -81,7 +86,7 @@ export function useVoiceChatWebSpeech({
   const audioCtxRef = useRef<AudioContext | null>(null);
   const ttsAnalyserRef = useRef<AnalyserNode | null>(null);
   const activeTtsAnalyserRef = useRef<AnalyserLike | null>(null);
-  const azureSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const speechPlayerRef = useRef<{ characterId: string; player: StreamingSpeechPlayer } | null>(null);
   
   // Simulated analyser cho lip-sync (vì Web Speech API không cung cấp audio data)
   const simulatedAnalyserRef = useRef<SimulatedAnalyserNode | null>(null);
@@ -136,63 +141,56 @@ export function useVoiceChatWebSpeech({
     return audioCtxRef.current;
   }, []);
 
-  const playCharacterAudio = useCallback(
-    async (audio: ArrayBuffer): Promise<void> => {
-      // Cuộc gọi đã bị hủy hoặc bị ngắt lời (barge-in) trong lúc tải/giải mã audio — đừng phát nữa.
-      if (abortRef.current || bargeInRef.current) return;
-
-      const audioContext = ensureAudioContext();
-      if (audioContext.state === "suspended") {
-        await audioContext.resume();
-      }
-
-      const decodedAudio = await audioContext.decodeAudioData(audio.slice(0));
-
-      if (abortRef.current || bargeInRef.current) return;
-
-      await new Promise<void>((resolve) => {
-        const source = audioContext.createBufferSource();
-        source.buffer = decodedAudio;
-        source.connect(ttsAnalyserRef.current ?? audioContext.destination);
-        azureSourceRef.current = source;
-        activeTtsAnalyserRef.current = ttsAnalyserRef.current;
-        source.onended = () => {
-          if (azureSourceRef.current === source) {
-            azureSourceRef.current = null;
-          }
-          resolve();
-        };
-        source.start();
-      });
-    },
-    [ensureAudioContext],
-  );
+  const getSpeechPlayer = useCallback((): StreamingSpeechPlayer => {
+    if (speechPlayerRef.current?.characterId !== characterId) {
+      speechPlayerRef.current?.player.stop();
+      speechPlayerRef.current = {
+        characterId,
+        player: createStreamingSpeechPlayer({
+          getContext: async () => {
+            const audioContext = ensureAudioContext();
+            if (audioContext.state === "suspended") {
+              await audioContext.resume();
+            }
+            return audioContext;
+          },
+          // Nối qua analyser để avatar 3D nhép môi theo giọng thật
+          getDestination: (audioContext) => {
+            activeTtsAnalyserRef.current = ttsAnalyserRef.current;
+            return ttsAnalyserRef.current ?? audioContext.destination;
+          },
+          open: (text, signal) => openCharacterSpeechStream(characterId, text, signal),
+        }),
+      };
+    }
+    return speechPlayerRef.current.player;
+  }, [characterId, ensureAudioContext]);
 
   /**
-   * Đọc câu trả lời bằng giọng của nhân vật do BE tạo. Câu sau được tạo âm thanh
-   * trong lúc câu trước đang phát, nên câu đầu được nghe sớm và không bị ngắt giữa chừng.
+   * Đọc câu trả lời bằng giọng của nhân vật do BE tạo. Âm thanh được phát ngay khi về,
+   * câu sau được tải trong lúc câu trước đang phát.
    */
   const speakCharacterReply = useCallback(
     async (text: string, signal?: AbortSignal): Promise<void> => {
-      const queue = createSpeechQueue(
-        (segment) => synthesizeCharacterSpeech(characterId, segment, signal),
-        playCharacterAudio,
-      );
-      const finished = splitSpeechSegments(text).map((segment) => queue.enqueue(segment));
+      if (abortRef.current || bargeInRef.current) return;
+      const player = getSpeechPlayer();
+      const stopOnAbort = () => player.stop();
+      signal?.addEventListener("abort", stopOnAbort);
       try {
-        await Promise.all(finished);
+        await Promise.all(
+          splitSpeechSegments(text, { earlyFirst: true }).map((segment) => player.enqueue(segment)),
+        );
       } finally {
-        queue.cancel();
+        signal?.removeEventListener("abort", stopOnAbort);
       }
     },
-    [characterId, playCharacterAudio],
+    [getSpeechPlayer],
   );
 
   /** Dừng ngay audio TTS đang phát (Azure buffer source + Web Speech synth + lip-sync giả lập). */
   const stopSpeechPlayback = useCallback(() => {
     ttsRef.current?.cancel();
-    azureSourceRef.current?.stop();
-    azureSourceRef.current = null;
+    speechPlayerRef.current?.player.stop();
     simulatedAnalyserRef.current?.stop();
   }, []);
 
