@@ -596,13 +596,13 @@ function BattleChat({
           </button>
         )}
 
-        {/* Cuộc trò chuyện mới */}
+        {/* Phỏng vấn mới */}
         <button
           type="button"
           onClick={handleNewSession}
           disabled={busy}
-          title="Cuộc trò chuyện mới"
-          aria-label="Tạo cuộc trò chuyện mới"
+          title="Phỏng vấn mới"
+          aria-label="Bắt đầu phỏng vấn mới"
           className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-[var(--border-strong)] text-[var(--text-secondary)] transition hover:border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] disabled:opacity-40"
         >
           {createSession.isPending ? (

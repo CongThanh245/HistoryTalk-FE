@@ -19,7 +19,7 @@ import {
   FileText,
   GraduationCap,
 } from "lucide-react";
-import type { ChatCharacter, ChatSession } from "@/services/chat.service";
+import { CHAT_MODE_LABELS, type ChatCharacter, type ChatSession } from "@/services/chat.service";
 import { characterService } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
@@ -369,8 +369,13 @@ export function ChatRightPanel({
           >
             <Plus className="w-4 h-4" />
           </div>
-          <span className="flex-1 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] group-hover:text-[var(--text-inverse)]">
-            Cuộc trò chuyện mới
+          <span className="flex-1 min-w-0">
+            <span className="block text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] group-hover:text-[var(--text-inverse)]">
+              {CHAT_MODE_LABELS.CHAT} mới
+            </span>
+            <span className="block text-[11px] text-content-muted group-hover:text-[var(--text-inverse)]">
+              Bạn hỏi, {activeCharacter.name} trả lời
+            </span>
           </span>
         </button>
 
@@ -384,7 +389,7 @@ export function ChatRightPanel({
             </div>
             <span className="flex-1 min-w-0">
               <span className="block text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] group-hover:text-[var(--text-inverse)]">
-                Vấn đáp
+                {CHAT_MODE_LABELS.EXAM}
               </span>
               <span className="block text-[11px] text-content-muted group-hover:text-[var(--text-inverse)]">
                 {activeCharacter.name} hỏi, bạn trả lời và được chấm điểm
@@ -482,11 +487,12 @@ export function ChatRightPanel({
                           : "text-content-heading",
                       )}
                     >
-                      {session.mode === "EXAM" && (
-                        <span className="mr-1.5 inline-block rounded-sm border border-[var(--text-primary)] px-1 py-px align-[1px] text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)]">
-                          Vấn đáp
-                        </span>
-                      )}
+                      <span className={cn(
+                        "mr-1.5 inline-block rounded-sm border px-1 py-px align-[1px] text-[9px] font-bold uppercase tracking-[0.08em]",
+                        session.mode === "EXAM" ? "border-[var(--text-primary)] text-[var(--text-primary)]" : "border-[var(--border-strong)] text-content-muted",
+                      )}>
+                        {CHAT_MODE_LABELS[session.mode === "EXAM" ? "EXAM" : "CHAT"]}
+                      </span>
                       {session.title || "Cuộc trò chuyện"}
                     </p>
                     <p
@@ -534,7 +540,7 @@ export function ChatRightPanel({
           className="btn-ink w-full min-h-9 px-3 text-[11px] cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
-          Cuộc trò chuyện mới
+          {CHAT_MODE_LABELS.CHAT} mới
         </button>
       </div>
     </>

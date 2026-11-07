@@ -8,6 +8,9 @@ import { inappropriateMessageFromError } from "@/lib/utils/content-policy";
 /** EXAM: the character asks and grades, the learner answers (chat_exam_mode_api_contract.md). */
 export type ChatSessionMode = "CHAT" | "EXAM";
 
+/** Names of the two modes in the UI: the learner interviews the character, or the character examines the learner. */
+export const CHAT_MODE_LABELS: Record<ChatSessionMode, string> = { CHAT: "Phỏng vấn", EXAM: "Vấn đáp" };
+
 export const EXAM_QUESTION_COUNT = { min: 3, max: 10, default: 5 } as const;
 
 export interface ChatSession {
