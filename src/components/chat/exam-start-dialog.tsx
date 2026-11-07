@@ -49,19 +49,19 @@ export function ExamStartDialog({
             Vấn đáp với {characterName}
           </DialogTitle>
           <DialogDescription className="text-sm leading-relaxed text-content-text">
-            {characterName} sẽ lần lượt hỏi, bạn trả lời từng câu và được chấm ngay. Mỗi câu chỉ trả lời một lần,
-            hết câu hỏi sẽ có điểm trên thang 10.
+            {characterName} hỏi lần lượt từng câu. Mỗi câu bạn trả lời một lần và được nhận xét ngay; trả lời xong câu
+            cuối thì có điểm tổng trên thang 10.
           </DialogDescription>
         </DialogHeader>
 
         {isFreeCustomer ? (
           <p className="border border-[var(--border-strong)] px-3 py-2 text-sm text-content-text">
-            Gói Free được hỏi tối đa {FREE_EXAM_QUESTIONS} câu mỗi buổi vấn đáp. Nâng cấp Plus hoặc Pro để chọn từ{" "}
+            Gói Free được chấm điểm sau {FREE_EXAM_QUESTIONS} câu mỗi buổi vấn đáp. Nâng cấp Plus hoặc Pro để chọn từ{" "}
             {EXAM_QUESTION_COUNT.min} đến {EXAM_QUESTION_COUNT.max} câu.
           </p>
         ) : (
         <fieldset className="grid gap-2">
-          <legend className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-content-muted">Số câu hỏi</legend>
+          <legend className="mb-2 text-sm font-semibold text-content-heading">Bạn muốn được chấm điểm sau bao nhiêu câu?</legend>
           <div className="flex flex-wrap gap-1.5">
             {COUNTS.map((n) => (
               <button
@@ -80,6 +80,9 @@ export function ExamStartDialog({
               </button>
             ))}
           </div>
+          <p className="text-xs text-content-muted">
+            Trả lời đủ {count} câu, {characterName} sẽ tổng kết và cho điểm.
+          </p>
         </fieldset>
         )}
 
@@ -99,7 +102,7 @@ export function ExamStartDialog({
             }}
             className="btn-crimson min-h-0 px-4 py-2 text-sm"
           >
-            Bắt đầu vấn đáp
+            {isFreeCustomer ? "Bắt đầu vấn đáp" : `Bắt đầu ${count} câu`}
           </button>
         </DialogFooter>
       </DialogContent>

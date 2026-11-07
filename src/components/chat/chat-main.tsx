@@ -1054,14 +1054,35 @@ export function ChatMain({
           <span className="font-bold uppercase tracking-[0.08em] text-[var(--text-primary)]">Vấn đáp</span>
           <span className="tabular-nums text-content-text">
             {exam.finished
-              ? `Đã trả lời ${exam.answeredQuestions}/${exam.totalQuestions} câu`
+              ? `Đã xong ${exam.totalQuestions} câu`
               : `Câu ${Math.min(exam.answeredQuestions + 1, exam.totalQuestions)}/${exam.totalQuestions}`}
           </span>
+          {!exam.finished && (
+            <span className="font-semibold text-[var(--text-primary)]">
+              {exam.totalQuestions - exam.answeredQuestions <= 1
+                ? "Câu cuối, trả lời xong là có điểm"
+                : `Còn ${exam.totalQuestions - exam.answeredQuestions} câu nữa là có điểm`}
+            </span>
+          )}
           <span className="tabular-nums text-content-text">
-            Điểm <strong className="text-content-heading">{exam.score.toLocaleString("vi-VN")}</strong>/10
+            {exam.finished ? "Điểm" : "Điểm tạm"}{" "}
+            <strong className="text-content-heading">{exam.score.toLocaleString("vi-VN")}</strong>/10
           </span>
           <span className="tabular-nums text-content-muted">
             Đúng {exam.correctCount} · Một phần {exam.partialCount} · Sai {exam.incorrectCount}
+          </span>
+          <span
+            className="basis-full h-1 overflow-hidden rounded-full bg-[var(--border-default)]"
+            role="progressbar"
+            aria-label="Tiến độ vấn đáp"
+            aria-valuemin={0}
+            aria-valuemax={exam.totalQuestions}
+            aria-valuenow={exam.answeredQuestions}
+          >
+            <span
+              className="block h-full bg-[var(--accent-gold)] transition-[width] duration-300"
+              style={{ width: `${(exam.answeredQuestions / Math.max(1, exam.totalQuestions)) * 100}%` }}
+            />
           </span>
         </div>
       )}
