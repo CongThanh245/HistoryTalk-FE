@@ -52,6 +52,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { ChatMain } from "@/components/chat/chat-main";
+import { ExamStartDialog } from "@/components/chat/exam-start-dialog";
+import { CHAT_MODE_LABELS } from "@/services/chat.service";
 import { StaffCharacterMediaPreview } from "@/components/staff/staff-media-preview";
 import { MediaSlotField } from "@/components/staff/media-slot-field";
 import { CharacterVoiceFields } from "@/components/staff/character-voice-fields";
@@ -194,6 +196,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     activeChatContextId,
     chatCharacter,
     chatInitializingLabel,
+    startTestExam,
+    startTestInterview,
+    testSessionMode,
+    isStartingTestExam,
     canStartChat,
     selectedContextId,
     setSelectedContextId,
@@ -208,6 +214,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     resetQuickCtx,
     createEvent,
   } = useStaffCharacterDetailView(props);
+  const [isTestExamDialogOpen, setIsTestExamDialogOpen] = React.useState(false);
 
   type MediaKind = "IMAGE_2D" | "MODEL_3D" | "VIDEO";
 
@@ -1310,9 +1317,40 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
         <div className="flex-1 flex flex-col min-w-0 relative bg-[var(--bg-app)]">
           <div className="flex shrink-0 items-center gap-2 border-b px-6 py-2.5 border-[var(--border-default)] bg-[var(--bg-main)]">
             <ChatCircleDotsIcon className="h-4 w-4 text-[var(--accent-gold)]" aria-hidden="true" />
-            <p className="text-sm font-semibold text-[var(--content-heading)]">Thử trò chuyện</p>
-            <p className="truncate text-xs text-[var(--content-muted)]">· Kiểm tra cách nhân vật trả lời theo nội dung đã lưu</p>
+            <p className="whitespace-nowrap text-sm font-semibold text-[var(--content-heading)]">Thử trò chuyện</p>
+            <p className="hidden truncate text-xs text-[var(--content-muted)] lg:block">· Kiểm tra cách nhân vật trả lời theo nội dung đã lưu</p>
+            {canStartChat && (
+              <div className="ml-auto flex shrink-0 overflow-hidden rounded-sm border border-[var(--border-strong)]" role="group" aria-label="Chế độ thử">
+                {(["CHAT", "EXAM"] as const).map((mode) => {
+                  const active = (isStartingTestExam ? "EXAM" : testSessionMode) === mode;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      aria-pressed={active}
+                      disabled={isStartingTestExam}
+                      title={mode === "CHAT" ? "Bạn hỏi, nhân vật trả lời" : "Nhân vật hỏi, chấm và cho điểm"}
+                      onClick={() => (mode === "CHAT" ? startTestInterview() : setIsTestExamDialogOpen(true))}
+                      className={cn(
+                        "px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-60",
+                        active
+                          ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                          : "text-[var(--content-heading)] hover:bg-[var(--status-neutral-bg)]",
+                      )}
+                    >
+                      {CHAT_MODE_LABELS[mode]}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
+          <ExamStartDialog
+            open={isTestExamDialogOpen}
+            characterName={chatCharacter.name}
+            onOpenChange={setIsTestExamDialogOpen}
+            onStart={startTestExam}
+          />
           {canStartChat ? (
             <ChatMain
               character={chatCharacter}

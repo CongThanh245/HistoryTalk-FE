@@ -10,17 +10,21 @@ import { ChatRightPanel } from "./chat-right-panel";
 import { DocumentCitationDialog } from "./document-citation-dialog";
 import { useCreateSession, useChatSessions } from "@/features/chat/hooks";
 import { isTokenExhaustionError } from "@/lib/utils/api-error";
+import { ChatModeChooser } from "./chat-mode-chooser";
 
 interface ChatClientProps {
   initialCharacterId: string;
   initialContextId?: string;
   initialSessionId?: string;
+  /** Open the interview right away (assignment links, calls) instead of asking Phỏng vấn or Vấn đáp. */
+  skipModeChoice?: boolean;
 }
 
 export function ChatClient({
   initialCharacterId,
   initialContextId,
   initialSessionId,
+  skipModeChoice = false,
 }: ChatClientProps) {
   const [activeCharacterId, setActiveCharacterId] = useState<string | null>(
     initialCharacterId || null,
@@ -32,6 +36,8 @@ export function ChatClient({
     null,
   );
   const sessionInitialized = useRef(false);
+  /** Phỏng vấn or Vấn đáp has been picked for this character (or a session was opened directly). */
+  const [modeChosen, setModeChosen] = useState(!!initialSessionId || skipModeChoice);
 
   const { data: activeCharacter, isLoading: isLoadingCharacter } = useQuery({
     queryKey: queryKeys.chat.character(activeCharacterId ?? ""),
@@ -71,11 +77,14 @@ export function ChatClient({
     if (sessionInitialized.current) return;
     if (activeSessionId) return;
     if (isTokenExhausted) return;
+    if (!modeChosen) return;
 
     sessionInitialized.current = true;
 
-    if (sessions && sessions.length > 0) {
-      setActiveSessionId(sessions[0].id);
+    // "Phỏng vấn" resumes the latest interview, never an exam session.
+    const interview = sessions?.find((s) => s.mode !== "EXAM");
+    if (interview) {
+      setActiveSessionId(interview.id);
     } else {
       createSession
         .mutateAsync({ characterId, contextId })
@@ -100,6 +109,7 @@ export function ChatClient({
     isTokenExhausted,
     tokenExhaustionKey,
     createSession,
+    modeChosen,
   ]);
 
   const handleSelectCharacter = useCallback((char: ChatCharacter) => {
@@ -107,6 +117,8 @@ export function ChatClient({
     setActiveSessionId(null);
     setTokenExhaustedFor(null);
     sessionInitialized.current = false;
+    // A new character asks again which mode.
+    setModeChosen(false);
   }, []);
 
   const handleSessionCreated = useCallback((sessionId: string) => {
@@ -135,6 +147,7 @@ export function ChatClient({
     if (isTokenExhausted) return;
 
     sessionInitialized.current = true;
+    setModeChosen(true);
     setActiveSessionId(null);
     setIsRightPanelOpen(false);
     createSession
@@ -161,6 +174,7 @@ export function ChatClient({
 
       const previousSessionId = activeSessionId;
       sessionInitialized.current = true;
+      setModeChosen(true);
       setActiveSessionId(null);
       setIsRightPanelOpen(false);
       setIsStartingExam(true);
@@ -172,8 +186,13 @@ export function ChatClient({
             setTokenExhaustedFor(tokenExhaustionKey);
             return;
           }
-          // e.g. the character has too few documents: go back to the conversation the learner was in.
+          // e.g. the character has too few documents: go back to the conversation the learner was in,
+          // or to the mode choice when the exam was picked there.
           setActiveSessionId(previousSessionId);
+          if (!previousSessionId) {
+            sessionInitialized.current = false;
+            setModeChosen(false);
+          }
         })
         .finally(() => setIsStartingExam(false));
     },
@@ -190,6 +209,15 @@ export function ChatClient({
 
   return (
     <div className="relative flex w-full h-full overflow-hidden">
+      {!modeChosen && !activeSessionId ? (
+        <ChatModeChooser
+          character={activeCharacter}
+          hasInterview={(sessions ?? []).some((s) => s.mode !== "EXAM")}
+          busy={!isSessionsSuccess || createSession.isPending}
+          onInterview={() => setModeChosen(true)}
+          onExam={handleStartExamSession}
+        />
+      ) : (
       <ChatMain
         character={activeCharacter}
         contextId={contextId}
@@ -202,6 +230,7 @@ export function ChatClient({
         isTokenExhausted={isTokenExhausted}
         onTokenExhausted={() => setTokenExhaustedFor(tokenExhaustionKey)}
       />
+      )}
       <ChatRightPanel
         activeCharacter={activeCharacter}
         onSelectCharacter={handleSelectCharacter}
@@ -212,7 +241,10 @@ export function ChatClient({
         sessions={sessions ?? []}
         isLoadingSessions={isLoadingSessions}
         activeSessionId={activeSessionId}
-        onSelectSession={setActiveSessionId}
+        onSelectSession={(id) => {
+          setModeChosen(true);
+          setActiveSessionId(id);
+        }}
         onNewSession={handleStartNewSession}
         onNewExamSession={handleStartExamSession}
         onDeleteSession={handleDeleteSession}

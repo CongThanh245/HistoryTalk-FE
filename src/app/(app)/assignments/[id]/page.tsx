@@ -277,7 +277,8 @@ function AssignmentActions({
   const characterScenarios = (scenarios.data ?? []).filter((s) => s.characterId === a.targetId);
   const [pickingScenario, setPickingScenario] = React.useState(false);
   const chatHref = (contextId?: string | null, sessionId?: string | null) => {
-    const query = new URLSearchParams();
+    // The assignment counts interview messages, so skip the Phỏng vấn / Vấn đáp choice.
+    const query = new URLSearchParams({ mode: "chat" });
     if (contextId) query.set("contextId", contextId);
     if (sessionId) query.set("sessionId", sessionId);
     const qs = query.toString();

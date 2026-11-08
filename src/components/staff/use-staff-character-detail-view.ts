@@ -376,8 +376,10 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     sessionInitialized.current = true;
     const requestId = ++sessionRequestIdRef.current;
 
-    if (sessions && sessions.length > 0) {
-      setSessionId(sessions[0].id);
+    // The test panel opens on an interview; exam sessions are started from its mode switch.
+    const interview = sessions?.find((s) => s.mode !== "EXAM");
+    if (interview) {
+      setSessionId(interview.id);
       setIsSwitchingContext(false);
     } else {
       createSession.mutateAsync({
@@ -452,7 +454,49 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     prevPendingRef.current = isPending;
   }, [isPending, createdCharacterId, draft.id, isCreated, activeChatContextId, characterId, createSession, sessionId]);
 
-  const chatInitializingLabel = isRecreatingSession
+  // ── Test panel mode: Phỏng vấn (the admin asks) or Vấn đáp (the character asks and grades) ──
+  const [isStartingTestExam, setIsStartingTestExam] = React.useState(false);
+  /** Starts an exam session with the character in the current test context. */
+  const startTestExam = (questionCount: number) => {
+    if (!isCreated || !activeChatContextId) return;
+    const requestId = ++sessionRequestIdRef.current;
+    const previousSessionId = sessionId;
+    setIsStartingTestExam(true);
+    setSessionId(null);
+    createSession
+      .mutateAsync({ characterId, contextId: activeChatContextId, exam: { questionCount } })
+      .then((session) => {
+        if (sessionRequestIdRef.current === requestId) setSessionId(session.id);
+      })
+      .catch(() => {
+        // The hook toasts the reason (e.g. too few documents); go back to the previous conversation.
+        if (sessionRequestIdRef.current === requestId) setSessionId(previousSessionId);
+      })
+      .finally(() => setIsStartingTestExam(false));
+  };
+  /** Back to the latest interview in this context, or a new one. */
+  const startTestInterview = () => {
+    if (!isCreated || !activeChatContextId) return;
+    const interview = sessions?.find((s) => s.mode !== "EXAM");
+    if (interview) {
+      ++sessionRequestIdRef.current;
+      setSessionId(interview.id);
+      return;
+    }
+    const requestId = ++sessionRequestIdRef.current;
+    setSessionId(null);
+    createSession
+      .mutateAsync({ characterId, contextId: activeChatContextId })
+      .then((session) => {
+        if (sessionRequestIdRef.current === requestId) setSessionId(session.id);
+      })
+      .catch(() => undefined);
+  };
+  const testSessionMode = sessions?.find((s) => s.id === sessionId)?.mode === "EXAM" ? "EXAM" : "CHAT";
+
+  const chatInitializingLabel = isStartingTestExam
+    ? "Nhân vật đang chuẩn bị câu hỏi vấn đáp..."
+    : isRecreatingSession
     ? "Đã lưu thay đổi — đang tạo phiên trò chuyện mới để áp dụng..."
     : isSwitchingContext
       ? "Đang chuyển bối cảnh — sẽ tạo phiên trò chuyện mới..."
@@ -660,6 +704,10 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     activeChatContextId,
     chatCharacter,
     chatInitializingLabel,
+    startTestExam,
+    startTestInterview,
+    testSessionMode,
+    isStartingTestExam,
     canStartChat,
 
     // context linking
