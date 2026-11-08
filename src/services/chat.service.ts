@@ -95,6 +95,29 @@ export interface ChatHistoryGroup {
   sessions: ChatHistorySession[];
 }
 
+/**
+ * A character together with a historical context it took part in: the valid pairs for
+ * POST /chat/sessions (GET /chat/scenarios). School accounts also get their school's local pairs.
+ */
+export interface ChatScenario {
+  scenarioId: string;
+  characterId: string;
+  characterName: string;
+  characterTitle?: string | null;
+  characterAvatar?: string | null;
+  characterPersonality?: string | null;
+  contextId: string;
+  contextName: string;
+  contextEra?: string | null;
+  contextYear?: number | null;
+  contextImage?: string | null;
+  contextSummary?: string | null;
+  scope: "GLOBAL" | "SCHOOL" | string;
+}
+
+/** Most scenarios fetched per request; every page is fetched. */
+const SCENARIO_PAGE_SIZE = 100;
+
 export interface ChatCharacter {
   id: string;
   name: string;
@@ -300,6 +323,23 @@ export const chatService = {
       onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens, messageType, quotesUsed });
     } catch (err) {
       onError(err);
+    }
+  },
+
+  /**
+   * Every scenario (all pages). The API pages with `page` (1-based) and `size`; it ignores `limit`.
+   * Optional `search` matches the character or context name.
+   */
+  getScenarios: async (params: { search?: string } = {}): Promise<ChatScenario[]> => {
+    const all: ChatScenario[] = [];
+    for (let page = 1; ; page++) {
+      const res = await axiosClient.get("/chat/scenarios", {
+        params: { page, size: SCENARIO_PAGE_SIZE, search: params.search || undefined },
+      });
+      const items = (res.data?.data ?? []) as ChatScenario[];
+      all.push(...items);
+      const totalPages = Number(res.data?.pagination?.totalPages) || 1;
+      if (page >= totalPages || items.length === 0) return all;
     }
   },
 

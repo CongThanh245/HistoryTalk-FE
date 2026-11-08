@@ -18,7 +18,7 @@ import {
 } from "@/components/saas/teacher-class-assignments";
 import { TargetPreviewDrawer, yearText, type PreviewTarget } from "@/components/saas/teaching-target-preview";
 import { ROUTES } from "@/constants/routes";
-import { useCharacters } from "@/features/characters/hooks";
+import { useChatScenarios } from "@/features/chat/hooks";
 import { useEvents } from "@/features/events/hooks";
 import { useQuizSets } from "@/features/quiz/hooks";
 import { localKeys, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
@@ -625,10 +625,27 @@ function ContextPicker({ selected, onSelect }: PickerProps) {
   );
 }
 
-/** GET /characters */
+/**
+ * GET /chat/scenarios: HistoryTalk characters that have at least one context to chat in, with those contexts.
+ * The assignment stores only the character; the student picks one of its contexts when starting.
+ */
 function CharacterPicker({ selected, onSelect }: PickerProps) {
-  const q = useCharacters({ page: 1, limit: 100 });
-  const options: Target[] = (q.data?.content ?? []).map((c) => ({ id: c.id, title: c.name, meta: c.title, preview: { kind: "character", id: c.id } }));
+  const q = useChatScenarios();
+  const options: Target[] = React.useMemo(() => {
+    const byCharacter = new Map<string, { title: string; subtitle?: string | null; contexts: string[] }>();
+    for (const s of q.data ?? []) {
+      if (s.scope !== "GLOBAL") continue; // the school's own characters are in the other tabs
+      const entry = byCharacter.get(s.characterId) ?? { title: s.characterName, subtitle: s.characterTitle, contexts: [] };
+      if (!entry.contexts.includes(s.contextName)) entry.contexts.push(s.contextName);
+      byCharacter.set(s.characterId, entry);
+    }
+    return [...byCharacter].map(([id, c]) => ({
+      id,
+      title: c.title,
+      meta: [c.subtitle, `Bối cảnh: ${c.contexts.join(", ")}`].filter(Boolean).join(" · "),
+      preview: { kind: "character" as const, id },
+    }));
+  }, [q.data]);
   return (
     <ApiState loading={q.isLoading} error={q.isError ? q.error : null}>
       <TargetList options={options} selected={selected} onSelect={onSelect} />

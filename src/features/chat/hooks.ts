@@ -167,3 +167,13 @@ export function useSoftDeleteSession() {
     },
   });
 }
+
+/** Valid character + context pairs (GET /chat/scenarios), all pages. */
+export function useChatScenarios(enabled = true) {
+  return useQuery({
+    queryKey: ["chat", "scenarios"] as const,
+    queryFn: () => chatService.getScenarios(),
+    enabled,
+    staleTime: 1000 * 60 * 5,
+  });
+}
