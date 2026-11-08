@@ -91,10 +91,23 @@ function Field({
 }
 
 /** "Request a quote": sends the school's contact details with the plan chosen in the calculator. */
-export function B2bQuoteForm({ quote, summary }: { quote: B2bQuoteInput; summary: string }) {
+export function B2bQuoteForm({
+  quote,
+  summary,
+  onSubmitted,
+}: {
+  quote: B2bQuoteInput;
+  summary: string;
+  /** Called when the confirmation with the quote code is closed (e.g. to close the dialog holding the form). */
+  onSubmitted?: () => void;
+}) {
   const [values, setValues] = useState<FormValues>(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
   const [submitted, setSubmitted] = useState<B2bQuote | null>(null);
+  const closeConfirmation = () => {
+    setSubmitted(null);
+    onSubmitted?.();
+  };
   const set = (key: keyof FormValues) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setValues((v) => ({ ...v, [key]: event.target.value }));
 
@@ -192,7 +205,7 @@ export function B2bQuoteForm({ quote, summary }: { quote: B2bQuoteInput; summary
         </div>
       </form>
 
-      <Dialog open={!!submitted} onOpenChange={(open) => !open && setSubmitted(null)}>
+      <Dialog open={!!submitted} onOpenChange={(open) => !open && closeConfirmation()}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -211,7 +224,7 @@ export function B2bQuoteForm({ quote, summary }: { quote: B2bQuoteInput; summary
             {submitted?.contactPhone}.
           </p>
           <DialogFooter>
-            <button type="button" onClick={() => setSubmitted(null)} className="btn-crimson min-h-0 px-4 py-2 text-sm">
+            <button type="button" onClick={closeConfirmation} className="btn-crimson min-h-0 px-4 py-2 text-sm">
               Đã hiểu
             </button>
           </DialogFooter>

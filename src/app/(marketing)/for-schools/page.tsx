@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Building2, Check, Loader2, School, Users } from "lucide-react";
+import { Building2, Check, Loader2, School, Send, Users } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Container } from "@/components/marketing/container";
 import { B2bQuoteForm } from "@/components/marketing/b2b-quote-form";
 import { cn } from "@/lib/utils/cn";
@@ -102,6 +109,7 @@ export default function ForSchoolsPage() {
   const [students, setStudents] = useState(850);
   const [teachers, setTeachers] = useState(22);
   const [promoCode, setPromoCode] = useState("");
+  const [quoteOpen, setQuoteOpen] = useState(false);
 
   const quoteInput: B2bQuoteInput = useMemo(
     () => ({ selectedPackage, numberOfStudents: students, numberOfTeachers: teachers, promoCode: promoCode.trim() || undefined }),
@@ -117,11 +125,11 @@ export default function ForSchoolsPage() {
   const calc = calcQuery.data;
   const isCalculating = calcQuery.isFetching || debouncedInput !== quoteInput;
 
-  const choosePlan = (plan: B2bPlan) => {
+  const choosePlan = (plan: B2bPlan, scroll = true) => {
     setSelectedPackage(plan.packageType);
     setStudents(plan.maxStudents);
     setTeachers(plan.maxTeachers);
-    calculatorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (scroll) calculatorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   // Changing the numbers by hand makes it a custom plan.
   const setCustom = (apply: () => void) => {
@@ -135,20 +143,27 @@ export default function ForSchoolsPage() {
 
   return (
     <div className="w-full overflow-hidden">
-      <section className="relative overflow-hidden pb-10 pt-32 md:pb-14 md:pt-40">
+      <section className="relative overflow-hidden pb-8 pt-8 md:pb-10 md:pt-10">
         <Container>
-          <div className="border-b border-[var(--text-primary)] pb-3">
-            <span className="archive-label">Dành cho trường học</span>
+          <div className="grid items-end gap-6 md:grid-cols-[minmax(0,1fr)_auto]">
+            <div>
+              <span className="archive-label">Dành cho trường học</span>
+              <h1 className="archive-title mt-3 max-w-4xl text-[clamp(30px,4.2vw,52px)]">
+                HistoryTalk cho nhà trường <em>trả theo số học sinh</em>
+              </h1>
+              <p className="mt-4 max-w-2xl text-[15px] leading-7 text-[var(--text-secondary)]">
+                Quỹ token chung cho cả năm học, kho nội dung lịch sử địa phương riêng, vấn đáp và quiz không giới hạn. Chọn
+                gói hoặc nhập quy mô trường để xem giá, rồi gửi yêu cầu báo giá ngay.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setQuoteOpen(true)}
+              className="btn-crimson inline-flex min-h-11 items-center justify-center gap-2 px-6 text-[13px] font-bold uppercase tracking-[0.08em]"
+            >
+              <Send className="h-4 w-4" aria-hidden="true" /> Gửi yêu cầu báo giá
+            </button>
           </div>
-          <h1 className="archive-title mt-10 max-w-4xl text-[clamp(34px,5.5vw,64px)]">
-            HistoryTalk cho nhà trường
-            <br />
-            <em>trả theo số học sinh, xem giá ngay</em>
-          </h1>
-          <p className="mt-6 max-w-2xl text-base leading-8 text-[var(--text-secondary)]">
-            Mỗi trường có quỹ token chung cho cả năm học, kho nội dung lịch sử địa phương riêng, chế độ vấn đáp và quiz
-            không giới hạn. Chọn một gói hoặc nhập số học sinh, giáo viên để tính giá rồi gửi yêu cầu báo giá.
-          </p>
         </Container>
       </section>
 
@@ -200,18 +215,30 @@ export default function ForSchoolsPage() {
                         {plan.discountPercent > 0 && ` · đã giảm ${plan.discountPercent}%`}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => choosePlan(plan)}
-                      className={cn(
-                        "mt-6 min-h-11 w-full rounded-sm border text-[13px] font-bold uppercase tracking-[0.08em] transition-colors",
-                        isInk
-                          ? "border-[var(--accent-gold)] bg-[var(--accent-gold)] text-[#FFFFFF] hover:opacity-90"
-                          : "border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]",
-                      )}
-                    >
-                      Tính giá gói này
-                    </button>
+                    <div className="mt-6 grid gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          choosePlan(plan, false);
+                          setQuoteOpen(true);
+                        }}
+                        className={cn(
+                          "min-h-11 w-full rounded-sm border text-[13px] font-bold uppercase tracking-[0.08em] transition-colors",
+                          isInk
+                            ? "border-[var(--accent-gold)] bg-[var(--accent-gold)] text-[#FFFFFF] hover:opacity-90"
+                            : "border-[var(--text-primary)] hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]",
+                        )}
+                      >
+                        Nhận báo giá gói này
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => choosePlan(plan)}
+                        className={cn("min-h-9 text-[12px] font-semibold underline-offset-4 hover:underline", isInk ? "text-[var(--text-inverse)] opacity-80" : "text-[var(--text-secondary)]")}
+                      >
+                        Tuỳ chỉnh số học sinh, giáo viên
+                      </button>
+                    </div>
                     <ul className={cn("mt-6 border-t", isInk ? "border-[var(--text-inverse)]/25" : "border-[var(--border-default)]")}>
                       {plan.highlights.map((text) => (
                         <li
@@ -321,7 +348,7 @@ export default function ForSchoolsPage() {
               )}
             </div>
 
-            <aside className="border-b border-r border-[var(--text-primary)] bg-[var(--text-primary)] p-6 text-[var(--text-inverse)] lg:p-8" aria-live="polite">
+            <aside className="border-b border-r border-[var(--text-primary)] bg-[var(--text-primary)] p-6 text-[var(--text-inverse)] lg:sticky lg:top-24 lg:self-start lg:p-8" aria-live="polite">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="archive-title is-plain text-[20px] text-[var(--text-inverse)]">Tóm tắt gói</h3>
                 {isCalculating && <Loader2 className="h-4 w-4 animate-spin opacity-70" aria-label="Đang tính" />}
@@ -352,20 +379,31 @@ export default function ForSchoolsPage() {
                   </p>
                 </dl>
               )}
+              <button
+                type="button"
+                onClick={() => setQuoteOpen(true)}
+                className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-sm border border-[var(--accent-gold)] bg-[var(--accent-gold)] text-[13px] font-bold uppercase tracking-[0.08em] text-[#FFFFFF] transition-opacity hover:opacity-90"
+              >
+                <Send className="h-4 w-4" aria-hidden="true" /> Gửi yêu cầu báo giá
+              </button>
+              <p className="mt-2 text-center text-xs opacity-70">Gửi kèm đúng gói và quy mô đang chọn ở trên.</p>
             </aside>
           </div>
         </Container>
       </section>
 
-      <section className="relative border-t border-[var(--text-primary)] py-16 md:py-20">
-        <Container className="max-w-4xl">
-          <h2 className="archive-title text-[clamp(26px,3.5vw,40px)]">Gửi yêu cầu báo giá</h2>
-          <p className="mb-8 mt-3 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
-            Điền thông tin người liên hệ của trường. Giá trên là giá niêm yết; mức chiết khấu cuối cùng được thống nhất khi tư vấn.
-          </p>
-          <B2bQuoteForm quote={quoteInput} summary={summaryText} />
-        </Container>
-      </section>
+      <Dialog open={quoteOpen} onOpenChange={setQuoteOpen}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Gửi yêu cầu báo giá</DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed text-content-text">
+              Điền thông tin người liên hệ của trường. Giá trên trang là giá niêm yết; chiết khấu cuối cùng được thống nhất khi
+              tư vấn.
+            </DialogDescription>
+          </DialogHeader>
+          <B2bQuoteForm quote={quoteInput} summary={summaryText} onSubmitted={() => setQuoteOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
