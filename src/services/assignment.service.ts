@@ -3,6 +3,7 @@
 // Type bam theo DTO Java: dto/assignment/*, dto/classroom/ClassroomStudentResponse...
 import { axiosClient } from "@/configs/axios.client";
 import { fromPagination, type ApiPage, type Gender, type StudentImportResult } from "@/services/school.service";
+import { withServerPage } from "@/lib/utils/pagination";
 
 // ─── Enums ─────────────────────────────────────────────────────────────────
 
@@ -214,7 +215,7 @@ export const assignmentService = {
     classroomId: string,
     params: TeacherAssignmentListParams = {},
   ): Promise<ApiPage<TeacherAssignment>> => {
-    const res = await axiosClient.get(`/teacher/assignments/classroom/${classroomId}`, { params });
+    const res = await axiosClient.get(`/teacher/assignments/classroom/${classroomId}`, { params: withServerPage(params) });
     return fromPagination<TeacherAssignment>(res.data);
   },
   getGradebook: async (assignmentId: string): Promise<AssignmentGradebook> => {
@@ -232,7 +233,7 @@ export const assignmentService = {
 
   // Student
   listMine: async (params: StudentAssignmentListParams = {}): Promise<ApiPage<StudentAssignment>> => {
-    const res = await axiosClient.get("/student/assignments", { params });
+    const res = await axiosClient.get("/student/assignments", { params: withServerPage(params) });
     const page = fromPagination<StudentAssignment>(res.data);
     return { ...page, items: page.items.map(mapStudentAssignment) };
   },
@@ -252,11 +253,11 @@ export const assignmentService = {
 
 export const classroomStudentService = {
   list: async (classId: string, params: ClassroomStudentListParams = {}): Promise<ApiPage<ClassroomStudent>> => {
-    const res = await axiosClient.get(`/classrooms/${classId}/students`, { params });
+    const res = await axiosClient.get(`/classrooms/${classId}/students`, { params: withServerPage(params) });
     return fromPagination<ClassroomStudent>(res.data);
   },
   listAvailable: async (classId: string, params: ClassroomStudentListParams = {}): Promise<ApiPage<AvailableStudent>> => {
-    const res = await axiosClient.get(`/classrooms/${classId}/available-students`, { params });
+    const res = await axiosClient.get(`/classrooms/${classId}/available-students`, { params: withServerPage(params) });
     return fromPagination<AvailableStudent>(res.data);
   },
   enroll: async (classId: string, studentIds: string[]): Promise<BatchEnrollResult> => {

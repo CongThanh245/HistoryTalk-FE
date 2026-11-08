@@ -5,6 +5,7 @@
 // Contract: BE docs/sprints/sprint_7/fe_contracts/school_subscription_daily_token_and_lifecycle_api_contract.md
 // Shapes follow the Java DTOs (dto/school/*), which are more complete than the markdown.
 import { axiosClient } from "@/configs/axios.client";
+import { fromServerPage, withServerPage } from "@/lib/utils/pagination";
 import type { ApiPage, ApiSchool, ApiStudent, EnterprisePackage } from "@/services/school.service";
 
 // ─── Token boost requests ──────────────────────────────────────────────────
@@ -138,7 +139,7 @@ export const TOP_UP_MIN = 1_000;
 
 // ─── Paging ────────────────────────────────────────────────────────────────
 
-/** `PaginatedResponse` of the boost list; `currentPage` is 0-based there. */
+/** `PaginatedResponse` of the boost list; `currentPage` is 1-based there (converted back to 0-based). */
 interface BoostPage {
   content: TokenBoostRequest[];
   totalElements: number;
@@ -153,7 +154,7 @@ function toPage(page: BoostPage | undefined): ApiPage<TokenBoostRequest> {
   const items = page?.content ?? [];
   return {
     items,
-    page: page?.currentPage ?? 0,
+    page: fromServerPage(page?.currentPage),
     size: page?.pageSize ?? items.length,
     totalElements: page?.totalElements ?? items.length,
     totalPages: page?.totalPages ?? 1,
@@ -184,7 +185,7 @@ export const schoolTokenService = {
 
   // Teacher: requests of the classes they teach + their own tickets
   listBoosts: async (params: BoostListParams = {}): Promise<ApiPage<TokenBoostRequest>> => {
-    const res = await axiosClient.get("/teacher/token-requests", { params });
+    const res = await axiosClient.get("/teacher/token-requests", { params: withServerPage(params) });
     return toPage(res.data.data);
   },
   /** Teacher: APPROVE takes the tokens from the teacher's own daily limit; ESCALATE forwards to the School Admin. */
@@ -205,7 +206,7 @@ export const schoolTokenService = {
 
   // School Admin: every ticket of the school; approving takes from the shared pool
   listBoostsForSchool: async (params: BoostListParams = {}): Promise<ApiPage<TokenBoostRequest>> => {
-    const res = await axiosClient.get("/school-admin/token-requests", { params });
+    const res = await axiosClient.get("/school-admin/token-requests", { params: withServerPage(params) });
     return toPage(res.data.data);
   },
   reviewBoostAsAdmin: async (id: string, payload: ReviewTokenBoostPayload): Promise<TokenBoostRequest> => {

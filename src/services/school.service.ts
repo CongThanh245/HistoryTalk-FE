@@ -3,6 +3,7 @@
 // Contract: BE docs/sprints/sprint_5/implemented_plan/saas_api_contract_for_fe.md
 //           BE docs/sprints/sprint_5/fe_contracts/saas_classroom_and_token_allocation_api_contract.md
 import { axiosClient } from "@/configs/axios.client";
+import { fromServerPage, withServerPage } from "@/lib/utils/pagination";
 
 // ─── Shared shapes ─────────────────────────────────────────────────────────
 
@@ -42,7 +43,7 @@ export function fromPagination<T>(body: { data?: T[]; pagination?: PaginationMet
   const p = body.pagination;
   return {
     items,
-    page: p?.page ?? 0,
+    page: fromServerPage(p?.page),
     size: p?.size ?? items.length,
     totalElements: p?.totalElements ?? items.length,
     totalPages: p?.totalPages ?? 1,
@@ -60,7 +61,7 @@ function fromSpringPage<T>(page: SpringPage<T> | undefined): ApiPage<T> {
   const items = page?.content ?? [];
   return {
     items,
-    page: page?.currentPage ?? 0,
+    page: fromServerPage(page?.currentPage),
     size: page?.pageSize ?? items.length,
     totalElements: page?.totalElements ?? items.length,
     totalPages: page?.totalPages ?? 1,
@@ -357,7 +358,7 @@ export interface ClassroomListParams {
 export const schoolService = {
   // System Admin
   listSchools: async (params: ListParams = {}): Promise<ApiPage<ApiSchool>> => {
-    const res = await axiosClient.get("/admin/schools", { params });
+    const res = await axiosClient.get("/admin/schools", { params: withServerPage(params) });
     return fromPagination<ApiSchool>(res.data);
   },
   getSchool: async (id: string): Promise<ApiSchool> => {
@@ -375,7 +376,7 @@ export const schoolService = {
   },
   /** sortBy: fullName | userName | email | createdAt */
   listSchoolAdmins: async (schoolId: string, params: AccountListParams = {}): Promise<ApiPage<ApiSchoolAdmin>> => {
-    const res = await axiosClient.get(`/admin/schools/${schoolId}/school-admins`, { params });
+    const res = await axiosClient.get(`/admin/schools/${schoolId}/school-admins`, { params: withServerPage(params) });
     return fromPagination<ApiSchoolAdmin>(res.data);
   },
   updateSchoolAdmin: async (id: string, payload: UpdateStaffAccountPayload): Promise<ApiSchoolAdmin> => {
@@ -401,7 +402,7 @@ export const schoolService = {
   },
   /** sortBy: fullName | userName | email | createdAt */
   listTeachers: async (params: AccountListParams = {}): Promise<ApiPage<ApiTeacher>> => {
-    const res = await axiosClient.get("/school-admin/teachers", { params });
+    const res = await axiosClient.get("/school-admin/teachers", { params: withServerPage(params) });
     return fromPagination<ApiTeacher>(res.data);
   },
   createTeacher: async (payload: CreateTeacherPayload): Promise<ApiTeacher> => {
@@ -427,7 +428,7 @@ export const schoolService = {
   // Students
   /** sortBy: studentCode | fullName | userName | email | token | createdAt */
   listStudents: async (params: AccountListParams = {}): Promise<ApiPage<ApiStudent>> => {
-    const res = await axiosClient.get("/school-admin/students", { params });
+    const res = await axiosClient.get("/school-admin/students", { params: withServerPage(params) });
     return fromPagination<ApiStudent>(res.data);
   },
   getStudent: async (id: string): Promise<ApiStudent> => {
@@ -480,13 +481,13 @@ export const schoolService = {
 
   // Classrooms
   listSchoolClassrooms: async (params: ClassroomListParams = {}): Promise<ApiPage<ApiClassroom>> => {
-    const res = await axiosClient.get("/school-admin/classrooms", { params });
+    const res = await axiosClient.get("/school-admin/classrooms", { params: withServerPage(params) });
     return fromAnyPage<ApiClassroom>(res.data);
   },
   listTeacherClassrooms: async (
     params: Pick<ClassroomListParams, "academicYear" | "page" | "size"> = {},
   ): Promise<ApiPage<ApiClassroom>> => {
-    const res = await axiosClient.get("/teacher/classrooms", { params });
+    const res = await axiosClient.get("/teacher/classrooms", { params: withServerPage(params) });
     return fromAnyPage<ApiClassroom>(res.data);
   },
   listStudentClassrooms: async (): Promise<ApiClassroom[]> => {

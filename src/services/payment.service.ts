@@ -1,4 +1,5 @@
 import { axiosClient } from "@/configs/axios.client";
+import { fromServerPage, withServerPage } from "@/lib/utils/pagination";
 
 // ── Types ─────────────────────────────────────────────────
 
@@ -80,8 +81,8 @@ export const paymentService = {
   },
 
   getHistory: async (params?: { status?: string; userId?: string; page?: number; size?: number }): Promise<PaymentHistoryPage> => {
-    const res = await axiosClient.get("/payments/history", { params });
-    return res.data.data;
+    const res = await axiosClient.get("/payments/history", { params: withServerPage(params) });
+    return { ...res.data.data, currentPage: fromServerPage(res.data.data?.currentPage) };
   },
 
   notifyReturn: async (payload: PayosReturnRequest): Promise<PayosReturnResponse> => {
