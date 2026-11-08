@@ -48,9 +48,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { inappropriateMessageFromError } from "@/lib/utils/content-policy";
 import { ContentWarningDialog } from "./content-warning-dialog";
-
-const AI_FEEDBACK_FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSeRil6ykImcwwFkgnV0lzFHWo8NLgOrOKNjTHNqq8Tt0-XMEQ/viewform?usp=dialog";
+import { AI_FEEDBACK_FORM_URL, AiDisclaimerFooter, AiFirstChatNotice } from "./ai-notice";
 
 const EXAM_VERDICT_LABELS: Record<ExamVerdict, { label: string; className: string }> = {
   CORRECT: { label: "Đúng", className: "text-(--status-success) border-(--status-success)" },
@@ -1295,6 +1293,8 @@ export function ChatMain({
         isTokenExhausted={isTokenExhausted}
       />
       <ContentWarningDialog message={contentWarning} onClose={() => setContentWarning(null)} />
+      <AiDisclaimerFooter />
+      <AiFirstChatNotice characterId={character.id} characterName={character.name} userId={user?.uid} />
 
       <style>{`
         .voice-call-nudge {
