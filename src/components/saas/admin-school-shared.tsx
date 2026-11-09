@@ -6,7 +6,7 @@ import { AlertTriangle, Info, RotateCcw } from "lucide-react";
 import { StaffFormInput } from "@/components/staff/staff-form";
 import { Field, isValidEmail } from "@/components/saas/saas-ui";
 import { PACKAGE_SHORT_LABELS, SCHOOL_STATUS_LABELS, millionTokens, type AdminFormField } from "@/features/saas/admin-schools";
-import { ENTERPRISE_PACKAGE_TOKENS, type EnterprisePackage, type SchoolStatus } from "@/services/school.service";
+import { packageYearTokens, type EnterprisePackage, type SchoolStatus } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
 
 /**
@@ -27,9 +27,12 @@ export function SchoolStatusPill({ status }: { status: SchoolStatus }) {
   return <span className={cn(PILL, STATUS_CLASS[status] ?? STATUS_CLASS.INACTIVE)}>{SCHOOL_STATUS_LABELS[status] ?? status}</span>;
 }
 
-/** "Enterprise S" pill with the school-year pool under it ("5 triệu token/năm học"). */
-export function PackageCell({ pkg, inline }: { pkg: EnterprisePackage; inline?: boolean }) {
-  const tokens = ENTERPRISE_PACKAGE_TOKENS[pkg];
+/**
+ * "Enterprise M" pill with the school-year pool under it ("1,02 tỷ token/năm học"). A custom package shows
+ * the school's own pool (`schoolPool`).
+ */
+export function PackageCell({ pkg, schoolPool, inline }: { pkg: EnterprisePackage; schoolPool?: number | null; inline?: boolean }) {
+  const tokens = packageYearTokens(pkg, schoolPool);
   return (
     <span className={cn("inline-flex gap-1", inline ? "flex-row flex-wrap items-center gap-2" : "flex-col items-start")}>
       <span className={cn(PILL, "border-border-card bg-transparent text-[var(--text-primary)]")}>{PACKAGE_SHORT_LABELS[pkg] ?? pkg}</span>

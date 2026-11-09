@@ -80,22 +80,32 @@ export interface ListParams {
 
 // ─── Schools (SYSTEM_ADMIN) ────────────────────────────────────────────────
 
-/** Token pool of one school year (01/09 – 31/05): SMALL 5M, MEDIUM 20M, LARGE 50M. */
-export type EnterprisePackage = "ENTERPRISE_SMALL" | "ENTERPRISE_MEDIUM" | "ENTERPRISE_LARGE";
+/** CUSTOM = a school created from a custom quote; its pool is the quoted one, not a fixed amount. */
+export type EnterprisePackage = "ENTERPRISE_SMALL" | "ENTERPRISE_MEDIUM" | "ENTERPRISE_LARGE" | "ENTERPRISE_CUSTOM";
 /** EXPIRED = the school year ended (after 31/05) without renewal; the whole school is locked. */
 export type SchoolStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED" | "EXPIRED";
 
+/** Token pool of one school year (01/09 – 31/05), BE `EnterprisePackage.tokens`. CUSTOM has none of its own. */
 export const ENTERPRISE_PACKAGE_TOKENS: Record<EnterprisePackage, number> = {
-  ENTERPRISE_SMALL: 5_000_000,
-  ENTERPRISE_MEDIUM: 20_000_000,
-  ENTERPRISE_LARGE: 50_000_000,
+  ENTERPRISE_SMALL: 435_750_000,
+  ENTERPRISE_MEDIUM: 1_016_750_000,
+  ENTERPRISE_LARGE: 1_452_500_000,
+  ENTERPRISE_CUSTOM: 0,
 };
+
+/** Pool of a school year for the package; a custom package falls back to the school's own pool. */
+export function packageYearTokens(pkg: EnterprisePackage, schoolPool?: number | null): number | null {
+  const tokens = ENTERPRISE_PACKAGE_TOKENS[pkg];
+  if (tokens) return tokens;
+  return schoolPool ? schoolPool : null;
+}
 
 /** Recommended number of students per package (BE `EnterprisePackage.recommendedStudents`). */
 export const ENTERPRISE_PACKAGE_STUDENTS: Record<EnterprisePackage, number> = {
-  ENTERPRISE_SMALL: 350,
-  ENTERPRISE_MEDIUM: 1_500,
-  ENTERPRISE_LARGE: 3_500,
+  ENTERPRISE_SMALL: 600,
+  ENTERPRISE_MEDIUM: 1_400,
+  ENTERPRISE_LARGE: 2_000,
+  ENTERPRISE_CUSTOM: 0,
 };
 
 export interface ApiSchool {

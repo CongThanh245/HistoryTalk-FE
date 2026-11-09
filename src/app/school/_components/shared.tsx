@@ -88,14 +88,16 @@ export const PACKAGE_LABELS: Record<EnterprisePackage, string> = {
   ENTERPRISE_SMALL: "Doanh nghiệp S",
   ENTERPRISE_MEDIUM: "Doanh nghiệp M",
   ENTERPRISE_LARGE: "Doanh nghiệp L",
+  ENTERPRISE_CUSTOM: "Doanh nghiệp tuỳ chỉnh",
 };
 
-/** e.g. "Doanh nghiệp S · 5.000.000 token/năm học" (quy chung ca nam hoc 01/09–31/05). */
+/** e.g. "Doanh nghiệp M · 1.016.750.000 token/năm học" (quỹ chung cả năm học 01/09–31/05). */
 export function packageLabel(p: EnterprisePackage | string | undefined | null) {
   if (!p) return "—";
   const known = p as EnterprisePackage;
   const tokens = ENTERPRISE_PACKAGE_TOKENS[known];
-  return tokens ? `${PACKAGE_LABELS[known]} · ${formatNumber(tokens)} token/năm học` : p;
+  if (!PACKAGE_LABELS[known]) return p;
+  return tokens ? `${PACKAGE_LABELS[known]} · ${formatNumber(tokens)} token/năm học` : PACKAGE_LABELS[known];
 }
 
 export function PackageBadge({ packageType }: { packageType: EnterprisePackage | string | undefined | null }) {

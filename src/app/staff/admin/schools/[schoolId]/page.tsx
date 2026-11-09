@@ -16,7 +16,7 @@ import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils/cn";
 import { apiErrorMessage, apiErrorStatus, useApiSchool } from "@/features/saas/hooks-api";
 import { PACKAGE_SHORT_LABELS, SCHOOL_STATUS_LABELS, millionTokens, useSchoolAdminCounts } from "@/features/saas/admin-schools";
-import { ENTERPRISE_PACKAGE_TOKENS } from "@/services/school.service";
+import { packageYearTokens } from "@/services/school.service";
 
 /** System Admin: one school (`GET /admin/schools/{id}`): info + token pool, and its School Admin accounts. */
 export default function AdminSchoolDetailPage() {
@@ -127,7 +127,7 @@ const SUMMARY_LABEL = "text-xs font-semibold text-[var(--text-tertiary)]";
 
 /** Key facts of the school as a labelled strip: code, package, school-year pool, status. */
 function SchoolSummary({ school }: { school: NonNullable<ReturnType<typeof useApiSchool>["data"]> }) {
-  const tokens = ENTERPRISE_PACKAGE_TOKENS[school.packageType];
+  const tokens = packageYearTokens(school.packageType, school.totalSchoolTokenQuota);
   const items: { label: string; value: React.ReactNode }[] = [
     { label: "Mã trường", value: <span className="font-mono">{school.schoolCode}</span> },
     { label: "Gói dịch vụ", value: PACKAGE_SHORT_LABELS[school.packageType] ?? school.packageType },
