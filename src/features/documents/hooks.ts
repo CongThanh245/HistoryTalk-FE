@@ -266,6 +266,7 @@ export function useUploadAndExtractPdf() {
       entityId,
       onProgress,
       signal,
+      enableAiVision,
     }: {
       file: File;
       entityType?: DocumentEntityType;
@@ -274,7 +275,8 @@ export function useUploadAndExtractPdf() {
       onProgress?: (page: number, total: number) => void;
       /** Lets a "Hủy" button cancel a long-running OCR extraction. */
       signal?: AbortSignal;
-    }) => documentService.uploadAndExtractPdfStream(file, entityType, entityId, onProgress, signal),
+      enableAiVision?: boolean;
+    }) => documentService.uploadAndExtractPdfStream(file, entityType, entityId, onProgress, signal, enableAiVision),
     onError: (err: unknown) => {
       // A user-initiated cancel (AbortController.abort()) isn't a failure — skip the toast.
       if (err instanceof DOMException && err.name === "AbortError") return;

@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { FileText, File, Plus, X, Upload, Eye, RotateCcw } from "lucide-react";
+import { FileText, File, Plus, X, Upload, Eye, RotateCcw, Sparkles } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { StaffFormLabel, StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
@@ -21,6 +22,7 @@ interface NewDocumentPanelProps {
     file: File,
     onProgress?: (page: number, total: number) => void,
     signal?: AbortSignal,
+    enableAiVision?: boolean,
   ) => Promise<ExtractedPdf>;
   isExtractPdfPending?: boolean;
   /** Create the document using the (possibly edited) extracted text + the fileUrl from onExtractPdf. */
@@ -69,6 +71,7 @@ export function NewDocumentPanel({
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [extracted, setExtracted] = React.useState<ExtractedPdf | null>(null);
+  const [enableAiVision, setEnableAiVision] = React.useState(false);
   const [ocrProgress, setOcrProgress] = React.useState<{ page: number; total: number } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const replaceInputRef = React.useRef<HTMLInputElement>(null);
@@ -135,7 +138,7 @@ export function NewDocumentPanel({
     const controller = new AbortController();
     abortControllerRef.current = controller;
     try {
-      const result = await onExtractPdf(picked, (page, total) => setOcrProgress({ page, total }), controller.signal);
+      const result = await onExtractPdf(picked, (page, total) => setOcrProgress({ page, total }), controller.signal, enableAiVision);
       setExtracted(result);
       setContent(result.rawText);
       setTitle((current) => current.trim() || picked.name.replace(/\.pdf$/i, ""));
@@ -240,7 +243,25 @@ export function NewDocumentPanel({
       )}
 
       {step === "pdf" && pdfPhase !== "review" ? (
-        <div className="grid gap-1.5">
+        <div className="grid gap-2">
+          <div className="flex items-center justify-between rounded-sm border border-card-light-border bg-[var(--bg-elevated)] p-2.5 text-xs">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[var(--accent-gold)] shrink-0" />
+              <div>
+                <span className="font-medium text-content-heading">Phân tích lược đồ & ảnh bằng AI</span>
+                <p className="text-[11px] text-content-muted">
+                  Tự động nhận diện bản đồ, trận đánh và chèn ảnh tư liệu vào bài viết
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={enableAiVision}
+              onCheckedChange={setEnableAiVision}
+              disabled={isBusy}
+              aria-label="Bật phân tích lược đồ bằng AI"
+            />
+          </div>
+
           <StaffFormLabel>File PDF</StaffFormLabel>
           {pdfPhase === "extracting" ? (
             <div
