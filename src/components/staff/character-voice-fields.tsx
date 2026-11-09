@@ -84,9 +84,12 @@ export function CharacterVoiceFields({
     { value: DEFAULT_VOICE, label: `Mặc định${defaultVoice ? ` (${defaultVoice.id}, nam)` : " (Thiện Minh, nam)"}` },
     ...shownVoices.map((v) => ({ value: v.id, label: voiceLabel(v) })),
   ];
-  // A saved voice that is no longer offered still shows, so saving does not silently change it.
+  // A saved voice that is no longer offered still shows, so saving does not silently change it,
+  // but the backend rejects it on save, so say so next to the field.
+  const unsupportedVoice =
+    !!value.voiceId && voicesQuery.isSuccess && !voices.some((v) => v.id === value.voiceId);
   if (value.voiceId && !voices.some((v) => v.id === value.voiceId)) {
-    voiceOptions.push({ value: value.voiceId, label: value.voiceId });
+    voiceOptions.push({ value: value.voiceId, label: `${value.voiceId}${unsupportedVoice ? " (không còn hỗ trợ)" : ""}` });
   }
 
   const [previewText, setPreviewText] = React.useState("");
@@ -173,7 +176,16 @@ export function CharacterVoiceFields({
           placeholder={voicesQuery.isLoading ? "Đang tải danh sách giọng..." : "Chọn giọng"}
           searchable
         />
-        {errors?.voiceId && <p className="text-xs text-accent-danger">{errors.voiceId}</p>}
+        {errors?.voiceId ? (
+          <p className="text-xs text-accent-danger">{errors.voiceId}</p>
+        ) : (
+          unsupportedVoice && (
+            <p role="alert" className="text-xs text-accent-danger">
+              Giọng &ldquo;{value.voiceId}&rdquo; không còn được hỗ trợ nên sẽ không lưu được. Hãy chọn giọng khác hoặc để
+              mặc định.
+            </p>
+          )
+        )}
         <p className="text-xs text-[var(--content-muted)]">
           {voicesUnavailable
             ? "Không tải được danh sách giọng, có thể máy chủ giọng đọc đang tắt. Bạn vẫn lưu nhân vật được."
