@@ -17,6 +17,7 @@ import {
   Send,
   SquarePen,
   Trash2,
+  Trophy,
   Volume2,
   VolumeX,
   X,
@@ -38,7 +39,8 @@ import { BattleMapCanvas } from "./BattleMapCanvas";
 import { BattleMapEditor, battleMapDraftKey } from "./BattleMapEditor";
 import { BattleMapCompareView } from "./BattleMapCompareView";
 import { toPracticeMap } from "./battle-map-practice";
-import { isGradableMap, scoreBattleMap, type BattleMapScore } from "./battle-map-scoring";
+import { readPracticeRecord, savePracticeScore, type PracticeRecord } from "./battle-map-practice-progress";
+import { isGradableMap, isScoredSymbol, scoreBattleMap, type BattleMapScore } from "./battle-map-scoring";
 import { emptyBattleMap, isBattleMap, type BattleMap } from "./battle-map.types";
 import { useBattleStory } from "./useBattlePlayback";
 import { toast } from "sonner";
@@ -110,7 +112,15 @@ export function BattleDetailView({
   const practiceMap = practicing && canPractice && !editingMap;
   const practiceDraftId = `practice:${event.id}`;
   const [practiceRun, setPracticeRun] = useState(0);
-  const [practiceResult, setPracticeResult] = useState<{ attempt: BattleMap; score: BattleMapScore } | null>(null);
+  const [practiceResult, setPracticeResult] = useState<{
+    attempt: BattleMap;
+    score: BattleMapScore;
+    progress: { previous: PracticeRecord | null; record: PracticeRecord };
+  } | null>(null);
+  /** Best score in this browser, shown on the "Tự vẽ lược đồ" button. */
+  // The page renders nothing on the server (see below), so reading the browser here is safe.
+  const [practiceRecord, setPracticeRecord] = useState<PracticeRecord | null>(() =>
+    typeof window === "undefined" ? null : readPracticeRecord(user?.uid, event.id));
   /** Width / height of the background, so vertical distances count like horizontal ones. */
   const imageAspect = useRef<{ url: string; value: number } | null>(null);
   const loadAspect = (url: string) => new Promise<number>(resolve => {
@@ -123,7 +133,10 @@ export function BattleDetailView({
   });
   const comparePractice = async (attempt: BattleMap) => {
     const aspect = await loadAspect(battleMap.imageUrl);
-    setPracticeResult({ attempt, score: scoreBattleMap(battleMap, attempt, aspect) });
+    const score = scoreBattleMap(battleMap, attempt, aspect);
+    const progress = savePracticeScore(user?.uid, event.id, score.percent);
+    setPracticeRecord(progress.record);
+    setPracticeResult({ attempt, score, progress });
   };
   const restartPractice = () => {
     try { localStorage.removeItem(battleMapDraftKey(user?.uid, practiceDraftId)); } catch { /* storage unavailable */ }
@@ -184,12 +197,14 @@ export function BattleDetailView({
       draftId={practiceDraftId}
       onClose={closePractice}
       onSave={comparePractice}
+      practiceTarget={battleMap.symbols.filter(isScoredSymbol).length}
     />
     {practiceResult && <BattleMapCompareView
       title={event.title}
       answer={battleMap}
       attempt={practiceResult.attempt}
       score={practiceResult.score}
+      progress={practiceResult.progress}
       onContinue={() => setPracticeResult(null)}
       onRestart={restartPractice}
       onClose={closePractice}
@@ -237,6 +252,9 @@ export function BattleDetailView({
         {canPractice && <button type="button" className={styles.mapEditButton} title="Vẽ lại lược đồ trên ảnh nền rồi so sánh với lược đồ gốc"
           onClick={() => { narration.pause(); onOpenPractice?.(); }}>
           <PenTool size={16} /> Tự vẽ lược đồ
+          {practiceRecord && <span className={styles.practiceBest} title={`Đã thử ${practiceRecord.attempts} lần`}>
+            <Trophy size={12} aria-hidden="true" />{practiceRecord.best.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%
+          </span>}
         </button>}
         {isAdmin && <button type="button" className={styles.mapEditButton} onClick={() => { narration.pause(); onOpenEditor(); }}>
           <SquarePen size={16} /> Chỉnh sửa lược đồ

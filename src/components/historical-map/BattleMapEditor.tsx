@@ -67,7 +67,7 @@ function readDraft(key: string | null) {
   } catch { return null; }
 }
 
-export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNarration = "", draftId, mode = "author" }: {
+export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNarration = "", draftId, mode = "author", practiceTarget }: {
   initialValue: BattleMap; title: string; onClose: () => void;
   /** Identifies the map for the unsaved draft kept in this browser (e.g. the event id); omit to keep no draft. */
   draftId?: string;
@@ -81,6 +81,8 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
    * draft, which is restored on its own and kept after comparing or closing.
    */
   mode?: "author" | "practice";
+  /** Practice: number of graded symbols in the original map, shown as a goal while drawing. */
+  practiceTarget?: number;
 }) {
   const practice = mode === "practice";
   const uid = useAuthStore(state => state.user?.uid);
@@ -492,8 +494,17 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
         <h1>{practice ? "Tự vẽ lược đồ trận đánh" : "Chỉnh sửa lược đồ trận đánh"}</h1>
         <p>{title}</p>
       </div>
-      {practice ? <span className={styles.saveState} role="status" title="Bài vẽ chỉ lưu trên trình duyệt này, không gửi lên máy chủ.">
-        {value.symbols.length ? `${value.symbols.length} ký hiệu · lưu trên máy này` : "Đặt ký hiệu lên ảnh nền để bắt đầu"}
+      {practice ? <span className={styles.practiceGoal} role="status" title="Bài vẽ chỉ lưu trên trình duyệt này, không gửi lên máy chủ.">
+        {practiceTarget ? <>
+          <span className={styles.practiceGoalText}>
+            <b>{value.symbols.filter(s => s.type !== "label" && s.type !== "step").length}</b> / {practiceTarget} ký hiệu
+          </span>
+          <span className={styles.practiceGoalBar} aria-hidden="true">
+            <span style={{ width: `${Math.min(100, (value.symbols.filter(s => s.type !== "label" && s.type !== "step").length / practiceTarget) * 100)}%` }} />
+          </span>
+        </> : <span className={styles.practiceGoalText}>
+          {value.symbols.length ? `${value.symbols.length} ký hiệu · lưu trên máy này` : "Đặt ký hiệu lên ảnh nền để bắt đầu"}
+        </span>}
       </span> : <span className={cn(styles.saveState, dirty && styles.saveStateDirty)} role="status" title="Lược đồ đã lưu sẽ hiển thị cho người học ở trang trận đánh.">
         {saving ? "Đang lưu…" : uploading ? "Đang tải ảnh lên…" : dirty ? "Có thay đổi chưa lưu" : hasDraft ? "Đã lưu" : "Chưa có lược đồ"}
       </span>}
