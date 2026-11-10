@@ -140,7 +140,8 @@ export function MessageBubble({
                           speechSynthesis.cancel();
                           setLocalIsSpeaking(false);
                         } else {
-                          const utterance = new SpeechSynthesisUtterance(message.content);
+                          const cleanText = message.content.replace(/!\[([^\]]*)\]\([^)]*\)?/g, "$1").replace(/\{\{IMG_\d+\}\}/g, "").replace(/https?:\/\/\S+/g, "").replace(/\(\s*\)/g, "").replace(/\s{2,}/g, " ").trim() || message.content;
+                          const utterance = new SpeechSynthesisUtterance(cleanText);
                           utterance.onend = () => setLocalIsSpeaking(false);
                           utterance.onerror = () => setLocalIsSpeaking(false);
                           speechSynthesis.speak(utterance);

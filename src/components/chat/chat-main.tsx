@@ -268,7 +268,15 @@ export function ChatMain({
 
   /** Đọc lại một tin nhắn: từng câu được đọc ngay khi có âm thanh, giọng giống trên mọi thiết bị. */
   const speakMessage = useCallback(
-    async (text: string, messageId: string): Promise<void> => {
+    async (rawText: string, messageId: string): Promise<void> => {
+      const text =
+        rawText
+          .replace(/!\[([^\]]*)\]\([^)]*\)?/g, "$1")
+          .replace(/\{\{IMG_\d+\}\}/g, "")
+          .replace(/https?:\/\/\S+/g, "")
+          .replace(/\(\s*\)/g, "")
+          .replace(/\s{2,}/g, " ")
+          .trim() || rawText;
       stopSpeech();
       setSpeakingMessageId(messageId);
       const segments = splitSpeechSegments(text, { earlyFirst: true });
@@ -531,7 +539,16 @@ export function ChatMain({
     sessionId,
   ]);
 
-  const enqueueSpeech = (text: string) => {
+  const enqueueSpeech = (rawText: string) => {
+    const text =
+      rawText
+        .replace(/!\[([^\]]*)\]\([^)]*\)?/g, "$1")
+        .replace(/\{\{IMG_\d+\}\}/g, "")
+        .replace(/https?:\/\/\S+/g, "")
+        .replace(/\(\s*\)/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    if (!text) return;
     for (const segment of splitSpeechSegments(text)) {
       void speechPlayer.enqueue(segment);
     }
