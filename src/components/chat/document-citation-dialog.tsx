@@ -8,6 +8,7 @@ import {
 import { useEventDetail } from "@/features/events/hooks";
 import type { RagDocument } from "@/services/document.service";
 import { findDocumentForQuote, splitContentByQuote } from "@/lib/utils/quote-match";
+import { MarkdownMessage } from "./MarkdownMessage";
 import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
 import {
   Loader2,
@@ -48,21 +49,23 @@ function DocumentContent({ content, quote }: { content: string; quote?: string |
   }, [parts]);
 
   return (
-    <p className="text-sm leading-7 whitespace-pre-wrap text-content-heading">
+    <div className="text-sm leading-7 text-content-heading space-y-2">
       {parts.map((part, i) =>
         part.matched ? (
           <mark
             key={i}
             ref={markRef}
-            className="rounded-sm px-0.5 bg-(--accent-gold-glow) text-inherit"
+            className="rounded-sm px-1.5 py-1 bg-(--accent-gold-glow) text-inherit block my-2 border-l-2 border-[var(--accent-gold)]"
           >
-            {part.text}
+            <MarkdownMessage text={part.text} />
           </mark>
         ) : (
-          <span key={i}>{part.text}</span>
+          <div key={i}>
+            <MarkdownMessage text={part.text} />
+          </div>
         ),
       )}
-    </p>
+    </div>
   );
 }
 
@@ -205,9 +208,9 @@ export function DocumentCitationDialog({
         </div>
         {quote && (
           <blockquote
-            className="pl-3 text-sm leading-relaxed border-[var(--text-primary)] text-content-text"
+            className="pl-3 text-sm leading-relaxed border-l-2 border-[var(--text-primary)] text-content-text"
           >
-            {quote}
+            <MarkdownMessage text={quote} />
           </blockquote>
         )}
       </div>

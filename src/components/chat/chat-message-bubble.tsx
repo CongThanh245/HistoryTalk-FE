@@ -215,9 +215,9 @@ export function MessageQuotes({
           {quotes.map((quote, i) => (
             <div key={i} className="flex flex-col gap-1 py-2">
               <blockquote
-                className="text-xs leading-relaxed pl-2 border-[var(--text-primary)] text-content-text"
+                className="text-xs leading-relaxed pl-2 border-l-2 border-[var(--text-primary)] text-content-text"
               >
-                {quote}
+                <MarkdownMessage text={quote} />
               </blockquote>
               {onViewQuote && (
                 <button

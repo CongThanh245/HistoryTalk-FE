@@ -134,6 +134,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
   const router = useRouter();
   const contextSearch = useSelectSearch();
+  const [charEditDocTab, setCharEditDocTab] = React.useState<"edit" | "preview">("edit");
   const {
     draft,
     isEditing,
