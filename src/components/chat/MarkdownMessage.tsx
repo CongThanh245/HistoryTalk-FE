@@ -8,7 +8,18 @@ interface Props {
   text: string;
 }
 
+function normalizeHistoricalImageUrls(raw: string): string {
+  if (!raw) return "";
+  return raw
+    .replace(/!\[([^\]]*)\]\s+\(([^)]+)\)/g, "![$1]($2)")
+    .replace(
+      /https?:\/\/[^\s)\]]+\/storage\/v1\/object\/public\/[^/]+\/(staging|published)\/historical-images\/([a-zA-Z0-9_.-]+)/gi,
+      "/historical-images/$1/$2",
+    );
+}
+
 export function MarkdownMessage({ text }: Props) {
+  const normalizedText = normalizeHistoricalImageUrls(text);
   const components: Components = {
     p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
     strong: ({ children }) => (
@@ -65,7 +76,7 @@ export function MarkdownMessage({ text }: Props) {
 
   return (
     <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={components}>
-      {text}
+      {normalizedText}
     </ReactMarkdown>
   );
 }

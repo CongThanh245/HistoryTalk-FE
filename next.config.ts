@@ -17,6 +17,17 @@ const nextConfig: NextConfig = {
     staleTimes: { dynamic: 30 },
   },
   turbopack: {},
+  async rewrites() {
+    const supabaseUrl = (
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "https://rvccamoxvumyzvowzsmo.supabase.co"
+    ).replace(/\/+$/, "");
+    return [
+      {
+        source: "/historical-images/:folder(staging|published)/:file*",
+        destination: `${supabaseUrl}/storage/v1/object/public/documents/:folder/historical-images/:file*`,
+      },
+    ];
+  },
   webpack(config, { isServer }) {
     if (isServer) {
       config.externals = [

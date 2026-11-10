@@ -27,7 +27,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const text = body.text?.trim() ?? "";
+  const text = (body.text ?? "").replace(/!\[([^\]]*)\]\([^)]*\)?/g, "$1").replace(/\{\{IMG_\d+\}\}/g, "").replace(/https?:\/\/\S+/g, "").replace(/\(\s*\)/g, "").replace(/\s{2,}/g, " ").trim();
   const characterId = body.characterId || "default";
 
   if (!text) {

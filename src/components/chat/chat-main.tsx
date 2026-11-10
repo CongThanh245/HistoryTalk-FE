@@ -315,7 +315,8 @@ export function ChatMain({
   }, []);
 
   const speakWithFallback = useCallback(
-    async (text: string, messageId: string): Promise<void> => {
+    async (rawText: string, messageId: string): Promise<void> => {
+      const text = rawText.replace(/!\[([^\]]*)\]\([^)]*\)?/g, "$1").replace(/\{\{IMG_\d+\}\}/g, "").replace(/https?:\/\/\S+/g, "").replace(/\(\s*\)/g, "").replace(/\s{2,}/g, " ").trim() || rawText;
       stopSpeech();
       setSpeakingMessageId(messageId);
       try {
