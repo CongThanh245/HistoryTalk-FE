@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -16,15 +17,10 @@ function normalizeHistoricalImageUrls(raw: string): string {
       /https?:\/\/[^\s)\]]+\/storage\/v1\/object\/public\/[^/]+\/(staging|published)\/historical-images\/([a-zA-Z0-9_.-]+)/gi,
       "/historical-images/$1/$2",
     );
-  // Convert any bare relative image URLs (/historical-images/...) not already wrapped in ![]() into a markdown image tag
-  text = text.replace(
-    /(^|[^\w!\](/])(\/historical-images\/(?:staging|published)\/[a-zA-Z0-9_.-]+(?:\.(?:jpg|jpeg|png|webp|gif))?)/gi,
-    "$1![Ảnh tư liệu]($2)"
-  );
   return text;
 }
 
-export function MarkdownMessage({ text }: Props) {
+export const MarkdownMessage = React.memo(function MarkdownMessage({ text }: Props) {
   const normalizedText = normalizeHistoricalImageUrls(text);
   const components: Components = {
     p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
@@ -103,4 +99,4 @@ export function MarkdownMessage({ text }: Props) {
       {normalizedText}
     </ReactMarkdown>
   );
-}
+});
