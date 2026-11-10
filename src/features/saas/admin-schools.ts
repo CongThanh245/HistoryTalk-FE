@@ -20,12 +20,15 @@ export const PACKAGE_SHORT_LABELS: Record<EnterprisePackage, string> = {
   ENTERPRISE_SMALL: "Enterprise S",
   ENTERPRISE_MEDIUM: "Enterprise M",
   ENTERPRISE_LARGE: "Enterprise L",
+  ENTERPRISE_CUSTOM: "Enterprise tuỳ chỉnh",
 };
 
-/** "5 triệu", "20 triệu", "50 triệu". */
+/** "435,75 triệu", "1,02 tỷ". */
 export function millionTokens(n: number) {
-  const m = n / 1_000_000;
-  return `${Number.isInteger(m) ? m : m.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} triệu`;
+  if (n >= 1_000_000_000) {
+    return `${(n / 1_000_000_000).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} tỷ`;
+  }
+  return `${(n / 1_000_000).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} triệu`;
 }
 
 export const SCHOOL_STATUS_LABELS: Record<SchoolStatus, string> = {

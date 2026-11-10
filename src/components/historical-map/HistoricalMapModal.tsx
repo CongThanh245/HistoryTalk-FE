@@ -63,8 +63,8 @@ const LeafletMap = dynamic(
   },
 );
 
-/** Which battle is selected and which screen is shown: map, battle page, or lược đồ editor. */
-export type MapRoute = { battle: string | null; view: "map" | "detail" | "edit" };
+/** Which battle is selected and which screen is shown: map, battle page, lược đồ editor, or "Tự vẽ lược đồ". */
+export type MapRoute = { battle: string | null; view: "map" | "detail" | "edit" | "practice" };
 /** push: new history entry · replace: same entry · back: return to the previous screen. */
 export type MapRouteNavigation = "push" | "replace" | "back";
 
@@ -105,9 +105,8 @@ function formatYear(year: number) {
 export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, onRouteChange, overlay }: HistoricalMapModalProps) {
   const user = useAuthStore((state) => state.user);
   // "Xem như người học": a Content Admin sees the learner screen, without any editing control.
-  // Pages with their own battles (overlay.events) decide who edits; otherwise Content / System Admins.
-  const isAdmin =
-    (overlay?.canEdit ?? (user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN")) && !overlay?.previewAsLearner;
+  // Pages with their own battles (overlay.events) decide who edits; otherwise Content Admins only (Sprint 9).
+  const isAdmin = (overlay?.canEdit ?? user?.role === "CONTENT_ADMIN") && !overlay?.previewAsLearner;
   const authHydrated = useAuthStore((state) => state.hasHydrated);
   // Personal study notes (USER pins): learners only — never in the admin "Xem như người học" preview.
   const canTakeNotes =
@@ -453,6 +452,9 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
         editing={route.view === "edit"}
         onOpenEditor={() => openScreen("edit")}
         onCloseEditor={() => navigate({ battle: activeEvent.id, view: editorOrigin }, "back")}
+        practicing={route.view === "practice"}
+        onOpenPractice={() => navigate({ battle: activeEvent.id, view: "practice" }, "push")}
+        onClosePractice={() => navigate({ battle: activeEvent.id, view: "detail" }, "back")}
         onBack={() => navigate({ battle: activeEvent.id, view: "map" }, "back")}
         onClose={() => { navigate({ battle: activeEvent.id, view: "map" }, "back"); setSelectedPin(null); }}
         previewAsLearner={overlay?.previewAsLearner}

@@ -1,4 +1,5 @@
 import { axiosClient } from "@/configs/axios.client";
+import { fromServerPage, withServerPage } from "@/lib/utils/pagination";
 import {
   parseQuestionData,
   parseQuestionType,
@@ -178,10 +179,11 @@ export const staffQuizService = {
   getAll: async (
     params?: GetStaffQuizzesParams,
   ): Promise<GetStaffQuizzesResponse> => {
-    const res = await axiosClient.get("/staff/quizzes", { params });
+    const res = await axiosClient.get("/staff/quizzes", { params: withServerPage(params) });
     const raw = res.data.data;
     return {
       ...raw,
+      currentPage: fromServerPage(raw?.currentPage),
       content: (raw.content ?? []).map(mapStaffQuizSet),
     };
   },
@@ -283,14 +285,15 @@ export const staffQuizService = {
 
   // ── Question Bank ───────────────────────────────────────
 
-  // GET /staff/question-bank?questionType=&search=&page=&size=
+  // GET /staff/question-bank?questionType=&search=&page=&size= (BE is 1-based; FE passes a 0-based index)
   getQuestionBank: async (
     params?: GetQuestionBankParams,
   ): Promise<GetQuestionBankResponse> => {
-    const res = await axiosClient.get("/staff/question-bank", { params });
+    const res = await axiosClient.get("/staff/question-bank", { params: withServerPage(params) });
     const raw = res.data.data;
     return {
       ...raw,
+      currentPage: fromServerPage(raw?.currentPage),
       content: (raw.content ?? []).map(mapQuestionBankItem),
     };
   },

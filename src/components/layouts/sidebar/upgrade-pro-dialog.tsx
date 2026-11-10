@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { CheckIcon, CrownIcon, SparklesIcon, XIcon } from "lucide-react";
+import { ArrowRightIcon, CheckIcon, CrownIcon, SchoolIcon, SparklesIcon, XIcon } from "lucide-react";
+import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
 import { paymentService } from "@/services/payment.service";
@@ -252,6 +253,24 @@ export function UpgradeProDialog({
                   />
                 ))}
           </div>
+
+          {/* Schools buy one plan for everyone; individual plans are not the way for them. */}
+          <Link
+            href="/for-schools"
+            onClick={() => setOpen(false)}
+            className="mx-6 mb-4 flex items-center justify-between gap-3 rounded-sm border border-[var(--border-strong)] px-4 py-3 text-sm transition-colors hover:border-[var(--accent-gold)]"
+          >
+            <span className="flex items-center gap-3">
+              <SchoolIcon className="h-5 w-5 shrink-0 text-[var(--accent-gold)]" aria-hidden="true" />
+              <span>
+                <strong className="block text-[var(--text-primary)]">Dành cho trường học</strong>
+                <span className="text-xs text-[var(--text-secondary)]">
+                  Mua cho cả trường theo số học sinh, xem giá ngay và gửi yêu cầu báo giá.
+                </span>
+              </span>
+            </span>
+            <ArrowRightIcon className="h-4 w-4 shrink-0 text-[var(--text-secondary)]" aria-hidden="true" />
+          </Link>
 
           <footer className="upgrade-pro-foot">
             <p>Thanh toán an toàn qua PayOS · Chuyển khoản ngân hàng & QR</p>

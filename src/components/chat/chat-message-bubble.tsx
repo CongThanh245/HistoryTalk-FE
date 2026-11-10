@@ -10,6 +10,7 @@ import { displayName } from "@/features/auth/display-name";
 import { useAuthStore } from "@/store/auth.store";
 import { MarkdownMessage } from "./MarkdownMessage";
 import { splitAssistantContent } from "@/lib/utils/helpers";
+import { ReportAnswerButton } from "./ai-notice";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -169,15 +170,16 @@ export function MessageBubble({
           <MessageQuotes quotes={message.quotes} onViewQuote={onViewQuote} />
         )}
 
-        <span
-          className="text-[10px] px-1 tracking-[0.06em] text-content-muted"
-        >
-          {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          })}
-        </span>
+        <div className="flex items-center gap-3 px-1">
+          <span className="text-[10px] tracking-[0.06em] text-content-muted">
+            {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })}
+          </span>
+          <ReportAnswerButton characterName={character.name} content={message.content} />
+        </div>
       </div>
     </div>
   );

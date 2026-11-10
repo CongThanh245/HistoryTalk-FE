@@ -100,6 +100,7 @@ export const ROUTES = {
         SYSTEM_ADMIN: "/staff/admin/accounts/system-admin",
       },
       SCHOOLS: "/staff/admin/schools",
+      B2B_QUOTES: "/staff/admin/b2b-quotes",
       SCHOOL_NEW: "/staff/admin/schools/new",
       SCHOOL_DETAIL: (schoolId: string) => `/staff/admin/schools/${schoolId}`,
       SUBSCRIPTIONS: "/staff/admin/subscriptions",

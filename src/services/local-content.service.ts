@@ -59,6 +59,12 @@ export interface LocalItem {
   // CHARACTER only
   title?: string | null;
   personality?: string | null;
+  /** TTS voice; null = default voice. */
+  voiceId?: string | null;
+  /** null = default "ta". */
+  selfPronoun?: string | null;
+  /** null = default "ngươi". */
+  addressPronoun?: string | null;
   modelUrl?: string | null;
   bornYear?: number | null;
   bornMonth?: number | null;
@@ -116,6 +122,12 @@ export interface LocalCharacterPayload {
   title?: string;
   background: string;
   personality?: string;
+  /** An id from GET /voices; "" = default voice. Omitted on update = unchanged. */
+  voiceId?: string;
+  /** "" = default "ta". Omitted on update = unchanged. */
+  selfPronoun?: string;
+  /** "" = default "ngươi". Omitted on update = unchanged. */
+  addressPronoun?: string;
   imageUrl?: string;
   modelUrl?: string;
   bornYear?: number;

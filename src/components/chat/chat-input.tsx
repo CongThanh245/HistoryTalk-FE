@@ -53,7 +53,8 @@ declare const SpeechRecognition: {
 };
 
 interface ChatInputProps {
-  onSend: (content: string) => void;
+  /** Resolve false to keep the text in the box, e.g. when the wording check blocks it. */
+  onSend: (content: string) => void | boolean | Promise<void | boolean>;
   isLoading?: boolean;
   disabled?: boolean;
   characterName?: string;
@@ -87,13 +88,20 @@ export function ChatInput({
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   }, [text]);
 
-  const handleSend = useCallback(() => {
+  const [isSending, setIsSending] = useState(false);
+  const handleSend = useCallback(async () => {
     const trimmed = text.trim();
-    if (!trimmed || isLoading || disabled) return;
-    onSend(trimmed);
-    setText("");
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
-  }, [text, isLoading, disabled, onSend]);
+    if (!trimmed || isLoading || disabled || isSending) return;
+    setIsSending(true);
+    try {
+      const sent = await onSend(trimmed);
+      if (sent === false) return;
+      setText("");
+      if (textareaRef.current) textareaRef.current.style.height = "auto";
+    } finally {
+      setIsSending(false);
+    }
+  }, [text, isLoading, disabled, isSending, onSend]);
 
   const MAX_LENGTH = 200;
   const isOverLimit = text.length > MAX_LENGTH;
@@ -237,7 +245,7 @@ export function ChatInput({
         <button
           type="button"
           onClick={handleSend}
-          disabled={!text.trim() || isLoading || disabled || isOverLimit}
+          disabled={!text.trim() || isLoading || isSending || disabled || isOverLimit}
           aria-label="Gửi tin nhắn"
           className={cn(
             "w-10 h-10 flex items-center justify-center rounded-sm",
@@ -249,7 +257,7 @@ export function ChatInput({
               : "bg-bg-elevated border-[var(--border-strong)]",
           )}
         >
-          {isLoading ? (
+          {isLoading || isSending ? (
             <div
               className="w-4 h-4 rounded-full border-2 border-accent-gold border-t-transparent animate-spin"
             />

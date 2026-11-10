@@ -1,5 +1,6 @@
 import { axiosClient } from "@/configs/axios.client";
 import { fromPagination, type ApiPage, type EnterprisePackage, type SchoolStatus } from "@/services/school.service";
+import { withServerPage } from "@/lib/utils/pagination";
 
 /**
  * 5 dashboard theo role (BE: AnalyticsDashboardController, US-SP6-06 → 10).
@@ -243,7 +244,7 @@ export const analyticsDashboardService = {
 
   // GET /school-admin/analytics/classrooms — token theo lop (mac dinh nhieu nhat truoc).
   getClassroomTokenUsage: async (params: ClassroomTokenParams = {}): Promise<ApiPage<ClassroomTokenUsage>> => {
-    const res = await axiosClient.get("/school-admin/analytics/classrooms", { params });
+    const res = await axiosClient.get("/school-admin/analytics/classrooms", { params: withServerPage(params) });
     return fromPagination<ClassroomTokenUsage>(res.data);
   },
 
@@ -252,7 +253,7 @@ export const analyticsDashboardService = {
     classroomId: string,
     params: { search?: string; page?: number; size?: number; sort?: string } = {},
   ): Promise<ApiPage<StudentTokenUsage>> => {
-    const res = await axiosClient.get(`/school-admin/analytics/classrooms/${classroomId}/students`, { params });
+    const res = await axiosClient.get(`/school-admin/analytics/classrooms/${classroomId}/students`, { params: withServerPage(params) });
     return fromPagination<StudentTokenUsage>(res.data);
   },
 

@@ -10,6 +10,12 @@ export type CharacterDraft = {
   image: string;
   modelUrl: string;
   personality: string;
+  /** "" = default voice. */
+  voiceId: string;
+  /** "" = default "ta". */
+  selfPronoun: string;
+  /** "" = default "ngươi". */
+  addressPronoun: string;
   bornYear: string;
   bornMonth: string;
   bornDay: string;
@@ -42,6 +48,9 @@ export const EMPTY_CHARACTER_DRAFT: CharacterDraft = {
   modelUrl: "",
   videoUrl: "",
   personality: "",
+  voiceId: "",
+  selfPronoun: "",
+  addressPronoun: "",
   bornYear: "",
   bornMonth: "",
   bornDay: "",
@@ -137,7 +146,7 @@ export const FORM_TABS: { key: FormTabKey; label: string }[] = [
 export const TAB_ERROR_FIELDS: Record<FormTabKey, CharacterValidationField[]> = {
   basic: ["name", "title", "bornDay", "bornMonth", "bornYear", "deathDay", "deathMonth", "deathYear"],
   media: ["image", "modelUrl"],
-  content: ["background", "personality"],
+  content: ["background", "personality", "selfPronoun", "addressPronoun"],
   rag: [],
   context: [],
 };

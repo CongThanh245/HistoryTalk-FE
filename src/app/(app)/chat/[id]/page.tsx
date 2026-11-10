@@ -11,12 +11,13 @@ import { ChatClient } from "@/components/chat/chat-client";
 
 interface ChatPageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ contextId?: string; sessionId?: string }>;
+  /** mode=chat skips the Phỏng vấn / Vấn đáp choice; call=2d|3d opens a call, which is always an interview. */
+  searchParams: Promise<{ contextId?: string; sessionId?: string; mode?: string; call?: string }>;
 }
 
 export default async function ChatPage({ params, searchParams }: ChatPageProps) {
   const { id } = await params;
-  const { contextId, sessionId } = await searchParams;
+  const { contextId, sessionId, mode, call } = await searchParams;
 
   return (
     // h-full kế thừa từ layout — không có padding vì chat cần full height
@@ -25,6 +26,7 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
         initialCharacterId={id}
         initialContextId={contextId}
         initialSessionId={sessionId}
+        skipModeChoice={mode === "chat" || !!call}
       />
     </div>
   );

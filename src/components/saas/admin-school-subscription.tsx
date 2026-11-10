@@ -23,7 +23,10 @@ type Action = "renew" | "activate" | "topup" | null;
 export function SchoolSubscriptionPanel({ school }: { school: ApiSchool }) {
   const { renew, activate, topUp } = useSchoolSubscriptionActions(school.id);
   const [action, setAction] = React.useState<Action>(null);
-  const [pkg, setPkg] = React.useState<EnterprisePackage>(school.packageType);
+  // A custom package has no fixed pool to renew into, so renewal starts from Enterprise M.
+  const [pkg, setPkg] = React.useState<EnterprisePackage>(
+    PACKAGE_ORDER.includes(school.packageType) ? school.packageType : "ENTERPRISE_MEDIUM",
+  );
   const [amount, setAmount] = React.useState("1000000");
   const [note, setNote] = React.useState("");
 

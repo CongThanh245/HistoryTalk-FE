@@ -1,5 +1,6 @@
 import type { ComponentType, CSSProperties } from "react";
 import {
+  FileText,
   House,
   Landmark,
   MessageCircle,
@@ -209,6 +210,7 @@ export const SYSTEM_ADMIN_SIDEBAR: SidebarSection[] = [
     title: "Gói trường học",
     items: [
       { icon: School, label: "Trường & School Admin", href: ROUTES.STAFF.ADMIN.SCHOOLS },
+      { icon: FileText, label: "Yêu cầu báo giá", href: ROUTES.STAFF.ADMIN.B2B_QUOTES },
     ],
   },
   {

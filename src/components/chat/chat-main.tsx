@@ -1,10 +1,17 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createStreamingSpeechPlayer,
+  findEarlyBreak,
+  openCharacterSpeechStream,
+  splitSpeechSegments,
+} from "@/lib/character-speech";
 import { Phone, ScrollText, Menu, Info, Coins, PhoneCall, Video, Lock, AlertTriangle, X, RotateCcw } from "lucide-react";
 import type {
   ChatCharacter,
   ChatMessage,
+  ExamVerdict,
   GetMessagesResponse,
 } from "@/services/chat.service";
 import { MessageBubble, MessageQuotes, TypingIndicator } from "./chat-message-bubble";
@@ -27,7 +34,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { useEntitlements } from "@/features/saas/entitlements";
 import { hasPlusAccess, hasProAccess } from "@/services/user.service";
-import { isTokenExhaustionError } from "@/lib/utils/api-error";
+import { getApiErrorMessage, isTokenExhaustionError } from "@/lib/utils/api-error";
 import { handlePlatformLockError } from "@/lib/utils/school-lock";
 import { TokenBoostRequestDialog } from "@/components/saas/token-boost-request-dialog";
 import { TeacherTicketDialog } from "@/components/saas/token-boost-ui";
@@ -39,9 +46,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { inappropriateMessageFromError } from "@/lib/utils/content-policy";
+import { ContentWarningDialog } from "./content-warning-dialog";
+import { AI_FEEDBACK_FORM_URL, AiDisclaimerFooter, AiFirstChatNotice } from "./ai-notice";
 
-const AI_FEEDBACK_FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSeRil6ykImcwwFkgnV0lzFHWo8NLgOrOKNjTHNqq8Tt0-XMEQ/viewform?usp=dialog";
+const EXAM_VERDICT_LABELS: Record<ExamVerdict, { label: string; className: string }> = {
+  CORRECT: { label: "Đúng", className: "text-(--status-success) border-(--status-success)" },
+  PARTIAL: { label: "Đúng một phần", className: "text-(--status-warning) border-(--status-warning)" },
+  INCORRECT: { label: "Chưa đúng", className: "text-accent-danger border-accent-danger" },
+};
+
+/** Exam replies put feedback and the next question either side of "---"; it should not be read aloud. */
+const stripExamSeparator = (text: string) => text.replace(/\s*\n?-{3,}\n?\s*/g, "\n");
 
 const isVoiceMessage = (message: ChatMessage) =>
   message.messageType?.toUpperCase() === "VOICE";
@@ -204,7 +220,6 @@ export function ChatMain({
     messageType?: "TEXT" | "VOICE";
   } | null>(null);
   const speechAudioCtxRef = useRef<AudioContext | null>(null);
-  const speechSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const [headerAvatarBroken, setHeaderAvatarBroken] = useState(false);
 
   useEffect(() => {
@@ -212,123 +227,64 @@ export function ChatMain({
   }, [character.imageUrl]);
 
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [contentWarning, setContentWarning] = useState<string | null>(null);
 
   const { data, isLoading } = useChatMessages(sessionId);
   const createSession = useCreateSession();
-  const stopSpeech = useCallback(() => {
-    speechSynthesis.cancel();
-    speechSourceRef.current?.stop();
-    speechSourceRef.current = null;
-    setSpeakingMessageId(null);
+  const getSpeechContext = useCallback(async (): Promise<AudioContext> => {
+    if (!speechAudioCtxRef.current || speechAudioCtxRef.current.state === "closed") {
+      const AudioContextCtor = window.AudioContext || (window as typeof window & {
+        webkitAudioContext?: typeof AudioContext;
+      }).webkitAudioContext;
+
+      if (!AudioContextCtor) {
+        throw new Error("AudioContext khong kha dung");
+      }
+
+      speechAudioCtxRef.current = new AudioContextCtor();
+    }
+
+    const audioContext = speechAudioCtxRef.current;
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+    return audioContext;
   }, []);
 
-  const playAzureSpeech = useCallback(
-    async (text: string): Promise<void> => {
-      const res = await fetch("/api/voice/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, characterId: character.id }),
-      });
-
-      if (!res.ok) {
-        const message = await res.text();
-        throw new Error(message || `Azure TTS failed: ${res.status}`);
-      }
-
-      const audioBuffer = await res.arrayBuffer();
-      if (!audioBuffer.byteLength) {
-        throw new Error("Azure TTS khong tra ve audio");
-      }
-
-      if (!speechAudioCtxRef.current || speechAudioCtxRef.current.state === "closed") {
-        const AudioContextCtor = window.AudioContext || (window as typeof window & {
-          webkitAudioContext?: typeof AudioContext;
-        }).webkitAudioContext;
-
-        if (!AudioContextCtor) {
-          throw new Error("AudioContext khong kha dung");
-        }
-
-        speechAudioCtxRef.current = new AudioContextCtor();
-      }
-
-      const audioContext = speechAudioCtxRef.current;
-      if (audioContext.state === "suspended") {
-        await audioContext.resume();
-      }
-
-      const decodedAudio = await audioContext.decodeAudioData(audioBuffer.slice(0));
-
-      await new Promise<void>((resolve, reject) => {
-        const source = audioContext.createBufferSource();
-        source.buffer = decodedAudio;
-        source.playbackRate.value = 1.25;
-        source.connect(audioContext.destination);
-        speechSourceRef.current = source;
-        source.onended = () => {
-          if (speechSourceRef.current === source) {
-            speechSourceRef.current = null;
-          }
-          setTimeout(() => {
-            if (!speechSynthesis.speaking && !speechSourceRef.current) {
-              setSpeakingMessageId(null);
-            }
-          }, 100);
-          resolve();
-        };
-        source.addEventListener("error", () => {
-          setTimeout(() => {
-            if (!speechSynthesis.speaking && !speechSourceRef.current) {
-              setSpeakingMessageId(null);
-            }
-          }, 100);
-          reject(new Error("Khong phat duoc audio Azure TTS"));
-        });
-        source.start();
-      });
-    },
-    [character.id],
+  const speechPlayer = useMemo(
+    () =>
+      createStreamingSpeechPlayer({
+        getContext: getSpeechContext,
+        getDestination: (context) => context.destination,
+        open: (text, signal) => openCharacterSpeechStream(character.id, text, signal),
+      }),
+    [character.id, getSpeechContext],
   );
 
-  const speakWebSpeech = useCallback((text: string) => {
-    const voices = speechSynthesis.getVoices();
-    const vietnameseVoice = voices.find((v) => v.name.includes("Vietnamese"));
-    const utterance = new SpeechSynthesisUtterance(text);
-    if (vietnameseVoice) utterance.voice = vietnameseVoice;
-    utterance.lang = "vi-VN";
-    utterance.rate = 1.25;
-    utterance.onend = () => {
-      setTimeout(() => {
-        if (!speechSynthesis.speaking && !speechSourceRef.current) {
-          setSpeakingMessageId(null);
-        }
-      }, 100);
-    };
-    utterance.onerror = () => {
-      setTimeout(() => {
-        if (!speechSynthesis.speaking && !speechSourceRef.current) {
-          setSpeakingMessageId(null);
-        }
-      }, 100);
-    };
-    speechSynthesis.speak(utterance);
-  }, []);
+  const stopSpeech = useCallback(() => {
+    speechPlayer.stop();
+    setSpeakingMessageId(null);
+  }, [speechPlayer]);
 
-  const speakWithFallback = useCallback(
+  /** Đọc lại một tin nhắn: từng câu được đọc ngay khi có âm thanh, giọng giống trên mọi thiết bị. */
+  const speakMessage = useCallback(
     async (rawText: string, messageId: string): Promise<void> => {
-      const text = rawText.replace(/!\[([^\]]*)\]\([^)]*\)?/g, "$1").replace(/\{\{IMG_\d+\}\}/g, "").replace(/https?:\/\/\S+/g, "").replace(/\(\s*\)/g, "").replace(/\s{2,}/g, " ").trim() || rawText;
+      const text =
+        rawText
+          .replace(/!\[([^\]]*)\]\([^)]*\)?/g, "$1")
+          .replace(/\{\{IMG_\d+\}\}/g, "")
+          .replace(/https?:\/\/\S+/g, "")
+          .replace(/\(\s*\)/g, "")
+          .replace(/\s{2,}/g, " ")
+          .trim() || rawText;
       stopSpeech();
       setSpeakingMessageId(messageId);
-      try {
-        await playAzureSpeech(text);
-        return;
-      } catch (err) {
-        console.warn("[ChatMain] Azure TTS failed, using Web Speech:", err);
-      }
-
-      speakWebSpeech(text);
+      const segments = splitSpeechSegments(text, { earlyFirst: true });
+      const finished = segments.map((segment) => speechPlayer.enqueue(segment));
+      await Promise.all(finished);
+      setSpeakingMessageId((current) => (current === messageId ? null : current));
     },
-    [playAzureSpeech, speakWebSpeech, stopSpeech],
+    [speechPlayer, stopSpeech],
   );
 
   const speak = useCallback((text: string, messageId: string) => {
@@ -336,8 +292,8 @@ export function ChatMain({
       stopSpeech();
       return;
     }
-    void speakWithFallback(text, messageId);
-  }, [speakingMessageId, speakWithFallback, stopSpeech]);
+    void speakMessage(text, messageId);
+  }, [speakingMessageId, speakMessage, stopSpeech]);
 
   useEffect(() => {
     return () => {
@@ -382,8 +338,12 @@ export function ChatMain({
     return ids;
   }, [messages, isStreaming]);
   const lastItem = displayItems[displayItems.length - 1];
+  // Exam sessions: the character asks and grades, so there are no suggestions and no calls.
+  const exam = data?.exam;
+  const isExam = !!exam;
+  const isExamFinished = !!exam?.finished;
   const showSuggestions =
-    suggestedQuestions.length > 0 && !isStreaming && lastItem?.type !== "voice-call" && lastItem?.message.role === "ASSISTANT";
+    !isExam && suggestedQuestions.length > 0 && !isStreaming && lastItem?.type !== "voice-call" && lastItem?.message.role === "ASSISTANT";
   const userTextMessageCount = useMemo(
     () =>
       messages.filter(
@@ -579,13 +539,106 @@ export function ChatMain({
     sessionId,
   ]);
 
-  const enqueueSpeech = (text: string) => {
-    speakWebSpeech(text);
+  const enqueueSpeech = (rawText: string) => {
+    const text =
+      rawText
+        .replace(/!\[([^\]]*)\]\([^)]*\)?/g, "$1")
+        .replace(/\{\{IMG_\d+\}\}/g, "")
+        .replace(/https?:\/\/\S+/g, "")
+        .replace(/\(\s*\)/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    if (!text) return;
+    for (const segment of splitSpeechSegments(text)) {
+      void speechPlayer.enqueue(segment);
+    }
   };
 
-  const handleSend = async (content: string, type?: "TEXT" | "VOICE") => {
+  /**
+   * Exam answers use the non-stream API: the reply comes back in one piece anyway and carries the grade and
+   * progress. Resolves false when the answer was not graded; the toast then offers to send it again.
+   */
+  const sendExamAnswer = async (examSessionId: string, content: string): Promise<boolean> => {
+    const tempUserMsg: ChatMessage = {
+      id: `temp-${Date.now()}`,
+      sessionId: examSessionId,
+      role: "USER",
+      content,
+      messageType: "TEXT",
+      createdAt: new Date().toISOString(),
+    };
+    setOptimisticMessages((prev) => [...prev, tempUserMsg]);
+    setStreamingMessageType("TEXT");
+    setStreamingMessage("");
+    setIsStreaming(true);
+
+    try {
+      const res = await chatService.sendMessage(examSessionId, content);
+      qc.setQueryData(
+        queryKeys.chat.messages(examSessionId),
+        (old: GetMessagesResponse | undefined) => ({
+          messages: [...(old?.messages ?? []), res.userMessage, res.assistantMessage],
+          suggestedQuestions: [],
+          exam: res.exam ?? old?.exam,
+        }),
+      );
+      setOptimisticMessages([]);
+      setLastTokenUsage({
+        remainingTokens: res.remainingTokens,
+        promptTokens: res.promptTokens || 0,
+        completionTokens: res.completionTokens || 0,
+        messageType: "TEXT",
+      });
+      recordStudyActivity(qc);
+      qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+      void speakMessage(stripExamSeparator(res.assistantMessage.content), res.assistantMessage.id);
+      return true;
+    } catch (err) {
+      setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
+      if (handlePlatformLockError(err)) return false;
+
+      const blocked = inappropriateMessageFromError(err);
+      if (blocked) {
+        setContentWarning(blocked);
+        return false;
+      }
+      if (isTokenExhaustionError(err)) {
+        setIsLocalTokenExhausted(true);
+        onTokenExhausted?.();
+        toast.error("Bạn đã hết token, chưa gửi được câu trả lời.", { duration: 8000 });
+        return false;
+      }
+      const status = (err as { response?: { status?: number } }).response?.status;
+      if (status === 400) {
+        // "Buổi vấn đáp này đã kết thúc." Reload the progress so the input locks.
+        toast.error(getApiErrorMessage(err, "Không gửi được câu trả lời"));
+        qc.invalidateQueries({ queryKey: queryKeys.chat.messages(examSessionId) });
+        return false;
+      }
+      // The backend saves nothing when grading fails, so the answer can simply be sent again.
+      toast.error(`${character.name} chưa chấm được câu trả lời vì dịch vụ AI đang gặp sự cố.`, {
+        action: { label: "Gửi lại", onClick: () => void sendExamAnswer(examSessionId, content) },
+        duration: 8000,
+      });
+      return false;
+    } finally {
+      setIsStreaming(false);
+    }
+  };
+
+  /** Resolves false when the message was not sent and its text should stay in the input box. */
+  const handleSend = async (content: string, type?: "TEXT" | "VOICE"): Promise<boolean> => {
     // Cancel any ongoing speech when starting a new message
     stopSpeech();
+    // Mở khóa âm thanh ngay trong thao tác của người dùng, vì trình duyệt chặn phát tự động.
+    void getSpeechContext().catch(() => {});
+
+    // Wording is checked before the message enters the chat, so a blocked message never shows up there.
+    const contentWarning = await chatService.checkContent(content);
+    if (contentWarning) {
+      setContentWarning(contentWarning);
+      return false;
+    }
     
     // If not specified, default to VOICE if the 3D avatar modal is open, else TEXT
     const msgType = type || (isVoice3DOpen ? "VOICE" : "TEXT");
@@ -594,7 +647,7 @@ export function ChatMain({
     let currentSessionId = sessionId;
 
     if (!currentSessionId) {
-      if (!contextId) return;
+      if (!contextId) return false;
       try {
         const newSession = await createSession.mutateAsync({
           characterId: character.id,
@@ -608,8 +661,13 @@ export function ChatMain({
           onTokenExhausted?.();
         }
 
-        return;
+        return false;
       }
+    }
+
+    if (isExam) {
+      void sendExamAnswer(currentSessionId, content);
+      return true;
     }
 
     const tempUserMsg: ChatMessage = {
@@ -631,6 +689,8 @@ export function ChatMain({
 
     // Buffer for streaming speech chunk-by-chunk
     let sentenceBuffer = "";
+    // Cụm đầu được đọc ngay ở dấu phẩy, không chờ hết câu
+    let spokeFirstPhrase = false;
     // Only split on sentence endings (. ! ? \n) to avoid unnatural TTS pauses between commas
     const punctuationRegex = /([.!?\n]+)/;
 
@@ -662,11 +722,14 @@ export function ChatMain({
         // Streaming voice logic: speak phrases as soon as punctuation is detected
         sentenceBuffer += chunk;
         const match = sentenceBuffer.match(punctuationRegex);
-        if (match && match.index !== undefined) {
-          const splitIndex = match.index + match[0].length;
+        const earlyBreak = spokeFirstPhrase ? -1 : findEarlyBreak(sentenceBuffer);
+        const splitIndex =
+          match && match.index !== undefined ? match.index + match[0].length : earlyBreak;
+        if (splitIndex > 0) {
           const phraseToSpeak = sentenceBuffer.slice(0, splitIndex).trim();
           sentenceBuffer = sentenceBuffer.slice(splitIndex);
           if (phraseToSpeak.length > 1) { // Avoid speaking stray punctuation
+            spokeFirstPhrase = true;
             enqueueSpeech(phraseToSpeak);
           }
         }
@@ -703,7 +766,7 @@ export function ChatMain({
           quotes: resData.quotesUsed,
         };
 
-        if (speechSynthesis.speaking || speechSourceRef.current) {
+        if (speechPlayer.isPlaying()) {
           setSpeakingMessageId(newAssistantMsg.id);
         }
 
@@ -751,6 +814,13 @@ export function ChatMain({
         // The stream uses fetch(), so the axios interceptor never sees the whole-school lock.
         if (handlePlatformLockError(err)) return;
 
+        // The send API checks wording again, in case the check before sending was skipped or failed.
+        const blocked = inappropriateMessageFromError(err);
+        if (blocked) {
+          setContentWarning(blocked);
+          return;
+        }
+
         if (isTokenExhaustionError(err)) {
           setIsLocalTokenExhausted(true);
           onTokenExhausted?.();
@@ -788,6 +858,7 @@ export function ChatMain({
       },
       msgType
     );
+    return true;
   };
 
   return (
@@ -898,7 +969,7 @@ export function ChatMain({
         {/* ── Nút Voice Call ── */}
         <button
           onClick={handleOpenVoice2DCall}
-          disabled={isConversationInitializing || (canUseVoiceCall && isTokenExhausted)}
+          disabled={isConversationInitializing || isExam || (canUseVoiceCall && isTokenExhausted)}
           aria-label={
             canUseVoiceCall
               ? `Gọi thoại với ${character.name}`
@@ -907,7 +978,9 @@ export function ChatMain({
                 : "Mở nâng cấp gói Plus"
           }
           title={
-            !canUseVoiceCall
+            isExam
+              ? "Không gọi được trong buổi vấn đáp"
+              : !canUseVoiceCall
               ? isSchoolAccount
                 ? "Gọi thoại chưa có trong gói của trường. Bấm để xem hướng dẫn."
                 : "Gọi thoại có trong gói Plus. Bấm để xem các gói nâng cấp."
@@ -937,7 +1010,7 @@ export function ChatMain({
 
         <button
           onClick={handleOpenVoice3DCall}
-          disabled={isConversationInitializing || (canUseVideoCall && isTokenExhausted)}
+          disabled={isConversationInitializing || isExam || (canUseVideoCall && isTokenExhausted)}
           aria-label={
             canUseVideoCall
               ? `Video call 3D với ${character.name}`
@@ -946,7 +1019,9 @@ export function ChatMain({
                 : "Mở nâng cấp gói Pro"
           }
           title={
-            !canUseVideoCall
+            isExam
+              ? "Không gọi được trong buổi vấn đáp"
+              : !canUseVideoCall
               ? isSchoolAccount
                 ? "Video call 3D chưa có trong gói của trường. Bấm để xem hướng dẫn."
                 : "Video call có trong gói Pro. Bấm để xem các gói nâng cấp."
@@ -988,6 +1063,44 @@ export function ChatMain({
           </button>
         )}
       </div>
+
+      {exam && sessionId && (
+        <div className="px-4 md:px-6 py-2 border-b border-(--border-default) flex flex-wrap items-center gap-x-4 gap-y-1 shrink-0 text-[11px] bg-bg-main">
+          <span className="font-bold uppercase tracking-[0.08em] text-[var(--text-primary)]">Vấn đáp</span>
+          <span className="tabular-nums text-content-text">
+            {exam.finished
+              ? `Đã xong ${exam.totalQuestions} câu`
+              : `Câu ${Math.min(exam.answeredQuestions + 1, exam.totalQuestions)}/${exam.totalQuestions}`}
+          </span>
+          {!exam.finished && (
+            <span className="font-semibold text-[var(--text-primary)]">
+              {exam.totalQuestions - exam.answeredQuestions <= 1
+                ? "Câu cuối, trả lời xong là có điểm"
+                : `Còn ${exam.totalQuestions - exam.answeredQuestions} câu nữa là có điểm`}
+            </span>
+          )}
+          <span className="tabular-nums text-content-text">
+            {exam.finished ? "Điểm" : "Điểm tạm"}{" "}
+            <strong className="text-content-heading">{exam.score.toLocaleString("vi-VN")}</strong>/10
+          </span>
+          <span className="tabular-nums text-content-muted">
+            Đúng {exam.correctCount} · Một phần {exam.partialCount} · Sai {exam.incorrectCount}
+          </span>
+          <span
+            className="basis-full h-1 overflow-hidden rounded-full bg-[var(--border-default)]"
+            role="progressbar"
+            aria-label="Tiến độ vấn đáp"
+            aria-valuemin={0}
+            aria-valuemax={exam.totalQuestions}
+            aria-valuenow={exam.answeredQuestions}
+          >
+            <span
+              className="block h-full bg-[var(--accent-gold)] transition-[width] duration-300"
+              style={{ width: `${(exam.answeredQuestions / Math.max(1, exam.totalQuestions)) * 100}%` }}
+            />
+          </span>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-5 pb-28 md:pb-6 space-y-4">
@@ -1043,6 +1156,18 @@ export function ChatMain({
                   }
                 />
               )}
+                  {item.type === "message" && item.message.examVerdict && EXAM_VERDICT_LABELS[item.message.examVerdict] && (
+                    <p className="-mt-2 pl-16 pr-4">
+                      <span
+                        className={cn(
+                          "inline-block rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em]",
+                          EXAM_VERDICT_LABELS[item.message.examVerdict].className,
+                        )}
+                      >
+                        Câu trả lời trước: {EXAM_VERDICT_LABELS[item.message.examVerdict].label}
+                      </span>
+                    </p>
+                  )}
                   {unanswered && (
                     <p className="-mt-2 flex items-center justify-end gap-2 pr-16 text-[11px] text-[var(--status-warning)]">
                       <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />
@@ -1092,7 +1217,12 @@ export function ChatMain({
               />
             )}
             {(isStreaming && !streamingMessage && streamingMessageType !== "VOICE") && (
-              <TypingIndicator character={character} />
+              <>
+                {isExam && (
+                  <p className="px-4 pl-16 text-[11px] text-content-muted">{character.name} đang chấm bài...</p>
+                )}
+                <TypingIndicator character={character} />
+              </>
             )}
           </>
         )}
@@ -1160,13 +1290,28 @@ export function ChatMain({
         </div>
       )}
 
+      {isExamFinished && exam && (
+        <div className="px-4 py-3 border-t border-[var(--text-primary)] shrink-0 bg-(--accent-gold-active-bg)">
+          <p className="text-sm font-bold text-content-heading">
+            Buổi vấn đáp đã kết thúc: {exam.score.toLocaleString("vi-VN")}/10 điểm
+          </p>
+          <p className="mt-0.5 text-xs text-content-text">
+            Đúng {exam.correctCount}, đúng một phần {exam.partialCount}, chưa đúng {exam.incorrectCount} trên{" "}
+            {exam.totalQuestions} câu. Mở bảng bên phải để vấn đáp lại hoặc trò chuyện tiếp.
+          </p>
+        </div>
+      )}
+
       <ChatInput
         onSend={handleSend}
         isLoading={isStreaming}
-        disabled={isStreaming || isTokenExhausted || isConversationInitializing}
+        disabled={isStreaming || isTokenExhausted || isConversationInitializing || isExamFinished}
         characterName={character.name}
         isTokenExhausted={isTokenExhausted}
       />
+      <ContentWarningDialog message={contentWarning} onClose={() => setContentWarning(null)} />
+      <AiDisclaimerFooter />
+      <AiFirstChatNotice characterId={character.id} characterName={character.name} userId={user?.uid} />
 
       <style>{`
         .voice-call-nudge {

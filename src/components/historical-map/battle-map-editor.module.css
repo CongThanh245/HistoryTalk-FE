@@ -6,6 +6,12 @@
 .header p { margin-top: 2px; font-size: 11px; font-weight: 600; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .saveState { font-size: 11px; font-weight: 600; color: var(--text-tertiary); white-space: nowrap; padding: 0 6px; }
 .saveStateDirty { color: var(--gold-on-light); font-weight: 700; }
+/* Practice: "5 / 12 ký hiệu" with a small bar toward the original map's count. */
+.practiceGoal { display: inline-flex; flex-direction: column; gap: 4px; min-width: 110px; padding: 0 6px; }
+.practiceGoalText { font-size: 11px; font-weight: 600; color: var(--text-tertiary); white-space: nowrap; }
+.practiceGoalText b { font-size: 13px; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.practiceGoalBar { display: block; height: 4px; border-radius: 999px; background: var(--border-default); overflow: hidden; }
+.practiceGoalBar span { display: block; height: 100%; border-radius: inherit; background: var(--accent-gold); transition: width 250ms ease; }
 .saveStateDirty::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--accent-gold); vertical-align: 1px; }
 
 .editor button, .zoomTools button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 7px 11px; border: 1px solid var(--border-strong); border-radius: 2px; font-size: 12px; font-weight: 600; background: var(--bg-surface); color: inherit; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }

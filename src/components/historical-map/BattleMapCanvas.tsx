@@ -102,7 +102,7 @@ const rectBetween = (a: { x: number; y: number }, b: { x: number; y: number }): 
   ({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) });
 const rectStyle = (r: CameraRect) => ({ left: `${r.x}%`, top: `${r.y}%`, width: `${r.w}%`, height: `${r.h}%` });
 
-export function BattleMapCanvas({ value, title, selectedId, selectedIds, placingType, placingColor, onSelect, onMove, onTransform, onAdd, onPointsChange, onDelete, legendTitle, symbolView, focus, spotlight, cameraFrame, onDrawFrame, onMarquee, phaseBadge, quickLabel, selectionToolbar }: {
+export function BattleMapCanvas({ value, title, selectedId, selectedIds, placingType, placingColor, onSelect, onMove, onTransform, onAdd, onPointsChange, onDelete, legendTitle, legendDefaultOpen, symbolView, focus, spotlight, cameraFrame, onDrawFrame, onMarquee, phaseBadge, quickLabel, selectionToolbar }: {
   value: BattleMap; title: string;
   /** Symbol with rotate/resize handles (single selection). */
   selectedId?: string | null;
@@ -124,6 +124,8 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
   onDelete?: (id: string) => void;
   /** Heading of the legend card, e.g. "Trận Bạch Đằng – 1288". */
   legendTitle?: string;
+  /** Whether the legend starts open; by default it does except while authoring. */
+  legendDefaultOpen?: boolean;
   /** Per-symbol state for phases; omit to draw every symbol normally. */
   symbolView?: (symbol: BattleSymbol) => SymbolView;
   /** Playback camera: zooms onto these symbols or this area (null = whole map). Leave undefined outside playback. */
@@ -149,7 +151,7 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
   const viewport = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState<{ w: number; h: number } | null>(null);
   const [aspect, setAspect] = useState<number | null>(null);
-  const [legendOpen, setLegendOpen] = useState(!onAdd);
+  const [legendOpen, setLegendOpen] = useState(legendDefaultOpen ?? !onAdd);
   /** Hover note: symbol id + pointer position in px relative to the plane. */
   const [tip, setTip] = useState<{ id: string; x: number; y: number } | null>(null);
   /** Symbol drag: moves every symbol of `group` by the pointer delta since `start`. */

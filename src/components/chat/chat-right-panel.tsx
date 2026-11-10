@@ -17,8 +17,9 @@ import {
   Trash2,
   Loader2,
   FileText,
+  GraduationCap,
 } from "lucide-react";
-import type { ChatCharacter, ChatSession } from "@/services/chat.service";
+import { CHAT_MODE_LABELS, type ChatCharacter, type ChatSession } from "@/services/chat.service";
 import { characterService } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
@@ -44,6 +45,7 @@ import {
 } from "@/components/ui/hover-card";
 
 import { cn } from "@/lib/utils/cn";
+import { ExamStartDialog } from "./exam-start-dialog";
 
 type PanelSection = "menu" | "history" | "characters" | "quiz" | "contexts" | "documents";
 type DetailSection = Exclude<PanelSection, "menu">;
@@ -60,6 +62,8 @@ interface ChatRightPanelProps {
   activeSessionId: string | null;
   onSelectSession: (sessionId: string) => void;
   onNewSession: () => void;
+  /** Starts an exam session where the character asks questionCount questions. */
+  onNewExamSession?: (questionCount: number) => void;
   onDeleteSession?: (sessionId: string) => void;
   onOpenDocument?: (documentId: string) => void;
 }
@@ -217,9 +221,11 @@ export function ChatRightPanel({
   activeSessionId,
   onSelectSession,
   onNewSession,
+  onNewExamSession,
   onDeleteSession,
   onOpenDocument,
 }: ChatRightPanelProps) {
+  const [isExamDialogOpen, setIsExamDialogOpen] = useState(false);
   const [section, setSection] = useState<PanelSection>("menu");
   const [lastDetailSection, setLastDetailSection] = useState<DetailSection>("history");
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
@@ -363,10 +369,34 @@ export function ChatRightPanel({
           >
             <Plus className="w-4 h-4" />
           </div>
-          <span className="flex-1 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] group-hover:text-[var(--text-inverse)]">
-            Cuộc trò chuyện mới
+          <span className="flex-1 min-w-0">
+            <span className="block text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] group-hover:text-[var(--text-inverse)]">
+              {CHAT_MODE_LABELS.CHAT} mới
+            </span>
+            <span className="block text-[11px] text-content-muted group-hover:text-[var(--text-inverse)]">
+              Bạn hỏi, {activeCharacter.name} trả lời
+            </span>
           </span>
         </button>
+
+        {onNewExamSession && (
+          <button
+            onClick={() => characterId && contextId && setIsExamDialogOpen(true)}
+            className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-none border-b border-(--border-default) cursor-pointer transition-colors hover:bg-[var(--text-primary)] text-left"
+          >
+            <div className="w-7 h-7 rounded-sm flex items-center justify-center shrink-0 border border-[var(--text-primary)] text-[var(--text-primary)] group-hover:border-[var(--text-inverse)] group-hover:text-[var(--text-inverse)]">
+              <GraduationCap className="w-4 h-4" />
+            </div>
+            <span className="flex-1 min-w-0">
+              <span className="block text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-primary)] group-hover:text-[var(--text-inverse)]">
+                {CHAT_MODE_LABELS.EXAM}
+              </span>
+              <span className="block text-[11px] text-content-muted group-hover:text-[var(--text-inverse)]">
+                {activeCharacter.name} hỏi, bạn trả lời và được chấm điểm
+              </span>
+            </span>
+          </button>
+        )}
 
         <MenuRow
           icon={<History className="w-4 h-4" />}
@@ -457,6 +487,12 @@ export function ChatRightPanel({
                           : "text-content-heading",
                       )}
                     >
+                      <span className={cn(
+                        "mr-1.5 inline-block rounded-sm border px-1 py-px align-[1px] text-[9px] font-bold uppercase tracking-[0.08em]",
+                        session.mode === "EXAM" ? "border-[var(--text-primary)] text-[var(--text-primary)]" : "border-[var(--border-strong)] text-content-muted",
+                      )}>
+                        {CHAT_MODE_LABELS[session.mode === "EXAM" ? "EXAM" : "CHAT"]}
+                      </span>
                       {session.title || "Cuộc trò chuyện"}
                     </p>
                     <p
@@ -504,7 +540,7 @@ export function ChatRightPanel({
           className="btn-ink w-full min-h-9 px-3 text-[11px] cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
-          Cuộc trò chuyện mới
+          {CHAT_MODE_LABELS.CHAT} mới
         </button>
       </div>
     </>
@@ -760,6 +796,18 @@ export function ChatRightPanel({
           }
         }}
       />
+
+      {onNewExamSession && (
+        <ExamStartDialog
+          open={isExamDialogOpen}
+          characterName={activeCharacter.name}
+          onOpenChange={setIsExamDialogOpen}
+          onStart={(questionCount) => {
+            onNewExamSession(questionCount);
+            setIsOpen(false);
+          }}
+        />
+      )}
     </>
   );
 }

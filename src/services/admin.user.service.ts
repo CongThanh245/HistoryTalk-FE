@@ -1,5 +1,6 @@
 // src/services/admin.user.service.ts
 import { axiosClient } from "@/configs/axios.client";
+import { fromServerPage, withServerPage } from "@/lib/utils/pagination";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -128,8 +129,9 @@ export const adminUserService = {
 
   /** Get paginated list of all users */
   listUsers: async (params?: ListUsersParams): Promise<PaginatedUsers> => {
-    const res = await axiosClient.get(BASE, { params });
-    return res.data.data as PaginatedUsers;
+    const res = await axiosClient.get(BASE, { params: withServerPage(params) });
+    const data = res.data.data as PaginatedUsers;
+    return { ...data, currentPage: fromServerPage(data?.currentPage) };
   },
 
   /** Get single user by ID */

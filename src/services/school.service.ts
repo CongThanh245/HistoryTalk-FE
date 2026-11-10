@@ -3,6 +3,7 @@
 // Contract: BE docs/sprints/sprint_5/implemented_plan/saas_api_contract_for_fe.md
 //           BE docs/sprints/sprint_5/fe_contracts/saas_classroom_and_token_allocation_api_contract.md
 import { axiosClient } from "@/configs/axios.client";
+import { fromServerPage, withServerPage } from "@/lib/utils/pagination";
 
 // ─── Shared shapes ─────────────────────────────────────────────────────────
 
@@ -42,7 +43,7 @@ export function fromPagination<T>(body: { data?: T[]; pagination?: PaginationMet
   const p = body.pagination;
   return {
     items,
-    page: p?.page ?? 0,
+    page: fromServerPage(p?.page),
     size: p?.size ?? items.length,
     totalElements: p?.totalElements ?? items.length,
     totalPages: p?.totalPages ?? 1,
@@ -60,7 +61,7 @@ function fromSpringPage<T>(page: SpringPage<T> | undefined): ApiPage<T> {
   const items = page?.content ?? [];
   return {
     items,
-    page: page?.currentPage ?? 0,
+    page: fromServerPage(page?.currentPage),
     size: page?.pageSize ?? items.length,
     totalElements: page?.totalElements ?? items.length,
     totalPages: page?.totalPages ?? 1,
@@ -79,22 +80,32 @@ export interface ListParams {
 
 // ─── Schools (SYSTEM_ADMIN) ────────────────────────────────────────────────
 
-/** Token pool of one school year (01/09 – 31/05): SMALL 5M, MEDIUM 20M, LARGE 50M. */
-export type EnterprisePackage = "ENTERPRISE_SMALL" | "ENTERPRISE_MEDIUM" | "ENTERPRISE_LARGE";
+/** CUSTOM = a school created from a custom quote; its pool is the quoted one, not a fixed amount. */
+export type EnterprisePackage = "ENTERPRISE_SMALL" | "ENTERPRISE_MEDIUM" | "ENTERPRISE_LARGE" | "ENTERPRISE_CUSTOM";
 /** EXPIRED = the school year ended (after 31/05) without renewal; the whole school is locked. */
 export type SchoolStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED" | "EXPIRED";
 
+/** Token pool of one school year (01/09 – 31/05), BE `EnterprisePackage.tokens`. CUSTOM has none of its own. */
 export const ENTERPRISE_PACKAGE_TOKENS: Record<EnterprisePackage, number> = {
-  ENTERPRISE_SMALL: 5_000_000,
-  ENTERPRISE_MEDIUM: 20_000_000,
-  ENTERPRISE_LARGE: 50_000_000,
+  ENTERPRISE_SMALL: 435_750_000,
+  ENTERPRISE_MEDIUM: 1_016_750_000,
+  ENTERPRISE_LARGE: 1_452_500_000,
+  ENTERPRISE_CUSTOM: 0,
 };
+
+/** Pool of a school year for the package; a custom package falls back to the school's own pool. */
+export function packageYearTokens(pkg: EnterprisePackage, schoolPool?: number | null): number | null {
+  const tokens = ENTERPRISE_PACKAGE_TOKENS[pkg];
+  if (tokens) return tokens;
+  return schoolPool ? schoolPool : null;
+}
 
 /** Recommended number of students per package (BE `EnterprisePackage.recommendedStudents`). */
 export const ENTERPRISE_PACKAGE_STUDENTS: Record<EnterprisePackage, number> = {
-  ENTERPRISE_SMALL: 350,
-  ENTERPRISE_MEDIUM: 1_500,
-  ENTERPRISE_LARGE: 3_500,
+  ENTERPRISE_SMALL: 600,
+  ENTERPRISE_MEDIUM: 1_400,
+  ENTERPRISE_LARGE: 2_000,
+  ENTERPRISE_CUSTOM: 0,
 };
 
 export interface ApiSchool {
@@ -357,7 +368,7 @@ export interface ClassroomListParams {
 export const schoolService = {
   // System Admin
   listSchools: async (params: ListParams = {}): Promise<ApiPage<ApiSchool>> => {
-    const res = await axiosClient.get("/admin/schools", { params });
+    const res = await axiosClient.get("/admin/schools", { params: withServerPage(params) });
     return fromPagination<ApiSchool>(res.data);
   },
   getSchool: async (id: string): Promise<ApiSchool> => {
@@ -375,7 +386,7 @@ export const schoolService = {
   },
   /** sortBy: fullName | userName | email | createdAt */
   listSchoolAdmins: async (schoolId: string, params: AccountListParams = {}): Promise<ApiPage<ApiSchoolAdmin>> => {
-    const res = await axiosClient.get(`/admin/schools/${schoolId}/school-admins`, { params });
+    const res = await axiosClient.get(`/admin/schools/${schoolId}/school-admins`, { params: withServerPage(params) });
     return fromPagination<ApiSchoolAdmin>(res.data);
   },
   updateSchoolAdmin: async (id: string, payload: UpdateStaffAccountPayload): Promise<ApiSchoolAdmin> => {
@@ -401,7 +412,7 @@ export const schoolService = {
   },
   /** sortBy: fullName | userName | email | createdAt */
   listTeachers: async (params: AccountListParams = {}): Promise<ApiPage<ApiTeacher>> => {
-    const res = await axiosClient.get("/school-admin/teachers", { params });
+    const res = await axiosClient.get("/school-admin/teachers", { params: withServerPage(params) });
     return fromPagination<ApiTeacher>(res.data);
   },
   createTeacher: async (payload: CreateTeacherPayload): Promise<ApiTeacher> => {
@@ -427,7 +438,7 @@ export const schoolService = {
   // Students
   /** sortBy: studentCode | fullName | userName | email | token | createdAt */
   listStudents: async (params: AccountListParams = {}): Promise<ApiPage<ApiStudent>> => {
-    const res = await axiosClient.get("/school-admin/students", { params });
+    const res = await axiosClient.get("/school-admin/students", { params: withServerPage(params) });
     return fromPagination<ApiStudent>(res.data);
   },
   getStudent: async (id: string): Promise<ApiStudent> => {
@@ -480,13 +491,13 @@ export const schoolService = {
 
   // Classrooms
   listSchoolClassrooms: async (params: ClassroomListParams = {}): Promise<ApiPage<ApiClassroom>> => {
-    const res = await axiosClient.get("/school-admin/classrooms", { params });
+    const res = await axiosClient.get("/school-admin/classrooms", { params: withServerPage(params) });
     return fromAnyPage<ApiClassroom>(res.data);
   },
   listTeacherClassrooms: async (
     params: Pick<ClassroomListParams, "academicYear" | "page" | "size"> = {},
   ): Promise<ApiPage<ApiClassroom>> => {
-    const res = await axiosClient.get("/teacher/classrooms", { params });
+    const res = await axiosClient.get("/teacher/classrooms", { params: withServerPage(params) });
     return fromAnyPage<ApiClassroom>(res.data);
   },
   listStudentClassrooms: async (): Promise<ApiClassroom[]> => {

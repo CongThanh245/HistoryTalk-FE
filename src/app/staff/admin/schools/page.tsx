@@ -223,7 +223,7 @@ function SchoolsContent() {
                             <span className="font-mono text-xs">{s.schoolCode}</span>
                           </TableCell>
                           <TableCell className="px-3 py-2.5">
-                            <PackageCell pkg={s.packageType} />
+                            <PackageCell pkg={s.packageType} schoolPool={s.totalSchoolTokenQuota} />
                           </TableCell>
                           <TableCell className="px-3 py-2.5">
                             <div className="w-40 space-y-1">

@@ -106,7 +106,8 @@ export function targetHref(a: Pick<StudentAssignment, "assignmentType" | "target
     case "CONTEXT_READING":
       return `${ROUTES.EVENTS}?event=${encodeURIComponent(a.targetId)}`;
     case "AI_CHAT_ROLEPLAY":
-      return ROUTES.CHAT(a.targetId);
+      // The assignment counts interview messages, so skip the Phỏng vấn / Vấn đáp choice.
+      return `${ROUTES.CHAT(a.targetId)}?mode=chat`;
     case "QUIZ_TEST":
       return ROUTES.QUIZ_DETAIL(a.targetId);
   }

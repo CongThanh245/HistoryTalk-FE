@@ -36,6 +36,8 @@ import {
   targetHref,
 } from "@/components/saas/student-assignment-card";
 import { ROUTES } from "@/constants/routes";
+import { AssignmentScenarioPicker } from "@/components/saas/assignment-scenario-picker";
+import { useChatScenarios } from "@/features/chat/hooks";
 import { useRole } from "@/features/auth/usePermission";
 import {
   useQuizDetail,
@@ -59,7 +61,7 @@ import type {
   StudentAssignment,
   SubmitAssignmentPayload,
 } from "@/services/assignment.service";
-import { chatService, type ChatSession } from "@/services/chat.service";
+import { chatService, type ChatScenario, type ChatSession } from "@/services/chat.service";
 import {
   quizService,
   type QuizQuestion,
@@ -270,6 +272,30 @@ function AssignmentActions({
     staleTime: 0,
   });
 
+  // Roleplay: the assignment names the character; the learner picks one of its contexts (GET /chat/scenarios).
+  const scenarios = useChatScenarios(open && type === "AI_CHAT_ROLEPLAY");
+  const characterScenarios = (scenarios.data ?? []).filter((s) => s.characterId === a.targetId);
+  const [pickingScenario, setPickingScenario] = React.useState(false);
+  const chatHref = (contextId?: string | null, sessionId?: string | null) => {
+    // The assignment counts interview messages, so skip the Phỏng vấn / Vấn đáp choice.
+    const query = new URLSearchParams({ mode: "chat" });
+    if (contextId) query.set("contextId", contextId);
+    if (sessionId) query.set("sessionId", sessionId);
+    const qs = query.toString();
+    return `${ROUTES.CHAT(a.targetId)}${qs ? `?${qs}` : ""}`;
+  };
+  const openChat = async (scenario?: ChatScenario) => {
+    if (!(await ensureStarted())) return;
+    setPickingScenario(false);
+    router.push(chatHref(scenario?.contextId));
+  };
+  /** One context: go straight in. None found: let the chat page pick the context, as before. */
+  const beginChat = () => {
+    if (characterScenarios.length === 1) void openChat(characterScenarios[0]);
+    else if (characterScenarios.length === 0 && !scenarios.isLoading) void openChat();
+    else setPickingScenario(true);
+  };
+
   if (a.submissionStatus === "EXEMPTED") {
     return (
       <Notice icon={ShieldCheck} title="Bạn được miễn bài này">
@@ -360,17 +386,26 @@ function AssignmentActions({
     const chat = evidence.data?.chat;
     if (notStarted || !chat) {
       primary = (
-        <button
-          type="button"
-          className="btn-crimson"
-          disabled={busy}
-          onClick={async () => {
-            if (await ensureStarted()) router.push(contentHref);
-          }}
-        >
-          {busy ? spinner : <Play className="h-4 w-4" aria-hidden="true" />}
-          {notStarted ? "Bắt đầu trò chuyện" : "Tiếp tục trò chuyện"}
-        </button>
+        <>
+          <button
+            type="button"
+            className="btn-crimson"
+            disabled={busy}
+            onClick={beginChat}
+          >
+            {busy ? spinner : <Play className="h-4 w-4" aria-hidden="true" />}
+            {notStarted ? "Bắt đầu trò chuyện" : "Tiếp tục trò chuyện"}
+          </button>
+          <AssignmentScenarioPicker
+            open={pickingScenario}
+            onOpenChange={setPickingScenario}
+            characterName={a.targetTitle ?? "nhân vật"}
+            scenarios={characterScenarios}
+            loading={scenarios.isLoading}
+            busy={busy}
+            onPick={(scenario) => void openChat(scenario)}
+          />
+        </>
       );
     } else {
       primary = (
@@ -385,7 +420,8 @@ function AssignmentActions({
         </button>
       );
       secondary = (
-        <Link href={contentHref} className="btn-line">
+        // Back into the same conversation and context the answers are counted from.
+        <Link href={chatHref(chat.contextId, chat.id)} className="btn-line">
           Tiếp tục trò chuyện
         </Link>
       );

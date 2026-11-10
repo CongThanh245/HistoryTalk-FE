@@ -39,6 +39,7 @@ const PACKAGE_HINTS: Record<EnterprisePackage, string> = {
   ENTERPRISE_SMALL: "Trường nhỏ, vài lớp dùng thử.",
   ENTERPRISE_MEDIUM: "Phù hợp phần lớn trường THCS/THPT.",
   ENTERPRISE_LARGE: "Trường lớn, nhiều khối lớp dùng thường xuyên.",
+  ENTERPRISE_CUSTOM: "Theo báo giá tuỳ chỉnh.",
 };
 
 const emptySchool = () => ({

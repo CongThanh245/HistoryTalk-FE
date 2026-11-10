@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { StaffFormInput, StaffFormSelect, StaffFormTextarea } from "@/components/staff/staff-form";
+import { CharacterVoiceFields } from "@/components/staff/character-voice-fields";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
@@ -73,6 +74,12 @@ interface ChrForm {
   isDeathBc: boolean;
   background: string;
   personality: string;
+  /** "" = default voice. */
+  voiceId: string;
+  /** "" = default "ta". */
+  selfPronoun: string;
+  /** "" = default "ngươi". */
+  addressPronoun: string;
   imageUrl: string;
   modelUrl: string;
   contextId: string;
@@ -97,7 +104,8 @@ function initialForm(item: LocalItem | undefined): FormState {
   };
   const chr: ChrForm = {
     name: "", title: "", bornDay: "", bornMonth: "", bornYear: "", isBornBc: false, deathDay: "", deathMonth: "", deathYear: "",
-    isDeathBc: false, background: "", personality: "", imageUrl: "", modelUrl: "", contextId: NONE,
+    isDeathBc: false, background: "", personality: "", voiceId: "", selfPronoun: "", addressPronoun: "",
+    imageUrl: "", modelUrl: "", contextId: NONE,
   };
   if (item?.type === "CONTEXT")
     Object.assign(ctx, {
@@ -111,6 +119,7 @@ function initialForm(item: LocalItem | undefined): FormState {
       bornDay: str(item.bornDay), bornMonth: str(item.bornMonth), bornYear: str(item.bornYear), isBornBc: !!item.isBornBc,
       deathDay: str(item.deathDay), deathMonth: str(item.deathMonth), deathYear: str(item.deathYear), isDeathBc: !!item.isDeathBc,
       background: item.description ?? "", personality: item.personality ?? "",
+      voiceId: item.voiceId ?? "", selfPronoun: item.selfPronoun ?? "", addressPronoun: item.addressPronoun ?? "",
       imageUrl: item.imageUrl ?? "", modelUrl: item.modelUrl ?? "", contextId: item.contextIds?.[0] ?? NONE,
     });
   return { scope: item?.contentScope ?? "CLASS_ONLY", classIds: item?.classIds ?? [], ctx, chr };
@@ -149,7 +158,7 @@ const FIELD_TAB: Record<string, Tab> = {
   name: "basic", era: "basic", year: "basic", location: "basic", description: "basic", coords: "basic",
   title: "basic", bornDay: "basic", bornMonth: "basic", bornYear: "basic", deathDay: "basic", deathMonth: "basic", deathYear: "basic",
   imageUrl: "media", videoUrl: "media", image: "media", modelUrl: "media",
-  background: "content", personality: "content",
+  background: "content", personality: "content", selfPronoun: "content", addressPronoun: "content",
   classes: "classes",
 };
 
@@ -187,6 +196,10 @@ function characterPayload(f: FormState, item?: LocalItem, isPublished?: boolean)
     title: optStr(c.title),
     background: c.background.trim(),
     personality: optStr(c.personality),
+    // On edit "" puts the voice and pronouns back to the defaults; on create blanks are left out.
+    ...(item
+      ? { voiceId: c.voiceId, selfPronoun: c.selfPronoun.trim(), addressPronoun: c.addressPronoun.trim() }
+      : { voiceId: optStr(c.voiceId), selfPronoun: optStr(c.selfPronoun), addressPronoun: optStr(c.addressPronoun) }),
     imageUrl: optStr(c.imageUrl),
     modelUrl: optStr(c.modelUrl),
     // The API skips null fields, so a blank date on edit keeps what is stored.
@@ -863,6 +876,11 @@ function CharacterContent({ f, patch, err }: { f: ChrForm; patch: (p: Partial<Ch
           placeholder="Đặc điểm tính cách, phong cách nói chuyện..."
         />
       </Field>
+      <CharacterVoiceFields
+        value={{ voiceId: f.voiceId, selfPronoun: f.selfPronoun, addressPronoun: f.addressPronoun }}
+        onChange={patch}
+        errors={{ selfPronoun: err("selfPronoun") ?? undefined, addressPronoun: err("addressPronoun") ?? undefined }}
+      />
     </div>
   );
 }

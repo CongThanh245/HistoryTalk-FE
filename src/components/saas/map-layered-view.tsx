@@ -133,7 +133,8 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
   const qc = useQueryClient();
   // Kho tư liệu map: teachers manage pins, camera focuses and battle maps of their school's contexts.
   const teacherEditableRole = classMode && role === "TEACHER";
-  const globalEditableRole = (!classMode && (role === "CONTENT_ADMIN" || role === "SYSTEM_ADMIN")) || teacherEditableRole;
+  // Official pins: Content Admins only since Sprint 9 (System Admins are read-only).
+  const globalEditableRole = (!classMode && role === "CONTENT_ADMIN") || teacherEditableRole;
   // Study notes are anchored to battles, so they belong to the battle map.
   const hasNotesLayer = !classMode && Boolean(role && (STUDY_NOTE_ROLES as readonly string[]).includes(role));
 

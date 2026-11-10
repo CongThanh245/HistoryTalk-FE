@@ -1,8 +1,17 @@
 import { axiosClient, refreshAccessToken } from "@/configs/axios.client";
 import { useAuthStore } from "@/store/auth.store";
 import { normalizeChatHistoryGroups } from "./chat-history.mapper";
+import { inappropriateMessageFromError } from "@/lib/utils/content-policy";
 
 // ── Types theo API response ───────────────────────────────
+
+/** EXAM: the character asks and grades, the learner answers (chat_exam_mode_api_contract.md). */
+export type ChatSessionMode = "CHAT" | "EXAM";
+
+/** Names of the two modes in the UI: the learner interviews the character, or the character examines the learner. */
+export const CHAT_MODE_LABELS: Record<ChatSessionMode, string> = { CHAT: "Phỏng vấn", EXAM: "Vấn đáp" };
+
+export const EXAM_QUESTION_COUNT = { min: 3, max: 10, default: 5 } as const;
 
 export interface ChatSession {
   id: string;
@@ -12,6 +21,25 @@ export interface ChatSession {
   lastMessage: string;
   lastMessageAt: string;
   messageCount: number;
+  mode?: ChatSessionMode;
+  /** Only on EXAM sessions. */
+  examQuestionCount?: number;
+}
+
+/** Grade of the answer just given. */
+export type ExamVerdict = "CORRECT" | "PARTIAL" | "INCORRECT";
+
+/** Progress of an exam session. Only present on EXAM sessions. */
+export interface ExamProgress {
+  totalQuestions: number;
+  answeredQuestions: number;
+  correctCount: number;
+  partialCount: number;
+  incorrectCount: number;
+  /** Out of 10, rounded to one decimal. */
+  score: number;
+  /** All questions answered: the input is locked and the last reply is a summary. */
+  finished: boolean;
 }
 
 export type MessageType = "TEXT" | "VOICE";
@@ -25,6 +53,8 @@ export interface ChatMessage {
   createdAt: string;
   /** Đoạn trích nguồn AI dựa vào để trả lời. Chỉ có ở message tạo qua /messages/stream. */
   quotes?: string[];
+  /** Exam sessions: grade of the answer this reply responds to. */
+  examVerdict?: ExamVerdict;
 }
 
 export interface SendMessageResponse {
@@ -34,11 +64,13 @@ export interface SendMessageResponse {
   remainingTokens: number;
   promptTokens: number;
   completionTokens: number;
+  exam?: ExamProgress;
 }
 
 export interface GetMessagesResponse {
   messages: ChatMessage[];
   suggestedQuestions: string[];
+  exam?: ExamProgress;
 }
 
 // History types
@@ -54,6 +86,7 @@ export interface ChatHistorySession {
   lastMessage: string;
   lastMessageAt: string;
   messageCount: number;
+  mode?: ChatSessionMode;
 }
 
 export interface ChatHistoryGroup {
@@ -61,6 +94,29 @@ export interface ChatHistoryGroup {
   contextName: string; // ← đổi từ eventTitle
   sessions: ChatHistorySession[];
 }
+
+/**
+ * A character together with a historical context it took part in: the valid pairs for
+ * POST /chat/sessions (GET /chat/scenarios). School accounts also get their school's local pairs.
+ */
+export interface ChatScenario {
+  scenarioId: string;
+  characterId: string;
+  characterName: string;
+  characterTitle?: string | null;
+  characterAvatar?: string | null;
+  characterPersonality?: string | null;
+  contextId: string;
+  contextName: string;
+  contextEra?: string | null;
+  contextYear?: number | null;
+  contextImage?: string | null;
+  contextSummary?: string | null;
+  scope: "GLOBAL" | "SCHOOL" | string;
+}
+
+/** Most scenarios fetched per request; every page is fetched. */
+const SCENARIO_PAGE_SIZE = 100;
 
 export interface ChatCharacter {
   id: string;
@@ -90,12 +146,15 @@ export const chatService = {
   createSession: async (
     characterId: string,
     contextId: string,
+    exam?: { questionCount: number },
   ): Promise<ChatSession> => {
     const res = await axiosClient.post(
       "/chat/sessions",
       {
         characterId,
         contextId,
+        // An exam session opens with question 1 already asked, so creating it calls the AI.
+        ...(exam ? { mode: "EXAM", examQuestionCount: exam.questionCount } : {}),
       },
       {
         timeout: 90000,
@@ -114,6 +173,20 @@ export const chatService = {
   getMessages: async (sessionId: string): Promise<GetMessagesResponse> => {
     const res = await axiosClient.get(`/chat/sessions/${sessionId}/messages`);
     return res.data.data;
+  },
+
+  /**
+   * POST /chat/messages/check: checks wording before the message is shown. Saves nothing and costs no tokens.
+   * Resolves the warning to show when blocked, or null when the message may be sent. A network or server
+   * error also resolves null, since the send APIs check again.
+   */
+  checkContent: async (content: string): Promise<string | null> => {
+    try {
+      await axiosClient.post("/chat/messages/check", { content }, { timeout: 8000 });
+      return null;
+    } catch (error) {
+      return inappropriateMessageFromError(error);
+    }
   },
 
   sendMessage: async (
@@ -250,6 +323,23 @@ export const chatService = {
       onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens, messageType, quotesUsed });
     } catch (err) {
       onError(err);
+    }
+  },
+
+  /**
+   * Every scenario (all pages). The API pages with `page` (1-based) and `size`; it ignores `limit`.
+   * Optional `search` matches the character or context name.
+   */
+  getScenarios: async (params: { search?: string } = {}): Promise<ChatScenario[]> => {
+    const all: ChatScenario[] = [];
+    for (let page = 1; ; page++) {
+      const res = await axiosClient.get("/chat/scenarios", {
+        params: { page, size: SCENARIO_PAGE_SIZE, search: params.search || undefined },
+      });
+      const items = (res.data?.data ?? []) as ChatScenario[];
+      all.push(...items);
+      const totalPages = Number(res.data?.pagination?.totalPages) || 1;
+      if (page >= totalPages || items.length === 0) return all;
     }
   },
 

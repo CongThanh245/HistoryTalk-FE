@@ -37,6 +37,7 @@ export function MarketingNavbar() {
     { href: "/", label: "Trang Chủ" },
     { href: "/features", label: "Tính Năng" },
     ...(canPurchase ? [{ href: "/pricing", label: "Bảng Giá" }] : []),
+    ...(canPurchase ? [{ href: "/for-schools", label: "Cho Trường Học" }] : []),
   ];
 
   return (

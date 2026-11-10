@@ -1,4 +1,5 @@
 import { axiosClient } from "@/configs/axios.client";
+import { fromServerPage, toServerPage } from "@/lib/utils/pagination";
 import {
   parseAnswerData,
   parseQuestionData,
@@ -309,13 +310,13 @@ export const quizService = {
     };
   },
 
-  // GET /quizzes/results/me?page=0&size=10
+  // GET /quizzes/results/me?page=1&size=10 (BE is 1-based; FE passes a 0-based index)
   getMyResults: async (
     params?: GetQuizResultsParams,
   ): Promise<GetQuizResultsResponse> => {
     const res = await axiosClient.get("/quizzes/results/me", {
       params: {
-        page: params?.page ?? 0,
+        page: toServerPage(params?.page),
         size: params?.size ?? 10,
         quizId: params?.quizId,
       },
@@ -323,6 +324,7 @@ export const quizService = {
     const raw = res.data.data;
     return {
       ...raw,
+      currentPage: fromServerPage(raw?.currentPage),
       content: raw.content.map(mapQuizResult),
     };
   },

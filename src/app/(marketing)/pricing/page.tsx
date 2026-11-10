@@ -100,6 +100,8 @@ function planToDisplay(plan: TierPlan, index: number, paidPlanCount: number, cyc
       { text: "Trò chuyện với nhân vật lịch sử bằng AI" },
       { text: "Khám phá bối cảnh sự kiện theo mạch học" },
       { text: "Làm quiz ôn tập sau hành trình" },
+      // Sprint 9: Free accounts get exam sessions of at most 2 questions (the backend caps it).
+      { text: isFree ? "Vấn đáp với nhân vật, tối đa 2 câu mỗi buổi" : "Vấn đáp và quiz không giới hạn" },
       { text: tier.isActive ? "Đang mở đăng ký" : "Tạm ngừng đăng ký" },
     ],
   };
@@ -402,6 +404,29 @@ export default function PricingPage() {
               </div>
             </>
           )}
+        </Container>
+      </section>
+
+      <section className="relative border-t border-[var(--text-primary)] py-14 md:py-20">
+        <Container className="relative max-w-5xl">
+          <div className="grid items-center gap-6 border border-[var(--text-primary)] bg-[var(--bg-surface)] p-6 md:grid-cols-[minmax(0,1fr)_auto] md:p-8">
+            <div>
+              <span className="archive-label">Dành cho trường học</span>
+              <h2 className="archive-title is-plain mt-3 text-[clamp(22px,3vw,30px)]">Mua cho cả trường theo số học sinh</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
+                Quỹ token chung cho năm học, kho nội dung lịch sử địa phương, quản lý lớp và giáo viên. Xem giá ngay theo quy
+                mô trường và gửi yêu cầu báo giá.
+              </p>
+            </div>
+            <MagneticButton
+              href="/for-schools"
+              size="md"
+              magneticStrength={0.09}
+              className="justify-center rounded-sm border border-[var(--accent-gold)] text-[13px] font-bold uppercase tracking-[0.08em]"
+            >
+              Xem bảng giá trường học
+            </MagneticButton>
+          </div>
         </Container>
       </section>
 

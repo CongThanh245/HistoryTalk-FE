@@ -264,7 +264,7 @@ function ChatWork({ row, studentId, role }: WorkProps) {
               <p className="text-[12px] font-bold" style={{ color }}>Nhân vật trong thư viện HistoryTalk</p>
               <p className="archive-title is-plain text-2xl">{a.targetTitle}</p>
             </div>
-            <Link href={ROUTES.CHAT(a.targetId)} className="btn-ink">
+            <Link href={`${ROUTES.CHAT(a.targetId)}?mode=chat`} className="btn-ink">
               Mở trò chuyện <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
