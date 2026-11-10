@@ -271,10 +271,14 @@ export function ChatMain({
     async (rawText: string, messageId: string): Promise<void> => {
       const text =
         rawText
-          .replace(/!\[([^\]]*)\]\([^)]*\)?/g, "$1")
+          .replace(/!\[[^\]]*\](?:\([^)]*\)?)?/g, "")
+          .replace(/!\[[^\]]*(?:\([^)]*)?/g, "")
+          .replace(/\/historical-images\/\S+/gi, "")
+          .replace(/[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp|gif)\)?/gi, "")
           .replace(/\{\{IMG_\d+\}\}/g, "")
           .replace(/https?:\/\/\S+/g, "")
           .replace(/\(\s*\)/g, "")
+          .replace(/\[\s*\]/g, "")
           .replace(/\s{2,}/g, " ")
           .trim() || rawText;
       stopSpeech();
@@ -542,10 +546,14 @@ export function ChatMain({
   const enqueueSpeech = (rawText: string) => {
     const text =
       rawText
-        .replace(/!\[([^\]]*)\]\([^)]*\)?/g, "$1")
+        .replace(/!\[[^\]]*\](?:\([^)]*\)?)?/g, "")
+        .replace(/!\[[^\]]*(?:\([^)]*)?/g, "")
+        .replace(/\/historical-images\/\S+/gi, "")
+        .replace(/[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp|gif)\)?/gi, "")
         .replace(/\{\{IMG_\d+\}\}/g, "")
         .replace(/https?:\/\/\S+/g, "")
         .replace(/\(\s*\)/g, "")
+        .replace(/\[\s*\]/g, "")
         .replace(/\s{2,}/g, " ")
         .trim();
     if (!text) return;
@@ -699,11 +707,27 @@ export function ChatMain({
       isTyping = true;
       typingInterval = setInterval(() => {
         if (localQueue.length > 0) {
+          // If the head of localQueue starts with an image markdown tag, emit it atomically so it pops immediately
+          if (localQueue.startsWith("![")) {
+            const closeParenIdx = localQueue.indexOf(")");
+            if (closeParenIdx !== -1) {
+              const imgMarkdown = localQueue.substring(0, closeParenIdx + 1);
+              localQueue = localQueue.substring(closeParenIdx + 1);
+              setStreamingMessage((prev) => prev + imgMarkdown);
+              return;
+            }
+          }
+
           // Dynamic typing speed: if queue is large, type faster to catch up
           let charsToTake = 1;
-          if (localQueue.length > 40) charsToTake = 2;
-          if (localQueue.length > 100) charsToTake = 4;
-          if (localQueue.length > 250) charsToTake = 8;
+          const nextImgIdx = localQueue.indexOf("![");
+          if (nextImgIdx > 0 && nextImgIdx < 8) {
+            charsToTake = nextImgIdx;
+          } else {
+            if (localQueue.length > 40) charsToTake = 2;
+            if (localQueue.length > 100) charsToTake = 4;
+            if (localQueue.length > 250) charsToTake = 8;
+          }
           
           const textToAdd = localQueue.substring(0, charsToTake);
           localQueue = localQueue.substring(charsToTake);
@@ -721,16 +745,19 @@ export function ChatMain({
 
         // Streaming voice logic: speak phrases as soon as punctuation is detected
         sentenceBuffer += chunk;
-        const match = sentenceBuffer.match(punctuationRegex);
-        const earlyBreak = spokeFirstPhrase ? -1 : findEarlyBreak(sentenceBuffer);
-        const splitIndex =
-          match && match.index !== undefined ? match.index + match[0].length : earlyBreak;
-        if (splitIndex > 0) {
-          const phraseToSpeak = sentenceBuffer.slice(0, splitIndex).trim();
-          sentenceBuffer = sentenceBuffer.slice(splitIndex);
-          if (phraseToSpeak.length > 1) { // Avoid speaking stray punctuation
-            spokeFirstPhrase = true;
-            enqueueSpeech(phraseToSpeak);
+        const isInsideImageTag = sentenceBuffer.lastIndexOf("![") > sentenceBuffer.lastIndexOf(")");
+        if (!isInsideImageTag) {
+          const match = sentenceBuffer.match(punctuationRegex);
+          const earlyBreak = spokeFirstPhrase ? -1 : findEarlyBreak(sentenceBuffer);
+          const splitIndex =
+            match && match.index !== undefined ? match.index + match[0].length : earlyBreak;
+          if (splitIndex > 0) {
+            const phraseToSpeak = sentenceBuffer.slice(0, splitIndex).trim();
+            sentenceBuffer = sentenceBuffer.slice(splitIndex);
+            if (phraseToSpeak.length > 1) { // Avoid speaking stray punctuation
+              spokeFirstPhrase = true;
+              enqueueSpeech(phraseToSpeak);
+            }
           }
         }
       },
