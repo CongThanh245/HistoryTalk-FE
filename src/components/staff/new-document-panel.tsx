@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FileText, File, Plus, X, Upload, Eye, RotateCcw, Sparkles } from "lucide-react";
+import { FileText, File, Plus, X, Upload, Eye, RotateCcw, Sparkles, Columns2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { StaffFormLabel, StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
@@ -73,7 +73,8 @@ export function NewDocumentPanel({
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [extracted, setExtracted] = React.useState<ExtractedPdf | null>(null);
   const [enableAiVision, setEnableAiVision] = React.useState(false);
-  const [contentTab, setContentTab] = React.useState<"edit" | "preview">("edit");
+  const [viewMode, setViewMode] = React.useState<"split" | "edit" | "preview">("split");
+  const deferredContent = React.useDeferredValue(content);
   const [ocrProgress, setOcrProgress] = React.useState<{ page: number; total: number } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const replaceInputRef = React.useRef<HTMLInputElement>(null);
@@ -116,7 +117,7 @@ export function NewDocumentPanel({
     setStep("closed");
     setTitle("");
     setContent("");
-    setContentTab("edit");
+    setViewMode("split");
     clearFile();
   };
 
@@ -388,48 +389,98 @@ export function NewDocumentPanel({
                     {imageCount} hình ảnh
                   </span>
                 )}
+                <span className="text-micro text-content-muted">
+                  {content.length.toLocaleString("vi-VN")} ký tự
+                </span>
                 <div className="inline-flex rounded-sm border border-[var(--card-light-border)] p-0.5 bg-[var(--bg-elevated)]">
                   <button
                     type="button"
-                    onClick={() => setContentTab("edit")}
-                    className={`px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
-                      contentTab === "edit"
+                    onClick={() => setViewMode("split")}
+                    title="Chế độ song song: Vừa sửa thô vừa xem trước trực tiếp"
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
+                      viewMode === "split"
                         ? "bg-[var(--accent-gold)] text-white shadow-xs"
                         : "text-content-muted hover:text-content-heading"
                     }`}
                   >
+                    <Columns2 className="h-3 w-3" />
+                    Song song
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("edit")}
+                    title="Chỉ hiển thị ô soạn thảo văn bản thô"
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
+                      viewMode === "edit"
+                        ? "bg-[var(--accent-gold)] text-white shadow-xs"
+                        : "text-content-muted hover:text-content-heading"
+                    }`}
+                  >
+                    <FileText className="h-3 w-3" />
                     Chỉnh sửa
                   </button>
                   <button
                     type="button"
-                    onClick={() => setContentTab("preview")}
-                    className={`px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
-                      contentTab === "preview"
+                    onClick={() => setViewMode("preview")}
+                    title="Chỉ hiển thị xem trước định dạng Markdown"
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
+                      viewMode === "preview"
                         ? "bg-[var(--accent-gold)] text-white shadow-xs"
                         : "text-content-muted hover:text-content-heading"
                     }`}
                   >
+                    <Eye className="h-3 w-3" />
                     Xem trước
                   </button>
                 </div>
               </div>
             </div>
 
-            {contentTab === "edit" ? (
+            {viewMode === "split" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-semibold text-content-muted mb-1 flex items-center gap-1">
+                    <FileText className="h-3 w-3" /> Văn bản thô (Raw)
+                  </span>
+                  <StaffFormTextarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder={step === "pdf" ? "Nội dung trích xuất tự động..." : "Nhập nội dung tài liệu..."}
+                    style={{ minHeight: "280px", maxHeight: "460px" }}
+                    disabled={isBusy}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-semibold text-content-muted mb-1 flex items-center gap-1">
+                    <Eye className="h-3 w-3" /> Xem trước trực tiếp (Real-time)
+                  </span>
+                  <div
+                    className="rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] p-4 text-xs overflow-y-auto leading-relaxed"
+                    style={{ minHeight: "280px", maxHeight: "460px" }}
+                  >
+                    {deferredContent.trim() ? (
+                      <MarkdownMessage text={deferredContent} />
+                    ) : (
+                      <p className="italic text-content-muted">Chưa có nội dung để xem trước</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : viewMode === "edit" ? (
               <StaffFormTextarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder={step === "pdf" ? "Nội dung trích xuất tự động..." : "Nhập nội dung tài liệu..."}
-                style={{ minHeight: "180px" }}
+                style={{ minHeight: "200px" }}
                 disabled={isBusy}
               />
             ) : (
               <div
                 className="rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] p-4 text-xs overflow-y-auto leading-relaxed"
-                style={{ minHeight: "180px", maxHeight: "420px" }}
+                style={{ minHeight: "200px", maxHeight: "460px" }}
               >
-                {content.trim() ? (
-                  <MarkdownMessage text={content} />
+                {deferredContent.trim() ? (
+                  <MarkdownMessage text={deferredContent} />
                 ) : (
                   <p className="italic text-content-muted">Chưa có nội dung để xem trước</p>
                 )}
