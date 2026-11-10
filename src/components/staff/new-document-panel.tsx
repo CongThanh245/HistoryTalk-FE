@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { StaffFormLabel, StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
+import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 
 interface ExtractedPdf {
   fileUrl: string;
@@ -72,6 +73,7 @@ export function NewDocumentPanel({
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [extracted, setExtracted] = React.useState<ExtractedPdf | null>(null);
   const [enableAiVision, setEnableAiVision] = React.useState(false);
+  const [contentTab, setContentTab] = React.useState<"edit" | "preview">("edit");
   const [ocrProgress, setOcrProgress] = React.useState<{ page: number; total: number } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const replaceInputRef = React.useRef<HTMLInputElement>(null);
@@ -114,6 +116,7 @@ export function NewDocumentPanel({
     setStep("closed");
     setTitle("");
     setContent("");
+    setContentTab("edit");
     clearFile();
   };
 
@@ -371,18 +374,70 @@ export function NewDocumentPanel({
         </div>
       ) : null}
 
-      {showContentEditor && (
-        <div className="grid gap-1.5">
-          <StaffFormLabel>{step === "pdf" ? "Nội dung trích xuất từ PDF (có thể chỉnh sửa)" : "Nội dung"}</StaffFormLabel>
-          <StaffFormTextarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={step === "pdf" ? "Nội dung trích xuất tự động..." : "Nhập nội dung tài liệu..."}
-            style={{ minHeight: "140px" }}
-            disabled={isBusy}
-          />
-        </div>
-      )}
+      {showContentEditor && (() => {
+        const imageCount = (content.match(/!\[.*?\]\(.*?\)/g) || []).length;
+        return (
+          <div className="grid gap-1.5">
+            <div className="flex items-center justify-between">
+              <StaffFormLabel>
+                {step === "pdf" ? "Nội dung trích xuất từ PDF (có thể chỉnh sửa)" : "Nội dung"}
+              </StaffFormLabel>
+              <div className="flex items-center gap-2">
+                {imageCount > 0 && (
+                  <span className="text-[11px] font-medium text-accent-gold bg-accent-gold/10 px-2 py-0.5 rounded-sm">
+                    {imageCount} hình ảnh
+                  </span>
+                )}
+                <div className="inline-flex rounded-sm border border-[var(--card-light-border)] p-0.5 bg-[var(--bg-elevated)]">
+                  <button
+                    type="button"
+                    onClick={() => setContentTab("edit")}
+                    className={`px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
+                      contentTab === "edit"
+                        ? "bg-[var(--accent-gold)] text-white shadow-xs"
+                        : "text-content-muted hover:text-content-heading"
+                    }`}
+                  >
+                    Chỉnh sửa
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setContentTab("preview")}
+                    className={`px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
+                      contentTab === "preview"
+                        ? "bg-[var(--accent-gold)] text-white shadow-xs"
+                        : "text-content-muted hover:text-content-heading"
+                    }`}
+                  >
+                    Xem trước
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {contentTab === "edit" ? (
+              <StaffFormTextarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder={step === "pdf" ? "Nội dung trích xuất tự động..." : "Nhập nội dung tài liệu..."}
+                style={{ minHeight: "180px" }}
+                disabled={isBusy}
+              />
+            ) : (
+              <div
+                className="rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] p-4 text-xs overflow-y-auto leading-relaxed"
+                style={{ minHeight: "180px", maxHeight: "420px" }}
+              >
+                {content.trim() ? (
+                  <MarkdownMessage text={content} />
+                ) : (
+                  <p className="italic text-content-muted">Chưa có nội dung để xem trước</p>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       <PdfViewerDialog open={previewOpen} onOpenChange={setPreviewOpen} pdfUrl={previewUrl} title={file?.name ?? "Xem trước PDF"} />
 

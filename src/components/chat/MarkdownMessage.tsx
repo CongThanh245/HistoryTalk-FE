@@ -72,6 +72,24 @@ export function MarkdownMessage({ text }: Props) {
     h4: ({ children }) => <p className="font-semibold mb-1">{children}</p>,
     h5: ({ children }) => <p className="font-semibold mb-1">{children}</p>,
     h6: ({ children }) => <p className="font-semibold mb-1">{children}</p>,
+    img: ({ src, alt }) => {
+      if (!src) return null;
+      return (
+        <span className="my-3 block">
+          <img
+            src={src}
+            alt={alt || "Ảnh tư liệu lịch sử"}
+            className="max-h-96 w-auto max-w-full rounded-md border border-[var(--card-light-border)] object-contain shadow-xs bg-black/5"
+            loading="lazy"
+          />
+          {alt && (
+            <span className="mt-1 block text-left text-xs italic text-[var(--content-muted)]">
+              {alt}
+            </span>
+          )}
+        </span>
+      );
+    },
   };
 
   return (

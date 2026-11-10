@@ -34,6 +34,7 @@ import { NewDocumentPanel } from "@/components/staff/new-document-panel";
 import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
+import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { isValidUrl } from "@/lib/utils/url";
 import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
 import { toast } from "sonner";
@@ -162,6 +163,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
     isCreated,
   } = useStaffContextDetailView(props);
 
+  const [editDocTab, setEditDocTab] = React.useState<"edit" | "preview">("edit");
   type MediaKind = "IMAGE_2D" | "VIDEO";
 
   const [imageUploadProgress, setImageUploadProgress] = React.useState<number | null>(null);
@@ -1084,17 +1086,63 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             <div className="grid gap-1.5">
               <div className="flex items-center justify-between">
                 <StaffFormLabel>Nội dung</StaffFormLabel>
-                <span className="text-[10px] text-[var(--content-muted)]">
-                  {editDraftContent.length.toLocaleString("vi-VN")} ký tự
-                </span>
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const imgCount = (editDraftContent.match(/!\[.*?\]\(.*?\)/g) || []).length;
+                    return imgCount > 0 ? (
+                      <span className="text-[11px] font-medium text-accent-gold bg-accent-gold/10 px-2 py-0.5 rounded-sm">
+                        {imgCount} hình ảnh
+                      </span>
+                    ) : null;
+                  })()}
+                  <span className="text-[10px] text-[var(--content-muted)]">
+                    {editDraftContent.length.toLocaleString("vi-VN")} ký tự
+                  </span>
+                  <div className="inline-flex rounded-sm border border-[var(--card-light-border)] p-0.5 bg-[var(--bg-elevated)]">
+                    <button
+                      type="button"
+                      onClick={() => setEditDocTab("edit")}
+                      className={`px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
+                        editDocTab === "edit"
+                          ? "bg-[var(--accent-gold)] text-white shadow-xs"
+                          : "text-content-muted hover:text-content-heading"
+                      }`}
+                    >
+                      Chỉnh sửa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditDocTab("preview")}
+                      className={`px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
+                        editDocTab === "preview"
+                          ? "bg-[var(--accent-gold)] text-white shadow-xs"
+                          : "text-content-muted hover:text-content-heading"
+                      }`}
+                    >
+                      Xem trước
+                    </button>
+                  </div>
+                </div>
               </div>
-              <StaffFormTextarea
-                value={editDraftContent}
-                onChange={(e) => setEditDraftContent(e.target.value)}
-                placeholder="Nội dung tài liệu"
-                className="min-h-65"
-                disabled={isSavingDocumentEdit}
-              />
+              {editDocTab === "edit" ? (
+                <StaffFormTextarea
+                  value={editDraftContent}
+                  onChange={(e) => setEditDraftContent(e.target.value)}
+                  placeholder="Nội dung tài liệu"
+                  className="min-h-65"
+                  disabled={isSavingDocumentEdit}
+                />
+              ) : (
+                <div
+                  className="rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] p-4 text-xs overflow-y-auto min-h-65 max-h-96 leading-relaxed"
+                >
+                  {editDraftContent.trim() ? (
+                    <MarkdownMessage text={editDraftContent} />
+                  ) : (
+                    <p className="italic text-content-muted">Chưa có nội dung để xem trước</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex shrink-0 justify-end gap-2 border-t px-6 py-4 border-[var(--card-light-border)]">
