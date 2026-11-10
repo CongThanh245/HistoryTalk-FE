@@ -10,12 +10,18 @@ interface Props {
 
 function normalizeHistoricalImageUrls(raw: string): string {
   if (!raw) return "";
-  return raw
+  let text = raw
     .replace(/!\[([^\]]*)\]\s+\(([^)]+)\)/g, "![$1]($2)")
     .replace(
       /https?:\/\/[^\s)\]]+\/storage\/v1\/object\/public\/[^/]+\/(staging|published)\/historical-images\/([a-zA-Z0-9_.-]+)/gi,
       "/historical-images/$1/$2",
     );
+  // Convert any bare relative image URLs (/historical-images/...) not already wrapped in ![]() into a markdown image tag
+  text = text.replace(
+    /(^|[^\w!\](/])(\/historical-images\/(?:staging|published)\/[a-zA-Z0-9_.-]+(?:\.(?:jpg|jpeg|png|webp|gif))?)/gi,
+    "$1![Ảnh tư liệu]($2)"
+  );
+  return text;
 }
 
 export function MarkdownMessage({ text }: Props) {

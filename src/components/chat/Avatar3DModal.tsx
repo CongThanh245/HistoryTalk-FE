@@ -17,6 +17,7 @@ import {
   usePublicContextDocuments,
 } from "@/features/documents/hooks";
 import { findDocumentForQuote, splitContentByQuote } from "@/lib/utils/quote-match";
+import { MarkdownMessage } from "./MarkdownMessage";
 import type { AnalyserLike } from "./FBXCharacterViewer";
 import { cn } from "@/lib/utils/cn";
 import { splitAssistantContent } from "@/lib/utils/helpers";
@@ -161,8 +162,8 @@ function TranscriptFeed({
                 <div className="flex flex-col gap-2 rounded-sm border border-white/10 bg-white/[0.04] px-2.5 py-2">
                   {m.quotes.map((quote, qi) => (
                     <div key={qi} className="flex flex-col gap-1">
-                      <blockquote className="m-0 border-[color-mix(in_srgb,_var(--accent-gold)_40%,_transparent)] pl-2 text-[11.5px] leading-[1.5] text-white/65">
-                        {quote}
+                      <blockquote className="m-0 border-l-2 border-[color-mix(in_srgb,_var(--accent-gold)_40%,_transparent)] pl-2 text-[11.5px] leading-[1.5] text-white/65">
+                        <MarkdownMessage text={quote} />
                       </blockquote>
                       <button
                         type="button"
@@ -360,8 +361,8 @@ function CallCitationPanel({
                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
                 <span>Không tìm thấy vị trí chính xác trong tài liệu. Đây là nội dung AI đã trích dẫn:</span>
               </div>
-              <blockquote className="border-[color-mix(in_srgb,_var(--accent-gold)_40%,_transparent)] pl-3 text-[13px] leading-[1.7] text-white/70">
-                {quote}
+              <blockquote className="border-l-2 border-[color-mix(in_srgb,_var(--accent-gold)_40%,_transparent)] pl-3 text-[13px] leading-[1.7] text-white/70">
+                <MarkdownMessage text={quote} />
               </blockquote>
             </div>
           )}
