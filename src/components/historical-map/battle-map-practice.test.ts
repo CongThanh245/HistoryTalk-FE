@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { BattleMap, BattleSymbol, BattleSymbolType } from "./battle-map.types";
 import { scoreBattleMap } from "./battle-map-scoring";
-import { buildCompareMap, COMPARE_FACTIONS, toPracticeMap } from "./battle-map-practice";
+import { buildCompareMap, COMPARE_FACTIONS, pickPreviewSymbols, toPracticeMap } from "./battle-map-practice";
 
 const map = (symbols: BattleSymbol[], extra: Partial<BattleMap> = {}): BattleMap => ({
   version: 1, mode: "custom", imageUrl: "x.png", imageSource: "Nguồn",
@@ -22,6 +22,25 @@ describe("toPracticeMap", () => {
     expect(sheet.symbols).toEqual([]);
     expect(sheet.phases).toBeUndefined();
     expect(sheet.mode).toBe("custom");
+  });
+});
+
+describe("pickPreviewSymbols", () => {
+  const ids = (m: BattleMap) => pickPreviewSymbols(m, 6).map(s => s.id);
+  const lines = (n: number) => Array.from({ length: n }, (_, i) => pt(`l${i}`, "arrow", 10, 10));
+  const units = (n: number) => Array.from({ length: n }, (_, i) => pt(`u${i}`, "infantry", 20, 20));
+
+  test("pickPreviewSymbols_mixesRoutesAndUnits", () => {
+    expect(ids(map([...units(5), ...lines(5)]))).toEqual(["l0", "l1", "l2", "u0", "u1", "u2"]);
+  });
+  test("pickPreviewSymbols_fillsWithRoutesWhenFewUnits", () => {
+    expect(ids(map([...units(1), ...lines(8)]))).toEqual(["l0", "l1", "l2", "l3", "l4", "u0"]);
+  });
+  test("pickPreviewSymbols_fillsWithUnitsWhenFewRoutes", () => {
+    expect(ids(map([...units(8), ...lines(1)]))).toEqual(["l0", "u0", "u1", "u2", "u3", "u4"]);
+  });
+  test("pickPreviewSymbols_skipsNotes", () => {
+    expect(ids(map([pt("t", "label", 1, 1), pt("n", "step", 2, 2), ...units(1)]))).toEqual(["u0"]);
   });
 });
 

@@ -58,9 +58,12 @@ export function practiceRank(percent: number): PracticeRank {
   return { stars: 0, title: "Tân binh", message: "Xem các ký hiệu màu đỏ trên lược đồ rồi vẽ tiếp nhé." };
 }
 
+/** Lowest percent of each rank, from Tân binh up. */
+export const PRACTICE_RANK_FLOORS = [0, 40, 70, 90];
+
 /** Next rank's threshold, or null at the top. */
 export function nextRankAt(percent: number): number | null {
-  return [40, 70, 90].find(t => percent < t) ?? null;
+  return PRACTICE_RANK_FLOORS.find(t => percent < t) ?? null;
 }
 
 export interface MissingHint {

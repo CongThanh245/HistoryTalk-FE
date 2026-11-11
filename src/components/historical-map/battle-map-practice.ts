@@ -1,5 +1,5 @@
 import { CORRECT_SCORE, isScoredSymbol, type BattleMapScore } from "./battle-map-scoring";
-import { isNoteSymbol, type BattleFaction, type BattleMap, type BattleSymbol } from "./battle-map.types";
+import { isLineSymbol, isNoteSymbol, type BattleFaction, type BattleMap, type BattleSymbol } from "./battle-map.types";
 
 /** The result map draws each match status as its own "side", so the canvas colours it. */
 export const COMPARE_FACTIONS: BattleFaction[] = [
@@ -23,6 +23,15 @@ export function toPracticeMap(answer: BattleMap): BattleMap {
     factions: answer.factions,
     symbols: [],
   };
+}
+
+/** A few graded symbols for the intro animation, routes first and about half units when the map has both. */
+export function pickPreviewSymbols(map: BattleMap, limit = 6): BattleSymbol[] {
+  const scored = map.symbols.filter(isScoredSymbol);
+  const allLines = scored.filter(s => isLineSymbol(s.type));
+  const allUnits = scored.filter(s => !isLineSymbol(s.type));
+  const lines = allLines.slice(0, limit - Math.min(allUnits.length, Math.floor(limit / 2)));
+  return [...lines, ...allUnits.slice(0, limit - lines.length)];
 }
 
 /**
