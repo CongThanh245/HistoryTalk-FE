@@ -8,6 +8,8 @@ import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { cn } from "@/lib/utils/cn";
 import { addEstimatedMouthMorph } from "./estimated-mouth-morph";
+import { TalkingPortrait } from "./talking-portrait";
+import type { PortraitSettings } from "@/services/media.service";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -240,17 +242,23 @@ function useLipSyncFrame(
 // GLB model component
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Unlit material and an estimated mouth morph for AI-generated (unrigged) models. */
+/**
+ * Unlit material and an estimated mouth morph for AI-generated (unrigged) models.
+ * Returns whether the model looks AI-generated.
+ */
 function prepareGeneratedModel(scene: THREE.Group) {
   // AI-generated GLBs have no normals and their lighting is baked into the
   // texture, so scene lights and tone mapping only darken it: show it unlit.
+  let generated = false;
   scene.traverse((object) => {
     const mesh = object as THREE.Mesh;
     if (!mesh.isMesh || mesh.geometry.attributes.normal) return;
+    generated = true;
     const source = mesh.material as THREE.MeshStandardMaterial;
     mesh.material = new THREE.MeshBasicMaterial({ map: source.map, color: source.color, toneMapped: false });
   });
   addEstimatedMouthMorph(scene);
+  return generated;
 }
 
 function GLBCharacterModel({
@@ -263,6 +271,7 @@ function GLBCharacterModel({
   ttsAnalyserRef,
   onDiagnostic,
   onVoiceVolume,
+  onGeneratedModel,
 }: {
   url: string;
   isSpeaking: boolean;
@@ -273,19 +282,23 @@ function GLBCharacterModel({
   ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
   onVoiceVolume?: (volume: number) => void;
+  onGeneratedModel?: () => void;
 }) {
   const gltf = useGLTF(url) as unknown as GLTF & { scene: THREE.Group };
 
   // Clone scene + animations so each mount has its own independent objects.
   // useGLTF returns cached shared objects — attaching them directly causes
   // the scene to be "stolen" from any previous render, making every 2nd open fail.
-  const clonedScene = React.useMemo(() => {
+  const [clonedScene, isGenerated] = React.useMemo(() => {
     const scene = SkeletonUtils.clone(gltf.scene) as THREE.Group;
     // Done here, before the first frame renders: a mesh drawn with morph data
     // but no morphTargetInfluences crashes three.js.
-    prepareGeneratedModel(scene);
-    return scene;
+    return [scene, prepareGeneratedModel(scene)] as const;
   }, [gltf.scene]);
+
+  useEffect(() => {
+    if (isGenerated) onGeneratedModel?.();
+  }, [isGenerated, onGeneratedModel]);
   const clonedAnimations = React.useMemo(
     () => gltf.animations.map((clip) => clip.clone()),
      
@@ -379,6 +392,8 @@ function FBXCharacterModel({
   ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
   onVoiceVolume?: (volume: number) => void;
+  /** Only GLB models can be AI-generated; unused here. */
+  onGeneratedModel?: () => void;
 }) {
   const fbx = useFBX(url);
   const clonedFbx = React.useMemo(
@@ -466,6 +481,7 @@ function AutoModel(props: {
   ttsAnalyserRef: React.RefObject<AnalyserLike | null>;
   onDiagnostic: (d: DiagnosticInfo) => void;
   onVoiceVolume?: (volume: number) => void;
+  onGeneratedModel?: () => void;
 }) {
   // Signed Supabase URLs append `?token=<jwt>` and JWTs are dot-separated
   // (header.payload.signature), so splitting the raw URL on "." picks up the
@@ -665,6 +681,13 @@ export type FBXCharacterViewerProps = {
   ttsAnalyserRef?: React.RefObject<AnalyserLike | null>;
   onDiagnostic?: (d: DiagnosticInfo) => void;
   onVoiceVolume?: (volume: number) => void;
+  /**
+   * The character's portrait. Shown as a talking portrait instead of the 3D view
+   * when there is no model or the model is AI-generated (no face rig).
+   */
+  portraitUrl?: string | null;
+  /** Display mode, face points and tuning set by content staff. */
+  portraitSettings?: PortraitSettings | null;
 };
 
 // Fallback analyser ref (rỗng) khi không truyền từ ngoài
@@ -719,8 +742,14 @@ export function FBXCharacterViewer({
   ttsAnalyserRef = EMPTY_ANALYSER_REF,
   onDiagnostic,
   onVoiceVolume,
+  portraitUrl,
+  portraitSettings,
 }: FBXCharacterViewerProps) {
   const testVolumeRef = useRef(0);
+  // Keyed by URL so switching character starts over.
+  const [generatedModelUrl, setGeneratedModelUrl] = useState<string | null>(null);
+  const [failedPortraitUrl, setFailedPortraitUrl] = useState<string | null>(null);
+  const handleGeneratedModel = React.useCallback(() => setGeneratedModelUrl(modelUrl), [modelUrl]);
   const diagnosticRef = useRef<DiagnosticInfo | null>(null);
   const [modelLoadError, setModelLoadError] = useState<{
     url: string;
@@ -758,9 +787,48 @@ export function FBXCharacterViewer({
   const shouldAnimate = effectiveSpeaking || isRecording || isListening || isProcessing;
 
   const hasValidModel = isValidModelUrl(modelUrl);
+  const modelUsable = hasValidModel && modelLoadError?.url !== modelUrl;
+  const displayMode = portraitSettings?.mode ?? "AUTO";
+  const portraitUsable =
+    !!portraitUrl && failedPortraitUrl !== portraitUrl && displayMode !== "MODEL_3D";
+
+  const statusBadge = (
+    <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-sm border border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[var(--accent-gold-soft)]">
+      <span
+        className={cn(
+          "h-2 w-2 shrink-0 rounded-full",
+          shouldAnimate && "animate-[pulse_1s_ease-in-out_infinite]",
+          dotColorClass,
+        )}
+      />
+      {statusLabel}
+    </div>
+  );
+
+  // An AI-generated model distorts the face and can't move its lips, so the
+  // character's own portrait does the talking instead.
+  if (
+    portraitUsable &&
+    (displayMode === "PORTRAIT" || !modelUsable || generatedModelUrl === modelUrl)
+  ) {
+    return (
+      <div className="relative h-full w-full">
+        {statusBadge}
+        <TalkingPortrait
+          imageUrl={portraitUrl}
+          isSpeaking={effectiveSpeaking}
+          isProcessing={isProcessing}
+          ttsAnalyserRef={ttsAnalyserRef}
+          onVoiceVolume={onVoiceVolume}
+          onUnavailable={() => setFailedPortraitUrl(portraitUrl)}
+          settings={portraitSettings}
+        />
+      </div>
+    );
+  }
 
   // Show placeholder if no valid model URL
-  if (!hasValidModel || modelLoadError?.url === modelUrl) {
+  if (!modelUsable) {
     return (
       <div className="relative h-full w-full">
         <NoModelPlaceholder
@@ -774,17 +842,7 @@ export function FBXCharacterViewer({
 
   return (
     <div className="relative h-full w-full">
-      {/* Status dot */}
-      <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-sm border border-[color-mix(in_srgb,_var(--accent-gold)_30%,_transparent)] bg-[rgba(0,0,0,0.6)] px-3.5 py-1 text-xs text-[var(--accent-gold-soft)]">
-        <span
-          className={cn(
-            "h-2 w-2 shrink-0 rounded-full",
-            shouldAnimate && "animate-[pulse_1s_ease-in-out_infinite]",
-            dotColorClass,
-          )}
-        />
-        {statusLabel}
-      </div>
+      {statusBadge}
 
       <ModelLoadOverlay />
 
@@ -818,6 +876,7 @@ export function FBXCharacterViewer({
               ttsAnalyserRef={ttsAnalyserRef}
               onDiagnostic={handleDiagnostic}
               onVoiceVolume={onVoiceVolume}
+              onGeneratedModel={portraitUsable ? handleGeneratedModel : undefined}
             />
           </Suspense>
         </ModelErrorBoundary>

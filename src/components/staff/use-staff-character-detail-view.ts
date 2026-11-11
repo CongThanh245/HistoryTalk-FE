@@ -279,6 +279,18 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     }
   }, [initialDraft, isEditing]);
 
+  // Media is uploaded straight to the server while editing, so
+  // these fields must follow it; otherwise Save would write stale URLs back.
+  const serverImage = initialDraft?.image;
+  const serverModelUrl = initialDraft?.modelUrl;
+  React.useEffect(() => {
+    setDraft((s) => ({
+      ...s,
+      image: serverImage ?? s.image,
+      modelUrl: serverModelUrl ?? s.modelUrl,
+    }));
+  }, [serverImage, serverModelUrl]);
+
   React.useEffect(() => {
     setMappedContexts(initialContexts ?? []);
   }, [initialContexts]);

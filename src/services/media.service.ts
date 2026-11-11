@@ -57,6 +57,56 @@ function buildMediaService(basePath: "characters" | "historical-contexts") {
   };
 }
 
+/** [x, y] as a share of the image width and height, y down. */
+export type PortraitPoint = [number, number];
+
+export interface PortraitPoints {
+  eyeLeft: PortraitPoint;
+  eyeRight: PortraitPoint;
+  mouth: PortraitPoint;
+  chin: PortraitPoint;
+}
+
+/**
+ * How the call screen shows a character. AUTO: the talking portrait when the 3D
+ * model is AI-generated or missing, otherwise the 3D model.
+ */
+export type PortraitDisplayMode = "AUTO" | "PORTRAIT" | "MODEL_3D";
+
+export interface PortraitSettings {
+  mode: PortraitDisplayMode;
+  /** How far the mouth opens, 1 = default. */
+  mouthOpen: number;
+  /** Framing, 1 = head and shoulders; larger is closer. */
+  zoom: number;
+  /** Face points placed by hand; only used while the image is still imageUrl. */
+  points?: PortraitPoints;
+  imageUrl?: string;
+}
+
+export const DEFAULT_PORTRAIT_SETTINGS: PortraitSettings = { mode: "AUTO", mouthOpen: 1, zoom: 1 };
+
+/** Stored by the backend as a JSON file next to the character's media. */
+export const portraitSettingsService = {
+  get: async (characterId: string): Promise<PortraitSettings> => {
+    const res = await axiosClient.get<ApiEnvelope<Partial<PortraitSettings> | null>>(
+      `/characters/${characterId}/media/portrait-settings`,
+    );
+    return { ...DEFAULT_PORTRAIT_SETTINGS, ...(res.data.data ?? {}) };
+  },
+
+  save: async (characterId: string, settings: PortraitSettings): Promise<PortraitSettings> => {
+    const res = await axiosClient.put<ApiEnvelope<PortraitSettings>>(
+      `/characters/${characterId}/media/portrait-settings`,
+      settings,
+    );
+    if (!res.data.success || !res.data.data) {
+      throw new Error(res.data.message ?? "Không lưu được thiết lập chân dung");
+    }
+    return { ...DEFAULT_PORTRAIT_SETTINGS, ...res.data.data };
+  },
+};
+
 export const characterMediaService = buildMediaService("characters");
 export const contextMediaService = buildMediaService("historical-contexts");
 

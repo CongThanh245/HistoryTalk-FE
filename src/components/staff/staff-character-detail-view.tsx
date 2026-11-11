@@ -657,7 +657,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   disabled={!isEditing}
                   isBusy={isUploadMediaPending || isDeleteMediaPending}
                   hasValue={!!draft.modelUrl || !!pendingModelFile}
-                  hint={`GLB, FBX · ${MEDIA_SIZE_HINT}`}
+                  hint={`GLB · ${MEDIA_SIZE_HINT}`}
                   caption={
                     pendingModelFile
                       ? `Đã chọn: ${pendingModelFile.name} (sẽ tải lên sau khi lưu)`

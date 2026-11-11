@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, FileText, AlertCircle, ExternalLink, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 
 import type { ChatCharacter } from "@/services/chat.service";
@@ -12,6 +12,7 @@ import { useVoiceChatWebSpeech } from "@/features/chat/useVoiceChatWebSpeech";
 import { queryKeys } from "@/shared/query-key";
 import { useAuthStore } from "@/store/auth.store";
 import { userService, type UserProfile } from "@/services/user.service";
+import { DEFAULT_PORTRAIT_SETTINGS, portraitSettingsService } from "@/services/media.service";
 import {
   usePublicCharacterDocuments,
   usePublicContextDocuments,
@@ -27,6 +28,14 @@ const FBXCharacterViewer = dynamic(
   () => import("./FBXCharacterViewer").then((m) => ({ default: m.FBXCharacterViewer })),
   { ssr: false, loading: () => <ModelLoadingPlaceholder /> },
 );
+
+const TalkingPortrait = dynamic(
+  () => import("./talking-portrait").then((m) => ({ default: m.TalkingPortrait })),
+  { ssr: false },
+);
+
+/** The 2D call shows the portrait in a small circle, so it frames the face closer than the full call view. */
+const PORTRAIT_2D_ZOOM = 1.4;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -695,6 +704,19 @@ export function Avatar3DModal({
   const micDisabled = (isBusy && status !== "speaking");
   const isListeningStatus = status === "listening";
   const is2D = variant === "2d";
+  // Waited for, so the call doesn't start on the 3D model and then swap to the portrait.
+  const portraitSettingsQuery = useQuery({
+    queryKey: queryKeys.characters.portraitSettings(character.id),
+    queryFn: () => portraitSettingsService.get(character.id),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+  const portraitSettings = portraitSettingsQuery.data ?? null;
+  // 2D call: the image talks once its face is found; it stays still when no face is found.
+  const [portraitReadyUrl, setPortraitReadyUrl] = useState<string | null>(null);
+  const [portraitFailedUrl, setPortraitFailedUrl] = useState<string | null>(null);
+  const portraitImage = character.imageUrl ?? null;
+  const portraitReady = !!portraitImage && portraitReadyUrl === portraitImage;
 
   return (
     <>
@@ -1497,12 +1519,27 @@ export function Avatar3DModal({
                     ? "border-[3px] border-[color-mix(in_srgb,_var(--accent-gold)_85%,_transparent)] shadow-[0_0_48px_color-mix(in_srgb,_var(--accent-gold)_28%,_transparent)]"
                     : "border-2 border-[color-mix(in_srgb,_var(--accent-gold)_35%,_transparent)] shadow-[0_20px_70px_rgba(0,0,0,0.35)]",
                 )}>
-                  {character.imageUrl ? (
-                    <img
-                      src={character.imageUrl}
-                      alt={character.name}
-                      className="h-full w-full object-cover"
-                    />
+                  {portraitImage ? (
+                    <>
+                      <img
+                        src={portraitImage}
+                        alt={character.name}
+                        className={cn("h-full w-full object-cover", portraitReady && "invisible")}
+                      />
+                      {!portraitSettingsQuery.isPending && portraitFailedUrl !== portraitImage && (
+                        <div className="absolute inset-0" aria-hidden="true">
+                          <TalkingPortrait
+                            imageUrl={portraitImage}
+                            isSpeaking={isSpeaking}
+                            isProcessing={status.startsWith("processing") || status === "thinking"}
+                            ttsAnalyserRef={ttsAnalyserRef}
+                            onReady={() => setPortraitReadyUrl(portraitImage)}
+                            onUnavailable={() => setPortraitFailedUrl(portraitImage)}
+                            settings={{ ...DEFAULT_PORTRAIT_SETTINGS, ...portraitSettings, zoom: (portraitSettings?.zoom ?? 1) * PORTRAIT_2D_ZOOM }}
+                          />
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-[72px] font-bold text-[var(--accent-gold-soft)]">
                       {character.name[0]}
@@ -1512,8 +1549,13 @@ export function Avatar3DModal({
               </div>
             ) : (
               <div className="avatar-call-model-layer relative z-[1] h-full w-full">
+                {portraitSettingsQuery.isPending ? (
+                  <ModelLoadingPlaceholder />
+                ) : (
                 <FBXCharacterViewer
                   modelUrl={character.modelUrl ?? "/models/character.glb"}
+                  portraitUrl={character.imageUrl}
+                  portraitSettings={portraitSettings}
                   isSpeaking={status === "speaking"}
                   isListening={status === "listening"}
                   isRecording={status === "listening"}
@@ -1522,6 +1564,7 @@ export function Avatar3DModal({
                   ttsAnalyserRef={ttsAnalyserRef}
                   onVoiceVolume={setVoiceVolume}
                 />
+                )}
               </div>
             )}
             {!is2D && (isSpeaking || isListeningStatus || isRecording) && (

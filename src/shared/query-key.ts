@@ -24,6 +24,7 @@ export const queryKeys = {
     list: (params?: { search?: string; page?: number; limit?: number }) =>
       ["characters", "list", params ?? {}] as const,
     detail: (id: string) => ["characters", "detail", id] as const,
+    portraitSettings: (id: string) => ["characters", "portrait-settings", id] as const,
     byContext: (
       contextId: string, // ← thêm
     ) => ["characters", "context", contextId] as const,

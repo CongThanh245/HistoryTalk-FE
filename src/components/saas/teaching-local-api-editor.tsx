@@ -1046,15 +1046,15 @@ function MediaFields({
           error={err(model.errKey)}
           hint={
             characterId
-              ? `Tải tệp .glb / .gltf (tối đa ${MODEL_MAX_MB} MB) hoặc dán đường dẫn.`
-              : "Dán đường dẫn tệp .glb / .gltf. Lưu nhân vật trước để tải tệp lên."
+              ? `Tải tệp .glb (tối đa ${MODEL_MAX_MB} MB) hoặc dán đường dẫn.`
+              : "Dán đường dẫn tệp .glb. Lưu nhân vật trước để tải tệp lên."
           }
         >
           <div className="flex flex-col gap-2 sm:flex-row">
             <StaffFormInput type="url" value={model.value} onChange={(e) => model.onChange(e.target.value)} maxLength={500} placeholder="https://.../model.glb" />
             <UploadButton
               label="Tải mô hình lên"
-              accept=".glb,.gltf,model/gltf-binary,model/gltf+json"
+              accept=".glb,model/gltf-binary"
               maxMb={MODEL_MAX_MB}
               disabled={!characterId}
               upload={(file, onProgress) => localContentService.uploadCharacterModel(characterId!, file, onProgress)}
