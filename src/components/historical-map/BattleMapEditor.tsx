@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Check, CircleHelp, PenLine, Clapperboard, ClipboardCheck, Copy, Download, Eye, GripVertical, ImageIcon, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Trash2, Undo2, Upload, Users, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Check, CircleHelp, PenLine, Clapperboard, ClipboardCheck, Copy, Download, Eye, GripVertical, ImageIcon, Keyboard, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Trash2, Undo2, Upload, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { battleMapImageService } from "@/services/media.service";
@@ -715,9 +715,17 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
                   {!practice && <button type="button" className={styles.chip} onClick={() => setTab("factions")}><Plus size={14} />Phe</button>}
                 </div>
               </div>
-              <p className={styles.hint}><MousePointerClick size={14} /> Chọn ký hiệu rồi bấm lên lược đồ để đặt. Với mũi tên và phòng tuyến: nhấn giữ rồi kéo theo đường đi để vẽ, đường sẽ tự làm mượt.</p>
               {/* .hint is a flex row (icon + text): the text needs one wrapper or every word and <kbd> becomes its own column. */}
-                <p className={styles.hint}><span>Bấm đúp vào ký hiệu (hoặc <kbd>Shift</kbd> + phím tắt) để đặt liên tục, <kbd>Esc</kbd> để thôi · <kbd>Q</kbd> đổi phe · <kbd>Ctrl</kbd> + <kbd>Z</kbd> hoàn tác.</span></p>
+              <p className={styles.hint}><MousePointerClick size={14} /><span><b>Bấm</b> để đặt ký hiệu, <b>kéo</b> để vẽ mũi tên và phòng tuyến.</span></p>
+              <details className={styles.shortcuts}>
+                <summary><Keyboard size={14} aria-hidden="true" />Phím tắt</summary>
+                <dl>
+                  <dt>Đặt liên tục</dt><dd>Bấm đúp ký hiệu, hoặc <kbd>Shift</kbd> + phím</dd>
+                  <dt>Thôi đặt</dt><dd><kbd>Esc</kbd></dd>
+                  <dt>Đổi phe</dt><dd><kbd>Q</kbd></dd>
+                  <dt>Hoàn tác</dt><dd><kbd>Ctrl</kbd> + <kbd>Z</kbd></dd>
+                </dl>
+              </details>
               {SYMBOL_GROUPS.map((group, i) => <div className={styles.group} key={group.title} data-tour={i === 0 ? "practice-tools" : undefined}>
                 <h2>{group.title}</h2>
                 <div className={styles.tools} style={{ color: activeFaction?.color }}>

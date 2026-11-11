@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Flag, PenLine, RotateCcw, Star, Trophy, TrendingDown, TrendingUp, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Eye, Flag, PenLine, RotateCcw, Star, Trophy, TrendingDown, TrendingUp, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { BattleMapCanvas } from "./BattleMapCanvas";
 import { buildCompareMap, COMPARE_FACTIONS } from "./battle-map-practice";
@@ -13,12 +13,8 @@ import styles from "./battle-map-compare.module.css";
 const colorOf = (id: string) => COMPARE_FACTIONS.find(f => f.id === id)?.color;
 const formatPercent = (n: number) => n.toLocaleString("vi-VN", { maximumFractionDigits: 1 });
 
-type View = "overlay" | "yours" | "answer";
-const VIEWS: { id: View; label: string }[] = [
-  { id: "overlay", label: "Chồng lên" },
-  { id: "yours", label: "Bài của bạn" },
-  { id: "answer", label: "Lược đồ gốc" },
-];
+/** A press shorter than this toggles the original map; a longer one only shows it while held. */
+const HOLD_MS = 300;
 
 /** Counts up to `target` once; jumps straight there when the person prefers less motion. */
 function useCountUp(target: number, durationMs = 900) {
@@ -58,7 +54,11 @@ export function BattleMapCompareView({ title, answer, attempt, score, progress, 
   /** "Đóng": back to the battle page. */
   onClose: () => void;
 }) {
-  const [view, setView] = useState<View>("overlay");
+  // The comparison is shown by default; the original map shows while the button is held, or stays after a tap.
+  const [pinned, setPinned] = useState(false);
+  const [holding, setHolding] = useState(false);
+  const pressStart = useRef(0);
+  const showAnswer = pinned || holding;
   const compareMap = useMemo(() => buildCompareMap(answer, attempt, score), [answer, attempt, score]);
   const hints = useMemo(() => missingHints(answer, score), [answer, score]);
   const correct = score.matches.filter(m => m.score >= CORRECT_SCORE).length;
@@ -90,12 +90,10 @@ export function BattleMapCompareView({ title, answer, attempt, score, progress, 
     { id: "cmp-extra", label: "Thừa / sai", value: score.extraIds.length, hint: "Bạn vẽ nhưng lược đồ gốc không có ở đó." },
   ];
 
-  const canvas = view === "answer"
-    ? <BattleMapCanvas key="answer" value={answer} title={`Lược đồ gốc ${title}`} />
-    : view === "yours"
-      ? <BattleMapCanvas key="yours" value={attempt} title={`Bài vẽ của bạn ${title}`} />
-      : <BattleMapCanvas key="overlay" value={compareMap} title={`So sánh lược đồ ${title}`} legendTitle="Chú giải so sánh" legendDefaultOpen={false}
-        symbolView={s => ({ dim: s.factionId === "cmp-answer" })} />;
+  const canvas = showAnswer
+    ? <BattleMapCanvas key="answer" value={answer} title={`Lược đồ gốc ${title}`} legendDefaultOpen={false} />
+    : <BattleMapCanvas key="overlay" value={compareMap} title={`So sánh lược đồ ${title}`} legendTitle="Chú giải so sánh" legendDefaultOpen={false}
+      symbolView={s => ({ dim: s.factionId === "cmp-answer" })} />;
 
   return <section className={styles.compare} role="dialog" aria-modal="true" aria-labelledby="battle-compare-title">
     <header className={styles.header}>
@@ -174,8 +172,26 @@ export function BattleMapCompareView({ title, answer, attempt, score, progress, 
       </aside>
 
       <div className={styles.canvasWrap}>
-        <div className={styles.viewSwitch} role="group" aria-label="Xem lược đồ">
-          {VIEWS.map(v => <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)}>{v.label}</button>)}
+        <div className={styles.viewSwitch}>
+          <button type="button" aria-pressed={showAnswer} className={styles.peek}
+            title="Nhấn giữ để xem lược đồ gốc, thả ra để quay lại. Bấm một lần để bật / tắt."
+            onPointerDown={e => {
+              if (e.button !== 0) return;
+              pressStart.current = performance.now();
+              e.currentTarget.setPointerCapture(e.pointerId);
+              setHolding(true);
+            }}
+            onPointerUp={() => {
+              setHolding(false);
+              if (performance.now() - pressStart.current < HOLD_MS) setPinned(p => !p);
+            }}
+            onPointerCancel={() => setHolding(false)}
+            // Keyboard (Enter / Space) has no pointer events: toggle.
+            onClick={e => { if (e.detail === 0) setPinned(p => !p); }}
+            onContextMenu={e => e.preventDefault()}>
+            <Eye size={15} aria-hidden="true" />
+            {pinned ? "Đang xem lược đồ gốc · bấm để quay lại" : holding ? "Lược đồ gốc" : "Giữ để xem lược đồ gốc"}
+          </button>
         </div>
         <div className={styles.canvas}>{canvas}</div>
       </div>
