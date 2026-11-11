@@ -15,7 +15,7 @@ import {
 import { queryKeys } from "@/shared/query-key"; // ← dùng queryKeys chung
 import type { EventEra, EventEraBackend } from "@/services/event.service";
 import { CustomPagination } from "../commons/pagination";
-import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
+import { chatModeTargetOf, useChatModePicker } from "@/components/chat/chat-mode-dialog";
 import { parseEra, parsePage } from "@/lib/catalog-url-state";
 import { isValidUrl } from "@/lib/utils/url";
 import { cn } from "@/lib/utils/cn";
@@ -183,7 +183,7 @@ const VIEW_OPTIONS = [
 // ── Component ─────────────────────────────────────────────
 
 export function CharactersClient() {
-  const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
+  const { openChatModes, chatModeDialog } = useChatModePicker();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const era = parseEra(searchParams.get("era"));
@@ -212,11 +212,14 @@ export function CharactersClient() {
   const handleSearch = (s: string) => {
     updateUrl({ search: s || null, page: null }, true);
   };
-  const handleClick = (id: string) => navigateWithAuth(`/chat/${id}`);
+  const handleClick = (id: string) => {
+    const character = data?.content.find((c) => c.id === id);
+    if (character) openChatModes(chatModeTargetOf(character));
+  };
 
   return (
     <>
-      {authRequiredDialog}
+      {chatModeDialog}
       <div className="space-y-6">
         <SearchInput value={search} onChange={handleSearch} placeholder="Tìm nhân vật, triều đại, sự kiện..." size="lg" />
 

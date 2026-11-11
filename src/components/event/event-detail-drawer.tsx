@@ -14,7 +14,7 @@ import { characterService, type Character } from "@/services/character.service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { recordStudyActivity } from "@/features/gamification/study-check-in";
 import { queryKeys } from "@/shared/query-key";
-import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
+import { chatModeTargetOf, useChatModePicker } from "@/components/chat/chat-mode-dialog";
 import { usePublicContextDocuments } from "@/features/documents/hooks";
 import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
 import { ERA_CONFIG, getEraFromYear, mapEraLabel } from "@/constants/eras";
@@ -251,7 +251,7 @@ interface EventDetailModalProps {
 
 export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   const router = useRouter();
-  const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
+  const { openChatModes, chatModeDialog } = useChatModePicker();
   const [finishedEventId, setFinishedEventId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -282,14 +282,15 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   const eraLabel = mapEraLabel(event.era) || ERA_CONFIG[getEraFromYear(event.year)].label;
 
   const handleSelectChar = (charId: string) => {
-    navigateWithAuth(`/chat/${charId}?contextId=${event.id}`);
+    const character = characters.find((c) => c.id === charId);
+    if (character) openChatModes(chatModeTargetOf(character, event.id));
   };
 
   // Portalled to <body>: the page wrapper animates with a transform, which turns "fixed" into "relative to the page"
   // — the drawer then sat inside the content area, under the site header, with its top (year, Skip, Close) cut off.
   return createPortal(
     <>
-      {authRequiredDialog}
+      {chatModeDialog}
       <div
         className="fixed inset-0 z-[60] bg-black/70"
         onClick={onClose}

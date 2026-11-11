@@ -10,7 +10,7 @@ import type { AnswerData } from "@/features/quiz/question-data";
 import { characterService } from "@/services/character.service";
 import { queryKeys } from "@/shared/query-key";
 import { isValidUrl } from "@/lib/utils/url";
-import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
+import { chatModeTargetOf, useChatModePicker } from "@/components/chat/chat-mode-dialog";
 import { cn } from "@/lib/utils/cn";
 import { useQuizSessionDetail } from "@/features/quiz/hooks";
 import { QuestionAnswerReview } from "./QuestionAnswerReview";
@@ -90,7 +90,7 @@ export function QuizResultPage({
   sessionId,
 }: QuizResultPageProps) {
   const router = useRouter();
-  const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation({
+  const { openChatModes, chatModeDialog } = useChatModePicker({
     title: "Bạn cần đăng nhập để chat",
     description: "Đăng nhập để trò chuyện và ôn lại kiến thức với nhân vật lịch sử.",
   });
@@ -147,7 +147,7 @@ export function QuizResultPage({
 
   return (
     <main className="min-h-full px-5 pb-7 pt-14 md:px-8 bg-[var(--bg-content)]">
-      {authRequiredDialog}
+      {chatModeDialog}
       <div className="mx-auto max-w-4xl">
         <section className="mb-6 rounded-sm border border-border-card bg-[var(--bg-surface)]">
           <div className="grid md:grid-cols-[1fr_240px] md:items-stretch">
@@ -224,7 +224,7 @@ export function QuizResultPage({
                 <button
                   key={character.id}
                   onClick={() =>
-                    navigateWithAuth(`/chat/${character.id}?contextId=${quiz.contextId}`)
+                    openChatModes(chatModeTargetOf(character, quiz.contextId))
                   }
                   className="group flex items-center gap-3 border-r border-b border-[var(--text-primary)] p-3 text-left transition-colors hover:bg-[var(--text-primary)]"
                 >

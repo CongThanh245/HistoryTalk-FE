@@ -15,7 +15,7 @@ import {
   type Character,
 } from "@/components/commons/character-card";
 import { useCharacters } from "@/features/characters/hooks";
-import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
+import { chatModeTargetOf, useChatModePicker } from "@/components/chat/chat-mode-dialog";
 import { isValidUrl } from "@/lib/utils/url";
 
 const SKELETON_COUNT = 5;
@@ -46,7 +46,7 @@ export function Carousel3DVertical({
 }: {
   initialCharacters?: Character[];
 }) {
-  const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
+  const { openChatModes, chatModeDialog } = useChatModePicker();
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const expandedCardRef = useRef<HTMLDivElement>(null);
   const expandedCardInnerRef = useRef<HTMLDivElement>(null);
@@ -277,7 +277,7 @@ export function Carousel3DVertical({
 
   return (
     <>
-      {authRequiredDialog}
+      {chatModeDialog}
       {expandedCharacter &&
         typeof document !== "undefined" &&
         createPortal(
@@ -350,7 +350,7 @@ export function Carousel3DVertical({
               <button
                 type="button"
                 onClick={() =>
-                  navigateWithAuth(`/chat/${expandedCharacter.character.id}`)
+                  openChatModes(chatModeTargetOf(expandedCharacter.character))
                 }
                 className="absolute inset-x-6 bottom-6 flex items-center justify-center gap-2 rounded-sm border border-[var(--accent-gold)] bg-[var(--accent-gold)] py-3.5 text-sm font-bold uppercase tracking-[0.08em] text-white transition-[background-color,border-color,transform] hover:border-[var(--accent-bronze)] hover:bg-[var(--accent-bronze)] active:scale-[0.98] [animation:character-detail-in_600ms_340ms_ease-out_both]"
               >

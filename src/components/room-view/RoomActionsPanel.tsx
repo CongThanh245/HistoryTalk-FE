@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, MessageCircle, Trophy, X } from "lucide-react";
 import type { Character } from "@/services/character.service";
 import type { HistoricalEvent } from "@/services/event.service";
-import { useAuthRequiredNavigation } from "@/features/auth/use-auth-required-navigation";
+import { chatModeTargetOf, useChatModePicker } from "@/components/chat/chat-mode-dialog";
 
 interface RoomActionsProps {
   character: Character;
@@ -14,11 +14,11 @@ interface RoomActionsProps {
 
 export function RoomActionsPanel({ character, event, onClose }: RoomActionsProps) {
   const router = useRouter();
-  const { authRequiredDialog, navigateWithAuth } = useAuthRequiredNavigation();
+  const { openChatModes, chatModeDialog } = useChatModePicker();
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-[var(--bg-surface)] text-[var(--text-primary)] md:border-l md:border-[var(--text-primary)]">
-      {authRequiredDialog}
+      {chatModeDialog}
       <div className="flex items-start gap-3 border-b border-[var(--text-primary)] p-4">
         <div className="min-w-0 flex-1">
           <h2 className="archive-title is-plain text-[22px]">{character.name}</h2>
@@ -33,7 +33,7 @@ export function RoomActionsPanel({ character, event, onClose }: RoomActionsProps
           <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{event.summary}</p>
         </div>
         <div className="space-y-2">
-          <button type="button" onClick={() => navigateWithAuth(`/chat/${character.id}?contextId=${event.id}`)} className="flex w-full items-center gap-3 rounded-sm bg-[var(--accent-gold)] px-3 py-3 text-left text-sm font-bold text-white transition-colors hover:bg-[var(--accent-bronze)]">
+          <button type="button" onClick={() => openChatModes(chatModeTargetOf(character, event.id))} className="flex w-full items-center gap-3 rounded-sm bg-[var(--accent-gold)] px-3 py-3 text-left text-sm font-bold text-white transition-colors hover:bg-[var(--accent-bronze)]">
             <MessageCircle size={18} />Trò chuyện với {character.name}
           </button>
           <button type="button" onClick={() => router.push(`/events?event=${event.id}`)} className="flex w-full items-center gap-3 rounded-sm border border-[var(--text-primary)] px-3 py-3 text-left text-sm font-semibold transition-colors hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]">

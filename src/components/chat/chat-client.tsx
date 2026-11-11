@@ -10,21 +10,20 @@ import { ChatRightPanel } from "./chat-right-panel";
 import { DocumentCitationDialog } from "./document-citation-dialog";
 import { useCreateSession, useChatSessions } from "@/features/chat/hooks";
 import { isTokenExhaustionError } from "@/lib/utils/api-error";
-import { ChatModeChooser } from "./chat-mode-chooser";
 
 interface ChatClientProps {
   initialCharacterId: string;
   initialContextId?: string;
   initialSessionId?: string;
-  /** Open the interview right away (assignment links, calls) instead of asking Phỏng vấn or Vấn đáp. */
-  skipModeChoice?: boolean;
+  /** Start a Vấn đáp session with this many questions instead of opening the interview. */
+  initialExamQuestions?: number;
 }
 
 export function ChatClient({
   initialCharacterId,
   initialContextId,
   initialSessionId,
-  skipModeChoice = false,
+  initialExamQuestions,
 }: ChatClientProps) {
   const [activeCharacterId, setActiveCharacterId] = useState<string | null>(
     initialCharacterId || null,
@@ -36,8 +35,8 @@ export function ChatClient({
     null,
   );
   const sessionInitialized = useRef(false);
-  /** Phỏng vấn or Vấn đáp has been picked for this character (or a session was opened directly). */
-  const [modeChosen, setModeChosen] = useState(!!initialSessionId || skipModeChoice);
+  /** Questions of the exam the page was opened for; cleared once it is started. */
+  const pendingExamRef = useRef(initialExamQuestions ?? null);
 
   const { data: activeCharacter, isLoading: isLoadingCharacter } = useQuery({
     queryKey: queryKeys.chat.character(activeCharacterId ?? ""),
@@ -77,7 +76,7 @@ export function ChatClient({
     if (sessionInitialized.current) return;
     if (activeSessionId) return;
     if (isTokenExhausted) return;
-    if (!modeChosen) return;
+    if (pendingExamRef.current) return;
 
     sessionInitialized.current = true;
 
@@ -109,7 +108,6 @@ export function ChatClient({
     isTokenExhausted,
     tokenExhaustionKey,
     createSession,
-    modeChosen,
   ]);
 
   const handleSelectCharacter = useCallback((char: ChatCharacter) => {
@@ -117,8 +115,7 @@ export function ChatClient({
     setActiveSessionId(null);
     setTokenExhaustedFor(null);
     sessionInitialized.current = false;
-    // A new character asks again which mode.
-    setModeChosen(false);
+    pendingExamRef.current = null;
   }, []);
 
   const handleSessionCreated = useCallback((sessionId: string) => {
@@ -147,7 +144,6 @@ export function ChatClient({
     if (isTokenExhausted) return;
 
     sessionInitialized.current = true;
-    setModeChosen(true);
     setActiveSessionId(null);
     setIsRightPanelOpen(false);
     createSession
@@ -174,7 +170,6 @@ export function ChatClient({
 
       const previousSessionId = activeSessionId;
       sessionInitialized.current = true;
-      setModeChosen(true);
       setActiveSessionId(null);
       setIsRightPanelOpen(false);
       setIsStartingExam(true);
@@ -187,17 +182,27 @@ export function ChatClient({
             return;
           }
           // e.g. the character has too few documents: go back to the conversation the learner was in,
-          // or to the mode choice when the exam was picked there.
+          // or open the interview when the exam was picked before coming here.
           setActiveSessionId(previousSessionId);
-          if (!previousSessionId) {
-            sessionInitialized.current = false;
-            setModeChosen(false);
-          }
+          if (!previousSessionId) sessionInitialized.current = false;
         })
         .finally(() => setIsStartingExam(false));
     },
     [activeSessionId, characterId, contextId, isTokenExhausted, tokenExhaustionKey, createSession],
   );
+
+  // Opened from the Vấn đáp choice of the mode popup: start that exam once, and drop it from the URL so a reload
+  // opens the conversation instead of a second exam.
+  useEffect(() => {
+    const questions = pendingExamRef.current;
+    if (!questions || !characterId || !contextId || !isSessionsSuccess) return;
+    pendingExamRef.current = null;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("mode");
+    url.searchParams.delete("questions");
+    window.history.replaceState(window.history.state, "", url);
+    handleStartExamSession(questions);
+  }, [characterId, contextId, isSessionsSuccess, handleStartExamSession]);
 
   if (isLoadingCharacter || !activeCharacter) {
     return (
@@ -209,15 +214,6 @@ export function ChatClient({
 
   return (
     <div className="relative flex w-full h-full overflow-hidden">
-      {!modeChosen && !activeSessionId ? (
-        <ChatModeChooser
-          character={activeCharacter}
-          hasInterview={(sessions ?? []).some((s) => s.mode !== "EXAM")}
-          busy={!isSessionsSuccess || createSession.isPending}
-          onInterview={() => setModeChosen(true)}
-          onExam={handleStartExamSession}
-        />
-      ) : (
       <ChatMain
         character={activeCharacter}
         contextId={contextId}
@@ -230,7 +226,6 @@ export function ChatClient({
         isTokenExhausted={isTokenExhausted}
         onTokenExhausted={() => setTokenExhaustedFor(tokenExhaustionKey)}
       />
-      )}
       <ChatRightPanel
         activeCharacter={activeCharacter}
         onSelectCharacter={handleSelectCharacter}
@@ -241,10 +236,7 @@ export function ChatClient({
         sessions={sessions ?? []}
         isLoadingSessions={isLoadingSessions}
         activeSessionId={activeSessionId}
-        onSelectSession={(id) => {
-          setModeChosen(true);
-          setActiveSessionId(id);
-        }}
+        onSelectSession={setActiveSessionId}
         onNewSession={handleStartNewSession}
         onNewExamSession={handleStartExamSession}
         onDeleteSession={handleDeleteSession}
