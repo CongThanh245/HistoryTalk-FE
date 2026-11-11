@@ -64,7 +64,7 @@ const LeafletMap = dynamic(
 );
 
 /** Which battle is selected and which screen is shown: map, battle page, lược đồ editor, or "Tự vẽ lược đồ". */
-export type MapRoute = { battle: string | null; view: "map" | "detail" | "edit" | "practice" };
+export type MapRoute = { battle: string | null; view: "map" | "detail" | "edit" | "practice" | "sketch" };
 /** push: new history entry · replace: same entry · back: return to the previous screen. */
 export type MapRouteNavigation = "push" | "replace" | "back";
 
@@ -452,8 +452,8 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
         editing={route.view === "edit"}
         onOpenEditor={() => openScreen("edit")}
         onCloseEditor={() => navigate({ battle: activeEvent.id, view: editorOrigin }, "back")}
-        practicing={route.view === "practice"}
-        onOpenPractice={() => navigate({ battle: activeEvent.id, view: "practice" }, "push")}
+        practicing={route.view === "practice" ? "challenge" : route.view === "sketch" ? "sketch" : false}
+        onOpenPractice={kind => navigate({ battle: activeEvent.id, view: kind === "sketch" ? "sketch" : "practice" }, "push")}
         onClosePractice={() => navigate({ battle: activeEvent.id, view: "detail" }, "back")}
         onBack={() => navigate({ battle: activeEvent.id, view: "map" }, "back")}
         onClose={() => { navigate({ battle: activeEvent.id, view: "map" }, "back"); setSelectedPin(null); }}

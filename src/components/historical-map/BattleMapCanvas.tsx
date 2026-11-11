@@ -11,10 +11,13 @@ const UNIT_BOX = <rect x="14" y="9" width="72" height="32" fill="white" />;
 /** Military-style glyphs drawn in a 100×50 box; arrows point right at rotation 0. */
 export function SymbolGlyph({ type, text }: { type: BattleSymbolType; text?: string }) {
   return <svg viewBox="0 0 100 50" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round">
-    {type === "arrow" && <path d="M4 18H68V5L96 25 68 45V32H4Z" fill="currentColor" fillOpacity=".3" />}
-    {type === "flank" && <><path d="M6 44C18 10 60 4 82 26" strokeWidth="6" /><path d="M94 38 73 34 88 19Z" fill="currentColor" /></>}
-    {type === "march" && <><path d="M4 25H88" /><path d="M74 13 94 25 74 37" /></>}
-    {type === "retreat" && <><path d="M4 25H76" strokeWidth="6" strokeDasharray="10 7" /><path d="M72 11 96 25 72 39Z" fill="currentColor" /></>}
+    {/* The four movement arrows match how they are drawn on the map: solid, hollow, chevrons, dashed with a tail bar. */}
+    {type === "arrow" && <><path d="M6 25H70" strokeWidth="8" strokeLinecap="round" /><path d="M66 8 96 25 66 42Z" fill="currentColor" /></>}
+    {type === "flank" && <><path d="M8 42C20 16 48 8 74 22" strokeWidth="13" strokeLinecap="round" />
+      <path d="M8 42C20 16 48 8 74 22" stroke="white" strokeWidth="5" strokeLinecap="round" /><path d="M95 34 66 34 80 9Z" fill="currentColor" /></>}
+    {type === "march" && <><path d="M4 25H90" strokeWidth="2.5" /><path d="M18 17 26 25 18 33M38 17 46 25 38 33M58 17 66 25 58 33" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M80 13 94 25 80 37" strokeWidth="3.5" strokeLinecap="round" /></>}
+    {type === "retreat" && <><path d="M8 25H72" strokeWidth="6" strokeDasharray="10 6" /><path d="M6 11V39" strokeWidth="5" /><path d="M70 11 96 25 70 39Z" fill="currentColor" /></>}
     {type === "infantry" && <>{UNIT_BOX}<path d="m14 9 72 32M86 9 14 41" /></>}
     {type === "cavalry" && <>{UNIT_BOX}<path d="M14 41 86 9" /></>}
     {type === "archer" && <>{UNIT_BOX}<path d="M36 35Q50 8 64 35M36 35H64M50 35V16" /></>}
@@ -82,7 +85,13 @@ function LinePath({ symbol, aspect, color, selected, enterKey }: { symbol: Battl
       {/* Light casing under the ink keeps every line readable on dark or busy images. */}
       <path d={g.line} fill="none" stroke="#fff" strokeOpacity=".85" strokeWidth={g.width + .55} strokeDasharray={g.dash} strokeLinecap={dashed ? "butt" : "round"} />
       {g.teeth && <path d={g.teeth} fill={color} stroke="#fff" strokeOpacity=".85" strokeWidth=".25" paintOrder="stroke" />}
+      {g.chevrons && <path d={g.chevrons} fill="none" stroke="#fff" strokeOpacity=".85" strokeWidth={g.width * 1.5 + .55} strokeLinecap="round" />}
+      {g.tail && <path d={g.tail} fill="none" stroke="#fff" strokeOpacity=".85" strokeWidth={g.width * 1.3 + .55} />}
       <path d={g.line} fill="none" stroke={color} strokeWidth={g.width} strokeDasharray={g.dash} strokeLinecap={dashed ? "butt" : "round"} />
+      {/* Hollow body (Vu hồi): a light channel down the middle leaves two parallel edges. */}
+      {g.hollowWidth && <path d={g.line} fill="none" stroke="#fff" strokeOpacity=".92" strokeWidth={g.hollowWidth} strokeLinecap="round" />}
+      {g.chevrons && <path d={g.chevrons} fill="none" stroke={color} strokeWidth={g.width * 1.5} strokeLinecap="round" />}
+      {g.tail && <path d={g.tail} fill="none" stroke={color} strokeWidth={g.width * 1.3} />}
     </g>
     {g.head && <path d={g.head} className={styles.pathHead} fill={g.headOpen ? "none" : color} stroke={g.headOpen ? color : "#fff"}
       strokeOpacity={g.headOpen ? 1 : .85} strokeWidth={g.headOpen ? g.width : .3} strokeLinecap="round" strokeLinejoin="round" paintOrder="stroke" />}
@@ -452,6 +461,11 @@ export function BattleMapCanvas({ value, title, selectedId, selectedIds, placing
                 aspect={aspect} color={placingColor ?? "#b91c1c"} />
             </g>}
           </svg>}
+          {/* Names the line being drawn at its tip, so a hollow "Vu hồi" is not taken for a plain "Tiến công". */}
+          {drawPreview && placingType && <span className={styles.drawLabel} aria-hidden="true"
+            style={{ left: `${drawPreview[drawPreview.length - 1].x}%`, top: `${drawPreview[drawPreview.length - 1].y}%`, "--chip": placingColor ?? "#b91c1c" } as React.CSSProperties}>
+            {SYMBOL_LABELS[placingType]}
+          </span>}
           {showSymbols && value.symbols.map(symbol => {
             if (isLineSymbol(symbol.type)) return null;
             const view = symbolView?.(symbol) ?? {};

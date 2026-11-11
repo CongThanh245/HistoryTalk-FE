@@ -244,6 +244,7 @@
 .pathSelected { fill: none; stroke: var(--accent-gold); stroke-opacity: .55; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 .pathSymbol:focus-visible .pathSelected, .pathSymbol:focus-visible .pathHit { stroke: var(--accent-gold); stroke-opacity: .35; }
 .pathPreview { opacity: .75; }
+.drawLabel { position: absolute; z-index: 4; transform: translate(12px, -130%); padding: 3px 9px; border: 1px solid var(--chip); border-left-width: 4px; border-radius: 2px; font-size: 12px; font-weight: 700; white-space: nowrap; color: #1b1712; background: rgb(255 255 255 / .94); box-shadow: 0 2px 6px rgb(0 0 0 / .18); pointer-events: none; }
 .plane[data-placing=true] .pathSymbol *, .plane[data-drawing=true] .pathSymbol * { pointer-events: none; }
 .pathSymbol[data-dim=true] { opacity: .38; }
 .pathSymbol[data-fx=fade] { animation: fx-fade 650ms ease var(--fx-delay) both; }

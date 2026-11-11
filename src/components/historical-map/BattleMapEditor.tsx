@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, CircleHelp, PenLine, Clapperboard, ClipboardCheck, Copy, Download, Eye, GripVertical, ImageIcon, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Trash2, Undo2, Upload, Users, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Check, CircleHelp, PenLine, Clapperboard, ClipboardCheck, Copy, Download, Eye, GripVertical, ImageIcon, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Trash2, Undo2, Upload, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { battleMapImageService } from "@/services/media.service";
@@ -36,6 +36,8 @@ const TOUR_KEY = "ht.battleEditor.tour";
 const PHASE_COACH_KEY = "ht.battleEditor.phaseCoach";
 /** Short walkthrough of "Thử thách trí nhớ", once per browser. */
 const PRACTICE_TOUR_KEY = "ht.battlePractice.tour";
+/** Short walkthrough of "Tự vẽ lược đồ", once per browser. */
+const SKETCH_TOUR_KEY = "ht.battleSketch.tour";
 const readStore = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
 const writeStore = (key: string, v: string) => { try { localStorage.setItem(key, v); } catch { /* storage unavailable */ } };
 const KEY_OF = Object.fromEntries(Object.entries(TOOL_KEYS).map(([key, type]) => [type, key.toUpperCase()])) as Partial<Record<BattleSymbolType, string>>;
@@ -81,20 +83,26 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
    * "practice": a learner redraws the map on the admin's background to compare it. Only the symbols tab, a short
    * tour of its own, no side editing, phases, preview or export; "So sánh" replaces "Lưu". The drawing lives in the
    * browser draft, which is restored on its own and kept after comparing or closing.
+   * "sketch": the same blank sheet for a learner to work out tactics freely. Nothing is graded; sides can be added;
+   * the drawing stays in the browser draft and "Xong" just leaves.
    */
-  mode?: "author" | "practice";
+  mode?: "author" | "practice" | "sketch";
   /** Practice: number of graded symbols in the original map, shown as a goal while drawing. */
   practiceTarget?: number;
 }) {
   const practice = mode === "practice";
+  const sketch = mode === "sketch";
+  /** A learner's own sheet (practice or sketch): browser-only, restored without asking. */
+  const learner = practice || sketch;
   const uid = useAuthStore(state => state.user?.uid);
   const draftKey = draftId ? battleMapDraftKey(uid, draftId) : null;
   const [{ start, blankSheet }] = useState(() => {
     const blank = withDefaultFactions(initialValue);
-    if (!practice) return { start: blank, blankSheet: null };
+    if (!learner) return { start: blank, blankSheet: null };
     const stored = readDraft(draftKey);
-    // A practice drawing is compared with the blank sheet, so it stays "unsaved" and keeps being written to the draft.
-    return { start: stored ? { ...blank, symbols: stored.map.symbols } : blank, blankSheet: JSON.stringify(blank) };
+    // A learner's drawing is compared with the blank sheet, so it stays "unsaved" and keeps being written to the draft.
+    // A sketch may also have added sides of its own.
+    return { start: stored ? { ...blank, symbols: stored.map.symbols, ...(sketch && { factions: stored.map.factions }) } : blank, blankSheet: JSON.stringify(blank) };
   });
   /** The map plus its undo history. */
   const [doc, setDoc] = useState(() => ({ value: start, past: [] as BattleMap[], future: [] as BattleMap[], at: 0 }));
@@ -111,7 +119,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
   const [saved, setSaved] = useState(() => blankSheet ?? JSON.stringify(start));
   /** Unsaved work found in this browser from an earlier visit, waiting for "Khôi phục" / "Bỏ". Practice restores it directly. */
   const [draft, setDraft] = useState<{ map: BattleMap; savedAt: number; stale: boolean } | null>(() => {
-    if (practice) return null;
+    if (learner) return null;
     const stored = readDraft(draftKey);
     if (!stored || JSON.stringify(stored.map) === JSON.stringify(start)) return null;
     return { map: stored.map, savedAt: stored.savedAt, stale: stored.base !== fingerprint(JSON.stringify(start)) };
@@ -147,8 +155,9 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
   /** Spotlight tour on screen: the full first-visit walkthrough, or the single phase-bar step. */
   const [tour, setTour] = useState<"full" | "phase" | null>(null);
   // First visit: walk through drawing → grouping into phases → narration → preview (skippable).
+  const tourKey = practice ? PRACTICE_TOUR_KEY : sketch ? SKETCH_TOUR_KEY : TOUR_KEY;
   useEffect(() => {
-    if (readStore(practice ? PRACTICE_TOUR_KEY : TOUR_KEY)) return;
+    if (readStore(tourKey)) return;
     const t = window.setTimeout(() => setTour("full"), 700);
     return () => window.clearTimeout(t);
   }, []);
@@ -157,7 +166,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     if (readStore(TOUR_KEY) === "skipped" && !readStore(PHASE_COACH_KEY)) setTour("phase");
   };
   const closeTour = (finished: boolean) => {
-    if (tour === "full") writeStore(practice ? PRACTICE_TOUR_KEY : TOUR_KEY, finished ? "done" : "skipped");
+    if (tour === "full") writeStore(tourKey, finished ? "done" : "skipped");
     else writeStore(PHASE_COACH_KEY, "1");
     setTour(null);
   };
@@ -196,8 +205,8 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     if (symbol && phases.length && !sorting) setPhaseId(phaseIndexOf(symbol) === -1 ? null : symbol.phaseId!);
   };
   const close = () => {
-    // A practice drawing stays in the browser draft, so leaving loses nothing.
-    if (practice) { onClose(); return; }
+    // A learner's drawing stays in the browser draft, so leaving loses nothing.
+    if (learner) { onClose(); return; }
     if (dirty && !window.confirm("Bỏ các thay đổi chưa lưu trên lược đồ?")) return;
     try { if (draftKey && dirty) localStorage.removeItem(draftKey); } catch { /* storage unavailable */ }
     onClose();
@@ -216,10 +225,10 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
   }, [draftKey, draft, value, saved, mapDirty]);
 
   useEffect(() => {
-    const beforeUnload = (e: BeforeUnloadEvent) => { if (dirty && !practice) e.preventDefault(); };
+    const beforeUnload = (e: BeforeUnloadEvent) => { if (dirty && !learner) e.preventDefault(); };
     window.addEventListener("beforeunload", beforeUnload);
     return () => window.removeEventListener("beforeunload", beforeUnload);
-  }, [dirty, practice]);
+  }, [dirty, learner]);
 
   const addSymbol = (type: BattleSymbolType, x = 50, y = 50, shape?: { points: MapPoint[] }) => {
     if (!canDraw) return;
@@ -337,7 +346,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     return owners.size === 1 ? [...owners][0] : undefined;
   })();
   // Phase picker floated at the selection: a multi-selection always, a single symbol once there are phases to choose from.
-  const selectionToolbar = !practice && value.mode === "custom" && !drawingFrame && (selection.length > 1 || (selection.length === 1 && phases.length > 0)) ? (
+  const selectionToolbar = !learner && value.mode === "custom" && !drawingFrame && (selection.length > 1 || (selection.length === 1 && phases.length > 0)) ? (
     <div className={styles.selectionBar} role="toolbar" aria-label="Đưa ký hiệu đã chọn vào giai đoạn">
       <span>{selection.length > 1 ? `${selection.length} ký hiệu · giai đoạn` : "Giai đoạn"}</span>
       {phases.length > 0 && <button type="button" aria-pressed={selectionPhase === null} title="Hiện suốt trận" onClick={() => assignPhase(selection, null)}>Luôn hiện</button>}
@@ -349,12 +358,18 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     {
       target: '[data-tour="practice-factions"]',
       title: "Chọn phe bạn muốn vẽ",
-      body: <>Mỗi phe một màu. Đổi phe trước khi vẽ cánh quân của phe đó, vì vẽ nhầm phe sẽ chỉ được nửa số điểm.</>,
+      body: sketch
+        ? <>Mỗi phe một màu. Muốn thử thêm một cánh quân khác, bấm <b>+ Phe</b> để thêm phe mới.</>
+        : <>Mỗi phe một màu. Đổi phe trước khi vẽ cánh quân của phe đó, vì vẽ nhầm phe sẽ chỉ được nửa số điểm.</>,
     },
     {
       target: '[data-tour="practice-tools"]',
-      title: "Chọn một ký hiệu",
-      body: <>Bấm vào ký hiệu bạn nhớ, ví dụ mũi tiến công hoặc đơn vị quân. Di chuột lên từng ô để xem tên.</>,
+      title: "Chọn đúng loại mũi tên",
+      body: <>
+        Mỗi loại có hình riêng: <b>Tiến công</b> nét đậm liền, <b>Vu hồi</b> thân rỗng hai viền,
+        <b> Cơ động</b> nét mảnh có dấu ›››, <b>Rút lui</b> nét đứt có gạch ở đuôi.
+        {!sketch && " Vẽ đúng vị trí nhưng sai loại chỉ được nửa số điểm."}
+      </>,
     },
     {
       target: '[data-tour="canvas"]',
@@ -365,10 +380,14 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
           <path className={styles.tourDragHead} d="M204 6 226 17 205 27Z" />
           <circle className={styles.tourDragDot} r="7" />
         </svg>
-        Với mũi tên: <b>nhấn giữ rồi kéo</b> theo hướng tiến quân, đầu mũi tên nằm ở điểm cuối. Với đơn vị quân: chỉ cần <b>bấm</b> vào vị trí.
+        Với mũi tên: <b>nhấn giữ rồi kéo</b> theo hướng tiến quân, đầu mũi tên nằm ở điểm cuối. Tên loại đang vẽ hiện ngay cạnh đầu mũi tên. Với đơn vị quân: chỉ cần <b>bấm</b> vào vị trí.
       </>,
     },
-    {
+    sketch ? {
+      target: '[data-tour="practice-compare"]',
+      title: "Bài vẽ tự lưu",
+      body: <>Không chấm điểm, cứ thoải mái thử phương án của bạn. Bài vẽ tự lưu trên máy này, lần sau mở lại vẫn còn. Xem lại hướng dẫn bằng nút <b>?</b>.</>,
+    } : {
       target: '[data-tour="practice-compare"]',
       title: "Xong thì bấm So sánh",
       body: <>Bộ đếm cạnh đó cho biết bạn đã vẽ bao nhiêu ký hiệu. Bạn có thể vẽ tiếp và so sánh nhiều lần. Xem lại hướng dẫn bằng nút <b>?</b>.</>,
@@ -519,20 +538,25 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     setError(""); update({ imageUrl: url });
   };
 
-  return <section className={styles.editor} aria-label={practice ? "Thử thách trí nhớ: vẽ lại lược đồ trận đánh" : "Chỉnh sửa lược đồ trận đánh"}>
+  const drawnCount = value.symbols.filter(s => s.type !== "label" && s.type !== "step").length;
+  return <section className={styles.editor} aria-label={practice ? "Thử thách trí nhớ: vẽ lại lược đồ trận đánh" : sketch ? "Tự vẽ lược đồ trận đánh" : "Chỉnh sửa lược đồ trận đánh"}>
     <header className={styles.header}>
       <button type="button" autoFocus onClick={close} aria-label="Quay lại" title="Quay lại"><ArrowLeft size={18} /></button>
       <div className={styles.headerTitle}>
-        <h1>{practice ? "Thử thách trí nhớ" : "Chỉnh sửa lược đồ trận đánh"}</h1>
+        <h1>{practice ? "Thử thách trí nhớ" : sketch ? "Tự vẽ lược đồ" : "Chỉnh sửa lược đồ trận đánh"}</h1>
         <p>{title}</p>
       </div>
-      {practice ? <span className={styles.practiceGoal} role="status" title="Bài vẽ chỉ lưu trên trình duyệt này, không gửi lên máy chủ.">
+      {sketch ? <span className={styles.practiceGoal} role="status" title="Bài vẽ chỉ lưu trên trình duyệt này, không gửi lên máy chủ và không chấm điểm.">
+        <span className={styles.practiceGoalText}>
+          {value.symbols.length ? <><b>{value.symbols.length}</b> ký hiệu · tự lưu trên máy này</> : "Vẽ tự do, không chấm điểm"}
+        </span>
+      </span> : practice ? <span className={styles.practiceGoal} role="status" title="Bài vẽ chỉ lưu trên trình duyệt này, không gửi lên máy chủ.">
         {practiceTarget ? <>
           <span className={styles.practiceGoalText}>
-            <b>{value.symbols.filter(s => s.type !== "label" && s.type !== "step").length}</b> / {practiceTarget} ký hiệu
+            <b>{drawnCount}</b> / {practiceTarget} ký hiệu
           </span>
           <span className={styles.practiceGoalBar} aria-hidden="true">
-            <span style={{ width: `${Math.min(100, (value.symbols.filter(s => s.type !== "label" && s.type !== "step").length / practiceTarget) * 100)}%` }} />
+            <span style={{ width: `${Math.min(100, (drawnCount / practiceTarget) * 100)}%` }} />
           </span>
         </> : <span className={styles.practiceGoalText}>
           {value.symbols.length ? `${value.symbols.length} ký hiệu · lưu trên máy này` : "Đặt ký hiệu lên ảnh nền để bắt đầu"}
@@ -542,14 +566,18 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
       </span>}
       <button type="button" onClick={undo} disabled={!doc.past.length} aria-label="Hoàn tác" title="Hoàn tác (Ctrl+Z)"><Undo2 size={16} /></button>
       <button type="button" onClick={redo} disabled={!doc.future.length} aria-label="Làm lại" title="Làm lại (Ctrl+Shift+Z)"><Redo2 size={16} /></button>
-      {!practice && <>
+      {learner && <button type="button" onClick={() => setValue(v => ({ ...v, symbols: [] }))} disabled={!value.symbols.length}
+        aria-label="Xóa hết ký hiệu" title="Xóa hết ký hiệu đã vẽ (Ctrl+Z để lấy lại)"><Trash2 size={16} /><span>Xóa hết</span></button>}
+      {!learner && <>
         <button type="button" onClick={() => setTour("full")} aria-label="Xem hướng dẫn" title="Xem hướng dẫn"><CircleHelp size={16} /></button>
         <button type="button" onClick={exportMap} aria-label="Xuất JSON" title="Tải thiết kế dưới dạng JSON"><Download size={16} /><span>Xuất JSON</span></button>
         <button type="button" data-tour="preview" aria-label="Xem trước" title="Phát thử như người học sẽ xem (không lưu)" disabled={!value.imageUrl.trim()}
           onClick={() => { pickTool(null); setSelectedId(null); setDrawingFrame(false); setPreviewing(true); }}><Eye size={16} /><span>Xem trước</span></button>
       </>}
-      {practice && <button type="button" onClick={() => setTour("full")} aria-label="Xem hướng dẫn" title="Xem hướng dẫn"><CircleHelp size={16} /></button>}
-      {practice
+      {learner && <button type="button" onClick={() => setTour("full")} aria-label="Xem hướng dẫn" title="Xem hướng dẫn"><CircleHelp size={16} /></button>}
+      {sketch
+        ? <button type="button" data-tour="practice-compare" className={styles.primary} title="Bài vẽ đã tự lưu trên máy này" onClick={close}><Check size={16} /><span>Xong</span></button>
+        : practice
         ? <button type="button" data-tour="practice-compare" className={styles.primary} aria-label="So sánh với lược đồ gốc" title="Chấm bài vẽ so với lược đồ gốc" disabled={!canSave || busy}
           onClick={() => { pickTool(null); setSelection([]); void save(); }}><ClipboardCheck size={16} /><span>So sánh</span></button>
         : <button type="button" className={styles.primary} aria-label="Lưu lược đồ" disabled={!canSave || busy} onClick={() => void save()}>{saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}<span>Lưu</span></button>}
@@ -561,7 +589,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     <div className={styles.layout}>
       <aside className={styles.settings} data-tour="settings">
         <div className={styles.tabs} role="tablist" aria-label="Nhóm thiết lập">
-          {TABS.filter(t => !practice || t.id === "symbols").map(t => <button key={t.id} type="button" role="tab" id={`map-tab-${t.id}`} aria-selected={tab === t.id} aria-controls="map-tab-panel"
+          {TABS.filter(t => !learner || t.id === "symbols" || (sketch && t.id === "factions")).map(t => <button key={t.id} type="button" role="tab" id={`map-tab-${t.id}`} aria-selected={tab === t.id} aria-controls="map-tab-panel"
             className={cn(styles.tab, tab === t.id && styles.tabActive)} onClick={() => setTab(t.id)}>
             <t.icon size={16} />{t.label}
           </button>)}
@@ -708,7 +736,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
         </div>
       </aside>
 
-      <SpotlightTour steps={practice ? practiceTourSteps : tourSteps} open={tour !== null} onClose={closeTour} />
+      <SpotlightTour steps={learner ? practiceTourSteps : tourSteps} open={tour !== null} onClose={closeTour} />
       <main className={styles.workspace} data-tour="canvas">
         {draft && <div className={styles.draftBanner} role="status">
           <span>Có bản nháp chưa lưu trên máy này ({new Date(draft.savedAt).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}).

@@ -263,6 +263,8 @@
 }
 @media (max-width: 480px) {
   .challengeMore { display: none; }
+  /* Icon only on phones: the pen reads as "draw", the title says the rest. */
+  .sketchLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .challengeButton { padding: 0 9px; }
   .challengeInvite { padding: 16px 14px 14px; }
   .challengeInvite h2 { font-size: 20px; }

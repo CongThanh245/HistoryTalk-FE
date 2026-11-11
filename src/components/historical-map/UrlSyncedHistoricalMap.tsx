@@ -8,7 +8,8 @@ import type { MapOverlay } from "./map-overlay.types";
 /**
  * Full-page battle map whose screen lives in the URL, so reload, shared links and
  * browser Back/Forward land on the same place:
- * `?battle=<contextId>` (selected) · `&view=detail` (battle page) · `&view=edit` (lược đồ editor).
+ * `?battle=<contextId>` (selected) · `&view=detail` (battle page) · `&view=edit` (lược đồ editor) ·
+ * `&view=practice` (Thử thách trí nhớ) · `&view=sketch` (Tự vẽ, ungraded).
  */
 export function UrlSyncedHistoricalMap({ onClose, overlay }: { onClose: () => void; overlay?: MapOverlay }) {
   const router = useRouter();
@@ -26,7 +27,7 @@ export function UrlSyncedHistoricalMap({ onClose, overlay }: { onClose: () => vo
   const view = params.get("view");
   const route: MapRoute = {
     battle: params.get("battle"),
-    view: view === "detail" || view === "edit" || view === "practice" ? view : "map",
+    view: view === "detail" || view === "edit" || view === "practice" || view === "sketch" ? view : "map",
   };
 
   const onRouteChange = (next: MapRoute, how: MapRouteNavigation) => {

@@ -12,13 +12,21 @@ interface LineStyle {
   dash?: [number, number];
   /** Marks along the left side of the line: triangles (defence line) or thin spikes (stakes). */
   teeth?: { every: number; size: number; base: number };
+  /** Hollow body: a light channel of this share of the width runs down the middle (two parallel edges). */
+  hollow?: number;
+  /** Open chevrons (›››) along the line, pointing the way. */
+  chevrons?: { every: number; size: number };
+  /** Bar across the start of the line, of this half-length. */
+  tail?: number;
 }
 
+// The four movement arrows must read apart even when drawn freehand along the same route, so each has its own
+// body rather than only a different weight: solid, hollow, chevrons, dashed with a tail bar.
 const LINE_STYLES: Partial<Record<BattleSymbolType, LineStyle>> = {
-  arrow: { width: .65, head: { length: 2.2, half: 1.25 } },
-  flank: { width: .5, head: { length: 1.9, half: 1.05 } },
-  march: { width: .3, head: { length: 1.4, half: .8, open: true } },
-  retreat: { width: .45, dash: [1.2, .8], head: { length: 1.8, half: 1 } },
+  arrow: { width: .7, head: { length: 2.3, half: 1.35 } },
+  flank: { width: 1.15, hollow: .42, head: { length: 2.6, half: 1.65 } },
+  march: { width: .26, chevrons: { every: 3.6, size: .9 }, head: { length: 1.5, half: .9, open: true } },
+  retreat: { width: .5, dash: [1.3, .9], tail: 1.1, head: { length: 1.9, half: 1.1 } },
   defenseLine: { width: .35, teeth: { every: 1.9, size: .9, base: .9 } },
   stakes: { width: .25, teeth: { every: 1.1, size: 1.3, base: .38 } },
 };
@@ -101,6 +109,12 @@ export interface LineGeometry {
   head?: string;
   headOpen?: boolean;
   teeth?: string;
+  /** Width of the light channel inside a hollow body (drawn over `line`). */
+  hollowWidth?: number;
+  /** Open chevrons along the line, stroked. */
+  chevrons?: string;
+  /** Bar across the start, stroked. */
+  tail?: string;
 }
 
 export function lineGeometry(s: BattleSymbol, aspect: number): LineGeometry {
@@ -110,6 +124,23 @@ export function lineGeometry(s: BattleSymbol, aspect: number): LineGeometry {
   const total = lengthOf(pts);
   const geometry: LineGeometry = { route: polyline(pts), line: polyline(pts), width: style.width * k };
   if (style.dash) geometry.dash = `${fmt(style.dash[0] * k)} ${fmt(style.dash[1] * k)}`;
+  if (style.hollow) geometry.hollowWidth = style.width * k * style.hollow;
+  if (style.tail && total > 0) {
+    const { p, t } = along(pts, 0), half = style.tail * k;
+    geometry.tail = polyline([{ x: p.x - t.y * half, y: p.y + t.x * half }, { x: p.x + t.y * half, y: p.y - t.x * half }]);
+  }
+  if (style.chevrons) {
+    const every = style.chevrons.every * k, size = style.chevrons.size * k;
+    // Stop before the head so the last chevron does not run into it.
+    const end = total - (style.head ? Math.min(style.head.length * k, total * .45) : 0) - size;
+    let d = "";
+    for (let at = every; at <= end; at += every) {
+      const { p, t } = along(pts, at), n = { x: -t.y, y: t.x };
+      const back = { x: p.x - t.x * size * .7, y: p.y - t.y * size * .7 };
+      d += polyline([{ x: back.x + n.x * size * .6, y: back.y + n.y * size * .6 }, p, { x: back.x - n.x * size * .6, y: back.y - n.y * size * .6 }]);
+    }
+    if (d) geometry.chevrons = d;
+  }
   if (style.head) {
     // Short lines get a proportionally smaller head so the shaft never disappears.
     const length = Math.min(style.head.length * k, total * .45), half = style.head.half * k * length / (style.head.length * k);

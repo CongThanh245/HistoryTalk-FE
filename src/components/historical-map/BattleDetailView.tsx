@@ -12,6 +12,7 @@ import {
   Loader2,
   MessageCircle,
   Pause,
+  PenTool,
   Play,
   RotateCcw,
   Send,
@@ -46,6 +47,9 @@ import { emptyBattleMap, isBattleMap, type BattleMap } from "./battle-map.types"
 import { useBattleStory } from "./useBattlePlayback";
 import { toast } from "sonner";
 
+/** Set once the learner has started "Thử thách trí nhớ": from then on the button skips the explanation. */
+const PRACTICE_INTRO_KEY = "ht.battlePractice.intro";
+
 // ── Main component ────────────────────────────────────────────
 export function BattleDetailView({
   event,
@@ -74,9 +78,12 @@ export function BattleDetailView({
   editing?: boolean;
   onOpenEditor: () => void;
   onCloseEditor: () => void;
-  /** Show the "Tự vẽ lược đồ" practice editor (any role) instead of the battle page. */
-  practicing?: boolean;
-  onOpenPractice?: () => void;
+  /**
+   * Show a learner's drawing sheet (any role) instead of the battle page: "challenge" redraws the map from memory
+   * and grades it, "sketch" is a free sheet to work out tactics, never graded.
+   */
+  practicing?: "challenge" | "sketch" | false;
+  onOpenPractice?: (kind: "challenge" | "sketch") => void;
   onClosePractice?: () => void;
   /** Content Admin previews the page as a learner: no editor entry point. */
   previewAsLearner?: boolean;
@@ -110,7 +117,10 @@ export function BattleDetailView({
   const battleMap = savedMap ?? event.battleMap ?? emptyBattleMap();
   // Learners redraw the map and compare it with this one; graded in the browser, nothing is stored on the server.
   const canPractice = isGradableMap(battleMap) && !!onOpenPractice;
-  const practiceMap = practicing && canPractice && !editingMap;
+  // Sketching only needs the blank background; the admin's symbols are never shown on it.
+  const canSketch = battleMap.mode === "custom" && !!battleMap.imageUrl.trim() && !!onOpenPractice;
+  const practiceMap = practicing === "challenge" && canPractice && !editingMap;
+  const sketchMap = practicing === "sketch" && canSketch && !editingMap;
   const practiceDraftId = `practice:${event.id}`;
   const practiceTarget = battleMap.symbols.filter(isScoredSymbol).length;
   /** The explanation shown before drawing; `hasDraft` is read when it opens. */
@@ -153,15 +163,26 @@ export function BattleDetailView({
     setPracticeResult(null);
     onClosePractice?.();
   };
-  const openPracticeIntro = () => {
-    let hasDraft = false;
-    try { hasDraft = localStorage.getItem(battleMapDraftKey(user?.uid, practiceDraftId)) !== null; } catch { /* storage unavailable */ }
-    setPracticeIntro({ hasDraft });
-  };
   const startPractice = () => {
     setPracticeIntro(null);
     setInviteDismissed(true);
-    onOpenPractice?.();
+    try { localStorage.setItem(PRACTICE_INTRO_KEY, "seen"); } catch { /* storage unavailable */ }
+    onOpenPractice?.("challenge");
+  };
+  /** The explanation is shown until the learner has started a challenge once; after that the button goes straight in. */
+  const openChallenge = () => {
+    narration.pause();
+    let seen = false, hasDraft = false;
+    try {
+      seen = localStorage.getItem(PRACTICE_INTRO_KEY) !== null;
+      hasDraft = localStorage.getItem(battleMapDraftKey(user?.uid, practiceDraftId)) !== null;
+    } catch { /* storage unavailable */ }
+    if (seen || practiceRecord) startPractice();
+    else setPracticeIntro({ hasDraft });
+  };
+  const openSketch = () => {
+    narration.pause();
+    onOpenPractice?.("sketch");
   };
   const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
@@ -190,7 +211,7 @@ export function BattleDetailView({
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       // The editors handle Esc themselves.
-      if (e.key === "Escape" && !editingMap && !practiceMap) {
+      if (e.key === "Escape" && !editingMap && !practiceMap && !sketchMap) {
         e.stopImmediatePropagation();
         if (practiceIntro) setPracticeIntro(null);
         else if (chatOpen) setChatOpen(false);
@@ -199,7 +220,7 @@ export function BattleDetailView({
     };
     window.addEventListener("keydown", h, true);
     return () => window.removeEventListener("keydown", h, true);
-  }, [chatOpen, editingMap, practiceMap, practiceIntro, onBack]);
+  }, [chatOpen, editingMap, practiceMap, sketchMap, practiceIntro, onBack]);
 
   // Portalled to <body>: inside the app shell the full-screen views sat under the sidebar and header (their stacking
   // context), so the map edges, zoom bar and narration card were cut off.
@@ -227,6 +248,16 @@ export function BattleDetailView({
       onClose={closePractice}
     />}
   </>, document.body);
+
+  // A blank copy of the background and sides, like the challenge, but nothing is compared.
+  if (sketchMap) return createPortal(<BattleMapEditor
+    mode="sketch"
+    initialValue={toPracticeMap(battleMap)}
+    title={event.title}
+    draftId={`sketch:${event.id}`}
+    onClose={() => onClosePractice?.()}
+    onSave={async () => { /* nothing to save: the sheet lives in the browser draft */ }}
+  />, document.body);
 
   if (editingMap) return createPortal(<BattleMapEditor
     key={pin?.pinId ?? "no-pin"}
@@ -266,9 +297,13 @@ export function BattleDetailView({
           </p>
         </div>
 
+        {canSketch && !isAdmin && <button type="button" className={styles.mapEditButton} title="Vẽ tự do trên ảnh nền trống để suy luận chiến thuật, không chấm điểm"
+          onClick={openSketch}>
+          <PenTool size={16} aria-hidden="true" /><span className={styles.sketchLabel}>Tự vẽ</span>
+        </button>}
         {canPractice && <button type="button" className={cn(styles.mapEditButton, styles.challengeButton)} data-fresh={!practiceRecord || undefined}
           title="Vẽ lại lược đồ theo trí nhớ rồi xem bạn nhớ đúng bao nhiêu"
-          onClick={() => { narration.pause(); openPracticeIntro(); }}>
+          onClick={openChallenge}>
           <Brain size={16} aria-hidden="true" />
           <span>Thử thách<span className={styles.challengeMore}> trí nhớ</span></span>
           {practiceRecord && <span className={styles.practiceBest} title={`Đã thử ${practiceRecord.attempts} lần`}>
@@ -309,7 +344,7 @@ export function BattleDetailView({
             : "Bạn có tự tin vào trí nhớ của mình?"}</h2>
           <p>Lược đồ sẽ tạm ẩn đi. Thử vẽ lại {practiceTarget} ký hiệu theo trí nhớ và xem bạn đúng bao nhiêu phần trăm.</p>
           <div className={styles.challengeInviteActions}>
-            <button type="button" className={styles.challengeInvitePrimary} onClick={openPracticeIntro}>Thử ngay</button>
+            <button type="button" className={styles.challengeInvitePrimary} onClick={openChallenge}>Thử ngay</button>
             <button type="button" onClick={() => setInviteDismissed(true)}>Để sau</button>
           </div>
         </aside>}
