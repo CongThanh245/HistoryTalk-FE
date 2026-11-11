@@ -11,6 +11,7 @@ import { ROUTES } from "@/constants/routes";
 import { useEntitlements } from "@/features/saas/entitlements";
 import { useMyTokenBoosts } from "@/features/saas/hooks-school-token";
 import { useTodayQuota } from "@/features/saas/quota-bonus";
+import { isSchoolPoolEmptyForStudent } from "@/features/saas/school-pool";
 
 /**
  * Profile "Hạn mức token" tab for Teacher / School Student. Sprint 7: every school spends from one shared pool;
@@ -24,6 +25,7 @@ export function SchoolQuotaCard({ role }: { role: string | undefined }) {
   const isStudent = role === "SCHOOL_STUDENT";
   const [boostOpen, setBoostOpen] = React.useState(false);
   const pending = usePendingBoostToday(isStudent);
+  const poolEmpty = isStudent && isSchoolPoolEmptyForStudent(quota);
 
   if (!hydrated) return null;
 
@@ -71,6 +73,12 @@ export function SchoolQuotaCard({ role }: { role: string | undefined }) {
                 Hạn mức hằng ngày do nhà trường đặt và làm mới lúc 00:00. Khi hết hạn mức chỉ khóa trò chuyện AI; quiz, tài liệu và bài tập vẫn dùng
                 bình thường.
               </p>
+              {poolEmpty && (
+                <p role="status" className="rounded-sm border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] px-3 py-2 text-sm text-[var(--accent-danger)]">
+                  Quỹ token chung của trường đã hết nên bạn chưa dùng được phần hạn mức còn lại. Trò chuyện AI sẽ mở lại khi nhà trường nạp thêm
+                  token. Bạn vẫn có thể gửi yêu cầu để thầy cô và nhà trường biết bạn đang cần.
+                </p>
+              )}
               <div className="flex flex-wrap items-center gap-3">
                 <button type="button" className="btn-crimson" onClick={() => setBoostOpen(true)} disabled={!!pending}>
                   Xin thêm token hôm nay

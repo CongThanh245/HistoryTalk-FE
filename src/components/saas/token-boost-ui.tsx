@@ -11,6 +11,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, Panel, formatDate, formatNumber } from "@/components/saas/saas-ui";
 import { useTeacherClassroomDashboard } from "@/features/dashboard/hooks";
 import { useProfile } from "@/features/profile/hooks";
+import { useApiTokenQuota } from "@/features/saas/hooks-api";
+import { isSchoolPoolShortError, topUpMailto } from "@/features/saas/school-pool";
 import {
   tokenApiErrorMessage,
   useCreateTeacherTicket,
@@ -67,6 +69,19 @@ const isTeacherSelfTicket = (r: TokenBoostRequest) =>
 /** Backend message when the teacher's own daily limit cannot cover an approval or a grant. */
 const isTeacherQuotaShort = (error: unknown) => /hạn mức token trong ngày của giáo viên/i.test(tokenApiErrorMessage(error, ""));
 
+/**
+ * The school pool cannot cover it; only a HistoryTalk top-up helps. The School Admin gets a contact button, a
+ * teacher gets to forward the request so the School Admin sees the demand.
+ */
+const toastSchoolPoolShort = (next?: { label: string; onClick: () => void }, isAdmin = false) =>
+  toast.error("Quỹ token chung của trường không đủ để cấp số token này.", {
+    description: isAdmin
+      ? "Liên hệ HistoryTalk để nạp thêm token cho trường."
+      : "Chuyển yêu cầu lên quản trị trường để nhà trường biết và nạp thêm token.",
+    action: next,
+    duration: 10_000,
+  });
+
 const TABS: Record<BoostReviewer, TokenBoostStatus[]> = {
   TEACHER: ["PENDING", "PENDING_ADMIN", "APPROVED", "REJECTED"],
   SCHOOL_ADMIN: ["PENDING_ADMIN", "PENDING", "APPROVED", "REJECTED"],
@@ -85,12 +100,21 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
   const [page, setPage] = React.useState(1);
   const query = useTokenBoostsForReview(reviewer, { status, page, limit: PAGE_SIZE });
   const review = useReviewTokenBoost(reviewer);
+  // School Admin approvals come out of the shared pool; show what is left and stop approvals it cannot cover.
+  const pool = useApiTokenQuota(!isTeacher);
+  const poolRemaining = !isTeacher && pool.data ? Math.max(0, pool.data.unallocatedTokenQuota) : null;
   const [target, setTarget] = React.useState<{ request: TokenBoostRequest; action: Action } | null>(null);
   const [amount, setAmount] = React.useState("");
   const [note, setNote] = React.useState("");
 
   const rows = query.data?.items ?? [];
-  const amountError = target && target.action !== "REJECT" ? rangeError(amount, BOOST_MIN_TOKENS, BOOST_MAX_TOKENS) : null;
+  const amountError =
+    target && target.action !== "REJECT"
+      ? rangeError(amount, BOOST_MIN_TOKENS, BOOST_MAX_TOKENS) ??
+        (target.action === "APPROVE" && poolRemaining != null && parseTokens(amount) > poolRemaining
+          ? `Quỹ chung của trường chỉ còn ${formatNumber(poolRemaining)} token`
+          : null)
+      : null;
 
   const ask = (request: TokenBoostRequest, action: Action) => {
     setAmount(String(request.requestedTokens));
@@ -118,6 +142,18 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
               action: { label: "Chuyển lên", onClick: () => send(request, "ESCALATE", tokens, reviewNote) },
               duration: 10_000,
             });
+            return;
+          }
+          if (isSchoolPoolShortError(err)) {
+            const quota = pool.data;
+            if (isTeacher) {
+              toastSchoolPoolShort({ label: "Chuyển lên", onClick: () => send(request, "ESCALATE", tokens, reviewNote) });
+            } else {
+              toastSchoolPoolShort(
+                quota ? { label: "Liên hệ nạp thêm", onClick: () => window.location.assign(topUpMailto(quota)) } : undefined,
+                true,
+              );
+            }
             return;
           }
           toast.error(tokenApiErrorMessage(err, "Không xử lý được yêu cầu. Vui lòng thử lại."));
@@ -265,6 +301,31 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
             <StudentTodayUsage classId={target.request.classroomId} studentUid={target.request.studentUid} boxed />
           )}
           {isTeacher && target?.action === "APPROVE" && <TeacherRemaining boxed />}
+          {poolRemaining != null && target?.action === "APPROVE" && (
+            <p
+              className={cn(
+                "rounded-sm border px-3 py-2 text-sm",
+                poolRemaining <= 0
+                  ? "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--accent-danger)]"
+                  : "border-[var(--border-default)] text-content-text",
+              )}
+            >
+              {poolRemaining <= 0 ? (
+                <>
+                  Quỹ token chung của trường đã hết nên chưa duyệt được.{" "}
+                  {pool.data && (
+                    <a href={topUpMailto(pool.data)} className="archive-link">
+                      Liên hệ HistoryTalk để nạp thêm
+                    </a>
+                  )}
+                </>
+              ) : (
+                <>
+                  Quỹ chung của trường còn <b className="tabular-nums">{formatNumber(poolRemaining)}</b> token.
+                </>
+              )}
+            </p>
+          )}
           {target && target.action !== "REJECT" && (
             <Field label={target.action === "ESCALATE" ? "Số token xin quản trị trường" : "Số token cấp"} required error={amountError} htmlFor="boost-approve-amount">
               <StaffFormInput id="boost-approve-amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
@@ -517,6 +578,10 @@ export function GrantTokensDialog({
               action: { label: "Xin quản trị trường", onClick: () => setTicketFor(s) },
               duration: 10_000,
             });
+            return;
+          }
+          if (isSchoolPoolShortError(err)) {
+            toastSchoolPoolShort({ label: "Xin quản trị trường", onClick: () => setTicketFor(s) });
             return;
           }
           toast.error(tokenApiErrorMessage(err, "Không cấp được token. Vui lòng thử lại."));

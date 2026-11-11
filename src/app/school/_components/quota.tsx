@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Activity, ArrowRight, CalendarRange, Coins, School as SchoolIcon, Zap } from "lucide-react";
+import { Activity, AlertTriangle, ArrowRight, CalendarRange, Coins, Mail, School as SchoolIcon, Zap } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
 
@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils/cn";
 import { useApiTokenQuota } from "@/features/saas/hooks-api";
 import { PACKAGE_SHORT_LABELS, SCHOOL_STATUS_LABELS } from "@/features/saas/admin-schools";
+import { poolLevel, topUpMailto } from "@/features/saas/school-pool";
 import type { SchoolAdminDashboard } from "@/services/analytics-dashboard.service";
 import type { SchoolTokenQuota } from "@/services/school.service";
 import { ErrorBlock, PackageBadge } from "./shared";
@@ -47,6 +48,48 @@ function QuotaFigure({ label, value, tone, hint }: { label: string; value: numbe
 }
 
 /**
+ * Empty or nearly empty shared pool: what stops working, and a pre-filled email to HistoryTalk for a top-up.
+ * Nothing when the pool is fine.
+ */
+export function PoolAlert({ quota }: { quota: SchoolTokenQuota }) {
+  const total = Math.max(0, quota.totalSchoolTokenQuota);
+  const remaining = Math.max(0, quota.unallocatedTokenQuota);
+  const level = poolLevel(total, remaining);
+  if (level !== "empty" && level !== "danger") return null;
+  const empty = level === "empty";
+  return (
+    <div
+      role={empty ? "alert" : "status"}
+      className={cn(
+        "flex flex-col gap-3 rounded-sm border px-4 py-3 sm:flex-row sm:items-center",
+        empty
+          ? "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)]"
+          : "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)]",
+      )}
+    >
+      <AlertTriangle
+        className={cn("hidden h-5 w-5 shrink-0 sm:block", empty ? "text-[var(--accent-danger)]" : "text-[var(--status-warning)]")}
+        aria-hidden="true"
+      />
+      <div className="min-w-0 flex-1 space-y-0.5 text-sm">
+        <p className={cn("font-semibold", empty ? "text-[var(--accent-danger)]" : "text-[var(--status-warning)]")}>
+          {empty ? "Quỹ token của trường đã hết" : `Quỹ token sắp hết, còn ${formatNumber(remaining)} token`}
+        </p>
+        <p className="text-content-text">
+          {empty
+            ? "Học sinh và giáo viên tạm thời không dùng được trò chuyện AI, và các yêu cầu xin thêm token không duyệt được. Quiz, tài liệu, bài tập vẫn dùng bình thường."
+            : "Khi quỹ về 0, cả trường sẽ không dùng được trò chuyện AI cho đến khi được nạp thêm."}{" "}
+          Liên hệ HistoryTalk để nạp thêm token.
+        </p>
+      </div>
+      <a href={topUpMailto(quota)} className={cn("shrink-0 self-start sm:self-center", empty ? "btn-crimson" : "btn-line")}>
+        <Mail className="h-4 w-4" aria-hidden="true" /> Liên hệ nạp thêm
+      </a>
+    </div>
+  );
+}
+
+/**
  * Shared pool of the school year (Sprint 7): every student chat is deducted from it directly, so
  * "used" = total − remaining. Nothing is handed out to students in advance.
  */
@@ -64,11 +107,11 @@ export function QuotaSummary({ quota }: { quota: SchoolTokenQuota }) {
       </div>
       <div className="space-y-1.5">
         <TokenBar used={used} quota={total} className="h-3" />
-        <p className={cn("text-xs tabular-nums", pct >= 85 ? "text-[var(--accent-danger)]" : "text-content-muted")}>
+        <p className={cn("text-xs tabular-nums", pct >= 85 || remaining <= 0 ? "text-[var(--accent-danger)]" : "text-content-muted")}>
           Đã dùng {pct.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}% quỹ token của năm học
-          {pct >= 85 && " — sắp hết, liên hệ HistoryTalk để nạp thêm"}
         </p>
       </div>
+      <PoolAlert quota={quota} />
     </div>
   );
 }
@@ -119,7 +162,7 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
   const remaining = Math.max(0, quota.unallocatedTokenQuota);
   const used = Math.max(0, total - remaining);
   const pct = total > 0 ? (used / total) * 100 : 0;
-  const level = pct >= 85 ? "danger" : pct >= 60 ? "warn" : "ok";
+  const level = poolLevel(total, remaining);
   const end = dash?.subscriptionEndDate;
   const left = end ? daysUntil(end) : null;
   const pending = dash?.pendingTokenBoostRequests ?? 0;
@@ -161,7 +204,7 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
           <p
             className={cn(
               "text-[40px] font-bold leading-none tracking-tight tabular-nums sm:text-[48px]",
-              level === "danger" ? "text-[var(--accent-danger)]" : level === "warn" ? "text-[var(--status-warning)]" : "text-[var(--jade)]",
+              level === "danger" || level === "empty" ? "text-[var(--accent-danger)]" : level === "warn" ? "text-[var(--status-warning)]" : "text-[var(--jade)]",
             )}
           >
             {formatNumber(remaining)}
@@ -170,7 +213,6 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
           <p className="text-sm tabular-nums text-content-muted">
             Đã dùng <b className="text-content-heading">{formatNumber(used)}</b> / {formatNumber(total)} token (
             {pct.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%)
-            {level === "danger" && <span className="font-semibold text-[var(--accent-danger)]"> — sắp hết, liên hệ HistoryTalk để nạp thêm</span>}
           </p>
           {worstDays != null && (
             <p className="text-xs text-content-muted">
@@ -179,6 +221,7 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
               {left != null && left > 0 && worstDays >= left ? " — đủ đến hết năm học." : "."}
             </p>
           )}
+          <PoolAlert quota={quota} />
         </div>
 
         <div className="grid content-start gap-3 sm:grid-cols-3 lg:grid-cols-1">
@@ -247,17 +290,29 @@ export function PoolStrip() {
   if (q.isError) return <ErrorBlock error={q.error} fallback="Không tải được quỹ token của trường." onRetry={() => void q.refetch()} />;
   const total = Math.max(0, q.data.totalSchoolTokenQuota);
   const remaining = Math.max(0, q.data.unallocatedTokenQuota);
+  const level = poolLevel(total, remaining);
   return (
+    <div className="space-y-3">
     <div className="flex flex-col gap-3 rounded-lg border border-border-card bg-[var(--bg-surface)] px-4 py-3 sm:flex-row sm:items-center">
       <Coins className="hidden h-5 w-5 shrink-0 text-[var(--accent-gold)] sm:block" aria-hidden="true" />
       <p className="shrink-0 text-sm">
-        Quỹ chung còn <b className="text-lg font-bold tabular-nums text-[var(--jade)]">{formatNumber(remaining)}</b>
+        Quỹ chung còn{" "}
+        <b
+          className={cn(
+            "text-lg font-bold tabular-nums",
+            level === "empty" || level === "danger" ? "text-[var(--accent-danger)]" : level === "warn" ? "text-[var(--status-warning)]" : "text-[var(--jade)]",
+          )}
+        >
+          {formatNumber(remaining)}
+        </b>
         <span className="text-content-muted"> / {formatNumber(total)} token</span>
       </p>
       <TokenBar used={total - remaining} quota={total} className="h-2 sm:flex-1" />
       <Link href={ROUTES.SCHOOL.HOME} className="archive-link shrink-0">
         Chi tiết quỹ &amp; gói năm học <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
       </Link>
+    </div>
+    <PoolAlert quota={q.data} />
     </div>
   );
 }

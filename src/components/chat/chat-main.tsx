@@ -34,6 +34,8 @@ import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialo
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { useEntitlements } from "@/features/saas/entitlements";
+import { useTodayQuota } from "@/features/saas/quota-bonus";
+import { isSchoolPoolEmptyForStudent } from "@/features/saas/school-pool";
 import { hasPlusAccess, hasProAccess } from "@/services/user.service";
 import { getApiErrorMessage, isTokenExhaustionError } from "@/lib/utils/api-error";
 import { handlePlatformLockError } from "@/lib/utils/school-lock";
@@ -210,7 +212,41 @@ export function ChatMain({
   const canRequestBoost = user?.role === "SCHOOL_STUDENT";
   // Teachers have their own daily limit (Sprint 7); when it is used up they ask the School Admin.
   const canRequestTeacherQuota = user?.role === "TEACHER";
+  // Student with limit left but nothing usable: the school pool is empty. Requests still go up, so the School Admin
+  // sees the demand and arranges a top-up.
+  const qc = useQueryClient();
+  const todayQuota = useTodayQuota();
+  const schoolPoolEmpty = canRequestBoost && isSchoolPoolEmptyForStudent(todayQuota);
   const [isBoostOpen, setIsBoostOpen] = useState(false);
+  /** Out-of-tokens toast with the next step for this account: buy more, or ask the teacher / School Admin. */
+  const notifyTokenExhausted = (what = "tiếp tục chat") => {
+    // Refresh today's numbers so the banner can tell a used-up limit from an empty school pool.
+    if (canRequestBoost) void qc.invalidateQueries({ queryKey: queryKeys.dashboard.student });
+    if (schoolPoolEmpty) {
+      toast.error("Quỹ token chung của trường đã hết nên tạm thời chưa trò chuyện AI được.", {
+        description: "Gửi yêu cầu để thầy cô và nhà trường biết bạn cần thêm token.",
+        action: { label: "Xin thêm token", onClick: () => setIsBoostOpen(true) },
+        duration: 8000,
+      });
+    } else if (canUpgrade) {
+      toast.error(`Bạn đã hết token. Vui lòng nạp thêm để ${what}.`, {
+        action: { label: "Nạp thêm", onClick: () => setIsUpgradeOpen(true) },
+        duration: 8000,
+      });
+    } else if (canRequestTeacherQuota) {
+      toast.error("Bạn đã dùng hết hạn mức token hôm nay (gồm cả phần đã cấp cho học sinh).", {
+        action: { label: "Xin thêm hạn mức", onClick: () => setIsBoostOpen(true) },
+        duration: 8000,
+      });
+    } else if (canRequestBoost) {
+      toast.error("Bạn đã dùng hết hạn mức token AI hôm nay. Các tính năng khác vẫn dùng bình thường.", {
+        action: { label: "Xin thêm token", onClick: () => setIsBoostOpen(true) },
+        duration: 8000,
+      });
+    } else {
+      toast.error("Bạn đã dùng hết hạn mức token hôm nay do trường cấp. Hạn mức làm mới lúc 00:00.", { duration: 8000 });
+    }
+  };
   const [aiWarningVisible, setAiWarningVisible] = useState(false);
   const [aiWarningLeaving, setAiWarningLeaving] = useState(false);
   const dismissedCallModeRef = useRef<"2d" | "3d" | null>(null);
@@ -451,7 +487,6 @@ export function ChatMain({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isStreaming, streamingMessage]);
 
-  const qc = useQueryClient();
 
   const handleVoiceMessagesChange = useCallback(
     (voiceMessages: VoiceRestMessage[]) => {
@@ -614,7 +649,7 @@ export function ChatMain({
       if (isTokenExhaustionError(err)) {
         setIsLocalTokenExhausted(true);
         onTokenExhausted?.();
-        toast.error("Bạn đã hết token, chưa gửi được câu trả lời.", { duration: 8000 });
+        notifyTokenExhausted("gửi câu trả lời");
         return false;
       }
       const status = (err as { response?: { status?: number } }).response?.status;
@@ -853,27 +888,7 @@ export function ChatMain({
         if (isTokenExhaustionError(err)) {
           setIsLocalTokenExhausted(true);
           onTokenExhausted?.();
-          if (canUpgrade) {
-            toast.error("Bạn đã hết token. Vui lòng nạp thêm để tiếp tục chat.", {
-              action: {
-                label: "Nạp thêm",
-                onClick: () => setIsUpgradeOpen(true),
-              },
-              duration: 8000,
-            });
-          } else if (canRequestTeacherQuota) {
-            toast.error("Bạn đã dùng hết hạn mức token hôm nay (gồm cả phần đã cấp cho học sinh).", {
-              action: { label: "Xin thêm hạn mức", onClick: () => setIsBoostOpen(true) },
-              duration: 8000,
-            });
-          } else if (canRequestBoost) {
-            toast.error("Bạn đã dùng hết hạn mức token AI hôm nay. Các tính năng khác vẫn dùng bình thường.", {
-              action: { label: "Xin thêm token", onClick: () => setIsBoostOpen(true) },
-              duration: 8000,
-            });
-          } else {
-            toast.error("Bạn đã dùng hết hạn mức token hôm nay do trường cấp. Hạn mức làm mới lúc 00:00.", { duration: 8000 });
-          }
+          notifyTokenExhausted();
         } else {
           // Tin nhan cua nguoi dung da bi go khoi khung chat o tren: cho gui lai ngay, khoi go lai.
           const aiDown = (err as { aiUnavailable?: boolean }).aiUnavailable || error.response?.status === 500 || error.response?.status === 503;
@@ -1295,6 +1310,8 @@ export function ChatMain({
             <span className="text-content-text">
               {canUpgrade
                 ? "Bạn đã dùng hết số token giới hạn. Vui lòng nâng cấp gói để tiếp tục cuộc trò chuyện."
+                : schoolPoolEmpty
+                ? "Quỹ token chung của trường đã hết nên trò chuyện AI tạm dừng cho đến khi nhà trường nạp thêm. Bạn vẫn gửi yêu cầu được để nhà trường biết; quiz, tài liệu và bài tập vẫn dùng bình thường."
                 : `Bạn đã dùng hết hạn mức token AI hôm nay${
                     entitlements.dailyQuota ? ` (${entitlements.dailyQuota.toLocaleString("vi-VN")} token)` : ""
                   } hoặc quỹ token của trường đã hết. Hạn mức làm mới lúc 00:00; quiz, tài liệu và bài tập vẫn dùng bình thường.`}
