@@ -15,6 +15,7 @@ import type {
   GetMessagesResponse,
 } from "@/services/chat.service";
 import { MessageBubble, MessageQuotes, TypingIndicator } from "./chat-message-bubble";
+import { MarkdownMessage } from "./MarkdownMessage";
 import { ChatInput } from "./chat-input";
 import {
   useChatMessages,
@@ -744,7 +745,8 @@ export function ChatMain({
         processQueue();
 
         // Streaming voice logic: speak phrases as soon as punctuation is detected
-        sentenceBuffer += chunk;
+        // Complete image tags are never spoken; drop them first so their "!" and ".jpg" can't act as sentence breaks.
+        sentenceBuffer = (sentenceBuffer + chunk).replace(/!\[[^\]]*\]\([^)]*\)/g, " ");
         const isInsideImageTag = sentenceBuffer.lastIndexOf("![") > sentenceBuffer.lastIndexOf(")");
         if (!isInsideImageTag) {
           const match = sentenceBuffer.match(punctuationRegex);
@@ -1529,7 +1531,7 @@ function VoiceCallTranscriptDialog({
                   <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.08em] opacity-70">
                     {isUser ? "Bạn" : character.name} - {formatVietnamTime(message.createdAt)}
                   </p>
-                  <p>{message.content}</p>
+                  {isUser ? <p>{message.content}</p> : <MarkdownMessage text={message.content} />}
                 </div>
                 {!isUser && message.quotes && message.quotes.length > 0 && (
                   <MessageQuotes quotes={message.quotes} onViewQuote={onOpenCitation} />

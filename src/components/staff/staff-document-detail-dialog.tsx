@@ -4,6 +4,7 @@ import * as React from "react";
 import { FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StaffFormLabel, StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
+import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 
 interface StaffDocumentDetailDialogProps {
   open: boolean;
@@ -103,9 +104,9 @@ export function StaffDocumentDetailDialog({
                 />
               ) : (
                 <div
-                  className="whitespace-pre-wrap rounded-sm border border-card-light-border bg-card-light-bg p-5 text-sm leading-7 text-content-muted"
+                  className="rounded-sm border border-card-light-border bg-card-light-bg p-5 text-sm leading-7 text-content-muted"
                 >
-                  {content || emptyContentMessage}
+                  {content ? <MarkdownMessage text={content} /> : emptyContentMessage}
                 </div>
               )}
             </div>

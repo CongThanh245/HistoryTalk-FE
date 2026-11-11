@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import {
@@ -58,12 +58,14 @@ import { CHAT_MODE_LABELS } from "@/services/chat.service";
 import { StaffCharacterMediaPreview } from "@/components/staff/staff-media-preview";
 import { MediaSlotField } from "@/components/staff/media-slot-field";
 import { CharacterVoiceFields } from "@/components/staff/character-voice-fields";
+import { PortraitSettingsEditor } from "@/components/staff/portrait-settings-editor";
 import { NewDocumentPanel } from "@/components/staff/new-document-panel";
 import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
 import type { EventEraBackend } from "@/services/event.service";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth.store";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import { hasValidationErrors, validateContextDraft } from "@/lib/utils/content-validation";
 import { FORM_TABS, type FormTabKey, type StaffCharacterDetailViewProps } from "./staff-character-detail-view.types";
@@ -72,19 +74,19 @@ import { useStaffCharacterDetailView } from "./use-staff-character-detail-view";
 export type { CharacterDraft } from "./staff-character-detail-view.types";
 export { EMPTY_CHARACTER_DRAFT } from "./staff-character-detail-view.types";
 
-// Mirrors config.storage.mediaMaxUploadMb on the backend â€” Supabase's
-// project-wide storage upload limit (Project Settings â†’ Storage), not
+// Mirrors config.storage.mediaMaxUploadMb on the backend — Supabase's
+// project-wide storage upload limit (Project Settings → Storage), not
 // per-type. Checked client-side too so an oversized file gets rejected the
 // moment it's picked instead of after filling out the whole form and
 // waiting for the request to fail. Keep this in sync manually if that
 // Supabase setting ever changes.
 const MEDIA_MAX_UPLOAD_MB = 50;
 const MEDIA_MAX_UPLOAD_BYTES = MEDIA_MAX_UPLOAD_MB * 1024 * 1024;
-const MEDIA_SIZE_HINT = `Tá»‘i Ä‘a ${MEDIA_MAX_UPLOAD_MB}MB`;
+const MEDIA_SIZE_HINT = `Tối đa ${MEDIA_MAX_UPLOAD_MB}MB`;
 // Backend: 2D images up to 10MB (DirectBinaryUploadStrategy); 3D models are bounded by the 50MB multipart cap.
 const IMAGE_MAX_UPLOAD_MB = 10;
 
-/** Sentinel id for the not-yet-created document being composed in create mode â€” it reuses the same view/edit/delete dialogs as a real, already-imported RagDocument. */
+/** Sentinel id for the not-yet-created document being composed in create mode — it reuses the same view/edit/delete dialogs as a real, already-imported RagDocument. */
 const PENDING_DOCUMENT_ID = "pending";
 
 function ValidationErrorText({ message }: { message?: string }) {
@@ -95,7 +97,7 @@ function ValidationErrorText({ message }: { message?: string }) {
   ) : null;
 }
 
-/** "10/9/1385", "1385 TCN", or "" â€” whatever parts of the date are known. */
+/** "10/9/1385", "1385 TCN", or "" — whatever parts of the date are known. */
 function formatLifeDate(day: string, month: string, year: string, isBc: boolean) {
   if (!year) return "";
   return [day, month, year].filter(Boolean).join("/") + (isBc ? " TCN" : "");
@@ -220,6 +222,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
   const deferredCharEditContent = React.useDeferredValue(editDraftContent);
   const [isTestExamDialogOpen, setIsTestExamDialogOpen] = React.useState(false);
 
+  // AI 3D generation is limited to content admins and teachers (matches the backend @PreAuthorize).
+  const userRole = useAuthStore((s) => s.user?.role);
+  const canTunePortrait = userRole === "CONTENT_ADMIN" || userRole === "TEACHER";
+
   type MediaKind = "IMAGE_2D" | "MODEL_3D" | "VIDEO";
 
   // In edit mode the character already exists, so a picked file uploads
@@ -233,7 +239,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     setPendingPreviewUrl?: (url: string | null) => void,
   ) => {
     if (file.size > MEDIA_MAX_UPLOAD_BYTES) {
-      toast.error(`${MEDIA_SIZE_HINT}. File Ä‘Ã£ chá»n náº·ng ${(file.size / 1024 / 1024).toFixed(1)}MB.`);
+      toast.error(`${MEDIA_SIZE_HINT}. File đã chọn nặng ${(file.size / 1024 / 1024).toFixed(1)}MB.`);
       return;
     }
 
@@ -275,10 +281,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
   const bornText = formatLifeDate(draft.bornDay, draft.bornMonth, draft.bornYear, draft.isBornBc);
   const deathText = formatLifeDate(draft.deathDay, draft.deathMonth, draft.deathYear, draft.isDeathBc);
-  const lifeSpan = bornText || deathText ? `${bornText || "?"} â€“ ${deathText || "?"}` : "";
+  const lifeSpan = bornText || deathText ? `${bornText || "?"} – ${deathText || "?"}` : "";
   const lifeSpanYears =
     draft.bornYear || draft.deathYear
-      ? `${draft.bornYear || "?"}${draft.isBornBc ? " TCN" : ""} â€“ ${draft.deathYear || "?"}${draft.isDeathBc ? " TCN" : ""}`
+      ? `${draft.bornYear || "?"}${draft.isBornBc ? " TCN" : ""} – ${draft.deathYear || "?"}${draft.isDeathBc ? " TCN" : ""}`
       : "";
 
   // Counts on the tabs let staff see how complete a character is without opening each tab.
@@ -287,13 +293,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
   const documentCount = mode === "edit" ? documents.length : draft.documentContent?.trim() ? 1 : 0;
   const checklist: { label: string; done: boolean; tab: FormTabKey }[] = [
-    { label: "áº¢nh nhÃ¢n váº­t", done: !!draft.image || !!pendingImageFile, tab: "media" },
-    { label: "MÃ´ hÃ¬nh 3D", done: !!draft.modelUrl || !!pendingModelFile, tab: "media" },
-    { label: "Tiá»ƒu sá»­", done: !!draft.background.trim(), tab: "content" },
-    { label: "TÃ­nh cÃ¡ch", done: !!draft.personality.trim(), tab: "content" },
-    { label: documentCount ? `${documentCount} tÃ i liá»‡u` : "ChÆ°a cÃ³ tÃ i liá»‡u", done: documentCount > 0, tab: "rag" },
+    { label: "Ảnh nhân vật", done: !!draft.image || !!pendingImageFile, tab: "media" },
+    { label: "Mô hình 3D", done: !!draft.modelUrl || !!pendingModelFile, tab: "media" },
+    { label: "Tiểu sử", done: !!draft.background.trim(), tab: "content" },
+    { label: "Tính cách", done: !!draft.personality.trim(), tab: "content" },
+    { label: documentCount ? `${documentCount} tài liệu` : "Chưa có tài liệu", done: documentCount > 0, tab: "rag" },
     {
-      label: mappedContexts.length ? `${mappedContexts.length} bá»‘i cáº£nh` : "ChÆ°a liÃªn káº¿t bá»‘i cáº£nh",
+      label: mappedContexts.length ? `${mappedContexts.length} bối cảnh` : "Chưa liên kết bối cảnh",
       done: mappedContexts.length > 0,
       tab: "context",
     },
@@ -301,7 +307,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-main)]">
-      {/* â•â•â•â•â•â•â• Header â•â•â•â•â•â•â• */}
+      {/* ═══════ Header ═══════ */}
       <div
         className="flex items-center justify-between px-6 py-4 border-b shrink-0 border-[var(--border-default)]"
       >
@@ -337,8 +343,8 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <h1 className="archive-title is-plain text-2xl">
                   {mode === "create" && !isCreated
-                    ? "Táº¡o nhÃ¢n váº­t má»›i"
-                    : draft.name || "NhÃ¢n váº­t"}
+                    ? "Tạo nhân vật mới"
+                    : draft.name || "Nhân vật"}
                 </h1>
                 {isCreated && (
                   <StaffPublishToggle
@@ -346,7 +352,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     disabled={!isEditing}
                     canPublish={canPublishCharacter}
                     blockedMessage={publishBlockedMessage}
-                    entityLabel="nhÃ¢n váº­t"
+                    entityLabel="nhân vật"
                     compact
                     onPublish={() => set("isPublished")(true)}
                     onUnpublish={() => set("isPublished")(false)}
@@ -355,10 +361,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         showValidationErrors(publishValidationErrors);
                       } else if (mappedContexts.length === 0) {
                         setActiveTab("context");
-                        toast.error("Vui lÃ²ng liÃªn káº¿t bá»‘i cáº£nh lá»‹ch sá»­ trÆ°á»›c khi xuáº¥t báº£n.");
+                        toast.error("Vui lòng liên kết bối cảnh lịch sử trước khi xuất bản.");
                       } else if (hasUnpublishedLinkedContext) {
                         setActiveTab("context");
-                        toast.error("Vui lÃ²ng xuáº¥t báº£n táº¥t cáº£ bá»‘i cáº£nh lá»‹ch sá»­ liÃªn káº¿t trÆ°á»›c khi xuáº¥t báº£n nhÃ¢n váº­t.");
+                        toast.error("Vui lòng xuất bản tất cả bối cảnh lịch sử liên kết trước khi xuất bản nhân vật.");
                       }
                     }}
                   />
@@ -366,8 +372,8 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               </div>
               <p className="text-xs text-[var(--content-muted)]">
                 {mode === "create" && !isCreated
-                  ? "Äiá»n thÃ´ng tin bÃªn trÃ¡i, thá»­ trÃ² chuyá»‡n bÃªn pháº£i sau khi táº¡o"
-                  : [draft.title, lifeSpanYears].filter(Boolean).join(" Â· ")}
+                  ? "Điền thông tin bên trái, thử trò chuyện bên phải sau khi tạo"
+                  : [draft.title, lifeSpanYears].filter(Boolean).join(" · ")}
               </p>
             </div>
           </div>
@@ -382,7 +388,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               onClick={() => setIsEditing(true)}
             >
               <PencilIcon className="h-4 w-4 mr-1.5" />
-              Chá»‰nh sá»­a
+              Chỉnh sửa
             </Button>
           )}
         </div>
@@ -391,10 +397,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
       <ConfirmDialog
         open={cancelDialogOpen}
         onOpenChange={setCancelDialogOpen}
-        title="Há»§y bá» thay Ä‘á»•i?"
-        description="Báº¡n cÃ³ má»™t sá»‘ thay Ä‘á»•i chÆ°a Ä‘Æ°á»£c lÆ°u. Náº¿u há»§y bá», cÃ¡c thay Ä‘á»•i nÃ y sáº½ bá»‹ máº¥t. Báº¡n cÃ³ cháº¯c cháº¯n muá»‘n tiáº¿p tá»¥c khÃ´ng?"
-        confirmLabel="Há»§y vÃ  xÃ³a thay Ä‘á»•i"
-        cancelLabel="Tiáº¿p tá»¥c chá»‰nh sá»­a"
+        title="Hủy bỏ thay đổi?"
+        description="Bạn có một số thay đổi chưa được lưu. Nếu hủy bỏ, các thay đổi này sẽ bị mất. Bạn có chắc chắn muốn tiếp tục không?"
+        confirmLabel="Hủy và xóa thay đổi"
+        cancelLabel="Tiếp tục chỉnh sửa"
         variant="danger"
         onConfirm={() => {
           cancelEditing();
@@ -406,10 +412,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
       <ConfirmDialog
         open={leaveDialogOpen}
         onOpenChange={setLeaveDialogOpen}
-        title="Bá» dá»Ÿ phiÃªn lÃ m viá»‡c?"
-        description="Báº¡n cÃ³ má»™t sá»‘ thay Ä‘á»•i chÆ°a Ä‘Æ°á»£c lÆ°u vÃ  sáº½ bá»‹ máº¥t náº¿u báº¡n rá»i khá»i trang nÃ y. Báº¡n cÃ³ cháº¯c cháº¯n muá»‘n rá»i Ä‘i?"
-        confirmLabel="Rá»i Ä‘i"
-        cancelLabel="á»ž láº¡i"
+        title="Bỏ dở phiên làm việc?"
+        description="Bạn có một số thay đổi chưa được lưu và sẽ bị mất nếu bạn rời khỏi trang này. Bạn có chắc chắn muốn rời đi?"
+        confirmLabel="Rời đi"
+        cancelLabel="Ở lại"
         variant="danger"
         onConfirm={() => {
           setLeaveDialogOpen(false);
@@ -417,9 +423,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
         }}
       />
 
-      {/* â•â•â•â•â•â•â• Body â€” two columns â•â•â•â•â•â•â• */}
+      {/* ═══════ Body — two columns ═══════ */}
       <div className="flex flex-1 min-h-0">
-        {/* â”€â”€ Left Panel: Form â”€â”€ */}
+        {/* ── Left Panel: Form ── */}
         <div
           className="w-[600px] shrink-0 border-r overflow-hidden flex flex-col border-[var(--card-light-border)]"
         >
@@ -455,15 +461,15 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             <div className="flex-1 px-6 py-6 space-y-5 overflow-y-auto">
               <TabsContent value="basic" className="mt-0 space-y-5">
                 {!isEditing ? (
-                  // View mode reads as plain text â€” disabled inputs looked broken and were hard to read.
+                  // View mode reads as plain text — disabled inputs looked broken and were hard to read.
                   <dl className="grid gap-5 sm:grid-cols-2">
                     {[
-                      { label: "Chá»©c vá»‹", value: draft.title },
-                      { label: "Sinh â€“ máº¥t", value: lifeSpan },
+                      { label: "Chức vị", value: draft.title },
+                      { label: "Sinh – mất", value: lifeSpan },
                     ].map((item) => (
                       <div key={item.label} className="min-w-0">
                         <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--content-muted)]">{item.label}</dt>
-                        <dd className="mt-1 text-[15px] font-medium text-[var(--content-heading)]">{item.value || "â€”"}</dd>
+                        <dd className="mt-1 text-[15px] font-medium text-[var(--content-heading)]">{item.value || "—"}</dd>
                       </div>
                     ))}
                   </dl>
@@ -472,21 +478,21 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <StaffFormLabel>TÃªn nhÃ¢n váº­t *</StaffFormLabel>
+                    <StaffFormLabel>Tên nhân vật *</StaffFormLabel>
                     <StaffFormInput
                       value={draft.name}
                       onChange={(e) => set("name")(e.target.value)}
-                      placeholder="VD: NgÃ´ Quyá»n"
+                      placeholder="VD: Ngô Quyền"
                       disabled={!isEditing}
                     />
                     <ValidationErrorText message={errors.name} />
                   </div>
                   <div className="grid gap-1.5">
-                    <StaffFormLabel>Chá»©c vá»‹ *</StaffFormLabel>
+                    <StaffFormLabel>Chức vị *</StaffFormLabel>
                     <StaffFormInput
                       value={draft.title}
                       onChange={(e) => set("title")(e.target.value)}
-                      placeholder="VD: Tiáº¿t Ä‘á»™ sá»©"
+                      placeholder="VD: Tiết độ sứ"
                       disabled={!isEditing}
                     />
                     <ValidationErrorText message={errors.title} />
@@ -495,7 +501,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-3">
-                    <StaffFormLabel>NgÃ y sinh</StaffFormLabel>
+                    <StaffFormLabel>Ngày sinh</StaffFormLabel>
                     <div className="grid grid-cols-[44px_54px_1fr_auto] gap-2 items-end">
                       <StaffFormInput
                         type="number"
@@ -503,7 +509,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         max={31}
                         value={draft.bornDay}
                         onChange={(e) => set("bornDay")(e.target.value)}
-                        placeholder="NgÃ y"
+                        placeholder="Ngày"
                         disabled={!isEditing}
                       />
                       <StaffFormInput
@@ -512,14 +518,14 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         max={12}
                         value={draft.bornMonth}
                         onChange={(e) => set("bornMonth")(e.target.value)}
-                        placeholder="ThÃ¡ng"
+                        placeholder="Tháng"
                         disabled={!isEditing}
                       />
                       <StaffFormInput
                         type="number"
                         value={draft.bornYear}
                         onChange={(e) => set("bornYear")(e.target.value)}
-                        placeholder="NÄƒm"
+                        placeholder="Năm"
                         disabled={!isEditing}
                       />
                       <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-sm border-[var(--card-light-border)] text-[var(--content-heading)]">
@@ -535,7 +541,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   </div>
 
                   <div className="grid gap-3">
-                    <StaffFormLabel>NgÃ y máº¥t</StaffFormLabel>
+                    <StaffFormLabel>Ngày mất</StaffFormLabel>
                     <div className="grid grid-cols-[44px_54px_1fr_auto] gap-2 items-end">
                       <StaffFormInput
                         type="number"
@@ -543,7 +549,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         max={31}
                         value={draft.deathDay}
                         onChange={(e) => set("deathDay")(e.target.value)}
-                        placeholder="NgÃ y"
+                        placeholder="Ngày"
                         disabled={!isEditing}
                       />
                       <StaffFormInput
@@ -552,14 +558,14 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         max={12}
                         value={draft.deathMonth}
                         onChange={(e) => set("deathMonth")(e.target.value)}
-                        placeholder="ThÃ¡ng"
+                        placeholder="Tháng"
                         disabled={!isEditing}
                       />
                       <StaffFormInput
                         type="number"
                         value={draft.deathYear}
                         onChange={(e) => set("deathYear")(e.target.value)}
-                        placeholder="NÄƒm"
+                        placeholder="Năm"
                         disabled={!isEditing}
                       />
                       <label className="flex items-center h-10 gap-2 px-2 text-xs font-medium border rounded-sm border-[var(--card-light-border)] text-[var(--content-heading)]">
@@ -579,7 +585,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                 <div className="border-t pt-5 border-[var(--card-light-border)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--content-muted)]">
-                    TÃ¬nh tráº¡ng ná»™i dung
+                    Tình trạng nội dung
                   </p>
                   <ul className="mt-3 grid gap-1 sm:grid-cols-2">
                     {checklist.map((item) => (
@@ -590,9 +596,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           className="flex w-full items-center gap-2 rounded-sm px-1.5 py-1 text-left text-sm transition-colors hover:bg-[var(--status-neutral-bg)]"
                         >
                           {item.done ? (
-                            <CheckIcon className="h-4 w-4 shrink-0 text-[var(--status-success)]" aria-label="ÄÃ£ cÃ³" />
+                            <CheckIcon className="h-4 w-4 shrink-0 text-[var(--status-success)]" aria-label="Đã có" />
                           ) : (
-                            <AlertIcon className="h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-label="CÃ²n thiáº¿u" />
+                            <AlertIcon className="h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-label="Còn thiếu" />
                           )}
                           <span className={item.done ? "text-[var(--content-heading)]" : "text-[var(--content-muted)]"}>
                             {item.label}
@@ -606,20 +612,20 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
               <TabsContent value="media" className="mt-0 space-y-5">
                 <MediaSlotField
-                  label="áº¢nh nhÃ¢n váº­t"
+                  label="Ảnh nhân vật"
                   icon={<ImageIcon className="h-3.5 w-3.5" />}
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   maxMb={IMAGE_MAX_UPLOAD_MB}
                   disabled={!isEditing}
                   isBusy={isUploadMediaPending || isDeleteMediaPending}
                   hasValue={!!draft.image || !!pendingImageFile}
-                  hint={`JPEG, PNG, WEBP, GIF Â· Tá»‘i Ä‘a ${IMAGE_MAX_UPLOAD_MB}MB`}
+                  hint={`JPEG, PNG, WEBP, GIF · Tối đa ${IMAGE_MAX_UPLOAD_MB}MB`}
                   caption={
                     pendingImageFile
-                      ? `ÄÃ£ chá»n: ${pendingImageFile.name} (sáº½ táº£i lÃªn sau khi lÆ°u)`
+                      ? `Đã chọn: ${pendingImageFile.name} (sẽ tải lên sau khi lưu)`
                       : draft.image
-                        ? "ÄÃ£ cÃ³ áº£nh"
-                        : "ChÆ°a cÃ³ áº£nh"
+                        ? "Đã có ảnh"
+                        : "Chưa có ảnh"
                   }
                   onPick={(file) => handleMediaPick(file, "IMAGE_2D", setPendingImageFile, setPendingImagePreviewUrl)}
                   onClear={() =>
@@ -637,36 +643,44 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     // eslint-disable-next-line @next/next/no-img-element -- local blob preview, not an optimizable remote asset
                     <img
                       src={pendingImagePreviewUrl}
-                      alt="Xem trÆ°á»›c áº£nh"
+                      alt="Xem trước ảnh"
                       className="object-cover w-32 h-32 mt-1 border rounded-sm border-[var(--card-light-border)]"
                     />
                   )}
                 </MediaSlotField>
 
                 <MediaSlotField
-                  label="MÃ´ hÃ¬nh 3D (.glb)"
+                  label="Mô hình 3D (.glb)"
                   icon={<CubeIcon className="h-3.5 w-3.5" />}
-                  accept=".glb,.fbx,model/gltf-binary"
+                  accept=".glb,model/gltf-binary"
                   maxMb={MEDIA_MAX_UPLOAD_MB}
                   disabled={!isEditing}
                   isBusy={isUploadMediaPending || isDeleteMediaPending}
                   hasValue={!!draft.modelUrl || !!pendingModelFile}
-                  hint={`GLB, FBX Â· ${MEDIA_SIZE_HINT}`}
+                  hint={`GLB, FBX · ${MEDIA_SIZE_HINT}`}
                   caption={
                     pendingModelFile
-                      ? `ÄÃ£ chá»n: ${pendingModelFile.name} (sáº½ táº£i lÃªn sau khi lÆ°u)`
+                      ? `Đã chọn: ${pendingModelFile.name} (sẽ tải lên sau khi lưu)`
                       : draft.modelUrl
-                        ? "ÄÃ£ cÃ³ mÃ´ hÃ¬nh 3D"
-                        : "ChÆ°a cÃ³ mÃ´ hÃ¬nh 3D"
+                        ? "Đã có mô hình 3D"
+                        : "Chưa có mô hình 3D"
                   }
                   onPick={(file) => handleMediaPick(file, "MODEL_3D", setPendingModelFile)}
                   onClear={() => handleMediaClear("MODEL_3D", pendingModelFile, setPendingModelFile)}
                 />
 
+                {isCreated && canTunePortrait && (
+                  <PortraitSettingsEditor
+                    characterId={characterId}
+                    imageUrl={!pendingImageFile && isValidUrl(draft.image) ? draft.image : undefined}
+                    disabled={!isEditing}
+                  />
+                )}
+
                 <StaffCharacterMediaPreview
                   imageUrl={draft.image}
                   modelUrl={draft.modelUrl}
-                  alt={draft.name || "áº¢nh nhÃ¢n váº­t"}
+                  alt={draft.name || "Ảnh nhân vật"}
                 />
               </TabsContent>
 
@@ -674,18 +688,18 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 {!isEditing ? (
                   <dl className="space-y-6">
                     {[
-                      { label: "Tiá»ƒu sá»­ / Bá»‘i cáº£nh", value: draft.background },
-                      { label: "TÃ­nh cÃ¡ch", value: draft.personality },
-                      { label: "Giá»ng Ä‘á»c", value: draft.voiceId || "Máº·c Ä‘á»‹nh (Thiá»‡n Minh, nam)" },
+                      { label: "Tiểu sử / Bối cảnh", value: draft.background },
+                      { label: "Tính cách", value: draft.personality },
+                      { label: "Giọng đọc", value: draft.voiceId || "Mặc định (Thiện Minh, nam)" },
                       {
-                        label: "CÃ¡ch xÆ°ng hÃ´",
-                        value: `Tá»± xÆ°ng "${draft.selfPronoun || "ta"}", gá»i ngÆ°á»i há»c "${draft.addressPronoun || "ngÆ°Æ¡i"}"`,
+                        label: "Cách xưng hô",
+                        value: `Tự xưng "${draft.selfPronoun || "ta"}", gọi người học "${draft.addressPronoun || "ngươi"}"`,
                       },
                     ].map((item) => (
                       <div key={item.label}>
                         <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--content-muted)]">{item.label}</dt>
                         <dd className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-[var(--content-heading)]">
-                          {item.value || "â€”"}
+                          {item.value || "—"}
                         </dd>
                       </div>
                     ))}
@@ -693,11 +707,11 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 ) : (
               <div className="space-y-5">
                 <div className="grid gap-1.5">
-                  <StaffFormLabel>Tiá»ƒu sá»­ / Bá»‘i cáº£nh *</StaffFormLabel>
+                  <StaffFormLabel>Tiểu sử / Bối cảnh *</StaffFormLabel>
                   <StaffFormTextarea
                     value={draft.background}
                     onChange={(e) => set("background")(e.target.value)}
-                    placeholder="MÃ´ táº£ cuá»™c Ä‘á»i, vai trÃ² lá»‹ch sá»­..."
+                    placeholder="Mô tả cuộc đời, vai trò lịch sử..."
                     className="min-h-30"
                     disabled={!isEditing}
                   />
@@ -705,11 +719,11 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 </div>
 
                 <div className="grid gap-1.5">
-                  <StaffFormLabel>TÃ­nh cÃ¡ch *</StaffFormLabel>
+                  <StaffFormLabel>Tính cách *</StaffFormLabel>
                   <StaffFormTextarea
                     value={draft.personality}
                     onChange={(e) => set("personality")(e.target.value)}
-                    placeholder="Äáº·c Ä‘iá»ƒm tÃ­nh cÃ¡ch, phong cÃ¡ch nÃ³i chuyá»‡n..."
+                    placeholder="Đặc điểm tính cách, phong cách nói chuyện..."
                     className="min-h-22.5"
                     disabled={!isEditing}
                   />
@@ -735,18 +749,18 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   <div className="flex items-center gap-2">
                     <ScrollIcon className="w-4 h-4 text-[var(--accent-blue)]" />
                     <p className="text-sm font-semibold text-[var(--content-heading)]">
-                      TÃ i liá»‡u RAG kÃ¨m theo
+                      Tài liệu RAG kèm theo
                     </p>
                   </div>
                   <div className="p-3 border rounded-sm border-[var(--card-light-border)]">
                     <div className="flex items-center justify-between gap-3 mb-2">
                       <p className="text-sm font-semibold text-[var(--content-heading)]">
-                        {mode === "edit" ? "TÃ i liá»‡u Ä‘Ã£ import" : "TÃ i liá»‡u"}
+                        {mode === "edit" ? "Tài liệu đã import" : "Tài liệu"}
                       </p>
                     </div>
 
                     <div className="mb-3">
-                      {/* Deferred: the document is saved by the page's Táº¡o / LÆ°u thay Ä‘á»•i, not a second button. Remounts
+                      {/* Deferred: the document is saved by the page's Tạo / Lưu thay đổi, not a second button. Remounts
                           (empty) once a saved document shows up in the list, so it is not saved twice. */}
                       <NewDocumentPanel
                         key={`doc-panel-${documents.length}`}
@@ -788,7 +802,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                     {mode === "edit" ? (
                       isLoadingDocuments ? (
-                        <p className="text-xs text-[var(--content-muted)]">Äang táº£i tÃ i liá»‡u...</p>
+                        <p className="text-xs text-[var(--content-muted)]">Đang tải tài liệu...</p>
                       ) : documents.length ? (
                         <div className="space-y-2">
                           {documents.map((document, index) => {
@@ -803,13 +817,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                   type="button"
                                   className="flex-1 min-w-0 text-left cursor-pointer"
                                   onClick={() => setViewingDocument(document)}
-                                  title="Xem chi tiáº¿t tÃ i liá»‡u nÃ y"
+                                  title="Xem chi tiết tài liệu này"
                                 >
                                   <p className="text-sm font-semibold truncate text-[var(--content-heading)]">
-                                    {document.title || "TÃ i liá»‡u chÆ°a Ä‘áº·t tÃªn"}
+                                    {document.title || "Tài liệu chưa đặt tên"}
                                   </p>
                                   <p className="mt-0.5 line-clamp-2 text-xs text-[var(--content-muted)]">
-                                    {document.content || "ChÆ°a cÃ³ ná»™i dung"}
+                                    {document.content || "Chưa có nội dung"}
                                   </p>
                                 </button>
                                 <div className="flex items-center gap-1">
@@ -835,7 +849,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                           setViewerLoading(false);
                                         }
                                       }}
-                                      title="Xem PDF gá»‘c"
+                                      title="Xem PDF gốc"
                                     >
                                       <EyeIcon className="w-4 h-4" />
                                     </Button>
@@ -847,7 +861,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                       size="icon-sm"
                                       className="rounded-sm shrink-0 text-content-heading"
                                       onClick={() => openDocumentEdit(document)}
-                                      title="Sá»­a ná»™i dung"
+                                      title="Sửa nội dung"
                                     >
                                       <PencilIcon className="w-4 h-4" />
                                     </Button>
@@ -860,7 +874,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                       className="shrink-0 rounded-sm text-accent-danger hover:bg-(--accent-danger)/15"
                                       disabled={isDeleteDocumentPending}
                                       onClick={() => setDeleteDocumentTarget(document)}
-                                      title="XÃ³a tÃ i liá»‡u"
+                                      title="Xóa tài liệu"
                                     >
                                       <TrashIcon className="w-4 h-4" />
                                     </Button>
@@ -871,11 +885,11 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           })}
                         </div>
                       ) : (
-                        <p className="text-xs text-[var(--content-muted)]">ChÆ°a cÃ³ tÃ i liá»‡u nÃ o.</p>
+                        <p className="text-xs text-[var(--content-muted)]">Chưa có tài liệu nào.</p>
                       )
                     ) : !draft.documentContent.trim() && (
                       <p className="text-xs text-[var(--content-muted)]">
-                        ChÆ°a cÃ³ tÃ i liá»‡u nÃ o. Báº¥m Â«TÃ i liá»‡u má»›iÂ» Ä‘á»ƒ Ä‘Ã­nh kÃ¨m; tÃ i liá»‡u Ä‘Æ°á»£c táº¡o cÃ¹ng nhÃ¢n váº­t.
+                        Chưa có tài liệu nào. Bấm «Tài liệu mới» để đính kèm; tài liệu được tạo cùng nhân vật.
                       </p>
                     )}
                   </div>
@@ -888,7 +902,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     <div className="flex items-center gap-2">
                       <LinkIcon className="w-4 h-4 text-[var(--accent-blue)]" />
                       <p className="text-sm font-semibold text-[var(--content-heading)]">
-                        LiÃªn káº¿t bá»‘i cáº£nh lá»‹ch sá»­
+                        Liên kết bối cảnh lịch sử
                       </p>
                     </div>
 
@@ -916,14 +930,14 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                 "flex-1 text-xs font-medium",
                                 isCtxPublished ? "text-[var(--status-success)]" : "text-[var(--text-tertiary)]"
                               )}>
-                                ÄÃ£ liÃªn káº¿t: {ctx.name} {!isCtxPublished && " (ChÆ°a xuáº¥t báº£n)"}
+                                Đã liên kết: {ctx.name} {!isCtxPublished && " (Chưa xuất bản)"}
                               </p>
                               {onUnmapContext && (
                                 <button
                                   onClick={() => handleRemoveContext(ctx.contextId)}
                                   disabled={isMapContextPending}
                                   className="p-1 text-[var(--accent-danger)] transition-all rounded-sm opacity-0 group-hover:opacity-100 hover:bg-[var(--status-danger-bg)] disabled:opacity-50"
-                                  title="Gá»¡ liÃªn káº¿t"
+                                  title="Gỡ liên kết"
                                 >
                                   <TrashIcon className="h-3.5 w-3.5" />
                                 </button>
@@ -944,18 +958,18 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         >
                            <SelectTrigger>
                              <SelectValue
-                               placeholder={isLoadingEvents ? "Äang táº£i..." : "Chá»n bá»‘i cáº£nh Ä‘á»ƒ liÃªn káº¿t"}
+                               placeholder={isLoadingEvents ? "Đang tải..." : "Chọn bối cảnh để liên kết"}
                              />
                            </SelectTrigger>
                            <SelectContent className="max-h-80">
-                             <SelectSearch value={contextSearch.search} onChange={contextSearch.setSearch} placeholder="TÃ¬m bá»‘i cáº£nh..." />
+                             <SelectSearch value={contextSearch.search} onChange={contextSearch.setSearch} placeholder="Tìm bối cảnh..." />
                              {!eventOptions.some((ev) => contextSearch.matches(ev.title)) && <SelectEmpty />}
                              {eventOptions.filter((ev) => ev.id === selectedContextId || contextSearch.matches(ev.title)).map((ev) => {
                                const isSelectable = !draft.isPublished || ev.isPublished;
                                return (
                                  <SelectItem key={ev.id} value={ev.id} disabled={!isSelectable}>
-                                   {ev.title} â€” {ev.year < 0 ? `${Math.abs(ev.year)} TCN` : ev.year}
-                                   {!ev.isPublished && " (ChÆ°a xuáº¥t báº£n)"}
+                                   {ev.title} — {ev.year < 0 ? `${Math.abs(ev.year)} TCN` : ev.year}
+                                   {!ev.isPublished && " (Chưa xuất bản)"}
                                  </SelectItem>
                                );
                              })}
@@ -976,26 +990,26 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           }`}
                       >
                         <LinkIcon className="h-4 w-4 mr-1.5" />
-                        {isMapContextPending ? "Äang liÃªn káº¿t..." : "LiÃªn káº¿t"}
+                        {isMapContextPending ? "Đang liên kết..." : "Liên kết"}
                       </Button>
                     </div>
 
-                    {/* â”€â”€ Quick-create context â€” Sheet trigger â”€â”€ */}
+                    {/* ── Quick-create context — Sheet trigger ── */}
                     <button
                       type="button"
                       className="w-full mt-2 flex items-center gap-2 px-3 py-2.5 rounded-sm text-xs font-semibold transition-all hover:bg-[var(--status-neutral-bg)] border text-[var(--accent-blue)] border-[var(--card-light-border)] bg-transparent"
                       onClick={() => setQuickCreateOpen(true)}
                     >
                       <PlusIcon className="h-3.5 w-3.5 shrink-0" />
-                      Táº¡o nhanh bá»‘i cáº£nh má»›i
+                      Tạo nhanh bối cảnh mới
                       <span
                         className="ml-auto text-[10px] font-normal px-1.5 py-0.5 rounded-sm text-[var(--accent-blue)] bg-accent-blue/10"
                       >
-                        Má»›i
+                        Mới
                       </span>
                     </button>
 
-                    {/* â”€â”€ Quick-create Sheet â”€â”€ */}
+                    {/* ── Quick-create Sheet ── */}
                     <Sheet open={quickCreateOpen} onOpenChange={setQuickCreateOpen}>
                       <SheetContent
                         side="right"
@@ -1015,37 +1029,37 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                               <SheetTitle
                                 className="text-base font-bold text-[var(--content-heading)]"
                               >
-                                Táº¡o bá»‘i cáº£nh lá»‹ch sá»­ má»›i
+                                Tạo bối cảnh lịch sử mới
                               </SheetTitle>
                               <SheetDescription
                                 className="text-xs mt-0.5 text-[var(--content-muted)]"
                               >
-                                Bá»‘i cáº£nh sáº½ Ä‘Æ°á»£c liÃªn káº¿t vá»›i nhÃ¢n váº­t nÃ y ngay sau khi táº¡o.
+                                Bối cảnh sẽ được liên kết với nhân vật này ngay sau khi tạo.
                               </SheetDescription>
                             </div>
                           </div>
                         </SheetHeader>
 
-                        {/* Sheet Body â€” scrollable */}
+                        {/* Sheet Body — scrollable */}
                         <div className="flex-1 px-6 py-5 space-y-6 overflow-y-auto">
 
-                          {/* Section: Ná»™i dung */}
+                          {/* Section: Nội dung */}
                           <div className="space-y-4">
                             <p
                               className="text-xs font-semibold text-[var(--content-muted)]"
                             >
-                              Ná»™i dung
+                              Nội dung
                             </p>
 
                             <div className="grid gap-1.5">
                               <Label className="text-xs font-medium text-[var(--content-heading)]">
-                                TÃªn bá»‘i cáº£nh <span className="text-accent-danger">*</span>
+                                Tên bối cảnh <span className="text-accent-danger">*</span>
                               </Label>
                               <Input
                                 id="qc-name"
                                 value={quickCtx.name}
                                 onChange={(e) => setQuickContextField("name")(e.target.value)}
-                                placeholder="VD: Chiáº¿n tháº¯ng Báº¡ch Äáº±ng"
+                                placeholder="VD: Chiến thắng Bạch Đằng"
                                 className="text-sm h-9"
                               />
                               <ValidationErrorText message={quickErrors.name} />
@@ -1053,13 +1067,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                             <div className="grid gap-1.5">
                               <Label className="text-xs font-medium text-[var(--content-heading)]">
-                                MÃ´ táº£ <span className="text-accent-danger">*</span>
+                                Mô tả <span className="text-accent-danger">*</span>
                               </Label>
                               <textarea
                                 id="qc-description"
                                 value={quickCtx.description}
                                 onChange={(e) => setQuickContextField("description")(e.target.value)}
-                                placeholder="Bá»‘i cáº£nh lá»‹ch sá»­, Ã½ nghÄ©a sá»± kiá»‡n..."
+                                placeholder="Bối cảnh lịch sử, ý nghĩa sự kiện..."
                                 rows={4}
                                 className="w-full px-3 py-2 text-sm transition-colors border rounded-sm outline-none resize-none focus:ring-1 focus:ring-[var(--accent-gold)] border-[var(--card-light-border)] bg-[var(--bg-content)] text-[var(--content-text)]"
                               />
@@ -1069,13 +1083,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             <div className="grid gap-1.5">
                               <Label className="text-xs font-medium flex items-center gap-1.5 text-[var(--content-heading)]">
                                 <MapPinIcon className="h-3.5 w-3.5" />
-                                Äá»‹a Ä‘iá»ƒm <span className="text-accent-danger">*</span>
+                                Địa điểm <span className="text-accent-danger">*</span>
                               </Label>
                               <Input
                                 id="qc-location"
                                 value={quickCtx.location}
                                 onChange={(e) => setQuickContextField("location")(e.target.value)}
-                                placeholder="VD: SÃ´ng Báº¡ch Äáº±ng, Quáº£ng Ninh"
+                                placeholder="VD: Sông Bạch Đằng, Quảng Ninh"
                                 className="text-sm h-9"
                               />
                               <ValidationErrorText message={quickErrors.location} />
@@ -1085,31 +1099,31 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           {/* Divider */}
                           <div className="h-px bg-[var(--card-light-border)]" />
 
-                          {/* Section: PhÃ¢n loáº¡i & Thá»i gian */}
+                          {/* Section: Phân loại & Thời gian */}
                           <div className="space-y-4">
                             <p
                               className="text-xs font-semibold text-[var(--content-muted)]"
                             >
-                              PhÃ¢n loáº¡i &amp; Thá»i gian
+                              Phân loại &amp; Thời gian
                             </p>
 
                             <div className="grid grid-cols-2 gap-3">
                               <div className="grid gap-1.5">
                                 <Label className="text-xs font-medium text-[var(--content-heading)]">
-                                  Thá»i Ä‘áº¡i <span className="text-accent-danger">*</span>
+                                  Thời đại <span className="text-accent-danger">*</span>
                                 </Label>
                                 <Select
                                   value={quickCtx.era}
                                   onValueChange={(v) => setQuickContextField("era")(v as EventEraBackend)}
                                 >
                                   <SelectTrigger className="text-sm h-9">
-                                    <SelectValue placeholder="Chá»n thá»i Ä‘áº¡i" />
+                                    <SelectValue placeholder="Chọn thời đại" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="ANCIENT">Cá»• Ä‘áº¡i</SelectItem>
-                                    <SelectItem value="MEDIEVAL">Trung Ä‘áº¡i</SelectItem>
-                                    <SelectItem value="MODERN">Cáº­n Ä‘áº¡i</SelectItem>
-                                    <SelectItem value="CONTEMPORARY">Hiá»‡n Ä‘áº¡i</SelectItem>
+                                    <SelectItem value="ANCIENT">Cổ đại</SelectItem>
+                                    <SelectItem value="MEDIEVAL">Trung đại</SelectItem>
+                                    <SelectItem value="MODERN">Cận đại</SelectItem>
+                                    <SelectItem value="CONTEMPORARY">Hiện đại</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <ValidationErrorText message={quickErrors.era} />
@@ -1117,7 +1131,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
                               <div className="grid gap-1.5">
                                 <Label className="text-xs font-medium text-[var(--content-heading)]">
-                                  NÄƒm <span className="text-accent-danger">*</span>
+                                  Năm <span className="text-accent-danger">*</span>
                                 </Label>
                                 <Input
                                   id="qc-year"
@@ -1140,13 +1154,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             <p
                               className="text-xs font-semibold text-[var(--content-muted)]"
                             >
-                              Media (tuá»³ chá»n)
+                              Media (tuỳ chọn)
                             </p>
 
                             <div className="grid gap-1.5">
                               <Label className="text-xs font-medium flex items-center gap-1.5 text-[var(--content-heading)]">
                                 <ImageIcon className="h-3.5 w-3.5" />
-                                URL hÃ¬nh áº£nh
+                                URL hình ảnh
                               </Label>
                               <Input
                                 id="qc-imageUrl"
@@ -1161,7 +1175,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             <div className="grid gap-1.5">
                               <Label className="text-xs font-medium flex items-center gap-1.5 text-[var(--content-heading)]">
                                 <VideoIcon className="h-3.5 w-3.5" />
-                                URL video (tuá»³ chá»n â€” cÃ³ thá»ƒ táº£i file video lÃªn sau khi táº¡o)
+                                URL video (tuỳ chọn — có thể tải file video lên sau khi tạo)
                               </Label>
                               <Input
                                 id="qc-videoUrl"
@@ -1177,7 +1191,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           {/* Divider */}
                           <div className="h-px bg-[var(--card-light-border)]" />
 
-                          {/* Section: Tráº¡ng thÃ¡i */}
+                          {/* Section: Trạng thái */}
                           <div
                             className={`flex items-center justify-between gap-3 px-4 py-3 transition-colors border rounded-sm ${quickCtx.isPublished ? "border-[var(--status-success-border)] bg-[var(--status-success-bg)]" : "border-[var(--border-strong)] bg-[var(--status-neutral-bg)]"}`}
                           >
@@ -1185,12 +1199,12 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                               <p
                                 className={`text-sm font-semibold ${quickCtx.isPublished ? "text-[var(--status-success)]" : "text-[var(--text-tertiary)]"}`}
                               >
-                                {quickCtx.isPublished ? "ÄÃ£ xuáº¥t báº£n" : "ChÆ°a xuáº¥t báº£n"}
+                                {quickCtx.isPublished ? "Đã xuất bản" : "Chưa xuất bản"}
                               </p>
                               <p className="text-xs mt-0.5 text-[var(--content-muted)]">
                                 {quickCtx.isPublished
-                                  ? "Bá»‘i cáº£nh Ä‘ang hiá»ƒn thá»‹ cÃ´ng khai cho ngÆ°á»i dÃ¹ng."
-                                  : "Báº­t Ä‘á»ƒ hiá»ƒn thá»‹ bá»‘i cáº£nh cho ngÆ°á»i dÃ¹ng."}
+                                  ? "Bối cảnh đang hiển thị công khai cho người dùng."
+                                  : "Bật để hiển thị bối cảnh cho người dùng."}
                               </p>
                             </div>
                             <button
@@ -1219,7 +1233,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                               resetQuickCtx();
                             }}
                           >
-                            Huá»·
+                            Huỷ
                           </Button>
                           <Button
                             disabled={
@@ -1235,7 +1249,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                             onClick={() => {
                               const nextErrors = validateContextDraft(quickCtx);
                               if (hasValidationErrors(nextErrors)) {
-                                toast.error("Vui lÃ²ng kiá»ƒm tra thÃ´ng tin bá»‘i cáº£nh.");
+                                toast.error("Vui lòng kiểm tra thông tin bối cảnh.");
                                 return;
                               }
                               createEvent.mutate(
@@ -1254,14 +1268,14 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                                     setSelectedContextId(newCtx.id);
                                     setQuickCreateOpen(false);
                                     resetQuickCtx();
-                                    toast.success("Táº¡o bá»‘i cáº£nh thÃ nh cÃ´ng!");
+                                    toast.success("Tạo bối cảnh thành công!");
                                   },
                                 },
                               );
                             }}
                           >
                             <PlusIcon className="h-4 w-4 mr-1.5" />
-                            {createEvent.isPending ? "Äang táº¡o..." : "Táº¡o bá»‘i cáº£nh"}
+                            {createEvent.isPending ? "Đang tạo..." : "Tạo bối cảnh"}
                           </Button>
                         </div>
                       </SheetContent>
@@ -1273,18 +1287,18 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   >
                     <LinkIcon className="w-5 h-5 mx-auto mb-2 text-[var(--content-muted)]" />
                     <p className="text-sm text-[var(--content-muted)]">
-                      Táº¡o nhÃ¢n váº­t trÆ°á»›c Ä‘á»ƒ liÃªn káº¿t vá»›i bá»‘i cáº£nh lá»‹ch sá»­.
+                      Tạo nhân vật trước để liên kết với bối cảnh lịch sử.
                     </p>
                   </div>
                 )}
               </TabsContent>
             </div>
 
-            {/* Save bar â€” pinned to the bottom of the form column, so Save is always in reach while editing. */}
+            {/* Save bar — pinned to the bottom of the form column, so Save is always in reach while editing. */}
             {isEditing && (
               <div className="flex shrink-0 items-center justify-between gap-3 border-t px-6 py-3 border-[var(--border-default)] bg-[var(--bg-main)]">
                 <p className="text-sm text-[var(--content-muted)]">
-                  {isDirty ? "CÃ³ thay Ä‘á»•i chÆ°a lÆ°u" : isCreated ? "Äang chá»‰nh sá»­a" : "Äiá»n thÃ´ng tin Ä‘á»ƒ táº¡o nhÃ¢n váº­t"}
+                  {isDirty ? "Có thay đổi chưa lưu" : isCreated ? "Đang chỉnh sửa" : "Điền thông tin để tạo nhân vật"}
                 </p>
                 <div className="flex items-center gap-2">
                   {isCreated && (
@@ -1300,7 +1314,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                         }
                       }}
                     >
-                      Há»§y
+                      Hủy
                     </Button>
                   )}
                   <Button
@@ -1309,7 +1323,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     disabled={!canSave}
                     className="border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] font-semibold transition-all duration-200 cursor-pointer"
                   >
-                    {isPending ? "Äang lÆ°u..." : isCreated ? "LÆ°u thay Ä‘á»•i" : "Táº¡o nhÃ¢n váº­t"}
+                    {isPending ? "Đang lưu..." : isCreated ? "Lưu thay đổi" : "Tạo nhân vật"}
                   </Button>
                 </div>
               </div>
@@ -1317,14 +1331,14 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
           </Tabs>
         </div>
 
-        {/* â”€â”€ Right Panel: test chat â”€â”€ */}
+        {/* ── Right Panel: test chat ── */}
         <div className="flex-1 flex flex-col min-w-0 relative bg-[var(--bg-app)]">
           <div className="flex shrink-0 items-center gap-2 border-b px-6 py-2.5 border-[var(--border-default)] bg-[var(--bg-main)]">
             <ChatCircleDotsIcon className="h-4 w-4 text-[var(--accent-gold)]" aria-hidden="true" />
-            <p className="whitespace-nowrap text-sm font-semibold text-[var(--content-heading)]">Thá»­ trÃ² chuyá»‡n</p>
-            <p className="hidden truncate text-xs text-[var(--content-muted)] lg:block">Â· Kiá»ƒm tra cÃ¡ch nhÃ¢n váº­t tráº£ lá»i theo ná»™i dung Ä‘Ã£ lÆ°u</p>
+            <p className="whitespace-nowrap text-sm font-semibold text-[var(--content-heading)]">Thử trò chuyện</p>
+            <p className="hidden truncate text-xs text-[var(--content-muted)] lg:block">· Kiểm tra cách nhân vật trả lời theo nội dung đã lưu</p>
             {canStartChat && (
-              <div className="ml-auto flex shrink-0 overflow-hidden rounded-sm border border-[var(--border-strong)]" role="group" aria-label="Cháº¿ Ä‘á»™ thá»­">
+              <div className="ml-auto flex shrink-0 overflow-hidden rounded-sm border border-[var(--border-strong)]" role="group" aria-label="Chế độ thử">
                 {(["CHAT", "EXAM"] as const).map((mode) => {
                   const active = (isStartingTestExam ? "EXAM" : testSessionMode) === mode;
                   return (
@@ -1333,7 +1347,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                       type="button"
                       aria-pressed={active}
                       disabled={isStartingTestExam}
-                      title={mode === "CHAT" ? "Báº¡n há»i, nhÃ¢n váº­t tráº£ lá»i" : "NhÃ¢n váº­t há»i, cháº¥m vÃ  cho Ä‘iá»ƒm"}
+                      title={mode === "CHAT" ? "Bạn hỏi, nhân vật trả lời" : "Nhân vật hỏi, chấm và cho điểm"}
                       onClick={() => (mode === "CHAT" ? startTestInterview() : setIsTestExamDialogOpen(true))}
                       className={cn(
                         "px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-60",
@@ -1382,14 +1396,14 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-[var(--content-heading)]">
-                        Há»‡ thá»‘ng Ä‘á»‘i thoáº¡i chÆ°a khá»Ÿi táº¡o
+                        Hệ thống đối thoại chưa khởi tạo
                       </h3>
                       <p className="max-w-sm mx-auto mt-1 text-sm text-[var(--content-muted)]">
                         {!isCreated
-                          ? "HÃ£y hoÃ n táº¥t thÃ´ng tin vÃ  'Táº¡o nhÃ¢n váº­t' Ä‘á»ƒ báº¯t Ä‘áº§u tráº£i nghiá»‡m AI."
+                          ? "Hãy hoàn tất thông tin và 'Tạo nhân vật' để bắt đầu trải nghiệm AI."
                           : hasPublishErrors
-                            ? "NhÃ¢n váº­t cáº§n Ä‘á»§ thÃ´ng tin vÃ  URL hÃ¬nh áº£nh há»£p lá»‡ trÆ°á»›c khi chat."
-                            : "Báº¡n cáº§n liÃªn káº¿t nhÃ¢n váº­t vá»›i má»™t 'Bá»‘i cáº£nh lá»‹ch sá»­' á»Ÿ khung bÃªn trÃ¡i Ä‘á»ƒ AI cÃ³ thá»ƒ hiá»ƒu Ä‘Æ°á»£c bá»‘i cáº£nh trÃ² chuyá»‡n."}
+                            ? "Nhân vật cần đủ thông tin và URL hình ảnh hợp lệ trước khi chat."
+                            : "Bạn cần liên kết nhân vật với một 'Bối cảnh lịch sử' ở khung bên trái để AI có thể hiểu được bối cảnh trò chuyện."}
                       </p>
                     </div>
                   </div>
@@ -1421,43 +1435,43 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             <span
               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--status-neutral-bg)] text-[var(--text-tertiary)]"
             >
-              CÃ³ PDF gá»‘c
+              Có PDF gốc
             </span>
           ) : undefined
         }
       />
 
-      {/* Document edit â€” header/footer stay fixed, only the middle scrolls,
-          so "LÆ°u thay Ä‘á»•i" never needs a scroll-to-find on long content. */}
+      {/* Document edit — header/footer stay fixed, only the middle scrolls,
+          so "Lưu thay đổi" never needs a scroll-to-find on long content. */}
       <Dialog open={!!editingDocument} onOpenChange={(open) => !open && closeDocumentEdit()}>
         <DialogContent className="flex max-h-[85vh] w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-[680px]">
           <DialogHeader className="shrink-0 border-b px-6 py-4 border-[var(--card-light-border)]">
-            <DialogTitle>Sá»­a tÃ i liá»‡u</DialogTitle>
+            <DialogTitle>Sửa tài liệu</DialogTitle>
           </DialogHeader>
           <div className="flex-1 min-h-0 px-6 py-4 space-y-4 overflow-y-auto">
             <div className="grid gap-1.5">
-              <StaffFormLabel>TiÃªu Ä‘á»</StaffFormLabel>
+              <StaffFormLabel>Tiêu đề</StaffFormLabel>
               <StaffFormInput
                 value={editDraftTitle}
                 onChange={(e) => setEditDraftTitle(e.target.value)}
-                placeholder="TiÃªu Ä‘á» tÃ i liá»‡u"
+                placeholder="Tiêu đề tài liệu"
                 disabled={isSavingDocumentEdit}
               />
             </div>
             <div className="grid gap-1.5">
               <div className="flex items-center justify-between">
-                <StaffFormLabel>Ná»™i dung</StaffFormLabel>
+                <StaffFormLabel>Nội dung</StaffFormLabel>
                 <div className="flex items-center gap-2">
                   {(() => {
                     const imgCount = (editDraftContent.match(/!\[.*?\]\(.*?\)/g) || []).length;
                     return imgCount > 0 ? (
                       <span className="text-[11px] font-medium text-accent-gold bg-accent-gold/10 px-2 py-0.5 rounded-sm">
-                        {imgCount} hÃ¬nh áº£nh
+                        {imgCount} hình ảnh
                       </span>
                     ) : null;
                   })()}
                   <span className="text-micro text-[var(--content-muted)]">
-                    {editDraftContent.length.toLocaleString("vi-VN")} kÃ½ tá»±
+                    {editDraftContent.length.toLocaleString("vi-VN")} ký tự
                   </span>
                   <div className="inline-flex rounded-sm border border-[var(--card-light-border)] p-0.5 bg-[var(--bg-elevated)]">
                     <button
@@ -1468,7 +1482,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                           ? "bg-[var(--accent-gold)] text-white shadow-xs"
                           : "text-content-muted hover:text-content-heading"
                       }`}
-                      title="Cháº¿ Ä‘á»™ song song: Vá»«a sá»­a thÃ´ vá»«a xem trÆ°á»›c"
+                      title="Chế độ song song: Vừa sửa thô vừa xem trước"
                     >
                       <ColumnsIcon className="h-3 w-3" />
                       Song song
@@ -1483,7 +1497,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                       }`}
                     >
                       <PencilIcon className="h-3 w-3" />
-                      Chá»‰nh sá»­a
+                      Chỉnh sửa
                     </button>
                     <button
                       type="button"
@@ -1495,7 +1509,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                       }`}
                     >
                       <EyeIcon className="h-3 w-3" />
-                      Xem trÆ°á»›c
+                      Xem trước
                     </button>
                   </div>
                 </div>
@@ -1504,25 +1518,25 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                   <div className="flex flex-col">
                     <span className="text-[11px] font-semibold text-content-muted mb-1 flex items-center gap-1">
-                      <PencilIcon className="h-3 w-3" /> VÄƒn báº£n thÃ´ (Raw)
+                      <PencilIcon className="h-3 w-3" /> Văn bản thô (Raw)
                     </span>
                     <StaffFormTextarea
                       value={editDraftContent}
                       onChange={(e) => setEditDraftContent(e.target.value)}
-                      placeholder="Ná»™i dung tÃ i liá»‡u"
+                      placeholder="Nội dung tài liệu"
                       className="min-h-65 max-h-96"
                       disabled={isSavingDocumentEdit}
                     />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[11px] font-semibold text-content-muted mb-1 flex items-center gap-1">
-                      <EyeIcon className="h-3 w-3" /> Xem trÆ°á»›c trá»±c tiáº¿p (Real-time)
+                      <EyeIcon className="h-3 w-3" /> Xem trước trực tiếp (Real-time)
                     </span>
                     <div className="rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] p-4 text-xs overflow-y-auto min-h-65 max-h-96 leading-relaxed">
                       {deferredCharEditContent.trim() ? (
                         <MarkdownMessage text={deferredCharEditContent} />
                       ) : (
-                        <p className="italic text-content-muted">ChÆ°a cÃ³ ná»™i dung Ä‘á»ƒ xem trÆ°á»›c</p>
+                        <p className="italic text-content-muted">Chưa có nội dung để xem trước</p>
                       )}
                     </div>
                   </div>
@@ -1531,7 +1545,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                 <StaffFormTextarea
                   value={editDraftContent}
                   onChange={(e) => setEditDraftContent(e.target.value)}
-                  placeholder="Ná»™i dung tÃ i liá»‡u"
+                  placeholder="Nội dung tài liệu"
                   className="min-h-65"
                   disabled={isSavingDocumentEdit}
                 />
@@ -1542,7 +1556,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   {deferredCharEditContent.trim() ? (
                     <MarkdownMessage text={deferredCharEditContent} />
                   ) : (
-                    <p className="italic text-content-muted">ChÆ°a cÃ³ ná»™i dung Ä‘á»ƒ xem trÆ°á»›c</p>
+                    <p className="italic text-content-muted">Chưa có nội dung để xem trước</p>
                   )}
                 </div>
               )}
@@ -1550,12 +1564,12 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
           </div>
           <div className="flex shrink-0 justify-end gap-2 border-t px-6 py-4 border-[var(--card-light-border)]">
             <Button type="button" variant="outline" onClick={closeDocumentEdit} disabled={isSavingDocumentEdit}>
-              Há»§y
+              Hủy
             </Button>
             <Button
               type="button"
               onClick={() => {
-                // The pending create-mode document has no real id yet â€” just
+                // The pending create-mode document has no real id yet — just
                 // write straight back into the draft instead of calling the
                 // (nonexistent) update API.
                 if (editingDocument && getDocumentId(editingDocument) === PENDING_DOCUMENT_ID) {
@@ -1568,7 +1582,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               }}
               disabled={isSavingDocumentEdit || isUpdateDocumentPending}
             >
-              {isSavingDocumentEdit || isUpdateDocumentPending ? "Äang lÆ°u..." : "LÆ°u thay Ä‘á»•i"}
+              {isSavingDocumentEdit || isUpdateDocumentPending ? "Đang lưu..." : "Lưu thay đổi"}
             </Button>
           </div>
         </DialogContent>
@@ -1578,9 +1592,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
       <ConfirmDialog
         open={!!deleteDocumentTarget}
         onOpenChange={(open) => !open && setDeleteDocumentTarget(null)}
-        title="XÃ³a tÃ i liá»‡u?"
-        description={`TÃ i liá»‡u "${deleteDocumentTarget?.title || "chÆ°a Ä‘áº·t tÃªn"}" sáº½ bá»‹ xÃ³a vÄ©nh viá»…n khá»i nhÃ¢n váº­t nÃ y.`}
-        confirmLabel="XÃ³a"
+        title="Xóa tài liệu?"
+        description={`Tài liệu "${deleteDocumentTarget?.title || "chưa đặt tên"}" sẽ bị xóa vĩnh viễn khỏi nhân vật này.`}
+        confirmLabel="Xóa"
         variant="danger"
         isPending={isDeleteDocumentPending}
         onConfirm={() => {

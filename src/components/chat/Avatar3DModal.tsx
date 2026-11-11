@@ -141,10 +141,10 @@ function TranscriptFeed({
                 "max-w-[80%] px-3 py-1.5 text-[13px] leading-normal",
                 m.role === "user"
                   ? "rounded-sm bg-white/[0.08] text-white/75"
-                  : "rounded-sm border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] bg-gradient-to-br from-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] to-[color-mix(in_srgb,_var(--accent-gold)_5%,_transparent)] text-white/90",
+                  : "rounded-sm border border-[color-mix(in_srgb,_var(--accent-gold)_20%,_transparent)] bg-gradient-to-br from-[color-mix(in_srgb,_var(--accent-gold)_15%,_transparent)] to-[color-mix(in_srgb,_var(--accent-gold)_5%,_transparent)] text-white/90 [&_img]:max-h-32 [&_strong]:text-inherit",
               )}
             >
-              {part}
+              {m.role === "assistant" ? <MarkdownMessage text={part} /> : part}
             </div>
           ))}
           {m.role === "assistant" && m.quotes && m.quotes.length > 0 && (
