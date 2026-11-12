@@ -238,7 +238,7 @@ export function UpgradeProDialog({
             </div>
           )}
 
-          <div className={`upgrade-pro-grid ${hasYearlyPlans(plans) ? "mt-6" : "mt-[60px]"}`}>
+          <div className={`upgrade-pro-grid ${hasYearlyPlans(plans) ? "mt-8" : "mt-[60px]"}`}>
             {isLoading
               ? [0, 1, 2].map((i) => <SkeletonCard key={i} index={i} />)
               : plans.map((plan, index) => (
@@ -258,13 +258,13 @@ export function UpgradeProDialog({
           <Link
             href="/for-schools"
             onClick={() => setOpen(false)}
-            className="mx-6 mb-4 flex items-center justify-between gap-3 rounded-sm border border-[var(--border-strong)] px-4 py-3 text-sm transition-colors hover:border-[var(--accent-gold)]"
+            className="mx-auto mt-8 flex max-w-[1040px] items-center justify-between gap-4 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-5 py-4 text-sm transition-colors hover:border-[var(--accent-gold)]"
           >
-            <span className="flex items-center gap-3">
+            <span className="flex items-center gap-4">
               <SchoolIcon className="h-5 w-5 shrink-0 text-[var(--accent-gold)]" aria-hidden="true" />
               <span>
                 <strong className="block text-[var(--text-primary)]">Dành cho trường học</strong>
-                <span className="text-xs text-[var(--text-secondary)]">
+                <span className="mt-1 block text-xs text-[var(--text-secondary)]">
                   Mua cho cả trường theo số học sinh, xem giá ngay và gửi yêu cầu báo giá.
                 </span>
               </span>

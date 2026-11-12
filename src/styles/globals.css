@@ -1150,8 +1150,9 @@ body {
 
 .upgrade-pro-card {
   position: relative;
-  min-height: 560px;
-  padding: 32px 24px 26px;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 28px 28px;
   border-radius: var(--radius-sm);
   background: var(--bg-surface);
   border: 1px solid var(--text-primary);
@@ -1308,31 +1309,45 @@ body {
 
 .upgrade-pro-features {
   display: grid;
-  margin-top: 26px;
+  margin-top: 28px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.upgrade-pro-card.is-featured .upgrade-pro-features {
+  border-color: color-mix(in srgb, var(--text-inverse) 22%, transparent);
 }
 
 .upgrade-pro-feature {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  min-height: 38px;
-  gap: 14px;
+  gap: 16px;
+  padding: 12px 0;
   border-top: 1px solid var(--border-default);
   color: var(--text-tertiary);
   font-size: 14px;
+  line-height: 1.45;
+}
+
+.upgrade-pro-feature > span {
+  flex-shrink: 0;
 }
 
 .upgrade-pro-feature strong {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
   color: var(--text-primary);
   font-size: 13px;
   font-weight: 700;
-  white-space: nowrap;
+  text-align: right;
 }
 
 .upgrade-pro-feature svg {
+  flex-shrink: 0;
+  margin-top: 2px;
   color: var(--accent-gold);
 }
 
@@ -1358,7 +1373,8 @@ body {
 }
 
 .upgrade-pro-foot {
-  margin-top: 34px;
+  max-width: 1040px;
+  margin: 28px auto 0;
   padding-top: 16px;
   border-top: 1px solid var(--border-default);
   text-align: center;
