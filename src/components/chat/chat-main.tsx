@@ -1395,7 +1395,10 @@ export function ChatMain({
       />
       <ContentWarningDialog message={contentWarning} onClose={() => setContentWarning(null)} />
       <AiDisclaimerFooter />
-      <AiFirstChatNotice characterId={character.id} characterName={character.name} userId={user?.uid} />
+      {/* Content authors test their own characters all day; the acknowledgement is for learners and teachers. */}
+      {!isStaffOrAdmin && (
+        <AiFirstChatNotice characterId={character.id} characterName={character.name} userId={user?.uid} />
+      )}
 
       <style>{`
         .voice-call-nudge {
