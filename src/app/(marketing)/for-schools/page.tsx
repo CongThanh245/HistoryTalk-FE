@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Building2, Check, Loader2, School, Send, Users } from "lucide-react";
+import { Building2, Check, ChevronDown, Loader2, School, Send, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,11 +15,13 @@ import { B2bQuoteForm } from "@/components/marketing/b2b-quote-form";
 import { cn } from "@/lib/utils/cn";
 import { formatVnd } from "@/features/payment/tier-plans";
 import {
+  B2B_CUSTOM_LIMITS,
   B2B_LIMITS,
   B2B_PACKAGE_LABELS,
   b2bQuoteService,
   type B2bPackage,
   type B2bPlan,
+  type B2bPlanCatalog,
   type B2bQuoteInput,
 } from "@/services/b2b-quote.service";
 
@@ -28,6 +30,61 @@ const planIcons = [School, Building2, Users];
 
 const formatTokens = (n: number) => n.toLocaleString("vi-VN");
 const clamp = (n: number, min: number, max: number) => Math.min(Math.max(Math.round(n) || min, min), max);
+
+const dateInputClass =
+  "h-11 w-full rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-3 text-sm text-[var(--text-primary)] focus:border-[var(--accent-gold)] focus:outline-none aria-[invalid=true]:border-(--status-error)";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Share of calendar weeks that are teaching weeks (holidays, Tết and exams off): 01/09 – 31/05 is about 39 weeks, so 35. */
+const TEACHING_WEEK_RATIO = 0.9;
+
+const toIsoDate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const parseIsoDate = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return y && m && d ? new Date(y, m - 1, d) : null;
+};
+const formatDate = (iso: string) => {
+  const d = parseIsoDate(iso);
+  return d ? d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }) : iso;
+};
+const daysBetween = (start: string, end: string) => {
+  const a = parseIsoDate(start);
+  const b = parseIsoDate(end);
+  return a && b ? Math.round((b.getTime() - a.getTime()) / DAY_MS) : 0;
+};
+const weeksForRange = (start: string, end: string) =>
+  clamp((daysBetween(start, end) / 7) * TEACHING_WEEK_RATIO, B2B_CUSTOM_LIMITS.minWeeks, B2B_CUSTOM_LIMITS.maxWeeks);
+
+/** Mirrors the backend default: 01/09 – 31/05 of the current school year (a new year starts from June). */
+function defaultSchoolYear() {
+  const today = new Date();
+  const startYear = today.getMonth() + 1 >= 6 ? today.getFullYear() : today.getFullYear() - 1;
+  return { start: toIsoDate(new Date(startYear, 8, 1)), end: toIsoDate(new Date(startYear + 1, 4, 31)) };
+}
+
+type PlanSettings = {
+  startDate: string;
+  endDate: string;
+  academicWeeks: number;
+  studentDailyTokenLimit: number;
+  studentDaysPerWeek: number;
+  teacherDailyTokenLimit: number;
+  teacherDaysPerWeek: number;
+};
+
+function defaultSettings(catalog?: B2bPlanCatalog): PlanSettings {
+  const year = defaultSchoolYear();
+  return {
+    startDate: year.start,
+    endDate: year.end,
+    academicWeeks: catalog?.academicWeeksPerYear ?? 35,
+    studentDailyTokenLimit: catalog?.studentDailyTokenLimit ?? 5000,
+    studentDaysPerWeek: catalog?.studentActiveDaysPerWeek ?? 4,
+    teacherDailyTokenLimit: catalog?.teacherDailyTokenLimit ?? 5000,
+    teacherDaysPerWeek: catalog?.teacherActiveDaysPerWeek ?? 6,
+  };
+}
 
 function useDebounced<T>(value: T, delay: number) {
   const [debounced, setDebounced] = useState(value);
@@ -55,12 +112,16 @@ function NumberField({
   min,
   max,
   onChange,
+  slider = true,
+  suffix,
 }: {
   label: string;
   value: number;
   min: number;
   max: number;
   onChange: (value: number) => void;
+  slider?: boolean;
+  suffix?: string;
 }) {
   // Typing is kept as text so a half-typed number is not clamped mid-way; it is applied on blur.
   const [text, setText] = useState(String(value));
@@ -69,7 +130,10 @@ function NumberField({
   return (
     <label className="grid gap-2">
       <span className="flex items-baseline justify-between text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-secondary)]">
-        {label}
+        <span>
+          {label}
+          {suffix && <span className="ml-1 font-medium normal-case tracking-normal text-[var(--text-muted)]">{suffix}</span>}
+        </span>
         <input
           type="number"
           inputMode="numeric"
@@ -86,16 +150,18 @@ function NumberField({
           aria-label={label}
         />
       </span>
-      <input
-        type="range"
+      {slider && (
+        <input
+          type="range"
         min={min}
         max={sliderMax}
         value={Math.min(value, sliderMax)}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full accent-[var(--accent-gold)]"
-        aria-hidden="true"
-        tabIndex={-1}
-      />
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+      )}
     </label>
   );
 }
@@ -109,11 +175,29 @@ export default function ForSchoolsPage() {
   const [students, setStudents] = useState(850);
   const [teachers, setTeachers] = useState(22);
   const [promoCode, setPromoCode] = useState("");
+  // null until the visitor changes something, so the catalog defaults apply once they arrive.
+  const [customSettings, setCustomSettings] = useState<PlanSettings | null>(null);
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const standardSettings = useMemo(() => defaultSettings(catalog), [catalog]);
+  const settings = customSettings ?? standardSettings;
+
+  const datesValid = daysBetween(settings.startDate, settings.endDate) > 0;
 
   const quoteInput: B2bQuoteInput = useMemo(
-    () => ({ selectedPackage, numberOfStudents: students, numberOfTeachers: teachers, promoCode: promoCode.trim() || undefined }),
-    [selectedPackage, students, teachers, promoCode],
+    () => ({
+      selectedPackage,
+      numberOfStudents: students,
+      numberOfTeachers: teachers,
+      promoCode: promoCode.trim() || undefined,
+      academicWeeks: settings.academicWeeks,
+      studentDailyTokenLimit: settings.studentDailyTokenLimit,
+      studentDaysPerWeek: settings.studentDaysPerWeek,
+      teacherDailyTokenLimit: settings.teacherDailyTokenLimit,
+      teacherDaysPerWeek: settings.teacherDaysPerWeek,
+      // The backend needs both dates or neither.
+      ...(datesValid ? { subscriptionStartDate: settings.startDate, subscriptionEndDate: settings.endDate } : {}),
+    }),
+    [selectedPackage, students, teachers, promoCode, settings, datesValid],
   );
   const debouncedInput = useDebounced(quoteInput, CALC_DEBOUNCE_MS);
   const calcQuery = useQuery({
@@ -129,6 +213,8 @@ export default function ForSchoolsPage() {
     setSelectedPackage(plan.packageType);
     setStudents(plan.maxStudents);
     setTeachers(plan.maxTeachers);
+    // The listed plans are priced on the standard school year and limits.
+    setCustomSettings(null);
     if (scroll) calculatorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   // Changing the numbers by hand makes it a custom plan.
@@ -136,9 +222,22 @@ export default function ForSchoolsPage() {
     apply();
     setSelectedPackage("ENTERPRISE_CUSTOM");
   };
+  const updateSettings = (patch: Partial<PlanSettings>) =>
+    setCustom(() => {
+      setCustomSettings((prev) => {
+        const next = { ...(prev ?? standardSettings), ...patch };
+        // A new date range re-estimates the teaching weeks; they can still be edited afterwards.
+        const datesChanged = patch.startDate !== undefined || patch.endDate !== undefined;
+        if (datesChanged && daysBetween(next.startDate, next.endDate) > 0) {
+          next.academicWeeks = weeksForRange(next.startDate, next.endDate);
+        }
+        return next;
+      });
+    });
+  const periodText = `${formatDate(settings.startDate)} – ${formatDate(settings.endDate)}`;
 
-  const summaryText = `${B2B_PACKAGE_LABELS[selectedPackage]} · ${students.toLocaleString("vi-VN")} học sinh · ${teachers.toLocaleString("vi-VN")} giáo viên${
-    calc ? ` · ${formatVnd(calc.finalPriceVnd)}/năm học` : ""
+  const summaryText = `${B2B_PACKAGE_LABELS[selectedPackage]} · ${students.toLocaleString("vi-VN")} học sinh · ${teachers.toLocaleString("vi-VN")} giáo viên · ${periodText} (${settings.academicWeeks} tuần học)${
+    calc ? ` · ${formatVnd(calc.finalPriceVnd)}` : ""
   }`;
 
   return (
@@ -159,7 +258,8 @@ export default function ForSchoolsPage() {
             <button
               type="button"
               onClick={() => setQuoteOpen(true)}
-              className="btn-crimson inline-flex min-h-11 items-center justify-center gap-2 px-6 text-[13px] font-bold uppercase tracking-[0.08em]"
+              disabled={!datesValid}
+              className="btn-crimson inline-flex min-h-11 disabled:cursor-not-allowed disabled:opacity-60 items-center justify-center gap-2 px-6 text-[13px] font-bold uppercase tracking-[0.08em]"
             >
               <Send className="h-4 w-4" aria-hidden="true" /> Gửi yêu cầu báo giá
             </button>
@@ -262,8 +362,10 @@ export default function ForSchoolsPage() {
         <Container className="max-w-6xl">
           <h2 className="archive-title text-[clamp(26px,3.5vw,40px)]">Tính giá theo quy mô trường</h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
-            Mỗi học sinh có hạn mức {formatTokens(catalog?.studentDailyTokenLimit ?? 5000)} token/ngày, mỗi giáo viên{" "}
-            {formatTokens(catalog?.teacherDailyTokenLimit ?? 5000)} token/ngày. Trường càng đông học sinh, chiết khấu càng lớn.
+            Giá chuẩn tính cho {catalog?.academicWeeksPerYear ?? 35} tuần học, mỗi học sinh{" "}
+            {formatTokens(catalog?.studentDailyTokenLimit ?? 5000)} token/ngày, mỗi giáo viên{" "}
+            {formatTokens(catalog?.teacherDailyTokenLimit ?? 5000)} token/ngày. Trường có thể đổi thời gian sử dụng và hạn mức
+            bên dưới. Trường càng đông học sinh, chiết khấu càng lớn.
           </p>
 
           <div className="mt-8 grid gap-0 border-l border-t border-[var(--text-primary)] lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
@@ -304,6 +406,89 @@ export default function ForSchoolsPage() {
                 max={B2B_LIMITS.maxTeachers}
                 onChange={(v) => setCustom(() => setTeachers(v))}
               />
+              <div className="grid gap-4 border-t border-[var(--border-default)] pt-5">
+                <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Thời gian sử dụng</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="grid gap-1.5">
+                    <span className="text-xs text-[var(--text-secondary)]">Từ ngày</span>
+                    <input
+                      type="date"
+                      value={settings.startDate}
+                      onChange={(e) => e.target.value && updateSettings({ startDate: e.target.value })}
+                      className={dateInputClass}
+                    />
+                  </label>
+                  <label className="grid gap-1.5">
+                    <span className="text-xs text-[var(--text-secondary)]">Đến ngày</span>
+                    <input
+                      type="date"
+                      value={settings.endDate}
+                      min={settings.startDate}
+                      onChange={(e) => e.target.value && updateSettings({ endDate: e.target.value })}
+                      className={dateInputClass}
+                      aria-invalid={!datesValid}
+                    />
+                  </label>
+                </div>
+                {!datesValid && <p className="text-xs text-(--status-error)">Ngày kết thúc phải sau ngày bắt đầu.</p>}
+                <NumberField
+                  label="Số tuần học"
+                  value={settings.academicWeeks}
+                  min={B2B_CUSTOM_LIMITS.minWeeks}
+                  max={B2B_CUSTOM_LIMITS.maxWeeks}
+                  onChange={(v) => updateSettings({ academicWeeks: v })}
+                  slider={false}
+                />
+                <p className="-mt-2 text-xs leading-5 text-[var(--text-muted)]">
+                  Tự ước tính khi đổi ngày, đã trừ nghỉ lễ, Tết và thi. Quỹ token và phí nền tảng tính theo số tuần này.
+                </p>
+              </div>
+
+              <details className="group border-t border-[var(--border-default)] pt-5">
+                <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-secondary)]">
+                  Hạn mức sử dụng
+                  <span className="flex items-center gap-1.5 font-medium normal-case tracking-normal text-[var(--text-muted)]">
+                    HS {formatTokens(settings.studentDailyTokenLimit)} × {settings.studentDaysPerWeek} ngày · GV{" "}
+                    {formatTokens(settings.teacherDailyTokenLimit)} × {settings.teacherDaysPerWeek} ngày
+                    <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+                  </span>
+                </summary>
+                <div className="mt-4 grid gap-4">
+                  <NumberField
+                    label="Token/ngày mỗi học sinh"
+                    value={settings.studentDailyTokenLimit}
+                    min={B2B_CUSTOM_LIMITS.minDailyTokens}
+                    max={B2B_CUSTOM_LIMITS.maxDailyTokens}
+                    onChange={(v) => updateSettings({ studentDailyTokenLimit: v })}
+                    slider={false}
+                  />
+                  <NumberField
+                    label="Ngày dùng/tuần của học sinh"
+                    value={settings.studentDaysPerWeek}
+                    min={B2B_CUSTOM_LIMITS.minDaysPerWeek}
+                    max={B2B_CUSTOM_LIMITS.maxDaysPerWeek}
+                    onChange={(v) => updateSettings({ studentDaysPerWeek: v })}
+                    slider={false}
+                  />
+                  <NumberField
+                    label="Token/ngày mỗi giáo viên"
+                    value={settings.teacherDailyTokenLimit}
+                    min={B2B_CUSTOM_LIMITS.minDailyTokens}
+                    max={B2B_CUSTOM_LIMITS.maxDailyTokens}
+                    onChange={(v) => updateSettings({ teacherDailyTokenLimit: v })}
+                    slider={false}
+                  />
+                  <NumberField
+                    label="Ngày dùng/tuần của giáo viên"
+                    value={settings.teacherDaysPerWeek}
+                    min={B2B_CUSTOM_LIMITS.minDaysPerWeek}
+                    max={B2B_CUSTOM_LIMITS.maxDaysPerWeek}
+                    onChange={(v) => updateSettings({ teacherDaysPerWeek: v })}
+                    slider={false}
+                  />
+                </div>
+              </details>
+
               <label className="grid gap-1.5">
                 <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Mã ưu đãi</span>
                 <input
@@ -363,7 +548,12 @@ export default function ForSchoolsPage() {
                 </div>
               ) : (
                 <dl className="mt-4">
-                  <SummaryRow label="Quỹ token năm học" value={`${formatTokens(calc.totalTokenPool)} token`} />
+                  <SummaryRow
+                    label="Thời gian"
+                    value={`${formatDate(calc.subscriptionStartDate ?? settings.startDate)} – ${formatDate(calc.subscriptionEndDate ?? settings.endDate)}`}
+                  />
+                  <SummaryRow label="Số tuần học" value={`${calc.academicWeeks ?? settings.academicWeeks} tuần`} />
+                  <SummaryRow label="Quỹ token cả gói" value={`${formatTokens(calc.totalTokenPool)} token`} />
                   <SummaryRow label="Chi phí token AI" value={formatVnd(calc.aiTokenCostVnd)} />
                   <SummaryRow label="Lưu trữ, quiz và LMS" value={formatVnd(calc.dbAndLmsCostVnd)} />
                   <SummaryRow label="Tạm tính" value={formatVnd(calc.subtotalVnd)} />
@@ -372,7 +562,7 @@ export default function ForSchoolsPage() {
                     value={calc.discountAmountVnd > 0 ? `−${formatVnd(calc.discountAmountVnd)}` : "0đ"}
                     accent
                   />
-                  <SummaryRow label="Tổng năm học" value={formatVnd(calc.finalPriceVnd)} strong />
+                  <SummaryRow label="Tổng cả gói" value={formatVnd(calc.finalPriceVnd)} strong />
                   <p className="mt-3 text-sm opacity-80">
                     Bình quân <strong className="text-[var(--accent-on-ink)]">{formatVnd(calc.averageMonthlyCostPerStudentVnd)}</strong> mỗi
                     học sinh mỗi tháng.
@@ -382,7 +572,8 @@ export default function ForSchoolsPage() {
               <button
                 type="button"
                 onClick={() => setQuoteOpen(true)}
-                className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-sm border border-[var(--accent-gold)] bg-[var(--accent-gold)] text-[13px] font-bold uppercase tracking-[0.08em] text-[#FFFFFF] transition-opacity hover:opacity-90"
+                disabled={!datesValid}
+                className="mt-6 inline-flex disabled:cursor-not-allowed disabled:opacity-60 min-h-11 w-full items-center justify-center gap-2 rounded-sm border border-[var(--accent-gold)] bg-[var(--accent-gold)] text-[13px] font-bold uppercase tracking-[0.08em] text-[#FFFFFF] transition-opacity hover:opacity-90"
               >
                 <Send className="h-4 w-4" aria-hidden="true" /> Gửi yêu cầu báo giá
               </button>

@@ -8,6 +8,16 @@ export type B2bQuoteStatus = "PENDING" | "CONTACTED" | "APPROVED" | "REJECTED";
 
 export const B2B_LIMITS = { minStudents: 1, maxStudents: 50_000, minTeachers: 1, maxTeachers: 5_000 } as const;
 
+/** Bounds of the optional plan settings; the stricter of the API contract and the backend DTO validation. */
+export const B2B_CUSTOM_LIMITS = {
+  minWeeks: 1,
+  maxWeeks: 52,
+  minDailyTokens: 500,
+  maxDailyTokens: 100_000,
+  minDaysPerWeek: 1,
+  maxDaysPerWeek: 7,
+} as const;
+
 export const B2B_PACKAGE_LABELS: Record<B2bPackage, string> = {
   ENTERPRISE_SMALL: "Gói Small",
   ENTERPRISE_MEDIUM: "Gói Medium",
@@ -57,14 +67,28 @@ export interface B2bPlanCatalog {
   tokenUnitPriceVnd: number;
   academicWeeksPerYear: number;
   studentDailyTokenLimit: number;
+  studentActiveDaysPerWeek: number;
   studentTotalAnnualCostVnd: number;
   teacherDailyTokenLimit: number;
+  teacherActiveDaysPerWeek: number;
   teacherTotalAnnualCostVnd: number;
   discountTiers: B2bDiscountTier[];
   plans: B2bPlan[];
 }
 
-export interface B2bQuoteInput {
+/** Optional plan settings; the backend falls back to the catalog defaults (35 weeks, 5,000 tokens/day, 4 and 6 days/week). */
+export interface B2bPlanSettings {
+  academicWeeks?: number;
+  studentDailyTokenLimit?: number;
+  teacherDailyTokenLimit?: number;
+  studentDaysPerWeek?: number;
+  teacherDaysPerWeek?: number;
+  /** yyyy-MM-dd; send both or neither. Defaults to 01/09 – 31/05 of the current school year. */
+  subscriptionStartDate?: string;
+  subscriptionEndDate?: string;
+}
+
+export interface B2bQuoteInput extends B2bPlanSettings {
   selectedPackage?: B2bPackage;
   numberOfStudents: number;
   numberOfTeachers: number;
@@ -75,13 +99,20 @@ export interface B2bQuoteCalculation extends B2bPrice {
   selectedPackage: B2bPackage;
   numberOfStudents: number;
   numberOfTeachers: number;
+  academicWeeks: number;
+  studentDaysPerWeek: number;
+  teacherDaysPerWeek: number;
   studentDailyTokenLimit: number;
   teacherDailyTokenLimit: number;
+  studentTokensPerYear: number;
+  teacherTokensPerYear: number;
   totalStudentTokens: number;
   totalTeacherTokens: number;
   averageMonthlyCostPerStudentVnd: number;
   /** The promo code that was accepted, or null. */
   promoCodeApplied: string | null;
+  subscriptionStartDate: string;
+  subscriptionEndDate: string;
 }
 
 export interface B2bQuoteRequestInput extends B2bQuoteInput {
@@ -111,8 +142,14 @@ export interface B2bQuote extends B2bPrice {
   selectedPackage: B2bPackage;
   numberOfStudents: number;
   numberOfTeachers: number;
+  /** Null on quotes sent before plan settings existed. */
+  academicWeeks: number | null;
+  studentDaysPerWeek: number | null;
+  teacherDaysPerWeek: number | null;
   studentDailyTokenLimit: number;
   teacherDailyTokenLimit: number;
+  subscriptionStartDate: string | null;
+  subscriptionEndDate: string | null;
   promoCode: string | null;
   message: string | null;
   status: B2bQuoteStatus;

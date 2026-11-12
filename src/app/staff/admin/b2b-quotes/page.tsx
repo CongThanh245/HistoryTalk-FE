@@ -31,6 +31,9 @@ const PAGE_SIZES = [10, 20, 50];
 const STATUS_FILTERS: (B2bQuoteStatus | "ALL")[] = ["ALL", "PENDING", "CONTACTED", "APPROVED", "REJECTED"];
 const quotesKey = ["admin", "b2b-quotes"] as const;
 
+/** yyyy-MM-dd → dd/MM/yyyy. */
+const formatDay = (iso: string) => iso.split("-").reverse().join("/");
+
 const STATUS_STYLES: Record<B2bQuoteStatus, string> = {
   PENDING: "border-[var(--status-warning)] text-[var(--status-warning)]",
   CONTACTED: "border-[var(--accent-blue)] text-[var(--accent-blue)]",
@@ -144,7 +147,7 @@ function QuotesContent() {
                 <caption className="sr-only">Yêu cầu báo giá trường học</caption>
                 <TableHeader>
                   <TableRow className="border-b border-border-card">
-                    {["Mã", "Trường", "Liên hệ", "Quy mô", "Tổng năm học", "Ngày gửi", "Trạng thái"].map((h) => (
+                    {["Mã", "Trường", "Liên hệ", "Quy mô", "Tổng cả gói", "Ngày gửi", "Trạng thái"].map((h) => (
                       <TableHead key={h} className="px-3 text-[13px] font-semibold text-[var(--text-tertiary)]">
                         {h}
                       </TableHead>
@@ -328,13 +331,25 @@ function QuoteSheet({ quoteId, onClose }: { quoteId: string | null; onClose: () 
                 <Detail label="Quy mô">
                   {formatNumber(quote.numberOfStudents)} học sinh · {formatNumber(quote.numberOfTeachers)} giáo viên
                 </Detail>
-                <Detail label="Quỹ token">{formatNumber(quote.totalTokenPool)} token/năm học</Detail>
+                {quote.subscriptionStartDate && quote.subscriptionEndDate && (
+                  <Detail label="Thời gian">
+                    {formatDay(quote.subscriptionStartDate)} – {formatDay(quote.subscriptionEndDate)}
+                    {quote.academicWeeks != null && <span className="text-content-muted"> · {quote.academicWeeks} tuần học</span>}
+                  </Detail>
+                )}
+                <Detail label="Hạn mức">
+                  HS {formatNumber(quote.studentDailyTokenLimit)} token/ngày
+                  {quote.studentDaysPerWeek != null && ` × ${quote.studentDaysPerWeek} ngày/tuần`} · GV{" "}
+                  {formatNumber(quote.teacherDailyTokenLimit)} token/ngày
+                  {quote.teacherDaysPerWeek != null && ` × ${quote.teacherDaysPerWeek} ngày/tuần`}
+                </Detail>
+                <Detail label="Quỹ token">{formatNumber(quote.totalTokenPool)} token cả gói</Detail>
                 <Detail label="Tạm tính">{formatVnd(quote.subtotalVnd)}</Detail>
                 <Detail label="Chiết khấu">
                   {quote.discountPercent}% (−{formatVnd(quote.discountAmountVnd)})
                   {quote.promoCode && <span className="text-content-muted"> · mã {quote.promoCode}</span>}
                 </Detail>
-                <Detail label="Tổng năm học">
+                <Detail label="Tổng cả gói">
                   <strong>{formatVnd(quote.finalPriceVnd)}</strong>
                 </Detail>
                 {quote.message && <Detail label="Ghi chú của trường">{quote.message}</Detail>}
