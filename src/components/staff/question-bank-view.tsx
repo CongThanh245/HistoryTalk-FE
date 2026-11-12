@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, Library, Link2, Pencil, Plus, Search, Trash2, X,
+  ArrowLeft, ChevronRight, Library, Link2, Pencil, Plus, Search, Trash2, X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -34,7 +34,11 @@ import type { QuestionBankItem, QuestionDifficulty } from "@/services/staff.quiz
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { cn } from "@/lib/utils/cn";
 
-const PAGE_SIZE = 20;
+// Questions carry no context in BE; the context comes from the quizzes they sit in. Grouping by context needs the
+// whole (filtered) bank at once, so fetch one large page and group on the client.
+const PAGE_SIZE = 500;
+const UNASSIGNED_GROUP = "__unassigned__";
+const NO_CONTEXT_GROUP = "__no_context__";
 const TYPE_FILTERS: { value: QuestionType | ""; label: string }[] = [
   { value: "", label: "Tất cả" },
   { value: "MULTIPLE_CHOICE", label: QUESTION_TYPE_LABELS.MULTIPLE_CHOICE },
@@ -42,25 +46,34 @@ const TYPE_FILTERS: { value: QuestionType | ""; label: string }[] = [
   { value: "MATCHING", label: QUESTION_TYPE_LABELS.MATCHING },
 ];
 
+interface QuestionGroup {
+  key: string;
+  title: string;
+  items: QuestionBankItem[];
+}
+
 /** Ngan hang cau hoi doc lap: CRUD + gan / go cau hoi vao quiz (GET/POST/PUT/PATCH/DELETE /staff/question-bank). */
 export function QuestionBankView({ onBack }: { onBack: () => void }) {
   const [search, setSearch] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState<QuestionType | "">("");
   const [difficultyFilter, setDifficultyFilter] = React.useState<QuestionDifficulty | "">("");
-  const [page, setPage] = React.useState(0);
   const [editing, setEditing] = React.useState<QuestionBankItem | "new" | null>(null);
+  /** Group whose copy of the edited question shows the form (a question can sit in several groups). */
+  const [editingGroup, setEditingGroup] = React.useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<QuestionBankItem | null>(null);
   const [attachTarget, setAttachTarget] = React.useState<QuestionBankItem | null>(null);
   const [attachQuizId, setAttachQuizId] = React.useState("");
+  /** Open context groups. null = default: open when there is only one group or a search is typed. */
+  const [openGroups, setOpenGroups] = React.useState<Set<string> | null>(null);
   const quizSearch = useSelectSearch();
 
   const params = React.useMemo(() => ({
     ...(search.trim() && { search: search.trim() }),
     ...(typeFilter && { questionType: typeFilter }),
     ...(difficultyFilter && { difficulty: difficultyFilter }),
-    page,
+    page: 0,
     size: PAGE_SIZE,
-  }), [search, typeFilter, difficultyFilter, page]);
+  }), [search, typeFilter, difficultyFilter]);
 
   const { data, isLoading, isError, refetch } = useQuestionBank(params);
   // BE chi tra co `assignedToQuiz`; tim quiz chua cau hoi qua danh sach quiz (co kem questions).
@@ -76,12 +89,49 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
   const attach = useAttachBankQuestion();
   const detach = useDetachBankQuestion();
 
-  const items = data?.content ?? [];
-  const totalPages = data?.totalPages ?? 1;
+  const items = React.useMemo(() => data?.content ?? [], [data?.content]);
   const totalItems = data?.totalElements ?? 0;
 
   const linkedQuizzes = (questionId: string) =>
     quizzes.filter((quiz) => quiz.questions.some((q) => q.questionId === questionId));
+
+  // One group per context of the quizzes a question is in (a question used under two contexts shows in both).
+  // Questions in no quiz go last, under "Chưa gắn bộ đề nào".
+  const groups = React.useMemo<QuestionGroup[]>(() => {
+    const byContext = new Map<string, QuestionGroup>();
+    const unassigned: QuestionBankItem[] = [];
+    for (const item of items) {
+      const contexts = new Map<string, string>();
+      for (const quiz of quizzes) {
+        if (quiz.questions.some((q) => q.questionId === item.questionId)) {
+          contexts.set(quiz.contextId || NO_CONTEXT_GROUP, quiz.contextTitle || "Bộ đề chưa có bối cảnh");
+        }
+      }
+      if (contexts.size === 0) {
+        unassigned.push(item);
+        continue;
+      }
+      for (const [key, title] of contexts) {
+        const group = byContext.get(key) ?? { key, title, items: [] };
+        group.items.push(item);
+        byContext.set(key, group);
+      }
+    }
+    const sorted = [...byContext.values()].sort((a, b) => a.title.localeCompare(b.title, "vi"));
+    if (unassigned.length) sorted.push({ key: UNASSIGNED_GROUP, title: "Chưa gắn bộ đề nào", items: unassigned });
+    return sorted;
+  }, [items, quizzes]);
+
+  const isGroupOpen = (key: string) =>
+    openGroups ? openGroups.has(key) : groups.length === 1 || !!search.trim();
+  const toggleGroup = (key: string) =>
+    setOpenGroups((current) => {
+      const next = new Set(current ?? groups.filter((g) => isGroupOpen(g.key)).map((g) => g.key));
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  const allOpen = groups.length > 0 && groups.every((g) => isGroupOpen(g.key));
 
   const handleSave = (draft: QuizQuestion) => {
     const payload = toQuestionPayload(draft);
@@ -131,11 +181,77 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
     ? quizzes.filter((quiz) => !quiz.questions.some((q) => q.questionId === attachTarget.questionId))
     : [];
 
+  const renderItem = (item: QuestionBankItem, groupKey: string) => {
+    if (editing !== "new" && editing?.questionId === item.questionId && editingGroup === groupKey) {
+      return (
+        <QuestionForm
+          key={item.questionId}
+          initial={fromStaffQuestion(item)}
+          orderIndex={1}
+          onSave={handleSave}
+          onCancel={() => setEditing(null)}
+          isSaving={updateQuestion.isPending}
+        />
+      );
+    }
+    const linked = linkedQuizzes(item.questionId);
+    return (
+      <div
+        key={item.questionId}
+        className="flex items-start gap-4 rounded-sm border border-card-light-border bg-card-light-bg px-5 py-4 group transition-all hover:border-[var(--text-primary)]"
+      >
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold leading-relaxed text-content-text">{item.content}</p>
+          <QuestionAnswerSummary q={fromStaffQuestion(item)} />
+          {(linked.length > 0 || item.assignedToQuiz) && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-semibold text-content-subtle">Trong quiz:</span>
+              {linked.length === 0 && (
+                <span className="text-xs text-content-muted">Đã gắn vào quiz</span>
+              )}
+              {linked.map((quiz) => (
+                <span
+                  key={quiz.quizId}
+                  className="inline-flex items-center gap-1 rounded-sm border border-[var(--border-default)] bg-[var(--status-neutral-bg)] px-2 py-0.5 text-xs text-content-text"
+                >
+                  {quiz.title}
+                  <button
+                    type="button"
+                    className="text-content-subtle hover:text-accent-danger disabled:opacity-50"
+                    disabled={detach.isPending}
+                    onClick={() => handleDetach(item.questionId, quiz.quizId, quiz.title)}
+                    title="Gỡ khỏi quiz"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-content-heading"
+            onClick={() => { setAttachTarget(item); setAttachQuizId(""); }} title="Gắn vào quiz">
+            <Link2 className="h-4 w-4" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-accent-blue"
+            disabled={editing !== null} onClick={() => { setEditing(item); setEditingGroup(groupKey); }} title="Sửa">
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-accent-danger"
+            onClick={() => setDeleteTarget(item)} title="Xoá">
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <StaffShell
       title="Ngân hàng câu hỏi"
       label="Nội dung"
-      description="Kho câu hỏi dùng chung (trắc nghiệm, điền chỗ trống, nối cặp) — có thể gắn vào nhiều quiz."
+      description="Kho câu hỏi dùng chung (trắc nghiệm, điền chỗ trống, nối cặp), chia theo bối cảnh của bộ đề chứa câu hỏi."
       icon={Library}
     >
       <button
@@ -153,7 +269,7 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
               <button
                 key={opt.value || "all"}
                 type="button"
-                onClick={() => { setTypeFilter(opt.value); setPage(0); }}
+                onClick={() => setTypeFilter(opt.value)}
                 className={cn(
                   "px-3 h-8 rounded-sm text-xs font-semibold border transition-all",
                   typeFilter === opt.value
@@ -169,7 +285,7 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
               <button
                 key={value || "all-difficulty"}
                 type="button"
-                onClick={() => { setDifficultyFilter(value); setPage(0); }}
+                onClick={() => setDifficultyFilter(value)}
                 className={cn(
                   "px-3 h-8 rounded-sm text-xs font-semibold border transition-all",
                   difficultyFilter === value
@@ -186,7 +302,7 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-content-subtle" />
               <Input
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm câu hỏi..."
                 className="pl-9 h-9 w-[220px] rounded-sm border-0 bg-[var(--status-neutral-bg)]"
               />
@@ -222,92 +338,57 @@ export function QuestionBankView({ onBack }: { onBack: () => void }) {
             </Button>
           </div>
         ) : items.length === 0 ? (
-          <p className="py-10 text-center text-sm text-content-muted">Chưa có câu hỏi nào trong ngân hàng.</p>
+          <p className="py-10 text-center text-sm text-content-muted">
+            {search.trim() || typeFilter || difficultyFilter ? "Không có câu hỏi nào khớp bộ lọc." : "Chưa có câu hỏi nào trong ngân hàng."}
+          </p>
         ) : (
-          <div className="space-y-2">
-            {items.map((item) => {
-              if (editing !== "new" && editing?.questionId === item.questionId) {
-                return (
-                  <QuestionForm
-                    key={item.questionId}
-                    initial={fromStaffQuestion(item)}
-                    orderIndex={1}
-                    onSave={handleSave}
-                    onCancel={() => setEditing(null)}
-                    isSaving={updateQuestion.isPending}
-                  />
-                );
-              }
-              const linked = linkedQuizzes(item.questionId);
-              return (
-                <div
-                  key={item.questionId}
-                  className="flex items-start gap-4 rounded-sm border border-card-light-border bg-card-light-bg px-5 py-4 group transition-all hover:border-[var(--text-primary)]"
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3 px-1">
+              <p className="text-xs text-content-muted">
+                {totalItems} câu hỏi · {groups.length} nhóm
+              </p>
+              {groups.length > 1 && (
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-content-muted hover:text-content-heading"
+                  onClick={() => setOpenGroups(allOpen ? new Set() : new Set(groups.map((g) => g.key)))}
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold leading-relaxed text-content-text">{item.content}</p>
-                    <QuestionAnswerSummary q={fromStaffQuestion(item)} />
-                    {(linked.length > 0 || item.assignedToQuiz) && (
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <span className="text-xs font-semibold text-content-subtle">Trong quiz:</span>
-                        {linked.length === 0 && (
-                          <span className="text-xs text-content-muted">Đã gắn vào quiz</span>
-                        )}
-                        {linked.map((quiz) => (
-                          <span
-                            key={quiz.quizId}
-                            className="inline-flex items-center gap-1 rounded-sm border border-[var(--border-default)] bg-[var(--status-neutral-bg)] px-2 py-0.5 text-xs text-content-text"
-                          >
-                            {quiz.title}
-                            <button
-                              type="button"
-                              className="text-content-subtle hover:text-accent-danger disabled:opacity-50"
-                              disabled={detach.isPending}
-                              onClick={() => handleDetach(item.questionId, quiz.quizId, quiz.title)}
-                              title="Gỡ khỏi quiz"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-content-heading"
-                      onClick={() => { setAttachTarget(item); setAttachQuizId(""); }} title="Gắn vào quiz">
-                      <Link2 className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-accent-blue"
-                      disabled={editing !== null} onClick={() => setEditing(item)} title="Sửa">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon-sm" className="rounded-sm h-8 w-8 text-accent-danger"
-                      onClick={() => setDeleteTarget(item)} title="Xoá">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {allOpen ? "Thu gọn tất cả" : "Mở tất cả"}
+                </button>
+              )}
+            </div>
+
+            {groups.map((group) => {
+              const open = isGroupOpen(group.key);
+              const muted = group.key === UNASSIGNED_GROUP || group.key === NO_CONTEXT_GROUP;
+              return (
+                <div key={group.key} className="overflow-hidden rounded-sm border border-card-light-border">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.key)}
+                    aria-expanded={open}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-[var(--status-neutral-bg)]"
+                  >
+                    <ChevronRight className={cn("h-4 w-4 shrink-0 text-content-muted transition-transform", open && "rotate-90")} />
+                    <span className={cn("min-w-0 flex-1 truncate text-sm font-semibold", muted ? "text-content-muted" : "text-content-heading")}>
+                      {group.title}
+                    </span>
+                    <span className="shrink-0 text-xs text-content-muted">{group.items.length} câu</span>
+                  </button>
+                  {open && (
+                    <div className="space-y-2 border-t border-card-light-border p-3">
+                      {group.items.map((item) => renderItem(item, group.key))}
+                    </div>
+                  )}
                 </div>
               );
             })}
-          </div>
-        )}
 
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-content-subtle">
-              Trang {page + 1} / {totalPages} · {totalItems} câu hỏi
-            </p>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon-sm" className="rounded-sm"
-                disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon-sm" className="rounded-sm"
-                disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            {totalItems > items.length && (
+              <p className="px-1 text-xs text-content-subtle">
+                Đang hiện {items.length} / {totalItems} câu hỏi. Dùng ô tìm kiếm hoặc bộ lọc để thu hẹp.
+              </p>
+            )}
           </div>
         )}
       </section>
