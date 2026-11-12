@@ -7,11 +7,11 @@ import {
   type CreateQuestionPayload,
   type UpdateQuizPayload,
   type UpdateQuestionPayload,
-  type ImportQuizFromCsvResponse,
+  type ImportQuizFromCsvPayload,
+  type StaffQuizSet,
   type GetQuestionBankParams,
 } from "@/services/staff.quiz.service";
 import { toast } from "sonner";
-import { getApiErrorMessage } from "@/lib/utils/api-error";
 
 // GET /staff/quizzes — danh sách quiz của staff
 export function useStaffQuizzes(params?: GetStaffQuizzesParams) {
@@ -151,34 +151,16 @@ export function useDeleteQuizQuestion() {
   });
 }
 
-// POST /staff/quizzes/import — import quiz từ CSV
+// POST /staff/quizzes/import — tạo 1 bộ đề nháp từ CSV (tiêu đề + bối cảnh lấy từ form).
+// Errors are left to the caller: the 400 message is multi-line and needs pre-line rendering.
 export function useImportQuizzesFromCsv() {
   const queryClient = useQueryClient();
-  return useMutation<ImportQuizFromCsvResponse, Error, File>({
-    mutationFn: (file: File) => staffQuizService.importFromCsv(file),
-    onSuccess: (result) => {
+  return useMutation<StaffQuizSet, Error, ImportQuizFromCsvPayload>({
+    mutationFn: (payload) => staffQuizService.importFromCsv(payload),
+    onSuccess: (quiz) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.staffQuizzes.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.all });
-
-      if (result.successCount > 0) {
-        toast.success(`Đã import thành công ${result.successCount} bộ quiz từ CSV`);
-      }
-
-      if (result.skippedCount > 0) {
-        toast.warning(`Đã bỏ qua ${result.skippedCount} bộ quiz (trùng lặp hoặc lỗi)`);
-      }
-
-      if (result.errors.length > 0) {
-        result.errors.slice(0, 3).forEach((error) => {
-          toast.error(error);
-        });
-        if (result.errors.length > 3) {
-          toast.error(`... và ${result.errors.length - 3} lỗi khác`);
-        }
-      }
-    },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "Import CSV thất bại"));
+      toast.success(`Đã tạo bộ đề "${quiz.title}" với ${quiz.questions.length} câu hỏi từ CSV.`);
     },
   });
 }

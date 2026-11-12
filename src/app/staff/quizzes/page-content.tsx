@@ -6,7 +6,7 @@ import {
   ClipboardList, Trash2, ArrowLeft,
   Pencil, Eye, EyeOff, Undo2,
   ChevronLeft, ChevronRight, Upload,
-  Search, Plus, Library, MoreHorizontal, Download, ChevronDown,
+  Search, Plus, Library, MoreHorizontal, Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -142,6 +142,21 @@ export default function StaffQuizzesPage() {
   // ── CSV Import ─────────────────────────────────────────────
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const importCsv = useImportQuizzesFromCsv();
+
+  // The importer's own template: right columns, BOM for Excel, one example per question type.
+  const downloadCsvTemplate = async () => {
+    try {
+      const blob = await staffQuizService.downloadImportTemplate();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "quiz-import-template.csv";
+      a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch {
+      toast.error("Không tải được file mẫu. Vui lòng thử lại.");
+    }
+  };
 
   // ── API hooks ─────────────────────────────────────────────
   const params = React.useMemo(() => ({
@@ -691,6 +706,79 @@ export default function StaffQuizzesPage() {
             ) : (
               isDirty && <p className="text-xs text-content-muted">Có thay đổi chưa lưu.</p>
             )}
+
+            {/* Creating from CSV lives on the create page, next to the manual form. */}
+            {editorMode === "create" && (
+              <div className="space-y-2 border-t pt-4 border-border-card">
+                <h3 className="text-sm font-semibold text-content-subtle">Hoặc nhập từ file CSV</h3>
+                <p className="text-xs text-content-muted">
+                  Dùng Tiêu đề và Bối cảnh ở trên; mỗi dòng trong file là một câu hỏi. Chỉ cần một câu lỗi thì
+                  cả file không được lưu.
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      importCsv.mutate(
+                        { file, title: draft.title.trim(), contextId: draft.contextId },
+                        {
+                          onSuccess: (quiz) => {
+                            refetchQuizzes();
+                            // Open the new draft quiz so staff can review the imported questions.
+                            setQuestionFormOpen(false);
+                            openEdit(quiz);
+                          },
+                          onError: (error) => {
+                            // 400 lists every bad row on its own line ("Câu hỏi N: ...").
+                            toast.error("Nhập CSV thất bại", {
+                              description: (
+                                <span className="whitespace-pre-line">
+                                  {getApiErrorMessage(error, "Vui lòng kiểm tra lại file CSV.")}
+                                </span>
+                              ),
+                              duration: 10000,
+                            });
+                          },
+                        },
+                      );
+                    }
+                    e.target.value = "";
+                  }}
+                />
+                <div className="flex flex-col gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full gap-1.5 font-semibold border-card-light-border bg-transparent text-content-heading"
+                    disabled={importCsv.isPending || !draft.title.trim() || !draft.contextId || questionFormOpen}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                    {importCsv.isPending ? "Đang nhập CSV..." : "Nhập câu hỏi từ CSV"}
+                  </Button>
+                  {(!draft.title.trim() || !draft.contextId) && (
+                    <p className="text-xs text-[var(--status-warning)]">Nhập tiêu đề và chọn bối cảnh trước khi nhập CSV.</p>
+                  )}
+                  {draft.questions.length > 0 && (
+                    <p className="text-xs text-content-muted">
+                      Nhập CSV tạo bộ đề chỉ từ file, {draft.questions.length} câu soạn tay ở bên phải sẽ không được lưu.
+                    </p>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full gap-1.5 text-content-muted"
+                    onClick={downloadCsvTemplate}
+                  >
+                    <Download className="h-4 w-4" /> Tải file mẫu CSV
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ── Question panel ── */}
@@ -775,24 +863,6 @@ export default function StaffQuizzesPage() {
             )}
             {!showTrash && (
               <>
-                {/* Hidden file input for CSV import */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      importCsv.mutate(file, {
-                        onSuccess: () => {
-                          refetchQuizzes();
-                        },
-                      });
-                    }
-                    e.target.value = "";
-                  }}
-                />
                 <Button
                   variant="outline"
                   className="h-9 rounded-sm px-4 font-semibold gap-1.5 border-card-light-border text-content-heading"
@@ -801,48 +871,15 @@ export default function StaffQuizzesPage() {
                   <Trash2 className="h-3.5 w-3.5" />
                   Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}
                 </Button>
-                {/* Every way to make a quiz lives under "Tạo bộ đề": blank, from CSV, and the CSV template. */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      size="sm"
-                      className="h-9 rounded-sm px-4 font-semibold gap-1.5 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
-                      disabled={importCsv.isPending}
-                    >
-                      <Plus className="h-4 w-4" />
-                      {importCsv.isPending ? "Đang nhập CSV..." : "Tạo bộ đề"}
-                      <ChevronDown className="h-4 w-4 opacity-80" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={openCreate}>
-                      <Plus className="h-4 w-4" /> Tạo bộ đề mới
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                      <Upload className="h-4 w-4" /> Nhập bộ đề từ CSV
-                    </DropdownMenuItem>
-                    {/* The importer's own template: right columns, BOM for Excel, one example per question type. */}
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        try {
-                          const blob = await staffQuizService.downloadImportTemplate();
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = "quiz-import-template.csv";
-                          a.click();
-                          window.setTimeout(() => URL.revokeObjectURL(url), 0);
-                          toast.info("Thay contextId bằng mã bối cảnh thật trước khi nhập (xem ở trang Bối cảnh).");
-                        } catch {
-                          toast.error("Không tải được file mẫu. Vui lòng thử lại.");
-                        }
-                      }}
-                    >
-                      <Download className="h-4 w-4" /> Tải file mẫu CSV
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {/* CSV import + template live on the create page itself. */}
+                <Button
+                  size="sm"
+                  className="h-9 rounded-sm px-4 font-semibold gap-1.5 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
+                  onClick={openCreate}
+                >
+                  <Plus className="h-4 w-4" />
+                  Tạo bộ đề
+                </Button>
               </>
             )}
           </div>

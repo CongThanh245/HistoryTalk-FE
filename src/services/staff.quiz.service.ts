@@ -117,12 +117,11 @@ export interface GetQuestionBankResponse {
 
 // ── Import CSV Types ──────────────────────────────────────
 
-export interface ImportQuizFromCsvResponse {
-  totalQuizzesAttempted: number;
-  successCount: number;
-  skippedCount: number;
-  errors: string[];
-  imported: StaffQuizSet[];
+// One CSV = one draft quiz; title and context come from the form, each CSV row is a question.
+export interface ImportQuizFromCsvPayload {
+  file: File;
+  contextId: string;
+  title: string;
 }
 
 type RawStaffQuizQuestion = Record<string, unknown>;
@@ -264,22 +263,18 @@ export const staffQuizService = {
   },
 
   // POST /staff/quizzes/import
-  importFromCsv: async (file: File): Promise<ImportQuizFromCsvResponse> => {
+  // All-or-nothing: any bad row fails with 400 listing every bad row ("Câu hỏi N: ..."), nothing saved.
+  importFromCsv: async ({ file, contextId, title }: ImportQuizFromCsvPayload): Promise<StaffQuizSet> => {
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("contextId", contextId);
+    formData.append("title", title);
     const res = await axiosClient.post("/staff/quizzes/import", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
-    const data = res.data.data;
-    return {
-      totalQuizzesAttempted: data.totalQuizzesAttempted ?? 0,
-      successCount: data.successCount ?? 0,
-      skippedCount: data.skippedCount ?? 0,
-      errors: data.errors ?? [],
-      imported: (data.imported ?? []).map(mapStaffQuizSet),
-    };
+    return mapStaffQuizSet(res.data.data);
   },
 
 
