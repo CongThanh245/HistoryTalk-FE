@@ -551,40 +551,34 @@ export default function StaffDocumentsPage() {
         ),
       },
       {
-        accessorKey: "ownerType",
-        header: "Loại liên kết",
+        accessorKey: "ownerName",
+        header: "Gắn với",
         cell: ({ row }) => {
           const isCharacter = row.original.ownerType === "character";
           return (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs font-semibold",
-                isCharacter
-                  ? "border-accent-blue/25 bg-accent-blue/10 text-accent-blue"
-                  : "border-accent-gold/30 bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]"
+            <div className="min-w-[180px]">
+              <p className="text-sm font-medium text-content-heading">
+                {row.original.ownerName}
+              </p>
+              {row.original.ownerSubtitle && (
+                <p className="text-xs text-content-muted">
+                  {row.original.ownerSubtitle}
+                </p>
               )}
-            >
-              {isCharacter ? <User className="h-3.5 w-3.5" /> : <Scroll className="h-3.5 w-3.5" />}
-              {isCharacter ? "Nhân vật" : "Bối cảnh"}
-            </span>
+              <span
+                className={cn(
+                  "mt-1 inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[11px] font-semibold",
+                  isCharacter
+                    ? "border-accent-blue/25 bg-accent-blue/10 text-accent-blue"
+                    : "border-accent-gold/30 bg-[var(--accent-gold-active-bg)] text-[var(--gold-on-light)]"
+                )}
+              >
+                {isCharacter ? <User className="h-3 w-3" /> : <Scroll className="h-3 w-3" />}
+                {isCharacter ? "Nhân vật" : "Bối cảnh"}
+              </span>
+            </div>
           );
         },
-      },
-      {
-        accessorKey: "ownerName",
-        header: "Đang gắn với",
-        cell: ({ row }) => (
-          <div className="min-w-[180px]">
-            <p className="text-sm font-medium text-content-heading">
-              {row.original.ownerName}
-            </p>
-            {row.original.ownerSubtitle && (
-              <p className="text-xs text-content-muted">
-                {row.original.ownerSubtitle}
-              </p>
-            )}
-          </div>
-        ),
       },
       {
         id: "linkedCharacters",
