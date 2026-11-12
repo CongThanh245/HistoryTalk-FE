@@ -38,6 +38,29 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
+const readLatestStoredTokens = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem("auth-storage");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      state?: {
+        tokens?: ReturnType<typeof useAuthStore.getState>["tokens"];
+      };
+    };
+    return parsed?.state?.tokens ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const withCrossTabRefreshLock = async <T>(fn: () => Promise<T>): Promise<T> => {
+  if (typeof navigator !== "undefined" && navigator.locks?.request) {
+    return navigator.locks.request("historytalk-refresh-token", fn);
+  }
+  return fn();
+};
+
 // Refresh access token dùng chung cho axios interceptor lẫn các request fetch() thô (vd: SSE stream)
 // không đi qua axiosClient nên không tự động được interceptor bên dưới xử lý 401.
 export const refreshAccessToken = async (): Promise<string> => {
@@ -47,8 +70,8 @@ export const refreshAccessToken = async (): Promise<string> => {
     });
   }
 
-  const refreshToken = useAuthStore.getState().tokens?.refreshToken;
-  if (!refreshToken) {
+  const initialRefreshToken = useAuthStore.getState().tokens?.refreshToken;
+  if (!initialRefreshToken) {
     // Không có refresh token nghĩa là user chưa đăng nhập hoặc vừa logout —
     // đây không phải trường hợp "phiên hết hạn" nên không hiện SessionExpiredDialog.
     throw new Error("No refresh token");
@@ -57,30 +80,50 @@ export const refreshAccessToken = async (): Promise<string> => {
   isRefreshing = true;
 
   try {
-    const { data } = await axiosClient.post(
-      "/auth/refresh-token",
-      { refreshToken },
-      { skipAuthRefresh: true } as RetryConfig,
-    );
+    return await withCrossTabRefreshLock(async () => {
+      // Another tab may have already rotated the refresh token while we waited for the lock.
+      const latestTokens = readLatestStoredTokens();
+      if (
+        latestTokens?.accessToken &&
+        latestTokens.refreshToken &&
+        latestTokens.refreshToken !== initialRefreshToken
+      ) {
+        useAuthStore.getState().setTokens(latestTokens);
+        const role = useAuthStore.getState().user?.role;
+        if (role) {
+          persistAuthCookies(latestTokens.accessToken, role, latestTokens.expiresIn);
+        }
+        processQueue(null, latestTokens.accessToken);
+        return latestTokens.accessToken;
+      }
 
-    if (!data.success) throw new Error("Refresh failed");
+      const activeRefreshToken = latestTokens?.refreshToken ?? initialRefreshToken;
 
-    const newAccessToken = data.data.accessToken;
+      const { data } = await axiosClient.post(
+        "/auth/refresh-token",
+        { refreshToken: activeRefreshToken },
+        { skipAuth: true, skipAuthRefresh: true } as RetryConfig,
+      );
 
-    useAuthStore.getState().setTokens({
-      accessToken: newAccessToken,
-      refreshToken: data.data.refreshToken,
-      tokenType: data.data.tokenType,
-      expiresIn: data.data.expiresIn,
+      if (!data.success) throw new Error("Refresh failed");
+
+      const newAccessToken = data.data.accessToken;
+
+      useAuthStore.getState().setTokens({
+        accessToken: newAccessToken,
+        refreshToken: data.data.refreshToken,
+        tokenType: data.data.tokenType,
+        expiresIn: data.data.expiresIn,
+      });
+
+      const role = useAuthStore.getState().user?.role;
+      if (role) {
+        persistAuthCookies(newAccessToken, role, data.data.expiresIn);
+      }
+
+      processQueue(null, newAccessToken);
+      return newAccessToken;
     });
-
-    const role = useAuthStore.getState().user?.role;
-    if (role) {
-      persistAuthCookies(newAccessToken, role, data.data.expiresIn);
-    }
-
-    processQueue(null, newAccessToken);
-    return newAccessToken;
   } catch (refreshError) {
     processQueue(refreshError, null);
 

@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { formatVietnamDateTime } from "@/lib/utils/datetime";
 import {
   UsersIcon,
   TrendingUpIcon,
@@ -62,16 +63,7 @@ function formatBytes(bytes: number) {
 }
 
 function fmtDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
+  return formatVietnamDateTime(iso, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }, iso);
 }
 
 function formatVND(amount?: number) {

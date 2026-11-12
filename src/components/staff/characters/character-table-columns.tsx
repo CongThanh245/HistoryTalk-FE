@@ -3,6 +3,7 @@
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import { MoreHorizontal, Trash2, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { formatVietnamDate, formatVietnamDateTime } from "@/lib/utils/datetime";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -42,9 +43,7 @@ const publishStatusSorting: SortingFn<Character> = (rowA, rowB, columnId) => {
 };
 
 function formatDate(value?: string | null) {
-  if (!value) return "—";
-  const date = new Date(value);
-  return isNaN(date.getTime()) ? "—" : date.toLocaleDateString("vi-VN");
+  return formatVietnamDate(value);
 }
 
 function getCreatorName(value: Character["createdBy"]) {
@@ -283,10 +282,9 @@ export function createCharacterTrashColumns({
       accessorKey: "deletedAt",
       header: "Đã xóa lúc",
       cell: ({ row }) => {
-        const date = new Date(row.original.deletedAt);
         return (
           <span className="text-xs text-accent-danger">
-            {!isNaN(date.getTime()) ? date.toLocaleString("vi-VN") : "—"}
+            {formatVietnamDateTime(row.original.deletedAt)}
           </span>
         );
       },

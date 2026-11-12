@@ -11,6 +11,12 @@ import { apiErrorMessage, apiErrorStatus } from "@/features/saas/hooks-api";
 import { useClassroomAssignments } from "@/features/saas/hooks-assignment-api";
 import type { AssignmentStatus, AssignmentType, SubmissionStatus, TeacherAssignment } from "@/services/assignment.service";
 import { cn } from "@/lib/utils/cn";
+import {
+  formatVietnamDateTime,
+  parseUtcDate,
+  utcToVietnamInput,
+  vietnamInputToUtc,
+} from "@/lib/utils/datetime";
 
 /**
  * Bai tap cua giao vien tren API that (GET /teacher/assignments/classroom/{id}).
@@ -105,17 +111,12 @@ export function DeadlineBadge({ deadline }: { deadline: string }) {
 
 /* ───────────────────────── Helpers ───────────────────────── */
 
-/** LocalDateTime cua BE ("YYYY-MM-DDTHH:mm:ss", khong mui gio) -> Date theo gio may. */
-export function parseLocalDateTime(value: string | null | undefined): Date | null {
-  if (!value) return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
+/** UTC timestamp cua BE -> Date. */
+export const parseLocalDateTime = parseUtcDate;
 
 export function formatLocalDateTime(value: string | null | undefined): string {
-  const d = parseLocalDateTime(value);
-  if (!d) return value ? value : "—";
-  return d.toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const formatted = formatVietnamDateTime(value, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }, "");
+  return formatted || (value ? value : "—");
 }
 
 export function isPastDeadline(deadline: string | null | undefined): boolean {
@@ -123,11 +124,11 @@ export function isPastDeadline(deadline: string | null | undefined): boolean {
   return d ? d.getTime() < Date.now() : false;
 }
 
-/** LocalDateTime -> gia tri cho <input type="datetime-local">. */
-export const toDateTimeInput = (value: string | null | undefined) => (value ? value.slice(0, 16) : "");
+/** UTC timestamp -> gia tri gio VN cho <input type="datetime-local">. */
+export const toDateTimeInput = utcToVietnamInput;
 
-/** Gia tri <input type="datetime-local"> -> "YYYY-MM-DDTHH:mm:00" cho BE. */
-export const fromDateTimeInput = (value: string) => (value.length >= 16 ? `${value.slice(0, 16)}:00` : "");
+/** Gia tri <input type="datetime-local"> (gio VN) -> ISO-8601 UTC cho BE. */
+export const fromDateTimeInput = vietnamInputToUtc;
 
 export function formatDuration(seconds: number | null | undefined): string {
   if (seconds == null) return "—";
