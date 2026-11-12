@@ -83,7 +83,6 @@ export function NewDocumentPanel({
   const [extractImages, setExtractImages] = React.useState(false);
   const [extractedWithImages, setExtractedWithImages] = React.useState(false);
   const [enableAiVision, setEnableAiVision] = React.useState(false);
-  const [viewMode, setViewMode] = React.useState<"split" | "edit" | "preview">("split");
   const deferredContent = React.useDeferredValue(content);
   const [ocrProgress, setOcrProgress] = React.useState<{ page: number; total: number } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -188,7 +187,6 @@ export function NewDocumentPanel({
     setContent("");
     setExtractImages(false);
     setEnableAiVision(false);
-    setViewMode("split");
     clearFile();
   };
 
@@ -218,7 +216,7 @@ export function NewDocumentPanel({
     setPickError(null);
     // When swapping an already-extracted file, keep it until the new one succeeds so a failed or cancelled
     // swap puts the previous file (and any edits to its text) back instead of leaving nothing.
-    const previous = file && extracted ? { file, previewUrl, extracted, content, extractedWithImages, viewMode } : null;
+    const previous = file && extracted ? { file, previewUrl, extracted, content, extractedWithImages } : null;
     const shouldExtractImages = extractImages || enableAiVision;
     const newPreviewUrl = URL.createObjectURL(picked);
     setFile(picked);
@@ -237,7 +235,6 @@ export function NewDocumentPanel({
       );
       setExtracted(result);
       setExtractedWithImages(shouldExtractImages);
-      setViewMode(shouldExtractImages ? "split" : "edit");
       setContent(result.rawText);
       setTitle((current) => current.trim() || picked.name.replace(/\.pdf$/i, ""));
       setPdfPhase("review");
@@ -253,7 +250,6 @@ export function NewDocumentPanel({
         setPreviewUrl(previous.previewUrl);
         setExtracted(previous.extracted);
         setExtractedWithImages(previous.extractedWithImages);
-        setViewMode(previous.viewMode);
         setContent(previous.content);
         setOcrProgress(null);
         setPdfPhase("review");
@@ -560,7 +556,6 @@ export function NewDocumentPanel({
       {showContentEditor && (() => {
         const imageCount = (content.match(/!\[.*?\]\(.*?\)/g) || []).length;
         const showMarkdownPreview = step !== "pdf" || extractedWithImages;
-        const effectiveViewMode = showMarkdownPreview ? viewMode : "edit";
         return (
           <div className="grid gap-1.5">
             <div className="flex items-center justify-between">
@@ -577,52 +572,15 @@ export function NewDocumentPanel({
                   {content.length.toLocaleString("vi-VN")} ký tự
                 </span>
                 {showMarkdownPreview && (
-                  <div className="inline-flex rounded-sm border border-[var(--card-light-border)] p-0.5 bg-[var(--bg-elevated)]">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("split")}
-                      title="Chế độ song song: Vừa sửa thô vừa xem trước trực tiếp"
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
-                        viewMode === "split"
-                          ? "bg-[var(--accent-gold)] text-white shadow-xs"
-                          : "text-content-muted hover:text-content-heading"
-                      }`}
-                    >
-                      <Columns2 className="h-3 w-3" />
-                      Song song
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("edit")}
-                      title="Chỉ hiển thị ô soạn thảo văn bản thô"
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
-                        viewMode === "edit"
-                          ? "bg-[var(--accent-gold)] text-white shadow-xs"
-                          : "text-content-muted hover:text-content-heading"
-                      }`}
-                    >
-                      <FileText className="h-3 w-3" />
-                      Chỉnh sửa
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("preview")}
-                      title="Chỉ hiển thị xem trước định dạng Markdown"
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
-                        viewMode === "preview"
-                          ? "bg-[var(--accent-gold)] text-white shadow-xs"
-                          : "text-content-muted hover:text-content-heading"
-                      }`}
-                    >
-                      <Eye className="h-3 w-3" />
-                      Xem trước
-                    </button>
-                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] px-2 py-0.5 text-[11px] font-medium text-content-muted">
+                    <Columns2 className="h-3 w-3" />
+                    Soạn &amp; Xem
+                  </span>
                 )}
               </div>
             </div>
 
-            {effectiveViewMode === "split" ? (
+            {showMarkdownPreview ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                 <div className="flex flex-col">
                   <span className="text-[11px] font-semibold text-content-muted mb-1 flex items-center gap-1">
@@ -652,7 +610,7 @@ export function NewDocumentPanel({
                   </div>
                 </div>
               </div>
-            ) : effectiveViewMode === "edit" ? (
+            ) : (
               <StaffFormTextarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -660,17 +618,6 @@ export function NewDocumentPanel({
                 style={{ minHeight: "200px" }}
                 disabled={isBusy}
               />
-            ) : (
-              <div
-                className="rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] p-4 text-xs overflow-y-auto leading-relaxed"
-                style={{ minHeight: "200px", maxHeight: "460px" }}
-              >
-                {deferredContent.trim() ? (
-                  <MarkdownMessage text={deferredContent} />
-                ) : (
-                  <p className="italic text-content-muted">Chưa có nội dung để xem trước</p>
-                )}
-              </div>
             )}
           </div>
         );
