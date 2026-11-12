@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueries,
+  useQueryClient,
+  type UseQueryResult,
+} from "@tanstack/react-query";
+import { TablePagination } from "@/components/saas/accounts-table";
 import {
   BookOpen,
   Search,
@@ -93,6 +99,13 @@ const FILTERS: { value: "all" | DocumentOwnerType; label: string }[] = [
   { value: "character", label: "Tài liệu nhân vật" },
   { value: "context", label: "Tài liệu bối cảnh" },
 ];
+
+function combineDocumentQueries(results: UseQueryResult<RagDocument[]>[]) {
+  return {
+    data: results.map((result) => result.data),
+    isLoading: results.some((result) => result.isLoading),
+  };
+}
 
 function getDocumentId(document: RagDocument) {
   return document.id ?? document.documentId;
@@ -315,6 +328,10 @@ export default function StaffDocumentsPage() {
     [charactersData?.content],
   );
 
+  // `useQueries` trả về mảng mới mỗi lần render → nếu đưa thẳng vào deps thì `rows`
+  // (flatMap + sort localeCompare toàn bộ tài liệu) bị tính lại ở MỌI lần gõ phím.
+  // `combine` (ổn định, khai báo ngoài component) được structural-share nên chỉ đổi
+  // tham chiếu khi dữ liệu thật sự đổi.
   const contextDocumentQueries = useQueries({
     queries: contexts.map((context) => ({
       queryKey: queryKeys.documents.historicalByContext(context.id),
@@ -322,6 +339,7 @@ export default function StaffDocumentsPage() {
       enabled: !!context.id,
       staleTime: 1000 * 60 * 5,
     })),
+    combine: combineDocumentQueries,
   });
 
   const characterDocumentQueries = useQueries({
@@ -331,11 +349,12 @@ export default function StaffDocumentsPage() {
       enabled: !!character.id,
       staleTime: 1000 * 60 * 5,
     })),
+    combine: combineDocumentQueries,
   });
 
   const rows = React.useMemo<StaffDocumentRow[]>(() => {
     const contextRows = contexts.flatMap((context, contextIndex) => {
-      const documents = contextDocumentQueries[contextIndex]?.data ?? [];
+      const documents = contextDocumentQueries.data[contextIndex] ?? [];
       const linkedCharacters = getContextCharacters(context, characters);
 
       return documents.map((document, documentIndex) => ({
@@ -350,7 +369,7 @@ export default function StaffDocumentsPage() {
     });
 
     const characterRows = characters.flatMap((character, characterIndex) => {
-      const documents = characterDocumentQueries[characterIndex]?.data ?? [];
+      const documents = characterDocumentQueries.data[characterIndex] ?? [];
 
       return documents.map((document, documentIndex) => ({
         key: makeDocumentKey(document, "character", character.id, documentIndex),
@@ -363,29 +382,64 @@ export default function StaffDocumentsPage() {
       }));
     });
 
+    const collator = new Intl.Collator("vi");
     return [...characterRows, ...contextRows].sort((a, b) =>
-      a.document.title.localeCompare(b.document.title, "vi"),
+      collator.compare(a.document.title ?? "", b.document.title ?? ""),
     );
-  }, [characterDocumentQueries, characters, contextDocumentQueries, contexts]);
+  }, [characterDocumentQueries.data, characters, contextDocumentQueries.data, contexts]);
+
+  // Chuỗi tìm kiếm đã lowercase sẵn cho từng dòng — tính 1 lần khi dữ liệu đổi, thay vì
+  // toLowerCase() toàn bộ nội dung tài liệu (có thể là cả file PDF) ở mỗi phím gõ.
+  const searchIndex = React.useMemo(
+    () =>
+      new Map(
+        rows.map((row) => [
+          row.key,
+          [
+            row.document.title ?? "",
+            row.ownerName,
+            ...row.linkedCharacters.map((character) => character.name),
+            row.document.content ?? "",
+          ]
+            .join("\n")
+            .toLowerCase(),
+        ]),
+      ),
+    [rows],
+  );
+
+  // Ô input cập nhật ngay, phần lọc + render bảng chạy ở mức ưu tiên thấp.
+  const deferredSearch = React.useDeferredValue(search);
 
   const filteredRows = React.useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = deferredSearch.trim().toLowerCase();
 
     return rows.filter((row) => {
-      const matchesFilter = filter === "all" || row.ownerType === filter;
-      if (!matchesFilter) return false;
+      if (filter !== "all" && row.ownerType !== filter) return false;
       if (!q) return true;
-
-      return (
-        row.document.title.toLowerCase().includes(q) ||
-        row.document.content.toLowerCase().includes(q) ||
-        row.ownerName.toLowerCase().includes(q) ||
-        row.linkedCharacters.some((character) =>
-          character.name.toLowerCase().includes(q),
-        )
-      );
+      return searchIndex.get(row.key)?.includes(q) ?? false;
     });
-  }, [filter, rows, search]);
+  }, [filter, rows, deferredSearch, searchIndex]);
+
+  const [pageIndex, setPageIndex] = React.useState(0);
+  const [pageSize, setPageSize] = React.useState(20);
+  // Về trang đầu khi đổi bộ lọc / từ khóa.
+  const [prevFilterKey, setPrevFilterKey] = React.useState(`${filter}|${deferredSearch}`);
+  if (prevFilterKey !== `${filter}|${deferredSearch}`) {
+    setPrevFilterKey(`${filter}|${deferredSearch}`);
+    setPageIndex(0);
+  }
+  const pageCount = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const safePageIndex = Math.min(pageIndex, pageCount - 1);
+  const pagedRows = React.useMemo(
+    () => filteredRows.slice(safePageIndex * pageSize, (safePageIndex + 1) * pageSize),
+    [filteredRows, safePageIndex, pageSize],
+  );
+
+  const characterDocumentCount = React.useMemo(
+    () => rows.filter((row) => row.ownerType === "character").length,
+    [rows],
+  );
 
   const selectedRow =
     filteredRows.find((row) => row.key === selectedKey) ?? filteredRows[0];
@@ -394,8 +448,8 @@ export default function StaffDocumentsPage() {
   const isInitialLoadingDocuments =
     isLoadingEvents ||
     isLoadingCharacters ||
-    contextDocumentQueries.some((query) => query.isLoading) ||
-    characterDocumentQueries.some((query) => query.isLoading);
+    contextDocumentQueries.isLoading ||
+    characterDocumentQueries.isLoading;
   const isLoadingDocuments =
     isInitialLoadingDocuments && !rows.length && hasAnyOwner;
 
@@ -489,7 +543,9 @@ export default function StaffDocumentsPage() {
               {row.original.document.title || "Tài liệu chưa đặt tên"}
             </p>
             <p className="mt-0.5 max-w-[420px] truncate text-xs text-content-muted">
-              {row.original.document.content || "Chưa có nội dung"}
+              {/* Chỉ đưa đoạn đầu vào DOM — `truncate` chỉ ẩn bằng CSS, nội dung đầy đủ
+                  (cả file PDF) vẫn bị render vào từng dòng nếu không cắt. */}
+              {row.original.document.content?.slice(0, 160) || "Chưa có nội dung"}
             </p>
           </button>
         ),
@@ -682,13 +738,10 @@ export default function StaffDocumentsPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="grid gap-3 sm:grid-cols-3">
             <SummaryCard label="Tổng tài liệu" value={rows.length} />
-            <SummaryCard
-              label="Tài liệu nhân vật"
-              value={rows.filter((row) => row.ownerType === "character").length}
-            />
+            <SummaryCard label="Tài liệu nhân vật" value={characterDocumentCount} />
             <SummaryCard
               label="Tài liệu bối cảnh"
-              value={rows.filter((row) => row.ownerType === "context").length}
+              value={rows.length - characterDocumentCount}
             />
           </div>
 
@@ -996,14 +1049,28 @@ export default function StaffDocumentsPage() {
         <div className="mt-5">
           <StaffDataTable
             columns={columns}
-            data={filteredRows}
+            data={pagedRows}
             isLoading={isLoadingDocuments}
+            isFetching={search !== deferredSearch}
             emptyMessage="Không tìm thấy tài liệu phù hợp."
             onRowClick={(row) => {
               setSelectedKey(row.key);
               setDetailOpen(true);
             }}
           />
+          {filteredRows.length > 0 && (
+            <TablePagination
+              pageIndex={safePageIndex}
+              pageSize={pageSize}
+              total={filteredRows.length}
+              pageSizeOptions={[10, 20, 50, 100]}
+              onPageChange={setPageIndex}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPageIndex(0);
+              }}
+            />
+          )}
         </div>
 
         {/* Document Detail Dialog */}

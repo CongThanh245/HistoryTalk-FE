@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   usePublicCharacterDocuments,
   usePublicContextsDocuments,
@@ -16,6 +16,8 @@ import {
   FileText,
   ExternalLink,
   X,
+  PlayCircle,
+  ChevronDown,
 } from "lucide-react";
 
 interface DocumentCitationDialogProps {
@@ -147,8 +149,33 @@ export function DocumentCitationDialog({
   const youtubeEmbedUrl = getYouTubeEmbedUrl(event?.videoUrl);
   const title = matchedDocument?.title || "Nguồn tham khảo";
 
+  // Video chiếm ~1/3 chiều cao panel — khi mở để xem trích dẫn thì thu gọn sẵn để
+  // nội dung được ưu tiên; mở từ danh sách tài liệu (không có quote) thì hiện luôn.
+  const [isVideoOpen, setIsVideoOpen] = useState(!quote);
+
   const renderVideo = () => (
-    <div className="relative w-full bg-black aspect-video shrink-0">
+    <div className="shrink-0 border-b border-[var(--text-primary)]">
+      <button
+        type="button"
+        onClick={() => setIsVideoOpen((v) => !v)}
+        aria-expanded={isVideoOpen}
+        className="flex items-center w-full gap-2 px-5 py-2 text-left cursor-pointer transition-colors hover:bg-(--status-neutral-bg)"
+      >
+        <PlayCircle size={15} className="shrink-0 text-[var(--text-primary)]" />
+        <span className="flex-1 min-w-0 text-[11px] font-bold uppercase tracking-[0.08em] truncate text-content-heading">
+          Video minh họa{event?.title ? ` · ${event.title}` : ""}
+        </span>
+        <ChevronDown
+          size={15}
+          className={`shrink-0 text-content-muted transition-transform ${isVideoOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+      {isVideoOpen && renderVideoPlayer()}
+    </div>
+  );
+
+  const renderVideoPlayer = () => (
+    <div className="relative w-full bg-black aspect-video">
       {youtubeEmbedUrl ? (
         <iframe
           className="absolute inset-0 h-full w-full"

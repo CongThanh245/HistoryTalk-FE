@@ -241,6 +241,7 @@ export function ChatClient({
         onNewExamSession={handleStartExamSession}
         onDeleteSession={handleDeleteSession}
         onOpenDocument={(documentId) => setCitationRequest({ documentId })}
+        hideOnDesktop={!!citationRequest}
       />
       {citationRequest && (
         <DocumentCitationDialog

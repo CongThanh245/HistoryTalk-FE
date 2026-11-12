@@ -66,6 +66,11 @@ interface ChatRightPanelProps {
   onNewExamSession?: (questionCount: number) => void;
   onDeleteSession?: (sessionId: string) => void;
   onOpenDocument?: (documentId: string) => void;
+  /**
+   * Ẩn sidebar desktop (vẫn giữ mounted để không mất section đang mở) — dùng khi
+   * panel tài liệu đang mở, tránh 3 cột cùng lúc làm khung chat bị bóp quá hẹp.
+   */
+  hideOnDesktop?: boolean;
 }
 
 const sectionTitles: Record<DetailSection, string> = {
@@ -224,6 +229,7 @@ export function ChatRightPanel({
   onNewExamSession,
   onDeleteSession,
   onOpenDocument,
+  hideOnDesktop = false,
 }: ChatRightPanelProps) {
   const [isExamDialogOpen, setIsExamDialogOpen] = useState(false);
   const [section, setSection] = useState<PanelSection>("menu");
@@ -752,7 +758,8 @@ export function ChatRightPanel({
       {/* Desktop: Sidebar */}
       <div
         className={cn(
-          "hidden md:flex shrink-0 h-full flex-col z-50 border-l border-[var(--text-primary)] overflow-hidden",
+          "hidden shrink-0 h-full flex-col z-50 border-l border-[var(--text-primary)] overflow-hidden",
+          hideOnDesktop ? "md:hidden" : "md:flex",
           "relative w-[280px] bg-bg-surface",
         )}
       >
