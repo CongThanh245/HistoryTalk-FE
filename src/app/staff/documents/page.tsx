@@ -667,22 +667,22 @@ export default function StaffDocumentsPage() {
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
-              {!canViewPdf && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="rounded-sm text-accent-blue"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedKey(row.original.key);
-                    setDetailOpen(true);
-                  }}
-                  title="Xem chi tiết"
-                >
-                  <FileText className="h-4 w-4" />
-                </Button>
-              )}
+              {/* Tài liệu PDF cũng đã được trích xuất thành văn bản → luôn xem chi tiết được;
+                  có file gốc thì thêm nút xem PDF bên cạnh. */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="rounded-sm text-accent-blue"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedKey(row.original.key);
+                  setDetailOpen(true);
+                }}
+                title="Xem chi tiết"
+              >
+                <FileText className="h-4 w-4" />
+              </Button>
               {canViewPdf && (
                 <Button
                   type="button"
