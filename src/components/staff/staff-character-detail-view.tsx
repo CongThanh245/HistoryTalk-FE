@@ -18,6 +18,7 @@ import {
   CircleCheck as CheckIcon,
   CircleAlert as AlertIcon,
   Columns2 as ColumnsIcon,
+  Globe,
 } from "lucide-react";
 import {
   Sheet,
@@ -61,6 +62,7 @@ import { MediaSlotField } from "@/components/staff/media-slot-field";
 import { CharacterVoiceFields } from "@/components/staff/character-voice-fields";
 import { PortraitSettingsEditor } from "@/components/staff/portrait-settings-editor";
 import { NewDocumentPanel } from "@/components/staff/new-document-panel";
+import { WikipediaCharacterImportDialog, type WikiCharacterFill } from "@/components/staff/wikipedia-character-import-dialog";
 import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { StaffDocumentDetailDialog } from "@/components/staff/staff-document-detail-dialog";
@@ -290,6 +292,34 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
   const formScrollRef = React.useRef<HTMLDivElement>(null);
 
+  // Wikipedia prefill. A picked article for the RAG document remounts the document panel (nonce) so it opens
+  // straight into the editor with that text.
+  const [wikiOpen, setWikiOpen] = React.useState(false);
+  const [wikiDoc, setWikiDoc] = React.useState<{ nonce: number; doc: { title: string; content: string } | null }>({
+    nonce: 0,
+    doc: null,
+  });
+  const applyWikipedia = (fill: WikiCharacterFill) => {
+    if (fill.name) set("name")(fill.name);
+    if (fill.title) set("title")(fill.title);
+    if (fill.born) {
+      set("bornDay")(fill.born.day);
+      set("bornMonth")(fill.born.month);
+      set("bornYear")(fill.born.year);
+      set("isBornBc")(fill.born.bc);
+    }
+    if (fill.death) {
+      set("deathDay")(fill.death.day);
+      set("deathMonth")(fill.death.month);
+      set("deathYear")(fill.death.year);
+      set("isDeathBc")(fill.death.bc);
+    }
+    if (fill.background) set("background")(fill.background);
+    if (fill.image) set("image")(fill.image);
+    if (fill.document) setWikiDoc((w) => ({ nonce: w.nonce + 1, doc: fill.document ?? null }));
+    toast.success("Đã điền từ Wikipedia. Kiểm tra lại các tab trước khi lưu.");
+  };
+
   // Counts on the tabs let staff see how complete a character is without opening each tab.
   const tabCounts: Partial<Record<FormTabKey, number>> =
     mode === "edit" && !isLoadingDocuments ? { rag: documents.length, context: mappedContexts.length } : {};
@@ -471,6 +501,24 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   </dl>
                 ) : (
               <div className="space-y-5">
+
+                <div className="flex items-center justify-between gap-3 rounded-sm border border-dashed border-[var(--card-light-border)] px-3 py-2.5">
+                  <p className="text-sm text-[var(--content-muted)]">
+                    {draft.name.trim()
+                      ? `Điền nhanh chức vị, ngày sinh – mất, ảnh, tiểu sử và tài liệu của “${draft.name.trim()}” từ Wikipedia.`
+                      : "Nhập tên nhân vật để điền nhanh các thông tin còn lại từ Wikipedia."}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setWikiOpen(true)}
+                    disabled={!draft.name.trim()}
+                  >
+                    <Globe className="mr-1.5 h-3.5 w-3.5" />
+                    Điền từ Wikipedia
+                  </Button>
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
@@ -759,9 +807,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                       {/* Deferred: the document is saved by the page's Tạo / Lưu thay đổi, not a second button. Remounts
                           (empty) once a saved document shows up in the list, so it is not saved twice. */}
                       <NewDocumentPanel
-                        key={`doc-panel-${documents.length}`}
+                        key={`doc-panel-${documents.length}-${wikiDoc.nonce}`}
                         deferred
                         wikiDefaultQuery={draft.name}
+                        initialText={wikiDoc.doc}
                         onDraftChange={(doc) => {
                           set("documentTitle")(doc?.title ?? "");
                           set("documentContent")(doc?.content ?? "");
@@ -1431,6 +1480,24 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
       </div>
 
       {/* PDF Viewer Dialog */}
+      {wikiOpen && (
+      <WikipediaCharacterImportDialog
+        open
+        onOpenChange={setWikiOpen}
+        defaultQuery={draft.name}
+        filled={{
+          name: !!draft.name.trim(),
+          title: !!draft.title.trim(),
+          born: !!(draft.bornYear || draft.bornMonth || draft.bornDay),
+          death: !!(draft.deathYear || draft.deathMonth || draft.deathDay),
+          background: !!draft.background.trim(),
+          image: !!draft.image.trim() || !!pendingImageFile,
+          document: !!draft.documentContent.trim(),
+        }}
+        onApply={applyWikipedia}
+      />
+      )}
+
       <PdfViewerDialog
         open={viewerOpen}
         onOpenChange={setViewerOpen}

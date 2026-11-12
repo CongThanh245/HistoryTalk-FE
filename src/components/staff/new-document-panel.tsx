@@ -38,6 +38,8 @@ interface NewDocumentPanelProps {
   onDraftChange?: (doc: { title: string; content: string; fileUrl?: string; file?: File } | null) => void;
   /** Prefilled search term for the "Wikipedia" source, e.g. the character's name. */
   wikiDefaultQuery?: string;
+  /** Opens straight into the text editor with this content (read on mount only — remount via key to replace). */
+  initialText?: { title: string; content: string } | null;
 }
 
 type Step = "closed" | "choose" | "text" | "pdf" | "wiki";
@@ -66,11 +68,12 @@ export function NewDocumentPanel({
   deferred = false,
   onDraftChange,
   wikiDefaultQuery,
+  initialText,
 }: NewDocumentPanelProps) {
-  const [step, setStep] = React.useState<Step>("closed");
+  const [step, setStep] = React.useState<Step>(initialText ? "text" : "closed");
   const [pdfPhase, setPdfPhase] = React.useState<PdfPhase>("pick");
-  const [title, setTitle] = React.useState("");
-  const [content, setContent] = React.useState("");
+  const [title, setTitle] = React.useState(initialText?.title ?? "");
+  const [content, setContent] = React.useState(initialText?.content ?? "");
   const [file, setFile] = React.useState<File | null>(null);
   const [pickError, setPickError] = React.useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
