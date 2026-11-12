@@ -342,7 +342,7 @@ function AssignmentActions({
       },
     );
 
-  const busy = start.isPending || submit.isPending;
+  const busy = start.isPending || submit.isPending || submit.isSuccess;
   const spinner = (
     <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
   );
@@ -419,7 +419,11 @@ function AssignmentActions({
           bài ({chat.messageCount ?? 0} tin nhắn)
         </button>
       );
-      secondary = (
+      secondary = busy || evidence.isFetching ? (
+        <button type="button" className="btn-line" disabled>
+          Tiếp tục trò chuyện
+        </button>
+      ) : (
         // Back into the same conversation and context the answers are counted from.
         <Link href={chatHref(chat.contextId, chat.id)} className="btn-line">
           Tiếp tục trò chuyện
@@ -455,7 +459,11 @@ function AssignmentActions({
           bài
         </button>
       );
-      secondary = (
+      secondary = busy ? (
+        <button type="button" className="btn-line" disabled>
+          Mở lại bối cảnh <ExternalLink className="h-4 w-4" aria-hidden="true" />
+        </button>
+      ) : (
         <Link href={contentHref} className="btn-line" target="_blank">
           Mở lại bối cảnh{" "}
           <ExternalLink className="h-4 w-4" aria-hidden="true" />

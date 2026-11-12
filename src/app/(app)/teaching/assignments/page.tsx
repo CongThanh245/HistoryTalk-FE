@@ -31,6 +31,7 @@ import { apiErrorMessage, useMyApiClassrooms } from "@/features/saas/hooks-api";
 import { assignmentKeys } from "@/features/saas/hooks-assignment-api";
 import { assignmentService, type AssignmentStatus, type AssignmentType, type TeacherAssignmentListParams } from "@/services/assignment.service";
 import { cn } from "@/lib/utils/cn";
+import { formatVietnamDate, formatVietnamTime } from "@/lib/utils/datetime";
 
 /** So bai toi da tai cho moi lop (BE phan trang, mac dinh 20). */
 const PER_CLASS = 100;
@@ -53,8 +54,8 @@ function DeadlineCell({ deadline, active }: { deadline: string; active: boolean 
   return (
     <div className="tabular-nums">
       <p className="font-medium text-content-heading">
-        {d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })}
-        <span className="ml-1.5 text-xs font-normal text-content-muted">{d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>
+        {formatVietnamDate(deadline)}
+        <span className="ml-1.5 text-xs font-normal text-content-muted">{formatVietnamTime(deadline)}</span>
       </p>
       {active && (
         <p className={cn("text-xs", left < 0 ? "text-content-muted" : left <= SOON_MS ? "font-semibold text-[var(--status-warning)]" : "text-[var(--text-secondary)]")}>

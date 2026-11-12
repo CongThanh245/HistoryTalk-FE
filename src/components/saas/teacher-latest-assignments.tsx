@@ -12,6 +12,7 @@ import { ROUTES } from "@/constants/routes";
 import { assignmentKeys } from "@/features/saas/hooks-assignment-api";
 import { assignmentService, type TeacherAssignment, type TeacherAssignmentListParams } from "@/services/assignment.service";
 import { cn } from "@/lib/utils/cn";
+import { formatVietnamDate } from "@/lib/utils/datetime";
 
 /** Same page size as the assignments page, so both read one cache entry per class. */
 const LIST_PARAMS: TeacherAssignmentListParams = { page: 0, size: 100 };
@@ -21,7 +22,7 @@ const SOON_MS = 48 * 60 * 60 * 1000;
 
 const dueAt = (a: TeacherAssignment) => parseLocalDateTime(a.deadline)?.getTime() ?? Infinity;
 const shortDate = (a: TeacherAssignment) =>
-  parseLocalDateTime(a.deadline)?.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }) ?? "—";
+  formatVietnamDate(a.deadline, { day: "2-digit", month: "2-digit" });
 
 /**
  * What a teacher opens the dashboard for: which open assignments close next and how many students have handed in.

@@ -16,6 +16,7 @@ import {
 import { ROUTES } from "@/constants/routes";
 import type { AssignmentType, StudentAssignment, SubmissionStatus } from "@/services/assignment.service";
 import { cn } from "@/lib/utils/cn";
+import { formatVietnamDateTime, parseUtcDate } from "@/lib/utils/datetime";
 
 // ─── Meta ──────────────────────────────────────────────────────────────────
 
@@ -49,17 +50,11 @@ export type AssignmentBucket = "TODO" | "DUE_SOON" | "DONE" | "OVERDUE" | "EXEMP
 
 const DUE_SOON_MS = 48 * 3600 * 1000;
 
-/** BE tra LocalDateTime khong mui gio -> parse theo gio may. */
-export function parseLocal(value: string | null | undefined): Date | null {
-  if (!value) return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
+/** BE tra UTC (ISO-8601 hoac LocalDateTime khong mui gio) -> parse theo UTC. */
+export const parseLocal = parseUtcDate;
 
 export function formatDateTime(value: string | null | undefined) {
-  const d = parseLocal(value);
-  if (!d) return "—";
-  return d.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+  return formatVietnamDateTime(value);
 }
 
 export const isDone = (s: SubmissionStatus) => s === "SUBMITTED" || s === "LATE_SUBMITTED";

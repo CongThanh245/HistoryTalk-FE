@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { formatVietnamDateTime } from "@/lib/utils/datetime";
 import { DEMO_TODAY } from "./mock-classroom";
 import { DEMO_SCHOOL_ID, DEMO_STUDENT_ID, DEMO_TEACHER_ID } from "./mock-data";
 import { useSaasStore } from "./store";
@@ -68,9 +69,7 @@ export function relativeTime(iso: string, now: Date = studentNow()) {
 
 export function formatDateTime(iso: string | undefined) {
   if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+  return formatVietnamDateTime(iso, undefined, iso);
 }
 
 /** Score on a scale of 10, for averages across tests with different max scores. */

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useParams } from "next/navigation";
+import { formatVietnamDate, parseUtcDate } from "@/lib/utils/datetime";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   Pencil,
@@ -107,15 +108,11 @@ const TIER_COLORS: Record<string, { bg: string; text: string; border: string }> 
 };
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  return formatVietnamDate(iso);
 }
 
 function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
+  const diff = Date.now() - (parseUtcDate(iso)?.getTime() ?? Date.now());
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins} phút trước`;
   const hrs = Math.floor(mins / 60);

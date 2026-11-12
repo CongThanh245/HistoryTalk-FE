@@ -4,6 +4,7 @@
 // backend enums, error → form-field mapping and the School Admin account helpers.
 
 import { apiErrorMessage, apiErrorStatus, useApiSchoolAdmins } from "@/features/saas/hooks-api";
+import { formatVietnamDate, formatVietnamTime } from "@/lib/utils/datetime";
 import type { CredentialRecord } from "@/components/saas/accounts-utils";
 import {
   type ApiSchool,
@@ -46,12 +47,12 @@ export function schoolPool(s: Pick<ApiSchool, "totalSchoolTokenQuota" | "unalloc
   return { total, unallocated, allocated, percent: total > 0 ? Math.round((allocated / total) * 100) : 0 };
 }
 
-/** The backend sends `LocalDateTime` without a zone (e.g. "2026-10-09T13:15:30"); treat it as local time. */
+/** The backend sends UTC timestamps; display in Vietnam time (Asia/Ho_Chi_Minh). */
 export function formatDateTime(value: string | null | undefined) {
   if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return `${d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })} ${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
+  const datePart = formatVietnamDate(value, undefined, "");
+  if (!datePart) return value;
+  return `${datePart} ${formatVietnamTime(value)}`;
 }
 
 /* ───────────────────────── Errors ───────────────────────── */

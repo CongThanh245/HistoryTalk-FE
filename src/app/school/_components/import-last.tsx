@@ -9,11 +9,12 @@ import { CredentialExportActions, OneTimeWarning } from "@/components/saas/accou
 import { todayStamp } from "@/components/saas/accounts-utils";
 import { DIALOG_CLASS, DIALOG_TITLE_CLASS, formatNumber } from "@/components/saas/saas-ui";
 import { cn } from "@/lib/utils/cn";
+import { formatVietnamDateTime } from "@/lib/utils/datetime";
 import { ImportAccountsTable, ImportErrorsTable, ImportSummary } from "./import-result";
 import { studentCredentials, useImportSession, type ImportSession } from "./import-session";
 
 const describe = (s: ImportSession) =>
-  `${s.fileName} · ${new Date(s.importedAt).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" })}`;
+  `${s.fileName} · ${formatVietnamDateTime(s.importedAt)}`;
 
 /**
  * Notice for the last import of this tab (credentials live in memory only) with buttons to reopen the full result

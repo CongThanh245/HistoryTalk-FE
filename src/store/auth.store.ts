@@ -52,3 +52,29 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
+
+// Keep Zustand auth state in sync across browser tabs so a rotated refreshToken
+// in one tab does not leave stale tokens in other open tabs.
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key !== "auth-storage" || !event.newValue) return;
+    try {
+      const parsed = JSON.parse(event.newValue) as {
+        state?: {
+          user?: User | null;
+          tokens?: AuthTokens | null;
+          isAuthenticated?: boolean;
+        };
+      };
+      if (parsed?.state) {
+        useAuthStore.setState({
+          user: parsed.state.user ?? null,
+          tokens: parsed.state.tokens ?? null,
+          isAuthenticated: Boolean(parsed.state.isAuthenticated),
+        });
+      }
+    } catch {
+      // Ignore malformed storage payload
+    }
+  });
+}
