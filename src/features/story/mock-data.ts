@@ -57,8 +57,38 @@ export const MOCK_BACKGROUNDS: StoryBackground[] = [
 
 export const DEFAULT_BACKGROUND = "scroll";
 
+// Real characters used by AI drafts (their ids are the backend's). Kept in localStorage like the stories, so a
+// drafted story still shows its speakers after a reload.
+const REAL_CHARACTERS_KEY = "historytalk:story-characters:v1";
+
+function readRealCharacters(): StoryCharacter[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const list = JSON.parse(localStorage.getItem(REAL_CHARACTERS_KEY) ?? "[]");
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+export function registerCharacters(characters: StoryCharacter[]) {
+  const byId = new Map(readRealCharacters().map((c) => [c.id, c]));
+  for (const c of characters) byId.set(c.id, c);
+  try {
+    localStorage.setItem(REAL_CHARACTERS_KEY, JSON.stringify([...byId.values()]));
+  } catch {
+    // Storage full or blocked: speakers then show without a name.
+  }
+}
+
+/** Every character a story may use: the sample ones and the real ones drafted with AI. */
+export function storyCharacters(): StoryCharacter[] {
+  const real = readRealCharacters().filter((c) => !MOCK_CHARACTERS.some((m) => m.id === c.id));
+  return [...MOCK_CHARACTERS, ...real];
+}
+
 export function findCharacter(id: string | null | undefined) {
-  return id ? MOCK_CHARACTERS.find((c) => c.id === id) ?? null : null;
+  return id ? storyCharacters().find((c) => c.id === id) ?? null : null;
 }
 
 export function findBackground(id: string | null | undefined) {

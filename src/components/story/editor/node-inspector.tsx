@@ -20,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils/cn";
 import { useStoryEditor } from "@/features/story/editor-store";
 import { option, storyStats } from "@/features/story/graph-utils";
-import { MOCK_BACKGROUNDS, MOCK_CHARACTERS, MOCK_CONTEXTS } from "@/features/story/mock-data";
+import { MOCK_BACKGROUNDS, MOCK_CONTEXTS, storyCharacters } from "@/features/story/mock-data";
 import { EXPRESSIONS, KIND_META, NARRATOR_LABEL } from "@/features/story/story-meta";
 import type { StoryFlowNode, StoryIssue, StoryNodeData, StoryOption } from "@/features/story/types";
 import { CharacterAvatar } from "../character-avatar";
@@ -104,12 +104,13 @@ function IssueList({ issues, onFocus }: { issues: StoryIssue[]; onFocus?: (id: s
 }
 
 function SpeakerPicker({ value, onChange }: { value: string | null; onChange: (id: string | null) => void }) {
-  const choices = [{ id: null, name: NARRATOR_LABEL }, ...MOCK_CHARACTERS];
+  const characters = storyCharacters();
+  const choices = [{ id: null, name: NARRATOR_LABEL }, ...characters];
   return (
     <div className="grid grid-cols-2 gap-1.5">
       {choices.map((c) => {
         const active = value === c.id;
-        const character = c.id ? MOCK_CHARACTERS.find((m) => m.id === c.id)! : null;
+        const character = c.id ? characters.find((m) => m.id === c.id)! : null;
         return (
           <button
             key={c.id ?? "narrator"}
@@ -406,12 +407,12 @@ function StorySettings({ issues, onFocus }: { issues: StoryIssue[]; onFocus: (id
           <select
             value={meta.contextId}
             onChange={(e) => {
-              const ctx = MOCK_CONTEXTS.find((c) => c.id === e.target.value)!;
-              updateMeta({ contextId: ctx.id, contextName: ctx.name });
+              const ctx = MOCK_CONTEXTS.find((c) => c.id === e.target.value);
+              if (ctx) updateMeta({ contextId: ctx.id, contextName: ctx.name });
             }}
             className="h-9 w-full cursor-pointer rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] px-2 text-[13px] text-[var(--text-primary)] outline-none hover:border-[var(--text-primary)]"
           >
-            {MOCK_CONTEXTS.map((c) => (
+            {[...MOCK_CONTEXTS, ...(MOCK_CONTEXTS.some((c) => c.id === meta.contextId) ? [] : [{ id: meta.contextId, name: meta.contextName }])].map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>

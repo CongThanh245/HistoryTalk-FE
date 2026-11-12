@@ -350,3 +350,17 @@
 /* "Thuyết minh" next to the phase title: jumps to the phase's narration in the right column. */
 .editor .narrationJump { min-height: 30px; padding: 0 10px; gap: 5px; border-color: var(--border-default); font-size: 12.5px; color: var(--accent-gold); }
 .editor .narrationJump:hover:not(:disabled) { border-color: var(--accent-gold); background: var(--accent-gold-active-bg); }
+
+/* Shown after an AI draft is added to the map. */
+.aiNotice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--status-neutral-bg);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+.aiNotice span { flex: 1; }
+.aiNotice button { display: inline-flex; padding: 2px; cursor: pointer; background: transparent; border: 0; color: inherit; }

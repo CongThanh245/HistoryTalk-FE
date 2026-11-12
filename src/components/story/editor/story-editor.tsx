@@ -26,6 +26,7 @@ import {
   Play,
   Redo2,
   Rocket,
+  Sparkles,
   Undo2,
   Wand2,
   X,
@@ -36,6 +37,8 @@ import { ROUTES } from "@/constants/routes";
 import { useStoryEditor } from "@/features/story/editor-store";
 import { validateStory } from "@/features/story/graph-utils";
 import { storyRepo } from "@/features/story/mock-data";
+import { useAuthStore } from "@/store/auth.store";
+import { StoryAiDialog } from "./story-ai-dialog";
 import { ADDABLE_KINDS, KIND_META } from "@/features/story/story-meta";
 import type { StoryFlowNode, StoryIssue, StoryNodeKind } from "@/features/story/types";
 import "@/features/story/story.css";
@@ -158,6 +161,9 @@ function EditorInner({ storyId }: { storyId: string }) {
   const [quickAdd, setQuickAdd] = useState<QuickAdd | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [liveId, setLiveId] = useState<string | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
+  const role = useAuthStore((s) => s.user?.role);
+  const canUseAi = role === "CONTENT_ADMIN" || role === "TEACHER";
 
   // Load (localStorage is client-only).
   useEffect(() => {
@@ -427,6 +433,16 @@ function EditorInner({ storyId }: { storyId: string }) {
             {errorCount ? `${errorCount} lỗi` : "Không lỗi"}
           </button>
 
+          {canUseAi && (
+            <button
+              type="button"
+              onClick={() => setAiOpen(true)}
+              title="AI viết kịch bản, viết tiếp, thêm câu hỏi hoặc viết lại theo tài liệu của bối cảnh"
+              className="flex h-9 cursor-pointer items-center gap-1.5 rounded-sm border border-[var(--border-strong)] px-3 text-[13px] font-semibold hover:border-[var(--text-primary)]"
+            >
+              <Sparkles className="size-4" /> AI soạn
+            </button>
+          )}
           <button
             type="button"
             onClick={() => openPreview()}
@@ -442,6 +458,7 @@ function EditorInner({ storyId }: { storyId: string }) {
             <Rocket className="size-4" /> Xuất bản
           </button>
         </header>
+        {canUseAi && <StoryAiDialog open={aiOpen} onOpenChange={setAiOpen} />}
 
         <div className="flex min-h-0 flex-1">
           <NodePalette onAdd={addAtCenter} />

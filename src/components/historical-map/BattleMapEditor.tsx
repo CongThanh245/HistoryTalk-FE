@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Check, CircleHelp, PenLine, Clapperboard, ClipboardCheck, Copy, Download, Eye, GripVertical, ImageIcon, Keyboard, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Trash2, Undo2, Upload, Users, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Check, CircleHelp, PenLine, Clapperboard, ClipboardCheck, Copy, Download, Eye, GripVertical, ImageIcon, Keyboard, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Sparkles, Trash2, Undo2, Upload, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { battleMapImageService } from "@/services/media.service";
 import { useAuthStore } from "@/store/auth.store";
 import { BattleMapCanvas, SymbolGlyph, type SymbolView } from "./BattleMapCanvas";
 import { BattlePreview } from "./BattlePreview";
+import { BattlePlanAiDialog } from "./BattlePlanAiDialog";
 import {
   autoEffect, defaultSymbolSize, isBattleMap, isLineSymbol, isNoteSymbol, moveSymbol, PHASE_NARRATION_MAX, SYMBOL_EFFECTS, SYMBOL_GROUPS, SYMBOL_LABELS, SYMBOL_SIZE_MAX, SYMBOL_SIZE_MIN, withPoints,
   type BattleMap, type BattlePhase, type BattleSymbol, type BattleSymbolType, type MapPoint, type SymbolEffect,
@@ -71,7 +72,7 @@ function readDraft(key: string | null) {
   } catch { return null; }
 }
 
-export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNarration = "", draftId, mode = "author", practiceTarget }: {
+export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNarration = "", draftId, mode = "author", practiceTarget, aiContextId }: {
   initialValue: BattleMap; title: string; onClose: () => void;
   /** Identifies the map for the unsaved draft kept in this browser (e.g. the event id); omit to keep no draft. */
   draftId?: string;
@@ -89,12 +90,19 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
   mode?: "author" | "practice" | "sketch";
   /** Practice: number of graded symbols in the original map, shown as a goal while drawing. */
   practiceTarget?: number;
+  /** Historical context the map belongs to: authors can then draft the map with AI from its documents. */
+  aiContextId?: string;
 }) {
   const practice = mode === "practice";
   const sketch = mode === "sketch";
   /** A learner's own sheet (practice or sketch): browser-only, restored without asking. */
   const learner = practice || sketch;
   const uid = useAuthStore(state => state.user?.uid);
+  const role = useAuthStore(state => state.user?.role);
+  /** Drafting with AI is for the people who author content, like every other content edit. */
+  const canUseAi = !learner && !!aiContextId && (role === "CONTENT_ADMIN" || role === "TEACHER");
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiNotice, setAiNotice] = useState("");
   const draftKey = draftId ? battleMapDraftKey(uid, draftId) : null;
   const [{ start, blankSheet }] = useState(() => {
     const blank = withDefaultFactions(initialValue);
@@ -570,6 +578,8 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
         aria-label="Xóa hết ký hiệu" title="Xóa hết ký hiệu đã vẽ (Ctrl+Z để lấy lại)"><Trash2 size={16} /><span>Xóa hết</span></button>}
       {!learner && <>
         <button type="button" onClick={() => setTour("full")} aria-label="Xem hướng dẫn" title="Xem hướng dẫn"><CircleHelp size={16} /></button>
+        {canUseAi && <button type="button" onClick={() => { pickTool(null); setSelection([]); setAiOpen(true); }} aria-label="Tạo bằng AI"
+          title="AI lập phe, điểm mốc và diễn biến từ tài liệu của trận đánh"><Sparkles size={16} /><span>Tạo bằng AI</span></button>}
         <button type="button" onClick={exportMap} aria-label="Xuất JSON" title="Tải thiết kế dưới dạng JSON"><Download size={16} /><span>Xuất JSON</span></button>
         <button type="button" data-tour="preview" aria-label="Xem trước" title="Phát thử như người học sẽ xem (không lưu)" disabled={!value.imageUrl.trim()}
           onClick={() => { pickTool(null); setSelectedId(null); setDrawingFrame(false); setPreviewing(true); }}><Eye size={16} /><span>Xem trước</span></button>
@@ -582,6 +592,20 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
           onClick={() => { pickTool(null); setSelection([]); void save(); }}><ClipboardCheck size={16} /><span>So sánh</span></button>
         : <button type="button" className={styles.primary} aria-label="Lưu lược đồ" disabled={!canSave || busy} onClick={() => void save()}>{saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}<span>Lưu</span></button>}
     </header>
+
+    {canUseAi && <BattlePlanAiDialog open={aiOpen} onOpenChange={setAiOpen} contextId={aiContextId!} map={value}
+      onApply={(next, skipped) => {
+        const firstNew = next.phases?.[(value.phases ?? []).length];
+        setValue(() => next);
+        if (firstNew) { setPhaseId(firstNew.id); setTab("phases"); }
+        setAiNotice(skipped
+          ? `Đã thêm lược đồ do AI lập (Ctrl+Z để hoàn tác). ${skipped} ký hiệu bị bỏ vì thiếu điểm mốc.`
+          : "Đã thêm lược đồ do AI lập. Kiểm tra lại rồi lưu (Ctrl+Z để hoàn tác).");
+      }} />}
+    {aiNotice && <div role="status" className={styles.aiNotice}>
+      <Sparkles size={14} /><span>{aiNotice}</span>
+      <button type="button" aria-label="Đóng thông báo" onClick={() => setAiNotice("")}><X size={14} /></button>
+    </div>}
 
     {previewing && <BattlePreview value={value} title={title} legacyNarration={legacyNarration}
       startScene={Math.max(0, activeIndex)} onClose={() => setPreviewing(false)} />}

@@ -188,6 +188,7 @@ export function LocalBattleMapPanel({ item, canEdit }: { item: LocalItem; canEdi
             initialValue={map ?? emptyBattleMap()}
             title={item.name}
             draftId={`local:${item.id}`}
+            aiContextId={item.id}
             onClose={() => setEditing(false)}
             onSave={async (value) => {
               try {

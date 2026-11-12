@@ -264,6 +264,7 @@ export function BattleDetailView({
     initialValue={savedMap ?? event.battleMap ?? legacyDraft ?? emptyBattleMap()}
     title={event.title}
     draftId={`event:${event.id}`}
+    aiContextId={event.id}
     onClose={onCloseEditor}
     legacyNarration={pin?.description ?? ""}
     onSave={async value => {
