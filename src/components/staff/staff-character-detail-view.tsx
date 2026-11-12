@@ -140,7 +140,6 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
 
   const router = useRouter();
   const contextSearch = useSelectSearch();
-  const [charEditDocTab, setCharEditDocTab] = React.useState<"split" | "edit" | "preview">("split");
   const {
     draft,
     isEditing,
@@ -1559,93 +1558,38 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                   <span className="text-micro text-[var(--content-muted)]">
                     {editDraftContent.length.toLocaleString("vi-VN")} ký tự
                   </span>
-                  <div className="inline-flex rounded-sm border border-[var(--card-light-border)] p-0.5 bg-[var(--bg-elevated)]">
-                    <button
-                      type="button"
-                      onClick={() => setCharEditDocTab("split")}
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
-                        charEditDocTab === "split"
-                          ? "bg-[var(--accent-gold)] text-white shadow-xs"
-                          : "text-content-muted hover:text-content-heading"
-                      }`}
-                      title="Chế độ song song: Vừa sửa thô vừa xem trước"
-                    >
-                      <ColumnsIcon className="h-3 w-3" />
-                      Song song
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCharEditDocTab("edit")}
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
-                        charEditDocTab === "edit"
-                          ? "bg-[var(--accent-gold)] text-white shadow-xs"
-                          : "text-content-muted hover:text-content-heading"
-                      }`}
-                    >
-                      <PencilIcon className="h-3 w-3" />
-                      Chỉnh sửa
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCharEditDocTab("preview")}
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
-                        charEditDocTab === "preview"
-                          ? "bg-[var(--accent-gold)] text-white shadow-xs"
-                          : "text-content-muted hover:text-content-heading"
-                      }`}
-                    >
-                      <EyeIcon className="h-3 w-3" />
-                      Xem trước
-                    </button>
+                  <span className="inline-flex items-center gap-1 rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] px-2 py-0.5 text-[11px] font-medium text-content-muted">
+                    <ColumnsIcon className="h-3 w-3" />
+                    Soạn &amp; Xem
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-semibold text-content-muted mb-1 flex items-center gap-1">
+                    <PencilIcon className="h-3 w-3" /> Văn bản thô (Raw)
+                  </span>
+                  <StaffFormTextarea
+                    value={editDraftContent}
+                    onChange={(e) => setEditDraftContent(e.target.value)}
+                    placeholder="Nội dung tài liệu"
+                    className="min-h-65 max-h-96"
+                    disabled={isSavingDocumentEdit}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-semibold text-content-muted mb-1 flex items-center gap-1">
+                    <EyeIcon className="h-3 w-3" /> Xem trước trực tiếp (Real-time)
+                  </span>
+                  <div className="rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] p-4 text-xs overflow-y-auto min-h-65 max-h-96 leading-relaxed">
+                    {deferredCharEditContent.trim() ? (
+                      <MarkdownMessage text={deferredCharEditContent} />
+                    ) : (
+                      <p className="italic text-content-muted">Chưa có nội dung để xem trước</p>
+                    )}
                   </div>
                 </div>
               </div>
-              {charEditDocTab === "split" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-semibold text-content-muted mb-1 flex items-center gap-1">
-                      <PencilIcon className="h-3 w-3" /> Văn bản thô (Raw)
-                    </span>
-                    <StaffFormTextarea
-                      value={editDraftContent}
-                      onChange={(e) => setEditDraftContent(e.target.value)}
-                      placeholder="Nội dung tài liệu"
-                      className="min-h-65 max-h-96"
-                      disabled={isSavingDocumentEdit}
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-semibold text-content-muted mb-1 flex items-center gap-1">
-                      <EyeIcon className="h-3 w-3" /> Xem trước trực tiếp (Real-time)
-                    </span>
-                    <div className="rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] p-4 text-xs overflow-y-auto min-h-65 max-h-96 leading-relaxed">
-                      {deferredCharEditContent.trim() ? (
-                        <MarkdownMessage text={deferredCharEditContent} />
-                      ) : (
-                        <p className="italic text-content-muted">Chưa có nội dung để xem trước</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : charEditDocTab === "edit" ? (
-                <StaffFormTextarea
-                  value={editDraftContent}
-                  onChange={(e) => setEditDraftContent(e.target.value)}
-                  placeholder="Nội dung tài liệu"
-                  className="min-h-65"
-                  disabled={isSavingDocumentEdit}
-                />
-              ) : (
-                <div
-                  className="rounded-sm border border-[var(--card-light-border)] bg-[var(--bg-elevated)] p-4 text-xs overflow-y-auto min-h-65 max-h-96 leading-relaxed"
-                >
-                  {deferredCharEditContent.trim() ? (
-                    <MarkdownMessage text={deferredCharEditContent} />
-                  ) : (
-                    <p className="italic text-content-muted">Chưa có nội dung để xem trước</p>
-                  )}
-                </div>
-              )}
             </div>
           </div>
           <div className="flex shrink-0 justify-end gap-2 border-t px-6 py-4 border-[var(--card-light-border)]">
