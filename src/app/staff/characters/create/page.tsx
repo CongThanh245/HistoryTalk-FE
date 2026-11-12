@@ -11,6 +11,8 @@ import { useCreateCharacterDocument, useUploadAndExtractPdf } from "@/features/d
 import { useEvents } from "@/features/events/hooks";
 import { isValidUrl } from "@/lib/utils/url";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth.store";
+import { characterDraftKey, clearCharacterDraft } from "@/components/staff/character-draft-storage";
 
 function toNullableNumber(value: string): number | null {
   const trimmed = value.trim();
@@ -19,6 +21,7 @@ function toNullableNumber(value: string): number | null {
 
 export default function CreateCharacterPage() {
   const router = useRouter();
+  const uid = useAuthStore((s) => s.user?.uid);
 
   const createCharacter = useCreateCharacter();
   const createCharacterDocument = useCreateCharacterDocument();
@@ -58,6 +61,8 @@ export default function CreateCharacterPage() {
 
     try {
       const newChar = await createCharacter.mutateAsync(payload);
+      // The character exists now; the autosaved create-form draft is no longer needed.
+      clearCharacterDraft(characterDraftKey(uid));
 
       // Upload any media picked before the character existed
       const pendingMedia: { file: File; mediaType: "IMAGE_2D" | "MODEL_3D" | "VIDEO" }[] = [

@@ -86,8 +86,8 @@ export { EMPTY_CHARACTER_DRAFT } from "./staff-character-detail-view.types";
 const MEDIA_MAX_UPLOAD_MB = 50;
 const MEDIA_MAX_UPLOAD_BYTES = MEDIA_MAX_UPLOAD_MB * 1024 * 1024;
 const MEDIA_SIZE_HINT = `Tối đa ${MEDIA_MAX_UPLOAD_MB}MB`;
-// Backend: 2D images up to 10MB (DirectBinaryUploadStrategy); 3D models are bounded by the 50MB multipart cap.
-const IMAGE_MAX_UPLOAD_MB = 10;
+// Backend: 2D images up to 20MB (DirectBinaryUploadStrategy, pending BE bump from 10MB); 3D models are bounded by the 50MB multipart cap.
+const IMAGE_MAX_UPLOAD_MB = 20;
 
 /** Sentinel id for the not-yet-created document being composed in create mode — it reuses the same view/edit/delete dialogs as a real, already-imported RagDocument. */
 const PENDING_DOCUMENT_ID = "pending";
@@ -221,6 +221,9 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
     quickErrors,
     resetQuickCtx,
     createEvent,
+    draftStorageKey,
+    restoredDocument,
+    discardSavedDraft,
   } = useStaffCharacterDetailView(props);
   const deferredCharEditContent = React.useDeferredValue(editDraftContent);
   const [isTestExamDialogOpen, setIsTestExamDialogOpen] = React.useState(false);
@@ -356,7 +359,8 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             size="icon"
             className="text-content-muted hover:bg-[var(--status-neutral-bg)] "
             onClick={() => {
-              if (isDirty && isEditing) {
+              // Create mode keeps an autosaved draft, so leaving loses nothing.
+              if (isDirty && isEditing && !draftStorageKey) {
                 setLeaveDialogOpen(true);
               } else {
                 router.push("/staff/characters");
@@ -807,10 +811,10 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                       {/* Deferred: the document is saved by the page's Tạo / Lưu thay đổi, not a second button. Remounts
                           (empty) once a saved document shows up in the list, so it is not saved twice. */}
                       <NewDocumentPanel
-                        key={`doc-panel-${documents.length}-${wikiDoc.nonce}`}
+                        key={`doc-panel-${documents.length}-${wikiDoc.nonce}-${restoredDocument.nonce}`}
                         deferred
                         wikiDefaultQuery={draft.name}
-                        initialText={wikiDoc.doc}
+                        initialText={wikiDoc.doc ?? restoredDocument.doc}
                         onDraftChange={(doc) => {
                           set("documentTitle")(doc?.title ?? "");
                           set("documentContent")(doc?.content ?? "");

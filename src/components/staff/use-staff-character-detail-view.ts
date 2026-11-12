@@ -22,6 +22,13 @@ import {
   type FormTabKey,
   type StaffCharacterDetailViewProps,
 } from "./staff-character-detail-view.types";
+import { useAuthStore } from "@/store/auth.store";
+import {
+  characterDraftKey,
+  clearCharacterDraft,
+  loadCharacterDraft,
+  saveCharacterDraft,
+} from "./character-draft-storage";
 
 function getCharacterRelatedValidationFields(
   field: keyof CharacterDraft,
@@ -143,6 +150,50 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   const [pendingVideoFile, setPendingVideoFile] = React.useState<File | null>(null);
   const [pendingImagePreviewUrl, setPendingImagePreviewUrl] = React.useState<string | null>(null);
   const [pendingVideoPreviewUrl, setPendingVideoPreviewUrl] = React.useState<string | null>(null);
+
+  /* ── Create mode: keep the unsaved form in localStorage so a reload does not lose it ── */
+  const uid = useAuthStore((s) => s.user?.uid);
+  const draftStorageKey = mode === "create" ? characterDraftKey(uid) : null;
+  // A restored RAG document is handed to the document panel (it keeps its own editor state); nonce remounts it.
+  const [restoredDocument, setRestoredDocument] = React.useState<{
+    nonce: number;
+    doc: { title: string; content: string } | null;
+  }>({ nonce: 0, doc: null });
+  const draftRestoredRef = React.useRef(false);
+
+  const discardSavedDraft = React.useCallback(() => {
+    clearCharacterDraft(draftStorageKey);
+    setDraft(initialDraft || EMPTY_CHARACTER_DRAFT);
+    setErrors({});
+    setRestoredDocument((r) => ({ nonce: r.nonce + 1, doc: null }));
+  }, [draftStorageKey, initialDraft]);
+
+  // Read after mount (not in useState) so the server render and first client render match.
+  React.useEffect(() => {
+    if (!draftStorageKey || draftRestoredRef.current) return;
+    draftRestoredRef.current = true;
+    const saved = loadCharacterDraft(draftStorageKey);
+    if (!saved) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from browser storage
+    setDraft((d) => ({ ...d, ...saved }));
+    if (saved.documentContent?.trim()) {
+      setRestoredDocument((r) => ({
+        nonce: r.nonce + 1,
+        doc: { title: saved.documentTitle ?? "", content: saved.documentContent ?? "" },
+      }));
+    }
+    toast.info("Đã khôi phục bản nháp đang nhập dở", {
+      description: "Ảnh, video, mô hình 3D và file PDF đã chọn không được lưu trong nháp, cần chọn lại.",
+      action: { label: "Bỏ nháp", onClick: discardSavedDraft },
+      duration: 8000,
+    });
+  }, [draftStorageKey, discardSavedDraft]);
+
+  React.useEffect(() => {
+    if (!draftStorageKey || !draftRestoredRef.current) return;
+    const t = window.setTimeout(() => saveCharacterDraft(draftStorageKey, draft), 400);
+    return () => window.clearTimeout(t);
+  }, [draft, draftStorageKey]);
 
   /* Detect if form is dirty */
   const isDirty = React.useMemo(() => {
@@ -296,15 +347,17 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
   }, [initialContexts]);
 
   React.useEffect(() => {
+    // Create mode autosaves the fields, so only warn when picked files (which cannot be stored) would be lost.
+    const hasUnstorableFiles = !!(pendingImageFile || pendingModelFile || pendingVideoFile || pendingPdfFile);
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty && isEditing) {
+      if (isDirty && isEditing && (!draftStorageKey || hasUnstorableFiles)) {
         e.preventDefault();
         e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isDirty, isEditing]);
+  }, [isDirty, isEditing, draftStorageKey, pendingImageFile, pendingModelFile, pendingVideoFile, pendingPdfFile]);
 
   /* Whether the character has been persisted (has an id) */
   const isCreated = !!(createdCharacterId || draft.id);
@@ -660,6 +713,11 @@ export function useStaffCharacterDetailView(props: StaffCharacterDetailViewProps
     showValidationErrors,
     publishValidationErrors,
     handleSaveClick,
+
+    // create-mode draft kept in localStorage
+    draftStorageKey,
+    restoredDocument,
+    discardSavedDraft,
 
     // documents / RAG
     getDocumentId,
