@@ -6,7 +6,7 @@ import {
   ClipboardList, Trash2, ArrowLeft,
   Pencil, Eye, EyeOff, RotateCcw,
   ChevronLeft, ChevronRight, Upload,
-  Search, Plus, Library, MoreHorizontal, Download,
+  Search, Plus, Library, MoreHorizontal, Download, ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -698,8 +698,6 @@ export default function StaffQuizzesPage() {
             <QuizQuestionEditor
               questions={draft.questions}
               onChange={(qs) => setDraft((s) => ({ ...s, questions: qs }))}
-              onImportError={(msg) => toast.error(msg)}
-              onImportSuccess={(n) => toast.success(`Đã thêm ${n} câu hỏi.`)}
               onEditingChange={setQuestionFormOpen}
             />
           </div>
@@ -795,19 +793,32 @@ export default function StaffQuizzesPage() {
                     e.target.value = "";
                   }}
                 />
+                <Button
+                  variant="outline"
+                  className="h-9 rounded-sm px-4 font-semibold gap-1.5 border-card-light-border text-content-heading"
+                  onClick={() => setShowTrash(true)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}
+                </Button>
+                {/* Every way to make a quiz lives under "Tạo bộ đề": blank, from CSV, and the CSV template. */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
-                      variant="outline"
-                      aria-label="Thao tác khác"
-                      className="h-9 rounded-sm px-3 font-semibold gap-1.5 border-card-light-border text-content-heading"
+                      size="sm"
+                      className="h-9 rounded-sm px-4 font-semibold gap-1.5 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
                       disabled={importCsv.isPending}
                     >
-                      <MoreHorizontal className="h-4 w-4" />
-                      {importCsv.isPending && <span className="text-xs">Đang nhập...</span>}
+                      <Plus className="h-4 w-4" />
+                      {importCsv.isPending ? "Đang nhập CSV..." : "Tạo bộ đề"}
+                      <ChevronDown className="h-4 w-4 opacity-80" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={openCreate}>
+                      <Plus className="h-4 w-4" /> Tạo bộ đề mới
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
                       <Upload className="h-4 w-4" /> Nhập bộ đề từ CSV
                     </DropdownMenuItem>
@@ -830,19 +841,8 @@ export default function StaffQuizzesPage() {
                     >
                       <Download className="h-4 w-4" /> Tải file mẫu CSV
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setShowTrash(true)}>
-                      <Trash2 className="h-4 w-4" /> Thùng rác {trashItems.length > 0 && `(${trashItems.length})`}
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button
-                  size="sm"
-                  className="h-9 rounded-sm px-4 font-semibold gap-1.5 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)]"
-                  onClick={openCreate}
-                >
-                  <Plus className="h-4 w-4" /> Tạo bộ đề
-                </Button>
               </>
             )}
           </div>

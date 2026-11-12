@@ -139,8 +139,6 @@ function Composer({
         <QuizQuestionEditor
           questions={questions}
           onChange={setQuestions}
-          onImportError={(msg) => toast.error(msg)}
-          onImportSuccess={(n) => toast.success(`Đã thêm ${n} câu hỏi.`)}
           onEditingChange={setFormOpen}
         />
       </Panel>

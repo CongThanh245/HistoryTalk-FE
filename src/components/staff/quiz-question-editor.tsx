@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   ArrowUp, ArrowDown, Pencil, Trash2,
-  Plus, Upload, CheckCircle2, ClipboardList, X,
+  Plus, CheckCircle2, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
@@ -11,19 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from "@/components/ui/dialog";
 import { newId } from "./staff-utils";
 import {
   QUESTION_TYPE_LABELS,
   type QuestionType,
 } from "@/features/quiz/question-data";
 import type { CreateQuestionPayload, QuestionDifficulty, StaffQuizQuestion } from "@/services/staff.quiz.service";
-import {
-  parseJsonQuestions, parseCsvQuestions, parsePlainTextQuestions,
-  type ImportedQuestion,
-} from "./quiz-import-parser";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -56,8 +49,6 @@ export interface QuizQuestion {
 interface QuizQuestionEditorProps {
   questions: QuizQuestion[];
   onChange: (qs: QuizQuestion[]) => void;
-  onImportError?: (msg: string) => void;
-  onImportSuccess?: (count: number) => void;
   /** Bao cho trang cha biet dang co form cau hoi mo (chua luu) de chan nut luu bo de. */
   onEditingChange?: (editing: boolean) => void;
 }
@@ -88,19 +79,6 @@ const makeEmpty = (): QuizQuestion => ({
   ...EMPTY_TYPE_FIELDS,
 });
 const reindex = (qs: QuizQuestion[]) => qs.map((q, i) => ({ ...q, orderIndex: i + 1 }));
-
-function toQuizQuestion(q: ImportedQuestion): QuizQuestion {
-  return {
-    ...makeEmpty(),
-    orderIndex: q.orderIndex,
-    questionType: q.questionType,
-    content: q.content,
-    explanation: q.explanation,
-    ...(q.options && { options: q.options, correctAnswers: q.correctAnswers?.length ? q.correctAnswers : [0] }),
-    ...(q.acceptedAnswers && { acceptedAnswers: q.acceptedAnswers, caseSensitive: q.caseSensitive ?? false }),
-    ...(q.matchingPairs && { matchingPairs: q.matchingPairs }),
-  };
-}
 
 // ─── Contract conversion ──────────────────────────────────────────────────────
 
@@ -192,155 +170,6 @@ function describeAnswer(q: QuizQuestion): string {
   if (q.questionType === "FILL_IN_BLANK") return q.acceptedAnswers.filter((a) => a.trim()).join(" / ");
   if (q.questionType === "MATCHING") return q.matchingPairs.map((p) => `${p.left} → ${p.right}`).join("; ");
   return q.correctAnswers.map((i) => `${LABELS[i]}. ${q.options[i]}`).join("; ");
-}
-
-// ─── Paste Dialog ─────────────────────────────────────────────────────────────
-
-const FORMAT_EXAMPLE = `Liên Hợp Quốc được thành lập năm nào?
-A. 1944
-B. 1945
-C. 1946
-D. 1947
-*B
-// LHQ chính thức thành lập ngày 24/10/1945.
-
----
-
-Trụ sở chính của LHQ đặt tại thành phố nào?
-A. Geneva
-B. London
-C. New York
-D. Paris
-*C`;
-
-interface PasteDialogProps {
-  startIndex: number;
-  onClose: () => void;
-  onImport: (qs: QuizQuestion[]) => void;
-}
-
-function PasteDialog({ startIndex, onClose, onImport }: PasteDialogProps) {
-  const [text, setText] = React.useState("");
-  const [previewCount, setPreviewCount] = React.useState<number | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const handlePreview = () => {
-    const result = parsePlainTextQuestions(text, startIndex);
-    if (!result.ok) { setError(result.error); setPreviewCount(null); return; }
-    setError(null);
-    setPreviewCount(result.questions.length);
-  };
-
-  const handleImport = () => {
-    const result = parsePlainTextQuestions(text, startIndex);
-    if (!result.ok) { setError(result.error); return; }
-    onImport(result.questions.map(toQuizQuestion));
-  };
-
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-sm border border-border-card shadow-[var(--shadow-soft)] bg-[var(--bg-surface)] text-content-heading">
-        
-        <DialogHeader className="px-8 pt-8 pb-4 relative overflow-hidden">
-          <DialogTitle className="text-2xl font-bold tracking-tight text-content-heading">
-            Dán nhiều câu trắc nghiệm
-          </DialogTitle>
-          <DialogDescription className="text-sm mt-1.5 leading-relaxed text-content-muted">
-            Chỉ dùng cho câu <strong>trắc nghiệm 4 phương án</strong>; câu điền chỗ trống và nối cặp hãy thêm bằng thanh “Thêm câu”. Dán nhiều câu cùng lúc theo định dạng chuẩn. Các câu hỏi được phân tách bằng dấu gạch ngang <code className="px-1.5 py-0.5 rounded-sm bg-[var(--status-neutral-bg)] font-mono text-xs">---</code> hoặc một dòng trống.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex-1 px-8 pb-8 overflow-y-auto space-y-6 scrollbar-thin scrollbar-thumb-black/10">
-          {/* Format reference section */}
-          <div className="rounded-sm border border-card-light-border bg-[var(--status-neutral-bg)] overflow-hidden">
-            <details className="group">
-              <summary className="px-5 py-3.5 cursor-pointer font-semibold select-none flex items-center justify-between text-content-text hover:bg-[var(--status-neutral-bg)] transition-colors">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent-teal" />
-                  <span>Xem định dạng mẫu & Hướng dẫn</span>
-                </div>
-                <div className="text-xs px-2 py-0.5 rounded-full bg-[var(--status-neutral-bg)] group-open:hidden">Xem</div>
-                <div className="text-xs px-2 py-0.5 rounded-full bg-[var(--status-neutral-bg)] hidden group-open:block">Đóng</div>
-              </summary>
-              <div className="px-5 pb-5 pt-1 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  <div className="space-y-2">
-                    <p className="font-bold underline decoration-accent-teal/30 underline-offset-4">Cấu trúc 1 câu hỏi:</p>
-                    <ul className="space-y-1 opacity-80 list-disc pl-4">
-                      <li>Dòng 1: Nội dung câu hỏi</li>
-                      <li>Dòng 2-5: Đáp án A, B, C, D (bắt đầu bằng A., B., C., D.)</li>
-                      <li>Dòng 6: Đáp án đúng (bắt đầu bằng *)</li>
-                      <li>Dòng 7: Giải thích (tuỳ chọn, bắt đầu bằng //)</li>
-                    </ul>
-                  </div>
-                  <pre className="p-4 rounded-sm font-mono text-[10px] leading-relaxed overflow-x-auto text-content-muted bg-[var(--bg-elevated)] border border-card-light-border">
-                    {`Nội dung câu hỏi?\nA. Đáp án A\nB. Đáp án B\nC. Đáp án C\nD. Đáp án D\n*B\n// Giải thích tại đây...`}
-                  </pre>
-                </div>
-              </div>
-            </details>
-          </div>
-
-          {/* Textarea field */}
-          <div className="grid gap-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-bold flex items-center gap-2 text-content-heading">
-                Nội dung văn bản
-                <span className="text-[10px] font-normal px-1.5 py-0.25 rounded-sm bg-accent-blue/10 text-accent-blue border border-accent-blue/20">Soạn thảo</span>
-              </Label>
-              <button type="button" 
-                className="text-xs font-semibold px-2 py-1 rounded-sm text-accent-blue hover:bg-accent-blue/10 transition-all"
-                onClick={() => { setText(FORMAT_EXAMPLE); setError(null); setPreviewCount(null); }}>
-                Dùng ví dụ mẫu
-              </button>
-            </div>
-            <div className="relative group">
-              <Textarea
-                value={text}
-                onChange={(e) => { setText(e.target.value); setError(null); setPreviewCount(null); }}
-                placeholder={"Dán các nội dung câu hỏi tại đây...\n\nVí dụ:\nLịch sử Việt Nam có bao nhiêu năm văn hiến?\nA. 1000\nB. 2000\nC. 3000\nD. 4000\n*D"}
-                className="min-h-[300px] font-mono text-sm resize-none rounded-sm p-6 transition-all border-2 leading-relaxed text-content-text bg-[var(--bg-elevated)] border-card-light-border"
-              />
-              <div className="absolute bottom-4 right-4 text-[10px] opacity-30 group-hover:opacity-60 pointer-events-none font-mono">
-                {text.length} ký tự
-              </div>
-            </div>
-          </div>
-
-          {/* Feedback Section */}
-          <div className="min-h-[40px] animate-in fade-in slide-in-from-top-2 duration-300">
-            {error && (
-              <div className="rounded-sm px-4 py-3 text-xs font-semibold flex items-center gap-2 border bg-[var(--status-danger-bg)] text-[var(--accent-danger)] border-[var(--status-danger-border)]">
-                <div className="shrink-0 w-5 h-5 rounded-full bg-accent-danger/20 flex items-center justify-center text-accent-danger">!</div>
-                {error}
-              </div>
-            )}
-            {previewCount !== null && !error && (
-              <div className="rounded-sm px-4 py-3 text-xs font-semibold flex items-center gap-2 border bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]">
-                <div className="shrink-0 w-5 h-5 rounded-full bg-[var(--status-success-bg)] flex items-center justify-center text-[var(--status-success)] font-bold">✓</div>
-                Xác nhận: Tìm thấy <strong>{previewCount}</strong> câu hỏi hợp lệ.
-              </div>
-            )}
-          </div>
-        </div>
-
-        <DialogFooter className="px-8 py-6 bg-[var(--status-neutral-bg)] border-t border-card-light-border flex flex-row items-center justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={onClose}
-            className="rounded-sm font-semibold px-6 text-content-muted hover:bg-[var(--status-neutral-bg)]">Hủy</Button>
-          
-          <Button type="button" variant="outline" onClick={handlePreview} disabled={!text.trim()}
-            className="rounded-sm font-semibold px-6 border-2 border-card-light-border bg-transparent text-content-text transition-all hover:border-[var(--text-primary)]">
-            Kiểm tra
-          </Button>
-
-          <Button type="button" onClick={handleImport} disabled={!text.trim() || error !== null}
-            className="rounded-sm font-bold px-8 transition-all text-white active:scale-95 border-none bg-[var(--accent-gold)] hover:bg-[var(--accent-bronze)]">
-            Import {previewCount !== null ? `(${previewCount} câu)` : ""}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 // ─── Inline Question Form ─────────────────────────────────────────────────────
@@ -629,11 +458,9 @@ function QuestionRow({ q, idx, total, onEdit, onDelete, onMove }: {
 
 // ─── Main Editor ──────────────────────────────────────────────────────────────
 
-export function QuizQuestionEditor({ questions, onChange, onImportError, onImportSuccess, onEditingChange }: QuizQuestionEditorProps) {
+export function QuizQuestionEditor({ questions, onChange, onEditingChange }: QuizQuestionEditorProps) {
   const [addingNew, setAddingNew] = React.useState<QuestionType | null>(null);
   const [editingId, setEditingId] = React.useState<string | null>(null);
-  const [pasteOpen, setPasteOpen] = React.useState(false);
-  const fileRef = React.useRef<HTMLInputElement>(null);
 
   const editing = addingNew !== null || editingId !== null;
   React.useEffect(() => { onEditingChange?.(editing); }, [editing, onEditingChange]);
@@ -658,51 +485,16 @@ export function QuizQuestionEditor({ questions, onChange, onImportError, onImpor
     [next[i], next[j]] = [next[j], next[i]]; onChange(reindex(next));
   };
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    e.target.value = "";
-    const raw = await file.text();
-    const start = questions.length + 1;
-    const result = file.name.endsWith(".csv") ? parseCsvQuestions(raw, start) : parseJsonQuestions(raw, start);
-    if (!result.ok) { onImportError?.(result.error); return; }
-    const imported = result.questions.map((q: ImportedQuestion) => toQuizQuestion(q));
-    onChange(reindex([...questions, ...imported]));
-    onImportSuccess?.(imported.length);
-  };
-
-  const handlePasteImport = (imported: QuizQuestion[]) => {
-    setPasteOpen(false);
-    onChange(reindex([...questions, ...imported]));
-    onImportSuccess?.(imported.length);
-  };
-
   return (
     <div className="space-y-3">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="min-w-0">
-          <span className="text-sm font-semibold text-content-heading">Câu hỏi ({questions.length})</span>
-          {typeCounts.length > 0 && (
-            <p className="text-xs text-content-muted">
-              {typeCounts.map((c) => `${c.n} ${QUESTION_TYPE_LABELS[c.type].toLowerCase()}`).join(" · ")}
-            </p>
-          )}
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {/* Paste text */}
-          <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-sm border-card-light-border bg-transparent text-content-text"
-            onClick={() => setPasteOpen(true)}>
-            <ClipboardList className="h-3.5 w-3.5" /> Dán nhiều câu trắc nghiệm
-          </Button>
-
-          {/* File import */}
-          <input ref={fileRef} type="file" accept=".json,.csv" className="hidden" onChange={handleFile} />
-          <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-sm border-card-light-border bg-transparent text-content-text"
-            onClick={() => fileRef.current?.click()}>
-            <Upload className="h-3.5 w-3.5" /> Nhập file trắc nghiệm (JSON/CSV)
-          </Button>
-
-        </div>
+      {/* Header: count by type. Questions are added one by one with the "Thêm câu" bar below. */}
+      <div className="min-w-0">
+        <span className="text-sm font-semibold text-content-heading">Câu hỏi ({questions.length})</span>
+        {typeCounts.length > 0 && (
+          <p className="text-xs text-content-muted">
+            {typeCounts.map((c) => `${c.n} ${QUESTION_TYPE_LABELS[c.type].toLowerCase()}`).join(" · ")}
+          </p>
+        )}
       </div>
 
       {/* Question list */}
@@ -753,14 +545,6 @@ export function QuizQuestionEditor({ questions, onChange, onImportError, onImpor
         )}
       </div>
 
-      {/* Paste dialog */}
-      {pasteOpen && (
-        <PasteDialog
-          startIndex={questions.length + 1}
-          onClose={() => setPasteOpen(false)}
-          onImport={handlePasteImport}
-        />
-      )}
     </div>
   );
 }
