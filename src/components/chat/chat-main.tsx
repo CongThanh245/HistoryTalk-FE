@@ -599,10 +599,11 @@ export function ChatMain({
   };
 
   /**
-   * Exam answers use the non-stream API: the reply comes back in one piece anyway and carries the grade and
-   * progress. Resolves false when the answer was not graded; the toast then offers to send it again.
+   * Exam answers stream like normal chat: first the feedback, then "---" and the next question, which the
+   * character writes from this answer. The grade and progress arrive with the last event.
+   * Resolves false when the answer was not graded; the toast then offers to send it again.
    */
-  const sendExamAnswer = async (examSessionId: string, content: string): Promise<boolean> => {
+  const sendExamAnswer = (examSessionId: string, content: string): Promise<boolean> => {
     const tempUserMsg: ChatMessage = {
       id: `temp-${Date.now()}`,
       sessionId: examSessionId,
@@ -616,58 +617,108 @@ export function ChatMain({
     setStreamingMessage("");
     setIsStreaming(true);
 
-    try {
-      const res = await chatService.sendMessage(examSessionId, content);
-      qc.setQueryData(
-        queryKeys.chat.messages(examSessionId),
-        (old: GetMessagesResponse | undefined) => ({
-          messages: [...(old?.messages ?? []), res.userMessage, res.assistantMessage],
-          suggestedQuestions: [],
-          exam: res.exam ?? old?.exam,
-        }),
-      );
-      setOptimisticMessages([]);
-      setLastTokenUsage({
-        remainingTokens: res.remainingTokens,
-        promptTokens: res.promptTokens || 0,
-        completionTokens: res.completionTokens || 0,
-        messageType: "TEXT",
-      });
-      recordStudyActivity(qc);
-      qc.invalidateQueries({ queryKey: queryKeys.profile.me });
-      void speakMessage(stripExamSeparator(res.assistantMessage.content), res.assistantMessage.id);
-      return true;
-    } catch (err) {
-      setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
-      if (handlePlatformLockError(err)) return false;
+    // Each sentence is read as soon as it is complete; the "---" between feedback and question is not read.
+    let sentenceBuffer = "";
+    let spokeFirstPhrase = false;
+    const speakPhrase = (phrase: string) => {
+      const text = stripExamSeparator(phrase).trim();
+      if (text.length > 1) {
+        spokeFirstPhrase = true;
+        enqueueSpeech(text);
+      }
+    };
 
-      const blocked = inappropriateMessageFromError(err);
-      if (blocked) {
-        setContentWarning(blocked);
-        return false;
-      }
-      if (isTokenExhaustionError(err)) {
-        setIsLocalTokenExhausted(true);
-        onTokenExhausted?.();
-        notifyTokenExhausted("gửi câu trả lời");
-        return false;
-      }
-      const status = (err as { response?: { status?: number } }).response?.status;
-      if (status === 400) {
-        // "Buổi vấn đáp này đã kết thúc." Reload the progress so the input locks.
-        toast.error(getApiErrorMessage(err, "Không gửi được câu trả lời"));
-        qc.invalidateQueries({ queryKey: queryKeys.chat.messages(examSessionId) });
-        return false;
-      }
-      // The backend saves nothing when grading fails, so the answer can simply be sent again.
-      toast.error(`${character.name} chưa chấm được câu trả lời vì dịch vụ AI đang gặp sự cố.`, {
-        action: { label: "Gửi lại", onClick: () => void sendExamAnswer(examSessionId, content) },
-        duration: 8000,
-      });
-      return false;
-    } finally {
-      setIsStreaming(false);
-    }
+    return new Promise<boolean>((resolve) => {
+      void chatService.sendMessageStream(
+        examSessionId,
+        content,
+        (chunk) => {
+          setStreamingMessage((prev) => prev + chunk);
+
+          sentenceBuffer += chunk;
+          const match = sentenceBuffer.match(/([.!?\n]+)/);
+          const splitIndex =
+            match && match.index !== undefined
+              ? match.index + match[0].length
+              : spokeFirstPhrase
+                ? -1
+                : findEarlyBreak(sentenceBuffer);
+          if (splitIndex > 0) {
+            speakPhrase(sentenceBuffer.slice(0, splitIndex));
+            sentenceBuffer = sentenceBuffer.slice(splitIndex);
+          }
+        },
+        (resData) => {
+          setIsStreaming(false);
+          setOptimisticMessages([]);
+          speakPhrase(sentenceBuffer);
+
+          const assistantMsg: ChatMessage = {
+            id: `ai-${Date.now()}`,
+            sessionId: examSessionId,
+            role: "ASSISTANT",
+            content: resData.fullContent,
+            messageType: "TEXT",
+            createdAt: new Date().toISOString(),
+            quotes: resData.quotesUsed,
+            examVerdict: resData.examVerdict,
+          };
+          if (speechPlayer.isPlaying()) {
+            setSpeakingMessageId(assistantMsg.id);
+          }
+
+          qc.setQueryData(
+            queryKeys.chat.messages(examSessionId),
+            (old: GetMessagesResponse | undefined) => ({
+              messages: [...(old?.messages ?? []), tempUserMsg, assistantMsg],
+              suggestedQuestions: [],
+              exam: resData.exam ?? old?.exam,
+            }),
+          );
+          setLastTokenUsage((prev) => ({
+            remainingTokens: resData.remainingTokens ?? prev?.remainingTokens ?? 0,
+            promptTokens: resData.promptTokens || 0,
+            completionTokens: resData.completionTokens || 0,
+            messageType: "TEXT",
+          }));
+          recordStudyActivity(qc);
+          qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+          resolve(true);
+        },
+        (err: unknown) => {
+          setIsStreaming(false);
+          stopSpeech();
+          setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
+          resolve(false);
+
+          if (handlePlatformLockError(err)) return;
+
+          const blocked = inappropriateMessageFromError(err);
+          if (blocked) {
+            setContentWarning(blocked);
+            return;
+          }
+          if (isTokenExhaustionError(err)) {
+            setIsLocalTokenExhausted(true);
+            onTokenExhausted?.();
+            notifyTokenExhausted("gửi câu trả lời");
+            return;
+          }
+          const status = (err as { response?: { status?: number } }).response?.status;
+          if (status === 400) {
+            // "Buổi vấn đáp này đã kết thúc." Reload the progress so the input locks.
+            toast.error(getApiErrorMessage(err, "Không gửi được câu trả lời"));
+            qc.invalidateQueries({ queryKey: queryKeys.chat.messages(examSessionId) });
+            return;
+          }
+          // The backend saves nothing when grading fails, so the answer can simply be sent again.
+          toast.error(`${character.name} chưa chấm được câu trả lời vì dịch vụ AI đang gặp sự cố.`, {
+            action: { label: "Gửi lại", onClick: () => void sendExamAnswer(examSessionId, content) },
+            duration: 8000,
+          });
+        },
+      );
+    });
   };
 
   /** Resolves false when the message was not sent and its text should stay in the input box. */

@@ -211,7 +211,7 @@ export const chatService = {
     sessionId: string,
     content: string,
     onData: (chunk: string) => void,
-    onDone: (data: { remainingTokens?: number, suggestedQuestions?: string[], fullContent: string, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE", quotesUsed?: string[] }) => void,
+    onDone: (data: { remainingTokens?: number, suggestedQuestions?: string[], fullContent: string, promptTokens?: number, completionTokens?: number, messageType?: "TEXT" | "VOICE", quotesUsed?: string[], exam?: ExamProgress, examVerdict?: ExamVerdict }) => void,
     onError: (error: unknown) => void,
     messageTypeParam: "TEXT" | "VOICE" = "TEXT"
   ) => {
@@ -265,6 +265,8 @@ export const chatService = {
       let promptTokens: number | undefined;
       let completionTokens: number | undefined;
       let quotesUsed: string[] | undefined;
+      let exam: ExamProgress | undefined;
+      let examVerdict: ExamVerdict | undefined;
 
       let fullContent = "";
       let streamError: string | null = null;
@@ -284,6 +286,9 @@ export const chatService = {
             promptTokens = parsed.data?.promptTokens;
             completionTokens = parsed.data?.completionTokens;
             quotesUsed = parsed.data?.quotes_used;
+            // Chi co o session van dap.
+            exam = parsed.data?.exam ?? undefined;
+            examVerdict = parsed.data?.examVerdict ?? undefined;
           } else if (parsed.type === "error") {
             // AI loi giua chung: BE van tra 200 + su kien "error" roi "done".
             streamError = typeof parsed.message === "string" ? parsed.message : "AI error";
@@ -320,7 +325,7 @@ export const chatService = {
         error.aiUnavailable = true;
         throw error;
       }
-      onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens, messageType, quotesUsed });
+      onDone({ remainingTokens, suggestedQuestions, fullContent, promptTokens, completionTokens, messageType, quotesUsed, exam, examVerdict });
     } catch (err) {
       onError(err);
     }
