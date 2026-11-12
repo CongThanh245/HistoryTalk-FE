@@ -5,11 +5,14 @@ import ReactQueryProviders from "@/components/context/query-client-provider";
 import React from "react";
 import SchoolSidebar from "@/components/layouts/sidebar/school-sidebar";
 import { SidebarProvider } from "@/components/layouts/sidebar/sidebar-context";
+import { ForcedPasswordChangeGuard } from "@/components/auth/ForcedPasswordChangeGuard";
 
 /** School Admin workspace (gói trường học). Access is enforced by the auth middleware. */
 export default function SchoolLayout({ children }: { children: React.ReactNode }) {
   return (
     <ReactQueryProviders>
+    <ReactQueryProviders>
+      <ForcedPasswordChangeGuard>
       <SidebarProvider>
         <div className="flex h-[100dvh] bg-[var(--bg-content)]">
           <SchoolSidebar />
@@ -24,6 +27,8 @@ export default function SchoolLayout({ children }: { children: React.ReactNode }
           </div>
         </div>
       </SidebarProvider>
+      </ForcedPasswordChangeGuard>
+    </ReactQueryProviders>
     </ReactQueryProviders>
   );
 }

@@ -3,6 +3,7 @@ import { userService, type UpdateProfilePayload, type ChangePasswordPayload } fr
 import { paymentService } from "@/services/payment.service";
 import { queryKeys } from "@/shared/query-key";
 import { useAuthStore } from "@/store/auth.store";
+import { resetClientAuth } from "@/features/auth/auth-cookies";
 import { toast } from "sonner";
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -44,6 +45,7 @@ export function useProfile() {
         tierId: profile.tierId,
         tierTitle: profile.tierTitle,
         token: profile.token,
+        mustChangePassword: profile.mustChangePassword,
       });
       return profile;
     },
@@ -88,7 +90,9 @@ export function useChangePassword() {
   return useMutation({
     mutationFn: (payload: ChangePasswordPayload) => userService.changePassword(payload),
     onSuccess: () => {
-      toast.success("Đổi mật khẩu thành công!");
+      toast.success("Đổi mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.");
+      resetClientAuth();
+      window.location.replace("/login");
     },
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Đổi mật khẩu thất bại. Vui lòng kiểm tra lại."));

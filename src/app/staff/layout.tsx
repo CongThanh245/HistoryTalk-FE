@@ -5,9 +5,12 @@ import ReactQueryProviders from "@/components/context/query-client-provider";
 import React from "react";
 import StaffSidebar from "@/components/layouts/sidebar/staff-sidebar";
 import { SidebarProvider } from "@/components/layouts/sidebar/sidebar-context";
+import { ForcedPasswordChangeGuard } from "@/components/auth/ForcedPasswordChangeGuard";
 function layout({ children }: { children: React.ReactNode }) {
   return (
     <ReactQueryProviders>
+    <ReactQueryProviders>
+      <ForcedPasswordChangeGuard>
       <SidebarProvider>
         <div className="flex h-[100dvh] bg-[var(--bg-content)]">
           <StaffSidebar />
@@ -20,6 +23,8 @@ function layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </SidebarProvider>
+      </ForcedPasswordChangeGuard>
+    </ReactQueryProviders>
     </ReactQueryProviders>
   );
 }

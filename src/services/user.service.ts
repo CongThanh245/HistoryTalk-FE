@@ -23,6 +23,7 @@ export interface UserProfile {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  mustChangePassword?: boolean;
 }
 
 export interface UpdateProfilePayload {

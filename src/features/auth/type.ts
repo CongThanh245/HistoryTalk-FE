@@ -42,6 +42,7 @@ export interface User {
   tierId?: string | null;
   tierTitle?: string | null;
   token?: number;
+  mustChangePassword?: boolean;
 }
 
 export interface AuthTokens {

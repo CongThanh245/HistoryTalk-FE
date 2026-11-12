@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useChangePassword } from "@/features/profile/hooks";
+import { useLogout } from "@/features/auth/hooks";
 import { cn } from "@/lib/utils/cn";
 
 type Field = "currentPassword" | "newPassword" | "confirmPassword";
@@ -25,11 +26,20 @@ const LABELS: Record<Field, string> = {
 const EMPTY: Record<Field, string> = { currentPassword: "", newPassword: "", confirmPassword: "" };
 
 /**
- * Change your own password (PATCH /users/me/password) from the account menu. For roles whose area has no profile
- * page — staff and school admins are kept out of /profile — this is their only way to change it.
+ * Change your own password (PATCH /users/me/password).
+ * Supports `forced` mode when the backend requires a first-login password change.
  */
-export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function ChangePasswordDialog({
+  open,
+  onOpenChange,
+  forced = false,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  forced?: boolean;
+}) {
   const { mutate: changePassword, isPending } = useChangePassword();
+  const { mutate: logout, isPending: isLoggingOut } = useLogout();
   const [form, setForm] = React.useState(EMPTY);
   const [errors, setErrors] = React.useState<Partial<Record<Field, string>>>({});
   const [visible, setVisible] = React.useState<Partial<Record<Field, boolean>>>({});
@@ -59,12 +69,25 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; on
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !isPending && onOpenChange(o)}>
-      <DialogContent className="staff-theme sm:max-w-md">
+    <Dialog open={open} onOpenChange={(o) => !forced && !isPending && onOpenChange(o)}>
+      <DialogContent
+        className="staff-theme sm:max-w-md"
+        showCloseButton={!forced}
+        onEscapeKeyDown={(e) => {
+          if (forced) e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          if (forced) e.preventDefault();
+        }}
+      >
         <form onSubmit={submit} noValidate className="space-y-4">
           <DialogHeader>
-            <DialogTitle>Đổi mật khẩu</DialogTitle>
-            <DialogDescription>Mật khẩu mới có ít nhất 8 ký tự và khác mật khẩu hiện tại.</DialogDescription>
+            <DialogTitle>{forced ? "Đổi mật khẩu lần đầu" : "Đổi mật khẩu"}</DialogTitle>
+            <DialogDescription>
+              {forced
+                ? "Vui lòng đổi mật khẩu mặc định trước khi tiếp tục sử dụng hệ thống."
+                : "Mật khẩu mới có ít nhất 8 ký tự và khác mật khẩu hiện tại."}
+            </DialogDescription>
           </DialogHeader>
 
           {(Object.keys(LABELS) as Field[]).map((field) => (
@@ -102,13 +125,26 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; on
           ))}
 
           <DialogFooter className="items-center gap-2 sm:justify-between">
-            <Link href="/forgot-password" className="text-sm text-content-muted hover:text-content-heading hover:underline">
-              Quên mật khẩu?
-            </Link>
-            <div className="flex gap-2">
-              <button type="button" className="btn-line" disabled={isPending} onClick={() => onOpenChange(false)}>
-                Hủy
+            {forced ? (
+              <button
+                type="button"
+                className="text-sm text-content-muted hover:text-content-heading hover:underline"
+                disabled={isPending || isLoggingOut}
+                onClick={() => logout()}
+              >
+                {isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}
               </button>
+            ) : (
+              <Link href="/forgot-password" className="text-sm text-content-muted hover:text-content-heading hover:underline">
+                Quên mật khẩu?
+              </Link>
+            )}
+            <div className="flex gap-2">
+              {!forced && (
+                <button type="button" className="btn-line" disabled={isPending} onClick={() => onOpenChange(false)}>
+                  Hủy
+                </button>
+              )}
               <button type="submit" className="btn-crimson disabled:opacity-50" disabled={isPending}>
                 {isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
                 Đổi mật khẩu

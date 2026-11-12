@@ -6,29 +6,32 @@ import { SidebarProvider } from "@/components/layouts/sidebar/sidebar-context";
 import { CustomerRouteGuard } from "@/components/context/customer-route-guard";
 import { GoogleWelcomeNotifier } from "@/components/commons/google-welcome-notifier";
 import { MascotCompanion } from "@/components/mascot/MascotCompanion";
+import { ForcedPasswordChangeGuard } from "@/components/auth/ForcedPasswordChangeGuard";
 
 function layout({ children }: { children: React.ReactNode }) {
   return (
     <ReactQueryProviders>
       <CustomerRouteGuard>
-        <SidebarProvider>
-          {/* On mobile: sidebar is a fixed overlay, main takes full width.   */}
-          {/* On md+:    sidebar sits in the flex row beside the main content. */}
-          <div className="flex h-[100dvh] bg-[var(--bg-content)]">
-            <CustomerSidebar />
-            <div className="flex-1 flex flex-col min-w-0">
-              <Header />
-              <main
-                className="relative flex-1 min-h-0 overflow-y-auto"
-                style={{ background: "var(--bg-content-decorated)" }}
-              >
-                <div className="mx-auto h-full max-w-7xl px-4 sm:px-6 lg:px-8 has-[.map-page]:!max-w-none has-[.map-page]:!px-0 has-[.chat-page]:!max-w-none has-[.chat-page]:!px-0 has-[.quiz-flow-page]:!max-w-none has-[.quiz-flow-page]:!px-0">
-                  {children}
-                </div>
-              </main>
+        <ForcedPasswordChangeGuard>
+          <SidebarProvider>
+            {/* On mobile: sidebar is a fixed overlay, main takes full width.   */}
+            {/* On md+:    sidebar sits in the flex row beside the main content. */}
+            <div className="flex h-[100dvh] bg-[var(--bg-content)]">
+              <CustomerSidebar />
+              <div className="flex-1 flex flex-col min-w-0">
+                <Header />
+                <main
+                  className="relative flex-1 min-h-0 overflow-y-auto"
+                  style={{ background: "var(--bg-content-decorated)" }}
+                >
+                  <div className="mx-auto h-full max-w-7xl px-4 sm:px-6 lg:px-8 has-[.map-page]:!max-w-none has-[.map-page]:!px-0 has-[.chat-page]:!max-w-none has-[.chat-page]:!px-0 has-[.quiz-flow-page]:!max-w-none has-[.quiz-flow-page]:!px-0">
+                    {children}
+                  </div>
+                </main>
+              </div>
             </div>
-          </div>
-        </SidebarProvider>
+          </SidebarProvider>
+        </ForcedPasswordChangeGuard>
       </CustomerRouteGuard>
       {/* Fires a toast if the URL contains ?notify=google_welcome */}
       <Suspense>
