@@ -198,6 +198,7 @@ export function ChatMain({
   const searchParams = useSearchParams();
   const { toggleMobileSidebar } = useSidebar();
   const user = useAuthStore((s) => s.user);
+  const authHydrated = useAuthStore((s) => s.hasHydrated);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>(
     [],
@@ -1442,7 +1443,8 @@ export function ChatMain({
       <ContentWarningDialog message={contentWarning} onClose={() => setContentWarning(null)} />
       <AiDisclaimerFooter />
       {/* Content authors test their own characters all day; the acknowledgement is for learners and teachers. */}
-      {!isStaffOrAdmin && (
+      {/* Wait for auth hydration so the dialog never flashes before the role is known. */}
+      {authHydrated && !isStaffOrAdmin && !pathname?.startsWith("/staff") && (
         <AiFirstChatNotice characterId={character.id} characterName={character.name} userId={user?.uid} />
       )}
 
