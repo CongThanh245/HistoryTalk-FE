@@ -62,8 +62,8 @@ const ERA_OPTIONS = [
 const MEDIA_MAX_UPLOAD_MB = 50;
 const MEDIA_MAX_UPLOAD_BYTES = MEDIA_MAX_UPLOAD_MB * 1024 * 1024;
 const MEDIA_SIZE_HINT = `Tối đa ${MEDIA_MAX_UPLOAD_MB}MB`;
-// Backend: 2D images up to 10MB (DirectBinaryUploadStrategy), videos up to 50MB (also the multipart cap).
-const IMAGE_MAX_UPLOAD_MB = 10;
+// Backend: 2D images up to 20MB (DirectBinaryUploadStrategy, pending BE bump from 10MB), videos up to 50MB (also the multipart cap).
+const IMAGE_MAX_UPLOAD_MB = 20;
 
 /** Sentinel id for the not-yet-created document being composed in create mode — it reuses the same view/edit/delete dialogs as a real, already-imported RagDocument. */
 const PENDING_DOCUMENT_ID = "pending";
