@@ -23,10 +23,25 @@ type Action = "renew" | "activate" | "topup" | null;
 export function SchoolSubscriptionPanel({ school }: { school: ApiSchool }) {
   const { renew, activate, topUp } = useSchoolSubscriptionActions(school.id);
   const [action, setAction] = React.useState<Action>(null);
-  // A custom package has no fixed pool to renew into, so renewal starts from Enterprise M.
+  // A custom package renews into its contracted pool (without carry-over or top-ups) unless a new one is entered.
+  const contractedPool = school.baseCustomTokenQuota ?? school.totalSchoolTokenQuota;
+  const isCustom = school.packageType === "ENTERPRISE_CUSTOM";
   const [pkg, setPkg] = React.useState<EnterprisePackage>(
-    PACKAGE_ORDER.includes(school.packageType) ? school.packageType : "ENTERPRISE_MEDIUM",
+    isCustom || PACKAGE_ORDER.includes(school.packageType) ? school.packageType : "ENTERPRISE_MEDIUM",
   );
+  const [customQuota, setCustomQuota] = React.useState(String(contractedPool || ""));
+  const customQuotaNumber = Number(customQuota.replace(/[.\s,]/g, ""));
+  const customQuotaError =
+    pkg === "ENTERPRISE_CUSTOM" && (!Number.isInteger(customQuotaNumber) || customQuotaNumber <= 0)
+      ? "Nhập số token lớn hơn 0"
+      : null;
+  const renewOptions: EnterprisePackage[] = isCustom ? [...PACKAGE_ORDER, "ENTERPRISE_CUSTOM"] : PACKAGE_ORDER;
+  const nextPackagePool =
+    school.nextPackageType === "ENTERPRISE_CUSTOM"
+      ? (school.nextCustomTokenQuota ?? contractedPool)
+      : school.nextPackageType
+        ? ENTERPRISE_PACKAGE_TOKENS[school.nextPackageType]
+        : null;
   const [amount, setAmount] = React.useState("1000000");
   const [note, setNote] = React.useState("");
 
@@ -42,8 +57,18 @@ export function SchoolSubscriptionPanel({ school }: { school: ApiSchool }) {
 
   const confirm = () => {
     if (action === "renew") {
+      if (customQuotaError) {
+        toast.error(customQuotaError);
+        return;
+      }
       renew.mutate(
-        { packageType: pkg },
+        pkg === "ENTERPRISE_CUSTOM"
+          ? {
+              packageType: pkg,
+              // Unchanged: let the backend keep the contracted pool.
+              ...(customQuotaNumber !== contractedPool ? { customTokenQuota: customQuotaNumber } : {}),
+            }
+          : { packageType: pkg },
         { onSuccess: () => toast.success(`Đã gia hạn ${PACKAGE_SHORT_LABELS[pkg]} cho năm học tới`), onError: fail("Không gia hạn được gói.") },
       );
     } else if (action === "activate") {
@@ -126,14 +151,41 @@ export function SchoolSubscriptionPanel({ school }: { school: ApiSchool }) {
         confirmLabel="Gia hạn"
         onConfirm={confirm}
       >
-        <Field label="Gói năm học tới">
-          <StaffFormSelect
-            value={pkg}
-            onValueChange={setPkg}
-            options={PACKAGE_ORDER.map((p) => ({ value: p, label: `${PACKAGE_SHORT_LABELS[p]} · ${millionTokens(ENTERPRISE_PACKAGE_TOKENS[p])} token` }))}
-            className="w-full"
-          />
-        </Field>
+        <div className="space-y-3">
+          <Field label="Gói năm học tới">
+            <StaffFormSelect
+              value={pkg}
+              onValueChange={setPkg}
+              options={renewOptions.map((p) => ({
+                value: p,
+                label:
+                  p === "ENTERPRISE_CUSTOM"
+                    ? `${PACKAGE_SHORT_LABELS[p]} · giữ quy mô hiện tại`
+                    : `${PACKAGE_SHORT_LABELS[p]} · ${millionTokens(ENTERPRISE_PACKAGE_TOKENS[p])} token`,
+              }))}
+              className="w-full"
+            />
+          </Field>
+          {pkg === "ENTERPRISE_CUSTOM" && (
+            <Field
+              label="Quỹ token năm học tới"
+              required
+              error={customQuotaError}
+              htmlFor="renew-custom-quota"
+            >
+              <StaffFormInput
+                id="renew-custom-quota"
+                inputMode="numeric"
+                value={customQuota}
+                onChange={(e) => setCustomQuota(e.target.value)}
+              />
+              <p className="mt-1 text-xs text-content-muted">
+                Mặc định là quỹ theo hợp đồng hiện tại ({formatNumber(contractedPool)} token, chưa tính phần chuyển sang và token mua thêm).
+                Khi kích hoạt, trường được cộng thêm 20% quỹ còn dư.
+              </p>
+            </Field>
+          )}
+        </div>
       </ConfirmDialog>
 
       <ConfirmDialog
@@ -141,7 +193,7 @@ export function SchoolSubscriptionPanel({ school }: { school: ApiSchool }) {
         onOpenChange={(o) => !o && setAction(null)}
         variant="warning"
         title="Kích hoạt năm học mới?"
-        description={`Trường chuyển sang ${school.nextPackageType ? PACKAGE_SHORT_LABELS[school.nextPackageType] : "gói đã gia hạn"}, năm học 01/09 – 31/05 mới. Quỹ mới = token của gói + 20% quỹ còn dư (khoảng ${formatNumber(carryOver)} token); phần dư còn lại bị thu hồi.`}
+        description={`Trường chuyển sang ${school.nextPackageType ? PACKAGE_SHORT_LABELS[school.nextPackageType] : "gói đã gia hạn"} cho năm học mới. Quỹ mới = ${nextPackagePool != null ? `${formatNumber(nextPackagePool)} token của gói` : "token của gói"} + 20% quỹ còn dư (khoảng ${formatNumber(carryOver)} token); phần dư còn lại bị thu hồi.`}
         confirmLabel="Kích hoạt"
         onConfirm={confirm}
       />

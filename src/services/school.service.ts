@@ -132,6 +132,12 @@ export interface ApiSchool {
   /** Renewed in May; `nextPackageType` starts on 01/09. */
   renewedForNextYear?: boolean | null;
   nextPackageType?: EnterprisePackage | null;
+  /** Pool the renewed custom package starts with (before the 20 % carry-over). */
+  nextCustomTokenQuota?: number | null;
+  /** Contracted pool of a custom package, without carry-over or top-ups; kept on renewal. */
+  baseCustomTokenQuota?: number | null;
+  maxStudents?: number | null;
+  maxTeachers?: number | null;
   localHistoryPolicyAccepted: boolean;
   status: SchoolStatus;
   createdAt: string;

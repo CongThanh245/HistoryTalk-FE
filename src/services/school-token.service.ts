@@ -127,6 +127,8 @@ export type DeactivationReason = "GRADUATED" | "TRANSFERRED_OUT";
 
 export interface RenewSubscriptionPayload {
   packageType: EnterprisePackage;
+  /** ENTERPRISE_CUSTOM only: the next year's pool; omitted keeps the school's contracted pool. */
+  customTokenQuota?: number;
 }
 
 export interface TopUpPayload {
