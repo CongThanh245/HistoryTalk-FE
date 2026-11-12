@@ -62,7 +62,7 @@ export function StaffDocumentDetailDialog({
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6">
-          <div className="mx-auto w-full max-w-3xl space-y-5">
+          <div className="mx-auto w-full max-w-6xl space-y-5">
             <div className="grid gap-1.5">
               {editable ? (
                 <>
@@ -104,7 +104,7 @@ export function StaffDocumentDetailDialog({
                 />
               ) : (
                 <div
-                  className="rounded-sm border border-card-light-border bg-card-light-bg p-5 text-sm leading-7 text-content-muted"
+                  className="rounded-sm border border-card-light-border bg-card-light-bg px-6 py-5 text-[15px] leading-7 text-content-text"
                 >
                   {content ? <MarkdownMessage text={content} /> : emptyContentMessage}
                 </div>

@@ -1128,20 +1128,7 @@ export function ChatMain({
             <strong className="text-content-heading">{exam.score.toLocaleString("vi-VN")}</strong>/10
           </span>
           <span className="tabular-nums text-content-muted">
-            Đúng {exam.correctCount} · Một phần {exam.partialCount} · Sai {exam.incorrectCount}
-          </span>
-          <span
-            className="basis-full h-1 overflow-hidden rounded-full bg-[var(--border-default)]"
-            role="progressbar"
-            aria-label="Tiến độ vấn đáp"
-            aria-valuemin={0}
-            aria-valuemax={exam.totalQuestions}
-            aria-valuenow={exam.answeredQuestions}
-          >
-            <span
-              className="block h-full bg-[var(--accent-gold)] transition-[width] duration-300"
-              style={{ width: `${(exam.answeredQuestions / Math.max(1, exam.totalQuestions)) * 100}%` }}
-            />
+            Đúng {exam.correctCount} · Đúng một phần {exam.partialCount} · Sai {exam.incorrectCount}
           </span>
         </div>
       )}
