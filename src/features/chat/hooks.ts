@@ -46,7 +46,7 @@ export function useCreateSession() {
       characterId: string;
       contextId: string;
       /** Set to start an exam session instead of a chat. */
-      exam?: { questionCount: number };
+      exam?: { questionCount: number; sourceSessionId?: string | null };
     }) => chatService.createSession(characterId, contextId, exam),
     onSuccess: (_, { characterId, contextId }) => {
       qc.invalidateQueries({

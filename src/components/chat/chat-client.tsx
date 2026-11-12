@@ -164,7 +164,7 @@ export function ChatClient({
   // Creating an exam session asks question 1 straight away, which takes a few seconds.
   const [isStartingExam, setIsStartingExam] = useState(false);
   const handleStartExamSession = useCallback(
-    (questionCount: number) => {
+    (questionCount: number, sourceSessionId?: string | null) => {
       if (!characterId || !contextId) return;
       if (isTokenExhausted) return;
 
@@ -174,7 +174,7 @@ export function ChatClient({
       setIsRightPanelOpen(false);
       setIsStartingExam(true);
       createSession
-        .mutateAsync({ characterId, contextId, exam: { questionCount } })
+        .mutateAsync({ characterId, contextId, exam: { questionCount, sourceSessionId } })
         .then((session) => setActiveSessionId(session.id))
         .catch((error) => {
           if (isTokenExhaustionError(error)) {
@@ -219,6 +219,9 @@ export function ChatClient({
         contextId={contextId}
         sessionId={activeSessionId}
         onSessionCreated={handleSessionCreated}
+        onStartExamFromChat={(questionCount) => handleStartExamSession(questionCount, activeSessionId)}
+        returnToSessionId={sessions?.find((session) => session.id === activeSessionId)?.sourceSessionId}
+        onReturnToSession={setActiveSessionId}
         initializingLabel={isStartingExam ? `${activeCharacter.name} đang chuẩn bị câu hỏi vấn đáp...` : undefined}
         toggleRightPanel={() => setIsRightPanelOpen(!isRightPanelOpen)}
         isRightOpen={isRightPanelOpen}

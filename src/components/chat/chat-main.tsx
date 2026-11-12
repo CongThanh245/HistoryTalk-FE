@@ -7,7 +7,7 @@ import {
   openCharacterSpeechStream,
   splitSpeechSegments,
 } from "@/lib/character-speech";
-import { Phone, ScrollText, Menu, Info, Coins, PhoneCall, Video, Lock, AlertTriangle, X, RotateCcw } from "lucide-react";
+import { Phone, ScrollText, Menu, Info, Coins, PhoneCall, Video, Lock, AlertTriangle, X, RotateCcw, GraduationCap, ArrowLeft } from "lucide-react";
 import type {
   ChatCharacter,
   ChatMessage,
@@ -51,6 +51,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { inappropriateMessageFromError } from "@/lib/utils/content-policy";
 import { ContentWarningDialog } from "./content-warning-dialog";
+import { ExamStartDialog } from "./exam-start-dialog";
 import { AI_FEEDBACK_FORM_URL, AiDisclaimerFooter, AiFirstChatNotice } from "./ai-notice";
 
 const EXAM_VERDICT_LABELS: Record<ExamVerdict, { label: string; className: string }> = {
@@ -163,6 +164,11 @@ interface ChatMainProps {
   contextId: string;
   sessionId: string | null;
   onSessionCreated: (sessionId: string) => void;
+  /** Starts an exam about this chat's conversation. */
+  onStartExamFromChat?: (questionCount: number) => void;
+  /** Set on an exam started from a chat: the chat the learner can go back to. */
+  returnToSessionId?: string;
+  onReturnToSession?: (sessionId: string) => void;
   toggleRightPanel?: () => void;
   isRightOpen?: boolean;
   /** Overrides the "initializing conversation" message shown while sessionId is null. */
@@ -177,6 +183,9 @@ export function ChatMain({
   contextId,
   sessionId,
   onSessionCreated,
+  onStartExamFromChat,
+  returnToSessionId,
+  onReturnToSession,
   toggleRightPanel,
   isRightOpen = false,
   initializingLabel,
@@ -383,6 +392,7 @@ export function ChatMain({
   const exam = data?.exam;
   const isExam = !!exam;
   const isExamFinished = !!exam?.finished;
+  const [isExamFromChatOpen, setIsExamFromChatOpen] = useState(false);
   const showSuggestions =
     !isExam && suggestedQuestions.length > 0 && !isStreaming && lastItem?.type !== "voice-call" && lastItem?.message.role === "ASSISTANT";
   const userTextMessageCount = useMemo(
@@ -1381,9 +1391,45 @@ export function ChatMain({
           </p>
           <p className="mt-0.5 text-xs text-content-text">
             Đúng {exam.correctCount}, đúng một phần {exam.partialCount}, chưa đúng {exam.incorrectCount} trên{" "}
-            {exam.totalQuestions} câu. Mở bảng bên phải để vấn đáp lại hoặc trò chuyện tiếp.
+            {exam.totalQuestions} câu.{" "}
+            {returnToSessionId
+              ? "Quay lại cuộc trò chuyện để hỏi tiếp, hoặc mở bảng bên phải để vấn đáp lại."
+              : "Mở bảng bên phải để vấn đáp lại hoặc trò chuyện tiếp."}
           </p>
+          {returnToSessionId && onReturnToSession && (
+            <button
+              onClick={() => onReturnToSession(returnToSessionId)}
+              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border cursor-pointer border-[var(--text-primary)] text-content-text hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)] transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Quay lại phỏng vấn
+            </button>
+          )}
         </div>
+      )}
+
+      {/* Once the learner has asked something, they can be quizzed on what the character told them. */}
+      {!isExam && sessionId && onStartExamFromChat && userTextMessageCount > 0 && !isStreaming && (
+        <div className="px-4 pt-2 flex justify-end shrink-0">
+          <button
+            onClick={() => setIsExamFromChatOpen(true)}
+            disabled={isTokenExhausted}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border cursor-pointer border-[var(--border-strong)] text-content-text hover:bg-[var(--text-primary)] hover:border-[var(--text-primary)] hover:text-[var(--text-inverse)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" /> Vấn đáp về cuộc trò chuyện này
+          </button>
+        </div>
+      )}
+      {onStartExamFromChat && (
+        <ExamStartDialog
+          open={isExamFromChatOpen}
+          characterName={character.name}
+          onOpenChange={setIsExamFromChatOpen}
+          onStart={(questionCount) => {
+            setIsExamFromChatOpen(false);
+            stopSpeech();
+            onStartExamFromChat(questionCount);
+          }}
+        />
       )}
 
       <ChatInput

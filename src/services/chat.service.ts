@@ -24,6 +24,8 @@ export interface ChatSession {
   mode?: ChatSessionMode;
   /** Only on EXAM sessions. */
   examQuestionCount?: number;
+  /** Only on an exam started from a chat: the chat to go back to afterwards. */
+  sourceSessionId?: string;
 }
 
 /** Grade of the answer just given. */
@@ -146,7 +148,7 @@ export const chatService = {
   createSession: async (
     characterId: string,
     contextId: string,
-    exam?: { questionCount: number },
+    exam?: { questionCount: number; sourceSessionId?: string | null },
   ): Promise<ChatSession> => {
     const res = await axiosClient.post(
       "/chat/sessions",
@@ -155,6 +157,8 @@ export const chatService = {
         contextId,
         // An exam session opens with question 1 already asked, so creating it calls the AI.
         ...(exam ? { mode: "EXAM", examQuestionCount: exam.questionCount } : {}),
+        // Asks about what was said in that chat instead of any document of the character.
+        ...(exam?.sourceSessionId ? { sourceSessionId: exam.sourceSessionId } : {}),
       },
       {
         timeout: 90000,
