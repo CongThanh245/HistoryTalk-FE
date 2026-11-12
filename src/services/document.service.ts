@@ -250,8 +250,9 @@ export const documentService = {
     entityId?: string,
     signal?: AbortSignal,
     enableAiVision?: boolean,
+    extractImages?: boolean,
   ): Promise<ExtractedPdf> => {
-    return documentService.uploadAndExtractPdfStream(file, entityType, entityId, undefined, signal, enableAiVision);
+    return documentService.uploadAndExtractPdfStream(file, entityType, entityId, undefined, signal, enableAiVision, extractImages);
   },
 
   // POST /documents/pdf/upload-and-extract/stream - Same as uploadAndExtractPdf
@@ -269,12 +270,16 @@ export const documentService = {
     /** Lets the caller cancel a long OCR run (e.g. a "Hủy" button) — aborting also rejects the in-flight reader.read() loop below with an AbortError. */
     signal?: AbortSignal,
     enableAiVision?: boolean,
+    extractImages?: boolean,
   ): Promise<ExtractedPdf> => {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
     const basePath = process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1";
     const queryParams = new URLSearchParams();
     if (enableAiVision !== undefined) {
       queryParams.append("enableAiVision", String(enableAiVision));
+    }
+    if (extractImages !== undefined) {
+      queryParams.append("extractImages", String(extractImages));
     }
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
     const url = `${baseUrl}${basePath}/documents/pdf/upload-and-extract${queryString}`;
@@ -285,6 +290,7 @@ export const documentService = {
       if (entityType) formData.append("entityType", entityType);
       if (entityId) formData.append("entityId", entityId);
       if (enableAiVision !== undefined) formData.append("enableAiVision", String(enableAiVision));
+      if (extractImages !== undefined) formData.append("extractImages", String(extractImages));
       return formData;
     };
 

@@ -649,9 +649,9 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                         }
                       }}
                       isCreateTextPending={isCreateTextDocumentPending}
-                      onExtractPdf={async (file, onProgress, signal, enableAiVision) => {
+                      onExtractPdf={async (file, onProgress, signal, enableAiVision, extractImages) => {
                         if (!onExtractPdfDocument) throw new Error("onExtractPdfDocument not provided");
-                        return onExtractPdfDocument(file, onProgress, signal, enableAiVision);
+                        return onExtractPdfDocument(file, onProgress, signal, enableAiVision, extractImages);
                       }}
                       isExtractPdfPending={isExtractPdfDocumentPending}
                       onCreatePdf={async (data) => {

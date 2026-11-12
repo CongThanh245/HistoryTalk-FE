@@ -123,6 +123,7 @@ export interface StaffCharacterDetailViewProps {
     onProgress?: (page: number, total: number) => void,
     signal?: AbortSignal,
     enableAiVision?: boolean,
+    extractImages?: boolean,
   ) => Promise<{ fileUrl: string; rawText: string; pageCount: number }>;
   isExtractPdfDocumentPending?: boolean;
   /** Create a brand-new PDF document in one call, using content + fileUrl already produced by onExtractPdfDocument (edit mode only) */
