@@ -89,6 +89,8 @@ export const ROUTES = {
     CHARACTERS: "/staff/characters",
     CONTEXTS: "/staff/contexts",
     QUIZZES: "/staff/quizzes",
+    STORIES: "/staff/stories",
+    STORY_EDITOR: (storyId: string) => `/staff/stories/${storyId}`,
     QUESTS: "/staff/quests",
     DOCUMENTS: "/staff/documents",
     TRASH: "/staff/trash",

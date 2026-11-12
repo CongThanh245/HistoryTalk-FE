@@ -28,6 +28,7 @@ import {
   LibraryBig,
   BookOpenText,
   ListChecks,
+  Clapperboard,
 } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
@@ -178,6 +179,7 @@ export const STAFF_SIDEBAR: SidebarSection[] = [
     items: [
       { icon: Shield, label: "Tổng quan", href: ROUTES.STAFF.HOME, exact: true },
       { icon: Scroll, label: "Bối cảnh", href: ROUTES.STAFF.CONTEXTS },
+      { icon: Clapperboard, label: "Kịch bản kể chuyện", href: ROUTES.STAFF.STORIES },
       { icon: Map, label: "Bản đồ lịch sử", href: ROUTES.STAFF.MAP },
       { icon: User, label: "Nhân vật", href: ROUTES.STAFF.CHARACTERS },
       { icon: BookOpen, label: "Tài liệu", href: ROUTES.STAFF.DOCUMENTS },
