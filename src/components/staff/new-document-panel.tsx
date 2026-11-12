@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { FileText, File, Plus, X, Upload, Eye, RotateCcw, Sparkles, Columns2 } from "lucide-react";
+import { FileText, File, Plus, X, Upload, Eye, RotateCcw, Sparkles, Columns2, Globe, Search } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { StaffFormLabel, StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
 import { PdfViewerDialog } from "@/components/staff/pdf-viewer-dialog";
 import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
+import { fetchWikipediaArticle, searchWikipedia, type WikiSearchResult } from "@/services/wikipedia.service";
 
 interface ExtractedPdf {
   fileUrl: string;
@@ -35,9 +36,11 @@ interface NewDocumentPanelProps {
    */
   deferred?: boolean;
   onDraftChange?: (doc: { title: string; content: string; fileUrl?: string; file?: File } | null) => void;
+  /** Prefilled search term for the "Wikipedia" source, e.g. the character's name. */
+  wikiDefaultQuery?: string;
 }
 
-type Step = "closed" | "choose" | "text" | "pdf";
+type Step = "closed" | "choose" | "text" | "pdf" | "wiki";
 type PdfPhase = "pick" | "extracting" | "review";
 
 // Mirrors the backend: PdfExtractionServiceImpl / SupabaseDocumentStorageService MAX_FILE_BYTES and the 50MB multipart cap.
@@ -62,6 +65,7 @@ export function NewDocumentPanel({
   isCreatePdfPending,
   deferred = false,
   onDraftChange,
+  wikiDefaultQuery,
 }: NewDocumentPanelProps) {
   const [step, setStep] = React.useState<Step>("closed");
   const [pdfPhase, setPdfPhase] = React.useState<PdfPhase>("pick");
@@ -79,6 +83,11 @@ export function NewDocumentPanel({
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const replaceInputRef = React.useRef<HTMLInputElement>(null);
   const abortControllerRef = React.useRef<AbortController | null>(null);
+  const [wikiQuery, setWikiQuery] = React.useState("");
+  const [wikiResults, setWikiResults] = React.useState<WikiSearchResult[] | null>(null);
+  const [wikiLoading, setWikiLoading] = React.useState<"search" | "article" | null>(null);
+  const [wikiError, setWikiError] = React.useState<string | null>(null);
+  const wikiAbortRef = React.useRef<AbortController | null>(null);
 
   // Deferred mode: keep the page's draft in step with the panel. The callback goes through a ref because pages
   // pass a new function every render, and reporting back re-renders them.
@@ -112,7 +121,60 @@ export function NewDocumentPanel({
     }
   };
 
+  const resetWiki = () => {
+    wikiAbortRef.current?.abort();
+    setWikiResults(null);
+    setWikiLoading(null);
+    setWikiError(null);
+  };
+
+  const runWikiSearch = async (query: string) => {
+    if (!query.trim()) return;
+    wikiAbortRef.current?.abort();
+    const controller = new AbortController();
+    wikiAbortRef.current = controller;
+    setWikiLoading("search");
+    setWikiError(null);
+    try {
+      const results = await searchWikipedia(query, controller.signal);
+      setWikiResults(results);
+    } catch (e) {
+      if (!controller.signal.aborted) setWikiError(e instanceof Error ? e.message : "Không kết nối được Wikipedia");
+    } finally {
+      if (!controller.signal.aborted) setWikiLoading(null);
+    }
+  };
+
+  // The article lands in the ordinary text editor, so staff review and edit it before anything is saved.
+  const pickWikiArticle = async (articleTitle: string) => {
+    wikiAbortRef.current?.abort();
+    const controller = new AbortController();
+    wikiAbortRef.current = controller;
+    setWikiLoading("article");
+    setWikiError(null);
+    try {
+      const article = await fetchWikipediaArticle(articleTitle, controller.signal);
+      setTitle((current) => current.trim() || article.title);
+      setContent(article.content);
+      resetWiki();
+      setStep("text");
+    } catch (e) {
+      if (!controller.signal.aborted) {
+        setWikiError(e instanceof Error ? e.message : "Không tải được bài viết");
+        setWikiLoading(null);
+      }
+    }
+  };
+
+  const openWiki = () => {
+    const query = wikiDefaultQuery?.trim() ?? "";
+    setWikiQuery(query);
+    setStep("wiki");
+    if (query) void runWikiSearch(query);
+  };
+
   const reset = () => {
+    resetWiki();
     setPickError(null);
     setStep("closed");
     setTitle("");
@@ -198,9 +260,77 @@ export function NewDocumentPanel({
           <File className="mr-1.5 h-3.5 w-3.5" />
           PDF
         </Button>
+        <Button type="button" size="sm" variant="outline" onClick={openWiki}>
+          <Globe className="mr-1.5 h-3.5 w-3.5" />
+          Wikipedia
+        </Button>
         <Button type="button" size="icon-sm" variant="ghost" onClick={reset} title="Hủy">
           <X className="h-3.5 w-3.5" />
         </Button>
+      </div>
+    );
+  }
+
+  if (step === "wiki") {
+    return (
+      <div className="w-full rounded-sm border border-card-light-border bg-[var(--bg-elevated)] p-3 space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-content-heading">
+            <Globe className="h-3.5 w-3.5" />
+            Lấy nội dung từ Wikipedia
+          </p>
+          <Button type="button" size="icon-sm" variant="ghost" onClick={reset} title="Hủy">
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+        <form
+          className="flex gap-1.5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void runWikiSearch(wikiQuery);
+          }}
+        >
+          <StaffFormInput
+            value={wikiQuery}
+            onChange={(e) => setWikiQuery(e.target.value)}
+            placeholder="Tên nhân vật, sự kiện..."
+            disabled={wikiLoading === "article"}
+          />
+          <Button type="submit" size="sm" variant="outline" disabled={!wikiQuery.trim() || !!wikiLoading}>
+            <Search className="mr-1.5 h-3.5 w-3.5" />
+            Tìm
+          </Button>
+        </form>
+        {wikiLoading ? (
+          <div className="flex items-center gap-2 text-xs text-content-muted">
+            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            {wikiLoading === "search" ? "Đang tìm trên Wikipedia..." : "Đang tải bài viết..."}
+          </div>
+        ) : wikiError ? (
+          <p role="alert" className="text-[11px] font-medium text-accent-danger">
+            {wikiError}
+          </p>
+        ) : wikiResults && !wikiResults.length ? (
+          <p className="text-xs text-content-muted">Không tìm thấy bài viết phù hợp.</p>
+        ) : wikiResults ? (
+          <ul className="max-h-72 space-y-1 overflow-y-auto">
+            {wikiResults.map((r) => (
+              <li key={r.title}>
+                <button
+                  type="button"
+                  onClick={() => void pickWikiArticle(r.title)}
+                  className="w-full rounded-sm border border-card-light-border p-2 text-left text-xs transition-colors hover:border-[var(--accent-gold)]/50 hover:bg-[var(--accent-gold)]/5"
+                >
+                  <span className="font-medium text-content-heading">{r.title}</span>
+                  {r.snippet && <p className="mt-0.5 line-clamp-2 text-content-muted">{r.snippet}…</p>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <p className="text-[11px] text-content-muted">
+          Nội dung được điền vào ô soạn để bạn kiểm tra và chỉnh sửa trước khi lưu. Nguồn và giấy phép CC BY-SA được ghi ở cuối tài liệu.
+        </p>
       </div>
     );
   }

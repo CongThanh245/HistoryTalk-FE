@@ -765,6 +765,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                       <NewDocumentPanel
                         key={`doc-panel-${documents.length}`}
                         deferred
+                        wikiDefaultQuery={draft.name}
                         onDraftChange={(doc) => {
                           set("documentTitle")(doc?.title ?? "");
                           set("documentContent")(doc?.content ?? "");
