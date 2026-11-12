@@ -9,6 +9,8 @@ import {
   RegisterRequest,
   RegisterResponse,
   ResetPasswordRequest,
+  ResendVerificationRequest,
+  VerifyEmailRequest,
 } from "./type";
 
 type ApiEnvelope<T> = {
@@ -127,6 +129,26 @@ export const authApi = {
       PUBLIC_AUTH_CONFIG,
     );
     return unwrapMessageResponse(res, "Không thể đặt lại mật khẩu");
+  },
+
+  verifyEmail: async (data: VerifyEmailRequest): Promise<MessageResponse> => {
+    const res = await axiosClient.post<ApiEnvelope<MessageResponse | null>>(
+      "/auth/verify-email",
+      data,
+      PUBLIC_AUTH_CONFIG,
+    );
+    return unwrapMessageResponse(res, "Không thể xác thực email");
+  },
+
+  resendVerification: async (
+    data: ResendVerificationRequest,
+  ): Promise<MessageResponse> => {
+    const res = await axiosClient.post<ApiEnvelope<MessageResponse | null>>(
+      "/auth/resend-verification",
+      data,
+      PUBLIC_AUTH_CONFIG,
+    );
+    return unwrapMessageResponse(res, "Không thể gửi lại email xác thực");
   },
 
   // Gửi kèm refresh token để BE thu hồi (BE xoay vòng refresh token, không còn blacklist access token).

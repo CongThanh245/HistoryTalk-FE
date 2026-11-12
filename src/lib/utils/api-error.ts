@@ -31,6 +31,7 @@ export const SCHOOL_ERROR_CODES = [
   "SCHOOL_SUBSCRIPTION_EXPIRED",
   "SCHOOL_SUBSCRIPTION_NOT_STARTED",
   "ACCOUNT_DEACTIVATED",
+  "EMAIL_NOT_VERIFIED",
 ] as const;
 export type SchoolErrorCode = (typeof SCHOOL_ERROR_CODES)[number];
 

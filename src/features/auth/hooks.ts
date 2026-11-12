@@ -9,7 +9,9 @@ import {
   GoogleLoginRequest,
   LoginRequest,
   RegisterRequest,
+  ResendVerificationRequest,
   ResetPasswordRequest,
+  VerifyEmailRequest,
 } from "./type";
 import { persistAuthCookies, resetClientAuth } from "./auth-cookies";
 
@@ -48,13 +50,21 @@ export function useGoogleLogin() {
 }
 
 export function useRegister() {
-  const router = useRouter();
-
   return useMutation({
     mutationFn: (data: RegisterRequest) => authApi.register(data),
-    onSuccess: () => {
-      router.push("/login");
-    },
+  });
+}
+
+export function useVerifyEmail() {
+  return useMutation({
+    mutationFn: (data: VerifyEmailRequest) => authApi.verifyEmail(data),
+  });
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: (data: ResendVerificationRequest) =>
+      authApi.resendVerification(data),
   });
 }
 

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, X } from "lucide-react";
 import { toast } from "sonner";
-import { useGoogleLogin, useLogin, useRegister } from "@/features/auth/hooks";
+import { useGoogleLogin, useLogin, useRegister, useResendVerification } from "@/features/auth/hooks";
 import { BrandLogo } from "@/components/commons/brand-logo";
 import { cn } from "@/lib/utils/cn";
 
@@ -74,12 +74,44 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const isRegister = mode === "register";
 
   const login = useLogin();
   const googleLogin = useGoogleLogin();
   const register = useRegister();
+  const resendVerification = useResendVerification();
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  function handleResendVerification() {
+    if (!unverifiedEmail) return;
+    resendVerification.mutate(
+      { email: unverifiedEmail },
+      {
+        onSuccess: () => {
+          setResendCooldown(60);
+          toast.success("Đã gửi lại email xác thực", {
+            description: "Vui lòng kiểm tra hộp thư Gmail của bạn.",
+          });
+        },
+        onError: (err: AuthError) => {
+          toast.error("Không thể gửi lại email", {
+            description:
+              err?.response?.data?.message ??
+              err?.message ??
+              "Vui lòng thử lại sau.",
+          });
+        },
+      },
+    );
+  }
 
   const loading = login.isPending || register.isPending || googleLogin.isPending;
   const usesRedirectGoogleLogin = GOOGLE_AUTH_MODE === "redirect";
@@ -169,10 +201,12 @@ export default function AuthForm({ mode }: AuthFormProps) {
       register.mutate(
         { userName, email, password, confirmPassword },
         {
-          onSuccess: () =>
+          onSuccess: () => {
             toast.success("Đăng ký thành công", {
-              description: "Vui lòng đăng nhập",
-            }),
+              description: "Vui lòng kiểm tra hộp thư Gmail để xác thực tài khoản.",
+            });
+            router.push(`/verify-email?email=${encodeURIComponent(email.trim())}`);
+          },
           onError: (err: AuthError) =>
             toast.error("Đăng ký thất bại", {
               description: err?.response?.data?.message ?? "Vui lòng thử lại",
@@ -185,10 +219,16 @@ export default function AuthForm({ mode }: AuthFormProps) {
         {
           onError: (err: AuthError) => {
             const message = err?.response?.data?.message ?? err?.message ?? "Email hoặc mật khẩu không đúng";
+            const code = schoolErrorCode(message);
+            if (code === "EMAIL_NOT_VERIFIED") {
+              setUnverifiedEmail(email.trim());
+            } else {
+              setUnverifiedEmail(null);
+            }
             toast.error("Đăng nhập thất bại", {
               // Graduated / transferred students get "ACCOUNT_DEACTIVATED: …" (Sprint 7).
               description:
-                schoolErrorCode(message) === "ACCOUNT_DEACTIVATED"
+                code === "ACCOUNT_DEACTIVATED"
                   ? "Tài khoản đã ngừng hoạt động do học sinh đã tốt nghiệp hoặc chuyển trường. Liên hệ nhà trường nếu cần hỗ trợ."
                   : stripErrorCode(message),
             });
@@ -325,6 +365,25 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
+              {!isRegister && unverifiedEmail && (
+                <div className="rounded-sm border border-[var(--accent-gold)] bg-[var(--bg-elevated)] p-3 text-xs leading-5 text-content-text space-y-2">
+                  <p>
+                    Tài khoản <strong>{unverifiedEmail}</strong> chưa được xác thực email.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={resendVerification.isPending || resendCooldown > 0}
+                    className="font-bold uppercase tracking-[0.06em] text-[var(--accent-gold)] hover:text-[var(--accent-bronze)] disabled:opacity-60 cursor-pointer"
+                  >
+                    {resendVerification.isPending
+                      ? "Đang gửi..."
+                      : resendCooldown > 0
+                        ? `Gửi lại sau ${resendCooldown}s`
+                        : "Gửi lại email xác thực"}
+                  </button>
+                </div>
+              )}
               {/* Username — chỉ hiện khi register */}
               {isRegister && (
                 <div className="space-y-1.5">
