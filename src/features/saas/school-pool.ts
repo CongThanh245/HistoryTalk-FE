@@ -1,7 +1,12 @@
+import { ROUTES } from "@/constants/routes";
 import { tokenApiErrorMessage } from "./hooks-school-token";
 import type { TodayQuota } from "./quota-bonus";
 
-/** Where schools ask HistoryTalk for a top-up (no in-app request exists yet). */
+/** Anchor of the PayOS purchase panel on the School Admin token page. */
+export const TOKEN_PURCHASE_ANCHOR = "mua-token";
+export const TOKEN_PURCHASE_HREF = `${ROUTES.SCHOOL.TOKENS}#${TOKEN_PURCHASE_ANCHOR}`;
+
+/** Where schools contact HistoryTalk (orders too large for a self-service purchase, contracts). */
 export const HISTORYTALK_CONTACT_EMAIL = "hello@historytalk.vn";
 
 /** Pre-filled email to HistoryTalk asking to top up a school's shared pool. */

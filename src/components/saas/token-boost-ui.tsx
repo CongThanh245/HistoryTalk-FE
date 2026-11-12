@@ -12,7 +12,7 @@ import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, Panel, formatDate, formatNumbe
 import { useTeacherClassroomDashboard } from "@/features/dashboard/hooks";
 import { useProfile } from "@/features/profile/hooks";
 import { useApiTokenQuota } from "@/features/saas/hooks-api";
-import { isSchoolPoolShortError, topUpMailto } from "@/features/saas/school-pool";
+import { TOKEN_PURCHASE_HREF, isSchoolPoolShortError } from "@/features/saas/school-pool";
 import {
   tokenApiErrorMessage,
   useCreateTeacherTicket,
@@ -70,13 +70,13 @@ const isTeacherSelfTicket = (r: TokenBoostRequest) =>
 const isTeacherQuotaShort = (error: unknown) => /hạn mức token trong ngày của giáo viên/i.test(tokenApiErrorMessage(error, ""));
 
 /**
- * The school pool cannot cover it; only a HistoryTalk top-up helps. The School Admin gets a contact button, a
+ * The school pool cannot cover it; only a top-up helps. The School Admin gets a link to buy tokens, a
  * teacher gets to forward the request so the School Admin sees the demand.
  */
 const toastSchoolPoolShort = (next?: { label: string; onClick: () => void }, isAdmin = false) =>
   toast.error("Quỹ token chung của trường không đủ để cấp số token này.", {
     description: isAdmin
-      ? "Liên hệ HistoryTalk để nạp thêm token cho trường."
+      ? "Mua thêm token qua PayOS để tiếp tục duyệt."
       : "Chuyển yêu cầu lên quản trị trường để nhà trường biết và nạp thêm token.",
     action: next,
     duration: 10_000,
@@ -145,14 +145,10 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
             return;
           }
           if (isSchoolPoolShortError(err)) {
-            const quota = pool.data;
             if (isTeacher) {
               toastSchoolPoolShort({ label: "Chuyển lên", onClick: () => send(request, "ESCALATE", tokens, reviewNote) });
             } else {
-              toastSchoolPoolShort(
-                quota ? { label: "Liên hệ nạp thêm", onClick: () => window.location.assign(topUpMailto(quota)) } : undefined,
-                true,
-              );
+              toastSchoolPoolShort({ label: "Mua thêm token", onClick: () => window.location.assign(TOKEN_PURCHASE_HREF) }, true);
             }
             return;
           }
@@ -313,11 +309,9 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
               {poolRemaining <= 0 ? (
                 <>
                   Quỹ token chung của trường đã hết nên chưa duyệt được.{" "}
-                  {pool.data && (
-                    <a href={topUpMailto(pool.data)} className="archive-link">
-                      Liên hệ HistoryTalk để nạp thêm
-                    </a>
-                  )}
+                  <a href={TOKEN_PURCHASE_HREF} className="archive-link">
+                    Mua thêm token
+                  </a>
                 </>
               ) : (
                 <>

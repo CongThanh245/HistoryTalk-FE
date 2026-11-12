@@ -139,6 +139,51 @@ export interface TopUpPayload {
 
 export const TOP_UP_MIN = 1_000;
 
+// ─── School Admin self-service: renewal and token purchase (PayOS) ─────────
+
+/** 0,15 đ per token, at least 100 000 tokens; PayOS needs at least 2 000 đ. */
+export const TOKEN_PURCHASE = { unitPriceVnd: 0.15, minTokens: 100_000, minAmountVnd: 2_000 } as const;
+
+/** Amount the backend charges for `tokens` (rounded, never below the PayOS minimum). */
+export const tokenPurchaseAmount = (tokens: number) =>
+  Math.max(TOKEN_PURCHASE.minAmountVnd, Math.round(tokens * TOKEN_PURCHASE.unitPriceVnd));
+
+export interface SchoolTokenPurchase {
+  orderId: string;
+  orderCode: number;
+  schoolId: string;
+  schoolName: string;
+  tokens: number;
+  amount: number;
+  paymentLinkId: string;
+  checkoutUrl: string;
+  qrCode: string;
+  status: string;
+  expiredAt: string | null;
+  createdAt: string | null;
+}
+
+export type PaymentOrderStatus = "PENDING" | "PAID" | "CANCELLED" | "EXPIRED" | "FAILED";
+export type FulfillmentStatus = "PENDING" | "FULFILLED" | "FAILED";
+
+export interface SchoolTokenPurchaseHistoryItem {
+  orderId: string;
+  orderCode: number;
+  tokens: number;
+  amount: number;
+  status: PaymentOrderStatus | string;
+  /** FULFILLED once the tokens are in the school pool. */
+  fulfillmentStatus: FulfillmentStatus | string | null;
+  paidAt: string | null;
+  createdAt: string | null;
+}
+
+export interface SchoolTokenPurchasePage {
+  content: SchoolTokenPurchaseHistoryItem[];
+  totalElements: number;
+  totalPages: number;
+}
+
 // ─── Paging ────────────────────────────────────────────────────────────────
 
 /** `PaginatedResponse` of the boost list; `currentPage` is 1-based there (converted back to 0-based). */
@@ -229,6 +274,24 @@ export const schoolTokenService = {
   deactivateStudent: async (uid: string, reason: DeactivationReason): Promise<ApiStudent> => {
     const res = await axiosClient.put(`/school-admin/students/${uid}/deactivate`, { reason });
     return res.data.data;
+  },
+
+  // School Admin
+  /** In May, or from 31 days before to 30 days after the current end date. */
+  renewOwn: async (payload: RenewSubscriptionPayload): Promise<ApiSchool> => {
+    const res = await axiosClient.post("/school-admin/subscription/renew", payload);
+    return res.data.data;
+  },
+  /** Creates a PayOS checkout; the tokens are added to the pool by the PayOS webhook once paid. */
+  purchaseTokens: async (tokens: number): Promise<SchoolTokenPurchase> => {
+    const res = await axiosClient.post("/school-admin/tokens/purchase", { tokens });
+    return res.data.data;
+  },
+  /** Unlike the other lists this endpoint is still 0-based (`PageRequest.of(page)`), so `page` is sent as is. */
+  purchaseHistory: async (params: { page: number; size: number }): Promise<SchoolTokenPurchasePage> => {
+    const res = await axiosClient.get("/school-admin/tokens/purchase-history", { params });
+    const data = res.data.data ?? {};
+    return { content: data.content ?? [], totalElements: data.totalElements ?? 0, totalPages: Math.max(1, data.totalPages ?? 1) };
   },
 
   // System Admin

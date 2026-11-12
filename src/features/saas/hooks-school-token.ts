@@ -18,6 +18,7 @@ import {
   type UpdateTokenPolicyPayload,
 } from "@/services/school-token.service";
 import { apiErrorMessage, apiErrorStatus, saasKeys } from "@/features/saas/hooks-api";
+import { queryKeys } from "@/shared/query-key";
 
 /**
  * Error text for the Sprint 7 endpoints. A 404 here means the running backend predates them (Spring answers
@@ -148,6 +149,41 @@ export function useDeactivateStudent() {
       qc.invalidateQueries({ queryKey: ["saas", "student"] });
     },
   });
+}
+
+// ─── School Admin: renewal and token purchase ──────────────────────────────
+
+const purchaseHistoryKey = ["saas", "token-purchases"] as const;
+
+export function useRenewOwnSubscription() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: RenewSubscriptionPayload) => schoolTokenService.renewOwn(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.dashboard.schoolAdmin }),
+  });
+}
+
+export function usePurchaseSchoolTokens() {
+  return useMutation({ mutationFn: (tokens: number) => schoolTokenService.purchaseTokens(tokens) });
+}
+
+/** `watch`: poll while an order just paid is waiting for the PayOS webhook. */
+export function useSchoolTokenPurchaseHistory(params: { page: number; size: number }, watch = false) {
+  return useQuery({
+    queryKey: [...purchaseHistoryKey, params],
+    queryFn: () => schoolTokenService.purchaseHistory(params),
+    refetchInterval: watch ? 3000 : false,
+  });
+}
+
+/** After a purchase lands in the pool: refresh the pool figures shown across the school area. */
+export function useRefreshSchoolPool() {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: saasKeys.quota });
+    qc.invalidateQueries({ queryKey: queryKeys.dashboard.schoolAdmin });
+    qc.invalidateQueries({ queryKey: purchaseHistoryKey });
+  };
 }
 
 // ─── System Admin ──────────────────────────────────────────────────────────

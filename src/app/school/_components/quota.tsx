@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Activity, AlertTriangle, ArrowRight, CalendarRange, Coins, Mail, School as SchoolIcon, Zap } from "lucide-react";
+import { Activity, AlertTriangle, ArrowRight, CalendarRange, Coins, CreditCard, School as SchoolIcon, Zap } from "lucide-react";
 
 import { ROUTES } from "@/constants/routes";
 
@@ -11,10 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils/cn";
 import { useApiTokenQuota } from "@/features/saas/hooks-api";
 import { PACKAGE_SHORT_LABELS, SCHOOL_STATUS_LABELS } from "@/features/saas/admin-schools";
-import { poolLevel, topUpMailto } from "@/features/saas/school-pool";
+import { TOKEN_PURCHASE_HREF, poolLevel } from "@/features/saas/school-pool";
 import type { SchoolAdminDashboard } from "@/services/analytics-dashboard.service";
 import type { SchoolTokenQuota } from "@/services/school.service";
 import { ErrorBlock, PackageBadge } from "./shared";
+import { RenewSubscriptionButton } from "./billing";
 
 /** School header (name, code, package) from GET /school-admin/token-quota. */
 export function SchoolHeader({ quota }: { quota: SchoolTokenQuota }) {
@@ -48,7 +49,7 @@ function QuotaFigure({ label, value, tone, hint }: { label: string; value: numbe
 }
 
 /**
- * Empty or nearly empty shared pool: what stops working, and a pre-filled email to HistoryTalk for a top-up.
+ * Empty or nearly empty shared pool: what stops working, and a link to buy more tokens through PayOS.
  * Nothing when the pool is fine.
  */
 export function PoolAlert({ quota }: { quota: SchoolTokenQuota }) {
@@ -79,12 +80,15 @@ export function PoolAlert({ quota }: { quota: SchoolTokenQuota }) {
           {empty
             ? "Học sinh và giáo viên tạm thời không dùng được trò chuyện AI, và các yêu cầu xin thêm token không duyệt được. Quiz, tài liệu, bài tập vẫn dùng bình thường."
             : "Khi quỹ về 0, cả trường sẽ không dùng được trò chuyện AI cho đến khi được nạp thêm."}{" "}
-          Liên hệ HistoryTalk để nạp thêm token.
+          Trường có thể mua thêm token qua PayOS, token được cộng ngay sau khi thanh toán.
         </p>
       </div>
-      <a href={topUpMailto(quota)} className={cn("shrink-0 self-start sm:self-center", empty ? "btn-crimson" : "btn-line")}>
-        <Mail className="h-4 w-4" aria-hidden="true" /> Liên hệ nạp thêm
-      </a>
+      <Link
+        href={TOKEN_PURCHASE_HREF}
+        className={cn("shrink-0 self-start sm:self-center", empty ? "btn-crimson" : "btn-line")}
+      >
+        <CreditCard className="h-4 w-4" aria-hidden="true" /> Mua thêm token
+      </Link>
     </div>
   );
 }
@@ -269,13 +273,16 @@ export function TokenHero({ quota, dash }: { quota: SchoolTokenQuota; dash?: Sch
             </b>
           </span>
         </span>
-        <Link href={ROUTES.SCHOOL.TOKENS} className="archive-link">
-          Hạn mức ngày &amp; yêu cầu token <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-        </Link>
+        <span className="flex flex-wrap items-center gap-3">
+          {dash && <RenewSubscriptionButton dash={dash} className="min-h-9 px-3 text-xs" />}
+          <Link href={ROUTES.SCHOOL.TOKENS} className="archive-link">
+            Hạn mức ngày, mua thêm &amp; yêu cầu token <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+        </span>
         {dash && !dash.renewedForNextYear && (
           <p className={cn("w-full text-xs", inMay ? "text-[var(--status-warning)]" : "text-content-muted")}>
-            Gia hạn trong tháng 5 để gói mới chạy từ 01/09; tối đa 20% token còn dư được bảo lưu sang năm sau. Sau 31/05 nếu chưa gia hạn, tài khoản
-            của trường bị khóa.
+            Gia hạn được trong tháng 5 hoặc trong 31 ngày trước khi gói hết hạn; khi gói mới bắt đầu, 20% token còn dư được bảo lưu. Quá ngày
+            hết hạn mà chưa gia hạn, tài khoản của trường bị khóa.
           </p>
         )}
       </div>
@@ -368,8 +375,8 @@ export function SubscriptionSummary({ data }: { data: SchoolAdminDashboard }) {
       </dl>
       {!data.renewedForNextYear && (
         <p className={cn("text-xs", inMay ? "text-[var(--status-warning)]" : "text-content-muted")}>
-          Gia hạn trong tháng 5 (01/05 – 31/05) để gói mới chạy từ 01/09; tối đa 20% token còn dư được bảo lưu sang năm sau. Sau 31/05 nếu chưa
-          gia hạn, toàn bộ tài khoản của trường bị khóa. Liên hệ HistoryTalk để gia hạn.
+          Gia hạn được trong tháng 5 hoặc trong 31 ngày trước khi gói hết hạn; khi gói mới bắt đầu, 20% token còn dư được bảo lưu. Quá ngày hết
+          hạn mà chưa gia hạn, toàn bộ tài khoản của trường bị khóa.
         </p>
       )}
     </div>

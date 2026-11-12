@@ -71,6 +71,12 @@ export function authMiddleware(request: NextRequest) {
 
   // School Admin works only in the school area (Role Matrix I–II, VIII row 23).
   if (isSchoolAdmin(role)) {
+    // PayOS sends every buyer back to /payment/*; a school token purchase is confirmed on the token page.
+    if (isPathOrChild(pathname, ROUTES.PAYMENT)) {
+      const target = new URL(ROUTES.SCHOOL.TOKENS, request.url);
+      target.search = request.nextUrl.search;
+      return NextResponse.redirect(target);
+    }
     return isSchoolRoute ? NextResponse.next() : redirect(SCHOOL_HOME);
   }
 

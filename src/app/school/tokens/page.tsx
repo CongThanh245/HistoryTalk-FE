@@ -1,9 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { Panel, SectionHeading } from "@/components/saas/saas-ui";
 import { TokenBoostReviewList } from "@/components/saas/token-boost-ui";
 import { useSchoolAdminDashboard } from "@/features/dashboard/hooks";
 import { PoolStrip } from "../_components/quota";
+import { PurchaseReturnBanner, TokenPurchasePanel } from "../_components/billing";
 import { DailyQuotaPolicyPanel } from "../_components/token-policy";
 import { SchoolShell } from "../_components/shared";
 
@@ -15,9 +17,17 @@ export default function SchoolTokensPage() {
   const dashboard = useSchoolAdminDashboard();
   const pending = dashboard.data?.pendingTokenBoostRequests ?? 0;
   return (
-    <SchoolShell title="Hạn mức token" description="Duyệt yêu cầu xin thêm token và đặt mức token mỗi học sinh, giáo viên được dùng mỗi ngày.">
+    <SchoolShell
+      title="Hạn mức token"
+      description="Mua thêm token cho quỹ chung, duyệt yêu cầu xin thêm token và đặt mức token mỗi học sinh, giáo viên được dùng mỗi ngày."
+    >
       <div className="space-y-6">
+        <Suspense>
+          <PurchaseReturnBanner />
+        </Suspense>
         <PoolStrip />
+
+        <TokenPurchasePanel schoolStatus={dashboard.data?.status} />
 
         <Panel>
           <SectionHeading title={pending > 0 ? `Yêu cầu chờ duyệt (${pending})` : "Yêu cầu xin thêm token"} />
