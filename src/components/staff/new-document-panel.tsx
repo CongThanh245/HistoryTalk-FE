@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FileText, File, Plus, X, Upload, Eye, RotateCcw, Sparkles, Columns2, Globe, Search } from "lucide-react";
+import { FileText, File, Plus, X, Upload, Eye, RotateCcw, Sparkles, Columns2, Globe, Search, Image as ImageIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { StaffFormLabel, StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
@@ -25,6 +25,7 @@ interface NewDocumentPanelProps {
     onProgress?: (page: number, total: number) => void,
     signal?: AbortSignal,
     enableAiVision?: boolean,
+    extractImages?: boolean,
   ) => Promise<ExtractedPdf>;
   isExtractPdfPending?: boolean;
   /** Create the document using the (possibly edited) extracted text + the fileUrl from onExtractPdf. */
@@ -79,6 +80,8 @@ export function NewDocumentPanel({
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [extracted, setExtracted] = React.useState<ExtractedPdf | null>(null);
+  const [extractImages, setExtractImages] = React.useState(false);
+  const [extractedWithImages, setExtractedWithImages] = React.useState(false);
   const [enableAiVision, setEnableAiVision] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<"split" | "edit" | "preview">("split");
   const deferredContent = React.useDeferredValue(content);
@@ -112,6 +115,7 @@ export function NewDocumentPanel({
   const clearFile = () => {
     setFile(null);
     setExtracted(null);
+    setExtractedWithImages(false);
     setPdfPhase("pick");
     setOcrProgress(null);
     if (previewUrl) {
@@ -182,8 +186,24 @@ export function NewDocumentPanel({
     setStep("closed");
     setTitle("");
     setContent("");
+    setExtractImages(false);
+    setEnableAiVision(false);
     setViewMode("split");
     clearFile();
+  };
+
+  const handleToggleExtractImages = (checked: boolean) => {
+    setExtractImages(checked);
+    if (!checked) {
+      setEnableAiVision(false);
+    }
+  };
+
+  const handleToggleAiVision = (checked: boolean) => {
+    setEnableAiVision(checked);
+    if (checked) {
+      setExtractImages(true);
+    }
   };
 
   const cancelExtraction = () => {
@@ -198,7 +218,8 @@ export function NewDocumentPanel({
     setPickError(null);
     // When swapping an already-extracted file, keep it until the new one succeeds so a failed or cancelled
     // swap puts the previous file (and any edits to its text) back instead of leaving nothing.
-    const previous = file && extracted ? { file, previewUrl, extracted, content } : null;
+    const previous = file && extracted ? { file, previewUrl, extracted, content, extractedWithImages, viewMode } : null;
+    const shouldExtractImages = extractImages || enableAiVision;
     const newPreviewUrl = URL.createObjectURL(picked);
     setFile(picked);
     setPreviewUrl(newPreviewUrl);
@@ -207,8 +228,16 @@ export function NewDocumentPanel({
     const controller = new AbortController();
     abortControllerRef.current = controller;
     try {
-      const result = await onExtractPdf(picked, (page, total) => setOcrProgress({ page, total }), controller.signal, enableAiVision);
+      const result = await onExtractPdf(
+        picked,
+        (page, total) => setOcrProgress({ page, total }),
+        controller.signal,
+        enableAiVision,
+        shouldExtractImages,
+      );
       setExtracted(result);
+      setExtractedWithImages(shouldExtractImages);
+      setViewMode(shouldExtractImages ? "split" : "edit");
       setContent(result.rawText);
       setTitle((current) => current.trim() || picked.name.replace(/\.pdf$/i, ""));
       setPdfPhase("review");
@@ -223,6 +252,8 @@ export function NewDocumentPanel({
         setFile(previous.file);
         setPreviewUrl(previous.previewUrl);
         setExtracted(previous.extracted);
+        setExtractedWithImages(previous.extractedWithImages);
+        setViewMode(previous.viewMode);
         setContent(previous.content);
         setOcrProgress(null);
         setPdfPhase("review");
@@ -383,17 +414,35 @@ export function NewDocumentPanel({
         <div className="grid gap-2">
           <div className="flex items-center justify-between rounded-sm border border-card-light-border bg-[var(--bg-elevated)] p-2.5 text-xs">
             <div className="flex items-center gap-2">
+              <ImageIcon className="h-4 w-4 text-[var(--accent-gold)] shrink-0" />
+              <div>
+                <span className="font-medium text-content-heading">Lưu ảnh tư liệu từ PDF</span>
+                <p className="text-[11px] text-content-muted">
+                  Trích xuất hình ảnh từ PDF lưu lên hệ thống và mở tab xem trước Markdown
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={extractImages}
+              onCheckedChange={handleToggleExtractImages}
+              disabled={isBusy}
+              aria-label="Bật lưu ảnh tư liệu từ PDF"
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-sm border border-card-light-border bg-[var(--bg-elevated)] p-2.5 text-xs">
+            <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-[var(--accent-gold)] shrink-0" />
               <div>
                 <span className="font-medium text-content-heading">Phân tích lược đồ & ảnh bằng AI</span>
                 <p className="text-[11px] text-content-muted">
-                  Tự động nhận diện bản đồ, trận đánh và chèn ảnh tư liệu vào bài viết
+                  Tự động nhận diện bản đồ, trận đánh và chèn ảnh tư liệu vào bài viết (tự bật lưu ảnh)
                 </p>
               </div>
             </div>
             <Switch
               checked={enableAiVision}
-              onCheckedChange={setEnableAiVision}
+              onCheckedChange={handleToggleAiVision}
               disabled={isBusy}
               aria-label="Bật phân tích lược đồ bằng AI"
             />
@@ -510,6 +559,8 @@ export function NewDocumentPanel({
 
       {showContentEditor && (() => {
         const imageCount = (content.match(/!\[.*?\]\(.*?\)/g) || []).length;
+        const showMarkdownPreview = step !== "pdf" || extractedWithImages;
+        const effectiveViewMode = showMarkdownPreview ? viewMode : "edit";
         return (
           <div className="grid gap-1.5">
             <div className="flex items-center justify-between">
@@ -517,7 +568,7 @@ export function NewDocumentPanel({
                 {step === "pdf" ? "Nội dung trích xuất từ PDF (có thể chỉnh sửa)" : "Nội dung"}
               </StaffFormLabel>
               <div className="flex items-center gap-2">
-                {imageCount > 0 && (
+                {showMarkdownPreview && imageCount > 0 && (
                   <span className="text-[11px] font-medium text-accent-gold bg-accent-gold/10 px-2 py-0.5 rounded-sm">
                     {imageCount} hình ảnh
                   </span>
@@ -525,51 +576,53 @@ export function NewDocumentPanel({
                 <span className="text-micro text-content-muted">
                   {content.length.toLocaleString("vi-VN")} ký tự
                 </span>
-                <div className="inline-flex rounded-sm border border-[var(--card-light-border)] p-0.5 bg-[var(--bg-elevated)]">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("split")}
-                    title="Chế độ song song: Vừa sửa thô vừa xem trước trực tiếp"
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
-                      viewMode === "split"
-                        ? "bg-[var(--accent-gold)] text-white shadow-xs"
-                        : "text-content-muted hover:text-content-heading"
-                    }`}
-                  >
-                    <Columns2 className="h-3 w-3" />
-                    Song song
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("edit")}
-                    title="Chỉ hiển thị ô soạn thảo văn bản thô"
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
-                      viewMode === "edit"
-                        ? "bg-[var(--accent-gold)] text-white shadow-xs"
-                        : "text-content-muted hover:text-content-heading"
-                    }`}
-                  >
-                    <FileText className="h-3 w-3" />
-                    Chỉnh sửa
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("preview")}
-                    title="Chỉ hiển thị xem trước định dạng Markdown"
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
-                      viewMode === "preview"
-                        ? "bg-[var(--accent-gold)] text-white shadow-xs"
-                        : "text-content-muted hover:text-content-heading"
-                    }`}
-                  >
-                    <Eye className="h-3 w-3" />
-                    Xem trước
-                  </button>
-                </div>
+                {showMarkdownPreview && (
+                  <div className="inline-flex rounded-sm border border-[var(--card-light-border)] p-0.5 bg-[var(--bg-elevated)]">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("split")}
+                      title="Chế độ song song: Vừa sửa thô vừa xem trước trực tiếp"
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
+                        viewMode === "split"
+                          ? "bg-[var(--accent-gold)] text-white shadow-xs"
+                          : "text-content-muted hover:text-content-heading"
+                      }`}
+                    >
+                      <Columns2 className="h-3 w-3" />
+                      Song song
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("edit")}
+                      title="Chỉ hiển thị ô soạn thảo văn bản thô"
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
+                        viewMode === "edit"
+                          ? "bg-[var(--accent-gold)] text-white shadow-xs"
+                          : "text-content-muted hover:text-content-heading"
+                      }`}
+                    >
+                      <FileText className="h-3 w-3" />
+                      Chỉnh sửa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("preview")}
+                      title="Chỉ hiển thị xem trước định dạng Markdown"
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
+                        viewMode === "preview"
+                          ? "bg-[var(--accent-gold)] text-white shadow-xs"
+                          : "text-content-muted hover:text-content-heading"
+                      }`}
+                    >
+                      <Eye className="h-3 w-3" />
+                      Xem trước
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
-            {viewMode === "split" ? (
+            {effectiveViewMode === "split" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                 <div className="flex flex-col">
                   <span className="text-[11px] font-semibold text-content-muted mb-1 flex items-center gap-1">
@@ -599,7 +652,7 @@ export function NewDocumentPanel({
                   </div>
                 </div>
               </div>
-            ) : viewMode === "edit" ? (
+            ) : effectiveViewMode === "edit" ? (
               <StaffFormTextarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
