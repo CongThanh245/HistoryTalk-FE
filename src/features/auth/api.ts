@@ -44,6 +44,7 @@ type RawLoginData = {
   tokenType: string;
   expiresIn: number;
   isNewUser?: boolean;
+  mustChangePassword?: boolean;
 };
 
 function unwrapMessageResponse(
@@ -64,6 +65,7 @@ function toLoginResponse(raw: RawLoginData): LoginResponse {
       userName: raw.userName,
       email: raw.email,
       role: raw.role,
+      mustChangePassword: raw.mustChangePassword,
     },
     tokens: {
       accessToken: raw.accessToken,
