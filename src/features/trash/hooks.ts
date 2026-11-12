@@ -1,4 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueries, useMutation, useQueryClient } from "@tanstack/react-query";
+import { characterService, type Character } from "@/services/character.service";
+import { eventService, type HistoricalEvent } from "@/services/event.service";
 import { trashService, type TrashItemType } from "@/services/trash.service";
 import { queryKeys } from "@/shared/query-key";
 import { removeContextFromCharacterCaches } from "@/features/characters/context-cache";
@@ -26,6 +28,42 @@ export function useTrashList(type: TrashItemType) {
     queryKey: trashQueryKey(type),
     queryFn: () => trashService.list(type),
     staleTime: 1000 * 30,
+  });
+}
+
+/**
+ * The trash list only carries id + name + deletedAt. Staff can still read a trashed item's detail, so load each one
+ * (same cache keys as the detail pages) to show what was deleted. Missing entries just render "—".
+ */
+export function useTrashCharacterDetails(ids: string[]) {
+  return useQueries({
+    queries: ids.map((id) => ({
+      queryKey: queryKeys.characters.detail(id),
+      queryFn: () => characterService.getById(id),
+      staleTime: 1000 * 60 * 5,
+      retry: false,
+    })),
+    combine: (results) => {
+      const map = new Map<string, Character>();
+      results.forEach((r, i) => { if (r.data) map.set(ids[i], r.data); });
+      return map;
+    },
+  });
+}
+
+export function useTrashContextDetails(ids: string[]) {
+  return useQueries({
+    queries: ids.map((id) => ({
+      queryKey: queryKeys.events.detail(id),
+      queryFn: () => eventService.getById(id),
+      staleTime: 1000 * 60 * 5,
+      retry: false,
+    })),
+    combine: (results) => {
+      const map = new Map<string, HistoricalEvent>();
+      results.forEach((r, i) => { if (r.data) map.set(ids[i], r.data); });
+      return map;
+    },
   });
 }
 

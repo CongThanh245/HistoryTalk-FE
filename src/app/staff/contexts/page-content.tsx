@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
-import { Scroll, Search, Plus, Trash2, RotateCcw, Eye, Image, MoreHorizontal } from "lucide-react";
+import { Scroll, Search, Plus, Trash2, RotateCcw, Undo2, Eye, Image, MoreHorizontal } from "lucide-react";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffDataTable } from "@/components/staff/staff-data-table";
 import { StaffImageHoverPreview } from "@/components/staff/staff-media-preview";
@@ -21,6 +21,7 @@ import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { useEvents, useUpdateEvent, useDeleteEvent } from "@/features/events/hooks";
 import {
   useTrashList,
+  useTrashContextDetails,
   useTrashRestore,
   useTrashPermanentDelete,
 } from "@/features/trash/hooks";
@@ -31,6 +32,8 @@ import {
   EventEra,
 } from "@/services/event.service";
 import type { TrashItem } from "@/services/trash.service";
+
+type TrashRow = TrashItem & { detail?: HistoricalEvent };
 import { cn } from "@/lib/utils/cn";
 import { FetchingBadge } from "@/components/commons/fetching-indicator";
 
@@ -86,6 +89,12 @@ export default function StaffContextsPage() {
   const deleteEvent = useDeleteEvent();
 
   const { data: trashItems = [], isLoading: isTrashLoading } = useTrashList("historical-contexts");
+  // Details only while the trash is open, so the normal list does not fire one request per trashed item.
+  const trashDetails = useTrashContextDetails(showTrash ? trashItems.map((t) => t.id) : []);
+  const trashRows = React.useMemo(
+    () => trashItems.map((t) => ({ ...t, detail: trashDetails.get(t.id) })),
+    [trashItems, trashDetails],
+  );
   const restoreContext = useTrashRestore("historical-contexts");
   const permanentDeleteContext = useTrashPermanentDelete("historical-contexts");
 
@@ -270,17 +279,85 @@ export default function StaffContextsPage() {
     [router],
   );
 
-  // Trash view columns
-  const trashColumns = React.useMemo<ColumnDef<TrashItem>[]>(
+  // Trash view columns. The trash list only has id + name + deletedAt; details are loaded separately (trashRows).
+  const trashColumns = React.useMemo<ColumnDef<TrashRow>[]>(
     () => [
+      {
+        id: "image",
+        header: "Ảnh",
+        cell: ({ row }) => (
+          <StaffImageHoverPreview
+            src={row.original.detail?.imageUrl}
+            alt={row.original.title || "Ảnh bối cảnh lịch sử"}
+            thumbClassName="h-14 w-20 rounded-sm border grayscale"
+            previewClassName="h-48 w-72"
+            sizes="80px"
+            previewSizes="288px"
+            fallback={<Image className="h-5 w-5" />}
+          />
+        ),
+      },
       {
         accessorKey: "title",
         header: "Tiêu đề",
+        cell: ({ row }) => {
+          const summary = row.original.detail?.summary || "";
+          return (
+            <div className="w-[240px]">
+              <p className="truncate text-sm font-semibold text-content-heading" title={row.original.title}>
+                {row.original.title}
+              </p>
+              <p className="mt-0.5 truncate text-xs text-content-muted" title={summary}>
+                {summary || "—"}
+              </p>
+            </div>
+          );
+        },
+      },
+      {
+        id: "era",
+        header: "Thời đại · Năm",
+        cell: ({ row }) => {
+          const d = row.original.detail;
+          if (!d) return <span className="text-xs text-content-muted">—</span>;
+          const era = d.era?.toLowerCase() as EventEra | undefined;
+          const label = era && era in ERA_CONFIG ? ERA_CONFIG[era]?.label : undefined;
+          const year = typeof d.year === "number" ? (d.year < 0 ? `${Math.abs(d.year)} TCN` : String(d.year)) : "";
+          return (
+            <div className="text-xs">
+              <p className="font-medium text-content-text">{label ?? "—"}</p>
+              {year && <p className="mt-0.5 text-content-muted">{year}</p>}
+            </div>
+          );
+        },
+      },
+      {
+        id: "location",
+        header: "Địa điểm",
         cell: ({ row }) => (
-          <div className="min-w-[260px]">
-            <p className="text-sm font-semibold text-content-heading opacity-60">
-              {row.original.title}
-            </p>
+          <span className="block max-w-[140px] truncate text-xs text-content-muted">
+            {row.original.detail?.location || "—"}
+          </span>
+        ),
+      },
+      {
+        id: "status",
+        header: "Trước khi xóa",
+        cell: ({ row }) => (
+          <span className="text-xs text-content-muted">
+            {row.original.detail ? (row.original.detail.isPublished ? "Đã xuất bản" : "Bản nháp") : "—"}
+          </span>
+        ),
+      },
+      {
+        id: "createdBy",
+        header: "Người tạo",
+        cell: ({ row }) => (
+          <div className="text-xs text-content-muted">
+            <p>{row.original.detail ? getCreatorName(row.original.detail.createdBy) : "—"}</p>
+            {row.original.detail?.createdDate && (
+              <p className="mt-0.5 opacity-70">Tạo: {formatDate(row.original.detail.createdDate)}</p>
+            )}
           </div>
         ),
       },
@@ -302,11 +379,13 @@ export default function StaffContextsPage() {
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1">
             <Button variant="ghost" size="icon-sm" className="rounded-sm text-accent-blue" title="Khôi phục"
+              aria-label={`Khôi phục ${row.original.title}`}
               onClick={() => { setRestoreTarget({ id: row.original.id, title: row.original.title }); setRestoreOpen(true); }}
             >
-              <RotateCcw className="h-4 w-4" />
+              <Undo2 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon-sm" className="rounded-sm text-accent-danger" title="Xoa vinh vien"
+            <Button variant="ghost" size="icon-sm" className="rounded-sm text-accent-danger" title="Xóa vĩnh viễn"
+              aria-label={`Xóa vĩnh viễn ${row.original.title}`}
               onClick={() => { setPermanentDeleteTarget({ id: row.original.id, title: row.original.title }); setPermanentDeleteOpen(true); }}
             >
               <Trash2 className="h-4 w-4" />
@@ -401,7 +480,7 @@ export default function StaffContextsPage() {
         </div>
 
         {showTrash ? (
-          <StaffDataTable columns={trashColumns} data={trashItems} emptyMessage="Thùng rác trống." isLoading={isTrashLoading} />
+          <StaffDataTable columns={trashColumns} data={trashRows} emptyMessage="Thùng rác trống." isLoading={isTrashLoading} />
         ) : (
           <StaffDataTable columns={columns} data={displayedItems} emptyMessage="Không tìm thấy bối cảnh phù hợp." isLoading={isLoading} isFetching={isFetching} />
         )}

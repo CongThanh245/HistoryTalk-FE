@@ -4,7 +4,7 @@ import * as React from "react";
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import {
   ClipboardList, Trash2, ArrowLeft,
-  Pencil, Eye, EyeOff, RotateCcw,
+  Pencil, Eye, EyeOff, Undo2,
   ChevronLeft, ChevronRight, Upload,
   Search, Plus, Library, MoreHorizontal, Download, ChevronDown,
 } from "lucide-react";
@@ -521,7 +521,7 @@ export default function StaffQuizzesPage() {
             title="Khôi phục"
             onClick={() => setRestoreTarget({ id: r.original.id, title: r.original.title })}
           >
-            <RotateCcw className="h-4 w-4" />
+            <Undo2 className="h-4 w-4" />
           </Button>
           <Button
             type="button" variant="ghost" size="icon-sm" className="rounded-sm text-accent-danger"

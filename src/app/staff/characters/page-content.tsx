@@ -18,6 +18,7 @@ import {
 } from "@/features/characters/hooks";
 import {
   useTrashList,
+  useTrashCharacterDetails,
   useTrashRestore,
   useTrashPermanentDelete,
 } from "@/features/trash/hooks";
@@ -47,6 +48,12 @@ export default function StaffCharactersPage() {
   const { data: trashItems = [], isLoading: isTrashLoading } = useTrashList("characters");
   const restoreCharacter = useTrashRestore("characters");
   const permanentDeleteCharacter = useTrashPermanentDelete("characters");
+  // Details only while the trash is open, so the normal list does not fire one request per trashed item.
+  const trashDetails = useTrashCharacterDetails(showTrash ? trashItems.map((t) => t.id) : []);
+  const trashRows = React.useMemo(
+    () => trashItems.map((t) => ({ ...t, detail: trashDetails.get(t.id) })),
+    [trashItems, trashDetails],
+  );
 
   const activeItems = React.useMemo(
     () => (data?.content ?? []).filter((item) => !item.deletedAt),
@@ -74,7 +81,6 @@ export default function StaffCharactersPage() {
     });
   }, [eraFilter, items, statusFilter]);
 
-  type TrashRow = (typeof trashItems)[number];
   const columns = React.useMemo(
     () =>
       createCharacterColumns({
@@ -153,7 +159,7 @@ export default function StaffCharactersPage() {
         {showTrash ? (
           <StaffDataTable
             columns={trashColumns}
-            data={trashItems}
+            data={trashRows}
             emptyMessage="Thùng rác trống."
             isLoading={isTrashLoading}
           />

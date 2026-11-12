@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
-import { MoreHorizontal, RotateCcw, Trash2 } from "lucide-react";
+import { MoreHorizontal, Trash2, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,8 @@ type TrashRow = {
   id: string;
   title: string;
   deletedAt: string;
+  /** Full record, loaded separately (the trash list only has id + name + deletedAt). */
+  detail?: Character;
 };
 
 type CharacterColumnHandlers = {
@@ -206,11 +208,74 @@ export function createCharacterTrashColumns({
     {
       accessorKey: "title",
       header: "Nhân vật",
+      cell: ({ row }) => {
+        const d = row.original.detail;
+        return (
+          <div className="flex min-w-[220px] items-center gap-3">
+            <StaffImageHoverPreview
+              src={d?.imageUrl}
+              alt={row.original.title}
+              thumbClassName="h-9 w-9 rounded-sm grayscale"
+              previewClassName="h-56 w-40"
+              sizes="36px"
+              previewSizes="160px"
+            />
+            <div className="min-w-0 max-w-[200px]">
+              <p className="truncate text-sm font-semibold text-content-heading" title={row.original.title}>
+                {row.original.title}
+              </p>
+              <p className="truncate text-xs text-content-muted" title={d?.title}>
+                {d?.title || "—"}
+              </p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      id: "lifespan",
+      header: "Thời gian sống",
       cell: ({ row }) => (
-        <div className="min-w-[220px] opacity-60">
-          <p className="text-sm font-semibold text-content-heading">
-            {row.original.title}
-          </p>
+        <span className="text-xs text-content-muted">
+          {row.original.detail ? formatCharacterLifespan(row.original.detail) || "—" : "—"}
+        </span>
+      ),
+    },
+    {
+      id: "contexts",
+      header: "Bối cảnh",
+      cell: ({ row }) => {
+        const contexts = row.original.detail?.contexts ?? [];
+        if (contexts.length === 0) return <span className="text-xs text-content-muted">—</span>;
+        const names = contexts.map((c) => c.name || "Bối cảnh");
+        return (
+          <span className="block max-w-[200px] truncate text-xs text-content-text" title={names.join(", ")}>
+            {names[0]}
+            {names.length > 1 && <span className="text-content-muted"> +{names.length - 1}</span>}
+          </span>
+        );
+      },
+    },
+    {
+      id: "status",
+      header: "Trước khi xóa",
+      cell: ({ row }) => {
+        const d = row.original.detail;
+        if (!d) return <span className="text-xs text-content-muted">—</span>;
+        return (
+          <span className="text-xs text-content-muted">{d.isPublished ? "Đã xuất bản" : "Bản nháp"}</span>
+        );
+      },
+    },
+    {
+      id: "createdBy",
+      header: "Người tạo",
+      cell: ({ row }) => (
+        <div className="text-xs text-content-muted">
+          <p>{row.original.detail ? getCreatorName(row.original.detail.createdBy) : "—"}</p>
+          {row.original.detail?.createdDate && (
+            <p className="mt-0.5 opacity-70">Tạo: {formatDate(row.original.detail.createdDate)}</p>
+          )}
         </div>
       ),
     },
@@ -236,15 +301,17 @@ export function createCharacterTrashColumns({
             size="icon-sm"
             className="rounded-sm text-accent-blue"
             title="Khôi phục"
+            aria-label={`Khôi phục ${row.original.title}`}
             onClick={() => onRestore(row.original)}
           >
-            <RotateCcw className="h-4 w-4" />
+            <Undo2 className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon-sm"
             className="rounded-sm text-accent-danger"
             title="Xóa vĩnh viễn"
+            aria-label={`Xóa vĩnh viễn ${row.original.title}`}
             onClick={() => onPermanentDelete(row.original)}
           >
             <Trash2 className="h-4 w-4" />
