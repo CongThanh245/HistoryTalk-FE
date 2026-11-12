@@ -438,7 +438,8 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
                 />
               </TabsContent>
 
-              <TabsContent value="media" className="mt-0">
+              {/* Kept mounted (hidden when inactive) so an image/model upload in progress survives switching tabs. */}
+              <TabsContent value="media" forceMount className="mt-0 data-[state=inactive]:hidden">
                 {kind === "CONTEXT" ? (
                   <MediaFields
                     err={err}
@@ -488,8 +489,10 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
                 </>
               )}
 
+              {/* Kept mounted (hidden when inactive): unmounting dropped the "Đang tải PDF..." state and the
+                  done/failed toast while the upload kept running in the background. */}
               {item && (
-                <TabsContent value="rag" className="mt-0">
+                <TabsContent value="rag" forceMount className="mt-0 data-[state=inactive]:hidden">
                   <DocumentsPanel kind={kind} itemId={item.id} canEdit={isMine} myUid={myUid} />
                 </TabsContent>
               )}

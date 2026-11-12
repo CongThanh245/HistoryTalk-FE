@@ -27,6 +27,7 @@ import {
   StaffFormSelect,
 } from "@/components/staff/staff-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StaffTabStepper } from "./staff-tab-stepper";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StaffPublishToggle } from "@/components/staff/staff-publish-toggle";
 import { StaffImageHoverPreview } from "@/components/staff/staff-media-preview";
@@ -243,6 +244,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
   const imagePreviewSrc = pendingImagePreviewUrl ?? (isValidUrl(draft.imageUrl) ? draft.imageUrl : null);
   const videoPreviewSrc = pendingVideoPreviewUrl ?? (draft.videoUrl || null);
 
+  const topRef = React.useRef<HTMLDivElement>(null);
   const visibleTabs = FORM_TABS.filter(
     (tab) => tab.key !== "characters" || mode === "edit",
   );
@@ -274,12 +276,19 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
       : []),
   ];
 
+  // Back / Next: switch tab and bring the new tab's top into view (the page itself is the scroller).
+  const goToTab = (key: FormTabKey) => {
+    setActiveTab(key);
+    topRef.current?.scrollIntoView({ block: "start" });
+  };
+
   return (
     <Tabs
       value={activeTab}
       onValueChange={(v) => setActiveTab(v as typeof activeTab)}
       className="flex min-h-full flex-col gap-0 bg-[var(--bg-main)]"
     >
+      <div ref={topRef} aria-hidden="true" />
       {/* ═══════ Header + tabs — pinned while the page itself scrolls (one scrollbar, no nested panes) ═══════ */}
       <div className="sticky top-0 z-20 border-b border-[var(--border-default)] bg-[var(--bg-main)]">
       <div className="flex items-center justify-between gap-4 px-6 pt-4 pb-2">
@@ -337,28 +346,14 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
             </div>
           </div>
         </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          {isCreated && !isEditing && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-sm bg-transparent border-border-card hover:bg-[var(--status-neutral-bg)] text-[var(--content-heading)] hover:text-[var(--content-heading)] dark:hover:text-[var(--content-heading)] transition-colors"
-              onClick={() => setIsEditing(true)}
-            >
-              <PencilIcon className="h-4 w-4 mr-1.5" />
-              Chỉnh sửa
-            </Button>
-          )}
-        </div>
       </div>
 
       {/* overflow-y-hidden: with only overflow-x-auto the 1px active underline made the row scroll vertically,
           drawing a stray ▲●▼ scrollbar at the right edge. */}
       <TabsList className="flex h-11 w-full justify-start gap-6 overflow-x-auto overflow-y-hidden px-6 py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {visibleTabs.map((tab) => (
+        {visibleTabs.map((tab, i) => (
           <TabsTrigger key={tab.key} value={tab.key} className="relative shrink-0 px-0.5 text-sm">
-            {tab.label}
+            {i + 1}. {tab.label}
             {tabCounts[tab.key] != null && (
               <span className="ml-1 text-xs font-normal text-[var(--content-muted)]">({tabCounts[tab.key]})</span>
             )}
@@ -957,9 +952,12 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
       {isEditing && (
         <div className="sticky bottom-0 z-20 border-t border-[var(--border-default)] bg-[var(--bg-main)]">
           <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between gap-3 px-6 py-3">
-            <p className="text-sm text-[var(--content-muted)]">
-              {isDirty ? "Có thay đổi chưa lưu" : isCreated ? "Đang chỉnh sửa" : "Điền thông tin để tạo bối cảnh"}
-            </p>
+            <StaffTabStepper
+              tabs={visibleTabs}
+              active={activeTab}
+              onChange={goToTab}
+              hint={isDirty ? "Có thay đổi chưa lưu" : isCreated ? "Đang chỉnh sửa" : "Điền thông tin để tạo bối cảnh"}
+            />
             <div className="flex items-center gap-2">
               {isCreated && (
                 <Button
@@ -986,6 +984,23 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                 {isPending ? pendingLabel || "Đang lưu..." : isCreated ? "Lưu thay đổi" : "Tạo bối cảnh"}
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ Edit bar — same spot as the save bar, so the entry point is where Save will appear ═══════ */}
+      {isCreated && !isEditing && (
+        <div className="sticky bottom-0 z-20 border-t border-[var(--border-default)] bg-[var(--bg-main)]">
+          <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between gap-3 px-6 py-3">
+            <StaffTabStepper tabs={visibleTabs} active={activeTab} onChange={goToTab} hint="Đang xem, chưa chỉnh sửa" />
+            <Button
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              className="border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] font-semibold transition-all duration-200 cursor-pointer"
+            >
+              <PencilIcon className="h-4 w-4 mr-1.5" />
+              Chỉnh sửa
+            </Button>
           </div>
         </div>
       )}

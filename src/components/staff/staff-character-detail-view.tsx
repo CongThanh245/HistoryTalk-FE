@@ -51,6 +51,7 @@ import {
   useSelectSearch,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StaffTabStepper } from "./staff-tab-stepper";
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
 import { ChatMain } from "@/components/chat/chat-main";
 import { ExamStartDialog } from "@/components/chat/exam-start-dialog";
@@ -287,6 +288,8 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
       ? `${draft.bornYear || "?"}${draft.isBornBc ? " TCN" : ""} – ${draft.deathYear || "?"}${draft.isDeathBc ? " TCN" : ""}`
       : "";
 
+  const formScrollRef = React.useRef<HTMLDivElement>(null);
+
   // Counts on the tabs let staff see how complete a character is without opening each tab.
   const tabCounts: Partial<Record<FormTabKey, number>> =
     mode === "edit" && !isLoadingDocuments ? { rag: documents.length, context: mappedContexts.length } : {};
@@ -304,6 +307,12 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
       tab: "context",
     },
   ];
+
+  // Back / Next: switch tab and start the new tab from its top.
+  const goToTab = (key: FormTabKey) => {
+    setActiveTab(key);
+    formScrollRef.current?.scrollTo({ top: 0 });
+  };
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[var(--bg-main)]">
@@ -379,19 +388,6 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {isCreated && !isEditing && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-sm bg-transparent border-border-card hover:bg-[var(--status-neutral-bg)] text-[var(--content-heading)] hover:text-[var(--content-heading)] dark:hover:text-[var(--content-heading)] transition-colors"
-              onClick={() => setIsEditing(true)}
-            >
-              <PencilIcon className="h-4 w-4 mr-1.5" />
-              Chỉnh sửa
-            </Button>
-          )}
-        </div>
       </div>
 
       <ConfirmDialog
@@ -438,13 +434,13 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               <TabsList
                 className="flex h-11 w-full justify-start gap-5 overflow-x-auto overflow-y-hidden py-0 px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
-                {FORM_TABS.map((tab) => (
+                {FORM_TABS.map((tab, i) => (
                   <TabsTrigger
                     key={tab.key}
                     value={tab.key}
                     className="relative shrink-0 px-0.5 text-sm"
                   >
-                    {tab.label}
+                    {i + 1}. {tab.label}
                     {tabCounts[tab.key] != null && (
                       <span className="ml-1 text-xs font-normal text-[var(--content-muted)]">({tabCounts[tab.key]})</span>
                     )}
@@ -458,7 +454,7 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
               </TabsList>
             </div>
 
-            <div className="flex-1 px-6 py-6 space-y-5 overflow-y-auto">
+            <div ref={formScrollRef} className="flex-1 px-6 py-6 space-y-5 overflow-y-auto">
               <TabsContent value="basic" className="mt-0 space-y-5">
                 {!isEditing ? (
                   // View mode reads as plain text — disabled inputs looked broken and were hard to read.
@@ -1298,9 +1294,12 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
             {/* Save bar — pinned to the bottom of the form column, so Save is always in reach while editing. */}
             {isEditing && (
               <div className="flex shrink-0 items-center justify-between gap-3 border-t px-6 py-3 border-[var(--border-default)] bg-[var(--bg-main)]">
-                <p className="text-sm text-[var(--content-muted)]">
-                  {isDirty ? "Có thay đổi chưa lưu" : isCreated ? "Đang chỉnh sửa" : "Điền thông tin để tạo nhân vật"}
-                </p>
+                <StaffTabStepper
+                  tabs={FORM_TABS}
+                  active={activeTab}
+                  onChange={goToTab}
+                  hint={isDirty ? "Có thay đổi chưa lưu" : isCreated ? "Đang chỉnh sửa" : "Điền thông tin để tạo nhân vật"}
+                />
                 <div className="flex items-center gap-2">
                   {isCreated && (
                     <Button
@@ -1327,6 +1326,21 @@ export function StaffCharacterDetailView(props: StaffCharacterDetailViewProps) {
                     {isPending ? "Đang lưu..." : isCreated ? "Lưu thay đổi" : "Tạo nhân vật"}
                   </Button>
                 </div>
+              </div>
+            )}
+
+            {/* Edit bar — same spot as the save bar, so the entry point is where Save will appear. */}
+            {isCreated && !isEditing && (
+              <div className="flex shrink-0 items-center justify-between gap-3 border-t px-6 py-3 border-[var(--border-default)] bg-[var(--bg-main)]">
+                <StaffTabStepper tabs={FORM_TABS} active={activeTab} onChange={goToTab} hint="Đang xem, chưa chỉnh sửa" />
+                <Button
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="border-0 bg-[var(--accent-gold)] text-white hover:bg-[var(--accent-bronze)] font-semibold transition-all duration-200 cursor-pointer"
+                >
+                  <PencilIcon className="h-4 w-4 mr-1.5" />
+                  Chỉnh sửa
+                </Button>
               </div>
             )}
           </Tabs>
