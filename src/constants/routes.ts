@@ -13,6 +13,7 @@ export const ROUTES = {
   LOGIN: "/login",
   REGISTER: "/register",
   FORGOT_PASSWORD: "/forgot-password",
+  VERIFY_EMAIL: "/verify-email",
 
   // ── App (authenticated user) ────────────────────────
   HOME: "/home",

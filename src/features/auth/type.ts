@@ -24,6 +24,14 @@ export interface ResetPasswordRequest {
   confirmPassword: string;
 }
 
+export interface VerifyEmailRequest {
+  token: string;
+}
+
+export interface ResendVerificationRequest {
+  email: string;
+}
+
 export interface User {
   uid: string;
   userName: string;
@@ -50,6 +58,7 @@ export interface LoginResponse {
 }
 
 export interface RegisterResponse {
+  emailVerified?: boolean;
   message: string;
 }
 
