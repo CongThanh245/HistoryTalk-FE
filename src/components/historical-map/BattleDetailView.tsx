@@ -116,7 +116,8 @@ export function BattleDetailView({
   const [savedMap, setSavedMap] = useState<BattleMap | null>(null);
   const battleMap = savedMap ?? event.battleMap ?? emptyBattleMap();
   // Learners redraw the map and compare it with this one; graded in the browser, nothing is stored on the server.
-  const canPractice = isGradableMap(battleMap) && !!onOpenPractice;
+  // Not for Content Admins (they author the map); "Xem như người học" brings it back for checking.
+  const canPractice = isGradableMap(battleMap) && !!onOpenPractice && !isAdmin;
   // Sketching only needs the blank background; the admin's symbols are never shown on it.
   const canSketch = battleMap.mode === "custom" && !!battleMap.imageUrl.trim() && !!onOpenPractice;
   const practiceMap = practicing === "challenge" && canPractice && !editingMap;

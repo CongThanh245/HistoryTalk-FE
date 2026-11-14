@@ -302,7 +302,9 @@ export function LayeredHistoricalMap({ onClose, mode = "battles" }: { onClose: (
       </>
     ) : null;
 
-    const showControl = classMode ? rows.length > 0 || Boolean(list) : rows.length > 1 || Boolean(list);
+    // Learners on the global map get no layer panel: the toggles/legend/notes list added clutter, not value.
+    // Notes stay reachable through the search box and the battle header's "Thêm ghi chú".
+    const showControl = classMode ? rows.length > 0 || Boolean(list) : globalEditable && (rows.length > 1 || Boolean(list));
 
     return (
       <div className="max-md:contents md:pointer-events-none md:absolute md:bottom-4 md:left-4 md:top-4 md:z-[520] md:flex md:w-[300px] md:flex-col md:gap-2">

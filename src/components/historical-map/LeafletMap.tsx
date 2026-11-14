@@ -18,7 +18,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { MapPin } from "@/services/map-pin.service";
 import { mapFocusService } from "@/services/map-focus.service";
 import type { HistoricalEvent } from "@/services/event.service";
-import { cn } from "@/lib/utils/cn";
 import { MAP_BOUNDS, type MapCoordinates, type OverlayPin } from "./map-overlay.types";
 
 interface LeafletMapProps {
@@ -45,6 +44,7 @@ interface LeafletMapProps {
 }
 
 const EMPTY_OVERLAY: OverlayPin[] = [];
+const DRAFT_PANE = "historicalDraftPane";
 
 const VIETNAM_BOUNDS = {
   southWest: [MAP_BOUNDS.south, MAP_BOUNDS.west] as [number, number],
@@ -118,6 +118,14 @@ export function LeafletMap({
     mapRef.current.invalidateSize();
     return () => observer.disconnect();
   }, [mapReady]);
+
+  // Placement-mode classes go through classList so Leaflet's own container classes survive re-renders.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.classList.toggle("cursor-crosshair", isAdding || placing);
+    container.classList.toggle("historical-map-placing", placing);
+  }, [isAdding, placing]);
 
   // Stable ref for callback (avoid re-binding on every render)
   const onSelectPinRef = useRef(onSelectPin);
@@ -213,6 +221,12 @@ export function LeafletMap({
         map.on("unload", () => clearTimeout(labelTimer));
 
 
+        // The unsaved draft dot gets its own click-through pane: with preferCanvas its canvas would
+        // otherwise stay in markerPane after the draft is removed and swallow clicks/hover on the pins.
+        const draftPane = map.createPane(DRAFT_PANE);
+        draftPane.style.zIndex = "610";
+        draftPane.style.pointerEvents = "none";
+
         mapRef.current = map;
         setMapReady(true);
         void drawVietnamBasemap(L, map).catch((error) => {
@@ -250,7 +264,7 @@ export function LeafletMap({
         fillColor: draftColor,
         fillOpacity: 0.2,
         interactive: false,
-        pane: "markerPane",
+        pane: DRAFT_PANE,
       }).addTo(preview);
       L.circleMarker(position, {
         radius: 8,
@@ -259,7 +273,7 @@ export function LeafletMap({
         fillColor: draftColor,
         fillOpacity: 1,
         interactive: false,
-        pane: "markerPane",
+        pane: DRAFT_PANE,
       }).bindTooltip(draftLabel, {
         permanent: true,
         direction: "top",
@@ -413,11 +427,9 @@ export function LeafletMap({
       <div className="relative w-full h-full historical-map-shell">
         <div
           ref={containerRef}
-          className={cn(
-            "w-full h-full historical-leaflet-map",
-            (isAdding || placing) && "cursor-crosshair",
-            placing && "historical-map-placing",
-          )}
+          // Static on purpose: Leaflet adds its own classes (leaflet-container, …) to this node, and a
+          // changing className prop would make React wipe them — tiles then collapse to 0px wide.
+          className="w-full h-full historical-leaflet-map"
           aria-label="Bản đồ tương tác Việt Nam"
         />
         <div className="historical-map-compass" aria-hidden="true">

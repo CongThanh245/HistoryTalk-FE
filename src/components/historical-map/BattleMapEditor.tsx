@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Check, CircleHelp, PenLine, Clapperboard, ClipboardCheck, Copy, Download, Eye, GripVertical, ImageIcon, Keyboard, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Sparkles, Trash2, Undo2, Upload, Users, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowLeftRight, ArrowUp, Check, CircleHelp, Clapperboard, ClipboardCheck, Copy, Eye, GripVertical, ImageIcon, Keyboard, Layers, ListTree, Loader2, MousePointerClick, MoveHorizontal, Plus, Redo2, RotateCw, Save, Shapes, Sparkles, Trash2, Undo2, Upload, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { battleMapImageService } from "@/services/media.service";
@@ -425,7 +425,7 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
     {
       target: '[data-tour="inspector"]',
       title: "4. Viết lời thuyết minh",
-      body: <>Mỗi giai đoạn có tên và lời thuyết minh ở cột này. Bấm <b>Thuyết minh</b> cạnh tên giai đoạn để mở ô viết (khi đang chọn ký hiệu, cột này hiện cài đặt của ký hiệu). Khi phát, ký hiệu của giai đoạn hiện dần theo giọng đọc.</>,
+      body: <>Mỗi giai đoạn có tên và lời thuyết minh ở cột này (khi đang chọn ký hiệu, cột này hiện cài đặt của ký hiệu; bỏ chọn để quay lại giai đoạn). Khi phát, ký hiệu của giai đoạn hiện dần theo giọng đọc.</>,
     },
     {
       target: '[data-tour="preview"]',
@@ -433,11 +433,6 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
       body: <>Phát thử đúng như người học sẽ xem, trước khi bấm Lưu. Mở lại hướng dẫn này bất cứ lúc nào bằng nút <b>?</b>.</>,
     },
   ];
-  /** Clears the selection so the right column shows the active phase, then puts the caret in its narration. */
-  const openNarration = () => {
-    setSelection([]); setDrawingFrame(false);
-    requestAnimationFrame(() => document.getElementById("phase-narration")?.focus());
-  };
   const pickPhase = (id: string | null) => { setPhaseId(id); setSelectedId(null); setDrawingFrame(false); };
   const setCamera = (phase: BattlePhase, camera: BattlePhase["camera"]) => {
     changePhase(phase.id, { camera });
@@ -526,19 +521,13 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
       }
       return true;
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không lưu được lược đồ. Hãy thử lại hoặc xuất JSON để giữ thiết kế."));
+      setError(getApiErrorMessage(err, "Không lưu được lược đồ. Hãy thử lại."));
       return false;
     } finally {
       setSaving(false);
     }
   };
   const busy = saving || uploading;
-
-  const exportMap = () => {
-    const url = URL.createObjectURL(new Blob([JSON.stringify({ battleMap: value }, null, 2)], { type: "application/json" }));
-    const link = document.createElement("a"); link.href = url; link.download = "battle-map.json"; link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
 
   const applyImageUrl = () => {
     const url = imageUrlInput.trim();
@@ -580,7 +569,6 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
         <button type="button" onClick={() => setTour("full")} aria-label="Xem hướng dẫn" title="Xem hướng dẫn"><CircleHelp size={16} /></button>
         {canUseAi && <button type="button" onClick={() => { pickTool(null); setSelection([]); setAiOpen(true); }} aria-label="Tạo bằng AI"
           title="AI lập phe, điểm mốc và diễn biến từ tài liệu của trận đánh"><Sparkles size={16} /><span>Tạo bằng AI</span></button>}
-        <button type="button" onClick={exportMap} aria-label="Xuất JSON" title="Tải thiết kế dưới dạng JSON"><Download size={16} /><span>Xuất JSON</span></button>
         <button type="button" data-tour="preview" aria-label="Xem trước" title="Phát thử như người học sẽ xem (không lưu)" disabled={!value.imageUrl.trim()}
           onClick={() => { pickTool(null); setSelectedId(null); setDrawingFrame(false); setPreviewing(true); }}><Eye size={16} /><span>Xem trước</span></button>
       </>}
@@ -786,7 +774,6 @@ export function BattleMapEditor({ initialValue, title, onSave, onClose, legacyNa
           </div>
           <strong className={styles.phaseCurrent}>{activePhase ? activePhase.title || "Chưa đặt tên" : "Lớp luôn hiện"}</strong>
           {/* The phase's narration lives in the right column, which only shows it with nothing selected: this jumps there. */}
-          {activePhase && <button type="button" className={styles.narrationJump} onClick={openNarration}><PenLine size={14} />Thuyết minh</button>}
           {drawingFrame && <span className={styles.drawHint}>Kéo trên lược đồ để khoanh vùng camera · Esc để hủy</span>}
           {value.mode === "custom" && <button type="button" className={styles.sortToggle} aria-pressed={sorting} title="Hiện mọi ký hiệu kèm số giai đoạn để gom nhóm"
             onClick={() => { setSorting(s => !s); setDrawingFrame(false); }}><ListTree size={15} />Phân giai đoạn</button>}

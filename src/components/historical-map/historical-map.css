@@ -189,7 +189,7 @@
 }
 /* Fade-in animation for new markers */
 .leaflet-marker-icon.landmark-marker { transition: opacity 180ms ease-out; }
-.battle-pin { position: relative; width: 60px; height: 60px; transform: scale(var(--marker-scale, 0.65)); transform-origin: center bottom; transition: transform 250ms ease; }
+.battle-pin { position: relative; width: 60px; height: 60px; transform: scale(var(--marker-scale, 0.65)); transform-origin: center center; /* = iconAnchor, so the photo stays on the pinned spot at every zoom */ transition: transform 250ms ease; }
 .battle-pin-photo { width: 60px; height: 60px; border: 3px solid var(--accent-gold); border-radius: 50%; overflow: hidden; background: var(--bg-surface); transition: transform 220ms ease; }
 .battle-pin-photo img { width: 100%; height: 100%; object-fit: cover; }
 .battle-pin--selected .battle-pin-photo { border-color: var(--bg-surface); outline: 3px solid var(--accent-gold); }

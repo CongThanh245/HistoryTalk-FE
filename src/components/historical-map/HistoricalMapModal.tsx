@@ -606,7 +606,11 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
             battlesError: eventsError,
             retryBattles: () => void refetchEvents(),
             selectedBattleId: panelDismissed ? null : activeContextId,
-            selectBattle: chooseContext,
+            // Admin picking a battle that has no pin yet goes straight to placing it (no extra "Ghim vị trí" click).
+            selectBattle: (id) => {
+              chooseContext(id);
+              if (isAdmin && id && !overviewQueriesLoading && !pinnedEventIds.has(id)) setIsAdding(true);
+            },
             canTakeNotes,
             studyNotes: allStudyNotes,
             studyNotesLoading: canTakeNotes && (eventsLoading || overviewQueriesLoading),
