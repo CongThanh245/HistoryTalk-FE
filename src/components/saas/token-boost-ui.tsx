@@ -97,7 +97,8 @@ type Action = "APPROVE" | "REJECT" | "ESCALATE";
 export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostReviewer; scopeHint: string }) {
   const isTeacher = reviewer === "TEACHER";
   const [status, setStatus] = React.useState<TokenBoostStatus>(TABS[reviewer][0]);
-  const [page, setPage] = React.useState(1);
+  // 0-based like every other FE list; withServerPage() turns it into the BE's 1-based `page`
+  const [page, setPage] = React.useState(0);
   const query = useTokenBoostsForReview(reviewer, { status, page, limit: PAGE_SIZE });
   const review = useReviewTokenBoost(reviewer);
   // School Admin approvals come out of the shared pool; show what is left and stop approvals it cannot cover.
@@ -111,6 +112,9 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
   const amountError =
     target && target.action !== "REJECT"
       ? rangeError(amount, BOOST_MIN_TOKENS, BOOST_MAX_TOKENS) ??
+        (parseTokens(amount) > target.request.requestedTokens
+          ? `Không được vượt quá số token đã xin (${formatNumber(target.request.requestedTokens)})`
+          : null) ??
         (target.action === "APPROVE" && poolRemaining != null && parseTokens(amount) > poolRemaining
           ? `Quỹ chung của trường chỉ còn ${formatNumber(poolRemaining)} token`
           : null)
@@ -190,7 +194,7 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
             aria-selected={status === t}
             onClick={() => {
               setStatus(t);
-              setPage(1);
+              setPage(0);
             }}
             className={cn(
               "inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]",
@@ -263,11 +267,11 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
 
       {query.data && query.data.totalPages > 1 && (
         <div className="flex items-center justify-end gap-2 text-sm">
-          <button type="button" className="btn-line" disabled={!query.data.hasPrevious} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+          <button type="button" className="btn-line" disabled={!query.data.hasPrevious} onClick={() => setPage((p) => Math.max(0, p - 1))}>
             Trước
           </button>
           <span className="tabular-nums text-content-muted">
-            {page} / {query.data.totalPages}
+            {page + 1} / {query.data.totalPages}
           </span>
           <button type="button" className="btn-line" disabled={!query.data.hasNext} onClick={() => setPage((p) => p + 1)}>
             Sau
@@ -322,7 +326,14 @@ export function TokenBoostReviewList({ reviewer, scopeHint }: { reviewer: BoostR
           )}
           {target && target.action !== "REJECT" && (
             <Field label={target.action === "ESCALATE" ? "Số token xin quản trị trường" : "Số token cấp"} required error={amountError} htmlFor="boost-approve-amount">
-              <StaffFormInput id="boost-approve-amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
+              {/* Forwarding keeps the amount the requester asked for; only an approval may grant less. */}
+              <StaffFormInput
+                id="boost-approve-amount"
+                inputMode="numeric"
+                value={amount}
+                readOnly={target.action === "ESCALATE"}
+                onChange={(e) => setAmount(e.target.value)}
+              />
             </Field>
           )}
           <Field label="Ghi chú" htmlFor="boost-note">
