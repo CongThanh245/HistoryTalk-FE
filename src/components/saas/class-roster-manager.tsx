@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useQueries } from "@tanstack/react-query";
 import { AlertCircle, ArrowRightLeft, ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileUp, Gift, KeyRound, RefreshCw, UserMinus, UserPlus, Users, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,9 +29,9 @@ import { ImportAccountsTable, ImportErrorsTable } from "@/app/school/_components
 import { useRole } from "@/features/auth/usePermission";
 import { apiErrorMessage, useApiSchoolClassrooms, useApiTeacherClassrooms } from "@/features/saas/hooks-api";
 import { useAvailableStudents, useClassroomStudents, useRosterMutations } from "@/features/saas/hooks-assignment-api";
-import { autoMapStudentColumns, buildBackendCsv, buildBackendTemplateCsv, decodeImportFile, downloadTextFile, readTable } from "@/features/saas/student-import";
+import { autoMapStudentColumns, buildBackendCsv, buildBackendTemplateCsv, decodeImportFile, downloadTextFile, readTable, type ExistingStatus } from "@/features/saas/student-import";
 import { ImportPreviewTable, useImportRows } from "@/components/saas/student-import-preview";
-import type { BatchEnrollResult, ClassroomStudent } from "@/services/assignment.service";
+import { classroomStudentService, type BatchEnrollResult, type ClassroomStudent } from "@/services/assignment.service";
 import type { ImportedStudentAccount, StudentImportResult } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
 import { FetchingBadge, FetchingBar } from "@/components/commons/fetching-indicator";
@@ -532,6 +533,18 @@ function AddStudentsDialog({ classId, open, onOpenChange }: { classId: string; o
 
 /* ───────────────────────── CSV import ───────────────────────── */
 
+/** Where a student code / email already is: in this class, elsewhere in the school, or nowhere. */
+async function lookupStudent(classId: string, key: string): Promise<ExistingStatus> {
+  const matches = (s: { studentCode: string | null; email: string | null }) =>
+    s.studentCode?.toLowerCase() === key || s.email?.toLowerCase() === key;
+  const [inClass, available] = await Promise.all([
+    classroomStudentService.list(classId, { search: key, size: 20 }),
+    classroomStudentService.listAvailable(classId, { search: key, size: 20 }),
+  ]);
+  if (inClass.items.some(matches)) return "in-class";
+  return available.items.some(matches) ? "school" : "none";
+}
+
 /** Existing accounts come back with allocatedToken 0 and a placeholder like "(Tài khoản hiện có)" instead of a password. */
 const isExistingAccount = (a: ImportedStudentAccount) => (a.allocatedToken ?? 0) === 0 && /^\(.*\)$/.test(a.initialPassword ?? "");
 
@@ -541,7 +554,38 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
   const [result, setResult] = React.useState<StudentImportResult | null>(null);
   const [credentials, setCredentials] = React.useState<CredentialRecord[] | null>(null);
   // Existing students only need a code or email, so name / birth date are optional when one is present.
-  const preview = useImportRows({ existingAllowed: true });
+  // Each code / email is looked up against this class and the school, so duplicates and unknown nameless rows
+  // are flagged in the preview instead of only in the server result.
+  const [statusMap, setStatusMap] = React.useState<ReadonlyMap<string, ExistingStatus>>(new Map());
+  const existingLookup = React.useCallback(
+    (code: string, email: string): ExistingStatus => {
+      const found = [code, email].filter(Boolean).map((k) => statusMap.get(k.toLowerCase()));
+      if (found.includes("in-class")) return "in-class";
+      if (found.includes("school")) return "school";
+      return found.includes(undefined) || found.includes("pending") ? "pending" : "none";
+    },
+    [statusMap],
+  );
+  const preview = useImportRows({ existingAllowed: true, existingLookup });
+  const lookupKeys = React.useMemo(
+    () => [...new Set(preview.checked.flatMap((r) => [r.values.studentCode, r.values.email]).filter(Boolean).map((k) => k.toLowerCase()))],
+    [preview.checked],
+  );
+  const lookupSignature = useQueries({
+    queries: lookupKeys.map((key) => ({
+      queryKey: ["roster-import-lookup", classId, key],
+      queryFn: () => lookupStudent(classId, key),
+      staleTime: 60_000,
+      retry: 1,
+    })),
+    // A failed lookup counts as "not found": a nameless row then has to get a name instead of failing on the server.
+    combine: (results) => results.map((q, i) => `${lookupKeys[i]}=${q.data ?? (q.isError ? "none" : "pending")}`).join("|"),
+  });
+  const [appliedSignature, setAppliedSignature] = React.useState("");
+  if (lookupSignature !== appliedSignature) {
+    setAppliedSignature(lookupSignature);
+    setStatusMap(new Map(lookupSignature ? lookupSignature.split("|").map((p) => p.split("=") as [string, ExistingStatus]) : []));
+  }
   const { importCsv } = useRosterMutations(classId);
   const loaded = !!fileName && !fileError;
 
@@ -694,7 +738,7 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
                   setSelected={preview.setSelected}
                   rawRow={preview.rawRow}
                   onSaveRow={preview.saveRow}
-                  note="Học sinh đã có chỉ cần mã HS hoặc email; học sinh mới cần họ tên và ngày sinh."
+                  note="Mã HS / email được đối chiếu với lớp và trường: học sinh đã ở trong lớp bị báo trùng; học sinh đã có trong trường chỉ cần mã HS hoặc email; học sinh mới cần họ tên và ngày sinh."
                   submitError={null}
                 />
               ) : (

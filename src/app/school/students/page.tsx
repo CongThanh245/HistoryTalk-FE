@@ -89,6 +89,14 @@ function useStudentClasses() {
  * School Admin: student accounts (GET/PUT/DELETE /school-admin/students, import, reset password, deactivate).
  * Sprint 7: no per-student token allocation any more — students spend from the shared pool within a daily limit.
  */
+// Selection, code and name stay pinned while the wide table scrolls sideways (opaque backgrounds so nothing shows through).
+const CODE_COL = "left-10 w-[120px] min-w-[120px] max-w-[120px] truncate";
+const NAME_COL = "left-[160px] shadow-[inset_-1px_0_0_var(--border-default)]";
+const STICKY_HEAD = "sticky z-20 bg-[var(--bg-deep)]";
+/** A selected row's tint is translucent, so it is laid over the opaque surface as an inset shadow. */
+const stickyCell = (selected: boolean) =>
+  cn("sticky z-10 bg-[var(--bg-surface)]", selected && "shadow-[inset_0_0_0_9999px_var(--accent-gold-active-bg)]");
+
 export default function SchoolStudentsPage() {
   return (
     <SchoolShell
@@ -353,17 +361,17 @@ function StudentsContent() {
                   <caption className="sr-only">Danh sách học sinh</caption>
                   <TableHeader>
                     <TableRow className="border-b border-border-card">
-                      <TableHead className="w-10 px-3">
+                      <TableHead className={cn("w-10 min-w-10 px-3", STICKY_HEAD, "left-0")}>
                         <Checkbox
                           checked={headerChecked}
                           onCheckedChange={(v) => selection.setMany(rowIds, v === true)}
                           aria-label="Chọn tất cả học sinh trên trang này"
                         />
                       </TableHead>
-                      <TableHead className={HEAD} aria-sort={ariaSort("studentCode", sort.sortBy, sort.direction)}>
+                      <TableHead className={cn(HEAD, CODE_COL, STICKY_HEAD)} aria-sort={ariaSort("studentCode", sort.sortBy, sort.direction)}>
                         <SortHeader label="Mã HS" column="studentCode" {...sort} />
                       </TableHead>
-                      <TableHead className={HEAD} aria-sort={ariaSort("fullName", sort.sortBy, sort.direction)}>
+                      <TableHead className={cn(HEAD, NAME_COL, STICKY_HEAD)} aria-sort={ariaSort("fullName", sort.sortBy, sort.direction)}>
                         <SortHeader label="Học sinh" column="fullName" {...sort} />
                       </TableHead>
                       <TableHead className={HEAD}>Lớp</TableHead>
@@ -392,11 +400,11 @@ function StudentsContent() {
                             checked && "bg-[var(--accent-gold-active-bg)] hover:bg-[var(--accent-gold-active-bg)]",
                           )}
                         >
-                          <TableCell className="w-10 px-3">
+                          <TableCell className={cn("w-10 min-w-10 px-3 left-0", stickyCell(checked))}>
                             <Checkbox checked={checked} onCheckedChange={(v) => selection.toggle(s.uid, v === true)} aria-label={`Chọn ${s.fullName}`} />
                           </TableCell>
-                          <TableCell className="whitespace-nowrap px-3 py-2.5 font-mono text-xs font-bold text-content-heading">{s.studentCode || "—"}</TableCell>
-                          <TableCell className="px-3 py-2.5">
+                          <TableCell className={cn("whitespace-nowrap px-3 py-2.5 font-mono text-xs font-bold text-content-heading", CODE_COL, stickyCell(checked))} title={s.studentCode || undefined}>{s.studentCode || "—"}</TableCell>
+                          <TableCell className={cn("px-3 py-2.5", NAME_COL, stickyCell(checked))}>
                             <button
                               type="button"
                               onClick={() => setEditTarget(s)}

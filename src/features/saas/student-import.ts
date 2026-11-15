@@ -77,6 +77,26 @@ export function parseDob(v: string): string | null {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
+/** Plausible student age: 5 to 30 years old today. */
+export const STUDENT_MIN_AGE = 5;
+export const STUDENT_MAX_AGE = 30;
+
+const isoYearsAgo = (years: number) => {
+  const d = new Date();
+  return `${d.getFullYear() - years}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+/** Earliest / latest yyyy-mm-dd birth date accepted for a student (also used as the date input's min / max). */
+export const studentDobBounds = () => ({ min: isoYearsAgo(STUDENT_MAX_AGE), max: isoYearsAgo(STUDENT_MIN_AGE) });
+
+/** Error for a yyyy-mm-dd birth date outside the plausible student age, or null. */
+export function studentDobRangeError(iso: string): string | null {
+  const { min, max } = studentDobBounds();
+  if (iso < min) return `Ngày sinh quá xa: học sinh tối đa ${STUDENT_MAX_AGE} tuổi`;
+  if (iso > max) return `Học sinh phải từ ${STUDENT_MIN_AGE} tuổi trở lên`;
+  return null;
+}
+
 export interface ImportTable {
   headers: string[];
   /** Data rows (header excluded), padded to the header width. */
@@ -200,7 +220,15 @@ const STUDENT_CODE_PATTERN = /^[A-Za-z0-9_-]{2,30}$/;
 export interface CheckStudentOptions {
   /** Class roster import: a row with a student code or email may be an existing student, so name and birth date are optional. */
   existingAllowed?: boolean;
+  /**
+   * Class roster import: where a row's student code / email already is — in this class, elsewhere in the school,
+   * nowhere ("none") — or "pending" while the lookup runs. Without it nameless rows are assumed to exist.
+   */
+  existingLookup?: (studentCode: string, email: string) => ExistingStatus;
 }
+
+export type ExistingStatus = "in-class" | "school" | "none" | "pending";
+export const LOOKUP_PENDING_MESSAGE = "Đang kiểm tra với danh sách học sinh…";
 
 export function checkStudentRows(table: ImportTable, mapping: StudentColumnMapping, options: CheckStudentOptions = {}): CheckedStudentRow[] {
   const get = (r: string[], i: number) => (i >= 0 ? (r[i] ?? "").trim() : "");
@@ -214,9 +242,19 @@ export function checkStudentRows(table: ImportTable, mapping: StudentColumnMappi
     const raw = Object.fromEntries(STUDENT_IMPORT_FIELDS.map((f) => [f.key, get(r, mapping[f.key])])) as StudentRowValues;
     const values: StudentRowValues = { ...raw, fullName: raw.fullName.replace(/\s+/g, " ") };
 
-    const maybeExisting = !!options.existingAllowed && !!(raw.studentCode || raw.email);
-    if (!values.fullName && !maybeExisting) errors.fullName = options.existingAllowed ? "Cần họ tên, hoặc mã HS / email của học sinh đã có" : "Thiếu họ và tên";
-    else if (values.fullName.length > 150) errors.fullName = "Họ tên tối đa 150 ký tự";
+    let maybeExisting = !!options.existingAllowed && !!(raw.studentCode || raw.email);
+    // Where the student already is (class roster import only); reported on the code column, or email when there is no code.
+    const lookupKey: StudentImportField = raw.studentCode ? "studentCode" : "email";
+    const status = maybeExisting && options.existingLookup ? options.existingLookup(raw.studentCode, raw.email) : undefined;
+    if (status === "pending") errors[lookupKey] = LOOKUP_PENDING_MESSAGE;
+    else if (status === "in-class") errors[lookupKey] = "Học sinh đã có trong lớp này";
+    else if (status === "school") warnings.push("Học sinh đã có trong trường: chỉ thêm vào lớp");
+    if (status === "none") maybeExisting = false;
+
+    if (!values.fullName && !maybeExisting) {
+      errors.fullName = status === "none" ? "Thiếu họ và tên (mã HS / email chưa có trong trường)"
+        : options.existingAllowed ? "Cần họ tên, hoặc mã HS / email của học sinh đã có" : "Thiếu họ và tên";
+    } else if (values.fullName.length > 150) errors.fullName = "Họ tên tối đa 150 ký tự";
 
     if (values.studentCode) {
       const key = values.studentCode.toLowerCase();
@@ -232,7 +270,11 @@ export function checkStudentRows(table: ImportTable, mapping: StudentColumnMappi
     else {
       const parsed = parseDobLoose(raw.dob);
       if (!parsed) errors.dob = "Ngày sinh không hợp lệ (dd/mm/yyyy)";
-      else values.dob = parsed;
+      else {
+        values.dob = parsed;
+        const rangeError = studentDobRangeError(parsed);
+        if (rangeError) errors.dob = rangeError;
+      }
     }
 
     if (values.email) {

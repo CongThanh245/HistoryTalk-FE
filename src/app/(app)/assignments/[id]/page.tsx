@@ -209,19 +209,31 @@ async function latestQuizResult(quizId: string): Promise<QuizResult | null> {
 }
 
 /** Phien chat gan nhat voi nhan vat cua bai (BE bo qua contextId). */
+/**
+ * The chat to submit: the latest one with the character since the student started this assignment.
+ * Older chats may already have been submitted for another assignment, which the server refuses to count twice,
+ * so they are not offered. `replies` = the character's answers in it, which is what the server grades.
+ */
 async function latestChatSession(
   characterId: string,
-): Promise<ChatSession | null> {
+  startedAt: string | null,
+): Promise<(ChatSession & { replies: number }) | null> {
   const sessions = await chatService.getSessions(characterId, "");
+  const since = parseLocal(startedAt)?.getTime() ?? 0;
   const mine = (sessions ?? []).filter(
-    (s) => s.characterId === characterId || !s.characterId,
+    (s) =>
+      (s.characterId === characterId || !s.characterId) &&
+      (parseLocal(s.lastMessageAt)?.getTime() ?? 0) >= since,
   );
   mine.sort(
     (x, y) =>
       (parseLocal(y.lastMessageAt)?.getTime() ?? 0) -
       (parseLocal(x.lastMessageAt)?.getTime() ?? 0),
   );
-  return mine[0] ?? null;
+  const latest = mine[0];
+  if (!latest) return null;
+  const { messages } = await chatService.getMessages(latest.id);
+  return { ...latest, replies: (messages ?? []).filter((m) => m.role === "ASSISTANT").length };
 }
 
 /**
@@ -263,11 +275,12 @@ function AssignmentActions({
       a.assignmentId,
       type,
       a.targetId,
+      a.startedAt,
     ],
     queryFn: async () =>
       type === "QUIZ_TEST"
         ? { quiz: await latestQuizResult(a.targetId), chat: null }
-        : { quiz: null, chat: await latestChatSession(a.targetId) },
+        : { quiz: null, chat: await latestChatSession(a.targetId, a.startedAt) },
     enabled: open && type !== "CONTEXT_READING",
     staleTime: 0,
   });
@@ -416,7 +429,7 @@ function AssignmentActions({
           onClick={() => submitWith({ chatSessionId: chat.id })}
         >
           {busy ? spinner : <Send className="h-4 w-4" aria-hidden="true" />} Nộp
-          bài ({chat.messageCount ?? 0} tin nhắn)
+          bài ({chat.replies}/{a.minRequirement ?? 5} lượt trả lời)
         </button>
       );
       secondary = busy || evidence.isFetching ? (
@@ -430,7 +443,7 @@ function AssignmentActions({
         </Link>
       );
     }
-    hint = `Trò chuyện với ${a.targetTitle ?? "nhân vật"} rồi quay lại nộp bài. Cần ${requirementText(a)?.toLowerCase() ?? "đủ số tin nhắn"} để được 10 điểm.`;
+    hint = `Trò chuyện với ${a.targetTitle ?? "nhân vật"} rồi quay lại nộp bài. Mỗi lần ${a.targetTitle ?? "nhân vật"} trả lời được tính 1 lượt; cần ${a.minRequirement ?? 5} lượt để được 10 điểm. Chỉ tính cuộc trò chuyện từ lúc bạn bắt đầu bài này, cuộc trò chuyện đã dùng để nộp bài khác không được tính lại.`;
   } else {
     if (notStarted) {
       primary = (

@@ -238,14 +238,14 @@ function AssignmentDetail({ id }: { id: string }) {
         onOpenChange={setCancelOpen}
         variant="danger"
         title="Hủy bài tập?"
-        description={`“${a.title}” sẽ bị xóa khỏi lớp ${a.className}, kể cả ${a.totalSubmittedStudents} bài đã nộp và điểm — bạn sẽ không xem lại được. Chỉ muốn ngừng nhận bài thì dùng “Đóng bài”.`}
+        description={`Học sinh lớp ${a.className} sẽ không còn thấy “${a.title}” và không nộp được nữa. Bạn vẫn xem lại được bài này cùng ${a.totalSubmittedStudents} bài đã nộp và điểm trong mục “Đã hủy”. Nếu chỉ muốn ngừng nhận bài mà học sinh vẫn xem được, hãy dùng “Đóng bài”.`}
         confirmLabel="Hủy bài tập"
         cancelLabel="Đóng"
         isPending={cancel.isPending}
         onConfirm={() =>
           cancel.mutate(a.assignmentId, {
             onSuccess: () => {
-              toast.success("Đã hủy bài tập");
+              toast.success("Đã hủy bài tập. Bạn vẫn xem lại được trong mục “Đã hủy”.");
               setCancelOpen(false);
               router.push(`${ROUTES.TEACHING.ASSIGNMENTS}?classId=${encodeURIComponent(a.classroomId)}`);
             },

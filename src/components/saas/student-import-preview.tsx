@@ -8,6 +8,7 @@ import { StaffFormInput } from "@/components/staff/staff-form";
 import {
   STUDENT_IMPORT_FIELDS,
   checkStudentRows,
+  LOOKUP_PENDING_MESSAGE,
   type CheckStudentOptions,
   type CheckedStudentRow,
   type ImportTable,
@@ -24,26 +25,44 @@ export const NORMALIZED_MAPPING = Object.fromEntries(STUDENT_IMPORT_FIELDS.map((
 export const normalizeRows = (table: ImportTable, mapping: StudentColumnMapping) =>
   table.rows.map((r) => STUDENT_IMPORT_FIELDS.map((f) => (mapping[f.key] >= 0 ? (r[mapping[f.key]] ?? "") : "")));
 
+const isPending = (r: CheckedStudentRow) => Object.values(r.errors).includes(LOOKUP_PENDING_MESSAGE);
+
 /** Rows being previewed, their check results and the ticked lines; shared by the school and class student imports. */
 export function useImportRows(options: CheckStudentOptions = {}) {
   const existingAllowed = !!options.existingAllowed;
+  const existingLookup = options.existingLookup;
   const [rows, setRows] = React.useState<string[][]>([]);
   const [selected, setSelected] = React.useState<Set<number>>(new Set());
   const [filter, setFilter] = React.useState<RowFilter>("ALL");
 
   const check = React.useCallback(
-    (r: string[][]) => checkStudentRows({ headers: NORMALIZED_HEADERS, rows: r }, NORMALIZED_MAPPING, { existingAllowed }),
-    [existingAllowed],
+    (r: string[][]) => checkStudentRows({ headers: NORMALIZED_HEADERS, rows: r }, NORMALIZED_MAPPING, { existingAllowed, existingLookup }),
+    [existingAllowed, existingLookup],
   );
   const checked = React.useMemo(() => check(rows), [check, rows]);
   const validRows = React.useMemo(() => checked.filter((r) => Object.keys(r.errors).length === 0), [checked]);
+
+  // Rows still waiting for the existing-student lookup start unticked; tick them once they turn out valid.
+  const [pendingLines, setPendingLines] = React.useState<Set<number>>(new Set());
+  const [prevChecked, setPrevChecked] = React.useState(checked);
+  if (prevChecked !== checked) {
+    setPrevChecked(checked);
+    const resolved = checked.filter((r) => pendingLines.has(r.line) && !isPending(r));
+    if (resolved.length) {
+      setPendingLines(new Set([...pendingLines].filter((l) => !resolved.some((r) => r.line === l))));
+      const ok = resolved.filter((r) => Object.keys(r.errors).length === 0).map((r) => r.line);
+      if (ok.length) setSelected((prev) => new Set([...prev, ...ok]));
+    }
+  }
   const pickedRows = React.useMemo(() => validRows.filter((r) => selected.has(r.line)), [validRows, selected]);
 
   /** Loads a parsed file; every valid row starts ticked. */
   const load = (table: ImportTable, mapping: StudentColumnMapping) => {
     const normalized = normalizeRows(table, mapping);
     setRows(normalized);
-    setSelected(new Set(check(normalized).filter((r) => Object.keys(r.errors).length === 0).map((r) => r.line)));
+    const result = check(normalized);
+    setSelected(new Set(result.filter((r) => Object.keys(r.errors).length === 0).map((r) => r.line)));
+    setPendingLines(new Set(result.filter(isPending).map((r) => r.line)));
     setFilter("ALL");
   };
 
@@ -58,11 +77,13 @@ export function useImportRows(options: CheckStudentOptions = {}) {
     if (row && Object.keys(row.errors).length === 0) nextSelected.add(line);
     else nextSelected.delete(line);
     setSelected(nextSelected);
+    if (row && isPending(row)) setPendingLines(new Set([...pendingLines, line]));
   };
 
   const clear = () => {
     setRows([]);
     setSelected(new Set());
+    setPendingLines(new Set());
     setFilter("ALL");
   };
 

@@ -9,6 +9,7 @@ import { StaffFormInput, StaffFormSelect } from "@/components/staff/staff-form";
 import { AccountStatusBadge, DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, formatDate, formatNumber, isValidEmail } from "@/components/saas/saas-ui";
 import { isLoosePhone } from "@/components/saas/teacher-edit-dialog";
 import { apiErrorMessage, apiErrorStatus, useApiStudent, useStudentMutations } from "@/features/saas/hooks-api";
+import { studentDobBounds, studentDobRangeError } from "@/features/saas/student-import";
 import type { ApiStudent, Gender } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
 
@@ -44,6 +45,10 @@ function validate(v: Form, original: ApiStudent | null): Errors {
   if (v.dob) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(v.dob) || Number.isNaN(new Date(v.dob).getTime())) e.dob = "Ngày sinh không hợp lệ";
     else if (v.dob >= todayIso()) e.dob = "Ngày sinh phải trước hôm nay";
+    else {
+      const rangeError = studentDobRangeError(v.dob);
+      if (rangeError) e.dob = rangeError;
+    }
   } else if (original?.dob) {
     // The backend ignores a null dob, so clearing would silently keep the old value.
     e.dob = "Không thể xóa ngày sinh đã có; hãy nhập ngày sinh";
@@ -199,7 +204,8 @@ export function StudentEditDialog({ student, onOpenChange }: { student: ApiStude
                 id="student-edit-dob"
                 type="date"
                 value={form.dob}
-                max={todayIso()}
+                min={studentDobBounds().min}
+                max={studentDobBounds().max}
                 aria-invalid={!!shown.dob}
                 onChange={(e) => set("dob", e.target.value)}
               />

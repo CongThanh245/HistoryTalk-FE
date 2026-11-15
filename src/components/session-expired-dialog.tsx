@@ -26,7 +26,9 @@ export function SessionExpiredDialog() {
     <AlertDialog open={isExpired}>
       <AlertDialogContent
         onEscapeKeyDown={(e) => e.preventDefault()}
-        className="bg-bg-surface border-[var(--text-primary)]"
+        // Above every other layer (dialogs z-110, alerts z-120, toasts): an expired session must never hide behind a modal.
+        overlayClassName="z-[9999]"
+        className="z-[9999] bg-bg-surface border-[var(--text-primary)]"
       >
         <AlertDialogHeader>
           <AlertDialogTitle className="archive-title text-2xl">
