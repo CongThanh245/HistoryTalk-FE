@@ -28,6 +28,9 @@ type EditorState = {
   coalesce: { key: string; at: number } | null;
   /** Bumped on every content change; the page autosaves on it. */
   revision: number;
+  /** Character ids of the story's context (speaker pickers). */
+  cast: string[];
+  setCast: (ids: string[]) => void;
 
   load: (doc: StoryDoc) => void;
   toDoc: () => StoryDoc | null;
@@ -71,6 +74,8 @@ export const useStoryEditor = create<EditorState>((set, get) => ({
   future: [],
   coalesce: null,
   revision: 0,
+  cast: [],
+  setCast: (ids) => set({ cast: ids }),
 
   load: (doc) => {
     const { nodes, edges, ...meta } = doc;

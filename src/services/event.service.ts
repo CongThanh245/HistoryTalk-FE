@@ -1,5 +1,7 @@
 import { axiosClient } from "@/configs/axios.client";
 import { isBattleMap, type BattleMap } from "@/components/historical-map/battle-map.types";
+import { isStoryScript } from "@/features/story/story-script";
+import type { StoryScript } from "@/features/story/types";
 import {
   type EventEra,
   type EventEraBackend,
@@ -19,6 +21,11 @@ export interface HistoricalEvent {
   location?: string;
   imageUrl?: string | null;
   battleMap?: BattleMap | null;
+  /**
+   * Visual-novel story played instead of the intro video.
+   * undefined = the backend does not send the field (not supported yet); null = no story.
+   */
+  storyScript?: StoryScript | null;
   videoUrl?: string | null;
   era?: EventEraBackend;
   period?: string;
@@ -54,6 +61,8 @@ export interface CreateEventRequest {
   location?: string;
   imageUrl?: string | null;
   battleMap?: BattleMap | null;
+  /** null clears the story. */
+  storyScript?: StoryScript | null;
   videoUrl?: string | null;
   isActive?: boolean;
   isPublished?: boolean;
@@ -91,6 +100,7 @@ type RawHistoricalContext = {
   location?: string;
   imageUrl?: string | null;
   battleMap?: BattleMap | null;
+  storyScript?: unknown;
   image?: string | null;
   thumbnailUrl?: string | null;
   thumbnail?: string | null;
@@ -143,6 +153,7 @@ export function mapContext(raw: RawHistoricalContext): HistoricalEvent {
     // uploads) or null — no client-side URL validation needed here.
     imageUrl: imageUrl ?? null,
     battleMap: isBattleMap(raw.battleMap) ? raw.battleMap : null,
+    storyScript: !("storyScript" in raw) ? undefined : isStoryScript(raw.storyScript) ? raw.storyScript : null,
     videoUrl: raw.videoUrl ?? null,
     era: raw.era as EventEraBackend,
     period: raw.period,
@@ -216,6 +227,7 @@ function toContractEventPayload(data: UpdateEventRequest) {
     ...(data.location !== undefined && { location: data.location }),
     ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
     ...(data.battleMap !== undefined && { battleMap: data.battleMap }),
+    ...(data.storyScript !== undefined && { storyScript: data.storyScript }),
     ...(data.videoUrl !== undefined && { videoUrl: data.videoUrl }),
     ...(data.isActive !== undefined && { isActive: data.isActive }),
     ...(data.isPublished !== undefined && { isPublished: data.isPublished }),

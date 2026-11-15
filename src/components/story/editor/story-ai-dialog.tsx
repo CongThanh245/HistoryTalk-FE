@@ -18,7 +18,7 @@ import { characterService } from "@/services/character.service";
 import { eventService } from "@/services/event.service";
 import { useStoryEditor } from "@/features/story/editor-store";
 import { draftToStory, insertSteps, nodeToStep, stepsLeadingTo, type AiStoryDraft } from "@/features/story/ai-draft";
-import { MOCK_BACKGROUNDS, registerCharacters } from "@/features/story/mock-data";
+import { STORY_BACKGROUNDS, registerCharacters } from "@/features/story/story-assets";
 import type { StoryCharacter } from "@/features/story/types";
 
 type Mode = "full" | "continue" | "quiz" | "rewrite";
@@ -31,7 +31,7 @@ const MODES: { id: Mode; label: string; hint: string }[] = [
   { id: "rewrite", label: "Viết lại lời thoại đang chọn", hint: "Giữ ý, đổi cách nói theo yêu cầu." },
 ];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const backgrounds = MOCK_BACKGROUNDS.map((b) => ({ id: b.id, name: b.name }));
+const backgrounds = STORY_BACKGROUNDS.map((b) => ({ id: b.id, name: b.name }));
 
 /**
  * AI drafting for the story editor. The AI writes from the documents of a real historical context, so the story

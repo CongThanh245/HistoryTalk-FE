@@ -20,6 +20,9 @@ import {
   ArrowLeft,
   CircleAlert,
   CloudCheck,
+  CloudOff,
+  EyeOff,
+  HardDrive,
   Loader2,
   Maximize2,
   Minimize2,
@@ -36,7 +39,8 @@ import { cn } from "@/lib/utils/cn";
 import { ROUTES } from "@/constants/routes";
 import { useStoryEditor } from "@/features/story/editor-store";
 import { validateStory } from "@/features/story/graph-utils";
-import { storyRepo } from "@/features/story/mock-data";
+import { storyRepo, type StoryStorage } from "@/features/story/story-repo";
+import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { useAuthStore } from "@/store/auth.store";
 import { StoryAiDialog } from "./story-ai-dialog";
 import { ADDABLE_KINDS, KIND_META } from "@/features/story/story-meta";
@@ -74,16 +78,31 @@ function ToolButton({ label, onClick, disabled, children }: { label: string; onC
   );
 }
 
-function SaveStatus({ saving, savedAt }: { saving: boolean; savedAt: Date | null }) {
+function SaveStatus({ saving, savedAt, storage, failed }: { saving: boolean; savedAt: Date | null; storage: StoryStorage; failed: boolean }) {
   if (saving)
     return (
       <span className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)]">
         <Loader2 className="size-3.5 animate-spin" /> Đang lưu…
       </span>
     );
+  if (failed)
+    return (
+      <span className="flex items-center gap-1.5 text-[12px] font-semibold text-[var(--accent-gold)]" title="Thay đổi sẽ được lưu lại ở lần sửa tiếp theo, hoặc bấm Ctrl S">
+        <CloudOff className="size-3.5" /> Chưa lưu được
+      </span>
+    );
+  if (storage === "local")
+    return (
+      <span
+        className="flex items-center gap-1.5 text-[12px] font-semibold text-[var(--accent-brass)]"
+        title="Máy chủ chưa hỗ trợ lưu kịch bản (storyScript). Kịch bản đang được giữ trên trình duyệt này và sẽ tự chuyển lên máy chủ khi backend sẵn sàng."
+      >
+        <HardDrive className="size-3.5" /> Chỉ lưu trên trình duyệt này
+      </span>
+    );
   if (!savedAt) return null;
   return (
-    <span className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)]" title="Tự động lưu trên trình duyệt (dữ liệu giả, chưa nối backend)">
+    <span className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)]">
       <CloudCheck className="size-3.5" /> Đã lưu {savedAt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
     </span>
   );
@@ -157,6 +176,10 @@ function EditorInner({ storyId }: { storyId: string }) {
 
   const [status, setStatus] = useState<"loading" | "ready" | "missing">("loading");
   const [saving, setSaving] = useState(false);
+  const [storage, setStorage] = useState<StoryStorage>("server");
+  const [saveFailed, setSaveFailed] = useState(false);
+  const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  const pendingRef = useRef(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [quickAdd, setQuickAdd] = useState<QuickAdd | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -165,17 +188,27 @@ function EditorInner({ storyId }: { storyId: string }) {
   const role = useAuthStore((s) => s.user?.role);
   const canUseAi = role === "CONTENT_ADMIN" || role === "TEACHER";
 
-  // Load (localStorage is client-only).
+  // Load the context's story (or a new one) from the server. `storyId` is the context id.
   useEffect(() => {
-    const doc = storyRepo.get(storyId);
-    if (!doc) {
-      setStatus("missing");
-      return;
-    }
-    load(doc);
-    setSavedAt(new Date(doc.updatedAt));
-    setStatus("ready");
-    requestAnimationFrame(() => fitOrStart());
+    let cancelled = false;
+    setStatus("loading");
+    storyRepo
+      .load(storyId)
+      .then(({ doc, storage: where, isNew, cast }) => {
+        if (cancelled) return;
+        load(doc);
+        useStoryEditor.getState().setCast(cast);
+        setStorage(where);
+        setSavedAt(isNew ? null : new Date(doc.updatedAt));
+        setStatus("ready");
+        requestAnimationFrame(() => fitOrStart());
+      })
+      .catch(() => {
+        if (!cancelled) setStatus("missing");
+      });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only on story change
   }, [storyId, load, flow]);
 
@@ -197,18 +230,55 @@ function EditorInner({ storyId }: { storyId: string }) {
     flow.setViewport({ x: 80 - start.position.x * 0.8, y: box.height / 2 - start.position.y * 0.8, zoom: 0.8 }, { duration: 300 });
   }
 
-  // Autosave shortly after the last change.
+  /** Saves the current story; saves run one after another so an older one never lands last. */
+  const saveNow = useCallback((): Promise<StoryStorage | null> => {
+    pendingRef.current = false;
+    const run = async () => {
+      const doc = toDoc();
+      if (!doc) return null;
+      setSaving(true);
+      try {
+        const where = await storyRepo.save(doc);
+        setStorage(where);
+        setSaveFailed(false);
+        setSavedAt(new Date());
+        return where;
+      } catch (e) {
+        setSaveFailed((already) => {
+          if (!already) toast.error("Không lưu được kịch bản", { description: getApiErrorMessage(e, "Vui lòng thử lại.") });
+          return true;
+        });
+        return null;
+      } finally {
+        setSaving(false);
+      }
+    };
+    const next = saveChainRef.current.then(run, run);
+    saveChainRef.current = next;
+    return next;
+  }, [toDoc]);
+
+  // Autosave a moment after the last change (each save is a request, so not on every keystroke).
   useEffect(() => {
     if (status !== "ready" || revision === 0) return;
-    setSaving(true);
-    const t = window.setTimeout(() => {
-      const doc = toDoc();
-      if (doc) storyRepo.save(doc);
-      setSaving(false);
-      setSavedAt(new Date());
-    }, 700);
+    pendingRef.current = true;
+    const t = window.setTimeout(() => void saveNow(), 1200);
     return () => window.clearTimeout(t);
-  }, [revision, status, toDoc]);
+  }, [revision, status, saveNow]);
+
+  // Leaving with a change not yet sent: send it, and warn on a tab close.
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!pendingRef.current) return;
+      void saveNow();
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      if (pendingRef.current) void saveNow();
+    };
+  }, [saveNow]);
 
   const issues = useMemo(() => validateStory(nodes, edges), [nodes, edges]);
   const issuesByNode = useMemo(() => {
@@ -315,7 +385,20 @@ function EditorInner({ storyId }: { storyId: string }) {
       return;
     }
     updateMeta({ status: "published" });
-    toast.success("Đã xuất bản kịch bản (giả lập)", { description: "Khi nối backend, học sinh sẽ thấy kịch bản thay cho video." });
+    void saveNow().then((where) => {
+      if (where === "server") toast.success("Đã xuất bản", { description: "Học sinh mở bối cảnh này sẽ xem kịch bản thay cho video." });
+      else if (where === "local")
+        toast.warning("Đã đánh dấu xuất bản, nhưng học sinh chưa thấy được", {
+          description: "Máy chủ chưa hỗ trợ lưu kịch bản. Kịch bản sẽ hiện với học sinh khi backend có trường storyScript.",
+        });
+    });
+  };
+
+  const unpublish = () => {
+    updateMeta({ status: "draft" });
+    void saveNow().then((where) => {
+      if (where) toast.success("Đã gỡ xuất bản", { description: "Học sinh sẽ thấy lại video giới thiệu (nếu có)." });
+    });
   };
 
   // Editor shortcuts.
@@ -326,10 +409,7 @@ function EditorInner({ storyId }: { storyId: string }) {
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        const doc = toDoc();
-        if (doc) storyRepo.save(doc);
-        setSavedAt(new Date());
-        toast.success("Đã lưu");
+        void saveNow().then((where) => where && toast.success("Đã lưu"));
         return;
       }
       if (typing || (preview && !preview.docked)) return;
@@ -356,7 +436,8 @@ function EditorInner({ storyId }: { storyId: string }) {
     return (
       <div className="grid h-full place-items-center p-8 text-center">
         <div>
-          <p className="text-[18px] font-bold">Không tìm thấy kịch bản</p>
+          <p className="text-[18px] font-bold">Không tải được bối cảnh</p>
+          <p className="mt-1 text-[13.5px] text-[var(--text-muted)]">Bối cảnh không tồn tại, đã bị xóa, hoặc mạng đang lỗi.</p>
           <Link href={ROUTES.STAFF.STORIES} className="mt-3 inline-block text-[14px] font-semibold text-[var(--accent-gold)] underline">
             Về danh sách kịch bản
           </Link>
@@ -398,7 +479,7 @@ function EditorInner({ storyId }: { storyId: string }) {
             </div>
             <div className="flex items-center gap-3 px-1.5">
               <span className="truncate text-[12px] text-[var(--text-muted)]">{meta?.contextName}</span>
-              <SaveStatus saving={saving} savedAt={savedAt} />
+              <SaveStatus saving={saving} savedAt={savedAt} storage={storage} failed={saveFailed} />
             </div>
           </div>
 
@@ -450,13 +531,24 @@ function EditorInner({ storyId }: { storyId: string }) {
           >
             <Play className="size-4" /> Xem thử
           </button>
-          <button
-            type="button"
-            onClick={publish}
-            className="flex h-9 cursor-pointer items-center gap-1.5 rounded-sm bg-[var(--accent-gold)] px-3 text-[13px] font-semibold text-[var(--text-inverse)] hover:bg-[var(--accent-bronze)]"
-          >
-            <Rocket className="size-4" /> Xuất bản
-          </button>
+          {meta?.status === "published" ? (
+            <button
+              type="button"
+              onClick={unpublish}
+              title="Học sinh sẽ không thấy kịch bản nữa. Lưu ý: khi đang xuất bản, mọi chỉnh sửa được lưu thẳng cho học sinh."
+              className="flex h-9 cursor-pointer items-center gap-1.5 rounded-sm border border-[var(--border-strong)] px-3 text-[13px] font-semibold hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
+            >
+              <EyeOff className="size-4" /> Gỡ xuất bản
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={publish}
+              className="flex h-9 cursor-pointer items-center gap-1.5 rounded-sm bg-[var(--accent-gold)] px-3 text-[13px] font-semibold text-[var(--text-inverse)] hover:bg-[var(--accent-bronze)]"
+            >
+              <Rocket className="size-4" /> Xuất bản
+            </button>
+          )}
         </header>
         {canUseAi && <StoryAiDialog open={aiOpen} onOpenChange={setAiOpen} />}
 
@@ -518,6 +610,13 @@ function EditorInner({ storyId }: { storyId: string }) {
             </ReactFlow>
 
             {quickAdd && <QuickAddMenu menu={quickAdd} onPick={pickQuickAdd} onClose={() => setQuickAdd(null)} />}
+            {status === "loading" && (
+              <div className="absolute inset-0 z-30 grid place-items-center bg-[var(--story-canvas)]">
+                <span className="flex items-center gap-2 text-[13.5px] text-[var(--text-muted)]">
+                  <Loader2 className="size-4 animate-spin" /> Đang tải kịch bản…
+                </span>
+              </div>
+            )}
           </div>
 
           <NodeInspector selected={selected} issues={issues} issuesByNode={issuesByNode} onFocus={focusNode} onPreview={openPreview} />

@@ -20,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils/cn";
 import { useStoryEditor } from "@/features/story/editor-store";
 import { option, storyStats } from "@/features/story/graph-utils";
-import { MOCK_BACKGROUNDS, MOCK_CONTEXTS, storyCharacters } from "@/features/story/mock-data";
+import { STORY_BACKGROUNDS, storyCharacters } from "@/features/story/story-assets";
 import { EXPRESSIONS, KIND_META, NARRATOR_LABEL } from "@/features/story/story-meta";
 import type { StoryFlowNode, StoryIssue, StoryNodeData, StoryOption } from "@/features/story/types";
 import { CharacterAvatar } from "../character-avatar";
@@ -104,7 +104,9 @@ function IssueList({ issues, onFocus }: { issues: StoryIssue[]; onFocus?: (id: s
 }
 
 function SpeakerPicker({ value, onChange }: { value: string | null; onChange: (id: string | null) => void }) {
-  const characters = storyCharacters();
+  // The context's own cast (loaded with the story); before it arrives, every known character.
+  const cast = useStoryEditor((s) => s.cast);
+  const characters = storyCharacters(cast.length ? cast : undefined);
   const choices = [{ id: null, name: NARRATOR_LABEL }, ...characters];
   return (
     <div className="grid grid-cols-2 gap-1.5">
@@ -287,7 +289,7 @@ function NodeForm({ node }: { node: StoryFlowNode }) {
               >
                 Giữ cảnh trước
               </button>
-              {MOCK_BACKGROUNDS.map((bg) => (
+              {STORY_BACKGROUNDS.map((bg) => (
                 <button
                   key={bg.id}
                   type="button"
@@ -403,21 +405,8 @@ function StorySettings({ issues, onFocus }: { issues: StoryIssue[]; onFocus: (id
         <Field label="Tên kịch bản">
           <Input value={meta.title} onChange={(e) => updateMeta({ title: e.target.value })} />
         </Field>
-        <Field label="Gắn với bối cảnh">
-          <select
-            value={meta.contextId}
-            onChange={(e) => {
-              const ctx = MOCK_CONTEXTS.find((c) => c.id === e.target.value);
-              if (ctx) updateMeta({ contextId: ctx.id, contextName: ctx.name });
-            }}
-            className="h-9 w-full cursor-pointer rounded-sm border border-[var(--border-strong)] bg-[var(--bg-elevated)] px-2 text-[13px] text-[var(--text-primary)] outline-none hover:border-[var(--text-primary)]"
-          >
-            {[...MOCK_CONTEXTS, ...(MOCK_CONTEXTS.some((c) => c.id === meta.contextId) ? [] : [{ id: meta.contextId, name: meta.contextName }])].map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+        <Field label="Bối cảnh" hint="Kịch bản phát thay video giới thiệu của bối cảnh này.">
+          <p className="rounded-sm border border-[var(--border-default)] bg-[var(--bg-elevated)] px-3 py-2 text-[13px] font-medium">{meta.contextName}</p>
         </Field>
         <Field label="Nhân vật kể chính" hint="Bước mới sẽ mặc định do nhân vật này nói.">
           <SpeakerPicker value={meta.narratorId} onChange={(narratorId) => updateMeta({ narratorId })} />

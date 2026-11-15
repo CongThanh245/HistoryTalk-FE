@@ -68,6 +68,20 @@ export type StoryDoc = {
   edges: StoryFlowEdge[];
 };
 
+/**
+ * What the backend stores in `historicalContext.storyScript` (one story per context).
+ * The context itself gives the id and name, so they are not repeated here.
+ */
+export type StoryScript = {
+  version: 1;
+  title: string;
+  narratorId: string | null;
+  status: StoryStatus;
+  updatedAt: string;
+  nodes: StoryFlowNode[];
+  edges: StoryFlowEdge[];
+};
+
 export type StoryCharacter = {
   id: string;
   name: string;

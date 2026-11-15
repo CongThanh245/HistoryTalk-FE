@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { nextNodeId } from "./graph-utils";
-import { DEFAULT_BACKGROUND, findCharacter } from "./mock-data";
+import { DEFAULT_BACKGROUND, findCharacter } from "./story-assets";
 import { NARRATOR_LABEL } from "./story-meta";
 import type { StoryFlowEdge, StoryFlowNode } from "./types";
 

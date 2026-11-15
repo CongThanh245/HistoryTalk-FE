@@ -18,6 +18,8 @@ import { chatModeTargetOf, useChatModePicker } from "@/components/chat/chat-mode
 import { usePublicContextDocuments } from "@/features/documents/hooks";
 import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
 import { ERA_CONFIG, getEraFromYear, mapEraLabel } from "@/constants/eras";
+import { ContextStoryIntro } from "@/components/story/player/context-story-intro";
+import { isPlayableScript } from "@/features/story/story-script";
 
 // ── Mock ──────────────────────────────────────────────────
 // TODO: fetch từ API /events/:id/characters
@@ -314,6 +316,16 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
                 event={event}
                 characters={characters}
                 onSelect={handleSelectChar}
+              />
+            ) : isPlayableScript(event.storyScript) ? (
+              // A published story replaces the intro video.
+              <ContextStoryIntro
+                key={event.id}
+                script={event.storyScript}
+                contextTitle={event.title}
+                characters={characters}
+                onFinish={() => setFinishedEventId(event.id)}
+                onOpenChat={handleSelectChar}
               />
             ) : (
               <FakeVideoPlayer

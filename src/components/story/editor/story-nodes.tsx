@@ -5,7 +5,7 @@ import { Handle, Position, type NodeProps, type NodeTypes } from "@xyflow/react"
 import { AlertTriangle, Check, CircleAlert, Unlock, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { outputHandles, type OutputHandle } from "@/features/story/graph-utils";
-import { findBackground, findCharacter } from "@/features/story/mock-data";
+import { findBackground, findCharacter } from "@/features/story/story-assets";
 import { EXPRESSIONS, KIND_META, NARRATOR_LABEL } from "@/features/story/story-meta";
 import type { StoryFlowNode, StoryNodeData } from "@/features/story/types";
 import { useEditorContext } from "./editor-context";

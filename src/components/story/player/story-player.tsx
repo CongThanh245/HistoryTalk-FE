@@ -6,6 +6,7 @@ import {
   Check,
   ChevronDown,
   FastForward,
+  SkipForward,
   History,
   MessageCircle,
   RotateCcw,
@@ -17,7 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
-import { findBackground } from "@/features/story/mock-data";
+import { findBackground } from "@/features/story/story-assets";
 import { useStoryEngine } from "@/features/story/use-story-engine";
 import type { StoryCharacter, StoryFlowEdge, StoryFlowNode } from "@/features/story/types";
 import "@/features/story/story.css";
@@ -149,6 +150,9 @@ export function StoryPlayer({
   onClose,
   onNodeChange,
   onOpenChat,
+  onComplete,
+  completeLabel = "Tiếp tục",
+  reserveTopRight = false,
 }: {
   nodes: StoryFlowNode[];
   edges: StoryFlowEdge[];
@@ -161,6 +165,11 @@ export function StoryPlayer({
    * step: the learner can ask whoever is on screen at any time, then come back.
    */
   onOpenChat?: (character: StoryCharacter) => void;
+  /** Learner screen: leave the story (skip, or the end screen's main button). */
+  onComplete?: () => void;
+  completeLabel?: string;
+  /** Leave room at the top right for a close button laid over the player (mobile drawer). */
+  reserveTopRight?: boolean;
 }) {
   const engine = useStoryEngine(nodes, edges, startAt);
   const { node, speaker, speakerName } = engine;
@@ -256,7 +265,7 @@ export function StoryPlayer({
       <Portrait character={speaker} expression={expression} talking={d?.kind === "line" && !typer.done} />
 
       {/* Top bar */}
-      <div className="absolute inset-x-0 top-0 z-30 flex items-center gap-2 p-3 md:p-4">
+      <div className={cn("absolute inset-x-0 top-0 z-30 flex items-center gap-2 p-3 md:p-4", reserveTopRight && "max-md:pr-16")}>
         <div className="min-w-0 rounded-sm bg-black/35 px-3 py-1.5 backdrop-blur-md">
           <p className="truncate text-[11px] font-bold uppercase tracking-[0.14em] text-white/60">Kể chuyện</p>
           <p className="truncate text-[13px] font-semibold">{title}</p>
@@ -282,6 +291,12 @@ export function StoryPlayer({
           <ControlButton label="Xem lại từ đầu" onClick={engine.restart}>
             <RotateCcw className="size-4" />
           </ControlButton>
+          {onComplete && (
+            <ControlButton label="Bỏ qua phần kể chuyện" onClick={onComplete}>
+              <SkipForward className="size-4" />
+              <span className="max-sm:hidden">Bỏ qua</span>
+            </ControlButton>
+          )}
           {onClose && (
             <ControlButton label="Đóng (Esc)" onClick={onClose}>
               <X className="size-4" />
@@ -406,7 +421,7 @@ export function StoryPlayer({
                 <p className="text-[11px] uppercase tracking-wider text-white/50">Câu đúng</p>
               </div>
             </div>
-            <div className="mt-5 flex gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
               <button type="button" onClick={engine.restart} className="flex-1 cursor-pointer rounded-sm border border-white/30 py-2.5 text-[14px] font-semibold hover:border-white">
                 Xem lại
               </button>
@@ -414,9 +429,22 @@ export function StoryPlayer({
                 <button
                   type="button"
                   onClick={openChat}
-                  className="flex-1 cursor-pointer rounded-sm bg-[#F5F2EA] py-2.5 text-[14px] font-bold text-[#111] hover:bg-white"
+                  className={cn(
+                    "flex-1 cursor-pointer rounded-sm py-2.5 text-[14px] font-bold",
+                    onComplete ? "border border-[#D9B25C] text-[#D9B25C] hover:bg-[#D9B25C] hover:text-[#111]" : "bg-[#F5F2EA] text-[#111] hover:bg-white",
+                  )}
                 >
                   Trò chuyện ngay
+                </button>
+              )}
+              {onComplete && (
+                <button
+                  type="button"
+                  autoFocus
+                  onClick={onComplete}
+                  className="w-full cursor-pointer rounded-sm bg-[#F5F2EA] py-2.5 text-[14px] font-bold text-[#111] hover:bg-white"
+                >
+                  {completeLabel}
                 </button>
               )}
             </div>
