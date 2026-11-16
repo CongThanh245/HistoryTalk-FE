@@ -43,6 +43,33 @@ export function yearlySavingPercent(plan: TierPlan): number | null {
   return saving > 0 ? saving : null;
 }
 
+/** Plan level by title, as the backend ranks it: free=0, plus=1, pro=2; unknown titles are -1. */
+export function planRank(title: string | null | undefined): number {
+  switch (title?.trim().toLowerCase()) {
+    case "free":
+      return 0;
+    case "plus":
+      return 1;
+    case "pro":
+      return 2;
+    default:
+      return -1;
+  }
+}
+
+/**
+ * Whether a user on `current` may buy `target` mid-period: a higher plan, or the same plan
+ * with a longer duration. With no active paid plan any paid tier can be bought.
+ */
+export function canUpgradeTo(current: PaymentTier | undefined, target: PaymentTier): boolean {
+  if (!current || current.amount <= 0) return true;
+  const currentRank = planRank(current.title);
+  const targetRank = planRank(target.title);
+  if (currentRank < 0 || targetRank < 0) return false;
+  if (targetRank !== currentRank) return targetRank > currentRank;
+  return target.noMonth > current.noMonth;
+}
+
 export function hasYearlyPlans(plans: TierPlan[]): boolean {
   return plans.some((p) => !!p.yearly);
 }

@@ -22,9 +22,29 @@ export interface CheckoutResponse {
   paymentLinkId: string;
   checkoutUrl: string;
   qrCode: string;
+  /** Amount actually charged (originalAmount - upgradeCreditAmount). */
   amount: number;
+  /** List price of the purchased tier. */
+  originalAmount?: number;
+  /** Prorated credit from the replaced paid plan; 0 for a plain purchase. */
+  upgradeCreditAmount?: number;
   status: string;
   expiredAt: string;
+}
+
+/** Price preview for buying a tier; `upgrade` is true when an active paid plan is replaced. */
+export interface UpgradeQuote {
+  currentTierId: string | null;
+  currentTierTitle: string | null;
+  currentTierNoMonth: number | null;
+  currentEndTime: string | null;
+  targetTierId: string;
+  targetTierTitle: string;
+  targetTierNoMonth: number;
+  originalAmount: number;
+  creditAmount: number;
+  amountToPay: number;
+  upgrade: boolean;
 }
 
 export interface PayosReturnRequest {
@@ -72,6 +92,12 @@ export interface PaymentHistoryPage {
 export const paymentService = {
   getTiers: async (): Promise<PaymentTier[]> => {
     const res = await axiosClient.get("/payments/tiers");
+    return res.data.data;
+  },
+
+  /** Previews the price of a tier, deducting the unused part of an active paid plan. Creates no order. */
+  getUpgradeQuote: async (tierId: string): Promise<UpgradeQuote> => {
+    const res = await axiosClient.get("/payments/upgrade-quote", { params: { tierId } });
     return res.data.data;
   },
 

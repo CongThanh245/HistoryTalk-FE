@@ -6,15 +6,18 @@ import { ArrowRightIcon, CheckIcon, CrownIcon, SchoolIcon, SparklesIcon, XIcon }
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryKeys } from "@/shared/query-key";
-import { paymentService } from "@/services/payment.service";
+import { paymentService, type PaymentTier, type UpgradeQuote } from "@/services/payment.service";
+import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/features/profile/hooks";
 import { useEntitlements } from "@/features/saas/entitlements";
 import {
+  canUpgradeTo,
   formatVnd,
   groupTierPlans,
+  planRank,
   hasYearlyPlans,
   tierForCycle,
   yearlySavingPercent,
@@ -28,6 +31,30 @@ function getTierFeatureSummary(planKey: string): string {
   return "Nội dung, chat, quiz";
 }
 
+/** Backend 400 messages for upgrades are English; show them in Vietnamese. */
+function upgradeErrorMessage(error: unknown, fallback: string): string {
+  const message = getApiErrorMessage(error, fallback);
+  if (message.startsWith("You can only upgrade")) {
+    return "Chỉ có thể nâng lên gói cao hơn, hoặc gói dài hơn cùng hạng với gói hiện tại.";
+  }
+  if (message.includes("already covers")) {
+    return "Số tiền quy đổi từ gói hiện tại đã đủ trả gói này. Vui lòng chọn gói dài hơn.";
+  }
+  if (message === "Tier is inactive or deleted") return "Gói này hiện không còn được bán.";
+  return message;
+}
+
+function formatDateTime(value: string | null): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
+}
+
+function cycleLabel(noMonth: number | null | undefined): string {
+  if (!noMonth) return "";
+  return noMonth >= 12 ? ` (${noMonth / 12 === 1 ? "năm" : `${noMonth / 12} năm`})` : ` (${noMonth} tháng)`;
+}
+
 function TierCard({
   plan,
   cycle,
@@ -35,6 +62,7 @@ function TierCard({
   onCheckout,
   loadingId,
   currentTierId,
+  currentTier,
 }: {
   plan: TierPlan;
   cycle: BillingCycle;
@@ -42,6 +70,8 @@ function TierCard({
   onCheckout: (tierId: string) => void;
   loadingId: string | null;
   currentTierId: string | null;
+  /** The account's tier row when it is one of the listed tiers. */
+  currentTier: PaymentTier | undefined;
 }) {
   const tier = tierForCycle(plan, cycle)!;
   const isFeatured = index === 0;
@@ -49,10 +79,20 @@ function TierCard({
   const isFree = plan.isFree;
   const isYearly = tier.noMonth >= 12;
   const saving = isYearly ? yearlySavingPercent(plan) : null;
-  // The account's subscription may be either the monthly or the yearly row of this plan.
-  const isCurrent = currentTierId
-    ? currentTierId === plan.monthly?.tierId || currentTierId === plan.yearly?.tierId
-    : isFree;
+  const hasPaidPlan = !!currentTier && currentTier.amount > 0;
+  const isCurrent = currentTierId ? currentTierId === tier.tierId : isFree;
+  // Free is always included; paid plans follow the backend's upgrade rules (no downgrades).
+  const blockedLabel = isCurrent
+    ? "Gói hiện tại"
+    : isFree
+      ? hasPaidPlan || !!currentTierId
+        ? "Đã bao gồm"
+        : "Gói hiện tại"
+      : !canUpgradeTo(currentTier, tier)
+        ? planRank(currentTier?.title) === planRank(tier.title)
+          ? "Đang dùng gói dài hơn"
+          : "Đã bao gồm trong gói hiện tại"
+        : null;
 
   const features: [string, string][] = [
     ["Thời hạn", isFree ? "Miễn phí" : `${tier.noMonth} tháng`],
@@ -77,11 +117,11 @@ function TierCard({
         {!isFree && <small>{isYearly ? "/năm" : "/tháng"}</small>}
       </div>
 
-      {isCurrent ? (
+      {blockedLabel ? (
         <div
           className={`upgrade-pro-action is-current cursor-default pointer-events-none ${isFeatured ? "is-featured" : ""}`}
         >
-          Gói hiện tại
+          {blockedLabel}
         </div>
       ) : (
         <button
@@ -90,7 +130,7 @@ function TierCard({
           onClick={() => onCheckout(tier.tierId)}
           className={`upgrade-pro-action ${isFeatured ? "is-featured" : ""} ${isLoading ? "opacity-70 cursor-wait" : "opacity-100 cursor-pointer"}`}
         >
-          {isLoading ? "Đang xử lý..." : "Đăng ký ngay"}
+          {isLoading ? "Đang xử lý..." : hasPaidPlan ? "Nâng cấp" : "Đăng ký ngay"}
         </button>
       )}
 
@@ -158,13 +198,36 @@ export function UpgradeProDialog({
     enabled: open,
   });
 
+  const [quote, setQuote] = useState<UpgradeQuote | null>(null);
+  const currentTierId = profile?.tierId ?? null;
+  const currentTier = tiers?.find((t) => t.tierId === currentTierId);
+  const hasPaidPlan = !!currentTier && currentTier.amount > 0;
+
   const checkoutMutation = useMutation({
     mutationFn: (tierId: string) => paymentService.checkout(tierId),
     onSuccess: (data) => {
       window.location.href = data.checkoutUrl;
     },
-    onError: () => {
-      toast.error("Không thể tạo đơn thanh toán. Vui lòng thử lại.");
+    onError: (error) => {
+      toast.error(upgradeErrorMessage(error, "Không thể tạo đơn thanh toán. Vui lòng thử lại."));
+      setLoadingId(null);
+    },
+  });
+
+  // Mid-period upgrade: show the prorated price before sending the user to PayOS.
+  const quoteMutation = useMutation({
+    mutationFn: (tierId: string) => paymentService.getUpgradeQuote(tierId),
+    onSuccess: (data) => {
+      setLoadingId(null);
+      if (data.upgrade) {
+        setQuote(data);
+        return;
+      }
+      setLoadingId(data.targetTierId);
+      checkoutMutation.mutate(data.targetTierId);
+    },
+    onError: (error) => {
+      toast.error(upgradeErrorMessage(error, "Không thể tính giá nâng cấp. Vui lòng thử lại."));
       setLoadingId(null);
     },
   });
@@ -188,13 +251,28 @@ export function UpgradeProDialog({
 
   const handleCheckout = (tierId: string) => {
     setLoadingId(tierId);
-    checkoutMutation.mutate(tierId);
+    if (hasPaidPlan) quoteMutation.mutate(tierId);
+    else checkoutMutation.mutate(tierId);
   };
+
+  const confirmUpgrade = () => {
+    if (!quote) return;
+    setLoadingId(quote.targetTierId);
+    checkoutMutation.mutate(quote.targetTierId);
+  };
+
+  const isRedirecting = !!quote && checkoutMutation.isPending;
 
   const plans = groupTierPlans(tiers ?? []);
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
+    <DialogPrimitive.Root
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) setQuote(null);
+        setOpen(next);
+      }}
+    >
       {children && (
         <div onClick={handleTriggerClick} className="contents">
           {children}
@@ -249,10 +327,69 @@ export function UpgradeProDialog({
                     index={index}
                     onCheckout={handleCheckout}
                     loadingId={loadingId}
-                    currentTierId={profile?.tierId ?? null}
+                    currentTierId={currentTierId}
+                    currentTier={currentTier}
                   />
                 ))}
           </div>
+
+          {open && quote && (
+            <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/50 p-4">
+              <section
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="upgrade-quote-title"
+                className="w-full max-w-[440px] rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] p-6 text-[var(--text-primary)] shadow-xl"
+              >
+                <h3 id="upgrade-quote-title" className="text-lg font-bold">
+                  Nâng cấp lên {quote.targetTierTitle}
+                  {cycleLabel(quote.targetTierNoMonth)}
+                </h3>
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                  Phần chưa dùng của gói {quote.currentTierTitle}
+                  {cycleLabel(quote.currentTierNoMonth)} (hết hạn {formatDateTime(quote.currentEndTime)}) được quy đổi
+                  và trừ vào giá gói mới. Gói mới bắt đầu ngay khi thanh toán thành công.
+                </p>
+
+                <dl className="mt-5 grid gap-2 border-y border-[var(--border-default)] py-4 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-[var(--text-secondary)]">Giá gói mới</dt>
+                    <dd>{formatVnd(quote.originalAmount)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-[var(--text-secondary)]">Quy đổi từ gói hiện tại</dt>
+                    <dd>−{formatVnd(quote.creditAmount)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 pt-2 text-base font-bold">
+                    <dt>Cần thanh toán</dt>
+                    <dd className="text-[var(--accent-gold)]">{formatVnd(quote.amountToPay)}</dd>
+                  </div>
+                </dl>
+                <p className="mt-3 text-xs text-[var(--text-tertiary)]">
+                  Số tiền lúc thanh toán có thể chênh vài đồng vì phần quy đổi được tính lại theo thời điểm tạo đơn.
+                </p>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    disabled={isRedirecting}
+                    onClick={() => setQuote(null)}
+                    className="h-10 rounded-sm border border-[var(--border-strong)] px-4 text-sm font-semibold hover:bg-[var(--bg-elevated)] disabled:opacity-60"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isRedirecting}
+                    onClick={confirmUpgrade}
+                    className="h-10 rounded-sm bg-[var(--accent-gold)] px-4 text-sm font-bold text-white hover:bg-[var(--accent-bronze)] disabled:cursor-wait disabled:opacity-70"
+                  >
+                    {isRedirecting ? "Đang chuyển tới PayOS..." : "Thanh toán"}
+                  </button>
+                </div>
+              </section>
+            </div>
+          )}
 
           {/* Schools buy one plan for everyone; individual plans are not the way for them. */}
           <Link
