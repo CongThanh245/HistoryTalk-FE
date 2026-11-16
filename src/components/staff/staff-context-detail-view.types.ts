@@ -10,6 +10,8 @@ export type ContextDraft = {
   description: string;
   era: EventEraBackend | "";
   year: string;
+  /** Năm trước Công nguyên; `year` luôn là số dương. */
+  isBC: boolean;
   location: string;
   imageUrl: string;
   videoUrl: string;
@@ -31,6 +33,7 @@ export const EMPTY_CONTEXT_DRAFT: ContextDraft = {
   description: "",
   era: "",
   year: "",
+  isBC: false,
   location: "",
   imageUrl: "",
   videoUrl: "",

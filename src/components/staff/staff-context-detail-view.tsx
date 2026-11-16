@@ -20,6 +20,7 @@ import {
   Columns2 as ColumnsIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   StaffFormLabel,
   StaffFormInput,
@@ -249,10 +250,11 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
   );
 
   const eraLabel = ERA_OPTIONS.find((option) => option.value === draft.era)?.label;
+  const yearLabel = draft.year ? `${draft.year}${draft.isBC ? " TCN" : ""}` : "";
   const subtitle =
     mode === "create" && !isCreated
       ? "Điền thông tin cơ bản, thêm ảnh/video ở tab Media"
-      : [draft.location, eraLabel, draft.year].filter(Boolean).join(" · ") || "—";
+      : [draft.location, eraLabel, yearLabel].filter(Boolean).join(" · ") || "—";
 
   // Counts on the tabs let staff see how complete a context is without opening each tab.
   const tabCounts: Partial<Record<FormTabKey, number>> =
@@ -408,7 +410,7 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                     <div className="grid gap-5 border-t border-[var(--card-light-border)] pt-5 sm:grid-cols-[1fr_1fr_2fr]">
                       {[
                         { label: "Thời đại", value: eraLabel },
-                        { label: "Năm", value: draft.year },
+                        { label: "Năm", value: yearLabel },
                         { label: "Địa điểm", value: draft.location },
                       ].map((item) => (
                         <div key={item.label} className="min-w-0">
@@ -446,13 +448,20 @@ export function StaffContextDetailView(props: StaffContextDetailViewProps) {
                   </div>
                   <div className="grid gap-1.5">
                     <StaffFormLabel>Năm *</StaffFormLabel>
-                    <StaffFormInput
-                      type="number"
-                      value={draft.year}
-                      onChange={(e) => set("year")(e.target.value)}
-                      placeholder="938"
-                      disabled={!isEditing}
-                    />
+                    <div className="flex items-center gap-3">
+                      <StaffFormInput
+                        type="number"
+                        min={1}
+                        value={draft.year}
+                        onChange={(e) => set("year")(e.target.value)}
+                        placeholder="938"
+                        disabled={!isEditing}
+                      />
+                      <label htmlFor="staff-ctx-bc" className="inline-flex shrink-0 cursor-pointer items-center gap-2 text-sm text-content-text">
+                        <Checkbox id="staff-ctx-bc" checked={draft.isBC} onCheckedChange={(v) => set("isBC")(!!v)} disabled={!isEditing} />
+                        TCN
+                      </label>
+                    </div>
                     <ValidationErrorText message={errors.year} />
                   </div>
                 </div>

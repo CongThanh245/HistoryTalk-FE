@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StaffFormInput, StaffFormTextarea } from "@/components/staff/staff-form";
 import { DIALOG_CLASS, DIALOG_TITLE_CLASS, Field, formatNumber } from "@/components/saas/saas-ui";
-import { apiErrorMessage, apiErrorStatus } from "@/features/saas/hooks-api";
+import { apiErrorMessage } from "@/features/saas/hooks-api";
 import { useMyTokenBoosts, useRequestTokenBoost } from "@/features/saas/hooks-school-token";
 import { localDateKey } from "@/features/saas/quota-bonus";
 import { BOOST_MAX_TOKENS, BOOST_MIN_TOKENS, type TokenBoostRequest } from "@/services/school-token.service";
@@ -15,11 +15,13 @@ import { cn } from "@/lib/utils/cn";
 
 const PRESETS = [500, 1_000, 2_000, 5_000];
 
-/** Today's request still waiting for the teacher, if any (one pending request per day). */
+export const isBoostPending = (r: TokenBoostRequest) => r.status === "PENDING" || r.status === "PENDING_ADMIN";
+
+/** Today's request that still counts (pending or approved). One per day; only a rejected one may be resent. */
 export function usePendingBoostToday(enabled = true): TokenBoostRequest | undefined {
   const { data } = useMyTokenBoosts(enabled);
   const today = localDateKey();
-  return data?.find((r) => (r.status === "PENDING" || r.status === "PENDING_ADMIN") && r.requestDate === today);
+  return data?.find((r) => r.status !== "REJECTED" && r.requestDate === today);
 }
 
 /**
@@ -64,12 +66,8 @@ export function TokenBoostRequestDialog({ open, onOpenChange }: { open: boolean;
           toast.success("Đã gửi yêu cầu xin thêm token", { description: "Thầy cô phụ trách lớp sẽ xem và duyệt trong hôm nay." });
           onOpenChange(false);
         },
-        onError: (err) =>
-          setError(
-            apiErrorStatus(err) === 409
-              ? "Bạn đã có một yêu cầu đang chờ duyệt hôm nay. Chờ thầy cô xử lý trước khi gửi yêu cầu mới."
-              : apiErrorMessage(err, "Không gửi được yêu cầu. Vui lòng thử lại."),
-          ),
+        // 409 is MSG38 (one request per day, whatever its status): show the backend's message as is.
+        onError: (err) => setError(apiErrorMessage(err, "Không gửi được yêu cầu. Vui lòng thử lại.")),
       },
     );
   }
@@ -89,8 +87,10 @@ export function TokenBoostRequestDialog({ open, onOpenChange }: { open: boolean;
             <p role="status" className="flex items-start gap-2 rounded-sm border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] p-3 text-sm">
               <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[var(--status-warning)]" aria-hidden="true" />
               <span>
-                Bạn đã xin thêm {formatNumber(pending.requestedTokens)} token hôm nay và đang chờ thầy cô duyệt. Mỗi ngày chỉ gửi được một yêu cầu
-                đang chờ.
+                {isBoostPending(pending)
+                  ? `Bạn đã xin thêm ${formatNumber(pending.requestedTokens)} token hôm nay và đang chờ thầy cô duyệt.`
+                  : `Yêu cầu hôm nay đã được duyệt${pending.approvedTokens != null ? ` (${formatNumber(pending.approvedTokens)} token)` : ""}.`}{" "}
+                Mỗi ngày chỉ gửi được một yêu cầu.
               </span>
             </p>
           ) : (

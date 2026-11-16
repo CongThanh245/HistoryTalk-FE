@@ -215,7 +215,8 @@ export function validateContextDraft(
   validateRequired(errors, "description", draft.description, "Mô tả");
   validateRequired(errors, "era", draft.era, "Thời đại");
   validateRequired(errors, "location", draft.location, "Địa điểm");
-  validateYear(errors, "year", draft.year, "Năm");
+  const year = validateYear(errors, "year", draft.year, "Năm");
+  if (year != null && year < 0) errors.year = "Năm phải lớn hơn 0. Năm trước Công nguyên thì tích ô TCN.";
   // CreateHistoricalContextRequest: name 3–100, description 10–5000, location ≤ 255, URLs ≤ 500.
   validateLength(errors, "name", draft.name, "Tên bối cảnh", { min: 3, max: 100 });
   validateLength(errors, "description", draft.description, "Mô tả", { min: 10, max: 5000 });

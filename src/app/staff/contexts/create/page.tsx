@@ -29,6 +29,7 @@ export default function CreateContextPage() {
       description: draft.description.trim(),
       era: draft.era as EventEraBackend,
       year: Number(draft.year),
+      beforeTCN: draft.isBC,
       location: draft.location.trim() || undefined,
       imageUrl: draft.imageUrl.trim() || undefined,
       videoUrl: draft.videoUrl.trim() || undefined,

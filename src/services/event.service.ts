@@ -224,6 +224,7 @@ function toContractEventPayload(data: UpdateEventRequest) {
     ...(data.description !== undefined && { description: data.description }),
     ...(data.era !== undefined && { era: data.era }),
     ...(data.year !== undefined && { year: data.year }),
+    ...(data.beforeTCN !== undefined && { isBC: data.beforeTCN }),
     ...(data.location !== undefined && { location: data.location }),
     ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
     ...(data.battleMap !== undefined && { battleMap: data.battleMap }),

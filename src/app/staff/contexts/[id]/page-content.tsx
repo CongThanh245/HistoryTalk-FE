@@ -62,6 +62,7 @@ export default function EditContextPage() {
       description: draft.description.trim(),
       era: draft.era as EventEraBackend,
       year: Number(draft.year),
+      beforeTCN: draft.isBC,
       location: draft.location.trim() || undefined,
       imageUrl: draft.imageUrl.trim() || undefined,
       videoUrl: draft.videoUrl.trim() || undefined,
@@ -114,7 +115,9 @@ export default function EditContextPage() {
     name: context.title || "",
     description: context.summary || "",
     era: (context.era ?? "") as EventEraBackend | "",
-    year: String(context.year ?? ""),
+    // Older rows may store a BC year as a negative number.
+    year: context.year ? String(Math.abs(context.year)) : "",
+    isBC: !!context.beforeTCN || (context.year ?? 0) < 0,
     location: context.location ?? "",
     imageUrl: context.imageUrl ?? "",
     videoUrl: context.videoUrl ?? "",

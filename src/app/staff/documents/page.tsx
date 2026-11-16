@@ -1018,7 +1018,7 @@ export default function StaffDocumentsPage() {
             if (!open) setDeleteTarget(null);
           }}
           title="Xóa tài liệu?"
-          description={`Tài liệu "${deleteTarget?.document.title || "chưa đặt tên"}" sẽ bị xóa khỏi nhân vật ${deleteTarget?.ownerName || ""}.`}
+          description={`Tài liệu "${deleteTarget?.document.title || "chưa đặt tên"}" sẽ bị xóa khỏi ${deleteTarget?.ownerType === "context" ? "bối cảnh" : "nhân vật"} ${deleteTarget?.ownerName || ""}.`}
           confirmLabel="Xóa"
           variant="danger"
           isPending={

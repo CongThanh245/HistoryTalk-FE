@@ -241,7 +241,7 @@ export default function StaffContextsPage() {
         header: "Năm",
         cell: ({ row }) => (
           <span className="text-xs text-content-muted">
-            {row.original.year < 0
+            {row.original.year < 0 || row.original.beforeTCN
               ? `${Math.abs(row.original.year)} TCN`
               : row.original.year}
           </span>
@@ -322,7 +322,7 @@ export default function StaffContextsPage() {
           if (!d) return <span className="text-xs text-content-muted">—</span>;
           const era = d.era?.toLowerCase() as EventEra | undefined;
           const label = era && era in ERA_CONFIG ? ERA_CONFIG[era]?.label : undefined;
-          const year = typeof d.year === "number" ? (d.year < 0 ? `${Math.abs(d.year)} TCN` : String(d.year)) : "";
+          const year = typeof d.year === "number" ? (d.year < 0 || d.beforeTCN ? `${Math.abs(d.year)} TCN` : String(d.year)) : "";
           return (
             <div className="text-xs">
               <p className="font-medium text-content-text">{label ?? "—"}</p>

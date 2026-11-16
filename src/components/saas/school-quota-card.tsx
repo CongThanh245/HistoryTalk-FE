@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Coins, School as SchoolIcon } from "lucide-react";
 import { TokenBar, formatDate, formatNumber, useHydrated } from "@/components/saas/saas-ui";
-import { TokenBoostRequestDialog, usePendingBoostToday } from "@/components/saas/token-boost-request-dialog";
+import { TokenBoostRequestDialog, isBoostPending, usePendingBoostToday } from "@/components/saas/token-boost-request-dialog";
 import { TokenBoostStatusBadge } from "@/components/saas/token-boost-ui";
 import { ROLE_LABELS, type Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
@@ -83,7 +83,11 @@ export function SchoolQuotaCard({ role }: { role: string | undefined }) {
                 <button type="button" className="btn-crimson" onClick={() => setBoostOpen(true)} disabled={!!pending}>
                   Xin thêm token hôm nay
                 </button>
-                {pending && <span className="text-xs text-content-muted">Yêu cầu hôm nay đang chờ thầy cô duyệt.</span>}
+                {pending && (
+                  <span className="text-xs text-content-muted">
+                    {isBoostPending(pending) ? "Yêu cầu hôm nay đang chờ thầy cô duyệt." : "Hôm nay bạn đã được duyệt thêm token."}
+                  </span>
+                )}
               </div>
             </>
           ) : (
