@@ -59,8 +59,8 @@ type ScopeOption = "ALL" | "B2C" | "B2B";
 
 const SCOPE_OPTIONS: { value: ScopeOption; label: string; hint: string }[] = [
   { value: "ALL", label: "Tất cả", hint: "Toàn hệ thống" },
-  { value: "B2C", label: "B2C · Khách lẻ", hint: "Khách hàng cá nhân, nội dung Global" },
-  { value: "B2B", label: "B2B · Trường học", hint: "Quản trị trường, giáo viên, học sinh, nội dung Local" },
+  { value: "B2C", label: "B2C · Khách lẻ", hint: "Khách hàng cá nhân, nội dung HistoryTalk" },
+  { value: "B2B", label: "B2B · Trường học", hint: "Quản trị trường, giáo viên, học sinh, nội dung riêng của trường" },
 ];
 
 const ROLE_LABELS: Record<string, string> = {
@@ -1205,20 +1205,20 @@ export default function AdminDashboardPage() {
                               : "bg-transparent text-[var(--content-muted)] hover:text-[var(--text-primary)]"
                           )}
                         >
-                          {tab === "global" ? "Global" : "Local"}
+                          {tab === "global" ? "HistoryTalk" : "Trường học"}
                         </button>
                       ))}
                     </div>
                   ) : (
                     <span className="rounded-sm border border-[var(--card-light-border)] px-2 py-0.5 text-[10px] font-bold text-[var(--content-muted)]">
-                      {isB2B ? "Local" : "Global"}
+                      {isB2B ? "Trường học" : "HistoryTalk"}
                     </span>
                   )}
                 </div>
                 <CardDescription className="text-xs">
                   {showLocalCharacters
-                    ? "Nhân vật Local của các trường được trò chuyện nhiều nhất"
-                    : "Nhân vật Global được trò chuyện nhiều nhất trong hệ thống"}
+                    ? "Nhân vật do các trường tạo được trò chuyện nhiều nhất"
+                    : "Nhân vật HistoryTalk được trò chuyện nhiều nhất"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="border-t border-[var(--border-default)] pt-4">
@@ -1390,7 +1390,7 @@ export default function AdminDashboardPage() {
                   <div className="rounded-sm p-3 border border-accent-gold/30 bg-[var(--accent-gold-active-bg)]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[13px] font-semibold text-[var(--accent-gold)]">
-                        Bối cảnh lịch sử {isB2B ? "(Local)" : "(Global)"}
+                        Bối cảnh lịch sử {isB2B ? "(Trường học)" : "(HistoryTalk)"}
                       </span>
                       <span className="text-lg font-bold tabular-nums text-[var(--content-heading)]">{(content?.historicalContexts.total ?? 0).toLocaleString()}</span>
                     </div>
@@ -1404,7 +1404,7 @@ export default function AdminDashboardPage() {
                   <div className="rounded-sm p-3 border border-[var(--quest-quiz)]/20 bg-[var(--quest-quiz-bg)]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[13px] font-semibold text-[var(--quest-quiz)]">
-                        Nhân vật {isB2B ? "(Local)" : "(Global)"}
+                        Nhân vật {isB2B ? "(Trường học)" : "(HistoryTalk)"}
                       </span>
                       <span className="text-lg font-bold tabular-nums text-[var(--content-heading)]">{(content?.characters.total ?? 0).toLocaleString()}</span>
                     </div>
@@ -1430,7 +1430,7 @@ export default function AdminDashboardPage() {
                     <div className="rounded-sm p-3 border border-[var(--card-light-border)]">
                       <div className="flex items-center gap-1.5 mb-2">
                         <SchoolIcon className="h-3.5 w-3.5 text-[var(--content-muted)]" />
-                        <span className="text-[13px] font-semibold text-[var(--content-heading)]">Nội dung Local (trường học)</span>
+                        <span className="text-[13px] font-semibold text-[var(--content-heading)]">Nội dung Trường học</span>
                       </div>
                       {[
                         { label: "Bối cảnh lịch sử", data: content?.localHistoricalContexts },
