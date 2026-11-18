@@ -117,6 +117,8 @@ export interface TokenAnalyticsParams {
   from?: string; // YYYY-MM-DD
   to?: string;   // YYYY-MM-DD
   granularity?: "day" | "week" | "month";
+  /** ALL | B2C (CUSTOMER) | B2B (user trường học). */
+  scope?: "ALL" | "B2C" | "B2B" | "GLOBAL" | "LOCAL";
 }
 
 // ─── Service ────────────────────────────────────────────────────────────────

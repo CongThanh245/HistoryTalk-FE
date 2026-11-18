@@ -53,6 +53,25 @@ import {
   useAdminQuizAnalytics,
 } from "@/features/admin/dashboard.hooks";
 
+// ─── Scope ───────────────────────────────────────────────────────────────────
+
+type ScopeOption = "ALL" | "B2C" | "B2B";
+
+const SCOPE_OPTIONS: { value: ScopeOption; label: string; hint: string }[] = [
+  { value: "ALL", label: "Tất cả", hint: "Toàn hệ thống" },
+  { value: "B2C", label: "B2C · Khách lẻ", hint: "Khách hàng cá nhân, nội dung Global" },
+  { value: "B2B", label: "B2B · Trường học", hint: "Quản trị trường, giáo viên, học sinh, nội dung Local" },
+];
+
+const ROLE_LABELS: Record<string, string> = {
+  CUSTOMER: "Khách hàng",
+  SCHOOL_ADMIN: "Quản trị trường",
+  TEACHER: "Giáo viên",
+  SCHOOL_STUDENT: "Học sinh",
+  CONTENT_ADMIN: "Quản trị nội dung",
+  SYSTEM_ADMIN: "Quản trị hệ thống",
+};
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatBytes(bytes: number) {
@@ -425,10 +444,23 @@ function SaaSLineChart({ dates, series }: SaaSLineChartProps) {
 
 // ─── Stat row ─────────────────────────────────────────────────────────────────
 
-function StatRow({ label, value, highlight = false }: { label: string; value: string | number; highlight?: boolean }) {
+function StatRow({
+  label,
+  value,
+  highlight = false,
+  hint,
+}: {
+  label: string;
+  value: string | number;
+  highlight?: boolean;
+  hint?: string;
+}) {
   return (
     <div className="flex items-center justify-between py-1.5 border-b border-[var(--border-default)] last:border-0">
-      <span className="text-xs text-[var(--content-muted)]">{label}</span>
+      <span className="flex items-center gap-1 text-xs text-[var(--content-muted)]" title={hint}>
+        {label}
+        {hint && <HelpCircleIcon className="h-3 w-3 opacity-60" aria-label={hint} />}
+      </span>
       <span className={`text-xs font-bold ${highlight ? "text-[var(--accent-gold)]" : "text-[var(--content-heading)]"}`}>
         {typeof value === "number" ? value.toLocaleString() : value}
       </span>
@@ -526,18 +558,26 @@ export default function AdminDashboardPage() {
   const [from, setFrom] = React.useState(daysAgoISO(13));
   const [to, setTo] = React.useState(todayISO());
   const [granularity, setGranularity] = React.useState<"day" | "week" | "month" | "year">("day");
+  // Phân khúc thống kê: BE tách B2C (khách lẻ / Global) và B2B (trường học / Local) — Sprint 10.
+  const [scope, setScope] = React.useState<ScopeOption>("ALL");
+  const isB2B = scope === "B2B";
+  const isB2C = scope === "B2C";
+  // Tab Global/Local cho card "Nhân vật Hot nhất" khi xem scope ALL.
+  const [charTab, setCharTab] = React.useState<"global" | "local">("global");
 
-  const { data: overview, isLoading: ovLoading } = useAdminOverview();
-  const { data: users, isLoading: usersLoading } = useAdminUserAnalytics({ from, to, granularity });
-  const { data: content, isLoading: contentLoading } = useAdminContentSummary();
-  const { data: chat, isLoading: chatLoading } = useAdminChatActivity({ from, to, granularity });
-  const { data: payments, isLoading: paymentsLoading } = useAdminPaymentAnalytics({ from, to, granularity });
+  const rangeParams = { from, to, granularity, scope };
+  const { data: overview, isLoading: ovLoading } = useAdminOverview({ scope });
+  const { data: users, isLoading: usersLoading } = useAdminUserAnalytics(rangeParams);
+  const { data: content, isLoading: contentLoading } = useAdminContentSummary({ scope });
+  const { data: chat, isLoading: chatLoading } = useAdminChatActivity(rangeParams);
+  const { data: payments, isLoading: paymentsLoading } = useAdminPaymentAnalytics(rangeParams);
   const { data: health, isLoading: healthLoading, refetch: refetchHealth } = useAdminSystemHealth();
-  
+
   // New Analytics hooks
-  const { data: revenue, isLoading: revenueLoading } = useAdminRevenueAnalytics({ from, to, granularity });
+  const { data: revenue, isLoading: revenueLoading } = useAdminRevenueAnalytics(rangeParams);
+  // /tiers chỉ áp dụng cho B2C (CUSTOMER) — BE không nhận scope.
   const { data: tiers, isLoading: tiersLoading } = useAdminTierAnalytics({ from, to, granularity });
-  const { data: quiz, isLoading: quizLoading } = useAdminQuizAnalytics({ from, to, granularity });
+  const { data: quiz, isLoading: quizLoading } = useAdminQuizAnalytics(rangeParams);
   // GET /admin/dashboard — token B2B/B2C, JVM chi tiet, tong quan nen tang.
   const { data: comprehensive, isLoading: comprehensiveLoading } = useSystemAdminComprehensiveDashboard();
   const tokenSummary = comprehensive?.tokenSummary;
@@ -575,6 +615,28 @@ export default function AdminDashboardPage() {
   const totalOrders = payments?.summary?.totalOrders ?? 0;
   const orderStatusMax = Math.max(...orderStatusRows.map((row) => row.count), 1);
 
+  // % đóng góp theo gói: revenueByTier lọc theo from..to, còn summary.totalRevenue là toàn thời gian
+  // → chia cho tổng revenueByTier để tổng % = 100%.
+  const revenueByTier = revenue?.revenueByTier ?? [];
+  const revenueByTierTotal = revenueByTier.reduce((sum, t) => sum + (t.revenue ?? 0), 0);
+  const revenueByTierOrders = revenueByTier.reduce((sum, t) => sum + (t.paidOrders ?? 0), 0);
+  // % hội viên theo gói: mẫu số là tổng hội viên B2C (free + paid), không phải tổng user toàn hệ thống.
+  const tierUserTotal = (tiers?.summary.currentFreeUsers ?? 0) + (tiers?.summary.currentPaidUsers ?? 0);
+
+  // Nhân vật hot: B2C → Global, B2B → Local, ALL → theo tab.
+  const showLocalCharacters = isB2B || (!isB2C && charTab === "local");
+  const topCharacters =
+    (showLocalCharacters ? overview?.topLocalCharacters : overview?.topGlobalCharacters) ??
+    overview?.topCharacters ??
+    [];
+
+  const b2bRoleRows = [
+    { label: "Quản trị trường", count: overview?.roles.schoolAdmins ?? 0, color: "var(--status-success)" },
+    { label: "Giáo viên", count: overview?.roles.teachers ?? 0, color: "var(--quest-quiz)" },
+    { label: "Học sinh", count: overview?.roles.schoolStudents ?? 0, color: "var(--accent-blue)" },
+  ];
+  const b2bRoleTotal = b2bRoleRows.reduce((sum, r) => sum + r.count, 0);
+
   return (
     <StaffShell
       title="Tổng quan hệ thống"
@@ -584,6 +646,33 @@ export default function AdminDashboardPage() {
       accent="var(--accent-gold)"
     >
       <div className="space-y-6">
+
+        {/* ── Scope selector: B2C / B2B ── */}
+        <div className="flex flex-wrap items-center gap-3 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-surface)] px-4 py-3">
+          <SchoolIcon className="h-4 w-4 text-[var(--content-muted)] shrink-0" />
+          <span className="text-xs font-semibold text-[var(--content-muted)] shrink-0">Phân khúc:</span>
+          <div className="flex flex-wrap items-center gap-1">
+            {SCOPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                title={opt.hint}
+                onClick={() => setScope(opt.value)}
+                className={cn(
+                  "rounded-sm px-3 py-1 text-[11px] font-bold transition-all duration-200",
+                  scope === opt.value
+                    ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                    : "bg-transparent text-[var(--content-muted)] hover:text-[var(--text-primary)]"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-[11px] text-[var(--content-muted)]">
+            {SCOPE_OPTIONS.find((o) => o.value === scope)?.hint}
+          </span>
+        </div>
 
         {/* ── Row 1: KPI cards ── */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
@@ -636,7 +725,9 @@ export default function AdminDashboardPage() {
             sub={
               <span className="flex flex-col gap-0.5">
                 <span>Tổng đơn: <strong>{totalOrders.toLocaleString()}</strong></span>
-                <span>Chuyển đổi: <strong>{(tiers?.summary.freeToPaidConversionRate ?? 0).toFixed(1)}%</strong></span>
+                {!isB2B && (
+                  <span>Chuyển đổi (B2C): <strong>{(tiers?.summary.freeToPaidConversionRate ?? 0).toFixed(1)}%</strong></span>
+                )}
               </span>
             }
           />
@@ -863,9 +954,55 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ── Row 4: Advanced Subscriptions & Revenue Analytics ── */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          
-          {/* Revenue by Tier Progress */}
+        <div className={cn("grid grid-cols-1 gap-6", isB2B ? "lg:grid-cols-2" : "lg:grid-cols-3")}>
+
+          {/* B2B: phân bổ người dùng trường học (thay cho 2 card gói dịch vụ chỉ áp dụng B2C) */}
+          {isB2B && (
+            <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <SchoolIcon className="h-4 w-4 text-accent-blue" />
+                  <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
+                    Người dùng trường học
+                  </CardTitle>
+                </div>
+                <CardDescription className="text-xs">Phân bổ tài khoản B2B theo vai trò</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3.5 border-t border-[var(--border-default)] pt-4">
+                {ovLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)
+                ) : (
+                  <>
+                    {b2bRoleRows.map((r) => {
+                      const pct = b2bRoleTotal > 0 ? Math.round((r.count / b2bRoleTotal) * 100) : 0;
+                      return (
+                        <div key={r.label}>
+                          <div className="flex justify-between text-xs font-semibold mb-1">
+                            <span className="text-[var(--content-muted)]">{r.label}</span>
+                            <span className="text-[var(--content-heading)]">
+                              {r.count.toLocaleString()}{" "}
+                              <span className="text-[var(--content-muted)] font-normal text-[10px]">({pct}%)</span>
+                            </span>
+                          </div>
+                          <div className="h-2 bg-[var(--card-light-border)] overflow-hidden">
+                            <div className="h-full transition-all duration-700" style={{ width: `${pct}%`, background: r.color }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="pt-2 border-t border-[var(--border-default)]">
+                      <StatRow label="Tổng tài khoản B2B" value={b2bRoleTotal} highlight />
+                      <StatRow label="Doanh thu nạp token" value={formatVND(revenue?.summary.totalRevenue ?? 0)} />
+                      <StatRow label="Giá trị đơn trung bình" value={formatVND(revenue?.summary.averageOrderValue ?? 0)} />
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Revenue by Tier Progress — chỉ B2C (scope=B2B trả revenueByTier rỗng) */}
+          {!isB2B && (
           <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -874,6 +1011,7 @@ export default function AdminDashboardPage() {
                   Doanh thu theo Gói dịch vụ
                 </CardTitle>
               </div>
+              <CardDescription className="text-xs">Tỷ trọng tính trong khoảng thời gian đang lọc</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 border-t border-[var(--border-default)] pt-4">
               {revenueLoading ? (
@@ -881,9 +1019,11 @@ export default function AdminDashboardPage() {
               ) : (
                 <>
                   <div className="space-y-3.5">
-                    {(revenue?.revenueByTier ?? []).map((t) => {
-                      const totalRev = revenue?.summary.totalRevenue ?? 1;
-                      const pct = totalRev > 0 ? Math.round((t.revenue / totalRev) * 100) : 0;
+                    {revenueByTier.length === 0 && (
+                      <div className="text-xs text-[var(--content-muted)]">Không có doanh thu gói trong khoảng thời gian này</div>
+                    )}
+                    {revenueByTier.map((t) => {
+                      const pct = revenueByTierTotal > 0 ? Math.round((t.revenue / revenueByTierTotal) * 100) : 0;
                       return (
                         <div key={t.tierId}>
                           <div className="flex justify-between text-xs font-semibold mb-1">
@@ -916,18 +1056,25 @@ export default function AdminDashboardPage() {
                       );
                     })}
                   </div>
-                  <div className="pt-2 border-t border-[var(--border-default)] text-xs text-[var(--content-muted)]">
-                    <div className="flex justify-between py-1">
-                      <span>Giá trị đơn hàng trung bình:</span>
-                      <strong className="text-[var(--content-heading)]">{formatVND(revenue?.summary.averageOrderValue ?? 0)}</strong>
-                    </div>
+                  <div className="pt-2 border-t border-[var(--border-default)]">
+                    <StatRow label="Doanh thu trong kỳ" value={formatVND(revenueByTierTotal)} />
+                    <StatRow
+                      label="Giá trị đơn trung bình (kỳ)"
+                      value={revenueByTierOrders > 0 ? formatVND(Math.round(revenueByTierTotal / revenueByTierOrders)) : "0 đ"}
+                    />
+                    <StatRow
+                      label="Giá trị đơn trung bình (toàn thời gian)"
+                      value={formatVND(revenue?.summary.averageOrderValue ?? 0)}
+                    />
                   </div>
                 </>
               )}
             </CardContent>
           </Card>
+          )}
 
-          {/* Tier Subscriptions usage */}
+          {/* Tier Subscriptions usage — chỉ B2C (CUSTOMER) */}
+          {!isB2B && (
           <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -944,8 +1091,7 @@ export default function AdminDashboardPage() {
                 <>
                   <div className="space-y-3">
                     {(tiers?.usersByTier ?? []).map((t) => {
-                      const totalUsers = (overview?.users.total ?? 1);
-                      const pct = totalUsers > 0 ? Math.round(((t.users ?? 0) / totalUsers) * 100) : 0;
+                      const pct = tierUserTotal > 0 ? Math.round(((t.users ?? 0) / tierUserTotal) * 100) : 0;
                       return (
                         <div key={t.tierId}>
                           <div className="flex justify-between text-xs font-semibold mb-1">
@@ -985,6 +1131,7 @@ export default function AdminDashboardPage() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* Orders status & Details */}
           <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
@@ -1037,13 +1184,42 @@ export default function AdminDashboardPage() {
             {/* Top nhân vật hot */}
             <Card className="rounded-xl bg-[var(--bg-surface)] border-border-card shadow-none">
               <CardHeader>
-                <div className="flex items-center gap-2">
-                  <FlameIcon className="h-4 w-4 text-[var(--accent-gold)]" />
-                  <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
-                    Nhân vật Hot nhất
-                  </CardTitle>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <FlameIcon className="h-4 w-4 text-[var(--accent-gold)]" />
+                    <CardTitle className="text-base font-semibold text-[var(--content-heading)]">
+                      Nhân vật Hot nhất
+                    </CardTitle>
+                  </div>
+                  {scope === "ALL" ? (
+                    <div className="flex items-center gap-1">
+                      {(["global", "local"] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => setCharTab(tab)}
+                          className={cn(
+                            "rounded-sm px-2.5 py-0.5 text-[11px] font-bold transition-all duration-200",
+                            charTab === tab
+                              ? "bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                              : "bg-transparent text-[var(--content-muted)] hover:text-[var(--text-primary)]"
+                          )}
+                        >
+                          {tab === "global" ? "Global" : "Local"}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="rounded-sm border border-[var(--card-light-border)] px-2 py-0.5 text-[10px] font-bold text-[var(--content-muted)]">
+                      {isB2B ? "Local" : "Global"}
+                    </span>
+                  )}
                 </div>
-                <CardDescription className="text-xs">Xếp hạng nhân vật được trò chuyện nhiều nhất trong hệ thống</CardDescription>
+                <CardDescription className="text-xs">
+                  {showLocalCharacters
+                    ? "Nhân vật Local của các trường được trò chuyện nhiều nhất"
+                    : "Nhân vật Global được trò chuyện nhiều nhất trong hệ thống"}
+                </CardDescription>
               </CardHeader>
               <CardContent className="border-t border-[var(--border-default)] pt-4">
                 {ovLoading ? (
@@ -1052,9 +1228,9 @@ export default function AdminDashboardPage() {
                       <Skeleton key={i} className="h-24 w-full rounded-sm" />
                     ))}
                   </div>
-                ) : (overview?.topCharacters ?? []).length > 0 ? (
+                ) : topCharacters.length > 0 ? (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {(overview?.topCharacters ?? []).map((c, idx) => {
+                    {topCharacters.map((c, idx) => {
                       const rank = idx + 1;
                       const rankColor =
                         rank === 1 ? "var(--accent-gold)" : rank === 2 ? "var(--text-tertiary)" : rank === 3 ? "var(--accent-bronze)" : "var(--content-muted)";
@@ -1213,7 +1389,9 @@ export default function AdminDashboardPage() {
                   {/* Historical Contexts */}
                   <div className="rounded-sm p-3 border border-accent-gold/30 bg-[var(--accent-gold-active-bg)]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[13px] font-semibold text-[var(--accent-gold)]">Bối cảnh lịch sử</span>
+                      <span className="text-[13px] font-semibold text-[var(--accent-gold)]">
+                        Bối cảnh lịch sử {isB2B ? "(Local)" : "(Global)"}
+                      </span>
                       <span className="text-lg font-bold tabular-nums text-[var(--content-heading)]">{(content?.historicalContexts.total ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex gap-3 text-[11px] text-[var(--content-muted)]">
@@ -1225,7 +1403,9 @@ export default function AdminDashboardPage() {
                   {/* Characters */}
                   <div className="rounded-sm p-3 border border-[var(--quest-quiz)]/20 bg-[var(--quest-quiz-bg)]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[13px] font-semibold text-[var(--quest-quiz)]">Nhân vật</span>
+                      <span className="text-[13px] font-semibold text-[var(--quest-quiz)]">
+                        Nhân vật {isB2B ? "(Local)" : "(Global)"}
+                      </span>
                       <span className="text-lg font-bold tabular-nums text-[var(--content-heading)]">{(content?.characters.total ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex gap-3 text-[11px] text-[var(--content-muted)]">
@@ -1244,6 +1424,29 @@ export default function AdminDashboardPage() {
                       Hoạt động: <strong className="text-[var(--content-heading)]">{content?.documents.active ?? 0}</strong>
                     </div>
                   </div>
+
+                  {/* Local content (B2B) — chỉ hiển thị riêng khi xem toàn hệ thống */}
+                  {scope === "ALL" && (content?.localHistoricalContexts || content?.localCharacters) && (
+                    <div className="rounded-sm p-3 border border-[var(--card-light-border)]">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <SchoolIcon className="h-3.5 w-3.5 text-[var(--content-muted)]" />
+                        <span className="text-[13px] font-semibold text-[var(--content-heading)]">Nội dung Local (trường học)</span>
+                      </div>
+                      {[
+                        { label: "Bối cảnh lịch sử", data: content?.localHistoricalContexts },
+                        { label: "Nhân vật", data: content?.localCharacters },
+                      ].map((row) => (
+                        <div key={row.label} className="flex items-center justify-between py-1 text-[11px] text-[var(--content-muted)]">
+                          <span>{row.label}</span>
+                          <span>
+                            <strong className="text-[var(--content-heading)]">{(row.data?.total ?? 0).toLocaleString()}</strong>
+                            {" · "}xuất bản <strong className="text-[var(--content-heading)]">{row.data?.published ?? 0}</strong>
+                            {" · "}hoạt động <strong className="text-[var(--content-heading)]">{row.data?.active ?? 0}</strong>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
             </CardContent>
@@ -1281,7 +1484,7 @@ export default function AdminDashboardPage() {
                       return (
                         <div key={r.role}>
                           <div className="flex justify-between text-[10px] font-semibold mb-0.5">
-                            <span className="text-[var(--content-muted)]">{r.role}</span>
+                            <span className="text-[var(--content-muted)]">{ROLE_LABELS[r.role] ?? r.role}</span>
                             <span className="text-[var(--content-heading)]">{r.count.toLocaleString()} ({pct}%)</span>
                           </div>
                           <div className="h-1.5 bg-[var(--card-light-border)] overflow-hidden">
@@ -1322,7 +1525,11 @@ export default function AdminDashboardPage() {
               ) : (
                 <>
                   <StatRow label="Tổng phiên chat" value={chat?.summary.sessions ?? 0} highlight />
-                  <StatRow label="Phiên đang hoạt động" value={chat?.summary.activeSessions ?? 0} />
+                  <StatRow
+                    label="Phiên đang hoạt động"
+                    value={chat?.summary.activeSessions ?? 0}
+                    hint="Phiên có tin nhắn trong 2 phút gần nhất"
+                  />
                   <StatRow label="Tổng tin nhắn" value={chat?.summary.messages ?? 0} />
                   <StatRow label="Tin nhắn người dùng" value={chat?.summary.userMessages ?? 0} />
                   <StatRow label="Tin nhắn AI" value={chat?.summary.aiMessages ?? 0} />

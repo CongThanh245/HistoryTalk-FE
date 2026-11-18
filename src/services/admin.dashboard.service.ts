@@ -1,7 +1,30 @@
 // src/services/admin.dashboard.service.ts
 import { axiosClient } from "@/configs/axios.client";
 
+// ─── Scope ───────────────────────────────────────────────────────────────────
+
+/**
+ * Phân khúc dữ liệu thống kê (Sprint 10).
+ * B2C = khách lẻ (CUSTOMER, nội dung Global); B2B = trường học (SCHOOL_ADMIN/TEACHER/SCHOOL_STUDENT, nội dung Local).
+ * GLOBAL/LOCAL là alias của B2C/B2B phía BE.
+ */
+export type DashboardScope = "ALL" | "B2C" | "B2B" | "GLOBAL" | "LOCAL";
+
+export interface DashboardScopeParams {
+  scope?: DashboardScope;
+}
+
 // ─── Overview ────────────────────────────────────────────────────────────────
+
+export interface TopCharacterOverview {
+  characterId: string;
+  name: string;
+  title?: string;
+  imageUrl?: string;
+  totalMessages: number;
+  userMessages: number;
+  aiMessages: number;
+}
 
 export interface DashboardOverviewData {
   users: {
@@ -16,6 +39,9 @@ export interface DashboardOverviewData {
     customers: number;
     contentAdmins: number;
     systemAdmins: number;
+    schoolAdmins?: number;
+    teachers?: number;
+    schoolStudents?: number;
   };
   content: {
     historicalContexts: number;
@@ -29,15 +55,12 @@ export interface DashboardOverviewData {
     messages: number;
     messagesToday: number;
   };
-  topCharacters?: {
-    characterId: string;
-    name: string;
-    title?: string;
-    imageUrl?: string;
-    totalMessages: number;
-    userMessages: number;
-    aiMessages: number;
-  }[];
+  /** Global khi scope ALL/B2C, Local khi scope B2B. */
+  topCharacters?: TopCharacterOverview[];
+  /** Nhân vật Global (school_id IS NULL). */
+  topGlobalCharacters?: TopCharacterOverview[];
+  /** Nhân vật Local của trường (school_id IS NOT NULL). */
+  topLocalCharacters?: TopCharacterOverview[];
   systemHealth: {
     status: string;
     lastCheckedAt: string;
@@ -64,7 +87,7 @@ export interface UserAnalyticsData {
   trend: UserTrendPoint[];
 }
 
-export interface UserAnalyticsParams {
+export interface UserAnalyticsParams extends DashboardScopeParams {
   from?: string;       // YYYY-MM-DD
   to?: string;         // YYYY-MM-DD
   granularity?: "day" | "week" | "month" | "year";
@@ -72,10 +95,19 @@ export interface UserAnalyticsParams {
 
 // ─── Content ─────────────────────────────────────────────────────────────────
 
+export interface ContentCount {
+  total: number;
+  published: number;
+  active: number;
+}
+
 export interface ContentSummaryData {
-  historicalContexts: { total: number; published: number; active: number };
-  characters: { total: number; published: number; active: number };
+  /** Global khi scope ALL/B2C, Local khi scope B2B. */
+  historicalContexts: ContentCount;
+  characters: ContentCount;
   documents: { total: number; active: number };
+  localHistoricalContexts?: ContentCount;
+  localCharacters?: ContentCount;
 }
 
 // ─── Chat ────────────────────────────────────────────────────────────────────
@@ -99,7 +131,7 @@ export interface ChatActivityData {
   trend: ChatTrendPoint[];
 }
 
-export interface ChatActivityParams {
+export interface ChatActivityParams extends DashboardScopeParams {
   from?: string;
   to?: string;
   granularity?: "day" | "week" | "month" | "year";
@@ -125,7 +157,7 @@ export interface PaymentAnalyticsData {
   transactionTrend: PaymentTransactionTrendPoint[];
 }
 
-export interface PaymentAnalyticsParams {
+export interface PaymentAnalyticsParams extends DashboardScopeParams {
   from?: string;
   to?: string;
   granularity?: "day" | "week" | "month" | "year";
@@ -174,6 +206,7 @@ export interface RevenueAnalyticsData {
     totalRevenue: number;
     revenueToday: number;
     revenueThisMonth: number;
+    revenueThisYear?: number;
     paidOrders: number;
     averageOrderValue: number;
   };
@@ -215,6 +248,7 @@ export interface QuizAnalyticsData {
   topQuizzes: {
     quizId: string;
     title: string;
+    level?: string;
     startedSessions: number;
     completedSessions: number;
     averageScorePercentage: number;
@@ -235,8 +269,8 @@ export interface QuizAnalyticsData {
 const BASE = "/system-admin/dashboard";
 
 export const adminDashboardService = {
-  getOverview: async (): Promise<DashboardOverviewData> => {
-    const res = await axiosClient.get(`${BASE}/overview`);
+  getOverview: async (params?: DashboardScopeParams): Promise<DashboardOverviewData> => {
+    const res = await axiosClient.get(`${BASE}/overview`, { params });
     return res.data.data as DashboardOverviewData;
   },
 
@@ -245,8 +279,8 @@ export const adminDashboardService = {
     return res.data.data as UserAnalyticsData;
   },
 
-  getContentSummary: async (): Promise<ContentSummaryData> => {
-    const res = await axiosClient.get(`${BASE}/content`);
+  getContentSummary: async (params?: DashboardScopeParams): Promise<ContentSummaryData> => {
+    const res = await axiosClient.get(`${BASE}/content`, { params });
     return res.data.data as ContentSummaryData;
   },
 

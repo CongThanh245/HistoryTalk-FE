@@ -5,12 +5,13 @@ import {
   type UserAnalyticsParams,
   type ChatActivityParams,
   type PaymentAnalyticsParams,
+  type DashboardScopeParams,
 } from "@/services/admin.dashboard.service";
 
 const DASHBOARD_KEYS = {
-  overview: ["admin", "dashboard", "overview"] as const,
+  overview: (params?: DashboardScopeParams) => ["admin", "dashboard", "overview", params] as const,
   users: (params?: UserAnalyticsParams) => ["admin", "dashboard", "users", params] as const,
-  content: ["admin", "dashboard", "content"] as const,
+  content: (params?: DashboardScopeParams) => ["admin", "dashboard", "content", params] as const,
   chat: (params?: ChatActivityParams) => ["admin", "dashboard", "chat", params] as const,
   payments: (params?: PaymentAnalyticsParams) => ["admin", "dashboard", "payments", params] as const,
   health: ["admin", "dashboard", "health"] as const,
@@ -19,10 +20,10 @@ const DASHBOARD_KEYS = {
   quiz: (params?: PaymentAnalyticsParams) => ["admin", "dashboard", "quiz", params] as const,
 };
 
-export function useAdminOverview() {
+export function useAdminOverview(params?: DashboardScopeParams) {
   return useQuery({
-    queryKey: DASHBOARD_KEYS.overview,
-    queryFn: () => adminDashboardService.getOverview(),
+    queryKey: DASHBOARD_KEYS.overview(params),
+    queryFn: () => adminDashboardService.getOverview(params),
     staleTime: 1000 * 60, // 60s
   });
 }
@@ -35,10 +36,10 @@ export function useAdminUserAnalytics(params?: UserAnalyticsParams) {
   });
 }
 
-export function useAdminContentSummary() {
+export function useAdminContentSummary(params?: DashboardScopeParams) {
   return useQuery({
-    queryKey: DASHBOARD_KEYS.content,
-    queryFn: () => adminDashboardService.getContentSummary(),
+    queryKey: DASHBOARD_KEYS.content(params),
+    queryFn: () => adminDashboardService.getContentSummary(params),
     staleTime: 1000 * 120, // 2 min
   });
 }
