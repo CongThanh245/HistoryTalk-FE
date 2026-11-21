@@ -30,6 +30,48 @@ const MODES: { id: Mode; label: string; hint: string }[] = [
   { id: "quiz", label: "Thêm câu hỏi sau bước đang chọn", hint: "Một câu hỏi về điều vừa được kể." },
   { id: "rewrite", label: "Viết lại lời thoại đang chọn", hint: "Giữ ý, đổi cách nói theo yêu cầu." },
 ];
+/** 0–3 as buttons, with a sentence that says what the picked number means. */
+function CountPicker({
+  label,
+  value,
+  onChange,
+  disabled,
+  explain,
+}: {
+  label: string;
+  value: number;
+  onChange: (n: number) => void;
+  disabled?: boolean;
+  explain: (n: number) => string;
+}) {
+  return (
+    <div className="grid gap-1.5">
+      <span className="font-semibold">{label}</span>
+      <div className="flex gap-1.5" role="radiogroup" aria-label={label}>
+        {[0, 1, 2, 3].map((n) => (
+          <button
+            key={n}
+            type="button"
+            role="radio"
+            aria-checked={value === n}
+            disabled={disabled}
+            onClick={() => onChange(n)}
+            className={cn(
+              "h-9 flex-1 cursor-pointer rounded-sm border text-[13px] font-semibold disabled:cursor-not-allowed disabled:opacity-50",
+              value === n
+                ? "border-[var(--text-primary)] bg-[var(--text-primary)] text-[var(--text-inverse)]"
+                : "border-[var(--border-strong)] hover:border-[var(--text-primary)]",
+            )}
+          >
+            {n === 0 ? "Không" : n}
+          </button>
+        ))}
+      </div>
+      <span className="text-[12px] font-normal leading-snug text-[var(--text-muted)]">{explain(value)}</span>
+    </div>
+  );
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const backgrounds = STORY_BACKGROUNDS.map((b) => ({ id: b.id, name: b.name }));
 
@@ -208,23 +250,44 @@ export function StoryAiDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           </div>
 
           {mode === "full" && (
-            <div className="grid grid-cols-3 gap-3">
-              <label className="grid gap-1 font-semibold">Thời lượng
+            <div className="grid gap-4">
+              <label className="grid gap-1 font-semibold">Thời lượng đọc
                 <select value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} className={select} disabled={busy}>
-                  {[2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n} phút</option>)}
+                  {[2, 3, 4, 5, 6].map((n) => (
+                    <option key={n} value={n}>
+                      {n} phút · khoảng {n * 12} lời thoại{n <= 2 ? " (ngắn)" : n >= 5 ? " (dài)" : ""}
+                    </option>
+                  ))}
                 </select>
               </label>
-              <label className="grid gap-1 font-semibold">Lựa chọn
-                <select value={choiceCount} onChange={(e) => setChoiceCount(Number(e.target.value))} className={select} disabled={busy}>
-                  {[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}
-                </select>
-              </label>
-              <label className="grid gap-1 font-semibold">Câu hỏi
-                <select value={quizCount} onChange={(e) => setQuizCount(Number(e.target.value))} className={select} disabled={busy}>
-                  {[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}
-                </select>
-              </label>
-              <label className="col-span-3 grid gap-1 font-semibold">Ghi chú cho AI
+              <CountPicker
+                label="Chỗ rẽ nhánh"
+                value={choiceCount}
+                onChange={setChoiceCount}
+                disabled={busy}
+                explain={(n) =>
+                  n === 0
+                    ? "Kể một mạch từ đầu đến cuối, học sinh chỉ bấm để nghe tiếp."
+                    : `${n} lần học sinh được chọn nghe tiếp theo 1 trong 2 hướng (ví dụ: "Nghe về kế cắm cọc" hay "Vì sao giặc kéo sang"). Các nhánh sau đó gặp lại nhau.`
+                }
+              />
+              <CountPicker
+                label="Câu hỏi kiểm tra"
+                value={quizCount}
+                onChange={setQuizCount}
+                disabled={busy}
+                explain={(n) =>
+                  n === 0
+                    ? "Không hỏi gì trong lúc kể."
+                    : `${n} câu trắc nghiệm xen giữa câu chuyện, hỏi về điều vừa kể. Trả lời sai thì nhân vật giải thích lại rồi mới kể tiếp.`
+                }
+              />
+              <p className="rounded-sm bg-[var(--bg-deep)] px-3 py-2 text-[12.5px] font-normal text-[var(--text-secondary)]">
+                AI sẽ viết khoảng <strong>{minutes * 12} lời thoại</strong>
+                {choiceCount > 0 && <>, <strong>{choiceCount} chỗ rẽ nhánh</strong></>}
+                {quizCount > 0 && <>, <strong>{quizCount} câu hỏi</strong></>} và 1 màn kết thúc, dựa trên tài liệu của bối cảnh. Bạn sửa lại được mọi thứ sau đó.
+              </p>
+              <label className="grid gap-1 font-semibold">Ghi chú cho AI <span className="text-[12px] font-normal text-[var(--text-muted)]">(không bắt buộc)</span>
                 <textarea value={notes} maxLength={500} rows={2} onChange={(e) => setNotes(e.target.value)} disabled={busy}
                   placeholder="Ví dụ: Nhấn mạnh vai trò của thuỷ triều" className="rounded-sm border border-[var(--border-strong)] bg-transparent p-2 font-normal" />
               </label>
