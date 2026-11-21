@@ -36,10 +36,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
-import { ROUTES } from "@/constants/routes";
 import { useStoryEditor } from "@/features/story/editor-store";
 import { validateStory } from "@/features/story/graph-utils";
-import { storyRepo, type StoryStorage } from "@/features/story/story-repo";
+import { storyRepo, type StoryRepo, type StoryStorage } from "@/features/story/story-repo";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { useAuthStore } from "@/store/auth.store";
 import { StoryAiDialog } from "./story-ai-dialog";
@@ -161,7 +160,7 @@ function QuickAddMenu({ menu, onPick, onClose }: { menu: QuickAdd; onPick: (kind
   );
 }
 
-function EditorInner({ storyId }: { storyId: string }) {
+function EditorInner({ storyId, repo }: { storyId: string; repo: StoryRepo }) {
   const flow = useReactFlow<StoryFlowNode>();
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -192,7 +191,7 @@ function EditorInner({ storyId }: { storyId: string }) {
   useEffect(() => {
     let cancelled = false;
     setStatus("loading");
-    storyRepo
+    repo
       .load(storyId)
       .then(({ doc, storage: where, isNew, cast }) => {
         if (cancelled) return;
@@ -210,7 +209,7 @@ function EditorInner({ storyId }: { storyId: string }) {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only on story change
-  }, [storyId, load, flow]);
+  }, [storyId, repo, load, flow]);
 
   /**
    * Fit the whole story when it is readable that way; a long story would be
@@ -238,7 +237,7 @@ function EditorInner({ storyId }: { storyId: string }) {
       if (!doc) return null;
       setSaving(true);
       try {
-        const where = await storyRepo.save(doc);
+        const where = await repo.save(doc);
         setStorage(where);
         setSaveFailed(false);
         setSavedAt(new Date());
@@ -256,7 +255,7 @@ function EditorInner({ storyId }: { storyId: string }) {
     const next = saveChainRef.current.then(run, run);
     saveChainRef.current = next;
     return next;
-  }, [toDoc]);
+  }, [toDoc, repo]);
 
   // Autosave a moment after the last change (each save is a request, so not on every keystroke).
   useEffect(() => {
@@ -386,7 +385,10 @@ function EditorInner({ storyId }: { storyId: string }) {
     }
     updateMeta({ status: "published" });
     void saveNow().then((where) => {
-      if (where === "server") toast.success("Đã xuất bản", { description: "Học sinh mở bối cảnh này sẽ xem kịch bản thay cho video." });
+      // Refused (e.g. a local story whose context or characters students cannot see yet): the toast shows the
+      // server's reason; stay a draft so later autosaves are not refused too.
+      if (where === null) updateMeta({ status: "draft" });
+      else if (where === "server") toast.success("Đã xuất bản", { description: "Học sinh mở bối cảnh này sẽ xem kịch bản thay cho video." });
       else if (where === "local")
         toast.warning("Đã đánh dấu xuất bản, nhưng học sinh chưa thấy được", {
           description: "Máy chủ chưa hỗ trợ lưu kịch bản. Kịch bản sẽ hiện với học sinh khi backend có trường storyScript.",
@@ -438,8 +440,8 @@ function EditorInner({ storyId }: { storyId: string }) {
         <div>
           <p className="text-[18px] font-bold">Không tải được bối cảnh</p>
           <p className="mt-1 text-[13.5px] text-[var(--text-muted)]">Bối cảnh không tồn tại, đã bị xóa, hoặc mạng đang lỗi.</p>
-          <Link href={ROUTES.STAFF.STORIES} className="mt-3 inline-block text-[14px] font-semibold text-[var(--accent-gold)] underline">
-            Về danh sách kịch bản
+          <Link href={repo.backHref} className="mt-3 inline-block text-[14px] font-semibold text-[var(--accent-gold)] underline">
+            {repo.backLabel}
           </Link>
         </div>
       </div>
@@ -452,8 +454,8 @@ function EditorInner({ storyId }: { storyId: string }) {
         {/* Toolbar */}
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-[var(--border-strong)] bg-[var(--bg-surface)] px-3">
           <Link
-            href={ROUTES.STAFF.STORIES}
-            aria-label="Về danh sách"
+            href={repo.backHref}
+            aria-label={repo.backLabel}
             className="grid size-9 place-items-center rounded-sm text-[var(--text-secondary)] hover:bg-[var(--bg-deep)]"
           >
             <ArrowLeft className="size-4" />
@@ -550,7 +552,7 @@ function EditorInner({ storyId }: { storyId: string }) {
             </button>
           )}
         </header>
-        {canUseAi && <StoryAiDialog open={aiOpen} onOpenChange={setAiOpen} />}
+        {canUseAi && <StoryAiDialog open={aiOpen} onOpenChange={setAiOpen} repo={repo} />}
 
         <div className="flex min-h-0 flex-1">
           <NodePalette onAdd={addAtCenter} />
@@ -678,10 +680,11 @@ function EditorInner({ storyId }: { storyId: string }) {
   );
 }
 
-export function StoryEditor({ storyId }: { storyId: string }) {
+/** `repo` decides where the story lives: HistoryTalk's contexts (default) or a teacher's local context. */
+export function StoryEditor({ storyId, repo = storyRepo }: { storyId: string; repo?: StoryRepo }) {
   return (
     <ReactFlowProvider>
-      <EditorInner storyId={storyId} />
+      <EditorInner storyId={storyId} repo={repo} />
     </ReactFlowProvider>
   );
 }

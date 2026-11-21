@@ -4,6 +4,7 @@
 import { axiosClient } from "@/configs/axios.client";
 import type { ApiPage } from "@/services/school.service";
 import type { BattleMap } from "@/components/historical-map/battle-map.types";
+import type { StoryScript } from "@/features/story/types";
 
 // ─── Enums ─────────────────────────────────────────────────────────────────
 
@@ -55,6 +56,8 @@ export interface LocalItem {
   longitude?: number | null;
   /** Battle map overlay (same shape as the official events' battleMap). */
   battleMap?: BattleMap | null;
+  /** Visual-novel story (same shape as the official events' storyScript). Students only get a published one. */
+  storyScript?: StoryScript | null;
 
   // CHARACTER only
   title?: string | null;
@@ -110,6 +113,8 @@ export interface LocalContextPayload {
   longitude?: number;
   /** null clears the battle map. */
   battleMap?: BattleMap | null;
+  /** Update only; null deletes the story. */
+  storyScript?: StoryScript | null;
   contentScope?: LocalScope;
   /** Replaces the class assignments; an empty list keeps the current ones (backend skips it). */
   classIds?: string[];
@@ -141,6 +146,13 @@ export interface LocalCharacterPayload {
   classIds?: string[];
   /** Create: defaults to true (published at once), false = draft. Update: true = publish, false = back to draft, omitted = keep. */
   isPublished?: boolean;
+}
+
+/** A published local story that shows a character (GET .../characters/{id}/published-stories). */
+export interface LocalStoryUsage {
+  contextId: string;
+  contextName: string;
+  storyTitle: string;
 }
 
 export interface LocalStatusPayload {
@@ -284,6 +296,11 @@ export const localContentService = {
   },
 
   // Teacher: contexts linked to a character (local or global)
+  /** Published local stories showing the character: hiding, deleting or unlinking it moves them back to draft. */
+  characterPublishedStories: async (characterId: string): Promise<LocalStoryUsage[]> => {
+    const res = await axiosClient.get(`/teacher/local-contents/characters/${characterId}/published-stories`);
+    return res.data.data ?? [];
+  },
   listCharacterContexts: async (characterId: string): Promise<LocalItem[]> => {
     const res = await axiosClient.get(`/teacher/local-contents/characters/${characterId}/contexts`);
     return res.data.data ?? [];
@@ -387,6 +404,11 @@ export const localContentService = {
   setStatus: async (kind: LocalKind, id: string, payload: LocalStatusPayload): Promise<LocalItem> => {
     const res = await axiosClient.put(`/school-admin/local-contents/${segment(kind)}/${id}/status`, payload);
     return res.data.data;
+  },
+  /** School Admin: same as `characterPublishedStories`. */
+  characterPublishedStoriesForSchool: async (characterId: string): Promise<LocalStoryUsage[]> => {
+    const res = await axiosClient.get(`/school-admin/local-contents/characters/${characterId}/published-stories`);
+    return res.data.data ?? [];
   },
   listDocumentsForSchool: async (kind: LocalKind, id: string): Promise<LocalDocument[]> => {
     const res = await axiosClient.get(`/school-admin/local-contents/${segment(kind)}/${id}/documents`);

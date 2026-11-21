@@ -5,8 +5,10 @@
  * `storyScript`. We detect that and keep the story in this browser instead, so nothing is lost; the editor then
  * says so. Once the backend supports it, the next save moves the local copy to the server.
  */
+import { ROUTES } from "@/constants/routes";
 import { characterService } from "@/services/character.service";
 import { eventService, type HistoricalEvent } from "@/services/event.service";
+import { localContentService } from "@/services/local-content.service";
 import { registerCharacters } from "./story-assets";
 import { docToScript, isStoryScript, newStoryDoc, scriptToDoc } from "./story-script";
 import type { StoryCharacter, StoryDoc, StoryScript } from "./types";
@@ -56,7 +58,29 @@ export type StoryEntry = {
   storage: StoryStorage;
 };
 
+/** Where the story editor loads and saves a context's story: HistoryTalk's contexts, or a teacher's local ones. */
+export type StoryRepo = {
+  load(contextId: string): Promise<{ doc: StoryDoc; storage: StoryStorage; isNew: boolean; cast: string[] }>;
+  save(doc: StoryDoc): Promise<StoryStorage>;
+  /** Contexts the AI dialog may write from. */
+  listContexts(): Promise<{ id: string; name: string }[]>;
+  /** A context's characters (speakers). */
+  listCharacters(contextId: string): Promise<StoryCharacter[]>;
+  backHref: string;
+  backLabel: string;
+};
+
 export const storyRepo = {
+  backHref: ROUTES.STAFF.STORIES,
+  backLabel: "Về danh sách kịch bản",
+
+  async listContexts() {
+    const res = await eventService.getAllClient({ page: 1, limit: 200 });
+    return res.content.map(contextRef);
+  },
+
+  listCharacters: loadContextCharacters,
+
   /** Every context with its story (or none). */
   async list(): Promise<{ entries: StoryEntry[]; serverSupported: boolean }> {
     const res = await eventService.getAllClient({ page: 1, limit: 200 });
@@ -101,3 +125,49 @@ export const storyRepo = {
     await eventService.update(contextId, { storyScript: null });
   },
 };
+
+// Teachers' local contexts (B2B): the story is stored on the local context through the teacher API.
+
+const LOCAL_LIST_SIZE = 100;
+
+/** Local characters linked to a local context (mine + colleagues' school-wide ones). */
+async function loadLocalContextCharacters(contextId: string): Promise<StoryCharacter[]> {
+  const page = await localContentService.list("CHARACTER", { page: 1, size: LOCAL_LIST_SIZE }).catch(() => null);
+  const characters = (page?.items ?? [])
+    .filter((c) => c.contextIds?.includes(contextId))
+    .map((c, i) => toStoryCharacter({ id: c.id, name: c.name, title: c.title, imageUrl: c.imageUrl }, i));
+  registerCharacters(characters);
+  return characters;
+}
+
+export function localStoryRepo(contextId: string): StoryRepo {
+  return {
+    backHref: ROUTES.TEACHING.LOCAL_EDIT(contextId, "CONTEXT"),
+    backLabel: "Về bối cảnh",
+
+    async load(id) {
+      const [context, characters] = await Promise.all([localContentService.get("CONTEXT", id), loadLocalContextCharacters(id)]);
+      const ref = { id: context.id, name: context.name };
+      const script = isStoryScript(context.storyScript) ? context.storyScript : null;
+      return {
+        doc: script ? scriptToDoc(script, ref) : newStoryDoc(ref),
+        storage: "server",
+        isNew: !script,
+        cast: characters.map((c) => c.id),
+      };
+    },
+
+    async save(doc) {
+      await localContentService.updateContext(doc.contextId, { storyScript: docToScript(doc) });
+      return "server";
+    },
+
+    async listContexts() {
+      const page = await localContentService.list("CONTEXT", { page: 1, size: LOCAL_LIST_SIZE });
+      return page.items.map((c) => ({ id: c.id, name: c.name }));
+    },
+
+    listCharacters: loadLocalContextCharacters,
+  };
+}
+

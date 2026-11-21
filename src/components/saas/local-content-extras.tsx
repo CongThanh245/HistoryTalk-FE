@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, Link2, Loader2, Map as MapIcon, Plus, Trash2, Unlink } from "lucide-react";
+import { ArrowRight, BookOpen, Link2, Loader2, Map as MapIcon, Plus, Trash2, Unlink } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
+import { useStoryCascadeGuard } from "@/components/saas/story-cascade-warning";
 import { BattleMapEditor } from "@/components/historical-map/BattleMapEditor";
 import { ContextMapFocusManager } from "@/components/staff/context-map-focus-manager";
 import { emptyBattleMap, isBattleMap } from "@/components/historical-map/battle-map.types";
@@ -13,6 +14,7 @@ import { StaffFormSelect } from "@/components/staff/staff-form";
 import { Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
 import { apiErrorMessage } from "@/features/saas/hooks-api";
+import { isPlayableScript, isStoryScript } from "@/features/story/story-script";
 import {
   useCharacterContextLinks,
   useCharacterContexts,
@@ -35,6 +37,7 @@ export function LinkedContextsPanel({ characterId, canEdit }: { characterId: str
   const linked = useCharacterContexts(characterId);
   const { contexts } = useTeacherLocalContent(canEdit);
   const { link, unlink } = useCharacterContextLinks(characterId);
+  const cascade = useStoryCascadeGuard();
   const [pick, setPick] = React.useState("");
 
   const linkedIds = new Set((linked.data ?? []).map((c) => c.id));
@@ -76,10 +79,17 @@ export function LinkedContextsPanel({ characterId, canEdit }: { characterId: str
                   label={`Bỏ liên kết ${c.name}`}
                   tone="danger"
                   onClick={() =>
-                    unlink.mutate(c.id, {
-                      onSuccess: () => toast.success(`Đã bỏ liên kết “${c.name}”`),
-                      onError: (e) => toast.error(apiErrorMessage(e, "Không bỏ liên kết được.")),
-                    })
+                    // Only the story of this context is affected by unlinking it.
+                    void cascade.guard(
+                      [characterId],
+                      "bỏ liên kết",
+                      () =>
+                        unlink.mutate(c.id, {
+                          onSuccess: () => toast.success(`Đã bỏ liên kết “${c.name}”`),
+                          onError: (e) => toast.error(apiErrorMessage(e, "Không bỏ liên kết được.")),
+                        }),
+                      (u) => u.contextId === c.id,
+                    )
                   }
                 >
                   <Unlink className="h-4 w-4" />
@@ -106,6 +116,7 @@ export function LinkedContextsPanel({ characterId, canEdit }: { characterId: str
           </button>
         </div>
       )}
+      {cascade.dialog}
     </Panel>
   );
 }
@@ -214,6 +225,69 @@ export function LocalBattleMapPanel({ item, canEdit }: { item: LocalItem; canEdi
           void save(null).then(
             () => toast.success("Đã xóa lược đồ"),
             (e) => toast.error(apiErrorMessage(e, "Không xóa được lược đồ.")),
+          )
+        }
+      />
+    </Panel>
+  );
+}
+
+/* ───────────────────────── Story (visual novel) ───────────────────────── */
+
+/**
+ * The context's visual-novel story, written in the same node editor as HistoryTalk's contexts (own page).
+ * Students see it on the context once its status is "Đã xuất bản".
+ */
+export function LocalStoryPanel({ item, canEdit }: { item: LocalItem; canEdit: boolean }) {
+  const { updateContext } = useLocalContentMutations();
+  const [clearOpen, setClearOpen] = React.useState(false);
+  const script = isStoryScript(item.storyScript) ? item.storyScript : null;
+  const playable = isPlayableScript(script);
+  const lines = script ? script.nodes.filter((n) => n.data.kind === "line").length : 0;
+
+  return (
+    <Panel>
+      <SectionHeading
+        title="Kịch bản kể chuyện"
+        description="Câu chuyện dạng visual novel: nhân vật kể lại sự kiện, có lựa chọn và câu hỏi xen giữa. Học sinh xem ngay trong bối cảnh khi kịch bản ở trạng thái đã xuất bản."
+      />
+      {script ? (
+        <div className="space-y-1 text-sm">
+          <p className="font-semibold text-content-heading">{script.title || "Kịch bản chưa đặt tên"}</p>
+          <p className="text-content-muted">
+            {lines} lời thoại · {script.status === "published" ? "Đã xuất bản" : "Bản nháp"}
+            {script.status === "published" && !playable ? " · chưa có nội dung để phát" : ""}
+          </p>
+          {script.status !== "published" && <p className="text-xs text-content-muted">Học sinh chưa thấy bản nháp. Xuất bản kịch bản trong trình soạn.</p>}
+          {!item.isPublished && <p className="text-xs text-content-muted">Bối cảnh chưa xuất bản nên học sinh chưa thấy kịch bản.</p>}
+        </div>
+      ) : (
+        <p className="text-sm text-content-muted">Bối cảnh chưa có kịch bản kể chuyện.</p>
+      )}
+      {canEdit && (
+        <div className="flex flex-wrap gap-2">
+          <Link href={ROUTES.TEACHING.LOCAL_STORY(item.id)} className="btn-crimson">
+            <BookOpen className="h-4 w-4" aria-hidden="true" /> {script ? "Sửa kịch bản" : "Soạn kịch bản"}
+          </Link>
+          {script && (
+            <button type="button" className="btn-line text-[var(--accent-danger)]" onClick={() => setClearOpen(true)}>
+              <Trash2 className="h-4 w-4" aria-hidden="true" /> Xóa kịch bản
+            </button>
+          )}
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={clearOpen}
+        onOpenChange={setClearOpen}
+        variant="danger"
+        title="Xóa kịch bản kể chuyện?"
+        description="Toàn bộ lời thoại, lựa chọn và câu hỏi của kịch bản này sẽ bị xóa."
+        confirmLabel="Xóa kịch bản"
+        onConfirm={() =>
+          void updateContext.mutateAsync({ id: item.id, payload: { storyScript: null } }).then(
+            () => toast.success("Đã xóa kịch bản"),
+            (e) => toast.error(apiErrorMessage(e, "Không xóa được kịch bản.")),
           )
         }
       />

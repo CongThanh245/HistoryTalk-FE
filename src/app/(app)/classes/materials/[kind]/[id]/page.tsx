@@ -6,6 +6,7 @@ import { ArrowLeft, MessageCircle, UserRound } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { ContentSourceTag } from "@/components/saas/content-source-tag";
+import { LocalContextStory } from "@/components/saas/local-context-story";
 import { LocalItemPreview, LocalScopeTag, QueryState } from "@/components/saas/local-content-ui";
 import { NeutralBadge, Panel, SaasShell } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
@@ -76,10 +77,13 @@ function MaterialView({ item, teacher }: { item: LocalItem; teacher?: boolean })
       </div>
 
       {item.type === "CONTEXT" ? (
-        <Panel>
-          <h2 className="archive-title is-plain text-3xl">{item.name}</h2>
-          <LocalItemPreview item={item} />
-        </Panel>
+        <>
+          <Panel>
+            <h2 className="archive-title is-plain text-3xl">{item.name}</h2>
+            <LocalItemPreview item={item} />
+          </Panel>
+          <LocalContextStory item={item} teacher={teacher} />
+        </>
       ) : (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           <Panel className="h-fit">

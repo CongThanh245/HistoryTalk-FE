@@ -14,8 +14,7 @@ import {
 import { cn } from "@/lib/utils/cn";
 import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { AI_STAGE_LABELS, aiAuthoringService, waitForJob, type AiJob } from "@/services/ai-authoring.service";
-import { characterService } from "@/services/character.service";
-import { eventService } from "@/services/event.service";
+import type { StoryRepo } from "@/features/story/story-repo";
 import { useStoryEditor } from "@/features/story/editor-store";
 import { draftToStory, insertSteps, nodeToStep, stepsLeadingTo, type AiStoryDraft } from "@/features/story/ai-draft";
 import { STORY_BACKGROUNDS, registerCharacters } from "@/features/story/story-assets";
@@ -78,8 +77,9 @@ const backgrounds = STORY_BACKGROUNDS.map((b) => ({ id: b.id, name: b.name }));
 /**
  * AI drafting for the story editor. The AI writes from the documents of a real historical context, so the story
  * is tied to one (the sample contexts have no documents). Its characters join the editor's character list.
+ * `repo` lists the contexts and characters it may write from: HistoryTalk's, or the teacher's local ones.
  */
-export function StoryAiDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function StoryAiDialog({ open, onOpenChange, repo }: { open: boolean; onOpenChange: (open: boolean) => void; repo: StoryRepo }) {
   const meta = useStoryEditor((s) => s.meta);
   const nodes = useStoryEditor((s) => s.nodes);
   const selected = nodes.find((n) => n.selected) ?? null;
@@ -114,23 +114,22 @@ export function StoryAiDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     setError("");
     setMode(kind === "line" || kind === "quiz" || kind === "start" ? "continue" : "full");
     if (meta && UUID.test(meta.contextId)) setContextId(meta.contextId);
-    eventService.getAllClient({ page: 1, limit: 200 })
-      .then((res) => setContexts(res.content.map((c) => ({ id: c.id, name: c.title }))))
+    repo.listContexts()
+      .then(setContexts)
       .catch(() => setError("Không tải được danh sách bối cảnh."));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per opening
   }, [open]);
 
   useEffect(() => {
     if (!contextId) return;
-    characterService.getByContext(contextId)
-      .then((list) => {
-        const mapped = list.map((c) => ({ id: c.id, name: c.name, title: c.title ?? "", portraitUrl: c.imageUrl ?? null, accent: "#7A5C2E" }));
+    repo.listCharacters(contextId)
+      .then((mapped) => {
         setCharacters(mapped);
         setNarratorId((current) => (mapped.some((c) => c.id === current) ? current
           : mapped.find((c) => c.id === meta?.narratorId)?.id ?? mapped[0]?.id ?? ""));
       })
       .catch(() => setCharacters([]));
-  }, [contextId, meta?.narratorId]);
+  }, [contextId, meta?.narratorId, repo]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 

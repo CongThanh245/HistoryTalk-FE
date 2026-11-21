@@ -25,6 +25,7 @@ import { apiErrorMessage, useMyApiClassrooms } from "@/features/saas/hooks-api";
 import { StaffFormSelect } from "@/components/staff/staff-form";
 import { LOCAL_KINDS, localYears, useLocalContentMutations, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
 import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
+import { useStoryCascadeGuard } from "@/components/saas/story-cascade-warning";
 import type { LocalItem, LocalKind } from "@/services/local-content.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useEvents } from "@/features/events/hooks";
@@ -440,6 +441,7 @@ function PublishToggle({ item, kind }: { item: LocalItem; kind: LocalKind }) {
   const on = reviewState(item) === "PUBLISHED";
   const noAudience = !on && item.contentScope !== "SCHOOL_WIDE" && !item.classIds?.length;
   const busy = update.isPending || m.setStatus.isPending;
+  const cascade = useStoryCascadeGuard();
 
   const change = (next: boolean) => {
     const onError = (error: unknown) => toast.error(apiErrorMessage(error, next ? "Không xuất bản được. Vui lòng thử lại." : "Không ẩn được nội dung. Vui lòng thử lại."));
@@ -449,14 +451,19 @@ function PublishToggle({ item, kind }: { item: LocalItem; kind: LocalKind }) {
         { onSuccess: () => toast.success(`Đã xuất bản “${item.name}”`), onError },
       );
     } else {
-      m.setStatus.mutate(
-        { kind, id: item.id, payload: { status: "INACTIVE" } },
-        { onSuccess: () => toast.success(`Đã ẩn “${item.name}” với học sinh`), onError },
-      );
+      const hide = () =>
+        m.setStatus.mutate(
+          { kind, id: item.id, payload: { status: "INACTIVE" } },
+          { onSuccess: () => toast.success(`Đã ẩn “${item.name}” với học sinh`), onError },
+        );
+      // Hiding a character used in a published story moves the story back to draft: warn first.
+      if (item.type === "CHARACTER") void cascade.guard([item.id], "ẩn", hide);
+      else hide();
     }
   };
 
   return (
+    <>
     <label
       className={cn("relative z-10 inline-flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg", noAudience ? "cursor-not-allowed" : "cursor-pointer")}
       title={noAudience ? "Chưa gán lớp nào: mở trang soạn để chọn lớp trước khi xuất bản" : on ? "Học sinh đang thấy. Tắt để ẩn" : "Bật để học sinh thấy"}
@@ -472,6 +479,8 @@ function PublishToggle({ item, kind }: { item: LocalItem; kind: LocalKind }) {
         {busy ? "Đang lưu..." : REVIEW_STATE_LABELS[reviewState(item)]}
       </span>
     </label>
+    {cascade.dialog}
+    </>
   );
 }
 
@@ -480,8 +489,9 @@ function RowMenu({ item, kind }: { item: LocalItem; kind: LocalKind }) {
   const m = useLocalContentMutations();
   const update = item.type === "CONTEXT" ? m.updateContext : m.updateCharacter;
   const wide = item.contentScope === "SCHOOL_WIDE";
+  const cascade = useStoryCascadeGuard();
 
-  const toggle = () =>
+  const share = () =>
     update.mutate(
       { id: item.id, payload: { contentScope: wide ? "CLASS_ONLY" : "SCHOOL_WIDE" } },
       {
@@ -489,8 +499,11 @@ function RowMenu({ item, kind }: { item: LocalItem; kind: LocalKind }) {
         onError: (error) => toast.error(apiErrorMessage(error, "Không đổi được phạm vi chia sẻ. Vui lòng thử lại.")),
       },
     );
+  // Narrowing a shared character to its own classes can hide it from a published story's students.
+  const toggle = () => (wide && item.type === "CHARACTER" ? void cascade.guard([item.id], "thôi chia sẻ", share) : share());
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
@@ -514,5 +527,7 @@ function RowMenu({ item, kind }: { item: LocalItem; kind: LocalKind }) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    {cascade.dialog}
+    </>
   );
 }

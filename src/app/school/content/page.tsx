@@ -5,6 +5,7 @@ import { EyeOff, FileText, Send, ShieldAlert, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
+import { StoryCascadeNotice, useStoryUsages } from "@/components/saas/story-cascade-warning";
 import { StaffFormSelect, StaffFormTextarea } from "@/components/staff/staff-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -178,6 +179,9 @@ function ContentReview() {
   };
   const handleAction = (action: Action, it: LocalItem) => ask(action, [it]);
   const dialog = pending ? ACTION_DIALOG[pending.action] : null;
+  // Hiding / returning characters used in published stories moves those stories back to draft.
+  const hiddenCharacterIds = pending && pending.action !== "PUBLISH" ? pending.targets.filter((t) => t.type === "CHARACTER").map((t) => t.id) : [];
+  const storyUsages = useStoryUsages(hiddenCharacterIds, "school", hiddenCharacterIds.length > 0);
   const dialogName = pending ? (pending.targets.length > 1 ? `${pending.targets.length} nội dung` : `“${pending.targets[0]?.name ?? ""}”`) : "";
 
   return (
@@ -329,6 +333,7 @@ function ContentReview() {
           setPending(null);
         }}
       >
+        <StoryCascadeNotice usages={storyUsages} />
         <label className="block space-y-1.5">
           <span className="text-xs font-semibold text-content-heading">Ghi chú cho giáo viên</span>
           <StaffFormTextarea

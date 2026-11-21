@@ -54,6 +54,8 @@ export const ROUTES = {
     LOCAL_NEW: (kind: "CONTEXT" | "CHARACTER") => `/teaching/local/new?kind=${kind}`,
     /** `kind` is required for API-backed contexts / characters (separate endpoints); mock quizzes omit it. */
     LOCAL_EDIT: (id: string, kind?: "CONTEXT" | "CHARACTER") => `/teaching/local/${id}${kind ? `?kind=${kind}` : ""}`,
+    /** Visual-novel story editor of a local context. */
+    LOCAL_STORY: (contextId: string) => `/teaching/local/${contextId}/story`,
     /** Teacher's trash of local contexts / characters. */
     LOCAL_TRASH: "/teaching/local/trash",
     /** Question editor of a teacher-authored quiz of a local context. */

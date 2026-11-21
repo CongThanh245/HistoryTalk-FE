@@ -8,13 +8,14 @@ import { ArrowLeft, EyeOff, FileText, Globe, ImageIcon, Loader2, Lock, Pencil, P
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/commons/confirm-dialog";
+import { StoryCascadeNotice, useStoryCascadeGuard, useStoryUsages } from "@/components/saas/story-cascade-warning";
 import { StaffFormInput, StaffFormSelect, StaffFormTextarea } from "@/components/staff/staff-form";
 import { CharacterVoiceFields } from "@/components/staff/character-voice-fields";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Field, IconAction, Panel, SectionHeading, formatDate } from "@/components/saas/saas-ui";
 import { LocalItemPreview, LocalReviewBadge, ReviewNote, reviewState } from "@/components/saas/local-content-ui";
-import { ContextQuizzesPanel, LinkedContextsPanel, LocalBattleMapPanel, LocalMapPanel } from "@/components/saas/local-content-extras";
+import { ContextQuizzesPanel, LinkedContextsPanel, LocalBattleMapPanel, LocalMapPanel, LocalStoryPanel } from "@/components/saas/local-content-extras";
 import { ROUTES } from "@/constants/routes";
 import { apiErrorMessage, useMyApiClassrooms } from "@/features/saas/hooks-api";
 import {
@@ -213,10 +214,10 @@ function characterPayload(f: FormState, item?: LocalItem, isPublished?: boolean)
 }
 
 
-type Tab = "basic" | "classes" | "media" | "content" | "rag" | "context" | "battle" | "map" | "quiz";
+type Tab = "basic" | "classes" | "media" | "content" | "rag" | "context" | "battle" | "map" | "quiz" | "story";
 
 /** Tabs that need the whole width (maps, lists): the preview column steps aside. */
-const WIDE_TABS: Tab[] = ["map", "battle", "quiz", "rag"];
+const WIDE_TABS: Tab[] = ["map", "battle", "story", "quiz", "rag"];
 
 const TAB_LABEL: Record<Tab, string> = {
   basic: "Cơ bản",
@@ -226,6 +227,7 @@ const TAB_LABEL: Record<Tab, string> = {
   rag: "Tài liệu",
   context: "Liên kết bối cảnh",
   battle: "Lược đồ trận đánh",
+  story: "Kể chuyện",
   map: "Bản đồ",
   quiz: "Câu đố",
 };
@@ -243,6 +245,9 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   const [form, setForm] = React.useState<FormState>(() => initialForm(item));
   const [showErrors, setShowErrors] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
+  // A character used in a published story: hiding / deleting / narrowing it moves the story back to draft.
+  const cascade = useStoryCascadeGuard();
+  const deleteUsages = useStoryUsages(item && kind === "CHARACTER" ? [item.id] : [], "teacher", deleteOpen);
   const [tab, setTab] = React.useState<Tab>("basic");
 
   const isMine = !item || item.createdBy?.uid === myUid;
@@ -257,7 +262,7 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   const busy = saving || mutations.setStatus.isPending;
 
   const tabs: Tab[] = kind === "CONTEXT"
-    ? ["basic", "classes", "media", ...(item ? (["map", "battle", "quiz", "rag"] as Tab[]) : [])]
+    ? ["basic", "classes", "media", ...(item ? (["map", "battle", "story", "quiz", "rag"] as Tab[]) : [])]
     : ["basic", "classes", "media", "content", "context", ...(item ? (["rag"] as Tab[]) : [])];
 
   const patchCtx = (p: Partial<CtxForm>) => setForm((f) => ({ ...f, ctx: { ...f.ctx, ...p } }));
@@ -325,19 +330,24 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
   const classNames = classes.filter((c) => form.classIds.includes(c.id)).map((c) => c.className);
   const audience = form.scope === "SCHOOL_WIDE" ? "Toàn trường" : classNames.length ? `Lớp ${classNames.join(", ")}` : "Chưa chọn lớp";
   const wide = WIDE_TABS.includes(tab);
+  const storyChecked = kind === "CHARACTER" && !!item;
+  const hideChecked = () => (storyChecked ? void cascade.guard([item!.id], "ẩn", () => void hide()) : void hide());
+  // Only a scope / class change can hide the character from a story's students.
+  const saveChecked = (publish?: boolean) =>
+    storyChecked && sharingDirty ? void cascade.guard([item!.id], "lưu", () => void save(publish)) : void save(publish);
 
   const actions = published ? (
     <>
-      <button type="button" className="btn-line disabled:opacity-60" onClick={hide} disabled={busy}>
+      <button type="button" className="btn-line disabled:opacity-60" onClick={hideChecked} disabled={busy}>
         <EyeOff className="h-4 w-4" aria-hidden="true" /> {mutations.setStatus.isPending ? "Đang ẩn..." : "Ẩn với học sinh"}
       </button>
-      <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => save()} disabled={busy}>
+      <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => saveChecked()} disabled={busy}>
         <Save className="h-4 w-4" aria-hidden="true" /> {saving ? "Đang lưu..." : "Lưu thay đổi"}
       </button>
     </>
   ) : !item ? (
     // No draft step: creating publishes to the classes picked in "Lớp học" (one button, like the Content Admin's "Tạo").
-    <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => save(true)} disabled={busy}>
+    <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => saveChecked(true)} disabled={busy}>
       {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
       {saving ? "Đang tạo..." : `Tạo ${label}`}
     </button>
@@ -345,11 +355,11 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
     <>
       {/* Hidden items may be edited without showing them again; old drafts just get published. */}
       {state === "HIDDEN" && (
-        <button type="button" className="btn-line disabled:opacity-60" onClick={() => save()} disabled={busy}>
+        <button type="button" className="btn-line disabled:opacity-60" onClick={() => saveChecked()} disabled={busy}>
           <Save className="h-4 w-4" aria-hidden="true" /> Lưu thay đổi
         </button>
       )}
-      <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => save(true)} disabled={busy}>
+      <button type="button" className="btn-crimson disabled:opacity-60" onClick={() => saveChecked(true)} disabled={busy}>
         <Send className="h-4 w-4" aria-hidden="true" /> {saving ? "Đang lưu..." : state === "HIDDEN" ? "Lưu & hiện lại" : "Lưu & xuất bản"}
       </button>
     </>
@@ -483,6 +493,9 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
                   <TabsContent value="battle" className="mt-0">
                     <LocalBattleMapPanel item={item} canEdit={isMine} />
                   </TabsContent>
+                  <TabsContent value="story" className="mt-0">
+                    <LocalStoryPanel item={item} canEdit={isMine} />
+                  </TabsContent>
                   <TabsContent value="quiz" className="mt-0">
                     <ContextQuizzesPanel contextId={item.id} canEdit={isMine} />
                   </TabsContent>
@@ -517,8 +530,11 @@ export function LocalApiEditor({ kind, item }: { kind: LocalKind; item?: LocalIt
           description={`“${item.name}” được chuyển vào thùng rác, học sinh không còn thấy. Có thể khôi phục trong Thùng rác của Kho tư liệu.`}
           confirmLabel="Xóa"
           onConfirm={remove}
-        />
+        >
+          <StoryCascadeNotice usages={deleteUsages} />
+        </ConfirmDialog>
       )}
+      {cascade.dialog}
     </div>
   );
 }

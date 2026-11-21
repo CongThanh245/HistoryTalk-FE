@@ -8,6 +8,7 @@ import { ArrowLeft, FileText, UserRound } from "lucide-react";
 
 import { ContentSourceTag } from "@/components/saas/content-source-tag";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LocalContextStory } from "@/components/saas/local-context-story";
 import { LocalItemPreview, LocalScopeTag, QueryState } from "@/components/saas/local-content-ui";
 import { NeutralBadge, Panel, SaasShell, SectionHeading, formatDate } from "@/components/saas/saas-ui";
 import { ROUTES } from "@/constants/routes";
@@ -125,6 +126,8 @@ function ItemView({ item, back, teacher }: { item: LocalItem; back: React.ReactN
           {item.createdBy ? `${item.createdBy.fullName} · ` : ""}Cập nhật {formatDate(item.updatedAt)}
         </p>
       </Panel>
+
+      <LocalContextStory item={item} teacher={teacher} />
 
       {/* Documents are only exposed by the teacher API. */}
       {teacher && <Documents kind={item.type} id={item.id} />}
