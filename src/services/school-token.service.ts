@@ -104,9 +104,10 @@ export interface UpdateTokenPolicyPayload {
 }
 
 export const DAILY_QUOTA_MIN = 100;
-export const DEFAULT_DAILY_QUOTA = 1_000;
+// Fallbacks when the school has no policy yet; match BE (School entity / DailyTokenAllowanceServiceImpl).
+export const DEFAULT_DAILY_QUOTA = 5_000;
 export const TEACHER_QUOTA_MIN = 500;
-export const DEFAULT_TEACHER_QUOTA = 10_000;
+export const DEFAULT_TEACHER_QUOTA = 5_000;
 
 export interface AcademicYearRolloverPayload {
   /** Start year of the finished school year (2025 = 2025–2026). */
