@@ -286,7 +286,7 @@ export function StoryAiDialog({ open, onOpenChange, repo }: { open: boolean; onO
                 {choiceCount > 0 && <>, <strong>{choiceCount} chỗ rẽ nhánh</strong></>}
                 {quizCount > 0 && <>, <strong>{quizCount} câu hỏi</strong></>} và 1 màn kết thúc, dựa trên tài liệu của bối cảnh. Bạn sửa lại được mọi thứ sau đó.
               </p>
-              <label className="grid gap-1 font-semibold">Ghi chú cho AI <span className="text-[12px] font-normal text-[var(--text-muted)]">(không bắt buộc)</span>
+              <label className="grid gap-1 font-semibold"><span>Ghi chú cho AI <span className="text-[12px] font-normal text-[var(--text-muted)]">(không bắt buộc)</span></span>
                 <textarea value={notes} maxLength={500} rows={2} onChange={(e) => setNotes(e.target.value)} disabled={busy}
                   placeholder="Ví dụ: Nhấn mạnh vai trò của thuỷ triều" className="rounded-sm border border-[var(--border-strong)] bg-transparent p-2 font-normal" />
               </label>

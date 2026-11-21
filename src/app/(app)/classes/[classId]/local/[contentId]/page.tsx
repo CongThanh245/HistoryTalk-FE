@@ -107,6 +107,9 @@ function ItemView({ item, back, teacher }: { item: LocalItem; back: React.ReactN
         </span>
       </div>
 
+      {/* How to discover it first (story / video / characters), then the details. */}
+      <LocalContextStory item={item} teacher={teacher} />
+
       <Panel>
         {item.type === "CONTEXT" ? (
           <h2 className="archive-title is-plain text-3xl">{item.name}</h2>
@@ -126,8 +129,6 @@ function ItemView({ item, back, teacher }: { item: LocalItem; back: React.ReactN
           {item.createdBy ? `${item.createdBy.fullName} · ` : ""}Cập nhật {formatDate(item.updatedAt)}
         </p>
       </Panel>
-
-      <LocalContextStory item={item} teacher={teacher} />
 
       {/* Documents are only exposed by the teacher API. */}
       {teacher && <Documents kind={item.type} id={item.id} />}

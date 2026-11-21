@@ -78,11 +78,12 @@ function MaterialView({ item, teacher }: { item: LocalItem; teacher?: boolean })
 
       {item.type === "CONTEXT" ? (
         <>
+          {/* How to discover it first (story / video / characters), then the details. */}
+          <LocalContextStory item={item} teacher={teacher} />
           <Panel>
             <h2 className="archive-title is-plain text-3xl">{item.name}</h2>
             <LocalItemPreview item={item} />
           </Panel>
-          <LocalContextStory item={item} teacher={teacher} />
         </>
       ) : (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
