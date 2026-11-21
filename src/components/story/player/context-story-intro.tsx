@@ -25,6 +25,7 @@ export function ContextStoryIntro({
   characters,
   onFinish,
   onOpenChat,
+  autoStart = false,
 }: {
   script: StoryScript;
   contextTitle: string;
@@ -33,8 +34,10 @@ export function ContextStoryIntro({
   /** Skip, or the end screen's main button: go on to the characters. */
   onFinish: () => void;
   onOpenChat: (characterId: string) => void;
+  /** Skip this cover and play at once (the learner already chose the story elsewhere). */
+  autoStart?: boolean;
 }) {
-  const [started, setStarted] = useState(false);
+  const [started, setStarted] = useState(autoStart);
 
   const cast = useMemo(() => characters.map((c, i) => toStoryCharacter(c, i)), [characters]);
   // The player looks speakers up by id while rendering, so they are registered before it renders

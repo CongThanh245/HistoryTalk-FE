@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { X, Play, SkipForward, MapPin, FileText, ChevronDown, ChevronUp, Trophy, ChevronRight } from "lucide-react";
+import { X, Play, SkipForward, MapPin, FileText, ChevronDown, ChevronUp, Trophy, ChevronRight, RotateCcw } from "lucide-react";
 import type { HistoricalEvent } from "@/services/event.service";
 import {
   CharacterCarouselCard,
@@ -20,6 +20,7 @@ import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
 import { ERA_CONFIG, getEraFromYear, mapEraLabel } from "@/constants/eras";
 import { ContextStoryIntro } from "@/components/story/player/context-story-intro";
 import { isPlayableScript } from "@/features/story/story-script";
+import { ContextIntroCover } from "./context-intro-cover";
 
 // ── Mock ──────────────────────────────────────────────────
 // TODO: fetch từ API /events/:id/characters
@@ -28,12 +29,15 @@ import { isPlayableScript } from "@/features/story/story-script";
 function FakeVideoPlayer({
   event,
   onFinish,
+  autoPlay = false,
 }: {
   event: HistoricalEvent;
   onFinish: () => void;
+  /** Start playing at once (the learner picked the video on the intro cover). */
+  autoPlay?: boolean;
 }) {
   const hasVideo = !!event.videoUrl;
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(autoPlay && hasVideo);
   const videoRef = useRef<HTMLVideoElement>(null);
   const youtubeEmbedUrl = getYouTubeEmbedUrl(event.videoUrl, { autoplay: playing });
   const isYouTubeVideo = !!youtubeEmbedUrl;
@@ -72,6 +76,7 @@ function FakeVideoPlayer({
             className="absolute inset-0 w-full h-full object-cover"
             src={event.videoUrl ?? undefined}
             controls={playing}
+            autoPlay={autoPlay}
             onEnded={onFinish}
           />
         )}
@@ -137,10 +142,15 @@ function CharactersReveal({
   event,
   characters,
   onSelect,
+  replayLabel,
+  onReplay,
 }: {
   event: HistoricalEvent;
   characters: Character[];
   onSelect: (id: string) => void;
+  /** "Nghe lại kể chuyện" / "Xem lại video": back to the intro cover. */
+  replayLabel?: string;
+  onReplay?: () => void;
 }) {
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden bg-[var(--abyssal-blue)]">
@@ -171,6 +181,15 @@ function CharactersReveal({
           <h3 className="font-display text-[26px] font-bold leading-[1.1] text-[var(--text-on-dark)]">
             {event.title}
           </h3>
+          {onReplay && replayLabel && (
+            <button
+              type="button"
+              onClick={onReplay}
+              className="mt-2 flex cursor-pointer items-center gap-1.5 text-[12px] font-semibold text-accent-gold-soft underline-offset-4 hover:underline"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> {replayLabel}
+            </button>
+          )}
         </div>
 
         {/* Cards dọc — dùng CharacterCarouselCard thu nhỏ */}
@@ -246,6 +265,8 @@ function DocumentRow({ title, content }: { title: string; content: string }) {
 const SECTION_HEADING =
   "mb-3 pb-2 border-b border-[var(--text-primary)] text-[11px] font-bold uppercase tracking-[0.14em] text-content-heading";
 
+type IntroStage = "cover" | "story" | "video" | "characters";
+
 interface EventDetailModalProps {
   event?: HistoricalEvent | null;
   onClose?: () => void;
@@ -254,7 +275,8 @@ interface EventDetailModalProps {
 export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   const router = useRouter();
   const { openChatModes, chatModeDialog } = useChatModePicker();
-  const [finishedEventId, setFinishedEventId] = useState<string | null>(null);
+  // Where the learner is in this context: choosing (cover), story, video, or the characters.
+  const [intro, setIntro] = useState<{ eventId: string; stage: IntroStage } | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -273,7 +295,13 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
   // createPortal needs the DOM; on the server (deep link to an event) render nothing until hydration.
   if (!event || typeof document === "undefined") return null;
 
-  const videoFinished = finishedEventId === event.id;
+  const script = isPlayableScript(event.storyScript) ? event.storyScript : null;
+  const hasVideo = !!event.videoUrl;
+  // Nothing to watch or hear: go straight to the characters.
+  const initialStage: IntroStage = script || hasVideo ? "cover" : "characters";
+  const stage = intro?.eventId === event.id ? intro.stage : initialStage;
+  const goTo = (next: IntroStage) => setIntro({ eventId: event.id, stage: next });
+  const narratorCharacter = script ? characters.find((c) => c.id === script.narratorId) ?? null : null;
   const yearLabel =
     event.yearLabel ??
     `${Math.abs(event.year)} ${event.year < 0 ? "TCN" : "SCN"}`;
@@ -311,26 +339,34 @@ export function EventDetailModal({ event, onClose }: EventDetailModalProps) {
 
           {/* ── Left 60% ── */}
           <div className="w-full md:w-[60%] shrink-0 h-[55dvh] md:h-full">
-            {videoFinished ? (
+            {stage === "characters" ? (
               <CharactersReveal
                 event={event}
                 characters={characters}
                 onSelect={handleSelectChar}
+                replayLabel={script ? "Nghe lại kể chuyện" : hasVideo ? "Xem lại video giới thiệu" : undefined}
+                onReplay={script || hasVideo ? () => goTo("cover") : undefined}
               />
-            ) : isPlayableScript(event.storyScript) ? (
-              // A published story replaces the intro video.
+            ) : stage === "story" && script ? (
               <ContextStoryIntro
                 key={event.id}
-                script={event.storyScript}
+                script={script}
                 contextTitle={event.title}
                 characters={characters}
-                onFinish={() => setFinishedEventId(event.id)}
+                onFinish={() => goTo("characters")}
                 onOpenChat={handleSelectChar}
+                autoStart
               />
+            ) : stage === "video" && hasVideo ? (
+              <FakeVideoPlayer event={event} onFinish={() => goTo("characters")} autoPlay />
             ) : (
-              <FakeVideoPlayer
+              <ContextIntroCover
                 event={event}
-                onFinish={() => setFinishedEventId(event.id)}
+                script={script}
+                narrator={narratorCharacter ? { name: narratorCharacter.name, imageUrl: narratorCharacter.imageUrl } : null}
+                onStory={() => goTo("story")}
+                onVideo={() => goTo("video")}
+                onCharacters={() => goTo("characters")}
               />
             )}
           </div>
