@@ -209,7 +209,7 @@ export function DarkCard({
           onError={() => setImageBroken(true)}
         />
         <div
-          className="absolute inset-0 z-10 bg-gradient-to-t from-bg-surface to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-1/5 bg-gradient-to-t from-bg-surface to-transparent"
         />
         {badge && (
           <div
