@@ -131,7 +131,7 @@ export const storyRepo = {
 const LOCAL_LIST_SIZE = 100;
 
 /** Local characters linked to a local context (mine + colleagues' school-wide ones). */
-async function loadLocalContextCharacters(contextId: string): Promise<StoryCharacter[]> {
+export async function loadLocalContextCharacters(contextId: string): Promise<StoryCharacter[]> {
   const page = await localContentService.list("CHARACTER", { page: 1, size: LOCAL_LIST_SIZE }).catch(() => null);
   const characters = (page?.items ?? [])
     .filter((c) => c.contextIds?.includes(contextId))

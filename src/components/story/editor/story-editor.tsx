@@ -179,6 +179,10 @@ function EditorInner({ storyId, repo }: { storyId: string; repo: StoryRepo }) {
   const [saveFailed, setSaveFailed] = useState(false);
   const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
   const pendingRef = useRef(false);
+  /** Message of the last failed save (the server says why a publish was refused). */
+  const lastErrorRef = useRef("");
+  const [publishBlock, setPublishBlock] = useState<string | null>(null);
+  const cast = useStoryEditor((s) => s.cast);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [quickAdd, setQuickAdd] = useState<QuickAdd | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -230,7 +234,7 @@ function EditorInner({ storyId, repo }: { storyId: string; repo: StoryRepo }) {
   }
 
   /** Saves the current story; saves run one after another so an older one never lands last. */
-  const saveNow = useCallback((): Promise<StoryStorage | null> => {
+  const saveNow = useCallback((opts?: { quiet?: boolean }): Promise<StoryStorage | null> => {
     pendingRef.current = false;
     const run = async () => {
       const doc = toDoc();
@@ -243,8 +247,9 @@ function EditorInner({ storyId, repo }: { storyId: string; repo: StoryRepo }) {
         setSavedAt(new Date());
         return where;
       } catch (e) {
+        lastErrorRef.current = getApiErrorMessage(e, "Vui lòng thử lại.");
         setSaveFailed((already) => {
-          if (!already) toast.error("Không lưu được kịch bản", { description: getApiErrorMessage(e, "Vui lòng thử lại.") });
+          if (!already && !opts?.quiet) toast.error("Không lưu được kịch bản", { description: lastErrorRef.current });
           return true;
         });
         return null;
@@ -279,7 +284,24 @@ function EditorInner({ storyId, repo }: { storyId: string; repo: StoryRepo }) {
     };
   }, [saveNow]);
 
-  const issues = useMemo(() => validateStory(nodes, edges), [nodes, edges]);
+  const narratorId = meta?.narratorId ?? null;
+  const issues = useMemo(() => {
+    const found = validateStory(nodes, edges);
+    // Speakers must still belong to the context: a character deleted or unlinked since (its id stays in the step)
+    // would show as an unnamed speaker, and the server refuses to publish it.
+    // An empty cast is also what a failed character request gives: then leave it to the server.
+    if (status !== "ready" || cast.length === 0) return found;
+    const known = new Set(cast);
+    for (const n of nodes) {
+      const speakerId = "speakerId" in n.data ? n.data.speakerId : null;
+      if (speakerId && !known.has(speakerId))
+        found.push({ nodeId: n.id, level: "error", message: "Người nói không còn thuộc bối cảnh này (đã xóa hoặc bỏ liên kết). Chọn lại người nói." });
+    }
+    const start = nodes.find((n) => n.data.kind === "start");
+    if (narratorId && !known.has(narratorId) && start)
+      found.push({ nodeId: start.id, level: "error", message: "Nhân vật kể chính không còn thuộc bối cảnh này. Chọn lại ở Thiết lập chung." });
+    return found;
+  }, [nodes, edges, cast, status, narratorId]);
   const issuesByNode = useMemo(() => {
     const map = new Map<string, StoryIssue[]>();
     for (const i of issues) map.set(i.nodeId, [...(map.get(i.nodeId) ?? []), i]);
@@ -384,11 +406,14 @@ function EditorInner({ storyId, repo }: { storyId: string; repo: StoryRepo }) {
       return;
     }
     updateMeta({ status: "published" });
-    void saveNow().then((where) => {
-      // Refused (e.g. a local story whose context or characters students cannot see yet): the toast shows the
-      // server's reason; stay a draft so later autosaves are not refused too.
-      if (where === null) updateMeta({ status: "draft" });
-      else if (where === "server") toast.success("Đã xuất bản", { description: "Học sinh mở bối cảnh này sẽ xem kịch bản thay cho video." });
+    setPublishBlock(null);
+    void saveNow({ quiet: true }).then((where) => {
+      // Refused (e.g. a local story whose context or characters students cannot see yet): keep the server's reason
+      // on screen, and stay a draft so later autosaves are not refused too.
+      if (where === null) {
+        updateMeta({ status: "draft" });
+        setPublishBlock(lastErrorRef.current || "Máy chủ từ chối xuất bản kịch bản.");
+      } else if (where === "server") toast.success("Đã xuất bản", { description: "Học sinh mở bối cảnh này sẽ xem kịch bản thay cho video." });
       else if (where === "local")
         toast.warning("Đã đánh dấu xuất bản, nhưng học sinh chưa thấy được", {
           description: "Máy chủ chưa hỗ trợ lưu kịch bản. Kịch bản sẽ hiện với học sinh khi backend có trường storyScript.",
@@ -553,6 +578,24 @@ function EditorInner({ storyId, repo }: { storyId: string; repo: StoryRepo }) {
           )}
         </header>
         {canUseAi && <StoryAiDialog open={aiOpen} onOpenChange={setAiOpen} repo={repo} />}
+        {publishBlock && (
+          <div role="alert" className="flex shrink-0 items-start gap-3 border-b border-[var(--accent-gold)]/40 bg-[var(--accent-gold-active-bg)] px-4 py-3 text-[13px]">
+            <CircleAlert className="mt-0.5 size-4 shrink-0 text-[var(--accent-gold)]" />
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-[var(--accent-gold)]">Chưa xuất bản được, kịch bản vẫn là bản nháp</p>
+              <p className="mt-0.5 text-[var(--text-secondary)]">{publishBlock}</p>
+            </div>
+            <Link
+              href={repo.backHref}
+              className="shrink-0 rounded-sm border border-[var(--text-primary)] px-3 py-1.5 text-[12.5px] font-semibold hover:bg-[var(--text-primary)] hover:text-[var(--text-inverse)]"
+            >
+              {repo.backLabel}
+            </Link>
+            <button type="button" aria-label="Ẩn thông báo" onClick={() => setPublishBlock(null)} className="shrink-0 cursor-pointer rounded-sm p-1 hover:bg-[var(--bg-deep)]">
+              <X className="size-4" />
+            </button>
+          </div>
+        )}
 
         <div className="flex min-h-0 flex-1">
           <NodePalette onAdd={addAtCenter} />
