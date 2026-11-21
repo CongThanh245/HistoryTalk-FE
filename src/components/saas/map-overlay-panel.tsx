@@ -29,6 +29,7 @@ import {
 } from "@/features/saas/hooks-map";
 import type { Assignment, ClassMapPin, Classroom, LocalContext, PersonalMapPin, PersonalPinColor } from "@/features/saas/types";
 import { cn } from "@/lib/utils/cn";
+import { DateInput } from "@/components/ui/date-input";
 
 /* ───────────────────────── Shell ─────────────────────────
  * Floats top-right of the map on desktop, bottom sheet on phones. */
@@ -669,12 +670,11 @@ export function ClassPinForm({
               {needsDue && (
                 <div>
                   <FieldLabel htmlFor="map-pin-due">Hạn nộp *</FieldLabel>
-                  <input
+                  <DateInput
                     id="map-pin-due"
-                    type="date"
                     value={effectiveDue}
                     min={initial?.dueDate || linked ? undefined : todayIso()}
-                    onChange={(e) => setDueDate(e.target.value)}
+                    onValueChange={setDueDate}
                     disabled={Boolean(linked)}
                     aria-invalid={Boolean(show("due"))}
                     className={cn(inputClass, "h-10", show("due") && invalidClass)}

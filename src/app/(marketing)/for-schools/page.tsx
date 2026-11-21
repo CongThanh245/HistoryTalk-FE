@@ -13,6 +13,7 @@ import {
 import { Container } from "@/components/marketing/container";
 import { B2bQuoteForm } from "@/components/marketing/b2b-quote-form";
 import { cn } from "@/lib/utils/cn";
+import { DateInput } from "@/components/ui/date-input";
 import { formatVnd } from "@/features/payment/tier-plans";
 import {
   B2B_CUSTOM_LIMITS,
@@ -411,20 +412,18 @@ export default function ForSchoolsPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="grid gap-1.5">
                     <span className="text-xs text-[var(--text-secondary)]">Từ ngày</span>
-                    <input
-                      type="date"
+                    <DateInput
                       value={settings.startDate}
-                      onChange={(e) => e.target.value && updateSettings({ startDate: e.target.value })}
+                      onValueChange={(v) => v && updateSettings({ startDate: v })}
                       className={dateInputClass}
                     />
                   </label>
                   <label className="grid gap-1.5">
                     <span className="text-xs text-[var(--text-secondary)]">Đến ngày</span>
-                    <input
-                      type="date"
+                    <DateInput
                       value={settings.endDate}
                       min={settings.startDate}
-                      onChange={(e) => e.target.value && updateSettings({ endDate: e.target.value })}
+                      onValueChange={(v) => v && updateSettings({ endDate: v })}
                       className={dateInputClass}
                       aria-invalid={!datesValid}
                     />

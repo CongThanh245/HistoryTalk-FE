@@ -36,6 +36,7 @@ import { apiErrorMessage, apiErrorStatus } from "@/features/saas/hooks-api";
 import { useAssignmentGradebook, useCancelAssignment, useUpdateAssignment } from "@/features/saas/hooks-assignment-api";
 import type { AssignmentGradebook, SubmissionItem, SubmissionStatus, UpdateAssignmentPayload } from "@/services/assignment.service";
 import { cn } from "@/lib/utils/cn";
+import { DateTimeInput } from "@/components/ui/date-input";
 
 export default function AssignmentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -401,7 +402,7 @@ function EditAssignmentDialog({
             <StaffFormTextarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className="min-h-[100px]" />
           </Field>
           <Field label="Hạn nộp" required error={errors.deadline} hint={`Hiện tại: ${formatLocalDateTime(a.deadline)}`} htmlFor="edit-due">
-            <StaffFormInput id="edit-due" type="datetime-local" value={form.deadline} onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value }))} />
+            <DateTimeInput component={StaffFormInput} id="edit-due" value={form.deadline} onValueChange={(v) => setForm((f) => ({ ...f, deadline: v }))} />
           </Field>
           {!isQuiz && (
             <Field

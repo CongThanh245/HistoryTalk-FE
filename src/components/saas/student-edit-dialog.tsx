@@ -12,6 +12,7 @@ import { apiErrorMessage, apiErrorStatus, useApiStudent, useStudentMutations } f
 import { studentDobBounds, studentDobRangeError } from "@/features/saas/student-import";
 import type { ApiStudent, Gender } from "@/services/school.service";
 import { cn } from "@/lib/utils/cn";
+import { DateInput } from "@/components/ui/date-input";
 
 export const GENDER_LABELS: Record<Gender, string> = { MALE: "Nam", FEMALE: "Nữ", OTHER: "Khác" };
 
@@ -200,14 +201,14 @@ export function StudentEditDialog({ student, onOpenChange }: { student: ApiStude
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Ngày sinh" error={shown.dob} htmlFor="student-edit-dob">
-              <StaffFormInput
+              <DateInput
+                component={StaffFormInput}
                 id="student-edit-dob"
-                type="date"
                 value={form.dob}
                 min={studentDobBounds().min}
                 max={studentDobBounds().max}
                 aria-invalid={!!shown.dob}
-                onChange={(e) => set("dob", e.target.value)}
+                onValueChange={(v) => set("dob", v)}
               />
             </Field>
             <Field label="Giới tính" error={shown.gender}>

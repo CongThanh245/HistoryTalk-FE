@@ -30,6 +30,7 @@ import type { AssignmentType } from "@/services/assignment.service";
 import type { ApiClassroom } from "@/services/school.service";
 import { useAuthStore } from "@/store/auth.store";
 import { cn } from "@/lib/utils/cn";
+import { DateTimeInput } from "@/components/ui/date-input";
 
 /**
  * Form "Giao bài tập" tren API that (POST /teacher/assignments).
@@ -226,7 +227,7 @@ export function AssignmentWizard({
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Hạn nộp" required error={show(errors.deadline)} hint="Phải ở tương lai. Học sinh nộp sau hạn sẽ bị tính nộp muộn." htmlFor="as-due">
-              <StaffFormInput id="as-due" type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+              <DateTimeInput component={StaffFormInput} id="as-due" value={deadline} onValueChange={setDeadline} />
             </Field>
             {type === "AI_CHAT_ROLEPLAY" && (
               <Field
