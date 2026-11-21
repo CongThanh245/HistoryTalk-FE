@@ -1,6 +1,13 @@
 import { axiosClient } from "@/configs/axios.client";
 import { fromPagination, type ApiPage, type EnterprisePackage, type SchoolStatus } from "@/services/school.service";
 import { withServerPage } from "@/lib/utils/pagination";
+import type {
+  ChatActivityData,
+  ContentSummaryData,
+  DashboardOverviewData,
+  QuizAnalyticsData,
+  UserAnalyticsData,
+} from "@/services/admin.dashboard.service";
 
 /**
  * 5 dashboard theo role (BE: AnalyticsDashboardController, US-SP6-06 → 10).
@@ -177,6 +184,67 @@ export interface SystemAdminComprehensiveDashboard {
   } | null;
 }
 
+// ── School admin — GET /school-admin/dashboard/{users,chat-activity,quiz,tokens} ──
+
+export interface SchoolDashboardRangeParams {
+  from?: string; // YYYY-MM-DD
+  to?: string;
+  granularity?: "day" | "week" | "month" | "year";
+}
+
+/** GET /school-admin/dashboard/tokens (DashboardTokenUsageResponse). Số liệu summary/trend/byRole/topUsers tính trong from..to. */
+export interface SchoolTokenAnalytics {
+  summary: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    remainingTokens: number;
+    averageRemainingTokens: number;
+    usersOutOfTokens: number;
+    estimatedCost: number;
+  };
+  trend: { date: string; promptTokens: number; completionTokens: number; totalTokens: number }[];
+  topUsersByTokenUsage: {
+    uid: string;
+    userName: string;
+    email?: string | null;
+    tierTitle?: string | null;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    remainingTokens: number;
+  }[];
+  /** Số liệu tích luỹ toàn thời gian của quỹ trường. */
+  schoolTokenManagement: {
+    totalSchoolTokenQuota: number;
+    unallocatedTokenQuota: number;
+    allocatedTokens: number;
+    quotaUsagePercentage: number;
+    tokensUsedByStudents: number;
+    tokensUsedByTeachers: number;
+    tokensUsedTotal: number;
+    studentTokenUsagePercentage: number;
+    teacherTokenUsagePercentage: number;
+    defaultDailyStudentQuota: number;
+    defaultDailyTeacherQuota: number;
+    pendingTokenBoostRequests: number;
+    topupPaidOrders: number;
+    topupTokensPurchased: number;
+    /** VND */
+    topupAmountPaid: number;
+  } | null;
+  tokenUsageByRole: {
+    role: "SCHOOL_STUDENT" | "TEACHER" | string;
+    users: number;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    usagePercentage: number;
+    defaultDailyQuota: number;
+  }[];
+  topClassroomsByTokenUsage: ClassroomTokenUsage[];
+}
+
 // ── Token analytics (school admin / teacher) ───────────────
 
 export interface ClassroomTokenUsage {
@@ -233,6 +301,38 @@ export interface ClassroomTokenParams {
 export const analyticsDashboardService = {
   getSchoolAdminDashboard: async (): Promise<SchoolAdminDashboard> => {
     const res = await axiosClient.get("/school-admin/dashboard");
+    return res.data.data;
+  },
+
+  // ── Bộ dashboard School Admin (Sprint 10): cùng shape với /system-admin/dashboard/*, chỉ dữ liệu của trường ──
+
+  getSchoolOverview: async (): Promise<DashboardOverviewData> => {
+    const res = await axiosClient.get("/school-admin/dashboard/overview");
+    return res.data.data;
+  },
+
+  getSchoolUserAnalytics: async (params: SchoolDashboardRangeParams = {}): Promise<UserAnalyticsData> => {
+    const res = await axiosClient.get("/school-admin/dashboard/users", { params });
+    return res.data.data;
+  },
+
+  getSchoolContentSummary: async (): Promise<ContentSummaryData> => {
+    const res = await axiosClient.get("/school-admin/dashboard/content");
+    return res.data.data;
+  },
+
+  getSchoolChatActivity: async (params: SchoolDashboardRangeParams = {}): Promise<ChatActivityData> => {
+    const res = await axiosClient.get("/school-admin/dashboard/chat-activity", { params });
+    return res.data.data;
+  },
+
+  getSchoolQuizAnalytics: async (params: SchoolDashboardRangeParams = {}): Promise<QuizAnalyticsData> => {
+    const res = await axiosClient.get("/school-admin/dashboard/quiz", { params });
+    return res.data.data;
+  },
+
+  getSchoolTokenAnalytics: async (params: SchoolDashboardRangeParams = {}): Promise<SchoolTokenAnalytics> => {
+    const res = await axiosClient.get("/school-admin/dashboard/tokens", { params });
     return res.data.data;
   },
 

@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { dashboardService } from "@/services/dashboard.service";
-import { analyticsDashboardService, type ClassroomTokenParams } from "@/services/analytics-dashboard.service";
+import {
+  analyticsDashboardService,
+  type ClassroomTokenParams,
+  type SchoolDashboardRangeParams,
+} from "@/services/analytics-dashboard.service";
 import { queryKeys } from "@/shared/query-key";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -29,6 +33,59 @@ export function useSchoolAdminDashboard(enabled = true) {
     queryFn: () => analyticsDashboardService.getSchoolAdminDashboard(),
     enabled,
     staleTime: ANALYTICS_STALE_TIME,
+  });
+}
+
+// ── Bộ dashboard School Admin (/school-admin/dashboard/*) ─────────────────────
+
+const SCHOOL_DASH = ["dashboard", "school-admin", "suite"] as const;
+const SCHOOL_DASH_STALE = 1000 * 60;
+
+export function useSchoolOverview() {
+  return useQuery({
+    queryKey: [...SCHOOL_DASH, "overview"],
+    queryFn: () => analyticsDashboardService.getSchoolOverview(),
+    staleTime: SCHOOL_DASH_STALE,
+  });
+}
+
+export function useSchoolUserAnalytics(params: SchoolDashboardRangeParams) {
+  return useQuery({
+    queryKey: [...SCHOOL_DASH, "users", params],
+    queryFn: () => analyticsDashboardService.getSchoolUserAnalytics(params),
+    staleTime: SCHOOL_DASH_STALE,
+  });
+}
+
+export function useSchoolContentSummary() {
+  return useQuery({
+    queryKey: [...SCHOOL_DASH, "content"],
+    queryFn: () => analyticsDashboardService.getSchoolContentSummary(),
+    staleTime: 1000 * 120,
+  });
+}
+
+export function useSchoolChatActivity(params: SchoolDashboardRangeParams) {
+  return useQuery({
+    queryKey: [...SCHOOL_DASH, "chat", params],
+    queryFn: () => analyticsDashboardService.getSchoolChatActivity(params),
+    staleTime: SCHOOL_DASH_STALE,
+  });
+}
+
+export function useSchoolQuizAnalytics(params: SchoolDashboardRangeParams) {
+  return useQuery({
+    queryKey: [...SCHOOL_DASH, "quiz", params],
+    queryFn: () => analyticsDashboardService.getSchoolQuizAnalytics(params),
+    staleTime: SCHOOL_DASH_STALE,
+  });
+}
+
+export function useSchoolTokenAnalytics(params: SchoolDashboardRangeParams) {
+  return useQuery({
+    queryKey: [...SCHOOL_DASH, "tokens", params],
+    queryFn: () => analyticsDashboardService.getSchoolTokenAnalytics(params),
+    staleTime: SCHOOL_DASH_STALE,
   });
 }
 

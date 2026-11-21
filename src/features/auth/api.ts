@@ -167,6 +167,16 @@ export const authApi = {
     );
   },
 
+  // Thu hồi mọi refresh token / phiên đăng nhập của tài khoản (kể cả thiết bị hiện tại).
+  logoutAll: async (): Promise<void> => {
+    await axiosClient.post("/auth/logout-all");
+  },
+
+  // Người dùng tự vô hiệu hoá (xoá mềm) tài khoản của mình; chỉ quản trị hệ thống khôi phục được.
+  deactivateMe: async (): Promise<void> => {
+    await axiosClient.patch("/auth/me/deactivate");
+  },
+
   refreshToken: async (
     refreshToken: string,
   ): Promise<{ accessToken: string; refreshToken: string }> => {

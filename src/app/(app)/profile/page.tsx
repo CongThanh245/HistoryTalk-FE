@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -25,6 +26,9 @@ import {
   useDeleteAvatar,
 } from "@/features/profile/hooks";
 import { useMyDashboard } from "@/features/dashboard/hooks";
+import { useDeactivateMe, useLogoutAll } from "@/features/auth/hooks";
+import { ConfirmDialog } from "@/components/commons/confirm-dialog";
+import { getApiErrorMessage } from "@/lib/utils/api-error";
 import { isPro, type UserProfile } from "@/services/user.service";
 import { UpgradeProDialog } from "@/components/layouts/sidebar/upgrade-pro-dialog";
 import { cn } from "@/lib/utils/cn";
@@ -52,6 +56,8 @@ import {
   Camera,
   Trash2,
   School,
+  LogOut,
+  UserX,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -488,19 +494,35 @@ function FormField({
         <Icon className="w-3.5 h-3.5" />
         {label}
       </Label>
-      <Input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={cn(
-          FIELD_INPUT,
-          disabled
-            ? "border-border-default bg-bg-elevated text-text-muted opacity-70"
-            : "border-border-strong bg-bg-main text-text-primary"
-        )}
-      />
+      {type === "date" ? (
+        <DateInput
+          component={Input}
+          value={value}
+          onValueChange={onChange}
+          max={new Date().toISOString().slice(0, 10)}
+          disabled={disabled}
+          className={cn(
+            FIELD_INPUT,
+            disabled
+              ? "border-border-default bg-bg-elevated text-text-muted opacity-70"
+              : "border-border-strong bg-bg-main text-text-primary"
+          )}
+        />
+      ) : (
+        <Input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={cn(
+            FIELD_INPUT,
+            disabled
+              ? "border-border-default bg-bg-elevated text-text-muted opacity-70"
+              : "border-border-strong bg-bg-main text-text-primary"
+          )}
+        />
+      )}
     </div>
   );
 }
@@ -795,7 +817,8 @@ function SecurityTab() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-md">
+    <div className="mx-auto max-w-md">
+    <form onSubmit={handleSubmit}>
       <ArchiveHeading label="Bảo mật" title="Đổi mật khẩu" />
 
       <div className="flex items-start gap-2 border-[var(--text-primary)] bg-bg-elevated px-4 py-3 text-sm text-text-secondary">
@@ -866,6 +889,78 @@ function SecurityTab() {
         </Link>
       </div>
     </form>
+    <AccountSessionSection />
+    </div>
+  );
+}
+
+/** Đăng xuất mọi thiết bị (mọi vai trò) và tự vô hiệu hoá tài khoản (chỉ khách hàng B2C). */
+function AccountSessionSection() {
+  const role = useAuthStore((s) => s.user?.role);
+  const logoutAll = useLogoutAll();
+  const deactivate = useDeactivateMe();
+  const [confirm, setConfirm] = useState<"logout-all" | "deactivate" | null>(null);
+  // Tài khoản giáo viên / học sinh / quản trị do trường hoặc hệ thống quản lý — không cho tự vô hiệu hoá.
+  const canDeactivate = role === "CUSTOMER";
+
+  const run = () => {
+    const m = confirm === "deactivate" ? deactivate : logoutAll;
+    m.mutate(undefined, {
+      onError: (err) =>
+        toast.error(
+          getApiErrorMessage(err, confirm === "deactivate" ? "Không vô hiệu hoá được tài khoản." : "Không đăng xuất được các thiết bị."),
+        ),
+    });
+  };
+
+  return (
+    <div className="mt-10 space-y-6">
+      <section>
+        <ArchiveHeading label="Phiên đăng nhập" title="Đăng xuất mọi thiết bị" />
+        <p className="py-3 text-sm text-text-secondary">
+          Thu hồi tất cả phiên đăng nhập của tài khoản trên mọi trình duyệt và điện thoại, kể cả thiết bị này. Dùng khi bạn quên đăng
+          xuất ở máy lạ hoặc nghi ngờ tài khoản bị lộ.
+        </p>
+        <Button type="button" variant="outline" className="w-full gap-2" onClick={() => setConfirm("logout-all")}>
+          <LogOut className="h-4 w-4" /> Đăng xuất khỏi tất cả thiết bị
+        </Button>
+      </section>
+
+      {canDeactivate && (
+        <section className="rounded-sm border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] p-4">
+          <p className="flex items-center gap-2 text-sm font-bold text-accent-danger">
+            <UserX className="h-4 w-4" /> Vô hiệu hoá tài khoản
+          </p>
+          <p className="mt-1.5 text-sm text-text-secondary">
+            Tài khoản sẽ bị khoá và bạn bị đăng xuất ngay. Gói đang dùng không được hoàn tiền. Muốn dùng lại, bạn cần liên hệ quản trị
+            HistoryTalk để khôi phục.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-3 w-full border-accent-danger text-accent-danger hover:bg-accent-danger hover:text-white"
+            onClick={() => setConfirm("deactivate")}
+          >
+            Vô hiệu hoá tài khoản
+          </Button>
+        </section>
+      )}
+
+      <ConfirmDialog
+        open={confirm !== null}
+        onOpenChange={(o) => !o && setConfirm(null)}
+        variant="danger"
+        title={confirm === "deactivate" ? "Vô hiệu hoá tài khoản?" : "Đăng xuất khỏi tất cả thiết bị?"}
+        description={
+          confirm === "deactivate"
+            ? "Bạn sẽ không đăng nhập được nữa cho đến khi quản trị viên khôi phục tài khoản."
+            : "Mọi thiết bị đang đăng nhập, kể cả thiết bị này, sẽ phải đăng nhập lại."
+        }
+        confirmLabel={confirm === "deactivate" ? "Vô hiệu hoá" : "Đăng xuất tất cả"}
+        isPending={logoutAll.isPending || deactivate.isPending}
+        onConfirm={run}
+      />
+    </div>
   );
 }
 

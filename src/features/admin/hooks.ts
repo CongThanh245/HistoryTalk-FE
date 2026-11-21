@@ -189,6 +189,25 @@ export function useAdminRestoreUser() {
   });
 }
 
+export function useAdminRestoreUsersBatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userIds: string[]) => adminUserService.restoreUsersBatch(userIds),
+    onSuccess: (res) => {
+      // Prefix ["admin","users"] để làm mới danh sách của mọi vai trò.
+      qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      qc.invalidateQueries({ queryKey: ADMIN_KEYS.stats });
+      const failed = res.failedUserIds?.length ?? 0;
+      if (failed > 0) toast.warning(`Đã mở khoá ${res.restoredCount} tài khoản, ${failed} tài khoản không mở khoá được`);
+      else toast.success(`Đã mở khoá ${res.restoredCount} tài khoản`);
+    },
+    onError: (err: unknown) => {
+      const error = err as { message?: string } | null;
+      toast.error(error?.message ?? "Mở khoá hàng loạt thất bại");
+    },
+  });
+}
+
 export function useAdminPermanentDeleteUser() {
   // TODO: Implement when backend supports permanent deletion
   return useMutation({

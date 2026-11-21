@@ -38,6 +38,7 @@ import {
   useAdminUpdateUser,
   useAdminDeleteUser,
   useAdminRestoreUser,
+  useAdminRestoreUsersBatch,
   type AdminUser,
 } from "@/features/admin/hooks";
 
@@ -152,6 +153,8 @@ export default function AdminAccountsPage() {
   const updateUser = useAdminUpdateUser();
   const deleteUser = useAdminDeleteUser();
   const restoreUser = useAdminRestoreUser();
+  const restoreBatch = useAdminRestoreUsersBatch();
+  const [batchOpen, setBatchOpen] = React.useState(false);
 
   // POST /auth/register-content-admin chỉ nhận roleName CONTENT_ADMIN | SYSTEM_ADMIN — không tạo được CUSTOMER qua đây.
   const canCreate = roleEnum === "CONTENT_ADMIN" || roleEnum === "SYSTEM_ADMIN";
@@ -184,6 +187,9 @@ export default function AdminAccountsPage() {
         u.fullName?.toLowerCase().includes(q)
     );
   }, [allUsers, search]);
+
+  // Tài khoản đang khoá trong danh sách đang xem (đúng vai trò + từ khoá tìm kiếm) — dùng cho mở khoá hàng loạt.
+  const lockedInView = React.useMemo(() => filtered.filter(isUserDeleted), [filtered]);
 
 
 
@@ -506,6 +512,17 @@ export default function AdminAccountsPage() {
                 className="pl-10 h-10 rounded-sm border bg-[var(--bg-elevated)] border-[var(--border-strong)]"
               />
             </div>
+            {lockedInView.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setBatchOpen(true)}
+                disabled={restoreBatch.isPending}
+                className="h-10 shrink-0 gap-1.5 rounded-sm border-[var(--status-success-border)] text-[var(--status-success)] hover:bg-[var(--status-success-bg)]"
+              >
+                <LockKeyholeOpen className="w-4 h-4" />
+                Mở khoá {lockedInView.length} tài khoản
+              </Button>
+            )}
             {canCreate && (
               <Button
                 onClick={openCreate}
@@ -702,6 +719,35 @@ export default function AdminAccountsPage() {
           );
         }}
       />
+
+      {/* Bulk restore confirm (PATCH /admin/users/restore/batch) */}
+      <ConfirmDialog
+        open={batchOpen}
+        onOpenChange={setBatchOpen}
+        title={`Mở khoá ${lockedInView.length} tài khoản?`}
+        description={
+          search.trim()
+            ? `Các tài khoản ${meta.label} đang khoá khớp với "${search.trim()}" sẽ được kích hoạt trở lại.`
+            : `Mọi tài khoản ${meta.label} đang khoá sẽ được kích hoạt trở lại.`
+        }
+        confirmLabel="Mở khoá tất cả"
+        isPending={restoreBatch.isPending}
+        onConfirm={() =>
+          restoreBatch.mutate(
+            lockedInView.map((u) => u.uid),
+            { onSuccess: () => setBatchOpen(false) },
+          )
+        }
+      >
+        <ul className="space-y-1">
+          {lockedInView.slice(0, 20).map((u) => (
+            <li key={u.uid} className="truncate">
+              • {u.fullName || u.userName} <span className="text-content-muted">({u.email})</span>
+            </li>
+          ))}
+          {lockedInView.length > 20 && <li className="text-content-muted">… và {lockedInView.length - 20} tài khoản khác</li>}
+        </ul>
+      </ConfirmDialog>
 
       {/* Restore confirm */}
       <ConfirmDialog

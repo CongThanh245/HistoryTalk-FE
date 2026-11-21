@@ -12,6 +12,7 @@ import { useApiSchoolClassrooms, useApiTeachers, useApiTokenQuota } from "@/feat
 import { useSchoolAdminDashboard } from "@/features/dashboard/hooks";
 import { TokenHero } from "./quota";
 import { ClassTokenUsagePanel } from "./token-usage";
+import { SchoolAnalyticsSection } from "./analytics";
 import { ErrorBlock } from "./shared";
 
 
@@ -54,8 +55,6 @@ export function OverviewWidgets() {
         <TokenHero quota={quota.data} dash={analytics.data} />
       )}
 
-      <ClassTokenUsagePanel />
-
       <StaffStatsGrid className="sm:grid-cols-3 lg:grid-cols-3">
         <StaffStatCard
           label={`Lớp năm học ${academicYearLabel(currentAcademicYear())}`}
@@ -66,6 +65,10 @@ export function OverviewWidgets() {
         <StaffStatCard label="Giáo viên" value={stat(teachers)} icon={<GraduationCap className="h-5 w-5" />} tone="green" />
         <StaffStatCard label="Học sinh" value={analyticsStat(analytics.data?.totalStudents)} icon={<Users className="h-5 w-5" />} tone="gold" />
       </StaffStatsGrid>
+
+      <SchoolAnalyticsSection />
+
+      <ClassTokenUsagePanel />
 
       <Panel>
         <SectionHeading title="Tình hình nộp bài" description="Tổng hợp bài nộp của học sinh trên toàn trường." />

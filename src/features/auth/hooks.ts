@@ -85,6 +85,34 @@ export function useResetPassword() {
   });
 }
 
+/** Sau khi BE đã thu hồi phiên: xoá auth phía client và về trang đăng nhập (giống useLogout). */
+function useLeaveSession() {
+  const queryClient = useQueryClient();
+  return () => {
+    resetClientAuth();
+    queryClient.removeQueries({ queryKey: queryKeys.profile.me });
+    window.location.replace("/login");
+  };
+}
+
+/** POST /auth/logout-all — đăng xuất khỏi mọi thiết bị, kể cả thiết bị này. */
+export function useLogoutAll() {
+  const leave = useLeaveSession();
+  return useMutation({
+    mutationFn: () => authApi.logoutAll(),
+    onSuccess: leave,
+  });
+}
+
+/** PATCH /auth/me/deactivate — tự vô hiệu hoá tài khoản rồi đăng xuất. */
+export function useDeactivateMe() {
+  const leave = useLeaveSession();
+  return useMutation({
+    mutationFn: () => authApi.deactivateMe(),
+    onSuccess: leave,
+  });
+}
+
 export function useLogout() {
   const queryClient = useQueryClient();
 

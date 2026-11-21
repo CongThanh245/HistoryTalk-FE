@@ -52,6 +52,12 @@ export interface UpdateRolePayload {
 }
 
 /** POST /auth/register-content-admin — chỉ tạo được CONTENT_ADMIN hoặc SYSTEM_ADMIN (SYSTEM_ADMIN gọi). */
+export interface BulkRestoreUsersResult {
+  restoredCount: number;
+  restoredUserIds: string[];
+  failedUserIds: string[];
+}
+
 export interface RegisterStaffPayload {
   userName: string;
   name: string;
@@ -163,6 +169,12 @@ export const adminUserService = {
   restoreUser: async (userId: string): Promise<AdminUser> => {
     const res = await axiosClient.patch(`${BASE}/${userId}/restore`);
     return res.data.data as AdminUser;
+  },
+
+  /** Restore several deactivated accounts at once (PATCH /admin/users/restore/batch). */
+  restoreUsersBatch: async (userIds: string[]): Promise<BulkRestoreUsersResult> => {
+    const res = await axiosClient.patch(`${BASE}/restore/batch`, { userIds });
+    return res.data.data as BulkRestoreUsersResult;
   },
 
   /** Create a CONTENT_ADMIN or SYSTEM_ADMIN account (SYSTEM_ADMIN only) */

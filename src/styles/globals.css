@@ -367,7 +367,11 @@ main:has(.map-page) > div {
   font-size: 11px;
   line-height: 1.15;
   font-weight: 650;
-  overflow-wrap: anywhere;
+  /* Never split a character's name mid-word: wrap only between words, balanced over two lines. */
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  text-wrap: balance;
 }
 
 .home-banner-spotlight {
@@ -382,7 +386,8 @@ main:has(.map-page) > div {
 
 .home-banner-portrait {
   position: relative;
-  aspect-ratio: 0.92;
+  /* Ảnh chân dung 3:4 có chữ thư pháp ở đáy — giữ đúng tỉ lệ để không bị cắt. */
+  aspect-ratio: 3 / 4;
   overflow: hidden;
   background: var(--bg-deep);
   border-radius: var(--radius-sm);
