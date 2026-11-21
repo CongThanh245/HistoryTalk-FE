@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useGoogleLogin, useLogin, useRegister, useResendVerification } from "@/features/auth/hooks";
 import { BrandLogo } from "@/components/commons/brand-logo";
 import { cn } from "@/lib/utils/cn";
+import { ForgotPasswordDialog } from "@/components/auth/ForgotPasswordForm";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -76,6 +77,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   const isRegister = mode === "register";
 
@@ -240,6 +242,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-[var(--bg-main)]">
+      <ForgotPasswordDialog
+        open={forgotOpen}
+        onOpenChange={setForgotOpen}
+        defaultEmail={email.includes("@") ? email.trim() : ""}
+      />
       {/* ── Left — Hero ── */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col bg-[var(--bg-deep)] border-r border-[var(--text-primary)]">
         <div
@@ -434,13 +441,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     Mật khẩu
                   </Label>
                   {!isRegister && (
-                    <Link
-                      href="/forgot-password"
+                    <button
+                      type="button"
                       tabIndex={-1}
+                      onClick={() => setForgotOpen(true)}
                       className="text-xs underline-offset-2 hover:underline text-gold-on-light"
                     >
                       Quên mật khẩu?
-                    </Link>
+                    </button>
                   )}
                 </div>
                 <div className="relative">
