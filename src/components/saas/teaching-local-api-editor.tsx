@@ -39,6 +39,7 @@ import {
   type LocalScope,
 } from "@/services/local-content.service";
 import { useAuthStore } from "@/store/auth.store";
+import { LocalContextStory } from "@/components/saas/local-context-story";
 
 /*
  * Teacher-authored contexts / characters (Sprint 6 API). Same content as the Content Admin's contexts and
@@ -583,7 +584,9 @@ function LocalReadOnlyView({ kind, item, myUid }: { kind: LocalKind; item: Local
             </TabsTrigger>
           ))}
         </TabsList>
-        <TabsContent value="overview" className="mt-0">
+        <TabsContent value="overview" className="mt-0 space-y-5">
+          {/* A colleague's published story: listen like a student (read only, no editing). */}
+          {kind === "CONTEXT" && <LocalContextStory item={item} viewer="teacher" />}
           <Panel>
             <LocalItemPreview item={item} />
           </Panel>

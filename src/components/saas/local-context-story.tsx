@@ -9,8 +9,8 @@ import { MessageCircle, RotateCcw, UserRound, X } from "lucide-react";
 import { ContextIntroCover } from "@/components/event/context-intro-cover";
 import { ContextStoryIntro } from "@/components/story/player/context-story-intro";
 import { ROUTES } from "@/constants/routes";
-import { useStudentLocalContent, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
-import { isPlayableScript } from "@/features/story/story-script";
+import { useSchoolLocalContent, useStudentLocalContent, useTeacherLocalContent } from "@/features/saas/hooks-local-content";
+import { isStoryScript } from "@/features/story/story-script";
 import { getYouTubeEmbedUrl } from "@/lib/utils/video-url";
 import type { HistoricalEvent } from "@/services/event.service";
 import type { LocalItem } from "@/services/local-content.service";
@@ -34,17 +34,44 @@ function asEvent(item: LocalItem): HistoricalEvent {
  * watch the intro video or meet the characters, each opening full screen. After the story come the characters to
  * chat with, and a way to listen again. Renders nothing when the context has neither a story nor a video.
  */
-export function LocalContextStory({ item, teacher }: { item: LocalItem; teacher?: boolean }) {
-  const script = item.type === "CONTEXT" && isPlayableScript(item.storyScript) ? item.storyScript : null;
+export function LocalContextStory({
+  item,
+  teacher,
+  viewer = teacher ? "teacher" : "student",
+  includeDraft = false,
+  height = 420,
+  portal = true,
+}: {
+  item: LocalItem;
+  teacher?: boolean;
+  /** Whose API lists the speakers: the student's, the teacher's (own + school-wide) or the School Admin's. */
+  viewer?: "student" | "teacher" | "schoolAdmin";
+  /** Also offer a draft story (School Admin reviewing it before students see it). */
+  includeDraft?: boolean;
+  height?: number;
+  /**
+   * Render the full-screen player into <body> (default). Inside a modal Sheet/Dialog pass false: a modal makes
+   * everything outside it inert, so the player must stay inside it (fixed positioning still covers the screen).
+   */
+  portal?: boolean;
+}) {
+  const raw = item.type === "CONTEXT" && isStoryScript(item.storyScript) ? item.storyScript : null;
+  // Same rule as isPlayableScript (published, more than the start node), drafts too when asked.
+  const script = raw && raw.nodes.length > 1 && (raw.status === "published" || includeDraft) ? raw : null;
+  const isDraft = !!script && script.status !== "published";
   const hasVideo = item.type === "CONTEXT" && !!item.videoUrl;
   const [stage, setStage] = React.useState<Stage | null>(null);
   const router = useRouter();
 
   // Characters are the local characters linked to this context (students: published ones of their classes).
   const enabled = item.type === "CONTEXT" && (!!script || hasVideo);
-  const student = useStudentLocalContent(!teacher && enabled);
-  const mine = useTeacherLocalContent(!!teacher && enabled);
-  const pool = teacher ? mine.characters : student.items.filter((i) => i.type === "CHARACTER");
+  const student = useStudentLocalContent(viewer === "student" && enabled);
+  const mine = useTeacherLocalContent(viewer === "teacher" && enabled);
+  const school = useSchoolLocalContent(viewer === "schoolAdmin" && enabled);
+  const pool =
+    viewer === "teacher"
+      ? mine.characters
+      : (viewer === "schoolAdmin" ? school.items : student.items).filter((i) => i.type === "CHARACTER");
   const characters = pool.filter((c) => c.contextIds?.includes(item.id));
   const narrator = script ? characters.find((c) => c.id === script.narratorId) ?? null : null;
 
@@ -60,11 +87,17 @@ export function LocalContextStory({ item, teacher }: { item: LocalItem; teacher?
 
   if (!enabled) return null;
   const openChat = (id: string) => router.push(ROUTES.CHAT(id));
+  const mount = (layer: React.ReactNode) => (portal ? createPortal(layer, document.body) : layer);
   const embed = hasVideo ? getYouTubeEmbedUrl(item.videoUrl, { autoplay: true }) : null;
 
   return (
     <>
-      <div className="h-[420px] overflow-hidden rounded-sm border border-[var(--text-primary)] max-sm:h-[460px]">
+      <div className="relative overflow-hidden rounded-sm border border-[var(--text-primary)]" style={{ height }}>
+        {isDraft && (
+          <span className="absolute left-3 top-3 z-20 rounded-sm bg-[#D9B25C] px-2 py-0.5 text-[11px] font-bold text-[#111]">
+            Kịch bản nháp · học sinh chưa thấy
+          </span>
+        )}
         <ContextIntroCover
           event={asEvent(item)}
           script={script}
@@ -76,7 +109,7 @@ export function LocalContextStory({ item, teacher }: { item: LocalItem; teacher?
       </div>
 
       {stage &&
-        createPortal(
+        mount(
           <div className="fixed inset-0 z-[70] bg-black text-[#F5F2EA]" role="dialog" aria-modal="true" aria-label={item.name}>
             {stage === "story" && script && (
               <ContextStoryIntro
@@ -162,7 +195,6 @@ export function LocalContextStory({ item, teacher }: { item: LocalItem; teacher?
               <X className="h-5 w-5" aria-hidden="true" />
             </button>}
           </div>,
-          document.body,
         )}
     </>
   );

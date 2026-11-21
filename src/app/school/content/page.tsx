@@ -28,6 +28,7 @@ import { LOCAL_SCOPE_LABEL, useSchoolLocalContent, useSchoolLocalDocuments, useS
 import { LOCAL_KIND_LABELS } from "@/features/saas/hooks-teaching";
 import type { LocalItem, LocalKind, LocalScope, LocalStatus } from "@/services/local-content.service";
 import { cn } from "@/lib/utils/cn";
+import { LocalContextStory } from "@/components/saas/local-context-story";
 
 /** School Admin: oversee the local history content teachers publish themselves (Role Matrix row 13, Sprint 6 API v3). */
 export default function SchoolContentPage() {
@@ -394,6 +395,9 @@ function ReviewSheet({
               </p>
 
               <ReviewNote item={item} />
+
+              {/* The context's story, drafts included, to check it before (or after) students hear it. */}
+              {item.type === "CONTEXT" && <LocalContextStory item={item} viewer="schoolAdmin" includeDraft height={360} portal={false} />}
 
               <LocalItemPreview item={item} />
 
