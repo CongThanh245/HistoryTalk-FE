@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMapInstance } from "leaflet";
 import { Crosshair } from "lucide-react";
 import { MAP_BOUNDS } from "@/components/historical-map/map-overlay.types";
+import { MAP_SEA_COLOR, addSimpleBasemap } from "@/components/historical-map/basemap";
 
 export interface MapView {
   latitude: number;
@@ -52,10 +53,8 @@ export function MapFocusPicker({ initial, onChange }: { initial: MapView; onChan
       });
       map.zoomControl.setPosition("bottomright");
       map.attributionControl.setPrefix(false);
-      L.tileLayer(
-        "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-        { maxZoom: 16, attribution: "&copy; Esri, &copy; OpenStreetMap" },
-      ).addTo(map);
+      map.getContainer().style.background = MAP_SEA_COLOR;
+      void addSimpleBasemap(L, map).catch(() => undefined);
 
       const report = () => {
         const center = map.getCenter();

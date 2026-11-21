@@ -1,4 +1,4 @@
-/* Leaflet always renders a light "printed sheet" (OSM tiles), so on-map ink/crimson stay explicit. */
+/* Leaflet always renders a light "printed sheet" (self-drawn GeoJSON land, see basemap.ts), so on-map ink/crimson stay explicit. */
 .historical-map-shell {
   background: var(--bg-deep);
   overflow: hidden;
@@ -28,6 +28,8 @@
 }
 .historical-leaflet-map.leaflet-container {
   font-family: var(--font-body), system-ui, sans-serif;
+  /* Sea. No tile layer: land is drawn from our own GeoJSON (see basemap.ts / MAP_SEA_COLOR). */
+  background: #DAD9D3;
 }
 .historical-leaflet-map .leaflet-tile-pane {
   filter: grayscale(0.9) contrast(1.04) brightness(1.03);
@@ -77,6 +79,14 @@
   text-transform: uppercase;
   white-space: nowrap;
   text-shadow: 0 1px 0 rgba(245, 242, 234, 0.72);
+}
+/* Neighbouring countries: quiet grey so Việt Nam stays the focus. */
+.historical-map-neighbor-label {
+  color: rgba(17, 17, 17, 0.34);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-shadow: 0 1px 0 rgba(245, 242, 234, 0.8);
 }
 .historical-map-region-label {
   color: rgba(17, 17, 17, 0.46);
@@ -357,7 +367,7 @@
 .map-layer-swatch--crimson { background: var(--accent-gold); }
 .map-layer-swatch--ink { background: #111111; }
 
-/* Basemap attribution (required by Esri terms): small, paper-coloured, never covering the map controls. */
+/* Basemap data credit (Natural Earth): small, paper-coloured, never covering the map controls. */
 .historical-leaflet-map .leaflet-control-attribution {
   margin: 0 !important;
   padding: 1px 6px;

@@ -13,12 +13,19 @@ import type {
   Map as LeafletMapInstance,
   Marker,
 } from "leaflet";
-import type { GeoJsonObject } from "geojson";
 import { useQuery } from "@tanstack/react-query";
 import type { MapPin } from "@/services/map-pin.service";
 import { mapFocusService } from "@/services/map-focus.service";
 import type { HistoricalEvent } from "@/services/event.service";
 import { MAP_BOUNDS, type MapCoordinates, type OverlayPin } from "./map-overlay.types";
+import {
+  BASEMAP_ATTRIBUTION,
+  NEIGHBOR_LAND_STYLE,
+  NEIGHBORS_GEOJSON_URL,
+  VIETNAM_ADM0_GEOJSON_URL,
+  VIETNAM_LAND_STYLE,
+  fetchGeoJson,
+} from "./basemap";
 
 interface LeafletMapProps {
   battle?: HistoricalEvent;
@@ -456,40 +463,23 @@ async function drawVietnamBasemap(
 ): Promise<LayerGroup> {
   const layer = L.layerGroup().addTo(map);
 
-  // Label-free basemap (Esri Light Gray Base, no API key; labels live in a separate Esri layer we don't load): standard OSM tiles print place names in the controlling party's language
-  // (e.g. Chinese names on Hoàng Sa / Trường Sa). Every label on this map is drawn by the app in Vietnamese.
-  L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-    {
-      maxZoom: 16,
-      attribution: 'Nền bản đồ &copy; Esri — Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
-    },
-  ).addTo(map);
-
-  const [vietnamGeoJson, provinceGeoJson] = await Promise.all([
-    fetch("/data/vietnam-adm0.geojson").then((response) => {
-      if (!response.ok) {
-        throw new Error("Unable to load Vietnam boundary GeoJSON");
-      }
-      return response.json() as Promise<GeoJsonObject>;
-    }),
-    fetch("/data/vietnam-adm1.geojson").then((response) => {
-      if (!response.ok) {
-        throw new Error("Unable to load Vietnam province GeoJSON");
-      }
-      return response.json() as Promise<GeoJsonObject>;
-    }),
+  // No external tiles (they print English / foreign names we can't control, see ./basemap.ts):
+  // neighbouring land and Việt Nam come from our own GeoJSON, every name is drawn below in Vietnamese.
+  const [neighborGeoJson, vietnamGeoJson, provinceGeoJson] = await Promise.all([
+    fetchGeoJson(NEIGHBORS_GEOJSON_URL),
+    fetchGeoJson(VIETNAM_ADM0_GEOJSON_URL),
+    fetchGeoJson("/data/vietnam-adm1.geojson"),
   ]);
+
+  L.geoJSON(neighborGeoJson, {
+    interactive: false,
+    style: NEIGHBOR_LAND_STYLE,
+    attribution: BASEMAP_ATTRIBUTION,
+  }).addTo(layer);
 
   L.geoJSON(vietnamGeoJson, {
     interactive: false,
-    style: {
-      color: "#B8321F",
-      weight: 3,
-      opacity: 0.95,
-      fillColor: "#F5F2EA",
-      fillOpacity: 0.3,
-    },
+    style: VIETNAM_LAND_STYLE,
   }).addTo(layer);
 
   const provinceLabelLayer = L.layerGroup().addTo(layer);
@@ -570,6 +560,14 @@ async function drawVietnamBasemap(
   // Phú Quốc is in the boundary data, but unlabelled at the country zoom it read as missing; name it like the archipelagos.
   addMapLabel(L, layer, [9.82, 103.97], "Phú Quốc");
   addMapLabel(L, layer, [13.5, 112.1], "Biển Đông", "sea");
+  addMapLabel(L, layer, [19.75, 107.95], "Vịnh Bắc Bộ", "sea");
+  addMapLabel(L, layer, [10.6, 101.9], "Vịnh Thái Lan", "sea");
+
+  // Neighbours, muted so Việt Nam stays the focus; names in Vietnamese (the basemap carries none).
+  addMapLabel(L, layer, [23.0, 109.6], "Trung Quốc", "neighbor");
+  addMapLabel(L, layer, [19.3, 102.6], "Lào", "neighbor");
+  addMapLabel(L, layer, [15.7, 101.2], "Thái Lan", "neighbor");
+  addMapLabel(L, layer, [12.7, 104.6], "Campuchia", "neighbor");
 
   return layer;
 }
@@ -668,7 +666,7 @@ function addMapLabel(
   layer: LayerGroup,
   position: LatLngExpression,
   label: string,
-  variant?: "country" | "region" | "sea",
+  variant?: "country" | "region" | "sea" | "neighbor",
 ) {
   const variantClass =
     variant === "country"
@@ -677,7 +675,9 @@ function addMapLabel(
         ? "historical-map-region-label"
         : variant === "sea"
           ? "historical-map-sea-label"
-          : "";
+          : variant === "neighbor"
+            ? "historical-map-neighbor-label"
+            : "";
 
   L.marker(position, {
     interactive: false,
