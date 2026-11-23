@@ -3,7 +3,8 @@ import { userService, type UpdateProfilePayload, type ChangePasswordPayload } fr
 import { paymentService } from "@/services/payment.service";
 import { queryKeys } from "@/shared/query-key";
 import { useAuthStore } from "@/store/auth.store";
-import { resetClientAuth } from "@/features/auth/auth-cookies";
+import { persistAuthCookies, resetClientAuth } from "@/features/auth/auth-cookies";
+import { authApi } from "@/features/auth/api";
 import { toast } from "sonner";
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -89,10 +90,23 @@ export function useUpdateProfile() {
 export function useChangePassword() {
   return useMutation({
     mutationFn: (payload: ChangePasswordPayload) => userService.changePassword(payload),
-    onSuccess: () => {
-      toast.success("Đổi mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.");
-      resetClientAuth();
-      window.location.replace("/login");
+    // The BE revokes every session on a password change, so sign straight back in with the new password
+    // instead of bouncing the user to /login; fall back to /login only if that re-login fails.
+    onSuccess: async (_data, payload) => {
+      const email = useAuthStore.getState().user?.email;
+      try {
+        if (!email) throw new Error("Missing email");
+        const { user, tokens } = await authApi.login({ email, password: payload.newPassword });
+        useAuthStore.getState().setAuth(user, tokens);
+        persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
+        toast.success("Đổi mật khẩu thành công!");
+        // Reload so cached profile/queries (still flagged mustChangePassword) are fetched again with the new session.
+        window.location.reload();
+      } catch {
+        toast.success("Đổi mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.");
+        resetClientAuth();
+        window.location.replace("/login");
+      }
     },
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Đổi mật khẩu thất bại. Vui lòng kiểm tra lại."));
