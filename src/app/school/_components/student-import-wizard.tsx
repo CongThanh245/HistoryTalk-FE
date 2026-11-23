@@ -265,7 +265,7 @@ export function StudentImportWizard({ open, onOpenChange }: { open: boolean; onO
                 onRemove={removeFile}
                 mappingSlot={
                   table && mapping && mappingErrors.length > 0 ? (
-                    <MappingStep table={table} mapping={mapping} onChange={setMapping} errors={mappingErrors} />
+                    <MappingStep table={table} mapping={mapping} onChange={setMapping} errors={mappingErrors} onRemove={removeFile} />
                   ) : null
                 }
               />
@@ -510,52 +510,113 @@ function UploadStep({
 /* ───────────────────────── Step 2 ───────────────────────── */
 const UNUSED = "-1";
 
+// Deprecated column: students share the school pool now, so it is never worth asking the teacher about it.
+const MAPPABLE_FIELDS = STUDENT_IMPORT_FIELDS.filter((f) => f.key !== "additionalToken");
+
 function MappingStep({
   table,
   mapping,
   onChange,
   errors,
+  onRemove,
 }: {
   table: ImportTable;
   mapping: StudentColumnMapping;
   onChange: (m: StudentColumnMapping) => void;
   errors: string[];
+  onRemove: () => void;
 }) {
-  const options = [{ value: UNUSED, label: "— Không dùng —" }, ...table.headers.map((h, i) => ({ value: String(i), label: h }))];
-  const sample = (i: number) =>
-    i < 0
-      ? ""
-      : table.rows
-          .slice(0, 3)
-          .map((r) => r[i])
-          .filter(Boolean)
-          .join(" · ");
+  // A file missing required columns is almost always the wrong file: say so first, keep manual matching as an opt-in.
+  const [manual, setManual] = React.useState(false);
+  const missing = STUDENT_IMPORT_FIELDS.filter((f) => f.required && mapping[f.key] < 0);
+
+  const firstValue = (i: number) => table.rows.map((r) => (r[i] ?? "").trim()).find(Boolean) ?? "";
+  const columnOptions = table.headers.map((h, i) => {
+    const v = firstValue(i);
+    return { value: String(i), label: v ? `Cột “${h}” — vd: ${v}` : `Cột “${h}”` };
+  });
+  const samples = (i: number) =>
+    table.rows
+      .slice(0, 3)
+      .map((r) => (r[i] ?? "").trim())
+      .filter(Boolean)
+      .join(" · ");
+
+  if (!manual && missing.length > 0) {
+    return (
+      <div role="alert" className="space-y-3 rounded-lg border border-[var(--accent-danger)] bg-[color-mix(in_srgb,var(--accent-danger)_6%,transparent)] p-4">
+        <p className="flex items-start gap-2 text-sm font-semibold text-[var(--accent-danger)]">
+          <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          File không đúng định dạng danh sách học sinh
+        </p>
+        <div className="space-y-1 text-sm text-content-text">
+          <p>
+            Thiếu cột bắt buộc: <b>{missing.map((f) => f.label).join(", ") || "—"}</b>.
+          </p>
+          <p className="text-content-muted">Các cột trong file của bạn: {table.headers.join(", ") || "(không có)"}</p>
+        </div>
+        <p className="text-sm text-content-muted">Có thể bạn đã chọn nhầm file. Hãy tải file mẫu, điền danh sách học sinh rồi tải lên lại.</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" className="btn-crimson" onClick={() => void downloadStudentTemplate()}>
+            <Download className="h-4 w-4" aria-hidden="true" /> Tải file mẫu
+          </button>
+          <button type="button" className="btn-line" onClick={onRemove}>
+            Chọn file khác
+          </button>
+          <button type="button" className="archive-link text-sm" onClick={() => setManual(true)}>
+            File đúng nhưng tên cột khác? Tự ghép cột
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-content-muted">
-        Không nhận ra một số cột trong file (tên cột khác file mẫu). Chọn cột tương ứng bên dưới, hoặc dùng file mẫu cho nhanh.
+    <div className="space-y-3">
+      <p className="text-sm text-content-text">
+        Với mỗi thông tin bên trái, chọn <b>cột trong file của bạn</b> chứa thông tin đó. Thông tin không có trong file thì chọn “Để trống”.
       </p>
-      <ul className="divide-y divide-[var(--border-default)] border-y border-border-card">
-        {STUDENT_IMPORT_FIELDS.map((f) => (
-          <li key={f.key} className="grid gap-2 py-3 sm:grid-cols-[minmax(0,1fr)_240px] sm:items-center sm:gap-4">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-content-heading">
-                {f.label}
-                {f.required && <span className="text-[var(--accent-danger)]">*</span>}
-                <span className="ml-2 font-mono text-[11px] font-normal text-content-muted">{f.column}</span>
-              </p>
-              <p className="text-xs text-content-muted">{f.hint}</p>
-              {mapping[f.key] >= 0 && <p className="truncate text-xs text-content-text">Ví dụ: {sample(mapping[f.key]) || "—"}</p>}
-            </div>
-            <StaffFormSelect
-              value={String(mapping[f.key])}
-              onValueChange={(v) => onChange({ ...mapping, [f.key]: Number(v) } as Record<StudentImportField, number>)}
-              options={options}
-              className="w-full"
-            />
-          </li>
-        ))}
+      <div className="hidden grid-cols-[minmax(0,1fr)_280px] gap-4 border-b border-border-card pb-2 text-xs font-semibold uppercase tracking-wide text-content-muted sm:grid">
+        <span>Thông tin học sinh</span>
+        <span>Lấy từ cột nào trong file?</span>
+      </div>
+      <ul className="divide-y divide-[var(--border-default)]">
+        {MAPPABLE_FIELDS.map((f) => {
+          const idx = mapping[f.key];
+          const unmappedRequired = f.required && idx < 0;
+          const options = [
+            { value: UNUSED, label: f.required ? "Chọn cột…" : "Để trống (không có trong file)" },
+            ...columnOptions,
+          ];
+          return (
+            <li key={f.key} className="grid gap-2 py-3 sm:grid-cols-[minmax(0,1fr)_280px] sm:items-start sm:gap-4">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-content-heading">
+                  {f.label}
+                  {f.required ? (
+                    <span className="ml-1.5 text-xs font-medium text-[var(--accent-danger)]">bắt buộc</span>
+                  ) : (
+                    <span className="ml-1.5 text-xs font-normal text-content-muted">không bắt buộc</span>
+                  )}
+                </p>
+                <p className="text-xs text-content-muted">{f.hint}</p>
+              </div>
+              <div className="min-w-0 space-y-1">
+                <StaffFormSelect
+                  value={String(idx)}
+                  onValueChange={(v) => onChange({ ...mapping, [f.key]: Number(v) } as Record<StudentImportField, number>)}
+                  options={options}
+                  className={cn("w-full", unmappedRequired && "border-[var(--accent-danger)]")}
+                />
+                {idx >= 0 ? (
+                  <p className="truncate text-xs text-content-muted">Dữ liệu trong file: {samples(idx) || "(trống)"}</p>
+                ) : unmappedRequired ? (
+                  <p className="text-xs text-[var(--accent-danger)]">Cần chọn cột để tiếp tục</p>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
       </ul>
       {errors.length > 0 && (
         <ul role="alert" className="space-y-1 text-sm text-[var(--accent-danger)]">
@@ -566,6 +627,9 @@ function MappingStep({
           ))}
         </ul>
       )}
+      <button type="button" className="archive-link text-sm" onClick={onRemove}>
+        Chọn file khác
+      </button>
     </div>
   );
 }
