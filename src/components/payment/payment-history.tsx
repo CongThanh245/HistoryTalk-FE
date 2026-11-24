@@ -20,6 +20,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { queryKeys } from "@/shared/query-key";
+import { parseUtcDate, VIETNAM_TIME_ZONE } from "@/lib/utils/datetime";
 import { paymentService, type PaymentHistoryItem } from "@/services/payment.service";
 import { adminDashboardService } from "@/services/admin.dashboard.service";
 import { StaffShell } from "@/components/staff/staff-shell";
@@ -42,8 +43,9 @@ function formatCurrency(amount: number) {
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "--";
 
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return "--";
+  // BE sends bare UTC LocalDateTime strings ("2026-11-24T01:39:00"); new Date() would read them as local time.
+  const date = parseUtcDate(dateStr);
+  if (!date) return "--";
 
   return new Intl.DateTimeFormat("vi-VN", {
     day: "2-digit",
@@ -51,6 +53,7 @@ function formatDate(dateStr: string | null) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: VIETNAM_TIME_ZONE,
   }).format(date);
 }
 
@@ -172,7 +175,8 @@ function HistoryRow({ item, index }: { item: PaymentHistoryItem; index: number }
           {formatCurrency(item.amount)}
         </p>
         <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
-          {pending ? "Đang chờ xác nhận" : "Gói Pro HistoryTalk"}
+          {/* Every tier lands here (Plus, Pro…), so describe the payment, not a fixed plan name. */}
+          {paid ? "Đã thanh toán" : pending ? "Đang chờ xác nhận" : "Không phát sinh phí"}
         </p>
       </div>
     </article>

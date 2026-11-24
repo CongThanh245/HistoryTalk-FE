@@ -37,6 +37,7 @@ import { SchoolQuotaCard } from "@/components/saas/school-quota-card";
 import { useAuthStore } from "@/store/auth.store";
 import { useEntitlements } from "@/features/saas/entitlements";
 import { useTodayQuota } from "@/features/saas/quota-bonus";
+import { parseUtcDate, VIETNAM_TIME_ZONE } from "@/lib/utils/datetime";
 import {
   User,
   Crown,
@@ -80,12 +81,13 @@ function formatDate(iso: string | null | undefined): string {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-  }).format(new Date(iso));
+    timeZone: VIETNAM_TIME_ZONE,
+  }).format(parseUtcDate(iso) ?? new Date(iso));
 }
 
 function formatRemainingTime(iso: string | null | undefined): string | null {
   if (!iso) return null;
-  const diffMs = new Date(iso).getTime() - Date.now();
+  const diffMs = (parseUtcDate(iso) ?? new Date(iso)).getTime() - Date.now();
   if (diffMs <= 0) return "Đã hết hạn";
 
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
