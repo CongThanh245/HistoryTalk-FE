@@ -27,6 +27,7 @@ import { recordStudyActivity } from "@/features/gamification/study-check-in";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { queryKeys } from "@/shared/query-key";
 import { invalidateTokenBalance } from "@/features/chat/token-balance";
+import { useProfile } from "@/features/profile/hooks";
 import { Avatar3DModal } from "./Avatar3DModal";
 import type { VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
 import { cn } from "@/lib/utils/cn";
@@ -427,6 +428,10 @@ export function ChatMain({
     (isSchoolAccount ? entitlements.voiceCall : hasPlusAccess(accessUser));
   const sessionIdRef = useRef(sessionId);
   const isStaffOrAdmin = user?.role === "CONTENT_ADMIN" || user?.role === "SYSTEM_ADMIN";
+  // Show the live balance, so a streak or quest reward credited after the reply also counts here (same source as the sidebar).
+  const { data: profileData } = useProfile();
+  const liveRemainingTokens =
+    user?.role === "CUSTOMER" ? profileData?.token : user?.role === "SCHOOL_STUDENT" ? todayQuota?.remaining : undefined;
   // Customers unlock calls with their personal tier; school accounts with the school package.
   const canUseVoiceCall =
     isStaffOrAdmin || (isSchoolAccount ? entitlements.voiceCall : hasPlusAccess(accessUser));
@@ -1342,7 +1347,7 @@ export function ChatMain({
               <>
                 <div className="flex items-center gap-1.5">
                   <Coins className="w-3 h-3 text-content-muted" />
-                  <span>Còn lại: <strong className="tabular-nums text-content-text">{lastTokenUsage.remainingTokens.toLocaleString()}</strong></span>
+                  <span>Còn lại: <strong className="tabular-nums text-content-text">{(liveRemainingTokens ?? lastTokenUsage.remainingTokens).toLocaleString("vi-VN")}</strong></span>
                 </div>
                 <span className="w-px h-3 bg-(--border-default)" />
                 <span className="tabular-nums">Đã dùng: {(lastTokenUsage.promptTokens + lastTokenUsage.completionTokens).toLocaleString()}</span>
