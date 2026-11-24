@@ -85,13 +85,14 @@ export function ApiGapNote({ children, className }: { children: React.ReactNode;
 
 
 export const PACKAGE_LABELS: Record<EnterprisePackage, string> = {
-  ENTERPRISE_SMALL: "Doanh nghiệp S",
-  ENTERPRISE_MEDIUM: "Doanh nghiệp M",
-  ENTERPRISE_LARGE: "Doanh nghiệp L",
-  ENTERPRISE_CUSTOM: "Doanh nghiệp tuỳ chỉnh",
+  // Same names as the System Admin school pages and the pricing page, so a school sees the package it bought.
+  ENTERPRISE_SMALL: "Enterprise S",
+  ENTERPRISE_MEDIUM: "Enterprise M",
+  ENTERPRISE_LARGE: "Enterprise L",
+  ENTERPRISE_CUSTOM: "Enterprise tuỳ chỉnh",
 };
 
-/** e.g. "Doanh nghiệp M · 1.016.750.000 token/năm học" (quỹ chung cả năm học 01/09–31/05). */
+/** e.g. "Enterprise M · 1.016.750.000 token/năm học" (quỹ chung cả năm học 01/09–31/05). */
 export function packageLabel(p: EnterprisePackage | string | undefined | null) {
   if (!p) return "—";
   const known = p as EnterprisePackage;
