@@ -124,7 +124,15 @@ export default function RootLayout({
                     var area = areas[role];
                     var outsideArea = area && !(pathname === area || pathname.startsWith(area + "/"));
 
-                    if (isLanding || isAuthOnly || outsideArea) {
+                    // /login?next=/school/tokens: the middleware sent the user here only because the access-token
+                    // cookie had expired; go back to that page (same-site paths only), else to the role home.
+                    var next = isAuthOnly ? new URLSearchParams(window.location.search).get("next") : null;
+                    var safeNext = next && next.charAt(0) === "/" && next.charAt(1) !== "/" && next.charAt(1) !== "\\\\" ? next : null;
+                    var nextInArea = safeNext && (!area || safeNext === area || safeNext.indexOf(area + "/") === 0);
+
+                    if (isAuthOnly && nextInArea) {
+                      window.location.replace(safeNext);
+                    } else if (isLanding || isAuthOnly || outsideArea) {
                       window.location.replace(homes[role] || "/home");
                     }
                   } else {

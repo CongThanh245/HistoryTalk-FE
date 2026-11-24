@@ -14,6 +14,7 @@ import {
   VerifyEmailRequest,
 } from "./type";
 import { persistAuthCookies, resetClientAuth } from "./auth-cookies";
+import { safeNextPath } from "@/lib/utils/safe-next-path";
 
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -24,8 +25,10 @@ export function useLogin() {
       setAuth(user, tokens);
       persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn, tokens.refreshExpiresIn);
 
-      // Force full page reload to trigger middleware with fresh cookies
-      window.location.href = getRoleHome(user.role);
+      // Force full page reload to trigger middleware with fresh cookies. Go back to the page that sent the user to
+      // /login (?next=); the middleware still sends them to their role home if that page is not theirs.
+      const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+      window.location.href = next ?? getRoleHome(user.role);
     },
   });
 }

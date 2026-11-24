@@ -10,6 +10,7 @@ import {
   isSchoolAdmin,
   isSystemAdmin,
 } from "@/constants/roles";
+import { safeNextPath } from "@/lib/utils/safe-next-path";
 
 const CONTENT_ADMIN_HOME = ROUTES.STAFF.HOME;
 const SYSTEM_ADMIN_HOME = ROUTES.STAFF.ADMIN.HOME;
@@ -28,7 +29,6 @@ const isPathOrChild = (pathname: string, basePath: string) => {
 
 const isPublicAssetPath = (pathname: string) =>
   /\.[a-zA-Z0-9]+$/.test(pathname);
-
 export function authMiddleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -47,14 +47,17 @@ export function authMiddleware(request: NextRequest) {
   const isAuthRequiredRoute = AUTH_REQUIRED_ROUTES.some((route) => isPathOrChild(pathname, route));
   const isAuthOnlyRoute = AUTH_ONLY_ROUTES.some((route) => isPathOrChild(pathname, route));
 
-  // Chưa đăng nhập → redirect về login nếu vào trang protected
+  // Chưa đăng nhập → redirect về login nếu vào trang protected. Keep the page in ?next= so that after signing in
+  // (or after the client refreshes an expired access token on /login) the user lands back where they were.
   if (!token && (isStaffRoute || isSchoolRoute || isAuthRequiredRoute)) {
-    return redirect(ROUTES.LOGIN);
+    const target = new URL(ROUTES.LOGIN, request.url);
+    target.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(target);
   }
   if (!token) return NextResponse.next();
 
-  // Đã đăng nhập → không cho vào trang login/register
-  if (isAuthOnlyRoute) return redirect(getRoleHome(role));
+  // Đã đăng nhập → không cho vào trang login/register. The role checks below still run on the next request.
+  if (isAuthOnlyRoute) return redirect(safeNextPath(request.nextUrl.searchParams.get("next")) ?? getRoleHome(role));
 
   // Customers may still visit the landing page (sidebar logo links there); other roles go to their own area.
   if (pathname === "/" && role !== "CUSTOMER") return redirect(getRoleHome(role));
