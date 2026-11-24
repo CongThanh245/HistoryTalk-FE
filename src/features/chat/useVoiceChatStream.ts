@@ -6,6 +6,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useAuthStore } from "@/store/auth.store";
+import { refreshAccessToken } from "@/configs/axios.client";
 import { getWebSpeechTTS, WebSpeechTTS } from "@/lib/web-speech-tts";
 
 export type VoiceStreamStatus =
@@ -152,10 +153,13 @@ export function useVoiceChatStream({
         setTtsAnalyser(analyser);
       });
 
-      const formData = new FormData();
-      formData.append("audio", audioBlob, "recording.webm");
-      formData.append("sessionId", sessionId);
-      formData.append("characterId", characterId);
+      const buildFormData = () => {
+        const fd = new FormData();
+        fd.append("audio", audioBlob, "recording.webm");
+        fd.append("sessionId", sessionId);
+        fd.append("characterId", characterId);
+        return fd;
+      };
 
       hasReceivedAudioRef.current = false;
       
@@ -169,11 +173,17 @@ export function useVoiceChatStream({
       }, 45000);
       
       try {
-        const res = await fetch("/api/voice/stream", {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: formData,
-        });
+        const doFetch = (accessToken?: string) =>
+          fetch("/api/voice/stream", {
+            method: "POST",
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+            body: buildFormData(),
+          });
+
+        let res = await doFetch(token);
+        if (res.status === 401 && !abortRef.current) {
+          res = await doFetch(await refreshAccessToken());
+        }
 
         if (!res.ok || !res.body) {
           throw new Error(`HTTP ${res.status}`);

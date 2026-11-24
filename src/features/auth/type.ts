@@ -50,6 +50,7 @@ export interface AuthTokens {
   refreshToken: string;
   tokenType: string;
   expiresIn: number;
+  refreshExpiresIn?: number;
 }
 
 export interface LoginResponse {

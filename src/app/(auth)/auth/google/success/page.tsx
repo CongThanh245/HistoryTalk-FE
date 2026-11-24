@@ -23,11 +23,17 @@ export default function GoogleOAuthSuccessPage() {
     const refreshToken = params.get("refreshToken");
     const tokenType = params.get("tokenType");
     const expiresInRaw = params.get("expiresIn");
+    const refreshExpiresInRaw = params.get("refreshExpiresIn");
     const uid = params.get("uid");
     const userName = decodeURIComponent(params.get("userName") ?? "");
     const email = decodeURIComponent(params.get("email") ?? "");
     const role = params.get("role");
     const expiresIn = Number(expiresInRaw);
+    const parsedRefreshExpiresIn = refreshExpiresInRaw ? Number(refreshExpiresInRaw) : undefined;
+    const refreshExpiresIn =
+      parsedRefreshExpiresIn && Number.isFinite(parsedRefreshExpiresIn) && parsedRefreshExpiresIn > 0
+        ? parsedRefreshExpiresIn
+        : undefined;
 
     window.history.replaceState({}, document.title, "/auth/google/success");
 
@@ -49,9 +55,9 @@ export default function GoogleOAuthSuccessPage() {
 
     setAuth(
       { uid, userName, email, role },
-      { accessToken, refreshToken, tokenType, expiresIn },
+      { accessToken, refreshToken, tokenType, expiresIn, refreshExpiresIn },
     );
-    persistAuthCookies(accessToken, role, expiresIn);
+    persistAuthCookies(accessToken, role, expiresIn, refreshExpiresIn);
 
     const isNewUser = params.get("isNewUser") === "true";
 

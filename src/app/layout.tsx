@@ -104,8 +104,12 @@ export default function RootLayout({
                     var tokens = parsed.state.tokens;
                     var role = user.role;
                     var accessToken = tokens.accessToken;
-                    var expiresIn = tokens.expiresIn || 3600;
-                    var maxAge = expiresIn > 100000 ? Math.floor(expiresIn / 1000) : expiresIn;
+                    var defaultSessionMaxAge = 7 * 24 * 60 * 60;
+                    var refreshExpiresIn = tokens.refreshExpiresIn;
+                    var accessExpiresIn = tokens.expiresIn || 0;
+                    var maxAge = (typeof refreshExpiresIn === "number" && isFinite(refreshExpiresIn) && refreshExpiresIn > 0)
+                      ? (refreshExpiresIn > 100000 ? Math.floor(refreshExpiresIn / 1000) : Math.floor(refreshExpiresIn))
+                      : Math.max(accessExpiresIn > 100000 ? Math.floor(accessExpiresIn / 1000) : Math.floor(accessExpiresIn), defaultSessionMaxAge);
 
                     // Set cookies synchronously so they are sent with the redirected page request
                     document.cookie = "auth-token=" + accessToken + "; path=/; max-age=" + maxAge + "; sameSite=lax";

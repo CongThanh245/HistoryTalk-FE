@@ -22,7 +22,7 @@ export function useLogin() {
     mutationFn: (data: LoginRequest) => authApi.login(data),
     onSuccess: ({ user, tokens }) => {
       setAuth(user, tokens);
-      persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
+      persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn, tokens.refreshExpiresIn);
 
       // Force full page reload to trigger middleware with fresh cookies
       window.location.href = getRoleHome(user.role);
@@ -37,7 +37,7 @@ export function useGoogleLogin() {
     mutationFn: (data: GoogleLoginRequest) => authApi.googleLogin(data),
     onSuccess: ({ user, tokens, isNewUser }) => {
       setAuth(user, tokens);
-      persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
+      persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn, tokens.refreshExpiresIn);
 
       // Force full page reload to trigger middleware with fresh cookies.
       // For CUSTOMER accounts we append ?notify=google_welcome so the home page
