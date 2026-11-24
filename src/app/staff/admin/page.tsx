@@ -102,9 +102,24 @@ function daysAgoISO(n: number) {
   return d.toISOString().slice(0, 10);
 }
 
+/** Large pools (billions of tokens) do not fit a stat card, so show them as "3,55 tỷ" / "435,75 triệu". */
+function formatTokenAmount(n: number): string {
+  const fmt = (v: number) => v.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
+  if (n >= 1_000_000_000) return `${fmt(n / 1_000_000_000)} tỷ`;
+  if (n >= 1_000_000) return `${fmt(n / 1_000_000)} triệu`;
+  return n.toLocaleString("vi-VN");
+}
+
 function formatUptime(uptime: string | number | undefined | null): string {
-  if (!uptime) return "—";
-  const seconds = parseFloat(String(uptime));
+  if (uptime === undefined || uptime === null || uptime === "") return "—";
+  // The health endpoint sends "1d 2h 3m 4s"; the JVM metrics send plain seconds.
+  const parts = typeof uptime === "string" ? uptime.match(/(\d+)\s*([dhms])/g) : null;
+  const seconds = parts
+    ? parts.reduce((sum, part) => {
+        const [, n, unit] = part.match(/(\d+)\s*([dhms])/)!;
+        return sum + Number(n) * { d: 86400, h: 3600, m: 60, s: 1 }[unit as "d" | "h" | "m" | "s"];
+      }, 0)
+    : parseFloat(String(uptime));
   if (isNaN(seconds)) return String(uptime);
 
   const d = Math.floor(seconds / (3600 * 24));
@@ -219,7 +234,10 @@ function KpiCard({
           </>
         ) : (
           <>
-            <div className="text-2xl font-bold tabular-nums text-[var(--content-heading)] leading-[1.2] truncate">
+            <div
+              className="text-2xl font-bold tabular-nums text-[var(--content-heading)] leading-[1.2] truncate"
+              title={String(value)}
+            >
               {value}
             </div>
             {sub && <div className="mt-1.5 text-xs text-[var(--content-muted)]">{sub}</div>}
@@ -470,7 +488,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           <KpiCard
             title="Quỹ token B2B"
-            value={(tokenSummary?.totalTokensB2bAllocated ?? 0).toLocaleString()}
+            value={formatTokenAmount(tokenSummary?.totalTokensB2bAllocated ?? 0)}
             icon={SchoolIcon}
             color="var(--accent-blue)"
             loading={comprehensiveLoading}
