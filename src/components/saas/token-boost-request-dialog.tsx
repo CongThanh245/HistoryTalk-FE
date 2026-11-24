@@ -21,7 +21,10 @@ export const isBoostPending = (r: TokenBoostRequest) => r.status === "PENDING" |
 export function usePendingBoostToday(enabled = true): TokenBoostRequest | undefined {
   const { data } = useMyTokenBoosts(enabled);
   const today = localDateKey();
-  return data?.find((r) => r.status !== "REJECTED" && r.requestDate === today);
+  // The BE stamps requestDate with the UTC date (its daily limit also turns over at 00:00 UTC), so between
+  // 00:00 and 07:00 Vietnam time today's request carries yesterday's local date. Accept both keys.
+  const utcToday = new Date().toISOString().slice(0, 10);
+  return data?.find((r) => r.status !== "REJECTED" && (r.requestDate === today || r.requestDate === utcToday));
 }
 
 /**
