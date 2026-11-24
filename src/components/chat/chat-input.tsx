@@ -59,6 +59,8 @@ interface ChatInputProps {
   disabled?: boolean;
   characterName?: string;
   isTokenExhausted?: boolean;
+  /** A message that failed to send; it is put back in the box (unless the user already typed something new). */
+  restoredDraft?: { text: string; key: number } | null;
 }
 
 export function ChatInput({
@@ -67,8 +69,14 @@ export function ChatInput({
   disabled,
   characterName,
   isTokenExhausted,
+  restoredDraft,
 }: ChatInputProps) {
   const [text, setText] = useState("");
+  const [restoredKey, setRestoredKey] = useState<number | null>(null);
+  if (restoredDraft && restoredDraft.key !== restoredKey) {
+    setRestoredKey(restoredDraft.key);
+    if (!text.trim()) setText(restoredDraft.text);
+  }
   const { mode } = useEntitlements();
   const [isRecording, setIsRecording] = useState(false);
   const [isSupported] = useState(

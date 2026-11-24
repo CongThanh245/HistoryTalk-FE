@@ -275,6 +275,7 @@ export function ChatMain({
 
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [contentWarning, setContentWarning] = useState<string | null>(null);
+  const [restoredDraft, setRestoredDraft] = useState<{ text: string; key: number } | null>(null);
 
   const { data, isLoading } = useChatMessages(sessionId);
   const createSession = useCreateSession();
@@ -954,6 +955,8 @@ export function ChatMain({
         } else {
           // Tin nhan cua nguoi dung da bi go khoi khung chat o tren: cho gui lai ngay, khoi go lai.
           const aiDown = (err as { aiUnavailable?: boolean }).aiUnavailable || error.response?.status === 500 || error.response?.status === 503;
+          // The bubble is gone, so put the question back in the box: it survives after the toast closes.
+          setRestoredDraft({ text: content, key: Date.now() });
           toast.error(
             aiDown
               ? `${character.name} chưa trả lời được vì dịch vụ AI đang gặp sự cố. Thử lại sau ít phút nhé.`
@@ -1439,6 +1442,7 @@ export function ChatMain({
         disabled={isStreaming || isTokenExhausted || isConversationInitializing || isExamFinished}
         characterName={character.name}
         isTokenExhausted={isTokenExhausted}
+        restoredDraft={restoredDraft}
       />
       <ContentWarningDialog message={contentWarning} onClose={() => setContentWarning(null)} />
       <AiDisclaimerFooter />
