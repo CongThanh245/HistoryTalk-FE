@@ -26,6 +26,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { recordStudyActivity } from "@/features/gamification/study-check-in";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { queryKeys } from "@/shared/query-key";
+import { invalidateTokenBalance } from "@/features/chat/token-balance";
 import { Avatar3DModal } from "./Avatar3DModal";
 import type { VoiceRestMessage } from "@/features/chat/useVoiceChatRest";
 import { cn } from "@/lib/utils/cn";
@@ -533,7 +534,7 @@ export function ChatMain({
     dismissedCallModeRef.current = "2d";
     replaceCallModeInUrl(null);
     setIsVoice2DOpen(false);
-    qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+    invalidateTokenBalance(qc);
     if (sessionId) {
       qc.invalidateQueries({ queryKey: queryKeys.chat.messages(sessionId) });
     }
@@ -555,7 +556,7 @@ export function ChatMain({
     dismissedCallModeRef.current = "3d";
     replaceCallModeInUrl(null);
     setIsVoice3DOpen(false);
-    qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+    invalidateTokenBalance(qc);
     if (sessionId) {
       qc.invalidateQueries({ queryKey: queryKeys.chat.messages(sessionId) });
     }
@@ -694,7 +695,7 @@ export function ChatMain({
             messageType: "TEXT",
           }));
           recordStudyActivity(qc);
-          qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+          invalidateTokenBalance(qc);
           resolve(true);
         },
         (err: unknown) => {
@@ -908,7 +909,7 @@ export function ChatMain({
             suggestedQuestions: resData.suggestedQuestions,
           }),
         );
-        qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+        invalidateTokenBalance(qc);
       },
       (err: unknown) => {
         setIsStreaming(false);

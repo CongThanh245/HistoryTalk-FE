@@ -2,6 +2,7 @@ import { recordStudyActivity } from "@/features/gamification/study-check-in";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { chatService, type ChatHistoryGroup } from "@/services/chat.service";
 import { queryKeys } from "@/shared/query-key";
+import { invalidateTokenBalance } from "./token-balance";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 import { getApiErrorMessage, isTokenExhaustionError } from "@/lib/utils/api-error";
@@ -87,7 +88,7 @@ export function useSendMessage() {
       content: string;
     }) => chatService.sendMessage(sessionId, content),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.profile.me });
+      invalidateTokenBalance(qc);
       recordStudyActivity(qc);
     },
     onError: (error: unknown) => {
