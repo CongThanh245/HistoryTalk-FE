@@ -24,6 +24,7 @@ import {
   type StreamingSpeechPlayer,
 } from "@/lib/character-speech";
 import { useAuthStore } from "@/store/auth.store";
+import { refreshAccessToken } from "@/configs/axios.client";
 import { chatService } from "@/services/chat.service";
 import { inappropriateMessageFrom } from "@/lib/utils/content-policy";
 import { getWebSpeechTTS, WebSpeechTTS } from "@/lib/web-speech-tts";
@@ -375,24 +376,30 @@ export function useVoiceChatWebSpeech({
         return;
       }
 
-      const token = useAuthStore.getState().tokens?.accessToken;
-
       // BE chỉ cần sessionId và content
       const endpoint = `${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}${process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1"}/chat/messages`;
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          sessionId,
-          content: text,
-          messageType: "VOICE",
-        }),
-        signal: controller.signal,
+      const payload = JSON.stringify({
+        sessionId,
+        content: text,
+        messageType: "VOICE",
       });
+      const doSend = (accessToken?: string) =>
+        fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          body: payload,
+          signal: controller.signal,
+        });
+
+      let res = await doSend(useAuthStore.getState().tokens?.accessToken);
+      if (res.status === 401 && !abortRef.current) {
+        const newAccessToken = await refreshAccessToken();
+        if (abortRef.current) return;
+        res = await doSend(newAccessToken);
+      }
 
       // Cuộc gọi đã bị hủy (hangup) trong lúc chờ mạng — bỏ luôn phản hồi trễ này,
       // không hiện tin nhắn/không phát TTS cho một cuộc gọi đã đóng.

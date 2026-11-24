@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
+import { refreshAccessToken } from "@/configs/axios.client";
 import { getWebSpeechTTS, WebSpeechTTS } from "@/lib/web-speech-tts";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -148,24 +149,29 @@ export function useVoiceChatRest({
         const useInternal =
           process.env.NEXT_PUBLIC_VOICE_USE_INTERNAL === "true";
 
-        const token = useAuthStore.getState().tokens?.accessToken;
-        const headers: HeadersInit = {};
-        if (token) {
-          (headers as Record<string, string>).Authorization = `Bearer ${token}`;
-        }
+        let activeToken = useAuthStore.getState().tokens?.accessToken;
+        const buildHeaders = (accessToken?: string): HeadersInit =>
+          accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
 
         let userTranscript = "";
 
         // ── Step 1: STT ─ Hiển thị user text NGAY sau khi nhận dạng ─────────────
         if (useInternal) {
-          const sttFormData = new FormData();
-          sttFormData.append("audio", audioBlob, "recording.webm");
+          const doSttFetch = (accessToken?: string) => {
+            const sttFormData = new FormData();
+            sttFormData.append("audio", audioBlob, "recording.webm");
+            return fetch("/api/voice/stt", {
+              method: "POST",
+              headers: buildHeaders(accessToken),
+              body: sttFormData,
+            });
+          };
 
-          const sttRes = await fetch("/api/voice/stt", {
-            method: "POST",
-            headers,
-            body: sttFormData,
-          });
+          let sttRes = await doSttFetch(activeToken);
+          if (sttRes.status === 401) {
+            activeToken = await refreshAccessToken();
+            sttRes = await doSttFetch(activeToken);
+          }
 
           if (!sttRes.ok) {
             const errJson = await sttRes.json().catch(() => ({}));
@@ -189,20 +195,27 @@ export function useVoiceChatRest({
         // ── Step 2: Chat + TTS ─ Hiển thị AI thinking ───────────────────────────
         setStatus("processing_chat");
 
-        const chatFormData = new FormData();
-        chatFormData.append("audio", audioBlob, "recording.webm");
-        chatFormData.append("sessionId", sessionId);
-        chatFormData.append("characterId", characterId);
-
         const endpoint = useInternal
           ? "/api/voice/chat"
           : `${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}${process.env.NEXT_PUBLIC_API_BASE_PATH ?? "/api/v1"}/voice/chat`;
 
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers,
-          body: chatFormData,
-        });
+        const doChatFetch = (accessToken?: string) => {
+          const chatFormData = new FormData();
+          chatFormData.append("audio", audioBlob, "recording.webm");
+          chatFormData.append("sessionId", sessionId);
+          chatFormData.append("characterId", characterId);
+          return fetch(endpoint, {
+            method: "POST",
+            headers: buildHeaders(accessToken),
+            body: chatFormData,
+          });
+        };
+
+        let res = await doChatFetch(activeToken);
+        if (res.status === 401) {
+          activeToken = await refreshAccessToken();
+          res = await doChatFetch(activeToken);
+        }
 
         if (!res.ok) {
           const errJson = await res.json().catch(() => ({}));

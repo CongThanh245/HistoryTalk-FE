@@ -43,6 +43,7 @@ type RawLoginData = {
   refreshToken: string;
   tokenType: string;
   expiresIn: number;
+  refreshExpiresIn?: number;
   isNewUser?: boolean;
   mustChangePassword?: boolean;
 };
@@ -72,6 +73,7 @@ function toLoginResponse(raw: RawLoginData): LoginResponse {
       refreshToken: raw.refreshToken,
       tokenType: raw.tokenType,
       expiresIn: raw.expiresIn,
+      refreshExpiresIn: raw.refreshExpiresIn,
     },
     isNewUser: raw.isNewUser,
   };

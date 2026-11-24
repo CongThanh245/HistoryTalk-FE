@@ -91,7 +91,12 @@ export const refreshAccessToken = async (): Promise<string> => {
         useAuthStore.getState().setTokens(latestTokens);
         const role = useAuthStore.getState().user?.role;
         if (role) {
-          persistAuthCookies(latestTokens.accessToken, role, latestTokens.expiresIn);
+          persistAuthCookies(
+            latestTokens.accessToken,
+            role,
+            latestTokens.expiresIn,
+            latestTokens.refreshExpiresIn,
+          );
         }
         processQueue(null, latestTokens.accessToken);
         return latestTokens.accessToken;
@@ -108,17 +113,22 @@ export const refreshAccessToken = async (): Promise<string> => {
       if (!data.success) throw new Error("Refresh failed");
 
       const newAccessToken = data.data.accessToken;
+      const nextRefreshExpiresIn =
+        data.data.refreshExpiresIn ??
+        latestTokens?.refreshExpiresIn ??
+        useAuthStore.getState().tokens?.refreshExpiresIn;
 
       useAuthStore.getState().setTokens({
         accessToken: newAccessToken,
         refreshToken: data.data.refreshToken,
         tokenType: data.data.tokenType,
         expiresIn: data.data.expiresIn,
+        refreshExpiresIn: nextRefreshExpiresIn,
       });
 
       const role = useAuthStore.getState().user?.role;
       if (role) {
-        persistAuthCookies(newAccessToken, role, data.data.expiresIn);
+        persistAuthCookies(newAccessToken, role, data.data.expiresIn, nextRefreshExpiresIn);
       }
 
       processQueue(null, newAccessToken);
@@ -127,10 +137,20 @@ export const refreshAccessToken = async (): Promise<string> => {
   } catch (refreshError) {
     processQueue(refreshError, null);
 
-    // Không logout/redirect ngay — chỉ báo cho người dùng biết phiên đã hết hạn,
-    // việc clear auth + chuyển trang login được thực hiện khi người dùng bấm xác nhận
-    // ở SessionExpiredDialog (xem src/components/session-expired-dialog.tsx).
-    useSessionStore.getState().showExpired();
+    // Chỉ đánh dấu phiên hết hạn khi BE từ chối refresh token (400/401/403 hoặc success=false),
+    // tránh đá user ra ngoài khi chỉ rớt mạng tạm thời hoặc timeout.
+    const isAuthRejection =
+      (axios.isAxiosError(refreshError) &&
+        refreshError.response != null &&
+        [400, 401, 403].includes(refreshError.response.status)) ||
+      (refreshError instanceof Error && refreshError.message === "Refresh failed");
+
+    if (isAuthRejection) {
+      // Không logout/redirect ngay — chỉ báo cho người dùng biết phiên đã hết hạn,
+      // việc clear auth + chuyển trang login được thực hiện khi người dùng bấm xác nhận
+      // ở SessionExpiredDialog (xem src/components/session-expired-dialog.tsx).
+      useSessionStore.getState().showExpired();
+    }
 
     throw refreshError;
   } finally {

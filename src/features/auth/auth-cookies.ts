@@ -3,19 +3,36 @@ import { AUTH_COOKIE_KEYS } from "@/constants/routes";
 import { useAuthStore } from "@/store/auth.store";
 
 const AUTH_STORAGE_KEY = "auth-storage";
+const DEFAULT_SESSION_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 
 export function getCookieMaxAge(expiresIn: number) {
-  return expiresIn > 100000 ? Math.floor(expiresIn / 1000) : expiresIn;
+  if (!Number.isFinite(expiresIn) || expiresIn <= 0) {
+    return DEFAULT_SESSION_COOKIE_MAX_AGE_SECONDS;
+  }
+  return expiresIn > 100000 ? Math.floor(expiresIn / 1000) : Math.floor(expiresIn);
+}
+
+export function getSessionCookieMaxAge(refreshExpiresIn?: number, fallbackExpiresIn?: number) {
+  if (typeof refreshExpiresIn === "number" && Number.isFinite(refreshExpiresIn) && refreshExpiresIn > 0) {
+    return getCookieMaxAge(refreshExpiresIn);
+  }
+  const fallback = typeof fallbackExpiresIn === "number" && Number.isFinite(fallbackExpiresIn) && fallbackExpiresIn > 0
+    ? getCookieMaxAge(fallbackExpiresIn)
+    : 0;
+  return Math.max(fallback, DEFAULT_SESSION_COOKIE_MAX_AGE_SECONDS);
 }
 
 export function persistAuthCookies(
   accessToken: string,
   role: User["role"],
   expiresIn: number,
+  refreshExpiresIn?: number,
 ) {
   if (typeof document === "undefined") return;
 
-  const maxAge = getCookieMaxAge(expiresIn);
+  // Cookie gates Next.js middleware/proxy navigation while the refresh token is still valid.
+  // Backend still enforces the shorter access token JWT expiry on every API call.
+  const maxAge = getSessionCookieMaxAge(refreshExpiresIn, expiresIn);
 
   document.cookie = `${AUTH_COOKIE_KEYS.TOKEN}=${accessToken}; path=/; max-age=${maxAge}; sameSite=lax`;
   document.cookie = `${AUTH_COOKIE_KEYS.ROLE}=${role}; path=/; max-age=${maxAge}; sameSite=lax`;
@@ -56,6 +73,6 @@ export function resetClientAuth() {
 export function syncAuthCookies(user: User | null, tokens: AuthTokens | null) {
   if (!user || !tokens?.accessToken) return false;
 
-  persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn);
+  persistAuthCookies(tokens.accessToken, user.role, tokens.expiresIn, tokens.refreshExpiresIn);
   return true;
 }
