@@ -529,6 +529,9 @@ function FormField({
 
 // ── Tab 2: Billing & Token ───────────────────
 function BillingTab() {
+  // Opened from the public pricing page ("Chọn gói") with ?upgrade=1: show the plan picker right away.
+  const searchParams = useSearchParams();
+  const [upgradeOpen, setUpgradeOpen] = useState(() => searchParams.get("upgrade") === "1");
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: payments, isLoading: paymentsLoading } = useMyPaymentHistory();
   const { data: dashboard, isLoading: dashboardLoading } = useMyDashboard();
@@ -574,7 +577,7 @@ function BillingTab() {
                 Free
               </Badge>
             )}
-            <UpgradeProDialog>
+            <UpgradeProDialog open={upgradeOpen} onOpenChange={setUpgradeOpen}>
               <button
                 type="button"
                 className="btn-crimson min-h-[34px] cursor-pointer whitespace-nowrap px-3 text-[11px]"

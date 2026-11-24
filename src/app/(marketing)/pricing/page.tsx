@@ -7,6 +7,7 @@ import { Container } from "@/components/marketing/container";
 import { MagneticButton } from "@/components/commons/MagneticButton";
 import { cn } from "@/lib/utils/cn";
 import { queryKeys } from "@/shared/query-key";
+import { useAuthStore } from "@/store/auth.store";
 import { paymentService, type PaymentTier } from "@/services/payment.service";
 import {
   formatVnd,
@@ -144,10 +145,19 @@ export default function PricingPage() {
   );
   const showCycleToggle = hasYearlyPlans(tierPlans);
 
+  // A signed-in customer cannot open /register (the middleware sends them home and the plan is lost), so their
+  // paid-plan buttons open the upgrade dialog on the billing tab instead; Free goes to the app home.
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const role = useAuthStore((s) => s.user?.role);
+  const signedInCustomer = isAuthenticated && role === "CUSTOMER";
   const plans = useMemo(() => {
     const paidPlanCount = tierPlans.filter((plan) => !plan.isFree).length;
-    return tierPlans.map((plan, index) => planToDisplay(plan, index, paidPlanCount, cycle));
-  }, [tierPlans, cycle]);
+    return tierPlans.map((plan, index) => {
+      const display = planToDisplay(plan, index, paidPlanCount, cycle);
+      if (!signedInCustomer) return display;
+      return { ...display, ctaHref: plan.isFree ? "/home" : "/profile?tab=billing&upgrade=1" };
+    });
+  }, [tierPlans, cycle, signedInCustomer]);
   const maxSaving = Math.max(0, ...tierPlans.map((plan) => yearlySavingPercent(plan) ?? 0));
 
   useEffect(() => {
