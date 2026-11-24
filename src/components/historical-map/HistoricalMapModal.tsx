@@ -554,7 +554,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
           ? "grid-rows-1 lg:grid-cols-1 lg:grid-rows-1 lg:overflow-hidden"
           : "grid-rows-[minmax(200px,35%)_1fr] lg:grid-cols-[minmax(0,1fr)_390px] lg:grid-rows-1 lg:overflow-hidden",
       )}>
-        <main className="map-stage relative min-h-0 min-w-0 overflow-hidden border-r border-[var(--text-primary)]">
+        <section aria-label="Bản đồ" className="map-stage relative min-h-0 min-w-0 overflow-hidden border-r border-[var(--text-primary)]">
           <LeafletMap
             battle={activeEvent}
             battles={events}
@@ -676,7 +676,7 @@ export function HistoricalMapModal({ isOpen, onClose, route: controlledRoute, on
               )}
             </div>
           )}
-        </main>
+        </section>
 
         {!panelDismissed && !isAdding && (
           <aside className="min-h-0 overflow-y-auto bg-[var(--bg-surface)]">

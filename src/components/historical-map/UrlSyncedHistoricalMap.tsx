@@ -40,11 +40,14 @@ export function UrlSyncedHistoricalMap({ onClose, overlay }: { onClose: () => vo
     if (next.battle) query.set("battle", next.battle); else query.delete("battle");
     if (next.view !== "map") query.set("view", next.view); else query.delete("view");
     const url = query.size ? `${pathname}?${query}` : pathname;
+    // Only the query changes, so use the native History API (Next keeps useSearchParams in sync with it) instead of
+    // router.push/replace: on a page opened from a link (?battle=...) router.push did nothing, so "Soạn lược đồ"
+    // and "Xem trước" stayed on the map.
     if (how === "push") {
       pushed.current += 1;
-      router.push(url, { scroll: false });
+      window.history.pushState(null, "", url);
     } else {
-      router.replace(url, { scroll: false });
+      window.history.replaceState(null, "", url);
     }
   };
 
