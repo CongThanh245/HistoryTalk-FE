@@ -214,11 +214,18 @@ export function AssignmentWizard({
       {type && (
         <Panel>
           <h2 className="archive-title is-plain text-xl">3. Thông tin bài</h2>
-          <Field label="Tên bài tập" required error={show(errors.title)} hint="3–255 ký tự.">
-            <StaffFormInput value={title} maxLength={255} onChange={(e) => setTitle(e.target.value)} />
+          <Field label="Tên bài tập" required error={show(errors.title)} hint="3–255 ký tự." htmlFor="as-title">
+            <StaffFormInput
+              id="as-title"
+              value={title}
+              maxLength={255}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="VD: Kiểm tra 15 phút: Chiến dịch Điện Biên Phủ"
+            />
           </Field>
-          <Field label="Mô tả / lời dặn cho học sinh">
+          <Field label="Mô tả / lời dặn cho học sinh" htmlFor="as-description">
             <StaffFormTextarea
+              id="as-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="VD: Đọc kỹ bối cảnh và chuẩn bị câu hỏi thảo luận."

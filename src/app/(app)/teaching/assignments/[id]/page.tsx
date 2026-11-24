@@ -103,11 +103,14 @@ function AssignmentDetail({ id }: { id: string }) {
   const scored = subs.filter((x) => x.score != null);
   const avgScore = scored.length ? scored.reduce((sum, x) => sum + (x.score ?? 0), 0) / scored.length : null;
   const q = normalizeText(search);
-  const shown = subs.filter(
-    (r) =>
-      (statusFilter === "ALL" || r.status === statusFilter) &&
-      (!q || normalizeText(`${r.fullName} ${r.studentCode ?? ""} ${r.email ?? ""}`).includes(q)),
-  );
+  // Work handed in comes first (newest first), so the teacher sees results without scrolling past the class list.
+  const shown = subs
+    .filter(
+      (r) =>
+        (statusFilter === "ALL" || r.status === statusFilter) &&
+        (!q || normalizeText(`${r.fullName} ${r.studentCode ?? ""} ${r.email ?? ""}`).includes(q)),
+    )
+    .sort((x, y) => (y.submittedAt ?? "").localeCompare(x.submittedAt ?? ""));
   const cancelled = a.status === "CANCELLED";
   // "Đóng bài" = ARCHIVED o BE: hoc sinh khong lam / nop duoc nua, ket qua van giu.
   const closed = a.status === "ARCHIVED";
@@ -217,7 +220,7 @@ function AssignmentDetail({ id }: { id: string }) {
             className="w-full sm:w-[220px]"
           />
         </div>
-        <SubmissionTable rows={shown} />
+        <SubmissionTable rows={shown} assignmentType={a.assignmentType} />
       </div>
 
       <EditAssignmentDialog open={editOpen} onOpenChange={setEditOpen} assignment={a} />
@@ -259,7 +262,8 @@ function AssignmentDetail({ id }: { id: string }) {
 }
 
 /* ───────────────────────── Submissions ───────────────────────── */
-function SubmissionTable({ rows }: { rows: SubmissionItem[] }) {
+function SubmissionTable({ rows, assignmentType }: { rows: SubmissionItem[]; assignmentType: AssignmentGradebook["assignmentType"] }) {
+  // Messages only count for a chat assignment and reading time only for a reading one; a test shows neither.
   const columns = React.useMemo<ColumnDef<SubmissionItem, unknown>[]>(
     () => [
       {
@@ -288,16 +292,24 @@ function SubmissionTable({ rows }: { rows: SubmissionItem[] }) {
             <span className={cn("font-bold tabular-nums", scoreClass(row.original.score))}>{row.original.score.toFixed(2)}</span>
           ),
       },
-      {
-        accessorKey: "messageCount",
-        header: "Tin nhắn",
-        cell: ({ row }) => <span className="tabular-nums">{row.original.messageCount ?? "—"}</span>,
-      },
-      {
-        accessorKey: "readingDurationSeconds",
-        header: "Thời gian đọc",
-        cell: ({ row }) => <span className="tabular-nums">{formatDuration(row.original.readingDurationSeconds)}</span>,
-      },
+      ...(assignmentType === "AI_CHAT_ROLEPLAY"
+        ? [
+            {
+              accessorKey: "messageCount",
+              header: "Tin nhắn",
+              cell: ({ row }) => <span className="tabular-nums">{row.original.messageCount ?? "—"}</span>,
+            } satisfies ColumnDef<SubmissionItem, unknown>,
+          ]
+        : []),
+      ...(assignmentType === "CONTEXT_READING"
+        ? [
+            {
+              accessorKey: "readingDurationSeconds",
+              header: "Thời gian đọc",
+              cell: ({ row }) => <span className="tabular-nums">{formatDuration(row.original.readingDurationSeconds)}</span>,
+            } satisfies ColumnDef<SubmissionItem, unknown>,
+          ]
+        : []),
       {
         accessorKey: "startedAt",
         header: "Bắt đầu",
@@ -309,7 +321,7 @@ function SubmissionTable({ rows }: { rows: SubmissionItem[] }) {
         cell: ({ row }) => <span className="tabular-nums text-content-muted">{formatLocalDateTime(row.original.submittedAt)}</span>,
       },
     ],
-    [],
+    [assignmentType],
   );
   return <StaffDataTable columns={columns} data={rows} emptyMessage="Không có học sinh phù hợp." />;
 }
