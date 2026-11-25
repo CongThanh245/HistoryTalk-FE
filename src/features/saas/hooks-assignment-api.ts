@@ -144,6 +144,8 @@ export function useRosterMutations(classId: string) {
   const qc = useQueryClient();
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["classroom-students"] });
+    // CSV preview lookups (in this class / in the school / new) go stale as soon as the roster changes.
+    void qc.removeQueries({ queryKey: ["roster-import-lookup"] });
     void qc.invalidateQueries({ queryKey: ["saas", "classroom"] });
     void qc.invalidateQueries({ queryKey: ["saas", "classrooms"] });
     void qc.invalidateQueries({ queryKey: ["dashboard"] });

@@ -29,7 +29,7 @@ import { ImportAccountsTable, ImportErrorsTable } from "@/app/school/_components
 import { useRole } from "@/features/auth/usePermission";
 import { apiErrorMessage, useApiSchoolClassrooms, useApiTeacherClassrooms } from "@/features/saas/hooks-api";
 import { useAvailableStudents, useClassroomStudents, useRosterMutations } from "@/features/saas/hooks-assignment-api";
-import { autoMapStudentColumns, buildBackendCsv, buildBackendTemplateCsv, decodeImportFile, downloadTextFile, readTable, type ExistingStatus } from "@/features/saas/student-import";
+import { STUDENT_IMPORT_FIELDS, autoMapStudentColumns, buildBackendCsv, buildBackendTemplateCsv, decodeImportFile, downloadTextFile, readTable, type ExistingStatus } from "@/features/saas/student-import";
 import { ImportPreviewTable, useImportRows } from "@/components/saas/student-import-preview";
 import { classroomStudentService, type BatchEnrollResult, type ClassroomStudent } from "@/services/assignment.service";
 import type { ImportedStudentAccount, StudentImportResult } from "@/services/school.service";
@@ -545,13 +545,21 @@ async function lookupStudent(classId: string, key: string): Promise<ExistingStat
   return available.items.some(matches) ? "school" : "none";
 }
 
-/** Existing accounts come back with allocatedToken 0 and a placeholder like "(Tài khoản hiện có)" instead of a password. */
-const isExistingAccount = (a: ImportedStudentAccount) => (a.allocatedToken ?? 0) === 0 && /^\(.*\)$/.test(a.initialPassword ?? "");
+/**
+ * Existing accounts come back with a placeholder instead of a password: "(Tài khoản hiện có)" when they were just added
+ * to the class, "(Đã có trong lớp từ trước)" when they were already in it. allocatedToken is their balance, not 0.
+ */
+const isExistingAccount = (a: ImportedStudentAccount) => /^\(.*\)$/.test((a.initialPassword ?? "").trim());
+const wasAlreadyInClass = (a: ImportedStudentAccount) => /đã có trong lớp/i.test(a.initialPassword ?? "");
 
 function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const [fileName, setFileName] = React.useState<string | null>(null);
   const [fileError, setFileError] = React.useState<string | null>(null);
+  // Labels of required new-student columns (full name, birth date) the file does not have.
+  const [missingColumns, setMissingColumns] = React.useState<string[]>([]);
   const [result, setResult] = React.useState<StudentImportResult | null>(null);
+  // Original file line of each row sent, so backend row numbers map back to the user's file when rows were unticked.
+  const [sentLines, setSentLines] = React.useState<number[]>([]);
   const [credentials, setCredentials] = React.useState<CredentialRecord[] | null>(null);
   // Existing students only need a code or email, so name / birth date are optional when one is present.
   // Each code / email is looked up against this class and the school, so duplicates and unknown nameless rows
@@ -588,15 +596,28 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
   }
   const { importCsv } = useRosterMutations(classId);
   const loaded = !!fileName && !fileError;
+  // Without name / birth-date columns only students already in the school can be added. When none of the rows match
+  // one, it is the wrong file (MSG27): say so like the school-wide import does instead of failing every row.
+  const wrongFormat =
+    loaded &&
+    missingColumns.length > 0 &&
+    preview.checked.length > 0 &&
+    preview.checked.every((r) => existingLookup(r.values.studentCode, r.values.email) === "none");
 
   const removeFile = () => {
     setFileName(null);
     setFileError(null);
+    setMissingColumns([]);
     preview.clear();
   };
   const reset = () => {
     removeFile();
     setResult(null);
+    setSentLines([]);
+  };
+  const close = () => {
+    reset();
+    onOpenChange(false);
   };
 
   async function handleFile(file: File | undefined) {
@@ -612,6 +633,7 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
       return setFileError("Không nhận ra cột họ tên, mã HS hay email. Hãy dùng file mẫu.");
     }
     setFileError(null);
+    setMissingColumns(STUDENT_IMPORT_FIELDS.filter((f) => f.required && mapping[f.key] < 0).map((f) => f.label));
     preview.load(parsed.table, mapping);
   }
 
@@ -619,13 +641,18 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
     if (preview.pickedRows.length === 0) return;
     // Rows are re-written as a clean UTF-8 CSV with the backend header (no BOM, no token column values).
     const csv = buildBackendCsv(preview.pickedRows.map((r) => r.values));
+    const lines = preview.pickedRows.map((r) => r.line);
     const file = new File([csv], (fileName ?? "lop").replace(/\.[^.]+$/, "") + "-chuan-hoa.csv", { type: "text/csv" });
     importCsv.mutate(
       { file },
       {
         onSuccess: (r) => {
+          setSentLines(lines);
           setResult(r);
-          toast.success(`Đã thêm ${r.successCount} học sinh vào lớp${r.failureCount ? `, ${r.failureCount} dòng lỗi` : ""}`);
+          const skipped = (r.successfulAccounts ?? []).filter(wasAlreadyInClass).length;
+          const added = Math.max(0, r.successCount - skipped);
+          const extras = [skipped && `${skipped} học sinh đã có trong lớp`, r.failureCount && `${r.failureCount} dòng lỗi`].filter(Boolean);
+          toast.success(`Đã thêm ${added} học sinh vào lớp${extras.length ? ` (${extras.join(", ")})` : ""}`);
         },
         onError: (error) => toast.error(apiErrorMessage(error, "Không nhập được file. Vui lòng kiểm tra file và thử lại.")),
       },
@@ -634,6 +661,8 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
 
   const accounts = result?.successfulAccounts ?? [];
   const fresh = accounts.filter((a) => !isExistingAccount(a));
+  const alreadyInClass = accounts.filter(wasAlreadyInClass).length;
+  const addedToClass = Math.max(0, (result?.successCount ?? 0) - alreadyInClass);
 
   return (
     <>
@@ -662,10 +691,11 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
           <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
             {result ? (
               <div className="space-y-4">
-                <dl className="grid grid-cols-3 gap-3">
+                <dl className={cn("grid gap-3", alreadyInClass > 0 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3")}>
                   {[
-                    ["Thêm vào lớp", result.successCount],
+                    ["Thêm vào lớp", addedToClass],
                     ["Tài khoản mới", fresh.length],
+                    ...(alreadyInClass > 0 ? [["Đã có trong lớp (bỏ qua)", alreadyInClass]] : []),
                     ["Dòng lỗi", result.failureCount],
                   ].map(([label, value]) => (
                     <div key={label} className="rounded-sm border border-[var(--border-strong)] p-3">
@@ -675,7 +705,7 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
                   ))}
                 </dl>
                 <p className="text-sm text-content-muted">{formatNumber(result.totalRows)} dòng trong file</p>
-                <ImportErrorsTable errors={result.errors} session={{ sentLines: [] }} />
+                <ImportErrorsTable errors={result.errors} session={{ sentLines }} />
                 {accounts.length > 0 && <ImportAccountsTable accounts={accounts} maxHeight="max-h-[35dvh]" />}
                 {fresh.length > 0 && (
                   <p className="text-xs text-[var(--status-warning)]">
@@ -727,7 +757,26 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
                 </label>
               )}
 
-              {loaded ? (
+              {wrongFormat ? (
+                <div role="alert" className="space-y-3 rounded-sm border border-[var(--accent-danger)] bg-[color-mix(in_srgb,var(--accent-danger)_6%,transparent)] p-4">
+                  <p className="flex items-start gap-2 text-sm font-semibold text-[var(--accent-danger)]">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    File không đúng định dạng danh sách học sinh
+                  </p>
+                  <p className="text-sm text-content-text">
+                    Thiếu cột bắt buộc: <b>{missingColumns.join(", ")}</b>. Không học sinh nào trong file đã có trong trường, nên cần đủ các cột này để
+                    tạo tài khoản mới.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button type="button" className="btn-crimson" onClick={() => downloadTextFile("class_student_import_template.csv", buildBackendTemplateCsv())}>
+                      <Download className="h-4 w-4" aria-hidden="true" /> Tải file mẫu
+                    </button>
+                    <button type="button" className="btn-line" onClick={removeFile}>
+                      Chọn file khác
+                    </button>
+                  </div>
+                </div>
+              ) : loaded ? (
                 <ImportPreviewTable
                   rows={preview.checked}
                   filter={preview.filter}
@@ -783,19 +832,19 @@ function ImportCsvDialog({ classId, open, onOpenChange }: { classId: string; ope
                     <KeyRound className="h-4 w-4" aria-hidden="true" /> Phiếu tài khoản mới
                   </button>
                 )}
-                <button type="button" className="btn-ink" onClick={() => onOpenChange(false)}>
+                <button type="button" className="btn-ink" onClick={close}>
                   Xong
                 </button>
               </>
             ) : (
               <>
-                <button type="button" className="btn-line" onClick={() => onOpenChange(false)}>
+                <button type="button" className="btn-line" onClick={close}>
                   Hủy
                 </button>
                 <button
                   type="button"
                   className="btn-crimson disabled:opacity-50"
-                  disabled={preview.pickedRows.length === 0 || importCsv.isPending}
+                  disabled={preview.pickedRows.length === 0 || importCsv.isPending || wrongFormat}
                   onClick={submit}
                 >
                   {importCsv.isPending ? "Đang nhập…" : loaded ? `Nhập ${preview.pickedRows.length} học sinh vào lớp` : "Nhập vào lớp"}

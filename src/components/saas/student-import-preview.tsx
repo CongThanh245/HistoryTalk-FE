@@ -110,6 +110,7 @@ const PREVIEW_FIELDS: { key: StudentImportField; label: string }[] = [
   { key: "email", label: "Email" },
   { key: "gender", label: "Giới tính" },
 ];
+const PHONE_FIELD: { key: StudentImportField; label: string } = { key: "phoneNumber", label: "SĐT" };
 const GENDER_VI: Record<string, string> = { MALE: "Nam", FEMALE: "Nữ" };
 
 export function ImportPreviewTable({
@@ -138,6 +139,11 @@ export function ImportPreviewTable({
   note?: React.ReactNode;
   submitError: string | null;
 }) {
+  // Phone is optional and usually empty, so its column only shows when the file has phone numbers (it can be invalid).
+  const fields = React.useMemo(
+    () => (rows.some((r) => r.values.phoneNumber || r.errors.phoneNumber) ? [...PREVIEW_FIELDS, PHONE_FIELD] : PREVIEW_FIELDS),
+    [rows],
+  );
   const [editing, setEditing] = React.useState<{ line: number; values: Record<StudentImportField, string> } | null>(null);
   const startEdit = (line: number) => {
     const raw = rawRow(line);
@@ -223,7 +229,7 @@ export function ImportPreviewTable({
                 />
               </th>
               <th className="px-2 py-2 font-semibold">Dòng</th>
-              {PREVIEW_FIELDS.map((f) => (
+              {fields.map((f) => (
                 <th key={f.key} className="px-2 py-2 font-semibold">
                   {f.label}
                 </th>
@@ -241,7 +247,7 @@ export function ImportPreviewTable({
                   <tr key={r.line} data-row-editor className="border-b border-[var(--border-default)] bg-[var(--bg-elevated)] align-top last:border-b-0">
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2 tabular-nums text-content-muted">{r.line}</td>
-                    {PREVIEW_FIELDS.map((f) => (
+                    {fields.map((f) => (
                       <td key={f.key} className="px-1 py-1.5">
                         <StaffFormInput
                           autoFocus={f.key === (Object.keys(r.errors)[0] ?? "fullName")}
@@ -299,7 +305,7 @@ export function ImportPreviewTable({
                     />
                   </td>
                   <td className="px-2 py-2 tabular-nums text-content-muted">{r.line}</td>
-                  {PREVIEW_FIELDS.map((f) => {
+                  {fields.map((f) => {
                     const err = r.errors[f.key];
                     const v = f.key === "gender" ? (GENDER_VI[r.values.gender] ?? r.values.gender) : r.values[f.key];
                     return (
@@ -331,7 +337,7 @@ export function ImportPreviewTable({
             })}
             {visible.length === 0 && (
               <tr>
-                <td colSpan={PREVIEW_FIELDS.length + 3} className="px-3 py-8 text-center text-sm text-content-muted">
+                <td colSpan={fields.length + 3} className="px-3 py-8 text-center text-sm text-content-muted">
                   Không có dòng nào.
                 </td>
               </tr>
