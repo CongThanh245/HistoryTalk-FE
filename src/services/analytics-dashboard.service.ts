@@ -45,6 +45,7 @@ export interface SchoolAdminDashboard {
   teacherTokenUsagePercentage?: number;
   topClassroomsByTokenUsage?: ClassroomTokenUsage[];
   defaultDailyStudentQuota?: number;
+  defaultDailyTeacherQuota?: number;
   pendingTokenBoostRequests?: number;
   assignmentStats: {
     totalSubmissions: number;

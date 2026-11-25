@@ -27,12 +27,18 @@ const quotaError = (v: string) => {
  * class has its own limit; a whole grade is set through the same endpoint, a single class through PUT /classrooms/{id}
  * (which also accepts 0 = back to the school default). Limits reset at 00:00; unused tokens stay in the shared pool.
  */
-export function DailyQuotaPolicyPanel({ currentDefault }: { currentDefault?: number }) {
+export function DailyQuotaPolicyPanel({
+  currentDefault,
+  currentTeacherDefault,
+}: {
+  currentDefault?: number;
+  currentTeacherDefault?: number;
+}) {
   const update = useUpdateTokenPolicy();
   const year = currentAcademicYear();
   const classes = useApiSchoolClassrooms({ page: 0, size: 200, academicYear: year, sort: "className,asc" });
-  // No API returns the teacher default yet (only the PUT response), so start from the backend default.
-  const [teacherQuota, setTeacherQuota] = React.useState(DEFAULT_TEACHER_QUOTA);
+  // Both defaults come from GET /school-admin/dashboard; useUpdateTokenPolicy writes the saved value into that cache.
+  const teacherQuota = currentTeacherDefault ?? DEFAULT_TEACHER_QUOTA;
   const studentQuota = currentDefault ?? DEFAULT_DAILY_QUOTA;
 
   const saveStudent = (n: number, done: () => void) =>
@@ -51,8 +57,7 @@ export function DailyQuotaPolicyPanel({ currentDefault }: { currentDefault?: num
     update.mutate(
       { defaultDailyTeacherQuota: n },
       {
-        onSuccess: (school) => {
-          setTeacherQuota(school.defaultDailyTeacherQuota ?? n);
+        onSuccess: () => {
           done();
           toast.success(`Hạn mức giáo viên: ${formatNumber(n)} token / ngày`);
         },

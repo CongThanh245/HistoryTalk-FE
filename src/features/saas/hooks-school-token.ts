@@ -19,6 +19,7 @@ import {
 } from "@/services/school-token.service";
 import { apiErrorMessage, apiErrorStatus, saasKeys } from "@/features/saas/hooks-api";
 import { queryKeys } from "@/shared/query-key";
+import type { SchoolAdminDashboard } from "@/services/analytics-dashboard.service";
 
 /**
  * Error text for the Sprint 7 endpoints. A 404 here means the running backend predates them (Spring answers
@@ -121,7 +122,17 @@ export function useUpdateTokenPolicy() {
   const refreshDashboards = useRefreshDashboards();
   return useMutation({
     mutationFn: (payload: UpdateTokenPolicyPayload) => schoolTokenService.updatePolicy(payload),
-    onSuccess: () => {
+    onSuccess: (_school, payload) => {
+      // Show the saved defaults right away instead of the stale dashboard value until the refetch lands.
+      qc.setQueryData<SchoolAdminDashboard>(queryKeys.dashboard.schoolAdmin, (prev) =>
+        prev
+          ? {
+              ...prev,
+              ...(payload.defaultDailyStudentQuota != null && { defaultDailyStudentQuota: payload.defaultDailyStudentQuota }),
+              ...(payload.defaultDailyTeacherQuota != null && { defaultDailyTeacherQuota: payload.defaultDailyTeacherQuota }),
+            }
+          : prev,
+      );
       refreshDashboards();
       qc.invalidateQueries({ queryKey: ["saas", "classrooms"] });
     },

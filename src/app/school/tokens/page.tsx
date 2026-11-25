@@ -34,7 +34,10 @@ export default function SchoolTokensPage() {
           <TokenBoostReviewList reviewer="SCHOOL_ADMIN" scopeHint="Hiện chưa có yêu cầu nào. Khi có, bạn sẽ thấy ở đây để duyệt hoặc từ chối." />
         </Panel>
 
-        <DailyQuotaPolicyPanel currentDefault={dashboard.data?.defaultDailyStudentQuota} />
+        <DailyQuotaPolicyPanel
+          currentDefault={dashboard.data?.defaultDailyStudentQuota}
+          currentTeacherDefault={dashboard.data?.defaultDailyTeacherQuota}
+        />
       </div>
     </SchoolShell>
   );
