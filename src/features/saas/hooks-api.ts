@@ -39,6 +39,12 @@ export function apiErrorStatus(error: unknown): number | undefined {
   return undefined;
 }
 
+/** Detail queries: a 404 / 400 (unknown or malformed id) will not fix itself, so show the empty state at once. */
+export const retryUnlessNotFound = (failureCount: number, error: unknown) => {
+  const status = apiErrorStatus(error);
+  return status !== 404 && status !== 400 && failureCount < 1;
+};
+
 export const saasKeys = {
   schools: (params: ListParams) => ["saas", "schools", params] as const,
   school: (id: string) => ["saas", "school", id] as const,
@@ -69,6 +75,7 @@ export function useApiSchool(id: string | undefined, enabled = true) {
     queryKey: saasKeys.school(id ?? ""),
     queryFn: () => schoolService.getSchool(id!),
     enabled: enabled && Boolean(id),
+    retry: retryUnlessNotFound,
   });
 }
 
@@ -170,6 +177,7 @@ export function useApiClassroom(id: string | undefined, enabled = true) {
     queryKey: saasKeys.classroom(id ?? ""),
     queryFn: () => schoolService.getClassroom(id!),
     enabled: enabled && Boolean(id),
+    retry: retryUnlessNotFound,
   });
 }
 
@@ -286,6 +294,7 @@ export function useApiStudent(id: string | undefined, enabled = true) {
     queryKey: saasKeys.student(id ?? ""),
     queryFn: () => schoolService.getStudent(id!),
     enabled: enabled && Boolean(id),
+    retry: retryUnlessNotFound,
   });
 }
 
