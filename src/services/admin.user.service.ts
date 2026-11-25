@@ -122,7 +122,7 @@ export interface TokenAnalyticsData {
 export interface TokenAnalyticsParams {
   from?: string; // YYYY-MM-DD
   to?: string;   // YYYY-MM-DD
-  granularity?: "day" | "week" | "month";
+  granularity?: "day" | "week" | "month" | "year";
   /** ALL | B2C (CUSTOMER) | B2B (user trường học). */
   scope?: "ALL" | "B2C" | "B2B" | "GLOBAL" | "LOCAL";
 }

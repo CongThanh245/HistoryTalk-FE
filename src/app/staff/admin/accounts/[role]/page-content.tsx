@@ -358,17 +358,17 @@ export default function AdminAccountsPage() {
       },
       {
         accessorKey: "deletedAt",
-        header: "Trạng thái",
+        header: () => <span className="whitespace-nowrap">Trạng thái</span>,
         cell: ({ row }) => {
           const u = row.original;
           const isDeleted = isUserDeleted(u);
           return isDeleted ? (
-            <span className="inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-[11px] font-bold bg-[var(--status-danger-bg)] text-[var(--accent-danger)] border border-[var(--status-danger-border)]">
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-sm px-2.5 py-1 text-[11px] font-bold bg-[var(--status-danger-bg)] text-[var(--accent-danger)] border border-[var(--status-danger-border)]">
               <LockKeyhole className="w-3 h-3" />
               Đã khóa
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-[11px] font-bold bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-sm px-2.5 py-1 text-[11px] font-bold bg-[var(--status-success-bg)] text-[var(--status-success)] border border-[var(--status-success-border)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--status-success)]" />
               Hoạt động
             </span>

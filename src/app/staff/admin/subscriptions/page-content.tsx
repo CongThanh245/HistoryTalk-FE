@@ -414,13 +414,13 @@ export default function AdminSubscriptionsPageContent() {
               tone="green"
             />
             <StaffStatCard
-              label="Tổng token pool"
-              value={totalTokenPool.toLocaleString()}
+              label="Tổng hạn mức ngày các gói"
+              value={totalTokenPool.toLocaleString("vi-VN")}
               icon={<Coins className="h-5 w-5" />}
               tone="gold"
             />
             <StaffStatCard
-              label="Doanh thu tổng gói"
+              label="Tổng giá niêm yết các gói"
               value={formatVND(totalRevenue)}
               icon={<CircleDollarSign className="h-5 w-5" />}
               tone="amber"

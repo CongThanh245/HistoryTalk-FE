@@ -53,14 +53,18 @@ export function useAdminUsers(role?: UserRole, params?: ListUsersParams) {
     queryKey: ADMIN_KEYS.users(role),
     queryFn: async () => {
       const data = await adminUserService.listUsers(params);
-      // Filter by role if specified
-      if (role) {
-        return {
-          ...data,
-          content: data.content.filter((u) => u.role === role),
-        };
+      if (!role) return data;
+      // GET /admin/users has no role filter and mixes every role, so one page of 100 can miss users of this role.
+      // Read the remaining pages before filtering (capped so a runaway total cannot loop forever).
+      const content = [...data.content];
+      const size = params?.size ?? data.pageSize ?? 100;
+      for (let page = (params?.page ?? 0) + 1; page < Math.min(data.totalPages, 50); page++) {
+        const next = await adminUserService.listUsers({ page, size });
+        content.push(...next.content);
+        if (!next.hasNext) break;
       }
-      return data;
+      const filtered = content.filter((u) => u.role === role);
+      return { ...data, content: filtered, totalElements: filtered.length, totalPages: 1, hasNext: false };
     },
     staleTime: 1000 * 30, // 30 seconds
   });

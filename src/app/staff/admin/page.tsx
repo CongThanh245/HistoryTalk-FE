@@ -54,6 +54,7 @@ import {
   useAdminTierAnalytics,
   useAdminQuizAnalytics,
 } from "@/features/admin/dashboard.hooks";
+import { useAdminTokenAnalytics } from "@/features/admin/hooks";
 
 // ─── Scope ───────────────────────────────────────────────────────────────────
 
@@ -312,6 +313,8 @@ export default function AdminDashboardPage() {
   // /tiers chỉ áp dụng cho B2C (CUSTOMER) — BE không nhận scope.
   const { data: tiers, isLoading: tiersLoading } = useAdminTierAnalytics({ from, to, granularity });
   const { data: quiz, isLoading: quizLoading } = useAdminQuizAnalytics(rangeParams);
+  // GET /system-admin/dashboard/tokens (Sprint 10): token used in the picked range, by scope.
+  const { data: tokenAnalytics, isLoading: tokenAnalyticsLoading } = useAdminTokenAnalytics(rangeParams);
   // GET /admin/dashboard — token B2B/B2C, JVM chi tiet, tong quan nen tang.
   const { data: comprehensive, isLoading: comprehensiveLoading } = useSystemAdminComprehensiveDashboard();
   const tokenSummary = comprehensive?.tokenSummary;
@@ -514,12 +517,17 @@ export default function AdminDashboardPage() {
             loading={comprehensiveLoading}
           />
           <KpiCard
-            title="Token toàn hệ thống"
-            value={(tokenSummary?.totalTokensSystemConsumed ?? 0).toLocaleString()}
+            title={isB2B ? "Token B2B trong khoảng" : isB2C ? "Token B2C trong khoảng" : "Token dùng trong khoảng"}
+            value={(tokenAnalytics?.summary?.totalTokens ?? 0).toLocaleString()}
             icon={FlameIcon}
             color="var(--accent-danger)"
-            loading={comprehensiveLoading}
-            sub={<span>Quiz: <strong>{(platform?.totalQuizzes ?? 0).toLocaleString()}</strong></span>}
+            loading={tokenAnalyticsLoading}
+            sub={
+              <span>
+                Toàn hệ thống từ trước tới nay: <strong>{(tokenSummary?.totalTokensSystemConsumed ?? 0).toLocaleString()}</strong> · Quiz:{" "}
+                <strong>{(platform?.totalQuizzes ?? 0).toLocaleString()}</strong>
+              </span>
+            }
           />
           <KpiCard
             title="CPU JVM"
