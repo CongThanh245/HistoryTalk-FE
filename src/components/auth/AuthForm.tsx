@@ -228,10 +228,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
               setUnverifiedEmail(null);
             }
             toast.error("Đăng nhập thất bại", {
-              // Graduated / transferred students get "ACCOUNT_DEACTIVATED: …" (Sprint 7).
+              // Any locked / deactivated account (graduated student, disabled teacher, school admin or customer) gets
+              // "ACCOUNT_DEACTIVATED: …", so the text must not assume the user is a student.
               description:
                 code === "ACCOUNT_DEACTIVATED"
-                  ? "Tài khoản đã ngừng hoạt động do học sinh đã tốt nghiệp hoặc chuyển trường. Liên hệ nhà trường nếu cần hỗ trợ."
+                  ? "Tài khoản đã bị vô hiệu hóa hoặc ngừng hoạt động. Vui lòng liên hệ quản trị viên nhà trường hoặc HistoryTalk nếu cần hỗ trợ."
                   : stripErrorCode(message),
             });
           },

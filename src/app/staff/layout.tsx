@@ -10,7 +10,7 @@ function layout({ children }: { children: React.ReactNode }) {
   return (
     <ReactQueryProviders>
     <ReactQueryProviders>
-      <ForcedPasswordChangeGuard>
+      <ForcedPasswordChangeGuard requireAuth>
       <SidebarProvider>
         <div className="flex h-[100dvh] bg-[var(--bg-content)]">
           <StaffSidebar />
