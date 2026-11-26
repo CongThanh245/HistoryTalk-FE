@@ -195,6 +195,12 @@ export default function AuthForm({ mode }: AuthFormProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    // Empty fields are caught here instead of costing a request that the backend rejects anyway.
+    if (!email.trim() || !password || (isRegister && !userName.trim())) {
+      toast.error(isRegister ? "Vui lòng nhập đủ tên người dùng, email và mật khẩu" : "Vui lòng nhập email và mật khẩu");
+      return;
+    }
+
     if (isRegister) {
       if (password !== confirmPassword) {
         toast.error("Mật khẩu không khớp");
